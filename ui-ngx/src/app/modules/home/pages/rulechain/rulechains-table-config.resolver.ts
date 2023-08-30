@@ -51,6 +51,7 @@ import { Edge } from '@shared/models/edge.models';
 import { mergeMap } from 'rxjs/operators';
 import { PageData } from '@shared/models/page/page-data';
 import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
+import { UtilsService } from '@core/services/utils.service';
 
 @Injectable()
 export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<RuleChain>> {
@@ -67,7 +68,8 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
               private homeDialogs: HomeDialogsService,
               private translate: TranslateService,
               private datePipe: DatePipe,
-              private router: Router) {
+              private router: Router,
+              private utils: UtilsService) {
     this.config.entityType = EntityType.RULE_CHAIN;
     this.config.entityComponent = RuleChainComponent;
     this.config.entityTabsComponent = RuleChainTabsComponent;
@@ -76,8 +78,9 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
 
     this.config.rowPointer = true;
 
+    this.config.entityTitle = ruleChain => ruleChain ? this.utils.customTranslation(ruleChain.name, ruleChain.name) : '';
     this.config.deleteEntityTitle = ruleChain => this.translate.instant('rulechain.delete-rulechain-title',
-      {ruleChainName: ruleChain.name});
+      { ruleChainName: this.utils.customTranslation(ruleChain.name, ruleChain.name) });
     this.config.deleteEntityContent = () => this.translate.instant('rulechain.delete-rulechain-text');
     this.config.deleteEntitiesTitle = count => this.translate.instant('rulechain.delete-rulechains-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('rulechain.delete-rulechains-text');
@@ -127,7 +130,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     const columns: Array<EntityColumn<RuleChain>> = [];
     columns.push(
       new DateEntityTableColumn<RuleChain>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<RuleChain>('name', 'rulechain.name', '100%')
+      new EntityTableColumn<RuleChain>('name', 'rulechain.name', '100%', this.config.entityTitle)
     );
     if (ruleChainScope === 'tenant' || ruleChainScope === 'edge') {
       columns.push(
@@ -198,7 +201,8 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     } else if (ruleChainScope === 'edges') {
       return this.translate.instant('edge.rulechain-templates');
     } else if (ruleChainScope === 'edge') {
-      return this.config.tableTitle = edge.name + ': ' + this.translate.instant('rulechain.rulechains');
+      return this.config.tableTitle = this.utils.customTranslation(edge.name, edge.name) +
+        ': ' + this.translate.instant('rulechain.rulechains');
     }
   }
 
@@ -342,7 +346,8 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
       $event.stopPropagation();
     }
     this.dialogService.confirm(
-      this.translate.instant('rulechain.set-root-rulechain-title', {ruleChainName: ruleChain.name}),
+      this.translate.instant('rulechain.set-root-rulechain-title',
+        {ruleChainName: this.utils.customTranslation(ruleChain.name, ruleChain.name)}),
       this.translate.instant('rulechain.set-root-rulechain-text'),
       this.translate.instant('action.no'),
       this.translate.instant('action.yes'),
@@ -400,7 +405,8 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
       $event.stopPropagation();
     }
     this.dialogService.confirm(
-      this.translate.instant('rulechain.set-edge-template-root-rulechain-title', {ruleChainName: ruleChain.name}),
+      this.translate.instant('rulechain.set-edge-template-root-rulechain-title',
+        {ruleChainName: this.utils.customTranslation(ruleChain.name, ruleChain.name)}),
       this.translate.instant('rulechain.set-edge-template-root-rulechain-text'),
       this.translate.instant('action.no'),
       this.translate.instant('action.yes'),
@@ -468,7 +474,8 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
       $event.stopPropagation();
     }
     this.dialogService.confirm(
-      this.translate.instant('rulechain.unassign-rulechain-title', {ruleChainName: ruleChain.name}),
+      this.translate.instant('rulechain.unassign-rulechain-title',
+        {ruleChainName: this.utils.customTranslation(ruleChain.name, ruleChain.name)}),
       this.translate.instant('rulechain.unassign-rulechain-from-edge-text'),
       this.translate.instant('action.no'),
       this.translate.instant('action.yes'),
@@ -518,7 +525,8 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
       $event.stopPropagation();
     }
     this.dialogService.confirm(
-      this.translate.instant('rulechain.set-auto-assign-to-edge-title', {ruleChainName: ruleChain.name}),
+      this.translate.instant('rulechain.set-auto-assign-to-edge-title',
+        {ruleChainName: this.utils.customTranslation(ruleChain.name, ruleChain.name)}),
       this.translate.instant('rulechain.set-auto-assign-to-edge-text'),
       this.translate.instant('action.no'),
       this.translate.instant('action.yes'),
@@ -540,7 +548,8 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
       $event.stopPropagation();
     }
     this.dialogService.confirm(
-      this.translate.instant('rulechain.unset-auto-assign-to-edge-title', {ruleChainName: ruleChain.name}),
+      this.translate.instant('rulechain.unset-auto-assign-to-edge-title',
+        {ruleChainName: this.utils.customTranslation(ruleChain.name, ruleChain.name)}),
       this.translate.instant('rulechain.unset-auto-assign-to-edge-text'),
       this.translate.instant('action.no'),
       this.translate.instant('action.yes'),

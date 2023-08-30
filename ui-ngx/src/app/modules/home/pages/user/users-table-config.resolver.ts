@@ -51,6 +51,7 @@ import { TenantService } from '@app/core/http/tenant.service';
 import { TenantId } from '@app/shared/models/id/tenant-id';
 import { UserTabsComponent } from '@home/pages/user/user-tabs.component';
 import { isDefinedAndNotNull } from '@core/utils';
+import { UtilsService } from '@core/services/utils.service';
 
 export interface UsersTableRouteData {
   authority: Authority;
@@ -74,7 +75,8 @@ export class UsersTableConfigResolver implements Resolve<EntityTableConfig<User>
               private translate: TranslateService,
               private datePipe: DatePipe,
               private router: Router,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,
+              private utils: UtilsService) {
 
     this.config.entityType = EntityType.USER;
     this.config.entityComponent = UserComponent;
@@ -128,10 +130,11 @@ export class UsersTableConfigResolver implements Resolve<EntityTableConfig<User>
         return of({title: ''});
       }),
       map((parentEntity) => {
+        const title = this.utils.customTranslation(parentEntity.title, parentEntity.title);
         if (this.authority === Authority.TENANT_ADMIN) {
-          this.config.tableTitle = parentEntity.title + ': ' + this.translate.instant('user.tenant-admins');
+          this.config.tableTitle = title + ': ' + this.translate.instant('user.tenant-admins');
         } else {
-          this.config.tableTitle = parentEntity.title + ': ' + this.translate.instant('user.customer-users');
+          this.config.tableTitle = title + ': ' + this.translate.instant('user.customer-users');
         }
         return this.config;
       })

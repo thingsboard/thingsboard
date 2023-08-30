@@ -61,6 +61,7 @@ import {
   AddEntitiesToEdgeDialogComponent,
   AddEntitiesToEdgeDialogData
 } from '@home/dialogs/add-entities-to-edge-dialog.component';
+import { UtilsService } from '@core/services/utils.service';
 
 @Injectable()
 export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig<EntityViewInfo>> {
@@ -78,7 +79,8 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
               private translate: TranslateService,
               private datePipe: DatePipe,
               private router: Router,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,
+              private utils: UtilsService) {
 
     this.config.entityType = EntityType.ENTITY_VIEW;
     this.config.entityComponent = EntityViewComponent;
@@ -88,8 +90,9 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
 
     this.config.addDialogStyle = {maxWidth: '800px'};
 
-    this.config.deleteEntityTitle = entityView =>
-      this.translate.instant('entity-view.delete-entity-view-title', {entityViewName: entityView.name});
+    this.config.entityTitle = entityView => entityView ? this.utils.customTranslation(entityView.name, entityView.name) : '';
+    this.config.deleteEntityTitle = entityView => this.translate.instant('entity-view.delete-entity-view-title',
+      {entityViewName: this.utils.customTranslation(entityView.name, entityView.name)});
     this.config.deleteEntityContent = () => this.translate.instant('entity-view.delete-entity-view-text');
     this.config.deleteEntitiesTitle = count => this.translate.instant('entity-view.delete-entity-views-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('entity-view.delete-entity-views-text');
@@ -138,11 +141,13 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
           if (parentCustomer.additionalInfo && parentCustomer.additionalInfo.isPublic) {
             this.config.tableTitle = this.translate.instant('customer.public-entity-views');
           } else {
-            this.config.tableTitle = parentCustomer.title + ': ' + this.translate.instant('entity-view.entity-views');
+            this.config.tableTitle = this.utils.customTranslation(parentCustomer.title, parentCustomer.title) +
+              ': ' + this.translate.instant('entity-view.entity-views');
           }
         } else if (this.config.componentsData.entityViewScope === 'edge') {
           this.edgeService.getEdge(this.config.componentsData.edgeId).subscribe(
-            edge => this.config.tableTitle = edge.name + ': ' + this.translate.instant('entity-view.entity-views')
+            edge => this.config.tableTitle =
+              this.utils.customTranslation(edge.name, edge.name) + ': ' + this.translate.instant('entity-view.entity-views')
           );
         } else {
           this.config.tableTitle = this.translate.instant('entity-view.entity-views');
@@ -164,7 +169,7 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
   configureColumns(entityViewScope: string): Array<EntityTableColumn<EntityViewInfo>> {
     const columns: Array<EntityTableColumn<EntityViewInfo>> = [
       new DateEntityTableColumn<EntityViewInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<EntityViewInfo>('name', 'entity-view.name', '33%'),
+      new EntityTableColumn<EntityViewInfo>('name', 'entity-view.name', '33%', this.config.entityTitle),
       new EntityTableColumn<EntityViewInfo>('type', 'entity-view.entity-view-type', '33%'),
     ];
     if (entityViewScope === 'tenant') {
@@ -346,7 +351,8 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
       $event.stopPropagation();
     }
     this.dialogService.confirm(
-      this.translate.instant('entity-view.make-public-entity-view-title', {entityViewName: entityView.name}),
+      this.translate.instant('entity-view.make-public-entity-view-title',
+        {entityViewName: this.utils.customTranslation(entityView.name, entityView.name)}),
       this.translate.instant('entity-view.make-public-entity-view-text'),
       this.translate.instant('action.no'),
       this.translate.instant('action.yes'),
@@ -388,13 +394,14 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
       $event.stopPropagation();
     }
     const isPublic = entityView.customerIsPublic;
+    const entityViewName = this.utils.customTranslation(entityView.name, entityView.name);
     let title;
     let content;
     if (isPublic) {
-      title = this.translate.instant('entity-view.make-private-entity-view-title', {entityViewName: entityView.name});
+      title = this.translate.instant('entity-view.make-private-entity-view-title', {entityViewName});
       content = this.translate.instant('entity-view.make-private-entity-view-text');
     } else {
-      title = this.translate.instant('entity-view.unassign-entity-view-title', {entityViewName: entityView.name});
+      title = this.translate.instant('entity-view.unassign-entity-view-title', {entityViewName});
       content = this.translate.instant('entity-view.unassign-entity-view-text');
     }
     this.dialogService.confirm(

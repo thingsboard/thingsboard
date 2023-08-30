@@ -61,7 +61,8 @@ import { ActionNotificationShow } from '@core/notification/notification.actions'
 import {
   EdgeInstructionsData,
   EdgeInstructionsDialogComponent
-} from "@home/pages/edge/edge-instructions-dialog.component";
+} from '@home/pages/edge/edge-instructions-dialog.component';
+import { UtilsService } from '@core/services/utils.service';
 
 @Injectable()
 export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeInfo>> {
@@ -78,7 +79,8 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
               private translate: TranslateService,
               private datePipe: DatePipe,
               private router: Router,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,
+              private utils: UtilsService) {
 
     this.config.entityType = EntityType.EDGE;
     this.config.entityComponent = EdgeComponent;
@@ -86,7 +88,9 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.EDGE);
     this.config.entityResources = entityTypeResources.get(EntityType.EDGE);
 
-    this.config.deleteEntityTitle = edge => this.translate.instant('edge.delete-edge-title', {edgeName: edge.name});
+    this.config.entityTitle = edge => edge ? this.utils.customTranslation(edge.name, edge.name) : '';
+    this.config.deleteEntityTitle = edge => this.translate.instant('edge.delete-edge-title',
+      {edgeName: this.utils.customTranslation(edge.name, edge.name)});
     this.config.deleteEntityContent = () => this.translate.instant('edge.delete-edge-text');
     this.config.deleteEntitiesTitle = count => this.translate.instant('edge.delete-edges-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('edge.delete-edges-text');
@@ -127,7 +131,8 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
           if (parentCustomer.additionalInfo && parentCustomer.additionalInfo.isPublic) {
             this.config.tableTitle = this.translate.instant('customer.public-edges');
           } else {
-            this.config.tableTitle = parentCustomer.title + ': ' + this.translate.instant('edge.edge-instances');
+            this.config.tableTitle = this.utils.customTranslation(parentCustomer.title, parentCustomer.title) +
+              ': ' + this.translate.instant('edge.edge-instances');
           }
         } else {
           this.config.tableTitle = this.translate.instant('edge.edge-instances');
@@ -148,7 +153,7 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
   configureColumns(edgeScope: string): Array<EntityTableColumn<EdgeInfo>> {
     const columns: Array<EntityTableColumn<EdgeInfo>> = [
       new DateEntityTableColumn<EdgeInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<EdgeInfo>('name', 'edge.name', '25%'),
+      new EntityTableColumn<EdgeInfo>('name', 'edge.name', '25%', this.config.entityTitle),
       new EntityTableColumn<EdgeInfo>('type', 'edge.edge-type', '25%'),
       new EntityTableColumn<EdgeInfo>('label', 'edge.label', '25%')
     ];
@@ -387,7 +392,8 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
       $event.stopPropagation();
     }
     this.dialogService.confirm(
-      this.translate.instant('edge.make-public-edge-title', {edgeName: edge.name}),
+      this.translate.instant('edge.make-public-edge-title',
+        {edgeName: this.utils.customTranslation(edge.name, edge.name)}),
       this.translate.instant('edge.make-public-edge-text'),
       this.translate.instant('action.no'),
       this.translate.instant('action.yes'),
@@ -457,13 +463,14 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
       $event.stopPropagation();
     }
     const isPublic = edge.customerIsPublic;
+    const edgeName = this.utils.customTranslation(edge.name, edge.name);
     let title;
     let content;
     if (isPublic) {
-      title = this.translate.instant('edge.make-private-edge-title', {edgeName: edge.name});
+      title = this.translate.instant('edge.make-private-edge-title', {edgeName});
       content = this.translate.instant('edge.make-private-edge-text');
     } else {
-      title = this.translate.instant('edge.unassign-edge-title', {edgeName: edge.name});
+      title = this.translate.instant('edge.unassign-edge-title', {edgeName});
       content = this.translate.instant('edge.unassign-edge-text');
     }
     this.dialogService.confirm(

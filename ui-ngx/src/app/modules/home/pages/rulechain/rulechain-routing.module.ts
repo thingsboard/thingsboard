@@ -109,8 +109,8 @@ export class RuleChainImportGuard implements CanActivate {
 }
 
 export const ruleChainBreadcumbLabelFunction: BreadCrumbLabelFunction<RuleChainPageComponent>
-  = ((route, translate, component) => {
-  let label: string = component.ruleChain.name;
+  = ((route, translate, component, data, utils) => {
+  let label: string = utils ? utils.customTranslation(component.ruleChain.name, component.ruleChain.name) : component.ruleChain.name;;
   if (component.ruleChain.root) {
     label += ` (${translate.instant('rulechain.root')})`;
   }
@@ -118,9 +118,9 @@ export const ruleChainBreadcumbLabelFunction: BreadCrumbLabelFunction<RuleChainP
 });
 
 export const importRuleChainBreadcumbLabelFunction: BreadCrumbLabelFunction<RuleChainPageComponent> =
-  ((route, translate, component) => {
-  return `${translate.instant('rulechain.import')}: ${component.ruleChain.name}`;
-});
+  ((route, translate, component, data, utils) =>
+  `${translate.instant('rulechain.import')}: ${utils.customTranslation(component.ruleChain.name, component.ruleChain.name)}`
+  );
 
 const routes: Routes = [
   {

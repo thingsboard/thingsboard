@@ -110,11 +110,15 @@ export class WidgetEditorAddDataResolver implements Resolve<WidgetEditorData> {
   }
 }
 
-export const widgetTypesBreadcumbLabelFunction: BreadCrumbLabelFunction<any> = ((route, translate) =>
-  route.data.widgetsBundle.title);
+export const widgetTypesBreadcumbLabelFunction: BreadCrumbLabelFunction<any> =
+  ((route, translate, component, data, utils) =>
+    utils ? utils.customTranslation(route.data.widgetsBundle.title, route.data.widgetsBundle.title) : route.data.widgetsBundle.title
+  );
 
 export const widgetEditorBreadcumbLabelFunction: BreadCrumbLabelFunction<WidgetEditorComponent> =
-  ((route, translate, component) => component ? component.widget.widgetName : '');
+  ((route, translate, component, data, utils) =>
+    component ? utils.customTranslation(component.widget.widgetName, component.widget.widgetName) : ''
+  );
 
 export const widgetsBundlesRoutes: Routes = [
   {

@@ -38,6 +38,7 @@ import { EntityAction } from '@home/models/entity/entity-component.models';
 import { FileSizePipe } from '@shared/pipe/file-size.pipe';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
+import { UtilsService } from '@core/services/utils.service';
 
 @Injectable()
 export class OtaUpdateTableConfigResolve implements Resolve<EntityTableConfig<OtaPackage, PageLink, OtaPackageInfo>> {
@@ -50,17 +51,18 @@ export class OtaUpdateTableConfigResolve implements Resolve<EntityTableConfig<Ot
               private store: Store<AppState>,
               private otaPackageService: OtaPackageService,
               private router: Router,
-              private fileSize: FileSizePipe) {
+              private fileSize: FileSizePipe,
+              private utils: UtilsService) {
     this.config.entityType = EntityType.OTA_PACKAGE;
     this.config.entityComponent = OtaUpdateComponent;
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.OTA_PACKAGE);
     this.config.entityResources = entityTypeResources.get(EntityType.OTA_PACKAGE);
 
-    this.config.entityTitle = (otaPackage) => otaPackage ? otaPackage.title : '';
+    this.config.entityTitle = (otaPackage) => otaPackage ? this.utils.customTranslation(otaPackage.title, otaPackage.title) : '';
 
     this.config.columns.push(
       new DateEntityTableColumn<OtaPackageInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<OtaPackageInfo>('title', 'ota-update.title', '15%'),
+      new EntityTableColumn<OtaPackageInfo>('title', 'ota-update.title', '15%', this.config.entityTitle),
       new EntityTableColumn<OtaPackageInfo>('version', 'ota-update.version', '15%'),
       new EntityTableColumn<OtaPackageInfo>('tag', 'ota-update.version-tag', '15%'),
       new EntityTableColumn<OtaPackageInfo>('type', 'ota-update.package-type', '15%', entity => {
@@ -112,7 +114,7 @@ export class OtaUpdateTableConfigResolve implements Resolve<EntityTableConfig<Ot
     );
 
     this.config.deleteEntityTitle = otaPackage => this.translate.instant('ota-update.delete-ota-update-title',
-      { title: otaPackage.title });
+      { title: this.utils.customTranslation(otaPackage.title, otaPackage.title) });
     this.config.deleteEntityContent = () => this.translate.instant('ota-update.delete-ota-update-text');
     this.config.deleteEntitiesTitle = count => this.translate.instant('ota-update.delete-ota-updates-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('ota-update.delete-ota-updates-text');

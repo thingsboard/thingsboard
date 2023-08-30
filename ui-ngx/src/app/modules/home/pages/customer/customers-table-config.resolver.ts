@@ -35,6 +35,7 @@ import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
+import { UtilsService } from '@core/services/utils.service';
 
 @Injectable()
 export class CustomersTableConfigResolver implements Resolve<EntityTableConfig<Customer>> {
@@ -46,7 +47,8 @@ export class CustomersTableConfigResolver implements Resolve<EntityTableConfig<C
               private translate: TranslateService,
               private datePipe: DatePipe,
               private router: Router,
-              private store: Store<AppState>) {
+              private store: Store<AppState>,
+              private utils: UtilsService) {
 
     this.config.entityType = EntityType.CUSTOMER;
     this.config.entityComponent = CustomerComponent;
@@ -55,9 +57,11 @@ export class CustomersTableConfigResolver implements Resolve<EntityTableConfig<C
     this.config.entityResources = entityTypeResources.get(EntityType.CUSTOMER);
     const authState = getCurrentAuthState(this.store);
 
+    this.config.entityTitle = customer => customer ? this.utils.customTranslation(customer.title, customer.title) : '';
+
     this.config.columns.push(
       new DateEntityTableColumn<Customer>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<Customer>('title', 'customer.title', '25%'),
+      new EntityTableColumn<Customer>('title', 'customer.title', '25%', this.config.entityTitle),
       new EntityTableColumn<Customer>('email', 'contact.email', '25%'),
       new EntityTableColumn<Customer>('country', 'contact.country', '25%'),
       new EntityTableColumn<Customer>('city', 'contact.city', '25%')
@@ -118,7 +122,8 @@ export class CustomersTableConfigResolver implements Resolve<EntityTableConfig<C
       );
     }
 
-    this.config.deleteEntityTitle = customer => this.translate.instant('customer.delete-customer-title', { customerTitle: customer.title });
+    this.config.deleteEntityTitle = customer => this.translate.instant('customer.delete-customer-title',
+      { customerTitle: this.utils.customTranslation(customer.title, customer.title) });
     this.config.deleteEntityContent = () => this.translate.instant('customer.delete-customer-text');
     this.config.deleteEntitiesTitle = count => this.translate.instant('customer.delete-customers-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('customer.delete-customers-text');

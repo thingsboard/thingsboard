@@ -43,6 +43,7 @@ import {
 } from '@home/components/profile/add-device-profile-dialog.component';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
 import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
+import { UtilsService } from '@core/services/utils.service';
 
 @Injectable()
 export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableConfig<DeviceProfile>> {
@@ -56,7 +57,8 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
               private datePipe: DatePipe,
               private dialogService: DialogService,
               private router: Router,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,
+              private utils: UtilsService) {
 
     this.config.entityType = EntityType.DEVICE_PROFILE;
     this.config.entityComponent = DeviceProfileComponent;
@@ -68,9 +70,11 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
 
     this.config.addDialogStyle = {width: '1000px'};
 
+    this.config.entityTitle = deviceProfile => deviceProfile ? this.utils.customTranslation(deviceProfile.name, deviceProfile.name) : '';
+
     this.config.columns.push(
       new DateEntityTableColumn<DeviceProfile>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<DeviceProfile>('name', 'device-profile.name', '20%'),
+      new EntityTableColumn<DeviceProfile>('name', 'device-profile.name', '20%', this.config.entityTitle),
       new EntityTableColumn<DeviceProfile>('type', 'device-profile.type', '20%', (deviceProfile) => {
         return this.translate.instant(deviceProfileTypeTranslationMap.get(deviceProfile.type));
       }),
@@ -100,7 +104,7 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
     );
 
     this.config.deleteEntityTitle = deviceProfile => this.translate.instant('device-profile.delete-device-profile-title',
-      { deviceProfileName: deviceProfile.name });
+      { deviceProfileName: this.utils.customTranslation(deviceProfile.name, deviceProfile.name) });
     this.config.deleteEntityContent = () => this.translate.instant('device-profile.delete-device-profile-text');
     this.config.deleteEntitiesTitle = count => this.translate.instant('device-profile.delete-device-profiles-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('device-profile.delete-device-profiles-text');
@@ -164,7 +168,8 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
       $event.stopPropagation();
     }
     this.dialogService.confirm(
-      this.translate.instant('device-profile.set-default-device-profile-title', {deviceProfileName: deviceProfile.name}),
+      this.translate.instant('device-profile.set-default-device-profile-title',
+        {deviceProfileName: this.utils.customTranslation(deviceProfile.name, deviceProfile.name)}),
       this.translate.instant('device-profile.set-default-device-profile-text'),
       this.translate.instant('action.no'),
       this.translate.instant('action.yes'),

@@ -24,6 +24,7 @@ import { distinctUntilChanged, map, publishReplay, refCount, share, switchMap, t
 import { BehaviorSubject, combineLatest, Observable, of } from 'rxjs';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { isDefinedAndNotNull } from '@core/utils';
+import { UtilsService } from '@core/services/utils.service';
 
 @Component({
   selector: 'tb-dashboard-widget-select',
@@ -89,7 +90,8 @@ export class DashboardWidgetSelectComponent implements OnInit {
 
   constructor(private widgetsService: WidgetService,
               private sanitizer: DomSanitizer,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              public utils: UtilsService) {
     this.widgetsBundles$ = this.search$.asObservable().pipe(
       distinctUntilChanged(),
       switchMap(search => this.fetchWidgetBundle(search))

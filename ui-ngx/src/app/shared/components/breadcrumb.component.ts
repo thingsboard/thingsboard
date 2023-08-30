@@ -110,7 +110,8 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
         let ignoreTranslate;
         if (breadcrumbConfig.labelFunction) {
           labelFunction = () => this.activeComponentValue ?
-            breadcrumbConfig.labelFunction(route, this.translate, this.activeComponentValue, lastChild.data) : breadcrumbConfig.label;
+            breadcrumbConfig.labelFunction(route, this.translate, this.activeComponentValue, lastChild.data, this.utils) :
+            breadcrumbConfig.label;
           ignoreTranslate = true;
         } else {
           label = breadcrumbConfig.label || 'home.home';

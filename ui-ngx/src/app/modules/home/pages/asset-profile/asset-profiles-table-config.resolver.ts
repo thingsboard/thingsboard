@@ -35,6 +35,7 @@ import { AssetProfile, TB_SERVICE_QUEUE } from '@shared/models/asset.models';
 import { AssetProfileService } from '@core/http/asset-profile.service';
 import { AssetProfileComponent } from '@home/components/profile/asset-profile.component';
 import { AssetProfileTabsComponent } from './asset-profile-tabs.component';
+import { UtilsService } from '@core/services/utils.service';
 
 @Injectable()
 export class AssetProfilesTableConfigResolver implements Resolve<EntityTableConfig<AssetProfile>> {
@@ -48,7 +49,8 @@ export class AssetProfilesTableConfigResolver implements Resolve<EntityTableConf
               private datePipe: DatePipe,
               private dialogService: DialogService,
               private router: Router,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,
+              private utils: UtilsService) {
 
     this.config.entityType = EntityType.ASSET_PROFILE;
     this.config.entityComponent = AssetProfileComponent;
@@ -58,9 +60,11 @@ export class AssetProfilesTableConfigResolver implements Resolve<EntityTableConf
 
     this.config.hideDetailsTabsOnEdit = false;
 
+    this.config.entityTitle = assetProfile => assetProfile ? this.utils.customTranslation(assetProfile.name, assetProfile.name) : '';
+
     this.config.columns.push(
       new DateEntityTableColumn<AssetProfile>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<AssetProfile>('name', 'asset-profile.name', '50%'),
+      new EntityTableColumn<AssetProfile>('name', 'asset-profile.name', '50%', this.config.entityTitle),
       new EntityTableColumn<AssetProfile>('description', 'asset-profile.description', '50%'),
       new EntityTableColumn<AssetProfile>('isDefault', 'asset-profile.default', '60px',
         entity => {
@@ -84,7 +88,7 @@ export class AssetProfilesTableConfigResolver implements Resolve<EntityTableConf
     );
 
     this.config.deleteEntityTitle = assetProfile => this.translate.instant('asset-profile.delete-asset-profile-title',
-      { assetProfileName: assetProfile.name });
+      { assetProfileName: this.utils.customTranslation(assetProfile.name, assetProfile.name) });
     this.config.deleteEntityContent = () => this.translate.instant('asset-profile.delete-asset-profile-text');
     this.config.deleteEntitiesTitle = count => this.translate.instant('asset-profile.delete-asset-profiles-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('asset-profile.delete-asset-profiles-text');
@@ -130,7 +134,8 @@ export class AssetProfilesTableConfigResolver implements Resolve<EntityTableConf
       $event.stopPropagation();
     }
     this.dialogService.confirm(
-      this.translate.instant('asset-profile.set-default-asset-profile-title', {assetProfileName: assetProfile.name}),
+      this.translate.instant('asset-profile.set-default-asset-profile-title',
+        {assetProfileName: this.utils.customTranslation(assetProfile.name, assetProfile.name)}),
       this.translate.instant('asset-profile.set-default-asset-profile-text'),
       this.translate.instant('action.no'),
       this.translate.instant('action.yes'),

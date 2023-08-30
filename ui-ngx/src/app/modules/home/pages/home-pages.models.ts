@@ -18,7 +18,7 @@ import { BreadCrumbLabelFunction } from '@shared/components/breadcrumb';
 import { EntityDetailsPageComponent } from '@home/components/entity/entity-details-page.component';
 
 export const entityDetailsPageBreadcrumbLabelFunction: BreadCrumbLabelFunction<EntityDetailsPageComponent>
-  = ((route, translate, component) => {
-  return component.entity?.name;
-});
+  = ((route, translate, component, data, utils) =>
+  utils ? utils.customTranslation(component.entity?.name, component.entity?.name) : component.entity?.name
+);
 

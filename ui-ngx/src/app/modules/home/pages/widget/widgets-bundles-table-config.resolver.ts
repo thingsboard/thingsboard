@@ -38,8 +38,8 @@ import { Authority } from '@shared/models/authority.enum';
 import { DialogService } from '@core/services/dialog.service';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
 import { Direction } from '@shared/models/page/sort-order';
-import { map } from 'rxjs/operators';
 import { WidgetsBundleTabsComponent } from '@home/pages/widget/widgets-bundle-tabs.component';
+import { UtilsService } from '@core/services/utils.service';
 
 @Injectable()
 export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableConfig<WidgetsBundle>> {
@@ -52,7 +52,8 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
               private translate: TranslateService,
               private importExport: ImportExportService,
               private datePipe: DatePipe,
-              private router: Router) {
+              private router: Router,
+              private utils: UtilsService) {
 
     this.config.entityType = EntityType.WIDGETS_BUNDLE;
     this.config.entityComponent = WidgetsBundleComponent;
@@ -63,12 +64,11 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
 
     this.config.rowPointer = true;
 
-    this.config.entityTitle = (widgetsBundle) => widgetsBundle ?
-      widgetsBundle.title : '';
+    this.config.entityTitle = widgetsBundle => widgetsBundle ? this.utils.customTranslation(widgetsBundle.title, widgetsBundle.title) : '';
 
     this.config.columns.push(
       new DateEntityTableColumn<WidgetsBundle>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<WidgetsBundle>('title', 'widgets-bundle.title', '100%'),
+      new EntityTableColumn<WidgetsBundle>('title', 'widgets-bundle.title', '100%', this.config.entityTitle),
       new EntityTableColumn<WidgetsBundle>('tenantId', 'widgets-bundle.system', '60px',
         entity => {
           return checkBoxCell(entity.tenantId.id === NULL_UUID);
@@ -106,7 +106,7 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
     );
 
     this.config.deleteEntityTitle = widgetsBundle => this.translate.instant('widgets-bundle.delete-widgets-bundle-title',
-      { widgetsBundleTitle: widgetsBundle.title });
+      { widgetsBundleTitle: this.utils.customTranslation(widgetsBundle.title, widgetsBundle.title) });
     this.config.deleteEntityContent = () => this.translate.instant('widgets-bundle.delete-widgets-bundle-text');
     this.config.deleteEntitiesTitle = count => this.translate.instant('widgets-bundle.delete-widgets-bundles-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('widgets-bundle.delete-widgets-bundles-text');

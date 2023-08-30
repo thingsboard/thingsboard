@@ -25,6 +25,7 @@ import { ActionNotificationShow } from '@core/notification/notification.actions'
 import { TranslateService } from '@ngx-translate/core';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
+import { UtilsService } from '@core/services/utils.service';
 
 export interface MakeDashboardPublicDialogData {
   dashboard: DashboardInfo;
@@ -47,10 +48,12 @@ export class MakeDashboardPublicDialogComponent extends DialogComponent<MakeDash
               public translate: TranslateService,
               private dashboardService: DashboardService,
               public dialogRef: MatDialogRef<MakeDashboardPublicDialogComponent>,
-              public fb: UntypedFormBuilder) {
+              public fb: UntypedFormBuilder,
+              private utils: UtilsService) {
     super(store, router, dialogRef);
 
     this.dashboard = data.dashboard;
+    this.dashboard.title = this.utils.customTranslation(this.dashboard.title, this.dashboard.title);
     this.publicLink = dashboardService.getPublicDashboardLink(this.dashboard);
   }
 

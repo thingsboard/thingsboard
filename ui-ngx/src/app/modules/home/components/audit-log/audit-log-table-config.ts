@@ -41,6 +41,7 @@ import {
   AuditLogDetailsDialogComponent,
   AuditLogDetailsDialogData
 } from '@home/components/audit-log/audit-log-details-dialog.component';
+import { UtilsService } from '@core/services/utils.service';
 
 export class AuditLogTableConfig extends EntityTableConfig<AuditLog, TimePageLink> {
 
@@ -49,6 +50,7 @@ export class AuditLogTableConfig extends EntityTableConfig<AuditLog, TimePageLin
               private datePipe: DatePipe,
               private dialog: MatDialog,
               private auditLogMode: AuditLogMode = AuditLogMode.TENANT,
+              private utils: UtilsService,
               public entityId: EntityId = null,
               public userId: UserId = null,
               public customerId: CustomerId = null,
@@ -83,7 +85,8 @@ export class AuditLogTableConfig extends EntityTableConfig<AuditLog, TimePageLin
       this.columns.push(
         new EntityTableColumn<AuditLog>('entityType', 'audit-log.entity-type', '20%',
           (entity) => translate.instant(entityTypeTranslations.get(entity.entityId.entityType).type)),
-        new EntityTableColumn<AuditLog>('entityName', 'audit-log.entity-name', '20%'),
+        new EntityTableColumn<AuditLog>('entityName', 'audit-log.entity-name', '20%',
+          entity => this.utils.customTranslation(entity.entityName, entity.entityName)),
       );
     }
 

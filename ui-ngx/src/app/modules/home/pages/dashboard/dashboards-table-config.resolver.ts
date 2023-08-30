@@ -70,6 +70,7 @@ import {
   AddEntitiesToEdgeDialogData
 } from '@home/dialogs/add-entities-to-edge-dialog.component';
 import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
+import { UtilsService } from '@core/services/utils.service';
 
 @Injectable()
 export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<DashboardInfo | Dashboard>> {
@@ -86,7 +87,8 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
               private translate: TranslateService,
               private datePipe: DatePipe,
               private router: Router,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,
+              private utils: UtilsService) {
 
     this.config.entityType = EntityType.DASHBOARD;
     this.config.entityComponent = DashboardFormComponent;
@@ -96,8 +98,9 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
 
     this.config.rowPointer = true;
 
-    this.config.deleteEntityTitle = dashboard =>
-      this.translate.instant('dashboard.delete-dashboard-title', {dashboardTitle: dashboard.title});
+    this.config.entityTitle = dashboard => dashboard ? this.utils.customTranslation(dashboard.title, dashboard.title) : '';
+    this.config.deleteEntityTitle = dashboard => this.translate.instant('dashboard.delete-dashboard-title',
+        {dashboardTitle: this.utils.customTranslation(dashboard.title, dashboard.title)});
     this.config.deleteEntityContent = () => this.translate.instant('dashboard.delete-dashboard-text');
     this.config.deleteEntitiesTitle = count => this.translate.instant('dashboard.delete-dashboards-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('dashboard.delete-dashboards-text');
@@ -149,11 +152,13 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
           if (parentCustomer.additionalInfo && parentCustomer.additionalInfo.isPublic) {
             this.config.tableTitle = this.translate.instant('customer.public-dashboards');
           } else {
-            this.config.tableTitle = parentCustomer.title + ': ' + this.translate.instant('dashboard.dashboards');
+            this.config.tableTitle = this.utils.customTranslation(parentCustomer.title, parentCustomer.title) +
+              ': ' + this.translate.instant('dashboard.dashboards');
           }
         } else if (this.config.componentsData.dashboardScope === 'edge') {
           this.edgeService.getEdge(this.config.componentsData.edgeId).subscribe(
-            edge => this.config.tableTitle = edge.name + ': ' + this.translate.instant('dashboard.dashboards')
+            edge => this.config.tableTitle = this.utils.customTranslation(edge.name, edge.name) +
+              ': ' + this.translate.instant('dashboard.dashboards')
           );
         } else {
           this.config.tableTitle = this.translate.instant('dashboard.dashboards');
@@ -175,7 +180,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
   configureColumns(dashboardScope: string): Array<EntityTableColumn<DashboardInfo>> {
     const columns: Array<EntityTableColumn<DashboardInfo>> = [
       new DateEntityTableColumn<DashboardInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<DashboardInfo>('title', 'dashboard.title', '50%')
+      new EntityTableColumn<DashboardInfo>('title', 'dashboard.title', '50%', this.config.entityTitle)
     ];
     if (dashboardScope === 'tenant') {
       columns.push(
@@ -444,7 +449,8 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
       $event.stopPropagation();
     }
     this.dialogService.confirm(
-      this.translate.instant('dashboard.make-private-dashboard-title', {dashboardTitle: dashboard.title}),
+      this.translate.instant('dashboard.make-private-dashboard-title',
+        { dashboardTitle: this.utils.customTranslation(dashboard.title, dashboard.title) }),
       this.translate.instant('dashboard.make-private-dashboard-text'),
       this.translate.instant('action.no'),
       this.translate.instant('action.yes'),

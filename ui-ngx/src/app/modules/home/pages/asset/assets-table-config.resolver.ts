@@ -57,12 +57,12 @@ import { AssetTableHeaderComponent } from '@modules/home/pages/asset/asset-table
 import { AssetId } from '@app/shared/models/id/asset-id';
 import { AssetTabsComponent } from '@home/pages/asset/asset-tabs.component';
 import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
-import { DeviceInfo } from '@shared/models/device.models';
 import { EdgeService } from '@core/http/edge.service';
 import {
   AddEntitiesToEdgeDialogComponent,
   AddEntitiesToEdgeDialogData
 } from '@home/dialogs/add-entities-to-edge-dialog.component';
+import { UtilsService } from '@core/services/utils.service';
 
 @Injectable()
 export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<AssetInfo>> {
@@ -81,7 +81,8 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
               private translate: TranslateService,
               private datePipe: DatePipe,
               private router: Router,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,
+              private utils: UtilsService) {
 
     this.config.entityType = EntityType.ASSET;
     this.config.entityComponent = AssetComponent;
@@ -89,7 +90,9 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.ASSET);
     this.config.entityResources = entityTypeResources.get(EntityType.ASSET);
 
-    this.config.deleteEntityTitle = asset => this.translate.instant('asset.delete-asset-title', {assetName: asset.name});
+    this.config.entityTitle = asset => asset ? this.utils.customTranslation(asset.name, asset.name) : '';
+    this.config.deleteEntityTitle = asset => this.translate.instant('asset.delete-asset-title',
+      {assetName: this.utils.customTranslation(asset.name, asset.name)});
     this.config.deleteEntityContent = () => this.translate.instant('asset.delete-asset-text');
     this.config.deleteEntitiesTitle = count => this.translate.instant('asset.delete-assets-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('asset.delete-assets-text');
@@ -139,11 +142,13 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
           if (parentCustomer.additionalInfo && parentCustomer.additionalInfo.isPublic) {
             this.config.tableTitle = this.translate.instant('customer.public-assets');
           } else {
-            this.config.tableTitle = parentCustomer.title + ': ' + this.translate.instant('asset.assets');
+            this.config.tableTitle = this.utils.customTranslation(parentCustomer.title, parentCustomer.title) +
+              ': ' + this.translate.instant('asset.assets');
           }
         } else if (this.config.componentsData.assetScope === 'edge') {
           this.edgeService.getEdge(this.config.componentsData.edgeId).subscribe(
-            edge => this.config.tableTitle = edge.name + ': ' + this.translate.instant('asset.assets')
+            edge => this.config.tableTitle = this.utils.customTranslation(edge.name, edge.name) +
+              ': ' + this.translate.instant('asset.assets')
           );
         } else {
           this.config.tableTitle = this.translate.instant('asset.assets');
@@ -164,7 +169,7 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
   configureColumns(assetScope: string): Array<EntityTableColumn<AssetInfo>> {
     const columns: Array<EntityTableColumn<AssetInfo>> = [
       new DateEntityTableColumn<AssetInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<AssetInfo>('name', 'asset.name', '25%'),
+      new EntityTableColumn<AssetInfo>('name', 'asset.name', '25%', this.config.entityTitle),
       new EntityTableColumn<AssetInfo>('assetProfileName', 'asset-profile.asset-profile', '25%'),
       new EntityTableColumn<AssetInfo>('label', 'asset.label', '25%'),
     ];
@@ -374,7 +379,8 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
       $event.stopPropagation();
     }
     this.dialogService.confirm(
-      this.translate.instant('asset.make-public-asset-title', {assetName: asset.name}),
+      this.translate.instant('asset.make-public-asset-title',
+        {assetName: this.utils.customTranslation(asset.name, asset.name)}),
       this.translate.instant('asset.make-public-asset-text'),
       this.translate.instant('action.no'),
       this.translate.instant('action.yes'),
@@ -416,13 +422,14 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
       $event.stopPropagation();
     }
     const isPublic = asset.customerIsPublic;
+    const assetName = this.utils.customTranslation(asset.name, asset.name);
     let title;
     let content;
     if (isPublic) {
-      title = this.translate.instant('asset.make-private-asset-title', {assetName: asset.name});
+      title = this.translate.instant('asset.make-private-asset-title', {assetName});
       content = this.translate.instant('asset.make-private-asset-text');
     } else {
-      title = this.translate.instant('asset.unassign-asset-title', {assetName: asset.name});
+      title = this.translate.instant('asset.unassign-asset-title', {assetName});
       content = this.translate.instant('asset.unassign-asset-text');
     }
     this.dialogService.confirm(

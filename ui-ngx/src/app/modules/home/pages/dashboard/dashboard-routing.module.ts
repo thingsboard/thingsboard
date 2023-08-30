@@ -58,8 +58,10 @@ export class DashboardResolver implements Resolve<Dashboard> {
   }
 }
 
-export const dashboardBreadcumbLabelFunction: BreadCrumbLabelFunction<DashboardPageComponent>
-  = ((route, translate, component) => component.dashboard.title);
+export const dashboardBreadcumbLabelFunction: BreadCrumbLabelFunction<DashboardPageComponent> =
+  ((route, translate, component, data, utils) =>
+    utils ? utils.customTranslation(component.dashboard.title, component.dashboard.title) : component.dashboard.title
+);
 
 const routes: Routes = [
   {

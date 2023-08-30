@@ -32,6 +32,7 @@ import {
 } from '@home/components/widget/lib/home-page/edit-links-dialog.component';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
+import { UtilsService } from '@core/services/utils.service';
 
 const defaultDocLinksMap = new Map<Authority, DocumentationLinks>(
   [
@@ -123,7 +124,8 @@ export class DocLinksWidgetComponent extends PageComponent implements OnInit, On
               private cd: ChangeDetectorRef,
               private userSettingsService: UserSettingsService,
               private dialog: MatDialog,
-              private breakpointObserver: BreakpointObserver) {
+              private breakpointObserver: BreakpointObserver,
+              public utils: UtilsService) {
     super(store);
   }
 

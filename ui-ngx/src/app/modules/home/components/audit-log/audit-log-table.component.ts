@@ -30,6 +30,7 @@ import { AppState } from '@core/core.state';
 import { Authority } from '@shared/models/authority.enum';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { ActivatedRoute } from '@angular/router';
+import { UtilsService } from '@core/services/utils.service';
 
 @Component({
   selector: 'tb-audit-log-table',
@@ -106,7 +107,8 @@ export class AuditLogTableComponent implements OnInit {
               private datePipe: DatePipe,
               private dialog: MatDialog,
               private store: Store<AppState>,
-              private route: ActivatedRoute) {
+              private route: ActivatedRoute,
+              private utils: UtilsService) {
   }
 
   ngOnInit() {
@@ -126,6 +128,7 @@ export class AuditLogTableComponent implements OnInit {
       this.datePipe,
       this.dialog,
       this.auditLogMode,
+      this.utils,
       this.entityIdValue,
       this.userIdValue,
       this.customerIdValue,

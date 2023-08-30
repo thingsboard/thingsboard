@@ -46,6 +46,7 @@ import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { MatSort } from '@angular/material/sort';
 import { DashboardInfo } from '@shared/models/dashboard.models';
 import { DashboardAutocompleteComponent } from '@shared/components/dashboard-autocomplete.component';
+import { UtilsService } from '@core/services/utils.service';
 
 @Component({
   selector: 'tb-recent-dashboards-widget',
@@ -80,7 +81,8 @@ export class RecentDashboardsWidgetComponent extends PageComponent implements On
 
   constructor(protected store: Store<AppState>,
               private cd: ChangeDetectorRef,
-              private userSettingService: UserSettingsService) {
+              private userSettingService: UserSettingsService,
+              public utils: UtilsService) {
     super(store);
   }
 

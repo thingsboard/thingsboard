@@ -37,6 +37,7 @@ import { PageLink } from '@shared/models/page/page-link';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { map } from 'rxjs/operators';
 import { ResourcesTableHeaderComponent } from '@home/pages/admin/resource/resources-table-header.component';
+import { UtilsService } from '@core/services/utils.service';
 
 @Injectable()
 export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableConfig<Resource, PageLink, ResourceInfo>> {
@@ -48,7 +49,8 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
               private resourceService: ResourceService,
               private translate: TranslateService,
               private router: Router,
-              private datePipe: DatePipe) {
+              private datePipe: DatePipe,
+              private utils: UtilsService) {
 
     this.config.entityType = EntityType.TB_RESOURCE;
     this.config.entityComponent = ResourcesLibraryComponent;
@@ -56,12 +58,11 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
     this.config.entityResources = entityTypeResources.get(EntityType.TB_RESOURCE);
     this.config.headerComponent = ResourcesTableHeaderComponent;
 
-    this.config.entityTitle = (resource) => resource ?
-      resource.title : '';
+    this.config.entityTitle = resource => resource ? this.utils.customTranslation(resource.title, resource.title) : '';
 
     this.config.columns.push(
       new DateEntityTableColumn<ResourceInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<ResourceInfo>('title', 'resource.title', '60%'),
+      new EntityTableColumn<ResourceInfo>('title', 'resource.title', '60%', this.config.entityTitle),
       new EntityTableColumn<ResourceInfo>('resourceType', 'resource.resource-type', '40%',
         entity => this.translate.instant(this.resourceTypesTranslationMap.get(entity.resourceType))),
       new EntityTableColumn<ResourceInfo>('tenantId', 'resource.system', '60px',
@@ -78,7 +79,7 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
     );
 
     this.config.deleteEntityTitle = resource => this.translate.instant('resource.delete-resource-title',
-      { resourceTitle: resource.title });
+      { resourceTitle: this.utils.customTranslation(resource.title, resource.title) });
     this.config.deleteEntityContent = () => this.translate.instant('resource.delete-resource-text');
     this.config.deleteEntitiesTitle = count => this.translate.instant('resource.delete-resources-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('resource.delete-resources-text');

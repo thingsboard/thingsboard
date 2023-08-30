@@ -84,6 +84,7 @@ import {
   DeviceCheckConnectivityDialogData
 } from '@home/pages/device/device-check-connectivity-dialog.component';
 import { EntityId } from '@shared/models/id/entity-id';
+import { UtilsService } from '@core/services/utils.service';
 
 interface DevicePageQueryParams extends PageQueryParam {
   deviceProfileId?: string;
@@ -107,7 +108,8 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
               private translate: TranslateService,
               private datePipe: DatePipe,
               private router: Router,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,
+              private utils: UtilsService) {
 
     this.config.entityType = EntityType.DEVICE;
     this.config.entityComponent = DeviceComponent;
@@ -117,7 +119,9 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
 
     this.config.addDialogStyle = {width: '600px'};
 
-    this.config.deleteEntityTitle = device => this.translate.instant('device.delete-device-title', {deviceName: device.name});
+    this.config.entityTitle = device => device ? this.utils.customTranslation(device.name, device.name) : '';
+    this.config.deleteEntityTitle = device => this.translate.instant('device.delete-device-title',
+      {deviceName: this.utils.customTranslation(device.name, device.name)});
     this.config.deleteEntityContent = () => this.translate.instant('device.delete-device-text');
     this.config.deleteEntitiesTitle = count => this.translate.instant('device.delete-devices-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('device.delete-devices-text');
@@ -167,11 +171,13 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
           if (parentCustomer.additionalInfo && parentCustomer.additionalInfo.isPublic) {
             this.config.tableTitle = this.translate.instant('customer.public-devices');
           } else {
-            this.config.tableTitle = parentCustomer.title + ': ' + this.translate.instant('device.devices');
+            this.config.tableTitle = this.utils.customTranslation(parentCustomer.title, parentCustomer.title) +
+              ': ' + this.translate.instant('device.devices');
           }
         } else if (this.config.componentsData.deviceScope === 'edge') {
           this.edgeService.getEdge(this.config.componentsData.edgeId).subscribe(
-            edge => this.config.tableTitle = edge.name + ': ' + this.translate.instant('device.devices')
+            edge => this.config.tableTitle = this.utils.customTranslation(edge.name, edge.name) +
+              ': ' + this.translate.instant('device.devices')
           );
         } else {
           this.config.tableTitle = this.translate.instant('device.devices');
@@ -219,7 +225,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
   configureColumns(deviceScope: string): Array<EntityTableColumn<DeviceInfo>> {
     const columns: Array<EntityTableColumn<DeviceInfo>> = [
       new DateEntityTableColumn<DeviceInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<DeviceInfo>('name', 'device.name', '25%'),
+      new EntityTableColumn<DeviceInfo>('name', 'device.name', '25%', this.config.entityTitle),
       new EntityTableColumn<DeviceInfo>('deviceProfileName', 'device-profile.device-profile', '25%'),
       new EntityTableColumn<DeviceInfo>('label', 'device.label', '25%'),
       new EntityTableColumn<DeviceInfo>('active', 'device.state', '80px',
@@ -505,7 +511,8 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
       $event.stopPropagation();
     }
     this.dialogService.confirm(
-      this.translate.instant('device.make-public-device-title', {deviceName: device.name}),
+      this.translate.instant('device.make-public-device-title',
+        {deviceName: this.utils.customTranslation(device.name, device.name)}),
       this.translate.instant('device.make-public-device-text'),
       this.translate.instant('action.no'),
       this.translate.instant('action.yes'),
@@ -547,13 +554,14 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
       $event.stopPropagation();
     }
     const isPublic = device.customerIsPublic;
+    const deviceName = this.utils.customTranslation(device.name, device.name);
     let title;
     let content;
     if (isPublic) {
-      title = this.translate.instant('device.make-private-device-title', {deviceName: device.name});
+      title = this.translate.instant('device.make-private-device-title', {deviceName});
       content = this.translate.instant('device.make-private-device-text');
     } else {
-      title = this.translate.instant('device.unassign-device-title', {deviceName: device.name});
+      title = this.translate.instant('device.unassign-device-title', {deviceName});
       content = this.translate.instant('device.unassign-device-text');
     }
     this.dialogService.confirm(
