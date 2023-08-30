@@ -309,6 +309,12 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
                                             CoapEfentoUtils.setDefaultMeasurements(serialNumber, batteryStatus, measurementPeriod, nextTransmissionAtMillis, signal, k));
                                     values.addProperty("ok_alarm_" + channel, data);
                                     break;
+                                case PULSE_CNT:
+                                    values = valuesMap.computeIfAbsent(startTimestampMillis, k ->
+                                            CoapEfentoUtils.setDefaultMeasurements(serialNumber, batteryStatus, measurementPeriod, nextTransmissionAtMillis, signal, k));
+                                    values.addProperty("pulse_cnt_" + channel, (double) (startPoint + sampleOffset));
+                                    startTimestampMillis = startTimestampMillis + measurementPeriodMillis;
+                                    break;
                                 case NO_SENSOR:
                                 case UNRECOGNIZED:
                                     log.trace("[{}][{}] Sensor error value! Ignoring.", sessionId, measurementTypeName);
