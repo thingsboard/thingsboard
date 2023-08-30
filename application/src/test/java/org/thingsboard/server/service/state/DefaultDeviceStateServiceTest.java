@@ -294,6 +294,7 @@ public class DefaultDeviceStateServiceTest {
         Mockito.verify(telemetrySubscriptionService, Mockito.never()).saveAttrAndNotify(Mockito.any(), Mockito.eq(deviceId), Mockito.any(), Mockito.eq("active"), Mockito.any(), Mockito.any());
 
         long newTimeout = 1;
+        Thread.sleep(newTimeout);
 
         service.onDeviceInactivityTimeoutUpdate(tenantId, deviceId, newTimeout);
         activityVerify(false);
