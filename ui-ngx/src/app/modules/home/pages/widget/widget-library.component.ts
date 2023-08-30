@@ -160,7 +160,7 @@ export class WidgetLibraryComponent extends PageComponent implements OnInit {
       }).afterClosed().subscribe(
         (type) => {
           if (type) {
-            this.router.navigate(['add', type], {relativeTo: this.route});
+            this.router.navigate([type], {relativeTo: this.route});
           }
         }
       );

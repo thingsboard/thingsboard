@@ -80,7 +80,7 @@ public class WidgetTypeController extends AutoCommitController {
                     "The newly created Widget Type Id will be present in the response. " +
                     "Specify existing Widget Type id to update the Widget Type. " +
                     "Referencing non-existing Widget Type Id will cause 'Not Found' error." +
-                    "\n\nWidget Type alias is unique in the scope of Widget Bundle. " +
+                    "\n\nWidget Type fqn is unique in the scope of System or Tenant. " +
                     "Special Tenant Id '13814000-1dd2-11b2-8080-808080808080' is automatically used if the create request is sent by user with 'SYS_ADMIN' authority." +
                     "Remove 'id', 'tenantId' rom the request body example (below) to create new Widget Type entity." +
                     SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
@@ -243,8 +243,8 @@ public class WidgetTypeController extends AutoCommitController {
             notes = "Set Widget Type deprecated flag. Referencing non-existing Widget Type Id will cause an error." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/widgetType/{widgetTypeId}/deprecate/{deprecated}", method = RequestMethod.POST)
-    @ResponseStatus(value = HttpStatus.OK)
-    public void setWidgetTypeDeprecated(
+    @ResponseBody
+    public WidgetTypeDetails setWidgetTypeDeprecated(
             @ApiParam(value = WIDGET_TYPE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable("widgetTypeId") String strWidgetTypeId,
             @PathVariable("deprecated") boolean deprecated) throws Exception {
@@ -252,14 +252,45 @@ public class WidgetTypeController extends AutoCommitController {
         var currentUser = getCurrentUser();
         WidgetTypeId widgetTypeId = new WidgetTypeId(toUUID(strWidgetTypeId));
         WidgetTypeDetails wtd = checkWidgetTypeId(widgetTypeId, Operation.WRITE);
-        widgetTypeService.setWidgetTypeDeprecated(currentUser.getTenantId(), widgetTypeId, deprecated);
-
-        if (wtd != null && !Authority.SYS_ADMIN.equals(currentUser.getAuthority())) {
+        WidgetTypeDetails updated = widgetTypeService.setWidgetTypeDeprecated(currentUser.getTenantId(), widgetTypeId, deprecated);
+        if (!Authority.SYS_ADMIN.equals(currentUser.getAuthority())) {
             WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(wtd.getTenantId(), wtd.getBundleAlias());
             if (widgetsBundle != null) {
                 autoCommit(currentUser, widgetsBundle.getId());
             }
         }
+        return updated;
+    }
+
+    @ApiOperation(value = "Move widget type to target widgets bundle (moveWidgetType)",
+            notes = "Move Widget Type to target Widgets Bundle. Referencing non-existing Widget Type Id will cause an error." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/widgetType/{widgetTypeId}/move", params = {"targetBundleAlias"}, method = RequestMethod.POST)
+    @ResponseBody
+    public WidgetTypeDetails moveWidgetType(
+            @ApiParam(value = WIDGET_TYPE_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable("widgetTypeId") String strWidgetTypeId,
+            @ApiParam(value = "Target Widget Bundle alias", required = true)
+            @RequestParam String targetBundleAlias) throws Exception {
+        checkParameter("widgetTypeId", strWidgetTypeId);
+        checkParameter("targetBundleAlias", targetBundleAlias);
+        var currentUser = getCurrentUser();
+        WidgetTypeId widgetTypeId = new WidgetTypeId(toUUID(strWidgetTypeId));
+        WidgetTypeDetails wtd = checkWidgetTypeId(widgetTypeId, Operation.WRITE);
+        if (!wtd.getBundleAlias().equals(targetBundleAlias)) {
+            wtd = widgetTypeService.moveWidgetType(currentUser.getTenantId(), widgetTypeId, targetBundleAlias);
+            if (!Authority.SYS_ADMIN.equals(currentUser.getAuthority())) {
+                WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(wtd.getTenantId(), wtd.getBundleAlias());
+                if (widgetsBundle != null) {
+                    autoCommit(currentUser, widgetsBundle.getId());
+                }
+                WidgetsBundle targetWidgetsBundle = widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(currentUser.getTenantId(), targetBundleAlias);
+                if (targetWidgetsBundle != null) {
+                    autoCommit(currentUser, targetWidgetsBundle.getId());
+                }
+            }
+        }
+        return wtd;
     }
 
 }
