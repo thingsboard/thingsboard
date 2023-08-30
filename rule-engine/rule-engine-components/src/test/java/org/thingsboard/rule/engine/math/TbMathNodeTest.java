@@ -652,7 +652,6 @@ public class TbMathNodeTest {
         List<Triple<TbContext, String, TbMathNode>> ctxNodes = IntStream.range(0, RULE_DISPATCHER_POOL_SIZE * 2)
                 .mapToObj(x -> {
                     final TbContext ctx = mock(TbContext.class); // many rule nodes - many contexts
-                    willReturn(tenantId).given(ctx).getTenantId();
                     willReturn(dbCallbackExecutor).given(ctx).getDbCallbackExecutor();
                     final String resultKey = "result" + x;
                     final TbMathNode node = spy(initNodeWithCustomFunction(ctx, "2a+3b",
