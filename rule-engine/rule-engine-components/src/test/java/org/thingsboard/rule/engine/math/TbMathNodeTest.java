@@ -678,10 +678,8 @@ public class TbMathNodeTest {
                     return Triple.of(ctx, resultKey, node);
                 })
                 .collect(Collectors.toList());
-
-        final TbMsg msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 2).put("b", 2).toString());
-
-        ctxNodes.forEach(ctxNode -> ruleEngineDispatcherExecutor.executeAsync(() -> ctxNode.getRight().onMsg(ctxNode.getLeft(), msg)));
+        ctxNodes.forEach(ctxNode -> ruleEngineDispatcherExecutor.executeAsync(() -> ctxNode.getRight()
+                .onMsg(ctxNode.getLeft(), TbMsg.newMsg("POST_TELEMETRY_REQUEST", originator, new TbMsgMetaData(), "{\"a\":2,\"b\":2}"))));
         ctxNodes.forEach(ctxNode -> verify(ctxNode.getRight(), timeout(5000)).onMsg(eq(ctxNode.getLeft()), any()));
         processingLatch.countDown();
 
