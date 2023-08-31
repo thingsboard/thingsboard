@@ -23,7 +23,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
-import { ActionAuthUpdateAuthUser, ActionAuthUpdateUserDetails } from '@core/auth/auth.actions';
+import { ActionAuthUpdateUserDetails } from '@core/auth/auth.actions';
 import { environment as env } from '@env/environment';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionSettingsChangeLanguage } from '@core/settings/settings.actions';
@@ -95,11 +95,6 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
             id: user.id,
             lastName: user.lastName,
           } }));
-        this.store.dispatch(new ActionAuthUpdateAuthUser({ authUser:  {...this.authUser, ...{
-              sub: user.email,
-              firstName: user.firstName,
-              lastName: user.lastName,
-            }}}));
         this.store.dispatch(new ActionSettingsChangeLanguage({ userLang: user.additionalInfo.lang }));
         this.authService.refreshJwtToken(false);
       }

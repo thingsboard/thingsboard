@@ -27,7 +27,12 @@ import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from 
 import { UserService } from '../http/user.service';
 import { Store } from '@ngrx/store';
 import { AppState } from '../core.state';
-import { ActionAuthAuthenticated, ActionAuthLoadUser, ActionAuthUnauthenticated } from './auth.actions';
+import {
+  ActionAuthAuthenticated,
+  ActionAuthLoadUser,
+  ActionAuthUnauthenticated,
+  ActionAuthUpdateAuthUser
+} from './auth.actions';
 import { getCurrentAuthState, getCurrentAuthUser } from './auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { ActionSettingsChangeLanguage } from '@app/core/settings/settings.actions';
@@ -479,6 +484,19 @@ export class AuthService {
               this.setUserFromJwtToken(loginResponse.token, loginResponse.refreshToken, false);
             } else {
               this.updateAndValidateTokens(loginResponse.token, loginResponse.refreshToken, true);
+            }
+            const authUser = getCurrentAuthUser(this.store);
+            const tokenData = this.jwtHelper.decodeToken(loginResponse.token);
+            if (['sub', 'firstName', 'lastName'].some(value => authUser[value] !== tokenData[value])) {
+              this.store.dispatch(new ActionAuthUpdateAuthUser({
+                authUser: {
+                  ...authUser, ...{
+                    sub: tokenData.sub,
+                    firstName: tokenData.firstName,
+                    lastName: tokenData.lastName,
+                  }
+                }
+              }));
             }
             this.refreshTokenSubject.next(loginResponse);
             this.refreshTokenSubject.complete();
