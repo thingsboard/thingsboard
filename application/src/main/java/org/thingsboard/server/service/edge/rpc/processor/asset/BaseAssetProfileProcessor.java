@@ -17,6 +17,8 @@ package org.thingsboard.server.service.edge.rpc.processor.asset;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.util.Pair;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -28,8 +30,9 @@ import java.nio.charset.StandardCharsets;
 @Slf4j
 public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
 
-    protected boolean saveOrUpdateAssetProfile(TenantId tenantId, AssetProfileId assetProfileId, AssetProfileUpdateMsg assetProfileUpdateMsg) {
+    protected Pair<Boolean, Boolean> saveOrUpdateAssetProfile(TenantId tenantId, AssetProfileId assetProfileId, AssetProfileUpdateMsg assetProfileUpdateMsg) {
         boolean created = false;
+        boolean assetProfileNameUpdated = false;
         assetCreationLock.lock();
         try {
             AssetProfile assetProfile = assetProfileService.findAssetProfileById(tenantId, assetProfileId);
@@ -39,6 +42,13 @@ public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
                 assetProfile = new AssetProfile();
                 assetProfile.setTenantId(tenantId);
                 assetProfile.setCreatedTime(Uuids.unixTimestamp(assetProfileId.getId()));
+            }
+            AssetProfile assetProfileByName = assetProfileService.findAssetProfileByName(tenantId, assetProfileName);
+            if (assetProfileByName != null && !assetProfileByName.getId().equals(assetProfileId)) {
+                assetProfileName = assetProfileName + "_" + StringUtils.randomAlphabetic(15);
+                log.warn("Asset profile with name {} already exists. Renaming asset profile name to {}",
+                        assetProfileUpdateMsg.getName(), assetProfileName);
+                assetProfileNameUpdated = true;
             }
             assetProfile.setName(assetProfileName);
             assetProfile.setDefault(assetProfileUpdateMsg.getDefault());
@@ -59,7 +69,7 @@ public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
         } finally {
             assetCreationLock.unlock();
         }
-        return created;
+        return Pair.of(created, assetProfileNameUpdated);
     }
 
     protected abstract void setDefaultRuleChainId(TenantId tenantId, AssetProfile assetProfile, AssetProfileUpdateMsg assetProfileUpdateMsg);
