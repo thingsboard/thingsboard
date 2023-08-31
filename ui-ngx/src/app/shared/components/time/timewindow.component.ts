@@ -61,7 +61,7 @@ import {
   textStyle,
   TimewindowStyle
 } from '@shared/models/widget-settings.models';
-import { DEFAULT_OVERLAY_POSITIONS } from '@shared/components/popover.models';
+import { DEFAULT_OVERLAY_POSITIONS } from '@shared/models/overlay.models';
 import { fromEvent } from 'rxjs';
 
 // @dynamic

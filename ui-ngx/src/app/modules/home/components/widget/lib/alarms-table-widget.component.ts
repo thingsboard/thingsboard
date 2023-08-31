@@ -123,7 +123,7 @@ import {
 } from '@home/components/alarm/alarm-filter-config.component';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { FormBuilder } from '@angular/forms';
-import { DEFAULT_OVERLAY_POSITIONS } from '@shared/components/popover.models';
+import { DEFAULT_OVERLAY_POSITIONS } from '@shared/models/overlay.models';
 
 interface AlarmsTableWidgetSettings extends TableWidgetSettings {
   alarmsTitle: string;

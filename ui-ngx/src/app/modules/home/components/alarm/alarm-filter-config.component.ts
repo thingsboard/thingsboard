@@ -45,7 +45,7 @@ import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { TranslateService } from '@ngx-translate/core';
 import { deepClone } from '@core/utils';
 import { fromEvent, Subscription } from 'rxjs';
-import { POSITION_MAP } from '@shared/components/popover.models';
+import { POSITION_MAP } from '@shared/models/overlay.models';
 
 export const ALARM_FILTER_CONFIG_DATA = new InjectionToken<any>('AlarmFilterConfigData');
 
