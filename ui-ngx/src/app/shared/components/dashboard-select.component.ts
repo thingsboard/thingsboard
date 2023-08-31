@@ -49,6 +49,7 @@ import {
   DashboardSelectPanelComponent
 } from './dashboard-select-panel.component';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
+import { UtilsService } from '@core/services/utils.service';
 
 // @dynamic
 @Component({
@@ -98,6 +99,7 @@ export class DashboardSelectComponent implements ControlValueAccessor, OnInit {
               private breakpointObserver: BreakpointObserver,
               private viewContainerRef: ViewContainerRef,
               private nativeElement: ElementRef,
+              public utils: UtilsService,
               @Inject(DOCUMENT) private document: Document,
               @Inject(WINDOW) private window: Window) {
   }

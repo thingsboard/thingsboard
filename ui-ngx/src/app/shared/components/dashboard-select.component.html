@@ -21,7 +21,7 @@
             [(ngModel)]="dashboardId"
             (ngModelChange)="dashboardIdChanged()">
   <mat-option *ngFor="let dashboard of dashboards$ | async" [value]="dashboard.id.id">
-    {{dashboard.title}}
+    {{utils.customTranslation(dashboard.title, dashboard.title)}}
   </mat-option>
 </mat-select>
 <section fxHide.gt-md class="tb-dashboard-select">

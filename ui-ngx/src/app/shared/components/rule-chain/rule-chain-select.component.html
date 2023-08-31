@@ -25,7 +25,7 @@
               [(ngModel)]="ruleChainId"
               (ngModelChange)="ruleChainIdChanged()">
     <mat-option *ngFor="let ruleChain of ruleChains$ | async" [value]="ruleChain.id.id">
-      {{ruleChain.name}}
+      {{utils.customTranslation(ruleChain.name, ruleChain.name)}}
     </mat-option>
   </mat-select>
 </mat-form-field>

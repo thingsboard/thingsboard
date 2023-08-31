@@ -57,7 +57,7 @@
             <img class="preview" [src]=getPreviewImage(widgetsBundle.image) alt="{{ widgetsBundle.title }}">
           </div>
           <div fxFlex fxLayout="column">
-            <mat-card-title>{{ widgetsBundle.title }}</mat-card-title>
+            <mat-card-title>{{ utils.customTranslation(widgetsBundle.title, widgetsBundle.title) }}</mat-card-title>
             <mat-card-subtitle *ngIf="isSystem(widgetsBundle)" translate>widgets-bundle.system</mat-card-subtitle>
             <mat-card-content *ngIf="widgetsBundle.description">
               {{ widgetsBundle.description }}

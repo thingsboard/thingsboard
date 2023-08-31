@@ -28,6 +28,7 @@ import { RuleChainService } from '@core/http/rule-chain.service';
 import { isDefinedAndNotNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { Direction } from '@shared/models/page/sort-order';
+import { UtilsService } from '@core/services/utils.service';
 
 @Component({
   selector: 'tb-rule-chain-select',
@@ -61,7 +62,8 @@ export class RuleChainSelectComponent implements ControlValueAccessor, OnInit {
 
   private propagateChange = (v: any) => { };
 
-  constructor(private ruleChainService: RuleChainService) {
+  constructor(private ruleChainService: RuleChainService,
+              public utils: UtilsService) {
   }
 
   ngOnInit() {

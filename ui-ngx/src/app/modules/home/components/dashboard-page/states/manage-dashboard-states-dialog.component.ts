@@ -40,6 +40,7 @@ import {
   DashboardStateDialogComponent,
   DashboardStateDialogData
 } from '@home/components/dashboard-page/states/dashboard-state-dialog.component';
+import { UtilsService } from '@core/services/utils.service';
 
 export interface ManageDashboardStatesDialogData {
   states: {[id: string]: DashboardState };
@@ -79,7 +80,8 @@ export class ManageDashboardStatesDialogComponent extends
               private fb: UntypedFormBuilder,
               private translate: TranslateService,
               private dialogs: DialogService,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,
+              public utils: UtilsService) {
     super(store, router, dialogRef);
 
     this.states = this.data.states;

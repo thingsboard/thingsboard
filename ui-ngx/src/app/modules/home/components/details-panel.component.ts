@@ -28,6 +28,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UntypedFormGroup } from '@angular/forms';
 import { Subscription } from 'rxjs';
+import { UtilsService } from '@core/services/utils.service';
 
 @Component({
   selector: 'tb-details-panel',
@@ -37,7 +38,15 @@ import { Subscription } from 'rxjs';
 export class DetailsPanelComponent extends PageComponent implements OnDestroy {
 
   @Input() headerHeightPx = 100;
-  @Input() headerTitle = '';
+  private title = '';
+  @Input()
+  set headerTitle(value: string) {
+    this.title = this.utils.customTranslation(value, value);
+  }
+  get headerTitle(): string {
+    return this.title;
+  }
+
   @Input() headerSubtitle = '';
   @Input() isReadOnly = false;
   @Input() isAlwaysEdit = false;
@@ -92,7 +101,8 @@ export class DetailsPanelComponent extends PageComponent implements OnDestroy {
 
 
   constructor(protected store: Store<AppState>,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private utils: UtilsService) {
     super(store);
   }
 

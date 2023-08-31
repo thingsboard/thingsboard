@@ -1297,7 +1297,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     if (!title || title.length === 0) {
       title = this.widgetComponentService.getInstantWidgetInfo(widget).widgetName;
     }
-    const confirmTitle = this.translate.instant('widget.remove-widget-title', {widgetTitle: title});
+    const confirmTitle = this.translate.instant('widget.remove-widget-title',
+      {widgetTitle: this.utils.customTranslation(title, title)});
     const confirmContent = this.translate.instant('widget.remove-widget-text');
     this.dialogService.confirm(confirmTitle,
       confirmContent,

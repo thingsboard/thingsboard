@@ -76,7 +76,7 @@ export class FiltersDialogComponent extends DialogComponent<FiltersDialogCompone
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<FiltersDialogComponent, Filters>,
               private fb: UntypedFormBuilder,
-              private utils: UtilsService,
+              public utils: UtilsService,
               private translate: TranslateService,
               private dialogs: DialogService,
               private dialog: MatDialog) {

@@ -29,6 +29,7 @@ import { WidgetConfigComponentData, WidgetInfo } from '@home/models/widget-compo
 import { isDefined, isDefinedAndNotNull, isString } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
+import { UtilsService } from '@core/services/utils.service';
 
 export interface AddWidgetDialogData {
   dashboard: Dashboard;
@@ -83,7 +84,8 @@ export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogCom
               @Inject(MAT_DIALOG_DATA) public data: AddWidgetDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<AddWidgetDialogComponent, Widget>,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              public utils: UtilsService) {
     super(store, router, dialogRef);
 
     this.dashboard = this.data.dashboard;

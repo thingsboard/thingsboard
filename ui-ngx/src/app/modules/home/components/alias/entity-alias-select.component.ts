@@ -39,6 +39,7 @@ import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autoc
 import { EntityAliasSelectCallbacks } from './entity-alias-select.component.models';
 import { ENTER } from '@angular/cdk/keycodes';
 import { ErrorStateMatcher } from '@angular/material/core';
+import { UtilsService } from '@core/services/utils.service';
 
 @Component({
   selector: 'tb-entity-alias-select',
@@ -107,7 +108,8 @@ export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit,
               private entityService: EntityService,
               public translate: TranslateService,
               public truncate: TruncatePipe,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              public utils: UtilsService) {
     this.selectEntityAliasFormGroup = this.fb.group({
       entityAlias: [null]
     });
@@ -202,9 +204,8 @@ export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit,
     }
   }
 
-  displayEntityAliasFn(entityAlias?: EntityAlias): string | undefined {
-    return entityAlias ? entityAlias.alias : undefined;
-  }
+  displayEntityAliasFn = (entityAlias?: EntityAlias): string | undefined =>
+    entityAlias ? this.utils.customTranslation(entityAlias.alias, entityAlias.alias) : undefined;
 
   fetchEntityAliases(searchText?: string): Observable<Array<EntityAlias>> {
     this.searchText = searchText;

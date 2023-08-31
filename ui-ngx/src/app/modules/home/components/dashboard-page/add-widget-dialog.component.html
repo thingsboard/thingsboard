@@ -19,7 +19,7 @@
   <mat-toolbar color="primary">
     <div class="tb-add-widget-toolbar">
       <h2>{{'widget.add' | translate}}:</h2>
-      <span fxFlex>{{data.widgetInfo.widgetName}}</span>
+      <span fxFlex>{{utils.customTranslation(data.widgetInfo.widgetName, data.widgetInfo.widgetName)}}</span>
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap.gt-xs="16px" style="min-width: fit-content;">
         <tb-toggle-select *ngIf="widgetConfig.hasBasicMode" appearance="fill-invert" selectMediaBreakpoint="xs"
                           [(ngModel)]="widgetConfigMode" [ngModelOptions]="{standalone: true}">
