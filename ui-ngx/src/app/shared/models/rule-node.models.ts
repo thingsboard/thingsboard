@@ -107,6 +107,7 @@ export abstract class RuleNodeConfigurationComponent extends PageComponent imple
       this.configForm().disable({emitEvent: false});
     } else {
       this.configForm().enable({emitEvent: false});
+      this.updateValidators(false);
     }
   };
 
