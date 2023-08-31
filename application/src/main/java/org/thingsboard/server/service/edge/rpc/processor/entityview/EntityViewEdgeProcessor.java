@@ -108,16 +108,16 @@ public class EntityViewEdgeProcessor extends BaseEntityViewProcessor {
             tbClusterService.pushMsgToRuleEngine(tenantId, entityViewId, tbMsg, new TbQueueCallback() {
                 @Override
                 public void onSuccess(TbQueueMsgMetadata metadata) {
-                    log.debug("Successfully send ENTITY_CREATED EVENT to rule engine [{}]", entityView);
+                    log.debug("[{}] Successfully send ENTITY_CREATED EVENT to rule engine [{}]", tenantId, entityView);
                 }
 
                 @Override
                 public void onFailure(Throwable t) {
-                    log.warn("Failed to send ENTITY_CREATED EVENT to rule engine [{}]", entityView, t);
+                    log.warn("[{}] Failed to send ENTITY_CREATED EVENT to rule engine [{}]", tenantId, entityView, t);
                 }
             });
         } catch (JsonProcessingException | IllegalArgumentException e) {
-            log.warn("[{}] Failed to push entity view action to rule engine: {}", entityViewId, DataConstants.ENTITY_CREATED, e);
+            log.warn("[{}][{}] Failed to push entity view action to rule engine: {}", tenantId, entityViewId, DataConstants.ENTITY_CREATED, e);
         }
     }
 

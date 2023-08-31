@@ -110,16 +110,16 @@ public class AssetEdgeProcessor extends BaseAssetProcessor {
             tbClusterService.pushMsgToRuleEngine(tenantId, assetId, tbMsg, new TbQueueCallback() {
                 @Override
                 public void onSuccess(TbQueueMsgMetadata metadata) {
-                    log.debug("Successfully send ENTITY_CREATED EVENT to rule engine [{}]", asset);
+                    log.debug("[{}] Successfully send ENTITY_CREATED EVENT to rule engine [{}]", tenantId, asset);
                 }
 
                 @Override
                 public void onFailure(Throwable t) {
-                    log.warn("Failed to send ENTITY_CREATED EVENT to rule engine [{}]", asset, t);
+                    log.warn("[{}] Failed to send ENTITY_CREATED EVENT to rule engine [{}]", tenantId, asset, t);
                 }
             });
         } catch (JsonProcessingException | IllegalArgumentException e) {
-            log.warn("[{}] Failed to push asset action to rule engine: {}", assetId, DataConstants.ENTITY_CREATED, e);
+            log.warn("[{}][{}] Failed to push asset action to rule engine: {}", tenantId, assetId, DataConstants.ENTITY_CREATED, e);
         }
     }
 

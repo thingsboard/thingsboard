@@ -102,16 +102,16 @@ public class DashboardEdgeProcessor extends BaseDashboardProcessor {
             tbClusterService.pushMsgToRuleEngine(tenantId, dashboardId, tbMsg, new TbQueueCallback() {
                 @Override
                 public void onSuccess(TbQueueMsgMetadata metadata) {
-                    log.debug("Successfully send ENTITY_CREATED EVENT to rule engine [{}]", dashboard);
+                    log.debug("[{}] Successfully send ENTITY_CREATED EVENT to rule engine [{}]", tenantId, dashboard);
                 }
 
                 @Override
                 public void onFailure(Throwable t) {
-                    log.warn("Failed to send ENTITY_CREATED EVENT to rule engine [{}]", dashboard, t);
+                    log.warn("[{}] Failed to send ENTITY_CREATED EVENT to rule engine [{}]", tenantId, dashboard, t);
                 }
             });
         } catch (JsonProcessingException | IllegalArgumentException e) {
-            log.warn("[{}] Failed to push dashboard action to rule engine: {}", dashboardId, DataConstants.ENTITY_CREATED, e);
+            log.warn("[{}][{}] Failed to push dashboard action to rule engine: {}", tenantId, dashboardId, DataConstants.ENTITY_CREATED, e);
         }
     }
 
