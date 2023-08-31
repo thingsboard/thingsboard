@@ -185,7 +185,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
     if (dashboardScope === 'tenant') {
       columns.push(
         new EntityTableColumn<DashboardInfo>('customersTitle', 'dashboard.assignedToCustomers',
-          '50%', entity => getDashboardAssignedCustomersText(entity), () => ({}), false),
+          '50%', entity => getDashboardAssignedCustomersText(entity, this.utils),() => ({}), false),
         new EntityTableColumn<DashboardInfo>('dashboardIsPublic', 'dashboard.public', '60px',
           entity => checkBoxCell(isPublicDashboard(entity)), () => ({}), false),
       );

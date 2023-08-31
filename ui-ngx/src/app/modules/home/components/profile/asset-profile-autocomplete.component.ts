@@ -47,6 +47,7 @@ import { AssetProfileService } from '@core/http/asset-profile.service';
 import { AssetProfileDialogComponent, AssetProfileDialogData } from './asset-profile-dialog.component';
 import { SubscriptSizing } from '@angular/material/form-field';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { UtilsService } from '@core/services/utils.service';
 
 @Component({
   selector: 'tb-asset-profile-autocomplete',
@@ -124,6 +125,7 @@ export class AssetProfileAutocompleteComponent implements ControlValueAccessor, 
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
               public truncate: TruncatePipe,
+              public utils: UtilsService,
               private assetProfileService: AssetProfileService,
               private fb: UntypedFormBuilder,
               private zone: NgZone,
@@ -270,9 +272,8 @@ export class AssetProfileAutocompleteComponent implements ControlValueAccessor, 
     }
   }
 
-  displayAssetProfileFn(profile?: AssetProfileInfo): string | undefined {
-    return profile ? profile.name : undefined;
-  }
+  displayAssetProfileFn = (profile?: AssetProfileInfo): string | undefined =>
+    profile ? this.utils.customTranslation(profile.name, profile.name) : undefined;
 
   fetchAssetProfiles(searchText?: string): Observable<Array<AssetProfileInfo>> {
     this.searchText = searchText;

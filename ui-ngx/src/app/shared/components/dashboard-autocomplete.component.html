@@ -36,7 +36,7 @@
     #dashboardAutocomplete="matAutocomplete"
     [displayWith]="displayDashboardFn">
     <mat-option *ngFor="let dashboard of filteredDashboards | async" [value]="dashboard">
-      <span [innerHTML]="dashboard.title | highlight:searchText"></span>
+      <span [innerHTML]="utils.customTranslation(dashboard.title, dashboard.title) | highlight:searchText"></span>
     </mat-option>
     <mat-option *ngIf="!(filteredDashboards | async)?.length" [value]="null">
       <span>

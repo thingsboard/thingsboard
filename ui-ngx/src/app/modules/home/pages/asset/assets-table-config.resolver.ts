@@ -170,16 +170,17 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
     const columns: Array<EntityTableColumn<AssetInfo>> = [
       new DateEntityTableColumn<AssetInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
       new EntityTableColumn<AssetInfo>('name', 'asset.name', '25%', this.config.entityTitle),
-      new EntityTableColumn<AssetInfo>('assetProfileName', 'asset-profile.asset-profile', '25%'),
-      new EntityTableColumn<AssetInfo>('label', 'asset.label', '25%'),
+      new EntityTableColumn<AssetInfo>('assetProfileName', 'asset-profile.asset-profile', '25%',
+        entity => this.utils.customTranslation(entity.assetProfileName, entity.assetProfileName)),
+      new EntityTableColumn<AssetInfo>('label', 'asset.label', '25%',
+        entity => this.utils.customTranslation(entity.label, entity.label) || ''),
     ];
     if (assetScope === 'tenant') {
       columns.push(
-        new EntityTableColumn<AssetInfo>('customerTitle', 'customer.customer', '25%'),
+        new EntityTableColumn<AssetInfo>('customerTitle', 'customer.customer', '25%',
+          entity => this.utils.customTranslation(entity.customerTitle, entity.customerTitle) || ''),
         new EntityTableColumn<AssetInfo>('customerIsPublic', 'asset.public', '60px',
-          entity => {
-            return checkBoxCell(entity.customerIsPublic);
-          }, () => ({}), false),
+          entity => checkBoxCell(entity.customerIsPublic), () => ({}), false),
       );
     }
     return columns;

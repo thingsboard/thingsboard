@@ -170,11 +170,13 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
     const columns: Array<EntityTableColumn<EntityViewInfo>> = [
       new DateEntityTableColumn<EntityViewInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
       new EntityTableColumn<EntityViewInfo>('name', 'entity-view.name', '33%', this.config.entityTitle),
-      new EntityTableColumn<EntityViewInfo>('type', 'entity-view.entity-view-type', '33%'),
+      new EntityTableColumn<EntityViewInfo>('type', 'entity-view.entity-view-type', '33%',
+        entity => this.utils.customTranslation(entity.type, entity.type)),
     ];
     if (entityViewScope === 'tenant') {
       columns.push(
-        new EntityTableColumn<EntityViewInfo>('customerTitle', 'customer.customer', '33%'),
+        new EntityTableColumn<EntityViewInfo>('customerTitle', 'customer.customer', '33%',
+          entity => this.utils.customTranslation(entity.customerTitle, entity.customerTitle) || ''),
         new EntityTableColumn<EntityViewInfo>('customerIsPublic', 'entity-view.public', '60px',
           entity => {
             return checkBoxCell(entity.customerIsPublic);

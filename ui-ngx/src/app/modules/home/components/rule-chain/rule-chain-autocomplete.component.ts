@@ -30,6 +30,7 @@ import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { RuleChainType } from '@app/shared/models/rule-chain.models';
+import { UtilsService } from '@core/services/utils.service';
 
 @Component({
   selector: 'tb-rule-chain-autocomplete',
@@ -84,7 +85,8 @@ export class RuleChainAutocompleteComponent implements ControlValueAccessor, OnI
               public truncate: TruncatePipe,
               private entityService: EntityService,
               private ruleChainService: RuleChainService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              public utils: UtilsService) {
     this.selectRuleChainFormGroup = this.fb.group({
       ruleChainId: [null]
     });
@@ -186,9 +188,8 @@ export class RuleChainAutocompleteComponent implements ControlValueAccessor, OnI
     }
   }
 
-  displayRuleChainFn(ruleChain?: BaseData<EntityId>): string | undefined {
-    return ruleChain ? ruleChain.name : undefined;
-  }
+  displayRuleChainFn = (ruleChain?: BaseData<EntityId>): string | undefined =>
+    ruleChain ? this.utils.customTranslation(ruleChain.name, ruleChain.name) : undefined;
 
   fetchRuleChain(searchText?: string): Observable<Array<BaseData<EntityId>>> {
     this.searchText = searchText;

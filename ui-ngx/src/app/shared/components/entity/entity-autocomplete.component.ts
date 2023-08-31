@@ -40,6 +40,7 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { isDefinedAndNotNull, isEqual } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { UtilsService } from '@core/services/utils.service';
 
 @Component({
   selector: 'tb-entity-autocomplete',
@@ -151,7 +152,8 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
               private entityService: EntityService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              public utils: UtilsService) {
     this.selectEntityFormGroup = this.fb.group({
       entity: [null]
     });
@@ -340,9 +342,9 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
     }
   }
 
-  displayEntityFn(entity?: BaseData<EntityId>): string | undefined {
-    return entity ? entity.name : undefined;
-  }
+  displayEntityFn = (entity?: BaseData<EntityId>): string | undefined =>
+    entity ? this.utils.customTranslation(entity.name, entity.name) : undefined;
+
 
   fetchEntities(searchText?: string): Observable<Array<BaseData<EntityId>>> {
     this.searchText = searchText;

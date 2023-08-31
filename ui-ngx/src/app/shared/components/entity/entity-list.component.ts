@@ -39,6 +39,7 @@ import { MatAutocomplete } from '@angular/material/autocomplete';
 import { MatChipGrid } from '@angular/material/chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { SubscriptSizing } from '@angular/material/form-field';
+import { UtilsService } from '@core/services/utils.service';
 
 @Component({
   selector: 'tb-entity-list',
@@ -111,7 +112,8 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
               private entityService: EntityService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              public utils: UtilsService) {
     this.entityListFormGroup = this.fb.group({
       entities: [this.entities, this.required ? [Validators.required] : []],
       entity: [null]

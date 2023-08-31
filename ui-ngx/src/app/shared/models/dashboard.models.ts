@@ -23,6 +23,7 @@ import { Timewindow } from '@shared/models/time/time.models';
 import { EntityAliases } from './alias.models';
 import { Filters } from '@shared/models/query/query.models';
 import { MatDialogRef } from '@angular/material/dialog';
+import { UtilsService } from '@core/services/utils.service';
 
 export interface DashboardInfo extends BaseData<DashboardId>, ExportableEntity<DashboardId> {
   tenantId?: TenantId;
@@ -146,11 +147,11 @@ export const isPublicDashboard = (dashboard: DashboardInfo): boolean => {
   }
 };
 
-export const getDashboardAssignedCustomersText = (dashboard: DashboardInfo): string => {
+export const getDashboardAssignedCustomersText = (dashboard: DashboardInfo, utils?: UtilsService): string => {
   if (dashboard && dashboard.assignedCustomers && dashboard.assignedCustomers.length > 0) {
     return dashboard.assignedCustomers
       .filter(customerInfo => !customerInfo.public)
-      .map(customerInfo => customerInfo.title)
+      .map(customerInfo => utils.customTranslation(customerInfo.title, customerInfo.title))
       .join(', ');
   } else {
     return '';

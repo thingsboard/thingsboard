@@ -30,6 +30,7 @@ import { Authority } from '@shared/models/authority.enum';
 import { TranslateService } from '@ngx-translate/core';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { FloatLabelType, MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
+import { UtilsService } from '@core/services/utils.service';
 
 @Component({
   selector: 'tb-dashboard-autocomplete',
@@ -102,7 +103,8 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
               private dashboardService: DashboardService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              public utils: UtilsService) {
     this.selectDashboardFormGroup = this.fb.group({
       dashboard: [null]
     });
@@ -195,9 +197,8 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
     }
   }
 
-  displayDashboardFn(dashboard?: DashboardInfo): string | undefined {
-    return dashboard ? dashboard.title : undefined;
-  }
+  displayDashboardFn = (dashboard?: DashboardInfo): string | undefined =>
+    dashboard ? this.utils.customTranslation(dashboard.title, dashboard.title) : undefined;
 
   fetchDashboards(searchText?: string): Observable<Array<DashboardInfo>> {
     this.searchText = searchText;

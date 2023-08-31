@@ -50,6 +50,7 @@ import { emptyPageData } from '@shared/models/page/page-data';
 import { getEntityDetailsPageURL } from '@core/utils';
 import { SubscriptSizing } from '@angular/material/form-field';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { UtilsService } from '@core/services/utils.service';
 
 @Component({
   selector: 'tb-device-profile-autocomplete',
@@ -138,7 +139,8 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
               private deviceProfileService: DeviceProfileService,
               private fb: UntypedFormBuilder,
               private zone: NgZone,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,
+              public utils: UtilsService) {
     this.selectDeviceProfileFormGroup = this.fb.group({
       deviceProfile: [null]
     });
@@ -292,9 +294,8 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
     }
   }
 
-  displayDeviceProfileFn(profile?: DeviceProfileInfo): string | undefined {
-    return profile ? profile.name : undefined;
-  }
+  displayDeviceProfileFn = (profile?: DeviceProfileInfo): string | undefined =>
+    profile ? this.utils.customTranslation(profile.name, profile.name) : undefined;
 
   fetchDeviceProfiles(searchText?: string): Observable<Array<DeviceProfileInfo>> {
     this.searchText = searchText;

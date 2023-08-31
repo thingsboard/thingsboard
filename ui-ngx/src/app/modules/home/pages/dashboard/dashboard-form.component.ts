@@ -30,6 +30,7 @@ import {
 import { DashboardService } from '@core/http/dashboard.service';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { isEqual } from '@core/utils';
+import { UtilsService } from '@core/services/utils.service';
 
 @Component({
   selector: 'tb-dashboard-form',
@@ -50,7 +51,8 @@ export class DashboardFormComponent extends EntityComponent<Dashboard> {
               @Inject('entity') protected entityValue: Dashboard,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<Dashboard>,
               public fb: UntypedFormBuilder,
-              protected cd: ChangeDetectorRef) {
+              protected cd: ChangeDetectorRef,
+              private utils: UtilsService) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
 
@@ -132,7 +134,7 @@ export class DashboardFormComponent extends EntityComponent<Dashboard> {
 
   private updateFields(entity: Dashboard): void {
     if (entity && !isEqual(entity, {})) {
-      this.assignedCustomersText = getDashboardAssignedCustomersText(entity);
+      this.assignedCustomersText = getDashboardAssignedCustomersText(entity, this.utils);
       this.publicLink = this.dashboardService.getPublicDashboardLink(entity);
     }
   }

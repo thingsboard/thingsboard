@@ -155,15 +155,15 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
       new DateEntityTableColumn<EdgeInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
       new EntityTableColumn<EdgeInfo>('name', 'edge.name', '25%', this.config.entityTitle),
       new EntityTableColumn<EdgeInfo>('type', 'edge.edge-type', '25%'),
-      new EntityTableColumn<EdgeInfo>('label', 'edge.label', '25%')
+      new EntityTableColumn<EdgeInfo>('label', 'edge.label', '25%',
+        entity => this.utils.customTranslation(entity.label, entity.label) || '')
     ];
     if (edgeScope === 'tenant') {
       columns.push(
-        new EntityTableColumn<EdgeInfo>('customerTitle', 'customer.customer', '25%'),
+        new EntityTableColumn<EdgeInfo>('customerTitle', 'customer.customer', '25%',
+          entity => this.utils.customTranslation(entity.customerTitle, entity.customerTitle) || ''),
         new EntityTableColumn<EdgeInfo>('customerIsPublic', 'edge.public', '60px',
-          entity => {
-            return checkBoxCell(entity.customerIsPublic);
-          }, () => ({}), false)
+          entity => checkBoxCell(entity.customerIsPublic), () => ({}), false)
       );
     }
     return columns;

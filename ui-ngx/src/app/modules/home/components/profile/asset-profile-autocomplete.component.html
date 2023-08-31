@@ -54,7 +54,7 @@
     #assetProfileAutocomplete="matAutocomplete"
     [displayWith]="displayAssetProfileFn">
     <mat-option *ngFor="let assetProfile of filteredAssetProfiles | async" [value]="assetProfile">
-      <span [innerHTML]="assetProfile.name | highlight:searchText"></span>
+      <span [innerHTML]="utils.customTranslation(assetProfile.name, assetProfile.name) | highlight:searchText"></span>
     </mat-option>
     <mat-option *ngIf="!(filteredAssetProfiles | async)?.length" [value]="null" class="tb-not-found">
       <div class="tb-not-found-content" (click)="$event.stopPropagation()">
