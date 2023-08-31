@@ -870,7 +870,7 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
     const rowsMap: {[timestamp: number]: TimeseriesRow} = {};
     for (let d = 0; d < data.length; d++) {
       const columnData = data[d].data;
-      columnData.forEach((cellData, index) => {
+      columnData.forEach((cellData) => {
         const timestamp = cellData[0];
         let row = rowsMap[timestamp];
         if (!row) {
@@ -879,7 +879,7 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
           };
           if (this.cellButtonActions.length) {
             if (this.usedShowCellActionFunction) {
-              const parsedData = formattedDataFormDatasourceData(data, index);
+              const parsedData = formattedDataFormDatasourceData(data, undefined, timestamp);
               row.actionCellButtons = prepareTableCellButtonActions(this.widgetContext, this.cellButtonActions,
                 parsedData[0], this.reserveSpaceForHiddenAction);
               row.hasActions = checkHasActions(row.actionCellButtons);
