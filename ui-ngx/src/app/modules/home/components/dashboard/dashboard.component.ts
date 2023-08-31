@@ -317,7 +317,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     this.gridsterResize$ = new ResizeObserver(() => {
       this.onGridsterParentResize();
     });
-    this.gridsterResize$.observe(this.gridster.el);
+    this.gridsterResize$.observe(this.gridster.el.parentElement);
   }
 
   onUpdateTimewindow(startTimeMs: number, endTimeMs: number, interval?: number, persist?: boolean): void {
