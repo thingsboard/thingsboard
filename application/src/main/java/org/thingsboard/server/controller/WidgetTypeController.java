@@ -17,7 +17,7 @@ package org.thingsboard.server.controller;
 
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,6 +32,9 @@ import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
+import org.thingsboard.server.common.data.id.WidgetsBundleId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
@@ -39,27 +42,38 @@ import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.entitiy.widgets.type.TbWidgetTypeService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.List;
 
 import static org.thingsboard.server.controller.ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_ALLOWABLE_VALUES;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
 import static org.thingsboard.server.controller.ControllerConstants.WIDGET_TYPE_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.WIDGET_TYPE_SORT_PROPERTY_ALLOWABLE_VALUES;
+import static org.thingsboard.server.controller.ControllerConstants.WIDGET_TYPE_TEXT_SEARCH_DESCRIPTION;
 
-@Slf4j
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
+@RequiredArgsConstructor
 public class WidgetTypeController extends AutoCommitController {
+
+    private final TbWidgetTypeService tbWidgetTypeService;
 
     private static final String WIDGET_TYPE_DESCRIPTION = "Widget Type represents the template for widget creation. Widget Type and Widget are similar to class and object in OOP theory.";
     private static final String WIDGET_TYPE_DETAILS_DESCRIPTION = "Widget Type Details extend Widget Type and add image and description properties. " +
             "Those properties are useful to edit the Widget Type but they are not required for Dashboard rendering. ";
     private static final String WIDGET_TYPE_INFO_DESCRIPTION = "Widget Type Info is a lightweight object that represents Widget Type but does not contain the heavyweight widget descriptor JSON";
-
+    private static final String TENANT_ONLY_PARAM_DESCRIPTION = "Optional boolean parameter indicating whether only tenant widget types should be returned";
 
     @ApiOperation(value = "Get Widget Type Details (getWidgetTypeById)",
             notes = "Get the Widget Type Details based on the provided Widget Type Id. " + WIDGET_TYPE_DETAILS_DESCRIPTION + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
@@ -98,16 +112,7 @@ public class WidgetTypeController extends AutoCommitController {
         }
 
         checkEntity(widgetTypeDetails.getId(), widgetTypeDetails, Resource.WIDGET_TYPE);
-        WidgetTypeDetails savedWidgetTypeDetails = widgetTypeService.saveWidgetType(widgetTypeDetails);
-
-        if (!Authority.SYS_ADMIN.equals(currentUser.getAuthority())) {
-            WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(widgetTypeDetails.getTenantId(), widgetTypeDetails.getBundleAlias());
-            if (widgetsBundle != null) {
-                autoCommit(currentUser, widgetsBundle.getId());
-            }
-        }
-
-        return checkNotNull(savedWidgetTypeDetails);
+        return tbWidgetTypeService.save(widgetTypeDetails, currentUser);
     }
 
     @ApiOperation(value = "Delete widget type (deleteWidgetType)",
@@ -119,25 +124,80 @@ public class WidgetTypeController extends AutoCommitController {
             @ApiParam(value = WIDGET_TYPE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable("widgetTypeId") String strWidgetTypeId) throws Exception {
         checkParameter("widgetTypeId", strWidgetTypeId);
-        var currentUser = getCurrentUser();
         WidgetTypeId widgetTypeId = new WidgetTypeId(toUUID(strWidgetTypeId));
         WidgetTypeDetails wtd = checkWidgetTypeId(widgetTypeId, Operation.DELETE);
-        widgetTypeService.deleteWidgetType(currentUser.getTenantId(), widgetTypeId);
+        tbWidgetTypeService.delete(wtd, getCurrentUser());
+    }
 
-        if (wtd != null && !Authority.SYS_ADMIN.equals(currentUser.getAuthority())) {
-            WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(wtd.getTenantId(), wtd.getBundleAlias());
-            if (widgetsBundle != null) {
-                autoCommit(currentUser, widgetsBundle.getId());
+    @ApiOperation(value = "Get Widget Types (getWidgetTypes)",
+            notes = "Returns a page of Widget Type objects available for current user. " + WIDGET_TYPE_DESCRIPTION + " " +
+                    PAGE_DATA_PARAMETERS + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/widgetTypes", params = {"pageSize", "page"}, method = RequestMethod.GET)
+    @ResponseBody
+    public PageData<WidgetTypeInfo> getWidgetTypes(
+            @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+            @RequestParam int pageSize,
+            @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+            @RequestParam int page,
+            @ApiParam(value = WIDGET_TYPE_TEXT_SEARCH_DESCRIPTION)
+            @RequestParam(required = false) String textSearch,
+            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = WIDGET_TYPE_SORT_PROPERTY_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortProperty,
+            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortOrder,
+            @ApiParam(value = TENANT_ONLY_PARAM_DESCRIPTION)
+            @RequestParam(required = false) Boolean tenantOnly) throws ThingsboardException {
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
+            return checkNotNull(widgetTypeService.findSystemWidgetTypesByPageLink(getTenantId(), pageLink));
+        } else {
+            if (tenantOnly != null && tenantOnly) {
+                return checkNotNull(widgetTypeService.findTenantWidgetTypesByTenantIdAndPageLink(getTenantId(), pageLink));
+            } else {
+                return checkNotNull(widgetTypeService.findAllTenantWidgetTypesByTenantIdAndPageLink(getTenantId(), pageLink));
             }
         }
+    }
+
+    @ApiOperation(value = "Get all Widget types for specified Bundle (getBundleWidgetTypesByBundleAlias) (Deprecated)",
+            notes = "Returns an array of Widget Type objects that belong to specified Widget Bundle." + WIDGET_TYPE_DESCRIPTION + " " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/widgetTypes", params = {"isSystem", "bundleAlias"}, method = RequestMethod.GET)
+    @ResponseBody
+    public List<WidgetType> getBundleWidgetTypesByBundleAlias(
+            @ApiParam(value = "System or Tenant", required = true)
+            @RequestParam boolean isSystem,
+            @ApiParam(value = "Widget Bundle alias", required = true)
+            @RequestParam String bundleAlias) throws ThingsboardException {
+        TenantId tenantId;
+        if (isSystem) {
+            tenantId = TenantId.SYS_TENANT_ID;
+        } else {
+            tenantId = getCurrentUser().getTenantId();
+        }
+        WidgetsBundle widgetsBundle = checkNotNull(widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(tenantId, bundleAlias));
+        return checkNotNull(widgetTypeService.findWidgetTypesByWidgetsBundleId(getTenantId(), widgetsBundle.getId()));
     }
 
     @ApiOperation(value = "Get all Widget types for specified Bundle (getBundleWidgetTypes)",
             notes = "Returns an array of Widget Type objects that belong to specified Widget Bundle." + WIDGET_TYPE_DESCRIPTION + " " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/widgetTypes", params = {"isSystem", "bundleAlias"}, method = RequestMethod.GET)
+    @RequestMapping(value = "/widgetTypes", params = {"widgetsBundleId"}, method = RequestMethod.GET)
     @ResponseBody
     public List<WidgetType> getBundleWidgetTypes(
+            @ApiParam(value = "Widget Bundle Id", required = true)
+            @RequestParam("widgetsBundleId") String strWidgetsBundleId) throws ThingsboardException {
+        WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
+        return checkNotNull(widgetTypeService.findWidgetTypesByWidgetsBundleId(getTenantId(), widgetsBundleId));
+    }
+
+    @ApiOperation(value = "Get all Widget types details for specified Bundle (getBundleWidgetTypesDetailsByBundleAlias) (Deprecated)",
+            notes = "Returns an array of Widget Type Details objects that belong to specified Widget Bundle." + WIDGET_TYPE_DETAILS_DESCRIPTION + " " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/widgetTypesDetails", params = {"isSystem", "bundleAlias"}, method = RequestMethod.GET)
+    @ResponseBody
+    public List<WidgetTypeDetails> getBundleWidgetTypesDetailsByBundleAlias(
             @ApiParam(value = "System or Tenant", required = true)
             @RequestParam boolean isSystem,
             @ApiParam(value = "Widget Bundle alias", required = true)
@@ -148,15 +208,28 @@ public class WidgetTypeController extends AutoCommitController {
         } else {
             tenantId = getCurrentUser().getTenantId();
         }
-        return checkNotNull(widgetTypeService.findWidgetTypesByTenantIdAndBundleAlias(tenantId, bundleAlias));
+        WidgetsBundle widgetsBundle = checkNotNull(widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(tenantId, bundleAlias));
+        return checkNotNull(widgetTypeService.findWidgetTypesDetailsByWidgetsBundleId(getTenantId(), widgetsBundle.getId()));
     }
 
     @ApiOperation(value = "Get all Widget types details for specified Bundle (getBundleWidgetTypes)",
             notes = "Returns an array of Widget Type Details objects that belong to specified Widget Bundle." + WIDGET_TYPE_DETAILS_DESCRIPTION + " " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/widgetTypesDetails", params = {"isSystem", "bundleAlias"}, method = RequestMethod.GET)
+    @RequestMapping(value = "/widgetTypesDetails", params = {"widgetsBundleId"}, method = RequestMethod.GET)
     @ResponseBody
     public List<WidgetTypeDetails> getBundleWidgetTypesDetails(
+            @ApiParam(value = "Widget Bundle Id", required = true)
+            @RequestParam("widgetsBundleId") String strWidgetsBundleId) throws ThingsboardException {
+        WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
+        return checkNotNull(widgetTypeService.findWidgetTypesDetailsByWidgetsBundleId(getTenantId(), widgetsBundleId));
+    }
+
+    @ApiOperation(value = "Get Widget Type Info objects (getBundleWidgetTypesInfosByBundleAlias) (Deprecated)",
+            notes = "Get the Widget Type Info objects based on the provided parameters. " + WIDGET_TYPE_INFO_DESCRIPTION + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/widgetTypesInfos", params = {"isSystem", "bundleAlias"}, method = RequestMethod.GET)
+    @ResponseBody
+    public List<WidgetTypeInfo> getBundleWidgetTypesInfosByBundleAlias(
             @ApiParam(value = "System or Tenant", required = true)
             @RequestParam boolean isSystem,
             @ApiParam(value = "Widget Bundle alias", required = true)
@@ -167,34 +240,28 @@ public class WidgetTypeController extends AutoCommitController {
         } else {
             tenantId = getCurrentUser().getTenantId();
         }
-        return checkNotNull(widgetTypeService.findWidgetTypesDetailsByTenantIdAndBundleAlias(tenantId, bundleAlias));
+        WidgetsBundle widgetsBundle = checkNotNull(widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(tenantId, bundleAlias));
+        return checkNotNull(widgetTypeService.findWidgetTypesInfosByWidgetsBundleId(getTenantId(), widgetsBundle.getId()));
     }
 
     @ApiOperation(value = "Get Widget Type Info objects (getBundleWidgetTypesInfos)",
             notes = "Get the Widget Type Info objects based on the provided parameters. " + WIDGET_TYPE_INFO_DESCRIPTION + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/widgetTypesInfos", params = {"isSystem", "bundleAlias"}, method = RequestMethod.GET)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/widgetTypesInfos", params = {"widgetsBundleId"}, method = RequestMethod.GET)
     @ResponseBody
     public List<WidgetTypeInfo> getBundleWidgetTypesInfos(
-            @ApiParam(value = "System or Tenant", required = true)
-            @RequestParam boolean isSystem,
-            @ApiParam(value = "Widget Bundle alias", required = true)
-            @RequestParam String bundleAlias) throws ThingsboardException {
-        TenantId tenantId;
-        if (isSystem) {
-            tenantId = TenantId.SYS_TENANT_ID;
-        } else {
-            tenantId = getCurrentUser().getTenantId();
-        }
-        return checkNotNull(widgetTypeService.findWidgetTypesInfosByTenantIdAndBundleAlias(tenantId, bundleAlias));
+            @ApiParam(value = "Widget Bundle Id", required = true)
+            @RequestParam("widgetsBundleId") String strWidgetsBundleId) throws ThingsboardException {
+        WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
+        return checkNotNull(widgetTypeService.findWidgetTypesInfosByWidgetsBundleId(getTenantId(), widgetsBundleId));
     }
 
-    @ApiOperation(value = "Get Widget Type (getWidgetType)",
+    @ApiOperation(value = "Get Widget Type (getWidgetTypeByBundleAliasAndTypeAlias) (Deprecated)",
             notes = "Get the Widget Type based on the provided parameters. " + WIDGET_TYPE_DESCRIPTION + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/widgetType", params = {"isSystem", "bundleAlias", "alias"}, method = RequestMethod.GET)
     @ResponseBody
-    public WidgetType getWidgetType(
+    public WidgetType getWidgetTypeByBundleAliasAndTypeAlias(
             @ApiParam(value = "System or Tenant", required = true)
             @RequestParam boolean isSystem,
             @ApiParam(value = "Widget Bundle alias", required = true)
@@ -213,12 +280,12 @@ public class WidgetTypeController extends AutoCommitController {
         return widgetType;
     }
 
-    @ApiOperation(value = "Get Widget Type by fqn (getWidgetTypeByFqn)",
+    @ApiOperation(value = "Get Widget Type (getWidgetType)",
             notes = "Get the Widget Type by FQN. " + WIDGET_TYPE_DESCRIPTION + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/widgetType", params = {"fqn"}, method = RequestMethod.GET)
     @ResponseBody
-    public WidgetType getWidgetTypeByFqn(
+    public WidgetType getWidgetType(
             @ApiParam(value = "Widget Type fqn", required = true)
             @RequestParam String fqn) throws ThingsboardException {
         String[] parts = fqn.split("\\.");
@@ -237,60 +304,6 @@ public class WidgetTypeController extends AutoCommitController {
         checkNotNull(widgetType);
         accessControlService.checkPermission(getCurrentUser(), Resource.WIDGET_TYPE, Operation.READ, widgetType.getId(), widgetType);
         return widgetType;
-    }
-
-    @ApiOperation(value = "Set widget type deprecated (setWidgetTypeDeprecated)",
-            notes = "Set Widget Type deprecated flag. Referencing non-existing Widget Type Id will cause an error." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/widgetType/{widgetTypeId}/deprecate/{deprecated}", method = RequestMethod.POST)
-    @ResponseBody
-    public WidgetTypeDetails setWidgetTypeDeprecated(
-            @ApiParam(value = WIDGET_TYPE_ID_PARAM_DESCRIPTION, required = true)
-            @PathVariable("widgetTypeId") String strWidgetTypeId,
-            @PathVariable("deprecated") boolean deprecated) throws Exception {
-        checkParameter("widgetTypeId", strWidgetTypeId);
-        var currentUser = getCurrentUser();
-        WidgetTypeId widgetTypeId = new WidgetTypeId(toUUID(strWidgetTypeId));
-        WidgetTypeDetails wtd = checkWidgetTypeId(widgetTypeId, Operation.WRITE);
-        WidgetTypeDetails updated = widgetTypeService.setWidgetTypeDeprecated(currentUser.getTenantId(), widgetTypeId, deprecated);
-        if (!Authority.SYS_ADMIN.equals(currentUser.getAuthority())) {
-            WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(wtd.getTenantId(), wtd.getBundleAlias());
-            if (widgetsBundle != null) {
-                autoCommit(currentUser, widgetsBundle.getId());
-            }
-        }
-        return updated;
-    }
-
-    @ApiOperation(value = "Move widget type to target widgets bundle (moveWidgetType)",
-            notes = "Move Widget Type to target Widgets Bundle. Referencing non-existing Widget Type Id will cause an error." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/widgetType/{widgetTypeId}/move", params = {"targetBundleAlias"}, method = RequestMethod.POST)
-    @ResponseBody
-    public WidgetTypeDetails moveWidgetType(
-            @ApiParam(value = WIDGET_TYPE_ID_PARAM_DESCRIPTION, required = true)
-            @PathVariable("widgetTypeId") String strWidgetTypeId,
-            @ApiParam(value = "Target Widget Bundle alias", required = true)
-            @RequestParam String targetBundleAlias) throws Exception {
-        checkParameter("widgetTypeId", strWidgetTypeId);
-        checkParameter("targetBundleAlias", targetBundleAlias);
-        var currentUser = getCurrentUser();
-        WidgetTypeId widgetTypeId = new WidgetTypeId(toUUID(strWidgetTypeId));
-        WidgetTypeDetails wtd = checkWidgetTypeId(widgetTypeId, Operation.WRITE);
-        if (!wtd.getBundleAlias().equals(targetBundleAlias)) {
-            wtd = widgetTypeService.moveWidgetType(currentUser.getTenantId(), widgetTypeId, targetBundleAlias);
-            if (!Authority.SYS_ADMIN.equals(currentUser.getAuthority())) {
-                WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(wtd.getTenantId(), wtd.getBundleAlias());
-                if (widgetsBundle != null) {
-                    autoCommit(currentUser, widgetsBundle.getId());
-                }
-                WidgetsBundle targetWidgetsBundle = widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(currentUser.getTenantId(), targetBundleAlias);
-                if (targetWidgetsBundle != null) {
-                    autoCommit(currentUser, targetWidgetsBundle.getId());
-                }
-            }
-        }
-        return wtd;
     }
 
 }

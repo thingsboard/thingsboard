@@ -194,7 +194,7 @@ public class InstallScripts {
                                     widgetTypeJson -> {
                                         try {
                                             WidgetTypeDetails widgetTypeDetails = JacksonUtil.treeToValue(widgetTypeJson, WidgetTypeDetails.class);
-                                            widgetTypeDetails.setBundleAlias(savedWidgetsBundle.getAlias());
+                                            // widgetTypeDetails.setBundleAlias(savedWidgetsBundle.getAlias()); // TODO:
                                             widgetTypeService.saveWidgetType(widgetTypeDetails);
                                         } catch (Exception e) {
                                             log.error("Unable to load widget type from json: [{}]", path.toString());

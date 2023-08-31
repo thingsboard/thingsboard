@@ -13,23 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.sync.ie;
+package org.thingsboard.server.service.entitiy.widgets.type;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.widget.BaseWidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
-import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.service.entitiy.SimpleTbEntityService;
 
-import java.util.Comparator;
-import java.util.List;
-
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class WidgetsBundleExportData extends EntityExportData<WidgetsBundle> {
-
-    @JsonProperty(index = 3)
-    private List<String> widgets;
-
+public interface TbWidgetTypeService extends SimpleTbEntityService<WidgetTypeDetails> {
 }

@@ -13,23 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.sync.ie;
+package org.thingsboard.server.dao.model.sql;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.widget.BaseWidgetType;
-import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
-import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import lombok.NoArgsConstructor;
 
-import java.util.Comparator;
-import java.util.List;
+import javax.persistence.Transient;
+import java.io.Serializable;
+import java.util.UUID;
 
+@NoArgsConstructor
+@AllArgsConstructor
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class WidgetsBundleExportData extends EntityExportData<WidgetsBundle> {
+public class WidgetsBundleWidgetCompositeKey implements Serializable {
 
-    @JsonProperty(index = 3)
-    private List<String> widgets;
+    @Transient
+    private static final long serialVersionUID = -245388185894468455L;
+
+    private UUID widgetsBundleId;
+    private UUID widgetTypeId;
 
 }

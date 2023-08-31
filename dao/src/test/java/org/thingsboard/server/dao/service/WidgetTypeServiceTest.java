@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
@@ -35,12 +36,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @DaoSqlTest
 public class WidgetTypeServiceTest extends AbstractServiceTest {
 
     @Autowired
     WidgetsBundleService widgetsBundleService;
+
     @Autowired
     WidgetTypeService widgetTypeService;
 
@@ -48,15 +51,8 @@ public class WidgetTypeServiceTest extends AbstractServiceTest {
 
     @Test
     public void testSaveWidgetType() throws IOException {
-        WidgetsBundle widgetsBundle = new WidgetsBundle();
-        widgetsBundle.setTenantId(tenantId);
-        widgetsBundle.setTitle("Widgets bundle");
-        WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
-
-
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
         widgetType.setTenantId(tenantId);
-        widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
         widgetType.setName("Widget Type");
         widgetType.setDescriptor(JacksonUtil.fromString("{ \"someKey\": \"someValue\" }", JsonNode.class));
         WidgetTypeDetails savedWidgetType = widgetTypeService.saveWidgetType(widgetType);
@@ -68,7 +64,6 @@ public class WidgetTypeServiceTest extends AbstractServiceTest {
         Assert.assertEquals(widgetType.getTenantId(), savedWidgetType.getTenantId());
         Assert.assertEquals(widgetType.getName(), savedWidgetType.getName());
         Assert.assertEquals(widgetType.getDescriptor(), savedWidgetType.getDescriptor());
-        Assert.assertEquals(savedWidgetsBundle.getAlias(), savedWidgetType.getBundleAlias());
 
         savedWidgetType.setName("New Widget Type");
 
@@ -76,34 +71,13 @@ public class WidgetTypeServiceTest extends AbstractServiceTest {
         WidgetType foundWidgetType = widgetTypeService.findWidgetTypeById(tenantId, savedWidgetType.getId());
         Assert.assertEquals(foundWidgetType.getName(), savedWidgetType.getName());
 
-        widgetsBundleService.deleteWidgetsBundle(tenantId, savedWidgetsBundle.getId());
+        widgetTypeService.deleteWidgetType(tenantId, savedWidgetType.getId());
     }
 
     @Test
     public void testSaveWidgetTypeWithEmptyName() throws IOException {
-        WidgetsBundle widgetsBundle = new WidgetsBundle();
-        widgetsBundle.setTenantId(tenantId);
-        widgetsBundle.setTitle("Widgets bundle");
-        WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
-
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
         widgetType.setTenantId(tenantId);
-        widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
-        widgetType.setDescriptor(JacksonUtil.fromString("{ \"someKey\": \"someValue\" }", JsonNode.class));
-        try {
-            Assertions.assertThrows(DataValidationException.class, () -> {
-                widgetTypeService.saveWidgetType(widgetType);
-            });
-        } finally {
-            widgetsBundleService.deleteWidgetsBundle(tenantId, savedWidgetsBundle.getId());
-        }
-    }
-
-    @Test
-    public void testSaveWidgetTypeWithEmptyBundleAlias() throws IOException {
-        WidgetTypeDetails widgetType = new WidgetTypeDetails();
-        widgetType.setTenantId(tenantId);
-        widgetType.setName("Widget Type");
         widgetType.setDescriptor(JacksonUtil.fromString("{ \"someKey\": \"someValue\" }", JsonNode.class));
         Assertions.assertThrows(DataValidationException.class, () -> {
             widgetTypeService.saveWidgetType(widgetType);
@@ -112,51 +86,19 @@ public class WidgetTypeServiceTest extends AbstractServiceTest {
 
     @Test
     public void testSaveWidgetTypeWithEmptyDescriptor() throws IOException {
-        WidgetsBundle widgetsBundle = new WidgetsBundle();
-        widgetsBundle.setTenantId(tenantId);
-        widgetsBundle.setTitle("Widgets bundle");
-        WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
-
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
         widgetType.setTenantId(tenantId);
         widgetType.setName("Widget Type");
-        widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
         widgetType.setDescriptor(JacksonUtil.fromString("{}", JsonNode.class));
-        try {
-            Assertions.assertThrows(DataValidationException.class, () -> {
-                widgetTypeService.saveWidgetType(widgetType);
-            });
-        } finally {
-            widgetsBundleService.deleteWidgetsBundle(tenantId, savedWidgetsBundle.getId());
-        }
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            widgetTypeService.saveWidgetType(widgetType);
+        });
     }
 
     @Test
     public void testSaveWidgetTypeWithInvalidTenant() throws IOException {
-        WidgetsBundle widgetsBundle = new WidgetsBundle();
-        widgetsBundle.setTenantId(tenantId);
-        widgetsBundle.setTitle("Widgets bundle");
-        WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
-
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
         widgetType.setTenantId(TenantId.fromUUID(Uuids.timeBased()));
-        widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
-        widgetType.setName("Widget Type");
-        widgetType.setDescriptor(JacksonUtil.fromString("{ \"someKey\": \"someValue\" }", JsonNode.class));
-        try {
-            Assertions.assertThrows(DataValidationException.class, () -> {
-                widgetTypeService.saveWidgetType(widgetType);
-            });
-        } finally {
-            widgetsBundleService.deleteWidgetsBundle(tenantId, savedWidgetsBundle.getId());
-        }
-    }
-
-    @Test
-    public void testSaveWidgetTypeWithInvalidBundleAlias() throws IOException {
-        WidgetTypeDetails widgetType = new WidgetTypeDetails();
-        widgetType.setTenantId(tenantId);
-        widgetType.setBundleAlias("some_alias");
         widgetType.setName("Widget Type");
         widgetType.setDescriptor(JacksonUtil.fromString("{ \"someKey\": \"someValue\" }", JsonNode.class));
         Assertions.assertThrows(DataValidationException.class, () -> {
@@ -166,14 +108,8 @@ public class WidgetTypeServiceTest extends AbstractServiceTest {
 
     @Test
     public void testUpdateWidgetTypeTenant() throws IOException {
-        WidgetsBundle widgetsBundle = new WidgetsBundle();
-        widgetsBundle.setTenantId(tenantId);
-        widgetsBundle.setTitle("Widgets bundle");
-        WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
-
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
         widgetType.setTenantId(tenantId);
-        widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
         widgetType.setName("Widget Type");
         widgetType.setDescriptor(JacksonUtil.fromString("{ \"someKey\": \"someValue\" }", JsonNode.class));
         WidgetTypeDetails savedWidgetType = widgetTypeService.saveWidgetType(widgetType);
@@ -183,43 +119,14 @@ public class WidgetTypeServiceTest extends AbstractServiceTest {
                 widgetTypeService.saveWidgetType(savedWidgetType);
             });
         } finally {
-            widgetsBundleService.deleteWidgetsBundle(tenantId, savedWidgetsBundle.getId());
-        }
-    }
-
-    @Test
-    public void testUpdateWidgetTypeBundleAlias() throws IOException {
-        WidgetsBundle widgetsBundle = new WidgetsBundle();
-        widgetsBundle.setTenantId(tenantId);
-        widgetsBundle.setTitle("Widgets bundle");
-        WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
-
-        WidgetTypeDetails widgetType = new WidgetTypeDetails();
-        widgetType.setTenantId(tenantId);
-        widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
-        widgetType.setName("Widget Type");
-        widgetType.setDescriptor(JacksonUtil.fromString("{ \"someKey\": \"someValue\" }", JsonNode.class));
-        WidgetTypeDetails savedWidgetType = widgetTypeService.saveWidgetType(widgetType);
-        savedWidgetType.setBundleAlias("some_alias");
-        try {
-            Assertions.assertThrows(DataValidationException.class, () -> {
-                widgetTypeService.saveWidgetType(savedWidgetType);
-            });
-        } finally {
-            widgetsBundleService.deleteWidgetsBundle(tenantId, savedWidgetsBundle.getId());
+            widgetTypeService.deleteWidgetType(tenantId, savedWidgetType.getId());
         }
     }
 
     @Test
     public void testUpdateWidgetTypeFqn() throws IOException {
-        WidgetsBundle widgetsBundle = new WidgetsBundle();
-        widgetsBundle.setTenantId(tenantId);
-        widgetsBundle.setTitle("Widgets bundle");
-        WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
-
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
         widgetType.setTenantId(tenantId);
-        widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
         widgetType.setName("Widget Type");
         widgetType.setDescriptor(JacksonUtil.fromString("{ \"someKey\": \"someValue\" }", JsonNode.class));
         WidgetTypeDetails savedWidgetType = widgetTypeService.saveWidgetType(widgetType);
@@ -229,60 +136,40 @@ public class WidgetTypeServiceTest extends AbstractServiceTest {
                 widgetTypeService.saveWidgetType(savedWidgetType);
             });
         } finally {
-            widgetsBundleService.deleteWidgetsBundle(tenantId, savedWidgetsBundle.getId());
+            widgetTypeService.deleteWidgetType(tenantId, savedWidgetType.getId());
         }
     }
 
     @Test
     public void testFindWidgetTypeById() throws IOException {
-        WidgetsBundle widgetsBundle = new WidgetsBundle();
-        widgetsBundle.setTenantId(tenantId);
-        widgetsBundle.setTitle("Widgets bundle");
-        WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
-
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
         widgetType.setTenantId(tenantId);
-        widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
         widgetType.setName("Widget Type");
         widgetType.setDescriptor(JacksonUtil.fromString("{ \"someKey\": \"someValue\" }", JsonNode.class));
         WidgetTypeDetails savedWidgetType = widgetTypeService.saveWidgetType(widgetType);
         WidgetTypeDetails foundWidgetType = widgetTypeService.findWidgetTypeDetailsById(tenantId, savedWidgetType.getId());
         Assert.assertNotNull(foundWidgetType);
         Assert.assertEquals(savedWidgetType, foundWidgetType);
-
-        widgetsBundleService.deleteWidgetsBundle(tenantId, savedWidgetsBundle.getId());
+        widgetTypeService.deleteWidgetType(tenantId, savedWidgetType.getId());
     }
 
     @Test
     public void testFindWidgetTypeByTenantIdAndFqn() throws IOException {
-        WidgetsBundle widgetsBundle = new WidgetsBundle();
-        widgetsBundle.setTenantId(tenantId);
-        widgetsBundle.setTitle("Widgets bundle");
-        WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
-
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
         widgetType.setTenantId(tenantId);
-        widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
         widgetType.setName("Widget Type");
         widgetType.setDescriptor(JacksonUtil.fromString("{ \"someKey\": \"someValue\" }", JsonNode.class));
         WidgetType savedWidgetType = new WidgetType(widgetTypeService.saveWidgetType(widgetType));
         WidgetType foundWidgetType = widgetTypeService.findWidgetTypeByTenantIdAndFqn(tenantId, savedWidgetType.getFqn());
         Assert.assertNotNull(foundWidgetType);
         Assert.assertEquals(savedWidgetType, foundWidgetType);
-
-        widgetsBundleService.deleteWidgetsBundle(tenantId, savedWidgetsBundle.getId());
+        widgetTypeService.deleteWidgetType(tenantId, savedWidgetType.getId());
     }
 
     @Test
     public void testDeleteWidgetType() throws IOException {
-        WidgetsBundle widgetsBundle = new WidgetsBundle();
-        widgetsBundle.setTenantId(tenantId);
-        widgetsBundle.setTitle("Widgets bundle");
-        WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
-
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
         widgetType.setTenantId(tenantId);
-        widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
         widgetType.setName("Widget Type");
         widgetType.setDescriptor(JacksonUtil.fromString("{ \"someKey\": \"someValue\" }", JsonNode.class));
         WidgetType savedWidgetType = widgetTypeService.saveWidgetType(widgetType);
@@ -291,12 +178,10 @@ public class WidgetTypeServiceTest extends AbstractServiceTest {
         widgetTypeService.deleteWidgetType(tenantId, savedWidgetType.getId());
         foundWidgetType = widgetTypeService.findWidgetTypeById(tenantId, savedWidgetType.getId());
         Assert.assertNull(foundWidgetType);
-
-        widgetsBundleService.deleteWidgetsBundle(tenantId, savedWidgetsBundle.getId());
     }
 
     @Test
-    public void testFindWidgetTypesByTenantIdAndBundleAlias() throws IOException {
+    public void testFindWidgetTypesByTenantIdAndWidgetsBundleId() throws IOException {
         WidgetsBundle widgetsBundle = new WidgetsBundle();
         widgetsBundle.setTenantId(tenantId);
         widgetsBundle.setTitle("Widgets bundle");
@@ -306,22 +191,27 @@ public class WidgetTypeServiceTest extends AbstractServiceTest {
         for (int i=0;i<121;i++) {
             WidgetTypeDetails widgetType = new WidgetTypeDetails();
             widgetType.setTenantId(tenantId);
-            widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
             widgetType.setName("Widget Type " + i);
             widgetType.setDescriptor(JacksonUtil.fromString("{ \"someKey\": \"someValue\" }", JsonNode.class));
             widgetTypes.add(new WidgetType(widgetTypeService.saveWidgetType(widgetType)));
         }
 
-        List<WidgetType> loadedWidgetTypes = widgetTypeService.findWidgetTypesByTenantIdAndBundleAlias(tenantId, savedWidgetsBundle.getAlias());
+        List<WidgetTypeId> widgetTypeIds = widgetTypes.stream().map(WidgetType::getId).collect(Collectors.toList());
+
+        widgetTypeService.updateWidgetsBundleWidgetTypes(tenantId, savedWidgetsBundle.getId(), widgetTypeIds);
+
+        List<WidgetType> loadedWidgetTypes = widgetTypeService.findWidgetTypesByWidgetsBundleId(tenantId, savedWidgetsBundle.getId());
 
         Collections.sort(widgetTypes, idComparator);
         Collections.sort(loadedWidgetTypes, idComparator);
 
         Assert.assertEquals(widgetTypes, loadedWidgetTypes);
 
-        widgetTypeService.deleteWidgetTypesByTenantIdAndBundleAlias(tenantId, savedWidgetsBundle.getAlias());
+        for (WidgetTypeId id : widgetTypeIds) {
+            widgetTypeService.deleteWidgetType(tenantId, id);
+        }
 
-        loadedWidgetTypes = widgetTypeService.findWidgetTypesByTenantIdAndBundleAlias(tenantId, savedWidgetsBundle.getAlias());
+        loadedWidgetTypes = widgetTypeService.findWidgetTypesByWidgetsBundleId(tenantId, savedWidgetsBundle.getId());
 
         Assert.assertTrue(loadedWidgetTypes.isEmpty());
 
