@@ -19,7 +19,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -38,9 +40,7 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
@@ -57,6 +57,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
 public class CalculateDeltaNode implements TbNode {
 
     private Map<EntityId, ValueWithTs> cache;
+    private Map<EntityId, ListenableFuture<ValueWithTs>> futures;
     private CalculateDeltaNodeConfiguration config;
     private TbContext ctx;
     private TimeseriesService timeseriesService;
@@ -69,7 +70,8 @@ public class CalculateDeltaNode implements TbNode {
         this.timeseriesService = ctx.getTimeseriesService();
         this.useCache = config.isUseCache();
         if (useCache) {
-            cache = new ConcurrentHashMap<>();
+            cache = new ConcurrentReferenceHashMap<>(16, ConcurrentReferenceHashMap.ReferenceType.SOFT);
+            futures = new ConcurrentReferenceHashMap<>(16, ConcurrentReferenceHashMap.ReferenceType.WEAK);
         }
     }
 
@@ -91,6 +93,7 @@ public class CalculateDeltaNode implements TbNode {
                     long currentTs = msg.getMetaDataTs();
 
                     if (useCache) {
+                        previousData = cache.get(msg.getOriginator());
                         cache.put(msg.getOriginator(), new ValueWithTs(currentTs, currentValue));
                     }
 
@@ -118,7 +121,7 @@ public class CalculateDeltaNode implements TbNode {
                     }
                     ctx.tellSuccess(TbMsg.transformMsgData(msg, JacksonUtil.toString(result)));
                 },
-                t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
+                t -> ctx.tellFailure(msg, t), MoreExecutors.directExecutor());
     }
 
     @Override
@@ -130,23 +133,23 @@ public class CalculateDeltaNode implements TbNode {
 
     private ListenableFuture<ValueWithTs> fetchLatestValueAsync(EntityId entityId) {
         return Futures.transform(timeseriesService.findLatest(ctx.getTenantId(), entityId, Collections.singletonList(config.getInputValueKey())),
-                list -> extractValue(list.get(0))
-                , ctx.getDbCallbackExecutor());
-    }
-
-    private ValueWithTs fetchLatestValue(EntityId entityId) {
-        List<TsKvEntry> tsKvEntries = timeseriesService.findLatestSync(
-                ctx.getTenantId(),
-                entityId,
-                Collections.singletonList(config.getInputValueKey()));
-        return extractValue(tsKvEntries.get(0));
+                list -> extractValue(list.get(0)),
+                MoreExecutors.directExecutor());
     }
 
     private ListenableFuture<ValueWithTs> getLastValue(EntityId entityId) {
         if (useCache) {
             ValueWithTs latestValue;
             if ((latestValue = cache.get(entityId)) == null) {
-                latestValue = fetchLatestValue(entityId);
+                return futures.computeIfAbsent(entityId, (id) -> {
+                    var future = Futures.transform(fetchLatestValueAsync(id), valueWithTs -> {
+                        cache.putIfAbsent(id, valueWithTs);
+                        return valueWithTs;
+                    }, MoreExecutors.directExecutor());
+
+                    withCallback(future, v -> futures.remove(id), t -> futures.remove(id), MoreExecutors.directExecutor());
+                    return future;
+                });
             }
             return Futures.immediateFuture(latestValue);
         } else {
