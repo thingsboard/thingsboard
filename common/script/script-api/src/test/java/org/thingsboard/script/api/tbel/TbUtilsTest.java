@@ -32,6 +32,7 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
@@ -365,6 +366,18 @@ public class TbUtilsTest {
         expectedJson.put("hello", "world");
         Object actualJson =  TbUtils.decodeToJson(ctx, expectedStr);
         Assert.assertEquals(expectedJson,actualJson);
+    }
+
+    @Test
+    public void convertTimeZone() throws IOException {
+        long tsIn = 1689066000000L;
+        Date dateIn = new Date(tsIn);
+        String timeZoneId = "America/New_York";
+        long expectedTsOffset = -14400000L;
+        long actualTs1 =  TbUtils.convertTimeZoneTs(tsIn, timeZoneId);
+        long actualTs2 =  TbUtils.convertTimeZoneTs(dateIn, timeZoneId);
+        Assert.assertEquals(actualTs1, actualTs2);
+        Assert.assertEquals(expectedTsOffset, (actualTs1 - tsIn));
     }
 
     private static List<Byte> toList(byte[] data) {

@@ -32,13 +32,16 @@ import java.math.RoundingMode;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 
 public class TbUtils {
 
@@ -163,6 +166,10 @@ public class TbUtils {
                 ExecutionContext.class, Map.class, List.class)));
         parserConfig.addImport("toFlatMap", new MethodStub(TbUtils.class.getMethod("toFlatMap",
                 ExecutionContext.class, Map.class, List.class, boolean.class)));
+        parserConfig.addImport("convertTimeZoneTs", new MethodStub(TbUtils.class.getMethod("convertTimeZoneTs",
+                Date.class, String.class)));
+       parserConfig.addImport("convertTimeZoneTs", new MethodStub(TbUtils.class.getMethod("convertTimeZoneTs",
+                long.class, String.class)));
     }
 
     public static String btoa(String input) {
@@ -593,6 +600,13 @@ public class TbUtils {
         return map;
     }
 
+    public static long convertTimeZoneTs(Date date, String toTimeZoneStr) {
+        return convertTimeZoneTs(date.getTime(), toTimeZoneStr);
+    }
+    public static long convertTimeZoneTs(long time, String toTimeZoneId) {
+        return (new Date(time + getTimeZoneUTCAndDSTOffset(time, toTimeZoneId))).getTime();
+    }
+
     private static void parseRecursive(Object json, Map<String, Object> map, List<String> excludeList, String path, boolean pathInKey) {
         if (json instanceof Map.Entry) {
             Map.Entry<?, ?> entry = (Map.Entry<?, ?>) json;
@@ -645,6 +659,23 @@ public class TbUtils {
                 throw new NumberFormatException("Failed radix: [" + radix + "] for value: \"" + value + "\"!");
         }
         return true;
+    }
+
+    /**
+     * Calculates the offset of the <code>timeZone</code> from UTC, factoring in any
+     * additional offset due to the time zone being in daylight savings time as of
+     * the given <code>date</code>.
+     * @param time
+     * @param toTimeZoneId
+     * @return
+     */
+    private static long getTimeZoneUTCAndDSTOffset(long time, String toTimeZoneId){
+        long timeZoneDSTOffset = 0;
+        TimeZone timeZone = TimeZone.getTimeZone(toTimeZoneId);
+        if(timeZone.inDaylightTime(new Date(time))) {
+            timeZoneDSTOffset = timeZone.getDSTSavings();
+        }
+        return timeZone.getRawOffset() + timeZoneDSTOffset;
     }
 
 }
