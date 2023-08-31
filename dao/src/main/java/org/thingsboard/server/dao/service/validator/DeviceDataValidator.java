@@ -64,6 +64,9 @@ public class DeviceDataValidator extends AbstractHasOtaPackageValidator<Device> 
         if (StringUtils.isEmpty(device.getName()) || device.getName().trim().length() == 0) {
             throw new DataValidationException("Device name should be specified!");
         }
+        if (StringUtils.contains0x00(device.getName())) {
+            throw new DataValidationException("Device name should not contain 0x00 symbol!");
+        }
         if (device.getTenantId() == null) {
             throw new DataValidationException("Device should be assigned to tenant!");
         } else {
