@@ -14,13 +14,17 @@
 /// limitations under the License.
 ///
 
-export * from './date-ago.pipe';
-export * from './enum-to-array.pipe';
-export * from './highlight.pipe';
-export * from './keyboard-shortcut.pipe';
-export * from './milliseconds-to-time-string.pipe';
-export * from './nospace.pipe';
-export * from './truncate.pipe';
-export * from './file-size.pipe';
-export * from './selectable-columns.pipe';
-export * from './custom-translate.pipe';
+import { Pipe, PipeTransform } from '@angular/core';
+import { UtilsService } from '@core/services/utils.service';
+import { i18nPrefix } from '@shared/models/constants';
+
+@Pipe({
+  name: 'customTranslate'
+})
+export class CustomTranslatePipe implements PipeTransform {
+
+  constructor(private utils: UtilsService) {}
+  public transform(text: string): string {
+    return text.includes(`{${i18nPrefix}`) ? this.utils.customTranslation(text, text) : text;
+  }
+}
