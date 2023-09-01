@@ -64,7 +64,7 @@ public class AssetDataValidator extends DataValidator<Asset> {
 
     @Override
     protected void validateDataImpl(TenantId tenantId, Asset asset) {
-        if (StringUtils.isEmpty(asset.getName())) {
+        if (StringUtils.isEmpty(asset.getName()) || asset.getName().trim().length() == 0) {
             throw new DataValidationException("Asset name should be specified!");
         }
         if (StringUtils.contains0x00(asset.getName())) {
