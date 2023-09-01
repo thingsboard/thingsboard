@@ -22,10 +22,10 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.asset.AssetDao;
 import org.thingsboard.server.dao.customer.CustomerDao;
-import org.thingsboard.server.dao.device.DeviceDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.tenant.TenantService;
 
@@ -35,18 +35,18 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.ThrowableAssert.catchThrowableOfType;
 import static org.mockito.BDDMockito.willReturn;
 
-@SpringBootTest(classes = DeviceDataValidator.class)
+@SpringBootTest(classes = AssetDataValidator.class)
 @Slf4j
-class DeviceDataValidatorTest {
+class AssetDataValidatorTest {
 
     @MockBean
-    DeviceDao deviceDao;
+    AssetDao assetDao;
     @MockBean
     TenantService tenantService;
     @MockBean
     CustomerDao customerDao;
     @Autowired
-    DeviceDataValidator validator;
+    AssetDataValidator validator;
     TenantId tenantId = TenantId.fromUUID(UUID.fromString("9ef79cdf-37a8-4119-b682-2e7ed4e018da"));
 
     @BeforeEach
@@ -59,11 +59,11 @@ class DeviceDataValidatorTest {
             "coffee", "1", "big box", "世界", "!", "--", "~!@#$%^&*()_+=-/|\\[]{};:'`\"?<>,.", "\uD83D\uDC0C", "\041",
             "Gdy Pomorze nie pomoże, to pomoże może morze, a gdy morze nie pomoże, to pomoże może Gdańsk",
     })
-    void testDeviceName_thenOK(final String name) {
-        Device device = new Device();
-        device.setTenantId(tenantId);
-        device.setName(name);
-        validator.validateDataImpl(tenantId, device);
+    void testAssetName_thenOK(final String name) {
+        Asset asset = new Asset();
+        asset.setTenantId(tenantId);
+        asset.setName(name);
+        validator.validateDataImpl(tenantId, asset);
     }
 
     @ParameterizedTest
@@ -72,19 +72,18 @@ class DeviceDataValidatorTest {
             "F0929906\000\000\000\000\000\000\000\000\000", "\000\000\000F0929906",
             "\u0000F0929906", "F092\u00009906", "F0929906\u0000"
     })
-
-    void testDeviceName_thenDataValidationException(final String name) {
-        Device device = new Device();
-        device.setTenantId(tenantId);
-        device.setName(name);
+    void testAssetName_thenDataValidationException(final String name) {
+        Asset asset = new Asset();
+        asset.setTenantId(tenantId);
+        asset.setName(name);
 
         DataValidationException exception = catchThrowableOfType(() ->
-                validator.validateDataImpl(tenantId, device), DataValidationException.class);
+                validator.validateDataImpl(tenantId, asset), DataValidationException.class);
         log.warn("Exception message: {}", exception == null ? null : exception.getMessage());
 
-        assertThatThrownBy(() -> validator.validateDataImpl(tenantId, device))
+        assertThatThrownBy(() -> validator.validateDataImpl(tenantId, asset))
                 .isInstanceOf(DataValidationException.class)
-                .hasMessageMatching(".*Device.*");
+                .hasMessageMatching(".*Asset.*");
     }
 
 }
