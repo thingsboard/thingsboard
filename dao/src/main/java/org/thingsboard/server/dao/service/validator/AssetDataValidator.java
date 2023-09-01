@@ -67,6 +67,9 @@ public class AssetDataValidator extends DataValidator<Asset> {
         if (StringUtils.isEmpty(asset.getName())) {
             throw new DataValidationException("Asset name should be specified!");
         }
+        if (StringUtils.contains0x00(asset.getName())) {
+            throw new DataValidationException("Asset name should not contain 0x00 symbol!");
+        }
         if (asset.getTenantId() == null) {
             throw new DataValidationException("Asset should be assigned to tenant!");
         } else {
