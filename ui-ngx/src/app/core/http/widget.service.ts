@@ -24,7 +24,6 @@ import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import {
   BaseWidgetType,
   fullWidgetTypeFqn,
-  Widget,
   WidgetType,
   widgetType,
   WidgetTypeDetails,
@@ -166,63 +165,6 @@ export class WidgetService {
           tap((res) => this.widgetTypeInfosCache.set(widgetsBundleId, res) )
       );
     }
-  }
-
-  public loadBundleLibraryWidgets(widgetsBundleId: string,
-                                  config?: RequestConfig): Observable<Array<Widget>> {
-    return this.getBundleWidgetTypes(widgetsBundleId, config).pipe(
-      map((types) => {
-        types = types.sort((a, b) => {
-          let result = (a.deprecated ? 1 : 0) - (b.deprecated ? 1 : 0);
-          if (result === 0) {
-            result = widgetType[b.descriptor.type].localeCompare(widgetType[a.descriptor.type]);
-            if (result === 0) {
-              result = b.createdTime - a.createdTime;
-            }
-          }
-          return result;
-        });
-        const widgetTypes = new Array<Widget>();
-        let top = 0;
-        const lastTop = [0, 0, 0];
-        let col = 0;
-        let column = 0;
-        types.forEach((type) => {
-          const widgetTypeInfo = toWidgetInfo(type);
-          const sizeX = 8;
-          const sizeY = Math.floor(widgetTypeInfo.sizeY);
-          const widget: Widget = {
-            typeId: type.id,
-            typeFullFqn: widgetTypeInfo.fullFqn,
-            type: widgetTypeInfo.type,
-            title: widgetTypeInfo.widgetName,
-            sizeX,
-            sizeY,
-            row: top,
-            col,
-            config: JSON.parse(widgetTypeInfo.defaultConfig)
-          };
-
-          widget.config.title = widgetTypeInfo.widgetName;
-          if (type.deprecated) {
-            widget.config.title += ` (${this.translate.instant('widget.deprecated')})`;
-          }
-
-          widgetTypes.push(widget);
-          top += sizeY;
-          if (top > lastTop[column] + 10) {
-            lastTop[column] = top;
-            column++;
-            if (column > 2) {
-              column = 0;
-            }
-            top = lastTop[column];
-            col = column * 8;
-          }
-        });
-        return widgetTypes;
-      })
-    );
   }
 
   public getWidgetType(fullFqn: string, config?: RequestConfig): Observable<WidgetType> {
