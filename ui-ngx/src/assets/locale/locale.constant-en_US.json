@@ -4912,6 +4912,7 @@
             "radius": "Radius",
             "inner-radius": "Inner radius",
             "tilt": "Tilt",
+            "common-pie-settings-range-error": "Value should be in range from 0 to 1",
             "stroke-settings": "Stroke settings",
             "width-pixels": "Width (pixels)",
             "show-labels": "Show labels",
