@@ -52,7 +52,6 @@ import java.util.UUID;
 @TbCoreComponent
 public class DeviceProfileEdgeProcessor extends BaseDeviceProfileProcessor {
 
-
     public ListenableFuture<Void> processDeviceProfileMsgFromEdge(TenantId tenantId, Edge edge, DeviceProfileUpdateMsg deviceProfileUpdateMsg) {
         log.trace("[{}] executing processDeviceProfileMsgFromEdge [{}] from edge [{}]", tenantId, deviceProfileUpdateMsg, edge.getName());
         DeviceProfileId deviceProfileId = new DeviceProfileId(new UUID(deviceProfileUpdateMsg.getIdMSB(), deviceProfileUpdateMsg.getIdLSB()));
@@ -70,7 +69,7 @@ public class DeviceProfileEdgeProcessor extends BaseDeviceProfileProcessor {
                     return handleUnsupportedMsgType(deviceProfileUpdateMsg.getMsgType());
             }
         } catch (DataValidationException e) {
-            log.warn("Failed to process DeviceProfileUpdateMsg from Edge [{}]", deviceProfileUpdateMsg, e);
+            log.warn("[{}] Failed to process DeviceProfileUpdateMsg from Edge [{}]", tenantId, deviceProfileUpdateMsg, e);
             return Futures.immediateFailedFuture(e);
         } finally {
             edgeSynchronizationManager.getSync().remove();
@@ -99,16 +98,16 @@ public class DeviceProfileEdgeProcessor extends BaseDeviceProfileProcessor {
             tbClusterService.pushMsgToRuleEngine(tenantId, deviceProfileId, tbMsg, new TbQueueCallback() {
                 @Override
                 public void onSuccess(TbQueueMsgMetadata metadata) {
-                    log.debug("Successfully send ENTITY_CREATED EVENT to rule engine [{}]", deviceProfile);
+                    log.debug("[{}] Successfully send ENTITY_CREATED EVENT to rule engine [{}]", tenantId, deviceProfile);
                 }
 
                 @Override
                 public void onFailure(Throwable t) {
-                    log.warn("Failed to send ENTITY_CREATED EVENT to rule engine [{}]", deviceProfile, t);
+                    log.warn("[{}] Failed to send ENTITY_CREATED EVENT to rule engine [{}]", tenantId, deviceProfile, t);
                 }
             });
         } catch (JsonProcessingException | IllegalArgumentException e) {
-            log.warn("[{}] Failed to push device profile action to rule engine: {}", deviceProfileId, DataConstants.ENTITY_CREATED, e);
+            log.warn("[{}][{}] Failed to push device profile action to rule engine: {}", tenantId, deviceProfileId, DataConstants.ENTITY_CREATED, e);
         }
     }
 

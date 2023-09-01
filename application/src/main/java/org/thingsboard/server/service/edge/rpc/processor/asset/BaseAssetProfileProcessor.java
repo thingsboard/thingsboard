@@ -46,8 +46,8 @@ public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
             AssetProfile assetProfileByName = assetProfileService.findAssetProfileByName(tenantId, assetProfileName);
             if (assetProfileByName != null && !assetProfileByName.getId().equals(assetProfileId)) {
                 assetProfileName = assetProfileName + "_" + StringUtils.randomAlphabetic(15);
-                log.warn("Asset profile with name {} already exists. Renaming asset profile name to {}",
-                        assetProfileUpdateMsg.getName(), assetProfileName);
+                log.warn("[{}] Asset profile with name {} already exists. Renaming asset profile name to {}",
+                        tenantId, assetProfileUpdateMsg.getName(), assetProfileName);
                 assetProfileNameUpdated = true;
             }
             assetProfile.setName(assetProfileName);
@@ -66,6 +66,9 @@ public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
                 assetProfile.setId(assetProfileId);
             }
             assetProfileService.saveAssetProfile(assetProfile, false);
+        } catch (Exception e) {
+            log.error("[{}] Failed to process asset profile update msg [{}]", tenantId, assetProfileUpdateMsg, e);
+            throw e;
         } finally {
             assetCreationLock.unlock();
         }

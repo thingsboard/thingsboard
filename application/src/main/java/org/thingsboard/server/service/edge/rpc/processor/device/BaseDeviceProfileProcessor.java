@@ -58,8 +58,8 @@ public abstract class BaseDeviceProfileProcessor extends BaseEdgeProcessor {
             DeviceProfile deviceProfileByName = deviceProfileService.findDeviceProfileByName(tenantId, deviceProfileName);
             if (deviceProfileByName != null && !deviceProfileByName.getId().equals(deviceProfileId)) {
                 deviceProfileName = deviceProfileName + "_" + StringUtils.randomAlphabetic(15);
-                log.warn("Device profile with name {} already exists. Renaming device profile name to {}",
-                        deviceProfileUpdateMsg.getName(), deviceProfileName);
+                log.warn("[{}] Device profile with name {} already exists. Renaming device profile name to {}",
+                        tenantId, deviceProfileUpdateMsg.getName(), deviceProfileName);
                 deviceProfileNameUpdated = true;
             }
             deviceProfile.setName(deviceProfileName);
@@ -98,7 +98,10 @@ public abstract class BaseDeviceProfileProcessor extends BaseEdgeProcessor {
                 deviceProfile.setId(deviceProfileId);
             }
             deviceProfileService.saveDeviceProfile(deviceProfile, false);
-        } finally {
+        } catch (Exception e) {
+            log.error("[{}] Failed to process device profile update msg [{}]", tenantId, deviceProfileUpdateMsg, e);
+            throw e;
+        }  finally {
             deviceCreationLock.unlock();
         }
         return Pair.of(created, deviceProfileNameUpdated);

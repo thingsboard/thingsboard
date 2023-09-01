@@ -69,7 +69,7 @@ public class AssetProfileEdgeProcessor extends BaseAssetProfileProcessor {
                     return handleUnsupportedMsgType(assetProfileUpdateMsg.getMsgType());
             }
         } catch (DataValidationException e) {
-            log.warn("Failed to process AssetProfileUpdateMsg from Edge [{}]", assetProfileUpdateMsg, e);
+            log.warn("[{}] Failed to process AssetProfileUpdateMsg from Edge [{}]", tenantId, assetProfileUpdateMsg, e);
             return Futures.immediateFailedFuture(e);
         } finally {
             edgeSynchronizationManager.getSync().remove();
@@ -98,16 +98,16 @@ public class AssetProfileEdgeProcessor extends BaseAssetProfileProcessor {
             tbClusterService.pushMsgToRuleEngine(tenantId, assetProfileId, tbMsg, new TbQueueCallback() {
                 @Override
                 public void onSuccess(TbQueueMsgMetadata metadata) {
-                    log.debug("Successfully send ENTITY_CREATED EVENT to rule engine [{}]", assetProfile);
+                    log.debug("[{}] Successfully send ENTITY_CREATED EVENT to rule engine [{}]", tenantId, assetProfile);
                 }
 
                 @Override
                 public void onFailure(Throwable t) {
-                    log.warn("Failed to send ENTITY_CREATED EVENT to rule engine [{}]", assetProfile, t);
+                    log.warn("[{}] Failed to send ENTITY_CREATED EVENT to rule engine [{}]", tenantId, assetProfile, t);
                 }
             });
         } catch (JsonProcessingException | IllegalArgumentException e) {
-            log.warn("[{}] Failed to push asset profile action to rule engine: {}", assetProfileId, DataConstants.ENTITY_CREATED, e);
+            log.warn("[{}][{}] Failed to push asset profile action to rule engine: {}", tenantId, assetProfileId, DataConstants.ENTITY_CREATED, e);
         }
     }
 
