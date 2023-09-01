@@ -898,7 +898,7 @@
         "name-starts-with": "Назва починається з",
         "use-entity-name-filter": "Використовуйте фільтр",
         "entity-list-empty": "Не вибрано жодних сутностей.",
-        "entity-type-list-empty": "Не вибрано жодних типів сутностей.",
+        "entity-type-list-empty": "Потрібно вибрати принаймні один тип сутності.",
         "entity-name-filter-required": "Необхідно задати фільтр по імені.",
         "entity-name-filter-no-entity-matched": "Не знайдено жодних сутностей, що починаються з '{{entity}}'.",
         "all-subtypes": "Всі",
