@@ -27,4 +27,6 @@ public interface TbWidgetsBundleService extends SimpleTbEntityService<WidgetsBun
 
     void updateWidgetsBundleWidgetTypes(WidgetsBundleId widgetsBundleId, List<WidgetTypeId> widgetTypeIds, User user) throws Exception;
 
+    void updateWidgetsBundleWidgetFqns(WidgetsBundleId widgetsBundleId, List<String> widgetFqns, User user) throws Exception;
+
 }

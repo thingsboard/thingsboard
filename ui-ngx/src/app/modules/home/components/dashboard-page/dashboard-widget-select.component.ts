@@ -121,12 +121,9 @@ export class DashboardWidgetSelectComponent implements OnInit {
   private getWidgets(): Observable<Array<WidgetInfo>> {
     if (!this.widgetsInfo) {
       if (this.widgetsBundle !== null) {
-        const bundleAlias = this.widgetsBundle.alias;
-        const isSystem = this.widgetsBundle.tenantId.id === NULL_UUID;
         this.loadingWidgetsSubject.next(true);
-        this.widgetsInfo = this.widgetsService.getBundleWidgetTypeInfos(bundleAlias, isSystem).pipe(
+        this.widgetsInfo = this.widgetsService.getBundleWidgetTypeInfos(this.widgetsBundle.id.id).pipe(
           map(widgets => {
-            widgets = widgets.sort((a, b) => b.createdTime - a.createdTime);
             const widgetTypes = new Set<widgetType>();
             const hasDeprecated = widgets.some(w => w.deprecated);
             const widgetInfos = widgets.map((widgetTypeInfo) => {

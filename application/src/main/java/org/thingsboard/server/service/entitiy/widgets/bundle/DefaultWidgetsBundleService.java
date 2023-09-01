@@ -73,4 +73,10 @@ public class DefaultWidgetsBundleService extends AbstractTbEntityService impleme
         widgetTypeService.updateWidgetsBundleWidgetTypes(user.getTenantId(), widgetsBundleId, widgetTypeIds);
         autoCommit(user, widgetsBundleId);
     }
+
+    @Override
+    public void updateWidgetsBundleWidgetFqns(WidgetsBundleId widgetsBundleId, List<String> widgetFqns, User user) throws Exception {
+        widgetTypeService.updateWidgetsBundleWidgetFqns(user.getTenantId(), widgetsBundleId, widgetFqns);
+        autoCommit(user, widgetsBundleId);
+    }
 }

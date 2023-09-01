@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  button.tb-add-new-widget {
-    height: auto;
-    padding-right: 12px;
-    font-size: 24px;
-    border-style: dashed;
-    border-width: 2px;
-  }
-}
+package org.thingsboard.server.dao.model.sql;
 
-:host ::ng-deep {
-  .tb-widget-library {
-    .tb-widget-container {
-      cursor: pointer;
-    }
-  }
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+import java.util.UUID;
+
+@Data
+@AllArgsConstructor
+public class WidgetTypeIdFqnEntity {
+    private UUID id;
+    private String fqn;
 }

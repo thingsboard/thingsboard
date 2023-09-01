@@ -35,6 +35,7 @@ import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 import org.thingsboard.server.dao.widget.WidgetTypeDao;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -139,8 +140,10 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
 
     @Override
     public List<WidgetTypeId> findWidgetTypeIdsByTenantIdAndFqns(UUID tenantId, List<String> widgetFqns) {
-        return widgetTypeRepository.findWidgetTypeIdsByTenantIdAndFqns(tenantId, widgetFqns).stream()
-                .map(WidgetTypeId::new).collect(Collectors.toList());
+        var idFqnPairs = widgetTypeRepository.findWidgetTypeIdsByTenantIdAndFqns(tenantId, widgetFqns);
+        idFqnPairs.sort(Comparator.comparingInt(o -> widgetFqns.indexOf(o.getFqn())));
+        return idFqnPairs.stream()
+                .map(id -> new WidgetTypeId(id.getId())).collect(Collectors.toList());
     }
 
     @Override

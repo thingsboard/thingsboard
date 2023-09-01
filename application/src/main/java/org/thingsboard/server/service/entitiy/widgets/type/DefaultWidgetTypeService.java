@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -34,9 +35,20 @@ public class DefaultWidgetTypeService extends AbstractTbEntityService implements
     private final WidgetTypeService widgetTypeService;
 
     @Override
-    public WidgetTypeDetails save(WidgetTypeDetails widgetTypeDetails, User user) throws Exception {
-        ActionType actionType = widgetTypeDetails.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
+    public WidgetTypeDetails save(WidgetTypeDetails entity, User user) throws Exception {
+        return this.save(entity, false, user);
+    }
+
+    @Override
+    public WidgetTypeDetails save(WidgetTypeDetails widgetTypeDetails, boolean updateExistingByFqn, User user) throws Exception {
         TenantId tenantId = widgetTypeDetails.getTenantId();
+        if (widgetTypeDetails.getId() == null && updateExistingByFqn) {
+            WidgetType widgetType = widgetTypeService.findWidgetTypeByTenantIdAndFqn(tenantId, widgetTypeDetails.getFqn());
+            if (widgetType != null) {
+                widgetTypeDetails.setId(widgetType.getId());
+            }
+        }
+        ActionType actionType = widgetTypeDetails.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         try {
             WidgetTypeDetails savedWidgetTypeDetails = checkNotNull(widgetTypeService.saveWidgetType(widgetTypeDetails));
             autoCommit(user, savedWidgetTypeDetails.getId());

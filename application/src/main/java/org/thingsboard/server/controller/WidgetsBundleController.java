@@ -136,6 +136,23 @@ public class WidgetsBundleController extends BaseController {
         tbWidgetsBundleService.updateWidgetsBundleWidgetTypes(widgetsBundleId, new ArrayList<>(widgetTypeIds), currentUser);
     }
 
+    @ApiOperation(value = "Update widgets bundle widgets list from widget type FQNs list (updateWidgetsBundleWidgetFqns)",
+            notes = "Updates widgets bundle widgets list from widget type FQNs list." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/widgetsBundle/{widgetsBundleId}/widgetTypeFqns", method = RequestMethod.POST)
+    @ResponseStatus(value = HttpStatus.OK)
+    public void updateWidgetsBundleWidgetFqns(
+            @ApiParam(value = WIDGET_BUNDLE_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable("widgetsBundleId") String strWidgetsBundleId,
+            @ApiParam(value = "Ordered list of widget type FQNs to be included by widgets bundle")
+            @RequestBody List<String> widgetTypeFqns) throws Exception {
+        checkParameter("widgetsBundleId", strWidgetsBundleId);
+        WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
+        checkNotNull(widgetTypeFqns);
+        var currentUser = getCurrentUser();
+        tbWidgetsBundleService.updateWidgetsBundleWidgetFqns(widgetsBundleId, widgetTypeFqns, currentUser);
+    }
+
     @ApiOperation(value = "Delete widgets bundle (deleteWidgetsBundle)",
             notes = "Deletes the widget bundle. Referencing non-existing Widget Bundle Id will cause an error." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")

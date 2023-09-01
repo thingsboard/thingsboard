@@ -74,6 +74,7 @@ public class WidgetTypeController extends AutoCommitController {
             "Those properties are useful to edit the Widget Type but they are not required for Dashboard rendering. ";
     private static final String WIDGET_TYPE_INFO_DESCRIPTION = "Widget Type Info is a lightweight object that represents Widget Type but does not contain the heavyweight widget descriptor JSON";
     private static final String TENANT_ONLY_PARAM_DESCRIPTION = "Optional boolean parameter indicating whether only tenant widget types should be returned";
+    private static final String UPDATE_EXISTING_BY_FQN_PARAM_DESCRIPTION = "Optional boolean parameter indicating whether to update existing widget type by FQN if present instead of creating new one";
 
     @ApiOperation(value = "Get Widget Type Details (getWidgetTypeById)",
             notes = "Get the Widget Type Details based on the provided Widget Type Id. " + WIDGET_TYPE_DETAILS_DESCRIPTION + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
@@ -86,6 +87,19 @@ public class WidgetTypeController extends AutoCommitController {
         checkParameter("widgetTypeId", strWidgetTypeId);
         WidgetTypeId widgetTypeId = new WidgetTypeId(toUUID(strWidgetTypeId));
         return checkWidgetTypeId(widgetTypeId, Operation.READ);
+    }
+
+    @ApiOperation(value = "Get Widget Type Info (getWidgetTypeInfoById)",
+            notes = "Get the Widget Type Info based on the provided Widget Type Id. " + WIDGET_TYPE_DETAILS_DESCRIPTION + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/widgetTypeInfo/{widgetTypeId}", method = RequestMethod.GET)
+    @ResponseBody
+    public WidgetTypeInfo getWidgetTypeInfoById(
+            @ApiParam(value = WIDGET_TYPE_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable("widgetTypeId") String strWidgetTypeId) throws ThingsboardException {
+        checkParameter("widgetTypeId", strWidgetTypeId);
+        WidgetTypeId widgetTypeId = new WidgetTypeId(toUUID(strWidgetTypeId));
+        return new WidgetTypeInfo(checkWidgetTypeId(widgetTypeId, Operation.READ));
     }
 
     @ApiOperation(value = "Create Or Update Widget Type (saveWidgetType)",
@@ -103,7 +117,9 @@ public class WidgetTypeController extends AutoCommitController {
     @ResponseBody
     public WidgetTypeDetails saveWidgetType(
             @ApiParam(value = "A JSON value representing the Widget Type Details.", required = true)
-            @RequestBody WidgetTypeDetails widgetTypeDetails) throws Exception {
+            @RequestBody WidgetTypeDetails widgetTypeDetails,
+            @ApiParam(value = UPDATE_EXISTING_BY_FQN_PARAM_DESCRIPTION)
+            @RequestParam(required = false) Boolean updateExistingByFqn) throws Exception {
         var currentUser = getCurrentUser();
         if (Authority.SYS_ADMIN.equals(currentUser.getAuthority())) {
             widgetTypeDetails.setTenantId(TenantId.SYS_TENANT_ID);
@@ -112,7 +128,7 @@ public class WidgetTypeController extends AutoCommitController {
         }
 
         checkEntity(widgetTypeDetails.getId(), widgetTypeDetails, Resource.WIDGET_TYPE);
-        return tbWidgetTypeService.save(widgetTypeDetails, currentUser);
+        return tbWidgetTypeService.save(widgetTypeDetails, updateExistingByFqn != null && updateExistingByFqn, currentUser);
     }
 
     @ApiOperation(value = "Delete widget type (deleteWidgetType)",
@@ -222,6 +238,18 @@ public class WidgetTypeController extends AutoCommitController {
             @RequestParam("widgetsBundleId") String strWidgetsBundleId) throws ThingsboardException {
         WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
         return checkNotNull(widgetTypeService.findWidgetTypesDetailsByWidgetsBundleId(getTenantId(), widgetsBundleId));
+    }
+
+    @ApiOperation(value = "Get all Widget type fqns for specified Bundle (getBundleWidgetTypeFqns)",
+            notes = "Returns an array of Widget Type fqns that belong to specified Widget Bundle." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/widgetTypeFqns", params = {"widgetsBundleId"}, method = RequestMethod.GET)
+    @ResponseBody
+    public List<String> getBundleWidgetTypeFqns(
+            @ApiParam(value = "Widget Bundle Id", required = true)
+            @RequestParam("widgetsBundleId") String strWidgetsBundleId) throws ThingsboardException {
+        WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
+        return checkNotNull(widgetTypeService.findWidgetFqnsByWidgetsBundleId(getTenantId(), widgetsBundleId));
     }
 
     @ApiOperation(value = "Get Widget Type Info objects (getBundleWidgetTypesInfosByBundleAlias) (Deprecated)",

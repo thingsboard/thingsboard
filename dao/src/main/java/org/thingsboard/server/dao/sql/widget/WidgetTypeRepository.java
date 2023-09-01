@@ -23,6 +23,7 @@ import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.WidgetTypeDetailsEntity;
 import org.thingsboard.server.dao.model.sql.WidgetTypeEntity;
+import org.thingsboard.server.dao.model.sql.WidgetTypeIdFqnEntity;
 import org.thingsboard.server.dao.model.sql.WidgetTypeInfoEntity;
 import org.thingsboard.server.dao.model.sql.WidgetsBundleEntity;
 
@@ -81,10 +82,10 @@ public interface WidgetTypeRepository extends JpaRepository<WidgetTypeDetailsEnt
             "AND wbw.widgetTypeId = wtd.id ORDER BY wbw.widgetTypeOrder")
     List<String> findWidgetFqnsByWidgetsBundleId(@Param("widgetsBundleId") UUID widgetsBundleId);
 
-    @Query("SELECT wtd.id FROM WidgetTypeDetailsEntity wtd " +
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.WidgetTypeIdFqnEntity(wtd.id, wtd.fqn) FROM WidgetTypeDetailsEntity wtd " +
             "WHERE wtd.tenantId = :tenantId " +
             "AND wtd.fqn IN (:widgetFqns)")
-    List<UUID> findWidgetTypeIdsByTenantIdAndFqns(@Param("tenantId") UUID tenantId, @Param("widgetFqns") List<String> widgetFqns);
+    List<WidgetTypeIdFqnEntity> findWidgetTypeIdsByTenantIdAndFqns(@Param("tenantId") UUID tenantId, @Param("widgetFqns") List<String> widgetFqns);
 
     @Query("SELECT wt FROM WidgetTypeEntity wt " +
             "WHERE wt.tenantId = :tenantId AND wt.fqn = :fqn")
