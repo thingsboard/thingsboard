@@ -15,13 +15,11 @@
  */
 package org.thingsboard.server.service.state;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DeviceIdInfo;
@@ -49,16 +47,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.willReturn;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.thingsboard.server.service.state.DefaultDeviceStateService.ACTIVITY_STATE;
 import static org.thingsboard.server.service.state.DefaultDeviceStateService.INACTIVITY_TIMEOUT;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class DefaultDeviceStateServiceTest {
 
     @Mock
@@ -75,6 +77,10 @@ public class DefaultDeviceStateServiceTest {
     DeviceStateData deviceStateDataMock;
     @Mock
     EntityQueryRepository entityQueryRepository;
+    @Mock
+    TelemetrySubscriptionService telemetrySubscriptionService;
+    @Mock
+    NotificationRuleProcessor notificationRuleProcessor;
 
     TenantId tenantId = new TenantId(UUID.fromString("00797a3b-7aeb-4b5b-b57a-c2a810d0f112"));
     DeviceId deviceId = DeviceId.fromString("00797a3b-7aeb-4b5b-b57a-c2a810d0f112");
@@ -82,31 +88,23 @@ public class DefaultDeviceStateServiceTest {
 
     DefaultDeviceStateService service;
 
-    TelemetrySubscriptionService telemetrySubscriptionService;
-
-    @Before
+    @BeforeEach
     public void setUp() {
-        service = spy(new DefaultDeviceStateService(deviceService, attributesService, tsService, clusterService, partitionService, entityQueryRepository, null, null, mock(NotificationRuleProcessor.class)));
-        telemetrySubscriptionService = Mockito.mock(TelemetrySubscriptionService.class);
+        service = spy(new DefaultDeviceStateService(deviceService, attributesService, tsService, clusterService, partitionService, entityQueryRepository, null, null, notificationRuleProcessor));
         ReflectionTestUtils.setField(service, "tsSubService", telemetrySubscriptionService);
         ReflectionTestUtils.setField(service, "defaultStateCheckIntervalInSec", 60);
         ReflectionTestUtils.setField(service, "defaultActivityStatsIntervalInSec", 60);
         ReflectionTestUtils.setField(service, "initFetchPackSize", 10);
 
         tpi = TopicPartitionInfo.builder().myPartition(true).build();
-        Mockito.when(partitionService.resolve(ServiceType.TB_CORE, tenantId, deviceId)).thenReturn(tpi);
-        Mockito.when(entityQueryRepository.findEntityDataByQueryInternal(Mockito.any())).thenReturn(new PageData<>());
-        var deviceIdInfo = new DeviceIdInfo(tenantId.getId(), null, deviceId.getId());
-        Mockito.when(deviceService.findDeviceIdInfos(Mockito.any()))
-                .thenReturn(new PageData<>(List.of(deviceIdInfo), 0, 1, false));
     }
 
     @Test
     public void givenDeviceIdFromDeviceStatesMap_whenGetOrFetchDeviceStateData_thenNoStackOverflow() {
         service.deviceStates.put(deviceId, deviceStateDataMock);
         DeviceStateData deviceStateData = service.getOrFetchDeviceStateData(deviceId);
-        assertThat(deviceStateData, is(deviceStateDataMock));
-        Mockito.verify(service, never()).fetchDeviceStateDataUsingEntityDataQuery(deviceId);
+        assertThat(deviceStateData).isEqualTo(deviceStateDataMock);
+        verify(service, never()).fetchDeviceStateDataUsingEntityDataQuery(deviceId);
     }
 
     @Test
@@ -114,8 +112,8 @@ public class DefaultDeviceStateServiceTest {
         service.deviceStates.clear();
         willReturn(deviceStateDataMock).given(service).fetchDeviceStateDataUsingEntityDataQuery(deviceId);
         DeviceStateData deviceStateData = service.getOrFetchDeviceStateData(deviceId);
-        assertThat(deviceStateData, is(deviceStateDataMock));
-        Mockito.verify(service, times(1)).fetchDeviceStateDataUsingEntityDataQuery(deviceId);
+        assertThat(deviceStateData).isEqualTo(deviceStateDataMock);
+        verify(service, times(1)).fetchDeviceStateDataUsingEntityDataQuery(deviceId);
     }
 
     @Test
@@ -151,14 +149,19 @@ public class DefaultDeviceStateServiceTest {
 
         DeviceStateData deviceStateData = service.toDeviceStateData(new EntityData(deviceId, latest, Map.of()), new DeviceIdInfo(TenantId.SYS_TENANT_ID.getId(), UUID.randomUUID(), deviceUuid));
 
-        Assert.assertEquals(5000L, deviceStateData.getState().getInactivityTimeout());
+        assertThat(deviceStateData.getState().getInactivityTimeout()).isEqualTo(5000L);
     }
 
     private void initStateService(long timeout) throws InterruptedException {
         service.stop();
-        Mockito.reset(service, telemetrySubscriptionService);
-        ReflectionTestUtils.setField(service, "defaultInactivityTimeoutMs", timeout);
+        reset(service, telemetrySubscriptionService);
+        service.setDefaultInactivityTimeoutMs(timeout);
         service.init();
+        when(partitionService.resolve(ServiceType.TB_CORE, tenantId, deviceId)).thenReturn(tpi);
+        when(entityQueryRepository.findEntityDataByQueryInternal(any())).thenReturn(new PageData<>());
+        var deviceIdInfo = new DeviceIdInfo(tenantId.getId(), null, deviceId.getId());
+        when(deviceService.findDeviceIdInfos(any()))
+                .thenReturn(new PageData<>(List.of(deviceIdInfo), 0, 1, false));
         PartitionChangeEvent event = new PartitionChangeEvent(this, new QueueKey(ServiceType.TB_CORE), Collections.singleton(tpi));
         service.onApplicationEvent(event);
         Thread.sleep(100);
@@ -185,7 +188,7 @@ public class DefaultDeviceStateServiceTest {
         service.checkStates();
         activityVerify(false);
 
-        Mockito.reset(telemetrySubscriptionService);
+        reset(telemetrySubscriptionService);
 
         long increase = 100;
         long newTimeout = System.currentTimeMillis() - deviceState.getLastActivityTime() + increase;
@@ -196,7 +199,7 @@ public class DefaultDeviceStateServiceTest {
         service.checkStates();
         activityVerify(false);
 
-        Mockito.reset(telemetrySubscriptionService);
+        reset(telemetrySubscriptionService);
 
         service.onDeviceActivity(tenantId, deviceId, System.currentTimeMillis());
         activityVerify(true);
@@ -223,18 +226,18 @@ public class DefaultDeviceStateServiceTest {
         service.onDeviceActivity(tenantId, deviceId, System.currentTimeMillis());
         activityVerify(true);
 
-        Mockito.reset(telemetrySubscriptionService);
+        reset(telemetrySubscriptionService);
 
         long increase = 100;
         long newTimeout = System.currentTimeMillis() - deviceState.getLastActivityTime() + increase;
 
         service.onDeviceInactivityTimeoutUpdate(tenantId, deviceId, newTimeout);
-        Mockito.verify(telemetrySubscriptionService, Mockito.never()).saveAttrAndNotify(Mockito.any(), Mockito.eq(deviceId), Mockito.any(), Mockito.eq("active"), Mockito.any(), Mockito.any());
+        verify(telemetrySubscriptionService, never()).saveAttrAndNotify(any(), eq(deviceId), any(), eq(ACTIVITY_STATE), any(), any());
         Thread.sleep(defaultTimeout + increase);
         service.checkStates();
         activityVerify(false);
 
-        Mockito.reset(telemetrySubscriptionService);
+        reset(telemetrySubscriptionService);
 
         service.onDeviceActivity(tenantId, deviceId, System.currentTimeMillis());
         activityVerify(true);
@@ -264,11 +267,11 @@ public class DefaultDeviceStateServiceTest {
         service.checkStates();
         activityVerify(false);
 
-        Mockito.reset(telemetrySubscriptionService);
+        reset(telemetrySubscriptionService);
 
         long newTimeout = 1;
         Thread.sleep(newTimeout);
-        Mockito.verify(telemetrySubscriptionService, Mockito.never()).saveAttrAndNotify(Mockito.any(), Mockito.eq(deviceId), Mockito.any(), Mockito.eq("active"), Mockito.any(), Mockito.any());
+        verify(telemetrySubscriptionService, never()).saveAttrAndNotify(any(), eq(deviceId), any(), eq(ACTIVITY_STATE), any(), any());
     }
 
     @Test
@@ -289,16 +292,14 @@ public class DefaultDeviceStateServiceTest {
         service.onDeviceActivity(tenantId, deviceId, System.currentTimeMillis());
         activityVerify(true);
 
-        Mockito.reset(telemetrySubscriptionService);
-
-        Mockito.verify(telemetrySubscriptionService, Mockito.never()).saveAttrAndNotify(Mockito.any(), Mockito.eq(deviceId), Mockito.any(), Mockito.eq("active"), Mockito.any(), Mockito.any());
+        verify(telemetrySubscriptionService, never()).saveAttrAndNotify(any(), eq(deviceId), any(), eq(ACTIVITY_STATE), any(), any());
 
         long newTimeout = 1;
         Thread.sleep(newTimeout);
 
         service.onDeviceInactivityTimeoutUpdate(tenantId, deviceId, newTimeout);
         activityVerify(false);
-        Mockito.reset(telemetrySubscriptionService);
+        reset(telemetrySubscriptionService);
 
         service.onDeviceInactivityTimeoutUpdate(tenantId, deviceId, defaultTimeout);
         activityVerify(true);
@@ -327,17 +328,17 @@ public class DefaultDeviceStateServiceTest {
         Thread.sleep(defaultTimeout);
         service.checkStates();
         activityVerify(false);
-        Mockito.reset(telemetrySubscriptionService);
+        reset(telemetrySubscriptionService);
 
         long newTimeout = 1;
         Thread.sleep(newTimeout);
 
         service.onDeviceInactivityTimeoutUpdate(tenantId, deviceId, newTimeout);
-        Mockito.verify(telemetrySubscriptionService, Mockito.never()).saveAttrAndNotify(Mockito.any(), Mockito.eq(deviceId), Mockito.any(), Mockito.eq("active"), Mockito.any(), Mockito.any());
+        verify(telemetrySubscriptionService, never()).saveAttrAndNotify(any(), eq(deviceId), any(), eq(ACTIVITY_STATE), any(), any());
     }
 
     private void activityVerify(boolean isActive) {
-        Mockito.verify(telemetrySubscriptionService, Mockito.times(1)).saveAttrAndNotify(Mockito.any(), Mockito.eq(deviceId), Mockito.any(), Mockito.eq("active"), Mockito.eq(isActive), Mockito.any());
+        verify(telemetrySubscriptionService, times(1)).saveAttrAndNotify(any(), eq(deviceId), any(), eq(ACTIVITY_STATE), eq(isActive), any());
     }
 
 }
