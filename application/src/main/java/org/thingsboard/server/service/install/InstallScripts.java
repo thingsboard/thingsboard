@@ -268,7 +268,7 @@ public class InstallScripts {
     }
 
     public void loadSystemLwm2mResources() {
-        Path resourceLwm2mPath = Paths.get(dataDir, MODELS_LWM2M_DIR);
+        Path resourceLwm2mPath = Paths.get(getDataDir(), MODELS_LWM2M_DIR);
         try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(resourceLwm2mPath, path -> path.toString().endsWith(InstallScripts.XML_EXT))) {
             dirStream.forEach(
                     path -> {
