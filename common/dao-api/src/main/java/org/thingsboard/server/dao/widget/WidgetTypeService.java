@@ -39,11 +39,11 @@ public interface WidgetTypeService extends EntityDaoService {
 
     void deleteWidgetType(TenantId tenantId, WidgetTypeId widgetTypeId);
 
-    PageData<WidgetTypeInfo> findSystemWidgetTypesByPageLink(TenantId tenantId, PageLink pageLink);
+    PageData<WidgetTypeInfo> findSystemWidgetTypesByPageLink(TenantId tenantId, boolean fullSearch, PageLink pageLink);
 
-    PageData<WidgetTypeInfo> findAllTenantWidgetTypesByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink);
+    PageData<WidgetTypeInfo> findAllTenantWidgetTypesByTenantIdAndPageLink(TenantId tenantId, boolean fullSearch, PageLink pageLink);
 
-    PageData<WidgetTypeInfo> findTenantWidgetTypesByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink);
+    PageData<WidgetTypeInfo> findTenantWidgetTypesByTenantIdAndPageLink(TenantId tenantId, boolean fullSearch, PageLink pageLink);
 
     List<WidgetType> findWidgetTypesByWidgetsBundleId(TenantId tenantId, WidgetsBundleId widgetsBundleId);
 

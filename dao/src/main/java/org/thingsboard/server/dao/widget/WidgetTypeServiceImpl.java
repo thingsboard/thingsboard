@@ -110,26 +110,26 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
     }
 
     @Override
-    public PageData<WidgetTypeInfo> findSystemWidgetTypesByPageLink(TenantId tenantId, PageLink pageLink) {
-        log.trace("Executing findSystemWidgetTypesByPageLink, pageLink [{}]", pageLink);
+    public PageData<WidgetTypeInfo> findSystemWidgetTypesByPageLink(TenantId tenantId, boolean fullSearch, PageLink pageLink) {
+        log.trace("Executing findSystemWidgetTypesByPageLink, fullSearch [{}] pageLink [{}]", fullSearch, pageLink);
         Validator.validatePageLink(pageLink);
-        return widgetTypeDao.findSystemWidgetTypes(tenantId, pageLink);
+        return widgetTypeDao.findSystemWidgetTypes(tenantId, fullSearch, pageLink);
     }
 
     @Override
-    public PageData<WidgetTypeInfo> findAllTenantWidgetTypesByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink) {
-        log.trace("Executing findAllTenantWidgetTypesByTenantIdAndPageLink, tenantId [{}], pageLink [{}]", tenantId, pageLink);
+    public PageData<WidgetTypeInfo> findAllTenantWidgetTypesByTenantIdAndPageLink(TenantId tenantId, boolean fullSearch, PageLink pageLink) {
+        log.trace("Executing findAllTenantWidgetTypesByTenantIdAndPageLink, tenantId [{}], fullSearch [{}], pageLink [{}]", tenantId, fullSearch, pageLink);
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         Validator.validatePageLink(pageLink);
-        return widgetTypeDao.findAllTenantWidgetTypesByTenantId(tenantId.getId(), pageLink);
+        return widgetTypeDao.findAllTenantWidgetTypesByTenantId(tenantId.getId(), fullSearch, pageLink);
     }
 
     @Override
-    public PageData<WidgetTypeInfo> findTenantWidgetTypesByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink) {
-        log.trace("Executing findTenantWidgetTypesByTenantIdAndPageLink, tenantId [{}], pageLink [{}]", tenantId, pageLink);
+    public PageData<WidgetTypeInfo> findTenantWidgetTypesByTenantIdAndPageLink(TenantId tenantId, boolean fullSearch, PageLink pageLink) {
+        log.trace("Executing findTenantWidgetTypesByTenantIdAndPageLink, tenantId [{}], fullSearch [{}], pageLink [{}]", tenantId, fullSearch, pageLink);
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         Validator.validatePageLink(pageLink);
-        return widgetTypeDao.findTenantWidgetTypesByTenantId(tenantId.getId(), pageLink);
+        return widgetTypeDao.findTenantWidgetTypesByTenantId(tenantId.getId(), fullSearch, pageLink);
     }
 
     @Override
@@ -227,7 +227,7 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
 
                 @Override
                 protected PageData<WidgetTypeInfo> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-                    return widgetTypeDao.findTenantWidgetTypesByTenantId(id.getId(), pageLink);
+                    return widgetTypeDao.findTenantWidgetTypesByTenantId(id.getId(), false, pageLink);
                 }
 
                 @Override

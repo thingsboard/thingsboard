@@ -386,8 +386,9 @@
         </tb-details-panel>
         <tb-details-panel *ngIf="!isAddingWidgetClosed && !widgetEditMode" fxFlex
                           headerTitle="{{ isAddingWidget ?
-                            ((!dashboardWidgetSelectComponent?.widgetsBundle ?
-                               'widget.select-widgets-bundle' : 'dashboard.select-widget-value') | translate: dashboardWidgetSelectComponent?.widgetsBundle) : ''
+                            ((dashboardWidgetSelectComponent?.selectWidgetMode === 'allWidgets' ? ('widget.select-widget' | translate) :
+                               (!dashboardWidgetSelectComponent?.widgetsBundle ?
+                                   'widget.select-widgets-bundle' : 'dashboard.select-widget-value') | translate: dashboardWidgetSelectComponent?.widgetsBundle)) : ''
                           }}"
                           headerHeightPx="64"
                           [isShowSearch]="true"
@@ -404,7 +405,8 @@
           <div class="search-pane" *ngIf="isAddingWidget" fxLayout="row">
             <tb-widgets-bundle-search fxFlex
                                       [(ngModel)]="searchBundle"
-                                      placeholder="{{ (!dashboardWidgetSelectComponent?.widgetsBundle ? 'widgets-bundle.search' : 'widget.search') | translate }}"
+                                      placeholder="{{ ((!dashboardWidgetSelectComponent?.widgetsBundle && dashboardWidgetSelectComponent?.selectWidgetMode === 'bundles')
+                                                        ? 'widgets-bundle.search' : 'widget.search') | translate }}"
                                       (ngModelChange)="searchBundle = $event">
             </tb-widgets-bundle-search>
           </div>
@@ -419,6 +421,14 @@
                     matTooltipPosition="above">
               <mat-icon>filter_list</mat-icon>
             </button>
+            <tb-toggle-select *ngIf="dashboardWidgetSelectComponent && !dashboardWidgetSelectComponent.widgetsBundle"
+                              appearance="fill-invert"
+                              disablePagination
+                              selectMediaBreakpoint="xs"
+                              [(ngModel)]="dashboardWidgetSelectComponent.selectWidgetMode">
+              <tb-toggle-option value="bundles">{{ 'widgets-bundle.widgets-bundles' | translate }}</tb-toggle-option>
+              <tb-toggle-option value="allWidgets">{{ 'widget.all-widgets' | translate }}</tb-toggle-option>
+            </tb-toggle-select>
             <tb-toggle-select *ngIf="dashboardWidgetSelectComponent?.hasDeprecated"
                               appearance="fill-invert"
                               disablePagination

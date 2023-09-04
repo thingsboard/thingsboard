@@ -78,33 +78,36 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
     }
 
     @Override
-    public PageData<WidgetTypeInfo> findSystemWidgetTypes(TenantId tenantId, PageLink pageLink) {
+    public PageData<WidgetTypeInfo> findSystemWidgetTypes(TenantId tenantId, boolean fullSearch, PageLink pageLink) {
         return DaoUtil.toPageData(
                 widgetTypeRepository
                         .findSystemWidgetTypes(
                                 NULL_UUID,
                                 Objects.toString(pageLink.getTextSearch(), ""),
+                                fullSearch,
                                 DaoUtil.toPageable(pageLink)));
     }
 
     @Override
-    public PageData<WidgetTypeInfo> findAllTenantWidgetTypesByTenantId(UUID tenantId, PageLink pageLink) {
+    public PageData<WidgetTypeInfo> findAllTenantWidgetTypesByTenantId(UUID tenantId, boolean fullSearch, PageLink pageLink) {
         return DaoUtil.toPageData(
                 widgetTypeRepository
                         .findAllTenantWidgetTypesByTenantId(
                                 tenantId,
                                 NULL_UUID,
                                 Objects.toString(pageLink.getTextSearch(), ""),
+                                fullSearch,
                                 DaoUtil.toPageable(pageLink)));
     }
 
     @Override
-    public PageData<WidgetTypeInfo> findTenantWidgetTypesByTenantId(UUID tenantId, PageLink pageLink) {
+    public PageData<WidgetTypeInfo> findTenantWidgetTypesByTenantId(UUID tenantId, boolean fullSearch, PageLink pageLink) {
         return DaoUtil.toPageData(
                 widgetTypeRepository
                         .findTenantWidgetTypesByTenantId(
                                 tenantId,
                                 Objects.toString(pageLink.getTextSearch(), ""),
+                                fullSearch,
                                 DaoUtil.toPageable(pageLink)));
     }
 

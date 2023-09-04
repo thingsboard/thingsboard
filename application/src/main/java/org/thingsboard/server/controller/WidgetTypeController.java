@@ -74,6 +74,7 @@ public class WidgetTypeController extends AutoCommitController {
             "Those properties are useful to edit the Widget Type but they are not required for Dashboard rendering. ";
     private static final String WIDGET_TYPE_INFO_DESCRIPTION = "Widget Type Info is a lightweight object that represents Widget Type but does not contain the heavyweight widget descriptor JSON";
     private static final String TENANT_ONLY_PARAM_DESCRIPTION = "Optional boolean parameter indicating whether only tenant widget types should be returned";
+    private static final String FULL_SEARCH_PARAM_DESCRIPTION = "Optional boolean parameter indicating whether search widgets by description not only by name";
     private static final String UPDATE_EXISTING_BY_FQN_PARAM_DESCRIPTION = "Optional boolean parameter indicating whether to update existing widget type by FQN if present instead of creating new one";
 
     @ApiOperation(value = "Get Widget Type Details (getWidgetTypeById)",
@@ -163,15 +164,17 @@ public class WidgetTypeController extends AutoCommitController {
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder,
             @ApiParam(value = TENANT_ONLY_PARAM_DESCRIPTION)
-            @RequestParam(required = false) Boolean tenantOnly) throws ThingsboardException {
+            @RequestParam(required = false) Boolean tenantOnly,
+            @ApiParam(value = FULL_SEARCH_PARAM_DESCRIPTION)
+            @RequestParam(required = false) Boolean fullSearch) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
-            return checkNotNull(widgetTypeService.findSystemWidgetTypesByPageLink(getTenantId(), pageLink));
+            return checkNotNull(widgetTypeService.findSystemWidgetTypesByPageLink(getTenantId(), fullSearch != null && fullSearch, pageLink));
         } else {
             if (tenantOnly != null && tenantOnly) {
-                return checkNotNull(widgetTypeService.findTenantWidgetTypesByTenantIdAndPageLink(getTenantId(), pageLink));
+                return checkNotNull(widgetTypeService.findTenantWidgetTypesByTenantIdAndPageLink(getTenantId(), fullSearch != null && fullSearch, pageLink));
             } else {
-                return checkNotNull(widgetTypeService.findAllTenantWidgetTypesByTenantIdAndPageLink(getTenantId(), pageLink));
+                return checkNotNull(widgetTypeService.findAllTenantWidgetTypesByTenantIdAndPageLink(getTenantId(), fullSearch != null && fullSearch, pageLink));
             }
         }
     }

@@ -38,23 +38,29 @@ public interface WidgetTypeRepository extends JpaRepository<WidgetTypeDetailsEnt
     boolean existsByTenantIdAndId(UUID tenantId, UUID id);
 
     @Query("SELECT new org.thingsboard.server.dao.model.sql.WidgetTypeInfoEntity(wtd) FROM WidgetTypeDetailsEntity wtd WHERE wtd.tenantId = :systemTenantId " +
-            "AND LOWER(wtd.name) LIKE LOWER(CONCAT('%', :searchText, '%'))")
+            "AND (LOWER(wtd.name) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
+            "OR ((:fullSearch) IS TRUE AND LOWER(wtd.description) LIKE LOWER(CONCAT('%', :searchText, '%'))))")
     Page<WidgetTypeInfoEntity> findSystemWidgetTypes(@Param("systemTenantId") UUID systemTenantId,
                                                      @Param("searchText") String searchText,
+                                                     @Param("fullSearch") boolean fullSearch,
                                                      Pageable pageable);
 
     @Query("SELECT new org.thingsboard.server.dao.model.sql.WidgetTypeInfoEntity(wtd) FROM WidgetTypeDetailsEntity wtd WHERE wtd.tenantId IN (:tenantId, :nullTenantId) " +
-            "AND LOWER(wtd.name) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "AND (LOWER(wtd.name) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
+            "OR ((:fullSearch) IS TRUE AND LOWER(wtd.description) LIKE LOWER(CONCAT('%', :searchText, '%'))))")
     Page<WidgetTypeInfoEntity> findAllTenantWidgetTypesByTenantId(@Param("tenantId") UUID tenantId,
-                                                                 @Param("nullTenantId") UUID nullTenantId,
-                                                                 @Param("textSearch") String textSearch,
-                                                                 Pageable pageable);
+                                                                  @Param("nullTenantId") UUID nullTenantId,
+                                                                  @Param("searchText") String searchText,
+                                                                  @Param("fullSearch") boolean fullSearch,
+                                                                  Pageable pageable);
 
     @Query("SELECT new org.thingsboard.server.dao.model.sql.WidgetTypeInfoEntity(wtd) FROM WidgetTypeDetailsEntity wtd WHERE wtd.tenantId = :tenantId " +
-            "AND LOWER(wtd.name) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "AND (LOWER(wtd.name) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
+            "OR ((:fullSearch) IS TRUE AND LOWER(wtd.description) LIKE LOWER(CONCAT('%', :searchText, '%'))))")
     Page<WidgetTypeInfoEntity> findTenantWidgetTypesByTenantId(@Param("tenantId") UUID tenantId,
-                                                                 @Param("textSearch") String textSearch,
-                                                                 Pageable pageable);
+                                                               @Param("searchText") String searchText,
+                                                               @Param("fullSearch") boolean fullSearch,
+                                                               Pageable pageable);
 
     @Query("SELECT wtd FROM WidgetTypeDetailsEntity wtd WHERE wtd.tenantId = :tenantId " +
             "AND LOWER(wtd.name) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
