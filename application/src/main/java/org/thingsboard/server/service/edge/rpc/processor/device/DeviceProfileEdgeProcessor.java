@@ -88,7 +88,7 @@ public class DeviceProfileEdgeProcessor extends BaseDeviceProfileProcessor {
             DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileById(tenantId, deviceProfileId);
             String deviceProfileAsString = JacksonUtil.toString(deviceProfile);
             TbMsgMetaData msgMetaData = getEdgeActionTbMsgMetaData(edge, null);
-            pushEntityCreatedEventToRuleEngine(tenantId, deviceProfileId, null, deviceProfileAsString, msgMetaData);
+            pushEntityEventToRuleEngine(tenantId, deviceProfileId, null, TbMsgType.ENTITY_CREATED, deviceProfileAsString, msgMetaData);
         } catch (Exception e) {
             log.warn("[{}][{}] Failed to push device profile action to rule engine: {}", tenantId, deviceProfileId, TbMsgType.ENTITY_CREATED.name(), e);
         }

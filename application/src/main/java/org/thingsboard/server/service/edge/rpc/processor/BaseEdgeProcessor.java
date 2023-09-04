@@ -581,18 +581,18 @@ public abstract class BaseEdgeProcessor {
         return metaData;
     }
 
-    protected void pushEntityCreatedEventToRuleEngine(TenantId tenantId, EntityId entityId, CustomerId customerId,
-                                                      String entity, TbMsgMetaData metaData) {
-        TbMsg tbMsg = TbMsg.newMsg(TbMsgType.ENTITY_CREATED, entityId, customerId, metaData, TbMsgDataType.JSON, entity);
+    protected void pushEntityEventToRuleEngine(TenantId tenantId, EntityId entityId, CustomerId customerId,
+                                               TbMsgType msgType, String msgData, TbMsgMetaData metaData) {
+        TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, customerId, metaData, TbMsgDataType.JSON, msgData);
         tbClusterService.pushMsgToRuleEngine(tenantId, entityId, tbMsg, new TbQueueCallback() {
             @Override
             public void onSuccess(TbQueueMsgMetadata metadata) {
-                log.debug("[{}] Successfully send ENTITY_CREATED EVENT to rule engine [{}]", tenantId, entity);
+                log.debug("[{}] Successfully send ENTITY_CREATED EVENT to rule engine [{}]", tenantId, msgData);
             }
 
             @Override
             public void onFailure(Throwable t) {
-                log.warn("[{}] Failed to send ENTITY_CREATED EVENT to rule engine [{}]", tenantId, entity, t);
+                log.warn("[{}] Failed to send ENTITY_CREATED EVENT to rule engine [{}]", tenantId, msgData, t);
             }
         });
     }

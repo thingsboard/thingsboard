@@ -100,7 +100,7 @@ public class AssetEdgeProcessor extends BaseAssetProcessor {
             Asset asset = assetService.findAssetById(tenantId, assetId);
             String assetAsString = JacksonUtil.toString(asset);
             TbMsgMetaData msgMetaData = getEdgeActionTbMsgMetaData(edge, asset.getCustomerId());
-            pushEntityCreatedEventToRuleEngine(tenantId, assetId, asset.getCustomerId(), assetAsString, msgMetaData);
+            pushEntityEventToRuleEngine(tenantId, assetId, asset.getCustomerId(), TbMsgType.ENTITY_CREATED, assetAsString, msgMetaData);
         } catch (Exception e) {
             log.warn("[{}][{}] Failed to push asset action to rule engine: {}", tenantId, assetId, TbMsgType.ENTITY_CREATED.name(), e);
         }

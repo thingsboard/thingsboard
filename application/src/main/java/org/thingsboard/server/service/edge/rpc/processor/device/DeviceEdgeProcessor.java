@@ -115,7 +115,7 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
             Device device = deviceService.findDeviceById(tenantId, deviceId);
             String deviceAsString = JacksonUtil.toString(device);
             TbMsgMetaData msgMetaData = getEdgeActionTbMsgMetaData(edge, device.getCustomerId());
-            pushEntityCreatedEventToRuleEngine(tenantId, deviceId, device.getCustomerId(), deviceAsString, msgMetaData);
+            pushEntityEventToRuleEngine(tenantId, deviceId, device.getCustomerId(), TbMsgType.ENTITY_CREATED, deviceAsString, msgMetaData);
         } catch (Exception e) {
             log.warn("[{}][{}] Failed to push device action to rule engine: {}", tenantId, deviceId, TbMsgType.ENTITY_CREATED.name(), e);
         }
