@@ -42,7 +42,7 @@ import cssjs from '@core/css/css';
 import { sortItems } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 import { CollectionViewer, DataSource, SelectionModel } from '@angular/cdk/collections';
-import { BehaviorSubject, forkJoin, merge, Observable, Subject, Subscription } from 'rxjs';
+import { BehaviorSubject, forkJoin, fromEvent, merge, Observable, Subject, Subscription } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { debounceTime, distinctUntilChanged, map, take, takeUntil, tap } from 'rxjs/operators';
 import { MatPaginator } from '@angular/material/paginator';
@@ -123,6 +123,7 @@ import {
 } from '@home/components/alarm/alarm-filter-config.component';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { FormBuilder } from '@angular/forms';
+import { DEFAULT_OVERLAY_POSITIONS } from '@shared/models/overlay.models';
 
 interface AlarmsTableWidgetSettings extends TableWidgetSettings {
   alarmsTitle: string;
@@ -572,14 +573,9 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       height: 'fit-content',
       maxHeight: '75vh'
     });
-    const connectedPosition: ConnectedPosition = {
-      originX: 'end',
-      originY: 'bottom',
-      overlayX: 'end',
-      overlayY: 'top'
-    };
-    config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
-      .withPositions([connectedPosition]);
+    config.positionStrategy = this.overlay.position()
+      .flexibleConnectedTo(target as HTMLElement)
+      .withPositions(DEFAULT_OVERLAY_POSITIONS);
 
     const overlayRef = this.overlay.create(config);
     overlayRef.backdropClick().subscribe(() => {
@@ -614,10 +610,12 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     const componentRef = overlayRef.attach(new ComponentPortal(AlarmFilterConfigComponent,
       this.viewContainerRef, injector));
 
-    const resizeWindows = this.utils.updateOverlayMaxHeigth(overlayRef, componentRef.location);
+    const resizeWindows$ = fromEvent(window, 'resize').subscribe(() => {
+      overlayRef.updatePosition();
+    });
 
     componentRef.onDestroy(() => {
-      resizeWindows.unsubscribe();
+      resizeWindows$.unsubscribe();
       if (componentRef.instance.panelResult) {
         const result = componentRef.instance.panelResult;
         const alarmFilter = this.entityService.resolveAlarmFilter(result, false);
