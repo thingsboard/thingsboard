@@ -34,8 +34,8 @@ public class TbMsgAttributesNodeConfiguration implements NodeConfiguration<TbMsg
         configuration.setScope(DataConstants.SERVER_SCOPE);
         configuration.setNotifyDevice(false);
         configuration.setSendAttributesUpdatedNotification(false);
-        // backward compatibility for existing tenants, but rule chain templates will have the true value for new tenants
-        configuration.setUpdateAttributesOnValueChange(false);
+        //Since version 1. For an existing rule nodes for version 0. See the TbVersionedNode implementation
+        configuration.setUpdateAttributesOnValueChange(true);
         return configuration;
     }
 }
