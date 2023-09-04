@@ -2063,7 +2063,7 @@
         "help-text": "Use '%' according to need: '%entity_name_contains%', '%entity_name_ends', 'entity_starts_with'.",
         "use-entity-name-filter": "Use filter",
         "entity-list-empty": "No entities selected.",
-        "entity-type-list-empty": "No entity types selected.",
+        "entity-type-list-required": "At least one entity type should be selected.",
         "entity-name-filter-required": "Entity name filter is required.",
         "entity-name-filter-no-entity-matched": "No entities starting with '{{entity}}' were found.",
         "all-subtypes": "All",

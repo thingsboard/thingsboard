@@ -1956,7 +1956,6 @@
         "help-text": "根据需要可以使用'%'进行匹配，例如：'%entity_name_contains%', '%entity_name_ends', 'entity_starts_with'。",
         "use-entity-name-filter": "用户筛选器",
         "entity-list-empty": "没有选择实体。",
-        "entity-type-list-empty": "没有选择实体类型。",
         "entity-name-filter-required": "实体名筛选器必填。",
         "entity-name-filter-no-entity-matched": "未找到以 '{{entity}}' 开头的实体",
         "all-subtypes": "全部",
