@@ -15,15 +15,12 @@
  */
 package org.thingsboard.server.service.edge.rpc.processor.dashboard;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -32,14 +29,11 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
-import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.TbMsgDataType;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
-import org.thingsboard.server.queue.TbQueueCallback;
-import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.Set;
@@ -96,22 +90,11 @@ public class DashboardEdgeProcessor extends BaseDashboardProcessor {
     private void pushDashboardCreatedEventToRuleEngine(TenantId tenantId, Edge edge, DashboardId dashboardId) {
         try {
             Dashboard dashboard = dashboardService.findDashboardById(tenantId, dashboardId);
-            ObjectNode entityNode = JacksonUtil.OBJECT_MAPPER.valueToTree(dashboard);
-            TbMsg tbMsg = TbMsg.newMsg(TbMsgType.ENTITY_CREATED, dashboardId, null,
-                    getActionTbMsgMetaData(edge, null), TbMsgDataType.JSON, JacksonUtil.OBJECT_MAPPER.writeValueAsString(entityNode));
-            tbClusterService.pushMsgToRuleEngine(tenantId, dashboardId, tbMsg, new TbQueueCallback() {
-                @Override
-                public void onSuccess(TbQueueMsgMetadata metadata) {
-                    log.debug("[{}] Successfully send ENTITY_CREATED EVENT to rule engine [{}]", tenantId, dashboard);
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    log.warn("[{}] Failed to send ENTITY_CREATED EVENT to rule engine [{}]", tenantId, dashboard, t);
-                }
-            });
-        } catch (JsonProcessingException | IllegalArgumentException e) {
-            log.warn("[{}][{}] Failed to push dashboard action to rule engine: {}", tenantId, dashboardId, DataConstants.ENTITY_CREATED, e);
+            String dashboardAsString = JacksonUtil.toString(dashboard);
+            TbMsgMetaData msgMetaData = getEdgeActionTbMsgMetaData(edge, null);
+            pushEntityCreatedEventToRuleEngine(tenantId, dashboardId, null, dashboardAsString, msgMetaData);
+        } catch (Exception e) {
+            log.warn("[{}][{}] Failed to push dashboard action to rule engine: {}", tenantId, dashboardId, TbMsgType.ENTITY_CREATED.name(), e);
         }
     }
 

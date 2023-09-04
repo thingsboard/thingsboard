@@ -15,15 +15,12 @@
  */
 package org.thingsboard.server.service.edge.rpc.processor.device;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -35,14 +32,11 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
-import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.TbMsgDataType;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
-import org.thingsboard.server.queue.TbQueueCallback;
-import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.UUID;
@@ -92,22 +86,11 @@ public class DeviceProfileEdgeProcessor extends BaseDeviceProfileProcessor {
     private void pushDeviceProfileCreatedEventToRuleEngine(TenantId tenantId, Edge edge, DeviceProfileId deviceProfileId) {
         try {
             DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileById(tenantId, deviceProfileId);
-            ObjectNode entityNode = JacksonUtil.OBJECT_MAPPER.valueToTree(deviceProfile);
-            TbMsg tbMsg = TbMsg.newMsg(TbMsgType.ENTITY_CREATED, deviceProfileId, getTbMsgMetaData(edge),
-                    TbMsgDataType.JSON, JacksonUtil.OBJECT_MAPPER.writeValueAsString(entityNode));
-            tbClusterService.pushMsgToRuleEngine(tenantId, deviceProfileId, tbMsg, new TbQueueCallback() {
-                @Override
-                public void onSuccess(TbQueueMsgMetadata metadata) {
-                    log.debug("[{}] Successfully send ENTITY_CREATED EVENT to rule engine [{}]", tenantId, deviceProfile);
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    log.warn("[{}] Failed to send ENTITY_CREATED EVENT to rule engine [{}]", tenantId, deviceProfile, t);
-                }
-            });
-        } catch (JsonProcessingException | IllegalArgumentException e) {
-            log.warn("[{}][{}] Failed to push device profile action to rule engine: {}", tenantId, deviceProfileId, DataConstants.ENTITY_CREATED, e);
+            String deviceProfileAsString = JacksonUtil.toString(deviceProfile);
+            TbMsgMetaData msgMetaData = getEdgeActionTbMsgMetaData(edge, null);
+            pushEntityCreatedEventToRuleEngine(tenantId, deviceProfileId, null, deviceProfileAsString, msgMetaData);
+        } catch (Exception e) {
+            log.warn("[{}][{}] Failed to push device profile action to rule engine: {}", tenantId, deviceProfileId, TbMsgType.ENTITY_CREATED.name(), e);
         }
     }
 
