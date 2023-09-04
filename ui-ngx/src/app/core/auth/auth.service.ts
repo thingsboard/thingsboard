@@ -27,7 +27,12 @@ import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from 
 import { UserService } from '../http/user.service';
 import { Store } from '@ngrx/store';
 import { AppState } from '../core.state';
-import { ActionAuthAuthenticated, ActionAuthLoadUser, ActionAuthUnauthenticated } from './auth.actions';
+import {
+  ActionAuthAuthenticated,
+  ActionAuthLoadUser,
+  ActionAuthUnauthenticated,
+  ActionAuthUpdateAuthUser
+} from './auth.actions';
 import { getCurrentAuthState, getCurrentAuthUser } from './auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { ActionSettingsChangeLanguage } from '@app/core/settings/settings.actions';
@@ -480,6 +485,7 @@ export class AuthService {
             } else {
               this.updateAndValidateTokens(loginResponse.token, loginResponse.refreshToken, true);
             }
+            this.updatedAuthUserFromToken(loginResponse.token);
             this.refreshTokenSubject.next(loginResponse);
             this.refreshTokenSubject.complete();
             this.refreshTokenSubject = null;
@@ -491,6 +497,18 @@ export class AuthService {
         }
     }
     return response;
+  }
+
+  private updatedAuthUserFromToken(token: string) {
+    const authUser = getCurrentAuthUser(this.store);
+    const tokenData = this.jwtHelper.decodeToken(token);
+    if (['sub', 'firstName', 'lastName'].some(value => authUser[value] !== tokenData[value])) {
+      this.store.dispatch(new ActionAuthUpdateAuthUser({
+        sub: tokenData.sub,
+        firstName: tokenData.firstName,
+        lastName: tokenData.lastName,
+      }));
+    }
   }
 
   private validateJwtToken(doRefresh): Observable<void> {
