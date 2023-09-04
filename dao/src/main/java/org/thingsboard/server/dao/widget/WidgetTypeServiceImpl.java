@@ -85,6 +85,21 @@ public class WidgetTypeServiceImpl extends AbstractEntityService implements Widg
     }
 
     @Override
+    public WidgetTypeDetails moveWidgetType(TenantId tenantId, WidgetTypeId widgetTypeId, String targetBundleAlias) {
+        log.trace("Executing moveWidgetType, widgetTypeId [{}], targetBundleAlias [{}]", widgetTypeId, targetBundleAlias);
+        Validator.validateId(widgetTypeId, "Incorrect widgetTypeId " + widgetTypeId);
+        WidgetTypeDetails widgetTypeDetails = widgetTypeDao.findById(tenantId, widgetTypeId.getId());
+        if (widgetTypeDetails != null && !widgetTypeDetails.getBundleAlias().equals(targetBundleAlias)) {
+            widgetTypeDetails.setBundleAlias(targetBundleAlias);
+            widgetTypeValidator.validate(widgetTypeDetails, WidgetType::getTenantId);
+            widgetTypeDetails = widgetTypeDao.save(widgetTypeDetails.getTenantId(), widgetTypeDetails);
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(widgetTypeDetails.getTenantId())
+                    .entityId(widgetTypeDetails.getId()).added(widgetTypeDetails.getId() == null).build());
+        }
+        return widgetTypeDetails;
+    }
+
+    @Override
     public void deleteWidgetType(TenantId tenantId, WidgetTypeId widgetTypeId) {
         log.trace("Executing deleteWidgetType [{}]", widgetTypeId);
         Validator.validateId(widgetTypeId, "Incorrect widgetTypeId " + widgetTypeId);
@@ -93,14 +108,15 @@ public class WidgetTypeServiceImpl extends AbstractEntityService implements Widg
     }
 
     @Override
-    public void setWidgetTypeDeprecated(TenantId tenantId, WidgetTypeId widgetTypeId, boolean deprecated) {
+    public WidgetTypeDetails setWidgetTypeDeprecated(TenantId tenantId, WidgetTypeId widgetTypeId, boolean deprecated) {
         log.trace("Executing setWidgetTypeDeprecated, widgetTypeId [{}], deprecated [{}]", widgetTypeId, deprecated);
         Validator.validateId(widgetTypeId, "Incorrect widgetTypeId " + widgetTypeId);
         WidgetTypeDetails widgetTypeDetails = widgetTypeDao.findById(tenantId, widgetTypeId.getId());
         if (widgetTypeDetails.isDeprecated() != deprecated) {
             widgetTypeDetails.setDeprecated(deprecated);
-            widgetTypeDao.save(widgetTypeDetails.getTenantId(), widgetTypeDetails);
+            widgetTypeDetails = widgetTypeDao.save(widgetTypeDetails.getTenantId(), widgetTypeDetails);
         }
+        return widgetTypeDetails;
     }
 
     @Override
@@ -117,6 +133,7 @@ public class WidgetTypeServiceImpl extends AbstractEntityService implements Widg
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         Validator.validateString(bundleAlias, INCORRECT_BUNDLE_ALIAS + bundleAlias);
         return widgetTypeDao.findWidgetTypesDetailsByTenantIdAndBundleAlias(tenantId.getId(), bundleAlias);
+
     }
 
     @Override

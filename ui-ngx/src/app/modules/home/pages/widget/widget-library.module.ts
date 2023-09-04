@@ -25,6 +25,7 @@ import { WidgetEditorComponent } from '@home/pages/widget/widget-editor.componen
 import { SelectWidgetTypeDialogComponent } from '@home/pages/widget/select-widget-type-dialog.component';
 import { SaveWidgetTypeAsDialogComponent } from './save-widget-type-as-dialog.component';
 import { WidgetsBundleTabsComponent } from '@home/pages/widget/widgets-bundle-tabs.component';
+import { MoveWidgetTypeDialogComponent } from '@home/pages/widget/move-widget-type-dialog.component';
 
 @NgModule({
   declarations: [
@@ -33,6 +34,7 @@ import { WidgetsBundleTabsComponent } from '@home/pages/widget/widgets-bundle-ta
     WidgetEditorComponent,
     SelectWidgetTypeDialogComponent,
     SaveWidgetTypeAsDialogComponent,
+    MoveWidgetTypeDialogComponent,
     WidgetsBundleTabsComponent
   ],
   imports: [

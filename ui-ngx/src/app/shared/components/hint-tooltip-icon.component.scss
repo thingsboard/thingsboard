@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 :host {
-  display: block;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
 
-  tb-json-object-edit.tb-rule-node-configuration-json {
-    display: block;
-    height: 300px;
-  }
-
-  .tb-rulenode-directive-error {
-    font-size: 13px;
-    font-weight: 400;
-    color: rgb(221, 44, 0);
+  .tb-hint-tooltip-icon {
+    color: #E0E0E0;
+    overflow: visible;
+    &:hover {
+      color: #9E9E9E;
+    }
   }
 }

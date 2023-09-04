@@ -698,6 +698,7 @@ export interface WidgetInfo {
   title: string;
   image?: string;
   description?: string;
+  deprecated?: boolean;
 }
 
 export interface GroupInfo {

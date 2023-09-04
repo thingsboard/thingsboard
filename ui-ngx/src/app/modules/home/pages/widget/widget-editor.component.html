@@ -63,8 +63,17 @@
               [tb-circular-progress]="saveWidgetAsPending"
               matTooltip="{{ 'widget.saveAs' | translate }} (Shift + CTRL + S)"
               matTooltipPosition="below">
-        <mat-icon>save</mat-icon>
+        <mat-icon>save_as</mat-icon>
         <span translate>action.saveAs</span>
+      </button>
+      <button mat-raised-button
+              fxHide.lt-md [disabled]="(isLoading$ | async) || moveDisabled()"
+              (click)="moveWidget()"
+              [tb-circular-progress]="moveWidgetPending"
+              matTooltip="{{ 'widget.move' | translate }} (Shift + CTRL + M)"
+              matTooltipPosition="below">
+        <tb-icon matButtonIcon>mdi:content-save-move</tb-icon>
+        <span translate>action.move</span>
       </button>
       <button mat-button
               fxHide.lt-lg
@@ -106,8 +115,14 @@
         <button mat-menu-item
                 [disabled]="(isLoading$ | async) || saveAsDisabled()"
                 (click)="saveWidgetAs()">
-          <mat-icon>save</mat-icon>
+          <mat-icon>save_as</mat-icon>
           <span translate>action.saveAs</span>
+        </button>
+        <button mat-menu-item
+                [disabled]="(isLoading$ | async) || moveDisabled()"
+                (click)="moveWidget()">
+          <tb-icon matMenuItemIcon>mdi:content-save-move</tb-icon>
+          <span translate>action.move</span>
         </button>
       </mat-menu>
     </mat-toolbar>
@@ -253,6 +268,11 @@
                                 rows="2" maxlength="255"></textarea>
                       <mat-hint align="end">{{descriptionInput.value?.length || 0}}/255</mat-hint>
                     </mat-form-field>
+                    <mat-slide-toggle class="mat-block" style="padding-bottom: 16px;"
+                                      [(ngModel)]="widget.deprecated"
+                                      (ngModelChange)="isDirty = true">
+                      {{ 'widget.deprecated' | translate }}
+                    </mat-slide-toggle>
                     <mat-form-field class="mat-block">
                       <mat-label translate>widget.settings-form-selector</mat-label>
                       <input matInput

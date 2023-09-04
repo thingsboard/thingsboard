@@ -198,6 +198,7 @@ import { UnitInputComponent } from '@shared/components/unit-input.component';
 import { MaterialIconsComponent } from '@shared/components/material-icons.component';
 import { ColorPickerPanelComponent } from '@shared/components/color-picker/color-picker-panel.component';
 import { TbIconComponent } from '@shared/components/icon.component';
+import { HintTooltipIconComponent } from '@shared/components/hint-tooltip-icon.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -375,7 +376,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     UnitInputComponent,
     MaterialIconsComponent,
     RuleChainSelectComponent,
-    TbIconComponent
+    TbIconComponent,
+    HintTooltipIconComponent
   ],
   imports: [
     CommonModule,
@@ -609,7 +611,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     UnitInputComponent,
     MaterialIconsComponent,
     RuleChainSelectComponent,
-    TbIconComponent
+    TbIconComponent,
+    HintTooltipIconComponent
   ]
 })
 export class SharedModule { }
