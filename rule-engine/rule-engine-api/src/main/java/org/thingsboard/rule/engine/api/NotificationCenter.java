@@ -22,6 +22,8 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
+import org.thingsboard.server.common.data.notification.targets.platform.UsersFilter;
+import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 
 import java.util.Set;
 import java.util.function.Consumer;
@@ -29,6 +31,8 @@ import java.util.function.Consumer;
 public interface NotificationCenter {
 
     NotificationRequest processNotificationRequest(TenantId tenantId, NotificationRequest notificationRequest, Consumer<NotificationRequestStats> callback);
+
+    void sendGeneralWebNotification(TenantId tenantId, UsersFilter recipients, NotificationTemplate template);
 
     void deleteNotificationRequest(TenantId tenantId, NotificationRequestId notificationRequestId);
 
