@@ -15,6 +15,8 @@
  */
 package org.thingsboard.rule.engine.telemetry;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -26,11 +28,13 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.TbVersionedNode;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 
@@ -51,6 +55,7 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_R
         type = ComponentType.ACTION,
         name = "save attributes",
         configClazz = TbMsgAttributesNodeConfiguration.class,
+        version = 1,
         nodeDescription = "Saves attributes data",
         nodeDetails = "Saves entity attributes based on configurable scope parameter. Expects messages with 'POST_ATTRIBUTES_REQUEST' message type. " +
                       "If upsert(update/insert) operation is completed successfully rule node will send the incoming message via <b>Success</b> chain, otherwise, <b>Failure</b> chain is used. " +
@@ -61,8 +66,9 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_R
         configDirective = "tbActionNodeAttributesConfig",
         icon = "file_upload"
 )
-public class TbMsgAttributesNode implements TbNode {
+public class TbMsgAttributesNode implements TbNode, TbVersionedNode {
 
+    static final String UPDATE_ATTRIBUTES_ON_VALUE_CHANGE_KEY = "updateAttributesOnValueChange";
     private TbMsgAttributesNodeConfiguration config;
 
     @Override
@@ -158,6 +164,21 @@ public class TbMsgAttributesNode implements TbNode {
             return mdScopeValue;
         }
         return config.getScope();
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0:
+                if (!oldConfiguration.has(UPDATE_ATTRIBUTES_ON_VALUE_CHANGE_KEY)) {
+                    hasChanges = true;
+                    ((ObjectNode) oldConfiguration).put(UPDATE_ATTRIBUTES_ON_VALUE_CHANGE_KEY, false);
+                }
+                break;
+            default:
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
     }
 
 }
