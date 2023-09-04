@@ -18,7 +18,6 @@ package org.thingsboard.server.dao.service;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -41,7 +40,7 @@ public class DataValidatorTest {
             "coffee", "1", "big box", "世界", "!", "--", "~!@#$%^&*()_+=-/|\\[]{};:'`\"?<>,.", "\uD83D\uDC0C", "\041",
             "Gdy Pomorze nie pomoże, to pomoże może morze, a gdy morze nie pomoże, to pomoże może Gdańsk",
     })
-    void testDeviceName_thenOK(final String name) {
+    void validateName_thenOK(final String name) {
         dataValidator.validateName("Device", name);
         dataValidator.validateName("Asset", name);
         dataValidator.validateName("Customer", name);
@@ -54,7 +53,7 @@ public class DataValidatorTest {
             "F0929906\000\000\000\000\000\000\000\000\000", "\000\000\000F0929906",
             "\u0000F0929906", "F092\u00009906", "F0929906\u0000"
     })
-    void testDeviceName_thenDataValidationException(final String name) {
+    void validateName_thenDataValidationException(final String name) {
         DataValidationException exception;
         exception = Assertions.assertThrows(DataValidationException.class, () -> dataValidator.validateName("Asset", name));
         log.warn("Exception message Asset: {}", exception.getMessage());
@@ -65,56 +64,21 @@ public class DataValidatorTest {
         assertThat(exception.getMessage()).as("message Device").containsPattern("Device .*name.*");
     }
 
-    @Test
-    public void validateEmail() {
-        String email = "aZ1_!#$%&'*+/=?`{|}~^.-@mail.io";
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "aZ1_!#$%&'*+/=?`{|}~^.-@mail.io", "support@thingsboard.io",
+    })
+    public void validateEmail(String email) {
         DataValidator.validateEmail(email);
     }
 
-    @Test
-    public void validateInvalidEmail1() {
-        String email = "test:1@mail.io";
-        Assertions.assertThrows(DataValidationException.class, () -> {
-            DataValidator.validateEmail(email);
-        });
-    }
-    @Test
-    public void validateInvalidEmail2() {
-        String email = "test()1@mail.io";
-        Assertions.assertThrows(DataValidationException.class, () -> {
-            DataValidator.validateEmail(email);
-        });
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "test:1@mail.io", "test()1@mail.io", "test[]1@mail.io",
+            "test\\1@mail.io", "test\"1@mail.io", "test<>1@mail.io",
+    })
+    public void validateEmailInvalid(String email) {
+        Assertions.assertThrows(DataValidationException.class, () -> DataValidator.validateEmail(email));
     }
 
-    @Test
-    public void validateInvalidEmail3() {
-        String email = "test[]1@mail.io";
-        Assertions.assertThrows(DataValidationException.class, () -> {
-            DataValidator.validateEmail(email);
-        });
-    }
-
-    @Test
-    public void validateInvalidEmail4() {
-        String email = "test\\1@mail.io";
-        Assertions.assertThrows(DataValidationException.class, () -> {
-            DataValidator.validateEmail(email);
-        });
-    }
-
-    @Test
-    public void validateInvalidEmail5() {
-        String email = "test\"1@mail.io";
-        Assertions.assertThrows(DataValidationException.class, () -> {
-            DataValidator.validateEmail(email);
-        });
-    }
-
-    @Test
-    public void validateInvalidEmail6() {
-        String email = "test<>1@mail.io";
-        Assertions.assertThrows(DataValidationException.class, () -> {
-            DataValidator.validateEmail(email);
-        });
-    }
 }
