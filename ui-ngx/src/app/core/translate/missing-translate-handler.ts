@@ -21,7 +21,7 @@ export class TbMissingTranslationHandler implements MissingTranslationHandler {
   handle(params: MissingTranslationHandlerParams) {
     if (params.key && !params.key.startsWith(customTranslationsPrefix)) {
       console.warn('Translation for \'' + params.key + '\' doesn\'t exist');
+      params.translateService.set(params.key, params.key);
     }
-    params.translateService.set(params.key, params.key);
   }
 }
