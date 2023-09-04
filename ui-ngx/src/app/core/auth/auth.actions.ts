@@ -57,7 +57,7 @@ export class ActionAuthUpdateUserDetails implements Action {
 export class ActionAuthUpdateAuthUser implements Action {
   readonly type = AuthActionTypes.UPDATE_AUTH_USER;
 
-  constructor(readonly payload: { authUser: AuthUser }) {}
+  constructor(readonly payload: Partial<AuthUser>) {}
 }
 
 export class ActionAuthUpdateLastPublicDashboardId implements Action {
