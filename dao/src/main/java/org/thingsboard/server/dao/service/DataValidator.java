@@ -86,6 +86,15 @@ public abstract class DataValidator<D extends BaseData<?>> {
     public void validateDelete(TenantId tenantId, EntityId entityId) {
     }
 
+    protected void validateName(String dataType, String name) {
+        if (StringUtils.isEmpty(name) || name.trim().length() == 0) {
+            throw new DataValidationException(dataType + " name should be specified!");
+        }
+        if (StringUtils.contains0x00(name)) {
+            throw new DataValidationException(dataType + " name should not contain 0x00 symbol!");
+        }
+    }
+
     protected boolean isSameData(D existentData, D actualData) {
         return actualData.getId() != null && existentData.getId().equals(actualData.getId());
     }

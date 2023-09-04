@@ -15,11 +15,55 @@
  */
 package org.thingsboard.server.dao.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.spy;
+
+@Slf4j
 public class DataValidatorTest {
+
+    DataValidator<?> dataValidator;
+
+    @BeforeEach
+    void setUp() {
+        dataValidator = spy(DataValidator.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "coffee", "1", "big box", "世界", "!", "--", "~!@#$%^&*()_+=-/|\\[]{};:'`\"?<>,.", "\uD83D\uDC0C", "\041",
+            "Gdy Pomorze nie pomoże, to pomoże może morze, a gdy morze nie pomoże, to pomoże może Gdańsk",
+    })
+    void testDeviceName_thenOK(final String name) {
+        dataValidator.validateName("Device", name);
+        dataValidator.validateName("Asset", name);
+        dataValidator.validateName("Customer", name);
+        dataValidator.validateName("Tenant", name);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "", " ", "  ", "\n", "\r\n", "\t", "\000", "\000\000", "\001", "\002", "\040", "\u0000", "\u0000\u0000",
+            "F0929906\000\000\000\000\000\000\000\000\000", "\000\000\000F0929906",
+            "\u0000F0929906", "F092\u00009906", "F0929906\u0000"
+    })
+    void testDeviceName_thenDataValidationException(final String name) {
+        DataValidationException exception;
+        exception = Assertions.assertThrows(DataValidationException.class, () -> dataValidator.validateName("Asset", name));
+        log.warn("Exception message Asset: {}", exception.getMessage());
+        assertThat(exception.getMessage()).as("message Asset").containsPattern("Asset .*name.*");
+
+        exception = Assertions.assertThrows(DataValidationException.class, () -> dataValidator.validateName("Device", name));
+        log.warn("Exception message Device: {}", exception.getMessage());
+        assertThat(exception.getMessage()).as("message Device").containsPattern("Device .*name.*");
+    }
 
     @Test
     public void validateEmail() {
