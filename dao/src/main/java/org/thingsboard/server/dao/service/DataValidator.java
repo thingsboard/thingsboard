@@ -86,12 +86,12 @@ public abstract class DataValidator<D extends BaseData<?>> {
     public void validateDelete(TenantId tenantId, EntityId entityId) {
     }
 
-    protected void validateName(String dataType, String name) {
+    protected void validateName(String exceptionPrefix, String name) {
         if (StringUtils.isEmpty(name) || name.trim().length() == 0) {
-            throw new DataValidationException(dataType + " name should be specified!");
+            throw new DataValidationException(exceptionPrefix + " should be specified!");
         }
         if (StringUtils.contains0x00(name)) {
-            throw new DataValidationException(dataType + " name should not contain 0x00 symbol!");
+            throw new DataValidationException(exceptionPrefix + " should not contain 0x00 symbol!");
         }
     }
 

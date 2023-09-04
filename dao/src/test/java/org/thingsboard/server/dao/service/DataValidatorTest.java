@@ -41,10 +41,12 @@ public class DataValidatorTest {
             "Gdy Pomorze nie pomoże, to pomoże może morze, a gdy morze nie pomoże, to pomoże może Gdańsk",
     })
     void validateName_thenOK(final String name) {
-        dataValidator.validateName("Device", name);
-        dataValidator.validateName("Asset", name);
-        dataValidator.validateName("Customer", name);
-        dataValidator.validateName("Tenant", name);
+        dataValidator.validateName("Device name", name);
+        dataValidator.validateName("Asset name", name);
+        dataValidator.validateName("Asset profile name", name);
+        dataValidator.validateName("Alarm type", name);
+        dataValidator.validateName("Customer name", name);
+        dataValidator.validateName("Tenant name", name);
     }
 
     @ParameterizedTest
@@ -55,13 +57,13 @@ public class DataValidatorTest {
     })
     void validateName_thenDataValidationException(final String name) {
         DataValidationException exception;
-        exception = Assertions.assertThrows(DataValidationException.class, () -> dataValidator.validateName("Asset", name));
-        log.warn("Exception message Asset: {}", exception.getMessage());
-        assertThat(exception.getMessage()).as("message Asset").containsPattern("Asset .*name.*");
+        exception = Assertions.assertThrows(DataValidationException.class, () -> dataValidator.validateName("Asset name", name));
+        log.warn("Exception message Asset name: {}", exception.getMessage());
+        assertThat(exception.getMessage()).as("message Asset name").containsPattern("Asset name .*");
 
-        exception = Assertions.assertThrows(DataValidationException.class, () -> dataValidator.validateName("Device", name));
-        log.warn("Exception message Device: {}", exception.getMessage());
-        assertThat(exception.getMessage()).as("message Device").containsPattern("Device .*name.*");
+        exception = Assertions.assertThrows(DataValidationException.class, () -> dataValidator.validateName("Device name", name));
+        log.warn("Exception message Device name: {}", exception.getMessage());
+        assertThat(exception.getMessage()).as("message Device name").containsPattern("Device name .*");
     }
 
     @ParameterizedTest

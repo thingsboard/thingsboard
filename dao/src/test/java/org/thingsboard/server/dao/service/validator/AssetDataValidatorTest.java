@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.service.validator;
 
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -31,8 +32,7 @@ import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.ThrowableAssert.catchThrowableOfType;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.willReturn;
 
 @SpringBootTest(classes = AssetDataValidator.class)
@@ -77,13 +77,9 @@ class AssetDataValidatorTest {
         asset.setTenantId(tenantId);
         asset.setName(name);
 
-        DataValidationException exception = catchThrowableOfType(() ->
-                validator.validateDataImpl(tenantId, asset), DataValidationException.class);
-        log.warn("Exception message: {}", exception == null ? null : exception.getMessage());
-
-        assertThatThrownBy(() -> validator.validateDataImpl(tenantId, asset))
-                .isInstanceOf(DataValidationException.class)
-                .hasMessageMatching(".*Asset.*");
+        DataValidationException exception = Assertions.assertThrows(DataValidationException.class, () -> validator.validateDataImpl(tenantId, asset));
+        log.warn("Exception message: {}", exception.getMessage());
+        assertThat(exception.getMessage()).as("message Asset name").containsPattern("Asset name .*");
     }
 
 }
