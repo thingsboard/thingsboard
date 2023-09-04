@@ -762,6 +762,7 @@ public final class EdgeGrpcSession implements Closeable {
         Optional<Edge> optional = ctx.getEdgeService().findEdgeByRoutingKey(TenantId.SYS_TENANT_ID, request.getEdgeRoutingKey());
         if (optional.isPresent()) {
             edge = optional.get();
+            this.tenantId = edge.getTenantId();
             try {
                 if (edge.getSecret().equals(request.getEdgeSecret())) {
                     sessionOpenListener.accept(edge.getId(), this);
