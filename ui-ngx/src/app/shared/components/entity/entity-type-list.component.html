@@ -56,6 +56,6 @@
     <ng-content select="[matSuffix]"></ng-content>
   </div>
   <mat-error *ngIf="entityTypeListFormGroup.get('entityTypeList').hasError('required')">
-    {{ 'entity.entity-type-list-empty' | translate }}
+    {{ 'entity.entity-type-list-required' | translate }}
   </mat-error>
 </mat-form-field>

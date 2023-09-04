@@ -330,7 +330,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
             WidgetsBundle widgetsBundleById = widgetsBundleService.findWidgetsBundleById(tenantId, widgetsBundleId);
             if (widgetsBundleById != null) {
                 List<WidgetType> widgetTypesToPush =
-                        widgetTypeService.findWidgetTypesByTenantIdAndBundleAlias(widgetsBundleById.getTenantId(), widgetsBundleById.getAlias());
+                        widgetTypeService.findWidgetTypesByWidgetsBundleId(widgetsBundleById.getTenantId(), widgetsBundleId);
                 for (WidgetType widgetType : widgetTypesToPush) {
                     futures.add(saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.WIDGET_TYPE, EdgeEventActionType.ADDED, widgetType.getId(), null));
                 }

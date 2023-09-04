@@ -15,31 +15,83 @@
  */
 package org.thingsboard.server.dao.sql.widget;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.WidgetTypeDetailsEntity;
 import org.thingsboard.server.dao.model.sql.WidgetTypeEntity;
+import org.thingsboard.server.dao.model.sql.WidgetTypeIdFqnEntity;
 import org.thingsboard.server.dao.model.sql.WidgetTypeInfoEntity;
+import org.thingsboard.server.dao.model.sql.WidgetsBundleEntity;
 
 import java.util.List;
 import java.util.UUID;
 
-public interface WidgetTypeRepository extends JpaRepository<WidgetTypeDetailsEntity, UUID> {
+public interface WidgetTypeRepository extends JpaRepository<WidgetTypeDetailsEntity, UUID>, ExportableEntityRepository<WidgetTypeDetailsEntity> {
 
     @Query("SELECT wt FROM WidgetTypeEntity wt WHERE wt.id = :widgetTypeId")
     WidgetTypeEntity findWidgetTypeById(@Param("widgetTypeId") UUID widgetTypeId);
 
-    @Query("SELECT wt FROM WidgetTypeEntity wt WHERE wt.tenantId = :tenantId AND wt.bundleAlias = :bundleAlias")
-    List<WidgetTypeEntity> findWidgetTypesByTenantIdAndBundleAlias(@Param("tenantId") UUID tenantId,
-                                                                   @Param("bundleAlias") String bundleAlias);
+    boolean existsByTenantIdAndId(UUID tenantId, UUID id);
 
-    @Query("SELECT new org.thingsboard.server.dao.model.sql.WidgetTypeInfoEntity(wtd) FROM WidgetTypeDetailsEntity wtd " +
-            "WHERE wtd.tenantId = :tenantId AND wtd.bundleAlias = :bundleAlias")
-    List<WidgetTypeInfoEntity> findWidgetTypesInfosByTenantIdAndBundleAlias(@Param("tenantId") UUID tenantId,
-                                                                            @Param("bundleAlias") String bundleAlias);
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.WidgetTypeInfoEntity(wtd) FROM WidgetTypeDetailsEntity wtd WHERE wtd.tenantId = :systemTenantId " +
+            "AND (LOWER(wtd.name) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
+            "OR ((:fullSearch) IS TRUE AND LOWER(wtd.description) LIKE LOWER(CONCAT('%', :searchText, '%'))))")
+    Page<WidgetTypeInfoEntity> findSystemWidgetTypes(@Param("systemTenantId") UUID systemTenantId,
+                                                     @Param("searchText") String searchText,
+                                                     @Param("fullSearch") boolean fullSearch,
+                                                     Pageable pageable);
 
-    List<WidgetTypeDetailsEntity> findByTenantIdAndBundleAlias(UUID tenantId, String bundleAlias);
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.WidgetTypeInfoEntity(wtd) FROM WidgetTypeDetailsEntity wtd WHERE wtd.tenantId IN (:tenantId, :nullTenantId) " +
+            "AND (LOWER(wtd.name) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
+            "OR ((:fullSearch) IS TRUE AND LOWER(wtd.description) LIKE LOWER(CONCAT('%', :searchText, '%'))))")
+    Page<WidgetTypeInfoEntity> findAllTenantWidgetTypesByTenantId(@Param("tenantId") UUID tenantId,
+                                                                  @Param("nullTenantId") UUID nullTenantId,
+                                                                  @Param("searchText") String searchText,
+                                                                  @Param("fullSearch") boolean fullSearch,
+                                                                  Pageable pageable);
+
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.WidgetTypeInfoEntity(wtd) FROM WidgetTypeDetailsEntity wtd WHERE wtd.tenantId = :tenantId " +
+            "AND (LOWER(wtd.name) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
+            "OR ((:fullSearch) IS TRUE AND LOWER(wtd.description) LIKE LOWER(CONCAT('%', :searchText, '%'))))")
+    Page<WidgetTypeInfoEntity> findTenantWidgetTypesByTenantId(@Param("tenantId") UUID tenantId,
+                                                               @Param("searchText") String searchText,
+                                                               @Param("fullSearch") boolean fullSearch,
+                                                               Pageable pageable);
+
+    @Query("SELECT wtd FROM WidgetTypeDetailsEntity wtd WHERE wtd.tenantId = :tenantId " +
+            "AND LOWER(wtd.name) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+    Page<WidgetTypeDetailsEntity> findTenantWidgetTypeDetailsByTenantId(@Param("tenantId") UUID tenantId,
+                                                                        @Param("textSearch") String textSearch,
+                                                                        Pageable pageable);
+
+    @Query("SELECT wt FROM WidgetTypeEntity wt, WidgetsBundleWidgetEntity wbw " +
+            "WHERE wbw.widgetsBundleId = :widgetsBundleId " +
+            "AND wbw.widgetTypeId = wt.id ORDER BY wbw.widgetTypeOrder")
+    List<WidgetTypeEntity> findWidgetTypesByWidgetsBundleId(@Param("widgetsBundleId") UUID widgetsBundleId);
+
+    @Query("SELECT wtd FROM WidgetTypeDetailsEntity wtd, WidgetsBundleWidgetEntity wbw " +
+            "WHERE wbw.widgetsBundleId = :widgetsBundleId " +
+            "AND wbw.widgetTypeId = wtd.id ORDER BY wbw.widgetTypeOrder")
+    List<WidgetTypeDetailsEntity> findWidgetTypesDetailsByWidgetsBundleId(@Param("widgetsBundleId") UUID widgetsBundleId);
+
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.WidgetTypeInfoEntity(wtd) FROM WidgetTypeDetailsEntity wtd, WidgetsBundleWidgetEntity wbw " +
+            "WHERE wbw.widgetsBundleId = :widgetsBundleId " +
+            "AND wbw.widgetTypeId = wtd.id ORDER BY wbw.widgetTypeOrder")
+    List<WidgetTypeInfoEntity> findWidgetTypesInfosByWidgetsBundleId(@Param("widgetsBundleId") UUID widgetsBundleId);
+
+    @Query("SELECT wtd.fqn FROM WidgetTypeDetailsEntity wtd, WidgetsBundleWidgetEntity wbw " +
+            "WHERE wbw.widgetsBundleId = :widgetsBundleId " +
+            "AND wbw.widgetTypeId = wtd.id ORDER BY wbw.widgetTypeOrder")
+    List<String> findWidgetFqnsByWidgetsBundleId(@Param("widgetsBundleId") UUID widgetsBundleId);
+
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.WidgetTypeIdFqnEntity(wtd.id, wtd.fqn) FROM WidgetTypeDetailsEntity wtd " +
+            "WHERE wtd.tenantId = :tenantId " +
+            "AND wtd.fqn IN (:widgetFqns)")
+    List<WidgetTypeIdFqnEntity> findWidgetTypeIdsByTenantIdAndFqns(@Param("tenantId") UUID tenantId, @Param("widgetFqns") List<String> widgetFqns);
 
     @Query("SELECT wt FROM WidgetTypeEntity wt " +
             "WHERE wt.tenantId = :tenantId AND wt.fqn = :fqn")
@@ -51,5 +103,8 @@ public interface WidgetTypeRepository extends JpaRepository<WidgetTypeDetailsEnt
     nativeQuery = true)
     List<WidgetTypeDetailsEntity> findWidgetTypesInfosByTenantIdAndResourceId(@Param("tenantId") UUID tenantId,
                                                                     @Param("resourceId") UUID resourceId);
+
+    @Query("SELECT externalId FROM WidgetTypeDetailsEntity WHERE id = :id")
+    UUID getExternalIdById(@Param("id") UUID id);
 
 }

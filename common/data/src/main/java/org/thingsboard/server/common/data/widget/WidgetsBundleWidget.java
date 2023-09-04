@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  button.tb-add-new-widget {
-    height: auto;
-    padding-right: 12px;
-    font-size: 24px;
-    border-style: dashed;
-    border-width: 2px;
-  }
-}
+package org.thingsboard.server.common.data.widget;
 
-:host ::ng-deep {
-  .tb-widget-library {
-    .tb-widget-container {
-      cursor: pointer;
-    }
-  }
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.id.WidgetTypeId;
+import org.thingsboard.server.common.data.id.WidgetsBundleId;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class WidgetsBundleWidget {
+
+    private WidgetsBundleId widgetsBundleId;
+    private WidgetTypeId widgetTypeId;
+    private int widgetTypeOrder;
+
 }

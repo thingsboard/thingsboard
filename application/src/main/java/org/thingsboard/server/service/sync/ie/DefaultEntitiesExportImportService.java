@@ -68,7 +68,7 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
             EntityType.CUSTOMER, EntityType.RULE_CHAIN, EntityType.DASHBOARD,
             EntityType.ASSET_PROFILE, EntityType.ASSET,
             EntityType.DEVICE_PROFILE, EntityType.DEVICE,
-            EntityType.ENTITY_VIEW, EntityType.WIDGETS_BUNDLE,
+            EntityType.ENTITY_VIEW, EntityType.WIDGET_TYPE, EntityType.WIDGETS_BUNDLE,
             EntityType.NOTIFICATION_TEMPLATE, EntityType.NOTIFICATION_TARGET, EntityType.NOTIFICATION_RULE
     );
 

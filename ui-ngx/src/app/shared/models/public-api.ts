@@ -44,6 +44,8 @@ export * from './notification.models';
 export * from './websocket/notification-ws.models';
 export * from './websocket/websocket.models';
 export * from './oauth2.models';
+export * from './ota-package.models';
+export * from './overlay.models';
 export * from './queue.models';
 export * from './relation.models';
 export * from './resource.models';

@@ -355,19 +355,19 @@ message WidgetsBundleUpdateMsg {
   optional bytes image = 6;
   bool isSystem = 7;
   optional string description = 8;
+  optional string widgets = 9;
 }
 
 message WidgetTypeUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  optional string bundleAlias = 4;
-  optional string fqn = 5;
-  optional string name = 6;
-  optional string descriptorJson = 7;
-  bool isSystem = 8;
-  optional string image = 9;
-  optional string description = 10;
+  optional string fqn = 4;
+  optional string name = 5;
+  optional string descriptorJson = 6;
+  bool isSystem = 7;
+  optional string image = 8;
+  optional string description = 9;
 }
 
 message AdminSettingsUpdateMsg {

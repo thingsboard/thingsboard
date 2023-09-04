@@ -54,7 +54,6 @@ public class WidgetEdgeTest extends AbstractEdgeTest {
         edgeImitator.expectMessageAmount(1);
         WidgetType widgetType = new WidgetType();
         widgetType.setName("Test Widget Type");
-        widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
         ObjectNode descriptor = JacksonUtil.newObjectNode();
         descriptor.put("key", "value");
         widgetType.setDescriptor(descriptor);

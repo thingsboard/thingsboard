@@ -1,0 +1,15 @@
+{
+  "widgetsBundle": {
+    "alias": "html_widgets",
+    "title": "HTML widgets",
+    "image": null,
+    "description": null,
+    "externalId": null,
+    "name": "HTML widgets"
+  },
+  "widgetTypeFqns": [
+    "cards.html_card",
+    "cards.html_value_card",
+    "cards.markdown_card"
+  ]
+}

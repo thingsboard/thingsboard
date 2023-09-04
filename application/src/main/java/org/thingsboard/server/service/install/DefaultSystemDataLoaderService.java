@@ -99,6 +99,7 @@ import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 
@@ -135,6 +136,9 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     @Autowired
     private AdminSettingsService adminSettingsService;
+
+    @Autowired
+    private WidgetTypeService widgetTypeService;
 
     @Autowired
     private WidgetsBundleService widgetsBundleService;
@@ -485,6 +489,10 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     public void deleteSystemWidgetBundle(String bundleAlias) throws Exception {
         WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(TenantId.SYS_TENANT_ID, bundleAlias);
         if (widgetsBundle != null) {
+            var widgetTypes = widgetTypeService.findWidgetTypesInfosByWidgetsBundleId(TenantId.SYS_TENANT_ID, widgetsBundle.getId());
+            for (var widgetType : widgetTypes) {
+                widgetTypeService.deleteWidgetType(TenantId.SYS_TENANT_ID, widgetType.getId());
+            }
             widgetsBundleService.deleteWidgetsBundle(TenantId.SYS_TENANT_ID, widgetsBundle.getId());
         }
     }
@@ -512,6 +520,9 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         this.deleteSystemWidgetBundle("navigation_widgets");
         this.deleteSystemWidgetBundle("edge_widgets");
         this.deleteSystemWidgetBundle("home_page_widgets");
+        this.deleteSystemWidgetBundle("entity_widgets");
+        this.deleteSystemWidgetBundle("html_widgets");
+        this.deleteSystemWidgetBundle("tables");
         installScripts.loadSystemWidgets();
     }
 

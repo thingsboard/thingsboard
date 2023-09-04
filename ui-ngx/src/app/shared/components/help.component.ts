@@ -18,13 +18,11 @@ import { Component, Input } from '@angular/core';
 import { HelpLinks } from '@shared/models/constants';
 
 @Component({
-  // eslint-disable-next-line @angular-eslint/component-selector
   selector: '[tb-help]',
   templateUrl: './help.component.html'
 })
 export class HelpComponent {
 
-  // eslint-disable-next-line @angular-eslint/no-input-rename
   @Input('tb-help') helpLinkId: string;
 
   gotoHelpPage(): void {

@@ -89,10 +89,6 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
   addNewProfile = true;
 
   @Input()
-  @coerceBoolean()
-  showCreateNewButton = false;
-
-  @Input()
   showDetailsPageLink = false;
 
   @Input()

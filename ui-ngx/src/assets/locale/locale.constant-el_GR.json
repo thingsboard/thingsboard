@@ -876,7 +876,6 @@
     "name-starts-with": "το όνομα αρχίζει από",
     "use-entity-name-filter": "χρήση φίλτρου",
     "entity-list-empty": "Δεν έχουν επιλεγεί οντότητες.",
-    "entity-type-list-empty": "Δεν έχουν επιλεγεί τύποι οντότητας.",
     "entity-name-filter-required": "Απαιτείται φίλτρο ονόματος οντότητας.",
     "entity-name-filter-no-entity-matched": "Δεν βρέθηκαν οντότητες οι οποίες αρχίζουν από '{{entity}}'.",
     "all-subtypes": "Όλοι",
