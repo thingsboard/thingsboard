@@ -282,13 +282,11 @@ public class InstallScripts {
                             doSaveLwm2mResource(tbResource);
                         } catch (Exception e) {
                             log.error("Unable to load resource lwm2m object model from file: [{}]", path.toString());
-                            throw new RuntimeException("resource lwm2m object model from file", e);
                         }
                     }
             );
         } catch (Exception e) {
             log.error("Unable to load resources lwm2m object model from file: [{}]", resourceLwm2mPath.toString());
-            throw new RuntimeException("resource lwm2m object model from file", e);
         }
     }
 
