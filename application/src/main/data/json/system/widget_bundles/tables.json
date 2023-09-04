@@ -8,7 +8,8 @@
     "name": "Tables"
   },
   "widgetTypeFqns": [
-    "cards.timeseries_table",
-    "cards.entities_table"
+    "cards.entities_table",
+    "alarm_widgets.alarms_table",
+    "cards.timeseries_table"
   ]
 }

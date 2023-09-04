@@ -8,14 +8,17 @@
     "name": "Maps"
   },
   "widgetTypeFqns": [
-    "maps_v2.route_map_tencent_maps",
-    "maps_v2.test",
-    "maps_v2.route_map",
-    "maps_v2.route_map_openstreetmap",
-    "maps_v2.tencent_maps",
-    "maps_v2.here_map",
-    "maps_v2.image_map",
+    "maps_v2.openstreetmap",
     "maps_v2.google_maps",
-    "maps_v2.openstreetmap"
+    "maps_v2.image_map",
+    "maps_v2.here_map",
+    "maps_v2.tencent_maps",
+    "maps_v2.test",
+    "maps_v2.route_map_openstreetmap",
+    "maps_v2.route_map",
+    "maps_v2.route_map_tencent_maps",
+    "input_widgets.markers_placement_openstreetmap",
+    "input_widgets.markers_placement_google_maps",
+    "input_widgets.markers_placement_image_map"
   ]
 }

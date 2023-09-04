@@ -8,10 +8,10 @@
     "name": "Analogue gauges"
   },
   "widgetTypeFqns": [
-    "analogue_gauges.analogue_compass",
-    "analogue_gauges.temperature_gauge_canvas_gauges",
     "analogue_gauges.temperature_radial_gauge_canvas_gauges",
+    "analogue_gauges.temperature_gauge_canvas_gauges",
     "analogue_gauges.speed_gauge_canvas_gauges",
-    "analogue_gauges.radial_gauge_canvas_gauges"
+    "analogue_gauges.radial_gauge_canvas_gauges",
+    "analogue_gauges.analogue_compass"
   ]
 }

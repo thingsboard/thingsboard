@@ -8,6 +8,7 @@
     "name": "Entity widgets"
   },
   "widgetTypeFqns": [
+    "cards.entities_table",
     "cards.entities_hierarchy"
   ]
 }

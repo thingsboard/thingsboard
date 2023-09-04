@@ -8,14 +8,15 @@
     "name": "Charts"
   },
   "widgetTypeFqns": [
+    "charts.basic_timeseries",
+    "charts.state_chart",
+    "charts.timeseries_bars_flot",
+    "cards.aggregated_value_card",
     "charts.bars",
-    "charts.doughnut_chart_js",
     "charts.pie",
     "charts.pie_chart_js",
+    "charts.doughnut_chart_js",
     "charts.polar_area_chart_js",
-    "charts.radar_chart_js",
-    "charts.state_chart",
-    "charts.basic_timeseries",
-    "charts.timeseries_bars_flot"
+    "charts.radar_chart_js"
   ]
 }

@@ -8,18 +8,18 @@
     "name": "Digital gauges"
   },
   "widgetTypeFqns": [
+    "digital_gauges.simple_gauge_justgage",
+    "digital_gauges.vertical_bar_justgage",
+    "digital_gauges.horizontal_bar_justgage",
     "digital_gauges.gauge_justgage",
+    "digital_gauges.mini_gauge_justgage",
     "digital_gauges.digital_thermometer",
     "digital_gauges.digital_speedometer",
+    "digital_gauges.digital_vertical_bar",
+    "digital_gauges.digital_bar",
+    "digital_gauges.simple_neon_gauge_justgage",
     "digital_gauges.neon_gauge_justgage",
     "digital_gauges.lcd_gauge",
-    "digital_gauges.lcd_bar_gauge",
-    "digital_gauges.simple_neon_gauge_justgage",
-    "digital_gauges.vertical_bar_justgage",
-    "digital_gauges.simple_gauge_justgage",
-    "digital_gauges.digital_bar",
-    "digital_gauges.mini_gauge_justgage",
-    "digital_gauges.horizontal_bar_justgage",
-    "digital_gauges.digital_vertical_bar"
+    "digital_gauges.lcd_bar_gauge"
   ]
 }

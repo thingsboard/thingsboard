@@ -8,15 +8,17 @@
     "name": "Control widgets"
   },
   "widgetTypeFqns": [
-    "control_widgets.rpc_debug_terminal",
-    "control_widgets.rpc_remote_shell",
-    "control_widgets.knob_control",
     "control_widgets.switch_control",
+    "control_widgets.slide_toggle_control",
     "control_widgets.round_switch",
     "control_widgets.led_indicator",
     "control_widgets.rpcbutton",
+    "control_widgets.knob_control",
     "control_widgets.update_attributes",
     "control_widgets.persistent_table",
-    "control_widgets.slide_toggle_control"
+    "control_widgets.rpc_debug_terminal",
+    "control_widgets.rpc_remote_shell",
+    "gpio_widgets.basic_gpio_control",
+    "gpio_widgets.raspberry_pi_gpio_control"
   ]
 }

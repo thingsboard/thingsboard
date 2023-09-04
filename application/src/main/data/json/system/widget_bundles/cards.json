@@ -8,13 +8,16 @@
     "name": "Cards"
   },
   "widgetTypeFqns": [
-    "cards.attributes_card",
-    "cards.simple_card",
-    "cards.label_widget",
-    "cards.qr_code",
-    "cards.dashboard_state_widget",
     "cards.value_card",
     "cards.horizontal_value_card",
-    "cards.aggregated_value_card"
+    "cards.aggregated_value_card",
+    "cards.label_widget",
+    "cards.dashboard_state_widget",
+    "cards.qr_code",
+    "cards.attributes_card",
+    "cards.html_card",
+    "cards.html_value_card",
+    "cards.markdown_card",
+    "cards.simple_card"
   ]
 }
