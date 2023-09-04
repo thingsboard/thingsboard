@@ -383,8 +383,8 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
-    public boolean removeAlarmTypes(UUID tenantId, Set<String> types) {
-        return alarmRepository.deleteTypeIfNoOneAlarmExists(tenantId, types) > 0;
+    public boolean removeAlarmTypesIfNoAlarmsPresent(UUID tenantId, Set<String> types) {
+        return alarmRepository.deleteTypeIfNoAlarmsExist(tenantId, types) > 0;
     }
 
     private static String getPropagationTypes(AlarmPropagationInfo ap) {

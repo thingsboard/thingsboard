@@ -100,5 +100,5 @@ public interface AlarmDao extends Dao<Alarm> {
 
     PageData<EntitySubtype> findTenantAlarmTypes(UUID tenantId, PageLink pageLink);
 
-    boolean removeAlarmTypes(UUID tenantId, Set<String> types);
+    boolean removeAlarmTypesIfNoAlarmsPresent(UUID tenantId, Set<String> types);
 }

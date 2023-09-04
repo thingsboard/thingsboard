@@ -130,14 +130,9 @@ ALTER TABLE notification_request ALTER COLUMN info SET DATA TYPE varchar(1000000
 CREATE TABLE IF NOT EXISTS alarm_types (
     tenant_id uuid NOT NULL,
     type varchar(255) NOT NULL,
-    CONSTRAINT tenant_id_type_unq_key UNIQUE (tenant_id, type)
+    CONSTRAINT tenant_id_type_unq_key UNIQUE (tenant_id, type),
+    CONSTRAINT fk_entity_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenant(id) ON DELETE CASCADE
 );
-
--- Activate the pg_trgm module for trigram-based searches.
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
-
--- Create a GIN index on the `type` column. (for optimizing `ILIKE` in search query)
-CREATE INDEX IF NOT EXISTS idx_gin_alarm_types_type ON alarm_types USING GIN(type gin_trgm_ops);
 
 INSERT INTO alarm_types (tenant_id, type) SELECT DISTINCT tenant_id, type FROM alarm ON CONFLICT (tenant_id, type) DO NOTHING;
 

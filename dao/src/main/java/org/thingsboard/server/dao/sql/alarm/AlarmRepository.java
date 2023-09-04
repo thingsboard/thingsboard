@@ -354,6 +354,6 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
     @Transactional
     @Modifying
     @Query(value = "DELETE FROM alarm_types AS at WHERE NOT EXISTS (SELECT 1 FROM alarm AS a WHERE a.tenant_id = at.tenant_id AND a.type = at.type) AND at.tenant_id = :tenantId AND at.type IN (:types)", nativeQuery = true)
-    int deleteTypeIfNoOneAlarmExists(@Param("tenantId") UUID tenantId, @Param("types") Set<String> types);
+    int deleteTypeIfNoAlarmsExist(@Param("tenantId") UUID tenantId, @Param("types") Set<String> types);
 
 }

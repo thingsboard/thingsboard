@@ -77,7 +77,7 @@ public interface AlarmService extends EntityDaoService {
 
     AlarmApiCallResult delAlarm(TenantId tenantId, AlarmId alarmId);
 
-    AlarmApiCallResult delAlarm(TenantId tenantId, AlarmId alarmId, boolean deleteAlarmType);
+    AlarmApiCallResult delAlarm(TenantId tenantId, AlarmId alarmId, boolean checkAndDeleteAlarmType);
 
     void delAlarmTypes(TenantId tenantId, Set<String> types);
 

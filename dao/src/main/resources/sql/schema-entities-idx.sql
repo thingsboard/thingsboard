@@ -115,9 +115,3 @@ CREATE INDEX IF NOT EXISTS idx_notification_id ON notification(id);
 CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_created_time ON notification(recipient_id, created_time DESC);
 
 CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_unread ON notification(recipient_id) WHERE status <> 'READ';
-
--- Activate the pg_trgm module for trigram-based searches.
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
-
--- Create a GIN index on the `type` column. (for optimizing `ILIKE` in search query)
-CREATE INDEX IF NOT EXISTS idx_gin_alarm_types_type ON alarm_types USING GIN(type gin_trgm_ops);

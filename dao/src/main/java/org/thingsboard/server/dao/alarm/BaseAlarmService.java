@@ -223,7 +223,7 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
 
     @Override
     @Transactional
-    public AlarmApiCallResult delAlarm(TenantId tenantId, AlarmId alarmId, boolean deleteAlarmType) {
+    public AlarmApiCallResult delAlarm(TenantId tenantId, AlarmId alarmId, boolean checkAndDeleteAlarmType) {
         log.debug("Deleting Alarm Id: {}", alarmId);
         AlarmInfo alarm = alarmDao.findAlarmInfoById(tenantId, alarmId.getId());
         if (alarm == null) {
@@ -233,7 +233,7 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
             alarmDao.removeById(tenantId, alarm.getUuidId());
             eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId)
                     .entityId(alarmId).entity(alarm).build());
-            if (deleteAlarmType) {
+            if (checkAndDeleteAlarmType) {
                 delAlarmTypes(tenantId, Collections.singleton(alarm.getType()));
             }
             return AlarmApiCallResult.builder().alarm(alarm).deleted(true).successful(true).build();
@@ -243,7 +243,7 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
     @Override
     @Transactional
     public void delAlarmTypes(TenantId tenantId, Set<String> types) {
-        if (!types.isEmpty() && alarmDao.removeAlarmTypes(tenantId.getId(), types)) {
+        if (!types.isEmpty() && alarmDao.removeAlarmTypesIfNoAlarmsPresent(tenantId.getId(), types)) {
             publishEvictEvent(new AlarmTypesCacheEvictEvent(tenantId));
         }
     }
