@@ -51,6 +51,7 @@ public class WidgetTypeMsgConstructor {
         if (widgetTypeDetails.getDescription() != null) {
             builder.setDescription(widgetTypeDetails.getDescription());
         }
+        builder.setDeprecated(widgetTypeDetails.isDeprecated());
         return builder.build();
     }
 
