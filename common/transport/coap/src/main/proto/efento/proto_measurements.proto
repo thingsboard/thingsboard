@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 syntax = "proto3";
-import "proto_measurement_types.proto";
+import "efento/proto_measurement_types.proto";
 
 option java_package = "org.thingsboard.server.gen.transport.coap";
 option java_outer_classname = "MeasurementsProtos";
