@@ -31,7 +31,7 @@ public class AlarmDataValidator extends DataValidator<Alarm> {
 
     @Override
     protected void validateDataImpl(TenantId tenantId, Alarm alarm) {
-        validateName("Alarm type", alarm.getType());
+        validateString("Alarm type", alarm.getType());
         if (alarm.getOriginator() == null) {
             throw new DataValidationException("Alarm originator should be specified!");
         }

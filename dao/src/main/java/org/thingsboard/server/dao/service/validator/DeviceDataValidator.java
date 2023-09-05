@@ -60,7 +60,7 @@ public class DeviceDataValidator extends AbstractHasOtaPackageValidator<Device> 
 
     @Override
     protected void validateDataImpl(TenantId tenantId, Device device) {
-        validateName("Device name", device.getName());
+        validateString("Device name", device.getName());
         if (device.getTenantId() == null) {
             throw new DataValidationException("Device should be assigned to tenant!");
         } else {

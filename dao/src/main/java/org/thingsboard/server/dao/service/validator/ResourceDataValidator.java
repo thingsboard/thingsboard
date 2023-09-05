@@ -66,7 +66,7 @@ public class ResourceDataValidator extends DataValidator<TbResource> {
 
     @Override
     protected void validateDataImpl(TenantId tenantId, TbResource resource) {
-        validateName("Resource title", resource.getTitle());
+        validateString("Resource title", resource.getTitle());
         if (resource.getResourceType() == null) {
             throw new DataValidationException("Resource type should be specified!");
         }

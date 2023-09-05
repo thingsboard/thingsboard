@@ -55,7 +55,7 @@ class AlarmDataValidatorTest {
         alarm.setTenantId(tenantId);
 
         validator.validateDataImpl(tenantId, alarm);
-        verify(validator).validateName("Alarm type", alarm.getType());
+        verify(validator).validateString("Alarm type", alarm.getType());
     }
 
 }

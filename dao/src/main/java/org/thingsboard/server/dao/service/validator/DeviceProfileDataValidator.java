@@ -103,7 +103,7 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
 
     @Override
     protected void validateDataImpl(TenantId tenantId, DeviceProfile deviceProfile) {
-        validateName("Device profile name", deviceProfile.getName());
+        validateString("Device profile name", deviceProfile.getName());
         if (deviceProfile.getType() == null) {
             throw new DataValidationException("Device profile type should be specified!");
         }

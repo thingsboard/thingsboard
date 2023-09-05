@@ -77,7 +77,7 @@ class DeviceProfileDataValidatorTest {
         deviceProfile.setTenantId(tenantId);
 
         validator.validateDataImpl(tenantId, deviceProfile);
-        verify(validator).validateName("Device profile name", deviceProfile.getName());
+        verify(validator).validateString("Device profile name", deviceProfile.getName());
     }
 
 }

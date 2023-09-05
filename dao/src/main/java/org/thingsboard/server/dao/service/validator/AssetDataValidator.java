@@ -63,7 +63,7 @@ public class AssetDataValidator extends DataValidator<Asset> {
 
     @Override
     protected void validateDataImpl(TenantId tenantId, Asset asset) {
-        validateName("Asset name", asset.getName());
+        validateString("Asset name", asset.getName());
         if (asset.getTenantId() == null) {
             throw new DataValidationException("Asset should be assigned to tenant!");
         } else {

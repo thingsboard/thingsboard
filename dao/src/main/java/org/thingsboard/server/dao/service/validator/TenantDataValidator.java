@@ -32,7 +32,7 @@ public class TenantDataValidator extends DataValidator<Tenant> {
 
     @Override
     protected void validateDataImpl(TenantId tenantId, Tenant tenant) {
-        validateName("Tenant title", tenant.getTitle());
+        validateString("Tenant title", tenant.getTitle());
         if (!StringUtils.isEmpty(tenant.getEmail())) {
             validateEmail(tenant.getEmail());
         }

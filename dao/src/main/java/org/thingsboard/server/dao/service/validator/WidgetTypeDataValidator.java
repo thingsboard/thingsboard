@@ -37,7 +37,7 @@ public class WidgetTypeDataValidator extends DataValidator<WidgetTypeDetails> {
 
     @Override
     protected void validateDataImpl(TenantId tenantId, WidgetTypeDetails widgetTypeDetails) {
-        validateName("Widgets type name", widgetTypeDetails.getName());
+        validateString("Widgets type name", widgetTypeDetails.getName());
         if (widgetTypeDetails.getDescriptor() == null || widgetTypeDetails.getDescriptor().size() == 0) {
             throw new DataValidationException("Widgets type descriptor can't be empty!");
         }

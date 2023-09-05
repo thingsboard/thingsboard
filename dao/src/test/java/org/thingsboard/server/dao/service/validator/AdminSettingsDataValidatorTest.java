@@ -44,7 +44,7 @@ class AdminSettingsDataValidatorTest {
         adminSettings.setJsonValue(JacksonUtil.toJsonNode("{}"));
 
         validator.validateDataImpl(tenantId, adminSettings);
-        verify(validator).validateName("Key", adminSettings.getKey());
+        verify(validator).validateString("Key", adminSettings.getKey());
     }
 
 }

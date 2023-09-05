@@ -27,7 +27,7 @@ public class ComponentDescriptorDataValidator extends DataValidator<ComponentDes
 
     @Override
     protected void validateDataImpl(TenantId tenantId, ComponentDescriptor plugin) {
-        validateName("Component name", plugin.getName());
+        validateString("Component name", plugin.getName());
         if (plugin.getType() == null) {
             throw new DataValidationException("Component type should be specified!");
         }

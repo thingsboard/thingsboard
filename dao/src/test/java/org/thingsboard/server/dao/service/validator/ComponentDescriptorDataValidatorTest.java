@@ -38,6 +38,6 @@ class ComponentDescriptorDataValidatorTest {
         plugin.setName("originator attributes");
         plugin.setClazz("org.thingsboard.rule.engine.metadata.TbGetAttributesNode");
         validator.validateDataImpl(TenantId.SYS_TENANT_ID, plugin);
-        verify(validator).validateName("Component name", plugin.getName());
+        verify(validator).validateString("Component name", plugin.getName());
     }
 }

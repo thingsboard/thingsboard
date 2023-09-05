@@ -47,7 +47,7 @@ public class TenantProfileDataValidator extends DataValidator<TenantProfile> {
 
     @Override
     protected void validateDataImpl(TenantId tenantId, TenantProfile tenantProfile) {
-        validateName("Tenant profile name", tenantProfile.getName());
+        validateString("Tenant profile name", tenantProfile.getName());
         if (tenantProfile.getProfileData() == null) {
             throw new DataValidationException("Tenant profile data should be specified!");
         }

@@ -43,7 +43,7 @@ class TenantDataValidatorTest {
         tenant.setEmail("support@thingsboard.io");
 
         validator.validateDataImpl(tenantId, tenant);
-        verify(validator).validateName("Tenant title", tenant.getTitle());
+        verify(validator).validateString("Tenant title", tenant.getTitle());
     }
 
 }

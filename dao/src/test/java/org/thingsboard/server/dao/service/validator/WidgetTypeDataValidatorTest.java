@@ -57,7 +57,7 @@ class WidgetTypeDataValidatorTest {
         widgetTypeDetails.setTenantId(tenantId);
 
         validator.validateDataImpl(tenantId, widgetTypeDetails);
-        verify(validator).validateName("Widgets type name", widgetTypeDetails.getName());
+        verify(validator).validateString("Widgets type name", widgetTypeDetails.getName());
     }
 
 }

@@ -49,8 +49,8 @@ public class EdgeDataValidator extends DataValidator<Edge> {
 
     @Override
     protected void validateDataImpl(TenantId tenantId, Edge edge) {
-        validateName("Edge name", edge.getName());
-        validateName("Edge type", edge.getType());
+        validateString("Edge name", edge.getName());
+        validateString("Edge type", edge.getType());
         if (StringUtils.isEmpty(edge.getSecret())) {
             throw new DataValidationException("Edge secret should be specified!");
         }

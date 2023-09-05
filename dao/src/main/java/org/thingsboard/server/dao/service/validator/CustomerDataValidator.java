@@ -63,7 +63,7 @@ public class CustomerDataValidator extends DataValidator<Customer> {
 
     @Override
     protected void validateDataImpl(TenantId tenantId, Customer customer) {
-        validateName("Customer title", customer.getTitle());
+        validateString("Customer title", customer.getTitle());
         if (customer.getTitle().equals(CustomerServiceImpl.PUBLIC_CUSTOMER_TITLE)) {
             throw new DataValidationException("'Public' title for customer is system reserved!");
         }

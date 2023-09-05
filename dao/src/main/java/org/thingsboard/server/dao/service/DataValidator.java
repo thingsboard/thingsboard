@@ -86,7 +86,7 @@ public abstract class DataValidator<D extends BaseData<?>> {
     public void validateDelete(TenantId tenantId, EntityId entityId) {
     }
 
-    public void validateName(String exceptionPrefix, String name) {
+    public void validateString(String exceptionPrefix, String name) {
         if (StringUtils.isEmpty(name) || name.trim().length() == 0) {
             throw new DataValidationException(exceptionPrefix + " should be specified!");
         }

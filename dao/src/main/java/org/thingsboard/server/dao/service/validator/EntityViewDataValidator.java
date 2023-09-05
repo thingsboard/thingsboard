@@ -58,8 +58,8 @@ public class EntityViewDataValidator extends DataValidator<EntityView> {
 
     @Override
     protected void validateDataImpl(TenantId tenantId, EntityView entityView) {
-        validateName("Entity view name", entityView.getName());
-        validateName("Entity view type", entityView.getType());
+        validateString("Entity view name", entityView.getName());
+        validateString("Entity view type", entityView.getType());
         if (entityView.getTenantId() == null) {
             throw new DataValidationException("Entity view should be assigned to tenant!");
         } else {

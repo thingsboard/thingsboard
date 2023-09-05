@@ -34,7 +34,7 @@ public class WidgetsBundleDataValidator extends DataValidator<WidgetsBundle> {
 
     @Override
     protected void validateDataImpl(TenantId tenantId, WidgetsBundle widgetsBundle) {
-        validateName("Widgets bundle title", widgetsBundle.getTitle());
+        validateString("Widgets bundle title", widgetsBundle.getTitle());
         if (widgetsBundle.getTenantId() == null) {
             widgetsBundle.setTenantId(TenantId.fromUUID(ModelConstants.NULL_UUID));
         }

@@ -57,8 +57,8 @@ class EntityViewDataValidatorTest {
         entityView.setTenantId(tenantId);
 
         validator.validateDataImpl(tenantId, entityView);
-        verify(validator).validateName("Entity view name", entityView.getName());
-        verify(validator).validateName("Entity view type", entityView.getType());
+        verify(validator).validateString("Entity view name", entityView.getName());
+        verify(validator).validateString("Entity view type", entityView.getType());
     }
 
 }

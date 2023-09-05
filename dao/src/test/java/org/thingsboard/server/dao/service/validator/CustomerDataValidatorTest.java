@@ -53,7 +53,7 @@ class CustomerDataValidatorTest {
         customer.setTenantId(tenantId);
 
         validator.validateDataImpl(tenantId, customer);
-        verify(validator).validateName("Customer title", customer.getTitle());
+        verify(validator).validateString("Customer title", customer.getTitle());
     }
 
 }

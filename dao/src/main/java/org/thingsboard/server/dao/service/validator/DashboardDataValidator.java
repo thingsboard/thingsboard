@@ -37,7 +37,7 @@ public class DashboardDataValidator extends DataValidator<Dashboard> {
 
     @Override
     protected void validateDataImpl(TenantId tenantId, Dashboard dashboard) {
-        validateName("Dashboard title", dashboard.getTitle());
+        validateString("Dashboard title", dashboard.getTitle());
         if (dashboard.getTenantId() == null) {
             throw new DataValidationException("Dashboard should be assigned to tenant!");
         } else {

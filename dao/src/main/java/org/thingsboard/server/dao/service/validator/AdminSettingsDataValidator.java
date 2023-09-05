@@ -50,7 +50,7 @@ public class AdminSettingsDataValidator extends DataValidator<AdminSettings> {
 
     @Override
     protected void validateDataImpl(TenantId tenantId, AdminSettings adminSettings) {
-        validateName("Key", adminSettings.getKey());
+        validateString("Key", adminSettings.getKey());
         if (adminSettings.getJsonValue() == null) {
             throw new DataValidationException("Json value should be specified!");
         }

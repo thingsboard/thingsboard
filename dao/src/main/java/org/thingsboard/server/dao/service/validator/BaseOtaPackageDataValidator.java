@@ -41,7 +41,7 @@ public abstract class BaseOtaPackageDataValidator<D extends BaseData<?>> extends
     private DeviceProfileDao deviceProfileDao;
 
     protected void validateImpl(OtaPackageInfo otaPackageInfo) {
-        validateName("OtaPackage title", otaPackageInfo.getTitle());
+        validateString("OtaPackage title", otaPackageInfo.getTitle());
 
         if (otaPackageInfo.getTenantId() == null) {
             throw new DataValidationException("OtaPackage should be assigned to tenant!");
