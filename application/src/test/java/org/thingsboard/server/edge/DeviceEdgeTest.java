@@ -548,7 +548,7 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         uplinkMsgBuilder.addDeviceUpdateMsg(deviceUpdateMsgBuilder.build());
 
         edgeImitator.expectResponsesAmount(1);
-        edgeImitator.expectMessageAmount(2);
+        edgeImitator.expectMessageAmount(1);
 
         edgeImitator.sendUplinkMsg(uplinkMsgBuilder.build());
 
