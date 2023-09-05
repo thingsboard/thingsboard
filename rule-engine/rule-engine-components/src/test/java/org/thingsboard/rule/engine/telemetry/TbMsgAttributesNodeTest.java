@@ -21,18 +21,87 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BooleanDataEntry;
+import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.JsonDataEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.util.TbPair;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.willCallRealMethod;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 
 @Slf4j
 class TbMsgAttributesNodeTest {
 
     final String updateAttributesOnlyOnValueChangeKey = "updateAttributesOnlyOnValueChange";
+
+    @Test
+    void testFilterChangedAttr_whenCurrentAttributesEmpty_thenReturnNewAttributes() {
+        TbMsgAttributesNode node = spy(TbMsgAttributesNode.class);
+        List<AttributeKvEntry> newAttributes = new ArrayList<>();
+
+        List<AttributeKvEntry> filtered = node.filterChangedAttr(Collections.emptyList(), newAttributes);
+        assertThat(filtered).isSameAs(newAttributes);
+    }
+
+    @Test
+    void testFilterChangedAttr_whenCurrentAttributesContainsInAnyOrderNewAttributes_thenReturnEmptyList() {
+        TbMsgAttributesNode node = spy(TbMsgAttributesNode.class);
+        List<AttributeKvEntry> currentAttributes = List.of(
+                new BaseAttributeKvEntry(1694000000L, new StringDataEntry("address", "Peremohy ave 1")),
+                new BaseAttributeKvEntry(1694000000L, new BooleanDataEntry("valid", true)),
+                new BaseAttributeKvEntry(1694000000L, new LongDataEntry("counter", 100L)),
+                new BaseAttributeKvEntry(1694000000L, new DoubleDataEntry("temp", -18.35)),
+                new BaseAttributeKvEntry(1694000000L, new JsonDataEntry("json", "{\"warning\":\"out of paper\"}"))
+        );
+        List<AttributeKvEntry> newAttributes = new ArrayList<>(currentAttributes);
+        newAttributes.add(newAttributes.get(0));
+        newAttributes.remove(0);
+        assertThat(newAttributes).hasSize(currentAttributes.size());
+        assertThat(currentAttributes).isNotEmpty();
+        assertThat(newAttributes).containsExactlyInAnyOrderElementsOf(currentAttributes);
+
+        List<AttributeKvEntry> filtered = node.filterChangedAttr(currentAttributes, newAttributes);
+        assertThat(filtered).isEmpty(); //no changes
+    }
+
+    @Test
+    void testFilterChangedAttr_whenCurrentAttributesContainsInAnyOrderNewAttributes_thenReturnExpectedList() {
+        TbMsgAttributesNode node = spy(TbMsgAttributesNode.class);
+        List<AttributeKvEntry> currentAttributes = List.of(
+                new BaseAttributeKvEntry(1694000000L, new StringDataEntry("address", "Peremohy ave 1")),
+                new BaseAttributeKvEntry(1694000000L, new BooleanDataEntry("valid", true)),
+                new BaseAttributeKvEntry(1694000000L, new LongDataEntry("counter", 100L)),
+                new BaseAttributeKvEntry(1694000000L, new DoubleDataEntry("temp", -18.35)),
+                new BaseAttributeKvEntry(1694000000L, new JsonDataEntry("json", "{\"warning\":\"out of paper\"}"))
+        );
+        List<AttributeKvEntry> newAttributes = List.of(
+                new BaseAttributeKvEntry(1694000999L, new JsonDataEntry("json", "{\"status\":\"OK\"}")), // value changed, reordered
+                new BaseAttributeKvEntry(1694000999L, new StringDataEntry("valid", "true")), //type changed
+                new BaseAttributeKvEntry(1694000999L, new LongDataEntry("counter", 101L)), //value changed
+                new BaseAttributeKvEntry(1694000999L, new DoubleDataEntry("temp", -18.35)),
+                new BaseAttributeKvEntry(1694000999L, new StringDataEntry("address", "Peremohy ave 1")) // reordered
+        );
+        List<AttributeKvEntry> expected = List.of(
+                new BaseAttributeKvEntry(1694000999L, new StringDataEntry("valid", "true")),
+                new BaseAttributeKvEntry(1694000999L, new LongDataEntry("counter", 101L)),
+                new BaseAttributeKvEntry(1694000999L, new JsonDataEntry("json", "{\"status\":\"OK\"}"))
+        );
+
+        List<AttributeKvEntry> filtered = node.filterChangedAttr(currentAttributes, newAttributes);
+        assertThat(filtered).containsExactlyInAnyOrderElementsOf(expected);
+    }
 
     @Test
     void testUpgrade_fromVersion0() throws TbNodeException {
