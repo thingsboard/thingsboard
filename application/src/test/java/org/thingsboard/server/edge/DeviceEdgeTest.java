@@ -548,16 +548,16 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         uplinkMsgBuilder.addDeviceUpdateMsg(deviceUpdateMsgBuilder.build());
 
         edgeImitator.expectResponsesAmount(1);
-        edgeImitator.expectMessageAmount(1);
+        edgeImitator.expectMessageAmount(2);
 
         edgeImitator.sendUplinkMsg(uplinkMsgBuilder.build());
 
         Assert.assertTrue(edgeImitator.waitForResponses());
         Assert.assertTrue(edgeImitator.waitForMessages());
 
-        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
-        Assert.assertTrue(latestMessage instanceof DeviceCredentialsRequestMsg);
-        DeviceCredentialsRequestMsg latestDeviceCredentialsRequestMsg = (DeviceCredentialsRequestMsg) latestMessage;
+        Optional<DeviceCredentialsRequestMsg> deviceCredentialsRequestMsgOpt = edgeImitator.findMessageByType(DeviceCredentialsRequestMsg.class);
+        Assert.assertTrue(deviceCredentialsRequestMsgOpt.isPresent());
+        DeviceCredentialsRequestMsg latestDeviceCredentialsRequestMsg = deviceCredentialsRequestMsgOpt.get();
         Assert.assertEquals(uuid.getMostSignificantBits(), latestDeviceCredentialsRequestMsg.getDeviceIdMSB());
         Assert.assertEquals(uuid.getLeastSignificantBits(), latestDeviceCredentialsRequestMsg.getDeviceIdLSB());
 

@@ -26,6 +26,5 @@ import org.thingsboard.server.common.data.id.TenantId;
 public class DeleteEntityEvent<T> {
     private final TenantId tenantId;
     private final EntityId entityId;
-    private final EdgeId edgeId;
     private final T entity;
 }

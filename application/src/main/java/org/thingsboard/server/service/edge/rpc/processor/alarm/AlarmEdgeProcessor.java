@@ -47,6 +47,16 @@ import java.util.UUID;
 @TbCoreComponent
 public class AlarmEdgeProcessor extends BaseAlarmProcessor {
 
+    public ListenableFuture<Void> processAlarmMsgFromEdge(TenantId tenantId, EdgeId edgeId, AlarmUpdateMsg alarmUpdateMsg) {
+        log.trace("[{}] processAlarmMsgFromEdge [{}]", tenantId, alarmUpdateMsg);
+        try {
+            edgeSynchronizationManager.getSync().set(edgeId);
+            return processAlarmMsg(tenantId, alarmUpdateMsg);
+        } finally {
+            edgeSynchronizationManager.getSync().remove();
+        }
+    }
+
     public DownlinkMsg convertAlarmEventToDownlink(EdgeEvent edgeEvent) {
         AlarmUpdateMsg alarmUpdateMsg =
                 convertAlarmEventToAlarmMsg(edgeEvent.getTenantId(), edgeEvent.getEntityId(), edgeEvent.getAction(), edgeEvent.getBody());
@@ -62,10 +72,12 @@ public class AlarmEdgeProcessor extends BaseAlarmProcessor {
     public ListenableFuture<Void> processAlarmNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) throws JsonProcessingException {
         EdgeEventActionType actionType = EdgeEventActionType.valueOf(edgeNotificationMsg.getAction());
         AlarmId alarmId = new AlarmId(new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB()));
+        EdgeId sourceEdgeId = safeGetEdgeId(edgeNotificationMsg.getSourceEdgeIdMSB(), edgeNotificationMsg.getSourceEdgeIdLSB());
         switch (actionType) {
             case DELETED:
                 Alarm deletedAlarm = JacksonUtil.OBJECT_MAPPER.readValue(edgeNotificationMsg.getBody(), Alarm.class);
-                List<ListenableFuture<Void>> delFutures = pushEventToAllRelatedEdges(tenantId, deletedAlarm.getOriginator(), alarmId, actionType, JacksonUtil.OBJECT_MAPPER.valueToTree(deletedAlarm));
+                List<ListenableFuture<Void>> delFutures = pushEventToAllRelatedEdges(tenantId, deletedAlarm.getOriginator(),
+                        alarmId, actionType, JacksonUtil.OBJECT_MAPPER.valueToTree(deletedAlarm), sourceEdgeId);
                 return Futures.transform(Futures.allAsList(delFutures), voids -> null, dbCallbackExecutorService);
             default:
                 ListenableFuture<Alarm> alarmFuture = alarmService.findAlarmByIdAsync(tenantId, alarmId);
@@ -77,13 +89,14 @@ public class AlarmEdgeProcessor extends BaseAlarmProcessor {
                     if (type == null) {
                         return Futures.immediateFuture(null);
                     }
-                    List<ListenableFuture<Void>>  futures = pushEventToAllRelatedEdges(tenantId, alarm.getOriginator(), alarmId, actionType, null);
+                    List<ListenableFuture<Void>> futures = pushEventToAllRelatedEdges(tenantId, alarm.getOriginator(),
+                            alarmId, actionType, null, sourceEdgeId);
                     return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
                 }, dbCallbackExecutorService);
         }
     }
 
-    private List<ListenableFuture<Void>> pushEventToAllRelatedEdges(TenantId tenantId, EntityId originatorId, AlarmId alarmId, EdgeEventActionType actionType, JsonNode body) {
+    private List<ListenableFuture<Void>> pushEventToAllRelatedEdges(TenantId tenantId, EntityId originatorId, AlarmId alarmId, EdgeEventActionType actionType, JsonNode body, EdgeId sourceEdgeId) {
         PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
         PageData<EdgeId> pageData;
         List<ListenableFuture<Void>> futures = new ArrayList<>();
@@ -91,12 +104,14 @@ public class AlarmEdgeProcessor extends BaseAlarmProcessor {
             pageData = edgeService.findRelatedEdgeIdsByEntityId(tenantId, originatorId, pageLink);
             if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
                 for (EdgeId relatedEdgeId : pageData.getData()) {
-                    futures.add(saveEdgeEvent(tenantId,
-                            relatedEdgeId,
-                            EdgeEventType.ALARM,
-                            actionType,
-                            alarmId,
-                            body));
+                    if (!relatedEdgeId.equals(sourceEdgeId)) {
+                        futures.add(saveEdgeEvent(tenantId,
+                                relatedEdgeId,
+                                EdgeEventType.ALARM,
+                                actionType,
+                                alarmId,
+                                body));
+                    }
                 }
                 if (pageData.hasNext()) {
                     pageLink = pageLink.nextPageLink();

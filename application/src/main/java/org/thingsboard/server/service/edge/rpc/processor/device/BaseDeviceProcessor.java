@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.edge.rpc.processor.device;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
@@ -104,34 +103,27 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
         return Pair.of(created, deviceNameUpdated);
     }
 
-    public ListenableFuture<Void> processDeviceCredentialsMsg(TenantId tenantId, DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg) {
-        log.debug("[{}] Executing processDeviceCredentialsMsg, deviceCredentialsUpdateMsg [{}]", tenantId, deviceCredentialsUpdateMsg);
+    protected void updateDeviceCredentials(TenantId tenantId, DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg) {
         DeviceId deviceId = new DeviceId(new UUID(deviceCredentialsUpdateMsg.getDeviceIdMSB(), deviceCredentialsUpdateMsg.getDeviceIdLSB()));
-        return dbCallbackExecutorService.submit(() -> {
-            Device device = deviceService.findDeviceById(tenantId, deviceId);
-            if (device != null) {
-                log.debug("Updating device credentials for device [{}]. New device credentials Id [{}], value [{}]",
-                        device.getName(), deviceCredentialsUpdateMsg.getCredentialsId(), deviceCredentialsUpdateMsg.getCredentialsValue());
-                try {
-                    edgeSynchronizationManager.getSync().set(true);
+        Device device = deviceService.findDeviceById(tenantId, deviceId);
+        if (device != null) {
+            log.debug("Updating device credentials for device [{}]. New device credentials Id [{}], value [{}]",
+                    device.getName(), deviceCredentialsUpdateMsg.getCredentialsId(), deviceCredentialsUpdateMsg.getCredentialsValue());
+            try {
+                DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, device.getId());
+                deviceCredentials.setCredentialsType(DeviceCredentialsType.valueOf(deviceCredentialsUpdateMsg.getCredentialsType()));
+                deviceCredentials.setCredentialsId(deviceCredentialsUpdateMsg.getCredentialsId());
+                deviceCredentials.setCredentialsValue(deviceCredentialsUpdateMsg.hasCredentialsValue()
+                        ? deviceCredentialsUpdateMsg.getCredentialsValue() : null);
+                deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials);
 
-                    DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, device.getId());
-                    deviceCredentials.setCredentialsType(DeviceCredentialsType.valueOf(deviceCredentialsUpdateMsg.getCredentialsType()));
-                    deviceCredentials.setCredentialsId(deviceCredentialsUpdateMsg.getCredentialsId());
-                    deviceCredentials.setCredentialsValue(deviceCredentialsUpdateMsg.hasCredentialsValue()
-                            ? deviceCredentialsUpdateMsg.getCredentialsValue() : null);
-                    deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials);
-                } catch (Exception e) {
-                    log.error("Can't update device credentials for device [{}], deviceCredentialsUpdateMsg [{}]",
-                            device.getName(), deviceCredentialsUpdateMsg, e);
-                    throw new RuntimeException(e);
-                } finally {
-                    edgeSynchronizationManager.getSync().remove();
-                }
-            } else {
-                log.warn("Can't find device by id [{}], deviceCredentialsUpdateMsg [{}]", deviceId, deviceCredentialsUpdateMsg);
+            } catch (Exception e) {
+                log.error("Can't update device credentials for device [{}], deviceCredentialsUpdateMsg [{}]",
+                        device.getName(), deviceCredentialsUpdateMsg, e);
+                throw new RuntimeException(e);
             }
-            return null;
-        });
+        } else {
+            log.warn("Can't find device by id [{}], deviceCredentialsUpdateMsg [{}]", deviceId, deviceCredentialsUpdateMsg);
+        }
     }
 }

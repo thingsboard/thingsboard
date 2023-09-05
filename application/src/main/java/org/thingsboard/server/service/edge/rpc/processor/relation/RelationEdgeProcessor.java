@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
@@ -44,6 +45,17 @@ import java.util.Set;
 @Slf4j
 @TbCoreComponent
 public class RelationEdgeProcessor extends BaseRelationProcessor {
+
+    public ListenableFuture<Void> processRelationMsgFromEdge(TenantId tenantId, Edge edge, RelationUpdateMsg relationUpdateMsg) {
+        log.trace("[{}] executing processRelationMsgFromEdge [{}] from edge [{}]", tenantId, relationUpdateMsg, edge.getName());
+        try {
+            edgeSynchronizationManager.getSync().set(edge.getId());
+
+            return processRelationMsg(tenantId, relationUpdateMsg);
+        } finally {
+            edgeSynchronizationManager.getSync().remove();
+        }
+    }
 
     public DownlinkMsg convertRelationEventToDownlink(EdgeEvent edgeEvent) {
         EntityRelation entityRelation = JacksonUtil.OBJECT_MAPPER.convertValue(edgeEvent.getBody(), EntityRelation.class);
