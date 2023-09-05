@@ -53,13 +53,11 @@ class WidgetTypeDataValidatorTest {
     void testValidateNameInvocation() {
         WidgetTypeDetails widgetTypeDetails = new WidgetTypeDetails();
         widgetTypeDetails.setName("widget type gas");
-        widgetTypeDetails.setBundleAlias("Widget bundle fuel");
         widgetTypeDetails.setDescriptor(JacksonUtil.toJsonNode("{\"content\":\"empty\"}"));
         widgetTypeDetails.setTenantId(tenantId);
 
         validator.validateDataImpl(tenantId, widgetTypeDetails);
         verify(validator).validateName("Widgets type name", widgetTypeDetails.getName());
-        verify(validator).validateName("Widgets type bundle alias", widgetTypeDetails.getBundleAlias());
     }
 
 }
