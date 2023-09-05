@@ -23,7 +23,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -65,9 +64,7 @@ public class RuleChainDataValidator extends DataValidator<RuleChain> {
 
     @Override
     protected void validateDataImpl(TenantId tenantId, RuleChain ruleChain) {
-        if (StringUtils.isEmpty(ruleChain.getName())) {
-            throw new DataValidationException("Rule chain name should be specified!");
-        }
+        validateName("Rule chain name", ruleChain.getName());
         if (ruleChain.getType() == null) {
             ruleChain.setType(RuleChainType.CORE);
         }

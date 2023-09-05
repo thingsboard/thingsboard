@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.service.validator;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
@@ -39,9 +38,8 @@ public class WidgetTypeDataValidator extends DataValidator<WidgetTypeDetails> {
 
     @Override
     protected void validateDataImpl(TenantId tenantId, WidgetTypeDetails widgetTypeDetails) {
-        if (StringUtils.isEmpty(widgetTypeDetails.getName())) {
-            throw new DataValidationException("Widgets type name should be specified!");
-        }
+        validateName("Widgets type name", widgetTypeDetails.getName());
+        validateName("Widgets type bundle alias", widgetTypeDetails.getBundleAlias());
         if (widgetTypeDetails.getDescriptor() == null || widgetTypeDetails.getDescriptor().size() == 0) {
             throw new DataValidationException("Widgets type descriptor can't be empty!");
         }
