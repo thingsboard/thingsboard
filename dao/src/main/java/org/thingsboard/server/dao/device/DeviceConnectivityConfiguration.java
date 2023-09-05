@@ -19,13 +19,14 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
 @ConfigurationProperties(prefix = "device")
 @Data
 public class DeviceConnectivityConfiguration {
-    private Map<String, DeviceConnectivityInfo> connectivity;
+    private Map<String, DeviceConnectivityInfo> connectivity = new HashMap<>();
 
     public boolean isEnabled(String protocol) {
         var info = connectivity.get(protocol);
