@@ -17,12 +17,11 @@ package org.thingsboard.rule.engine.telemetry;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -101,18 +100,13 @@ public class TbMsgAttributesNode implements TbVersionedNode {
         List<String> keys = newAttributes.stream().map(KvEntry::getKey).collect(Collectors.toList());
         ListenableFuture<List<AttributeKvEntry>> findFuture = ctx.getAttributesService().find(ctx.getTenantId(), msg.getOriginator(), scope, keys);
 
-        Futures.addCallback(findFuture, new FutureCallback<>() {
-            @Override
-            public void onSuccess(List<AttributeKvEntry> currentAttributes) {
-                List<AttributeKvEntry> attributesChanged = filterChangedAttr(currentAttributes, newAttributes);
-                saveAttr(attributesChanged, ctx, msg, scope, sendAttributesUpdateNotification);
-            }
-
-            @Override
-            public void onFailure(Throwable throwable) {
-                ctx.tellFailure(msg, throwable);
-            }
-        }, MoreExecutors.directExecutor());
+        DonAsynchron.withCallback(findFuture,
+                currentAttributes -> {
+                    List<AttributeKvEntry> attributesChanged = filterChangedAttr(currentAttributes, newAttributes);
+                    saveAttr(attributesChanged, ctx, msg, scope, sendAttributesUpdateNotification);
+                },
+                throwable -> ctx.tellFailure(msg, throwable),
+                MoreExecutors.directExecutor());
     }
 
     void saveAttr(List<AttributeKvEntry> attributes, TbContext ctx, TbMsg msg, String scope, boolean sendAttributesUpdateNotification) {
@@ -176,6 +170,7 @@ public class TbMsgAttributesNode implements TbVersionedNode {
                 }
                 break;
             default:
+                break;
         }
         return new TbPair<>(hasChanges, oldConfiguration);
     }
