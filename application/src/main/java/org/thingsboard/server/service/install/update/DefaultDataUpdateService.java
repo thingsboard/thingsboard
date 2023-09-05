@@ -206,7 +206,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 migrateEdgeEvents("Starting edge events migration. ");
                 break;
             case "3.5.1":
-                log.info("Updating data from version 3.5.1 to 3.5.2 ...");
+                log.info("Updating data from version 3.5.1 to 3.6.0 ...");
                 migrateEdgeEvents("Starting edge events migration - adding seq_id column. ");
                 break;
             default:
