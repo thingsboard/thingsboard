@@ -113,22 +113,11 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
     private void pushDeviceCreatedEventToRuleEngine(TenantId tenantId, Edge edge, DeviceId deviceId) {
         try {
             Device device = deviceService.findDeviceById(tenantId, deviceId);
-            ObjectNode entityNode = JacksonUtil.OBJECT_MAPPER.valueToTree(device);
-            TbMsg tbMsg = TbMsg.newMsg(TbMsgType.ENTITY_CREATED, deviceId, device.getCustomerId(),
-                    getActionTbMsgMetaData(edge, device.getCustomerId()), TbMsgDataType.JSON, JacksonUtil.OBJECT_MAPPER.writeValueAsString(entityNode));
-            tbClusterService.pushMsgToRuleEngine(tenantId, deviceId, tbMsg, new TbQueueCallback() {
-                @Override
-                public void onSuccess(TbQueueMsgMetadata metadata) {
-                    log.debug("Successfully send ENTITY_CREATED EVENT to rule engine [{}]", device);
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    log.warn("Failed to send ENTITY_CREATED EVENT to rule engine [{}]", device, t);
-                }
-            });
-        } catch (JsonProcessingException | IllegalArgumentException e) {
-            log.warn("[{}] Failed to push device action to rule engine: {}", deviceId, TbMsgType.ENTITY_CREATED.name(), e);
+            String deviceAsString = JacksonUtil.toString(device);
+            TbMsgMetaData msgMetaData = getEdgeActionTbMsgMetaData(edge, device.getCustomerId());
+            pushEntityEventToRuleEngine(tenantId, deviceId, device.getCustomerId(), TbMsgType.ENTITY_CREATED, deviceAsString, msgMetaData);
+        } catch (Exception e) {
+            log.warn("[{}][{}] Failed to push device action to rule engine: {}", tenantId, deviceId, TbMsgType.ENTITY_CREATED.name(), e);
         }
     }
 
@@ -161,7 +150,7 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
 
             @Override
             public void onFailure(Throwable t) {
-                log.error("Can't process push notification to core [{}]", deviceRpcCallMsg, t);
+                log.error("[{}] Can't process push notification to core [{}]", tenantId, deviceRpcCallMsg, t);
                 futureToSet.setException(t);
             }
         };
@@ -196,18 +185,18 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
             tbClusterService.pushMsgToRuleEngine(tenantId, deviceId, tbMsg, new TbQueueCallback() {
                 @Override
                 public void onSuccess(TbQueueMsgMetadata metadata) {
-                    log.debug("Successfully send TO_SERVER_RPC_REQUEST to rule engine [{}], deviceRpcCallMsg {}",
-                            device, deviceRpcCallMsg);
+                    log.debug("[{}] Successfully send TO_SERVER_RPC_REQUEST to rule engine [{}], deviceRpcCallMsg {}",
+                            tenantId, device, deviceRpcCallMsg);
                 }
 
                 @Override
                 public void onFailure(Throwable t) {
-                    log.debug("Failed to send TO_SERVER_RPC_REQUEST to rule engine [{}], deviceRpcCallMsg {}",
-                            device, deviceRpcCallMsg, t);
+                    log.debug("[{}] Failed to send TO_SERVER_RPC_REQUEST to rule engine [{}], deviceRpcCallMsg {}",
+                            tenantId, device, deviceRpcCallMsg, t);
                 }
             });
         } catch (JsonProcessingException | IllegalArgumentException e) {
-            log.warn("[{}] Failed to push TO_SERVER_RPC_REQUEST to rule engine. deviceRpcCallMsg {}", deviceId, deviceRpcCallMsg, e);
+            log.warn("[{}][{}] Failed to push TO_SERVER_RPC_REQUEST to rule engine. deviceRpcCallMsg {}", tenantId, deviceId, deviceRpcCallMsg, e);
         }
 
         return Futures.immediateFuture(null);

@@ -17,22 +17,22 @@ package org.thingsboard.server.service.edge.rpc.processor.asset;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.util.Pair;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.id.AssetProfileId;
-import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 import java.nio.charset.StandardCharsets;
-import java.util.UUID;
 
 @Slf4j
-public class BaseAssetProfileProcessor extends BaseEdgeProcessor {
+public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
 
-    protected boolean saveOrUpdateAssetProfile(TenantId tenantId, AssetProfileId assetProfileId, AssetProfileUpdateMsg assetProfileUpdateMsg) {
+    protected Pair<Boolean, Boolean> saveOrUpdateAssetProfile(TenantId tenantId, AssetProfileId assetProfileId, AssetProfileUpdateMsg assetProfileUpdateMsg) {
         boolean created = false;
+        boolean assetProfileNameUpdated = false;
         assetCreationLock.lock();
         try {
             AssetProfile assetProfile = assetProfileService.findAssetProfileById(tenantId, assetProfileId);
@@ -43,6 +43,13 @@ public class BaseAssetProfileProcessor extends BaseEdgeProcessor {
                 assetProfile.setTenantId(tenantId);
                 assetProfile.setCreatedTime(Uuids.unixTimestamp(assetProfileId.getId()));
             }
+            AssetProfile assetProfileByName = assetProfileService.findAssetProfileByName(tenantId, assetProfileName);
+            if (assetProfileByName != null && !assetProfileByName.getId().equals(assetProfileId)) {
+                assetProfileName = assetProfileName + "_" + StringUtils.randomAlphabetic(15);
+                log.warn("[{}] Asset profile with name {} already exists. Renaming asset profile name to {}",
+                        tenantId, assetProfileUpdateMsg.getName(), assetProfileName);
+                assetProfileNameUpdated = true;
+            }
             assetProfile.setName(assetProfileName);
             assetProfile.setDefault(assetProfileUpdateMsg.getDefault());
             assetProfile.setDefaultQueueName(assetProfileUpdateMsg.hasDefaultQueueName() ? assetProfileUpdateMsg.getDefaultQueueName() : null);
@@ -50,20 +57,27 @@ public class BaseAssetProfileProcessor extends BaseEdgeProcessor {
             assetProfile.setImage(assetProfileUpdateMsg.hasImage()
                     ? new String(assetProfileUpdateMsg.getImage().toByteArray(), StandardCharsets.UTF_8) : null);
 
-            UUID defaultRuleChainUUID = safeGetUUID(assetProfileUpdateMsg.getDefaultRuleChainIdMSB(), assetProfileUpdateMsg.getDefaultRuleChainIdLSB());
-            assetProfile.setDefaultRuleChainId(defaultRuleChainUUID != null ? new RuleChainId(defaultRuleChainUUID) : null);
-
-            UUID defaultDashboardUUID = safeGetUUID(assetProfileUpdateMsg.getDefaultDashboardIdMSB(), assetProfileUpdateMsg.getDefaultDashboardIdLSB());
-            assetProfile.setDefaultDashboardId(defaultDashboardUUID != null ? new DashboardId(defaultDashboardUUID) : null);
+            setDefaultRuleChainId(tenantId, assetProfile, assetProfileUpdateMsg);
+            setDefaultEdgeRuleChainId(tenantId, assetProfile, assetProfileUpdateMsg);
+            setDefaultDashboardId(tenantId, assetProfile, assetProfileUpdateMsg);
 
             assetProfileValidator.validate(assetProfile, AssetProfile::getTenantId);
             if (created) {
                 assetProfile.setId(assetProfileId);
             }
             assetProfileService.saveAssetProfile(assetProfile, false);
+        } catch (Exception e) {
+            log.error("[{}] Failed to process asset profile update msg [{}]", tenantId, assetProfileUpdateMsg, e);
+            throw e;
         } finally {
             assetCreationLock.unlock();
         }
-        return created;
+        return Pair.of(created, assetProfileNameUpdated);
     }
+
+    protected abstract void setDefaultRuleChainId(TenantId tenantId, AssetProfile assetProfile, AssetProfileUpdateMsg assetProfileUpdateMsg);
+
+    protected abstract void setDefaultEdgeRuleChainId(TenantId tenantId, AssetProfile assetProfile, AssetProfileUpdateMsg assetProfileUpdateMsg);
+
+    protected abstract void setDefaultDashboardId(TenantId tenantId, AssetProfile assetProfile, AssetProfileUpdateMsg assetProfileUpdateMsg);
 }
