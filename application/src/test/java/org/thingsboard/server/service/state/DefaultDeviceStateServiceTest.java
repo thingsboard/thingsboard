@@ -42,6 +42,7 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
+import org.thingsboard.server.queue.usagestats.DefaultTbApiUsageReportClient;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.util.Collections;
@@ -86,7 +87,7 @@ public class DefaultDeviceStateServiceTest {
 
     @Before
     public void setUp() {
-        service = spy(new DefaultDeviceStateService(deviceService, attributesService, tsService, clusterService, partitionService, entityQueryRepository, null, null, mock(NotificationRuleProcessor.class)));
+        service = spy(new DefaultDeviceStateService(deviceService, attributesService, tsService, clusterService, partitionService, entityQueryRepository, null, mock(DefaultTbApiUsageReportClient.class), mock(NotificationRuleProcessor.class)));
         telemetrySubscriptionService = Mockito.mock(TelemetrySubscriptionService.class);
         ReflectionTestUtils.setField(service, "tsSubService", telemetrySubscriptionService);
         ReflectionTestUtils.setField(service, "defaultStateCheckIntervalInSec", 60);

@@ -358,13 +358,14 @@ message WidgetsBundleUpdateMsg {
   optional bytes image = 6;
   bool isSystem = 7;
   optional string description = 8;
+  optional string widgets = 9;
 }
 
 message WidgetTypeUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  optional string bundleAlias = 4;
+  optional string bundleAlias = 4; // deprecated
   optional string alias = 5; // deprecated
   optional string name = 6;
   optional string descriptorJson = 7;

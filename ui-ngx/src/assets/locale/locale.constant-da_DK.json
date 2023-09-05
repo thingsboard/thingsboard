@@ -1298,7 +1298,6 @@
     "name-starts-with": "Navnet begynder med",
     "use-entity-name-filter": "Anvend filter",
     "entity-list-empty": "Ingen entiteter valgt.",
-    "entity-type-list-empty": "Ingen entitetstyper valgt.",
     "entity-name-filter-required": "Entitetsnavnfilter er påkrævet.",
     "entity-name-filter-no-entity-matched": "",
     "all-subtypes": "Alle",

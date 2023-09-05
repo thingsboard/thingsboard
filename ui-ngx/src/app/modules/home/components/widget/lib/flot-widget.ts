@@ -1621,10 +1621,10 @@ export class TbFlot {
     const descriptors = this.ctx.actionsApi.getActionDescriptors('sliceClick');
     if ($event && descriptors.length) {
       $event.stopPropagation();
-      const entityInfo = this.ctx.actionsApi.getActiveEntityInfo();
-      const entityId = entityInfo ? entityInfo.entityId : null;
-      const entityName = entityInfo ? entityInfo.entityName : null;
-      const entityLabel = entityInfo ? entityInfo.entityLabel : null;
+      const datasource = item.series.datasource;
+      const entityId = datasource ? datasource.entity?.id : null;
+      const entityName = datasource ? datasource.entityName : null;
+      const entityLabel = datasource ? datasource.entityLabel : null;
       this.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, item, entityLabel);
     }
   }

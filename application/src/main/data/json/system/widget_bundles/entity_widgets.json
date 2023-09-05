@@ -1,0 +1,14 @@
+{
+  "widgetsBundle": {
+    "alias": "entity_widgets",
+    "title": "Entity widgets",
+    "image": null,
+    "description": null,
+    "externalId": null,
+    "name": "Entity widgets"
+  },
+  "widgetTypeFqns": [
+    "cards.entities_table",
+    "cards.entities_hierarchy"
+  ]
+}

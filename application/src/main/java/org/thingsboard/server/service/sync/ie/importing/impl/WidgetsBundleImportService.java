@@ -54,32 +54,7 @@ public class WidgetsBundleImportService extends BaseEntityImportService<WidgetsB
     @Override
     protected WidgetsBundle saveOrUpdate(EntitiesImportCtx ctx, WidgetsBundle widgetsBundle, WidgetsBundleExportData exportData, IdProvider idProvider) {
         WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
-        if (widgetsBundle.getId() == null) {
-            for (WidgetTypeDetails widget : exportData.getWidgets()) {
-                widget.setId(null);
-                widget.setTenantId(ctx.getTenantId());
-                widget.setBundleAlias(savedWidgetsBundle.getAlias());
-                widgetTypeService.saveWidgetType(widget);
-            }
-        } else {
-            Map<String, WidgetTypeInfo> existingWidgets = widgetTypeService.findWidgetTypesInfosByTenantIdAndBundleAlias(ctx.getTenantId(), savedWidgetsBundle.getAlias()).stream()
-                    .collect(Collectors.toMap(BaseWidgetType::getFqn, w -> w));
-            for (WidgetTypeDetails widget : exportData.getWidgets()) {
-                WidgetTypeInfo existingWidget;
-                if ((existingWidget = existingWidgets.remove(widget.getFqn())) != null) {
-                    widget.setId(existingWidget.getId());
-                    widget.setCreatedTime(existingWidget.getCreatedTime());
-                } else {
-                    widget.setId(null);
-                }
-                widget.setTenantId(ctx.getTenantId());
-                widget.setBundleAlias(savedWidgetsBundle.getAlias());
-                widgetTypeService.saveWidgetType(widget);
-            }
-            existingWidgets.values().stream()
-                    .map(BaseWidgetType::getId)
-                    .forEach(widgetTypeId -> widgetTypeService.deleteWidgetType(ctx.getTenantId(), widgetTypeId));
-        }
+        widgetTypeService.updateWidgetsBundleWidgetFqns(ctx.getTenantId(), savedWidgetsBundle.getId(), exportData.getWidgets());
         return savedWidgetsBundle;
     }
 

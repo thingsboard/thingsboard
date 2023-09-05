@@ -28,3 +28,4 @@ export * from './toggle-select.component';
 export * from './unit-input.component';
 export * from './material-icons.component';
 export * from './icon.component';
+export * from './hint-tooltip-icon.component';

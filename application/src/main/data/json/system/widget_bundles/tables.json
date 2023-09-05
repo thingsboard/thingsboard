@@ -1,0 +1,15 @@
+{
+  "widgetsBundle": {
+    "alias": "tables",
+    "title": "Tables",
+    "image": null,
+    "description": null,
+    "externalId": null,
+    "name": "Tables"
+  },
+  "widgetTypeFqns": [
+    "cards.entities_table",
+    "alarm_widgets.alarms_table",
+    "cards.timeseries_table"
+  ]
+}

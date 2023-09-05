@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityInfo;
+import org.thingsboard.server.common.data.FSTUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -44,6 +45,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @DaoSqlTest
 public class TenantProfileServiceTest extends AbstractServiceTest {
@@ -293,6 +297,29 @@ public class TenantProfileServiceTest extends AbstractServiceTest {
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
 
+    }
+
+    @Test
+    public void testTenantProfileSerialization_fst() {
+        TenantProfile tenantProfile = new TenantProfile();
+        TenantProfileData profileData = new TenantProfileData();
+        tenantProfile.setProfileData(profileData);
+        profileData.setConfiguration(new DefaultTenantProfileConfiguration());
+        addMainQueueConfig(tenantProfile);
+
+        byte[] serialized = assertDoesNotThrow(() -> {
+            return FSTUtils.encode(tenantProfile);
+        });
+        assertDoesNotThrow(() -> {
+            FSTUtils.encode(profileData);
+        });
+
+        TenantProfile deserialized = assertDoesNotThrow(() -> {
+            return FSTUtils.decode(serialized);
+        });
+        assertThat(deserialized).isEqualTo(tenantProfile);
+        assertThat(deserialized.getProfileData()).isNotNull();
+        assertThat(deserialized.getProfileData().getQueueConfiguration()).isNotEmpty();
     }
 
     public static TenantProfile createTenantProfile(String name) {

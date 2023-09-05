@@ -52,9 +52,9 @@ import {
   getPlacementName,
   popoverMotion,
   PopoverPlacement,
-  POSITION_MAP,
   PropertyMapping
 } from '@shared/components/popover.models';
+import { POSITION_MAP } from '@shared/models/overlay.models';
 import { distinctUntilChanged, take, takeUntil } from 'rxjs/operators';
 import { isNotEmptyStr, onParentScrollOrWindowResize } from '@core/utils';
 import { animate, AnimationBuilder, AnimationMetadata, style } from '@angular/animations';
