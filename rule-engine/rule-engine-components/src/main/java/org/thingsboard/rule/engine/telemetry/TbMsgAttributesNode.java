@@ -61,14 +61,14 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_R
                       "If upsert(update/insert) operation is completed successfully rule node will send the incoming message via <b>Success</b> chain, otherwise, <b>Failure</b> chain is used. " +
                       "Additionally if checkbox <b>Send attributes updated notification</b> is set to true, rule node will put the \"Attributes Updated\" " +
                       "event for <b>SHARED_SCOPE</b> and <b>SERVER_SCOPE</b> attributes updates to the corresponding rule engine queue." +
-                      "Performance checkbox 'Update Attributes On Value Change' will skip attributes overwrites for values with no changes (avoid concurrent writes because this check is not transactional; will not update 'Last updated time' for skipped attributes).",
+                      "Performance checkbox 'Save attributes only if the value changes' will skip attributes overwrites for values with no changes (avoid concurrent writes because this check is not transactional; will not update 'Last updated time' for skipped attributes).",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeAttributesConfig",
         icon = "file_upload"
 )
 public class TbMsgAttributesNode implements TbNode, TbVersionedNode {
 
-    static final String UPDATE_ATTRIBUTES_ON_VALUE_CHANGE_KEY = "updateAttributesOnValueChange";
+    static final String UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY = "updateAttributesOnlyOnValueChange";
     private TbMsgAttributesNodeConfiguration config;
 
     @Override
@@ -94,7 +94,7 @@ public class TbMsgAttributesNode implements TbNode, TbVersionedNode {
         String scope = getScope(msg.getMetaData().getValue(SCOPE));
         boolean sendAttributesUpdateNotification = checkSendNotification(scope);
 
-        if (!config.isUpdateAttributesOnValueChange()) {
+        if (!config.isUpdateAttributesOnlyOnValueChange()) {
             saveAttr(newAttributes, ctx, msg, scope, sendAttributesUpdateNotification);
             return;
         }
@@ -171,9 +171,9 @@ public class TbMsgAttributesNode implements TbNode, TbVersionedNode {
         boolean hasChanges = false;
         switch (fromVersion) {
             case 0:
-                if (!oldConfiguration.has(UPDATE_ATTRIBUTES_ON_VALUE_CHANGE_KEY)) {
+                if (!oldConfiguration.has(UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY)) {
                     hasChanges = true;
-                    ((ObjectNode) oldConfiguration).put(UPDATE_ATTRIBUTES_ON_VALUE_CHANGE_KEY, false);
+                    ((ObjectNode) oldConfiguration).put(UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY, false);
                 }
                 break;
             default:

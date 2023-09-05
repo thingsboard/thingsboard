@@ -32,42 +32,43 @@ import static org.mockito.Mockito.mock;
 @Slf4j
 class TbMsgAttributesNodeTest {
 
+    final String updateAttributesOnlyOnValueChangeKey = "updateAttributesOnlyOnValueChange";
+
     @Test
     void testUpgrade_fromVersion0() throws TbNodeException {
-        final String updateAttributesOnValueChangeKey = "updateAttributesOnValueChange";
+
         TbMsgAttributesNode node = mock(TbMsgAttributesNode.class);
         willCallRealMethod().given(node).upgrade(anyInt(), any());
 
         ObjectNode jsonNode = (ObjectNode) JacksonUtil.valueToTree(new TbMsgAttributesNodeConfiguration().defaultConfiguration());
-        jsonNode.remove(updateAttributesOnValueChangeKey);
-        assertThat(jsonNode.has(updateAttributesOnValueChangeKey)).as("pre condition has no " + updateAttributesOnValueChangeKey).isFalse();
+        jsonNode.remove(updateAttributesOnlyOnValueChangeKey);
+        assertThat(jsonNode.has(updateAttributesOnlyOnValueChangeKey)).as("pre condition has no " + updateAttributesOnlyOnValueChangeKey).isFalse();
 
         TbPair<Boolean, JsonNode> upgradeResult = node.upgrade(0, jsonNode);
 
         ObjectNode resultNode = (ObjectNode) upgradeResult.getSecond();
         assertThat(upgradeResult.getFirst()).as("upgrade result has changes").isTrue();
-        assertThat(resultNode.has(updateAttributesOnValueChangeKey)).as("upgrade result has key " + updateAttributesOnValueChangeKey).isTrue();
-        assertThat(resultNode.get(updateAttributesOnValueChangeKey).asBoolean()).as("upgrade result value [false] for key " + updateAttributesOnValueChangeKey).isFalse();
+        assertThat(resultNode.has(updateAttributesOnlyOnValueChangeKey)).as("upgrade result has key " + updateAttributesOnlyOnValueChangeKey).isTrue();
+        assertThat(resultNode.get(updateAttributesOnlyOnValueChangeKey).asBoolean()).as("upgrade result value [false] for key " + updateAttributesOnlyOnValueChangeKey).isFalse();
     }
 
     @Test
-    void testUpgrade_fromVersion0_alreadyHasUpdateAttributesOnValueChange() throws TbNodeException {
-        final String updateAttributesOnValueChangeKey = "updateAttributesOnValueChange";
+    void testUpgrade_fromVersion0_alreadyHasupdateAttributesOnlyOnValueChange() throws TbNodeException {
         TbMsgAttributesNode node = mock(TbMsgAttributesNode.class);
         willCallRealMethod().given(node).upgrade(anyInt(), any());
 
         ObjectNode jsonNode = (ObjectNode) JacksonUtil.valueToTree(new TbMsgAttributesNodeConfiguration().defaultConfiguration());
-        jsonNode.remove(updateAttributesOnValueChangeKey);
-        jsonNode.put(updateAttributesOnValueChangeKey, true);
-        assertThat(jsonNode.has(updateAttributesOnValueChangeKey)).as("pre condition has no " + updateAttributesOnValueChangeKey).isTrue();
-        assertThat(jsonNode.get(updateAttributesOnValueChangeKey).asBoolean()).as("pre condition has [true] for key " + updateAttributesOnValueChangeKey).isTrue();
+        jsonNode.remove(updateAttributesOnlyOnValueChangeKey);
+        jsonNode.put(updateAttributesOnlyOnValueChangeKey, true);
+        assertThat(jsonNode.has(updateAttributesOnlyOnValueChangeKey)).as("pre condition has no " + updateAttributesOnlyOnValueChangeKey).isTrue();
+        assertThat(jsonNode.get(updateAttributesOnlyOnValueChangeKey).asBoolean()).as("pre condition has [true] for key " + updateAttributesOnlyOnValueChangeKey).isTrue();
 
         TbPair<Boolean, JsonNode> upgradeResult = node.upgrade(0, jsonNode);
 
         ObjectNode resultNode = (ObjectNode) upgradeResult.getSecond();
         assertThat(upgradeResult.getFirst()).as("upgrade result has changes").isFalse();
-        assertThat(resultNode.has(updateAttributesOnValueChangeKey)).as("upgrade result has key " + updateAttributesOnValueChangeKey).isTrue();
-        assertThat(resultNode.get(updateAttributesOnValueChangeKey).asBoolean()).as("upgrade result value [true] for key " + updateAttributesOnValueChangeKey).isTrue();
+        assertThat(resultNode.has(updateAttributesOnlyOnValueChangeKey)).as("upgrade result has key " + updateAttributesOnlyOnValueChangeKey).isTrue();
+        assertThat(resultNode.get(updateAttributesOnlyOnValueChangeKey).asBoolean()).as("upgrade result value [true] for key " + updateAttributesOnlyOnValueChangeKey).isTrue();
     }
 
 }

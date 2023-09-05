@@ -26,7 +26,7 @@ public class TbMsgAttributesNodeConfiguration implements NodeConfiguration<TbMsg
 
     private Boolean notifyDevice;
     private boolean sendAttributesUpdatedNotification;
-    private boolean updateAttributesOnValueChange;
+    private boolean updateAttributesOnlyOnValueChange;
 
     @Override
     public TbMsgAttributesNodeConfiguration defaultConfiguration() {
@@ -35,7 +35,7 @@ public class TbMsgAttributesNodeConfiguration implements NodeConfiguration<TbMsg
         configuration.setNotifyDevice(false);
         configuration.setSendAttributesUpdatedNotification(false);
         //Since version 1. For an existing rule nodes for version 0. See the TbVersionedNode implementation
-        configuration.setUpdateAttributesOnValueChange(true);
+        configuration.setUpdateAttributesOnlyOnValueChange(true);
         return configuration;
     }
 }
