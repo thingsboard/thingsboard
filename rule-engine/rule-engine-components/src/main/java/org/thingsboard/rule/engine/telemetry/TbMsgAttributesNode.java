@@ -25,7 +25,6 @@ import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.TbVersionedNode;
@@ -66,7 +65,7 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_R
         configDirective = "tbActionNodeAttributesConfig",
         icon = "file_upload"
 )
-public class TbMsgAttributesNode implements TbNode, TbVersionedNode {
+public class TbMsgAttributesNode implements TbVersionedNode {
 
     static final String UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY = "updateAttributesOnlyOnValueChange";
     private TbMsgAttributesNodeConfiguration config;
