@@ -48,6 +48,7 @@ import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
@@ -385,6 +386,13 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     @Override
+    public PageData<AlarmId> findAlarmIdsByAssigneeId(TenantId tenantId, UserId userId, PageLink pageLink) {
+        log.trace("[{}] Executing findAlarmIdsByAssigneeId [{}]", tenantId, userId);
+        validateId(userId, "Incorrect userId " + userId);
+        return alarmDao.findAlarmIdsByAssigneeId(tenantId, userId.getId(), pageLink);
+    }
+
+    @Override
     public AlarmSeverity findHighestAlarmSeverity(TenantId tenantId, EntityId entityId, AlarmSearchStatus alarmSearchStatus,
                                                   AlarmStatus alarmStatus, String assigneeId) {
         AlarmStatusFilter asf;
@@ -522,5 +530,4 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
             request.setEndTs(request.getStartTs());
         }
     }
-
 }
