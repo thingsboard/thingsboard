@@ -585,7 +585,6 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
                 const widget: Widget = {
                   typeFullFqn: widgetInfo.fullFqn,
                   type: widgetInfo.type,
-                  title: widgetInfo.widgetName,
                   sizeX,
                   sizeY,
                   row: 0,
