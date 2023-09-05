@@ -92,6 +92,7 @@ import * as FileSizePipe from '@shared/pipe/file-size.pipe';
 import * as NospacePipe from '@shared/pipe/nospace.pipe';
 import * as SelectableColumnsPipe from '@shared/pipe/selectable-columns.pipe';
 import * as KeyboardShortcutPipe from '@shared/pipe/keyboard-shortcut.pipe';
+import * as CustomTranslatePipe from '@shared/pipe/custom-translate.pipe';
 
 import * as coercion from '@shared/decorators/coercion';
 import * as enumerable from '@shared/decorators/enumerable';
@@ -395,6 +396,7 @@ class ModulesMap implements IModulesMap {
     '@shared/pipe/nospace.pipe': NospacePipe,
     '@shared/pipe/selectable-columns.pipe': SelectableColumnsPipe,
     '@shared/pipe/keyboard-shortcut.pipe': KeyboardShortcutPipe,
+    '@shared/pipe/custom-translate.pipe': CustomTranslatePipe,
 
     '@shared/decorators/coercion': coercion,
     '@shared/decorators/enumerable': enumerable,
