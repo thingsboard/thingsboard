@@ -280,4 +280,6 @@ export const hidePageSizePixelValue = 550;
 export const customTranslationsPrefix = 'custom.';
 export const i18nPrefix = 'i18n';
 
+export const i18nRegExp = new RegExp(`{${i18nPrefix}:[^{}]+}`, 'g');
+
 export const MODULES_MAP = new InjectionToken<IModulesMap>('ModulesMap');

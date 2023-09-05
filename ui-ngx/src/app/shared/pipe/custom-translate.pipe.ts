@@ -15,16 +15,34 @@
 ///
 
 import { Pipe, PipeTransform } from '@angular/core';
-import { UtilsService } from '@core/services/utils.service';
-import { i18nPrefix } from '@shared/models/constants';
+import { i18nPrefix, i18nRegExp } from '@shared/models/constants';
+import { TranslateService } from '@ngx-translate/core';
+import { isString } from '@core/utils';
 
 @Pipe({
   name: 'customTranslate'
 })
 export class CustomTranslatePipe implements PipeTransform {
 
-  constructor(private utils: UtilsService) {}
-  public transform(text: string): string {
-    return text.includes(`{${i18nPrefix}`) ? this.utils.customTranslation(text, text) : text;
+  constructor(private translate: TranslateService) {}
+  public transform(text: string, def?: any): string {
+    if (text && isString(text)) {
+      if (text.includes(`{${i18nPrefix}`)) {
+        const matches = text.match(i18nRegExp);
+        let result = text;
+        for (const match of matches) {
+          const translationId = match.substring(6, match.length - 1);
+          result = result.replace(match, this.doTranslate(translationId, def || match));
+        }
+        return result;
+      }
+    }
+    return text;
   }
+
+  private doTranslate(translationValue: string, defaultValue: string): string {
+    const translation = this.translate.instant(translationValue);
+    return translation !== translationValue ? translation : defaultValue;
+  }
+
 }
