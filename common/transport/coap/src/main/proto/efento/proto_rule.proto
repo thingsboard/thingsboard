@@ -1,0 +1,267 @@
+/**
+ * Copyright © 2016-2023 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+syntax = "proto3";
+
+option java_package = "org.thingsboard.server.gen.transport.coap";
+option java_outer_classname = "ProtoRuleProtos";
+
+/* Encoding A: used to set absolute values in the Rules (e.g. upper and lower threshold values)                                 */
+/*  - TEMPERATURE - [°C] - Celsius degree. Resolution 0.1°C. Range [-273.2:4000.0].                                             */
+/*  - HUMIDITY - [% RH] - Relative humidity. Resolution 1%. Range [0:100].                                                      */
+/*  - ATMOSPHERIC_PRESSURE - [hPa] - Hectopascal (1hPa = 100Pa). Resolution 0.1hPa. Range: [1.0:2000.0].                        */
+/*  - DIFERENTIAL_PRESSURE - [Pa] - Pascal. Resolution 1Pa. Range [-10000:10000]                                                */
+/*  - OK/ALARM - Not applicable                                                                                                 */
+/*  - IAQ - [IAQ] - IAQ index. Resolution 1IAQ. Range [0:500].                                                                  */
+/*  - FLOODING - Not applicable                                                                                                 */
+/*  - PULSE_CNT - [NB] Number of pulses. Resolution 1 pulse. Range [0:8000000].                                                 */
+/*  - ELECTRICITY_METER - [W] - Watt; Resolution 1W. Range [0:8000000]. Average power consumption in period                     */
+/*  - WATER_METER [l/min] - Liter per minute. Resolution 1l/min. Range [0:8000000]. Average water flow in period.               */
+/*  - SOIL_MOISTURE - [kPa] - Kilopascal (1kPa = 1000Pa); Resolution 1kPa. Range [-1000:0]. Soil moisture (tension).            */
+/*  - CO_GAS - [ppm] - Parts per million. Resolution 1ppm. Range [0:1000000]. Carbon monoxide concentration.                    */
+/*  - NO2_GAS - [ppm] - Parts per million. Resolution 1ppm. Range [0:1000000]. Nitrogen dioxide concentration.                  */
+/*  - H2S_GAS - [ppm] - Parts per million. Resolution 0.01ppm. Range [0.00:80000.00]. Hydrogen sulfide concentration.           */
+/*  - AMBIENT_LIGHT -[lx] - Lux. Resolution 0.1lx. Range [0.0:100000.0]. Illuminance.                                           */
+/*  - PM_1_0 - [µg/m^3] - Micro gram per cubic meter. Resolution 1µg/m^3 Range [0:1000].                                        */
+/*  - PM_2_5 - [µg/m^3] - Micro gram per cubic meter. Resolution 1µg/m^3 Range [0:1000].                                        */
+/*  - PM_10_0 - [µg/m^3] - Micro gram per cubic meter. Resolution 1µg/m^3 Range [0:1000].                                       */
+/*  - NOISE_LEVEL - [dB] - Decibels. Resolution 0.1 dB. Range: [0.0:200.0]. Noise level.                                        */
+/*  - NH3_GAS - [ppm] - Parts per million. Resolution 1ppm. Range [0:1000000]. Ammonia concentration.                           */
+/*  - CH4_GAS - [ppm] - Parts per million. Resolution 1ppm. Range [0:1000000]. Methane concentration.                           */
+/*  - HIGH_PRESSURE - [kPa] - Kilopascal (1kPa = 1000Pa, 100kPa = 1bar). Resolution 1kPa. Range [0:200000]. Pressure.           */
+/*  - DISTANCE_MM - [mm] - Millimeter. Resolution 1mm. Range [0:100000]. Distance.                                              */
+/*  - WATER_METER_ACC_MINOR - [l] - Liter. Resolution 1l. Range [0:1000000]. Accumulative water meter (minor).                  */
+/*  - WATER_METER_ACC_MAJOR - [hl] - Hectoliter. Resolution 1hl. Range [0:1000000]. Accumulative water meter (major).           */
+/*  - CO2_GAS - [ppm] - Parts per million. Resolution 1ppm. Range [0:1000000]. Carbon dioxide concentration.                    */
+/*  - HUMIDITY ACCURATE - [% RH] - Relative humidity. Resolution 0.1%. Range [0.0:100.0].                                       */
+/*  - STATIC_IAQ - [sIAQ] - Static IAQ index. Resolution 1sIAQ. Range [0:10000].                                                */
+/*  - CO2_EQUIVALENT - [ppm] - Parts per million. Resolution 1ppm. Range [0:1000000]. Carbon dioxide equivalent.                */
+/*  - BREATH_VOC - [ppm] - Parts per million. Resolution 1ppm. Range [0:100000]. Breath VOC estimate.                           */
+/*  - PERCENTAGE - [%] - Percentage. Resolution 0.01%. Range [0.00:100.00].                                                     */
+/*  - PULSE_CNT_ACC_MINOR - [NB] - Number of pulses. Resolution 1 pulse. Range [0:1000000]. Accumulative pulse counter (minor). */
+/*  - PULSE_CNT_ACC_MAJOR - [kNB] - Number of kilopulses. Resolution 1 kilopulse. Range [0:1000000].                            */
+/*                                  Accumulative pulse counter (major).                                                         */
+/*  - ELEC_METER_ACC_MINOR - [Wh] - Watt-hour. Resolution 1Wh. Range [0:1000000]. Accumulative electricity meter (minor).       */
+/*  - ELEC_METER_ACC_MAJOR - [kWh] - Kilowatt-hour. Resolution 1kWh. Range [0:1000000]. Accumulative electricity meter (major). */
+
+/* Encoding R: used to set relative values in the Rules (e.g. differential threshold and hysteresis)                            */
+/*  - TEMPERATURE - [°C] - Celsius degree. Resolution 0.1°C. Range [0.1:4273.2].                                                */
+/*  - HUMIDITY - [% RH] - Relative humidity. Resolution 1%. Range [1:100].                                                      */
+/*  - ATMOSPHERIC_PRESSURE - [hPa] - Hectopascal (1hPa = 100Pa). Resolution 0.1hPa. Range: [0.1:1999.0].                        */
+/*  - DIFERENTIAL_PRESSURE - [Pa] - Pascal. Resolution 1Pa. Range [1:20000]                                                     */
+/*  - OK/ALARM - Not applicable                                                                                                 */
+/*  - VOC - [IAQ] - Iaq index. Resolution 1IAQ. Range [1:500].                                                                  */
+/*  - FLOODING - Not applicable                                                                                                 */
+/*  - PULSE_CNT - [NB] Number of pulses. Resolution 1 pulse. Range [1:8000000].                                                 */
+/*  - ELECTRICITY_METER - [W] - Watt; Resolution 1W. Range [1:8000000]. Average power consumption in period                     */
+/*  - WATER_METER [l/min] - Liter per minute. Resolution 1l/min. Range [1:8000000]. Average water flow in period.               */
+/*  - SOIL_MOISTURE - [kPa] - Kilopascal (1kPa = 1000Pa); Resolution 1kPa. Range [1:1000]. Soil moisture (tension).             */
+/*  - CO_GAS - [ppm] - Parts per million. Resolution 1ppm. Range [1:1000000]. Carbon monoxide concentration.                    */
+/*  - NO2_GAS - [ppm] - Parts per million. Resolution 1ppm. Range [1:1000000]. Nitrogen dioxide concentration.                  */
+/*  - H2S_GAS - [ppm] - Parts per million. Resolution 0.01ppm. Range [0.01:80000.00]. Hydrogen sulfide concentration.           */
+/*  - AMBIENT_LIGHT -[lx] - Lux. Resolution 0.1lx. Range [0.1:100000.0]. Illuminance.                                           */
+/*  - PM_1_0 - [µg/m^3] - Micro gram per cubic meter. Resolution 1µg/m^3 Range [1:1000].                                        */
+/*  - PM_2_5 - [µg/m^3] - Micro gram per cubic meter. Resolution 1µg/m^3 Range [1:1000].                                        */
+/*  - PM_10_0 - [µg/m^3] - Micro gram per cubic meter. Resolution 1µg/m^3 Range [1:1000].                                       */
+/*  - NOISE_LEVEL - [dB] - Decibels. Resolution 0.1 dB. Range: [0.1:200.0]. Noise level.                                        */
+/*  - NH3_GAS - [ppm] - Parts per million. Resolution 1ppm. Range [1:1000000]. Ammonia concentration.                           */
+/*  - CH4_GAS - [ppm] - Parts per million. Resolution 1ppm. Range [1:1000000]. Methane concentration.                           */
+/*  - HIGH_PRESSURE - [kPa] - Kilopascal (1kPa = 1000Pa, 100kPa = 1bar). Resolution 1kPa. Range [1:200000]. Pressure.           */
+/*  - DISTANCE_MM - [mm] - Millimeter. Resolution 1mm. Range [1:100000]. Distance.                                              */
+/*  - WATER_METER_ACC_MINOR - [l] - Liter. Resolution 1l. Range [1:1000000]. Accumulative water meter (minor).                  */
+/*  - WATER_METER_ACC_MAJOR - [hl] - Hectoliter. Resolution 1hl. Range [1:1000000]. Accumulative water meter (major).           */
+/*  - CO2_GAS - [ppm] - Parts per million. Resolution 1ppm. Range [1:1000000]. Carbon dioxide concentration.                    */
+/*  - HUMIDITY ACCURATE - [% RH] - Relative humidity. Resolution 0.1%. Range [0.1:100.0].                                       */
+/*  - STATIC_IAQ - [sIAQ] - Static IAQ index. Resolution 1sIAQ. Range [1:10000].                                                */
+/*  - CO2_EQUIVALENT - [ppm] - Parts per million. Resolution 1ppm. Range [1:1000000]. Carbon dioxide equivalent.                */
+/*  - BREATH_VOC - [ppm] - Parts per million. Resolution 1ppm. Range [1:100000]. Breath VOC estimate.                           */
+/*  - PERCENTAGE - [%] - Percentage. Resolution 0.01%. Range [0.01:100.00].                                                     */
+/*  - PULSE_CNT_ACC_MINOR - [NB] - Number of pulses. Resolution 1 pulse. Range [1:1000000]. Accumulative pulse counter (minor). */
+/*  - PULSE_CNT_ACC_MAJOR - [kNB] - Number of kilopulses. Resolution 1 kilopulse. Range [1:1000000].                            */
+/*                                  Accumulative pulse counter (major).                                                         */
+/*  - ELEC_METER_ACC_MINOR - [Wh] - Watt-hour. Resolution 1Wh. Range [1:1000000]. Accumulative electricity meter (minor).       */
+/*  - ELEC_METER_ACC_MAJOR - [kWh] - Kilowatt-hour. Resolution 1kWh. Range [1:1000000]. Accumulative electricity meter (major). */
+
+/* Condition to be checked by the device. If the condition is true, an action is triggered                                      */
+enum Condition {
+
+  /* Invalid value                                                                                                              */
+  CONDITION_UNSPECIFIED = 0;
+
+  /* Threshold function for given rule_id is disabled                                                                           */
+  CONDITION_DISABLED = 1;
+
+  /* Upper threshold. Continuous sensors only. If the measurement (or average from a few measurements) is over the threshold,   */
+  /* an action is triggered.                                                                                                    */
+  /* parameter[0] - Threshold value in "Encoding A" format. Must match channel type                                             */
+  /* parameter[1] - Hysteresis value in "Encoding R" format. Must much channel type. Set to "0" to disable                      */
+  /* parameter[2] - Triggering mode:                                                                                            */
+  /*                  - 1 - moving average (a1=(n1+n2+n3)/3, a2=(n2+n3+n4)/3, etc.)                                             */
+  /*                  - 2 - window average (a1=(n1+n2+n3)/3, a2=(n4+n5+n6)/3, etc.)                                             */
+  /*                  - 3 - consecutive samples (number of consecutive samples above threshold)                                 */
+  /* parameter[3] - Number of measurements for trigger determination. E.g parameter[3] equals 3, average value from three       */
+  /*                samples will be calculated and compared to the threshold value in average mode or the third consecutive     */
+  /*                sample above threshold will trigger action in consecutive mode. Range: [1:10].                              */
+  /* parameter[4] - Type of measurement (as described in MeasurementType).                                                      */
+  CONDITION_HIGH_THRESHOLD = 2;
+
+  /* Lower threshold. Continuous sensors only. If the measurement (or average from a few measurements) is below the threshold,  */
+  /* an action is triggered.                                                                                                    */
+  /* parameter[0] - Threshold value in "Encoding A" format. Must match channel type                                             */
+  /* parameter[1] - Hysteresis value in "Encoding R" format. Must much channel type. Set to "0" to disable                      */
+  /* parameter[2] - Triggering mode:                                                                                            */
+  /*                  - 1 - moving average (a1=(n1+n2+n3)/3, a2=(n2+n3+n4)/3, etc.)                                             */
+  /*                  - 2 - window average (a1=(n1+n2+n3)/3, a2=(n4+n5+n6)/3, etc.)                                             */
+  /*                  - 3 - consecutive samples (number of consecutive samples above threshold)                                 */
+  /* parameter[3] - Number of measurements for trigger determination. E.g parameter[3] equals 3, average value from three       */
+  /*                samples will be calculated and compared to the threshold value in average mode or the third consecutive     */
+  /*                sample below threshold will trigger action in consecutive mode. Range: [1:10].                              */
+  /* parameter[4] - Type of measurement (as described in MeasurementType).                                                      */
+  CONDITION_LOW_THRESHOLD = 3;
+
+  /* Differential threshold. Continuous sensors only. If the absolute value of the difference between the last value sent to    */
+  /* the server and the measurement value (or average from a few measurements) is greater or equal to the value of              */
+  /* the threshold set, an action is triggered.                                                                                 */
+  /* parameter[0] - Threshold value in "Encoding R" format. Must match channel type                                             */
+  /* parameter[1] - Triggering mode:                                                                                            */
+  /*                  - 1 - moving average (a1=(n1+n2+n3)/3, a2=(n2+n3+n4)/3, etc.)                                             */
+  /*                  - 2 - window average (a1=(n1+n2+n3)/3, a2=(n4+n5+n6)/3, etc.)                                             */
+  /*                  - 3 - consecutive samples (number of consecutive samples above threshold)                                 */
+  /* parameter[2] - Number of measurements for trigger determination. E.g parameter[3] equals 3, average value from three       */
+  /*                samples will be calculated and compared to the threshold value in average mode or the third consecutive     */
+  /*                sample exceeding threshold will trigger action in consecutive mode. Range: [1:10].                          */
+  /* parameter[3] - Type of measurement (as described in MeasurementType).                                                      */
+  CONDITION_DIFF_THRESHOLD = 4;
+
+  /* Change of binary sensor's state. Binary sensors only. Each change of the binary's sensor state will trigger an action.     */
+  CONDITION_BINARY_CHANGE_STATE = 5;
+
+  /* Logic operator. Used for combining multiple rules into more complex conditions. If the logic condition specified by        */
+  /* parameters (logic operator and selected rules) is met, an action is triggered.                                             */
+  /* parameter[0] - Logic operator (as described in LogicOperation).                                                            */
+  /* parameter[1] - Rule selector (bit mask). Specifies which rules should be taken into account while determining              */
+  /*                rules outcome.                                                                                              */
+  /* parameter[2] - Rule negation (bit mask). Specifies which of chosen in parameter[1] rules should be negated                 */
+  /*                before determining rules outcome.                                                                           */
+  /* parameter[3] - Rule action delay [s]. Specifies time delay between the rule activation and rule action being triggered.    */
+  /*                Range: [0:864000].                                                                                          */
+  /* parameter[4] - Rule return delay [s]. Specifies time delay between the rule deactivation and rule action being triggered.  */
+  /*                Range: [0:864001]. Max parameter value disables action triggering on rule deactivation.                     */
+  CONDITION_LOGIC_OPERATOR = 6;
+
+  /* On measurement. Continous sensors only. The basic function is to trigger communication after measurement if at least 60s   */
+  /* have passed since the last one. Transmission may occur every x measurement. Optionally dependency on the other rule can    */
+  /* be configured, then, when all conditions are met, transmission is triggered.                                               */
+  /* parameter[0] - Send every n measurement. This parameter specifies every which measurement transmission will be triggered   */
+  /*                if all other conditions are met. Range: [1:500]. If parameter[0] equals 1, transmission will occur after    */
+  /*                every measurement.                                                                                          */
+  /* parameter[1] - Optional. Rule selector (bit mask). Specifies which rule should be taken into account while determining     */
+  /*                the measurement rule outcome.                                                                               */
+  /* parameter[2] - Optional. Rule negation (bit mask). Specifies which of chosen in parameter[1] rule should be negated        */
+  /*                before determining the measurement rule outcome.                                                            */
+  CONDITION_ON_MEASUREMENT = 7;
+}
+
+/* Logic operators to be used for determining the outcome of rules with logic operator condition.                               */
+enum LogicOperator {
+
+  /* Invalid use                                                                                                                */
+  LOGIC_OPERATOR_UNSPECIFIED = 0;
+
+  /* Logic AND                                                                                                                  */
+  LOGIC_OPERATOR_AND = 1;
+
+  /* Logic OR                                                                                                                   */
+  LOGIC_OPERATOR_OR = 2;
+}
+
+/* Action to be triggered. Currently the only possible action is to trigger the transmission.                                   */
+/* Other actions will be available in next SW releases.                                                                         */
+enum Action {
+
+  /* Invalid value                                                                                                              */
+  ACTION_UNSPECIFIED = 0;
+
+  /* To trigger the transmission                                                                                                */
+  ACTION_TRIGGER_TRANSMISSION = 1;
+
+  /* To take no action. Possible for logic operator components                                                                  */
+  ACTION_NO_ACTION = 2;
+
+  /* To trigger the transmission with ACK                                                                                       */
+  ACTION_TRIGGER_TRANSMISSION_WITH_ACK = 3;
+}
+
+/* Type of a rule calendars.                                                                                                    */
+enum CalendarType {
+
+  /* Invalid value                                                                                                              */
+  CALENDAR_TYPE_UNSPECIFIED = 0;
+
+  /* Type for inactive calendars                                                                                                */
+  CALENDAR_TYPE_DISABLED = 1;
+
+  /* Week type. Enables selcted rules on specified days of the week in specified time periods.                                  */
+  /* parameter[0] - Week day mask. Bitmask of days when selected rules are enabled                                              */
+  /*                  - Bit 0 - Sunday                                                                                          */
+  /*                  - Bit 1 - Monday                                                                                          */
+  /*                    ...                                                                                                     */
+  /*                  - Bit 6 - Saturday                                                                                        */
+  /* parameter[1] - 'From time' - point in time from which selected rules will be enabled (in minutes from midnight).           */
+  /* parameter[2] - 'To time' - point in time from which selected rules will be disabled (in minutes from midnight).            */
+  /* Note: if 'From time' is bigger than 'To time' there are two periods when rules are enabled - from 00:00 to 'To time'       */
+  /*        and from 'From time' to 23:59.                                                                                      */
+  /* parameter[3] - Timezone - desired timezone for date comparison. Encoded as number (N) of 15 minutes offsets                */
+  /*                  - example - if N = 4, then  offset = 4 * 15min = 1h. I.e. timezone is UTC+1.                              */
+  CALENDAR_TYPE_WEEK = 2;
+}
+
+/* Rules calendars. Used for enabling/disabling rules based on date/time.                                                       */
+/* It is possible to configure up to 6 calendars. Each of them can affect any number of rules.                                  */
+message ProtoCalendar {
+
+  /* Bit mask of selected rules. Mask on bits [0:11]                                                                            */
+  /*                  - Bit 0 - Rule ID 0                                                                                       */
+  /*                  - Bit 1 - Rule ID 1                                                                                       */
+  /*                    ...                                                                                                     */
+  /*                  - Bit 11 - Rule ID 11                                                                                     */
+  uint32 rule_mask = 1;
+
+  /* Calendars's parameters. Described in Type.                                                                                 */
+  repeated sint32 parameters = 2;
+
+  /* Calendar's type.  Described in Type.                                                                                       */
+  CalendarType type = 3;
+}
+
+/* Rules used to define edge logic on the device. Rules are defined by conditions and actions:                                  */
+/* If Condition is true, trigger Action. It is possible to configure up to 12 rules and assign them to different channels.      */
+/* One rule can be assigned to any number of channels. For instance rule "If temperature is over 10 C, trigger the transmission"*/
+/* can be assigned to channels 1 and 2. No matter to how many channels a rule is assigned, it's still counted as one rule.      */
+message ProtoRule {
+
+  /* Channels to which the rule is assigned. One rule can be assigned to multiple channels as long as those are of the same type*/
+  /* Bit mask on bits [0:5]. E.g. To assign the rule for channel 1: "000001", to assign rule to channels 2 and 4: "001010"      */
+  uint32 channel_mask = 1;
+
+  /* Rule's condition (as described in Condition).                                                                              */
+  Condition condition = 2;
+
+  /* Condition's parameters (as described in Condition). For binary sensors there are no parameters                             */
+  repeated sint32 parameters = 3;
+
+  /* Action to be triggered.                                                                                                    */
+  Action action = 4;
+}

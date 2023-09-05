@@ -18,6 +18,7 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
+import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -50,6 +51,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -567,19 +570,18 @@ public class AlarmControllerTest extends AbstractControllerTest {
 
         alarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
         Assert.assertNotNull(alarm);
+        AlarmId alarmId = alarm.getId();
 
-        Mockito.reset(tbClusterService, auditLogService);
         long beforeAssignmentTs = System.currentTimeMillis();
 
-        doPost("/api/alarm/" + alarm.getId() + "/assign/" + savedUser.getId().getId()).andExpect(status().isOk());
-        AlarmInfo foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
+        doPost("/api/alarm/" + alarmId.getId() + "/assign/" + savedUser.getId().getId()).andExpect(status().isOk());
+        Alarm foundAlarm = doGet("/api/alarm/info/" + alarmId.getId(), AlarmInfo.class);
+
         Assert.assertNotNull(foundAlarm);
         Assert.assertEquals(savedUser.getId(), foundAlarm.getAssigneeId());
         Assert.assertTrue(foundAlarm.getAssignTs() >= beforeAssignmentTs);
 
         beforeAssignmentTs = System.currentTimeMillis();
-
-        Mockito.reset(tbClusterService, auditLogService);
 
         loginSysAdmin();
 
@@ -587,7 +589,9 @@ public class AlarmControllerTest extends AbstractControllerTest {
 
         loginDifferentTenant();
 
-        foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
+        foundAlarm = Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> doGet("/api/alarm/info/" + alarmId.getId(), AlarmInfo.class), Objects::nonNull);
+
         Assert.assertNotNull(foundAlarm);
         Assert.assertNull(foundAlarm.getAssigneeId());
         Assert.assertTrue(foundAlarm.getAssignTs() >= beforeAssignmentTs);
@@ -613,15 +617,66 @@ public class AlarmControllerTest extends AbstractControllerTest {
                 .build();
         alarm = doPost("/api/alarm", alarm, Alarm.class);
         Assert.assertNotNull(alarm);
+        AlarmId alarmId = alarm.getId();
+        alarm = doGet("/api/alarm/info/" + alarmId.getId(), AlarmInfo.class);
+        Assert.assertNotNull(alarm);
+        long beforeAssignmentTs = System.currentTimeMillis();
 
-        alarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
+        doPost("/api/alarm/" + alarmId.getId() + "/assign/" + savedUser.getId().getId()).andExpect(status().isOk());
+        AlarmInfo foundAlarm = doGet("/api/alarm/info/" + alarmId.getId(), AlarmInfo.class);
+        Assert.assertNotNull(foundAlarm);
+        Assert.assertEquals(savedUser.getId(), foundAlarm.getAssigneeId());
+        Assert.assertTrue(foundAlarm.getAssignTs() >= beforeAssignmentTs);
+
+        beforeAssignmentTs = System.currentTimeMillis();
+
+        doDelete("/api/user/" + savedUser.getId().getId()).andExpect(status().isOk());
+
+        foundAlarm = Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> doGet("/api/alarm/info/" + alarmId.getId(), AlarmInfo.class), Objects::nonNull);
+
+        Assert.assertNotNull(foundAlarm);
+        Assert.assertNull(foundAlarm.getAssigneeId());
+        Assert.assertTrue(foundAlarm.getAssignTs() >= beforeAssignmentTs);
+    }
+
+    @Test
+    public void testUnassignAlarmOnCustomerRemoving() throws Exception {
+        createDifferentTenantCustomer();
+        loginDifferentTenant();
+
+        User user = new User();
+        user.setAuthority(Authority.CUSTOMER_USER);
+        user.setTenantId(tenantId);
+        user.setCustomerId(differentTenantCustomerId);
+        user.setEmail("customerForAssign@thingsboard.org");
+        User savedUser = createUser(user, "password");
+
+        Device device = createDevice("Different customer device", "default", "differentTenantTest");
+
+        Device assignedDevice = doPost("/api/customer/" + differentTenantCustomerId.getId()
+                + "/device/" + device.getId().getId(), Device.class);
+        Assert.assertEquals(differentTenantCustomerId, assignedDevice.getCustomerId());
+
+        Alarm alarm = Alarm.builder()
+                .type(TEST_ALARM_TYPE)
+                .tenantId(savedDifferentTenant.getId())
+                .customerId(differentTenantCustomerId)
+                .originator(device.getId())
+                .severity(AlarmSeverity.MAJOR)
+                .build();
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+        Assert.assertNotNull(alarm);
+        AlarmId alarmId = alarm.getId();
+
+        alarm = doGet("/api/alarm/info/" + alarmId.getId(), AlarmInfo.class);
         Assert.assertNotNull(alarm);
 
         Mockito.reset(tbClusterService, auditLogService);
         long beforeAssignmentTs = System.currentTimeMillis();
 
-        doPost("/api/alarm/" + alarm.getId() + "/assign/" + savedUser.getId().getId()).andExpect(status().isOk());
-        AlarmInfo foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
+        doPost("/api/alarm/" + alarmId.getId() + "/assign/" + savedUser.getId().getId()).andExpect(status().isOk());
+        AlarmInfo foundAlarm = doGet("/api/alarm/info/" + alarmId.getId(), AlarmInfo.class);
         Assert.assertNotNull(foundAlarm);
         Assert.assertEquals(savedUser.getId(), foundAlarm.getAssigneeId());
         Assert.assertTrue(foundAlarm.getAssignTs() >= beforeAssignmentTs);
@@ -630,9 +685,11 @@ public class AlarmControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        doDelete("/api/user/" + savedUser.getId().getId()).andExpect(status().isOk());
+        doDelete("/api/customer/" + differentTenantCustomerId.getId()).andExpect(status().isOk());
 
-        foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
+        foundAlarm = Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> doGet("/api/alarm/info/" + alarmId.getId(), AlarmInfo.class), Objects::nonNull);
+
         Assert.assertNotNull(foundAlarm);
         Assert.assertNull(foundAlarm.getAssigneeId());
         Assert.assertTrue(foundAlarm.getAssignTs() >= beforeAssignmentTs);

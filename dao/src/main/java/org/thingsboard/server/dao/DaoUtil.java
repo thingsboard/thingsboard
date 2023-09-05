@@ -37,6 +37,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public abstract class DaoUtil {
 
@@ -111,6 +112,10 @@ public abstract class DaoUtil {
             ids.add(getId(idBased));
         }
         return ids;
+    }
+
+    public static <I> List<I> fromUUIDs(List<UUID> uuids, Function<UUID, I> mapper) {
+        return uuids.stream().map(mapper).collect(Collectors.toList());
     }
 
     public static <I> I toEntityId(UUID uuid, Function<UUID, I> creator) {

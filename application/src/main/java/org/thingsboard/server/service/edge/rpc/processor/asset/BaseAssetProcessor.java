@@ -49,8 +49,8 @@ public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
             Asset assetByName = assetService.findAssetByTenantIdAndName(tenantId, assetName);
             if (assetByName != null && !assetByName.getId().equals(assetId)) {
                 assetName = assetName + "_" + StringUtils.randomAlphanumeric(15);
-                log.warn("Asset with name {} already exists. Renaming asset name to {}",
-                        assetUpdateMsg.getName(), assetName);
+                log.warn("[{}] Asset with name {} already exists. Renaming asset name to {}",
+                        tenantId, assetUpdateMsg.getName(), assetName);
                 assetNameUpdated = true;
             }
             asset.setName(assetName);
@@ -69,6 +69,9 @@ public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
                 asset.setId(assetId);
             }
             assetService.saveAsset(asset, false);
+        } catch (Exception e) {
+            log.error("[{}] Failed to process asset update msg [{}]", tenantId, assetUpdateMsg, e);
+            throw e;
         } finally {
             assetCreationLock.unlock();
         }

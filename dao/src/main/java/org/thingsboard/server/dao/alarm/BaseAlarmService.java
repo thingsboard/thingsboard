@@ -416,6 +416,13 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
     }
 
     @Override
+    public PageData<AlarmId> findAlarmIdsByAssigneeId(TenantId tenantId, UserId userId, PageLink pageLink) {
+        log.trace("[{}] Executing findAlarmIdsByAssigneeId [{}]", tenantId, userId);
+        validateId(userId, "Incorrect userId " + userId);
+        return alarmDao.findAlarmIdsByAssigneeId(tenantId, userId.getId(), pageLink);
+    }
+
+    @Override
     public AlarmSeverity findHighestAlarmSeverity(TenantId tenantId, EntityId entityId, AlarmSearchStatus alarmSearchStatus,
                                                   AlarmStatus alarmStatus, String assigneeId) {
         AlarmStatusFilter asf;
@@ -564,5 +571,4 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
             request.setEndTs(request.getStartTs());
         }
     }
-
 }
