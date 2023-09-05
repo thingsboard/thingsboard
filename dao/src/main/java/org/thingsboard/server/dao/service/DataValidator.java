@@ -86,7 +86,7 @@ public abstract class DataValidator<D extends BaseData<?>> {
     public void validateDelete(TenantId tenantId, EntityId entityId) {
     }
 
-    protected void validateName(String exceptionPrefix, String name) {
+    public void validateName(String exceptionPrefix, String name) {
         if (StringUtils.isEmpty(name) || name.trim().length() == 0) {
             throw new DataValidationException(exceptionPrefix + " should be specified!");
         }
@@ -160,8 +160,8 @@ public abstract class DataValidator<D extends BaseData<?>> {
         validateQueueNameOrTopic(topic, TOPIC);
     }
 
-    private static void validateQueueNameOrTopic(String value, String fieldName) {
-        if (StringUtils.isEmpty(value)) {
+    static void validateQueueNameOrTopic(String value, String fieldName) {
+        if (StringUtils.isEmpty(value) || value.trim().length() == 0 ) {
             throw new DataValidationException(String.format("Queue %s should be specified!", fieldName));
         }
         if (!QUEUE_PATTERN.matcher(value).matches()) {

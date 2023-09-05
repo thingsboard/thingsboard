@@ -83,4 +83,25 @@ public class DataValidatorTest {
         Assertions.assertThrows(DataValidationException.class, () -> DataValidator.validateEmail(email));
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "azAZ09_.-", "topic",
+    })
+    public void validateQueueNameOrTopic(String value) {
+        DataValidator.validateQueueNameOrTopic(value, "name");
+        DataValidator.validateQueueNameOrTopic(value, "topic");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "", " ", "  ", "\n", "\r\n", "\t", "\000", "\000\000", "\001", "\002", "\040", "\u0000", "\u0000\u0000",
+            "topic@home", "!", ",", "Łódź",
+            "\uD83D\uDC0C", "\041",
+            "F0929906\000\000\000\000\000\000\000\000\000",
+    })
+    public void validateQueueNameOrTopicInvalid(String value) {
+        Assertions.assertThrows(DataValidationException.class, () -> DataValidator.validateQueueNameOrTopic(value, "name"));
+        Assertions.assertThrows(DataValidationException.class, () -> DataValidator.validateQueueNameOrTopic(value, "topic"));
+    }
+
 }
