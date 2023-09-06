@@ -75,7 +75,6 @@ export interface GroupActionDescriptor<T extends BaseData<HasId>> {
 export interface HeaderActionDescriptor {
   name: string;
   icon: string;
-  isMdiIcon?: boolean;
   isEnabled: () => boolean;
   onAction: ($event: MouseEvent) => void;
 }

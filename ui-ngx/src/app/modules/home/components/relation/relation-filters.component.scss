@@ -14,43 +14,15 @@
  * limitations under the License.
  */
 :host {
-  .tb-relation-filters {
-    max-width: calc(100vw - 48px);
-    margin-top: 2px;
-    overflow: hidden;
+  .flex-50 {
+    flex: 1 1 50%;
+  }
 
-    .container{
-      width: 100%;
-    }
+  .actions-header {
+    width: 40px
+  }
 
-    .map-label {
-      font-weight: 400;
-      font-size: 12px;
-    }
-
-    .body {
-      max-height: 363px;
-      overflow: auto;
-
-      .row {
-        padding-top: 5px;
-
-        .input-block {
-          border: 1px solid #E0E0E0;
-          width: 100%;
-          border-radius: 6px;
-          padding: 24px;
-          align-items: center;
-        }
-      }
-    }
-
-    .any-filter{
-      margin: 10px 0 20px;
-    }
-
-    .add-button {
-      margin: 5px 0px 15px;
-    }
+  .entity-type-list {
+    display: flex;
   }
 }

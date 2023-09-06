@@ -25,8 +25,10 @@ import {
   ClaimResult,
   Device,
   DeviceCredentials,
-  DeviceInfo, DeviceInfoQuery,
-  DeviceSearchQuery
+  DeviceInfo,
+  DeviceInfoQuery,
+  DeviceSearchQuery,
+  PublishTelemetryCommand
 } from '@app/shared/models/device.models';
 import { EntitySubtype } from '@app/shared/models/entity-type.models';
 import { AuthService } from '@core/auth/auth.service';
@@ -85,6 +87,13 @@ export class DeviceService {
 
   public saveDevice(device: Device, config?: RequestConfig): Observable<Device> {
     return this.http.post<Device>('/api/device', device, defaultHttpOptionsFromConfig(config));
+  }
+
+  public saveDeviceWithCredentials(device: Device, credentials: DeviceCredentials, config?: RequestConfig): Observable<Device> {
+    return this.http.post<Device>('/api/device-with-credentials', {
+      device,
+      credentials
+    }, defaultHttpOptionsFromConfig(config));
   }
 
   public deleteDevice(deviceId: string, config?: RequestConfig) {
@@ -199,6 +208,10 @@ export class DeviceService {
 
   public bulkImportDevices(entitiesData: BulkImportRequest, config?: RequestConfig): Observable<BulkImportResult> {
     return this.http.post<BulkImportResult>('/api/device/bulk_import', entitiesData, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getDevicePublishTelemetryCommands(deviceId: string, config?: RequestConfig): Observable<PublishTelemetryCommand> {
+    return this.http.get<PublishTelemetryCommand>(`/api/device-connectivity/${deviceId}`, defaultHttpOptionsFromConfig(config));
   }
 
 }

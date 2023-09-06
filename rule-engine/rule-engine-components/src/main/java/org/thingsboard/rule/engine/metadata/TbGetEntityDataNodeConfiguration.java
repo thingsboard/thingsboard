@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.metadata;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 
 import java.util.HashMap;
 
@@ -34,7 +35,7 @@ public class TbGetEntityDataNodeConfiguration extends TbGetMappedDataNodeConfigu
         dataMapping.putIfAbsent("alarmThreshold", "threshold");
         configuration.setDataMapping(dataMapping);
         configuration.setDataToFetch(DataToFetch.ATTRIBUTES);
-        configuration.setFetchTo(FetchTo.METADATA);
+        configuration.setFetchTo(TbMsgSource.METADATA);
         return configuration;
     }
 

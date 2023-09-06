@@ -35,7 +35,14 @@
   </mat-error>
 </mat-form-field>
 <ng-template #boxInput>
-  <div class="tb-color-preview no-margin box" [ngClass]="{'disabled': disabled}" (click)="!disabled && showColorPicker($event)">
-    <div class="tb-color-result" [ngStyle]="!disabled ? {background: colorFormGroup.get('color').value} : {}"></div>
-  </div>
+  <button type="button"
+          mat-stroked-button
+          class="tb-box-button"
+          [disabled]="disabled"
+          #matButton
+          (click)="openColorPickerPopup($event, matButton)">
+    <div class="tb-color-preview no-margin box" [ngClass]="{'disabled': disabled}">
+      <div class="tb-color-result" [style]="!disabled ? {background: colorFormGroup.get('color').value} : {}"></div>
+    </div>
+  </button>
 </ng-template>

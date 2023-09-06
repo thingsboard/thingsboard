@@ -15,25 +15,31 @@
     limitations under the License.
 
 -->
-<div [formGroup]="timewindowConfig" class="tb-widget-config-panel">
+<div [formGroup]="timewindowConfig" class="tb-form-panel">
   <div fxLayout="row" fxLayoutAlign="space-between center">
-    <div class="tb-widget-config-panel-title" translate>timewindow.timewindow</div>
-    <tb-toggle-select formControlName="useDashboardTimewindow">
+    <div class="tb-form-panel-title" translate>timewindow.timewindow</div>
+    <tb-toggle-select formControlName="useDashboardTimewindow" selectMediaBreakpoint="xs">
       <tb-toggle-option [value]="true">{{ 'widget-config.use-dashboard-timewindow' | translate }}</tb-toggle-option>
       <tb-toggle-option [value]="false">{{ 'widget-config.use-widget-timewindow' | translate }}</tb-toggle-option>
     </tb-toggle-select>
   </div>
-  <div class="tb-widget-config-row">
-    <tb-timewindow asButton="true"
-                   strokedButton
-                   isEdit="true"
-                   alwaysDisplayTypePrefix
-                   [historyOnly]="onlyHistoryTimewindow"
-                   quickIntervalOnly="{{ widgetType === widgetTypes.latest }}"
-                   aggregation="{{ widgetType === widgetTypes.timeseries }}"
-                   formControlName="timewindow"></tb-timewindow>
+  <div class="tb-form-row column-xs">
     <mat-slide-toggle class="mat-slide" formControlName="displayTimewindow">
       {{ 'widget-config.display-timewindow' | translate }}
     </mat-slide-toggle>
+    <div fxFlex fxLayout="row" fxLayoutAlign="space-between center">
+      <tb-timewindow asButton="true"
+                     strokedButton
+                     noMargin
+                     isEdit="true"
+                     alwaysDisplayTypePrefix
+                     [historyOnly]="onlyHistoryTimewindow"
+                     quickIntervalOnly="{{ widgetType === widgetTypes.latest }}"
+                     aggregation="{{ widgetType === widgetTypes.timeseries }}"
+                     formControlName="timewindow"></tb-timewindow>
+      <tb-timewindow-style formControlName="timewindowStyle"
+                           [previewValue]="timewindowConfig.get('timewindow').value">
+      </tb-timewindow-style>
+    </div>
   </div>
 </div>

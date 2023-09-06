@@ -1,0 +1,90 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-aggregated-value-card-panel" [style]="backgroundStyle">
+  <div class="tb-aggregated-value-card-overlay" [style]="overlayStyle"></div>
+  <div class="tb-aggregated-value-card-title-panel">
+    <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
+    <ng-container *ngTemplateOutlet="subtitleTpl"></ng-container>
+  </div>
+  <ng-container *ngTemplateOutlet="valuesTpl"></ng-container>
+  <ng-container *ngTemplateOutlet="chartTpl"></ng-container>
+  <ng-container *ngTemplateOutlet="dateTpl"></ng-container>
+</div>
+
+<ng-template #subtitleTpl>
+  <div *ngIf="showSubtitle" class="tb-aggregated-value-card-subtitle"
+       [style]="subtitleStyle" [style.color]="subtitleColor">{{ subtitle$ | async }}</div>
+</ng-template>
+<ng-template #valuesTpl>
+  <div *ngIf="showValues" class="tb-aggregated-value-card-values">
+    <div class="tb-aggregated-value-card-values-container">
+      <div class="tb-aggregated-value-card-values-section left">
+        <ng-container *ngIf="values[aggregatedValueCardKeyPosition.leftTop]">
+          <ng-container *ngTemplateOutlet="valueTpl; context:{value: values[aggregatedValueCardKeyPosition.leftTop]}"></ng-container>
+        </ng-container>
+        <ng-container *ngIf="values[aggregatedValueCardKeyPosition.leftBottom]">
+          <ng-container *ngTemplateOutlet="valueTpl; context:{value: values[aggregatedValueCardKeyPosition.leftBottom]}"></ng-container>
+        </ng-container>
+      </div>
+      <div class="tb-aggregated-value-card-values-section center">
+        <ng-container *ngIf="values[aggregatedValueCardKeyPosition.center]">
+          <ng-container *ngTemplateOutlet="valueTpl; context:{value: values[aggregatedValueCardKeyPosition.center]}"></ng-container>
+        </ng-container>
+      </div>
+      <div class="tb-aggregated-value-card-values-section right">
+        <ng-container *ngIf="values[aggregatedValueCardKeyPosition.rightTop]">
+          <ng-container *ngTemplateOutlet="valueTpl; context:{value: values[aggregatedValueCardKeyPosition.rightTop]}"></ng-container>
+        </ng-container>
+        <ng-container *ngIf="values[aggregatedValueCardKeyPosition.rightBottom]">
+          <ng-container *ngTemplateOutlet="valueTpl; context:{value: values[aggregatedValueCardKeyPosition.rightBottom]}"></ng-container>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+</ng-template>
+<ng-template #chartTpl>
+  <div *ngIf="showChart" class="tb-aggregated-value-card-chart">
+    <div class="tb-aggregated-value-card-chart-ticks">
+      <div>{{tickMax$ | async}}</div>
+      <div>{{tickMin$ | async}}</div>
+    </div>
+    <div class="tb-aggregated-value-card-chart-container">
+      <div class="tb-aggregated-value-card-chart-element" #chartElement></div>
+      <div class="tb-aggregated-value-card-chart-boundary top left"></div>
+      <div class="tb-aggregated-value-card-chart-boundary top right"></div>
+      <div class="tb-aggregated-value-card-chart-boundary bottom left"></div>
+      <div class="tb-aggregated-value-card-chart-boundary bottom right"></div>
+    </div>
+  </div>
+</ng-template>
+<ng-template #dateTpl>
+  <div *ngIf="showDate" [style]="dateStyle" [style.color]="dateColor" [innerHTML]="dateFormat.formatted"></div>
+</ng-template>
+<ng-template #valueTpl let-value="value">
+  <div class="tb-aggregated-value-card-value" [style]="value.style" [style.color]="value.color.color">
+    <div *ngIf="value.showArrow" class="value-arrow-container">
+      <span *ngIf="!value.upArrow && !value.downArrow" class="value-arrow"></span>
+      <tb-icon *ngIf="value.upArrow" class="value-arrow">arrow_upward</tb-icon>
+      <tb-icon *ngIf="value.downArrow" class="value-arrow">arrow_downward</tb-icon>
+    </div>
+    <div class="value-text">
+      <span>{{ value.value }}</span>
+      <span class="units" [class]="{'small': value.center}">{{ value.units }}</span>
+    </div>
+  </div>
+</ng-template>

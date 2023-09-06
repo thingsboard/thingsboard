@@ -27,7 +27,7 @@
         <mat-form-field fxFlex>
           <mat-label>&nbsp;</mat-label>
           <input #searchInput matInput
-                 [(ngModel)]="pageLink.textSearch"
+                 [formControl]="textSearch"
                  placeholder="{{ 'alarm.search' | translate }}"/>
         </mat-form-field>
         <button mat-icon-button (click)="exitFilterMode()"
@@ -70,7 +70,7 @@
                           [indeterminate]="alarmsDatasource.selection.hasValue() && !(alarmsDatasource.isAllSelected() | async)">
             </mat-checkbox>
           </mat-header-cell>
-          <mat-cell *matCellDef="let alarm">
+          <mat-cell *matCellDef="let alarm; let row = index" [style]="rowStyle(alarm, row)">
             <mat-checkbox (click)="$event.stopPropagation();"
                           (change)="$event ? alarmsDatasource.toggleSelection(alarm) : null"
                           [checked]="alarmsDatasource.isSelected(alarm)">
@@ -122,12 +122,12 @@
                                                                 maxWidth: (alarmsDatasource.countCellButtonAction * 48) + 'px',
                                                                 width: (alarmsDatasource.countCellButtonAction * 48) + 'px' }">
           </mat-header-cell>
-          <mat-cell *matCellDef="let alarm" [ngStyle.gt-md]="{ minWidth: (alarmsDatasource.countCellButtonAction * 48) + 'px',
+          <mat-cell *matCellDef="let alarm; let row = index" [style]="rowStyle(alarm, row)" [ngStyle.gt-md]="{ minWidth: (alarmsDatasource.countCellButtonAction * 48) + 'px',
                                                                maxWidth: (alarmsDatasource.countCellButtonAction * 48) + 'px',
                                                                width: (alarmsDatasource.countCellButtonAction * 48) + 'px' }">
-            <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
+            <div [fxHide]="showCellActionsMenu" fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
               <ng-container *ngFor="let actionDescriptor of alarm.actionCellButtons; trackBy: trackByActionCellDescriptionId">
-                <span *ngIf="!actionDescriptor.icon" style="width: 40px;"></span>
+                <span *ngIf="!actionDescriptor.icon" style="width: 48px;"></span>
                 <button mat-icon-button [disabled]="(isLoading$ | async) || !actionEnabled(alarm, actionDescriptor)"
                         *ngIf="actionDescriptor.icon"
                         matTooltip="{{ actionDescriptor.displayName }}"
@@ -137,7 +137,7 @@
                 </button>
               </ng-container>
             </div>
-            <div fxHide fxShow.lt-lg *ngIf="alarm.hasActions">
+            <div fxHide [fxShow.lt-lg]="showCellActionsMenu" *ngIf="alarm.hasActions">
               <button mat-icon-button
                       (click)="$event.stopPropagation(); ctx.detectChanges();"
                       [matMenuTriggerFor]="cellActionsMenu">
@@ -160,7 +160,8 @@
         <mat-row [ngClass]="{'mat-row-select': enableSelection,
                              'mat-selected': alarmsDatasource.isSelected(alarm),
                              'tb-current-entity': alarmsDatasource.isCurrentAlarm(alarm),
-                             'invisible': alarmsDatasource.dataLoading}"
+                             'invisible': alarmsDatasource.dataLoading,
+                             'tb-pointer': hasRowAction}"
                  *matRowDef="let alarm; columns: displayedColumns; let row = index"
                  [ngStyle]="rowStyle(alarm, row)"
                  (click)="onRowClick($event, alarm)"></mat-row>

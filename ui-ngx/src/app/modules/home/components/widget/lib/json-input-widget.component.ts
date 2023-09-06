@@ -94,12 +94,8 @@ export class JsonInputWidgetComponent extends PageComponent implements OnInit {
 
   private initializeConfig() {
     if (this.settings.widgetTitle && this.settings.widgetTitle.length) {
-      const title = createLabelFromDatasource(this.datasource, this.settings.widgetTitle);
-      this.ctx.widgetTitle = this.utils.customTranslation(title, title);
-    } else {
-      this.ctx.widgetTitle = this.ctx.widgetConfig.title;
+      this.ctx.widgetTitle = this.settings.widgetTitle;
     }
-
     if (this.settings.labelValue && this.settings.labelValue.length) {
       const label = createLabelFromDatasource(this.datasource, this.settings.labelValue);
       this.labelValue = this.utils.customTranslation(label, label);

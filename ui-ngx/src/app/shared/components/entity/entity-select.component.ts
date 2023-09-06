@@ -122,20 +122,18 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
 
   writeValue(value: EntityId | null): void {
     if (value != null) {
-      if (value.id === NULL_UUID) {
-        value.id = null;
-      }
-      this.modelValue = value;
-      this.entitySelectFormGroup.get('entityType').patchValue(value.entityType, {emitEvent: true});
-      this.entitySelectFormGroup.get('entityId').patchValue(value, {emitEvent: true});
+      this.modelValue = {
+        entityType: value.entityType,
+        id: value.id !== NULL_UUID ? value.id : null
+      };
     } else {
       this.modelValue = {
         entityType: this.defaultEntityType,
         id: null
       };
-      this.entitySelectFormGroup.get('entityType').patchValue(this.defaultEntityType, {emitEvent: true});
-      this.entitySelectFormGroup.get('entityId').patchValue(null, {emitEvent: true});
     }
+    this.entitySelectFormGroup.get('entityType').patchValue(this.modelValue.entityType, {emitEvent: false});
+    this.entitySelectFormGroup.get('entityId').patchValue(this.modelValue.id, {emitEvent: false});
   }
 
   updateView(entityType: EntityType | AliasEntityType | null, entityId: string | null) {

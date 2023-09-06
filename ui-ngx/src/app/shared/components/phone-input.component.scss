@@ -24,7 +24,6 @@
 
   .phone-input-container {
     display: flex;
-    align-items: center;
 
     .phone-input {
       width: 100%;
@@ -32,10 +31,11 @@
   }
 
   .flags-select-container {
-    display: inline-block;
+    display: flex;
+    align-items: center;
     position: relative;
     width: 50px;
-    height: 100%;
+    height: 56px;
     margin-right: 5px;
   }
 

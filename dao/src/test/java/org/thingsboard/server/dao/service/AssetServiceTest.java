@@ -86,6 +86,17 @@ public class AssetServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    public void testSaveDeviceWithNameContains0x00_thenDataValidationException() {
+        Asset asset = new Asset();
+        asset.setTenantId(tenantId);
+        asset.setType("default");
+        asset.setName("F0929906\000\000\000\000\000\000\000\000\000");
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            assetService.saveAsset(asset);
+        });
+    }
+
+    @Test
     public void testSaveAssetWithEmptyTenant() {
         Asset asset = new Asset();
         asset.setName("My asset");

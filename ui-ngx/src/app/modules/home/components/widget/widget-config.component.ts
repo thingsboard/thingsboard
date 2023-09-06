@@ -21,10 +21,8 @@ import {
   ComponentRef,
   forwardRef,
   Input,
-  OnChanges,
   OnDestroy,
   OnInit,
-  SimpleChanges,
   ViewChild,
   ViewContainerRef
 } from '@angular/core';
@@ -110,7 +108,7 @@ const defaultSettingsForm = [
     }
   ]
 })
-export class WidgetConfigComponent extends PageComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator, OnChanges {
+export class WidgetConfigComponent extends PageComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
 
   @ViewChild('basicModeContainer', {read: ViewContainerRef, static: false}) basicModeContainer: ViewContainerRef;
 
@@ -149,7 +147,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
 
   @Input() disabled: boolean;
 
-  @Input()
   widgetConfigMode = WidgetConfigMode.advanced;
 
   widgetType: widgetType;
@@ -212,6 +209,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     this.advancedSettings = this.fb.group({});
     this.widgetSettings = this.fb.group({
       title: [null, []],
+      titleFont: [null, []],
+      titleColor: [null, []],
       showTitleIcon: [null, []],
       titleIcon: [null, []],
       iconColor: [null, []],
@@ -224,6 +223,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       color: [null, []],
       padding: [null, []],
       margin: [null, []],
+      borderRadius: [null, []],
       widgetStyle: [null, []],
       widgetCss: [null, []],
       titleStyle: [null, []],
@@ -249,19 +249,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     this.actionsSettings = this.fb.group({
       actions: [null, []]
     });
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    for (const propName of Object.keys(changes)) {
-      const change = changes[propName];
-      if (!change.firstChange && change.currentValue !== change.previousValue) {
-        if (propName === 'widgetConfigMode') {
-          if (this.hasBasicModeDirective) {
-            this.setupConfig();
-          }
-        }
-      }
-    }
   }
 
   ngOnDestroy(): void {
@@ -366,7 +353,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       this.dataSettings.addControl('timewindowConfig', this.fb.control({
         useDashboardTimewindow: true,
         displayTimewindow: true,
-        timewindow: null
+        timewindow: null,
+        timewindowStyle: null
       }));
       if (this.widgetType === widgetType.alarm) {
         this.dataSettings.addControl('alarmFilterConfig', this.fb.control(null));
@@ -403,7 +391,20 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   writeValue(value: WidgetConfigComponentData): void {
     this.modelValue = value;
     this.widgetType = this.modelValue?.widgetType;
+    this.widgetConfigMode = this.modelValue?.hasBasicMode ?
+      (this.modelValue?.config?.configMode || WidgetConfigMode.advanced) : WidgetConfigMode.advanced;
     this.setupConfig(this.isAdd);
+  }
+
+  setWidgetConfigMode(widgetConfigMode: WidgetConfigMode) {
+    if (this.modelValue?.hasBasicMode && this.widgetConfigMode !== widgetConfigMode) {
+      this.widgetConfigMode = widgetConfigMode;
+      this.modelValue.config.configMode = widgetConfigMode;
+      if (this.hasBasicModeDirective) {
+        this.setupConfig();
+      }
+      this.propagateChange(this.modelValue);
+    }
   }
 
   private setupConfig(isAdd = false) {
@@ -472,6 +473,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       const displayWidgetTitle = isDefined(config.showTitle) ? config.showTitle : false;
       this.widgetSettings.patchValue({
           title: config.title,
+          titleFont: config.titleFont,
+          titleColor: config.titleColor,
           showTitleIcon: isDefined(config.showTitleIcon) && displayWidgetTitle ? config.showTitleIcon : false,
           titleIcon: isDefined(config.titleIcon) ? config.titleIcon : '',
           iconColor: isDefined(config.iconColor) ? config.iconColor : 'rgba(0, 0, 0, 0.87)',
@@ -484,6 +487,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
           color: config.color,
           padding: config.padding,
           margin: config.margin,
+          borderRadius: config.borderRadius,
           widgetStyle: isDefined(config.widgetStyle) ? config.widgetStyle : {},
           widgetCss: isDefined(config.widgetCss) ? config.widgetCss : '',
           titleStyle: isDefined(config.titleStyle) ? config.titleStyle : {
@@ -511,7 +515,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
           useDashboardTimewindow,
           displayTimewindow: isDefined(config.displayTimewindow) ?
             config.displayTimewindow : true,
-          timewindow: config.timewindow
+          timewindow: config.timewindow,
+          timewindowStyle: config.timewindowStyle
         }, {emitEvent: false});
       }
       if (this.modelValue.isDataEnabled) {
@@ -578,11 +583,15 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     const showTitleIcon: boolean = this.widgetSettings.get('showTitleIcon').value;
     if (showTitle) {
       this.widgetSettings.get('title').enable({emitEvent: false});
+      this.widgetSettings.get('titleFont').enable({emitEvent: false});
+      this.widgetSettings.get('titleColor').enable({emitEvent: false});
       this.widgetSettings.get('titleTooltip').enable({emitEvent: false});
       this.widgetSettings.get('titleStyle').enable({emitEvent: false});
       this.widgetSettings.get('showTitleIcon').enable({emitEvent: false});
     } else {
       this.widgetSettings.get('title').disable({emitEvent: false});
+      this.widgetSettings.get('titleFont').disable({emitEvent: false});
+      this.widgetSettings.get('titleColor').disable({emitEvent: false});
       this.widgetSettings.get('titleTooltip').disable({emitEvent: false});
       this.widgetSettings.get('titleStyle').disable({emitEvent: false});
       this.widgetSettings.get('showTitleIcon').disable({emitEvent: false});

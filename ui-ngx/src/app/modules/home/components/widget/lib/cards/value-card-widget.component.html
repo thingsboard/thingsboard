@@ -1,0 +1,73 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-value-card-panel" [class]="this.layout" [style]="backgroundStyle">
+  <div class="tb-value-card-overlay" [style]="overlayStyle"></div>
+  <div class="tb-value-card-title-panel">
+    <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
+  </div>
+  <ng-container [ngSwitch]="layout">
+    <ng-template [ngSwitchCase]="valueCardLayout.square">
+      <ng-container *ngTemplateOutlet="iconWithLabelTpl"></ng-container>
+      <ng-container *ngTemplateOutlet="valueTpl"></ng-container>
+    </ng-template>
+    <ng-template [ngSwitchCase]="valueCardLayout.vertical">
+      <ng-container *ngTemplateOutlet="labelTpl"></ng-container>
+      <ng-container *ngTemplateOutlet="valueTpl"></ng-container>
+      <ng-container *ngTemplateOutlet="iconTpl"></ng-container>
+    </ng-template>
+    <ng-template [ngSwitchCase]="valueCardLayout.centered">
+      <ng-container *ngTemplateOutlet="labelTpl"></ng-container>
+      <div class="tb-value-card-icon-row">
+        <ng-container *ngTemplateOutlet="iconTpl"></ng-container>
+        <ng-container *ngTemplateOutlet="valueTpl"></ng-container>
+      </div>
+      <ng-container *ngTemplateOutlet="dateTpl"></ng-container>
+    </ng-template>
+    <ng-template [ngSwitchCase]="valueCardLayout.simplified">
+      <ng-container *ngTemplateOutlet="valueTpl"></ng-container>
+      <ng-container *ngTemplateOutlet="labelTpl"></ng-container>
+    </ng-template>
+    <ng-template [ngSwitchCase]="layout === valueCardLayout.horizontal ||
+                                 layout === valueCardLayout.horizontal_reversed ? layout : ''">
+      <ng-container *ngTemplateOutlet="iconWithLabelTpl"></ng-container>
+      <div fxFlex></div>
+      <ng-container *ngTemplateOutlet="valueTpl"></ng-container>
+    </ng-template>
+  </ng-container>
+</div>
+<ng-template #iconWithLabelTpl>
+  <div class="tb-value-card-icon-row">
+    <ng-container *ngTemplateOutlet="iconTpl"></ng-container>
+    <div class="tb-value-card-label-row">
+      <ng-container *ngTemplateOutlet="labelTpl"></ng-container>
+      <ng-container *ngTemplateOutlet="dateTpl"></ng-container>
+    </div>
+  </div>
+</ng-template>
+<ng-template #iconTpl>
+  <tb-icon *ngIf="showIcon" [style]="iconStyle" [style.color]="iconColor.color">{{ icon }}</tb-icon>
+</ng-template>
+<ng-template #labelTpl>
+  <div *ngIf="showLabel" [style]="labelStyle" [style.color]="labelColor.color">{{ label$ | async }}</div>
+</ng-template>
+<ng-template #dateTpl>
+  <div *ngIf="showDate" [style]="dateStyle" [style.color]="dateColor.color" [innerHTML]="dateFormat.formatted"></div>
+</ng-template>
+<ng-template #valueTpl>
+  <div class="tb-value-card-value" [style]="valueStyle" [style.color]="valueColor.color">{{ valueText }}</div>
+</ng-template>

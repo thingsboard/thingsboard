@@ -33,6 +33,7 @@ export interface TableWidgetSettings {
   enableSearch: boolean;
   enableSelectColumnDisplay: boolean;
   enableStickyAction: boolean;
+  showCellActionsMenu: boolean;
   enableStickyHeader: boolean;
   displayPagination: boolean;
   defaultPageSize: number;
@@ -451,7 +452,7 @@ export function constructTableCssString(widgetConfig: WidgetConfig): string {
     '.mat-mdc-table .mat-mdc-row .mat-mdc-cell.mat-mdc-table-sticky, .mat-mdc-table .mat-mdc-header-cell.mat-mdc-table-sticky {\n' +
     'background-color: ' + origBackgroundColor + ';\n' +
     '}\n' +
-    '.mat-mdc-table .mat-mdc-cell {\n' +
+    '.mat-mdc-table .mat-mdc-row {\n' +
     'color: ' + mdDark + ';\n' +
     'background-color: rgba(0, 0, 0, 0);\n' +
     '}\n' +

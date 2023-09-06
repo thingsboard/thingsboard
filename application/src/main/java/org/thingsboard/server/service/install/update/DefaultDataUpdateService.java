@@ -47,6 +47,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -205,7 +206,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 migrateEdgeEvents("Starting edge events migration. ");
                 break;
             case "3.5.1":
-                log.info("Updating data from version 3.5.1 to 3.5.2 ...");
+                log.info("Updating data from version 3.5.1 to 3.6.0 ...");
                 migrateEdgeEvents("Starting edge events migration - adding seq_id column. ");
                 break;
             default:
@@ -502,7 +503,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
                             md.getNodes().add(ruleNode);
                             md.setFirstNodeIndex(newIdx);
-                            md.addConnectionInfo(newIdx, oldIdx, "Success");
+                            md.addConnectionInfo(newIdx, oldIdx, TbNodeConnectionType.SUCCESS);
                             ruleChainService.saveRuleChainMetaData(tenant.getId(), md, Function.identity());
                         }
                     } catch (Exception e) {

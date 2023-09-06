@@ -29,6 +29,8 @@ import org.thingsboard.server.common.data.TenantProfileType;
 @Data
 public class DefaultTenantProfileConfiguration implements TenantProfileConfiguration {
 
+    private static final long serialVersionUID = -7134932690332578595L;
+
     private long maxDevices;
     private long maxAssets;
     private long maxCustomers;

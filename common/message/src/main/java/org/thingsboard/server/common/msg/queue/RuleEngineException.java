@@ -32,6 +32,11 @@ public class RuleEngineException extends Exception {
         ts = System.currentTimeMillis();
     }
 
+    public RuleEngineException(String message, Throwable t) {
+        super(message != null ? message : "Unknown", t);
+        ts = System.currentTimeMillis();
+    }
+
     public String toJsonString() {
         try {
             return mapper.writeValueAsString(mapper.createObjectNode().put("message", getMessage()));

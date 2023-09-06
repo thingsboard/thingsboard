@@ -46,6 +46,7 @@ import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 @Slf4j
@@ -129,8 +130,11 @@ public class AppActor extends ContextAwareActor {
                 PageDataIterable<Tenant> tenantIterator = new PageDataIterable<>(tenantService::findTenants, ENTITY_PACK_LIMIT);
                 for (Tenant tenant : tenantIterator) {
                     log.debug("[{}] Creating tenant actor", tenant.getId());
-                    getOrCreateTenantActor(tenant.getId());
-                    log.debug("[{}] Tenant actor created.", tenant.getId());
+                    getOrCreateTenantActor(tenant.getId()).ifPresentOrElse(tenantActor -> {
+                        log.debug("[{}] Tenant actor created.", tenant.getId());
+                    }, () -> {
+                        log.debug("[{}] Skipped actor creation", tenant.getId());
+                    });
                 }
             }
             log.info("Main system actor started.");
@@ -143,11 +147,9 @@ public class AppActor extends ContextAwareActor {
         if (TenantId.SYS_TENANT_ID.equals(msg.getTenantId())) {
             msg.getMsg().getCallback().onFailure(new RuleEngineException("Message has system tenant id!"));
         } else {
-            if (!deletedTenants.contains(msg.getTenantId())) {
-                getOrCreateTenantActor(msg.getTenantId()).tell(msg);
-            } else {
-                msg.getMsg().getCallback().onSuccess();
-            }
+            getOrCreateTenantActor(msg.getTenantId()).ifPresentOrElse(actor -> {
+                actor.tell(msg);
+            }, () -> msg.getMsg().getCallback().onSuccess());
         }
     }
 
@@ -164,12 +166,13 @@ public class AppActor extends ContextAwareActor {
                     log.info("[{}] Handling tenant deleted notification: {}", msg.getTenantId(), msg);
                     deletedTenants.add(tenantId);
                     ctx.stop(new TbEntityActorId(tenantId));
-                } else {
-                    target = getOrCreateTenantActor(msg.getTenantId());
+                    return;
                 }
-            } else {
-                target = getOrCreateTenantActor(msg.getTenantId());
             }
+            target = getOrCreateTenantActor(msg.getTenantId()).orElseGet(() -> {
+                log.debug("Ignoring component lifecycle msg for tenant {} because it is not managed by this service", msg.getTenantId());
+                return null;
+            });
         }
         if (target != null) {
             target.tellWithHighPriority(msg);
@@ -179,24 +182,28 @@ public class AppActor extends ContextAwareActor {
     }
 
     private void onToDeviceActorMsg(TenantAwareMsg msg, boolean priority) {
-        if (!deletedTenants.contains(msg.getTenantId())) {
-            TbActorRef tenantActor = getOrCreateTenantActor(msg.getTenantId());
+        getOrCreateTenantActor(msg.getTenantId()).ifPresentOrElse(tenantActor -> {
             if (priority) {
                 tenantActor.tellWithHighPriority(msg);
             } else {
                 tenantActor.tell(msg);
             }
-        } else {
+        }, () -> {
             if (msg instanceof TransportToDeviceActorMsgWrapper) {
                 ((TransportToDeviceActorMsgWrapper) msg).getCallback().onSuccess();
             }
-        }
+        });
     }
 
-    private TbActorRef getOrCreateTenantActor(TenantId tenantId) {
-        return ctx.getOrCreateChildActor(new TbEntityActorId(tenantId),
+    private Optional<TbActorRef> getOrCreateTenantActor(TenantId tenantId) {
+        if (deletedTenants.contains(tenantId)) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(ctx.getOrCreateChildActor(new TbEntityActorId(tenantId),
                 () -> DefaultActorService.TENANT_DISPATCHER_NAME,
-                () -> new TenantActor.ActorCreator(systemContext, tenantId));
+                () -> new TenantActor.ActorCreator(systemContext, tenantId),
+                () -> systemContext.getServiceInfoProvider().isService(ServiceType.TB_CORE) ||
+                        systemContext.getPartitionService().isManagedByCurrentService(tenantId)));
     }
 
     private void onToEdgeSessionMsg(EdgeSessionMsg msg) {
@@ -204,7 +211,7 @@ public class AppActor extends ContextAwareActor {
         if (ModelConstants.SYSTEM_TENANT.equals(msg.getTenantId())) {
             log.warn("Message has system tenant id: {}", msg);
         } else {
-            target = getOrCreateTenantActor(msg.getTenantId());
+            target = getOrCreateTenantActor(msg.getTenantId()).orElse(null);
         }
         if (target != null) {
             target.tellWithHighPriority(msg);

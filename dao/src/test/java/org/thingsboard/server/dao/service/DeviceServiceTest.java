@@ -78,7 +78,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
 
     @Before
     public void before() {
-        anotherTenantId = createTenant();
+        anotherTenantId = createTenant().getId();
     }
 
     @After
@@ -278,6 +278,17 @@ public class DeviceServiceTest extends AbstractServiceTest {
         Device device = new Device();
         device.setName("My device");
         device.setType("default");
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            deviceService.saveDevice(device);
+        });
+    }
+
+    @Test
+    public void testSaveDeviceWithNameContains0x00_thenDataValidationException() {
+        Device device = new Device();
+        device.setType("default");
+        device.setTenantId(tenantId);
+        device.setName("F0929906\000\000\000\000\000\000\000\000\000");
         Assertions.assertThrows(DataValidationException.class, () -> {
             deviceService.saveDevice(device);
         });

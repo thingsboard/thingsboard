@@ -64,12 +64,17 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
 
   datasourceType = DatasourceType;
 
+
+  public get isAlarmSource(): boolean {
+    return this.widgetConfigComponent.widgetType === widgetType.alarm;
+  }
+
   public get basicMode(): boolean {
     return !this.widgetConfigComponent.widgetEditMode && this.configMode === WidgetConfigMode.basic;
   }
 
   public get maxDatasources(): number {
-    return this.forceSingleDatasource ? 1 : this.widgetConfigComponent.modelValue?.typeParameters?.maxDatasources;
+    return (this.forceSingleDatasource || this.isAlarmSource) ? 1 : this.widgetConfigComponent.modelValue?.typeParameters?.maxDatasources;
   }
 
   public get singleDatasource(): boolean {
@@ -107,6 +112,10 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
   @Input()
   @coerceBoolean()
   hideDataKeys = false;
+
+  @Input()
+  @coerceBoolean()
+  hideLatestDataKeys = false;
 
   @Input()
   @coerceBoolean()
@@ -266,7 +275,7 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
 
   private configModeChanged() {
     if (this.basicMode) {
-      let datasourcesMode = this.detectDatasourcesMode(this.datasourcesFormGroup.get('datasources').value);
+      const datasourcesMode = this.detectDatasourcesMode(this.datasourcesFormGroup.get('datasources').value);
       this.datasourcesModeChange(datasourcesMode);
     }
   }

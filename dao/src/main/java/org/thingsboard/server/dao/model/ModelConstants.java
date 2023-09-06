@@ -308,12 +308,21 @@ public class ModelConstants {
      */
     public static final String WIDGET_TYPE_TABLE_NAME = "widget_type";
     public static final String WIDGET_TYPE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
-    public static final String WIDGET_TYPE_BUNDLE_ALIAS_PROPERTY = "bundle_alias";
-    public static final String WIDGET_TYPE_ALIAS_PROPERTY = ALIAS_PROPERTY;
+
+    public static final String WIDGET_TYPE_FQN_PROPERTY = "fqn";
     public static final String WIDGET_TYPE_NAME_PROPERTY = "name";
     public static final String WIDGET_TYPE_IMAGE_PROPERTY = "image";
     public static final String WIDGET_TYPE_DESCRIPTION_PROPERTY = "description";
     public static final String WIDGET_TYPE_DESCRIPTOR_PROPERTY = "descriptor";
+
+    public static final String WIDGET_TYPE_DEPRECATED_PROPERTY = "deprecated";
+
+    /**
+     * Widgets bundle widget constants.
+     */
+    public static final String WIDGETS_BUNDLE_WIDGET_TABLE_NAME = "widgets_bundle_widget";
+
+    public static final String WIDGET_TYPE_ORDER_PROPERTY = "widget_type_order";
 
     /**
      * Dashboard constants.

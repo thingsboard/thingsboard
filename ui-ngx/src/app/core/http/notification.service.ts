@@ -31,6 +31,7 @@ import {
   NotificationTarget,
   NotificationTemplate,
   NotificationType,
+  NotificationUserSettings,
   SlackChanelType,
   SlackConversation
 } from '@shared/models/notification.models';
@@ -173,5 +174,13 @@ export class NotificationService {
       url += `&notificationTypes=${notificationTypes}`;
     }
     return this.http.get<PageData<NotificationTemplate>>(url, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getNotificationUserSettings(config?: RequestConfig): Observable<NotificationUserSettings> {
+    return this.http.get<NotificationUserSettings>(`/api/notification/settings/user`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public saveNotificationUserSettings(settings: NotificationUserSettings, config?: RequestConfig): Observable<NotificationUserSettings> {
+    return this.http.post<NotificationUserSettings>('/api/notification/settings/user', settings, defaultHttpOptionsFromConfig(config));
   }
 }

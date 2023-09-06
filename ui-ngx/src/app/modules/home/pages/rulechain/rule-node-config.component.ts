@@ -18,14 +18,22 @@ import {
   AfterViewInit,
   Component,
   ComponentRef,
+  EventEmitter,
   forwardRef,
   Input,
   OnDestroy,
   OnInit,
+  Output,
   ViewChild,
   ViewContainerRef
 } from '@angular/core';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import {
+  ControlValueAccessor,
+  NG_VALUE_ACCESSOR,
+  UntypedFormBuilder,
+  UntypedFormGroup,
+  Validators
+} from '@angular/forms';
 import {
   IRuleNodeConfigurationComponent,
   RuleNodeConfiguration,
@@ -76,6 +84,12 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
   @Input()
   ruleChainType: RuleChainType;
 
+  @Output()
+  initRuleNode = new EventEmitter<void>();
+
+  @Output()
+  changeScript = new EventEmitter<void>();
+
   nodeDefinitionValue: RuleNodeDefinition;
 
   @Input()
@@ -85,6 +99,7 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
       if (this.nodeDefinitionValue) {
         this.validateDefinedDirective();
       }
+      setTimeout(() => this.initRuleNode.emit());
     }
   }
 
@@ -98,8 +113,11 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
 
   changeSubscription: Subscription;
 
+  changeScriptSubscription: Subscription;
+
+  definedConfigComponent: IRuleNodeConfigurationComponent;
+
   private definedConfigComponentRef: ComponentRef<IRuleNodeConfigurationComponent>;
-  private definedConfigComponent: IRuleNodeConfigurationComponent;
 
   private configuration: RuleNodeConfiguration;
 
@@ -127,6 +145,14 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
     if (this.definedConfigComponentRef) {
       this.definedConfigComponentRef.destroy();
     }
+    if (this.changeSubscription) {
+      this.changeSubscription.unsubscribe();
+      this.changeSubscription = null;
+    }
+    if (this.changeScriptSubscription) {
+      this.changeScriptSubscription.unsubscribe();
+      this.changeScriptSubscription = null;
+    }
   }
 
   ngAfterViewInit(): void {
@@ -138,6 +164,9 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
       this.ruleNodeConfigFormGroup.disable({emitEvent: false});
     } else {
       this.ruleNodeConfigFormGroup.enable({emitEvent: false});
+    }
+    if (this.definedConfigComponent) {
+      this.definedConfigComponent.disabled = this.disabled;
     }
   }
 
@@ -199,6 +228,9 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
       this.changeSubscription = this.definedConfigComponent.configurationChanged.subscribe((configuration) => {
         this.updateModel(configuration);
       });
+      if (this.definedConfigComponent?.changeScript) {
+        this.changeScriptSubscription = this.definedConfigComponent.changeScript.subscribe(() => this.changeScript.emit());
+      }
     }
   }
 
