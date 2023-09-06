@@ -502,7 +502,7 @@ export class AuthService {
   private updatedAuthUserFromToken(token: string) {
     const authUser = getCurrentAuthUser(this.store);
     const tokenData = this.jwtHelper.decodeToken(token);
-    if (['sub', 'firstName', 'lastName'].some(value => authUser[value] !== tokenData[value])) {
+    if (authUser && tokenData && ['sub', 'firstName', 'lastName'].some(value => authUser[value] !== tokenData[value])) {
       this.store.dispatch(new ActionAuthUpdateAuthUser({
         sub: tokenData.sub,
         firstName: tokenData.firstName,
