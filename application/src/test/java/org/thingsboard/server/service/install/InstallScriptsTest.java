@@ -92,6 +92,11 @@ class InstallScriptsTest {
         ruleChainsFromPath.forEach(this::validateRuleChainTemplate);
     }
 
+    @Test
+    void testDeviceProfileDefaultRuleChainTemplate() {
+        validateRuleChainTemplate(installScripts.getDeviceProfileDefaultRuleChainTemplateFilePath());
+    }
+
     private void validateRuleChainTemplate(Path templateFilePath) {
         JsonNode ruleChainJson = JacksonUtil.toJsonNode(templateFilePath.toFile());
 
