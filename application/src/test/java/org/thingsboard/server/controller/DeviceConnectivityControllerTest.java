@@ -396,4 +396,10 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
     public void testDownloadMqttCertWithoutCertFile() throws Exception {
         doGet("/api/device-connectivity/mqtts/certificate/download").andExpect(status().isNotFound());
     }
+
+    @Test
+    @DirtiesContext
+    public void testDownloadCertWithUnknownProtocol() throws Exception {
+        doGet("/api/device-connectivity/unknownProtocol/certificate/download").andExpect(status().isNotFound());
+    }
 }

@@ -81,7 +81,7 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
 
     @PostConstruct
     private void init() {
-        DeviceConnectivityInfo mqtts = deviceConnectivityConfiguration.getConnectivity().get(MQTTS);
+        DeviceConnectivityInfo mqtts = deviceConnectivityConfiguration.getConnectivity(MQTTS);
         if (mqtts != null && mqtts.isEnabled()) {
             String certFilePath = mqtts.getPemCertFile();
             if (StringUtils.isBlank(certFilePath) || !ResourceUtils.resourceExists(this, certFilePath)) {
@@ -89,7 +89,6 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
                 log.error("MQTTS is enabled but cert {}!", error);
             }
         }
-
     }
 
     @Override
@@ -140,9 +139,12 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     @Override
     public Resource getPemCertFile(String protocol) {
         return certs.computeIfAbsent(protocol, key -> {
-            String certFilePath = deviceConnectivityConfiguration.getConnectivity()
-                    .get(protocol)
-                    .getPemCertFile();
+            DeviceConnectivityInfo connectivity = deviceConnectivityConfiguration.getConnectivity(protocol);
+            if (connectivity == null) {
+                log.warn("Unknown connectivity protocol: {}", protocol);
+                return null;
+            }
+            String certFilePath = connectivity.getPemCertFile();
             if (StringUtils.isNotBlank(certFilePath) && ResourceUtils.resourceExists(this, certFilePath)) {
                 try {
                     return getCert(certFilePath);
@@ -195,7 +197,7 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     }
 
     private String getHttpPublishCommand(String protocol, String baseUrl, DeviceCredentials deviceCredentials) throws URISyntaxException {
-        DeviceConnectivityInfo properties = deviceConnectivityConfiguration.getConnectivity().get(protocol);
+        DeviceConnectivityInfo properties = deviceConnectivityConfiguration.getConnectivity(protocol);
         if (properties == null || !properties.isEnabled() ||
                 deviceCredentials.getCredentialsType() != DeviceCredentialsType.ACCESS_TOKEN) {
             return null;
@@ -246,14 +248,14 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     }
 
     private String getMqttPublishCommand(String baseUrl, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) throws URISyntaxException {
-        DeviceConnectivityInfo properties = deviceConnectivityConfiguration.getConnectivity().get(MQTT);
+        DeviceConnectivityInfo properties = deviceConnectivityConfiguration.getConnectivity(MQTT);
         String mqttHost = getHost(baseUrl, properties);
         String mqttPort = properties.getPort().isEmpty() ? null : properties.getPort();
         return DeviceConnectivityUtil.getMqttPublishCommand(MQTT, mqttHost, mqttPort, deviceTelemetryTopic, deviceCredentials);
     }
 
     private List<String> getMqttsPublishCommand(String baseUrl, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) throws URISyntaxException {
-        DeviceConnectivityInfo properties = deviceConnectivityConfiguration.getConnectivity().get(MQTTS);
+        DeviceConnectivityInfo properties = deviceConnectivityConfiguration.getConnectivity(MQTTS);
         String mqttHost = getHost(baseUrl, properties);
         String mqttPort = properties.getPort().isEmpty() ? null : properties.getPort();
         String pubCommand = DeviceConnectivityUtil.getMqttPublishCommand(MQTTS, mqttHost, mqttPort, deviceTelemetryTopic, deviceCredentials);
@@ -268,7 +270,7 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     }
 
     private String getDockerMqttPublishCommand(String protocol, String baseUrl, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) throws URISyntaxException {
-        DeviceConnectivityInfo properties = deviceConnectivityConfiguration.getConnectivity().get(protocol);
+        DeviceConnectivityInfo properties = deviceConnectivityConfiguration.getConnectivity(protocol);
         String mqttHost = getHost(baseUrl, properties);
         String mqttPort = properties.getPort().isEmpty() ? null : properties.getPort();
         return DeviceConnectivityUtil.getDockerMqttPublishCommand(protocol, baseUrl, mqttHost, mqttPort, deviceTelemetryTopic, deviceCredentials);
@@ -308,14 +310,14 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     }
 
     private String getCoapPublishCommand(String protocol, String baseUrl, DeviceCredentials deviceCredentials) throws URISyntaxException {
-        DeviceConnectivityInfo properties = deviceConnectivityConfiguration.getConnectivity().get(protocol);
+        DeviceConnectivityInfo properties = deviceConnectivityConfiguration.getConnectivity(protocol);
         String hostName = getHost(baseUrl, properties);
         String port = properties.getPort().isEmpty() ? "" : ":" + properties.getPort();
         return DeviceConnectivityUtil.getCoapPublishCommand(protocol, hostName, port, deviceCredentials);
     }
 
     private String getDockerCoapPublishCommand(String protocol, String baseUrl, DeviceCredentials deviceCredentials) throws URISyntaxException {
-        DeviceConnectivityInfo properties = deviceConnectivityConfiguration.getConnectivity().get(protocol);
+        DeviceConnectivityInfo properties = deviceConnectivityConfiguration.getConnectivity(protocol);
         String host = getHost(baseUrl, properties);
         String port = properties.getPort().isEmpty() ? "" : ":" + properties.getPort();
         return DeviceConnectivityUtil.getDockerCoapPublishCommand(protocol, host, port, deviceCredentials);
