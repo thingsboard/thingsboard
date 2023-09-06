@@ -340,7 +340,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       }
 
       this.units = options.units || '';
-      this.decimals = isDefined(options.decimals) ? options.decimals : 0;
+      this.decimals = isDefined(options.decimals) ? options.decimals : 2;
 
       this.loadingData = false;
 

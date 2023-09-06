@@ -152,7 +152,7 @@ export class WidgetContext {
   }
 
   get decimals(): number {
-    return isDefined(this.widget.config.decimals) ? this.widget.config.decimals : 0;
+    return isDefined(this.widget.config.decimals) ? this.widget.config.decimals : 2;
   }
 
   set changeDetector(cd: ChangeDetectorRef) {
