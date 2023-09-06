@@ -42,13 +42,18 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
             dashboard.setCreatedTime(Uuids.unixTimestamp(dashboardId.getId()));
         }
         dashboard.setTitle(dashboardUpdateMsg.getTitle());
+        dashboard.setImage(dashboardUpdateMsg.hasImage() ? dashboardUpdateMsg.getImage() : null);
         dashboard.setConfiguration(JacksonUtil.toJsonNode(dashboardUpdateMsg.getConfiguration()));
+
         Set<ShortCustomerInfo> assignedCustomers = null;
         if (dashboardUpdateMsg.hasAssignedCustomers()) {
-            assignedCustomers = JacksonUtil.fromString(dashboardUpdateMsg.getAssignedCustomers(), new TypeReference<>() {
-            });
+            assignedCustomers = JacksonUtil.fromString(dashboardUpdateMsg.getAssignedCustomers(), new TypeReference<>() {});
+            assignedCustomers = filterNonExistingCustomers(tenantId, assignedCustomers);
             dashboard.setAssignedCustomers(assignedCustomers);
         }
+
+        dashboard.setMobileOrder(dashboardUpdateMsg.hasMobileOrder() ? dashboardUpdateMsg.getMobileOrder() : null);
+        dashboard.setMobileHide(dashboardUpdateMsg.getMobileHide());
 
         dashboardValidator.validate(dashboard, Dashboard::getTenantId);
         if (created) {
@@ -66,6 +71,8 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
         }
         return created;
     }
+
+    protected abstract Set<ShortCustomerInfo> filterNonExistingCustomers(TenantId tenantId, Set<ShortCustomerInfo> assignedCustomers);
 
     private void unassignCustomersFromDashboard(TenantId tenantId, Dashboard dashboard) {
         if (dashboard.getAssignedCustomers() != null && !dashboard.getAssignedCustomers().isEmpty()) {

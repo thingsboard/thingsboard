@@ -49,8 +49,11 @@
         "name": "Save Client Attributes",
         "debugMode": false,
         "configuration": {
+          "version": 1,
           "scope": "CLIENT_SCOPE",
-          "notifyDevice": "false"
+          "notifyDevice": "false",
+          "sendAttributesUpdatedNotification": "false",
+          "updateAttributesOnlyOnValueChange": "true"
         },
         "externalId": null
       },

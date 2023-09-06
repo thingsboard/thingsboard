@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
@@ -47,6 +48,7 @@ import org.thingsboard.server.common.data.notification.targets.MicrosoftTeamsNot
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.platform.CustomerUsersFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.targets.platform.SystemAdministratorsFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.UserListFilter;
 import org.thingsboard.server.common.data.notification.targets.slack.SlackConversation;
 import org.thingsboard.server.common.data.notification.targets.slack.SlackConversationType;
@@ -61,6 +63,7 @@ import org.thingsboard.server.common.data.notification.template.SlackDeliveryMet
 import org.thingsboard.server.common.data.notification.template.SmsDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.WebDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.dao.notification.DefaultNotifications;
 import org.thingsboard.server.dao.notification.NotificationDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
@@ -602,6 +605,23 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
     }
 
     @Test
+    public void testInternalGeneralWebNotifications() throws Exception {
+        loginSysAdmin();
+        getAnotherWsClient().subscribeForUnreadNotifications(10).waitForReply(true);
+
+        getAnotherWsClient().registerWaitForUpdate();
+
+        DefaultNotifications.DefaultNotification expectedNotification = DefaultNotifications.maintenanceWork;
+        notificationCenter.sendGeneralWebNotification(TenantId.SYS_TENANT_ID, new SystemAdministratorsFilter(),
+                expectedNotification.toTemplate());
+
+        getAnotherWsClient().waitForUpdate(true);
+        Notification notification = getAnotherWsClient().getLastDataUpdate().getUpdate();
+        assertThat(notification.getSubject()).isEqualTo(expectedNotification.getSubject());
+        assertThat(notification.getText()).isEqualTo(expectedNotification.getText());
+    }
+
+    @Test
     public void testMicrosoftTeamsNotifications() throws Exception {
         RestTemplate restTemplate = mock(RestTemplate.class);
         microsoftTeamsNotificationChannel.setRestTemplate(restTemplate);
@@ -688,7 +708,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
     protected void connectOtherWsClient() throws Exception {
         loginCustomerUser();
-        otherWsClient = (NotificationApiWsClient) super.getAnotherWsClient();
+        otherWsClient = super.getAnotherWsClient();
         loginTenantAdmin();
     }
 

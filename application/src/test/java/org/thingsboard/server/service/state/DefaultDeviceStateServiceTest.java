@@ -47,6 +47,7 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
+import org.thingsboard.server.queue.usagestats.DefaultTbApiUsageReportClient;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.util.Collections;
@@ -93,6 +94,8 @@ public class DefaultDeviceStateServiceTest {
     TelemetrySubscriptionService telemetrySubscriptionService;
     @Mock
     NotificationRuleProcessor notificationRuleProcessor;
+    @Mock
+    DefaultTbApiUsageReportClient defaultTbApiUsageReportClient;
 
     TenantId tenantId = new TenantId(UUID.fromString("00797a3b-7aeb-4b5b-b57a-c2a810d0f112"));
     DeviceId deviceId = DeviceId.fromString("00797a3b-7aeb-4b5b-b57a-c2a810d0f112");
@@ -102,7 +105,7 @@ public class DefaultDeviceStateServiceTest {
 
     @BeforeEach
     public void setUp() {
-        service = spy(new DefaultDeviceStateService(deviceService, attributesService, tsService, clusterService, partitionService, entityQueryRepository, null, null, notificationRuleProcessor));
+        service = spy(new DefaultDeviceStateService(deviceService, attributesService, tsService, clusterService, partitionService, entityQueryRepository, null, defaultTbApiUsageReportClient, notificationRuleProcessor));
         ReflectionTestUtils.setField(service, "tsSubService", telemetrySubscriptionService);
         ReflectionTestUtils.setField(service, "defaultStateCheckIntervalInSec", 60);
         ReflectionTestUtils.setField(service, "defaultActivityStatsIntervalInSec", 60);

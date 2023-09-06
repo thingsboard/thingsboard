@@ -1538,7 +1538,6 @@
     "help-text": "İhtiyaca göre '%' kullanın: '%entity_name_contains%', '%entity_name_ends', 'entity_starts_with'.",
     "use-entity-name-filter": "Filtre kullan",
     "entity-list-empty": "Hiçbir öğe seçilmedi.",
-    "entity-type-list-empty": "Hiçbir öğe türü seçilmedi.",
     "entity-name-filter-required": "Öğe ismi filtresi gerekli.",
     "entity-name-filter-no-entity-matched": "'{{entity}}' ile başlayan hiçbir öğe bulunamadı.",
     "all-subtypes": "Tümü",

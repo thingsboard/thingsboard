@@ -73,23 +73,13 @@
       </mat-chip-listbox>
     </div>
     <div class="tb-form-row column-xs">
-      <div class="fixed-title-width" translate>alarm.alarm-type-list</div>
-      <mat-form-field fxFlex appearance="outline"
-                      subscriptSizing="dynamic"
-                      class="tb-chips">
-        <mat-chip-grid #alarmTypeChipList formControlName="typeList">
-          <mat-chip-row *ngFor="let type of alarmTypeList()"
-                        [removable]="true" (removed)="removeAlarmType(type)">
-            {{type}}
-            <mat-icon matChipRemove>cancel</mat-icon>
-          </mat-chip-row>
-          <input placeholder="{{ !alarmFilterConfigForm.get('typeList').value?.length ? ('alarm.any-type' | translate) : '' }}"
-                 [matChipInputFor]="alarmTypeChipList"
-                 [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-                 matChipInputAddOnBlur
-                 (matChipInputTokenEnd)="addAlarmType($event)">
-        </mat-chip-grid>
-      </mat-form-field>
+      <div class="fixed-title-width" ngClass.xs="filters-title-mobile" translate>alarm.alarm-type-list</div>
+      <tb-entity-subtype-list subscriptSizing="dynamic"
+                              formControlName="typeList"
+                              appearance="outline"
+                              [additionalClasses]="['tb-chips', 'flex']"
+                              [entityType]="entityType.ALARM">
+      </tb-entity-subtype-list>
     </div>
     <div class="tb-form-row column-xs">
       <div class="fixed-title-width" translate>alarm.assignee</div>

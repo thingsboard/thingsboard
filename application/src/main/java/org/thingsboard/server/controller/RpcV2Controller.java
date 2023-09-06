@@ -230,7 +230,7 @@ public class RpcV2Controller extends AbstractRpcController {
         Rpc rpc = checkRpcId(rpcId, Operation.DELETE);
 
         if (rpc != null) {
-            if (rpc.getStatus().equals(RpcStatus.QUEUED)) {
+            if (rpc.getStatus().isPushDeleteNotificationToCore()) {
                 RemoveRpcActorMsg removeMsg = new RemoveRpcActorMsg(getTenantId(), rpc.getDeviceId(), rpc.getUuidId());
                 log.trace("[{}] Forwarding msg {} to queue actor!", rpc.getDeviceId(), rpc);
                 tbClusterService.pushMsgToCore(removeMsg, null);

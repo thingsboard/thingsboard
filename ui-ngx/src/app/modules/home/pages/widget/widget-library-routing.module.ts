@@ -20,7 +20,6 @@ import { ActivatedRouteSnapshot, Resolve, RouterModule, Routes } from '@angular/
 import { EntitiesTableComponent } from '../../components/entity/entities-table.component';
 import { Authority } from '@shared/models/authority.enum';
 import { WidgetsBundlesTableConfigResolver } from '@modules/home/pages/widget/widgets-bundles-table-config.resolver';
-import { WidgetLibraryComponent } from '@home/pages/widget/widget-library.component';
 import { BreadCrumbConfig, BreadCrumbLabelFunction } from '@shared/components/breadcrumb';
 import { Observable } from 'rxjs';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
@@ -28,10 +27,11 @@ import { WidgetService } from '@core/http/widget.service';
 import { WidgetEditorComponent } from '@home/pages/widget/widget-editor.component';
 import { map } from 'rxjs/operators';
 import { detailsToWidgetInfo, WidgetInfo } from '@home/models/widget-component.models';
-import { widgetType, WidgetTypeDetails } from '@app/shared/models/widget.models';
+import { widgetType, WidgetTypeDetails, WidgetTypeInfo } from '@app/shared/models/widget.models';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
-import { WidgetsData } from '@home/models/dashboard-component.models';
-import { NULL_UUID } from '@shared/models/id/has-uuid';
+import { RouterTabsComponent } from '@home/components/router-tabs.component';
+import { WidgetTypesTableConfigResolver } from '@home/pages/widget/widget-types-table-config.resolver';
+import { WidgetsBundleWidgetsComponent } from '@home/pages/widget/widgets-bundle-widgets.component';
 
 export interface WidgetEditorData {
   widgetTypeDetails: WidgetTypeDetails;
@@ -45,28 +45,20 @@ export class WidgetsBundleResolver implements Resolve<WidgetsBundle> {
   }
 
   resolve(route: ActivatedRouteSnapshot): Observable<WidgetsBundle> {
-    let widgetsBundleId = route.params.widgetsBundleId;
-    if (!widgetsBundleId) {
-      widgetsBundleId = route.parent.params.widgetsBundleId;
-    }
+    const widgetsBundleId = route.params.widgetsBundleId;
     return this.widgetsService.getWidgetsBundle(widgetsBundleId);
   }
 }
 
 @Injectable()
-export class WidgetsTypesDataResolver implements Resolve<WidgetsData> {
+export class WidgetsBundleWidgetsResolver implements Resolve<Array<WidgetTypeInfo>> {
 
   constructor(private widgetsService: WidgetService) {
   }
 
-  resolve(route: ActivatedRouteSnapshot): Observable<WidgetsData> {
-    const widgetsBundle: WidgetsBundle = route.parent.data.widgetsBundle;
-    const bundleAlias = widgetsBundle.alias;
-    const isSystem = widgetsBundle.tenantId.id === NULL_UUID;
-    return this.widgetsService.loadBundleLibraryWidgets(bundleAlias,
-      isSystem).pipe(
-      map((widgets) => ({ widgets })
-      ));
+  resolve(route: ActivatedRouteSnapshot): Observable<Array<WidgetTypeInfo>> {
+    const widgetsBundleId = route.params.widgetsBundleId;
+    return this.widgetsService.getBundleWidgetTypeInfos(widgetsBundleId);
   }
 }
 
@@ -103,7 +95,7 @@ export class WidgetEditorDataResolver implements Resolve<WidgetEditorData> {
   }
 }
 
-export const widgetTypesBreadcumbLabelFunction: BreadCrumbLabelFunction<any> = ((route, translate) =>
+export const widgetsBundleWidgetsBreadcumbLabelFunction: BreadCrumbLabelFunction<any> = ((route, translate) =>
   route.data.widgetsBundle.title);
 
 export const widgetEditorBreadcumbLabelFunction: BreadCrumbLabelFunction<WidgetEditorComponent> =
@@ -111,7 +103,49 @@ export const widgetEditorBreadcumbLabelFunction: BreadCrumbLabelFunction<WidgetE
     component?.widget?.widgetName ?
       (component.widget.widgetName + (component.widget.deprecated ? ` (${translate.instant('widget.deprecated')})` : '')) : '');
 
-export const widgetsBundlesRoutes: Routes = [
+const widgetTypesRoutes: Routes = [
+  {
+    path: 'widget-types',
+    data: {
+      breadcrumb: {
+        label: 'widget.widgets',
+        icon: 'now_widgets'
+      }
+    },
+    children: [
+      {
+        path: '',
+        component: EntitiesTableComponent,
+        data: {
+          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+          title: 'widget.widgets'
+        },
+        resolve: {
+          entitiesTableConfig: WidgetTypesTableConfigResolver
+        }
+      },
+      {
+        path: ':widgetTypeId',
+        component: WidgetEditorComponent,
+        canDeactivate: [ConfirmOnExitGuard],
+        data: {
+          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+          title: 'widget.editor',
+          breadcrumb: {
+            labelFunction: widgetEditorBreadcumbLabelFunction,
+            icon: 'insert_chart'
+          } as BreadCrumbConfig<WidgetEditorComponent>,
+          hideTabs: true
+        },
+        resolve: {
+          widgetEditorData: WidgetEditorDataResolver
+        }
+      }
+    ]
+  },
+];
+
+const widgetsBundlesRoutes: Routes = [
   {
     path: 'widgets-bundles',
     data: {
@@ -133,73 +167,91 @@ export const widgetsBundlesRoutes: Routes = [
         }
       },
       {
-        path: ':widgetsBundleId/widgetTypes',
+        path: ':widgetsBundleId',
+        component: WidgetsBundleWidgetsComponent,
+        canDeactivate: [ConfirmOnExitGuard],
         data: {
+          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+          title: 'widgets-bundle.widgets-bundle-widgets',
           breadcrumb: {
-            labelFunction: widgetTypesBreadcumbLabelFunction,
+            labelFunction: widgetsBundleWidgetsBreadcumbLabelFunction,
             icon: 'now_widgets'
-          } as BreadCrumbConfig<any>
+          } as BreadCrumbConfig<any>,
+          hideTabs: true
         },
         resolve: {
-          widgetsBundle: WidgetsBundleResolver
-        },
-        children: [
-          {
-            path: '',
-            component: WidgetLibraryComponent,
-            data: {
-              auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
-              title: 'widget.widget-library'
-            },
-            resolve: {
-              widgetsData: WidgetsTypesDataResolver
-            }
-          },
-          {
-            path: ':widgetTypeId',
-            component: WidgetEditorComponent,
-            canDeactivate: [ConfirmOnExitGuard],
-            data: {
-              auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
-              title: 'widget.editor',
-              breadcrumb: {
-                labelFunction: widgetEditorBreadcumbLabelFunction,
-                icon: 'insert_chart'
-              } as BreadCrumbConfig<WidgetEditorComponent>
-            },
-            resolve: {
-              widgetEditorData: WidgetEditorDataResolver
-            }
-          }
-        ]
+          widgetsBundle: WidgetsBundleResolver,
+          widgets: WidgetsBundleWidgetsResolver
+        }
       }
     ]
   },
+];
+
+export const widgetsLibraryRoutes: Routes = [
+  {
+    path: 'widgets-library',
+    component: RouterTabsComponent,
+    data: {
+      auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+      breadcrumb: {
+        label: 'widget.widget-library',
+        icon: 'now_widgets'
+      }
+    },
+    children: [
+      {
+        path: '',
+        children: [],
+        data: {
+          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+          redirectTo: '/resources/widgets-library/widget-types'
+        }
+      },
+      ...widgetTypesRoutes,
+      ...widgetsBundlesRoutes
+    ]
+  }
 ];
 
 const routes: Routes = [
   {
     path: 'widgets-bundles',
     pathMatch: 'full',
-    redirectTo: '/resources/widgets-bundles'
+    redirectTo: '/resources/widgets-library/widgets-bundles'
+  },
+  {
+    path: 'resources/widgets-bundles',
+    pathMatch: 'full',
+    redirectTo: '/resources/widgets-library/widgets-bundles'
   },
   {
     path: 'widgets-bundles/:widgetsBundleId/widgetTypes',
     pathMatch: 'full',
-    redirectTo: '/resources/widgets-bundles/:widgetsBundleId/widgetTypes',
+    redirectTo: '/resources/widgets-library/widgets-bundles/:widgetsBundleId'
+  },
+  {
+    path: 'resources/widgets-bundles/:widgetsBundleId/widgetTypes',
+    pathMatch: 'full',
+    redirectTo: '/resources/widgets-library/widgets-bundles/:widgetsBundleId'
   },
   {
     path: 'widgets-bundles/:widgetsBundleId/widgetTypes/:widgetTypeId',
     pathMatch: 'full',
-    redirectTo: '/resources/widgets-bundles/:widgetsBundleId/widgetTypes/:widgetTypeId',
+    redirectTo: '/resources/widgets-library/widget-types/:widgetTypeId'
+  },
+  {
+    path: 'resources/widgets-bundles/:widgetsBundleId/widgetTypes/:widgetTypeId',
+    pathMatch: 'full',
+    redirectTo: '/resources/widgets-library/widget-types/:widgetTypeId'
   },
   {
     path: 'widgets-bundles/:widgetsBundleId/widgetTypes/add/:widgetType',
-    redirectTo: '/resources/widgets-bundles/:widgetsBundleId/widgetTypes/:widgetType',
+    redirectTo: '/resources/widgets-library/widget-types/:widgetType',
   },
   {
     path: 'resources/widgets-bundles/:widgetsBundleId/widgetTypes/add/:widgetType',
-    redirectTo: '/resources/widgets-bundles/:widgetsBundleId/widgetTypes/:widgetType',
+    redirectTo: '/resources/widgets-library/widget-types/:widgetType',
   }
 ];
 
@@ -208,9 +260,10 @@ const routes: Routes = [
   imports: [RouterModule.forChild(routes)],
   exports: [RouterModule],
   providers: [
+    WidgetTypesTableConfigResolver,
     WidgetsBundlesTableConfigResolver,
     WidgetsBundleResolver,
-    WidgetsTypesDataResolver,
+    WidgetsBundleWidgetsResolver,
     WidgetEditorDataResolver
   ]
 })

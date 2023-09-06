@@ -28,7 +28,8 @@ import {
   AlarmSeverity,
   AlarmStatus
 } from '@shared/models/alarm.models';
-import { UtilsService } from '@core/services/utils.service';
+import { EntitySubtype } from '@shared/models/entity-type.models';
+import { PageLink } from '@shared/models/page/page-link';
 
 @Injectable({
   providedIn: 'root'
@@ -36,8 +37,7 @@ import { UtilsService } from '@core/services/utils.service';
 export class AlarmService {
 
   constructor(
-    private http: HttpClient,
-    private utils: UtilsService
+    private http: HttpClient
   ) { }
 
   public getAlarm(alarmId: string, config?: RequestConfig): Observable<Alarm> {
@@ -106,6 +106,10 @@ export class AlarmService {
     }
     return this.http.get<AlarmSeverity>(url,
       defaultHttpOptionsFromConfig(config));
+  }
+
+  public getAlarmTypes(pageLink: PageLink, config?: RequestConfig): Observable<PageData<EntitySubtype>> {
+    return this.http.get<PageData<EntitySubtype>>(`/api/alarm/types${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
   }
 
 }

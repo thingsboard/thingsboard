@@ -455,7 +455,7 @@ class DefaultTbContext implements TbContext {
         return entityActionMsg(entity, id, ruleNodeId, actionMsgType, null);
     }
 
-    @Deprecated(since = "3.5.2", forRemoval = true)
+    @Deprecated(since = "3.6.0", forRemoval = true)
     public <E, I extends EntityId, K extends HasRuleEngineProfile> TbMsg entityActionMsg(E entity, I id, RuleNodeId ruleNodeId, String action, K profile) {
         try {
             return entityActionMsg(id, getActionMetaData(ruleNodeId), JacksonUtil.toString(JacksonUtil.valueToTree(entity)), action, profile);
@@ -464,7 +464,7 @@ class DefaultTbContext implements TbContext {
         }
     }
 
-    @Deprecated(since = "3.5.2", forRemoval = true)
+    @Deprecated(since = "3.6.0", forRemoval = true)
     private <I extends EntityId, K extends HasRuleEngineProfile> TbMsg entityActionMsg(I id, TbMsgMetaData msgMetaData, String msgData, String action, K profile) {
         String defaultQueueName = null;
         RuleChainId defaultRuleChainId = null;

@@ -101,12 +101,17 @@ export abstract class RuleNodeConfigurationComponent extends PageComponent imple
   configurationValue: RuleNodeConfiguration;
 
   private configurationSet = false;
+  private disabledValue = false;
 
   set disabled(value: boolean) {
-    if (value) {
-      this.configForm().disable({emitEvent: false});
-    } else {
-      this.configForm().enable({emitEvent: false});
+    if (this.disabledValue !== value) {
+      this.disabledValue = value;
+      if (value) {
+        this.configForm().disable({emitEvent: false});
+      } else {
+        this.configForm().enable({emitEvent: false});
+        this.updateValidators(false);
+      }
     }
   };
 

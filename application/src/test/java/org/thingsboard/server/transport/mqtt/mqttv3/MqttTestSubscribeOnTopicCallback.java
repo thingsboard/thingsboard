@@ -36,7 +36,7 @@ public class MqttTestSubscribeOnTopicCallback extends MqttTestCallback {
     public void messageArrived(String requestTopic, MqttMessage mqttMessage) {
         log.warn("messageArrived on topic: {}, awaitSubTopic: {}", requestTopic, awaitSubTopic);
         if (awaitSubTopic.equals(requestTopic)) {
-            qoS = mqttMessage.getQos();
+            messageArrivedQoS = mqttMessage.getQos();
             payloadBytes = mqttMessage.getPayload();
             subscribeLatch.countDown();
         }

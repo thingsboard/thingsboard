@@ -30,13 +30,6 @@ import java.util.List;
 public class WidgetsBundleExportData extends EntityExportData<WidgetsBundle> {
 
     @JsonProperty(index = 3)
-    private List<WidgetTypeDetails> widgets;
-
-    @Override
-    public EntityExportData<WidgetsBundle> sort() {
-        super.sort();
-        widgets.sort(Comparator.comparing(BaseWidgetType::getFqn));
-        return this;
-    }
+    private List<String> widgets;
 
 }

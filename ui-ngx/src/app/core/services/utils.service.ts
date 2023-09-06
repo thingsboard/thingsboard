@@ -17,7 +17,7 @@
 // eslint-disable-next-line @typescript-eslint/triple-slash-reference
 /// <reference path="../../../../src/typings/rawloader.typings.d.ts" />
 
-import { ElementRef, Inject, Injectable, NgZone } from '@angular/core';
+import { Inject, Injectable, NgZone } from '@angular/core';
 import { WINDOW } from '@core/services/window.service';
 import { ExceptionData } from '@app/shared/models/error.models';
 import {
@@ -45,7 +45,7 @@ import { alarmFields, alarmSeverityTranslations, alarmStatusTranslations } from 
 import { materialColors } from '@app/shared/models/material.models';
 import { WidgetInfo } from '@home/models/widget-component.models';
 import jsonSchemaDefaults from 'json-schema-defaults';
-import { fromEvent, Observable, Subscription } from 'rxjs';
+import { Observable } from 'rxjs';
 import { publishReplay, refCount } from 'rxjs/operators';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
 import {
@@ -57,8 +57,6 @@ import {
 import { EntityId } from '@shared/models/id/entity-id';
 import { DatePipe } from '@angular/common';
 import { entityTypeTranslations } from '@shared/models/entity-type.models';
-import { OverlayRef } from '@angular/cdk/overlay';
-import { ResizeObserver } from '@juggle/resize-observer';
 
 const i18nRegExp = new RegExp(`{${i18nPrefix}:[^{}]+}`, 'g');
 
@@ -528,26 +526,6 @@ export class UtilsService {
 
   public base64toObj(b64Encoded: string): any {
     return base64toObj(b64Encoded);
-  }
-
-  public updateOverlayMaxHeigth(overlay: OverlayRef, observeElementRef?: ElementRef): Subscription {
-    const observeElement = observeElementRef ? observeElementRef.nativeElement : overlay.overlayElement.children[0];
-
-    const setMaxHeigthOverlay = () => {
-      const top = observeElement.getBoundingClientRect().top;
-      const viewport = window.innerHeight;
-      overlay.updateSize({
-        maxHeight: viewport - top
-      });
-    };
-
-    const observer = new ResizeObserver(() => {
-      setMaxHeigthOverlay();
-      observer.unobserve(observeElement);
-    });
-    observer.observe(observeElement);
-
-    return fromEvent(window, 'resize').subscribe(() => setMaxHeigthOverlay());
   }
 
 }
