@@ -28,6 +28,10 @@ import java.util.Map;
 public class DeviceConnectivityConfiguration {
     private Map<String, DeviceConnectivityInfo> connectivity = new HashMap<>();
 
+    public DeviceConnectivityInfo getConnectivity(String protocol) {
+        return connectivity.get(protocol);
+    }
+
     public boolean isEnabled(String protocol) {
         var info = connectivity.get(protocol);
         return info != null && info.isEnabled();
