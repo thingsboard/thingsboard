@@ -227,7 +227,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
     @Override
     public void upgradeRuleNodes() {
         try {
-            log.info("Starting versioned rule nodes upgrade ...");
+            log.info("Starting rule nodes upgrade ...");
             var nodeClassToVersionMap = componentDiscoveryService.getVersionedNodes();
             log.debug("Found {} versioned nodes to check for upgrade!", nodeClassToVersionMap.size());
             nodeClassToVersionMap.forEach(clazz -> {
