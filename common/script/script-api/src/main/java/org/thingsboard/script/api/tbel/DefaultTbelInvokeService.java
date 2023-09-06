@@ -125,7 +125,7 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
         super.init();
         OptimizerFactory.setDefaultOptimizer(OptimizerFactory.SAFE_REFLECTIVE);
         parserConfig = ParserContext.enableSandboxedMode();
-        parserConfig.addReserved(TbUtils.class.getName());
+        parserConfig.addNonConvertableClasses(TbUtils.class.getName());
         parserConfig.addImport("JSON", TbJson.class);
         parserConfig.registerDataType("Date", TbDate.class, date -> 8L);
         parserConfig.registerDataType("Random", Random.class, date -> 8L);
