@@ -496,7 +496,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
           },
           pageSize: isDefined(config.pageSize) ? config.pageSize : 1024,
           units: config.units,
-          decimals: config.decimals,
+          decimals: isDefined(config.decimals) ? config.decimals : 0,
           noDataDisplayMessage: isDefined(config.noDataDisplayMessage) ? config.noDataDisplayMessage : ''
         },
         {emitEvent: false}
