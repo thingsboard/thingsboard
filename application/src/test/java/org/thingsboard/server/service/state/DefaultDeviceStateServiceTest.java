@@ -18,6 +18,10 @@ package org.thingsboard.server.service.state;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -25,10 +29,13 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DeviceIdInfo;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.notification.rule.trigger.DeviceActivityTrigger;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.TsValue;
+import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -46,10 +53,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -57,7 +67,9 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 import static org.thingsboard.server.service.state.DefaultDeviceStateService.ACTIVITY_STATE;
+import static org.thingsboard.server.service.state.DefaultDeviceStateService.INACTIVITY_ALARM_TIME;
 import static org.thingsboard.server.service.state.DefaultDeviceStateService.INACTIVITY_TIMEOUT;
 
 @ExtendWith(MockitoExtension.class)
@@ -339,6 +351,175 @@ public class DefaultDeviceStateServiceTest {
 
     private void activityVerify(boolean isActive) {
         verify(telemetrySubscriptionService, times(1)).saveAttrAndNotify(any(), eq(deviceId), any(), eq(ACTIVITY_STATE), eq(isActive), any());
+    }
+
+    @Test
+    public void givenStateDataIsNull_whenUpdateInactivityTimeoutIfExpired_thenShouldCleanupDevice() {
+        // GIVEN
+        service.deviceStates.put(deviceId, deviceStateDataMock);
+
+        // WHEN
+        service.updateInactivityStateIfExpired(System.currentTimeMillis(), deviceId, null);
+
+        // THEN
+        assertThat(service.deviceStates.get(deviceId)).isNull();
+        assertThat(service.deviceStates.size()).isEqualTo(0);
+        assertThat(service.deviceStates.isEmpty()).isTrue();
+    }
+
+    @Test
+    public void givenNotMyPartition_whenUpdateInactivityTimeoutIfExpired_thenShouldCleanupDevice() {
+        // GIVEN
+        long currentTime = System.currentTimeMillis();
+
+        DeviceState deviceState = DeviceState.builder()
+                .active(true)
+                .lastConnectTime(currentTime - 8000)
+                .lastActivityTime(currentTime - 4000)
+                .lastDisconnectTime(0)
+                .lastInactivityAlarmTime(0)
+                .inactivityTimeout(3000)
+                .build();
+
+        DeviceStateData stateData = DeviceStateData.builder()
+                .tenantId(tenantId)
+                .deviceId(deviceId)
+                .deviceCreationTime(currentTime - 10000)
+                .state(deviceState)
+                .build();
+
+        service.deviceStates.put(deviceId, stateData);
+
+        var notMyTpi = TopicPartitionInfo.builder().myPartition(false).build();
+        given(partitionService.resolve(ServiceType.TB_CORE, tenantId, deviceId)).willReturn(notMyTpi);
+
+        // WHEN
+        service.updateInactivityStateIfExpired(System.currentTimeMillis(), deviceId, stateData);
+
+        // THEN
+        assertThat(service.deviceStates.get(deviceId)).isNull();
+        assertThat(service.deviceStates.size()).isEqualTo(0);
+        assertThat(service.deviceStates.isEmpty()).isTrue();
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideParametersForUpdateInactivityStateIfExpired")
+    public void givenTestParameters_whenUpdateInactivityStateIfExpired_thenShouldBeInTheExpectedStateAndPerformExpectedActions(
+            boolean activityState, long ts, long lastActivityTime, long lastInactivityAlarmTime, long inactivityTimeout, long deviceCreationTime,
+            boolean expectedActivityState, long expectedLastInactivityAlarmTime, boolean shouldUpdateActivityStateToInactive
+    ) {
+        // GIVEN
+        var state = DeviceState.builder()
+                .active(activityState)
+                .lastActivityTime(lastActivityTime)
+                .lastInactivityAlarmTime(lastInactivityAlarmTime)
+                .inactivityTimeout(inactivityTimeout)
+                .build();
+
+        var deviceStateData = DeviceStateData.builder()
+                .tenantId(tenantId)
+                .deviceId(deviceId)
+                .deviceCreationTime(deviceCreationTime)
+                .metaData(new TbMsgMetaData())
+                .state(state)
+                .build();
+
+        if (shouldUpdateActivityStateToInactive) {
+            given(partitionService.resolve(ServiceType.TB_CORE, tenantId, deviceId)).willReturn(tpi);
+        }
+
+        // WHEN
+        service.updateInactivityStateIfExpired(ts, deviceId, deviceStateData);
+
+        // THEN
+        assertThat(state.isActive()).isEqualTo(expectedActivityState);
+        assertThat(state.getLastInactivityAlarmTime()).isEqualTo(expectedLastInactivityAlarmTime);
+
+        if (shouldUpdateActivityStateToInactive) {
+            then(telemetrySubscriptionService).should().saveAttrAndNotify(
+                    eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(SERVER_SCOPE), eq(ACTIVITY_STATE), eq(false), any()
+            );
+
+            var msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+            then(clusterService).should().pushMsgToRuleEngine(eq(tenantId), eq(deviceId), msgCaptor.capture(), any());
+            var actualMsg = msgCaptor.getValue();
+            assertThat(actualMsg.getType()).isEqualTo(TbMsgType.INACTIVITY_EVENT.name());
+            assertThat(actualMsg.getOriginator()).isEqualTo(deviceId);
+
+            var notificationCaptor = ArgumentCaptor.forClass(DeviceActivityTrigger.class);
+            then(notificationRuleProcessor).should().process(notificationCaptor.capture());
+            var actualNotification = notificationCaptor.getValue();
+            assertThat(actualNotification.getTenantId()).isEqualTo(tenantId);
+            assertThat(actualNotification.getDeviceId()).isEqualTo(deviceId);
+            assertThat(actualNotification.isActive()).isFalse();
+
+            then(telemetrySubscriptionService).should().saveAttrAndNotify(
+                    eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(SERVER_SCOPE),
+                    eq(INACTIVITY_ALARM_TIME), eq(expectedLastInactivityAlarmTime), any()
+            );
+        }
+    }
+
+    private static Stream<Arguments> provideParametersForUpdateInactivityStateIfExpired() {
+        return Stream.of(
+                Arguments.of(false, 100, 70,  90,  70,  60,  false, 90,  false),
+
+                Arguments.of(false, 100, 40,  50,  70,  10,  false, 50,  false),
+
+                Arguments.of(false, 100, 25,  60,  75,  25,  false, 60,  false),
+
+                Arguments.of(false, 100, 60,  70,  10,  50,  false, 70,  false),
+
+                Arguments.of(false, 100, 10,  15,  90,  10,  false, 15,  false),
+
+                Arguments.of(false, 100, 0,   40,  75,  0,   false, 40,  false),
+
+                Arguments.of(true,  100, 90,  80,  80,  50,  true,  80,  false),
+
+                Arguments.of(true,  100, 95,  90,  10,  50,  true,  90,  false),
+
+                Arguments.of(true,  100, 10,  10,  90,  10,  false, 100, true),
+
+                Arguments.of(true,  100, 10,  10,  90,  11,  true,  10,  false),
+
+                Arguments.of(true,  100, 15,  10,  85,  5,   false, 100, true),
+
+                Arguments.of(true,  100, 15,  10,  75,  5,   false, 100, true),
+
+                Arguments.of(true,  100, 95,  90,  5,   50,  false, 100, true),
+
+                Arguments.of(true,  100, 0,   0,   101, 0,   true,  0,   false),
+
+                Arguments.of(true,  100, 0,   0,   100, 0,   false, 100, true),
+
+                Arguments.of(true,  100, 0,   0,   99,  0,   false, 100, true),
+
+                Arguments.of(true,  100, 0,   0,   120, 10,  true,  0,   false),
+
+                Arguments.of(true,  100, 50,  0,   100, 0,   true,  0,   false),
+
+                Arguments.of(true,  100, 10,  0,   91,  0,   true,  0,   false),
+
+                Arguments.of(true,  100, 90,  0,   10,  0,   false, 100, true),
+
+                Arguments.of(true,  100, 100, 100, 1,   0,   true,  100, false),
+
+                Arguments.of(true,  100, 100, 100, 100, 100, true,  100, false),
+
+                Arguments.of(false, 100, 59,  60,  30,  10,  false, 60,  false),
+
+                Arguments.of(true,  100, 60,  60,  30,  10,  false, 100, true),
+
+                Arguments.of(true,  100, 61,  60,  30,  10,  false, 100, true),
+
+                Arguments.of(true,  0,   0,   0,   1,   0,   true,  0,   false),
+
+                Arguments.of(true,  0,   0,   0,   0,   0,   false, 0,   true),
+
+                Arguments.of(true,  100, 90,  80,  20,  70,  true,  80,  false),
+
+                Arguments.of(true,  100, 80,  90,  30,  70,  true,  90,  false)
+        );
     }
 
 }
