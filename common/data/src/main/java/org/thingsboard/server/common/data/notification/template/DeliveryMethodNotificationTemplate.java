@@ -22,10 +22,10 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 
 import javax.validation.constraints.NotEmpty;
+import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "method")
@@ -33,7 +33,8 @@ import javax.validation.constraints.NotEmpty;
         @Type(name = "WEB", value = WebDeliveryMethodNotificationTemplate.class),
         @Type(name = "EMAIL", value = EmailDeliveryMethodNotificationTemplate.class),
         @Type(name = "SMS", value = SmsDeliveryMethodNotificationTemplate.class),
-        @Type(name = "SLACK", value = SlackDeliveryMethodNotificationTemplate.class)
+        @Type(name = "SLACK", value = SlackDeliveryMethodNotificationTemplate.class),
+        @Type(name = "MICROSOFT_TEAMS", value = MicrosoftTeamsDeliveryMethodNotificationTemplate.class)
 })
 @Data
 @NoArgsConstructor
@@ -41,7 +42,7 @@ public abstract class DeliveryMethodNotificationTemplate {
 
     private boolean enabled;
     @NotEmpty
-    private String body;
+    protected String body;
 
     public DeliveryMethodNotificationTemplate(DeliveryMethodNotificationTemplate other) {
         this.enabled = other.enabled;
@@ -54,8 +55,7 @@ public abstract class DeliveryMethodNotificationTemplate {
     @JsonIgnore
     public abstract DeliveryMethodNotificationTemplate copy();
 
-    public boolean containsAny(String... params) {
-        return StringUtils.containsAny(body, params);
-    }
+    @JsonIgnore
+    public abstract List<TemplatableValue> getTemplatableValues();
 
 }

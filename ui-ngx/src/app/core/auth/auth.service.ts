@@ -27,7 +27,12 @@ import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from 
 import { UserService } from '../http/user.service';
 import { Store } from '@ngrx/store';
 import { AppState } from '../core.state';
-import { ActionAuthAuthenticated, ActionAuthLoadUser, ActionAuthUnauthenticated } from './auth.actions';
+import {
+  ActionAuthAuthenticated,
+  ActionAuthLoadUser,
+  ActionAuthUnauthenticated,
+  ActionAuthUpdateAuthUser
+} from './auth.actions';
 import { getCurrentAuthState, getCurrentAuthUser } from './auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { ActionSettingsChangeLanguage } from '@app/core/settings/settings.actions';
@@ -244,7 +249,7 @@ export class AuthService {
     if (authState && authState.authUser) {
       if (authState.authUser.authority === Authority.TENANT_ADMIN || authState.authUser.authority === Authority.CUSTOMER_USER) {
         if ((this.userHasDefaultDashboard(authState) && authState.forceFullscreen) || authState.authUser.isPublic) {
-          if (path === 'profile' || path === 'security') {
+          if (path.startsWith('account')) {
             if (this.userHasProfile(authState.authUser)) {
               return false;
             } else {
@@ -385,10 +390,10 @@ export class AuthService {
         } else if (authPayload.authUser) {
           authPayload.authUser.authority = Authority.ANONYMOUS;
         }
-        if (authPayload.authUser.isPublic) {
+        if (authPayload.authUser?.isPublic) {
           authPayload.forceFullscreen = true;
         }
-        if (authPayload.authUser.isPublic) {
+        if (authPayload.authUser?.isPublic) {
           this.loadSystemParams().subscribe(
             (sysParams) => {
               authPayload = {...authPayload, ...sysParams};
@@ -399,10 +404,10 @@ export class AuthService {
               loadUserSubject.error(err);
             }
           );
-        } else if (authPayload.authUser.authority === Authority.PRE_VERIFICATION_TOKEN) {
+        } else if (authPayload.authUser?.authority === Authority.PRE_VERIFICATION_TOKEN) {
           loadUserSubject.next(authPayload);
           loadUserSubject.complete();
-        } else if (authPayload.authUser.userId) {
+        } else if (authPayload.authUser?.userId) {
           this.userService.getUser(authPayload.authUser.userId).subscribe(
             (user) => {
               authPayload.userDetails = user;
@@ -480,6 +485,7 @@ export class AuthService {
             } else {
               this.updateAndValidateTokens(loginResponse.token, loginResponse.refreshToken, true);
             }
+            this.updatedAuthUserFromToken(loginResponse.token);
             this.refreshTokenSubject.next(loginResponse);
             this.refreshTokenSubject.complete();
             this.refreshTokenSubject = null;
@@ -491,6 +497,18 @@ export class AuthService {
         }
     }
     return response;
+  }
+
+  private updatedAuthUserFromToken(token: string) {
+    const authUser = getCurrentAuthUser(this.store);
+    const tokenData = this.jwtHelper.decodeToken(token);
+    if (['sub', 'firstName', 'lastName'].some(value => authUser[value] !== tokenData[value])) {
+      this.store.dispatch(new ActionAuthUpdateAuthUser({
+        sub: tokenData.sub,
+        firstName: tokenData.firstName,
+        lastName: tokenData.lastName,
+      }));
+    }
   }
 
   private validateJwtToken(doRefresh): Observable<void> {

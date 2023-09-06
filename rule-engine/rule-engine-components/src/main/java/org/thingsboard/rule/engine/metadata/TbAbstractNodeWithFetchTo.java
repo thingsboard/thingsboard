@@ -25,6 +25,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.TbVersionedNode;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.util.TbPair;
@@ -39,7 +40,7 @@ public abstract class TbAbstractNodeWithFetchTo<C extends TbAbstractFetchToNodeC
     protected final static String FETCH_TO_PROPERTY_NAME = "fetchTo";
 
     protected C config;
-    protected FetchTo fetchTo;
+    protected TbMsgSource fetchTo;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -71,9 +72,9 @@ public abstract class TbAbstractNodeWithFetchTo<C extends TbAbstractFetchToNodeC
     }
 
     protected void enrichMessage(ObjectNode msgData, TbMsgMetaData metaData, KvEntry kvEntry, String targetKey) {
-        if (FetchTo.DATA.equals(fetchTo)) {
+        if (TbMsgSource.DATA.equals(fetchTo)) {
             JacksonUtil.addKvEntry(msgData, kvEntry, targetKey);
-        } else if (FetchTo.METADATA.equals(fetchTo)) {
+        } else if (TbMsgSource.METADATA.equals(fetchTo)) {
             metaData.putValue(targetKey, kvEntry.getValueAsString());
         }
     }
@@ -83,9 +84,9 @@ public abstract class TbAbstractNodeWithFetchTo<C extends TbAbstractFetchToNodeC
             case DATA:
                 return TbMsg.transformMsgData(msg, JacksonUtil.toString(msgDataNode));
             case METADATA:
-                return TbMsg.transformMsg(msg, msgMetaData);
+                return TbMsg.transformMsgMetadata(msg, msgMetaData);
             default:
-                log.debug("Unexpected FetchTo value: {}. Allowed values: {}", fetchTo, FetchTo.values());
+                log.debug("Unexpected FetchTo value: {}. Allowed values: {}", fetchTo, TbMsgSource.values());
                 return msg;
         }
     }
@@ -96,21 +97,29 @@ public abstract class TbAbstractNodeWithFetchTo<C extends TbAbstractFetchToNodeC
             String ifTrue,
             String ifFalse
     ) throws TbNodeException {
-        var newConfigObjectNode = (ObjectNode) oldConfiguration;
-        if (!newConfigObjectNode.has(oldProperty)) {
+        var newConfig = (ObjectNode) oldConfiguration;
+        if (!newConfig.has(oldProperty)) {
             throw new TbNodeException("property to update: '" + oldProperty + "' doesn't exists in configuration!");
         }
-        var value = newConfigObjectNode.get(oldProperty).asText();
+        return upgradeConfigurationToUseFetchTo(oldProperty, ifTrue, ifFalse, newConfig);
+    }
+
+    protected TbPair<Boolean, JsonNode> upgradeConfigurationToUseFetchTo(
+            String oldProperty, String ifTrue,
+            String ifFalse, ObjectNode newConfig
+    ) throws TbNodeException {
+        var value = newConfig.get(oldProperty).asText();
         if ("true".equals(value)) {
-            newConfigObjectNode.remove(oldProperty);
-            newConfigObjectNode.put(FETCH_TO_PROPERTY_NAME, ifTrue);
-            return new TbPair<>(true, newConfigObjectNode);
+            newConfig.remove(oldProperty);
+            newConfig.put(FETCH_TO_PROPERTY_NAME, ifTrue);
+            return new TbPair<>(true, newConfig);
         } else if ("false".equals(value)) {
-            newConfigObjectNode.remove(oldProperty);
-            newConfigObjectNode.put(FETCH_TO_PROPERTY_NAME, ifFalse);
-            return new TbPair<>(true, newConfigObjectNode);
+            newConfig.remove(oldProperty);
+            newConfig.put(FETCH_TO_PROPERTY_NAME, ifFalse);
+            return new TbPair<>(true, newConfig);
         } else {
-            throw new TbNodeException("property to update: '" + oldProperty + "' has unexpected value: " + value + ". Allowed values: true or false!");
+            throw new TbNodeException("property to update: '" + oldProperty + "' has unexpected value: "
+                    + value + ". Allowed values: true or false!");
         }
     }
 

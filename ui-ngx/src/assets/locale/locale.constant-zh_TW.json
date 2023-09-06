@@ -519,6 +519,7 @@
         "attributes": "屬性",
         "latest-telemetry": "最新遙測",
         "attributes-scope": "設備屬性範圍",
+        "scope-telemetry": "遙測",
         "scope-latest-telemetry": "最新遙測",
         "scope-client": "客戶端屬性",
         "scope-server": "服務端屬性",
@@ -1134,8 +1135,7 @@
         "device-configuration": "設備配置",
         "transport-configuration": "傳輸配置",
         "wizard": {
-            "device-details": "設備詳情",
-            "customer-to-assign-device": "客戶指定設備"
+            "device-details": "設備詳情"
         },
         "unassign-devices-from-edge-title": "您確定要解除邊緣設備 { count, plural, =1 {1 device} other {# devices} }的指定嗎？",
         "unassign-devices-from-edge-text": "確認後邊緣指定設備將解除指定及其所有相關資料將無法恢復。"
@@ -1735,7 +1735,6 @@
         "help-text": "根據需要使用'%'：'%entity_name_contains%', '%entity_name_ends', 'entity_starts_with'.",
         "use-entity-name-filter": "用戶過濾",
         "entity-list-empty": "沒有選擇實體。",
-        "entity-type-list-empty": "沒有選擇實體類型。",
         "entity-name-filter-required": "實體名過濾器必填。",
         "entity-name-filter-no-entity-matched": "沒有找到以 '{{entity}}' 開頭的實體",
         "all-subtypes": "所有",
@@ -2364,7 +2363,6 @@
         "browse-files": "瀏覽文件"
     },
     "image-input": {
-        "drop-image-or": "拖放圖像或",
         "drop-images-or": "拖放圖像或",
         "no-images": "未選擇任何圖像",
         "images": "圖像"
@@ -3338,7 +3336,7 @@
         "created": "{{created}}已創建",
         "updated": "{{updated}}已更新",
         "deleted": "{{deleted}} 已刪除",
-        "remove-other-entities-confirm-text": "小心！這將永久刪除您要恢復的版本中不存在的所有當前實體。請鍵入刪除其他實體進行確認。",
+        "remove-other-entities-confirm-text": "小心！這將永久刪除所有在您要恢復的版本中不存在的當前實體。請輸入 \"remove other entities\" 進行確認。",
         "auto-commit-to-branch": "自動提交到{{ branch }}分支",
         "default-create-entity-version-name": "{{entityName}} 更新",
         "sync-strategy-merge-hint": "在存儲庫中創建或更新選定實體。所有其他存儲實體都不會被修改。",

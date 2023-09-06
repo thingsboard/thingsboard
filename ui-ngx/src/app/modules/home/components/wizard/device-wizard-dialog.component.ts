@@ -23,7 +23,6 @@ import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 import { Device, DeviceProfileInfo, DeviceTransportType } from '@shared/models/device.models';
 import { MatStepper, StepperOrientation } from '@angular/material/stepper';
-import { BaseData, HasId } from '@shared/models/base-data';
 import { EntityType } from '@shared/models/entity-type.models';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -40,7 +39,7 @@ import { HttpErrorResponse } from '@angular/common/http';
   templateUrl: './device-wizard-dialog.component.html',
   styleUrls: ['./device-wizard-dialog.component.scss']
 })
-export class DeviceWizardDialogComponent extends DialogComponent<DeviceWizardDialogComponent, boolean> {
+export class DeviceWizardDialogComponent extends DialogComponent<DeviceWizardDialogComponent, Device> {
 
   @ViewChild('addDeviceWizardStepper', {static: true}) addDeviceWizardStepper: MatStepper;
 
@@ -64,7 +63,7 @@ export class DeviceWizardDialogComponent extends DialogComponent<DeviceWizardDia
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
-              public dialogRef: MatDialogRef<DeviceWizardDialogComponent, boolean>,
+              public dialogRef: MatDialogRef<DeviceWizardDialogComponent, Device>,
               private deviceService: DeviceService,
               private breakpointObserver: BreakpointObserver,
               private fb: FormBuilder) {
@@ -121,7 +120,7 @@ export class DeviceWizardDialogComponent extends DialogComponent<DeviceWizardDia
   add(): void {
     if (this.allValid()) {
       this.createDevice().subscribe(
-        () => this.dialogRef.close(true)
+        (device) => this.dialogRef.close(device)
       );
     }
   }
@@ -137,7 +136,7 @@ export class DeviceWizardDialogComponent extends DialogComponent<DeviceWizardDia
     }
   }
 
-  private createDevice(): Observable<BaseData<HasId>> {
+  private createDevice(): Observable<Device> {
     const device: Device = {
       name: this.deviceWizardFormGroup.get('name').value,
       label: this.deviceWizardFormGroup.get('label').value,
@@ -147,11 +146,8 @@ export class DeviceWizardDialogComponent extends DialogComponent<DeviceWizardDia
         overwriteActivityTime: this.deviceWizardFormGroup.get('overwriteActivityTime').value,
         description: this.deviceWizardFormGroup.get('description').value
       },
-      customerId: null
+      customerId: this.deviceWizardFormGroup.get('customerId').value
     };
-    if (this.deviceWizardFormGroup.get('customerId').value) {
-      device.customerId = new CustomerId(this.deviceWizardFormGroup.get('customerId').value);
-    }
     if (this.addDeviceWizardStepper.steps.last.completed || this.addDeviceWizardStepper.selectedIndex > 0) {
       return this.deviceService.saveDeviceWithCredentials(deepTrim(device), deepTrim(this.credentialsFormGroup.value.credential)).pipe(
         catchError((e: HttpErrorResponse) => {

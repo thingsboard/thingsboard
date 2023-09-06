@@ -86,8 +86,7 @@
                     matTooltip="{{ actionDescriptor.name }}"
                     matTooltipPosition="above"
                     (click)="actionDescriptor.onAction($event)">
-              <mat-icon *ngIf="actionDescriptor.isMdiIcon" [svgIcon]="actionDescriptor.icon"></mat-icon>
-              <mat-icon *ngIf="!actionDescriptor.isMdiIcon">{{actionDescriptor.icon}}</mat-icon>
+              <tb-icon>{{actionDescriptor.icon}}</tb-icon>
             </button>
             <button mat-icon-button [disabled]="isLoading$ | async" (click)="updateData()"
                     matTooltip="{{ 'action.refresh' | translate }}"
@@ -112,7 +111,7 @@
             <mat-form-field fxFlex>
               <mat-label>&nbsp;</mat-label>
               <input #searchInput matInput
-                     [(ngModel)]="pageLink.textSearch"
+                     [formControl]="textSearch"
                      placeholder="{{ translations.search | translate }}"/>
             </mat-form-field>
             <button mat-icon-button (click)="exitFilterMode()"

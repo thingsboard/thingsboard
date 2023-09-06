@@ -81,6 +81,7 @@ import { distinct, filter, map, switchMap, takeUntil } from 'rxjs/operators';
 import { AlarmDataListener } from '@core/api/alarm-data.service';
 import { RpcStatus } from '@shared/models/rpc.models';
 import { EventEmitter } from '@angular/core';
+import { NOT_SUPPORTED } from '@shared/models/telemetry/telemetry.models';
 
 const moment = moment_;
 
@@ -159,6 +160,16 @@ export class WidgetSubscription implements IWidgetSubscription {
   pageSize: number;
   warnOnPageDataOverflow: boolean;
   ignoreDataUpdateOnIntervalTick: boolean;
+
+  get firstDatasource(): Datasource {
+    if (this.type === widgetType.alarm) {
+      return this.alarmSource;
+    } else if (this.datasources?.length) {
+      return this.datasources[0];
+    } else {
+      return null;
+    }
+  }
 
   datasourcePages: PageData<Datasource>[];
   dataPages: PageData<Array<DatasourceData>>[];
@@ -1531,7 +1542,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       } else if (prevData && prevData[0] && prevData[0].length > 1 && data.data.length > 0) {
         const prevTs = prevData[0][0];
         const prevValue = prevData[0][1];
-        if (prevTs === data.data[0][0] && prevValue === data.data[0][1]) {
+        if (prevTs === data.data[0][0] && prevValue === data.data[0][1] && data.data[0][1] !== NOT_SUPPORTED) {
           update = false;
         }
       }

@@ -54,7 +54,7 @@ type FieldAlignment = 'row' | 'column';
 type MultipleInputWidgetDataKeyType = 'server' | 'shared' | 'timeseries';
 export type MultipleInputWidgetDataKeyValueType = 'string' | 'double' | 'integer' |
                                                   'JSON' | 'booleanCheckbox' | 'booleanSwitch' |
-                                                  'dateTime' | 'date' | 'time' | 'select';
+                                                  'dateTime' | 'date' | 'time' | 'select' | 'color';
 type MultipleInputWidgetDataKeyEditableType = 'editable' | 'disabled' | 'readonly';
 
 type ConvertGetValueFunction = (value: any, ctx: WidgetContext) => any;
@@ -202,10 +202,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   private initializeConfig() {
 
     if (this.settings.widgetTitle && this.settings.widgetTitle.length) {
-      const titlePatternText = this.utils.customTranslation(this.settings.widgetTitle, this.settings.widgetTitle);
-      this.ctx.widgetTitle = createLabelFromDatasource(this.datasources[0], titlePatternText);
-    } else {
-      this.ctx.widgetTitle = this.ctx.widgetConfig.title;
+      this.ctx.widgetTitle = this.settings.widgetTitle;
     }
 
     this.settings.groupTitle = this.settings.groupTitle || '${entityName}';
@@ -390,6 +387,12 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
               }
             });
           }
+        } else if (key.settings.dataKeyValueType === 'color') {
+          formControl.valueChanges.pipe(
+            takeUntil(this.destroy$)
+          ).subscribe(() => {
+            this.inputChanged(source, key);
+          });
         }
         this.multipleInputFormGroup.addControl(key.formId, formControl);
       }

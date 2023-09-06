@@ -120,6 +120,10 @@ public interface EdgeRepository extends JpaRepository<EdgeEntity, UUID> {
                                                @Param("searchText") String searchText,
                                                Pageable pageable);
 
+    @Query("SELECT ee FROM EdgeEntity ee, TenantEntity te WHERE ee.tenantId = te.id AND te.tenantProfileId = :tenantProfileId ")
+    Page<EdgeEntity> findByTenantProfileId(@Param("tenantProfileId") UUID tenantProfileId,
+                                           Pageable pageable);
+
     @Query("SELECT DISTINCT d.type FROM EdgeEntity d WHERE d.tenantId = :tenantId")
     List<String> findTenantEdgeTypes(@Param("tenantId") UUID tenantId);
 

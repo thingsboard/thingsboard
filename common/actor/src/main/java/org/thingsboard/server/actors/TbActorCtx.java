@@ -32,7 +32,7 @@ public interface TbActorCtx extends TbActorRef {
 
     void stop(TbActorId target);
 
-    TbActorRef getOrCreateChildActor(TbActorId actorId, Supplier<String> dispatcher, Supplier<TbActorCreator> creator);
+    TbActorRef getOrCreateChildActor(TbActorId actorId, Supplier<String> dispatcher, Supplier<TbActorCreator> creator, Supplier<Boolean> createCondition);
 
     void broadcastToChildren(TbActorMsg msg);
 

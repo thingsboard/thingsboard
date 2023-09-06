@@ -44,6 +44,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.UnaryOperator;
+import java.util.regex.Pattern;
 
 /**
  * Created by Valerii Sosliuk on 5/12/2017.
@@ -227,7 +228,7 @@ public class JacksonUtil {
         return node;
     }
 
-    public static void replaceUuidsRecursively(JsonNode node, Set<String> skipFieldsSet, UnaryOperator<UUID> replacer) {
+    public static void replaceUuidsRecursively(JsonNode node, Set<String> skipFieldsSet, Pattern includedFieldsPattern, UnaryOperator<UUID> replacer) {
         if (node == null) {
             return;
         }
@@ -239,9 +240,14 @@ public class JacksonUtil {
                 if (skipFieldsSet.contains(fieldName)) {
                     continue;
                 }
+                if (includedFieldsPattern != null) {
+                    if (!RegexUtils.matches(fieldName, includedFieldsPattern)) {
+                        continue;
+                    }
+                }
                 var child = objectNode.get(fieldName);
                 if (child.isObject() || child.isArray()) {
-                    replaceUuidsRecursively(child, skipFieldsSet, replacer);
+                    replaceUuidsRecursively(child, skipFieldsSet, includedFieldsPattern, replacer);
                 } else if (child.isTextual()) {
                     String text = child.asText();
                     String newText = RegexUtils.replace(text, RegexUtils.UUID_PATTERN, uuid -> replacer.apply(UUID.fromString(uuid)).toString());
@@ -255,7 +261,7 @@ public class JacksonUtil {
             for (int i = 0; i < array.size(); i++) {
                 JsonNode arrayElement = array.get(i);
                 if (arrayElement.isObject() || arrayElement.isArray()) {
-                    replaceUuidsRecursively(arrayElement, skipFieldsSet, replacer);
+                    replaceUuidsRecursively(arrayElement, skipFieldsSet, includedFieldsPattern, replacer);
                 } else if (arrayElement.isTextual()) {
                     String text = arrayElement.asText();
                     String newText = RegexUtils.replace(text, RegexUtils.UUID_PATTERN, uuid -> replacer.apply(UUID.fromString(uuid)).toString());

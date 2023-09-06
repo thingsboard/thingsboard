@@ -27,7 +27,7 @@
         <mat-form-field fxFlex>
           <mat-label>&nbsp;</mat-label>
           <input #searchInput matInput
-                 [(ngModel)]="textSearch"
+                 [formControl]="textSearch"
                  placeholder="{{ 'widget.search-data' | translate }}"/>
         </mat-form-field>
         <button mat-icon-button (click)="exitFilterMode()"
@@ -60,17 +60,18 @@
                 </mat-cell>
               </ng-container>
               <ng-container matColumnDef="actions" [stickyEnd]="enableStickyAction">
-                <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (source.timeseriesDatasource.countCellButtonAction * 48) + 'px',
-                                                                      maxWidth: (source.timeseriesDatasource.countCellButtonAction * 48) + 'px',
-                                                                      width: (source.timeseriesDatasource.countCellButtonAction * 48) + 'px' }">
+                <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (source.timeseriesDatasource.countCellButtonAction * 40) + 'px',
+                                                                      maxWidth: (source.timeseriesDatasource.countCellButtonAction * 40) + 'px',
+                                                                      width: (source.timeseriesDatasource.countCellButtonAction * 40) + 'px' }">
                 </mat-header-cell>
-                <mat-cell *matCellDef="let row" [ngStyle.gt-md]="{ minWidth: (source.timeseriesDatasource.countCellButtonAction * 48) + 'px',
-                                                                   maxWidth: (source.timeseriesDatasource.countCellButtonAction * 48) + 'px',
-                                                                   width: (source.timeseriesDatasource.countCellButtonAction * 48) + 'px' }">
+                <mat-cell *matCellDef="let row; let rowIndex = index" [style]="rowStyle(source, row, rowIndex)" [ngStyle.gt-md]="{ minWidth: (source.timeseriesDatasource.countCellButtonAction * 40) + 'px',
+                                                                   maxWidth: (source.timeseriesDatasource.countCellButtonAction * 40) + 'px',
+                                                                   width: (source.timeseriesDatasource.countCellButtonAction * 40) + 'px' }">
                   <div [fxHide]="showCellActionsMenu && source.timeseriesDatasource.countCellButtonAction !== 1" fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
                     <ng-container *ngFor="let actionDescriptor of row.actionCellButtons; trackBy: trackByActionCellDescriptionId">
                       <span *ngIf="!actionDescriptor.icon" style="width: 40px;"></span>
                       <button *ngIf="actionDescriptor.icon"
+                              class="tb-mat-40"
                               mat-icon-button [disabled]="isLoading$ | async"
                               matTooltip="{{ actionDescriptor.displayName }}"
                               matTooltipPosition="above"
@@ -81,6 +82,7 @@
                   </div>
                   <div fxHide [fxShow.lt-lg]="showCellActionsMenu && source.timeseriesDatasource.countCellButtonAction !== 1" *ngIf="row.hasActions">
                     <button mat-icon-button
+                            class="tb-mat-40"
                             (click)="$event.stopPropagation(); ctx.detectChanges();"
                             [matMenuTriggerFor]="cellActionsMenu">
                       <mat-icon class="material-icons">more_vert</mat-icon>
@@ -99,7 +101,8 @@
                 </mat-cell>
               </ng-container>
               <mat-header-row *matHeaderRowDef="source.displayedColumns; sticky: enableStickyHeader"></mat-header-row>
-              <mat-row *matRowDef="let row; columns: source.displayedColumns; let rowIndex = index"
+              <mat-row [ngClass]="{'tb-pointer': hasRowAction}"
+                       *matRowDef="let row; columns: source.displayedColumns; let rowIndex = index"
                        [ngStyle]="rowStyle(source, row, rowIndex)"
                        (click)="onRowClick($event, row)"></mat-row>
             </table>

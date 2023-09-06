@@ -39,7 +39,7 @@
                 matTooltip="{{ icon.displayName }}"
                 matTooltipPosition="above"
                 type="button">
-          <mat-icon>{{icon.name}}</mat-icon>
+          <tb-icon matButtonIcon>{{icon.name}}</tb-icon>
         </button>
         <button *ngIf="icon.name !== selectedIcon"
                 class="tb-select-icon-button"
@@ -48,18 +48,29 @@
                 matTooltip="{{ icon.displayName }}"
                 matTooltipPosition="above"
                 type="button">
-          <mat-icon>{{icon.name}}</mat-icon>
+          <tb-icon matButtonIcon>{{icon.name}}</tb-icon>
         </button>
       </ng-container>
     </div>
   </cdk-virtual-scroll-viewport>
-  <button *ngIf="!showAllSubject.value" class="tb-material-icons-show-more" mat-button color="primary" (click)="showAllSubject.next(true)">
-    {{ 'action.show-more' | translate }}
-  </button>
   <ng-container *ngIf="notFound">
     <div class="tb-no-data-available" [ngStyle]="{width: iconsPanelWidth}">
       <div class="tb-no-data-bg"></div>
       <div class="tb-no-data-text">{{ 'icon.no-icons-found' | translate:{iconSearch: searchIconControl.value} }}</div>
     </div>
   </ng-container>
+  <div class="tb-material-icons-panel-buttons" *ngIf="iconClearButton || !showAllSubject.value">
+    <button *ngIf="iconClearButton"
+            mat-button
+            color="primary"
+            type="button"
+            (click)="clearIcon()"
+            [disabled]="!selectedIcon">
+      {{ 'action.clear' | translate }}
+    </button>
+    <span fxFlex></span>
+    <button *ngIf="!showAllSubject.value" class="tb-material-icons-show-more" mat-button color="primary" (click)="showAllSubject.next(true)">
+      {{ 'action.show-more' | translate }}
+    </button>
+  </div>
 </div>

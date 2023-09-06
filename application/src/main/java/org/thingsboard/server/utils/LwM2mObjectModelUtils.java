@@ -16,8 +16,6 @@
 package org.thingsboard.server.utils;
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.model.DDFFileParser;
-import org.eclipse.leshan.core.model.DefaultDDFFileValidator;
 import org.eclipse.leshan.core.model.InvalidDDFFileException;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.thingsboard.server.common.data.ResourceType;

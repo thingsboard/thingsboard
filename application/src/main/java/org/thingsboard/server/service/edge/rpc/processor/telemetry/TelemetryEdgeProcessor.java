@@ -38,7 +38,8 @@ public class TelemetryEdgeProcessor extends BaseTelemetryProcessor {
 
     public DownlinkMsg convertTelemetryEventToDownlink(EdgeEvent edgeEvent) throws JsonProcessingException {
         EntityType entityType = EntityType.valueOf(edgeEvent.getType().name());
-        EntityDataProto entityDataProto = convertTelemetryEventToEntityDataProto(entityType, edgeEvent.getEntityId(),
+        EntityDataProto entityDataProto = convertTelemetryEventToEntityDataProto(
+                edgeEvent.getTenantId(), entityType, edgeEvent.getEntityId(),
                 edgeEvent.getAction(), edgeEvent.getBody());
         return DownlinkMsg.newBuilder()
                 .setDownlinkMsgId(EdgeUtils.nextPositiveInt())

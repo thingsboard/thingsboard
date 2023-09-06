@@ -29,7 +29,10 @@ import {
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { isUndefined } from '@core/utils';
-import { getTimewindowConfig } from '@home/components/widget/config/timewindow-config-panel.component';
+import {
+  getTimewindowConfig,
+  setTimewindowConfig
+} from '@home/components/widget/config/timewindow-config-panel.component';
 
 @Component({
   selector: 'tb-entities-table-basic-config',
@@ -80,6 +83,8 @@ export class EntitiesTableBasicConfigComponent extends BasicWidgetConfigComponen
       columns: [this.getColumns(configData.config.datasources), []],
       showTitle: [configData.config.showTitle, []],
       title: [configData.config.settings?.entitiesTitle, []],
+      titleFont: [configData.config.titleFont, []],
+      titleColor: [configData.config.titleColor, []],
       showTitleIcon: [configData.config.showTitleIcon, []],
       titleIcon: [configData.config.titleIcon, []],
       iconColor: [configData.config.iconColor, []],
@@ -91,15 +96,15 @@ export class EntitiesTableBasicConfigComponent extends BasicWidgetConfigComponen
   }
 
   protected prepareOutputConfig(config: any): WidgetConfigComponentData {
-    this.widgetConfig.config.useDashboardTimewindow = config.timewindowConfig.useDashboardTimewindow;
-    this.widgetConfig.config.displayTimewindow = config.timewindowConfig.displayTimewindow;
-    this.widgetConfig.config.timewindow = config.timewindowConfig.timewindow;
+    setTimewindowConfig(this.widgetConfig.config, config.timewindowConfig);
     this.widgetConfig.config.datasources = config.datasources;
     this.setColumns(config.columns, this.widgetConfig.config.datasources);
     this.widgetConfig.config.actions = config.actions;
     this.widgetConfig.config.showTitle = config.showTitle;
     this.widgetConfig.config.settings = this.widgetConfig.config.settings || {};
     this.widgetConfig.config.settings.entitiesTitle = config.title;
+    this.widgetConfig.config.titleFont = config.titleFont;
+    this.widgetConfig.config.titleColor = config.titleColor;
     this.widgetConfig.config.showTitleIcon = config.showTitleIcon;
     this.widgetConfig.config.titleIcon = config.titleIcon;
     this.widgetConfig.config.iconColor = config.iconColor;
@@ -118,6 +123,8 @@ export class EntitiesTableBasicConfigComponent extends BasicWidgetConfigComponen
     const showTitleIcon: boolean = this.entitiesTableWidgetConfigForm.get('showTitleIcon').value;
     if (showTitle) {
       this.entitiesTableWidgetConfigForm.get('title').enable();
+      this.entitiesTableWidgetConfigForm.get('titleFont').enable();
+      this.entitiesTableWidgetConfigForm.get('titleColor').enable();
       this.entitiesTableWidgetConfigForm.get('showTitleIcon').enable({emitEvent: false});
       if (showTitleIcon) {
         this.entitiesTableWidgetConfigForm.get('titleIcon').enable();
@@ -128,11 +135,15 @@ export class EntitiesTableBasicConfigComponent extends BasicWidgetConfigComponen
       }
     } else {
       this.entitiesTableWidgetConfigForm.get('title').disable();
+      this.entitiesTableWidgetConfigForm.get('titleFont').disable();
+      this.entitiesTableWidgetConfigForm.get('titleColor').disable();
       this.entitiesTableWidgetConfigForm.get('showTitleIcon').disable({emitEvent: false});
       this.entitiesTableWidgetConfigForm.get('titleIcon').disable();
       this.entitiesTableWidgetConfigForm.get('iconColor').disable();
     }
     this.entitiesTableWidgetConfigForm.get('title').updateValueAndValidity({emitEvent});
+    this.entitiesTableWidgetConfigForm.get('titleFont').updateValueAndValidity({emitEvent});
+    this.entitiesTableWidgetConfigForm.get('titleColor').updateValueAndValidity({emitEvent});
     this.entitiesTableWidgetConfigForm.get('showTitleIcon').updateValueAndValidity({emitEvent: false});
     this.entitiesTableWidgetConfigForm.get('titleIcon').updateValueAndValidity({emitEvent});
     this.entitiesTableWidgetConfigForm.get('iconColor').updateValueAndValidity({emitEvent});

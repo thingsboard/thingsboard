@@ -23,7 +23,10 @@ import { WidgetConfigComponentData } from '@home/models/widget-component.models'
 import { DataKey, Datasource, WidgetConfig } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { isUndefined } from '@core/utils';
-import { getTimewindowConfig } from '@home/components/widget/config/timewindow-config-panel.component';
+import {
+  getTimewindowConfig,
+  setTimewindowConfig
+} from '@home/components/widget/config/timewindow-config-panel.component';
 
 @Component({
   selector: 'tb-alarms-table-basic-config',
@@ -61,6 +64,8 @@ export class AlarmsTableBasicConfigComponent extends BasicWidgetConfigComponent 
       columns: [this.getColumns(configData.config.alarmSource), []],
       showTitle: [configData.config.showTitle, []],
       title: [configData.config.settings?.alarmsTitle, []],
+      titleFont: [configData.config.titleFont, []],
+      titleColor: [configData.config.titleColor, []],
       showTitleIcon: [configData.config.showTitleIcon, []],
       titleIcon: [configData.config.titleIcon, []],
       iconColor: [configData.config.iconColor, []],
@@ -72,9 +77,7 @@ export class AlarmsTableBasicConfigComponent extends BasicWidgetConfigComponent 
   }
 
   protected prepareOutputConfig(config: any): WidgetConfigComponentData {
-    this.widgetConfig.config.useDashboardTimewindow = config.timewindowConfig.useDashboardTimewindow;
-    this.widgetConfig.config.displayTimewindow = config.timewindowConfig.displayTimewindow;
-    this.widgetConfig.config.timewindow = config.timewindowConfig.timewindow;
+    setTimewindowConfig(this.widgetConfig.config, config.timewindowConfig);
     this.widgetConfig.config.alarmFilterConfig = config.alarmFilterConfig;
     this.widgetConfig.config.alarmSource = config.datasources[0];
     this.setColumns(config.columns, this.widgetConfig.config.alarmSource);
@@ -82,6 +85,8 @@ export class AlarmsTableBasicConfigComponent extends BasicWidgetConfigComponent 
     this.widgetConfig.config.showTitle = config.showTitle;
     this.widgetConfig.config.settings = this.widgetConfig.config.settings || {};
     this.widgetConfig.config.settings.alarmsTitle = config.title;
+    this.widgetConfig.config.titleFont = config.titleFont;
+    this.widgetConfig.config.titleColor = config.titleColor;
     this.widgetConfig.config.showTitleIcon = config.showTitleIcon;
     this.widgetConfig.config.titleIcon = config.titleIcon;
     this.widgetConfig.config.iconColor = config.iconColor;
@@ -100,6 +105,8 @@ export class AlarmsTableBasicConfigComponent extends BasicWidgetConfigComponent 
     const showTitleIcon: boolean = this.alarmsTableWidgetConfigForm.get('showTitleIcon').value;
     if (showTitle) {
       this.alarmsTableWidgetConfigForm.get('title').enable();
+      this.alarmsTableWidgetConfigForm.get('titleFont').enable();
+      this.alarmsTableWidgetConfigForm.get('titleColor').enable();
       this.alarmsTableWidgetConfigForm.get('showTitleIcon').enable({emitEvent: false});
       if (showTitleIcon) {
         this.alarmsTableWidgetConfigForm.get('titleIcon').enable();
@@ -110,11 +117,15 @@ export class AlarmsTableBasicConfigComponent extends BasicWidgetConfigComponent 
       }
     } else {
       this.alarmsTableWidgetConfigForm.get('title').disable();
+      this.alarmsTableWidgetConfigForm.get('titleFont').disable();
+      this.alarmsTableWidgetConfigForm.get('titleColor').disable();
       this.alarmsTableWidgetConfigForm.get('showTitleIcon').disable({emitEvent: false});
       this.alarmsTableWidgetConfigForm.get('titleIcon').disable();
       this.alarmsTableWidgetConfigForm.get('iconColor').disable();
     }
     this.alarmsTableWidgetConfigForm.get('title').updateValueAndValidity({emitEvent});
+    this.alarmsTableWidgetConfigForm.get('titleFont').updateValueAndValidity({emitEvent});
+    this.alarmsTableWidgetConfigForm.get('titleColor').updateValueAndValidity({emitEvent});
     this.alarmsTableWidgetConfigForm.get('showTitleIcon').updateValueAndValidity({emitEvent: false});
     this.alarmsTableWidgetConfigForm.get('titleIcon').updateValueAndValidity({emitEvent});
     this.alarmsTableWidgetConfigForm.get('iconColor').updateValueAndValidity({emitEvent});

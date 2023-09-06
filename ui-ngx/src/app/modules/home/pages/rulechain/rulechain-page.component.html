@@ -46,12 +46,12 @@
                         matTooltipPosition="above">
                   <mat-icon>search</mat-icon>
                 </button>
-                <input #ruleNodeSearchInput matInput
-                       [(ngModel)]="ruleNodeTypeSearch"
+                <input matInput
+                       [formControl]="ruleNodeTypeSearch"
                        placeholder="{{'rulenode.search' | translate}}"/>
                 <button mat-icon-button matSuffix class="tb-small"
-                        [fxShow]="ruleNodeTypeSearch !== ''"
-                        (click)="ruleNodeTypeSearch = ''; updateRuleChainLibrary()"
+                        [fxShow]="ruleNodeTypeSearch.value !== ''"
+                        (click)="ruleNodeTypeSearch.reset()"
                         matTooltip="{{'action.clear-search' | translate}}"
                         matTooltipPosition="above">
                   <mat-icon>close</mat-icon>
@@ -110,8 +110,6 @@
                               [ruleNode]="editingRuleNode"
                               [ruleChainId]="ruleChain.id?.id"
                               [ruleChainType]="ruleChainType"
-                              [isEdit]="true"
-                              [isReadOnly]="false"
                               (initRuleNode)="onRuleNodeInit()"
                               (changeScript)="switchToFirstTab()">
                 </tb-rule-node>

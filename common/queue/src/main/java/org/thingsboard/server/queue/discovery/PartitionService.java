@@ -64,4 +64,7 @@ public interface PartitionService {
     void updateQueue(TransportProtos.QueueUpdateMsg queueUpdateMsg);
 
     void removeQueue(TransportProtos.QueueDeleteMsg queueDeleteMsg);
+
+    boolean isManagedByCurrentService(TenantId tenantId);
+
 }

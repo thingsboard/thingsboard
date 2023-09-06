@@ -67,7 +67,7 @@ public class AlarmsCleanUpServiceTest extends AbstractControllerTest {
     @Test
     public void testAlarmsCleanUp() throws Exception {
         int ttlDays = 1;
-        updateDefaultTenantProfile(profileConfiguration -> {
+        updateDefaultTenantProfileConfig(profileConfiguration -> {
             profileConfiguration.setAlarmsTtlDays(ttlDays);
         });
 
@@ -104,10 +104,10 @@ public class AlarmsCleanUpServiceTest extends AbstractControllerTest {
         alarmsCleanUpService.cleanUp();
 
         for (AlarmId outdatedAlarm : outdatedAlarms) {
-            verify(alarmService).delAlarm(eq(tenantId), eq(outdatedAlarm));
+            verify(alarmService).delAlarm(eq(tenantId), eq(outdatedAlarm), eq(false));
         }
         for (AlarmId freshAlarm : freshAlarms) {
-            verify(alarmService, never()).delAlarm(eq(tenantId), eq(freshAlarm));
+            verify(alarmService, never()).delAlarm(eq(tenantId), eq(freshAlarm), eq(false));
         }
 
         verify(cleanUpServiceLogger).info(startsWith("Removed {} outdated alarm"), eq((long) count), eq(tenantId), any());

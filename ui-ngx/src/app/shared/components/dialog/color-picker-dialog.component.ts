@@ -23,6 +23,12 @@ import { DialogComponent } from '@shared/components/dialog.component';
 
 export interface ColorPickerDialogData {
   color: string;
+  colorClearButton: boolean;
+}
+
+export interface ColorPickerDialogResult {
+  color?: string;
+  canceled?: boolean;
 }
 
 @Component({
@@ -30,24 +36,26 @@ export interface ColorPickerDialogData {
   templateUrl: './color-picker-dialog.component.html',
   styleUrls: ['./color-picker-dialog.component.scss']
 })
-export class ColorPickerDialogComponent extends DialogComponent<ColorPickerDialogComponent, string> {
+export class ColorPickerDialogComponent extends DialogComponent<ColorPickerDialogComponent, ColorPickerDialogResult> {
 
   color: string;
+  colorClearButton: boolean;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: ColorPickerDialogData,
-              public dialogRef: MatDialogRef<ColorPickerDialogComponent, string>) {
+              public dialogRef: MatDialogRef<ColorPickerDialogComponent, ColorPickerDialogResult>) {
     super(store, router, dialogRef);
     this.color = data.color;
+    this.colorClearButton = data.colorClearButton;
   }
 
   selectColor(color: string) {
-    this.dialogRef.close(color);
+    this.dialogRef.close({color});
   }
 
   cancel(): void {
-    this.dialogRef.close(null);
+    this.dialogRef.close({canceled: true});
   }
 
 }
