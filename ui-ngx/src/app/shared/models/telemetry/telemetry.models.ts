@@ -37,6 +37,8 @@ import { isUndefined } from '@core/utils';
 import { CmdWrapper, WsSubscriber } from '@shared/models/websocket/websocket.models';
 import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
 
+export const NOT_SUPPORTED = 'Not supported!';
+
 export enum DataKeyType {
   timeseries = 'timeseries',
   attribute = 'attribute',

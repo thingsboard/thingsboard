@@ -1952,7 +1952,6 @@
         "help-text": "Usar el símbolo '%' de acuerdo a las necesidades: '%entity_name_contains%', '%entity_name_ends', 'entity_starts_with'.",
         "use-entity-name-filter": "Usar filtro",
         "entity-list-empty": "No hay entidades seleccionadas.",
-        "entity-type-list-empty": "No hay tipos de entidad seleccionados.",
         "entity-name-filter-required": "Filtro de nombre de entidad requerido.",
         "entity-name-filter-no-entity-matched": "No hay entidades que comiencen con '{{entity}}' .",
         "all-subtypes": "Todos",

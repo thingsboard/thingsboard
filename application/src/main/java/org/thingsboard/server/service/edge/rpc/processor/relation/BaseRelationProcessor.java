@@ -59,7 +59,7 @@ public abstract class BaseRelationProcessor extends BaseEdgeProcessor {
                         relationService.saveRelation(tenantId, entityRelation);
                         break;
                     } else {
-                        log.warn("Skipping relating update msg because from/to entity doesn't exists on edge, {}", relationUpdateMsg);
+                        log.warn("[{}] Skipping relating update msg because from/to entity doesn't exists on edge, {}", tenantId, relationUpdateMsg);
                         break;
                     }
                 case ENTITY_DELETED_RPC_MESSAGE:

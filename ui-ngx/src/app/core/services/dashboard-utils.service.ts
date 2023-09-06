@@ -29,12 +29,20 @@ import {
   GridSettings,
   WidgetLayout
 } from '@shared/models/dashboard.models';
-import { deepClone, isDefined, isDefinedAndNotNull, isString, isUndefined } from '@core/utils';
+import {
+  deepClone,
+  isDefined,
+  isDefinedAndNotNull,
+  isEmptyStr,
+  isNotEmptyStr,
+  isString,
+  isUndefined
+} from '@core/utils';
 import {
   Datasource,
   datasourcesHasOnlyComparisonAggregation,
   DatasourceType,
-  defaultLegendConfig,
+  defaultLegendConfig, isValidWidgetFullFqn,
   Widget,
   WidgetConfig,
   WidgetConfigMode,
@@ -214,12 +222,20 @@ export class DashboardUtilsService {
 
   public validateAndUpdateWidget(widget: Widget): Widget {
     widget.config = this.validateAndUpdateWidgetConfig(widget.config, widget.type);
-    // Temp workaround
-    if (widget.isSystemType && widget.bundleAlias === 'charts' && widget.typeAlias === 'timeseries') {
-      widget.typeAlias = 'basic_timeseries';
+    widget = this.validateAndUpdateWidgetTypeFqn(widget);
+    if (isDefined((widget as any).title)) {
+      delete (widget as any).title;
     }
-    if (widget.isSystemType && widget.bundleAlias === 'charts' &&
-      ['state_chart', 'basic_timeseries', 'timeseries_bars_flot'].includes(widget.typeAlias)) {
+    if (isDefined((widget as any).image)) {
+      delete (widget as any).image;
+    }
+    if (isDefined((widget as any).description)) {
+      delete (widget as any).description;
+    }
+    // Temp workaround
+    if (['system.charts.state_chart',
+         'system.charts.basic_timeseries',
+         'system.charts.timeseries_bars_flot'].includes(widget.typeFullFqn)) {
       const widgetConfig = widget.config;
       const widgetSettings = widget.config.settings;
       if (isDefinedAndNotNull(widgetConfig.showLegend)) {
@@ -234,6 +250,29 @@ export class DashboardUtilsService {
       } else if (isUndefined(widgetSettings.legendConfig)) {
         widgetSettings.legendConfig = defaultLegendConfig(widget.type);
       }
+    }
+    return widget;
+  }
+
+  private validateAndUpdateWidgetTypeFqn(widget: Widget): Widget {
+    const w = widget as any;
+    if (!isValidWidgetFullFqn(widget.typeFullFqn)) {
+      if (isDefinedAndNotNull(w.isSystemType) && isNotEmptyStr(w.bundleAlias) && isNotEmptyStr(w.typeAlias)) {
+        widget.typeFullFqn = (w.isSystemType ? 'system' : 'tenant') + '.' + w.bundleAlias + '.' + w.typeAlias;
+      }
+    }
+    if (isDefined(w.isSystemType)) {
+      delete w.isSystemType;
+    }
+    if (isDefined(w.bundleAlias)) {
+      delete w.bundleAlias;
+    }
+    if (isDefined(w.typeAlias)) {
+      delete w.typeAlias;
+    }
+    // Temp workaround
+    if (widget.typeFullFqn === 'system.charts.timeseries') {
+      widget.typeFullFqn = 'system.charts.basic_timeseries';
     }
     return widget;
   }

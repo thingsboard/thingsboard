@@ -15,16 +15,15 @@
 ///
 
 import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Observable, of } from 'rxjs';
 import { map, mergeMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { BroadcastService } from '@app/core/services/broadcast.service';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { RelationTypes } from '@app/shared/models/relation.models';
-import { FloatLabelType, MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { coerceArray, coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
@@ -39,12 +38,13 @@ import { coerceArray, coerceBoolean } from '@shared/decorators/coercion';
 })
 export class RelationTypeAutocompleteComponent implements ControlValueAccessor, OnInit, AfterViewInit, OnDestroy {
 
-  relationTypeFormGroup: UntypedFormGroup;
+  relationTypeFormGroup: FormGroup;
 
   modelValue: string | null;
 
   @Input()
-  label: string;
+  @coerceBoolean()
+  showLabel = true;
 
   @Input()
   @coerceArray()
@@ -52,9 +52,6 @@ export class RelationTypeAutocompleteComponent implements ControlValueAccessor, 
 
   @Input()
   appearance: MatFormFieldAppearance = 'fill';
-
-  @Input()
-  floatLabel: FloatLabelType = 'auto';
 
   @Input()
   @coerceBoolean()
@@ -79,7 +76,7 @@ export class RelationTypeAutocompleteComponent implements ControlValueAccessor, 
   constructor(private store: Store<AppState>,
               private broadcast: BroadcastService,
               public translate: TranslateService,
-              private fb: UntypedFormBuilder) {
+              private fb: FormBuilder) {
     this.relationTypeFormGroup = this.fb.group({
       relationType: [null, this.required ? [Validators.required, Validators.maxLength(255)] : [Validators.maxLength(255)]]
     });

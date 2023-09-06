@@ -161,12 +161,14 @@ import { HasDirtyFlag } from '@core/guards/confirm-on-exit.guard';
 })
 export class DashboardPageComponent extends PageComponent implements IDashboardController, HasDirtyFlag, OnInit, AfterViewInit, OnDestroy {
 
+  private forcePristine = false;
+
   get isDirty(): boolean {
-    return this.isEdit;
+    return this.isEdit && !this.forcePristine;
   }
 
   set isDirty(value: boolean) {
-
+    this.forcePristine = !value;
   }
 
   authState: AuthState = getCurrentAuthState(this.store);
@@ -1151,20 +1153,15 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   addWidgetFromType(widget: WidgetInfo) {
     this.onAddWidgetClosed();
     this.searchBundle = '';
-    this.widgetComponentService.getWidgetInfo(widget.bundleAlias, widget.typeAlias, widget.isSystemType).subscribe(
+    this.widgetComponentService.getWidgetInfo(widget.typeFullFqn).subscribe(
       (widgetTypeInfo) => {
         const config: WidgetConfig = this.dashboardUtils.widgetConfigFromWidgetType(widgetTypeInfo);
         if (!config.title) {
           config.title = 'New ' + widgetTypeInfo.widgetName;
         }
         let newWidget: Widget = {
-          isSystemType: widget.isSystemType,
-          bundleAlias: widget.bundleAlias,
-          typeAlias: widgetTypeInfo.alias,
+          typeFullFqn: widgetTypeInfo.fullFqn,
           type: widgetTypeInfo.type,
-          title: 'New widget',
-          image: null,
-          description: null,
           sizeX: widgetTypeInfo.sizeX,
           sizeY: widgetTypeInfo.sizeY,
           config,

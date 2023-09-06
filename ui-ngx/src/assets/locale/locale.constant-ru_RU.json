@@ -772,7 +772,6 @@
         "name-starts-with": "Название, начинающееся с",
         "use-entity-name-filter": "Использовать фильтр",
         "entity-list-empty": "Не выбраны объекты.",
-        "entity-type-list-empty": "Не выбраны типы объекта.",
         "entity-name-filter-required": "Фильтр по названию объекта обязателен.",
         "entity-name-filter-no-entity-matched": "Объекты, чье название начинается с '{{entity}}', не найдены.",
         "all-subtypes": "Все",

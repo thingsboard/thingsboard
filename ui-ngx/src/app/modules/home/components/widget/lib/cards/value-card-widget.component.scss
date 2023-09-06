@@ -24,7 +24,7 @@
     justify-content: center;
     gap: 16px;
     padding: 24px;
-    > div:not(.tb-value-card-overlay) {
+    > div:not(.tb-value-card-overlay), > tb-icon {
       z-index: 1;
     }
     &.square {

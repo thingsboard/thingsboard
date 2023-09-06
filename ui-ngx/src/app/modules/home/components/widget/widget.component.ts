@@ -301,7 +301,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.subscriptionContext.widgetUtils = this.widgetContext.utils;
     this.subscriptionContext.getServerTimeDiff = this.dashboardService.getServerTimeDiff.bind(this.dashboardService);
 
-    this.widgetComponentService.getWidgetInfo(this.widget.bundleAlias, this.widget.typeAlias, this.widget.isSystemType).subscribe(
+    this.widgetComponentService.getWidgetInfo(this.widget.typeFullFqn).subscribe(
       (widgetInfo) => {
         this.widgetInfo = widgetInfo;
         this.loadFromWidgetInfo();
@@ -404,7 +404,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
 
   private loadFromWidgetInfo() {
     this.widgetContext.widgetNamespace =
-      `widget-type-${(this.widget.isSystemType ? 'sys-' : '')}${this.widget.bundleAlias}-${this.widget.typeAlias}`;
+      `widget-type-${this.widget.typeFullFqn.replace(/\./g, '-')}`;
     const elem = this.elementRef.nativeElement;
     elem.classList.add('tb-widget');
     elem.classList.add(this.widgetContext.widgetNamespace);
@@ -761,8 +761,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         }
         this.widgetContentContainer.clear();
         this.handleWidgetException(e);
-        this.widgetComponentService.clearWidgetInfo(this.widgetInfo, this.widget.bundleAlias, this.widget.typeAlias,
-          this.widget.isSystemType);
+        this.widgetComponentService.clearWidgetInfo(this.widgetInfo);
         throw e;
       }
 

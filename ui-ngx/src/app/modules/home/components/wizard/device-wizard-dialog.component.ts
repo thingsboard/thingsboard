@@ -146,11 +146,8 @@ export class DeviceWizardDialogComponent extends DialogComponent<DeviceWizardDia
         overwriteActivityTime: this.deviceWizardFormGroup.get('overwriteActivityTime').value,
         description: this.deviceWizardFormGroup.get('description').value
       },
-      customerId: null
+      customerId: this.deviceWizardFormGroup.get('customerId').value
     };
-    if (this.deviceWizardFormGroup.get('customerId').value) {
-      device.customerId = new CustomerId(this.deviceWizardFormGroup.get('customerId').value);
-    }
     if (this.addDeviceWizardStepper.steps.last.completed || this.addDeviceWizardStepper.selectedIndex > 0) {
       return this.deviceService.saveDeviceWithCredentials(deepTrim(device), deepTrim(this.credentialsFormGroup.value.credential)).pipe(
         catchError((e: HttpErrorResponse) => {

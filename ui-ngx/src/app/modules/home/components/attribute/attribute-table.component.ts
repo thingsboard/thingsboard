@@ -515,9 +515,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
 
     // @ts-ignore
     const stateController: IStateController = {
-      getStateParams(): StateParams {
-        return {};
-      }
+      getStateParams: (): StateParams => ({})
     };
 
     const filters: Filters = {};
@@ -569,9 +567,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
       this.widgetsCarouselIndex = 0;
       if (widgetsBundle) {
         this.widgetsLoaded = false;
-        const bundleAlias = widgetsBundle.alias;
-        const isSystem = widgetsBundle.tenantId.id === NULL_UUID;
-        this.widgetService.getBundleWidgetTypes(bundleAlias, isSystem).subscribe(
+        this.widgetService.getBundleWidgetTypes(widgetsBundle.id.id).subscribe(
           (widgetTypes) => {
             widgetTypes = widgetTypes.sort((a, b) => {
               let result = widgetType[b.descriptor.type].localeCompare(widgetType[a.descriptor.type]);
@@ -587,11 +583,8 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
                 const sizeY = widgetInfo.sizeY * 2;
                 const col = Math.floor(Math.max(0, (20 - sizeX) / 2));
                 const widget: Widget = {
-                  isSystemType: isSystem,
-                  bundleAlias,
-                  typeAlias: widgetInfo.alias,
+                  typeFullFqn: widgetInfo.fullFqn,
                   type: widgetInfo.type,
-                  title: widgetInfo.widgetName,
                   sizeX,
                   sizeY,
                   row: 0,

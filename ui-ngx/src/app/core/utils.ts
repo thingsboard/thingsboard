@@ -421,18 +421,19 @@ export const createLabelFromDatasource = (datasource: Datasource, pattern: strin
 
 export const hasDatasourceLabelsVariables = (pattern: string): boolean => varsRegex.test(pattern) !== null;
 
-export function formattedDataFormDatasourceData(input: DatasourceData[], dataIndex?: number): FormattedData[] {
+export function formattedDataFormDatasourceData(input: DatasourceData[], dataIndex?: number, ts?: number): FormattedData[] {
   return _(input).groupBy(el => el.datasource.entityName + el.datasource.entityType)
     .values().value().map((entityArray, i) => {
       const datasource = entityArray[0].datasource;
       const obj = formattedDataFromDatasource(datasource, i);
       entityArray.filter(el => el.data.length).forEach(el => {
         const index = isDefined(dataIndex) ? dataIndex : el.data.length - 1;
-        if (!obj.hasOwnProperty(el.dataKey.label) || el.data[index][1] !== '') {
-          obj[el.dataKey.label] = el.data[index][1];
-          obj[el.dataKey.label + '|ts'] = el.data[index][0];
+        const dataSet = isDefined(ts) ? el.data.find(data => data[0] === ts) : el.data[index];
+        if (dataSet !== undefined && (!obj.hasOwnProperty(el.dataKey.label) || dataSet[1] !== '')) {
+          obj[el.dataKey.label] = dataSet[1];
+          obj[el.dataKey.label + '|ts'] = dataSet[0];
           if (el.dataKey.label.toLowerCase() === 'type') {
-            obj.deviceType = el.data[index][1];
+            obj.deviceType = dataSet[1];
           }
         }
       });

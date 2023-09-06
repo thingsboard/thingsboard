@@ -26,7 +26,7 @@
       <div class="tb-form-table-row"
            *ngFor="let relationFilterControl of relationFiltersFormArray.controls; let $index = index">
         <tb-relation-type-autocomplete subscriptSizing="dynamic"
-                                       class="flex-50"
+                                       class="flex-50" showLabel="false"
                                        [additionalClasses]="['tb-inline-field']"
                                        appearance="outline"
                                        [formControl]="relationFilterControl.get('relationType')">

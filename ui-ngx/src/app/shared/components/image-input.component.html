@@ -25,7 +25,7 @@
           <div class="tb-image-preview-text" *ngIf="!safeImageUrl && disabled; else elseBlock">{{ 'dashboard.empty-image' | translate }}</div>
           <ng-template #elseBlock><img class="tb-image-preview" [src]="safeImageUrl" /></ng-template>
         </div>
-        <button *ngIf="safeImageUrl && !disabled"
+        <button *ngIf="safeImageUrl && showClearButton && !disabled"
                 mat-icon-button color="primary"
                 class="tb-mat-24"
                 type="button"
@@ -52,7 +52,7 @@
           </div>
         </div>
       </div>
-      <button *ngIf="!showPreview && safeImageUrl && !disabled"
+      <button *ngIf="!showPreview && safeImageUrl && showClearButton && !disabled"
               mat-icon-button color="primary"
               class="tb-mat-24"
               type="button"

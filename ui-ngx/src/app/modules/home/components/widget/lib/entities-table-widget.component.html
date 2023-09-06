@@ -52,12 +52,12 @@
                                                                 maxWidth: (entityDatasource.countCellButtonAction * 48) + 'px',
                                                                 width: (entityDatasource.countCellButtonAction * 48) + 'px' }">
           </mat-header-cell>
-          <mat-cell *matCellDef="let entity" [ngStyle.gt-md]="{ minWidth: (entityDatasource.countCellButtonAction * 48) + 'px',
+          <mat-cell *matCellDef="let entity; let row = index" [style]="rowStyle(entity, row)" [ngStyle.gt-md]="{ minWidth: (entityDatasource.countCellButtonAction * 48) + 'px',
                                                                 maxWidth: (entityDatasource.countCellButtonAction * 48) + 'px',
                                                                 width: (entityDatasource.countCellButtonAction * 48) + 'px' }">
             <div [fxHide]="showCellActionsMenu && entityDatasource.countCellButtonAction !== 1" fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
               <ng-container *ngFor="let actionDescriptor of entity.actionCellButtons; trackBy: trackByActionCellDescriptionId">
-                <span *ngIf="!actionDescriptor.icon" style="width: 40px;"></span>
+                <span *ngIf="!actionDescriptor.icon" style="width: 48px;"></span>
                 <button mat-icon-button [disabled]="isLoading$ | async"
                         *ngIf="actionDescriptor.icon"
                         matTooltip="{{ actionDescriptor.displayName }}"
