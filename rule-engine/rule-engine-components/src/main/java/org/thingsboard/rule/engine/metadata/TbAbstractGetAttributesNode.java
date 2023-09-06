@@ -88,6 +88,11 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
             newConfigObjectNode.put(FETCH_TO_PROPERTY_NAME, TbMsgSource.METADATA.name());
             return new TbPair<>(true, newConfigObjectNode);
         }
+        if (newConfigObjectNode.get(oldProperty).isNull()) {
+            newConfigObjectNode.remove(oldProperty);
+            newConfigObjectNode.put(FETCH_TO_PROPERTY_NAME, TbMsgSource.METADATA.name());
+            return new TbPair<>(true, newConfigObjectNode);
+        }
         return upgradeConfigurationToUseFetchTo(oldProperty, ifTrue, ifFalse, newConfigObjectNode);
     }
 
