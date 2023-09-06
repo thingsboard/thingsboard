@@ -405,8 +405,12 @@ actors:
       # Enqueue the result of external node processing as a separate message to the rule engine.
       force_ack: "${ACTORS_RULE_EXTERNAL_NODE_FORCE_ACK:false}"
   rpc:
+    # Maximum number of persistent RPC call retries in case of failed requests delivery.
     max_retries: "${ACTORS_RPC_MAX_RETRIES:5}"
-    sequential: "${ACTORS_RPC_SEQUENTIAL:false}"
+    # RPC submit strategies. Allowed values: BURST, SEQUENTIAL_ON_ACK_FROM_DEVICE, SEQUENTIAL_ON_RESPONSE_FROM_DEVICE.
+    submit_strategy: "${ACTORS_RPC_SUBMIT_STRATEGY_TYPE:BURST}"
+    # Time in milliseconds for RPC to receive response after delivery. Used only for SEQUENTIAL_ON_RESPONSE_FROM_DEVICE submit strategy.
+    response_timeout_ms: "${ACTORS_RPC_RESPONSE_TIMEOUT_MS:30000}"
   statistics:
     # Enable/disable actor statistics
     enabled: "${ACTORS_STATISTICS_ENABLED:true}"

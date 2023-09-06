@@ -13,26 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.rpc;
+package org.thingsboard.server.service.rpc;
 
-import lombok.Getter;
+import java.util.Arrays;
 
-public enum RpcStatus {
+public enum RpcSubmitStrategy {
 
-    QUEUED(true),
-    SENT(true),
-    DELIVERED(true),
-    SUCCESSFUL(false),
-    TIMEOUT(false),
-    EXPIRED(false),
-    FAILED(false),
-    DELETED(false);
+    BURST, SEQUENTIAL_ON_ACK_FROM_DEVICE, SEQUENTIAL_ON_RESPONSE_FROM_DEVICE;
 
-    @Getter
-    private final boolean pushDeleteNotificationToCore;
-
-    RpcStatus(boolean pushDeleteNotificationToCore) {
-        this.pushDeleteNotificationToCore = pushDeleteNotificationToCore;
+    public static RpcSubmitStrategy parse(String strategyStr) {
+        return Arrays.stream(RpcSubmitStrategy.values())
+                .filter(strategy -> strategy.name().equalsIgnoreCase(strategyStr))
+                .findFirst()
+                .orElse(BURST);
     }
-
 }
