@@ -67,6 +67,13 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String INCORRECT_DEVICE_ID = "Incorrect deviceId ";
     public static final String DEFAULT_DEVICE_TELEMETRY_TOPIC = "v1/devices/me/telemetry";
+    public static final String HTTP_DEFAULT_PORT = "80";
+    public static final String HTTPS_DEFAULT_PORT = "443";
+    public static final String MQTT_DEFAULT_PORT = "1883";
+    public static final String MQTTS_DEFAULT_PORT = "8883";
+    public static final String COAP_DEFAULT_PORT = "5683";
+    public static final String COAPS_DEFAULT_PORT = "5684";
+
 
     private final Map<String, Resource> certs = new ConcurrentHashMap<>();
 
@@ -203,7 +210,8 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
             return null;
         }
         String hostName = getHost(baseUrl, properties);
-        String port = properties.getPort().isEmpty() ? "" : ":" + properties.getPort();
+        String propertyPort = properties.getPort();
+        String port = (propertyPort.isEmpty() || HTTP_DEFAULT_PORT.equals(propertyPort) || HTTPS_DEFAULT_PORT.equals(propertyPort)) ? "" : ":" + propertyPort;
 
         return DeviceConnectivityUtil.getHttpPublishCommand(protocol, hostName, port, deviceCredentials);
     }
@@ -250,14 +258,16 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     private String getMqttPublishCommand(String baseUrl, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) throws URISyntaxException {
         DeviceConnectivityInfo properties = deviceConnectivityConfiguration.getConnectivity(MQTT);
         String mqttHost = getHost(baseUrl, properties);
-        String mqttPort = properties.getPort().isEmpty() ? null : properties.getPort();
+        String propertyPort = properties.getPort();
+        String mqttPort = (propertyPort.isEmpty() || MQTT_DEFAULT_PORT.equals(propertyPort)) ? null : properties.getPort();
         return DeviceConnectivityUtil.getMqttPublishCommand(MQTT, mqttHost, mqttPort, deviceTelemetryTopic, deviceCredentials);
     }
 
     private List<String> getMqttsPublishCommand(String baseUrl, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) throws URISyntaxException {
         DeviceConnectivityInfo properties = deviceConnectivityConfiguration.getConnectivity(MQTTS);
         String mqttHost = getHost(baseUrl, properties);
-        String mqttPort = properties.getPort().isEmpty() ? null : properties.getPort();
+        String propertyPort = properties.getPort();
+        String mqttPort = (propertyPort.isEmpty() || MQTTS_DEFAULT_PORT.equals(propertyPort)) ? null : properties.getPort();
         String pubCommand = DeviceConnectivityUtil.getMqttPublishCommand(MQTTS, mqttHost, mqttPort, deviceTelemetryTopic, deviceCredentials);
 
         ArrayList<String> commands = new ArrayList<>();
@@ -272,7 +282,8 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     private String getDockerMqttPublishCommand(String protocol, String baseUrl, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) throws URISyntaxException {
         DeviceConnectivityInfo properties = deviceConnectivityConfiguration.getConnectivity(protocol);
         String mqttHost = getHost(baseUrl, properties);
-        String mqttPort = properties.getPort().isEmpty() ? null : properties.getPort();
+        String propertyPort = properties.getPort();
+        String mqttPort = (propertyPort.isEmpty() || MQTT_DEFAULT_PORT.equals(propertyPort) || MQTTS_DEFAULT_PORT.equals(propertyPort)) ? null : properties.getPort();
         return DeviceConnectivityUtil.getDockerMqttPublishCommand(protocol, baseUrl, mqttHost, mqttPort, deviceTelemetryTopic, deviceCredentials);
     }
 
@@ -312,14 +323,16 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     private String getCoapPublishCommand(String protocol, String baseUrl, DeviceCredentials deviceCredentials) throws URISyntaxException {
         DeviceConnectivityInfo properties = deviceConnectivityConfiguration.getConnectivity(protocol);
         String hostName = getHost(baseUrl, properties);
-        String port = properties.getPort().isEmpty() ? "" : ":" + properties.getPort();
+        String propertyPort = properties.getPort();
+        String port = (propertyPort.isEmpty() || COAP_DEFAULT_PORT.equals(propertyPort) || COAPS_DEFAULT_PORT.equals(propertyPort)) ? "" : ":" + properties.getPort();
         return DeviceConnectivityUtil.getCoapPublishCommand(protocol, hostName, port, deviceCredentials);
     }
 
     private String getDockerCoapPublishCommand(String protocol, String baseUrl, DeviceCredentials deviceCredentials) throws URISyntaxException {
         DeviceConnectivityInfo properties = deviceConnectivityConfiguration.getConnectivity(protocol);
         String host = getHost(baseUrl, properties);
-        String port = properties.getPort().isEmpty() ? "" : ":" + properties.getPort();
+        String propertyPort = properties.getPort();
+        String port = (propertyPort.isEmpty() || COAP_DEFAULT_PORT.equals(propertyPort) || COAPS_DEFAULT_PORT.equals(propertyPort)) ? "" : ":" + properties.getPort();
         return DeviceConnectivityUtil.getDockerCoapPublishCommand(protocol, host, port, deviceCredentials);
     }
 
