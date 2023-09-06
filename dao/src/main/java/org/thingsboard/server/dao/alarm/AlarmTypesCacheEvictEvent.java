@@ -13,39 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  display: flex;
-  max-width: 100%;
-  .mdc-button {
-    max-width: 100%;
-  }
-}
+package org.thingsboard.server.dao.alarm;
 
-:host ::ng-deep {
-  .mdc-button {
-    .mat-icon {
-      min-width: 24px;
-    }
-    .mdc-button__label {
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-  }
-}
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import org.thingsboard.server.common.data.id.TenantId;
 
-::ng-deep {
-  .tb-alarm-filter-config-component {
-    flex: 1;
-
-    tb-entity-subtype-list {
-      flex: 1;
-      width: 180px;
-    }
-
-    .mat-mdc-chip {
-      .mdc-evolution-chip__cell, .mat-mdc-chip-action, .mat-mdc-chip-action-label {
-        overflow: hidden;
-      }
-    }
-  }
+@Data
+@RequiredArgsConstructor
+class AlarmTypesCacheEvictEvent {
+    private final TenantId tenantId;
 }
