@@ -28,7 +28,6 @@ import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
@@ -104,7 +103,7 @@ public class InstallScripts {
     @Autowired
     private ResourceService resourceService;
 
-    private Path getTenantRuleChainsDir() {
+    Path getTenantRuleChainsDir() {
         return Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, RULE_CHAINS_DIR);
     }
 
@@ -112,7 +111,7 @@ public class InstallScripts {
         return Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, DEVICE_PROFILE_DIR, "rule_chain_template.json");
     }
 
-    private Path getEdgeRuleChainsDir() {
+    Path getEdgeRuleChainsDir() {
         return Paths.get(getDataDir(), JSON_DIR, EDGE_DIR, RULE_CHAINS_DIR);
     }
 
@@ -148,8 +147,8 @@ public class InstallScripts {
     }
 
     private void loadRuleChainsFromPath(TenantId tenantId, Path ruleChainsPath) throws IOException {
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(ruleChainsPath, path -> path.toString().endsWith(InstallScripts.JSON_EXT))) {
-            dirStream.forEach(
+        findRuleChainsFromPath(ruleChainsPath)
+                .forEach(
                     path -> {
                         try {
                             createRuleChainFromFile(tenantId, path, null);
@@ -157,9 +156,15 @@ public class InstallScripts {
                             log.error("Unable to load rule chain from json: [{}]", path.toString());
                             throw new RuntimeException("Unable to load rule chain from json", e);
                         }
-                    }
-            );
+                    });
+    }
+
+    List<Path> findRuleChainsFromPath(Path ruleChainsPath) throws IOException {
+        List<Path> paths = new ArrayList<>();
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(ruleChainsPath, path -> path.toString().endsWith(InstallScripts.JSON_EXT))) {
+            dirStream.forEach(paths::add);
         }
+        return paths;
     }
 
     public RuleChain createDefaultRuleChain(TenantId tenantId, String ruleChainName) throws IOException {
