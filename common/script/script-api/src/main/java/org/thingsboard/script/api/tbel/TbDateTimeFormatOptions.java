@@ -41,12 +41,16 @@ public class TbDateTimeFormatOptions {
         String patternTime = "";
         delimiterValidation();
 
-        if ("numeric".equals(day)) {
-            patternDate = "d";
-        } else if ("2-digit".equals(day)) {
-            patternDate = "dd";
+        if ("short".equals(weekday)) {
+            patternDate = "E, ";
+        } else if ("long".equals(weekday)) {
+            patternDate = "EEEE, ";
         }
-
+        if ("numeric".equals(day)) {
+            patternDate += "d";
+        } else if ("2-digit".equals(day)) {
+            patternDate += "dd";
+        }
         if ("numeric".equals(month)) {
             patternDate = patternDate.isEmpty() ? "M" :  patternDate + delimiter + "M";
         } else if ("2-digit".equals(month)) {
