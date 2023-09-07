@@ -487,7 +487,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             DeviceState state = stateData.getState();
             if (!isActive(ts, state)
                     && (state.getLastInactivityAlarmTime() == 0L || state.getLastInactivityAlarmTime() <= state.getLastActivityTime())
-                    && stateData.getDeviceCreationTime() + state.getInactivityTimeout() < ts) {
+                    && stateData.getDeviceCreationTime() + state.getInactivityTimeout() <= ts) {
                 if (partitionService.resolve(ServiceType.TB_CORE, stateData.getTenantId(), deviceId).isMyPartition()) {
                     state.setActive(false);
                     state.setLastInactivityAlarmTime(ts);
