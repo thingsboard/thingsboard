@@ -26,7 +26,6 @@ import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.vc.data.EntitiesExportCtx;
 
-import java.util.Collections;
 import java.util.Set;
 
 @Service
@@ -41,10 +40,10 @@ public class DashboardExportService extends BaseEntityExportService<DashboardId,
             });
         }
         for (JsonNode entityAlias : dashboard.getEntityAliasesConfig()) {
-            replaceUuidsRecursively(ctx, entityAlias, Collections.emptySet());
+            replaceUuidsRecursively(ctx, entityAlias, Set.of("id"), null);
         }
         for (JsonNode widgetConfig : dashboard.getWidgetsConfig()) {
-            replaceUuidsRecursively(ctx, JacksonUtil.getSafely(widgetConfig, "config", "actions"), Collections.singleton("id"));
+            replaceUuidsRecursively(ctx, JacksonUtil.getSafely(widgetConfig, "config", "actions"), Set.of("id"), null);
         }
     }
 

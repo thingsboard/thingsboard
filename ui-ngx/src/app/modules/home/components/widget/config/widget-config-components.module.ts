@@ -29,7 +29,9 @@ import { FilterSelectComponent } from '@home/components/filter/filter-select.com
 import { WidgetSettingsModule } from '@home/components/widget/lib/settings/widget-settings.module';
 import { WidgetSettingsComponent } from '@home/components/widget/config/widget-settings.component';
 import { TimewindowConfigPanelComponent } from '@home/components/widget/config/timewindow-config-panel.component';
-import { WidgetUnitsComponent } from '@home/components/widget/config/widget-units.component';
+import { WidgetSettingsCommonModule } from '@home/components/widget/lib/settings/common/widget-settings-common.module';
+import { TimewindowStyleComponent } from '@home/components/widget/config/timewindow-style.component';
+import { TimewindowStylePanelComponent } from '@home/components/widget/config/timewindow-style-panel.component';
 
 @NgModule({
   declarations:
@@ -43,14 +45,16 @@ import { WidgetUnitsComponent } from '@home/components/widget/config/widget-unit
       DatasourcesComponent,
       EntityAliasSelectComponent,
       FilterSelectComponent,
+      TimewindowStyleComponent,
+      TimewindowStylePanelComponent,
       TimewindowConfigPanelComponent,
-      WidgetUnitsComponent,
       WidgetSettingsComponent
     ],
   imports: [
     CommonModule,
     SharedModule,
-    WidgetSettingsModule
+    WidgetSettingsModule,
+    WidgetSettingsCommonModule
   ],
   exports: [
     AlarmAssigneeSelectComponent,
@@ -62,9 +66,11 @@ import { WidgetUnitsComponent } from '@home/components/widget/config/widget-unit
     DatasourcesComponent,
     EntityAliasSelectComponent,
     FilterSelectComponent,
+    TimewindowStyleComponent,
+    TimewindowStylePanelComponent,
     TimewindowConfigPanelComponent,
-    WidgetUnitsComponent,
-    WidgetSettingsComponent
+    WidgetSettingsComponent,
+    WidgetSettingsCommonModule
   ]
 })
 export class WidgetConfigComponentsModule { }

@@ -30,12 +30,12 @@ public class AttributeUtils {
         Validator.validateString(scope, "Incorrect scope " + scope);
     }
 
-    public static void validate(List<AttributeKvEntry> kvEntries) {
-        kvEntries.forEach(AttributeUtils::validate);
+    public static void validate(List<AttributeKvEntry> kvEntries,  boolean valueNoXssValidation) {
+        kvEntries.forEach(tsKvEntry -> validate(tsKvEntry, valueNoXssValidation));
     }
 
-    public static void validate(AttributeKvEntry kvEntry) {
-        KvUtils.validate(kvEntry);
+    public static void validate(AttributeKvEntry kvEntry, boolean valueNoXssValidation) {
+        KvUtils.validate(kvEntry, valueNoXssValidation);
         if (kvEntry.getDataType() == null) {
             throw new IncorrectParameterException("Incorrect kvEntry. Data type can't be null");
         } else {

@@ -26,6 +26,8 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { RuleChainType } from '@shared/models/rule-chain.models';
+import { DebugRuleNodeEventBody } from '@shared/models/event.models';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface RuleNodeConfiguration {
   [key: string]: any;
@@ -71,10 +73,15 @@ export interface RuleNodeConfigurationDescriptor {
 export interface IRuleNodeConfigurationComponent {
   ruleNodeId: string;
   ruleChainId: string;
+  hasScript: boolean;
+  disabled: boolean;
+  testScriptLabel?: string;
+  changeScript?: EventEmitter<void>;
   ruleChainType: RuleChainType;
   configuration: RuleNodeConfiguration;
   configurationChanged: Observable<RuleNodeConfiguration>;
   validate();
+  testScript? (debugEventBody?: DebugRuleNodeEventBody);
   [key: string]: any;
 }
 
@@ -87,11 +94,26 @@ export abstract class RuleNodeConfigurationComponent extends PageComponent imple
 
   ruleChainId: string;
 
+  hasScript: boolean = false;
+
   ruleChainType: RuleChainType;
 
   configurationValue: RuleNodeConfiguration;
 
   private configurationSet = false;
+  private disabledValue = false;
+
+  set disabled(value: boolean) {
+    if (this.disabledValue !== value) {
+      this.disabledValue = value;
+      if (value) {
+        this.configForm().disable({emitEvent: false});
+      } else {
+        this.configForm().enable({emitEvent: false});
+        this.updateValidators(false);
+      }
+    }
+  };
 
   set configuration(value: RuleNodeConfiguration) {
     this.configurationValue = value;
@@ -499,3 +521,4 @@ export function getRuleNodeHelpLink(component: RuleNodeComponentDescriptor): str
   }
   return 'ruleEngine';
 }
+

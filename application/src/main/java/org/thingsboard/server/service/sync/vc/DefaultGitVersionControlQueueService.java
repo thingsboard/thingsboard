@@ -103,7 +103,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     private final Map<UUID, PendingGitRequest<?>> pendingRequestMap = new HashMap<>();
     private final Map<UUID, HashMap<Integer, String[]>> chunkedMsgs = new ConcurrentHashMap<>();
 
-    @Value("${queue.vc.request-timeout:60000}")
+    @Value("${queue.vc.request-timeout:180000}")
     private int requestTimeout;
     @Value("${queue.vc.msg-chunk-size:500000}")
     private int msgChunkSize;

@@ -96,6 +96,10 @@ zk:
   session_timeout_ms: "${ZOOKEEPER_SESSION_TIMEOUT_MS:3000}"
   # Name of the directory in zookeeper 'filesystem'
   zk_dir: "${ZOOKEEPER_NODES_DIR:/thingsboard}"
+  # The recalculate_delay property recommended in a microservices architecture setup for rule-engine services.
+  # This property provides a pause to ensure that when a rule-engine service is restarted, other nodes don't immediately attempt to recalculate their partitions.
+  # The delay is recommended because the initialization of rule chain actors is time-consuming. Avoiding unnecessary recalculations during a restart can enhance system performance and stability.
+  recalculate_delay: "${ZOOKEEPER_RECALCULATE_DELAY_MS:0}"
 
 cluster:
   stats:
@@ -249,7 +253,8 @@ cassandra:
     concurrent_limit: "${CASSANDRA_QUERY_CONCURRENT_LIMIT:1000}"
     permit_max_wait_time: "${PERMIT_MAX_WAIT_TIME:120000}"
     dispatcher_threads: "${CASSANDRA_QUERY_DISPATCHER_THREADS:2}"
-    callback_threads: "${CASSANDRA_QUERY_CALLBACK_THREADS:4}"
+    callback_threads: "${CASSANDRA_QUERY_CALLBACK_THREADS:4}" # Buffered rate executor (read, write), for managing I/O rate. See "nosql-*-callback" threads in JMX
+    result_processing_threads: "${CASSANDRA_QUERY_RESULT_PROCESSING_THREADS:50}" # Result set transformer and processing. See "cassandra-callback" threads in JMX
     poll_ms: "${CASSANDRA_QUERY_POLL_MS:50}"
     rate_limit_print_interval_ms: "${CASSANDRA_QUERY_RATE_LIMIT_PRINT_MS:10000}"
     # set all data types values except target to null for the same ts on save
@@ -267,11 +272,13 @@ sql:
     batch_max_delay: "${SQL_ATTRIBUTES_BATCH_MAX_DELAY_MS:100}"
     stats_print_interval_ms: "${SQL_ATTRIBUTES_BATCH_STATS_PRINT_MS:10000}"
     batch_threads: "${SQL_ATTRIBUTES_BATCH_THREADS:3}" # batch thread count have to be a prime number like 3 or 5 to gain perfect hash distribution
+    value_no_xss_validation: "${SQL_ATTRIBUTES_VALUE_NO_XSS_VALIDATION:false}"
   ts:
     batch_size: "${SQL_TS_BATCH_SIZE:10000}"
     batch_max_delay: "${SQL_TS_BATCH_MAX_DELAY_MS:100}"
     stats_print_interval_ms: "${SQL_TS_BATCH_STATS_PRINT_MS:10000}"
     batch_threads: "${SQL_TS_BATCH_THREADS:3}" # batch thread count have to be a prime number like 3 or 5 to gain perfect hash distribution
+    value_no_xss_validation: "${SQL_TS_VALUE_NO_XSS_VALIDATION:false}"
   ts_latest:
     batch_size: "${SQL_TS_LATEST_BATCH_SIZE:10000}"
     batch_max_delay: "${SQL_TS_LATEST_BATCH_MAX_DELAY_MS:100}"
@@ -393,9 +400,17 @@ actors:
       queue_size: "${ACTORS_RULE_TRANSACTION_QUEUE_SIZE:15000}"
       # Time in milliseconds for transaction to complete
       duration: "${ACTORS_RULE_TRANSACTION_DURATION:60000}"
+    external:
+      # Force acknowledgement of the incoming message for external rule nodes to decrease processing latency.
+      # Enqueue the result of external node processing as a separate message to the rule engine.
+      force_ack: "${ACTORS_RULE_EXTERNAL_NODE_FORCE_ACK:false}"
   rpc:
+    # Maximum number of persistent RPC call retries in case of failed requests delivery.
     max_retries: "${ACTORS_RPC_MAX_RETRIES:5}"
-    sequential: "${ACTORS_RPC_SEQUENTIAL:false}"
+    # RPC submit strategies. Allowed values: BURST, SEQUENTIAL_ON_ACK_FROM_DEVICE, SEQUENTIAL_ON_RESPONSE_FROM_DEVICE.
+    submit_strategy: "${ACTORS_RPC_SUBMIT_STRATEGY_TYPE:BURST}"
+    # Time in milliseconds for RPC to receive response after delivery. Used only for SEQUENTIAL_ON_RESPONSE_FROM_DEVICE submit strategy.
+    response_timeout_ms: "${ACTORS_RPC_RESPONSE_TIMEOUT_MS:30000}"
   statistics:
     # Enable/disable actor statistics
     enabled: "${ACTORS_STATISTICS_ENABLED:true}"
@@ -482,7 +497,7 @@ cache:
       timeToLiveInMinutes: "${CACHE_SPECS_TWO_FA_VERIFICATION_CODES_TTL:60}"
       maxSize: "${CACHE_SPECS_TWO_FA_VERIFICATION_CODES_MAX_SIZE:100000}"
     versionControlTask:
-      timeToLiveInMinutes: "${CACHE_SPECS_VERSION_CONTROL_TASK_TTL:5}"
+      timeToLiveInMinutes: "${CACHE_SPECS_VERSION_CONTROL_TASK_TTL:20}"
       maxSize: "${CACHE_SPECS_VERSION_CONTROL_TASK_MAX_SIZE:100000}"
     userSettings:
       timeToLiveInMinutes: "${CACHE_SPECS_USER_SETTINGS_TTL:1440}"
@@ -493,6 +508,12 @@ cache:
     entityCount:
       timeToLiveInMinutes: "${CACHE_SPECS_ENTITY_COUNT_TTL:1440}"
       maxSize: "${CACHE_SPECS_ENTITY_COUNT_MAX_SIZE:100000}"
+    resourceInfo:
+      timeToLiveInMinutes: "${CACHE_SPECS_RESOURCE_INFO_TTL:1440}"
+      maxSize: "${CACHE_SPECS_RESOURCE_INFO_MAX_SIZE:100000}"
+    alarmTypes:
+      timeToLiveInMinutes: "${CACHE_SPECS_ALARM_TYPES_TTL:60}"
+      maxSize: "${CACHE_SPECS_ALARM_TYPES_MAX_SIZE:10000}"
 
   # deliberately placed outside 'specs' group above
   notificationRules:
@@ -636,6 +657,7 @@ audit-log:
       "device": "${AUDIT_LOG_MASK_DEVICE:W}"
       "asset": "${AUDIT_LOG_MASK_ASSET:W}"
       "dashboard": "${AUDIT_LOG_MASK_DASHBOARD:W}"
+      "widget_type": "${AUDIT_LOG_MASK_WIDGET_TYPE:W}"
       "widgets_bundle": "${AUDIT_LOG_MASK_WIDGETS_BUNDLE:W}"
       "customer": "${AUDIT_LOG_MASK_CUSTOMER:W}"
       "user": "${AUDIT_LOG_MASK_USER:W}"
@@ -982,6 +1004,35 @@ transport:
     enabled: "${TB_TRANSPORT_STATS_ENABLED:true}"
     print-interval-ms: "${TB_TRANSPORT_STATS_PRINT_INTERVAL_MS:60000}"
 
+# Device connectivity properties to publish telemetry
+device:
+  connectivity:
+    http:
+      enabled: "${DEVICE_CONNECTIVITY_HTTP_ENABLED:true}"
+      host: "${DEVICE_CONNECTIVITY_HTTP_HOST:}"
+      port: "${DEVICE_CONNECTIVITY_HTTP_PORT:8080}"
+    https:
+      enabled: "${DEVICE_CONNECTIVITY_HTTPS_ENABLED:false}"
+      host: "${DEVICE_CONNECTIVITY_HTTPS_HOST:}"
+      port: "${DEVICE_CONNECTIVITY_HTTPS_PORT:443}"
+    mqtt:
+      enabled: "${DEVICE_CONNECTIVITY_MQTT_ENABLED:true}"
+      host: "${DEVICE_CONNECTIVITY_MQTT_HOST:}"
+      port: "${DEVICE_CONNECTIVITY_MQTT_PORT:1883}"
+    mqtts:
+      enabled: "${DEVICE_CONNECTIVITY_MQTTS_ENABLED:false}"
+      host: "${DEVICE_CONNECTIVITY_MQTTS_HOST:}"
+      port: "${DEVICE_CONNECTIVITY_MQTTS_PORT:8883}"
+      pem_cert_file: "${DEVICE_CONNECTIVITY_MQTT_SSL_PEM_CERT:mqttserver.pem}"
+    coap:
+      enabled: "${DEVICE_CONNECTIVITY_COAP_ENABLED:true}"
+      host: "${DEVICE_CONNECTIVITY_COAP_HOST:}"
+      port: "${DEVICE_CONNECTIVITY_COAP_PORT:5683}"
+    coaps:
+      enabled: "${DEVICE_CONNECTIVITY_COAPS_ENABLED:false}"
+      host: "${DEVICE_CONNECTIVITY_COAPS_HOST:}"
+      port: "${DEVICE_CONNECTIVITY_COAPS_PORT:5684}"
+
 # Edges parameters
 edges:
   enabled: "${EDGES_ENABLED:true}"
@@ -1052,6 +1103,7 @@ queue:
     fetch_max_bytes: "${TB_QUEUE_KAFKA_FETCH_MAX_BYTES:134217728}"
     request.timeout.ms: "${TB_QUEUE_KAFKA_REQUEST_TIMEOUT_MS:30000}" # (30 seconds) # refer to https://docs.confluent.io/platform/current/installation/configuration/producer-configs.html#producerconfigs_request.timeout.ms
     session.timeout.ms: "${TB_QUEUE_KAFKA_SESSION_TIMEOUT_MS:10000}" # (10 seconds) # refer to https://docs.confluent.io/platform/current/installation/configuration/consumer-configs.html#consumerconfigs_session.timeout.ms
+    auto_offset_reset: "${TB_QUEUE_KAFKA_AUTO_OFFSET_RESET:earliest}" # earliest, latest or none
     use_confluent_cloud: "${TB_QUEUE_KAFKA_USE_CONFLUENT_CLOUD:false}"
     confluent:
       ssl.algorithm: "${TB_QUEUE_KAFKA_CONFLUENT_SSL_ALGORITHM:https}"
@@ -1171,8 +1223,8 @@ queue:
     topic: "${TB_QUEUE_VC_TOPIC:tb_version_control}"
     partitions: "${TB_QUEUE_VC_PARTITIONS:10}"
     poll-interval: "${TB_QUEUE_VC_INTERVAL_MS:25}"
-    pack-processing-timeout: "${TB_QUEUE_VC_PACK_PROCESSING_TIMEOUT_MS:60000}"
-    request-timeout: "${TB_QUEUE_VC_REQUEST_TIMEOUT:60000}"
+    pack-processing-timeout: "${TB_QUEUE_VC_PACK_PROCESSING_TIMEOUT_MS:180000}"
+    request-timeout: "${TB_QUEUE_VC_REQUEST_TIMEOUT:180000}"
     msg-chunk-size: "${TB_QUEUE_VC_MSG_CHUNK_SIZE:250000}"
   js:
     # JS Eval request topic
@@ -1248,6 +1300,8 @@ queue:
           failure-percentage: "${TB_QUEUE_RE_SQ_PROCESSING_STRATEGY_FAILURE_PERCENTAGE:0}" # Skip retry if failures or timeouts are less then X percentage of messages;
           pause-between-retries: "${TB_QUEUE_RE_SQ_PROCESSING_STRATEGY_RETRY_PAUSE:5}" # Time in seconds to wait in consumer thread before retries;
           max-pause-between-retries: "${TB_QUEUE_RE_SQ_PROCESSING_STRATEGY_MAX_RETRY_PAUSE:5}" # Max allowed time in seconds for pause between retries.
+    # After a queue is deleted (or profile's isolation option was disabled), Rule Engine will continue reading related topics during this period, before deleting the actual topics
+    topic-deletion-delay: "${TB_QUEUE_RULE_ENGINE_TOPIC_DELETION_DELAY_SEC:30}"
   transport:
     # For high priority notifications that require minimum latency and processing time
     notifications_topic: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_TOPIC:tb_transport.notifications}"
@@ -1261,6 +1315,10 @@ service:
   type: "${TB_SERVICE_TYPE:monolith}" # monolith or tb-core or tb-rule-engine
   # Unique id for this service (autogenerated if empty)
   id: "${TB_SERVICE_ID:}"
+  rule_engine:
+    # Comma-separated list of tenant profiles ids assigned to this Rule Engine.
+    # This Rule Engine will only be responsible for tenants with these profiles (in case 'isolation' option is enabled in profile).
+    assigned_tenant_profiles: "${TB_RULE_ENGINE_ASSIGNED_TENANT_PROFILES:}"
 
 metrics:
   # Enable/disable actuator metrics.

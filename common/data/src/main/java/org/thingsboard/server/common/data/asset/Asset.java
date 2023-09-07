@@ -131,7 +131,7 @@ public class Asset extends BaseDataWithAdditionalInfo<AssetId> implements HasLab
         this.name = name;
     }
 
-    @ApiModelProperty(position = 6, required = true, value = "Asset type", example = "Building")
+    @ApiModelProperty(position = 6, value = "Asset type", example = "Building")
     public String getType() {
         return type;
     }
@@ -140,7 +140,7 @@ public class Asset extends BaseDataWithAdditionalInfo<AssetId> implements HasLab
         this.type = type;
     }
 
-    @ApiModelProperty(position = 7, required = true, value = "Label that may be used in widgets", example = "NY Building")
+    @ApiModelProperty(position = 7, value = "Label that may be used in widgets", example = "NY Building")
     public String getLabel() {
         return label;
     }
@@ -149,7 +149,7 @@ public class Asset extends BaseDataWithAdditionalInfo<AssetId> implements HasLab
         this.label = label;
     }
 
-    @ApiModelProperty(position = 8, required = true, value = "JSON object with Asset Profile Id.")
+    @ApiModelProperty(position = 8, value = "JSON object with Asset Profile Id.")
     public AssetProfileId getAssetProfileId() {
         return assetProfileId;
     }

@@ -416,6 +416,9 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
   private get mailSettingsFormValue(): MailServerSettings {
     const formValue = this.mailSettings.getRawValue() as Required<typeof this.mailSettings.value>;
     delete formValue.changePassword;
+    if (!isDefinedAndNotNull(formValue.password)) {
+      delete formValue.password;
+    }
     return formValue;
   }
 

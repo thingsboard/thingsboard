@@ -76,10 +76,16 @@ export class DataKeysPanelComponent implements ControlValueAccessor, OnInit, OnC
   addKeyTitle: string;
 
   @Input()
+  keySettingsTitle: string;
+
+  @Input()
   removeKeyTitle: string;
 
   @Input()
   noKeysText: string;
+
+  @Input()
+  requiredKeysText: string;
 
   @Input()
   datasourceType: DatasourceType;
@@ -94,11 +100,25 @@ export class DataKeysPanelComponent implements ControlValueAccessor, OnInit, OnC
   @coerceBoolean()
   hideDataKeyColor = false;
 
+  @Input()
+  @coerceBoolean()
+  hideUnits = false;
+
+  @Input()
+  @coerceBoolean()
+  hideDecimals = false;
+
+  @Input()
+  @coerceBoolean()
+  hideSourceSelection = false;
+
   dataKeyType: DataKeyType;
   alarmKeys: Array<DataKey>;
   functionTypeKeys: Array<DataKey>;
 
   keysListFormGroup: UntypedFormGroup;
+
+  errorText = '';
 
   get widgetType(): widgetType {
     return this.widgetConfigComponent.widgetType;
@@ -108,8 +128,25 @@ export class DataKeysPanelComponent implements ControlValueAccessor, OnInit, OnC
     return this.widgetConfigComponent.widgetConfigCallbacks;
   }
 
+  get hasAdditionalLatestDataKeys(): boolean {
+    return !this.hideSourceSelection && this.widgetConfigComponent.widgetType === widgetType.timeseries &&
+      this.widgetConfigComponent.modelValue?.typeParameters?.hasAdditionalLatestDataKeys;
+  }
+
   get datakeySettingsSchema(): JsonSettingsSchema {
     return this.widgetConfigComponent.modelValue?.dataKeySettingsSchema;
+  }
+
+  get dragEnabled(): boolean {
+    return this.keysFormArray().controls.length > 1;
+  }
+
+  get noKeys(): boolean {
+    let keys: DataKey[] = this.keysListFormGroup.get('keys').value;
+    if (this.hasAdditionalLatestDataKeys) {
+      keys = keys.filter(k => !(k as any).latest);
+    }
+    return keys.length === 0;
   }
 
   private propagateChange = (_val: any) => {};
@@ -189,7 +226,13 @@ export class DataKeysPanelComponent implements ControlValueAccessor, OnInit, OnC
   }
 
   public validate(c: UntypedFormControl) {
-    return this.keysListFormGroup.valid ? null : {
+    this.errorText = '';
+    let valid = this.keysListFormGroup.valid;
+    if (this.noKeys && this.requiredKeysText) {
+      valid = false;
+      this.errorText = this.requiredKeysText;
+    }
+    return valid ? null : {
       dataKeyRows: {
         valid: false,
       },
@@ -219,6 +262,9 @@ export class DataKeysPanelComponent implements ControlValueAccessor, OnInit, OnC
     const dataKey = this.callbacks.generateDataKey('', null, this.datakeySettingsSchema);
     dataKey.label = '';
     dataKey.decimals = 0;
+    if (this.hasAdditionalLatestDataKeys) {
+      (dataKey as any).latest = false;
+    }
     const keysArray = this.keysListFormGroup.get('keys') as UntypedFormArray;
     const keyControl = this.fb.control(dataKey, [dataKeyRowValidator]);
     keysArray.push(keyControl);

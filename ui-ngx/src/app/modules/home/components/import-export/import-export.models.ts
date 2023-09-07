@@ -25,7 +25,8 @@ export interface ImportWidgetResult {
 
 export interface WidgetsBundleItem {
   widgetsBundle: WidgetsBundle;
-  widgetTypes: WidgetTypeDetails[];
+  widgetTypes?: WidgetTypeDetails[];
+  widgetTypeFqns?: string[];
 }
 
 export interface CsvToJsonConfig {

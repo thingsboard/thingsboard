@@ -16,16 +16,16 @@
 
 -->
 <ng-container [formGroup]="assigneeFormGroup">
-  <mat-form-field fxFlex class="mat-block" style="margin-bottom: 25px"
+  <mat-form-field [ngStyle]="inline ? {width: '100%'} : {marginBottom: '25px'}"
                   (click)="openAlarmAssigneeSelectPanel($event)"
-                  subscriptSizing="dynamic">
-    <mat-label translate>alarm.assignee</mat-label>
+                  subscriptSizing="dynamic" [appearance]="inline ? 'outline' : 'fill'">
+    <mat-label *ngIf="!inline" translate>alarm.assignee</mat-label>
     <input matInput readonly formControlName="assignee">
-    <span *ngIf="assignee" matPrefix class="user-avatar"
+    <span *ngIf="assignee" matPrefix class="user-avatar" [ngClass]="{'inline': inline}"
           [style.backgroundColor]="getAvatarBgColor()">
       {{ getUserInitials() }}
     </span>
-    <mat-icon *ngIf="!assignee" matPrefix class="unassigned-icon">account_circle</mat-icon>
-    <mat-icon *ngIf="!disabled" matSuffix>arrow_drop_down</mat-icon>
+    <mat-icon *ngIf="!assignee" matPrefix class="unassigned-icon" [ngClass]="{'inline': inline}">account_circle</mat-icon>
+    <mat-icon *ngIf="!disabled" matSuffix class="drop-down-icon" [ngClass]="{'inline': inline}">arrow_drop_down</mat-icon>
   </mat-form-field>
 </ng-container>

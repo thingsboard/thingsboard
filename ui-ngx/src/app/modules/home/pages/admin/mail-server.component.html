@@ -331,7 +331,7 @@
           </fieldset>
           <div fxLayout="row" fxLayoutAlign="end center" fxLayout.xs="column" fxLayoutAlign.xs="end" fxLayoutGap="16px">
             <button mat-raised-button type="button"
-                    [disabled]="(isLoading$ | async) || mailSettings.invalid || domainForm.invalid || (mailSettings.dirty || domainForm.dirty)"
+                    [disabled]="(isLoading$ | async) || mailSettings.get('enableOauth2').value ? mailSettings.invalid || domainForm.invalid || (mailSettings.dirty || domainForm.dirty) : mailSettings.invalid"
                     (click)="sendTestMail()">
               {{'admin.send-test-mail' | translate}}
             </button>

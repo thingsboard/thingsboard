@@ -83,15 +83,18 @@ import * as TbCore from '@core/public-api';
 import * as TbShared from '@shared/public-api';
 import * as TbHomeComponents from '@home/components/public-api';
 
-import * as MillisecondsToTimeStringPipe from '@shared/pipe/milliseconds-to-time-string.pipe';
+import * as DateAgoPipe from '@shared/pipe/date-ago.pipe';
 import * as EnumToArrayPipe from '@shared/pipe/enum-to-array.pipe';
-import * as HighlightPipe from '@shared/pipe/highlight.pipe';
-import * as TruncatePipe from '@shared/pipe/truncate.pipe';
-import * as TbJsonPipe from '@shared/pipe/tbJson.pipe';
 import * as FileSizePipe from '@shared/pipe/file-size.pipe';
-import * as NospacePipe from '@shared/pipe/nospace.pipe';
-import * as SelectableColumnsPipe from '@shared/pipe/selectable-columns.pipe';
+import * as HighlightPipe from '@shared/pipe/highlight.pipe';
 import * as KeyboardShortcutPipe from '@shared/pipe/keyboard-shortcut.pipe';
+import * as MillisecondsToTimeStringPipe from '@shared/pipe/milliseconds-to-time-string.pipe';
+import * as NospacePipe from '@shared/pipe/nospace.pipe';
+import * as SafePipe from '@shared/pipe/safe.pipe';
+import * as SelectableColumnsPipe from '@shared/pipe/selectable-columns.pipe';
+import * as ShortNumberPipe from '@shared/pipe/short-number.pipe';
+import * as TbJsonPipe from '@shared/pipe/tbJson.pipe';
+import * as TruncatePipe from '@shared/pipe/truncate.pipe';
 
 import * as coercion from '@shared/decorators/coercion';
 import * as enumerable from '@shared/decorators/enumerable';
@@ -179,6 +182,11 @@ import * as ProtobufContentComponent from '@shared/components/protobuf-content.c
 import * as SlackConversationAutocompleteComponent from '@shared/components/slack-conversation-autocomplete.component';
 import * as StringItemsListComponent from '@shared/components/string-items-list.component';
 import * as ToggleHeaderComponent from '@shared/components/toggle-header.component';
+import * as ToggleSelectComponent from '@shared/components/toggle-select.component';
+import * as UnitInputComponent from '@shared/components/unit-input.component';
+import * as MaterialIconsComponent from '@shared/components/material-icons.component';
+import * as TbIconComponent from '@shared/components/icon.component';
+import * as HintTooltipIconComponent from '@shared/components/hint-tooltip-icon.component';
 
 import * as AddEntityDialogComponent from '@home/components/entity/add-entity-dialog.component';
 import * as EntitiesTableComponent from '@home/components/entity/entities-table.component';
@@ -381,15 +389,18 @@ class ModulesMap implements IModulesMap {
     '@shared/public-api': TbShared,
     '@home/components/public-api': TbHomeComponents,
 
-    '@shared/pipe/milliseconds-to-time-string.pipe': MillisecondsToTimeStringPipe,
+    '@shared/pipe/date-ago.pipe': DateAgoPipe,
     '@shared/pipe/enum-to-array.pipe': EnumToArrayPipe,
-    '@shared/pipe/highlight.pipe': HighlightPipe,
-    '@shared/pipe/truncate.pipe': TruncatePipe,
-    '@shared/pipe/tbJson.pipe': TbJsonPipe,
     '@shared/pipe/file-size.pipe': FileSizePipe,
-    '@shared/pipe/nospace.pipe': NospacePipe,
-    '@shared/pipe/selectable-columns.pipe': SelectableColumnsPipe,
+    '@shared/pipe/highlight.pipe': HighlightPipe,
     '@shared/pipe/keyboard-shortcut.pipe': KeyboardShortcutPipe,
+    '@shared/pipe/milliseconds-to-time-string.pipe': MillisecondsToTimeStringPipe,
+    '@shared/pipe/nospace.pipe': NospacePipe,
+    '@shared/pipe/safe.pipe': SafePipe,
+    '@shared/pipe/selectable-columns.pipe': SelectableColumnsPipe,
+    '@shared/pipe/short-number.pipe': ShortNumberPipe,
+    '@shared/pipe/tbJson.pipe': TbJsonPipe,
+    '@shared/pipe/truncate.pipe': TruncatePipe,
 
     '@shared/decorators/coercion': coercion,
     '@shared/decorators/enumerable': enumerable,
@@ -478,6 +489,11 @@ class ModulesMap implements IModulesMap {
     '@shared/components/slack-conversation-autocomplete.component': SlackConversationAutocompleteComponent,
     '@shared/components/string-items-list.component': StringItemsListComponent,
     '@shared/components/toggle-header.component': ToggleHeaderComponent,
+    '@shared/components/toggle-select.component': ToggleSelectComponent,
+    '@shared/components/unit-input.component': UnitInputComponent,
+    '@shared/components/material-icons.component': MaterialIconsComponent,
+    '@shared/components/icon.component': TbIconComponent,
+    '@shared/components/hint-tooltip-icon.component': HintTooltipIconComponent,
 
     '@home/components/entity/add-entity-dialog.component': AddEntityDialogComponent,
     '@home/components/entity/entities-table.component': EntitiesTableComponent,

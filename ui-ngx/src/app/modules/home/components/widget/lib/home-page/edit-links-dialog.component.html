@@ -22,7 +22,7 @@
     <button mat-icon-button
             (click)="close()"
             type="button">
-      <mat-icon class="material-icons">close</mat-icon>
+      <tb-icon class="material-icons">close</tb-icon>
     </button>
   </mat-toolbar>
   <div mat-dialog-content>
@@ -60,7 +60,7 @@
                matTooltip="{{ 'action.drag' | translate }}"
                matTooltipPosition="above"
                class="tb-drag-handle">
-            <mat-icon>drag_indicator</mat-icon>
+            <tb-icon>drag_indicator</tb-icon>
           </div>
         </ng-template>
       </div>
@@ -71,7 +71,7 @@
          matTooltip="{{ (mode === 'docs' ? 'widgets.documentation.add-link' : 'widgets.quick-links.add-link') | translate }}"
          matTooltipPosition="above"
          (click)="addLink()">
-      <mat-icon class="tb-add-icon">add</mat-icon>
+      <tb-icon class="tb-add-icon">add</tb-icon>
     </div>
     <ng-container *ngIf="addMode">
       <ng-container [ngSwitch]="mode">

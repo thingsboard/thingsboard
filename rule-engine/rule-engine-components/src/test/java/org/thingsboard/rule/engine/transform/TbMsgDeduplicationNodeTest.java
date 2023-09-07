@@ -30,7 +30,6 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.deduplication.DeduplicationStrategy;
 import org.thingsboard.rule.engine.deduplication.TbMsgDeduplicationNode;
 import org.thingsboard.rule.engine.deduplication.TbMsgDeduplicationNodeConfiguration;
@@ -39,9 +38,10 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,8 +70,6 @@ import static org.mockito.Mockito.when;
 @Slf4j
 public class TbMsgDeduplicationNodeTest {
 
-    private static final String TB_MSG_DEDUPLICATION_TIMEOUT_MSG = "TbMsgDeduplicationNodeMsg";
-
     private TbContext ctx;
 
     private final ThingsBoardThreadFactory factory = ThingsBoardThreadFactory.forName("de-duplication-node-test");
@@ -97,12 +95,12 @@ public class TbMsgDeduplicationNodeTest {
         when(ctx.getTenantId()).thenReturn(tenantId);
 
         doAnswer((Answer<TbMsg>) invocationOnMock -> {
-            String type = (String) (invocationOnMock.getArguments())[1];
+            TbMsgType type = (TbMsgType) (invocationOnMock.getArguments())[1];
             EntityId originator = (EntityId) (invocationOnMock.getArguments())[2];
             TbMsgMetaData metaData = (TbMsgMetaData) (invocationOnMock.getArguments())[3];
             String data = (String) (invocationOnMock.getArguments())[4];
             return TbMsg.newMsg(type, originator, metaData.copy(), data);
-        }).when(ctx).newMsg(isNull(), eq(TB_MSG_DEDUPLICATION_TIMEOUT_MSG), nullable(EntityId.class), any(TbMsgMetaData.class), any(String.class));
+        }).when(ctx).newMsg(isNull(), eq(TbMsgType.DEDUPLICATION_TIMEOUT_SELF_MSG), nullable(EntityId.class), any(TbMsgMetaData.class), any(String.class));
         node = spy(new TbMsgDeduplicationNode());
         config = new TbMsgDeduplicationNodeConfiguration().defaultConfiguration();
     }
@@ -173,7 +171,7 @@ public class TbMsgDeduplicationNodeTest {
         verify(ctx, times(msgCount)).ack(any());
         verify(ctx, times(1)).tellFailure(eq(msgToReject), any());
         verify(node, times(msgCount + wantedNumberOfTellSelfInvocation + 1)).onMsg(eq(ctx), any());
-        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbRelationTypes.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
 
         TbMsg firstMsg = inputMsgs.get(0);
         TbMsg actualMsg = newMsgCaptor.getValue();
@@ -221,7 +219,7 @@ public class TbMsgDeduplicationNodeTest {
         verify(ctx, times(msgCount)).ack(any());
         verify(ctx, times(1)).tellFailure(eq(msgToReject), any());
         verify(node, times(msgCount + wantedNumberOfTellSelfInvocation + 1)).onMsg(eq(ctx), any());
-        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbRelationTypes.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
 
         TbMsg actualMsg = newMsgCaptor.getValue();
         // msg ids should be different because we create new msg before enqueueForTellNext
@@ -242,7 +240,7 @@ public class TbMsgDeduplicationNodeTest {
 
         config.setInterval(deduplicationInterval);
         config.setStrategy(DeduplicationStrategy.ALL);
-        config.setOutMsgType(SessionMsgType.POST_ATTRIBUTES_REQUEST.name());
+        config.setOutMsgType(TbMsgType.POST_ATTRIBUTES_REQUEST.name());
         config.setQueueName(DataConstants.HP_QUEUE_NAME);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
@@ -263,7 +261,7 @@ public class TbMsgDeduplicationNodeTest {
 
         verify(ctx, times(msgCount)).ack(any());
         verify(node, times(msgCount + wantedNumberOfTellSelfInvocation)).onMsg(eq(ctx), any());
-        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbRelationTypes.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
 
         Assertions.assertEquals(1, newMsgCaptor.getAllValues().size());
         TbMsg outMessage = newMsgCaptor.getAllValues().get(0);
@@ -282,7 +280,7 @@ public class TbMsgDeduplicationNodeTest {
 
         config.setInterval(deduplicationInterval);
         config.setStrategy(DeduplicationStrategy.ALL);
-        config.setOutMsgType(SessionMsgType.POST_ATTRIBUTES_REQUEST.name());
+        config.setOutMsgType(TbMsgType.POST_ATTRIBUTES_REQUEST.name());
         config.setQueueName(DataConstants.HP_QUEUE_NAME);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
@@ -309,7 +307,7 @@ public class TbMsgDeduplicationNodeTest {
 
         verify(ctx, times(msgCount)).ack(any());
         verify(node, times(msgCount + wantedNumberOfTellSelfInvocation)).onMsg(eq(ctx), any());
-        verify(ctx, times(2)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbRelationTypes.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+        verify(ctx, times(2)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
 
         List<TbMsg> resultMsgs = newMsgCaptor.getAllValues();
         Assertions.assertEquals(2, resultMsgs.size());
@@ -363,7 +361,7 @@ public class TbMsgDeduplicationNodeTest {
 
         verify(ctx, times(msgCount)).ack(any());
         verify(node, times(msgCount + wantedNumberOfTellSelfInvocation)).onMsg(eq(ctx), any());
-        verify(ctx, times(2)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbRelationTypes.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+        verify(ctx, times(2)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
 
         List<TbMsg> resultMsgs = newMsgCaptor.getAllValues();
         Assertions.assertEquals(2, resultMsgs.size());
@@ -414,7 +412,7 @@ public class TbMsgDeduplicationNodeTest {
         metaData.putValue("ts", String.valueOf(ts));
         return TbMsg.newMsg(
                 DataConstants.MAIN_QUEUE_NAME,
-                SessionMsgType.POST_TELEMETRY_REQUEST.name(),
+                TbMsgType.POST_TELEMETRY_REQUEST,
                 deviceId,
                 metaData,
                 JacksonUtil.toString(dataNode));

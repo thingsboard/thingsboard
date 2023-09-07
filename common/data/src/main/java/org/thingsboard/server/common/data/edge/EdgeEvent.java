@@ -31,6 +31,7 @@ import java.util.UUID;
 @ToString(callSuper = true)
 public class EdgeEvent extends BaseData<EdgeEventId> {
 
+    private long seqId;
     private TenantId tenantId;
     private EdgeId edgeId;
     private EdgeEventActionType action;

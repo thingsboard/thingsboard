@@ -18,14 +18,14 @@
 <section fxLayout="row" fxLayoutAlign="space-between start" class="notification"
          [ngStyle]="{borderColor: notificationColor()}">
   <div *ngIf="showIcon; else defaultIcon">
-    <mat-icon class="icon" [ngStyle]="{color: notification.additionalConfig.icon.color}">
+    <tb-icon class="icon" [ngStyle]="{color: notification.additionalConfig.icon.color}">
       {{ notification.additionalConfig.icon.icon }}
-    </mat-icon>
+    </tb-icon>
   </div>
   <ng-template #defaultIcon>
-    <mat-icon class="icon" *ngIf="notificationTypeIcons.get(notification.type)" [ngStyle]="notificationIconColor()">
+    <tb-icon class="icon" *ngIf="notificationTypeIcons.get(notification.type)" [ngStyle]="notificationIconColor()">
       {{ notificationTypeIcons.get(notification.type) }}
-    </mat-icon>
+    </tb-icon>
   </ng-template>
   <div class="content" fxFlex>
     <div class="title" [innerHTML]="(title | safe: 'html' )"></div>
@@ -41,7 +41,7 @@
             matTooltip="{{ 'notification.mark-as-read' | translate }}" matTooltipPosition="above">
       <mat-icon>check_circle_outline</mat-icon>
     </button>
-    <div class="alarm-severity" *ngIf="notification.type === notificationType.ALARM"
+    <div class="alarm-severity" *ngIf="notification.type === notificationType.ALARM && !notification.info.cleared"
          [ngStyle]="{backgroundColor: alarmColorSeverity(0.06)}">
       <span [ngStyle]="notificationIconColor()" class="severity">
         {{alarmSeverityTranslations.get(notification.info.alarmSeverity) | translate}}

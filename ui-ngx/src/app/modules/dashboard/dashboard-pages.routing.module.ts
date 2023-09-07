@@ -25,6 +25,7 @@ import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { DashboardResolver } from '@app/modules/home/pages/dashboard/dashboard-routing.module';
 import { UtilsService } from '@core/services/utils.service';
 import { Widget } from '@app/shared/models/widget.models';
+import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 
 @Injectable()
 export class WidgetEditorDashboardResolver implements Resolve<Dashboard> {
@@ -37,13 +38,8 @@ export class WidgetEditorDashboardResolver implements Resolve<Dashboard> {
   resolve(route: ActivatedRouteSnapshot): Dashboard {
     const editWidgetInfo = this.utils.editWidgetInfo;
     const widget: Widget = {
-      isSystemType: true,
-      bundleAlias: 'customWidgetBundle',
-      typeAlias: 'customWidget',
+      typeFullFqn: 'system.customWidget',
       type: editWidgetInfo.type,
-      title: 'My widget',
-      image: null,
-      description: null,
       sizeX: editWidgetInfo.sizeX * 2,
       sizeY: editWidgetInfo.sizeY * 2,
       row: 2,
@@ -59,6 +55,7 @@ const routes: Routes = [
   {
     path: 'dashboard/:dashboardId',
     component: DashboardPageComponent,
+    canDeactivate: [ConfirmOnExitGuard],
     data: {
       breadcrumb: {
         skip: true
@@ -75,6 +72,7 @@ const routes: Routes = [
   {
     path: 'widget-editor',
     component: DashboardPageComponent,
+    canDeactivate: [ConfirmOnExitGuard],
     data: {
       breadcrumb: {
         skip: true

@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.util.ContactBasedEntityDetails;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.ContactBased;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -37,7 +38,7 @@ public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEnti
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        var msgDataAsObjectNode = FetchTo.DATA.equals(fetchTo) ? getMsgDataAsObjectNode(msg) : null;
+        var msgDataAsObjectNode = TbMsgSource.DATA.equals(fetchTo) ? getMsgDataAsObjectNode(msg) : null;
         withCallback(getDetails(ctx, msg, msgDataAsObjectNode),
                 ctx::tellSuccess,
                 t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
@@ -49,7 +50,7 @@ public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEnti
 
     protected void checkIfDetailsListIsNotEmptyOrElseThrow(List<ContactBasedEntityDetails> detailsList) throws TbNodeException {
         if (detailsList == null || detailsList.isEmpty()) {
-            throw new TbNodeException("No entity details selected!");
+            throw new TbNodeException("At least one entity detail should be selected!");
         }
     }
 
@@ -114,9 +115,9 @@ public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEnti
 
     private void setDetail(String property, String value, ObjectNode messageData, TbMsgMetaData msgMetaData) {
         String fieldName = getPrefix() + property;
-        if (FetchTo.METADATA.equals(fetchTo)) {
+        if (TbMsgSource.METADATA.equals(fetchTo)) {
             msgMetaData.putValue(fieldName, value);
-        } else if (FetchTo.DATA.equals(fetchTo)) {
+        } else if (TbMsgSource.DATA.equals(fetchTo)) {
             messageData.put(fieldName, value);
         }
     }

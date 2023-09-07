@@ -16,6 +16,8 @@
 :host {
   display: block;
   .clear-alarm-rule {
+    min-width: 0;
+    margin-right: 8px;
     border: 2px groove rgba(0, 0, 0, .45);
     border-radius: 4px;
     padding: 8px;

@@ -47,6 +47,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -202,44 +203,49 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 } else {
                     log.info("Skipping audit logs migration");
                 }
-                boolean skipEdgeEventsMigration = getEnv("TB_SKIP_EDGE_EVENTS_MIGRATION", false);
-                if (!skipEdgeEventsMigration) {
-                    log.info("Starting edge events migration. Can be skipped with TB_SKIP_EDGE_EVENTS_MIGRATION env variable set to true");
-                    edgeEventDao.migrateEdgeEvents();
-                } else {
-                    log.info("Skipping edge events migration");
-                }
+                migrateEdgeEvents("Starting edge events migration. ");
                 break;
             case "3.5.1":
-                log.info("Updating data from version 3.5.1 to 3.5.2 ...");
+                log.info("Updating data from version 3.5.1 to 3.6.0 ...");
+                migrateEdgeEvents("Starting edge events migration - adding seq_id column. ");
                 break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
         }
     }
 
+    private void migrateEdgeEvents(String logPrefix) {
+        boolean skipEdgeEventsMigration = getEnv("TB_SKIP_EDGE_EVENTS_MIGRATION", false);
+        if (!skipEdgeEventsMigration) {
+            log.info(logPrefix + "Can be skipped with TB_SKIP_EDGE_EVENTS_MIGRATION env variable set to true");
+            edgeEventDao.migrateEdgeEvents();
+        } else {
+            log.info("Skipping edge events migration");
+        }
+    }
+
     @Override
     public void upgradeRuleNodes() {
         try {
-            log.info("Lookup rule nodes to upgrade ...");
+            log.info("Starting rule nodes upgrade ...");
             var nodeClassToVersionMap = componentDiscoveryService.getVersionedNodes();
-            log.info("Found {} versioned nodes to check for upgrade!", nodeClassToVersionMap.size());
+            log.debug("Found {} versioned nodes to check for upgrade!", nodeClassToVersionMap.size());
             nodeClassToVersionMap.forEach(clazz -> {
                 var ruleNodeType = clazz.getClassName();
                 var ruleNodeTypeForLogs = clazz.getSimpleName();
                 var toVersion = clazz.getCurrentVersion();
-                log.info("Going to check for nodes with type: {} to upgrade to version: {}.", ruleNodeTypeForLogs, toVersion);
+                log.debug("Going to check for nodes with type: {} to upgrade to version: {}.", ruleNodeTypeForLogs, toVersion);
                 var ruleNodesToUpdate = new PageDataIterable<>(
                         pageLink -> ruleChainService.findAllRuleNodesByTypeAndVersionLessThan(ruleNodeType, toVersion, pageLink), 1024
                 );
                 if (Iterables.isEmpty(ruleNodesToUpdate)) {
-                    log.info("There are no active nodes with type: {}, or all nodes with this type already set to latest version!", ruleNodeTypeForLogs);
+                    log.debug("There are no active nodes with type: {}, or all nodes with this type already set to latest version!", ruleNodeTypeForLogs);
                 } else {
                     for (var ruleNode : ruleNodesToUpdate) {
                         var ruleNodeId = ruleNode.getId();
                         var oldConfiguration = ruleNode.getConfiguration();
                         int fromVersion = ruleNode.getConfigurationVersion();
-                        log.info("Going to upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
+                        log.debug("Going to upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
                                 ruleNodeId, ruleNodeTypeForLogs, fromVersion, toVersion);
                         try {
                             var tbVersionedNode = (TbVersionedNode) clazz.getClazz().getDeclaredConstructor().newInstance();
@@ -249,7 +255,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                             }
                             ruleNode.setConfigurationVersion(toVersion);
                             ruleChainService.saveRuleNode(TenantId.SYS_TENANT_ID, ruleNode);
-                            log.info("Successfully upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
+                            log.debug("Successfully upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
                                     ruleNodeId, ruleNodeTypeForLogs, fromVersion, toVersion);
                         } catch (Exception e) {
                             log.warn("Failed to upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {} due to: ",
@@ -497,7 +503,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
                             md.getNodes().add(ruleNode);
                             md.setFirstNodeIndex(newIdx);
-                            md.addConnectionInfo(newIdx, oldIdx, "Success");
+                            md.addConnectionInfo(newIdx, oldIdx, TbNodeConnectionType.SUCCESS);
                             ruleChainService.saveRuleChainMetaData(tenant.getId(), md, Function.identity());
                         }
                     } catch (Exception e) {

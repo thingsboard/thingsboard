@@ -32,9 +32,10 @@ public class TbMathNodeConfiguration implements NodeConfiguration<TbMathNodeConf
     @Override
     public TbMathNodeConfiguration defaultConfiguration() {
         TbMathNodeConfiguration configuration = new TbMathNodeConfiguration();
-        configuration.setOperation(TbRuleNodeMathFunctionType.ADD);
-        configuration.setArguments(Arrays.asList(new TbMathArgument("x", TbMathArgumentType.CONSTANT, "2"), new TbMathArgument("y", TbMathArgumentType.CONSTANT, "2")));
-        configuration.setResult(new TbMathResult(TbMathArgumentType.MESSAGE_BODY, "result", 2, false, false, null));
+        configuration.setOperation(TbRuleNodeMathFunctionType.CUSTOM);
+        configuration.setCustomFunction("(x - 32) / 1.8");
+        configuration.setArguments(List.of(new TbMathArgument("x", TbMathArgumentType.MESSAGE_BODY, "temperature")));
+        configuration.setResult(new TbMathResult(TbMathArgumentType.MESSAGE_BODY, "temperatureCelsius", 2, false, false, null));
         return configuration;
     }
 }
