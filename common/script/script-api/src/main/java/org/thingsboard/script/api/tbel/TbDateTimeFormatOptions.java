@@ -28,7 +28,7 @@ public class TbDateTimeFormatOptions {
     String hour = "undefined"; //?: "numeric" | "2-digit" | undefined;
     String minute = "undefined"; //?: "numeric" | "2-digit" | undefined;
     String second = "undefined"; //?: "numeric" | "2-digit" | undefined;
-    String timeZoneName = "undefined"; //?: "long" | "short" | undefined;
+    String timeZoneName = "undefined"; //?: "full" |  "long" | "short" | undefined;
     String timeZoneNameNumeric= "undefined"; //?:  "numeric" | "long" | "middle" | "short" | undefined;
     String formatMatcher = "undefined"; //?: "best fit" | "basic" | undefined;
     boolean hour12 = false; //?: boolean | undefined;
@@ -99,7 +99,9 @@ public class TbDateTimeFormatOptions {
          * Z 	Time zone 	RFC 822 time zone 	-0800
          * X/XX/XXX 	Time zone 	ISO 8601 time zone 	-08; -0800; -08:00
          */
-        if ("short".equals(timeZoneName)) {
+        if ("full".equals(timeZoneName)) {
+            pattern += " zXXX (zzzz)";
+        } else if ("short".equals(timeZoneName)) {
             pattern += " z";
         } else if ("long".equals(timeZoneName)){
             pattern += " zzzz";
