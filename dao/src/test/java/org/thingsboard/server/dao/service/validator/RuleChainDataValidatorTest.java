@@ -23,7 +23,6 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
-import org.thingsboard.server.dao.rule.RuleChainDao;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 
@@ -35,8 +34,6 @@ import static org.mockito.Mockito.verify;
 @SpringBootTest(classes = RuleChainDataValidator.class)
 class RuleChainDataValidatorTest {
 
-    @MockBean
-    RuleChainDao ruleChainDao;
     @MockBean
     RuleChainService ruleChainService;
     @MockBean

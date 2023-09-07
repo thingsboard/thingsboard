@@ -31,7 +31,6 @@ import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.util.ReflectionUtils;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.rule.RuleChainDao;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.ConstraintValidator;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -41,14 +40,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
 public class RuleChainDataValidator extends DataValidator<RuleChain> {
-
-    @Autowired
-    private RuleChainDao ruleChainDao;
 
     @Autowired
     @Lazy
@@ -88,15 +86,19 @@ public class RuleChainDataValidator extends DataValidator<RuleChain> {
         }
     }
 
-    public static void validateMetaData(RuleChainMetaData ruleChainMetaData) {
+    public static List<Throwable> validateMetaData(RuleChainMetaData ruleChainMetaData) {
         ConstraintValidator.validateFields(ruleChainMetaData);
-        ruleChainMetaData.getNodes().forEach(RuleChainDataValidator::validateRuleNode);
+        List<Throwable> throwables = ruleChainMetaData.getNodes().stream()
+                .map(RuleChainDataValidator::validateRuleNode)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(ruleChainMetaData.getConnections())) {
             validateCircles(ruleChainMetaData.getConnections());
         }
+        return throwables;
     }
 
-    public static void validateRuleNode(RuleNode ruleNode) {
+    public static Throwable validateRuleNode(RuleNode ruleNode) {
         String errorPrefix = "'" + ruleNode.getName() + "' node configuration is invalid: ";
         ConstraintValidator.validateFields(ruleNode, errorPrefix);
         Object nodeConfig;
@@ -104,11 +106,12 @@ public class RuleChainDataValidator extends DataValidator<RuleChain> {
             Class<Object> nodeConfigType = ReflectionUtils.getAnnotationProperty(ruleNode.getType(),
                     "org.thingsboard.rule.engine.api.RuleNode", "configClazz");
             nodeConfig = JacksonUtil.treeToValue(ruleNode.getConfiguration(), nodeConfigType);
-        } catch (Exception e) {
-            log.warn("Failed to validate node configuration: {}", ExceptionUtils.getRootCauseMessage(e));
-            return;
+        } catch (Throwable t) {
+            log.warn("Failed to validate node configuration: {}", ExceptionUtils.getRootCauseMessage(t));
+            return t;
         }
         ConstraintValidator.validateFields(nodeConfig, errorPrefix);
+        return null;
     }
 
     private static void validateCircles(List<NodeConnectionInfo> connectionInfos) {
