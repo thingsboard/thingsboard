@@ -154,6 +154,11 @@ public class JacksonUtil {
         }
     }
 
+    public static <T> T treeToValue(Map map, Class<T> clazz) {
+        JsonNode node = toJsonNode(map);
+       return treeToValue(node, clazz);
+    }
+
     public static JsonNode toJsonNode(String value) {
         return toJsonNode(value, OBJECT_MAPPER);
     }
@@ -174,6 +179,15 @@ public class JacksonUtil {
             return value != null ? OBJECT_MAPPER.readTree(value) : null;
         } catch (IOException e) {
             throw new IllegalArgumentException("The given File object value: "
+                    + value + " cannot be transformed to a JsonNode", e);
+        }
+    }
+
+    public static JsonNode toJsonNode(Map value) {
+        try {
+            return value != null ? OBJECT_MAPPER.reader().readTree(OBJECT_MAPPER.writeValueAsString(value)) : null;
+        } catch (IOException e) {
+            throw new IllegalArgumentException("The given Map value: "
                     + value + " cannot be transformed to a JsonNode", e);
         }
     }

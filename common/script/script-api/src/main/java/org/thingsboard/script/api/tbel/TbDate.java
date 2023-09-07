@@ -28,9 +28,15 @@ import java.time.temporal.TemporalAccessor;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TimeZone;
 
+import static org.thingsboard.common.util.JacksonUtil.treeToValue;
+
 public class TbDate extends Date {
+
+
+    private static final String patternDefault = "dd/MM/yyyy HH:mm:ss";
 
     private static final DateTimeFormatter isoDateFormatter = DateTimeFormatter.ofPattern(
             "yyyy-MM-dd[[ ]['T']HH:mm[:ss[.SSS]][ ][XXX][Z][z][VV][O]]").withZone(ZoneId.systemDefault());
@@ -58,13 +64,17 @@ public class TbDate extends Date {
         this(year, month, date, hrs, min, 0);
     }
 
-    public TbDate(int year, int month, int date,
-                  int hrs, int min, int second) {
+    public TbDate(int year, int month, int date, int hrs, int min, int second) {
         super(new GregorianCalendar(year, month, date, hrs, min, second).getTimeInMillis());
     }
 
     public String toDateString() {
         DateFormat formatter = DateFormat.getDateInstance();
+        return formatter.format(this);
+    }
+
+    public String toDateString(String pattern) {
+        DateFormat formatter  = new SimpleDateFormat(pattern);
         return formatter.format(this);
     }
 
@@ -78,14 +88,30 @@ public class TbDate extends Date {
     }
 
     public String toLocaleString(String locale) {
-        DateFormat formatter = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM, Locale.forLanguageTag(locale));
-        return formatter.format(this);
+        return toLocaleString(locale, "UTC");
     }
 
     public String toLocaleString(String locale, String tz) {
-        DateFormat formatter = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM, Locale.forLanguageTag(locale));
-        formatter.setTimeZone(TimeZone.getTimeZone(tz));
-        return formatter.format(this);
+        return toLocaleString(locale, tz, patternDefault);
+    }
+
+    public String toLocaleString(String locale, String tz, String pattern) {
+        DateFormat dateFormat = new SimpleDateFormat(pattern, Locale.forLanguageTag(locale));
+        dateFormat.setTimeZone(TimeZone.getTimeZone(tz));
+        return dateFormat.format(this);
+    }
+
+    public String toLocaleString(Map options) {
+        return toLocaleString(Locale.getDefault(Locale.Category.FORMAT).toString(), options);
+    }
+    public String toLocaleString(String locale, Map options) {
+        String tz = options.keySet().contains("timeZone") ? String.valueOf(options.get("timeZone")) : null;
+        String pattern = getPattern(options);
+        if (pattern == null) {
+            return toLocaleString(locale, tz);
+        } else {
+            return toLocaleString(locale, tz, pattern);
+        }
     }
 
     public static long now() {
@@ -121,6 +147,11 @@ public class TbDate extends Date {
     public static long UTC(int year, int month, int date,
                            int hrs, int min, int sec) {
         return Date.UTC(year - 1900, month, date, hrs, min, sec);
+    }
+
+    private static String getPattern(Map options) {
+        TbDateTimeFormatOptions formatOptions = treeToValue(options, TbDateTimeFormatOptions.class);
+        return formatOptions.getPatternJava();
     }
 
 }
