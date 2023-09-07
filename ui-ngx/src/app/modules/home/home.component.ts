@@ -14,8 +14,17 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { startWith, skip, Subject } from 'rxjs';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  HostListener,
+  Inject,
+  OnDestroy,
+  OnInit,
+  ViewChild
+} from '@angular/core';
+import { skip, startWith, Subject } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 
@@ -66,6 +75,13 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
   hideLoadingBar = false;
 
   private destroy$ = new Subject<void>();
+
+  @HostListener('document:keydown.F11', ['$event']) onKeydownHandler(event: KeyboardEvent) {
+    if (event) {
+      event.preventDefault();
+    }
+    this.toggleFullscreen();
+  }
 
   constructor(protected store: Store<AppState>,
               @Inject(WINDOW) private window: Window,
