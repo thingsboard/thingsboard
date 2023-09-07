@@ -67,6 +67,8 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String INCORRECT_DEVICE_ID = "Incorrect deviceId ";
     public static final String DEFAULT_DEVICE_TELEMETRY_TOPIC = "v1/devices/me/telemetry";
+    public static final String HTTP_DEFAULT_PORT = "80";
+    public static final String HTTPS_DEFAULT_PORT = "443";
 
     private final Map<String, Resource> certs = new ConcurrentHashMap<>();
 
@@ -203,8 +205,9 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
             return null;
         }
         String hostName = getHost(baseUrl, properties);
-        String port = properties.getPort().isEmpty() ? "" : ":" + properties.getPort();
-
+        String propertiesPort = properties.getPort();
+        String port = (propertiesPort.isEmpty() || HTTP_DEFAULT_PORT.equals(propertiesPort) || HTTPS_DEFAULT_PORT.equals(propertiesPort))
+                ? "" : ":" + propertiesPort;
         return DeviceConnectivityUtil.getHttpPublishCommand(protocol, hostName, port, deviceCredentials);
     }
 
