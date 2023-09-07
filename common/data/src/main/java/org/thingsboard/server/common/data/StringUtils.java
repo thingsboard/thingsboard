@@ -190,6 +190,13 @@ public class StringUtils {
         return org.apache.commons.lang3.StringUtils.contains(seq, searchSeq);
     }
 
+    /**
+     * Use this to prevent org.postgresql.util.PSQLException: ERROR: invalid byte sequence for encoding "UTF8": 0x00
+     **/
+    public static boolean contains0x00(final String s) {
+        return s != null && s.contains("\u0000");
+    }
+
     public static String randomNumeric(int length) {
         return RandomStringUtils.randomNumeric(length);
     }

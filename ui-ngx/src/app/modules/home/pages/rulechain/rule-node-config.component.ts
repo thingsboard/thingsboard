@@ -165,6 +165,9 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
     } else {
       this.ruleNodeConfigFormGroup.enable({emitEvent: false});
     }
+    if (this.definedConfigComponent) {
+      this.definedConfigComponent.disabled = this.disabled;
+    }
   }
 
   writeValue(value: RuleNodeConfiguration): void {

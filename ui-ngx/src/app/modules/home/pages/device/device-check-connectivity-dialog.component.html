@@ -342,7 +342,7 @@
   <span fxFlex></span>
   <button mat-button
           [disabled]="(isLoading$ | async)"
-          (click)="close()">{{ closeButtonLabel | translate }}</button>
+          (click)="close()">{{ 'action.close' | translate }}</button>
 </div>
 <ng-template #loadingCommand>
   <div class="tb-loader">

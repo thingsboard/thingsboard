@@ -1,0 +1,197 @@
+/**
+ * Copyright © 2016-2023 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+syntax = "proto3";
+
+option java_package = "org.thingsboard.server.gen.transport.coap";
+option java_outer_classname = "DeviceInfoProtos";
+
+enum ModemType
+{
+
+  /* Invalid value                                                                                                              */
+  MODEM_TYPE_UNSPECIFIED = 0;
+
+  /* Quectel BC66 modem                                                                                                         */
+  MODEM_TYPE_BC66 = 1;
+
+  /* Quectel BC66-NA modem                                                                                                      */
+  MODEM_TYPE_BC66NA = 2;
+}
+
+message ProtoRuntime
+{
+
+  /* Up-time in seconds (since reset)                                                                                           */
+  uint32 up_time = 1;
+
+  /* Message counters (since reset). There are 3 counters:                                                                      */
+  /*   message_counters[0] - Counter of confirmable messages attempts                                                           */
+  /*   message_counters[1] - Counter of non-confirmable messages attempts                                                       */
+  /*   message_counters[2] - Counter of succeeded messages                                                                      */
+  repeated uint32 message_counters = 2;
+
+  /* MCU temperature in Celsius                                                                                                 */
+  sint32 mcu_temperature = 3;
+
+  /* Minimum battery voltage in mV                                                                                              */
+  uint32 min_battery_voltage = 4;
+
+  /* MCU temperature in Celsius, while the minimum battery voltage was reached                                                  */
+  sint32 min_battery_mcu_temperature = 5;
+
+  /* Battery reset timestamp (Unix timestamp)                                                                                   */
+  uint32 battery_reset_timestamp = 6;
+
+  /* Max MCU temperature in Celsius                                                                                             */
+  sint32 max_mcu_temperature = 7;
+
+  /* Min MCU temperature in Celsius                                                                                             */
+  sint32 min_mcu_temperature = 8;
+
+  /* Table of runtime errors. Max length: 20                                                                                    */
+  repeated uint32 runtime_errors = 9;
+}
+
+message ProtoModem
+{
+
+  ModemType type = 1;
+
+  /* Parameters for BC66 modem:                                                                                                 */
+  /*   parameters[0] - sc_EARFCN - Range: [0:262143]. Unknown value: -1                                                         */
+  /*   parameters[1] - sc_EARNFCN_offset - Range: [0:4] mapped to [-2, -1, -0.5, 0, 1]. Unknown value: -1                       */
+  /*   parameters[2] - sc_PCI - Range: [0:502]. Unknown value: -1                                                               */
+  /*   parameters[3] - sc_Cell id - Range: [1:268435456]. Unknown value: 0                                                      */
+  /*   parameters[4] - sc_RSRP - [dBm] - Range: [-140:-44]. Unknown value: 0                                                    */
+  /*   parameters[5] - sc_RSRQ - [dB] - Range: [-20:-3]. Unknown value: 0                                                       */
+  /*   parameters[6] - sc_RSSI - [dBm] - Range: [-110:-3] Unknown value: 0                                                      */
+  /*   parameters[7] - sc_SINR - [dB] - Range: [-10:30]. Unknown value: 31                                                      */
+  /*   parameters[8] - sc_Band - Range: [see module supported bands]. The current serving cell band. Unknown value: -1          */
+  /*   parameters[9] - sc_TAC - Range: [0:65536]. Unknown value: -1                                                             */
+  /*   parameters[10] - sc_ECL - Range: [0:2]. Unknown value: -1                                                                */
+  /*   parameters[11] - sc_TX_PWR - [0.1cBm] - Range [-440:230]. Unknown value: -1000                                           */
+  /*   parameters[12] - OP_MODE - Range: [0:3]. Unknown value: -1                                                               */
+  /*   parameters[13] - nc_EARFCN - Range: [0:262143]. Unknown value: -1                                                        */
+  /*   parameters[14] - nc_EARNFCN_offset - Range: [0:4] mapped to [-2, -1, -0.5, 0, 1]. Unknown value: -1                      */
+  /*   parameters[15] - nc_PCI - Range: [0:502]. Unknown value: -1                                                              */
+  /*   parameters[16] - nc_RSRP - [dBm] - Range: [-140:-44]. Unknown value: 0                                                   */
+  /*   parameters[17] - RLC_UL_BLER - Range: [0:100]. Unknown value: -1                                                         */
+  /*   parameters[18] - RLC_DL_BLER - Range: [0:100]. Unknown value: -1                                                         */
+  /*   parameters[19] - MAC_UL_BLER - Range: [0:100]. Unknown value: -1                                                         */
+  /*   parameters[20] - MAC_DL_BLER - Range: [0:100]. Unknown value: -1                                                         */
+  /*   parameters[21] - MAC_UL_TOTAL_BYTES - Range: [0:2147483647]. Unknown value: -1                                           */
+  /*   parameters[22] - MAC_DL_TOTAL_BYTES - Range: [0:2147483647]. Unknown value: -1                                           */
+  /*   parameters[23] - MAC_UL_total_HARQ_Tx - Range: [0:2147483647]. Unknown value: -1                                         */
+  /*   parameters[24] - MAC_DL_total_HARQ_Tx - Range: [0:2147483647]. Unknown value: -1                                         */
+  /*   parameters[25] - MAC_UL_HARQ_re_Tx - Range: [0:2147483647]. Unknown value: -1                                            */
+  /*   parameters[26] - MAC_DL_HARQ_re_Tx - Range: [0:2147483647]. Unknown value: -1                                            */
+  /*   parameters[27] - RLC_UL_tput - Range: [0:2147483647]. Unknown value: -1                                                  */
+  /*   parameters[28] - RLC_DL_tput - Range: [0:2147483647]. Unknown value: -1                                                  */
+  /*   parameters[29] - MAC_UL_tput - Range: [0:2147483647]. Unknown value: -1                                                  */
+  /*   parameters[30] - MAC_DL_tput - Range: [0:2147483647]. Unknown value: -1                                                  */
+  /*   parameters[31] - sleep_duration - [0.1s] - Range: [0:2147483647]. Unknown value: -1                                      */
+  /*   parameters[32] - Rx_time - [0.1s] - Range: [0:2147483647]. Unknown value: -1                                             */
+  /*   parameters[33] - Tx_time - [0.1s] - Range: [0:2147483647]. Unknown value: -1                                             */
+  repeated sint32 parameters = 2;
+}
+
+message ProtoUpdateInfo
+{
+
+  /* Timestamp of update (Unix timestamp)                                                                                       */
+  uint32 timestamp = 1;
+
+  /* Update status, possible values:                                                                                            */
+  /*    - 0x1 - No update yet                                                                                                   */
+  /*    - 0x2 - No error                                                                                                        */
+  /*    - 0x3 - UDP socekt error                                                                                                */
+  /*    - 0x4 - Hash error                                                                                                      */
+  /*    - 0x5 - Missing packet error                                                                                            */
+  /*    - 0x6 - Invalid data error                                                                                              */
+  /*    - 0x7 - Sending timeout error                                                                                           */
+  /*    - 0x8 - No SW to update error                                                                                           */
+  /*    - 0x9 - Sending unexpected error                                                                                        */
+  /*    - 0x10 - Unexpected error                                                                                               */
+  uint32 status = 2;
+}
+
+message ProtoDeviceInfo
+{
+
+  /* Serial number of device                                                                                                    */
+  bytes serial_num = 1;
+
+  /* Deprecated field                                                                                                           */
+  reserved 2;
+
+  /* Software version e.g ver 06.10 -> 0x060A -> 1546                                                                           */
+  uint32 sw_version = 3;
+
+  /* Deprecated fields                                                                                                          */
+  reserved 4,5,6,7,8,9,10,11,12;
+
+  /* Structure with battery and temperature information                                                                         */
+  ProtoRuntime runtime_info = 13;
+
+  /* Structure with modem specific runtime information                                                                          */
+  ProtoModem modem = 14;
+
+  /* String up to 7 bytes long. Software commit id e.g. "e0e8556"                                                               */
+  /* From version 06.07 the first two characters indicate the LTS version.                                                      */
+  /* For example: the value "0bdd23f" means LTS version 11 and the beginning of the commit ID "dd23f"                           */
+  string commit_id = 15;
+
+  /* Optional string up to 36 bytes long. Can be set to any user define value or hold device's IMEI                             */
+  string cloud_token = 16;
+
+  /* Memory statistics:                                                                                                         */
+  /*   memory_statistics[0] - Status of Nv storage:                                                                             */
+  /*     - 0 - Nv storage hasn't errors                                                                                         */
+  /*     - 1 - Nv storage has some corrupted packet. Memory is read-only                                                        */
+  /*     - 2 - Nv storage is corrupted. Memory is unavailable                                                                   */
+  /*   memory_statistics[1] - Timestamp of the end of collecting statistics.                                                    */
+  /*                          Value in seconds since UNIX EPOCH 01-01-1970. Undefined value: 4294967295                         */
+  /*   memory_statistics[2] - Capacity of memory in bytes                                                                       */
+  /*   memory_statistics[3] - Used space in bytes                                                                               */
+  /*   memory_statistics[4] - Size of invalid (outdated) packets in bytes                                                       */
+  /*   memory_statistics[5] - Size of corrupted packets in bytes                                                                */
+  /*   memory_statistics[6] - Number of valid packets                                                                           */
+  /*   memory_statistics[7] - Number of invalid (outdated) packets                                                              */
+  /*   memory_statistics[8] - Number of corrupted packets                                                                       */
+  /*   memory_statistics[9] - Number of all samples for channel 1 (valid packets)                                               */
+  /*   memory_statistics[10] - Number of all samples for channel 2 (valid packets)                                              */
+  /*   memory_statistics[11] - Number of all samples for channel 3 (valid packets)                                              */
+  /*   memory_statistics[12] - Number of all samples for channel 4 (valid packets)                                              */
+  /*   memory_statistics[13] - Number of all samples for channel 5 (valid packets)                                              */
+  /*   memory_statistics[14] - Number of all samples for channel 6 (valid packets)                                              */
+  /*   memory_statistics[15] - Timestamp of the first binary measurement.                                                       */
+  /*                           Value in seconds since UNIX EPOCH 01-01-1970. Undefined value: 4294967295                        */
+  /*   memory_statistics[16] - Timestamp of the last binary measurement.                                                        */
+  /*                           Value in seconds since UNIX EPOCH 01-01-1970. Undefined value: 4294967295                        */
+  /*   memory_statistics[17] - Timestamp of the last binary measurement, that marked as sent.                                   */
+  /*                           Value in seconds since UNIX EPOCH 01-01-1970. Undefined value: 4294967295                        */
+  /*   memory_statistics[18] - Timestamp of the first continuous measurement.                                                   */
+  /*                           Value in seconds since UNIX EPOCH 01-01-1970. Undefined value: 4294967295                        */
+  /*   memory_statistics[19] - Timestamp of the last continuous measurement.                                                    */
+  /*                           Value in seconds since UNIX EPOCH 01-01-1970. Undefined value: 4294967295                        */
+  /*   memory_statistics[20] - Timestamp of the last continuous measurement, that marked as sent.                               */
+  /*                           Value in seconds since UNIX EPOCH 01-01-1970. Undefined value: 4294967295                        */
+  /*   memory_statistics[21] - NVM write counter                                                                                */
+  repeated uint32 memory_statistics = 17;
+
+  /* Information about last sensor SW update                                                                                    */
+  ProtoUpdateInfo last_update_info = 18;
+}

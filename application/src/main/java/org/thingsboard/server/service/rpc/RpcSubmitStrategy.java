@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  button.tb-add-new-widget {
-    height: auto;
-    padding-right: 12px;
-    font-size: 24px;
-    border-style: dashed;
-    border-width: 2px;
-  }
-}
+package org.thingsboard.server.service.rpc;
 
-:host ::ng-deep {
-  .tb-widget-library {
-    .tb-widget-container {
-      cursor: pointer;
+import java.util.Arrays;
+
+public enum RpcSubmitStrategy {
+
+    BURST, SEQUENTIAL_ON_ACK_FROM_DEVICE, SEQUENTIAL_ON_RESPONSE_FROM_DEVICE;
+
+    public static RpcSubmitStrategy parse(String strategyStr) {
+        return Arrays.stream(RpcSubmitStrategy.values())
+                .filter(strategy -> strategy.name().equalsIgnoreCase(strategyStr))
+                .findFirst()
+                .orElse(BURST);
     }
-  }
 }

@@ -21,7 +21,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { Dashboard, DashboardLayoutId } from '@shared/models/dashboard.models';
-import { deepClone, isDefined, isObject, isString, isUndefined } from '@core/utils';
+import { deepClone, guid, isDefined, isObject, isString, isUndefined } from '@core/utils';
 import { WINDOW } from '@core/services/window.service';
 import { DOCUMENT } from '@angular/common';
 import {
@@ -34,8 +34,8 @@ import {
 } from '@shared/models/alias.models';
 import { MatDialog } from '@angular/material/dialog';
 import { ImportDialogComponent, ImportDialogData } from '@home/components/import-export/import-dialog.component';
-import { forkJoin, Observable, of } from 'rxjs';
-import { catchError, map, mergeMap, tap } from 'rxjs/operators';
+import { forkJoin, Observable, of, Subject } from 'rxjs';
+import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityService } from '@core/http/entity.service';
 import { Widget, WidgetSize, WidgetType, WidgetTypeDetails } from '@shared/models/widget.models';
@@ -58,7 +58,6 @@ import {
 import { EntityType } from '@shared/models/entity-type.models';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetService } from '@core/http/widget.service';
-import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { ImportEntitiesResultInfo, ImportEntityData } from '@shared/models/entity.models';
 import { RequestConfig } from '@core/http/http-utils';
@@ -75,6 +74,11 @@ import { EdgeService } from '@core/http/edge.service';
 import { RuleNode } from '@shared/models/rule-node.models';
 import { AssetProfileService } from '@core/http/asset-profile.service';
 import { AssetProfile } from '@shared/models/asset.models';
+import {
+  ExportWidgetsBundleDialogComponent,
+  ExportWidgetsBundleDialogData,
+  ExportWidgetsBundleDialogResult
+} from '@home/components/import-export/export-widgets-bundle-dialog.component';
 
 // @dynamic
 @Injectable()
@@ -180,6 +184,7 @@ export class ImportExportService {
         } else {
           let widget = widgetItem.widget;
           widget = this.dashboardUtils.validateAndUpdateWidget(widget);
+          widget.id = guid();
           const aliasesInfo = this.prepareAliasesInfo(widgetItem.aliasesInfo);
           const filtersInfo: FiltersInfo = widgetItem.filtersInfo || {
             datasourceFilters: {}
@@ -261,9 +266,6 @@ export class ImportExportService {
   public exportWidgetType(widgetTypeId: string) {
     this.widgetService.getWidgetTypeById(widgetTypeId).subscribe(
       (widgetTypeDetails) => {
-        if (isDefined(widgetTypeDetails.bundleAlias)) {
-          delete widgetTypeDetails.bundleAlias;
-        }
         let name = widgetTypeDetails.name;
         name = name.toLowerCase().replace(/\W/g, '_');
         this.exportToPc(this.prepareExport(widgetTypeDetails), name);
@@ -274,7 +276,28 @@ export class ImportExportService {
     );
   }
 
-  public importWidgetType(bundleAlias: string): Observable<WidgetType> {
+  public exportWidgetTypes(widgetTypeIds: string[]): Observable<void> {
+    const widgetTypesObservables: Array<Observable<WidgetTypeDetails>> = [];
+    for (const id of widgetTypeIds) {
+      widgetTypesObservables.push(this.widgetService.getWidgetTypeById(id));
+    }
+    return forkJoin(widgetTypesObservables).pipe(
+      map((widgetTypes) =>
+        Object.fromEntries(widgetTypes.map(wt=> {
+          let name = wt.name;
+          name = name.toLowerCase().replace(/\W/g, '_') + `.${JSON_TYPE.extension}`;
+          const data = JSON.stringify(this.prepareExport(wt), null, 2);
+          return [name, data];
+        }))),
+        mergeMap(widgetTypeFiles => this.exportJSZip(widgetTypeFiles, 'widget_types')),
+        catchError(e => {
+            this.handleExportError(e, 'widget-type.export-failed-error');
+            throw e;
+        })
+    );
+  }
+
+  public importWidgetType(): Observable<WidgetType> {
     return this.openImportDialog('widget-type.import', 'widget-type.widget-type-file').pipe(
       mergeMap((widgetTypeDetails: WidgetTypeDetails) => {
         if (!this.validateImportedWidgetTypeDetails(widgetTypeDetails)) {
@@ -283,7 +306,6 @@ export class ImportExportService {
               type: 'error'}));
           throw new Error('Invalid widget type file');
         } else {
-          widgetTypeDetails.bundleAlias = bundleAlias;
           return this.widgetService.saveImportedWidgetTypeDetails(widgetTypeDetails);
         }
       }),
@@ -296,29 +318,61 @@ export class ImportExportService {
   public exportWidgetsBundle(widgetsBundleId: string) {
     this.widgetService.getWidgetsBundle(widgetsBundleId).subscribe(
       (widgetsBundle) => {
-        const bundleAlias = widgetsBundle.alias;
-        const isSystem = widgetsBundle.tenantId.id === NULL_UUID;
-        this.widgetService.getBundleWidgetTypesDetails(bundleAlias, isSystem).subscribe(
-          (widgetTypesDetails) => {
-            widgetTypesDetails = widgetTypesDetails.sort((a, b) => a.createdTime - b.createdTime);
-            const widgetsBundleItem: WidgetsBundleItem = {
-              widgetsBundle: this.prepareExport(widgetsBundle),
-              widgetTypes: []
-            };
-            for (const widgetTypeDetails of widgetTypesDetails) {
-              if (isDefined(widgetTypeDetails.bundleAlias)) {
-                delete widgetTypeDetails.bundleAlias;
+        this.dialog.open<ExportWidgetsBundleDialogComponent, ExportWidgetsBundleDialogData,
+          ExportWidgetsBundleDialogResult>(ExportWidgetsBundleDialogComponent, {
+          disableClose: true,
+          panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+          data: {
+            widgetsBundle
+          }
+        }).afterClosed().subscribe(
+          (result) => {
+            if (result) {
+              if (result.exportWidgets) {
+                this.exportWidgetsBundleWithWidgetTypes(widgetsBundle);
+              } else {
+                this.exportWidgetsBundleWithWidgetTypeFqns(widgetsBundle);
               }
-              widgetsBundleItem.widgetTypes.push(this.prepareExport(widgetTypeDetails));
             }
-            let name = widgetsBundle.title;
-            name = name.toLowerCase().replace(/\W/g, '_');
-            this.exportToPc(widgetsBundleItem, name);
-          },
-          (e) => {
-            this.handleExportError(e, 'widgets-bundle.export-failed-error');
           }
         );
+      },
+      (e) => {
+        this.handleExportError(e, 'widgets-bundle.export-failed-error');
+      }
+    );
+  }
+
+  private exportWidgetsBundleWithWidgetTypes(widgetsBundle: WidgetsBundle) {
+    this.widgetService.getBundleWidgetTypesDetails(widgetsBundle.id.id).subscribe(
+      (widgetTypesDetails) => {
+        const widgetsBundleItem: WidgetsBundleItem = {
+          widgetsBundle: this.prepareExport(widgetsBundle),
+          widgetTypes: []
+        };
+        for (const widgetTypeDetails of widgetTypesDetails) {
+          widgetsBundleItem.widgetTypes.push(this.prepareExport(widgetTypeDetails));
+        }
+        let name = widgetsBundle.title;
+        name = name.toLowerCase().replace(/\W/g, '_');
+        this.exportToPc(widgetsBundleItem, name);
+      },
+      (e) => {
+        this.handleExportError(e, 'widgets-bundle.export-failed-error');
+      }
+    );
+  }
+
+  private exportWidgetsBundleWithWidgetTypeFqns(widgetsBundle: WidgetsBundle) {
+    this.widgetService.getBundleWidgetTypeFqns(widgetsBundle.id.id).subscribe(
+      (widgetTypeFqns) => {
+        const widgetsBundleItem: WidgetsBundleItem = {
+          widgetsBundle: this.prepareExport(widgetsBundle),
+          widgetTypeFqns
+        };
+        let name = widgetsBundle.title;
+        name = name.toLowerCase().replace(/\W/g, '_');
+        this.exportToPc(widgetsBundleItem, name);
       },
       (e) => {
         this.handleExportError(e, 'widgets-bundle.export-failed-error');
@@ -338,16 +392,32 @@ export class ImportExportService {
           const widgetsBundle = widgetsBundleItem.widgetsBundle;
           return this.widgetService.saveWidgetsBundle(widgetsBundle).pipe(
             mergeMap((savedWidgetsBundle) => {
-              const bundleAlias = savedWidgetsBundle.alias;
-              const widgetTypesDetails = widgetsBundleItem.widgetTypes;
-              if (widgetTypesDetails.length) {
-                const saveWidgetTypesObservables: Array<Observable<WidgetType>> = [];
-                for (const widgetTypeDetails of widgetTypesDetails) {
-                  widgetTypeDetails.bundleAlias = bundleAlias;
-                  saveWidgetTypesObservables.push(this.widgetService.saveImportedWidgetTypeDetails(widgetTypeDetails));
+              if (widgetsBundleItem.widgetTypes?.length || widgetsBundleItem.widgetTypeFqns?.length) {
+                let widgetTypesObservable: Observable<Array<WidgetTypeDetails>>;
+                if (widgetsBundleItem.widgetTypes?.length) {
+                  const widgetTypesDetails = widgetsBundleItem.widgetTypes;
+                  const saveWidgetTypesObservables: Array<Observable<WidgetTypeDetails>> = [];
+                  for (const widgetTypeDetails of widgetTypesDetails) {
+                    saveWidgetTypesObservables.push(this.widgetService.saveImportedWidgetTypeDetails(widgetTypeDetails));
+                  }
+                  widgetTypesObservable = forkJoin(saveWidgetTypesObservables);
+                } else {
+                  widgetTypesObservable = of([]);
                 }
-                return forkJoin(saveWidgetTypesObservables).pipe(
-                  map(() => savedWidgetsBundle)
+                return widgetTypesObservable.pipe(
+                  switchMap((widgetTypes) => {
+                    let widgetTypeFqns = widgetTypes.map(w => w.fqn);
+                    if (widgetsBundleItem.widgetTypeFqns?.length) {
+                      widgetTypeFqns = widgetTypeFqns.concat(widgetsBundleItem.widgetTypeFqns);
+                    }
+                    if (widgetTypeFqns.length) {
+                      return this.widgetService.updateWidgetsBundleWidgetFqns(savedWidgetsBundle.id.id, widgetTypeFqns).pipe(
+                        map((res) => savedWidgetsBundle)
+                      );
+                    } else {
+                      return of(savedWidgetsBundle);
+                    }
+                  })
                 );
               } else {
                 return of(savedWidgetsBundle);
@@ -636,19 +706,28 @@ export class ImportExportService {
     this.downloadFile(content, filename, TEXT_TYPE);
   }
 
-  public exportJSZip(data: object, filename: string) {
+  public exportJSZip(data: object, filename: string): Observable<void> {
+    const exportJsSubjectSubject = new Subject<void>();
     import('jszip').then((JSZip) => {
-      const jsZip = new JSZip.default();
-      for (const keyName in data) {
-        if (data.hasOwnProperty(keyName)) {
-          const valueData = data[keyName];
-          jsZip.file(keyName, valueData);
+      try {
+        const jsZip = new JSZip.default();
+        for (const keyName in data) {
+          if (data.hasOwnProperty(keyName)) {
+            const valueData = data[keyName];
+            jsZip.file(keyName, valueData);
+          }
         }
+        jsZip.generateAsync({type: 'blob'}).then(content => {
+          this.downloadFile(content, filename, ZIP_TYPE);
+          exportJsSubjectSubject.next(null);
+        }).catch(e => {
+            exportJsSubjectSubject.error(e);
+        });
+      } catch (e) {
+          exportJsSubjectSubject.error(e);
       }
-      jsZip.generateAsync({type: 'blob'}).then(content => {
-        this.downloadFile(content, filename, ZIP_TYPE);
-      });
     });
+    return exportJsSubjectSubject.asObservable();
   }
 
   private prepareRuleChain(ruleChain: RuleChain): RuleChain {
@@ -765,16 +844,23 @@ export class ImportExportService {
     if (isUndefined(widgetsBundleItem.widgetsBundle)) {
       return false;
     }
-    if (isUndefined(widgetsBundleItem.widgetTypes)) {
+    if (isUndefined(widgetsBundleItem.widgetTypes) && isUndefined(widgetsBundleItem.widgetTypeFqns)) {
       return false;
     }
     const widgetsBundle = widgetsBundleItem.widgetsBundle;
     if (isUndefined(widgetsBundle.title)) {
       return false;
     }
-    const widgetTypesDetails = widgetsBundleItem.widgetTypes;
-    for (const widgetTypeDetails of widgetTypesDetails) {
-      if (!this.validateImportedWidgetTypeDetails(widgetTypeDetails)) {
+    if (isDefined(widgetsBundleItem.widgetTypes)) {
+      const widgetTypesDetails = widgetsBundleItem.widgetTypes;
+      for (const widgetTypeDetails of widgetTypesDetails) {
+        if (!this.validateImportedWidgetTypeDetails(widgetTypeDetails)) {
+          return false;
+        }
+      }
+    }
+    if (isDefined(widgetsBundleItem.widgetTypeFqns)) {
+      if (!Array.isArray(widgetsBundleItem.widgetTypeFqns)) {
         return false;
       }
     }

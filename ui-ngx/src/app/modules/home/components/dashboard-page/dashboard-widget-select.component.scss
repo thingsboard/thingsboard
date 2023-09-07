@@ -54,6 +54,10 @@
           font-size: 20px;
           line-height: normal;
           margin-bottom: 8px;
+          .tb-deprecated {
+            font-size: 14px;
+            color: rgba(209, 39, 48, 0.87);
+          }
         }
 
         .mat-mdc-card-subtitle {

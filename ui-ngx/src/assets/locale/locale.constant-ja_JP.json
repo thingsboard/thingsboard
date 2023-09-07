@@ -685,7 +685,6 @@
 		"name-starts-with": "名前はで始まる",
 		"use-entity-name-filter": "フィルタを使用する",
 		"entity-list-empty": "選択されたエンティティはありません",
-		"entity-type-list-empty": "エンティティタイプは選択されていません。",
 		"entity-name-filter-required": "エンティティ名フィルタが必要です。",
 		"entity-name-filter-no-entity-matched": "'{{entity}}'発見されました。",
 		"all-subtypes": "すべて",

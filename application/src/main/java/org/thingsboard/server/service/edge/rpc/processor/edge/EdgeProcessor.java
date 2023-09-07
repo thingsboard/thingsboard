@@ -85,7 +85,7 @@ public class EdgeProcessor extends BaseEdgeProcessor {
                     do {
                         pageData = userService.findCustomerUsers(tenantId, customerId, pageLink);
                         if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
-                            log.trace("[{}] [{}] user(s) are going to be added to edge.", edge.getId(), pageData.getData().size());
+                            log.trace("[{}][{}][{}] user(s) are going to be added to edge.", tenantId, edge.getId(), pageData.getData().size());
                             for (User user : pageData.getData()) {
                                 futures.add(saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.USER, EdgeEventActionType.ADDED, user.getId(), null));
                             }
@@ -108,7 +108,7 @@ public class EdgeProcessor extends BaseEdgeProcessor {
                     return Futures.immediateFuture(null);
             }
         } catch (Exception e) {
-            log.error("Exception during processing edge event", e);
+            log.error("[{}] Exception during processing edge event", tenantId, e);
             return Futures.immediateFailedFuture(e);
         }
     }
