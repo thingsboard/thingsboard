@@ -24,6 +24,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
@@ -664,12 +665,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     }
 
     private void forwardToEventService(Event event, TbCallback callback) {
-        try {
-            actorContext.getEventService().saveAsync(event);
-            callback.onSuccess();
-        } catch (Exception e) {
-            callback.onFailure(e);
-        }
+        DonAsynchron.withCallback(actorContext.getEventService().saveAsync(event),
+                result -> callback.onSuccess(),
+                callback::onFailure);
     }
 
     private void throwNotHandled(Object msg, TbCallback callback) {
