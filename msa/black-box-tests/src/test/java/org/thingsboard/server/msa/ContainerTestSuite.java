@@ -18,6 +18,7 @@ package org.thingsboard.server.msa;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.testcontainers.containers.DockerComposeContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.thingsboard.server.common.data.StringUtils;
 
@@ -170,7 +171,11 @@ public class ContainerTestSuite {
                     .waitingFor("tb-mqtt-transport2", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
                     .waitingFor("tb-vc-executor1", Wait.forLogMessage(TB_VC_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
                     .waitingFor("tb-vc-executor2", Wait.forLogMessage(TB_VC_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
-                    .waitingFor("tb-js-executor", Wait.forLogMessage(TB_JS_EXECUTOR_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT));
+                    .waitingFor("tb-js-executor", Wait.forLogMessage(TB_JS_EXECUTOR_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                    .withLogConsumer("tb-core1", new Slf4jLogConsumer(log).withPrefix("tb-core1"))
+                    .withLogConsumer("tb-core2", new Slf4jLogConsumer(log).withPrefix("tb-core2"))
+                    .withLogConsumer("tb-rule-engine1", new Slf4jLogConsumer(log).withPrefix("tb-rule-engine1"))
+                    .withLogConsumer("tb-rule-engine2", new Slf4jLogConsumer(log).withPrefix("tb-rule-engine2"));
             testContainer.start();
             setActive(true);
         } catch (Exception e) {
