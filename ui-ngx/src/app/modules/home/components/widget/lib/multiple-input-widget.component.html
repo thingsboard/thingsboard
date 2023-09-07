@@ -23,174 +23,164 @@
     <fieldset *ngFor="let source of sources" [ngClass]="{'fields-group': settings.showGroupTitle}">
       <legend class="group-title" *ngIf="settings.showGroupTitle">{{ getGroupTitle(source.datasource) }}
       </legend>
-      <div class="tb-multiple-input-layout layout-wrap"
-           [ngClass]="{'vertical-alignment': isVerticalAlignment || changeAlignment}">
-        <div *ngFor="let key of visibleKeys(source)"
-             [ngStyle]="{width: (isVerticalAlignment || changeAlignment) ? '100%' : inputWidthSettings}">
-          <div class="input-field" *ngIf="key.settings.dataKeyValueType === 'string'">
-            <mat-form-field class="mat-block" appearance="outline" subscriptSizing="dynamic">
-              <mat-label>{{key.label}}</mat-label>
-              <input matInput
-                     formControlName="{{key.formId}}"
-                     [required]="key.settings.required"
-                     [readonly]="key.settings.isEditable === 'readonly'"
-                     type="text"
-                     (focus)="key.isFocused = true; focusInputElement($event)"
-                     (blur)="key.isFocused = false; inputChanged(source, key)">
-              <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon" matPrefix>
-                <tb-icon *ngIf="!key.settings.safeCustomIcon; else customToggleIcon">{{key.settings.icon}}</tb-icon>
-                <ng-template #customToggleIcon>
-                  <img class="mat-icon" [src]="key.settings.safeCustomIcon" alt="icon">
-                </ng-template>
-              </ng-container>
-              <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
-                {{ getErrorMessageText(key.settings, 'required') }}
-              </mat-error>
-            </mat-form-field>
-          </div>
-          <div class="input-field" *ngIf="key.settings.dataKeyValueType === 'double' ||
-                                          key.settings.dataKeyValueType === 'integer'">
-            <mat-form-field class="mat-block" appearance="outline" subscriptSizing="dynamic">
-              <mat-label>{{key.label}}</mat-label>
-              <input matInput
-                     formControlName="{{key.formId}}"
-                     [required]="key.settings.required"
-                     [readonly]="key.settings.isEditable === 'readonly'"
-                     type="number"
-                     step="{{key.settings.step}}"
-                     min="{{key.settings.minValue}}"
-                     max="{{key.settings.maxValue}}"
-                     (focus)="key.isFocused = true; focusInputElement($event)"
-                     (blur)="key.isFocused = false; inputChanged(source, key)">
-              <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon" matPrefix>
-                <tb-icon *ngIf="!key.settings.safeCustomIcon; else customToggleIcon">{{key.settings.icon}}</tb-icon>
-                <ng-template #customToggleIcon>
-                  <img class="mat-icon" [src]="key.settings.safeCustomIcon" alt="icon">
-                </ng-template>
-              </ng-container>
-              <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
-                {{ getErrorMessageText(key.settings,'required') }}
-              </mat-error>
-              <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('min')">
-                {{ getErrorMessageText(key.settings,'min') }}
-              </mat-error>
-              <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('max')">
-                {{ getErrorMessageText(key.settings,'max') }}
-              </mat-error>
-            </mat-form-field>
-          </div>
-          <div class="input-field mat-block" *ngIf="key.settings.dataKeyValueType === 'booleanCheckbox'">
-            <mat-checkbox formControlName="{{key.formId}}"
-                          (change)="inputChanged(source, key)">
-              <span class="label-wrapper">{{key.label}}</span>
-            </mat-checkbox>
-          </div>
-          <div class="input-field" *ngIf="key.settings.dataKeyValueType === 'JSON'">
-            <mat-form-field class="mat-block" appearance="outline" subscriptSizing="dynamic">
-              <mat-label>{{key.label}}</mat-label>
-              <input
-                matInput
-                type="text"
-                formControlName="{{key.formId}}"
-                tb-json-to-string
-                [readonly]="key.settings.isEditable === 'readonly'"
-                [required]="key.settings.required"
-                (focus)="key.isFocused = true; focusInputElement($event)"
-                (blur)="key.isFocused = false; inputChanged(source, key)"
-              />
-              <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon" matPrefix>
-                <tb-icon *ngIf="!key.settings.safeCustomIcon; else customToggleIcon">{{key.settings.icon}}</tb-icon>
-                <ng-template #customToggleIcon>
-                  <img class="mat-icon" [src]="key.settings.safeCustomIcon" alt="icon">
-                </ng-template>
-              </ng-container>
-              <button [disabled]="key.settings.isEditable === 'disabled' || key.settings.isEditable === 'readonly'"
-                      type="button"
-                      matSuffix mat-icon-button
-                      (click)="openEditJSONDialog($event, key, source)">
-                <mat-icon>open_in_new</mat-icon>
-              </button>
-              <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
-                {{ getErrorMessageText(key.settings,'required') }}
-              </mat-error>
-              <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('invalidJSON')">
-                {{ getErrorMessageText(key.settings,'invalidJSON') | translate }}
-              </mat-error>
-            </mat-form-field>
-          </div>
-          <div class="input-field mat-block" *ngIf="key.settings.dataKeyValueType === 'booleanSwitch'">
-            <mat-slide-toggle formControlName="{{key.formId}}"
-                              [labelPosition]="key.settings.slideToggleLabelPosition"
-                              (change)="inputChanged(source, key)">
-              <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon">
-                <tb-icon *ngIf="!key.settings.safeCustomIcon; else customToggleIcon">{{key.settings.icon}}</tb-icon>
-                <ng-template #customToggleIcon>
-                  <img class="mat-icon" [src]="key.settings.safeCustomIcon" alt="icon">
-                </ng-template>
-              </ng-container>
-              <span class="label-wrapper">{{key.label}}</span>
-            </mat-slide-toggle>
-          </div>
-          <div class="input-field mat-block date-time-input" *ngIf="(key.settings.dataKeyValueType === 'dateTime') ||
-                                                    (key.settings.dataKeyValueType === 'date') ||
-                                                    (key.settings.dataKeyValueType === 'time')" fxLayout="column">
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-label>{{key.label}}</mat-label>
-              <mat-datetimepicker-toggle [for]="datePicker" matPrefix></mat-datetimepicker-toggle>
-              <mat-datetimepicker #datePicker type="{{datePickerType(key.settings.dataKeyValueType)}}"
-                                  openOnFocus="true"></mat-datetimepicker>
-              <input matInput formControlName="{{key.formId}}"
-                     [required]="key.settings.required"
-                     [readonly]="key.settings.isEditable === 'readonly'"
-                     [matDatetimepicker]="datePicker"
-                     (focus)="key.isFocused = true;"
-                     (blur)="key.isFocused = false;"
-                     (dateChange)="inputChanged(source, key)">
-              <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
-                {{ getErrorMessageText(key.settings, 'required') }}
-              </mat-error>
-              <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('matDatepickerParse')">
-                {{ getErrorMessageText(key.settings, 'invalidDate') }}
-              </mat-error>
-            </mat-form-field>
-          </div>
-          <div class="input-field" *ngIf="key.settings.dataKeyValueType === 'select'">
-            <mat-form-field class="mat-block" appearance="outline" subscriptSizing="dynamic">
-              <mat-label>{{key.label}}</mat-label>
-              <mat-select formControlName="{{key.formId}}"
-                          [required]="key.settings.required"
-                          (focus)="key.isFocused = true;"
-                          (selectionChange)="key.isFocused = false; inputChanged(source, key)">
-                <mat-option *ngFor="let option of key.settings.selectOptions"
-                            [value]="option.value"
-                            [disabled]="key.settings.isEditable === 'readonly'">
-                  {{ getCustomTranslationText(option.label ? option.label : option.value) }}
-                </mat-option>
-              </mat-select>
-              <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
-                {{ getErrorMessageText(key.settings, 'required') }}
-              </mat-error>
-            </mat-form-field>
-          </div>
-
-          <div class="tb-form-row space-between color-picker-input" *ngIf="key.settings.dataKeyValueType === 'color'">
-            <div class="label-container">
-              <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon">
-                <tb-icon *ngIf="!key.settings.safeCustomIcon; else customToggleIcon">{{key.settings.icon}}</tb-icon>
-                <ng-template #customToggleIcon>
-                  <img class="mat-icon" [src]="key.settings.safeCustomIcon" alt="icon">
-                </ng-template>
-              </ng-container>
-              {{key.label}}
-            </div>
-            <tb-color-input asBoxInput
-                            [required]="key.settings.required"
-                            [requiredText]="getErrorMessageText(key.settings, 'required')"
-                            openOnInput
-                            formControlName="{{key.formId}}">
+      <div class="tb-multiple-input-layout"
+           [style]="{'grid-template-columns': 'repeat(' + columns + ', 1fr)', 'column-gap': settings.columnGap + 'px', 'row-gap': settings.rowGap + 'px'}">
+        <ng-container *ngFor="let key of visibleKeys(source)">
+          <mat-form-field *ngIf="key.settings.dataKeyValueType === 'string'"
+                          [appearance]="key.settings.appearance" [subscriptSizing]="key.settings.subscriptSizing">
+            <mat-label>{{key.label}}</mat-label>
+            <input matInput
+                   formControlName="{{key.formId}}"
+                   [required]="key.settings.required"
+                   [readonly]="key.settings.isEditable === 'readonly'"
+                   type="text"
+                   (focus)="key.isFocused = true; focusInputElement($event)"
+                   (blur)="key.isFocused = false; inputChanged(source, key)">
+            <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon" matIconPrefix>
+              <ng-container *ngTemplateOutlet="iconPrefix; context: {key: key}"></ng-container>
+            </ng-container>
+            <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
+              {{ getErrorMessageText(key.settings, 'required') }}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field *ngIf="['double', 'integer'].includes(key.settings.dataKeyValueType)"
+                          [appearance]="key.settings.appearance" [subscriptSizing]="key.settings.subscriptSizing">
+            <mat-label>{{key.label}}</mat-label>
+            <input matInput
+                   formControlName="{{key.formId}}"
+                   [required]="key.settings.required"
+                   [readonly]="key.settings.isEditable === 'readonly'"
+                   type="number"
+                   step="{{key.settings.step}}"
+                   min="{{key.settings.minValue}}"
+                   max="{{key.settings.maxValue}}"
+                   (focus)="key.isFocused = true; focusInputElement($event)"
+                   (blur)="key.isFocused = false; inputChanged(source, key)">
+            <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon" matIconPrefix>
+              <ng-container *ngTemplateOutlet="iconPrefix; context: {key: key}"></ng-container>
+            </ng-container>
+            <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
+              {{ getErrorMessageText(key.settings,'required') }}
+            </mat-error>
+            <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('min')">
+              {{ getErrorMessageText(key.settings,'min') }}
+            </mat-error>
+            <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('max')">
+              {{ getErrorMessageText(key.settings,'max') }}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field *ngIf="key.settings.dataKeyValueType === 'JSON'"
+                          [appearance]="key.settings.appearance" [subscriptSizing]="key.settings.subscriptSizing">
+            <mat-label>{{key.label}}</mat-label>
+            <input
+              matInput
+              type="text"
+              formControlName="{{key.formId}}"
+              tb-json-to-string
+              [readonly]="key.settings.isEditable === 'readonly'"
+              [required]="key.settings.required"
+              (focus)="key.isFocused = true; focusInputElement($event)"
+              (blur)="key.isFocused = false; inputChanged(source, key)"
+            />
+            <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon" matIconPrefix>
+              <ng-container *ngTemplateOutlet="iconPrefix; context: {key: key}"></ng-container>
+            </ng-container>
+            <button [disabled]="key.settings.isEditable === 'disabled' || key.settings.isEditable === 'readonly'"
+                    type="button"
+                    matSuffix mat-icon-button
+                    (click)="openEditJSONDialog($event, key, source)">
+              <mat-icon>open_in_new</mat-icon>
+            </button>
+            <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
+              {{ getErrorMessageText(key.settings,'required') }}
+            </mat-error>
+            <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('invalidJSON')">
+              {{ getErrorMessageText(key.settings,'invalidJSON') | translate }}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field *ngIf="['dateTime','date', 'time'].includes(key.settings.dataKeyValueType)"
+                          [appearance]="key.settings.appearance" [subscriptSizing]="key.settings.subscriptSizing">
+            <mat-label>{{key.label}}</mat-label>
+            <mat-datetimepicker-toggle [for]="datePicker" matPrefix></mat-datetimepicker-toggle>
+            <mat-datetimepicker #datePicker type="{{datePickerType(key.settings.dataKeyValueType)}}"
+                                openOnFocus="true"></mat-datetimepicker>
+            <input matInput formControlName="{{key.formId}}"
+                   [required]="key.settings.required"
+                   [readonly]="key.settings.isEditable === 'readonly'"
+                   [matDatetimepicker]="datePicker"
+                   (focus)="key.isFocused = true;"
+                   (blur)="key.isFocused = false;"
+                   (dateChange)="inputChanged(source, key)">
+            <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
+              {{ getErrorMessageText(key.settings, 'required') }}
+            </mat-error>
+            <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('matDatepickerParse')">
+              {{ getErrorMessageText(key.settings, 'invalidDate') }}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field *ngIf="key.settings.dataKeyValueType === 'select'"
+                          [appearance]="key.settings.appearance" [subscriptSizing]="key.settings.subscriptSizing">
+            <mat-label>{{key.label}}</mat-label>
+            <mat-select formControlName="{{key.formId}}"
+                        [required]="key.settings.required"
+                        (focus)="key.isFocused = true;"
+                        (selectionChange)="key.isFocused = false; inputChanged(source, key)">
+              <mat-option *ngFor="let option of key.settings.selectOptions"
+                          [value]="option.value"
+                          [disabled]="key.settings.isEditable === 'readonly'">
+                {{ getCustomTranslationText(option.label ? option.label : option.value) }}
+              </mat-option>
+            </mat-select>
+            <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon" matIconPrefix>
+              <ng-container *ngTemplateOutlet="iconPrefix; context: {key: key}"></ng-container>
+            </ng-container>
+            <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
+              {{ getErrorMessageText(key.settings, 'required') }}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field *ngIf="key.settings.dataKeyValueType === 'color'"
+                          class="color-input" [appearance]="key.settings.appearance" [subscriptSizing]="key.settings.subscriptSizing"
+                          (click)="colorInput.openColorPickerPopup($event)">
+            <mat-label>{{key.label}}</mat-label>
+            <input matInput
+                   formControlName="{{key.formId}}"
+                   [required]="key.settings.required"
+                   [readonly]="key.settings.isEditable === 'readonly'"
+                   type="text"
+                   (keydown)="$event.preventDefault();">
+            <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon" matIconPrefix>
+              <ng-container *ngTemplateOutlet="iconPrefix; context: {key: key}"></ng-container>
+            </ng-container>
+            <tb-color-input #colorInput asBoxInput matSuffix
+                            colorClearButton
+                            [disabled]="multipleInputFormGroup.get(key.formId).disabled"
+                            [readonly]="key.settings.isEditable === 'readonly'"
+                            [ngModel]="multipleInputFormGroup.get(key.formId).value"
+                            (ngModelChange)="colorChanged(source, key, $event)"
+                            [ngModelOptions]="{ standalone: true }">
             </tb-color-input>
-          </div>
-        </div>
+            <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
+              {{ getErrorMessageText(key.settings, 'required') }}
+            </mat-error>
+          </mat-form-field>
+          <mat-checkbox *ngIf="key.settings.dataKeyValueType === 'booleanCheckbox'"
+                        formControlName="{{key.formId}}"
+                        (change)="inputChanged(source, key)">
+            <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon">
+              <ng-container *ngTemplateOutlet="iconPrefix; context: {key: key}"></ng-container>
+            </ng-container>
+            <span class="label-wrapper">{{key.label}}</span>
+          </mat-checkbox>
+          <mat-slide-toggle *ngIf="key.settings.dataKeyValueType === 'booleanSwitch'"
+                            formControlName="{{key.formId}}"
+                            [labelPosition]="key.settings.slideToggleLabelPosition"
+                            (change)="inputChanged(source, key)">
+            <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon">
+              <ng-container *ngTemplateOutlet="iconPrefix; context: {key: key}"></ng-container>
+            </ng-container>
+            <span class="label-wrapper">{{key.label}}</span>
+          </mat-slide-toggle>
+        </ng-container>
       </div>
     </fieldset>
   </div>
@@ -216,3 +206,9 @@
     </div>
   </div>
 </form>
+<ng-template #iconPrefix let-key="key">
+  <tb-icon *ngIf="!key.settings.safeCustomIcon; else customToggleIcon">{{key.settings.icon}}</tb-icon>
+  <ng-template #customToggleIcon>
+    <img class="mat-icon" [src]="key.settings.safeCustomIcon" alt="icon">
+  </ng-template>
+</ng-template>
