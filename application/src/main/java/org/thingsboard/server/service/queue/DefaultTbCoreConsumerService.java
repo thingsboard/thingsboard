@@ -667,7 +667,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private void forwardToEventService(Event event, TbCallback callback) {
         DonAsynchron.withCallback(actorContext.getEventService().saveAsync(event),
                 result -> callback.onSuccess(),
-                callback::onFailure);
+                callback::onFailure,
+                actorContext.getDbCallbackExecutor());
     }
 
     private void throwNotHandled(Object msg, TbCallback callback) {
