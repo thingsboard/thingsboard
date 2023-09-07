@@ -54,6 +54,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -354,6 +355,56 @@ public class DefaultDeviceStateServiceTest {
 
     private void activityVerify(boolean isActive) {
         verify(telemetrySubscriptionService, times(1)).saveAttrAndNotify(any(), eq(deviceId), any(), eq(ACTIVITY_STATE), eq(isActive), any());
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideParametersForDecreaseInactivityTimeout")
+    public void givenTestParameters_whenOnDeviceInactivityTimeout_thenShouldBeInTheExpectedStateAndPerformExpectedActions(
+            boolean activityState, long newInactivityTimeout, long timeIncrement, boolean expectedActivityState
+    ) throws Exception {
+        // GIVEN
+        long defaultInactivityTimeout = 10000;
+        initStateService(defaultInactivityTimeout);
+
+        var currentTime = new AtomicLong(System.currentTimeMillis());
+
+        DeviceState deviceState = DeviceState.builder()
+                .active(activityState)
+                .lastActivityTime(currentTime.get())
+                .inactivityTimeout(defaultInactivityTimeout)
+                .build();
+
+        DeviceStateData deviceStateData = DeviceStateData.builder()
+                .tenantId(tenantId)
+                .deviceId(deviceId)
+                .state(deviceState)
+                .metaData(new TbMsgMetaData())
+                .build();
+
+        service.deviceStates.put(deviceId, deviceStateData);
+        service.getPartitionedEntities(tpi).add(deviceId);
+
+        given(service.getCurrentTimeMillis()).willReturn(currentTime.addAndGet(timeIncrement));
+
+        // WHEN
+        service.onDeviceInactivityTimeoutUpdate(tenantId, deviceId, newInactivityTimeout);
+
+        // THEN
+        assertThat(deviceState.getInactivityTimeout()).isEqualTo(newInactivityTimeout);
+        assertThat(deviceState.isActive()).isEqualTo(expectedActivityState);
+        if (activityState && !expectedActivityState) {
+            then(telemetrySubscriptionService).should().saveAttrAndNotify(
+                    any(), eq(deviceId), any(), eq(ACTIVITY_STATE), eq(false), any()
+            );
+        }
+    }
+
+    private static Stream<Arguments> provideParametersForDecreaseInactivityTimeout() {
+        return Stream.of(
+                Arguments.of(true, 1, 0, true),
+
+                Arguments.of(true, 1, 1, false)
+        );
     }
 
     @Test
