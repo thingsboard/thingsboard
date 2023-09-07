@@ -18,6 +18,10 @@ package org.thingsboard.server.dao;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.util.CollectionUtils;
+import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -146,5 +150,17 @@ public abstract class DaoUtil {
         } else {
             return null;
         }
+    }
+
+    public static List<EntitySubtype> convertTenantEntityTypesToDto(UUID tenantId, EntityType entityType, List<String> types) {
+        if (CollectionUtils.isEmpty(types)) {
+            return Collections.emptyList();
+        }
+
+        List<EntitySubtype> list = new ArrayList<>(types.size());
+        for (String type : types) {
+            list.add(new EntitySubtype(TenantId.fromUUID(tenantId), entityType, type));
+        }
+        return list;
     }
 }
