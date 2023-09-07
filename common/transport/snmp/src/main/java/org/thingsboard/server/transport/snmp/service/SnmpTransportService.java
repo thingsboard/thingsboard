@@ -302,8 +302,8 @@ public class SnmpTransportService implements TbTransportService, CommandResponde
     *
     * TODO: add check for host uniqueness when saving device (for backward compatibility - only for the ones using from-device RPC requests)
     *
-    * TODO: this won't work properly in a cluster mode, due to load-balancing of requests from devices:
-    *  session might not be on this instance
+    * NOTE: SNMP TRAPs support won't work properly when there is more than one SNMP transport,
+    *  due to load-balancing of requests from devices: session might not be on this instance
     * */
     @Override
     public void processPdu(CommandResponderEvent event) {
