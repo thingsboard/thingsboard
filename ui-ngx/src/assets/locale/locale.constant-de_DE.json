@@ -914,7 +914,6 @@
     "name-starts-with": "Name beginnt mit",
     "use-entity-name-filter": "Filter verwenden",
     "entity-list-empty": "Keine Entitäten ausgewählt.",
-    "entity-type-list-empty": "Keine Entitättypen ausgewählt.",
     "entity-name-filter-required": "Entitätsnamenfilter ist erforderlich.",
     "entity-name-filter-no-entity-matched": "Keine Entitäten beginnend mit '{{entity}}' gefunden.",
     "all-subtypes": "Alle",

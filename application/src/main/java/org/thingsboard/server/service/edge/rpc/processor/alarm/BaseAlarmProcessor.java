@@ -20,15 +20,21 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
@@ -45,7 +51,7 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
                 EntityType.valueOf(alarmUpdateMsg.getOriginatorType()));
         AlarmId alarmId = new AlarmId(new UUID(alarmUpdateMsg.getIdMSB(), alarmUpdateMsg.getIdLSB()));
         if (originatorId == null) {
-            log.warn("Originator not found for the alarm msg {}", alarmUpdateMsg);
+            log.warn("[{}] Originator not found for the alarm msg {}", tenantId, alarmUpdateMsg);
             return Futures.immediateFuture(null);
         }
         try {
@@ -129,13 +135,38 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
             case ALARM_CLEAR:
                 Alarm alarm = alarmService.findAlarmById(tenantId, alarmId);
                 if (alarm != null) {
-                    return alarmMsgConstructor.constructAlarmUpdatedMsg(tenantId, msgType, alarm);
+                    return alarmMsgConstructor.constructAlarmUpdatedMsg(msgType, alarm, findOriginatorEntityName(tenantId, alarm));
                 }
                 break;
             case DELETED:
                 Alarm deletedAlarm = JacksonUtil.OBJECT_MAPPER.convertValue(body, Alarm.class);
-                return alarmMsgConstructor.constructAlarmUpdatedMsg(tenantId, msgType, deletedAlarm);
+                return alarmMsgConstructor.constructAlarmUpdatedMsg(msgType, deletedAlarm, findOriginatorEntityName(tenantId, deletedAlarm));
         }
         return null;
+    }
+
+    private String findOriginatorEntityName(TenantId tenantId, Alarm alarm) {
+        String entityName = null;
+        switch (alarm.getOriginator().getEntityType()) {
+            case DEVICE:
+                Device deviceById = deviceService.findDeviceById(tenantId, new DeviceId(alarm.getOriginator().getId()));
+                if (deviceById != null) {
+                    entityName = deviceById.getName();
+                }
+                break;
+            case ASSET:
+                Asset assetById = assetService.findAssetById(tenantId, new AssetId(alarm.getOriginator().getId()));
+                if (assetById != null) {
+                    entityName = assetById.getName();
+                }
+                break;
+            case ENTITY_VIEW:
+                EntityView entityViewById = entityViewService.findEntityViewById(tenantId, new EntityViewId(alarm.getOriginator().getId()));
+                if (entityViewById != null) {
+                    entityName = entityViewById.getName();
+                }
+                break;
+        }
+        return entityName;
     }
 }

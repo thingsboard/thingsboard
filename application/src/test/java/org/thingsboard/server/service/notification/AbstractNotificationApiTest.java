@@ -265,4 +265,8 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
         return (NotificationApiWsClient) super.getWsClient();
     }
 
+    @Override
+    public NotificationApiWsClient getAnotherWsClient() {
+        return (NotificationApiWsClient) super.getAnotherWsClient();
+    }
 }

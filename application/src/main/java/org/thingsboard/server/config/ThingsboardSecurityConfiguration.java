@@ -188,11 +188,6 @@ public class ThingsboardSecurityConfiguration {
         return auth.build();
     }
 
-    @Bean
-    protected BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
     @Autowired
     private OAuth2AuthorizationRequestResolver oAuth2AuthorizationRequestResolver;
 

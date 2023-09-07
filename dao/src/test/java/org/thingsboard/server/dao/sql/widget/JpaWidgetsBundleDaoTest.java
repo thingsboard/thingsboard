@@ -86,9 +86,9 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
         UUID tenantId2 = Uuids.timeBased();
         // Create a bunch of widgetBundles
         for (int i = 0; i < 10; i++) {
-            createWidgetBundles(3, tenantId1, "WB1_");
-            createWidgetBundles(5, tenantId2, "WB2_");
-            createSystemWidgetBundles(10, "WB_SYS_");
+            createWidgetBundles(3, tenantId1, "WB1_" + i + "_");
+            createWidgetBundles(5, tenantId2, "WB2_" + i + "_");
+            createSystemWidgetBundles(10, "WB_SYS_" + i + "_");
         }
         widgetsBundles = widgetsBundleDao.find(TenantId.SYS_TENANT_ID);
         assertEquals(180, widgetsBundleDao.find(TenantId.SYS_TENANT_ID).size());
@@ -112,9 +112,9 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
         UUID tenantId2 = Uuids.timeBased();
         // Create a bunch of widgetBundles
         for (int i = 0; i < 10; i++) {
-            createWidgetBundles(5, tenantId1, "WB1_");
-            createWidgetBundles(3, tenantId2, "WB2_");
-            createSystemWidgetBundles(2, "WB_SYS_");
+            createWidgetBundles(5, tenantId1, "WB1_" + i + "_");
+            createWidgetBundles(3, tenantId2, "WB2_" + i + "_");
+            createSystemWidgetBundles(2, "WB_SYS_" + i + "_");
         }
         widgetsBundles = widgetsBundleDao.find(TenantId.SYS_TENANT_ID);
         assertEquals(100, widgetsBundleDao.find(TenantId.SYS_TENANT_ID).size());

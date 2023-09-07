@@ -124,8 +124,24 @@ export class MenuService {
             id: 'widget_library',
             name: 'widget.widget-library',
             type: 'link',
-            path: '/resources/widgets-bundles',
-            icon: 'now_widgets'
+            path: '/resources/widgets-library',
+            icon: 'now_widgets',
+            pages: [
+              {
+                id: 'widget_types',
+                name: 'widget.widgets',
+                type: 'link',
+                path: '/resources/widgets-library/widget-types',
+                icon: 'now_widgets'
+              },
+              {
+                id: 'widgets_bundles',
+                name: 'widgets-bundle.widgets-bundles',
+                type: 'link',
+                path: '/resources/widgets-library/widgets-bundles',
+                icon: 'now_widgets'
+              }
+            ]
           },
           {
             id: 'resources_library',
@@ -283,7 +299,7 @@ export class MenuService {
           {
             name: 'widget.widget-library',
             icon: 'now_widgets',
-            path: '/widgets-bundles'
+            path: '/resources/widgets-library',
           }
         ]
       },
@@ -492,8 +508,24 @@ export class MenuService {
             id: 'widget_library',
             name: 'widget.widget-library',
             type: 'link',
-            path: '/resources/widgets-bundles',
-            icon: 'now_widgets'
+            path: '/resources/widgets-library',
+            icon: 'now_widgets',
+            pages: [
+              {
+                id: 'widget_types',
+                name: 'widget.widgets',
+                type: 'link',
+                path: '/resources/widgets-library/widget-types',
+                icon: 'now_widgets'
+              },
+              {
+                id: 'widgets_bundles',
+                name: 'widgets-bundle.widgets-bundles',
+                type: 'link',
+                path: '/resources/widgets-library/widgets-bundles',
+                icon: 'now_widgets'
+              }
+            ]
           },
           {
             id: 'resources_library',

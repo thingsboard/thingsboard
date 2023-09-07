@@ -33,9 +33,16 @@ public class DashboardMsgConstructor {
                 .setIdMSB(dashboard.getId().getId().getMostSignificantBits())
                 .setIdLSB(dashboard.getId().getId().getLeastSignificantBits())
                 .setTitle(dashboard.getTitle())
-                .setConfiguration(JacksonUtil.toString(dashboard.getConfiguration()));
+                .setConfiguration(JacksonUtil.toString(dashboard.getConfiguration()))
+                .setMobileHide(dashboard.isMobileHide());
         if (dashboard.getAssignedCustomers() != null) {
             builder.setAssignedCustomers(JacksonUtil.toString(dashboard.getAssignedCustomers()));
+        }
+        if (dashboard.getImage() != null) {
+            builder.setImage(dashboard.getImage());
+        }
+        if (dashboard.getMobileOrder() != null) {
+            builder.setMobileOrder(dashboard.getMobileOrder());
         }
         return builder.build();
     }

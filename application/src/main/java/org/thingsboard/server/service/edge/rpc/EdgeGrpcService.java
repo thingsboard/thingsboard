@@ -195,17 +195,17 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             switch (msg.getMsgType()) {
                 case EDGE_EVENT_UPDATE_TO_EDGE_SESSION_MSG:
                     EdgeEventUpdateMsg edgeEventUpdateMsg = (EdgeEventUpdateMsg) msg;
-                    log.trace("[{}] onToEdgeSessionMsg [{}]", edgeEventUpdateMsg.getTenantId(), msg);
+                    log.trace("[{}] onToEdgeSessionMsg [{}]", tenantId, msg);
                     onEdgeEvent(tenantId, edgeEventUpdateMsg.getEdgeId());
                     break;
                 case EDGE_SYNC_REQUEST_TO_EDGE_SESSION_MSG:
                     ToEdgeSyncRequest toEdgeSyncRequest = (ToEdgeSyncRequest) msg;
-                    log.trace("[{}] toEdgeSyncRequest [{}]", toEdgeSyncRequest.getTenantId(), msg);
+                    log.trace("[{}] toEdgeSyncRequest [{}]", tenantId, msg);
                     startSyncProcess(tenantId, toEdgeSyncRequest.getEdgeId(), toEdgeSyncRequest.getId());
                     break;
                 case EDGE_SYNC_RESPONSE_FROM_EDGE_SESSION_MSG:
                     FromEdgeSyncResponse fromEdgeSyncResponse = (FromEdgeSyncResponse) msg;
-                    log.trace("[{}] fromEdgeSyncResponse [{}]", fromEdgeSyncResponse.getTenantId(), msg);
+                    log.trace("[{}] fromEdgeSyncResponse [{}]", tenantId, msg);
                     processSyncResponse(fromEdgeSyncResponse);
                     break;
             }
@@ -263,7 +263,8 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     }
 
     private void onEdgeConnect(EdgeId edgeId, EdgeGrpcSession edgeGrpcSession) {
-        log.info("[{}] edge [{}] connected successfully.", edgeGrpcSession.getSessionId(), edgeId);
+        TenantId tenantId = edgeGrpcSession.getEdge().getTenantId();
+        log.info("[{}][{}] edge [{}] connected successfully.", tenantId, edgeGrpcSession.getSessionId(), edgeId);
         sessions.put(edgeId, edgeGrpcSession);
         final Lock newEventLock = sessionNewEventsLocks.computeIfAbsent(edgeId, id -> new ReentrantLock());
         newEventLock.lock();
@@ -272,10 +273,10 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         } finally {
             newEventLock.unlock();
         }
-        save(edgeId, DefaultDeviceStateService.ACTIVITY_STATE, true);
+        save(tenantId, edgeId, DefaultDeviceStateService.ACTIVITY_STATE, true);
         long lastConnectTs = System.currentTimeMillis();
-        save(edgeId, DefaultDeviceStateService.LAST_CONNECT_TIME, lastConnectTs);
-        pushRuleEngineMessage(edgeGrpcSession.getEdge().getTenantId(), edgeId, lastConnectTs, TbMsgType.CONNECT_EVENT);
+        save(tenantId, edgeId, DefaultDeviceStateService.LAST_CONNECT_TIME, lastConnectTs);
+        pushRuleEngineMessage(tenantId, edgeId, lastConnectTs, TbMsgType.CONNECT_EVENT);
         cancelScheduleEdgeEventsCheck(edgeId);
         scheduleEdgeEventsCheck(edgeGrpcSession);
     }
@@ -334,7 +335,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                     newEventLock.lock();
                     try {
                         if (Boolean.TRUE.equals(sessionNewEvents.get(edgeId))) {
-                            log.trace("[{}] Set session new events flag to false", edgeId.getId());
+                            log.trace("[{}][{}] Set session new events flag to false", tenantId, edgeId.getId());
                             sessionNewEvents.put(edgeId, false);
                             Futures.addCallback(session.processEdgeEvents(), new FutureCallback<>() {
                                 @Override
@@ -392,9 +393,10 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             } finally {
                 newEventLock.unlock();
             }
-            save(edgeId, DefaultDeviceStateService.ACTIVITY_STATE, false);
+            TenantId tenantId = toRemove.getEdge().getTenantId();
+            save(tenantId, edgeId, DefaultDeviceStateService.ACTIVITY_STATE, false);
             long lastDisconnectTs = System.currentTimeMillis();
-            save(edgeId, DefaultDeviceStateService.LAST_DISCONNECT_TIME, lastDisconnectTs);
+            save(tenantId, edgeId, DefaultDeviceStateService.LAST_DISCONNECT_TIME, lastDisconnectTs);
             pushRuleEngineMessage(toRemove.getEdge().getTenantId(), edgeId, lastDisconnectTs, TbMsgType.DISCONNECT_EVENT);
             cancelScheduleEdgeEventsCheck(edgeId);
         } else {
@@ -402,36 +404,38 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         }
     }
 
-    private void save(EdgeId edgeId, String key, long value) {
-        log.debug("[{}] Updating long edge telemetry [{}] [{}]", edgeId, key, value);
+    private void save(TenantId tenantId, EdgeId edgeId, String key, long value) {
+        log.debug("[{}][{}] Updating long edge telemetry [{}] [{}]", tenantId, edgeId, key, value);
         if (persistToTelemetry) {
             tsSubService.saveAndNotify(
-                    TenantId.SYS_TENANT_ID, edgeId,
+                    tenantId, edgeId,
                     Collections.singletonList(new BasicTsKvEntry(System.currentTimeMillis(), new LongDataEntry(key, value))),
-                    new AttributeSaveCallback(edgeId, key, value));
+                    new AttributeSaveCallback(tenantId, edgeId, key, value));
         } else {
-            tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, edgeId, DataConstants.SERVER_SCOPE, key, value, new AttributeSaveCallback(edgeId, key, value));
+            tsSubService.saveAttrAndNotify(tenantId, edgeId, DataConstants.SERVER_SCOPE, key, value, new AttributeSaveCallback(tenantId, edgeId, key, value));
         }
     }
 
-    private void save(EdgeId edgeId, String key, boolean value) {
-        log.debug("[{}] Updating boolean edge telemetry [{}] [{}]", edgeId, key, value);
+    private void save(TenantId tenantId, EdgeId edgeId, String key, boolean value) {
+        log.debug("[{}][{}] Updating boolean edge telemetry [{}] [{}]", tenantId, edgeId, key, value);
         if (persistToTelemetry) {
             tsSubService.saveAndNotify(
-                    TenantId.SYS_TENANT_ID, edgeId,
+                    tenantId, edgeId,
                     Collections.singletonList(new BasicTsKvEntry(System.currentTimeMillis(), new BooleanDataEntry(key, value))),
-                    new AttributeSaveCallback(edgeId, key, value));
+                    new AttributeSaveCallback(tenantId, edgeId, key, value));
         } else {
-            tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, edgeId, DataConstants.SERVER_SCOPE, key, value, new AttributeSaveCallback(edgeId, key, value));
+            tsSubService.saveAttrAndNotify(tenantId, edgeId, DataConstants.SERVER_SCOPE, key, value, new AttributeSaveCallback(tenantId, edgeId, key, value));
         }
     }
 
     private static class AttributeSaveCallback implements FutureCallback<Void> {
+        private final TenantId tenantId;
         private final EdgeId edgeId;
         private final String key;
         private final Object value;
 
-        AttributeSaveCallback(EdgeId edgeId, String key, Object value) {
+        AttributeSaveCallback(TenantId tenantId, EdgeId edgeId, String key, Object value) {
+            this.tenantId = tenantId;
             this.edgeId = edgeId;
             this.key = key;
             this.value = value;
@@ -439,12 +443,12 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
         @Override
         public void onSuccess(@Nullable Void result) {
-            log.trace("[{}] Successfully updated attribute [{}] with value [{}]", edgeId, key, value);
+            log.trace("[{}][{}] Successfully updated attribute [{}] with value [{}]", tenantId, edgeId, key, value);
         }
 
         @Override
         public void onFailure(Throwable t) {
-            log.warn("[{}] Failed to update attribute [{}] with value [{}]", edgeId, key, value, t);
+            log.warn("[{}][{}] Failed to update attribute [{}] with value [{}]", tenantId, edgeId, key, value, t);
         }
     }
 

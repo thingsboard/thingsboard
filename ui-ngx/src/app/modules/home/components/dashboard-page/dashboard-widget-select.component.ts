@@ -19,11 +19,17 @@ import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { IAliasController } from '@core/api/widget-api.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { WidgetService } from '@core/http/widget.service';
-import { fullWidgetTypeFqn, WidgetInfo, widgetType } from '@shared/models/widget.models';
-import { distinctUntilChanged, map, publishReplay, refCount, share, switchMap, tap } from 'rxjs/operators';
-import { BehaviorSubject, combineLatest, Observable, of } from 'rxjs';
+import { fullWidgetTypeFqn, WidgetInfo, widgetType, WidgetTypeInfo } from '@shared/models/widget.models';
+import { debounceTime, distinctUntilChanged, map, share, switchMap, tap } from 'rxjs/operators';
+import { BehaviorSubject, combineLatest, Observable, of, ReplaySubject } from 'rxjs';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { isDefinedAndNotNull } from '@core/utils';
+import { PageLink } from '@shared/models/page/page-link';
+import { Direction } from '@shared/models/page/sort-order';
+
+type widgetsListMode = 'all' | 'actual' | 'deprecated';
+
+type selectWidgetMode = 'bundles' | 'allWidgets';
 
 @Component({
   selector: 'tb-dashboard-widget-select',
@@ -34,10 +40,14 @@ export class DashboardWidgetSelectComponent implements OnInit {
 
   private search$ = new BehaviorSubject<string>('');
   private filterWidgetTypes$ = new BehaviorSubject<Array<widgetType>>(null);
+  private widgetsListMode$ = new BehaviorSubject<widgetsListMode>('actual');
+  private selectWidgetMode$ = new BehaviorSubject<selectWidgetMode>('bundles');
   private widgetsInfo: Observable<Array<WidgetInfo>>;
   private widgetsBundleValue: WidgetsBundle;
   widgetTypes = new Set<widgetType>();
+  hasDeprecated = false;
 
+  allWidgets$: Observable<Array<WidgetInfo>>;
   widgets$: Observable<Array<WidgetInfo>>;
   loadingWidgetsSubject: BehaviorSubject<boolean> = new BehaviorSubject(false);
   loadingWidgets$ = this.loadingWidgetsSubject.pipe(
@@ -54,8 +64,10 @@ export class DashboardWidgetSelectComponent implements OnInit {
       this.widgetsBundleValue = widgetBundle;
       if (widgetBundle === null) {
         this.widgetTypes.clear();
+        this.hasDeprecated = false;
       }
       this.filterWidgetTypes$.next(null);
+      this.widgetsListMode$.next('actual');
       this.widgetsInfo = null;
     }
   }
@@ -81,6 +93,24 @@ export class DashboardWidgetSelectComponent implements OnInit {
     return this.filterWidgetTypes$.value;
   }
 
+  @Input()
+  set selectWidgetMode(mode: selectWidgetMode) {
+    this.selectWidgetMode$.next(mode);
+  }
+
+  get selectWidgetMode(): selectWidgetMode {
+    return this.selectWidgetMode$.value;
+  }
+
+  @Input()
+  set widgetsListMode(mode: widgetsListMode) {
+    this.widgetsListMode$.next(mode);
+  }
+
+  get widgetsListMode(): widgetsListMode {
+    return this.widgetsListMode$.value;
+  }
+
   @Output()
   widgetSelected: EventEmitter<WidgetInfo> = new EventEmitter<WidgetInfo>();
 
@@ -90,13 +120,20 @@ export class DashboardWidgetSelectComponent implements OnInit {
   constructor(private widgetsService: WidgetService,
               private sanitizer: DomSanitizer,
               private cd: ChangeDetectorRef) {
-    this.widgetsBundles$ = this.search$.asObservable().pipe(
-      distinctUntilChanged(),
-      switchMap(search => this.fetchWidgetBundle(search))
-    );
-    this.widgets$ = combineLatest([this.search$.asObservable(), this.filterWidgetTypes$.asObservable()]).pipe(
+    this.widgetsBundles$ = combineLatest([this.search$.asObservable(), this.selectWidgetMode$.asObservable()]).pipe(
       distinctUntilChanged((oldValue, newValue) => JSON.stringify(oldValue) === JSON.stringify(newValue)),
-      switchMap(search => this.fetchWidget(...search))
+      switchMap(search => this.fetchWidgetBundle(...search))
+    );
+    this.allWidgets$ = combineLatest([this.search$.asObservable().pipe(
+        debounceTime(150)
+    ), this.selectWidgetMode$.asObservable()]).pipe(
+        distinctUntilChanged((oldValue, newValue) => JSON.stringify(oldValue) === JSON.stringify(newValue)),
+        switchMap(search => this.fetchAllWidgets(...search)),
+        share({ connector: () => new ReplaySubject(1), resetOnError: false, resetOnComplete: false, resetOnRefCountZero: false })
+    );
+    this.widgets$ = combineLatest([this.search$.asObservable(), this.filterWidgetTypes$.asObservable(), this.widgetsListMode$]).pipe(
+      distinctUntilChanged((oldValue, newValue) => JSON.stringify(oldValue) === JSON.stringify(newValue)),
+      switchMap(search => this.fetchWidgets(...search))
     );
   }
 
@@ -106,27 +143,19 @@ export class DashboardWidgetSelectComponent implements OnInit {
   private getWidgets(): Observable<Array<WidgetInfo>> {
     if (!this.widgetsInfo) {
       if (this.widgetsBundle !== null) {
-        const bundleAlias = this.widgetsBundle.alias;
-        const isSystem = this.widgetsBundle.tenantId.id === NULL_UUID;
         this.loadingWidgetsSubject.next(true);
-        this.widgetsInfo = this.widgetsService.getBundleWidgetTypeInfos(bundleAlias, isSystem).pipe(
+        this.widgetsInfo = this.widgetsService.getBundleWidgetTypeInfos(this.widgetsBundle.id.id).pipe(
           map(widgets => {
-            widgets = widgets.sort((a, b) => b.createdTime - a.createdTime);
             const widgetTypes = new Set<widgetType>();
+            const hasDeprecated = widgets.some(w => w.deprecated);
             const widgetInfos = widgets.map((widgetTypeInfo) => {
                 widgetTypes.add(widgetTypeInfo.widgetType);
-                const widget: WidgetInfo = {
-                  typeFullFqn: fullWidgetTypeFqn(widgetTypeInfo),
-                  type: widgetTypeInfo.widgetType,
-                  title: widgetTypeInfo.name,
-                  image: widgetTypeInfo.image,
-                  description: widgetTypeInfo.description
-                };
-                return widget;
+                return this.toWidgetInfo(widgetTypeInfo);
               }
             );
             setTimeout(() => {
               this.widgetTypes = widgetTypes;
+              this.hasDeprecated = hasDeprecated;
               this.cd.markForCheck();
             });
             return widgetInfos;
@@ -134,8 +163,7 @@ export class DashboardWidgetSelectComponent implements OnInit {
           tap(() => {
             this.loadingWidgetsSubject.next(false);
           }),
-          publishReplay(1),
-          refCount()
+          share({ connector: () => new ReplaySubject(1), resetOnError: false, resetOnComplete: false, resetOnRefCountZero: false })
         );
       } else {
         this.widgetsInfo = of([]);
@@ -166,27 +194,32 @@ export class DashboardWidgetSelectComponent implements OnInit {
     return '/assets/widget-preview-empty.svg';
   }
 
-  private getWidgetsBundle(): Observable<Array<WidgetsBundle>> {
+  private getWidgetsBundles(): Observable<Array<WidgetsBundle>> {
     return this.widgetsService.getAllWidgetsBundles().pipe(
       tap(() => this.loadingWidgetBundlesSubject.next(false)),
-      publishReplay(1),
-      refCount()
+      share({ connector: () => new ReplaySubject(1), resetOnError: false, resetOnComplete: false, resetOnRefCountZero: false })
     );
   }
 
-  private fetchWidgetBundle(search: string): Observable<Array<WidgetsBundle>> {
-    return this.getWidgetsBundle().pipe(
-      map(bundles => search ? bundles.filter(
-        bundle => (
-          bundle.title?.toLowerCase().includes(search.toLowerCase()) ||
-          bundle.description?.toLowerCase().includes(search.toLowerCase())
-        )) : bundles
-      )
-    );
+  private fetchWidgetBundle(search: string, mode: selectWidgetMode): Observable<Array<WidgetsBundle>> {
+    if (mode === 'bundles') {
+      return this.getWidgetsBundles().pipe(
+          map(bundles => search ? bundles.filter(
+              bundle => (
+                  bundle.title?.toLowerCase().includes(search.toLowerCase()) ||
+                  bundle.description?.toLowerCase().includes(search.toLowerCase())
+              )) : bundles
+          )
+      );
+    } else {
+      return of([]);
+    }
   }
 
-  private fetchWidget(search: string, filter: widgetType[]): Observable<Array<WidgetInfo>> {
+  private fetchWidgets(search: string, filter: widgetType[], listMode: widgetsListMode): Observable<Array<WidgetInfo>> {
     return this.getWidgets().pipe(
+      map(widgets => (listMode && listMode !== 'all') ?
+        widgets.filter((widget) => listMode === 'actual' ? !widget.deprecated : widget.deprecated) : widgets),
       map(widgets => filter ? widgets.filter((widget) => filter.includes(widget.type)) : widgets),
       map(widgets => search ? widgets.filter(
         widget => (
@@ -195,5 +228,38 @@ export class DashboardWidgetSelectComponent implements OnInit {
         )) : widgets
       )
     );
+  }
+
+  private fetchAllWidgets(search: string, mode: selectWidgetMode): Observable<Array<WidgetInfo>> {
+    if (mode === 'allWidgets') {
+      const pageLink = new PageLink(1024, 0, search, {
+        property: 'name',
+        direction: Direction.ASC
+      });
+      return this.getAllWidgets(pageLink);
+    } else {
+      return of([]);
+    }
+  }
+
+  private getAllWidgets(pageLink: PageLink): Observable<Array<WidgetInfo>> {
+    this.loadingWidgetsSubject.next(true);
+    return this.widgetsService.getWidgetTypes(pageLink, false, true).pipe(
+      map(data => data.data.map(w => this.toWidgetInfo(w))),
+      tap(() => {
+        this.loadingWidgetsSubject.next(false);
+      })
+    );
+  }
+
+  private toWidgetInfo(widgetTypeInfo: WidgetTypeInfo): WidgetInfo {
+    return {
+      typeFullFqn: fullWidgetTypeFqn(widgetTypeInfo),
+      type: widgetTypeInfo.widgetType,
+      title: widgetTypeInfo.name,
+      image: widgetTypeInfo.image,
+      description: widgetTypeInfo.description,
+      deprecated: widgetTypeInfo.deprecated
+    };
   }
 }

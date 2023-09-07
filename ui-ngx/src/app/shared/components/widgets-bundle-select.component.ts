@@ -61,6 +61,9 @@ export class WidgetsBundleSelectComponent implements ControlValueAccessor, OnIni
   @Input()
   disabled: boolean;
 
+  @Input()
+  excludeBundleIds: Array<string>;
+
   widgetsBundles$: Observable<Array<WidgetsBundle>>;
 
   widgetsBundles: Array<WidgetsBundle>;
@@ -160,6 +163,12 @@ export class WidgetsBundleSelectComponent implements ControlValueAccessor, OnIni
       }
     } else {
       widgetsBundlesObservable = this.widgetService.getAllWidgetsBundles();
+    }
+    if (this.excludeBundleIds && this.excludeBundleIds.length) {
+      widgetsBundlesObservable = widgetsBundlesObservable.pipe(
+        map((widgetBundles) =>
+          widgetBundles.filter(w => !this.excludeBundleIds.includes(w.id.id)))
+      );
     }
     return widgetsBundlesObservable;
   }

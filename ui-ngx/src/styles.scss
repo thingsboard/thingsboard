@@ -694,6 +694,10 @@ mat-label {
 
   .tb-table-widget {
     .mat-mdc-table {
+      .mat-mdc-row {
+        font-size: 13px;
+      }
+
       .mat-mdc-cell {
         background: inherit;
         color: inherit;

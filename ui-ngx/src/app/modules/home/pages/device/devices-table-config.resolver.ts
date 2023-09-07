@@ -467,12 +467,13 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     }).afterClosed().subscribe(
       (res) => {
         if (res) {
-          this.config.updateData();
           this.store.pipe(select(selectUserSettingsProperty( 'notDisplayConnectivityAfterAddDevice'))).pipe(
             take(1)
           ).subscribe((settings: boolean) => {
             if(!settings) {
               this.checkConnectivity(null, res.id, true);
+            } else {
+              this.config.updateData();
             }
           });
         }
@@ -734,6 +735,10 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
         }
       })
       .afterClosed()
-      .subscribe(() => {});
+      .subscribe(() => {
+        if (afterAdd ) {
+          this.config.updateData();
+        }
+      });
   }
 }

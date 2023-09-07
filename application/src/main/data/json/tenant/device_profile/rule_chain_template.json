@@ -33,7 +33,11 @@
         "name": "Save Client Attributes",
         "debugMode": false,
         "configuration": {
-          "scope": "CLIENT_SCOPE"
+          "version": 1,
+          "scope": "CLIENT_SCOPE",
+          "notifyDevice": "false",
+          "sendAttributesUpdatedNotification": "false",
+          "updateAttributesOnlyOnValueChange": "true"
         }
       },
       {

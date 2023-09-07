@@ -1104,7 +1104,6 @@
     "name-starts-with": "Ime se začne z",
     "use-entity-name-filter": "Uporabi filter",
     "entity-list-empty": "Nobena entiteta ni izbrana.",
-    "entity-type-list-empty": "Izbrana ni nobena vrsta entitete.",
     "entity-name-filter-required": "Potreben je filter imena entitete.",
     "entity-name-filter-no-entity-matched": "Najti ni bilo nobene entitete, ki se začne z '{{entity}}'.",
     "all-subtypes": "Vse",
