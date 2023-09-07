@@ -17,8 +17,6 @@ package org.thingsboard.server.service.edge.rpc.processor.device;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
@@ -32,12 +30,8 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.device.DeviceProfileService;
-import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
-import org.thingsboard.server.service.edge.rpc.constructor.DeviceMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.DeviceProfileMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessorTest;
 
 import java.util.UUID;
@@ -46,16 +40,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.BDDMockito.willReturn;
 
 public abstract class AbstractDeviceProcessorTest extends BaseEdgeProcessorTest {
-
-    @MockBean
-    DeviceProfileService deviceProfileService;
-    @MockBean
-    DeviceService deviceService;
-
-    @SpyBean
-    DeviceMsgConstructor deviceMsgConstructor;
-    @SpyBean
-    DeviceProfileMsgConstructor deviceProfileMsgConstructor;
 
     protected DeviceId deviceId;
     protected DeviceProfileId deviceProfileId;

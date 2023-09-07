@@ -17,8 +17,6 @@ package org.thingsboard.server.service.edge.rpc.processor.asset;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
@@ -29,13 +27,8 @@ import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.asset.AssetProfileService;
-import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
-import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
-import org.thingsboard.server.service.edge.rpc.constructor.AssetMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.AssetProfileMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessorTest;
 
 import java.util.UUID;
@@ -45,15 +38,6 @@ import static org.mockito.BDDMockito.willReturn;
 
 public abstract class AbstractAssetProcessorTest extends BaseEdgeProcessorTest {
 
-    @MockBean
-    AssetProfileService assetProfileService;
-    @MockBean
-    AssetService assetService;
-
-    @SpyBean
-    AssetMsgConstructor assetMsgConstructor;
-    @SpyBean
-    AssetProfileMsgConstructor assetProfileMsgConstructor;
 
     protected AssetId assetId;
     protected AssetProfileId assetProfileId;
