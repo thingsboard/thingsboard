@@ -347,7 +347,6 @@ public class DefaultDeviceStateServiceTest {
         reset(telemetrySubscriptionService);
 
         long newTimeout = 1;
-        Thread.sleep(newTimeout);
 
         service.onDeviceInactivityTimeoutUpdate(tenantId, deviceId, newTimeout);
         verify(telemetrySubscriptionService, never()).saveAttrAndNotify(any(), eq(deviceId), any(), eq(ACTIVITY_STATE), any(), any());
