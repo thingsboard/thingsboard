@@ -129,8 +129,6 @@ export class OtaUpdateComponent extends EntityComponent<OtaPackage> implements O
   }
 
   updateForm(entity: OtaPackage) {
-    this.entity.name = entity.title;
-
     this.entityForm.patchValue({
       title: entity.title,
       version: entity.version,
