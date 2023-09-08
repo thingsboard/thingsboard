@@ -178,11 +178,15 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         if (nodes != null) {
             for (RuleNode node : nodes) {
                 setSingletonMode(node);
+                /* TODO: voba - merge comment
                 if (node.getId() != null) {
                     ruleNodeIndexMap.put(node.getId(), nodes.indexOf(node));
                 } else {
                     toAddOrUpdate.add(node);
                 }
+                 */
+                ruleNodeIndexMap.put(node.getId(), nodes.indexOf(node));
+                toAddOrUpdate.add(node);
             }
         }
 
@@ -193,8 +197,8 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             Integer index = ruleNodeIndexMap.get(existingNode.getId());
             RuleNode newRuleNode = null;
             if (index != null) {
-                newRuleNode = ruleChainMetaData.getNodes().get(index);
-                toAddOrUpdate.add(newRuleNode);
+//                newRuleNode = ruleChainMetaData.getNodes().get(index);
+//                toAddOrUpdate.add(newRuleNode);
             } else {
                 updatedRuleNodes.add(new RuleNodeUpdateResult(existingNode, null));
                 toDelete.add(existingNode);
