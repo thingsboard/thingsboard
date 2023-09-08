@@ -687,11 +687,11 @@ audit-log:
     password: "${AUDIT_LOG_SINK_PASSWORD:}"
 
 state:
-  # Should be greater then transport.sessions.report_timeout
+  # Should be greater than transport.sessions.report_timeout
   defaultInactivityTimeoutInSec: "${DEFAULT_INACTIVITY_TIMEOUT:600}"
   defaultStateCheckIntervalInSec: "${DEFAULT_STATE_CHECK_INTERVAL:60}"
-  # Controls whether we store device 'active' flag in attributes (default) or telemetry.
-  # If you device to change this parameter, you should re-create the device info view as one of the following:
+  # Controls whether we store the device 'active' flag in attributes (default) or telemetry.
+  # If you decide to change this parameter, you should re-create the device info view as one of the following:
   # If 'persistToTelemetry' is changed from 'false' to 'true': 'CREATE OR REPLACE VIEW device_info_view AS SELECT * FROM device_info_active_ts_view;'
   # If 'persistToTelemetry' is changed from 'true' to 'false': 'CREATE OR REPLACE VIEW device_info_view AS SELECT * FROM device_info_active_attribute_view;'
   persistToTelemetry: "${PERSIST_STATE_TO_TELEMETRY:false}"

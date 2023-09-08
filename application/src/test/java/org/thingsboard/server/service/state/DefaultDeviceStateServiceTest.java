@@ -19,6 +19,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -27,10 +28,13 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DeviceIdInfo;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.notification.rule.trigger.DeviceActivityTrigger;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.TsValue;
+import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -49,14 +53,26 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willReturn;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
+import static org.thingsboard.server.service.state.DefaultDeviceStateService.ACTIVITY_STATE;
+import static org.thingsboard.server.service.state.DefaultDeviceStateService.INACTIVITY_ALARM_TIME;
 import static org.thingsboard.server.service.state.DefaultDeviceStateService.INACTIVITY_TIMEOUT;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -76,6 +92,8 @@ public class DefaultDeviceStateServiceTest {
     DeviceStateData deviceStateDataMock;
     @Mock
     EntityQueryRepository entityQueryRepository;
+    @Mock
+    NotificationRuleProcessor notificationRuleProcessor;
 
     TenantId tenantId = new TenantId(UUID.fromString("00797a3b-7aeb-4b5b-b57a-c2a810d0f112"));
     DeviceId deviceId = DeviceId.fromString("00797a3b-7aeb-4b5b-b57a-c2a810d0f112");
@@ -87,7 +105,7 @@ public class DefaultDeviceStateServiceTest {
 
     @Before
     public void setUp() {
-        service = spy(new DefaultDeviceStateService(deviceService, attributesService, tsService, clusterService, partitionService, entityQueryRepository, null, mock(DefaultTbApiUsageReportClient.class), mock(NotificationRuleProcessor.class)));
+        service = spy(new DefaultDeviceStateService(deviceService, attributesService, tsService, clusterService, partitionService, entityQueryRepository, null, mock(DefaultTbApiUsageReportClient.class), notificationRuleProcessor));
         telemetrySubscriptionService = Mockito.mock(TelemetrySubscriptionService.class);
         ReflectionTestUtils.setField(service, "tsSubService", telemetrySubscriptionService);
         ReflectionTestUtils.setField(service, "defaultStateCheckIntervalInSec", 60);
@@ -103,20 +121,120 @@ public class DefaultDeviceStateServiceTest {
     }
 
     @Test
+    public void givenDeviceBelongsToExternalPartition_whenOnDeviceInactivity_thenCleansStateAndDoesNotReportInactivity() {
+        // GIVEN
+        service.deviceStates.put(deviceId, DeviceStateData.builder().build());
+        given(partitionService.resolve(ServiceType.TB_CORE, tenantId, deviceId))
+                .willReturn(TopicPartitionInfo.builder().build());
+
+        // WHEN
+        service.onDeviceInactivity(tenantId, deviceId);
+
+        // THEN
+        assertThat(service.deviceStates).isEmpty();
+        then(service).should(never()).fetchDeviceStateDataUsingSeparateRequests(deviceId);
+        then(clusterService).shouldHaveNoInteractions();
+        then(notificationRuleProcessor).shouldHaveNoInteractions();
+        then(telemetrySubscriptionService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    public void givenDeviceBelongsToMyPartition_whenOnDeviceInactivity_thenReportsInactivity() throws InterruptedException {
+        // GIVEN
+        initStateService(10000);
+        var deviceStateData = DeviceStateData.builder()
+                .tenantId(tenantId)
+                .deviceId(deviceId)
+                .state(DeviceState.builder().build())
+                .metaData(new TbMsgMetaData())
+                .build();
+
+        service.deviceStates.put(deviceId, deviceStateData);
+
+        // WHEN
+        long timeBeforeCall = System.currentTimeMillis();
+        service.onDeviceInactivity(tenantId, deviceId);
+        long timeAfterCall = System.currentTimeMillis();
+
+        // THEN
+        var inactivityTimeCaptor = ArgumentCaptor.forClass(Long.class);
+        then(telemetrySubscriptionService).should().saveAttrAndNotify(
+                any(), eq(deviceId), any(), eq(INACTIVITY_ALARM_TIME), inactivityTimeCaptor.capture(), any()
+        );
+        var actualInactivityTime = inactivityTimeCaptor.getValue();
+        assertThat(actualInactivityTime).isGreaterThanOrEqualTo(timeBeforeCall);
+        assertThat(actualInactivityTime).isLessThanOrEqualTo(timeAfterCall);
+
+        then(telemetrySubscriptionService).should().saveAttrAndNotify(
+                any(), eq(deviceId), any(), eq(ACTIVITY_STATE), eq(false), any()
+        );
+
+        var msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        then(clusterService).should().pushMsgToRuleEngine(eq(tenantId), eq(deviceId), msgCaptor.capture(), any());
+        var actualMsg = msgCaptor.getValue();
+        assertThat(actualMsg.getType()).isEqualTo(TbMsgType.INACTIVITY_EVENT.name());
+        assertThat(actualMsg.getOriginator()).isEqualTo(deviceId);
+
+        var notificationCaptor = ArgumentCaptor.forClass(DeviceActivityTrigger.class);
+        then(notificationRuleProcessor).should().process(notificationCaptor.capture());
+        var actualNotification = notificationCaptor.getValue();
+        assertThat(actualNotification.getTenantId()).isEqualTo(tenantId);
+        assertThat(actualNotification.getDeviceId()).isEqualTo(deviceId);
+        assertThat(actualNotification.isActive()).isFalse();
+    }
+
+    @Test
+    public void givenInactivityTimeoutReached_whenUpdateInactivityStateIfExpired_thenReportsInactivity() {
+        // GIVEN
+        var deviceStateData = DeviceStateData.builder()
+                .tenantId(tenantId)
+                .deviceId(deviceId)
+                .state(DeviceState.builder().build())
+                .metaData(new TbMsgMetaData())
+                .build();
+
+        given(partitionService.resolve(ServiceType.TB_CORE, tenantId, deviceId)).willReturn(tpi);
+
+        // WHEN
+        service.updateInactivityStateIfExpired(System.currentTimeMillis(), deviceId, deviceStateData);
+
+        // THEN
+        then(telemetrySubscriptionService).should().saveAttrAndNotify(
+                any(), eq(deviceId), any(), eq(INACTIVITY_ALARM_TIME), anyLong(), any()
+        );
+        then(telemetrySubscriptionService).should().saveAttrAndNotify(
+                any(), eq(deviceId), any(), eq(ACTIVITY_STATE), eq(false), any()
+        );
+
+        var msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        then(clusterService).should().pushMsgToRuleEngine(eq(tenantId), eq(deviceId), msgCaptor.capture(), any());
+        var actualMsg = msgCaptor.getValue();
+        assertThat(actualMsg.getType()).isEqualTo(TbMsgType.INACTIVITY_EVENT.name());
+        assertThat(actualMsg.getOriginator()).isEqualTo(deviceId);
+
+        var notificationCaptor = ArgumentCaptor.forClass(DeviceActivityTrigger.class);
+        then(notificationRuleProcessor).should().process(notificationCaptor.capture());
+        var actualNotification = notificationCaptor.getValue();
+        assertThat(actualNotification.getTenantId()).isEqualTo(tenantId);
+        assertThat(actualNotification.getDeviceId()).isEqualTo(deviceId);
+        assertThat(actualNotification.isActive()).isFalse();
+    }
+
+    @Test
     public void givenDeviceIdFromDeviceStatesMap_whenGetOrFetchDeviceStateData_thenNoStackOverflow() {
         service.deviceStates.put(deviceId, deviceStateDataMock);
         DeviceStateData deviceStateData = service.getOrFetchDeviceStateData(deviceId);
-        assertThat(deviceStateData, is(deviceStateDataMock));
-        Mockito.verify(service, never()).fetchDeviceStateDataUsingEntityDataQuery(deviceId);
+        assertThat(deviceStateData).isEqualTo(deviceStateDataMock);
+        Mockito.verify(service, never()).fetchDeviceStateDataUsingSeparateRequests(deviceId);
     }
 
     @Test
     public void givenDeviceIdWithoutDeviceStateInMap_whenGetOrFetchDeviceStateData_thenFetchDeviceStateData() {
         service.deviceStates.clear();
-        willReturn(deviceStateDataMock).given(service).fetchDeviceStateDataUsingEntityDataQuery(deviceId);
+        willReturn(deviceStateDataMock).given(service).fetchDeviceStateDataUsingSeparateRequests(deviceId);
         DeviceStateData deviceStateData = service.getOrFetchDeviceStateData(deviceId);
-        assertThat(deviceStateData, is(deviceStateDataMock));
-        Mockito.verify(service, times(1)).fetchDeviceStateDataUsingEntityDataQuery(deviceId);
+        assertThat(deviceStateData).isEqualTo(deviceStateDataMock);
+        Mockito.verify(service, times(1)).fetchDeviceStateDataUsingSeparateRequests(deviceId);
     }
 
     @Test
@@ -339,6 +457,39 @@ public class DefaultDeviceStateServiceTest {
 
     private void activityVerify(boolean isActive) {
         Mockito.verify(telemetrySubscriptionService, Mockito.times(1)).saveAttrAndNotify(Mockito.any(), Mockito.eq(deviceId), Mockito.any(), Mockito.eq("active"), Mockito.eq(isActive), Mockito.any());
+    }
+
+    @Test
+    public void givenConcurrentAccess_whenGetOrFetchDeviceStateData_thenFetchDeviceStateDataInvokedOnce() {
+        var deviceStateData = DeviceStateData.builder().build();
+        var getOrFetchInvocationCounter = new AtomicInteger();
+
+        doAnswer(invocation -> {
+            getOrFetchInvocationCounter.incrementAndGet();
+            Thread.sleep(100);
+            return deviceStateData;
+        }).when(service).fetchDeviceStateDataUsingSeparateRequests(deviceId);
+
+        int numberOfThreads = 10;
+        var allThreadsReadyLatch = new CountDownLatch(numberOfThreads);
+        var executor = Executors.newFixedThreadPool(numberOfThreads);
+
+        for (int i = 0; i < numberOfThreads; i++) {
+            executor.submit(() -> {
+                allThreadsReadyLatch.countDown();
+                try {
+                    allThreadsReadyLatch.await();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                service.getOrFetchDeviceStateData(deviceId);
+            });
+        }
+
+        executor.shutdown();
+        await().atMost(10, TimeUnit.SECONDS).until(executor::isTerminated);
+
+        assertThat(getOrFetchInvocationCounter.get()).isEqualTo(1);
     }
 
 }

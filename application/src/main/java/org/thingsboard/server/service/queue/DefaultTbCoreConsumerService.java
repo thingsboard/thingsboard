@@ -256,14 +256,23 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                     log.trace("[{}] Forwarding message to device actor {}", id, toCoreMsg.getToDeviceActorMsg());
                                     forwardToDeviceActor(toCoreMsg.getToDeviceActorMsg(), callback);
                                 } else if (toCoreMsg.hasDeviceStateServiceMsg()) {
-                                    log.trace("[{}] Forwarding message to state service {}", id, toCoreMsg.getDeviceStateServiceMsg());
+                                    log.trace("[{}] Forwarding message to device state service {}", id, toCoreMsg.getDeviceStateServiceMsg());
                                     forwardToStateService(toCoreMsg.getDeviceStateServiceMsg(), callback);
                                 } else if (toCoreMsg.hasEdgeNotificationMsg()) {
                                     log.trace("[{}] Forwarding message to edge service {}", id, toCoreMsg.getEdgeNotificationMsg());
                                     forwardToEdgeNotificationService(toCoreMsg.getEdgeNotificationMsg(), callback);
+                                } else if (toCoreMsg.hasDeviceConnectMsg()) {
+                                    log.trace("[{}] Forwarding message to device state service {}", id, toCoreMsg.getDeviceConnectMsg());
+                                    forwardToStateService(toCoreMsg.getDeviceConnectMsg(), callback);
                                 } else if (toCoreMsg.hasDeviceActivityMsg()) {
                                     log.trace("[{}] Forwarding message to device state service {}", id, toCoreMsg.getDeviceActivityMsg());
                                     forwardToStateService(toCoreMsg.getDeviceActivityMsg(), callback);
+                                } else if (toCoreMsg.hasDeviceDisconnectMsg()) {
+                                    log.trace("[{}] Forwarding message to device state service {}", id, toCoreMsg.getDeviceDisconnectMsg());
+                                    forwardToStateService(toCoreMsg.getDeviceDisconnectMsg(), callback);
+                                } else if (toCoreMsg.hasDeviceInactivityMsg()) {
+                                    log.trace("[{}] Forwarding message to device state service {}", id, toCoreMsg.getDeviceInactivityMsg());
+                                    forwardToStateService(toCoreMsg.getDeviceInactivityMsg(), callback);
                                 } else if (!toCoreMsg.getToDeviceActorNotificationMsg().isEmpty()) {
                                     Optional<TbActorMsg> actorMsg = encodingService.decode(toCoreMsg.getToDeviceActorNotificationMsg().toByteArray());
                                     if (actorMsg.isPresent()) {
@@ -592,17 +601,54 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         stateService.onQueueMsg(deviceStateServiceMsg, callback);
     }
 
+    private void forwardToStateService(TransportProtos.DeviceConnectProto deviceConnectMsg, TbCallback callback) {
+        var tenantId = toTenantId(deviceConnectMsg.getTenantIdMSB(), deviceConnectMsg.getTenantIdLSB());
+        var deviceId = new DeviceId(new UUID(deviceConnectMsg.getDeviceIdMSB(), deviceConnectMsg.getDeviceIdLSB()));
+        try {
+            stateService.onDeviceConnect(tenantId, deviceId);
+            callback.onSuccess();
+        } catch (Exception e) {
+            log.warn("Failed process device connect message for device [{}]", deviceId, e);
+            callback.onFailure(e);
+        }
+    }
+
     private void forwardToStateService(TransportProtos.DeviceActivityProto deviceActivityMsg, TbCallback callback) {
         if (statsEnabled) {
             stats.log(deviceActivityMsg);
         }
-        TenantId tenantId = toTenantId(deviceActivityMsg.getTenantIdMSB(), deviceActivityMsg.getTenantIdLSB());
-        DeviceId deviceId = new DeviceId(new UUID(deviceActivityMsg.getDeviceIdMSB(), deviceActivityMsg.getDeviceIdLSB()));
+        var tenantId = toTenantId(deviceActivityMsg.getTenantIdMSB(), deviceActivityMsg.getTenantIdLSB());
+        var deviceId = new DeviceId(new UUID(deviceActivityMsg.getDeviceIdMSB(), deviceActivityMsg.getDeviceIdLSB()));
         try {
             stateService.onDeviceActivity(tenantId, deviceId, deviceActivityMsg.getLastActivityTime());
             callback.onSuccess();
         } catch (Exception e) {
-            callback.onFailure(new RuntimeException("Failed update device activity for device [" + deviceId.getId() + "]!", e));
+            log.warn("Failed process device activity message for device [{}]", deviceId, e);
+            callback.onFailure(e);
+        }
+    }
+
+    private void forwardToStateService(TransportProtos.DeviceDisconnectProto deviceDisconnectMsg, TbCallback callback) {
+        var tenantId = toTenantId(deviceDisconnectMsg.getTenantIdMSB(), deviceDisconnectMsg.getTenantIdLSB());
+        var deviceId = new DeviceId(new UUID(deviceDisconnectMsg.getDeviceIdMSB(), deviceDisconnectMsg.getDeviceIdLSB()));
+        try {
+            stateService.onDeviceDisconnect(tenantId, deviceId);
+            callback.onSuccess();
+        } catch (Exception e) {
+            log.warn("Failed process device activity message for device [{}]", deviceId, e);
+            callback.onFailure(e);
+        }
+    }
+
+    private void forwardToStateService(TransportProtos.DeviceInactivityProto deviceInactivityMsg, TbCallback callback) {
+        var tenantId = toTenantId(deviceInactivityMsg.getTenantIdMSB(), deviceInactivityMsg.getTenantIdLSB());
+        var deviceId = new DeviceId(new UUID(deviceInactivityMsg.getDeviceIdMSB(), deviceInactivityMsg.getDeviceIdLSB()));
+        try {
+            stateService.onDeviceInactivity(tenantId, deviceId);
+            callback.onSuccess();
+        } catch (Exception e) {
+            log.warn("Failed process device inactivity message for device [{}]", deviceId, e);
+            callback.onFailure(e);
         }
     }
 
