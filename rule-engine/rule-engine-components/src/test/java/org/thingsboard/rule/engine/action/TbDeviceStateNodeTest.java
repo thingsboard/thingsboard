@@ -41,11 +41,11 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
@@ -128,13 +128,17 @@ public class TbDeviceStateNodeTest {
     @Test
     public void givenNonDeviceOriginator_whenOnMsg_thenTellsSuccessAndNoActivityActionsTriggered() {
         // GIVEN
-        var msg = TbMsg.newMsg(TbMsgType.ENTITY_CREATED, new AssetId(UUID.randomUUID()), new TbMsgMetaData(), "{}");
+        var originator = new AssetId(UUID.randomUUID());
+        var msg = TbMsg.newMsg(TbMsgType.ENTITY_CREATED, originator, new TbMsgMetaData(), "{}");
+        given(ctxMock.isLocalEntity(originator)).willReturn(true);
 
         // WHEN
         node.onMsg(ctxMock, msg);
 
         // THEN
-        then(ctxMock).should(only()).tellSuccess(msg);
+        then(ctxMock).should(times(1)).isLocalEntity(originator);
+        then(ctxMock).should(times(1)).tellSuccess(msg);
+        then(ctxMock).shouldHaveNoMoreInteractions();
     }
 
     @Test
@@ -147,16 +151,20 @@ public class TbDeviceStateNodeTest {
 
         // THEN
         then(ctxMock).should(times(1)).isLocalEntity(DUMMY_MSG_ORIGINATOR);
-        then(ctxMock).should(times(1)).tellSuccess(DUMMY_MSG);
+        then(ctxMock).should().getSelfId();
         then(ctxMock).shouldHaveNoMoreInteractions();
     }
 
     @Test
-    public void givenConnectEventInConfig_whenOnMsg_thenOnDeviceConnectCalledAndTellsSuccess() throws TbNodeException {
+    public void givenConnectEventInConfig_whenOnMsg_thenOnDeviceConnectCalledAndTellsSuccess() {
         // GIVEN
         config.setEvent(TbMsgType.CONNECT_EVENT);
         var nodeConfig = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-        node.init(ctxMock, nodeConfig);
+        try {
+            node.init(ctxMock, nodeConfig);
+        } catch (TbNodeException e) {
+            fail("Node failed to initialize!", e);
+        }
         given(ctxMock.getTenantId()).willReturn(DUMMY_TENANT_ID);
         given(ctxMock.getClusterService()).willReturn(tbClusterServiceMock);
         given(ctxMock.isLocalEntity(DUMMY_MSG.getOriginator())).willReturn(true);
