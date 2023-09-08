@@ -144,14 +144,14 @@ public class TbDateTzTest {
         pattern.remove("timeZoneName", "full");
         pattern.remove("delimiter", ".");
         pattern.remove("era", "long");
-        String expectedUA = "Donnerstag, 20 Dezember 2012";
-        String actualUA = d.toLocaleString(localString, pattern);
-        Assert.assertEquals(expectedUA, actualUA);
+        String expected = "Donnerstag, 20 Dezember 2012";
+        String actual = d.toLocaleString(localString, pattern);
+        Assert.assertEquals(expected, actual);
 
         localString = "ar-EG";
-        expectedUA = "الخميس, ٢٠ ديسمبر ٢٠١٢";
-        actualUA = d.toLocaleString(localString, pattern);
-        Assert.assertEquals(expectedUA, actualUA);
+        expected = "الخميس, ٢٠ ديسمبر ٢٠١٢";
+        actual = d.toLocaleString(localString, pattern);
+        Assert.assertEquals(expected, actual);
     }
 
     private ExecutionHashMap<String, Object> getPattern() {
