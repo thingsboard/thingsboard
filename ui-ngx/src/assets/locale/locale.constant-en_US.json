@@ -2003,6 +2003,7 @@
         "type-rule-chain-metadata": "Rule Chain Metadata",
         "type-edge": "Edge",
         "type-user": "User",
+        "type-tenant": "Tenant",
         "type-customer": "Customer",
         "type-relation": "Relation",
         "type-widgets-bundle": "Widgets Bundle",
