@@ -1,13 +1,12 @@
 {
   "title": "Rule Engine Statistics",
+  "image": null,
+  "mobileHide": false,
+  "mobileOrder": null,
   "configuration": {
     "widgets": {
       "81987f19-3eac-e4ce-b790-d96e9b54d9a0": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "basic_timeseries",
         "type": "timeseries",
-        "title": "New widget",
         "sizeX": 12,
         "sizeY": 7,
         "config": {
@@ -151,6 +150,15 @@
             "xaxisSecond": {
               "axisPosition": "top",
               "showLabels": true
+            },
+            "showLegend": true,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "showMin": true,
+              "showMax": true,
+              "showAvg": false,
+              "showTotal": true
             }
           },
           "title": "Queue Stats",
@@ -169,25 +177,13 @@
           "widgetStyle": {},
           "useDashboardTimewindow": false,
           "displayTimewindow": true,
-          "showLegend": true,
-          "actions": {},
-          "legendConfig": {
-            "direction": "column",
-            "position": "bottom",
-            "showMin": true,
-            "showMax": true,
-            "showAvg": false,
-            "showTotal": true
-          }
+          "actions": {}
         },
-        "id": "81987f19-3eac-e4ce-b790-d96e9b54d9a0"
+        "id": "81987f19-3eac-e4ce-b790-d96e9b54d9a0",
+        "typeFullFqn": "system.charts.basic_timeseries"
       },
       "5eb79712-5c24-3060-7e4f-6af36b8f842d": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "timeseries_table",
         "type": "timeseries",
-        "title": "New widget",
         "sizeX": 24,
         "sizeY": 5,
         "config": {
@@ -272,14 +268,11 @@
           "titleTooltip": "",
           "displayTimewindow": true
         },
-        "id": "5eb79712-5c24-3060-7e4f-6af36b8f842d"
+        "id": "5eb79712-5c24-3060-7e4f-6af36b8f842d",
+        "typeFullFqn": "system.cards.timeseries_table"
       },
       "ad3f1417-87a8-750e-fc67-49a2de1466d4": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "basic_timeseries",
         "type": "timeseries",
-        "title": "New widget",
         "sizeX": 12,
         "sizeY": 7,
         "config": {
@@ -393,6 +386,15 @@
             "xaxisSecond": {
               "axisPosition": "top",
               "showLabels": true
+            },
+            "showLegend": true,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "showMin": true,
+              "showMax": true,
+              "showAvg": false,
+              "showTotal": true
             }
           },
           "title": "Processing Failures and Timeouts",
@@ -411,18 +413,10 @@
           "widgetStyle": {},
           "useDashboardTimewindow": false,
           "displayTimewindow": true,
-          "showLegend": true,
-          "actions": {},
-          "legendConfig": {
-            "direction": "column",
-            "position": "bottom",
-            "showMin": true,
-            "showMax": true,
-            "showAvg": false,
-            "showTotal": true
-          }
+          "actions": {}
         },
-        "id": "ad3f1417-87a8-750e-fc67-49a2de1466d4"
+        "id": "ad3f1417-87a8-750e-fc67-49a2de1466d4",
+        "typeFullFqn": "system.charts.basic_timeseries"
       }
     },
     "states": {
@@ -457,14 +451,12 @@
               "backgroundColor": "#eeeeee",
               "color": "rgba(0,0,0,0.870588)",
               "columns": 24,
-              "margins": [
-                10,
-                10
-              ],
               "backgroundSizeMode": "100%",
               "autoFillHeight": true,
               "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70
+              "mobileRowHeight": 70,
+              "margin": 10,
+              "outerMargin": true
             }
           }
         }
@@ -477,8 +469,10 @@
         "filter": {
           "type": "assetType",
           "resolveMultiple": true,
-          "assetType": "TbServiceQueue",
-          "assetNameFilter": ""
+          "assetNameFilter": "",
+          "assetTypes": [
+            "TbServiceQueue"
+          ]
         }
       }
     },
@@ -514,7 +508,9 @@
       "showDashboardTimewindow": true,
       "showDashboardExport": true,
       "toolbarAlwaysOpen": true
-    }
+    },
+    "filters": {}
   },
+  "externalId": null,
   "name": "Rule Engine Statistics"
 }
