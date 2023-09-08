@@ -53,7 +53,6 @@ public class EdgeSyncCursor {
     public EdgeSyncCursor(EdgeContextComponent ctx, Edge edge, boolean fullSync) {
         if (fullSync) {
             fetchers.add(new QueuesEdgeEventFetcher(ctx.getQueueService()));
-            fetchers.add(new RuleChainsEdgeEventFetcher(ctx.getRuleChainService()));
             fetchers.add(new AdminSettingsEdgeEventFetcher(ctx.getAdminSettingsService(), ctx.getFreemarkerConfig()));
             fetchers.add(new TenantEdgeEventFetcher(ctx.getTenantService()));
             fetchers.add(new TenantAdminUsersEdgeEventFetcher(ctx.getUserService()));
@@ -64,6 +63,7 @@ public class EdgeSyncCursor {
                 fetchers.add(new CustomerUsersEdgeEventFetcher(ctx.getUserService(), edge.getCustomerId()));
             }
         }
+        fetchers.add(new RuleChainsEdgeEventFetcher(ctx.getRuleChainService()));
         fetchers.add(new DashboardsEdgeEventFetcher(ctx.getDashboardService()));
         fetchers.add(new DefaultProfilesEdgeEventFetcher(ctx.getDeviceProfileService(), ctx.getAssetProfileService()));
         fetchers.add(new DeviceProfilesEdgeEventFetcher(ctx.getDeviceProfileService()));

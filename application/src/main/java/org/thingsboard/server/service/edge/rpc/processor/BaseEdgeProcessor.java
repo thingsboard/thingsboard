@@ -234,6 +234,9 @@ public abstract class BaseEdgeProcessor {
     protected DataValidator<EntityView> entityViewValidator;
 
     @Autowired
+    protected DataValidator<RuleChain> ruleChainValidator;
+
+    @Autowired
     protected EdgeMsgConstructor edgeMsgConstructor;
 
     @Autowired
