@@ -21,12 +21,24 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.thingsboard.common.util.JacksonUtil;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.chrono.IsoChronology;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -122,6 +134,176 @@ class TbDateTest {
         assertThat(executor.submit(() -> new TbDate(ts - offset).toISOString()).get(30, TimeUnit.SECONDS))
                 .as("new instance format in executor thread")
                 .startsWith(datePrefix);
+    }
+
+    @Test
+    void testToLocaleDateString() {
+        TbDate d = new TbDate(1693962245000L);
+
+        // Depends on time zone, so we just check it works;
+        Assert.assertNotNull(d.toLocaleDateString());
+        Assert.assertNotNull(d.toLocaleDateString("en-US"));
+
+        Assert.assertEquals("9/5/23", d.toLocaleDateString("en-US", "America/New_York")); 
+        Assert.assertEquals("23. 9. 5.", d.toLocaleDateString("ko-KR",  "America/New_York")); 
+        Assert.assertEquals("06.09.23",  d.toLocaleDateString( "uk-UA", "Europe/Kiev")); 
+        Assert.assertEquals("5\u200F/9\u200F/2023",  d.toLocaleDateString( "ar-EG", "America/New_York")); 
+
+        Assert.assertEquals("Tuesday, September 5, 2023", d.toLocaleDateString("en-US", JacksonUtil.newObjectNode()
+                .put("timeZone", "America/New_York")
+                .put("dateStyle", "full")
+                .toString())); 
+        Assert.assertEquals("2023년 9월 5일 화요일", d.toLocaleDateString("ko-KR", JacksonUtil.newObjectNode()
+                .put("timeZone", "America/New_York")
+                .put("dateStyle", "full")
+                .toString())); 
+        Assert.assertEquals("середа, 6 вересня 2023 р.", d.toLocaleDateString("uk-UA", JacksonUtil.newObjectNode()
+                .put("timeZone", "Europe/Kiev")
+                .put("dateStyle", "full")
+                .toString())); 
+        Assert.assertEquals("الثلاثاء، 5 سبتمبر 2023", d.toLocaleDateString("ar-EG", JacksonUtil.newObjectNode()
+                .put("timeZone", "America/New_York")
+                .put("dateStyle", "full")
+                .toString())); 
+
+        Assert.assertEquals("Tuesday 9/5/2023", d.toLocaleDateString("en-US", JacksonUtil.newObjectNode()
+                .put("timeZone", "America/New_York")
+                .put("pattern", "EEEE M/d/yyyy")
+                .toString())); 
+        Assert.assertEquals("화요일 9/5/2023", d.toLocaleDateString("ko-KR", JacksonUtil.newObjectNode()
+                .put("timeZone", "America/New_York")
+                .put("pattern", "EEEE M/d/yyyy")
+                .toString())); 
+        Assert.assertEquals("середа 9/6/2023", d.toLocaleDateString("uk-UA", JacksonUtil.newObjectNode()
+                .put("timeZone", "Europe/Kiev")
+                .put("pattern", "EEEE M/d/yyyy")
+                .toString())); 
+        Assert.assertEquals("الثلاثاء 9/5/2023", d.toLocaleDateString("ar-EG", JacksonUtil.newObjectNode()
+                .put("timeZone", "America/New_York")
+                .put("pattern", "EEEE M/d/yyyy")
+                .toString())); 
+    }
+
+    @Test
+    void testToLocaleTimeString() {
+        TbDate d = new TbDate(1693962245000L);
+
+        // Depends on time zone, so we just check it works;
+        Assert.assertNotNull(d.toLocaleTimeString());
+        Assert.assertNotNull(d.toLocaleTimeString("en-US"));
+
+
+        Assert.assertEquals("9:04:05 PM", d.toLocaleTimeString("en-US", "America/New_York"));
+        Assert.assertEquals("오후 9:04:05", d.toLocaleTimeString("ko-KR",  "America/New_York"));
+        Assert.assertEquals("04:04:05",  d.toLocaleTimeString( "uk-UA", "Europe/Kiev"));
+        Assert.assertEquals("9:04:05 م",  d.toLocaleTimeString( "ar-EG", "America/New_York"));
+
+        Assert.assertEquals("9:04:05 PM Eastern Daylight Time", d.toLocaleTimeString("en-US", JacksonUtil.newObjectNode()
+                .put("timeZone", "America/New_York")
+                .put("timeStyle", "full")
+                .toString())); 
+        Assert.assertEquals("오후 9시 4분 5초 미 동부 하계 표준시", d.toLocaleTimeString("ko-KR", JacksonUtil.newObjectNode()
+                .put("timeZone", "America/New_York")
+                .put("timeStyle", "full")
+                .toString())); 
+        Assert.assertEquals("04:04:05 за східноєвропейським літнім часом", d.toLocaleTimeString("uk-UA", JacksonUtil.newObjectNode()
+                .put("timeZone", "Europe/Kiev")
+                .put("timeStyle", "full")
+                .toString())); 
+        Assert.assertEquals("9:04:05 م التوقيت الصيفي الشرقي لأمريكا الشمالية", d.toLocaleTimeString("ar-EG", JacksonUtil.newObjectNode()
+                .put("timeZone", "America/New_York")
+                .put("timeStyle", "full")
+                .toString())); 
+
+        Assert.assertEquals("9:04:05 PM", d.toLocaleTimeString("en-US", JacksonUtil.newObjectNode()
+                .put("timeZone", "America/New_York")
+                .put("pattern", "h:mm:ss a")
+                .toString())); 
+        Assert.assertEquals("9:04:05 오후", d.toLocaleTimeString("ko-KR", JacksonUtil.newObjectNode()
+                .put("timeZone", "America/New_York")
+                .put("pattern", "h:mm:ss a")
+                .toString())); 
+        Assert.assertEquals("4:04:05 дп", d.toLocaleTimeString("uk-UA", JacksonUtil.newObjectNode()
+                .put("timeZone", "Europe/Kiev")
+                .put("pattern", "h:mm:ss a")
+                .toString())); 
+        Assert.assertEquals("9:04:05 م", d.toLocaleTimeString("ar-EG", JacksonUtil.newObjectNode()
+                .put("timeZone", "America/New_York")
+                .put("pattern", "h:mm:ss a")
+                .toString())); 
+    }
+
+    @Test
+    void testToLocaleString() {
+        TbDate d = new TbDate(1693962245000L);
+
+        // Depends on time zone, so we just check it works;
+        Assert.assertNotNull(d.toLocaleString());
+        Assert.assertNotNull(d.toLocaleString("en-US"));
+
+        Assert.assertEquals("9/5/23, 9:04:05 PM", d.toLocaleString("en-US", "America/New_York")); 
+        Assert.assertEquals("23. 9. 5. 오후 9:04:05", d.toLocaleString("ko-KR",  "America/New_York")); 
+        Assert.assertEquals("06.09.23, 04:04:05",  d.toLocaleString( "uk-UA", "Europe/Kiev")); 
+        Assert.assertEquals("5\u200F/9\u200F/2023 9:04:05 م",  d.toLocaleString( "ar-EG", "America/New_York")); 
+
+        Assert.assertEquals("Tuesday, September 5, 2023 at 9:04:05 PM Eastern Daylight Time", d.toLocaleString("en-US", JacksonUtil.newObjectNode()
+                .put("timeZone", "America/New_York")
+                .put("dateStyle", "full")
+                .put("timeStyle", "full")
+                .toString())); 
+        Assert.assertEquals("2023년 9월 5일 화요일 오후 9시 4분 5초 미 동부 하계 표준시", d.toLocaleString("ko-KR", JacksonUtil.newObjectNode()
+                .put("timeZone", "America/New_York")
+                .put("dateStyle", "full")
+                .put("timeStyle", "full")
+                .toString())); 
+        Assert.assertEquals("середа, 6 вересня 2023 р. о 04:04:05 за східноєвропейським літнім часом", d.toLocaleString("uk-UA", JacksonUtil.newObjectNode()
+                .put("timeZone", "Europe/Kiev")
+                .put("dateStyle", "full")
+                .put("timeStyle", "full")
+                .toString())); 
+        Assert.assertEquals("الثلاثاء، 5 سبتمبر 2023 9:04:05 م التوقيت الصيفي الشرقي لأمريكا الشمالية", d.toLocaleString("ar-EG", JacksonUtil.newObjectNode()
+                .put("timeZone", "America/New_York")
+                .put("dateStyle", "full")
+                .put("timeStyle", "full")
+                .toString())); 
+
+        Assert.assertEquals("9/5/2023, 9:04:05 PM", d.toLocaleString("en-US", JacksonUtil.newObjectNode()
+                .put("timeZone", "America/New_York")
+                .put("pattern", "M/d/yyyy, h:mm:ss a")
+                .toString())); 
+        Assert.assertEquals("9/5/2023, 9:04:05 오후", d.toLocaleString("ko-KR", JacksonUtil.newObjectNode()
+                .put("timeZone", "America/New_York")
+                .put("pattern", "M/d/yyyy, h:mm:ss a")
+                .toString())); 
+        Assert.assertEquals("9/6/2023, 4:04:05 дп", d.toLocaleString("uk-UA", JacksonUtil.newObjectNode()
+                .put("timeZone", "Europe/Kiev")
+                .put("pattern", "M/d/yyyy, h:mm:ss a")
+                .toString())); 
+        Assert.assertEquals("9/5/2023, 9:04:05 م", d.toLocaleString("ar-EG", JacksonUtil.newObjectNode()
+                .put("timeZone", "America/New_York")
+                .put("pattern", "M/d/yyyy, h:mm:ss a")
+                .toString())); 
+    }
+
+    private static String toLocalString(TbDate d, Locale locale, ZoneId tz) {
+        LocalDateTime ldt = d.toInstant().atZone(tz).toLocalDateTime();
+
+//        new DateTimeFormatterBuilder().appendPattern(pattern).toFormatter(locale)
+
+        String formatPattern =
+                DateTimeFormatterBuilder.getLocalizedDateTimePattern(
+                        FormatStyle.SHORT,
+                        FormatStyle.MEDIUM,
+                        IsoChronology.INSTANCE,
+                        locale);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(formatPattern, locale);
+        return formatter.format(ldt);
+    }
+
+    private static String toLocalString2(TbDate d, Locale locale, ZoneId tz) {
+        DateFormat dateFormat = SimpleDateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM, locale);
+        dateFormat.setTimeZone(TimeZone.getTimeZone(tz));
+        return dateFormat.format(d);
     }
 
 }
