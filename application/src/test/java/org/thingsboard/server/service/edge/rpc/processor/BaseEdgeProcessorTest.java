@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -195,6 +196,9 @@ public abstract class BaseEdgeProcessorTest {
 
     @MockBean
     protected DataValidator<EntityView> entityViewValidator;
+
+    @MockBean
+    protected DataValidator<RuleChain> ruleChainValidator;
 
     @MockBean
     protected EdgeMsgConstructor edgeMsgConstructor;

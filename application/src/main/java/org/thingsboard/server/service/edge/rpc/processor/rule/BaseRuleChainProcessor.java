@@ -41,7 +41,7 @@ import java.util.function.Function;
 @Slf4j
 public class BaseRuleChainProcessor extends BaseEdgeProcessor {
 
-    protected boolean saveOrUpdateRuleChain(TenantId tenantId, RuleChainId ruleChainId, RuleChainUpdateMsg ruleChainUpdateMsg) {
+    protected boolean saveOrUpdateRuleChain(TenantId tenantId, RuleChainId ruleChainId, RuleChainUpdateMsg ruleChainUpdateMsg, RuleChainType ruleChainType) {
         boolean created = false;
         RuleChain ruleChain = ruleChainService.findRuleChainById(tenantId, ruleChainId);
         if (ruleChain == null) {
@@ -51,7 +51,7 @@ public class BaseRuleChainProcessor extends BaseEdgeProcessor {
             ruleChain.setCreatedTime(Uuids.unixTimestamp(ruleChainId.getId()));
         }
         ruleChain.setName(ruleChainUpdateMsg.getName());
-        ruleChain.setType(RuleChainType.EDGE);
+        ruleChain.setType(ruleChainType);
         ruleChain.setDebugMode(ruleChainUpdateMsg.getDebugMode());
         ruleChain.setConfiguration(JacksonUtil.toJsonNode(ruleChainUpdateMsg.getConfiguration()));
 
