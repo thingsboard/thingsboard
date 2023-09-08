@@ -25,6 +25,7 @@ import org.mvel2.ParserContext;
 import org.mvel2.SandboxedParserConfiguration;
 import org.mvel2.execution.ExecutionHashMap;
 import java.text.ParseException;
+import java.util.Date;
 
 @Slf4j
 
@@ -125,6 +126,32 @@ public class TbDateTzTest {
         pattern.put("hour12", false);
         String actualUS = d.toLocaleString(localString, pattern);
         Assert.assertEquals(expectedUS, actualUS);
+    }
+
+    @Test
+    public void testToLocaleStringTzPattern_de_DE_ar_EG() throws ParseException {
+//        Date dUTC = new Date(Date.UTC(2012, 11, 20, 3, 0, 0)); // 1693962245000L
+//        TbDate d = new TbDate(dUTC.getTime()); //  1693962245000L
+        TbDate d = new TbDate(2012, 11, 20, 3, 0, 0);   // 1355965200000
+        String localString = "de-DE";
+        ExecutionHashMap<String, Object> pattern = getPattern();
+        pattern.put("weekday", "long");
+        pattern.put("hour12", false);
+        pattern.put("timeZone", "UTC");
+        pattern.remove("hour", "numeric");
+        pattern.remove("minute", "numeric");
+        pattern.remove("second", "numeric");
+        pattern.remove("timeZoneName", "full");
+        pattern.remove("delimiter", ".");
+        pattern.remove("era", "long");
+        String expectedUA = "Donnerstag, 20 Dezember 2012";
+        String actualUA = d.toLocaleString(localString, pattern);
+        Assert.assertEquals(expectedUA, actualUA);
+
+        localString = "ar-EG";
+        expectedUA = "الخميس, ٢٠ ديسمبر ٢٠١٢";
+        actualUA = d.toLocaleString(localString, pattern);
+        Assert.assertEquals(expectedUA, actualUA);
     }
 
     private ExecutionHashMap<String, Object> getPattern() {
