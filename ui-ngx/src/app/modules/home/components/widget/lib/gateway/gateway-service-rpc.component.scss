@@ -13,19 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.device;
+:host {
+  width: 100%;
+  height: 100%;
+  overflow-x: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import org.springframework.core.io.Resource;
-import org.thingsboard.server.common.data.Device;
+  .command-form {
+    width: 100%;
+    flex-wrap: nowrap;
+    padding: 0 15px 5px;
+    margin-bottom: 5px;
 
-import java.net.URISyntaxException;
+    & > button {
+      margin-top: 10px;
+    }
+  }
 
-public interface DeviceConnectivityService {
+  .result-block {
+    padding: 0 15px;
+    display: flex;
+    flex-direction: column;
 
-    JsonNode findDevicePublishTelemetryCommands(String baseUrl, Device device) throws URISyntaxException;
-
-    JsonNode findGatewayLaunchCommands(String baseUrl, Device device) throws URISyntaxException;
-
-    Resource getPemCertFile(String protocol);
+    & > span {
+      font-weight: 600;
+    }
+  }
 }
+
+:host ::ng-deep {
+  .tb-json-content {
+    height: 100%;
+  }
+
+  .mat-mdc-form-field-icon-suffix {
+    z-index: 100;
+  }
+}
+
