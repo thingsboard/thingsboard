@@ -99,11 +99,15 @@ redis:
 transport:
   snmp:
     enabled: "${SNMP_ENABLED:true}"
+    bind_port: "${SNMP_BIND_PORT:1620}"
     response_processing:
       # parallelism level for executor (workStealingPool) that is responsible for handling responses from SNMP devices
       parallelism_level: "${SNMP_RESPONSE_PROCESSING_PARALLELISM_LEVEL:20}"
     # to configure SNMP to work over UDP or TCP
     underlying_protocol: "${SNMP_UNDERLYING_PROTOCOL:udp}"
+    max_request_oids: "${SNMP_MAX_REQUEST_OIDS:100}"
+    response:
+      ignore_type_cast_errors: "${SNMP_RESPONSE_IGNORE_TYPE_CAST_ERRORS:false}"
   sessions:
     inactivity_timeout: "${TB_TRANSPORT_SESSIONS_INACTIVITY_TIMEOUT:300000}"
     report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:3000}"

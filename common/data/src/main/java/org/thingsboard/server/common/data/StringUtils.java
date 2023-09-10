@@ -163,6 +163,15 @@ public class StringUtils {
         return false;
     }
 
+    public static boolean equalsAnyIgnoreCase(String string, String... otherStrings) {
+        for (String otherString : otherStrings) {
+            if (equalsIgnoreCase(string, otherString)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static String substringAfterLast(String str, String sep) {
         return org.apache.commons.lang3.StringUtils.substringAfterLast(str, sep);
     }

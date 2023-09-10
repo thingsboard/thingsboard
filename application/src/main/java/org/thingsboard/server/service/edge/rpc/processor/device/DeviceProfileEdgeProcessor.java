@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -36,6 +37,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
@@ -94,7 +96,7 @@ public class DeviceProfileEdgeProcessor extends BaseDeviceProfileProcessor {
         }
     }
 
-    public DownlinkMsg convertDeviceProfileEventToDownlink(EdgeEvent edgeEvent) {
+    public DownlinkMsg convertDeviceProfileEventToDownlink(EdgeEvent edgeEvent, EdgeId edgeId, EdgeVersion edgeVersion) {
         DeviceProfileId deviceProfileId = new DeviceProfileId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
@@ -103,6 +105,7 @@ public class DeviceProfileEdgeProcessor extends BaseDeviceProfileProcessor {
                 DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileById(edgeEvent.getTenantId(), deviceProfileId);
                 if (deviceProfile != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
+                    deviceProfile = checkIfDeviceProfileDefaultFieldsAssignedToEdge(edgeEvent.getTenantId(), edgeId, deviceProfile, edgeVersion);
                     DeviceProfileUpdateMsg deviceProfileUpdateMsg =
                             deviceProfileMsgConstructor.constructDeviceProfileUpdatedMsg(msgType, deviceProfile);
                     downlinkMsg = DownlinkMsg.newBuilder()
