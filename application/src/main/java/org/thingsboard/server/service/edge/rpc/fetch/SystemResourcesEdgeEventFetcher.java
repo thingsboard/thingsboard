@@ -15,22 +15,20 @@
  */
 package org.thingsboard.server.service.edge.rpc.fetch;
 
-import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.widget.WidgetsBundle;
-import org.thingsboard.server.dao.widget.WidgetsBundleService;
+import org.thingsboard.server.dao.resource.ResourceService;
 
-@Slf4j
-public class TenantWidgetsBundlesEdgeEventFetcher extends BaseWidgetsBundlesEdgeEventFetcher {
+public class SystemResourcesEdgeEventFetcher extends BaseResourceEdgeEventFetcher {
 
-    public TenantWidgetsBundlesEdgeEventFetcher(WidgetsBundleService widgetsBundleService) {
-        super(widgetsBundleService);
+    public SystemResourcesEdgeEventFetcher(ResourceService resourceService) {
+        super(resourceService);
     }
 
     @Override
-    protected PageData<WidgetsBundle> findWidgetsBundles(TenantId tenantId, PageLink pageLink) {
-        return widgetsBundleService.findTenantWidgetsBundlesByTenantId(tenantId, pageLink);
+    protected PageData<TbResource> findTenantResources(TenantId tenantId, PageLink pageLink) {
+        return resourceService.findAllTenantResources(TenantId.SYS_TENANT_ID, pageLink);
     }
 }

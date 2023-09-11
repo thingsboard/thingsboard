@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.edge;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -393,7 +392,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(expectedRuleChainUUID, ruleChainUUID);
     }
 
-    private void validateAdminSettings() throws JsonProcessingException {
+    private void validateAdminSettings() {
         List<AdminSettingsUpdateMsg> adminSettingsUpdateMsgs = edgeImitator.findAllMessagesByType(AdminSettingsUpdateMsg.class);
         Assert.assertEquals(4, adminSettingsUpdateMsgs.size());
 
