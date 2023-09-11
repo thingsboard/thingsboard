@@ -548,6 +548,14 @@ redis:
   db: "${REDIS_DB:0}"
   # db password
   password: "${REDIS_PASSWORD:}"
+  # ssl config
+  ssl:
+    enabled: "${TB_REDIS_SSL_ENABLED:true}"
+    truststoreLocation: "${TB_REDIS_SSL_TRUSTSTORE_LOCATION:}"
+    truststorePassword: "${TB_REDIS_SSL_TRUSTSTORE_PASSWORD:}"
+    # client authentication could be optional and depends on redis server configuration
+    keystoreLocation: "${TB_REDIS_SSL_KEYSTORE_LOCATION:}"
+    keystorePassword: "${TB_REDIS_SSL_KEYSTORE_PASSWORD:}"
   # pool config
   pool_config:
     maxTotal: "${REDIS_POOL_CONFIG_MAX_TOTAL:128}"

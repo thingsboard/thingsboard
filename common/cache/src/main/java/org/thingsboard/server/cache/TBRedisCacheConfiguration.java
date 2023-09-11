@@ -16,6 +16,8 @@
 package org.thingsboard.server.cache;
 
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
@@ -35,6 +37,12 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import redis.clients.jedis.JedisPoolConfig;
 
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManagerFactory;
+import java.io.FileInputStream;
+import java.security.KeyStore;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,6 +52,7 @@ import java.util.List;
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
 @EnableCaching
 @Data
+@Slf4j
 public abstract class TBRedisCacheConfiguration {
 
     private static final String COMMA = ",";
@@ -89,6 +98,9 @@ public abstract class TBRedisCacheConfiguration {
     public RedisConnectionFactory redisConnectionFactory() {
         return loadFactory();
     }
+
+    @Autowired
+    private TbRedisSslCredentialsConfiguration redisSslCredentials;
 
     protected abstract JedisConnectionFactory loadFactory();
 
@@ -148,5 +160,34 @@ public abstract class TBRedisCacheConfiguration {
             }
         }
         return result;
+    }
+
+    protected SSLSocketFactory createSslSocketFactory() {
+        try {
+            KeyStore trustStore = KeyStore.getInstance("jks");
+            trustStore.load(new FileInputStream(redisSslCredentials.getTruststoreLocation()), redisSslCredentials.getTruststorePassword().toCharArray());
+
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("X509");
+            trustManagerFactory.init(trustStore);
+
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+
+            // client authentication is optional
+            if (redisSslCredentials.getKeystoreLocation() != null && redisSslCredentials.getKeystorePassword() != null) {
+                KeyStore keyStore = KeyStore.getInstance("pkcs12");
+                keyStore.load(new FileInputStream(redisSslCredentials.getKeystoreLocation()), redisSslCredentials.getKeystorePassword().toCharArray());
+
+                KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("PKIX");
+                keyManagerFactory.init(keyStore, redisSslCredentials.getKeystorePassword().toCharArray());
+
+                sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
+            } else {
+                sslContext.init(null, trustManagerFactory.getTrustManagers(), null);
+            }
+            return sslContext.getSocketFactory();
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }
