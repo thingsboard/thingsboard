@@ -102,6 +102,8 @@ import static org.thingsboard.server.common.data.StringUtils.isBlank;
 @Slf4j
 public class DefaultDataUpdateService implements DataUpdateService {
 
+    private static final int MAX_PENDING_SAVE_RULE_NODE_FUTURES = 100;
+
     @Autowired
     private TenantService tenantService;
 
@@ -229,6 +231,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
     @Override
     public void upgradeRuleNodes() {
         try {
+            var futures = new ArrayList<ListenableFuture<?>>(100);
             log.info("Starting rule nodes upgrade ...");
             var nodeClassToVersionMap = componentDiscoveryService.getVersionedNodes();
             log.debug("Found {} versioned nodes to check for upgrade!", nodeClassToVersionMap.size());
@@ -256,11 +259,15 @@ public class DefaultDataUpdateService implements DataUpdateService {
                                 ruleNode.setConfiguration(upgradeRuleNodeConfigurationResult.getSecond());
                             }
                             ruleNode.setConfigurationVersion(toVersion);
-                            jpaExecutorService.submit(() -> {
+                            futures.add(jpaExecutorService.submit(() -> {
                                 ruleChainService.saveRuleNode(TenantId.SYS_TENANT_ID, ruleNode);
                                 log.debug("Successfully upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
                                         ruleNodeId, ruleNodeTypeForLogs, fromVersion, toVersion);
-                            });
+                            }));
+                            if (futures.size() >= MAX_PENDING_SAVE_RULE_NODE_FUTURES) {
+                                awaitFuturesToComplete(futures);
+                                futures.clear();
+                            }
                         } catch (Exception e) {
                             log.warn("Failed to upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {} due to: ",
                                     ruleNodeId, ruleNodeTypeForLogs, fromVersion, toVersion, e);
@@ -268,9 +275,20 @@ public class DefaultDataUpdateService implements DataUpdateService {
                     }
                 }
             });
+            awaitFuturesToComplete(futures);
             log.info("Finished rule nodes upgrade!");
         } catch (Exception e) {
             log.error("Unexpected error during rule nodes upgrade: ", e);
+        }
+    }
+
+    private static void awaitFuturesToComplete(List<ListenableFuture<?>> futures) {
+        var batchFuture = Futures.allAsList(futures);
+        try {
+            batchFuture.get();
+            log.info("{} rule nodes upgraded successfully!", futures.size());
+        } catch (ExecutionException | InterruptedException e) {
+            throw new RuntimeException("Failed to process save rule nodes requests due to: ", e);
         }
     }
 
