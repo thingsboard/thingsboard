@@ -48,8 +48,8 @@ public class KvUtils {
 
         String key = tsKvEntry.getKey();
 
-        if (key == null) {
-            throw new DataValidationException("Key can't be null");
+        if (key == null || key.isBlank()) {
+            throw new DataValidationException("Key can't be null or empty");
         }
 
         if (key.length() > 255) {
