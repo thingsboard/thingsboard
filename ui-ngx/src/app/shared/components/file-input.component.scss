@@ -22,8 +22,10 @@ $previewSize: 100px !default;
   .tb-container {
     margin-top: 0;
     label.tb-title {
-      display: block;
       padding-bottom: 8px;
+      &:not(.pointer-event) {
+        display: block;
+      }
     }
   }
 

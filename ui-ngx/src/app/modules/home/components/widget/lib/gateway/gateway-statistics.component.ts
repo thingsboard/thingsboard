@@ -14,18 +14,10 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, Input, ViewChild } from '@angular/core';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { Router } from '@angular/router';
+import { AfterViewInit, Component, ElementRef, Input, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { MatDialog } from '@angular/material/dialog';
 import { AttributeService } from '@core/http/attribute.service';
-import { DeviceService } from '@core/http/device.service';
-import { TranslateService } from '@ngx-translate/core';
 import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetry.models';
-import { PageComponent } from '@shared/components/page.component';
-import { DialogService } from '@core/services/dialog.service';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { TbFlot } from '@home/components/widget/lib/flot-widget';
 import { ResizeObserver } from '@juggle/resize-observer';
@@ -41,13 +33,12 @@ import { MatTableDataSource } from '@angular/material/table';
 import { MatSort } from '@angular/material/sort';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 
-
 @Component({
   selector: 'tb-gateway-statistics',
   templateUrl: './gateway-statistics.component.html',
   styleUrls: ['./gateway-statistics.component.scss']
 })
-export class GatewayStatisticsComponent extends PageComponent implements AfterViewInit {
+export class GatewayStatisticsComponent implements AfterViewInit {
 
   @ViewChild(MatSort) sort: MatSort;
   @ViewChild('statisticChart') statisticChart: ElementRef;
@@ -58,10 +49,10 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
   @Input()
   public general: boolean;
 
-  public isNumericData: boolean = false;
+  public isNumericData = false;
   public chartInited: boolean;
   private flot: TbFlot;
-  private flotCtx;
+  private flotCtx: WidgetContext;
   public statisticForm: FormGroup;
   public statisticsKeys = [];
   public commands = [];
@@ -89,70 +80,61 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
   };
 
 
-  constructor(protected router: Router,
-              protected store: Store<AppState>,
-              protected fb: FormBuilder,
-              protected translate: TranslateService,
-              protected attributeService: AttributeService,
-              protected deviceService: DeviceService,
-              protected dialogService: DialogService,
-              private cd: ChangeDetectorRef,
-              private utils: UtilsService,
-              public dialog: MatDialog) {
-    super(store);
+  constructor(private fb: FormBuilder,
+              private attributeService: AttributeService,
+              private utils: UtilsService) {
     const sortOrder: SortOrder = {property: '0', direction: Direction.DESC};
     this.pageLink = new PageLink(Number.POSITIVE_INFINITY, 0, null, sortOrder);
     this.displayedColumns = ['0', '1'];
     this.dataSource = new MatTableDataSource<any>([]);
     this.statisticForm = this.fb.group({
       statisticKey: [null, []]
-    })
+    });
 
     this.statisticForm.get('statisticKey').valueChanges.subscribe(value => {
       this.commandObj = null;
       if (this.commands.length) {
         this.commandObj = this.commands.find(command => command.attributeOnGateway === value);
       }
-      if (this.subscriptionInfo) this.createChartsSubscription(this.ctx.defaultSubscription.datasources[0].entity, value);
-    })
+      if (this.subscriptionInfo) {
+        this.createChartsSubscription(this.ctx.defaultSubscription.datasources[0].entity, value);
+      }
+    });
   }
 
 
   ngAfterViewInit() {
     this.dataSource.sort = this.sort;
-    this.sort.sortChange.subscribe(_=>{
-      this.sortData();
-    })
+    this.sort.sortChange.subscribe(() => this.sortData());
     this.init();
     if (this.ctx.defaultSubscription.datasources.length) {
       const gateway = this.ctx.defaultSubscription.datasources[0].entity;
-      if (gateway.id.id === NULL_UUID) return;
+      if (gateway.id.id === NULL_UUID) {
+        return;
+      }
       if (!this.general) {
-        this.attributeService.getEntityAttributes(gateway.id, AttributeScope.SHARED_SCOPE, ["general_configuration"]).subscribe((resp: AttributeData[]) => {
-          if (resp && resp.length) {
-            this.commands = resp[0].value.statistics.commands;
-            if (!this.statisticForm.get('statisticKey').value && this.commands && this.commands.length) {
-              this.statisticForm.get('statisticKey').setValue(this.commands[0].attributeOnGateway);
-              this.createChartsSubscription(gateway, this.commands[0].attributeOnGateway);
+        this.attributeService.getEntityAttributes(gateway.id, AttributeScope.SHARED_SCOPE, ['general_configuration'])
+          .subscribe((resp: AttributeData[]) => {
+            if (resp && resp.length) {
+              this.commands = resp[0].value.statistics.commands;
+              if (!this.statisticForm.get('statisticKey').value && this.commands && this.commands.length) {
+                this.statisticForm.get('statisticKey').setValue(this.commands[0].attributeOnGateway);
+                this.createChartsSubscription(gateway, this.commands[0].attributeOnGateway);
+              }
             }
-          }
-        })
+          });
       } else {
-        let connectorsTs;
         this.attributeService.getEntityTimeseriesLatest(gateway.id).subscribe(
           data => {
-            connectorsTs = Object.keys(data)
-              .filter(el => el.includes(
-                'ConnectorEventsProduced'
-              ) || el.includes(
-                'ConnectorEventsSent'))
+            const connectorsTs = Object.keys(data)
+              .filter(el => el.includes('ConnectorEventsProduced') || el.includes('ConnectorEventsSent'));
             this.createGeneralChartsSubscription(gateway, connectorsTs);
-          })
+          });
       }
     }
   }
 
-  public sortData () {
+  public sortData() {
     this.dataSource.sortData(this.dataSource.data, this.sort);
   }
 
@@ -162,7 +144,7 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
   }
 
   private createChartsSubscription(gateway: BaseData<EntityId>, attr: string) {
-    let subscriptionInfo = [{
+    const subscriptionInfo = [{
       type: DatasourceType.entity,
       entityType: EntityType.DEVICE,
       entityId: gateway.id.id,
@@ -175,8 +157,8 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
     this.changeSubscription(subscriptionInfo);
   }
 
-  private createGeneralChartsSubscription(gateway: BaseData<EntityId>, attrData: [string]) {
-    let subscriptionInfo = [{
+  private createGeneralChartsSubscription(gateway: BaseData<EntityId>, attrData: string[]) {
+    const subscriptionInfo = [{
       type: DatasourceType.entity,
       entityType: EntityType.DEVICE,
       entityId: gateway.id.id,
@@ -184,20 +166,20 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
       timeseries: []
     }];
     subscriptionInfo[0].timeseries = [];
-    if (attrData && attrData.length) {
+    if (attrData?.length) {
       attrData.forEach(attr => {
-        subscriptionInfo[0].timeseries.push({name: attr, label: attr})
-      })
+        subscriptionInfo[0].timeseries.push({name: attr, label: attr});
+      });
     }
     this.ctx.defaultSubscription.datasources[0].dataKeys.forEach(dataKey => {
-      subscriptionInfo[0].timeseries.push({name: dataKey.name, label: dataKey.label})
-    })
+      subscriptionInfo[0].timeseries.push({name: dataKey.name, label: dataKey.label});
+    });
 
     this.subscriptionInfo = subscriptionInfo;
     this.changeSubscription(subscriptionInfo);
   }
 
-  init = () => {
+  private init = () => {
     this.flotCtx = {
       $scope: this.ctx.$scope,
       $injector: this.ctx.$injector,
@@ -207,20 +189,20 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
       subscriptionApi: this.ctx.subscriptionApi,
       detectChanges: this.ctx.detectChanges,
       settings: this.ctx.settings
-    };
-  }
+    } as WidgetContext;
+  };
 
-  updateChart = () => {
+  private updateChart = () => {
     if (this.flot && this.ctx.defaultSubscription.data.length) {
       this.flot.update();
     }
-  }
+  };
 
-  resize = () => {
+  private resize = () => {
     if (this.flot) {
       this.flot.resize();
     }
-  }
+  };
 
   private reset() {
     if (this.resize$) {
@@ -260,7 +242,7 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
     this.chartInited = true;
     this.flotCtx.$container = $(this.statisticChart.nativeElement);
     this.resize$.observe(this.statisticChart.nativeElement);
-    this.flot = new TbFlot(this.flotCtx as WidgetContext, "line");
+    this.flot = new TbFlot(this.flotCtx as WidgetContext, 'line');
     this.flot.update();
   }
 
@@ -270,16 +252,17 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
       return;
     }
     this.dataSource.data = this.subscription.data.length ? this.subscription.data[0].data : [];
-    this.isNumericData = this.dataSource.data.every(data => !isNaN(+data[1]) );
+    this.isNumericData = this.dataSource.data.every(data => !isNaN(+data[1]));
   }
 
 
-  changeSubscription(subscriptionInfo: SubscriptionInfo[]) {
+  private changeSubscription(subscriptionInfo: SubscriptionInfo[]) {
     if (this.subscription) {
       this.reset();
     }
     if (this.ctx.datasources[0].entity) {
-      this.ctx.subscriptionApi.createSubscriptionFromInfo(widgetType.timeseries, subscriptionInfo, this.subscriptionOptions, false, true).subscribe(subscription => {
+      this.ctx.subscriptionApi.createSubscriptionFromInfo(widgetType.timeseries, subscriptionInfo, this.subscriptionOptions,
+        false, true).subscribe(subscription => {
         this.subscription = subscription;
         this.isDataOnlyNumbers();
         this.legendData = this.subscription.legendData;
@@ -291,9 +274,7 @@ export class GatewayStatisticsComponent extends PageComponent implements AfterVi
         if (this.isNumericData) {
           this.initChart();
         }
-      })
-
+      });
     }
   }
-
 }

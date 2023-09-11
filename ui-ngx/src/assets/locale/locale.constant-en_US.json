@@ -2635,7 +2635,7 @@
     "gateway": {
         "add-entry": "Add configuration",
         "advanced": "Advanced",
-        "checking-device-activity": "Checking Device Activity:",
+        "checking-device-activity": "Checking device activity",
         "command": "Docker commands",
         "command-copied-message": "Docker command has been copied to clipboard",
         "configuration": "Configuration",
@@ -2888,7 +2888,7 @@
             "log-format": "Log message format",
             "remote-log": "Enables remote logging and logs reading from the gateway",
             "backup-count": "If backup count is > 0, when a rollover is done, no more than backup count files are kept - the oldest ones are deleted",
-            "storage": "Provides configuration for saving incoming data before it is sent to the ThingsBoard platform",
+            "storage": "Provides configuration for saving incoming data before it is sent to the platform",
             "file": "Received data saving to the hard drive",
             "memory": "Received data saving to the RAM memory",
             "sqlite": "Received data saving to the .db file",
@@ -5330,7 +5330,10 @@
             "events-filter": "Events filter",
             "event-key-contains": "Event key contains...",
             "is-connector": "Is Connector",
-            "state-param-name": "State parameter connector name"
+            "state-param-name": "State parameter connector name",
+            "status": "Status",
+            "message": "Message",
+            "created-time": "Created time"
         },
         "gauge": {
             "default-color": "Default color",

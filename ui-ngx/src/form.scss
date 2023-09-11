@@ -65,6 +65,9 @@
       box-shadow: none;
       border-radius: 0;
     }
+    &.no-gap {
+      gap: 0;
+    }
     &.tb-slide-toggle {
       padding: 0;
       gap: 0;
@@ -218,7 +221,7 @@
     }
   }
 
-  .tb-form-row .mat-mdc-form-field, .mat-mdc-form-field.tb-inline-field {
+  .tb-form-row:not(.tb-not-inline-field) .mat-mdc-form-field, .mat-mdc-form-field.tb-inline-field {
     &.mat-form-field-appearance-fill {
       .mdc-text-field--filled:not(.mdc-text-field--disabled) {
         &:before {

@@ -15,12 +15,13 @@
     limitations under the License.
 
 -->
-<section class="tb-widget-settings" [formGroup]="GatewayLogSettingForm" fxLayout="column">
-  <mat-slide-toggle class="mat-slide" formControlName="isConnectorLog">
-    {{"widgets.gateway.is-connector" | translate}}
-  </mat-slide-toggle>
-  <mat-form-field fxFlex class="mat-block" *ngIf="GatewayLogSettingForm.get('isConnectorLog').value">
-    <mat-label>{{"widgets.gateway.state-param-name" | translate}}</mat-label>
-    <input matInput formControlName="connectorLogState">
-  </mat-form-field>
-</section>
+<div class="tb-form-panel" [formGroup]="gatewayLogSettingForm">
+  <div class="tb-form-row column-xs">
+    <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="isConnectorLog">
+      {{"widgets.gateway.is-connector" | translate}}
+    </mat-slide-toggle>
+    <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+      <input matInput formControlName="connectorLogState" placeholder="{{ 'widgets.gateway.state-param-name' | translate }}">
+    </mat-form-field>
+  </div>
+</div>

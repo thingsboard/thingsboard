@@ -16,14 +16,13 @@
 :host {
   width: 100%;
   height: 100%;
-  display: block;
+  display: flex;
+  flex-direction: column;
 
-  .mat-icon {
-    color: rgba(0, 0, 0, .12);
-  }
-
-  .tb-form-panel {
-    margin-bottom: 20px;
+  .configuration-block {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
   }
 
   .mat-toolbar {
@@ -31,113 +30,37 @@
     color: rgba(0, 0, 0, .87) !important;
   }
 
-  .mat-content {
-    .expansion-panel-header {
-      font-weight: 600;
-      color: rgba(0, 0, 0, .87) !important;
-    }
-
-    mat-slide-toggle {
-      margin-bottom: 16px;
-    }
-
-    mat-form-field {
-      margin-right: 15px;
-    }
-
-    .slider-icon {
-      position: absolute;
-      transform: translateY(-3px);
-    }
-
-    .block-title {
-      font-size: 20px;
-      font-weight: 400;
-      padding-top: 16px;
-    }
-
-    .hover-cursor {
-      cursor: pointer;
-    }
-  }
-
-  .security-toggle-group {
-    margin-bottom: 15px;
+  .toggle-group {
     margin-right: auto;
-  }
-
-  .logs-label {
-    font-weight: 500;
-    margin-bottom: 10px;
-  }
-
-  .statistics-block {
-    margin-bottom: 15px;
-    padding-left: 15px;
-    padding-top: 15px;
   }
 
   .first-capital {
     text-transform: capitalize;
   }
 
-  mat-panel-title {
-    display: block;
-    padding-top: 20px;
-  }
-
-  mat-panel-title span {
-    display: block;
-    padding-left: 0;
-    padding-top: 5px;
-  }
-
-  .tb-hint {
-    font-size: 13px;
-    color: rgba(0, 0, 0, .54);
-    width: fit-content;
-    cursor: pointer;
-    text-transform: none !important;
-  }
-
-  .line-break {
-    width: 100%;
-  }
-
   textarea {
     resize: none;
+  }
+
+  .saving-period {
+    flex: 1;
   }
 }
 
 :host ::ng-deep {
-  .mat-tab-label-active {
-    color: white;
-    opacity: 1;
-  }
-
-  .mat-tab-label, .mat-tab-label-active{
-    min-width: 50px !important;
-    padding: 3px !important;
-    margin: 3px !important;
-    flex-grow: 1;
-  }
-
-  .mat-ink-bar {
-    height: 100%;
-    z-index: -10;
-    border-radius: 5px;
-  }
-
   .pointer-event {
     pointer-events: all;
   }
 
-  .mat-mdc-form-field-icon-suffix {
-    z-index: 100;
+  .toggle-group span {
+    padding: 0 25px;
   }
 
-  .security-toggle-group span {
-    padding: 0 25px;
+  .mat-mdc-form-field-icon-suffix {
+    color: #E0E0E0;
+    &:hover {
+      color: #9E9E9E;
+    }
   }
 }
 

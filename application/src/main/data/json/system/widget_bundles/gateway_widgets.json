@@ -12,7 +12,6 @@
     "gateway_widgets.attributes_card",
     "gateway_widgets.gateway_configuration2",
     "gateway_widgets.config_form_latest",
-    "gateway_widgets.gateway_events",
     "gateway_widgets.gateway_connector",
     "gateway_widgets.gateway_logs",
     "gateway_widgets.gateway_statistics",

@@ -15,82 +15,102 @@
     limitations under the License.
 
 -->
-<form style="height: calc(100% - 7px)" fxLayout="column">
-  <div fxLayout="row" fxLayout.lt-lg="column" fxLayoutGap="15px" fxFlex class="connector-container">
-    <mat-card fxLayout="column" fxFlex.lt-lg style="overflow: auto; min-height: 35vh">
-      <mat-toolbar class="mat-mdc-table-toolbar">
-        <h2>{{ 'gateway.connectors' | translate }}</h2>
-        <span fxFlex></span>
-        <button mat-icon-button
-                [disabled]="isLoading$ | async"
-                (click)="addAttribute()"
-                matTooltip="{{ 'action.add' | translate }}"
-                matTooltipPosition="above">
-          <mat-icon>add</mat-icon>
-        </button>
-      </mat-toolbar>
-      <table mat-table [dataSource]="dataSource"
-             matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()"
-             matSortDisableClear>
-        <ng-container matColumnDef="enabled" sticky>
-          <mat-header-cell *matHeaderCellDef style="width: 30px;">
-            {{ 'gateway.connectors-table-enabled' | translate }}
-          </mat-header-cell>
-          <mat-cell *matCellDef="let attribute">
-            <mat-slide-toggle [checked]="activeConnectors.includes(attribute.key)"
-                              (click)="$event.stopPropagation(); enableConnector(attribute)"></mat-slide-toggle>
-          </mat-cell>
-        </ng-container>
-        <ng-container matColumnDef="key">
-          <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 40%">
-            {{ 'gateway.connectors-table-name' | translate }}</mat-header-cell>
-          <mat-cell *matCellDef="let attribute">
-            {{ attribute.key }}
-          </mat-cell>
-        </ng-container>
-        <ng-container matColumnDef="type">
-          <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 30%">
-            {{ 'gateway.connectors-table-type' | translate }}
-          </mat-header-cell>
-          <mat-cell *matCellDef="let attribute" style="text-transform: uppercase">
-            {{ returnType(attribute) }}
-          </mat-cell>
-        </ng-container>
-        <ng-container matColumnDef="syncStatus">
-          <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 30%">
-            {{ 'gateway.configuration' | translate }}
-          </mat-header-cell>
-          <mat-cell *matCellDef="let attribute" style="text-transform: uppercase">
-              <div
-              [ngClass]="{
-              'status-block': true,
-              'status-sync':isConnectorSynced(attribute),
-              'status-unsync':!isConnectorSynced(attribute)
-              }">{{isConnectorSynced(attribute)?'sync' : 'out of sync'}}</div>
-          </mat-cell>
-        </ng-container>
-        <ng-container matColumnDef="errors">
-          <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 30%">
-            {{ 'gateway.connectors-table-status' | translate }}
-          </mat-header-cell>
-          <mat-cell *matCellDef="let attribute" style="text-transform: uppercase">
-            <span class="dot"
-                  matTooltip="{{ 'Errors: '+ getErrorsCount(attribute)}}"
-                  matTooltipPosition="above"
-                  [ngClass]="{
-            'hasErrors': +getErrorsCount(attribute) > 0,
-            'noErrors': +getErrorsCount(attribute) == 0 || getErrorsCount(attribute) == ''
-            }"></span>
-          </mat-cell>
-        </ng-container>
-        <ng-container matColumnDef="actions" stickyEnd>
-          <mat-header-cell *matHeaderCellDef
-                           [ngStyle.gt-md]="{ minWidth: '144px', maxWidth: '144px', width: '144px'}">
-            {{ 'gateway.connectors-table-actions' | translate }}
-          </mat-header-cell>
-          <mat-cell *matCellDef="let attribute"
-                    [ngStyle.gt-md]="{ minWidth: '144px', maxWidth: '144px', width: '144px'}">
-            <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
+<div class="connector-container tb-form-panel no-border">
+  <section class="table-container tb-form-panel stroked no-padding flex">
+    <mat-toolbar class="mat-mdc-table-toolbar">
+      <h2>{{ 'gateway.connectors' | translate }}</h2>
+      <span fxFlex></span>
+      <button mat-icon-button
+              [disabled]="isLoading$ | async"
+              (click)="addAttribute()"
+              matTooltip="{{ 'action.add' | translate }}"
+              matTooltipPosition="above">
+        <mat-icon>add</mat-icon>
+      </button>
+    </mat-toolbar>
+    <table mat-table [dataSource]="dataSource"
+           matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()"
+           matSortDisableClear>
+      <ng-container matColumnDef="enabled" sticky>
+        <mat-header-cell *matHeaderCellDef style="width: 60px;min-width: 60px;">
+          {{ 'gateway.connectors-table-enabled' | translate }}
+        </mat-header-cell>
+        <mat-cell *matCellDef="let attribute">
+          <mat-slide-toggle [checked]="activeConnectors.includes(attribute.key)"
+                            (click)="$event.stopPropagation(); enableConnector(attribute)"></mat-slide-toggle>
+        </mat-cell>
+      </ng-container>
+      <ng-container matColumnDef="key">
+        <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 40%">
+          {{ 'gateway.connectors-table-name' | translate }}</mat-header-cell>
+        <mat-cell *matCellDef="let attribute">
+          {{ attribute.key }}
+        </mat-cell>
+      </ng-container>
+      <ng-container matColumnDef="type">
+        <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 30%">
+          {{ 'gateway.connectors-table-type' | translate }}
+        </mat-header-cell>
+        <mat-cell *matCellDef="let attribute" style="text-transform: uppercase">
+          {{ returnType(attribute) }}
+        </mat-cell>
+      </ng-container>
+      <ng-container matColumnDef="syncStatus">
+        <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 30%">
+          {{ 'gateway.configuration' | translate }}
+        </mat-header-cell>
+        <mat-cell *matCellDef="let attribute" style="text-transform: uppercase">
+            <div class="status" [class]="isConnectorSynced(attribute) ? 'status-sync' : 'status-unsync'">
+              {{ isConnectorSynced(attribute) ? 'sync' : 'out of sync' }}
+            </div>
+        </mat-cell>
+      </ng-container>
+      <ng-container matColumnDef="errors">
+        <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 30%">
+          {{ 'gateway.connectors-table-status' | translate }}
+        </mat-header-cell>
+        <mat-cell *matCellDef="let attribute" style="text-transform: uppercase">
+          <span class="dot"
+                matTooltip="{{ 'Errors: '+ getErrorsCount(attribute)}}"
+                matTooltipPosition="above"
+                [class]="{'hasErrors': +getErrorsCount(attribute) > 0,
+                          'noErrors': +getErrorsCount(attribute) === 0 || getErrorsCount(attribute) === ''}"></span>
+        </mat-cell>
+      </ng-container>
+      <ng-container matColumnDef="actions" stickyEnd>
+        <mat-header-cell *matHeaderCellDef
+                         [ngStyle.gt-md]="{ minWidth: '144px', maxWidth: '144px', width: '144px'}">
+          {{ 'gateway.connectors-table-actions' | translate }}
+        </mat-header-cell>
+        <mat-cell *matCellDef="let attribute"
+                  [ngStyle.gt-md]="{ minWidth: '144px', maxWidth: '144px', width: '144px'}">
+          <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
+            <button mat-icon-button
+                    matTooltip="RPC"
+                    matTooltipPosition="above"
+                    (click)="connectorRpc(attribute, $event)">
+              <mat-icon>private_connectivity</mat-icon>
+            </button>
+            <button mat-icon-button
+                    matTooltip="Logs"
+                    matTooltipPosition="above"
+                    (click)="connectorLogs(attribute, $event)">
+              <mat-icon>list</mat-icon>
+            </button>
+            <button mat-icon-button
+                    matTooltip="Delete connector"
+                    matTooltipPosition="above"
+                    (click)="deleteConnector(attribute, $event)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+          <div fxHide fxShow.lt-lg>
+            <button mat-icon-button
+                    (click)="$event.stopPropagation()"
+                    [matMenuTriggerFor]="cellActionsMenu">
+              <mat-icon class="material-icons">more_vert</mat-icon>
+            </button>
+            <mat-menu #cellActionsMenu="matMenu" xPosition="before">
               <button mat-icon-button
                       matTooltip="RPC"
                       matTooltipPosition="above"
@@ -98,7 +118,7 @@
                 <mat-icon>private_connectivity</mat-icon>
               </button>
               <button mat-icon-button
-                      matTooltip="Logs"
+                      matTooltip="Delete connector"
                       matTooltipPosition="above"
                       (click)="connectorLogs(attribute, $event)">
                 <mat-icon>list</mat-icon>
@@ -109,90 +129,61 @@
                       (click)="deleteConnector(attribute, $event)">
                 <mat-icon>delete</mat-icon>
               </button>
-            </div>
-            <div fxHide fxShow.lt-lg>
-              <button mat-icon-button
-                      (click)="$event.stopPropagation()"
-                      [matMenuTriggerFor]="cellActionsMenu">
-                <mat-icon class="material-icons">more_vert</mat-icon>
-              </button>
-              <mat-menu #cellActionsMenu="matMenu" xPosition="before">
-                <button mat-icon-button
-                        matTooltip="RPC"
-                        matTooltipPosition="above"
-                        (click)="connectorRpc(attribute, $event)">
-                  <mat-icon>private_connectivity</mat-icon>
-                </button>
-                <button mat-icon-button
-                        matTooltip="Delete connector"
-                        matTooltipPosition="above"
-                        (click)="connectorLogs(attribute, $event)">
-                  <mat-icon>list</mat-icon>
-                </button>
-                <button mat-icon-button
-                        matTooltip="Delete connector"
-                        matTooltipPosition="above"
-                        (click)="deleteConnector(attribute, $event)">
-                  <mat-icon>delete</mat-icon>
-                </button>
-              </mat-menu>
-            </div>
-          </mat-cell>
-        </ng-container>
-        <mat-header-row [ngClass]="{'mat-row-select': true}"
-                        *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
-        <mat-row [ngClass]="{'mat-row-select': true,
-                'tb-current-entity': isSameConnector(attribute)}"
-                 *matRowDef="let attribute; columns: displayedColumns;" (click)="selectConnector(attribute)"></mat-row>
-      </table>
-      <mat-divider></mat-divider>
-    </mat-card>
-    <div [formGroup]="connectorForm" fxLayout="column">
-      <mat-card fxLayout="row" fxLayout.lt-lg="column" fxLayoutGap="15px" fxLayoutGap.lt-lg="5px">
-        <mat-form-field class="mat-block tb-value-type">
-          <mat-label>{{ 'gateway.connectors-table-name' | translate }}</mat-label>
-          <input matInput formControlName="name" #nameInput/>
-        </mat-form-field>
-        <mat-form-field class="mat-block tb-value-type">
-          <mat-label>{{ 'gateway.connectors-table-type' | translate }}</mat-label>
-          <mat-select formControlName="type">
-            <mat-option style="text-transform: uppercase"
-                        *ngFor="let type of gatewayConnectorDefaultTypes | keyvalue" [value]="type.key">{{type.value}}</mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field class="mat-block tb-value-type" *ngIf="connectorForm.get('type').value === 'grpc'">
-          <mat-label>{{ 'gateway.connectors-table-key' | translate }}</mat-label>
-          <input matInput formControlName="key"/>
-        </mat-form-field>
-        <mat-form-field class="mat-block tb-value-type" *ngIf="connectorForm.get('type').value === 'custom'">
-          <mat-label>{{ 'gateway.connectors-table-class' | translate }}</mat-label>
-          <input matInput formControlName="class"/>
-        </mat-form-field>
-        <mat-form-field class="mat-block tb-value-type">
-          <mat-label translate>gateway.remote-logging-level</mat-label>
-          <mat-select formControlName="logLevel">
-            <mat-option *ngFor="let logLevel of gatewayLogLevel" [value]="logLevel">{{logLevel}}</mat-option>
-          </mat-select>
-        </mat-form-field>
-      </mat-card>
-      <mat-card fxLayout="column" fxFlex>
-        <tb-json-object-edit
-          fxFlex
-          fxLayout="column"
-          required
-          label="{{ 'gateway.configuration' | translate }}"
-          formControlName="configurationJson">
-        </tb-json-object-edit>
-        <div fxLayoutAlign="start center">
-          <button mat-raised-button color="primary"
-                  class="action-btns"
-                  type="button"
-                  [disabled]="!connectorForm.dirty || connectorForm.invalid"
-                  (click)="saveConnector()">
-            {{ 'action.save' | translate }}
-          </button>
-        </div>
-      </mat-card>
-    </div>
-  </div>
-</form>
+            </mat-menu>
+          </div>
+        </mat-cell>
+      </ng-container>
+      <mat-header-row class="mat-row-select"
+                      *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
+      <mat-row class="mat-row-select" [class]="{'tb-current-entity': isSameConnector(attribute)}"
+               *matRowDef="let attribute; columns: displayedColumns;" (click)="selectConnector(attribute)"></mat-row>
+    </table>
+  </section>
+  <section [formGroup]="connectorForm" class="tb-form-panel no-border no-padding flex">
+    <section class="tb-form-row tb-not-inline-field same-padding input-container">
+      <mat-form-field class="flex" subscriptSizing="dynamic">
+        <mat-label>{{ 'gateway.connectors-table-name' | translate }}</mat-label>
+        <input matInput formControlName="name" #nameInput/>
+      </mat-form-field>
+      <mat-form-field class="flex" subscriptSizing="dynamic" hideRequiredMarker>
+        <mat-label>{{ 'gateway.connectors-table-type' | translate }}</mat-label>
+        <mat-select formControlName="type">
+          <mat-option style="text-transform: uppercase"
+                      *ngFor="let type of gatewayConnectorDefaultTypes | keyvalue" [value]="type.key">{{ type.value }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field class="flex" *ngIf="connectorForm.get('type').value === 'grpc'" subscriptSizing="dynamic">
+        <mat-label>{{ 'gateway.connectors-table-key' | translate }}</mat-label>
+        <input matInput formControlName="key"/>
+      </mat-form-field>
+      <mat-form-field class="flex" *ngIf="connectorForm.get('type').value === 'custom'" subscriptSizing="dynamic">
+        <mat-label>{{ 'gateway.connectors-table-class' | translate }}</mat-label>
+        <input matInput formControlName="class"/>
+      </mat-form-field>
+      <mat-form-field class="flex" subscriptSizing="dynamic" hideRequiredMarker>
+        <mat-label translate>gateway.remote-logging-level</mat-label>
+        <mat-select formControlName="logLevel">
+          <mat-option *ngFor="let logLevel of gatewayLogLevel" [value]="logLevel">{{ logLevel }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </section>
+    <section class="tb-form-panel stroked flex">
+      <tb-json-object-edit
+        class="flex"
+        fxLayout="column"
+        required
+        label="{{ 'gateway.configuration' | translate }}"
+        formControlName="configurationJson">
+      </tb-json-object-edit>
+      <div fxLayoutAlign="start center">
+        <button mat-raised-button color="primary"
+                class="action-button"
+                type="button"
+                [disabled]="!connectorForm.dirty || connectorForm.invalid"
+                (click)="saveConnector()">
+          {{ 'action.save' | translate }}
+        </button>
+      </div>
+    </section>
+  </section>
+</div>

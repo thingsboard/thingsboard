@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div mat-dialog-content tb-toast fxLayout="column" toastTarget="dockerCommandDialogContent" style="padding-top: 5px">
+<div mat-dialog-content fxLayout="column" style="padding: 0">
   <div fxLayout="row" fxLayoutAlign="space-between center">
     <span class="tb-no-data-text">{{ 'gateway.docker-label' | translate }}</span>
     <div fxFlexAlign="end" class="tb-help" [tb-help]="helpLink"></div>
@@ -29,14 +29,9 @@
         Windows
       </ng-template>
       <ng-template matTabContent>
-        <div class="tb-form-panel no-padding no-border tb-tab-body">
-          <tb-markdown usePlainMarkdown containerClass="start-code" data="
-                    ```bash
-                    {{windowsCode}}
-                    {:copy-code}
-                    ```
-                "></tb-markdown>
-        </div>
+        <ng-container
+          *ngTemplateOutlet="commandsExample; context: {command: commands?.mqtt?.windows }">
+        </ng-container>
       </ng-template>
     </mat-tab>
     <mat-tab>
@@ -45,14 +40,9 @@
         Linux
       </ng-template>
       <ng-template matTabContent>
-        <div class="tb-form-panel no-padding no-border tb-tab-body">
-          <tb-markdown usePlainMarkdown containerClass="start-code" data="
-                    ```bash
-                    {{linuxCode}}
-                    {:copy-code}
-                    ```
-                "></tb-markdown>
-        </div>
+        <ng-container
+          *ngTemplateOutlet="commandsExample; context: {command: commands?.mqtt?.linux }">
+        </ng-container>
       </ng-template>
     </mat-tab>
     <mat-tab>
@@ -61,15 +51,22 @@
         MacOS
       </ng-template>
       <ng-template matTabContent>
-        <div class="tb-form-panel no-padding no-border tb-tab-body">
-          <tb-markdown usePlainMarkdown containerClass="start-code" data="
-                    ```bash
-                    {{linuxCode}}
-                    {:copy-code}
-                    ```
-                "></tb-markdown>
-        </div>
+        <ng-container
+          *ngTemplateOutlet="commandsExample; context: {command: commands?.mqtt?.linux }">
+        </ng-container>
       </ng-template>
     </mat-tab>
   </mat-tab-group>
 </div>
+
+<ng-template #commandsExample let-command="command">
+  <div class="tb-form-panel no-padding no-border tb-tab-body">
+    <tb-markdown usePlainMarkdown containerClass="start-code"
+       data="
+          ```bash
+          {{ command }}
+          {:copy-code}
+          ```
+      "></tb-markdown>
+  </div>
+</ng-template>
