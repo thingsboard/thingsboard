@@ -91,6 +91,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -232,6 +233,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
     public void upgradeRuleNodes() {
         try {
             var futures = new ArrayList<ListenableFuture<?>>(100);
+            var totalRuleNodesUpgraded = new AtomicInteger(0);
             log.info("Starting rule nodes upgrade ...");
             var nodeClassToVersionMap = componentDiscoveryService.getVersionedNodes();
             log.debug("Found {} versioned nodes to check for upgrade!", nodeClassToVersionMap.size());
@@ -265,7 +267,8 @@ public class DefaultDataUpdateService implements DataUpdateService {
                                         ruleNodeId, ruleNodeTypeForLogs, fromVersion, toVersion);
                             }));
                             if (futures.size() >= MAX_PENDING_SAVE_RULE_NODE_FUTURES) {
-                                awaitFuturesToComplete(futures);
+                                log.info("{} upgraded rule nodes so far ...",
+                                        totalRuleNodesUpgraded.addAndGet(awaitFuturesToCompleteAndGetCount(futures)));
                                 futures.clear();
                             }
                         } catch (Exception e) {
@@ -275,18 +278,17 @@ public class DefaultDataUpdateService implements DataUpdateService {
                     }
                 }
             });
-            awaitFuturesToComplete(futures);
-            log.info("Finished rule nodes upgrade!");
+            log.info("Finished rule nodes upgrade. Upgraded rule nodes count: {}",
+                    totalRuleNodesUpgraded.addAndGet(awaitFuturesToCompleteAndGetCount(futures)));
         } catch (Exception e) {
             log.error("Unexpected error during rule nodes upgrade: ", e);
         }
     }
 
-    private static void awaitFuturesToComplete(List<ListenableFuture<?>> futures) {
+    private int awaitFuturesToCompleteAndGetCount(List<ListenableFuture<?>> futures) {
         var batchFuture = Futures.allAsList(futures);
         try {
-            batchFuture.get();
-            log.info("{} rule nodes upgraded successfully!", futures.size());
+            return batchFuture.get().size();
         } catch (ExecutionException | InterruptedException e) {
             throw new RuntimeException("Failed to process save rule nodes requests due to: ", e);
         }
