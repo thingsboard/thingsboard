@@ -78,6 +78,7 @@ import org.thingsboard.server.dao.model.sql.DeviceProfileEntity;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.sql.JpaExecutorService;
 import org.thingsboard.server.dao.sql.device.DeviceProfileRepository;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -152,6 +153,9 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
     @Autowired
     private EdgeEventDao edgeEventDao;
+
+    @Autowired
+    JpaExecutorService jpaExecutorService;
 
     @Override
     public void updateData(String fromVersion) throws Exception {
@@ -252,9 +256,11 @@ public class DefaultDataUpdateService implements DataUpdateService {
                                 ruleNode.setConfiguration(upgradeRuleNodeConfigurationResult.getSecond());
                             }
                             ruleNode.setConfigurationVersion(toVersion);
-                            ruleChainService.saveRuleNode(TenantId.SYS_TENANT_ID, ruleNode);
-                            log.debug("Successfully upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
-                                    ruleNodeId, ruleNodeTypeForLogs, fromVersion, toVersion);
+                            jpaExecutorService.submit(() -> {
+                                ruleChainService.saveRuleNode(TenantId.SYS_TENANT_ID, ruleNode);
+                                log.debug("Successfully upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
+                                        ruleNodeId, ruleNodeTypeForLogs, fromVersion, toVersion);
+                            });
                         } catch (Exception e) {
                             log.warn("Failed to upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {} due to: ",
                                     ruleNodeId, ruleNodeTypeForLogs, fromVersion, toVersion, e);
