@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,14 @@
  */
 package org.thingsboard.server.common.data.kv;
 
+import javax.validation.Valid;
 import java.util.Objects;
 import java.util.Optional;
 
 public class BasicTsKvEntry implements TsKvEntry {
     private static final int MAX_CHARS_PER_DATA_POINT = 512;
     protected final long ts;
+    @Valid
     private final KvEntry kv;
 
     public BasicTsKvEntry(long ts, KvEntry kv) {

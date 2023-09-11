@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -26,12 +26,12 @@
   </section>
   <mat-form-field [fxShow]="navigationCardsWidgetSettingsForm.get('filterType').value !== 'all'" fxFlex class="mat-block" floatLabel="always">
     <mat-label translate>widgets.navigation.items</mat-label>
-    <mat-chip-list #filterItemsChipList>
-      <mat-chip *ngFor="let filterItem of navigationCardsWidgetSettingsForm.get('filter').value"
+    <mat-chip-grid #filterItemsChipList>
+      <mat-chip-row *ngFor="let filterItem of navigationCardsWidgetSettingsForm.get('filter').value"
                 [removable]="true" (removed)="onFilterItemRemoved(filterItem)">
         {{ filterItem }}
         <mat-icon matChipRemove>cancel</mat-icon>
-      </mat-chip>
+      </mat-chip-row>
       <input matInput type="text" placeholder="{{ 'widgets.navigation.enter-urls-to-filter' | translate }}"
              style="max-width: 200px;"
              #filterItemInput
@@ -44,7 +44,7 @@
              [matChipInputFor]="filterItemsChipList"
              [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
              (matChipInputTokenEnd)="addFilterItemFromChipInput($event)">
-    </mat-chip-list>
+    </mat-chip-grid>
     <mat-autocomplete #filterItemAutocomplete="matAutocomplete"
                       class="tb-autocomplete"
                       (optionSelected)="filterItemSelected($event)">

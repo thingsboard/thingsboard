@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -109,17 +108,20 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     private final Lock scriptsLock = new ReentrantLock();
 
     @PostConstruct
+    @Override
     public void init() {
         super.init();
         requestTemplate.init();
     }
 
     @PreDestroy
-    public void destroy() {
+    @Override
+    public void stop() {
         super.stop();
         if (requestTemplate != null) {
             requestTemplate.stop();
         }
+        callbackExecutor.shutdownNow();
     }
 
     @Override
@@ -188,7 +190,6 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
         }, callbackExecutor);
     }
 
-    @NotNull
     private JsInvokeProtos.RemoteJsRequest buildJsInvokeRequest(JsScriptInfo jsInfo, Object[] args, boolean includeScriptBody, String scriptBody) {
         JsInvokeProtos.JsInvokeRequest.Builder jsRequestBuilder = JsInvokeProtos.JsInvokeRequest.newBuilder()
                 .setScriptHash(jsInfo.getHash())

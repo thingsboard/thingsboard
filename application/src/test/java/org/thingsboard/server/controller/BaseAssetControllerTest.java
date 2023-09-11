@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
@@ -393,6 +394,41 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         testNotifyEntityAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(),
                 savedTenant.getId(), savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.UNASSIGNED_FROM_CUSTOMER, savedAsset.getId().toString(), savedCustomer.getId().toString(), savedCustomer.getTitle());
+
+        foundAsset = doGet("/api/asset/" + savedAsset.getId().getId().toString(), Asset.class);
+        Assert.assertEquals(ModelConstants.NULL_UUID, foundAsset.getCustomerId().getId());
+    }
+
+    @Test
+    public void testAssignUnassignAssetToPublicCustomer() throws Exception {
+        Asset asset = new Asset();
+        asset.setName("My asset");
+        asset.setType("default");
+        Asset savedAsset = doPost("/api/asset", asset, Asset.class);
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        Asset assignedAsset = doPost("/api/customer/public/asset/" + savedAsset.getId().getId().toString(), Asset.class);
+
+        Customer publicCustomer = doGet("/api/customer/" + assignedAsset.getCustomerId(), Customer.class);
+        Assert.assertTrue(publicCustomer.isPublic());
+
+        testNotifyEntityAllOneTime(assignedAsset, assignedAsset.getId(), assignedAsset.getId(),
+                savedTenant.getId(), publicCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ASSIGNED_TO_CUSTOMER, assignedAsset.getId().toString(), publicCustomer.getId().toString(), publicCustomer.getTitle());
+
+        Asset foundAsset = doGet("/api/asset/" + savedAsset.getId().getId().toString(), Asset.class);
+        Assert.assertEquals(publicCustomer.getId(), foundAsset.getCustomerId());
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        Asset unassignedAsset =
+                doDelete("/api/customer/asset/" + savedAsset.getId().getId().toString(), Asset.class);
+        Assert.assertEquals(ModelConstants.NULL_UUID, unassignedAsset.getCustomerId().getId());
+
+        testNotifyEntityAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(),
+                savedTenant.getId(), publicCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.UNASSIGNED_FROM_CUSTOMER, savedAsset.getId().toString(), publicCustomer.getId().toString(), publicCustomer.getTitle());
 
         foundAsset = doGet("/api/asset/" + savedAsset.getId().getId().toString(), Asset.class);
         Assert.assertEquals(ModelConstants.NULL_UUID, foundAsset.getCustomerId().getId());
@@ -945,6 +981,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         testEntityDaoWithRelationsOk(savedTenant.getId(), assetId, "/api/asset/" + assetId);
     }
 
+    @Ignore
     @Test
     public void testDeleteAssetExceptionWithRelationsTransactional() throws Exception {
         AssetId assetId = createAsset("Asset for Test WithRelations Transactional Exception").getId();

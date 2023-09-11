@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,9 +16,12 @@
 
 import L from 'leaflet';
 import {
+  GenericFunction,
   ShowTooltipAction, WidgetToolipSettings
 } from './map-models';
-import { Datasource } from '@app/shared/models/widget.models';
+import { Datasource, FormattedData } from '@app/shared/models/widget.models';
+import { fillDataPattern, isDefinedAndNotNull, isString, processDataPattern, safeExecute } from '@core/utils';
+import { parseWithTranslation } from '@home/components/widget/lib/maps/common-maps-utils';
 
 export function createTooltip(target: L.Layer,
                               settings: Partial<WidgetToolipSettings>,
@@ -83,3 +86,40 @@ export function isJSON(data: string): boolean {
     return false;
   }
 }
+
+interface labelSettings {
+  showLabel: boolean;
+  useLabelFunction: boolean;
+  parsedLabelFunction: GenericFunction;
+  label: string;
+}
+
+export function entitiesParseName(entities: FormattedData[], labelSettings: labelSettings):  FormattedData[] {
+  const div = document.createElement('div');
+  for (const entity of entities) {
+    if (labelSettings?.showLabel) {
+      const pattern = labelSettings.useLabelFunction ? safeExecute(labelSettings.parsedLabelFunction,
+        [entity, entities, entity.dsIndex]) : labelSettings.label;
+      const markerLabelText = parseWithTranslation.prepareProcessPattern(pattern, true);
+      const replaceInfoLabelMarker = processDataPattern(pattern, entity);
+      div.innerHTML = fillDataPattern(markerLabelText, replaceInfoLabelMarker, entity);
+      entity.entityParseName = div.textContent || div.innerText || '';
+    } else {
+      entity.entityParseName = entity.entityName;
+    }
+  }
+  return entities;
+}
+
+export const isValidLatitude = (latitude: any): boolean =>
+  isDefinedAndNotNull(latitude) &&
+  !isString(latitude) &&
+  !isNaN(latitude) && isFinite(latitude) && Math.abs(latitude) <= 90;
+
+export const isValidLongitude = (longitude: any): boolean =>
+  isDefinedAndNotNull(longitude) &&
+  !isString(longitude) &&
+  !isNaN(longitude) && isFinite(longitude) && Math.abs(longitude) <= 180;
+
+export const isValidLatLng = (latitude: any, longitude: any): boolean =>
+  isValidLatitude(latitude) && isValidLongitude(longitude);

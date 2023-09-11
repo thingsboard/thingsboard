@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
+:host::ng-deep {
   width: 100%;
   height: 100%;
   display: block;
@@ -21,10 +21,46 @@
     .table-container {
       position: relative;
     }
-    .mat-table {
-      .mat-row {
+    .mat-mdc-table {
+      .mat-mdc-row {
         &.invisible {
           visibility: hidden;
+        }
+        .mat-mdc-cell {
+          .assignee-cell {
+            white-space: nowrap;
+            .assigned-container {
+              overflow: hidden;
+              text-overflow: ellipsis;
+              .user-avatar {
+                display: inline-flex;
+                justify-content: center;
+                align-items: center;
+                margin-right: 8px;
+                border-radius: 50%;
+                width: 28px;
+                height: 28px;
+                min-width: 28px;
+                min-height: 28px;
+                color: white;
+                font-size: 13px;
+                font-weight: 700;
+              }
+            }
+            .unassigned-container {
+              overflow: hidden;
+              text-overflow: ellipsis;
+              .material-icons.unassigned-icon {
+                width: 28px;
+                height: 28px;
+                font-size: 28px;
+                margin-right: 8px;
+                color: rgba(0, 0, 0, 0.38);
+                overflow: visible;
+                vertical-align: middle;
+              }
+            }
+          }
         }
       }
     }

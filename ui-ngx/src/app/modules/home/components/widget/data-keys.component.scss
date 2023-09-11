@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,62 +14,107 @@
  * limitations under the License.
  */
 
-.mat-chip.mat-standard-chip.tb-datakey-chip {
-  overflow: hidden;
+.tb-datakeys-container {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
 
-  .tb-attribute-chip {
-    max-width: 100%;
-    color: rgb(66, 66, 66);
-    font-weight: normal;
-    font-size: 16px;
+  input.tb-dragging {
+    display: none;
+  }
 
-    .tb-chip-drag-handle {
-      cursor: move;
+  .mat-mdc-chip.mat-mdc-standard-chip.tb-datakey-chip {
+    overflow: hidden;
+    line-height: 20px;
+    height: 32px;
 
-      mat-icon {
-        pointer-events: none;
-      }
-    }
-
-    .tb-chip-labels {
-      display: flex;
-      flex-direction: row;
-      align-items: flex-end;
-      min-width: 0;
-      .tb-chip-label {
+    .mat-mdc-chip-action {
+      overflow: hidden;
+      .mat-mdc-chip-action-label {
         overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
       }
-
-      .tb-chip-separator {
-        white-space: pre;
+    }
+    .tb-attribute-chip {
+      max-width: 100%;
+      color: rgb(66, 66, 66);
+      font-weight: normal;
+      font-size: 16px;
+      .tb-chip-drag-handle {
+        cursor: move;
+        mat-icon {
+          pointer-events: none;
+          margin-right: 4px;
+          margin-left: 4px;
+          vertical-align: bottom;
+        }
+      }
+      .tb-chip-labels {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        min-width: 0;
+        .tb-chip-label {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          .mat-icon.tb-datakey-icon {
+            margin-right: 4px;
+            margin-left: 4px;
+          }
+          .tb-agg-func {
+            font-style: italic;
+            color: #0c959c;
+          }
+        }
+        .tb-chip-separator {
+          white-space: pre;
+        }
+      }
+      .mat-mdc-chip-remove.mat-icon {
+        width: 24px;
+        min-width: 24px;
+        height: 24px;
+        font-size: 24px;
+        margin-right: 4px;
+        color: inherit;
+        opacity: inherit;
+        padding-left: 0;
       }
     }
 
-    .mat-chip-remove.mat-icon {
-      width: 24px;
-      height: 24px;
-      font-size: 24px;
-      margin-left: 0;
-      color: inherit;
-      opacity: inherit;
+    &.tb-datakey-chip-dnd-placeholder {
+      min-width: 120px;
+      border: 2px dashed rgba(0, 0, 0, 0.2);
+    }
+    &.tb-chip-dragging {
+      display: none;
+    }
+    .tb-dragging-chip-image-fill {
+      background-color: rgba(0,0,0,0.3);
+      border-radius: var(--mdc-chip-container-shape-radius, 16px 16px 16px 16px);
+      display: none;
+      pointer-events: none;
+    }
+    .tb-dragging-chip-image {
+      background-color: var(--mdc-chip-elevated-container-color, transparent);
+      border-radius: var(--mdc-chip-container-shape-radius, 16px 16px 16px 16px);
+      overflow: hidden;
+      height: 32px;
+      line-height: 20px;
+      .tb-dragging-chip-image-fill {
+        display: block;
+      }
     }
   }
 }
 
-:host ::ng-deep {
-  .mat-form-field-flex {
-    padding-top: 0;
-    .mat-form-field-infix {
-      border-top: 0;
-    }
+.mat-icon.tb-datakey-icon {
+  vertical-align: middle;
+  & > svg {
+    vertical-align: initial;
   }
-
-  .tb-chip-label {
-    .tb-agg-func {
-      font-style: italic;
-      color: #0c959c;
-    }
+  &.new-key {
+    margin-left: 8px;
+    margin-right: 8px;
   }
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ///
 
 import { Component, Inject, InjectionToken } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { OverlayRef } from '@angular/cdk/overlay';
 import { EntityType } from '@shared/models/entity-type.models';
 import { FilterEventBody } from '@shared/models/event.models';
@@ -41,7 +41,7 @@ export interface FilterEntityColumn {
 })
 export class EventFilterPanelComponent {
 
-  eventFilterFormGroup: FormGroup;
+  eventFilterFormGroup: UntypedFormGroup;
   result: EventFilterPanelData;
 
   private conditionError = false;
@@ -55,7 +55,7 @@ export class EventFilterPanelComponent {
   constructor(@Inject(EVENT_FILTER_PANEL_DATA)
               public data: EventFilterPanelData,
               public overlayRef: OverlayRef,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     this.eventFilterFormGroup = this.fb.group({});
     this.data.columns.forEach((column) => {
       this.showColumns.push(column);

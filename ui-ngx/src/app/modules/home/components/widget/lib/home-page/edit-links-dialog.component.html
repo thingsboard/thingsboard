@@ -1,0 +1,95 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form class="tb-edit-links-dialog" [formGroup]="editLinksFormGroup">
+  <mat-toolbar style="background: transparent;">
+    <h2>{{ (mode === 'docs' ? 'widgets.documentation.title' : 'widgets.quick-links.title') | translate }}</h2>
+    <span fxFlex></span>
+    <button mat-icon-button
+            (click)="close()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div mat-dialog-content>
+    <div class="tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
+         (cdkDropListDropped)="linkDrop($event)" [cdkDropListDisabled]="editMode || addMode">
+      <div cdkDrag class="tb-draggable" *ngFor="let linkControl of linksFormArray().controls; trackBy: trackByLink;
+               let $index = index; last as isLast;"
+           fxLayout="row" fxLayoutAlign="start center" [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
+        <ng-container [ngSwitch]="mode">
+          <ng-template [ngSwitchCase]="'docs'">
+            <tb-doc-link fxFlex #docLink [formControl]="linkControl"
+                         [disableEdit]="editMode || addMode"
+                         (editModeChanged)="editMode = $event"
+                         (docLinkUpdated)="update()"
+                         (docLinkDeleted)="deleteLink($index)">
+            </tb-doc-link>
+            <ng-container *ngIf="!docLink.isEditing()">
+              <ng-container *ngTemplateOutlet="dragHandle"></ng-container>
+            </ng-container>
+          </ng-template>
+          <ng-template [ngSwitchCase]="'quickLinks'">
+            <tb-quick-link fxFlex #quickLink [formControl]="linkControl"
+                           [disableEdit]="editMode || addMode"
+                           (editModeChanged)="editMode = $event"
+                           (quickLinkUpdated)="update()"
+                           (quickLinkDeleted)="deleteLink($index)">
+            </tb-quick-link>
+            <ng-container *ngIf="!quickLink.isEditing()">
+              <ng-container *ngTemplateOutlet="dragHandle"></ng-container>
+            </ng-container>
+          </ng-template>
+        </ng-container>
+        <ng-template #dragHandle>
+          <div cdkDragHandle
+               matTooltip="{{ 'action.drag' | translate }}"
+               matTooltipPosition="above"
+               class="tb-drag-handle">
+            <mat-icon>drag_indicator</mat-icon>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+  <div mat-dialog-actions>
+    <div *ngIf="!editMode && !addMode" fxFlex class="tb-add-link-button"
+         matTooltip="{{ (mode === 'docs' ? 'widgets.documentation.add-link' : 'widgets.quick-links.add-link') | translate }}"
+         matTooltipPosition="above"
+         (click)="addLink()">
+      <mat-icon class="tb-add-icon">add</mat-icon>
+    </div>
+    <ng-container *ngIf="addMode">
+      <ng-container [ngSwitch]="mode">
+        <ng-template [ngSwitchCase]="'docs'">
+          <tb-doc-link fxFlex [(ngModel)]="addingLink"
+                       [ngModelOptions]="{standalone: true}"
+                       (docLinkAdded)="linkAdded($event)"
+                       (docLinkAddCanceled)="addMode = false">
+          </tb-doc-link>
+        </ng-template>
+        <ng-template [ngSwitchCase]="'quickLinks'">
+          <tb-quick-link fxFlex [(ngModel)]="addingLink"
+                       [ngModelOptions]="{standalone: true}"
+                       (quickLinkAdded)="linkAdded($event)"
+                       (quickLinkAddCanceled)="addMode = false">
+          </tb-quick-link>
+        </ng-template>
+      </ng-container>
+    </ng-container>
+  </div>
+</form>

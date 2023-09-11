@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 import { phoneNumberPattern, SmsProviderConfiguration, TestSmsRequest } from '@shared/models/settings.models';
@@ -40,7 +40,7 @@ export class SendTestSmsDialogComponent extends
 
   phoneNumberPattern = phoneNumberPattern;
 
-  sendTestSmsFormGroup: FormGroup;
+  sendTestSmsFormGroup: UntypedFormGroup;
 
   smsProviderConfiguration = this.data.smsProviderConfiguration;
 
@@ -50,7 +50,7 @@ export class SendTestSmsDialogComponent extends
               private adminService: AdminService,
               private translate: TranslateService,
               public dialogRef: MatDialogRef<SendTestSmsDialogComponent>,
-              public fb: FormBuilder) {
+              public fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
   }
 

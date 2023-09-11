@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@
                     [matTooltip]="widget.titleTooltip"
                     matTooltipClass="tb-tooltip-multiline"
                     matTooltipPosition="above"
-                    class="mat-subheading-2 title">
+                    class="mat-subtitle-1 title">
                 <mat-icon *ngIf="widget.showTitleIcon" [ngStyle]="widget.titleIconStyle">{{widget.titleIcon}}</mat-icon>
                 {{widget.customTranslatedTitle}}
               </span>
@@ -61,42 +61,42 @@
          fxLayout="row"
          fxLayoutAlign="start center"
          (mousedown)="$event.stopPropagation()">
-      <button mat-button mat-icon-button *ngFor="let action of widget.customHeaderActions"
+      <button mat-icon-button *ngFor="let action of widget.customHeaderActions"
               [fxShow]="!isEdit"
               (click)="action.onAction($event)"
               matTooltip="{{ action.displayName }}"
               matTooltipPosition="above">
         <mat-icon>{{ action.icon }}</mat-icon>
       </button>
-      <button mat-button mat-icon-button *ngFor="let action of widget.widgetActions"
+      <button mat-icon-button *ngFor="let action of widget.widgetActions"
               [fxShow]="!isEdit && action.show"
               (click)="action.onAction($event)"
               matTooltip="{{ action.name | translate }}"
               matTooltipPosition="above">
         <mat-icon>{{ action.icon }}</mat-icon>
       </button>
-      <button mat-button mat-icon-button
+      <button mat-icon-button
               [fxShow]="!isEdit && widget.enableFullscreen"
               (click)="$event.stopPropagation(); widget.isFullscreen = !widget.isFullscreen"
               matTooltip="{{(widget.isFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
               matTooltipPosition="above">
         <mat-icon>{{ widget.isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
       </button>
-      <button mat-button mat-icon-button
+      <button mat-icon-button
               [fxShow]="isEditActionEnabled && !widget.isFullscreen"
               (click)="onEdit($event)"
               matTooltip="{{ 'widget.edit' | translate }}"
               matTooltipPosition="above">
         <mat-icon>edit</mat-icon>
       </button>
-      <button mat-button mat-icon-button
+      <button mat-icon-button
               [fxShow]="isExportActionEnabled && !widget.isFullscreen"
               (click)="onExport($event)"
               matTooltip="{{ 'widget.export' | translate }}"
               matTooltipPosition="above">
         <mat-icon>file_download</mat-icon>
       </button>
-      <button mat-button mat-icon-button
+      <button mat-icon-button
               [fxShow]="isRemoveActionEnabled && !widget.isFullscreen"
               (click)="onRemove($event);"
               matTooltip="{{ 'widget.remove' | translate }}"

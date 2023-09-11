@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 import { Component, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, FormGroupDirective, Validators } from '@angular/forms';
+import { AbstractControl, UntypedFormArray, UntypedFormBuilder, UntypedFormGroup, FormGroupDirective, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { AdminService } from '@core/http/admin.service';
@@ -36,7 +36,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 })
 export class AutoCommitSettingsComponent extends PageComponent implements OnInit {
 
-  autoCommitSettingsForm: FormGroup;
+  autoCommitSettingsForm: UntypedFormGroup;
   settings: AutoCommitSettings = null;
 
   entityTypes = EntityType;
@@ -48,7 +48,7 @@ export class AutoCommitSettingsComponent extends PageComponent implements OnInit
               private dialogService: DialogService,
               private sanitizer: DomSanitizer,
               private translate: TranslateService,
-              public fb: FormBuilder) {
+              public fb: UntypedFormBuilder) {
     super(store);
   }
 
@@ -76,8 +76,8 @@ export class AutoCommitSettingsComponent extends PageComponent implements OnInit
     this.isReadOnly = this.adminService.getRepositorySettingsInfo().pipe(map(settings => settings.readOnly));
   }
 
-  entityTypesFormGroupArray(): FormGroup[] {
-    return (this.autoCommitSettingsForm.get('entityTypes') as FormArray).controls as FormGroup[];
+  entityTypesFormGroupArray(): UntypedFormGroup[] {
+    return (this.autoCommitSettingsForm.get('entityTypes') as UntypedFormArray).controls as UntypedFormGroup[];
   }
 
   entityTypesFormGroupExpanded(entityTypeControl: AbstractControl): boolean {
@@ -89,17 +89,17 @@ export class AutoCommitSettingsComponent extends PageComponent implements OnInit
   }
 
   public removeEntityType(index: number) {
-    (this.autoCommitSettingsForm.get('entityTypes') as FormArray).removeAt(index);
+    (this.autoCommitSettingsForm.get('entityTypes') as UntypedFormArray).removeAt(index);
     this.autoCommitSettingsForm.markAsDirty();
   }
 
   public addEnabled(): boolean {
-    const entityTypesArray = this.autoCommitSettingsForm.get('entityTypes') as FormArray;
+    const entityTypesArray = this.autoCommitSettingsForm.get('entityTypes') as UntypedFormArray;
     return entityTypesArray.length < exportableEntityTypes.length;
   }
 
   public addEntityType() {
-    const entityTypesArray = this.autoCommitSettingsForm.get('entityTypes') as FormArray;
+    const entityTypesArray = this.autoCommitSettingsForm.get('entityTypes') as UntypedFormArray;
     const config: AutoVersionCreateConfig = {
       branch: null,
       saveAttributes: true,
@@ -119,7 +119,7 @@ export class AutoCommitSettingsComponent extends PageComponent implements OnInit
   }
 
   public removeAll() {
-    const entityTypesArray = this.autoCommitSettingsForm.get('entityTypes') as FormArray;
+    const entityTypesArray = this.autoCommitSettingsForm.get('entityTypes') as UntypedFormArray;
     entityTypesArray.clear();
     this.autoCommitSettingsForm.updateValueAndValidity();
     this.autoCommitSettingsForm.markAsDirty();
@@ -187,7 +187,7 @@ export class AutoCommitSettingsComponent extends PageComponent implements OnInit
     });
   }
 
-  private prepareEntityTypesFormArray(settings: AutoCommitSettings | null): FormArray {
+  private prepareEntityTypesFormArray(settings: AutoCommitSettings | null): UntypedFormArray {
     const entityTypesControls: Array<AbstractControl> = [];
     if (settings) {
       for (const entityType of Object.keys(settings)) {

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import {
   deepClone,
   hashCode,
   isDefined,
+  isDefinedAndNotNull,
   isNumber,
   isObject,
   isUndefined
@@ -73,9 +74,9 @@ import {
   getColumnDefaultVisibility,
   getColumnSelectionAvailability,
   getColumnWidth,
+  getHeaderTitle,
   getRowStyleInfo,
   getTableCellButtonActions,
-  getHeaderTitle,
   noDataMessage,
   prepareTableCellButtonActions,
   RowStyleInfo,
@@ -94,7 +95,7 @@ import {
 import {
   AlarmDataInfo,
   alarmFields,
-  AlarmSearchStatus,
+  AlarmInfo,
   alarmSeverityColors,
   alarmSeverityTranslations,
   AlarmStatus,
@@ -118,15 +119,25 @@ import {
   KeyFilter
 } from '@app/shared/models/query/query.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import {
-  ALARM_FILTER_PANEL_DATA,
-  AlarmFilterPanelComponent,
-  AlarmFilterPanelData
-} from '@home/components/widget/lib/alarm-filter-panel.component';
 import { entityFields } from '@shared/models/entity.models';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
+import {
+  ALARM_ASSIGNEE_PANEL_DATA,
+  AlarmAssigneePanelComponent,
+  AlarmAssigneePanelData
+} from '@home/components/alarm/alarm-assignee-panel.component';
+import {
+  AlarmCommentDialogComponent,
+  AlarmCommentDialogData
+} from '@home/components/alarm/alarm-comment-dialog.component';
+import { EntityService } from '@core/http/entity.service';
+import {
+  ALARM_FILTER_CONFIG_DATA,
+  AlarmFilterConfigComponent,
+  AlarmFilterConfigData
+} from '@home/components/alarm/alarm-filter-config.component';
 
 interface AlarmsTableWidgetSettings extends TableWidgetSettings {
   alarmsTitle: string;
@@ -135,15 +146,18 @@ interface AlarmsTableWidgetSettings extends TableWidgetSettings {
   enableSelection: boolean;
   enableStatusFilter?: boolean;
   enableFilter: boolean;
+  displayActivity: boolean;
   displayDetails: boolean;
   allowAcknowledgment: boolean;
   allowClear: boolean;
+  allowAssign: boolean;
 }
 
 interface AlarmWidgetActionDescriptor extends TableCellButtonActionDescriptor {
   details?: boolean;
   acknowledge?: boolean;
   clear?: boolean;
+  activity?: boolean;
 }
 
 @Component({
@@ -186,9 +200,11 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
 
   private alarmsTitlePattern: string;
 
+  private displayActivity = false;
   private displayDetails = true;
   public allowAcknowledgment = true;
   private allowClear = true;
+  public allowAssign = true;
 
   private defaultPageSize = 10;
   private defaultSortOrder = '-' + alarmFields.createdTime.value;
@@ -241,6 +257,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
               private datePipe: DatePipe,
               private dialog: MatDialog,
               private dialogService: DialogService,
+              private entityService: EntityService,
               private alarmService: AlarmService,
               private cd: ChangeDetectorRef) {
     super(store);
@@ -322,9 +339,11 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   private initializeConfig() {
     this.ctx.widgetActions = [this.searchAction, this.alarmFilterAction, this.columnDisplayAction];
 
+    this.displayActivity = isDefined(this.settings.displayActivity) ? this.settings.displayActivity : false;
     this.displayDetails = isDefined(this.settings.displayDetails) ? this.settings.displayDetails : true;
     this.allowAcknowledgment = isDefined(this.settings.allowAcknowledgment) ? this.settings.allowAcknowledgment : true;
     this.allowClear = isDefined(this.settings.allowClear) ? this.settings.allowClear : true;
+    this.allowAssign = isDefined(this.settings.allowAssign) ? this.settings.allowAssign : true;
 
     if (this.settings.alarmsTitle && this.settings.alarmsTitle.length) {
       this.alarmsTitlePattern = this.utils.customTranslation(this.settings.alarmsTitle, this.settings.alarmsTitle);
@@ -363,17 +382,8 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize * 2, this.defaultPageSize * 3];
     this.pageLink.pageSize = this.displayPagination ? this.defaultPageSize : 1024;
 
-    this.pageLink.searchPropagatedAlarms = isDefined(this.widgetConfig.searchPropagatedAlarms)
-      ? this.widgetConfig.searchPropagatedAlarms : true;
-    let alarmStatusList: AlarmSearchStatus[] = [];
-    if (isDefined(this.widgetConfig.alarmStatusList) && this.widgetConfig.alarmStatusList.length) {
-      alarmStatusList = this.widgetConfig.alarmStatusList;
-    } else if (isDefined(this.widgetConfig.alarmSearchStatus) && this.widgetConfig.alarmSearchStatus !== AlarmSearchStatus.ANY) {
-      alarmStatusList = [this.widgetConfig.alarmSearchStatus];
-    }
-    this.pageLink.statusList = alarmStatusList;
-    this.pageLink.severityList = isDefined(this.widgetConfig.alarmSeverityList) ? this.widgetConfig.alarmSeverityList : [];
-    this.pageLink.typeList = isDefined(this.widgetConfig.alarmTypeList) ? this.widgetConfig.alarmTypeList : [];
+    const alarmFilter = this.entityService.resolveAlarmFilter(this.widgetConfig.alarmFilterConfig);
+    this.pageLink = {...this.pageLink, ...alarmFilter};
 
     this.noDataDisplayMessageText =
       noDataMessage(this.widgetConfig.noDataDisplayMessage, 'alarm.no-alarms-prompt', this.utils, this.translate);
@@ -418,6 +428,9 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
           if (alarmField && alarmField.time) {
             keySettings.columnWidth = '120px';
           }
+          if (alarmField && alarmField.keyName  === alarmFields.assignee.keyName) {
+            keySettings.columnWidth = '120px'
+          }
         }
         this.stylesInfo[dataKey.def] = getCellStyleInfo(keySettings, 'value, alarm, ctx');
         this.contentsInfo[dataKey.def] = getCellContentInfo(keySettings, 'value, alarm, ctx');
@@ -446,6 +459,16 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.sortOrderProperty = sortColumn ? sortColumn.def : null;
 
     const actionCellDescriptors: AlarmWidgetActionDescriptor[] = [];
+    if (this.displayActivity) {
+      actionCellDescriptors.push(
+        {
+          displayName: this.translate.instant('alarm-activity.activity'),
+          icon: 'comment',
+          activity: true
+        } as AlarmWidgetActionDescriptor
+      );
+    }
+
     if (this.displayDetails) {
       actionCellDescriptors.push(
         {
@@ -568,6 +591,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     const target = $event.target || $event.srcElement || $event.currentTarget;
     const config = new OverlayConfig();
     config.backdropClass = 'cdk-overlay-transparent-backdrop';
+    config.panelClass = 'tb-filter-panel';
     config.hasBackdrop = true;
     const connectedPosition: ConnectedPosition = {
       originX: 'end',
@@ -584,12 +608,18 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     });
     const providers: StaticProvider[] = [
       {
-        provide: ALARM_FILTER_PANEL_DATA,
+        provide: ALARM_FILTER_CONFIG_DATA,
         useValue: {
-          statusList: this.pageLink.statusList,
-          severityList: this.pageLink.severityList,
-          typeList: this.pageLink.typeList
-        } as AlarmFilterPanelData
+          panelMode: true,
+          userMode: true,
+          alarmFilterConfig: {
+            statusList: deepClone(this.pageLink.statusList),
+            severityList: deepClone(this.pageLink.severityList),
+            typeList: deepClone(this.pageLink.typeList),
+            searchPropagatedAlarms: this.pageLink.searchPropagatedAlarms,
+            assignedToCurrentUser: isDefinedAndNotNull(this.pageLink.assigneeId)
+          }
+        } as AlarmFilterConfigData
       },
       {
         provide: OverlayRef,
@@ -597,14 +627,13 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       }
     ];
     const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
-    const componentRef = overlayRef.attach(new ComponentPortal(AlarmFilterPanelComponent,
+    const componentRef = overlayRef.attach(new ComponentPortal(AlarmFilterConfigComponent,
       this.viewContainerRef, injector));
     componentRef.onDestroy(() => {
-      if (componentRef.instance.result) {
-        const result = componentRef.instance.result;
-        this.pageLink.statusList = result.statusList;
-        this.pageLink.severityList = result.severityList;
-        this.pageLink.typeList = result.typeList;
+      if (componentRef.instance.panelResult) {
+        const result = componentRef.instance.panelResult;
+        const alarmFilter = this.entityService.resolveAlarmFilter(result);
+        this.pageLink = {...this.pageLink, ...alarmFilter};
         this.resetPageIndex();
         this.updateData();
       }
@@ -776,11 +805,13 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     if (descriptors.length) {
       let entityId;
       let entityName;
+      let entityLabel;
       if (alarm && alarm.originator) {
         entityId = alarm.originator;
         entityName = alarm.originatorName;
+        entityLabel = alarm.originatorLabel;
       }
-      this.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, {alarm});
+      this.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, {alarm}, entityLabel);
     }
   }
 
@@ -791,17 +822,21 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       this.ackAlarm($event, alarm);
     } else if (actionDescriptor.clear) {
       this.clearAlarm($event, alarm);
+    } else if (actionDescriptor.activity) {
+      this.openAlarmActivity($event, alarm);
     } else {
       if ($event) {
         $event.stopPropagation();
       }
       let entityId;
       let entityName;
+      let entityLabel;
       if (alarm && alarm.originator) {
         entityId = alarm.originator;
         entityName = alarm.originatorName;
+        entityLabel = alarm.originatorLabel;
       }
-      this.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName, {alarm});
+      this.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName, {alarm}, entityLabel);
     }
   }
 
@@ -830,7 +865,8 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
             alarmId: alarm.id.id,
             allowAcknowledgment: this.allowAcknowledgment,
             allowClear: this.allowClear,
-            displayDetails: true
+            displayDetails: true,
+            allowAssign: this.allowAssign
           }
         }).afterClosed().subscribe(
         (res) => {
@@ -954,6 +990,23 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     }
   }
 
+  private openAlarmActivity($event: Event, alarm: AlarmDataInfo) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    if (alarm && alarm.id && alarm.id.id !== NULL_UUID) {
+      this.dialog.open<AlarmCommentDialogComponent, AlarmCommentDialogData, void>
+      (AlarmCommentDialogComponent,
+        {
+          disableClose: true,
+          panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+          data: {
+            alarmId: alarm.id.id
+          }
+        }).afterClosed()
+    }
+  }
+
   private defaultContent(key: EntityColumn, contentInfo: CellContentInfo, value: any): any {
     if (isDefined(value)) {
       const alarmField = alarmFields[key.name];
@@ -966,7 +1019,10 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
           return alarmStatusTranslations.get(value) ? this.translate.instant(alarmStatusTranslations.get(value)) : value;
         } else if (alarmField.value === alarmFields.originatorType.value) {
           return this.translate.instant(entityTypeTranslations.get(value).type);
-        } else {
+        } else if (alarmField.value === alarmFields.assignee.value) {
+          return '';
+        }
+        else {
           return value;
         }
       }
@@ -1012,6 +1068,84 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.cellContentCache.length = 0;
     this.cellStyleCache.length = 0;
     this.rowStyleCache.length = 0;
+  }
+
+  getUserDisplayName(entity: AlarmInfo) {
+    let displayName = '';
+    if ((entity.assignee.firstName && entity.assignee.firstName.length > 0) ||
+      (entity.assignee.lastName && entity.assignee.lastName.length > 0)) {
+      if (entity.assignee.firstName) {
+        displayName += entity.assignee.firstName;
+      }
+      if (entity.assignee.lastName) {
+        if (displayName.length > 0) {
+          displayName += ' ';
+        }
+        displayName += entity.assignee.lastName;
+      }
+    } else {
+      displayName = entity.assignee.email;
+    }
+    return displayName;
+  }
+
+  getUserInitials(entity: AlarmInfo): string {
+    let initials = '';
+    if (entity.assignee.firstName && entity.assignee.firstName.length ||
+      entity.assignee.lastName && entity.assignee.lastName.length) {
+      if (entity.assignee.firstName) {
+        initials += entity.assignee.firstName.charAt(0);
+      }
+      if (entity.assignee.lastName) {
+        initials += entity.assignee.lastName.charAt(0);
+      }
+    } else {
+      initials += entity.assignee.email.charAt(0);
+    }
+    return initials.toUpperCase();
+  }
+
+  getAvatarBgColor(entity: AlarmInfo) {
+    return this.utils.stringToHslColor(this.getUserDisplayName(entity), 40, 60);
+  }
+
+  openAlarmAssigneePanel($event: Event, entity: AlarmInfo) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const target = $event.target || $event.srcElement || $event.currentTarget;
+    const config = new OverlayConfig();
+    config.backdropClass = 'cdk-overlay-transparent-backdrop';
+    config.hasBackdrop = true;
+    const connectedPosition: ConnectedPosition = {
+      originX: 'end',
+      originY: 'bottom',
+      overlayX: 'end',
+      overlayY: 'top'
+    };
+    config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
+      .withPositions([connectedPosition]);
+    config.minWidth = '260px';
+    const overlayRef = this.overlay.create(config);
+    overlayRef.backdropClick().subscribe(() => {
+      overlayRef.dispose();
+    });
+    const providers: StaticProvider[] = [
+      {
+        provide: ALARM_ASSIGNEE_PANEL_DATA,
+        useValue: {
+          alarmId: entity.id.id,
+          assigneeId: entity.assigneeId?.id
+        } as AlarmAssigneePanelData
+      },
+      {
+        provide: OverlayRef,
+        useValue: overlayRef
+      }
+    ];
+    const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
+    overlayRef.attach(new ComponentPortal(AlarmAssigneePanelComponent,
+      this.viewContainerRef, injector));
   }
 }
 

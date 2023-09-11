@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -160,7 +160,7 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
     if ($event) {
       $event.stopPropagation();
     }
-    this.router.navigateByUrl(`widgets-bundles/${widgetsBundle.id.id}/widgetTypes`);
+    this.router.navigateByUrl(`resources/widgets-bundles/${widgetsBundle.id.id}/widgetTypes`);
   }
 
   exportWidgetsBundle($event: Event, widgetsBundle: WidgetsBundle) {

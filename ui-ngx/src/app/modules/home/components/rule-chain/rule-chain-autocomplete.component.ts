@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ///
 
 import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, share, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
@@ -43,17 +43,18 @@ import { RuleChainType } from '@app/shared/models/rule-chain.models';
 })
 export class RuleChainAutocompleteComponent implements ControlValueAccessor, OnInit {
 
-  selectRuleChainFormGroup: FormGroup;
-
-  ruleChainLabel = 'rulechain.rulechain';
+  selectRuleChainFormGroup: UntypedFormGroup;
 
   modelValue: string | null;
 
   @Input()
-  labelText: string;
+  labelText: string = 'rulechain.rulechain';
 
   @Input()
   requiredText: string;
+
+  @Input()
+  ruleChainType: RuleChainType = RuleChainType.CORE;
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -83,7 +84,7 @@ export class RuleChainAutocompleteComponent implements ControlValueAccessor, OnI
               public truncate: TruncatePipe,
               private entityService: EntityService,
               private ruleChainService: RuleChainService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     this.selectRuleChainFormGroup = this.fb.group({
       ruleChainId: [null]
     });
@@ -191,9 +192,8 @@ export class RuleChainAutocompleteComponent implements ControlValueAccessor, OnI
 
   fetchRuleChain(searchText?: string): Observable<Array<BaseData<EntityId>>> {
     this.searchText = searchText;
-    // @voba: at the moment device profiles are not supported by edge, so 'core' hardcoded
     return this.entityService.getEntitiesByNameFilter(EntityType.RULE_CHAIN, searchText,
-      50, RuleChainType.CORE, {ignoreLoading: true}).pipe(
+      50, this.ruleChainType, {ignoreLoading: true}).pipe(
         catchError(() => of([]))
     );
   }

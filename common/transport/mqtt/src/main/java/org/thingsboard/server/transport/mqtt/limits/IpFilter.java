@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 package org.thingsboard.server.transport.mqtt.limits;
 
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.handler.codec.haproxy.HAProxyMessage;
 import io.netty.handler.ipfilter.AbstractRemoteAddressFilter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.transport.mqtt.MqttTransportContext;

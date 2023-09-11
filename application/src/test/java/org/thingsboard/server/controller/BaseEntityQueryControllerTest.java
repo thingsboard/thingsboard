@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,12 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.DeviceTypeFilter;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.DynamicValueSourceType;
@@ -92,7 +95,64 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
     }
 
     @Test
-    public void testCountEntitiesByQuery() throws Exception {
+    public void testTenantCountEntitiesByQuery() throws Exception {
+        List<Device> devices = new ArrayList<>();
+        for (int i = 0; i < 97; i++) {
+            Device device = new Device();
+            device.setName("Device" + i);
+            device.setType("default");
+            device.setLabel("testLabel" + (int) (Math.random() * 1000));
+            devices.add(doPost("/api/device", device, Device.class));
+            Thread.sleep(1);
+        }
+        DeviceTypeFilter filter = new DeviceTypeFilter();
+        filter.setDeviceTypes(List.of("default"));
+        filter.setDeviceNameFilter("");
+
+        EntityCountQuery countQuery = new EntityCountQuery(filter);
+
+        Long count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
+        Assert.assertEquals(97, count.longValue());
+
+        filter.setDeviceTypes(List.of("unknown"));
+        count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
+        Assert.assertEquals(0, count.longValue());
+
+        filter.setDeviceTypes(List.of("default"));
+        filter.setDeviceNameFilter("Device1");
+
+        count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
+        Assert.assertEquals(11, count.longValue());
+
+        EntityListFilter entityListFilter = new EntityListFilter();
+        entityListFilter.setEntityType(EntityType.DEVICE);
+        entityListFilter.setEntityList(devices.stream().map(Device::getId).map(DeviceId::toString).collect(Collectors.toList()));
+
+        countQuery = new EntityCountQuery(entityListFilter);
+
+        count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
+        Assert.assertEquals(97, count.longValue());
+
+        EntityTypeFilter filter2 = new EntityTypeFilter();
+        filter2.setEntityType(EntityType.DEVICE);
+
+        EntityCountQuery countQuery2 = new EntityCountQuery(filter2);
+
+        Long count2 = doPostWithResponse("/api/entitiesQuery/count", countQuery2, Long.class);
+        Assert.assertEquals(97, count2.longValue());
+    }
+
+    @Test
+    public void testSysAdminCountEntitiesByQuery() throws Exception {
+        loginSysAdmin();
+
+        EntityTypeFilter allDeviceFilter = new EntityTypeFilter();
+        allDeviceFilter.setEntityType(EntityType.DEVICE);
+        EntityCountQuery query = new EntityCountQuery(allDeviceFilter);
+        Long initialCount = doPostWithResponse("/api/entitiesQuery/count", query, Long.class);
+
+        loginTenantAdmin();
+
         List<Device> devices = new ArrayList<>();
         for (int i = 0; i < 97; i++) {
             Device device = new Device();
@@ -105,6 +165,8 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
         DeviceTypeFilter filter = new DeviceTypeFilter();
         filter.setDeviceType("default");
         filter.setDeviceNameFilter("");
+
+        loginSysAdmin();
 
         EntityCountQuery countQuery = new EntityCountQuery(filter);
 
@@ -130,13 +192,139 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
         count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
         Assert.assertEquals(97, count.longValue());
 
-        EntityTypeFilter filter2 = new EntityTypeFilter();
-        filter2.setEntityType(EntityType.DEVICE);
+        Long count2 = doPostWithResponse("/api/entitiesQuery/count", query, Long.class);
+        Assert.assertEquals(initialCount + 97, count2.longValue());
+    }
 
-        EntityCountQuery countQuery2 = new EntityCountQuery(filter2);
+    @Test
+    public void testTenantCountAlarmsByQuery() throws Exception {
+        loginTenantAdmin();
+        List<Device> devices = new ArrayList<>();
+        List<Alarm> alarms = new ArrayList<>();
+        for (int i = 0; i < 97; i++) {
+            Device device = new Device();
+            device.setName("Device" + i);
+            device.setType("default");
+            device.setLabel("testLabel" + (int) (Math.random() * 1000));
+            devices.add(doPost("/api/device", device, Device.class));
+            Thread.sleep(1);
+        }
 
-        Long count2 = doPostWithResponse("/api/entitiesQuery/count", countQuery2, Long.class);
-        Assert.assertEquals(97, count2.longValue());
+        for (int i = 0; i < devices.size(); i++) {
+            Alarm alarm = new Alarm();
+            alarm.setOriginator(devices.get(i).getId());
+            alarm.setType("alarm" + i);
+            alarm.setSeverity(AlarmSeverity.WARNING);
+            alarms.add(doPost("/api/alarm", alarm, Alarm.class));
+            Thread.sleep(1);
+        }
+        testCountAlarmsByQuery(alarms);
+    }
+
+    @Test
+    public void testCustomerCountAlarmsByQuery() throws Exception {
+        loginTenantAdmin();
+        List<Device> devices = new ArrayList<>();
+        List<Alarm> alarms = new ArrayList<>();
+        for (int i = 0; i < 97; i++) {
+            Device device = new Device();
+            device.setCustomerId(customerId);
+            device.setName("Device" + i);
+            device.setType("default");
+            device.setLabel("testLabel" + (int) (Math.random() * 1000));
+            devices.add(doPost("/api/device", device, Device.class));
+            Thread.sleep(1);
+        }
+
+        loginCustomerUser();
+
+        for (int i = 0; i < devices.size(); i++) {
+            Alarm alarm = new Alarm();
+            alarm.setCustomerId(customerId);
+            alarm.setOriginator(devices.get(i).getId());
+            alarm.setType("alarm" + i);
+            alarm.setSeverity(AlarmSeverity.WARNING);
+            alarms.add(doPost("/api/alarm", alarm, Alarm.class));
+            Thread.sleep(1);
+        }
+        testCountAlarmsByQuery(alarms);
+    }
+
+    private void testCountAlarmsByQuery(List<Alarm> alarms) throws Exception {
+        AlarmCountQuery countQuery = new AlarmCountQuery();
+
+        Long count = doPostWithResponse("/api/alarmsQuery/count", countQuery, Long.class);
+        Assert.assertEquals(97, count.longValue());
+
+        countQuery = AlarmCountQuery.builder()
+                .typeList(List.of("unknown"))
+                .build();
+
+        count = doPostWithResponse("/api/alarmsQuery/count", countQuery, Long.class);
+        Assert.assertEquals(0, count.longValue());
+
+        countQuery = AlarmCountQuery.builder()
+                .typeList(List.of("alarm1", "alarm2", "alarm3"))
+                .build();
+
+        count = doPostWithResponse("/api/alarmsQuery/count", countQuery, Long.class);
+        Assert.assertEquals(3, count.longValue());
+
+        countQuery = AlarmCountQuery.builder()
+                .typeList(alarms.stream().map(Alarm::getType).collect(Collectors.toList()))
+                .build();
+
+        count = doPostWithResponse("/api/alarmsQuery/count", countQuery, Long.class);
+        Assert.assertEquals(97, count.longValue());
+
+        countQuery = AlarmCountQuery.builder()
+                .severityList(List.of(AlarmSeverity.CRITICAL))
+                .build();
+
+        count = doPostWithResponse("/api/alarmsQuery/count", countQuery, Long.class);
+        Assert.assertEquals(0, count.longValue());
+
+        countQuery = AlarmCountQuery.builder()
+                .severityList(List.of(AlarmSeverity.WARNING))
+                .build();
+
+        count = doPostWithResponse("/api/alarmsQuery/count", countQuery, Long.class);
+        Assert.assertEquals(97, count.longValue());
+
+        long startTs = alarms.stream().map(Alarm::getCreatedTime).min(Long::compareTo).get();
+        long endTs = alarms.stream().map(Alarm::getCreatedTime).max(Long::compareTo).get();
+
+        countQuery = AlarmCountQuery.builder()
+                .startTs(startTs - 1)
+                .endTs(endTs + 1)
+                .build();
+
+        count = doPostWithResponse("/api/alarmsQuery/count", countQuery, Long.class);
+        Assert.assertEquals(97, count.longValue());
+
+        countQuery = AlarmCountQuery.builder()
+                .startTs(0)
+                .endTs(endTs + 1)
+                .build();
+
+        count = doPostWithResponse("/api/alarmsQuery/count", countQuery, Long.class);
+        Assert.assertEquals(97, count.longValue());
+
+        countQuery = AlarmCountQuery.builder()
+                .startTs(0)
+                .endTs(System.currentTimeMillis())
+                .build();
+
+        count = doPostWithResponse("/api/alarmsQuery/count", countQuery, Long.class);
+        Assert.assertEquals(97, count.longValue());
+
+        countQuery = AlarmCountQuery.builder()
+                .startTs(endTs + 1)
+                .endTs(System.currentTimeMillis())
+                .build();
+
+        count = doPostWithResponse("/api/alarmsQuery/count", countQuery, Long.class);
+        Assert.assertEquals(0, count.longValue());
     }
 
     @Test
@@ -152,7 +340,7 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
         }
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
@@ -253,7 +441,7 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
         Thread.sleep(1000);
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
@@ -332,7 +520,7 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
 
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("");
 
         KeyFilter highTemperatureFilter = new KeyFilter();
@@ -387,7 +575,7 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
     @Test
     public void givenInvalidEntityDataPageLink_thenReturnError() throws Exception {
         DeviceTypeFilter filter = new DeviceTypeFilter();
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("");
 
         String invalidSortProperty = "created(Time)";

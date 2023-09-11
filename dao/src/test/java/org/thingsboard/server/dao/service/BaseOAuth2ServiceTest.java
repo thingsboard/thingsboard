@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.oauth2.MapperType;
@@ -61,7 +62,7 @@ public abstract class BaseOAuth2ServiceTest extends AbstractServiceTest {
         Assert.assertTrue(oAuth2Service.findOAuth2Info().getOauth2ParamsInfos().isEmpty());
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveHttpAndMixedDomainsTogether() {
         OAuth2Info oAuth2Info = new OAuth2Info(true, Lists.newArrayList(
                 OAuth2ParamsInfo.builder()
@@ -77,10 +78,12 @@ public abstract class BaseOAuth2ServiceTest extends AbstractServiceTest {
                         ))
                         .build()
         ));
-        oAuth2Service.saveOAuth2Info(oAuth2Info);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            oAuth2Service.saveOAuth2Info(oAuth2Info);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveHttpsAndMixedDomainsTogether() {
         OAuth2Info oAuth2Info = new OAuth2Info(true, Lists.newArrayList(
                 OAuth2ParamsInfo.builder()
@@ -96,7 +99,9 @@ public abstract class BaseOAuth2ServiceTest extends AbstractServiceTest {
                         ))
                         .build()
         ));
-        oAuth2Service.saveOAuth2Info(oAuth2Info);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            oAuth2Service.saveOAuth2Info(oAuth2Info);
+        });
     }
 
     @Test

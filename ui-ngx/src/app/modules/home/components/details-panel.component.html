@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -29,18 +29,18 @@
         </span>
       </div>
       <div *ngIf="isShowSearch" [fxHide]="!showSearchPane" fxLayout="row" fxLayoutAlign="start center" style="width: 100%;">
-        <button mat-button mat-icon-button (click)="onToggleSearch()">
+        <button mat-icon-button (click)="onToggleSearch()">
           <mat-icon class="material-icons">arrow_back</mat-icon>
         </button>
         <div style="width: 100%; margin: 0 20px">
           <ng-content select=".search-pane"></ng-content>
         </div>
       </div>
-      <button mat-button mat-icon-button *ngIf="isShowSearch && !showSearchPane" (click)="onToggleSearch()">
+      <button mat-icon-button *ngIf="isShowSearch && !showSearchPane" (click)="onToggleSearch()">
         <mat-icon class="material-icons">search</mat-icon>
       </button>
       <ng-content select=".details-buttons"></ng-content>
-      <button mat-button mat-icon-button (click)="onCloseDetails()">
+      <button mat-icon-button (click)="onCloseDetails()">
         <mat-icon class="material-icons">close</mat-icon>
       </button>
     </div>

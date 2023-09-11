@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import {
   ViewChild, ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
-import { ControlValueAccessor, FormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validator } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validator } from '@angular/forms';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -35,7 +35,7 @@ import { deepClone, isString } from '@app/core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { JsonFormProps } from './react/json-form.models';
 import inspector from 'schema-inspector';
-import * as tinycolor_ from 'tinycolor2';
+import tinycolor from 'tinycolor2';
 import { DialogService } from '@app/core/services/dialog.service';
 // import * as React from 'react';
 // import * as ReactDOM from 'react-dom';
@@ -47,8 +47,6 @@ import { Observable } from 'rxjs/internal/Observable';
 import { forkJoin, from } from 'rxjs';
 import { MouseEvent } from 'react';
 import { TbPopoverService } from '@shared/components/popover.service';
-
-const tinycolor = tinycolor_;
 
 @Component({
   selector: 'tb-json-form',
@@ -149,7 +147,7 @@ export class JsonFormComponent implements OnInit, ControlValueAccessor, Validato
   setDisabledState(isDisabled: boolean): void {
   }
 
-  public validate(c: FormControl) {
+  public validate(c: UntypedFormControl) {
     return this.isModelValid ? null : {
       modelValid: false
     };

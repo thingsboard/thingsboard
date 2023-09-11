@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ///
 
 import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { AliasFilterType, aliasFilterTypeTranslationMap, EntityAliasFilter } from '@shared/models/alias.models';
 import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
 import { TranslateService } from '@ngx-translate/core';
@@ -44,8 +44,8 @@ export class EntityFilterComponent implements ControlValueAccessor, OnInit {
 
   @Output() resolveMultipleChanged: EventEmitter<boolean> = new EventEmitter<boolean>();
 
-  entityFilterFormGroup: FormGroup;
-  filterFormGroup: FormGroup;
+  entityFilterFormGroup: UntypedFormGroup;
+  filterFormGroup: UntypedFormGroup;
 
   aliasFilterTypes: Array<AliasFilterType>;
 
@@ -61,7 +61,7 @@ export class EntityFilterComponent implements ControlValueAccessor, OnInit {
 
   constructor(private translate: TranslateService,
               private entityService: EntityService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
   }
 
   ngOnInit(): void {
@@ -136,25 +136,25 @@ export class EntityFilterComponent implements ControlValueAccessor, OnInit {
         break;
       case AliasFilterType.assetType:
         this.filterFormGroup = this.fb.group({
-          assetType: [filter ? filter.assetType : null, [Validators.required]],
+          assetTypes: [filter ? filter.assetTypes : null, [Validators.required]],
           assetNameFilter: [filter ? filter.assetNameFilter : '', []],
         });
         break;
       case AliasFilterType.deviceType:
         this.filterFormGroup = this.fb.group({
-          deviceType: [filter ? filter.deviceType : null, [Validators.required]],
+          deviceTypes: [filter ? filter.deviceTypes : null, [Validators.required]],
           deviceNameFilter: [filter ? filter.deviceNameFilter : '', []],
         });
         break;
       case AliasFilterType.edgeType:
         this.filterFormGroup = this.fb.group({
-          edgeType: [filter ? filter.edgeType : null, [Validators.required]],
+          edgeTypes: [filter ? filter.edgeTypes : null, [Validators.required]],
           edgeNameFilter: [filter ? filter.edgeNameFilter : '', []],
         });
         break;
       case AliasFilterType.entityViewType:
         this.filterFormGroup = this.fb.group({
-          entityViewType: [filter ? filter.entityViewType : null, [Validators.required]],
+          entityViewTypes: [filter ? filter.entityViewTypes : null, [Validators.required]],
           entityViewNameFilter: [filter ? filter.entityViewNameFilter : '', []],
         });
         break;

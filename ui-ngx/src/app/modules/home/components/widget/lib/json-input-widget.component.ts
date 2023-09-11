@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Datasource, DatasourceData, DatasourceType, WidgetConfig } from '@shared/models/widget.models';
 import { IWidgetSubscription } from '@core/api/widget-api.models';
-import { FormBuilder, FormGroup, ValidatorFn, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { AttributeService } from '@core/http/attribute.service';
 import { AttributeData, AttributeScope, DataKeyType, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -68,13 +68,13 @@ export class JsonInputWidgetComponent extends PageComponent implements OnInit {
 
   isFocused: boolean;
   originalValue: any;
-  attributeUpdateFormGroup: FormGroup;
+  attributeUpdateFormGroup: UntypedFormGroup;
 
   toastTargetId = 'json-input-widget' + this.utils.guid();
 
   constructor(protected store: Store<AppState>,
               private utils: UtilsService,
-              private fb: FormBuilder,
+              private fb: UntypedFormBuilder,
               private attributeService: AttributeService,
               private translate: TranslateService) {
     super(store);

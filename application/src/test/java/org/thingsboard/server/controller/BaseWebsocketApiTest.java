@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -26,6 +28,8 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -35,6 +39,7 @@ import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.DeviceTypeFilter;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
@@ -48,12 +53,14 @@ import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.data.query.TsValue;
+import org.thingsboard.server.service.subscription.SubscriptionErrorCode;
 import org.thingsboard.server.service.subscription.TbAttributeSubscriptionScope;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
-import org.thingsboard.server.service.telemetry.cmd.v2.EntityCountCmd;
-import org.thingsboard.server.service.telemetry.cmd.v2.EntityCountUpdate;
-import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
-import org.thingsboard.server.service.telemetry.sub.SubscriptionErrorCode;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountUpdate;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountUpdate;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -82,7 +89,7 @@ public abstract class BaseWebsocketApiTest extends AbstractControllerTest {
         device.setType("default");
         device.setLabel("testLabel" + (int) (Math.random() * 1000));
         device = doPost("/api/device", device, Device.class);
-        dtf = new DeviceTypeFilter(device.getType(), device.getName());
+        dtf = new DeviceTypeFilter(List.of(device.getType()), device.getName());
     }
 
     @After
@@ -190,7 +197,7 @@ public abstract class BaseWebsocketApiTest extends AbstractControllerTest {
         Assert.assertEquals(1, update1.getCmdId());
         Assert.assertEquals(1, update1.getCount());
 
-        DeviceTypeFilter dtf2 = new DeviceTypeFilter("non-existing-device-type", "D");
+        DeviceTypeFilter dtf2 = new DeviceTypeFilter(List.of("non-existing-device-type"), "D");
         EntityCountQuery edq2 = new EntityCountQuery(dtf2, Collections.emptyList());
         EntityCountCmd cmd2 = new EntityCountCmd(2, edq2);
 
@@ -209,7 +216,7 @@ public abstract class BaseWebsocketApiTest extends AbstractControllerTest {
         highTemperatureFilter.setPredicate(predicate);
         highTemperatureFilter.setValueType(EntityKeyValueType.NUMERIC);
 
-        DeviceTypeFilter dtf3 = new DeviceTypeFilter("default", "D");
+        DeviceTypeFilter dtf3 = new DeviceTypeFilter(List.of("default"), "D");
         EntityCountQuery edq3 = new EntityCountQuery(dtf3, Collections.singletonList(highTemperatureFilter));
         EntityCountCmd cmd3 = new EntityCountCmd(3, edq3);
         getWsClient().send(cmd3);
@@ -226,7 +233,7 @@ public abstract class BaseWebsocketApiTest extends AbstractControllerTest {
         highTemperatureFilter2.setPredicate(predicate2);
         highTemperatureFilter2.setValueType(EntityKeyValueType.NUMERIC);
 
-        DeviceTypeFilter dtf4 = new DeviceTypeFilter("default", "D");
+        DeviceTypeFilter dtf4 = new DeviceTypeFilter(List.of("default"), "D");
         EntityCountQuery edq4 = new EntityCountQuery(dtf4, Collections.singletonList(highTemperatureFilter2));
         EntityCountCmd cmd4 = new EntityCountCmd(4, edq4);
 
@@ -235,6 +242,74 @@ public abstract class BaseWebsocketApiTest extends AbstractControllerTest {
         EntityCountUpdate update4 = getWsClient().parseCountReply(getWsClient().waitForReply());
         Assert.assertEquals(4, update4.getCmdId());
         Assert.assertEquals(0, update4.getCount());
+    }
+
+    @Test
+    public void testAlarmCountWsCmd() throws Exception {
+        loginTenantAdmin();
+
+        AlarmCountCmd cmd1 = new AlarmCountCmd(1, new AlarmCountQuery());
+
+        getWsClient().send(cmd1);
+
+        AlarmCountUpdate update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
+        Assert.assertEquals(1, update.getCmdId());
+        Assert.assertEquals(0, update.getCount());
+
+        Alarm alarm = new Alarm();
+        alarm.setOriginator(tenantId);
+        alarm.setType("TEST ALARM");
+        alarm.setSeverity(AlarmSeverity.WARNING);
+
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+
+        AlarmCountCmd cmd2 = new AlarmCountCmd(2, new AlarmCountQuery());
+
+        getWsClient().send(cmd2);
+
+        update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
+        Assert.assertEquals(2, update.getCmdId());
+        Assert.assertEquals(1, update.getCount());
+
+        AlarmCountCmd cmd3 = new AlarmCountCmd(3, AlarmCountQuery.builder().assigneeId(tenantAdminUserId).build());
+
+        getWsClient().send(cmd3);
+
+        update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
+        Assert.assertEquals(3, update.getCmdId());
+        Assert.assertEquals(0, update.getCount());
+
+        alarm.setAssigneeId(tenantAdminUserId);
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+
+        AlarmCountCmd cmd4 = new AlarmCountCmd(4, AlarmCountQuery.builder().assigneeId(tenantAdminUserId).build());
+
+        getWsClient().send(cmd4);
+
+        update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
+        Assert.assertEquals(4, update.getCmdId());
+        Assert.assertEquals(1, update.getCount());
+
+        AlarmCountCmd cmd5 = new AlarmCountCmd(5,
+                AlarmCountQuery.builder().severityList(Collections.singletonList(AlarmSeverity.CRITICAL)).build());
+
+        getWsClient().send(cmd5);
+
+        update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
+        Assert.assertEquals(5, update.getCmdId());
+        Assert.assertEquals(0, update.getCount());
+
+        alarm.setSeverity(AlarmSeverity.CRITICAL);
+        doPost("/api/alarm", alarm, Alarm.class);
+
+        AlarmCountCmd cmd6 = new AlarmCountCmd(6,
+                AlarmCountQuery.builder().severityList(Collections.singletonList(AlarmSeverity.CRITICAL)).build());
+
+        getWsClient().send(cmd6);
+
+        update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
+        Assert.assertEquals(6, update.getCmdId());
+        Assert.assertEquals(1, update.getCount());
     }
 
     @Test
@@ -548,7 +623,7 @@ public abstract class BaseWebsocketApiTest extends AbstractControllerTest {
         SingleEntityFilter entityFilter = new SingleEntityFilter();
         entityFilter.setSingleEntity(tenantId);
 
-        assertThatNoException().isThrownBy(() -> {
+        assertThatNoException().as("subscribeForAttributes").isThrownBy(() -> {
             JsonNode update = getWsClient().subscribeForAttributes(tenantId, TbAttributeSubscriptionScope.SERVER_SCOPE.name(), List.of("attr"));
             assertThat(update.get("errorMsg").isNull()).isTrue();
             assertThat(update.get("errorCode").asInt()).isEqualTo(SubscriptionErrorCode.NO_ERROR.getCode());
@@ -560,8 +635,36 @@ public abstract class BaseWebsocketApiTest extends AbstractControllerTest {
                 new BaseAttributeKvEntry(System.currentTimeMillis(), new StringDataEntry("attr", expectedAttrValue))
         ));
         JsonNode update = JacksonUtil.toJsonNode(getWsClient().waitForUpdate());
-        assertThat(update).isNotNull();
+        assertThat(update).as("waitForUpdate").isNotNull();
         assertThat(update.get("data").get("attr").get(0).get(1).asText()).isEqualTo(expectedAttrValue);
+    }
+
+    @Test
+    public void testEntityCountCmd_filterTypeSingularCompatibilityTest() {
+        ObjectNode oldFormatDeviceTypeFilterSingular = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        oldFormatDeviceTypeFilterSingular.put("type", "deviceType");
+        oldFormatDeviceTypeFilterSingular.put("deviceType", "default");
+        oldFormatDeviceTypeFilterSingular.put("deviceNameFilter", "Device");
+
+        ObjectNode query = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        query.set("entityFilter", oldFormatDeviceTypeFilterSingular);
+
+        ObjectNode entityCountCmd = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        entityCountCmd.put("cmdId", 1);
+        entityCountCmd.set("query", query);
+
+        ArrayNode entityCountCmds = JacksonUtil.OBJECT_MAPPER.createArrayNode();
+        entityCountCmds.add(entityCountCmd);
+
+        ObjectNode wrapperNode = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        wrapperNode.set("entityCountCmds", entityCountCmds);
+
+        getWsClient().send(JacksonUtil.toString(wrapperNode));
+
+        EntityCountUpdate update = getWsClient().parseCountReply(getWsClient().waitForReply());
+        Assert.assertEquals(1, update.getCmdId());
+        Assert.assertEquals(1, update.getCount());
+
     }
 
     private void sendTelemetry(Device device, List<TsKvEntry> tsData) throws InterruptedException {
@@ -569,15 +672,17 @@ public abstract class BaseWebsocketApiTest extends AbstractControllerTest {
         tsService.saveAndNotify(device.getTenantId(), null, device.getId(), tsData, 0, new FutureCallback<Void>() {
             @Override
             public void onSuccess(@Nullable Void result) {
+                log.debug("sendTelemetry callback onSuccess");
                 latch.countDown();
             }
 
             @Override
             public void onFailure(Throwable t) {
+                log.error("Failed to send telemetry", t);
                 latch.countDown();
             }
         });
-        latch.await(3, TimeUnit.SECONDS);
+        assertThat(latch.await(TIMEOUT, TimeUnit.SECONDS)).as("await sendTelemetry callback");
     }
 
     private void sendAttributes(Device device, TbAttributeSubscriptionScope scope, List<AttributeKvEntry> attrData) throws InterruptedException {
@@ -589,14 +694,16 @@ public abstract class BaseWebsocketApiTest extends AbstractControllerTest {
         tsService.saveAndNotify(tenantId, entityId, scope.name(), attrData, new FutureCallback<Void>() {
             @Override
             public void onSuccess(@Nullable Void result) {
+                log.debug("sendAttributes callback onSuccess");
                 latch.countDown();
             }
 
             @Override
             public void onFailure(Throwable t) {
+                log.error("Failed to sendAttributes", t);
                 latch.countDown();
             }
         });
-        latch.await(3, TimeUnit.SECONDS);
+        assertThat(latch.await(TIMEOUT, TimeUnit.SECONDS)).as("await sendAttributes callback").isTrue();
     }
 }

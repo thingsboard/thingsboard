@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,7 +20,9 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
   DataKey,
-  Datasource, datasourcesHasAggregation, datasourcesHasOnlyComparisonAggregation,
+  Datasource,
+  datasourcesHasAggregation,
+  datasourcesHasOnlyComparisonAggregation,
   DatasourceType,
   datasourceTypeTranslationMap,
   defaultLegendConfig,
@@ -32,24 +34,18 @@ import {
 } from '@shared/models/widget.models';
 import {
   ControlValueAccessor,
-  FormArray,
-  FormBuilder,
-  FormControl,
-  FormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   Validator,
   Validators
 } from '@angular/forms';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
-import { deepClone, isDefined, isObject } from '@app/core/utils';
-import {
-  alarmFields,
-  AlarmSearchStatus,
-  alarmSearchStatusTranslations,
-  AlarmSeverity,
-  alarmSeverityTranslations
-} from '@shared/models/alarm.models';
+import { deepClone, genNextLabel, isDefined, isObject } from '@app/core/utils';
+import { alarmFields, AlarmSearchStatus } from '@shared/models/alarm.models';
 import { IAliasController } from '@core/api/widget-api.models';
 import { EntityAlias } from '@shared/models/alias.models';
 import { UtilsService } from '@core/services/utils.service';
@@ -71,10 +67,7 @@ import { Dashboard } from '@shared/models/dashboard.models';
 import { entityFields } from '@shared/models/entity.models';
 import { Filter } from '@shared/models/query/query.models';
 import { FilterDialogComponent, FilterDialogData } from '@home/components/filter/filter-dialog.component';
-import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
-import { MatChipInputEvent } from '@angular/material/chips';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
-import { AggregationType } from '@shared/models/time/time.models';
 
 const emptySettingsSchema: JsonSchema = {
   type: 'object',
@@ -104,23 +97,9 @@ const defaultSettingsForm = [
 })
 export class WidgetConfigComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
 
-  readonly separatorKeysCodes: number[] = [ENTER, COMMA, SEMICOLON];
-
   widgetTypes = widgetType;
 
   entityTypes = EntityType;
-
-  alarmSearchStatuses = [AlarmSearchStatus.ACTIVE,
-                         AlarmSearchStatus.CLEARED,
-                         AlarmSearchStatus.ACK,
-                         AlarmSearchStatus.UNACK];
-
-  alarmSearchStatusTranslationMap = alarmSearchStatusTranslations;
-
-  alarmSeverities = Object.keys(AlarmSeverity);
-  alarmSeverityEnum = AlarmSeverity;
-
-  alarmSeverityTranslationMap = alarmSeverityTranslations;
 
   @Input()
   forceExpandDatasources: boolean;
@@ -163,13 +142,13 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
 
   private propagateChange = null;
 
-  public dataSettings: FormGroup;
-  public targetDeviceSettings: FormGroup;
-  public alarmSourceSettings: FormGroup;
-  public widgetSettings: FormGroup;
-  public layoutSettings: FormGroup;
-  public advancedSettings: FormGroup;
-  public actionsSettings: FormGroup;
+  public dataSettings: UntypedFormGroup;
+  public targetDeviceSettings: UntypedFormGroup;
+  public alarmSourceSettings: UntypedFormGroup;
+  public widgetSettings: UntypedFormGroup;
+  public layoutSettings: UntypedFormGroup;
+  public advancedSettings: UntypedFormGroup;
+  public actionsSettings: UntypedFormGroup;
   public openExtensionPanel = true;
   public timeseriesKeyError = false;
 
@@ -188,7 +167,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
               private entityService: EntityService,
               private dialog: MatDialog,
               private translate: TranslateService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
@@ -254,7 +233,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     });
     this.layoutSettings = this.fb.group({
       mobileOrder: [null, [Validators.pattern(/^-?[0-9]+$/)]],
-      mobileHeight: [null, [Validators.min(1), Validators.max(10), Validators.pattern(/^\d*$/)]],
+      mobileHeight: [null, [Validators.min(1), Validators.pattern(/^\d*$/)]],
       mobileHide: [false],
       desktopHide: [false]
     });
@@ -329,6 +308,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       this.datasourceTypes = [DatasourceType.function, DatasourceType.entity];
       if (this.widgetType === widgetType.latest) {
         this.datasourceTypes.push(DatasourceType.entityCount);
+        this.datasourceTypes.push(DatasourceType.alarmCount);
       }
     }
 
@@ -350,10 +330,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
         }
       });
       if (this.widgetType === widgetType.alarm) {
-        this.dataSettings.addControl('alarmStatusList', this.fb.control(null));
-        this.dataSettings.addControl('alarmSeverityList', this.fb.control(null));
-        this.dataSettings.addControl('alarmTypeList', this.fb.control(null));
-        this.dataSettings.addControl('searchPropagatedAlarms', this.fb.control(null));
+        this.dataSettings.addControl('alarmFilterConfig', this.fb.control(null));
       }
     }
     if (this.modelValue.isDataEnabled) {
@@ -374,8 +351,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       this.fb.control(null, []));
   }
 
-  datasourcesFormArray(): FormArray {
-    return this.dataSettings.get('datasources') as FormArray;
+  datasourcesFormArray(): UntypedFormArray {
+    return this.dataSettings.get('datasources') as UntypedFormArray;
   }
 
   registerOnChange(fn: any): void {
@@ -494,7 +471,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
           if (this.widgetType !== widgetType.rpc &&
             this.widgetType !== widgetType.alarm &&
             this.widgetType !== widgetType.static) {
-            const datasourcesFormArray = this.dataSettings.get('datasources') as FormArray;
+            const datasourcesFormArray = this.dataSettings.get('datasources') as UntypedFormArray;
             datasourcesFormArray.clear();
             if (config.datasources) {
               config.datasources.forEach((datasource) => {
@@ -518,24 +495,9 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
               targetDeviceAliasId
             }, {emitEvent: false});
           } else if (this.widgetType === widgetType.alarm) {
-            let alarmStatusList: AlarmSearchStatus[] = [];
-            if (isDefined(config.alarmStatusList) && config.alarmStatusList.length) {
-              alarmStatusList = config.alarmStatusList;
-            } else if (isDefined(config.alarmSearchStatus) && config.alarmSearchStatus !== AlarmSearchStatus.ANY) {
-              alarmStatusList = [config.alarmSearchStatus];
-            }
             this.dataSettings.patchValue(
-              { alarmStatusList }, {emitEvent: false}
-            );
-            this.dataSettings.patchValue(
-              { alarmSeverityList: isDefined(config.alarmSeverityList) ? config.alarmSeverityList : [] }, {emitEvent: false}
-            );
-            this.dataSettings.patchValue(
-              { alarmTypeList: isDefined(config.alarmTypeList) ? config.alarmTypeList : [] }, {emitEvent: false}
-            );
-            this.dataSettings.patchValue(
-              { searchPropagatedAlarms: isDefined(config.searchPropagatedAlarms) ?
-                  config.searchPropagatedAlarms : true }, {emitEvent: false}
+              { alarmFilterConfig: isDefined(config.alarmFilterConfig) ?
+                  config.alarmFilterConfig : { statusList: [AlarmSearchStatus.ACTIVE], searchPropagatedAlarms: true } }, {emitEvent: false}
             );
             this.alarmSourceSettings.patchValue(
               config.alarmSource, {emitEvent: false}
@@ -576,17 +538,17 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     }
   }
 
-  public dataKeysOptional(datasource?: Datasource): boolean {
+  public dataKeysOptional(type?: DatasourceType): boolean {
     if (this.widgetType === widgetType.timeseries && this.modelValue?.typeParameters?.hasAdditionalLatestDataKeys) {
       return true;
     } else {
       return this.modelValue.typeParameters && this.modelValue.typeParameters.dataKeysOptional
-        && datasource?.type !== DatasourceType.entityCount;
+        && type !== DatasourceType.entityCount && type !== DatasourceType.alarmCount;
     }
   }
 
-  private buildDatasourceForm(datasource?: Datasource): FormGroup {
-    const dataKeysRequired = !this.dataKeysOptional(datasource);
+  private buildDatasourceForm(datasource?: Datasource): UntypedFormGroup {
+    const dataKeysRequired = !this.dataKeysOptional(datasource?.type);
     const datasourceFormGroup = this.fb.group(
       {
         type: [datasource ? datasource.type : null, [Validators.required]],
@@ -595,7 +557,9 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
           datasource && (datasource.type === DatasourceType.entity ||
                          datasource.type === DatasourceType.entityCount) ? [Validators.required] : []],
         filterId: [datasource ? datasource.filterId : null, []],
-        dataKeys: [datasource ? datasource.dataKeys : null, dataKeysRequired ? [Validators.required] : []]
+        dataKeys: [datasource ? datasource.dataKeys : null, dataKeysRequired ? [Validators.required] : []],
+        alarmFilterConfig: [datasource && datasource.alarmFilterConfig ?
+          datasource.alarmFilterConfig : { statusList: [AlarmSearchStatus.ACTIVE] }]
       }
     );
     if (this.widgetType === widgetType.timeseries && this.modelValue?.typeParameters?.hasAdditionalLatestDataKeys) {
@@ -605,7 +569,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       datasourceFormGroup.get('entityAliasId').setValidators(
         (type === DatasourceType.entity || type === DatasourceType.entityCount) ? [Validators.required] : []
       );
-      const newDataKeysRequired = !this.dataKeysOptional(datasourceFormGroup.value);
+      const newDataKeysRequired = !this.dataKeysOptional(type);
       datasourceFormGroup.get('dataKeys').setValidators(newDataKeysRequired ? [Validators.required] : []);
       datasourceFormGroup.get('entityAliasId').updateValueAndValidity();
       datasourceFormGroup.get('dataKeys').updateValueAndValidity();
@@ -701,37 +665,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     }
   }
 
-  public alarmTypeList(): string[] {
-    return this.dataSettings.get('alarmTypeList').value;
-  }
-
-  public removeAlarmType(type: string): void {
-    const types: string[] = this.dataSettings.get('alarmTypeList').value;
-    const index = types.indexOf(type);
-    if (index >= 0) {
-      types.splice(index, 1);
-      this.dataSettings.get('alarmTypeList').setValue(types);
-      this.dataSettings.get('alarmTypeList').markAsDirty();
-    }
-  }
-
-  public addAlarmType(event: MatChipInputEvent): void {
-    const input = event.input;
-    const value = event.value;
-
-    const types: string[] = this.dataSettings.get('alarmTypeList').value;
-
-    if ((value || '').trim()) {
-      types.push(value.trim());
-      this.dataSettings.get('alarmTypeList').setValue(types);
-      this.dataSettings.get('alarmTypeList').markAsDirty();
-    }
-
-    if (input) {
-      input.value = '';
-    }
-  }
-
   public displayAdvanced(): boolean {
     return !!this.modelValue && (!!this.modelValue.settingsSchema && !!this.modelValue.settingsSchema.schema ||
         !!this.modelValue.settingsDirective && !!this.modelValue.settingsDirective.length);
@@ -794,7 +727,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
           label = this.translate.instant(keyField.name);
         }
       }
-      label = this.genNextLabel(label);
+      const datasources = this.widgetType === widgetType.alarm ? [this.modelValue.config.alarmSource] : this.modelValue.config.datasources;
+      label = genNextLabel(label, datasources);
       const result: DataKey = {
         name: chip,
         type,
@@ -817,41 +751,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       }
       return result;
     }
-  }
-
-  private genNextLabel(name: string): string {
-    let label = name;
-    let i = 1;
-    let matches = false;
-    const datasources = this.widgetType === widgetType.alarm ? [this.modelValue.config.alarmSource] : this.modelValue.config.datasources;
-    if (datasources) {
-      do {
-        matches = false;
-        datasources.forEach((datasource) => {
-          if (datasource) {
-            if (datasource.dataKeys) {
-              datasource.dataKeys.forEach((dataKey) => {
-                if (dataKey.label === label) {
-                  i++;
-                  label = name + ' ' + i;
-                  matches = true;
-                }
-              });
-            }
-            if (datasource.latestDataKeys) {
-              datasource.latestDataKeys.forEach((dataKey) => {
-                if (dataKey.label === label) {
-                  i++;
-                  label = name + ' ' + i;
-                  matches = true;
-                }
-              });
-            }
-          }
-        });
-      } while (matches);
-    }
-    return label;
   }
 
   private genNextColor(): string {
@@ -941,7 +840,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     return stateId => stateId.toLowerCase().indexOf(lowercaseQuery) === 0;
   }
 
-  public validate(c: FormControl) {
+  public validate(c: UntypedFormControl) {
     this.timeseriesKeyError = false;
     this.datasourceError = [];
     if (!this.dataSettings.valid) {

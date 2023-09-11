@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -24,24 +24,24 @@
     </mat-form-field>
     <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px">
       <section fxLayout="column" fxFlex>
-        <mat-checkbox formControlName="enableSelection" style="margin-bottom: 16px;">
+        <mat-checkbox formControlName="enableSelection">
           {{ 'widgets.table.enable-alarms-selection' | translate }}
         </mat-checkbox>
-        <mat-checkbox formControlName="enableSearch" style="margin-bottom: 16px;">
+        <mat-checkbox formControlName="enableSearch">
           {{ 'widgets.table.enable-alarms-search' | translate }}
         </mat-checkbox>
-        <mat-checkbox formControlName="enableSelectColumnDisplay" style="margin-bottom: 16px;">
+        <mat-checkbox formControlName="enableSelectColumnDisplay">
           {{ 'widgets.table.enable-select-column-display' | translate }}
         </mat-checkbox>
-        <mat-checkbox formControlName="enableFilter" style="margin-bottom: 16px;">
+        <mat-checkbox formControlName="enableFilter">
           {{ 'widgets.table.enable-alarm-filter' | translate }}
         </mat-checkbox>
       </section>
       <section fxLayout="column" fxFlex>
-        <mat-checkbox formControlName="enableStickyHeader" style="margin-bottom: 16px;">
+        <mat-checkbox formControlName="enableStickyHeader">
           {{ 'widgets.table.enable-sticky-header' | translate }}
         </mat-checkbox>
-        <mat-checkbox formControlName="enableStickyAction" style="margin-bottom: 16px;">
+        <mat-checkbox formControlName="enableStickyAction">
           {{ 'widgets.table.enable-sticky-action' | translate }}
         </mat-checkbox>
       </section>
@@ -58,6 +58,9 @@
       </mat-select>
     </mat-form-field>
     <section fxLayout="column" fxLayoutGap="8px">
+      <mat-slide-toggle formControlName="displayActivity">
+        {{ 'widgets.table.display-alarm-activity' | translate }}
+      </mat-slide-toggle>
       <mat-slide-toggle fxFlex formControlName="displayDetails">
         {{ 'widgets.table.display-alarm-details' | translate }}
       </mat-slide-toggle>
@@ -66,6 +69,9 @@
       </mat-slide-toggle>
       <mat-slide-toggle formControlName="allowClear">
         {{ 'widgets.table.allow-alarms-clear' | translate }}
+      </mat-slide-toggle>
+      <mat-slide-toggle formControlName="allowAssign">
+        {{ 'widgets.table.allow-alarms-assign' | translate }}
       </mat-slide-toggle>
       <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px" fxLayoutAlign.gt-xs="start center">
         <mat-slide-toggle fxFlex formControlName="displayPagination">

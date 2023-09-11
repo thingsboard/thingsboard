@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import { HttpClient } from '@angular/common/http';
 import {
   AdminSettings,
   AutoCommitSettings,
+  FeaturesInfo,
   JwtSettings,
   MailServerSettings,
   RepositorySettings,
@@ -130,5 +131,9 @@ export class AdminService {
 
   public checkUpdates(config?: RequestConfig): Observable<UpdateMessage> {
     return this.http.get<UpdateMessage>(`/api/admin/updates`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getFeaturesInfo(config?: RequestConfig): Observable<FeaturesInfo> {
+    return this.http.get<FeaturesInfo>('/api/admin/featuresInfo', defaultHttpOptionsFromConfig(config));
   }
 }

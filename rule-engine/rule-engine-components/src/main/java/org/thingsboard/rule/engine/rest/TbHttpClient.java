@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsAsyncClientHttpRequestFactory;
 import org.springframework.http.client.Netty4ClientHttpRequestFactory;
-import org.thingsboard.server.common.data.StringUtils;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 import org.springframework.web.client.AsyncRestTemplate;
@@ -49,6 +48,7 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.credentials.BasicCredentials;
 import org.thingsboard.rule.engine.credentials.ClientCredentials;
 import org.thingsboard.rule.engine.credentials.CredentialsType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -65,6 +65,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 @Data
 @Slf4j
@@ -182,37 +183,36 @@ public class TbHttpClient {
         }
     }
 
-    public void processMessage(TbContext ctx, TbMsg msg) {
+    public void processMessage(TbContext ctx, TbMsg msg,
+                               Consumer<TbMsg> onSuccess,
+                               BiConsumer<TbMsg, Throwable> onFailure) {
         String endpointUrl = TbNodeUtils.processPattern(config.getRestEndpointUrlPattern(), msg);
         HttpHeaders headers = prepareHeaders(msg);
         HttpMethod method = HttpMethod.valueOf(config.getRequestMethod());
         HttpEntity<String> entity;
-        if(HttpMethod.GET.equals(method) || HttpMethod.HEAD.equals(method) ||
-            HttpMethod.OPTIONS.equals(method) || HttpMethod.TRACE.equals(method) ||
-            config.isIgnoreRequestBody()) {
+        if (HttpMethod.GET.equals(method) || HttpMethod.HEAD.equals(method) ||
+                HttpMethod.OPTIONS.equals(method) || HttpMethod.TRACE.equals(method) ||
+                config.isIgnoreRequestBody()) {
             entity = new HttpEntity<>(headers);
         } else {
-            entity = new HttpEntity<>(msg.getData(), headers);
+            entity = new HttpEntity<>(getData(msg), headers);
         }
 
         URI uri = buildEncodedUri(endpointUrl);
         ListenableFuture<ResponseEntity<String>> future = httpClient.exchange(
                 uri, method, entity, String.class);
-        future.addCallback(new ListenableFutureCallback<ResponseEntity<String>>() {
+        future.addCallback(new ListenableFutureCallback<>() {
             @Override
             public void onFailure(Throwable throwable) {
-                TbMsg next = processException(ctx, msg, throwable);
-                ctx.tellFailure(next, throwable);
+                onFailure.accept(processException(ctx, msg, throwable), throwable);
             }
 
             @Override
             public void onSuccess(ResponseEntity<String> responseEntity) {
                 if (responseEntity.getStatusCode().is2xxSuccessful()) {
-                    TbMsg next = processResponse(ctx, msg, responseEntity);
-                    ctx.tellSuccess(next);
+                    onSuccess.accept(processResponse(ctx, msg, responseEntity));
                 } else {
-                    TbMsg next = processFailureResponse(ctx, msg, responseEntity);
-                    ctx.tellNext(next, TbRelationTypes.FAILURE);
+                    onFailure.accept(processFailureResponse(ctx, msg, responseEntity), null);
                 }
             }
         });
@@ -241,6 +241,18 @@ public class TbHttpClient {
         }
 
         return uri;
+    }
+
+    private String getData(TbMsg msg) {
+        String data = msg.getData();
+
+        if (config.isTrimDoubleQuotes()) {
+            final String dataBefore = data;
+            data = data.replaceAll("^\"|\"$", "");
+            log.trace("Trimming double quotes. Before trim: [{}], after trim: [{}]", dataBefore, data);
+        }
+
+        return data;
     }
 
     private TbMsg processResponse(TbContext ctx, TbMsg origMsg, ResponseEntity<String> response) {

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import {
   ViewChild,
   ViewContainerRef
 } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import {
   IRuleNodeConfigurationComponent,
   RuleNodeConfiguration,
@@ -78,7 +78,7 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
 
   definedDirectiveError: string;
 
-  widgetSettingsFormGroup: FormGroup;
+  widgetSettingsFormGroup: UntypedFormGroup;
 
   changeSubscription: Subscription;
 
@@ -92,7 +92,7 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
   constructor(private translate: TranslateService,
               private cfr: ComponentFactoryResolver,
               private widgetService: WidgetService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     this.widgetSettingsFormGroup = this.fb.group({
       settings: [null, Validators.required]
     });

@@ -30,6 +30,11 @@
               "src/thingsboard.ico",
               "src/assets",
               {
+                "glob": "*.svg",
+                "input": "./node_modules/@mdi/svg/svg/",
+                "output": "/assets/mdi/"
+              },
+              {
                 "glob": "worker-html.js",
                 "input": "./node_modules/ace-builds/src-noconflict/",
                 "output": "/"
@@ -48,6 +53,16 @@
                 "glob": "worker-javascript.js",
                 "input": "./node_modules/ace-builds/src-noconflict/",
                 "output": "/"
+              },
+              {
+                "glob": "worker-tbel.js",
+                "input": "./src/app/shared/models/ace/tbel/",
+                "output": "/"
+              },
+              {
+                "glob": "**/*",
+                "input": "node_modules/tinymce",
+                "output": "/assets/tinymce/"
               },
               {
                 "glob": "marker-icon-2x.png",
@@ -75,6 +90,7 @@
               "node_modules/jstree-bootstrap-theme/dist/themes/proton/style.min.css",
               "node_modules/leaflet/dist/leaflet.css",
               "src/app/modules/home/components/widget/lib/maps/markers.scss",
+              "src/app/modules/home/components/widget/lib/home-page/home-page.scss",
               "node_modules/leaflet.markercluster/dist/MarkerCluster.css",
               "node_modules/leaflet.markercluster/dist/MarkerCluster.Default.css",
               "node_modules/@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css",
@@ -132,7 +148,16 @@
               "qrcode",
               "wcwidth",
               "leaflet-polylinedecorator",
-              "ace-diff"
+              "ace-diff",
+              "messageformat-parser",
+              "html2canvas",
+              "jszip",
+              "moment",
+              "ace",
+              "ace-builds",
+              "diff-match-patch",
+              "tv4",
+              "@messageformat/parser"
             ]
           },
           "configurations": {
@@ -222,14 +247,11 @@
           }
         },
         "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
+          "builder": "@angular-eslint/builder:lint",
           "options": {
-            "tsConfig": [
-              "src/tsconfig.app.json",
-              "src/tsconfig.spec.json"
-            ],
-            "exclude": [
-              "**/node_modules/**"
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html"
             ]
           }
         }
@@ -251,22 +273,15 @@
               "devServerTarget": "thingsboard:serve:production"
             }
           }
-        },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": "e2e/tsconfig.e2e.json",
-            "exclude": [
-              "**/node_modules/**"
-            ]
-          }
         }
       }
     }
   },
-  "defaultProject": "thingsboard",
   "cli": {
     "packageManager": "yarn",
-    "analytics": false
+    "analytics": false,
+    "schematicCollections": [
+      "@angular-eslint/schematics"
+    ]
   }
 }

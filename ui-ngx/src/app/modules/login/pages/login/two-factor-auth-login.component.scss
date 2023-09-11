@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,11 +29,11 @@
         width: 450px !important;
       }
 
-      .mat-card-title {
+      .mat-mdc-card-title {
         font: 400 28px / 36px Roboto, "Helvetica Neue", sans-serif;
       }
 
-      .mat-card-content {
+      .mat-mdc-card-content {
         margin-top: 44px;
         margin-left: 40px;
       }
@@ -75,19 +75,12 @@
     button.provider {
       text-align: start;
       font-weight: 400;
-
-      &:not(.mat-button-disabled) {
+      &:not([disabled][disabled]) {
         border-color: rgba(255, 255, 255, .8);
-      }
-
-      .icon {
-        height: 18px;
-        width: 18px;
-        vertical-align: sub;
       }
     }
 
-    .mat-form-field-invalid .mat-hint {
+    .mat-form-field-invalid .mat-mdc-form-field-hint {
       margin-top: 20px;
     }
   }

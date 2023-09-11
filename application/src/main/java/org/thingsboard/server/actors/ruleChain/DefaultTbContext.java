@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.bouncycastle.util.Arrays;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.MailService;
+import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.RuleEngineApiUsageStateService;
 import org.thingsboard.rule.engine.api.RuleEngineAssetProfileCache;
@@ -34,7 +35,9 @@ import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.TbRelationTypes;
+import org.thingsboard.rule.engine.api.slack.SlackService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.rule.engine.util.TenantIdLoader;
 import org.thingsboard.server.actors.ActorSystemContext;
@@ -71,6 +74,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.TbMsgProcessingStackItem;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -85,6 +89,10 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.dao.nosql.TbResultSetFuture;
+import org.thingsboard.server.dao.notification.NotificationRequestService;
+import org.thingsboard.server.dao.notification.NotificationRuleService;
+import org.thingsboard.server.dao.notification.NotificationTargetService;
+import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -104,6 +112,7 @@ import org.thingsboard.server.service.script.RuleNodeTbelScriptEngine;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -210,6 +219,12 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public void enqueueForTellFailure(TbMsg tbMsg, Throwable th) {
+        TopicPartitionInfo tpi = resolvePartition(tbMsg);
+        enqueueForTellNext(tpi, tbMsg, Collections.singleton(TbRelationTypes.FAILURE), getFailureMessage(th), null, null);
+    }
+
+    @Override
     public void enqueueForTellNext(TbMsg tbMsg, String relationType) {
         TopicPartitionInfo tpi = resolvePartition(tbMsg);
         enqueueForTellNext(tpi, tbMsg, Collections.singleton(relationType), null, null, null);
@@ -306,16 +321,7 @@ class DefaultTbContext implements TbContext {
         if (nodeCtx.getSelf().isDebugMode()) {
             mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), msg, TbRelationTypes.FAILURE, th);
         }
-        String failureMessage;
-        if (th != null) {
-            if (!StringUtils.isEmpty(th.getMessage())) {
-                failureMessage = th.getMessage();
-            } else {
-                failureMessage = th.getClass().getSimpleName();
-            }
-        } else {
-            failureMessage = null;
-        }
+        String failureMessage = getFailureMessage(th);
         nodeCtx.getChainActor().tell(new RuleNodeToRuleChainTellNextMsg(nodeCtx.getSelf().getRuleChainId(),
                 nodeCtx.getSelf().getId(), Collections.singleton(TbRelationTypes.FAILURE),
                 msg, failureMessage));
@@ -471,6 +477,11 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public ListeningExecutor getNotificationExecutor() {
+        return mainCtx.getNotificationExecutor();
+    }
+
+    @Override
     @Deprecated
     public ScriptEngine createJsScriptEngine(String script, String... argNames) {
         return new RuleNodeJsScriptEngine(getTenantId(), mainCtx.getJsInvokeService(), script, argNames);
@@ -592,6 +603,11 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public AlarmCommentService getAlarmCommentService() {
+        return mainCtx.getAlarmCommentService();
+    }
+
+    @Override
     public RuleChainService getRuleChainService() {
         return mainCtx.getRuleChainService();
     }
@@ -677,6 +693,41 @@ class DefaultTbContext implements TbContext {
     @Override
     public SmsSenderFactory getSmsSenderFactory() {
         return mainCtx.getSmsSenderFactory();
+    }
+
+    @Override
+    public NotificationCenter getNotificationCenter() {
+        return mainCtx.getNotificationCenter();
+    }
+
+    @Override
+    public NotificationTargetService getNotificationTargetService() {
+        return mainCtx.getNotificationTargetService();
+    }
+
+    @Override
+    public NotificationTemplateService getNotificationTemplateService() {
+        return mainCtx.getNotificationTemplateService();
+    }
+
+    @Override
+    public NotificationRequestService getNotificationRequestService() {
+        return mainCtx.getNotificationRequestService();
+    }
+
+    @Override
+    public NotificationRuleService getNotificationRuleService() {
+        return mainCtx.getNotificationRuleService();
+    }
+
+    @Override
+    public SlackService getSlackService() {
+        return mainCtx.getSlackService();
+    }
+
+    @Override
+    public boolean isExternalNodeForceAck() {
+        return mainCtx.isExternalNodeForceAck();
     }
 
     @Override
@@ -788,11 +839,31 @@ class DefaultTbContext implements TbContext {
         return metaData;
     }
 
+
     @Override
-    public void checkTenantEntity(EntityId entityId) {
+    public void schedule(Runnable runnable, long delay, TimeUnit timeUnit) {
+        mainCtx.getScheduler().schedule(runnable, delay, timeUnit);
+    }
+
+    @Override
+    public void checkTenantEntity(EntityId entityId) throws TbNodeException {
         if (!this.getTenantId().equals(TenantIdLoader.findTenantId(this, entityId))) {
-            throw new RuntimeException("Entity with id: '" + entityId + "' specified in the configuration doesn't belong to the current tenant.");
+            throw new TbNodeException("Entity with id: '" + entityId + "' specified in the configuration doesn't belong to the current tenant.", true);
         }
+    }
+
+    private static String getFailureMessage(Throwable th) {
+        String failureMessage;
+        if (th != null) {
+            if (!StringUtils.isEmpty(th.getMessage())) {
+                failureMessage = th.getMessage();
+            } else {
+                failureMessage = th.getClass().getSimpleName();
+            }
+        } else {
+            failureMessage = null;
+        }
+        return failureMessage;
     }
 
     private class SimpleTbQueueCallback implements TbQueueCallback {

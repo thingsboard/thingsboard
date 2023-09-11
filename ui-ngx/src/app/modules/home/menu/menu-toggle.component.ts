@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@
 import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
 import { MenuSection } from '@core/services/menu.models';
 import { Router } from '@angular/router';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { ActionPreferencesUpdateOpenedMenuSection } from '@core/auth/auth.actions';
 
 @Component({
   selector: 'tb-menu-toggle',
@@ -28,22 +31,25 @@ export class MenuToggleComponent implements OnInit {
 
   @Input() section: MenuSection;
 
-  constructor(private router: Router) {
+  constructor(private router: Router,
+              private store: Store<AppState>) {
   }
 
   ngOnInit() {
   }
 
-  sectionActive(): boolean {
-    return this.router.isActive(this.section.path, false);
-  }
-
   sectionHeight(): string {
-    if (this.router.isActive(this.section.path, false)) {
-      return this.section.height;
+    if (this.section.opened) {
+      return this.section.pages.length * 40 + 'px';
     } else {
       return '0px';
     }
+  }
+
+  toggleSection(event: MouseEvent) {
+    event.stopPropagation();
+    this.section.opened = !this.section.opened;
+    this.store.dispatch(new ActionPreferencesUpdateOpenedMenuSection({path: this.section.path, opened: this.section.opened}));
   }
 
   trackBySectionPages(index: number, section: MenuSection){

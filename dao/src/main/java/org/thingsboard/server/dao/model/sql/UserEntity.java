@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,6 +69,9 @@ public class UserEntity extends BaseSqlEntity<User> implements SearchTextEntity<
     @Column(name = ModelConstants.USER_LAST_NAME_PROPERTY)
     private String lastName;
 
+    @Column(name = ModelConstants.PHONE_PROPERTY)
+    private String phone;
+
     @Type(type = "json")
     @Column(name = ModelConstants.USER_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
@@ -91,6 +94,7 @@ public class UserEntity extends BaseSqlEntity<User> implements SearchTextEntity<
         this.email = user.getEmail();
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
+        this.phone = user.getPhone();
         this.additionalInfo = user.getAdditionalInfo();
     }
 
@@ -118,6 +122,7 @@ public class UserEntity extends BaseSqlEntity<User> implements SearchTextEntity<
         user.setEmail(email);
         user.setFirstName(firstName);
         user.setLastName(lastName);
+        user.setPhone(phone);
         user.setAdditionalInfo(additionalInfo);
         return user;
     }

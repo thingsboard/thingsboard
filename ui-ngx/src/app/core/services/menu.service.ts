@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,31 +15,40 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { AuthService } from '../auth/auth.service';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '../core.state';
-import { selectAuth, selectIsAuthenticated } from '../auth/auth.selectors';
-import { take } from 'rxjs/operators';
+import { getCurrentOpenedMenuSections, selectAuth, selectIsAuthenticated } from '../auth/auth.selectors';
+import { filter, map, take } from 'rxjs/operators';
 import { HomeSection, MenuSection } from '@core/services/menu.models';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { Authority } from '@shared/models/authority.enum';
-import { guid } from '@core/utils';
 import { AuthState } from '@core/auth/auth.models';
+import { NavigationEnd, Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
 })
 export class MenuService {
 
+  currentMenuSections: Array<MenuSection>;
   menuSections$: Subject<Array<MenuSection>> = new BehaviorSubject<Array<MenuSection>>([]);
   homeSections$: Subject<Array<HomeSection>> = new BehaviorSubject<Array<HomeSection>>([]);
+  availableMenuLinks$ = this.menuSections$.pipe(
+    map((items) => this.allMenuLinks(items))
+  );
 
-  constructor(private store: Store<AppState>, private authService: AuthService) {
+  constructor(private store: Store<AppState>,
+              private router: Router) {
     this.store.pipe(select(selectIsAuthenticated)).subscribe(
       (authenticated: boolean) => {
         if (authenticated) {
           this.buildMenu();
         }
+      }
+    );
+    this.router.events.pipe(filter(event => event instanceof NavigationEnd)).subscribe(
+      () => {
+        this.updateOpenedMenuSections();
       }
     );
   }
@@ -48,48 +57,57 @@ export class MenuService {
     this.store.pipe(select(selectAuth), take(1)).subscribe(
       (authState: AuthState) => {
         if (authState.authUser) {
-          let menuSections: Array<MenuSection>;
           let homeSections: Array<HomeSection>;
           switch (authState.authUser.authority) {
             case Authority.SYS_ADMIN:
-              menuSections = this.buildSysAdminMenu(authState);
-              homeSections = this.buildSysAdminHome(authState);
+              this.currentMenuSections = this.buildSysAdminMenu();
+              homeSections = this.buildSysAdminHome();
               break;
             case Authority.TENANT_ADMIN:
-              menuSections = this.buildTenantAdminMenu(authState);
+              this.currentMenuSections = this.buildTenantAdminMenu(authState);
               homeSections = this.buildTenantAdminHome(authState);
               break;
             case Authority.CUSTOMER_USER:
-              menuSections = this.buildCustomerUserMenu(authState);
+              this.currentMenuSections = this.buildCustomerUserMenu(authState);
               homeSections = this.buildCustomerUserHome(authState);
               break;
           }
-          this.menuSections$.next(menuSections);
+          this.updateOpenedMenuSections();
+          this.menuSections$.next(this.currentMenuSections);
           this.homeSections$.next(homeSections);
         }
       }
     );
   }
 
-  private buildSysAdminMenu(authState: AuthState): Array<MenuSection> {
+  private updateOpenedMenuSections() {
+    const url = this.router.url;
+    const openedMenuSections = getCurrentOpenedMenuSections(this.store);
+    this.currentMenuSections.filter(section => section.type === 'toggle' &&
+      (url.startsWith(section.path) || openedMenuSections.includes(section.path))).forEach(
+      section => section.opened = true
+    );
+  }
+
+  private buildSysAdminMenu(): Array<MenuSection> {
     const sections: Array<MenuSection> = [];
     sections.push(
       {
-        id: guid(),
+        id: 'home',
         name: 'home.home',
         type: 'link',
         path: '/home',
         icon: 'home'
       },
       {
-        id: guid(),
+        id: 'tenants',
         name: 'tenant.tenants',
         type: 'link',
         path: '/tenants',
         icon: 'supervisor_account'
       },
       {
-        id: guid(),
+        id: 'tenant_profiles',
         name: 'tenant-profile.tenant-profiles',
         type: 'link',
         path: '/tenantProfiles',
@@ -97,84 +115,159 @@ export class MenuService {
         isMdiIcon: true
       },
       {
-        id: guid(),
-        name: 'widget.widget-library',
-        type: 'link',
-        path: '/widgets-bundles',
-        icon: 'now_widgets'
+        id: 'resources',
+        name: 'admin.resources',
+        type: 'toggle',
+        path: '/resources',
+        icon: 'folder',
+        pages: [
+          {
+            id: 'widget_library',
+            name: 'widget.widget-library',
+            type: 'link',
+            path: '/resources/widgets-bundles',
+            icon: 'now_widgets'
+          },
+          {
+            id: 'resources_library',
+            name: 'resource.resources-library',
+            type: 'link',
+            path: '/resources/resources-library',
+            icon: 'mdi:rhombus-split',
+            isMdiIcon: true
+          }
+        ]
       },
       {
-        id: guid(),
-        name: 'admin.system-settings',
-        type: 'toggle',
+        id: 'notifications_center',
+        name: 'notification.notification-center',
+        type: 'link',
+        path: '/notification',
+        icon: 'mdi:message-badge',
+        isMdiIcon: true,
+        pages: [
+          {
+            id: 'notification_inbox',
+            name: 'notification.inbox',
+            fullName: 'notification.notification-inbox',
+            type: 'link',
+            path: '/notification/inbox',
+            icon: 'inbox'
+          },
+          {
+            id: 'notification_sent',
+            name: 'notification.sent',
+            fullName: 'notification.notification-sent',
+            type: 'link',
+            path: '/notification/sent',
+            icon: 'outbox'
+          },
+          {
+            id: 'notification_recipients',
+            name: 'notification.recipients',
+            fullName: 'notification.notification-recipients',
+            type: 'link',
+            path: '/notification/recipients',
+            icon: 'contacts'
+          },
+          {
+            id: 'notification_templates',
+            name: 'notification.templates',
+            fullName: 'notification.notification-templates',
+            type: 'link',
+            path: '/notification/templates',
+            icon: 'mdi:message-draw',
+            isMdiIcon: true
+          },
+          {
+            id: 'notification_rules',
+            name: 'notification.rules',
+            fullName: 'notification.notification-rules',
+            type: 'link',
+            path: '/notification/rules',
+            icon: 'mdi:message-cog',
+            isMdiIcon: true
+          }
+        ]
+      },
+      {
+        id: 'settings',
+        name: 'admin.settings',
+        type: 'link',
         path: '/settings',
-        height: '320px',
         icon: 'settings',
         pages: [
           {
-            id: guid(),
+            id: 'general',
             name: 'admin.general',
+            fullName: 'admin.general-settings',
             type: 'link',
             path: '/settings/general',
             icon: 'settings_applications'
           },
           {
-            id: guid(),
+            id: 'mail_server',
             name: 'admin.outgoing-mail',
             type: 'link',
             path: '/settings/outgoing-mail',
             icon: 'mail'
           },
           {
-            id: guid(),
-            name: 'admin.sms-provider',
+            id: 'notification_settings',
+            name: 'admin.notifications',
+            fullName: 'admin.notifications-settings',
             type: 'link',
-            path: '/settings/sms-provider',
-            icon: 'sms'
-          },
-          {
-            id: guid(),
-            name: 'admin.security-settings',
-            type: 'link',
-            path: '/settings/security-settings',
-            icon: 'security'
-          },
-          {
-            id: guid(),
-            name: 'admin.oauth2.oauth2',
-            type: 'link',
-            path: '/settings/oauth2',
-            icon: 'security'
-          },
-          {
-            id: guid(),
-            name: 'admin.2fa.2fa',
-            type: 'link',
-            path: '/settings/2fa',
-            icon: 'mdi:two-factor-authentication',
+            path: '/settings/notifications',
+            icon: 'mdi:message-badge',
             isMdiIcon: true
           },
           {
-            id: guid(),
-            name: 'resource.resources-library',
-            type: 'link',
-            path: '/settings/resources-library',
-            icon: 'folder'
-          },
-          {
-            id: guid(),
+            id: 'queues',
             name: 'admin.queues',
             type: 'link',
             path: '/settings/queues',
             icon: 'swap_calls'
           },
         ]
+      },
+      {
+        id: 'security_settings',
+        name: 'security.security',
+        type: 'toggle',
+        path: '/security-settings',
+        icon: 'security',
+        pages: [
+          {
+            id: 'security_settings_general',
+            name: 'admin.general',
+            fullName: 'security.general-settings',
+            type: 'link',
+            path: '/security-settings/general',
+            icon: 'settings_applications'
+          },
+          {
+            id: '2fa',
+            name: 'admin.2fa.2fa',
+            type: 'link',
+            path: '/security-settings/2fa',
+            icon: 'mdi:two-factor-authentication',
+            isMdiIcon: true
+          },
+          {
+            id: 'oauth2',
+            name: 'admin.oauth2.oauth2',
+            type: 'link',
+            path: '/security-settings/oauth2',
+            icon: 'mdi:shield-account',
+            isMdiIcon: true
+          }
+        ]
       }
     );
     return sections;
   }
 
-  private buildSysAdminHome(authState: AuthState): Array<HomeSection> {
+  private buildSysAdminHome(): Array<HomeSection> {
     const homeSections: Array<HomeSection> = [];
     homeSections.push(
       {
@@ -257,50 +350,66 @@ export class MenuService {
     const sections: Array<MenuSection> = [];
     sections.push(
       {
-        id: guid(),
+        id: 'home',
         name: 'home.home',
         type: 'link',
         path: '/home',
         icon: 'home'
       },
       {
-        id: guid(),
-        name: 'rulechain.rulechains',
+        id: 'alarms',
+        name: 'alarm.alarms',
         type: 'link',
-        path: '/ruleChains',
-        icon: 'settings_ethernet'
+        path: '/alarms',
+        icon: 'mdi:alert-outline',
+        isMdiIcon: true
       },
       {
-        id: guid(),
-        name: 'customer.customers',
+        id: 'dashboards',
+        name: 'dashboard.dashboards',
         type: 'link',
-        path: '/customers',
-        icon: 'supervisor_account'
+        path: '/dashboards',
+        icon: 'dashboards'
       },
       {
-        id: guid(),
-        name: 'asset.assets',
-        type: 'link',
-        path: '/assets',
-        icon: 'domain'
+        id: 'entities',
+        name: 'entity.entities',
+        type: 'toggle',
+        path: '/entities',
+        icon: 'category',
+        pages: [
+          {
+            id: 'devices',
+            name: 'device.devices',
+            type: 'link',
+            path: '/entities/devices',
+            icon: 'devices_other'
+          },
+          {
+            id: 'assets',
+            name: 'asset.assets',
+            type: 'link',
+            path: '/entities/assets',
+            icon: 'domain'
+          },
+          {
+            id: 'entity_views',
+            name: 'entity-view.entity-views',
+            type: 'link',
+            path: '/entities/entityViews',
+            icon: 'view_quilt'
+          }
+        ]
       },
       {
-        id: guid(),
-        name: 'device.devices',
-        type: 'link',
-        path: '/devices',
-        icon: 'devices_other'
-      },
-      {
-        id: guid(),
+        id: 'profiles',
         name: 'profiles.profiles',
         type: 'toggle',
         path: '/profiles',
-        height: '80px',
         icon: 'badge',
         pages: [
           {
-            id: guid(),
+            id: 'device_profiles',
             name: 'device-profile.device-profiles',
             type: 'link',
             path: '/profiles/deviceProfiles',
@@ -308,7 +417,7 @@ export class MenuService {
             isMdiIcon: true
           },
           {
-            id: guid(),
+            id: 'asset_profiles',
             name: 'asset-profile.asset-profiles',
             type: 'link',
             path: '/profiles/assetProfiles',
@@ -318,40 +427,41 @@ export class MenuService {
         ]
       },
       {
-        id: guid(),
-        name: 'ota-update.ota-updates',
+        id: 'customers',
+        name: 'customer.customers',
         type: 'link',
-        path: '/otaUpdates',
-        icon: 'memory'
+        path: '/customers',
+        icon: 'supervisor_account'
       },
       {
-        id: guid(),
-        name: 'entity-view.entity-views',
+        id: 'rule_chains',
+        name: 'rulechain.rulechains',
         type: 'link',
-        path: '/entityViews',
-        icon: 'view_quilt'
+        path: '/ruleChains',
+        icon: 'settings_ethernet'
       }
     );
     if (authState.edgesSupportEnabled) {
       sections.push(
         {
-          id: guid(),
-          name: 'edge.edge-instances',
-          type: 'link',
-          path: '/edgeInstances',
-          icon: 'router'
-        },
-        {
-          id: guid(),
+          id: 'edge_management',
           name: 'edge.management',
           type: 'toggle',
           path: '/edgeManagement',
-          height: '40px',
           icon: 'settings_input_antenna',
           pages: [
             {
-              id: guid(),
+              id: 'edges',
+              name: 'edge.instances',
+              fullName: 'edge.edge-instances',
+              type: 'link',
+              path: '/edgeManagement/instances',
+              icon: 'router'
+            },
+            {
+              id: 'rulechain_templates',
               name: 'edge.rulechain-templates',
+              fullName: 'edge.edge-rulechain-templates',
               type: 'link',
               path: '/edgeManagement/ruleChains',
               icon: 'settings_ethernet'
@@ -362,75 +472,166 @@ export class MenuService {
     }
     sections.push(
       {
-        id: guid(),
-        name: 'widget.widget-library',
-        type: 'link',
-        path: '/widgets-bundles',
-        icon: 'now_widgets'
+        id: 'features',
+        name: 'feature.advanced-features',
+        type: 'toggle',
+        path: '/features',
+        icon: 'construction',
+        pages: [
+          {
+            id: 'otaUpdates',
+            name: 'ota-update.ota-updates',
+            type: 'link',
+            path: '/features/otaUpdates',
+            icon: 'memory'
+          },
+          {
+            id: 'version_control',
+            name: 'version-control.version-control',
+            type: 'link',
+            path: '/features/vc',
+            icon: 'history'
+          }
+        ]
       },
       {
-        id: guid(),
-        name: 'dashboard.dashboards',
-        type: 'link',
-        path: '/dashboards',
-        icon: 'dashboards'
+        id: 'resources',
+        name: 'admin.resources',
+        type: 'toggle',
+        path: '/resources',
+        icon: 'folder',
+        pages: [
+          {
+            id: 'widget_library',
+            name: 'widget.widget-library',
+            type: 'link',
+            path: '/resources/widgets-bundles',
+            icon: 'now_widgets'
+          },
+          {
+            id: 'resources_library',
+            name: 'resource.resources-library',
+            type: 'link',
+            path: '/resources/resources-library',
+            icon: 'mdi:rhombus-split',
+            isMdiIcon: true
+          }
+        ]
       },
       {
-        id: guid(),
-        name: 'version-control.version-control',
+        id: 'notifications_center',
+        name: 'notification.notification-center',
         type: 'link',
-        path: '/vc',
-        icon: 'history'
+        path: '/notification',
+        icon: 'mdi:message-badge',
+        isMdiIcon: true,
+        pages: [
+          {
+            id: 'notification_inbox',
+            name: 'notification.inbox',
+            fullName: 'notification.notification-inbox',
+            type: 'link',
+            path: '/notification/inbox',
+            icon: 'inbox'
+          },
+          {
+            id: 'notification_sent',
+            name: 'notification.sent',
+            fullName: 'notification.notification-sent',
+            type: 'link',
+            path: '/notification/sent',
+            icon: 'outbox'
+          },
+          {
+            id: 'notification_recipients',
+            name: 'notification.recipients',
+            fullName: 'notification.notification-recipients',
+            type: 'link',
+            path: '/notification/recipients',
+            icon: 'contacts'
+          },
+          {
+            id: 'notification_templates',
+            name: 'notification.templates',
+            fullName: 'notification.notification-templates',
+            type: 'link',
+            path: '/notification/templates',
+            icon: 'mdi:message-draw',
+            isMdiIcon: true
+          },
+          {
+            id: 'notification_rules',
+            name: 'notification.rules',
+            fullName: 'notification.notification-rules',
+            type: 'link',
+            path: '/notification/rules',
+            icon: 'mdi:message-cog',
+            isMdiIcon: true
+          }
+        ]
       },
       {
-        id: guid(),
-        name: 'audit-log.audit-logs',
-        type: 'link',
-        path: '/auditLogs',
-        icon: 'track_changes'
-      },
-      {
-        id: guid(),
+        id: 'api_usage',
         name: 'api-usage.api-usage',
         type: 'link',
         path: '/usage',
         icon: 'insert_chart'
       },
       {
-        id: guid(),
-        name: 'admin.system-settings',
-        type: 'toggle',
+        id: 'settings',
+        name: 'admin.settings',
+        type: 'link',
         path: '/settings',
-        height: '160px',
         icon: 'settings',
         pages: [
           {
-            id: guid(),
-            name: 'admin.home-settings',
+            id: 'home_settings',
+            name: 'admin.home',
+            fullName: 'admin.home-settings',
             type: 'link',
             path: '/settings/home',
             icon: 'settings_applications'
           },
           {
-            id: guid(),
-            name: 'resource.resources-library',
+            id: 'notification_settings',
+            name: 'admin.notifications',
+            fullName: 'admin.notifications-settings',
             type: 'link',
-            path: '/settings/resources-library',
-            icon: 'folder'
+            path: '/settings/notifications',
+            icon: 'mdi:message-badge',
+            isMdiIcon: true
           },
           {
-            id: guid(),
-            name: 'admin.repository-settings',
+            id: 'repository_settings',
+            name: 'admin.repository',
+            fullName: 'admin.repository-settings',
             type: 'link',
             path: '/settings/repository',
             icon: 'manage_history'
           },
           {
-            id: guid(),
-            name: 'admin.auto-commit-settings',
+            id: 'auto_commit_settings',
+            name: 'admin.auto-commit',
+            fullName: 'admin.auto-commit-settings',
             type: 'link',
             path: '/settings/auto-commit',
             icon: 'settings_backup_restore'
+          }
+        ]
+      },
+      {
+        id: 'security_settings',
+        name: 'security.security',
+        type: 'toggle',
+        path: '/security-settings',
+        icon: 'security',
+        pages: [
+          {
+            id: 'audit_log',
+            name: 'audit-log.audit-logs',
+            type: 'link',
+            path: '/security-settings/auditLogs',
+            icon: 'track_changes'
           }
         ]
       }
@@ -602,52 +803,88 @@ export class MenuService {
     const sections: Array<MenuSection> = [];
     sections.push(
       {
-        id: guid(),
+        id: 'home',
         name: 'home.home',
         type: 'link',
         path: '/home',
         icon: 'home'
       },
       {
-        id: guid(),
-        name: 'asset.assets',
+        id: 'alarms',
+        name: 'alarm.alarms',
         type: 'link',
-        path: '/assets',
-        icon: 'domain'
+        path: '/alarms',
+        icon: 'mdi:alert-outline',
+        isMdiIcon: true
       },
       {
-        id: guid(),
-        name: 'device.devices',
+        id: 'dashboards',
+        name: 'dashboard.dashboards',
         type: 'link',
-        path: '/devices',
-        icon: 'devices_other'
+        path: '/dashboards',
+        icon: 'dashboards'
       },
       {
-        id: guid(),
-        name: 'entity-view.entity-views',
-        type: 'link',
-        path: '/entityViews',
-        icon: 'view_quilt'
+        id: 'entities',
+        name: 'entity.entities',
+        type: 'toggle',
+        path: '/entities',
+        icon: 'category',
+        pages: [
+          {
+            id: 'devices',
+            name: 'device.devices',
+            type: 'link',
+            path: '/entities/devices',
+            icon: 'devices_other'
+          },
+          {
+            id: 'assets',
+            name: 'asset.assets',
+            type: 'link',
+            path: '/entities/assets',
+            icon: 'domain'
+          },
+          {
+            id: 'entity_views',
+            name: 'entity-view.entity-views',
+            type: 'link',
+            path: '/entities/entityViews',
+            icon: 'view_quilt'
+          }
+        ]
       }
     );
     if (authState.edgesSupportEnabled) {
       sections.push(
         {
-          id: guid(),
+          id: 'edges',
           name: 'edge.edge-instances',
+          fullName: 'edge.edge-instances',
           type: 'link',
-          path: '/edgeInstances',
+          path: '/edgeManagement/instances',
           icon: 'router'
         }
       );
     }
     sections.push(
       {
-        id: guid(),
-        name: 'dashboard.dashboards',
+        id: 'notifications_center',
+        name: 'notification.notification-center',
         type: 'link',
-        path: '/dashboards',
-        icon: 'dashboard'
+        path: '/notification',
+        icon: 'mdi:message-badge',
+        isMdiIcon: true,
+        pages: [
+          {
+            id: 'notification_inbox',
+            name: 'notification.inbox',
+            fullName: 'notification.notification-inbox',
+            type: 'link',
+            path: '/notification/inbox',
+            icon: 'inbox'
+          }
+        ]
       }
     );
     return sections;
@@ -716,6 +953,19 @@ export class MenuService {
     return homeSections;
   }
 
+  private allMenuLinks(sections: Array<MenuSection>): Array<MenuSection> {
+    const result: Array<MenuSection> = [];
+    for (const section of sections) {
+      if (section.type === 'link') {
+        result.push(section);
+      }
+      if (section.pages && section.pages.length) {
+        result.push(...this.allMenuLinks(section.pages));
+      }
+    }
+    return result;
+  }
+
   public menuSections(): Observable<Array<MenuSection>> {
     return this.menuSections$;
   }
@@ -724,5 +974,24 @@ export class MenuService {
     return this.homeSections$;
   }
 
-}
+  public availableMenuLinks(): Observable<Array<MenuSection>> {
+    return this.availableMenuLinks$;
+  }
 
+  public menuLinkById(id: string): Observable<MenuSection | undefined> {
+    return this.availableMenuLinks$.pipe(
+      map((links) => links.find(link => link.id === id))
+    );
+  }
+
+  public menuLinksByIds(ids: string[]): Observable<Array<MenuSection>> {
+    return this.availableMenuLinks$.pipe(
+      map((links) => links.filter(link => ids.includes(link.id)).sort((a, b) => {
+        const i1 = ids.indexOf(a.id);
+        const i2 = ids.indexOf(b.id);
+        return i1 - i2;
+      }))
+    );
+  }
+
+}

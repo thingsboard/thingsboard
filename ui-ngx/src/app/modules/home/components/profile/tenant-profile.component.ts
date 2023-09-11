@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 import { ChangeDetectorRef, Component, Inject, Input, Optional } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { createTenantProfileConfiguration, TenantProfile, TenantProfileType } from '@shared/models/tenant.model';
 import { ActionNotificationShow } from '@app/core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
@@ -39,7 +39,7 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
               protected translate: TranslateService,
               @Optional() @Inject('entity') protected entityValue: TenantProfile,
               @Optional() @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<TenantProfile>,
-              protected fb: FormBuilder,
+              protected fb: UntypedFormBuilder,
               protected cd: ChangeDetectorRef) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
@@ -52,15 +52,15 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
     }
   }
 
-  buildForm(entity: TenantProfile): FormGroup {
+  buildForm(entity: TenantProfile): UntypedFormGroup {
     const mainQueue = [
       {
         id: guid(),
         consumerPerPartition: true,
         name: 'Main',
-        packProcessingTimeout: 2000,
-        partitions: 10,
-        pollInterval: 25,
+        packProcessingTimeout: 10000,
+        partitions: 1,
+        pollInterval: 2000,
         processingStrategy: {
           failurePercentage: 0,
           maxPauseBetweenRetries: 3,
@@ -74,7 +74,56 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
         },
         topic: 'tb_rule_engine.main',
         additionalInfo: {
-          description: ''
+          description: '',
+          customProperties: ''
+        }
+      },
+      {
+        id: guid(),
+        name: 'HighPriority',
+        topic: 'tb_rule_engine.hp',
+        pollInterval: 2000,
+        partitions: 1,
+        consumerPerPartition: true,
+        packProcessingTimeout: 10000,
+        submitStrategy: {
+          type: 'BURST',
+          batchSize: 100
+        },
+        processingStrategy: {
+          type: 'RETRY_FAILED_AND_TIMED_OUT',
+          retries: 0,
+          failurePercentage: 0,
+          pauseBetweenRetries: 5,
+          maxPauseBetweenRetries: 5
+        },
+        additionalInfo: {
+          description: '',
+          customProperties: ''
+        }
+      },
+      {
+        id: guid(),
+        name: 'SequentialByOriginator',
+        topic: 'tb_rule_engine.sq',
+        pollInterval: 2000,
+        partitions: 1,
+        consumerPerPartition: true,
+        packProcessingTimeout: 10000,
+        submitStrategy: {
+          type: 'SEQUENTIAL_BY_ORIGINATOR',
+          batchSize: 100
+        },
+        processingStrategy: {
+          type: 'RETRY_FAILED_AND_TIMED_OUT',
+          retries: 3,
+          failurePercentage: 0,
+          pauseBetweenRetries: 5,
+          maxPauseBetweenRetries: 5
+        },
+        additionalInfo: {
+          description: '',
+          customProperties: ''
         }
       }
     ];
@@ -118,9 +167,6 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
     if (this.entityForm) {
       if (this.isEditValue) {
         this.entityForm.enable({emitEvent: false});
-        if (!this.isAdd) {
-          this.entityForm.get('isolatedTbRuleEngine').disable({emitEvent: false});
-        }
       } else {
         this.entityForm.disable({emitEvent: false});
       }

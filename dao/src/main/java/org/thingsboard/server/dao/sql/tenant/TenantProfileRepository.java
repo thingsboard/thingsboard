@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.dao.model.sql.TenantProfileEntity;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface TenantProfileRepository extends JpaRepository<TenantProfileEntity, UUID> {
@@ -51,5 +52,7 @@ public interface TenantProfileRepository extends JpaRepository<TenantProfileEnti
             "FROM TenantProfileEntity t " +
             "WHERE t.isDefault = true")
     EntityInfo findDefaultTenantProfileInfo();
+
+    List<TenantProfileEntity> findByIdIn(List<UUID> ids);
 
 }

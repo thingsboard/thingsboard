@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 .markdown-content {
-  min-width: 400px;
+  min-width: 300px;
   &.tb-edit-mode {
     .tb-markdown-view-container {
       border: 1px solid #c0c0c0;
@@ -58,15 +58,31 @@
     overflow: auto;
     height: 100%;
   }
-  button.panel-button {
-    background: rgba(220, 220, 220, .35);
-    align-items: center;
-    vertical-align: middle;
-    min-width: 32px;
-    min-height: 15px;
-    padding: 4px;
-    font-size: .8rem;
-    line-height: 15px;
-    color: #7b7b7b;
+
+  .markdown-editor-toolbar {
+    & > * {
+      &:not(:last-child) {
+        margin-right: 4px;
+      }
+    }
+    button.mat-mdc-button-base, button.mat-mdc-button-base.tb-mat-32 {
+      background: rgba(220, 220, 220, .35);
+      align-items: center;
+      vertical-align: middle;
+      min-width: 32px;
+      min-height: 15px;
+      padding: 4px;
+      font-size: .8rem;
+      line-height: 15px;
+      &:not(.tb-help-popup-button) {
+        color: #7b7b7b;
+      }
+    }
+    button.mat-mdc-button-base:not(.mat-mdc-icon-button) {
+      height: 23px;
+    }
+    .tb-help-popup-button-loading {
+      background: #f3f3f3;
+    }
   }
 }

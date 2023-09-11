@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 import { Component } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { switchRpcDefaultSettings } from '@home/components/widget/lib/settings/control/switch-rpc-settings.component';
@@ -29,10 +29,10 @@ import { deepClone } from '@core/utils';
 })
 export class SwitchControlWidgetSettingsComponent extends WidgetSettingsComponent {
 
-  switchControlWidgetSettingsForm: FormGroup;
+  switchControlWidgetSettingsForm: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
@@ -44,7 +44,7 @@ export class SwitchControlWidgetSettingsComponent extends WidgetSettingsComponen
     return null;
   }
 
-  protected settingsForm(): FormGroup {
+  protected settingsForm(): UntypedFormGroup {
     return this.switchControlWidgetSettingsForm;
   }
 
@@ -75,9 +75,9 @@ export class SwitchControlWidgetSettingsComponent extends WidgetSettingsComponen
 
   protected prepareOutputSettings(settings: any): WidgetSettings {
     return {
+      ...settings.switchRpcSettings,
       title: settings.title,
-      showOnOffLabels: settings.showOnOffLabels,
-      ...settings.switchRpcSettings
+      showOnOffLabels: settings.showOnOffLabels
     };
   }
 }

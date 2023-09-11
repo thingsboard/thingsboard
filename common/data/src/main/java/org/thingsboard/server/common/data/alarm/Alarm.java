@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.alarm;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.annotations.ApiModel;
@@ -22,6 +23,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasName;
@@ -30,6 +32,7 @@ import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
@@ -40,8 +43,10 @@ import java.util.List;
  */
 @ApiModel
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Builder
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId, HasCustomerId {
 
     @ApiModelProperty(position = 3, value = "JSON object with Tenant Id", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
@@ -58,25 +63,31 @@ public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId, Ha
     private EntityId originator;
     @ApiModelProperty(position = 8, required = true, value = "Alarm severity", example = "CRITICAL")
     private AlarmSeverity severity;
-    @ApiModelProperty(position = 9, required = true, value = "Alarm status", example = "CLEARED_UNACK")
-    private AlarmStatus status;
-    @ApiModelProperty(position = 10, value = "Timestamp of the alarm start time, in milliseconds", example = "1634058704565")
+    @ApiModelProperty(position = 9, required = true, value = "Acknowledged", example = "true")
+    private boolean acknowledged;
+    @ApiModelProperty(position = 10, required = true, value = "Cleared", example = "false")
+    private boolean cleared;
+    @ApiModelProperty(position = 11, value = "Alarm assignee user id")
+    private UserId assigneeId;
+    @ApiModelProperty(position = 12, value = "Timestamp of the alarm start time, in milliseconds", example = "1634058704565")
     private long startTs;
-    @ApiModelProperty(position = 11, value = "Timestamp of the alarm end time(last time update), in milliseconds", example = "1634111163522")
+    @ApiModelProperty(position = 13, value = "Timestamp of the alarm end time(last time update), in milliseconds", example = "1634111163522")
     private long endTs;
-    @ApiModelProperty(position = 12, value = "Timestamp of the alarm acknowledgement, in milliseconds", example = "1634115221948")
+    @ApiModelProperty(position = 14, value = "Timestamp of the alarm acknowledgement, in milliseconds", example = "1634115221948")
     private long ackTs;
-    @ApiModelProperty(position = 13, value = "Timestamp of the alarm clearing, in milliseconds", example = "1634114528465")
+    @ApiModelProperty(position = 15, value = "Timestamp of the alarm clearing, in milliseconds", example = "1634114528465")
     private long clearTs;
-    @ApiModelProperty(position = 14, value = "JSON object with alarm details")
+    @ApiModelProperty(position = 16, value = "Timestamp of the alarm assignment, in milliseconds", example = "1634115928465")
+    private long assignTs;
+    @ApiModelProperty(position = 17, value = "JSON object with alarm details")
     private transient JsonNode details;
-    @ApiModelProperty(position = 15, value = "Propagation flag to specify if alarm should be propagated to parent entities of alarm originator", example = "true")
+    @ApiModelProperty(position = 18, value = "Propagation flag to specify if alarm should be propagated to parent entities of alarm originator", example = "true")
     private boolean propagate;
-    @ApiModelProperty(position = 16, value = "Propagation flag to specify if alarm should be propagated to the owner (tenant or customer) of alarm originator", example = "true")
+    @ApiModelProperty(position = 19, value = "Propagation flag to specify if alarm should be propagated to the owner (tenant or customer) of alarm originator", example = "true")
     private boolean propagateToOwner;
-    @ApiModelProperty(position = 17, value = "Propagation flag to specify if alarm should be propagated to the tenant entity", example = "true")
+    @ApiModelProperty(position = 20, value = "Propagation flag to specify if alarm should be propagated to the tenant entity", example = "true")
     private boolean propagateToTenant;
-    @ApiModelProperty(position = 18, value = "JSON array of relation types that should be used for propagation. " +
+    @ApiModelProperty(position = 21, value = "JSON array of relation types that should be used for propagation. " +
             "By default, 'propagateRelationTypes' array is empty which means that the alarm will be propagated based on any relation type to parent entities. " +
             "This parameter should be used only in case when 'propagate' parameter is set to true, otherwise, 'propagateRelationTypes' array will be ignored.")
     private List<String> propagateRelationTypes;
@@ -97,11 +108,14 @@ public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId, Ha
         this.type = alarm.getType();
         this.originator = alarm.getOriginator();
         this.severity = alarm.getSeverity();
-        this.status = alarm.getStatus();
+        this.assigneeId = alarm.getAssigneeId();
         this.startTs = alarm.getStartTs();
         this.endTs = alarm.getEndTs();
+        this.acknowledged = alarm.isAcknowledged();
         this.ackTs = alarm.getAckTs();
         this.clearTs = alarm.getClearTs();
+        this.cleared = alarm.isCleared();
+        this.assignTs = alarm.getAssignTs();
         this.details = alarm.getDetails();
         this.propagate = alarm.isPropagate();
         this.propagateToOwner = alarm.isPropagateToOwner();
@@ -119,7 +133,7 @@ public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId, Ha
     @ApiModelProperty(position = 1, value = "JSON object with the alarm Id. " +
             "Specify this field to update the alarm. " +
             "Referencing non-existing alarm Id will cause error. " +
-            "Omit this field to create new alarm." )
+            "Omit this field to create new alarm.")
     @Override
     public AlarmId getId() {
         return super.getId();
@@ -130,6 +144,21 @@ public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId, Ha
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();
+    }
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @ApiModelProperty(position = 22, required = true, value = "status of the Alarm", example = "ACTIVE_UNACK", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    public AlarmStatus getStatus() {
+        return toStatus(cleared, acknowledged);
+    }
+
+    public static AlarmStatus toStatus(boolean cleared, boolean acknowledged) {
+
+        if (cleared) {
+            return acknowledged ? AlarmStatus.CLEARED_ACK : AlarmStatus.CLEARED_UNACK;
+        } else {
+            return acknowledged ? AlarmStatus.ACTIVE_ACK : AlarmStatus.ACTIVE_UNACK;
+        }
     }
 
 }

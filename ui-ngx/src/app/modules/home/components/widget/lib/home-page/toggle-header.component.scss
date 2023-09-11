@@ -1,0 +1,134 @@
+/**
+ * Copyright © 2016-2023 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@import "../../../../../../../scss/constants";
+
+:host ::ng-deep {
+  .mat-button-toggle-group.mat-button-toggle-group-appearance-standard.tb-toggle-header {
+    width: 100%;
+    border-radius: 100px;
+    height: 32px;
+    padding: 2px;
+    border: none;
+    background: rgba(0, 0, 0, 0.06);
+    .mat-button-toggle + .mat-button-toggle {
+      border-left: none;
+    }
+    .mat-button-toggle.mat-button-toggle-appearance-standard {
+      flex: 1;
+      color: rgba(0, 0, 0, 0.38);
+      background: transparent;
+
+      .mat-button-toggle-focus-overlay, .mat-button-toggle-ripple {
+        border-radius: 20px;
+      }
+      .mat-button-toggle-button {
+        height: 28px;
+        .mat-button-toggle-label-content {
+          line-height: 26px;
+          font-weight: 400;
+          font-size: 14px;
+          letter-spacing: 0.2px;
+        }
+      }
+      &.mat-button-toggle-checked {
+        .mat-button-toggle-button {
+          background: #F3F6FA;
+          color: #305680;
+          border: 1px solid #305680;
+          border-radius: 20px;
+
+          .mat-button-toggle-label-content {
+            font-weight: 500;
+            line-height: 24px;
+          }
+        }
+      }
+    }
+  }
+  @media #{$mat-md-lg} {
+    .mat-button-toggle-group.mat-button-toggle-group-appearance-standard.tb-toggle-header {
+      height: 24px;
+      .mat-button-toggle.mat-button-toggle-appearance-standard {
+        .mat-button-toggle-button {
+          height: 20px;
+          display: grid;
+          .mat-button-toggle-label-content {
+            line-height: 20px;
+            font-size: 10px;
+            padding: 0 2px;
+          }
+        }
+        &.mat-button-toggle-checked {
+          .mat-button-toggle-button {
+            .mat-button-toggle-label-content {
+              line-height: 18px;
+            }
+          }
+        }
+      }
+    }
+  }
+  .tb-toggle-header-select {
+    &.mat-mdc-form-field {
+      line-height: 16px;
+      font-size: 12px;
+    }
+    .mat-mdc-text-field-wrapper.mdc-text-field--outlined .mat-mdc-form-field-infix {
+      min-height: 0;
+      width: auto;
+      padding-top: 8px;
+      padding-bottom: 8px;
+    }
+    .mdc-text-field--outlined {
+      padding-left: 8px;
+      padding-right: 6px;
+    }
+    .mat-mdc-select {
+      font-weight: 400;
+      font-size: 12px;
+      line-height: 16px;
+      letter-spacing: 0.25px;
+    }
+    .mat-mdc-select-value {
+      color: rgba(0, 0, 0, 0.38);
+    }
+    .mat-mdc-select-arrow-wrapper {
+      height: 12px;
+      padding-left: 6px;
+    }
+    .mat-mdc-select-arrow {
+      width: 12px;
+      height: 12px;
+      & > svg {
+        display: none;
+      }
+      &:after {
+        font-family: 'Material Icons';
+        content: "expand_more";
+        position: absolute;
+        display: inline-block;
+        font-size: 20px;
+        line-height: 12px;
+        top: 0;
+        left: -6px;
+        right: 0;
+        bottom: 0;
+        color: rgba(0, 0, 0, 0.38);
+      }
+    }
+  }
+}

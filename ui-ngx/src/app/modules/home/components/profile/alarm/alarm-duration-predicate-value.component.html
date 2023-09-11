@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -17,8 +17,7 @@
 -->
 <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" [formGroup]="alarmDurationPredicateValueFormGroup">
   <div fxFlex fxLayout="column" [fxShow]="!dynamicMode">
-    <mat-form-field floatLabel="always" hideRequiredMarker class="mat-block">
-      <mat-label></mat-label>
+    <mat-form-field class="mat-block" subscriptSizing="dynamic">
       <input required type="number" matInput
              step="1" min="1" max="2147483647"
              formControlName="defaultValue"
@@ -40,8 +39,7 @@
   <div fxFlex fxLayout="column" [fxShow]="dynamicMode">
     <div formGroupName="dynamicValue" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
       <div fxFlex="40" fxLayout="column">
-        <mat-form-field floatLabel="always" hideRequiredMarker class="mat-block">
-          <mat-label></mat-label>
+        <mat-form-field class="mat-block" subscriptSizing="dynamic">
           <mat-select formControlName="sourceType" placeholder="{{'filter.dynamic-source-type' | translate}}">
             <mat-option [value]="null">
               {{'filter.no-dynamic-value' | translate}}
@@ -53,8 +51,7 @@
         </mat-form-field>
       </div>
       <div fxFlex fxLayout="column">
-        <mat-form-field floatLabel="always" hideRequiredMarker class="mat-block source-attribute">
-          <mat-label></mat-label>
+        <mat-form-field class="mat-block source-attribute" subscriptSizing="dynamic">
           <input matInput formControlName="sourceAttribute" placeholder="{{'filter.source-attribute' | translate}}">
         </mat-form-field>
       </div>

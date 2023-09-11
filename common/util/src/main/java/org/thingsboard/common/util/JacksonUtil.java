@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,10 +32,14 @@ import org.thingsboard.server.common.data.kv.KvEntry;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.UnaryOperator;
+import java.util.regex.Pattern;
 
 /**
  * Created by Valerii Sosliuk on 5/12/2017.
@@ -155,6 +159,14 @@ public class JacksonUtil {
         return mapper.createObjectNode();
     }
 
+    public static ArrayNode newArrayNode() {
+        return newArrayNode(OBJECT_MAPPER);
+    }
+
+    public static ArrayNode newArrayNode(ObjectMapper mapper) {
+        return mapper.createArrayNode();
+    }
+
     public static <T> T clone(T value) {
         @SuppressWarnings("unchecked")
         Class<T> valueClass = (Class<T>) value.getClass();
@@ -189,7 +201,7 @@ public class JacksonUtil {
         return node;
     }
 
-    public static void replaceUuidsRecursively(JsonNode node, Set<String> skipFieldsSet, UnaryOperator<UUID> replacer) {
+    public static void replaceUuidsRecursively(JsonNode node, Set<String> skipFieldsSet, Pattern includedFieldsPattern, UnaryOperator<UUID> replacer) {
         if (node == null) {
             return;
         }
@@ -201,9 +213,14 @@ public class JacksonUtil {
                 if (skipFieldsSet.contains(fieldName)) {
                     continue;
                 }
+                if (includedFieldsPattern != null) {
+                    if (!RegexUtils.matches(fieldName, includedFieldsPattern)) {
+                        continue;
+                    }
+                }
                 var child = objectNode.get(fieldName);
                 if (child.isObject() || child.isArray()) {
-                    replaceUuidsRecursively(child, skipFieldsSet, replacer);
+                    replaceUuidsRecursively(child, skipFieldsSet, includedFieldsPattern, replacer);
                 } else if (child.isTextual()) {
                     String text = child.asText();
                     String newText = RegexUtils.replace(text, RegexUtils.UUID_PATTERN, uuid -> replacer.apply(UUID.fromString(uuid)).toString());
@@ -217,7 +234,7 @@ public class JacksonUtil {
             for (int i = 0; i < array.size(); i++) {
                 JsonNode arrayElement = array.get(i);
                 if (arrayElement.isObject() || arrayElement.isArray()) {
-                    replaceUuidsRecursively(arrayElement, skipFieldsSet, replacer);
+                    replaceUuidsRecursively(arrayElement, skipFieldsSet, includedFieldsPattern, replacer);
                 } else if (arrayElement.isTextual()) {
                     String text = arrayElement.asText();
                     String newText = RegexUtils.replace(text, RegexUtils.UUID_PATTERN, uuid -> replacer.apply(UUID.fromString(uuid)).toString());
@@ -226,6 +243,25 @@ public class JacksonUtil {
                     }
                 }
             }
+        }
+    }
+
+    public static Map<String, String> toFlatMap(JsonNode node) {
+        HashMap<String, String> map = new HashMap<>();
+        toFlatMap(node, "", map);
+        return map;
+    }
+
+    private static void toFlatMap(JsonNode node, String currentPath, Map<String, String> map) {
+        if (node.isObject()) {
+            Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
+            currentPath = currentPath.isEmpty() ? "" : currentPath + ".";
+            while (fields.hasNext()) {
+                Map.Entry<String, JsonNode> entry = fields.next();
+                toFlatMap(entry.getValue(), currentPath + entry.getKey(), map);
+            }
+        } else if (node.isValueNode()) {
+            map.put(currentPath, node.asText());
         }
     }
 

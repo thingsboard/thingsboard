@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@
   </tb-legend>
 </div>
 <div class="tb-absolute-fill tb-widget-error" *ngIf="widgetErrorData">
-  <span>Widget Error: {{ widgetErrorData.name + ": " + widgetErrorData.message}}</span>
+  <span [innerHtml]="('Widget Error:<br/><br/>' + widgetErrorData.message) | safe:'html'"></span>
 </div>
 <div class="tb-absolute-fill tb-widget-no-data" *ngIf="displayNoData">
   <span fxLayoutAlign="center center"

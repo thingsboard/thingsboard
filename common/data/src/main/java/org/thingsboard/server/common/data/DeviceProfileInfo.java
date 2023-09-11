@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import lombok.Value;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.UUID;
 
@@ -41,22 +42,28 @@ public class DeviceProfileInfo extends EntityInfo {
     @ApiModelProperty(position = 6, value = "Type of the transport used to connect the device. Default transport supports HTTP, CoAP and MQTT.")
     private final DeviceTransportType transportType;
 
+    @ApiModelProperty(position = 7, value = "Tenant id.")
+    private final TenantId tenantId;
+
     @JsonCreator
     public DeviceProfileInfo(@JsonProperty("id") EntityId id,
+                             @JsonProperty("tenantId") TenantId tenantId,
                              @JsonProperty("name") String name,
                              @JsonProperty("image") String image,
                              @JsonProperty("defaultDashboardId") DashboardId defaultDashboardId,
                              @JsonProperty("type") DeviceProfileType type,
                              @JsonProperty("transportType") DeviceTransportType transportType) {
         super(id, name);
+        this.tenantId = tenantId;
         this.image = image;
         this.defaultDashboardId = defaultDashboardId;
         this.type = type;
         this.transportType = transportType;
     }
 
-    public DeviceProfileInfo(UUID uuid, String name, String image, UUID defaultDashboardId, DeviceProfileType type, DeviceTransportType transportType) {
+    public DeviceProfileInfo(UUID uuid, UUID tenantId, String name, String image, UUID defaultDashboardId, DeviceProfileType type, DeviceTransportType transportType) {
         super(EntityIdFactory.getByTypeAndUuid(EntityType.DEVICE_PROFILE, uuid), name);
+        this.tenantId = new TenantId(tenantId);
         this.image = image;
         this.defaultDashboardId = defaultDashboardId != null ? new DashboardId(defaultDashboardId) : null;
         this.type = type;
@@ -64,7 +71,7 @@ public class DeviceProfileInfo extends EntityInfo {
     }
 
     public DeviceProfileInfo(DeviceProfile profile) {
-        this(profile.getId(), profile.getName(), profile.getImage(), profile.getDefaultDashboardId(),
+        this(profile.getId(), profile.getTenantId(), profile.getName(), profile.getImage(), profile.getDefaultDashboardId(),
                 profile.getType(), profile.getTransportType());
     }
 

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormBuilder,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   NG_VALUE_ACCESSOR,
 } from '@angular/forms';
 import {
@@ -38,7 +38,7 @@ import {
 })
 
 export class AlarmDynamicValue implements ControlValueAccessor, OnInit{
-  public dynamicValue: FormGroup;
+  public dynamicValue: UntypedFormGroup;
   public dynamicValueSourceTypes: DynamicValueSourceType[] = getDynamicSourcesForAllowUser(false);
   public dynamicValueSourceTypeTranslations = dynamicValueSourceTypeTranslationMap;
   private propagateChange = (v: any) => { };
@@ -49,7 +49,7 @@ export class AlarmDynamicValue implements ControlValueAccessor, OnInit{
   @Input()
   disabled: boolean;
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: UntypedFormBuilder) {
   }
 
   ngOnInit(): void {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,22 +41,22 @@ import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.edge.rpc.processor.AlarmEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.AssetEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.AssetProfileEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.CustomerEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.DashboardEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.DeviceEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.DeviceProfileEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.EdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.EntityViewEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.OtaPackageEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.QueueEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.RelationEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.RuleChainEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.UserEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.WidgetBundleEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.WidgetTypeEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.alarm.AlarmEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.asset.AssetEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.asset.AssetProfileEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.customer.CustomerEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.dashboard.DashboardEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.device.DeviceEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.device.DeviceProfileEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.edge.EdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.entityview.EntityViewEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.ota.OtaPackageEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.queue.QueueEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.relation.RelationEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.rule.RuleChainEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.user.UserEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.widget.WidgetBundleEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.widget.WidgetTypeEdgeProcessor;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;

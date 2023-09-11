@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormBuilder,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   ValidationErrors,
@@ -57,7 +57,7 @@ import { isDefinedAndNotNull } from '@core/utils';
 })
 export class SnmpDeviceTransportConfigurationComponent implements ControlValueAccessor, OnInit, Validator {
 
-  snmpDeviceTransportConfigurationFormGroup: FormGroup;
+  snmpDeviceTransportConfigurationFormGroup: UntypedFormGroup;
 
   snmpDeviceProtocolVersions = Object.values(SnmpDeviceProtocolVersion);
   snmpAuthenticationProtocols = Object.values(SnmpAuthenticationProtocol);
@@ -82,7 +82,7 @@ export class SnmpDeviceTransportConfigurationComponent implements ControlValueAc
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
   }
 
   registerOnChange(fn: any): void {

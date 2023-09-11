@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,13 +16,11 @@
 
 import * as CanvasGauges from 'canvas-gauges';
 import { FontStyle, FontWeight } from '@home/components/widget/lib/settings.models';
-import * as tinycolor_ from 'tinycolor2';
+import tinycolor from 'tinycolor2';
 import { ColorFormats } from 'tinycolor2';
 import { isDefined, isDefinedAndNotNull, isString, isUndefined, padValue } from '@core/utils';
 import GenericOptions = CanvasGauges.GenericOptions;
 import BaseGauge = CanvasGauges.BaseGauge;
-
-const tinycolor = tinycolor_;
 
 export type GaugeType = 'arc' | 'donut' | 'horizontalBar' | 'verticalBar';
 
@@ -651,10 +649,10 @@ function barDimensions(context: DigitalGaugeCanvasRenderingContext2D,
     }
     let dashCount = Math.floor(circumference / (options.dashThickness * bd.fontSizeFactor));
     if (options.gaugeType === 'donut') {
-      // tslint:disable-next-line:no-bitwise
+      // eslint-disable-next-line no-bitwise
       dashCount = (dashCount | 1) - 1;
     } else {
-      // tslint:disable-next-line:no-bitwise
+      // eslint-disable-next-line no-bitwise
       dashCount = (dashCount - 1) | 1;
     }
     bd.dashLength = Math.ceil(circumference / dashCount);

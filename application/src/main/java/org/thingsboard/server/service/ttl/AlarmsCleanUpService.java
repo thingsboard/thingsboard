@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -60,46 +61,48 @@ public class AlarmsCleanUpService {
 
     @Scheduled(initialDelayString = "#{T(org.apache.commons.lang3.RandomUtils).nextLong(0, ${sql.ttl.alarms.checking_interval})}", fixedDelayString = "${sql.ttl.alarms.checking_interval}")
     public void cleanUp() {
-        PageLink tenantsBatchRequest = new PageLink(10_000, 0);
-        PageLink removalBatchRequest = new PageLink(removalBatchSize, 0 );
-        PageData<TenantId> tenantsIds;
-        do {
-            tenantsIds = tenantService.findTenantsIds(tenantsBatchRequest);
-            for (TenantId tenantId : tenantsIds.getData()) {
-                if (!partitionService.resolve(ServiceType.TB_CORE, tenantId, tenantId).isMyPartition()) {
-                    continue;
-                }
+        PageDataIterable<TenantId> tenants = new PageDataIterable<>(tenantService::findTenantsIds, 10_000);
+        for (TenantId tenantId : tenants) {
+            try {
+                cleanUp(tenantId);
+            } catch (Exception e) {
+                log.warn("Failed to clean up alarms by ttl for tenant {}", tenantId, e);
+            }
+        }
+    }
 
-                Optional<DefaultTenantProfileConfiguration> tenantProfileConfiguration = tenantProfileCache.get(tenantId).getProfileConfiguration();
-                if (tenantProfileConfiguration.isEmpty() || tenantProfileConfiguration.get().getAlarmsTtlDays() == 0) {
-                    continue;
-                }
+    private void cleanUp(TenantId tenantId) {
+        if (!partitionService.resolve(ServiceType.TB_CORE, tenantId, tenantId).isMyPartition()) {
+            return;
+        }
 
-                long ttl = TimeUnit.DAYS.toMillis(tenantProfileConfiguration.get().getAlarmsTtlDays());
-                long expirationTime = System.currentTimeMillis() - ttl;
+        Optional<DefaultTenantProfileConfiguration> tenantProfileConfiguration = tenantProfileCache.get(tenantId).getProfileConfiguration();
+        if (tenantProfileConfiguration.isEmpty() || tenantProfileConfiguration.get().getAlarmsTtlDays() == 0) {
+            return;
+        }
 
-                long totalRemoved = 0;
-                while (true) {
-                    PageData<AlarmId> toRemove = alarmDao.findAlarmsIdsByEndTsBeforeAndTenantId(expirationTime, tenantId, removalBatchRequest);
-                    toRemove.getData().forEach(alarmId -> {
-                        relationService.deleteEntityRelations(tenantId, alarmId);
-                        Alarm alarm = alarmService.deleteAlarm(tenantId, alarmId).getAlarm();
-                        entityActionService.pushEntityActionToRuleEngine(alarm.getOriginator(), alarm, tenantId, null, ActionType.ALARM_DELETE, null);
-                    });
+        long ttl = TimeUnit.DAYS.toMillis(tenantProfileConfiguration.get().getAlarmsTtlDays());
+        long expirationTime = System.currentTimeMillis() - ttl;
 
-                    totalRemoved += toRemove.getTotalElements();
-                    if (!toRemove.hasNext()) {
-                        break;
-                    }
-                }
-
-                if (totalRemoved > 0) {
-                    log.info("Removed {} outdated alarm(s) for tenant {} older than {}", totalRemoved, tenantId, new Date(expirationTime));
+        PageLink removalBatchRequest = new PageLink(removalBatchSize, 0);
+        long totalRemoved = 0;
+        while (true) {
+            PageData<AlarmId> toRemove = alarmDao.findAlarmsIdsByEndTsBeforeAndTenantId(expirationTime, tenantId, removalBatchRequest);
+            for (AlarmId alarmId : toRemove.getData()) {
+                relationService.deleteEntityRelations(tenantId, alarmId);
+                Alarm alarm = alarmService.delAlarm(tenantId, alarmId).getAlarm();
+                if (alarm != null) {
+                    entityActionService.pushEntityActionToRuleEngine(alarm.getOriginator(), alarm, tenantId, null, ActionType.ALARM_DELETE, null);
+                    totalRemoved++;
                 }
             }
-
-            tenantsBatchRequest = tenantsBatchRequest.nextPageLink();
-        } while (tenantsIds.hasNext());
+            if (!toRemove.hasNext()) {
+                break;
+            }
+        }
+        if (totalRemoved > 0) {
+            log.info("Removed {} outdated alarm(s) for tenant {} older than {}", totalRemoved, tenantId, new Date(expirationTime));
+        }
     }
 
 }

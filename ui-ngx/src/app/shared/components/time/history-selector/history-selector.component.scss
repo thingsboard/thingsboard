@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@
     z-index: 2;
     pointer-events: none;
 
-    .mat-button {
+    .mat-mdc-button {
       top: 0;
       left: 0;
       width: 32px;
@@ -85,13 +85,7 @@
   padding-bottom: 16px;
   padding-left: 10px;
 
-  mat-slider-container {
-    mat-slider {
-      min-width: 80px;
-    }
-  }
-
-  .mat-icon-button {
+  .mat-mdc-icon-button {
     width: 44px;
     min-width: 44px;
     height: 48px;
@@ -108,10 +102,6 @@
         width: inherit;
         height: inherit;
       }
-    }
-
-    mat-select {
-      margin: 0;
     }
   }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,23 +19,24 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.OtaPackage;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.device.DeviceProfileService;
+import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.ota.OtaPackageService;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -43,7 +44,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,24 +51,15 @@ import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 
 public abstract class BaseDeviceProfileServiceTest extends AbstractServiceTest {
 
+    @Autowired
+    DeviceProfileService deviceProfileService;
+    @Autowired
+    DeviceService deviceService;
+    @Autowired
+    OtaPackageService otaPackageService;
+
     private IdComparator<DeviceProfile> idComparator = new IdComparator<>();
     private IdComparator<DeviceProfileInfo> deviceProfileInfoIdComparator = new IdComparator<>();
-
-    private TenantId tenantId;
-
-    @Before
-    public void before() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("My tenant");
-        Tenant savedTenant = tenantService.saveTenant(tenant);
-        Assert.assertNotNull(savedTenant);
-        tenantId = savedTenant.getId();
-    }
-
-    @After
-    public void after() {
-        tenantService.deleteTenant(tenantId);
-    }
 
     @Test
     public void testSaveDeviceProfile() {
@@ -196,23 +187,27 @@ public abstract class BaseDeviceProfileServiceTest extends AbstractServiceTest {
         Assert.assertEquals(savedDeviceProfile2.getId(), defaultDeviceProfile.getId());
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveDeviceProfileWithEmptyName() {
         DeviceProfile deviceProfile = new DeviceProfile();
         deviceProfile.setTenantId(tenantId);
-        deviceProfileService.saveDeviceProfile(deviceProfile);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            deviceProfileService.saveDeviceProfile(deviceProfile);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testSaveDeviceProfileWithSameName() {
         DeviceProfile deviceProfile = this.createDeviceProfile(tenantId, "Device Profile");
         deviceProfileService.saveDeviceProfile(deviceProfile);
         DeviceProfile deviceProfile2 = this.createDeviceProfile(tenantId, "Device Profile");
-        deviceProfileService.saveDeviceProfile(deviceProfile2);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            deviceProfileService.saveDeviceProfile(deviceProfile2);
+        });
     }
 
     @Ignore
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testChangeDeviceProfileTypeWithExistingDevices() {
         DeviceProfile deviceProfile = this.createDeviceProfile(tenantId, "Device Profile");
         DeviceProfile savedDeviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
@@ -224,10 +219,12 @@ public abstract class BaseDeviceProfileServiceTest extends AbstractServiceTest {
         deviceService.saveDevice(device);
         //TODO: once we have more profile types, we should test that we can not change profile type in runtime and uncomment the @Ignore.
 //        savedDeviceProfile.setType(DeviceProfileType.LWM2M);
-        deviceProfileService.saveDeviceProfile(savedDeviceProfile);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            deviceProfileService.saveDeviceProfile(savedDeviceProfile);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testChangeDeviceProfileTransportTypeWithExistingDevices() {
         DeviceProfile deviceProfile = this.createDeviceProfile(tenantId, "Device Profile");
         DeviceProfile savedDeviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
@@ -238,10 +235,12 @@ public abstract class BaseDeviceProfileServiceTest extends AbstractServiceTest {
         device.setDeviceProfileId(savedDeviceProfile.getId());
         deviceService.saveDevice(device);
         savedDeviceProfile.setTransportType(DeviceTransportType.MQTT);
-        deviceProfileService.saveDeviceProfile(savedDeviceProfile);
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            deviceProfileService.saveDeviceProfile(savedDeviceProfile);
+        });
     }
 
-    @Test(expected = DataValidationException.class)
+    @Test
     public void testDeleteDeviceProfileWithExistingDevice() {
         DeviceProfile deviceProfile = this.createDeviceProfile(tenantId, "Device Profile");
         DeviceProfile savedDeviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
@@ -251,7 +250,9 @@ public abstract class BaseDeviceProfileServiceTest extends AbstractServiceTest {
         device.setType("default");
         device.setDeviceProfileId(savedDeviceProfile.getId());
         deviceService.saveDevice(device);
-        deviceProfileService.deleteDeviceProfile(tenantId, savedDeviceProfile.getId());
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            deviceProfileService.deleteDeviceProfile(tenantId, savedDeviceProfile.getId());
+        });
     }
 
     @Test
@@ -352,7 +353,7 @@ public abstract class BaseDeviceProfileServiceTest extends AbstractServiceTest {
         Collections.sort(loadedDeviceProfileInfos, deviceProfileInfoIdComparator);
 
         List<DeviceProfileInfo> deviceProfileInfos = deviceProfiles.stream()
-                .map(deviceProfile -> new DeviceProfileInfo(deviceProfile.getId(),
+                .map(deviceProfile -> new DeviceProfileInfo(deviceProfile.getId(), deviceProfile.getTenantId(),
                         deviceProfile.getName(), deviceProfile.getImage(), deviceProfile.getDefaultDashboardId(),
                         deviceProfile.getType(), deviceProfile.getTransportType())).collect(Collectors.toList());
 

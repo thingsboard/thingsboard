@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,13 @@ package org.thingsboard.server.dao.device;
 
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
-import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.entity.EntityDaoService;
 
-public interface DeviceProfileService {
+public interface DeviceProfileService extends EntityDaoService {
 
     DeviceProfile findDeviceProfileById(TenantId tenantId, DeviceProfileId deviceProfileId);
 
@@ -38,6 +38,8 @@ public interface DeviceProfileService {
     PageData<DeviceProfile> findDeviceProfiles(TenantId tenantId, PageLink pageLink);
 
     PageData<DeviceProfileInfo> findDeviceProfileInfos(TenantId tenantId, PageLink pageLink, String transportType);
+
+    DeviceProfile findDeviceProfileByProvisionDeviceKey(String provisionDeviceKey);
 
     DeviceProfile findOrCreateDeviceProfile(TenantId tenantId, String profileName);
 

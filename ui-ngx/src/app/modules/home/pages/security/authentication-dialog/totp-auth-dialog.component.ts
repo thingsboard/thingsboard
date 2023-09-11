@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MatDialogRef } from '@angular/material/dialog';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { TwoFactorAuthenticationService } from '@core/http/two-factor-authentication.service';
 import {
   AccountTwoFaSettings,
@@ -39,7 +39,7 @@ export class TotpAuthDialogComponent extends DialogComponent<TotpAuthDialogCompo
   private authAccountConfig: TotpTwoFactorAuthAccountConfig;
   private config: AccountTwoFaSettings;
 
-  totpConfigForm: FormGroup;
+  totpConfigForm: UntypedFormGroup;
   totpAuthURL: string;
 
   @ViewChild('stepper', {static: false}) stepper: MatStepper;
@@ -49,7 +49,7 @@ export class TotpAuthDialogComponent extends DialogComponent<TotpAuthDialogCompo
               protected router: Router,
               private twoFaService: TwoFactorAuthenticationService,
               public dialogRef: MatDialogRef<TotpAuthDialogComponent>,
-              public fb: FormBuilder) {
+              public fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
     this.twoFaService.generateTwoFaAccountConfig(TwoFactorAuthProviderType.TOTP).subscribe(accountConfig => {
       this.authAccountConfig = accountConfig as TotpTwoFactorAuthAccountConfig;

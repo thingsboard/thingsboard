@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.thingsboard.server.service.queue.processing;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.EntityType;
@@ -33,7 +34,6 @@ import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
@@ -47,6 +47,7 @@ import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.TbPackCallback;
 import org.thingsboard.server.service.queue.TbPackProcessingContext;
+import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 
 import javax.annotation.PreDestroy;
 import java.util.List;
@@ -75,6 +76,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     protected final TbAssetProfileCache assetProfileCache;
     protected final TbApiUsageStateService apiUsageStateService;
     protected final PartitionService partitionService;
+    protected final ApplicationEventPublisher eventPublisher;
 
     protected final TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer;
     protected final Optional<JwtSettingsService> jwtSettingsService;
@@ -83,7 +85,8 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     public AbstractConsumerService(ActorSystemContext actorContext, DataDecodingEncodingService encodingService,
                                    TbTenantProfileCache tenantProfileCache, TbDeviceProfileCache deviceProfileCache,
                                    TbAssetProfileCache assetProfileCache, TbApiUsageStateService apiUsageStateService,
-                                   PartitionService partitionService, TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer, Optional<JwtSettingsService> jwtSettingsService) {
+                                   PartitionService partitionService, ApplicationEventPublisher eventPublisher,
+                                   TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer, Optional<JwtSettingsService> jwtSettingsService) {
         this.actorContext = actorContext;
         this.encodingService = encodingService;
         this.tenantProfileCache = tenantProfileCache;
@@ -91,6 +94,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
         this.assetProfileCache = assetProfileCache;
         this.apiUsageStateService = apiUsageStateService;
         this.partitionService = partitionService;
+        this.eventPublisher = eventPublisher;
         this.nfConsumer = nfConsumer;
         this.jwtSettingsService = jwtSettingsService;
     }
@@ -205,6 +209,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
                         apiUsageStateService.onCustomerDelete((CustomerId) componentLifecycleMsg.getEntityId());
                     }
                 }
+                eventPublisher.publishEvent(componentLifecycleMsg);
             }
             log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg);
             actorContext.tellWithHighPriority(actorMsg);

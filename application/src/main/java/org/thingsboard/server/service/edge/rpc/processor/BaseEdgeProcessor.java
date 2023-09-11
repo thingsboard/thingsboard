@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,9 +97,13 @@ import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 public abstract class BaseEdgeProcessor {
+
+    protected static final Lock deviceCreationLock = new ReentrantLock();
 
     protected static final int DEFAULT_PAGE_SIZE = 100;
 
@@ -306,6 +310,12 @@ public abstract class BaseEdgeProcessor {
         return futures;
     }
 
+    protected ListenableFuture<Void> handleUnsupportedMsgType(UpdateMsgType msgType) {
+        String errMsg = String.format("Unsupported msg type %s", msgType);
+        log.error(errMsg);
+        return Futures.immediateFailedFuture(new RuntimeException(errMsg));
+    }
+
     protected UpdateMsgType getUpdateMsgType(EdgeEventActionType actionType) {
         switch (actionType) {
             case UPDATED:
@@ -460,6 +470,42 @@ public abstract class BaseEdgeProcessor {
                 log.warn("Unsupported entity type [{}] during construct of entity id. entityIdMSB [{}], entityIdLSB [{}]",
                         entityTypeStr, entityIdMSB, entityIdLSB);
                 return null;
+        }
+    }
+
+    protected UUID safeGetUUID(long mSB, long lSB) {
+        return mSB != 0 && lSB != 0 ? new UUID(mSB, lSB) : null;
+    }
+
+    protected CustomerId safeGetCustomerId(long mSB, long lSB) {
+        CustomerId customerId = null;
+        UUID customerUUID = safeGetUUID(mSB, lSB);
+        if (customerUUID != null) {
+            customerId = new CustomerId(customerUUID);
+        }
+        return customerId;
+    }
+
+    protected boolean isEntityExists(TenantId tenantId, EntityId entityId) {
+        switch (entityId.getEntityType()) {
+            case TENANT:
+                return tenantService.findTenantById(tenantId) != null;
+            case DEVICE:
+                return deviceService.findDeviceById(tenantId, new DeviceId(entityId.getId())) != null;
+            case ASSET:
+                return assetService.findAssetById(tenantId, new AssetId(entityId.getId())) != null;
+            case ENTITY_VIEW:
+                return entityViewService.findEntityViewById(tenantId, new EntityViewId(entityId.getId())) != null;
+            case CUSTOMER:
+                return customerService.findCustomerById(tenantId, new CustomerId(entityId.getId())) != null;
+            case USER:
+                return userService.findUserById(tenantId, new UserId(entityId.getId())) != null;
+            case DASHBOARD:
+                return dashboardService.findDashboardById(tenantId, new DashboardId(entityId.getId())) != null;
+            case EDGE:
+                return edgeService.findEdgeById(tenantId, new EdgeId(entityId.getId())) != null;
+            default:
+                return false;
         }
     }
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@ import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
-  FormArray,
-  FormBuilder,
-  FormControl,
-  FormGroup,
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   Validator,
@@ -48,6 +48,7 @@ export function flotDataKeyDefaultSettings(chartType: ChartType): TbFlotKeySetti
     showLines: chartType === 'graph',
     lineWidth: 1,
     fillLines: false,
+    fillLinesOpacity: 0.4,
 
     // Points settings
     showPoints: false,
@@ -122,12 +123,12 @@ export class FlotKeySettingsComponent extends PageComponent implements OnInit, C
 
   private propagateChange = null;
 
-  public flotKeySettingsFormGroup: FormGroup;
+  public flotKeySettingsFormGroup: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
               private widgetService: WidgetService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
@@ -146,6 +147,7 @@ export class FlotKeySettingsComponent extends PageComponent implements OnInit, C
       showLines: [this.chartType === 'graph', []],
       lineWidth: [1, [Validators.min(0)]],
       fillLines: [false, []],
+      fillLinesOpacity: [0.4, [Validators.min(0), Validators.max(1)]],
 
       // Points settings
 
@@ -188,15 +190,19 @@ export class FlotKeySettingsComponent extends PageComponent implements OnInit, C
     });
 
     this.flotKeySettingsFormGroup.get('showLines').valueChanges.subscribe(() => {
-      this.updateValidators(true);
+      this.updateValidators(false);
+    });
+
+    this.flotKeySettingsFormGroup.get('fillLines').valueChanges.subscribe(() => {
+      this.updateValidators(false);
     });
 
     this.flotKeySettingsFormGroup.get('showPoints').valueChanges.subscribe(() => {
-      this.updateValidators(true);
+      this.updateValidators(false);
     });
 
     this.flotKeySettingsFormGroup.get('comparisonSettings.showValuesForComparison').valueChanges.subscribe(() => {
-      this.updateValidators(true);
+      this.updateValidators(false);
     });
 
     this.flotKeySettingsFormGroup.valueChanges.subscribe(() => {
@@ -238,7 +244,7 @@ export class FlotKeySettingsComponent extends PageComponent implements OnInit, C
     this.updateValidators(false);
   }
 
-  validate(c: FormControl) {
+  validate(c: UntypedFormControl) {
     return (this.flotKeySettingsFormGroup.valid) ? null : {
       flotKeySettings: {
         valid: false,
@@ -254,15 +260,22 @@ export class FlotKeySettingsComponent extends PageComponent implements OnInit, C
 
   private updateValidators(emitEvent?: boolean): void {
     const showLines: boolean = this.flotKeySettingsFormGroup.get('showLines').value;
+    const fillLines: boolean = this.flotKeySettingsFormGroup.get('fillLines').value;
     const showPoints: boolean = this.flotKeySettingsFormGroup.get('showPoints').value;
     const showValuesForComparison: boolean = this.flotKeySettingsFormGroup.get('comparisonSettings.showValuesForComparison').value;
 
     if (showLines) {
       this.flotKeySettingsFormGroup.get('lineWidth').enable({emitEvent});
       this.flotKeySettingsFormGroup.get('fillLines').enable({emitEvent});
+      if (fillLines) {
+        this.flotKeySettingsFormGroup.get('fillLinesOpacity').enable({emitEvent});
+      } else {
+        this.flotKeySettingsFormGroup.get('fillLinesOpacity').disable({emitEvent});
+      }
     } else {
       this.flotKeySettingsFormGroup.get('lineWidth').disable({emitEvent});
       this.flotKeySettingsFormGroup.get('fillLines').disable({emitEvent});
+      this.flotKeySettingsFormGroup.get('fillLinesOpacity').disable({emitEvent});
     }
 
     if (showPoints) {
@@ -287,6 +300,7 @@ export class FlotKeySettingsComponent extends PageComponent implements OnInit, C
 
     this.flotKeySettingsFormGroup.get('lineWidth').updateValueAndValidity({emitEvent: false});
     this.flotKeySettingsFormGroup.get('fillLines').updateValueAndValidity({emitEvent: false});
+    this.flotKeySettingsFormGroup.get('fillLinesOpacity').updateValueAndValidity({emitEvent: false});
     this.flotKeySettingsFormGroup.get('showPointsLineWidth').updateValueAndValidity({emitEvent: false});
     this.flotKeySettingsFormGroup.get('showPointsRadius').updateValueAndValidity({emitEvent: false});
     this.flotKeySettingsFormGroup.get('showPointShape').updateValueAndValidity({emitEvent: false});
@@ -295,8 +309,8 @@ export class FlotKeySettingsComponent extends PageComponent implements OnInit, C
     this.flotKeySettingsFormGroup.get('comparisonSettings.color').updateValueAndValidity({emitEvent: false});
   }
 
-  thresholdsFormArray(): FormArray {
-    return this.flotKeySettingsFormGroup.get('thresholds') as FormArray;
+  thresholdsFormArray(): UntypedFormArray {
+    return this.flotKeySettingsFormGroup.get('thresholds') as UntypedFormArray;
   }
 
   public trackByThreshold(index: number, thresholdControl: AbstractControl): any {
@@ -304,7 +318,7 @@ export class FlotKeySettingsComponent extends PageComponent implements OnInit, C
   }
 
   public removeThreshold(index: number) {
-    (this.flotKeySettingsFormGroup.get('thresholds') as FormArray).removeAt(index);
+    (this.flotKeySettingsFormGroup.get('thresholds') as UntypedFormArray).removeAt(index);
   }
 
   public addThreshold() {
@@ -316,7 +330,7 @@ export class FlotKeySettingsComponent extends PageComponent implements OnInit, C
       lineWidth: null,
       color: null
     };
-    const thresholdsArray = this.flotKeySettingsFormGroup.get('thresholds') as FormArray;
+    const thresholdsArray = this.flotKeySettingsFormGroup.get('thresholds') as UntypedFormArray;
     const thresholdControl = this.fb.control(threshold, []);
     (thresholdControl as any).new = true;
     thresholdsArray.push(thresholdControl);
@@ -324,7 +338,7 @@ export class FlotKeySettingsComponent extends PageComponent implements OnInit, C
   }
 
   thresholdDrop(event: CdkDragDrop<string[]>) {
-    const thresholdsArray = this.flotKeySettingsFormGroup.get('thresholds') as FormArray;
+    const thresholdsArray = this.flotKeySettingsFormGroup.get('thresholds') as UntypedFormArray;
     const threshold = thresholdsArray.at(event.previousIndex);
     thresholdsArray.removeAt(event.previousIndex);
     thresholdsArray.insert(event.currentIndex, threshold);

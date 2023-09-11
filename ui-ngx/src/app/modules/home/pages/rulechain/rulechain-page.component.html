@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -23,8 +23,9 @@
     <div class="tb-rulechain-layout" fxFlex fxLayout="row">
       <section fxLayout="row"
                class="tb-header-buttons tb-library-open" [fxShow]="!isLibraryOpen">
-        <button mat-button mat-icon-button color="primary"
-                class="tb-btn-header tb-btn-open-library mat-fab"
+        <button color="primary"
+                mat-mini-fab
+                class="tb-btn-header tb-btn-open-library"
                 (click)="isLibraryOpen = true"
                 matTooltip="{{ 'rulenode.open-node-library' | translate }}"
                 matTooltipPosition="above">
@@ -40,25 +41,24 @@
                     fxLayout="column">
           <mat-toolbar color="primary" class="tb-dark">
             <div class="mat-toolbar-tools">
-              <button mat-button mat-icon-button class="tb-small"
+              <button mat-icon-button class="tb-small"
                 matTooltip="{{'rulenode.search' | translate}}"
                 matTooltipPosition="above">
                 <mat-icon>search</mat-icon>
               </button>
-              <mat-form-field fxFlex floatLabel="always">
-                <mat-label></mat-label>
+              <mat-form-field fxFlex class="tb-appearance-transparent">
                 <input #ruleNodeSearchInput matInput
                        [(ngModel)]="ruleNodeTypeSearch"
                        placeholder="{{'rulenode.search' | translate}}"/>
               </mat-form-field>
-              <button mat-button mat-icon-button class="tb-small"
+              <button mat-icon-button class="tb-small"
                       [fxShow]="ruleNodeTypeSearch !== ''"
                       (click)="ruleNodeTypeSearch = ''; updateRuleChainLibrary()"
                       matTooltip="{{'action.clear-search' | translate}}"
                       matTooltipPosition="above">
                 <mat-icon>close</mat-icon>
               </button>
-              <button mat-button mat-icon-button class="tb-small"
+              <button mat-icon-button class="tb-small"
                       (click)="isLibraryOpen = false"
                       matTooltip="{{'action.close' | translate}}"
                       matTooltipPosition="above">
@@ -111,7 +111,7 @@
             <div class="details-buttons">
               <div [tb-help]="helpLinkIdForRuleNodeType()"></div>
             </div>
-            <mat-tab-group fxFlex class="tb-absolute-fill tb-rulenode-details" [(selectedIndex)]="selectedRuleNodeTabIndex">
+            <mat-tab-group fxFlex mat-stretch-tabs="false" class="tb-absolute-fill tb-rulenode-details" [(selectedIndex)]="selectedRuleNodeTabIndex">
               <mat-tab label="{{ 'rulenode.details' | translate }}">
                 <tb-rule-node #tbRuleNode
                               [ruleNode]="editingRuleNode"
@@ -166,18 +166,16 @@
         <mat-drawer-content class="tb-rulechain-graph-content">
           <button #versionControlButton
                   *ngIf="!isImport"
-                  mat-button
                   color="primary"
                   type="button"
-                  mat-icon-button class="mat-fab version-control-button"
+                  mat-mini-fab class="version-control-button"
                   (click)="toggleVersionControl($event, versionControlButton)"
                   matTooltip="{{'version-control.version-control' | translate}}"
                   matTooltipPosition="above">
             <mat-icon>history</mat-icon>
           </button>
-          <button mat-button
-                  type="button"
-                  mat-icon-button class="tb-fullscreen-button"
+          <button type="button"
+                  mat-icon-button class="tb-fullscreen-button tb-mat-40"
                   (click)="isFullscreen = !isFullscreen"
                   matTooltip="{{(isFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
                   matTooltipPosition="above">

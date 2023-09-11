@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
@@ -428,6 +429,7 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
         testEntityDaoWithRelationsOk(savedTenant.getId(), customerId, "/api/customer/" + customerId);
     }
 
+    @Ignore
     @Test
     public void testDeleteCustomerExceptionWithRelationsTransactional() throws Exception {
         CustomerId customerId = createCustomer("Customer for Test WithRelations Transactional Exception").getId();

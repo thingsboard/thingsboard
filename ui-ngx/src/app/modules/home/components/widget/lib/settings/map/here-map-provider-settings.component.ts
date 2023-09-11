@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import {
   HereMapProviderSettings,
   hereMapProviderTranslationMap
 } from '@home/components/widget/lib/maps/map-models';
+import { isDefinedAndNotNull } from '@core/utils';
 
 @Component({
   selector: 'tb-here-map-provider-settings',
@@ -77,9 +78,22 @@ export class HereMapProviderSettingsComponent extends PageComponent implements O
     this.providerSettingsFormGroup = this.fb.group({
       mapProviderHere: [null, [Validators.required]],
       credentials: this.fb.group({
+        useV3: [true],
         app_id: [null, [Validators.required]],
-        app_code: [null, [Validators.required]]
+        app_code: [null, [Validators.required]],
+        apiKey: [null, [Validators.required]]
       })
+    });
+    this.providerSettingsFormGroup.get('credentials.useV3').valueChanges.subscribe(value => {
+      if (value) {
+        this.providerSettingsFormGroup.get('credentials.apiKey').enable({emitEvent: false});
+        this.providerSettingsFormGroup.get('credentials.app_id').disable({emitEvent: false});
+        this.providerSettingsFormGroup.get('credentials.app_code').disable({emitEvent: false});
+      } else {
+        this.providerSettingsFormGroup.get('credentials.apiKey').disable({emitEvent: false});
+        this.providerSettingsFormGroup.get('credentials.app_id').enable({emitEvent: false});
+        this.providerSettingsFormGroup.get('credentials.app_code').enable({emitEvent: false});
+      }
     });
     this.providerSettingsFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
@@ -99,14 +113,21 @@ export class HereMapProviderSettingsComponent extends PageComponent implements O
       this.providerSettingsFormGroup.disable({emitEvent: false});
     } else {
       this.providerSettingsFormGroup.enable({emitEvent: false});
+      this.providerSettingsFormGroup.get('credentials.useV3').updateValueAndValidity({onlySelf: true});
     }
   }
 
   writeValue(value: HereMapProviderSettings): void {
+    if (!isDefinedAndNotNull(value.credentials.useV3)) {
+      if (isDefinedAndNotNull(value.credentials.app_id) && isDefinedAndNotNull(value.credentials.app_code)) {
+        value.credentials.useV3 = false;
+      }
+    }
     this.modelValue = value;
     this.providerSettingsFormGroup.patchValue(
       value, {emitEvent: false}
     );
+    this.providerSettingsFormGroup.get('credentials.useV3').updateValueAndValidity({onlySelf: true});
   }
 
   public validate(c: FormControl) {

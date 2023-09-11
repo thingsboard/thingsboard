@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,29 +15,26 @@
  */
 package org.thingsboard.rule.engine.math;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.util.concurrent.Futures;
-import org.junit.After;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Triple;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.verification.Timeout;
 import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.math.TbMathArgument;
-import org.thingsboard.rule.engine.math.TbMathArgumentType;
-import org.thingsboard.rule.engine.math.TbMathNode;
-import org.thingsboard.rule.engine.math.TbMathNodeConfiguration;
-import org.thingsboard.rule.engine.math.TbMathResult;
-import org.thingsboard.rule.engine.math.TbRuleNodeMathFunctionType;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -53,21 +50,39 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.willAnswer;
+import static org.mockito.BDDMockito.willReturn;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@Slf4j
 public class TbMathNodeTest {
 
-    private EntityId originator = new DeviceId(Uuids.timeBased());
-    private TenantId tenantId = TenantId.fromUUID(Uuids.timeBased());
+    static final int RULE_DISPATCHER_POOL_SIZE = 2;
+    static final int DB_CALLBACK_POOL_SIZE = 3;
+    private final EntityId originator = DeviceId.fromString("ccd71696-0586-422d-940e-755a41ec3b0d");
+    private final TenantId tenantId = TenantId.fromUUID(UUID.fromString("e7f46b23-0c7d-42f5-9b06-fc35ab17af8a"));
 
     @Mock
     private TbContext ctx;
@@ -77,35 +92,31 @@ public class TbMathNodeTest {
     private TimeseriesService tsService;
     @Mock
     private RuleEngineTelemetryService telemetryService;
-    private AbstractListeningExecutor dbExecutor;
+    private AbstractListeningExecutor dbCallbackExecutor;
+    private AbstractListeningExecutor ruleEngineDispatcherExecutor;
 
-    @Before
+    @BeforeEach
     public void before() {
-        dbExecutor = new AbstractListeningExecutor() {
-            @Override
-            protected int getThreadPollSize() {
-                return 3;
-            }
-        };
-        dbExecutor.init();
-        initMocks();
-    }
+        dbCallbackExecutor = new DBCallbackExecutor();
+        dbCallbackExecutor.init();
+        ruleEngineDispatcherExecutor = new RuleDispatcherExecutor();
+        ruleEngineDispatcherExecutor.init();
 
-    @After
-    public void after() {
-        dbExecutor.destroy();
-    }
-
-    private void initMocks() {
-        Mockito.reset(ctx);
-        Mockito.reset(attributesService);
-        Mockito.reset(tsService);
-        Mockito.reset(telemetryService);
         lenient().when(ctx.getAttributesService()).thenReturn(attributesService);
         lenient().when(ctx.getTelemetryService()).thenReturn(telemetryService);
         lenient().when(ctx.getTimeseriesService()).thenReturn(tsService);
         lenient().when(ctx.getTenantId()).thenReturn(tenantId);
-        lenient().when(ctx.getDbCallbackExecutor()).thenReturn(dbExecutor);
+        lenient().when(ctx.getDbCallbackExecutor()).thenReturn(dbCallbackExecutor);
+    }
+
+    @AfterEach
+    public void after() {
+        ruleEngineDispatcherExecutor.executor().shutdownNow();
+        dbCallbackExecutor.executor().shutdownNow();
+    }
+
+    private void initMocks() {
+        Mockito.clearInvocations(ctx, attributesService, tsService, telemetryService);
     }
 
     private TbMathNode initNode(TbRuleNodeMathFunctionType operation, TbMathResult result, TbMathArgument... arguments) {
@@ -116,7 +127,15 @@ public class TbMathNodeTest {
         return initNode(TbRuleNodeMathFunctionType.CUSTOM, expression, result, arguments);
     }
 
+    private TbMathNode initNodeWithCustomFunction(TbContext ctx, String expression, TbMathResult result, TbMathArgument... arguments) {
+        return initNode(ctx, TbRuleNodeMathFunctionType.CUSTOM, expression, result, arguments);
+    }
+
     private TbMathNode initNode(TbRuleNodeMathFunctionType operation, String expression, TbMathResult result, TbMathArgument... arguments) {
+        return initNode(this.ctx, operation, expression, result, arguments);
+    }
+
+    private TbMathNode initNode(TbContext ctx, TbRuleNodeMathFunctionType operation, String expression, TbMathResult result, TbMathArgument... arguments) {
         try {
             TbMathNodeConfiguration configuration = new TbMathNodeConfiguration();
             configuration.setOperation(operation);
@@ -483,10 +502,11 @@ public class TbMathNodeTest {
                 new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "TestKey")
         );
         TbMsg msg = TbMsg.newMsg("TEST", originator, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 10).toString());
-        Throwable thrown = assertThrows(RuntimeException.class, () -> {
-            node.onMsg(ctx, msg);
-        });
-        Assert.assertNotNull(thrown.getMessage());
+        node.onMsg(ctx, msg);
+
+        ArgumentCaptor<Throwable> tCaptor = ArgumentCaptor.forClass(Throwable.class);
+        Mockito.verify(ctx, Mockito.timeout(5000)).tellFailure(eq(msg), tCaptor.capture());
+        Assert.assertNotNull(tCaptor.getValue().getMessage());
     }
 
     @Test
@@ -497,9 +517,202 @@ public class TbMathNodeTest {
         );
 
         TbMsg msg = TbMsg.newMsg("TEST", originator, new TbMsgMetaData(), "[]");
-        Throwable thrown = assertThrows(RuntimeException.class, () -> {
-            node.onMsg(ctx, msg);
-        });
-        Assert.assertNotNull(thrown.getMessage());
+        node.onMsg(ctx, msg);
+
+        ArgumentCaptor<Throwable> tCaptor = ArgumentCaptor.forClass(Throwable.class);
+        Mockito.verify(ctx, Mockito.timeout(5000)).tellFailure(eq(msg), tCaptor.capture());
+        Assert.assertNotNull(tCaptor.getValue().getMessage());
     }
+
+    @Test
+    public void testExp4j_concurrent() {
+        TbMathNode node = spy(initNodeWithCustomFunction("2a+3b",
+                new TbMathResult(TbMathArgumentType.MESSAGE_BODY, "result", 2, false, false, null),
+                new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "a"),
+                new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "b")
+        ));
+        EntityId originatorSlow = DeviceId.fromString("7f01170d-6bba-419c-b95c-2b4c3ba32f30");
+        EntityId originatorFast = DeviceId.fromString("c45360ff-7906-4102-a2ae-3495a86168d0");
+        CountDownLatch slowProcessingLatch = new CountDownLatch(1);
+
+        List<TbMsg> slowMsgList = IntStream.range(0, 5)
+                .mapToObj(x -> TbMsg.newMsg("TEST", originatorSlow, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 2).put("b", 2).toString()))
+                .collect(Collectors.toList());
+        List<TbMsg> fastMsgList = IntStream.range(0, 2)
+                .mapToObj(x -> TbMsg.newMsg("TEST", originatorFast, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 2).put("b", 2).toString()))
+                .collect(Collectors.toList());
+
+        assertThat(slowMsgList.size()).as("slow msgs >= rule-dispatcher pool size").isGreaterThanOrEqualTo(RULE_DISPATCHER_POOL_SIZE);
+
+        log.debug("rule-dispatcher [{}], db-callback [{}], slowMsg [{}], fastMsg [{}]", RULE_DISPATCHER_POOL_SIZE, DB_CALLBACK_POOL_SIZE, slowMsgList.size(), fastMsgList.size());
+
+        willAnswer(invocation -> {
+            TbMsg msg = invocation.getArgument(1);
+            log.debug("\uD83D\uDC0C processMsgAsync slow originator [{}][{}]", msg.getOriginator(), msg);
+            try {
+                assertThat(slowProcessingLatch.await(30, TimeUnit.SECONDS)).as("await on slowProcessingLatch").isTrue();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            return invocation.callRealMethod();
+        }).given(node).processMsgAsync(eq(ctx), argThat(slowMsgList::contains));
+
+        willAnswer(invocation -> {
+            TbMsg msg = invocation.getArgument(1);
+            log.debug("\u26A1\uFE0F processMsgAsync FAST originator [{}][{}]", msg.getOriginator(), msg);
+            return invocation.callRealMethod();
+        }).given(node).processMsgAsync(eq(ctx), argThat(fastMsgList::contains));
+
+        willAnswer(invocation -> {
+            TbMsg msg = invocation.getArgument(1);
+            log.debug("submit slow originator onMsg [{}][{}]", msg.getOriginator(), msg);
+            return invocation.callRealMethod();
+        }).given(node).onMsg(eq(ctx), argThat(slowMsgList::contains));
+
+        willAnswer(invocation -> {
+            TbMsg msg = invocation.getArgument(1);
+            log.debug("submit FAST originator onMsg [{}][{}]", msg.getOriginator(), msg);
+            return invocation.callRealMethod();
+        }).given(node).onMsg(eq(ctx), argThat(fastMsgList::contains));
+
+        // submit slow msg may block all rule engine dispatcher threads
+        slowMsgList.forEach(msg -> ruleEngineDispatcherExecutor.executeAsync(() -> node.onMsg(ctx, msg)));
+        // wait until dispatcher threads started with all slowMsg
+        verify(node, new Timeout(TimeUnit.SECONDS.toMillis(5), times(slowMsgList.size()))).onMsg(eq(ctx), argThat(slowMsgList::contains));
+
+        // submit fast have to return immediately
+        fastMsgList.forEach(msg -> ruleEngineDispatcherExecutor.executeAsync(() -> node.onMsg(ctx, msg)));
+        // wait until all fast messages processed
+        verify(ctx, new Timeout(TimeUnit.SECONDS.toMillis(5), times(fastMsgList.size()))).tellSuccess(any());
+
+        slowProcessingLatch.countDown();
+
+        verify(ctx, new Timeout(TimeUnit.SECONDS.toMillis(5), times(fastMsgList.size() + slowMsgList.size()))).tellSuccess(any());
+
+        verify(ctx, never()).tellFailure(any(), any());
+    }
+
+    @Test
+    public void testExp4j_concurrentBySingleOriginator_processMsgAsyncException() {
+        TbMathNode node = spy(initNodeWithCustomFunction("2a+3b",
+                new TbMathResult(TbMathArgumentType.MESSAGE_BODY, "result", 2, false, false, null),
+                new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "a"),
+                new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "b")
+        ));
+
+        willThrow(new RuntimeException("Message body has no 'delta'")).given(node).resolveArguments(any(), any(), any(), any());
+
+        EntityId originatorSlow = DeviceId.fromString("7f01170d-6bba-419c-b95c-2b4c3ba32f30");
+        CountDownLatch slowProcessingLatch = new CountDownLatch(1);
+
+        List<TbMsg> slowMsgList = IntStream.range(0, 5)
+                .mapToObj(x -> TbMsg.newMsg("TEST", originatorSlow, new TbMsgMetaData(), JacksonUtil.newObjectNode().put("a", 2).put("b", 2).toString()))
+                .collect(Collectors.toList());
+
+        assertThat(slowMsgList.size()).as("slow msgs >= rule-dispatcher pool size").isGreaterThanOrEqualTo(RULE_DISPATCHER_POOL_SIZE);
+
+        log.debug("rule-dispatcher [{}], db-callback [{}], slowMsg [{}]", RULE_DISPATCHER_POOL_SIZE, DB_CALLBACK_POOL_SIZE, slowMsgList.size());
+
+        willAnswer(invocation -> {
+            TbMsg msg = invocation.getArgument(1);
+            if (slowProcessingLatch.getCount() > 0) {
+                log.debug("Await on slowProcessingLatch before processMsgAsync");
+                try {
+                    assertThat(slowProcessingLatch.await(30, TimeUnit.SECONDS)).as("await on slowProcessingLatch").isTrue();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            log.debug("\uD83D\uDC0C processMsgAsync with exception [{}][{}]", msg.getOriginator(), msg);
+            return invocation.callRealMethod();
+        }).given(node).processMsgAsync(eq(ctx), argThat(slowMsgList::contains));
+
+        willAnswer(invocation -> {
+            TbMsg msg = invocation.getArgument(1);
+            log.debug("submit slow originator onMsg [{}][{}]", msg.getOriginator(), msg);
+            return invocation.callRealMethod();
+        }).given(node).onMsg(eq(ctx), argThat(slowMsgList::contains));
+
+        // submit slow msg may block all rule engine dispatcher threads
+        slowMsgList.forEach(msg -> ruleEngineDispatcherExecutor.executeAsync(() -> node.onMsg(ctx, msg)));
+        // wait until dispatcher threads started with all slowMsg
+        verify(node, new Timeout(TimeUnit.SECONDS.toMillis(5), times(slowMsgList.size()))).onMsg(eq(ctx), argThat(slowMsgList::contains));
+
+        slowProcessingLatch.countDown();
+
+        verify(ctx, new Timeout(TimeUnit.SECONDS.toMillis(5), times(slowMsgList.size()))).tellFailure(any(), any());
+        verify(ctx, never()).tellSuccess(any());
+
+    }
+
+    @Test
+    public void testExp4j_concurrentBySingleOriginator_SingleMsg_manyNodesWithDifferentOutput() {
+        assertThat(RULE_DISPATCHER_POOL_SIZE).as("dispatcher pool size have to be > 1").isGreaterThan(1);
+        CountDownLatch processingLatch = new CountDownLatch(1);
+        List<Triple<TbContext, String, TbMathNode>> ctxNodes = IntStream.range(0, RULE_DISPATCHER_POOL_SIZE * 2)
+                .mapToObj(x -> {
+                    final TbContext ctx = mock(TbContext.class); // many rule nodes - many contexts
+                    willReturn(dbCallbackExecutor).given(ctx).getDbCallbackExecutor();
+                    final String resultKey = "result" + x;
+                    final TbMathNode node = spy(initNodeWithCustomFunction(ctx, "2a+3b",
+                            new TbMathResult(TbMathArgumentType.MESSAGE_METADATA, resultKey, 1, false, true, null),
+                            new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "a"),
+                            new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "b")));
+                    willAnswer(invocation -> {
+                        if (processingLatch.getCount() > 0) {
+                            log.debug("Await on processingLatch before processMsgAsync");
+                            try {
+                                assertThat(processingLatch.await(30, TimeUnit.SECONDS)).as("await on processingLatch").isTrue();
+                            } catch (InterruptedException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+                        log.debug("\uD83D\uDC0C processMsgAsync on node with expected resultKey [{}]", resultKey);
+                        return invocation.callRealMethod();
+                    }).given(node).processMsgAsync(any(), any());
+                    willAnswer(invocation -> {
+                        TbMsg msg = invocation.getArgument(1);
+                        log.debug("submit originator onMsg [{}][{}]", msg.getOriginator(), msg);
+                        return invocation.callRealMethod();
+                    }).given(node).onMsg(any(), any());
+                    return Triple.of(ctx, resultKey, node);
+                })
+                .collect(Collectors.toList());
+        ctxNodes.forEach(ctxNode -> ruleEngineDispatcherExecutor.executeAsync(() -> ctxNode.getRight()
+                .onMsg(ctxNode.getLeft(), TbMsg.newMsg("POST_TELEMETRY_REQUEST", originator, new TbMsgMetaData(), "{\"a\":2,\"b\":2}"))));
+        ctxNodes.forEach(ctxNode -> verify(ctxNode.getRight(), timeout(5000)).onMsg(eq(ctxNode.getLeft()), any()));
+        processingLatch.countDown();
+
+        SoftAssertions softly = new SoftAssertions();
+        ctxNodes.forEach(ctxNode -> {
+            final TbContext ctx = ctxNode.getLeft();
+            final String resultKey = ctxNode.getMiddle();
+            ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+            verify(ctx, timeout(5000)).tellSuccess(msgCaptor.capture());
+
+            TbMsg resultMsg = msgCaptor.getValue();
+            assertThat(resultMsg).as("result msg non null for result key " + resultKey).isNotNull();
+            log.debug("asserting result key [{}] in metadata [{}]", resultKey, resultMsg.getMetaData().getData());
+            softly.assertThat(resultMsg.getMetaData().getValue(resultKey)).as("asserting result key " + resultKey)
+                    .isEqualTo("10.0");
+        });
+
+        softly.assertAll();
+        verify(ctx, never()).tellFailure(any(), any());
+    }
+
+    static class RuleDispatcherExecutor extends AbstractListeningExecutor {
+        @Override
+        protected int getThreadPollSize() {
+            return RULE_DISPATCHER_POOL_SIZE;
+        }
+    }
+
+    static class DBCallbackExecutor extends AbstractListeningExecutor {
+        @Override
+        protected int getThreadPollSize() {
+            return DB_CALLBACK_POOL_SIZE;
+        }
+    }
+
 }

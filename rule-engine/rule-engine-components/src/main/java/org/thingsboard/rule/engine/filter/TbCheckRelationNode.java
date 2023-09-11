@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,10 +46,9 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
         name = "check relation",
         configClazz = TbCheckRelationNodeConfiguration.class,
         relationTypes = {"True", "False"},
-        nodeDescription = "Checks the relation from the selected entity to the originator of the message by type and direction" +
-                " if 'Check for single entity' is set to true, otherwise rule node will check if exist" +
-                " any relation to the originator of the message by type and direction.",
-        nodeDetails = "If at least one relation exists - send Message via <b>True</b> chain, otherwise <b>False</b> chain is used.",
+        nodeDescription = "Checks the presence of the relation between the originator of the message and other entities.",
+        nodeDetails = "If 'check relation to specific entity' is selected, one must specify a related entity. " +
+                "Otherwise, the rule node checks the presence of a relation to any entity that matches the direction and relation type criteria.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeCheckRelationConfig")
 public class TbCheckRelationNode implements TbNode {

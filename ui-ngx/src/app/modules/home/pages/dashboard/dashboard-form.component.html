@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -96,7 +96,7 @@
         <mat-label translate>dashboard.public-link</mat-label>
         <input matInput disabled [ngModel]="publicLink">
       </mat-form-field>
-      <button mat-button mat-icon-button style="margin-top: 8px;"
+      <button mat-icon-button style="margin-top: 8px;"
               ngxClipboard
               (cbOnSuccess)="onPublicLinkCopied($event)"
               cbContent="{{ publicLink }}"
@@ -124,13 +124,13 @@
           <textarea matInput formControlName="description" rows="2"></textarea>
         </mat-form-field>
       </div>
-      <div style="padding-bottom: 16px;" translate>dashboard.mobile-app-settings</div>
+      <div translate>dashboard.mobile-app-settings</div>
       <tb-image-input fxFlex
                       label="{{'dashboard.image' | translate}}"
                       maxSizeByte="524288"
                       formControlName="image">
       </tb-image-input>
-      <mat-checkbox fxFlex formControlName="mobileHide" style="padding-bottom: 16px; padding-top: 16px;">
+      <mat-checkbox fxFlex formControlName="mobileHide">
         {{ 'dashboard.mobile-hide' | translate }}
       </mat-checkbox>
       <mat-form-field class="mat-block">

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import io.grpc.stub.StreamObserver;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -56,12 +57,18 @@ public class EdgeGrpcClient implements EdgeRpcClient {
     private int rpcPort;
     @Value("${cloud.rpc.timeout}")
     private int timeoutSecs;
-    @Value("${cloud.rpc.keep_alive_time_sec}")
+    @Value("${cloud.rpc.keep_alive_time_sec:10}")
     private int keepAliveTimeSec;
+    @Value("${cloud.rpc.keep_alive_timeout_sec:5}")
+    private int keepAliveTimeoutSec;
     @Value("${cloud.rpc.ssl.enabled}")
     private boolean sslEnabled;
     @Value("${cloud.rpc.ssl.cert:}")
     private String certResource;
+    @Value("${cloud.rpc.max_inbound_message_size:4194304}")
+    private int maxInboundMessageSize;
+    @Getter
+    private int serverMaxInboundMessageSize;
 
     private ManagedChannel channel;
 
@@ -77,7 +84,10 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                         Consumer<DownlinkMsg> onDownlink,
                         Consumer<Exception> onError) {
         NettyChannelBuilder builder = NettyChannelBuilder.forAddress(rpcHost, rpcPort)
-                .keepAliveTime(keepAliveTimeSec, TimeUnit.SECONDS);
+                .maxInboundMessageSize(maxInboundMessageSize)
+                .keepAliveTime(keepAliveTimeSec, TimeUnit.SECONDS)
+                .keepAliveTimeout(keepAliveTimeoutSec, TimeUnit.SECONDS)
+                .keepAliveWithoutCalls(true);
         if (sslEnabled) {
             try {
                 SslContextBuilder sslContextBuilder = GrpcSslContexts.forClient();
@@ -101,7 +111,8 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                 .setConnectRequestMsg(ConnectRequestMsg.newBuilder()
                         .setEdgeRoutingKey(edgeKey)
                         .setEdgeSecret(edgeSecret)
-                        .setEdgeVersion(EdgeVersion.V_3_3_3)
+                        .setEdgeVersion(EdgeVersion.V_3_4_0)
+                        .setMaxInboundMessageSize(maxInboundMessageSize)
                         .build())
                 .build());
     }
@@ -117,6 +128,10 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                 if (responseMsg.hasConnectResponseMsg()) {
                     ConnectResponseMsg connectResponseMsg = responseMsg.getConnectResponseMsg();
                     if (connectResponseMsg.getResponseCode().equals(ConnectResponseCode.ACCEPTED)) {
+                        if (connectResponseMsg.hasMaxInboundMessageSize()) {
+                            log.debug("[{}] Server max inbound message size: {}", edgeKey, connectResponseMsg.getMaxInboundMessageSize());
+                            serverMaxInboundMessageSize = connectResponseMsg.getMaxInboundMessageSize();
+                        }
                         log.info("[{}] Configuration received: {}", edgeKey, connectResponseMsg.getConfiguration());
                         onEdgeUpdate.accept(connectResponseMsg.getConfiguration());
                     } else {

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -86,22 +86,38 @@ export interface StateEntityFilter {
 }
 
 export interface AssetTypeFilter {
+  /**
+   * @deprecated
+   */
   assetType?: string;
+  assetTypes?: string[];
   assetNameFilter?: string;
 }
 
 export interface DeviceTypeFilter {
+  /**
+   * @deprecated
+   */
   deviceType?: string;
+  deviceTypes?: string[];
   deviceNameFilter?: string;
 }
 
 export interface EdgeTypeFilter {
+  /**
+   * @deprecated
+   */
   edgeType?: string;
+  edgeTypes?: string[];
   edgeNameFilter?: string;
 }
 
 export interface EntityViewFilter {
+  /**
+   * @deprecated
+   */
   entityViewType?: string;
+  entityViewTypes?: string[];
   entityViewNameFilter?: string;
 }
 
@@ -127,7 +143,7 @@ export interface EntitySearchQueryFilter {
   fetchLastLevelOnly?: boolean;
 }
 
-// tslint:disable-next-line:no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface ApiUsageStateFilter {
 
 }

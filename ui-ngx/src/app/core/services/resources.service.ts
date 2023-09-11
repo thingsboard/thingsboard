@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ export interface ModulesWithFactories {
 })
 export class ResourcesService {
 
-  private loadedResources: { [url: string]: ReplaySubject<any> } = {};
+  private loadedResources: { [url: string]: ReplaySubject<void> } = {};
   private loadedModules: { [url: string]: ReplaySubject<Type<any>[]> } = {};
   private loadedModulesAndFactories: { [url: string]: ReplaySubject<ModulesWithFactories> } = {};
 
@@ -214,7 +214,7 @@ export class ResourcesService {
   }
 
   private loadResourceByType(type: 'css' | 'js', url: string): Observable<any> {
-    const subject = new ReplaySubject();
+    const subject = new ReplaySubject<void>();
     this.loadedResources[url] = subject;
     let el;
     let loaded = false;

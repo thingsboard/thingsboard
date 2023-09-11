@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,7 +16,8 @@
 
 -->
 <mat-form-field [formGroup]="selectTenantProfileFormGroup" class="mat-block">
-  <input matInput type="text" placeholder="{{ 'tenant-profile.tenant-profile' | translate }}"
+  <mat-label translate>tenant-profile.tenant-profile</mat-label>
+  <input matInput type="text"
          #tenantProfileInput
          formControlName="tenantProfile"
          (focusin)="onFocus()"
@@ -30,13 +31,13 @@
   </a>
   <button *ngIf="selectTenantProfileFormGroup.get('tenantProfile').value && !disabled"
           type="button"
-          matSuffix mat-button mat-icon-button aria-label="Clear"
+          matSuffix mat-icon-button aria-label="Clear"
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
   <button *ngIf="selectTenantProfileFormGroup.get('tenantProfile').value && !disabled"
           type="button"
-          matSuffix mat-button mat-icon-button aria-label="Edit"
+          matSuffix mat-icon-button aria-label="Edit"
           matTooltip="{{ 'tenant-profile.edit' | translate }}"
           matTooltipPosition="above"
           (click)="editTenantProfile($event)">

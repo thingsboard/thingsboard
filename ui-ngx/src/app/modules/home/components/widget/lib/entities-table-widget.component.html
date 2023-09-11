@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 -->
 <div class="tb-table-widget tb-absolute-fill">
   <div fxFlex fxLayout="column" class="tb-absolute-fill">
-    <mat-toolbar class="mat-table-toolbar" [fxShow]="textSearchMode">
+    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="textSearchMode">
       <div class="mat-toolbar-tools">
-        <button mat-button mat-icon-button
+        <button mat-icon-button
                 matTooltip="{{ 'action.search' | translate }}"
                 matTooltipPosition="above">
           <mat-icon>search</mat-icon>
@@ -30,7 +30,7 @@
                  [(ngModel)]="pageLink.textSearch"
                  placeholder="{{ 'entity.search' | translate }}"/>
         </mat-form-field>
-        <button mat-button mat-icon-button (click)="exitFilterMode()"
+        <button mat-icon-button (click)="exitFilterMode()"
                 matTooltip="{{ 'action.close' | translate }}"
                 matTooltipPosition="above">
           <mat-icon>close</mat-icon>
@@ -48,17 +48,17 @@
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="actions" [stickyEnd]="enableStickyAction">
-          <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (entityDatasource.countCellButtonAction * 40) + 'px',
-                                                                maxWidth: (entityDatasource.countCellButtonAction * 40) + 'px',
-                                                                width: (entityDatasource.countCellButtonAction * 40) + 'px' }">
+          <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (entityDatasource.countCellButtonAction * 48) + 'px',
+                                                                maxWidth: (entityDatasource.countCellButtonAction * 48) + 'px',
+                                                                width: (entityDatasource.countCellButtonAction * 48) + 'px' }">
           </mat-header-cell>
-          <mat-cell *matCellDef="let entity" [ngStyle.gt-md]="{ minWidth: (entityDatasource.countCellButtonAction * 40) + 'px',
-                                                                maxWidth: (entityDatasource.countCellButtonAction * 40) + 'px',
-                                                                width: (entityDatasource.countCellButtonAction * 40) + 'px' }">
+          <mat-cell *matCellDef="let entity" [ngStyle.gt-md]="{ minWidth: (entityDatasource.countCellButtonAction * 48) + 'px',
+                                                                maxWidth: (entityDatasource.countCellButtonAction * 48) + 'px',
+                                                                width: (entityDatasource.countCellButtonAction * 48) + 'px' }">
             <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
               <ng-container *ngFor="let actionDescriptor of entity.actionCellButtons; trackBy: trackByActionCellDescriptionId">
                 <span *ngIf="!actionDescriptor.icon" style="width: 40px;"></span>
-                <button mat-button mat-icon-button [disabled]="isLoading$ | async"
+                <button mat-icon-button [disabled]="isLoading$ | async"
                         *ngIf="actionDescriptor.icon"
                         matTooltip="{{ actionDescriptor.displayName }}"
                         matTooltipPosition="above"
@@ -68,7 +68,7 @@
               </ng-container>
             </div>
             <div fxHide fxShow.lt-lg *ngIf="entity.hasActions">
-              <button mat-button mat-icon-button
+              <button mat-icon-button
                       (click)="$event.stopPropagation(); ctx.detectChanges();"
                       [matMenuTriggerFor]="cellActionsMenu">
                 <mat-icon class="material-icons">more_vert</mat-icon>

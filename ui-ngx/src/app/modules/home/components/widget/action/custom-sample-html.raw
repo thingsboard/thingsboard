@@ -111,7 +111,7 @@
 <!--                            <button mat-icon-button color="primary"-->
 <!--                                    aria-label="Remove"-->
 <!--                                    type="button"-->
-<!--                                    (click)="removeOldRelation(i)"-->
+<!--                                    (click)="removeOldRelation(i, relation.value)"-->
 <!--                                    matTooltip="Remove relation"-->
 <!--                                    matTooltipPosition="above">-->
 <!--                                <mat-icon>close</mat-icon>-->

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
+import org.thingsboard.server.common.data.alarm.AlarmQueryV2;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
@@ -41,6 +42,7 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -48,9 +50,18 @@ import org.thingsboard.server.service.entitiy.alarm.TbAlarmService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_INFO_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_SORT_PROPERTY_ALLOWABLE_VALUES;
+import static org.thingsboard.server.controller.ControllerConstants.ASSIGNEE_ID;
+import static org.thingsboard.server.controller.ControllerConstants.ASSIGN_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_ID;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_TYPE;
@@ -76,9 +87,16 @@ public class AlarmController extends BaseController {
     private static final String ALARM_SECURITY_CHECK = "If the user has the authority of 'Tenant Administrator', the server checks that the originator of alarm is owned by the same tenant. " +
             "If the user has the authority of 'Customer User', the server checks that the originator of alarm belongs to the customer. ";
     private static final String ALARM_QUERY_SEARCH_STATUS_DESCRIPTION = "A string value representing one of the AlarmSearchStatus enumeration value";
+
+    private static final String ALARM_QUERY_SEARCH_STATUS_ARRAY_DESCRIPTION = "A list of string values separated by comma ',' representing one of the AlarmSearchStatus enumeration value";
     private static final String ALARM_QUERY_SEARCH_STATUS_ALLOWABLE_VALUES = "ANY, ACTIVE, CLEARED, ACK, UNACK";
     private static final String ALARM_QUERY_STATUS_DESCRIPTION = "A string value representing one of the AlarmStatus enumeration value";
     private static final String ALARM_QUERY_STATUS_ALLOWABLE_VALUES = "ACTIVE_UNACK, ACTIVE_ACK, CLEARED_UNACK, CLEARED_ACK";
+    private static final String ALARM_QUERY_SEVERITY_ARRAY_DESCRIPTION = "A list of string values separated by comma ',' representing one of the AlarmSeverity enumeration value";
+    private static final String ALARM_QUERY_SEVERITY_ALLOWABLE_VALUES = "CRITICAL, MAJOR, MINOR, WARNING, INDETERMINATE";
+
+    private static final String ALARM_QUERY_TYPE_ARRAY_DESCRIPTION = "A list of string values separated by comma ',' representing alarm types";
+    private static final String ALARM_QUERY_ASSIGNEE_DESCRIPTION = "A string value representing the assignee user id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     private static final String ALARM_QUERY_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'substring' filter based on of next alarm fields: type, severity or status";
     private static final String ALARM_QUERY_START_TIME_DESCRIPTION = "The start timestamp in milliseconds of the search time range over the Alarm class field: 'createdTime'.";
     private static final String ALARM_QUERY_END_TIME_DESCRIPTION = "The end timestamp in milliseconds of the search time range over the Alarm class field: 'createdTime'.";
@@ -93,12 +111,8 @@ public class AlarmController extends BaseController {
     public Alarm getAlarmById(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION)
                               @PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
         checkParameter(ALARM_ID, strAlarmId);
-        try {
-            AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
-            return checkAlarmId(alarmId, Operation.READ);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
+        return checkAlarmId(alarmId, Operation.READ);
     }
 
     @ApiOperation(value = "Get Alarm Info (getAlarmInfoById)",
@@ -110,15 +124,11 @@ public class AlarmController extends BaseController {
     public AlarmInfo getAlarmInfoById(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION)
                                       @PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
         checkParameter(ALARM_ID, strAlarmId);
-        try {
-            AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
-            return checkAlarmInfoId(alarmId, Operation.READ);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
+        return checkAlarmInfoId(alarmId, Operation.READ);
     }
 
-    @ApiOperation(value = "Create or update Alarm (saveAlarm)",
+    @ApiOperation(value = "Create or Update Alarm (saveAlarm)",
             notes = "Creates or Updates the Alarm. " +
                     "When creating alarm, platform generates Alarm Id as " + UUID_WIKI_LINK +
                     "The newly created Alarm id will be present in the response. Specify existing Alarm id to update the alarm. " +
@@ -135,7 +145,12 @@ public class AlarmController extends BaseController {
     @ResponseBody
     public Alarm saveAlarm(@ApiParam(value = "A JSON value representing the alarm.") @RequestBody Alarm alarm) throws ThingsboardException {
         alarm.setTenantId(getTenantId());
+        checkNotNull(alarm.getOriginator());
         checkEntity(alarm.getId(), alarm, Resource.ALARM);
+        checkEntityId(alarm.getOriginator(), Operation.READ);
+        if (alarm.getAssigneeId() != null) {
+            checkUserId(alarm.getAssigneeId(), Operation.READ);
+        }
         return tbAlarmService.save(alarm, getCurrentUser());
     }
 
@@ -158,11 +173,12 @@ public class AlarmController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm/{alarmId}/ack", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
-    public void ackAlarm(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION) @PathVariable(ALARM_ID) String strAlarmId) throws Exception {
+    public AlarmInfo ackAlarm(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION) @PathVariable(ALARM_ID) String strAlarmId) throws Exception {
         checkParameter(ALARM_ID, strAlarmId);
         AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
         Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
-        tbAlarmService.ack(alarm, getCurrentUser()).get();
+        //TODO: return correct error code if the alarm is not found or already cleared
+        return tbAlarmService.ack(alarm, getCurrentUser());
     }
 
     @ApiOperation(value = "Clear Alarm (clearAlarm)",
@@ -172,11 +188,50 @@ public class AlarmController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm/{alarmId}/clear", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
-    public void clearAlarm(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION) @PathVariable(ALARM_ID) String strAlarmId) throws Exception {
+    public AlarmInfo clearAlarm(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION) @PathVariable(ALARM_ID) String strAlarmId) throws Exception {
         checkParameter(ALARM_ID, strAlarmId);
         AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
         Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
-        tbAlarmService.clear(alarm, getCurrentUser()).get();
+        //TODO: return correct error code if the alarm is not found or already cleared
+        return tbAlarmService.clear(alarm, getCurrentUser());
+    }
+
+    @ApiOperation(value = "Assign/Reassign Alarm (assignAlarm)",
+            notes = "Assign the Alarm. " +
+                    "Once assigned, the 'assign_ts' field will be set to current timestamp and special rule chain event 'ALARM_ASSIGNED' " +
+                    "(or ALARM_REASSIGNED in case of assigning already assigned alarm) will be generated. " +
+                    "Referencing non-existing Alarm Id will cause an error." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/alarm/{alarmId}/assign/{assigneeId}", method = RequestMethod.POST)
+    @ResponseStatus(value = HttpStatus.OK)
+    public Alarm assignAlarm(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION)
+                             @PathVariable(ALARM_ID) String strAlarmId,
+                             @ApiParam(value = ASSIGN_ID_PARAM_DESCRIPTION)
+                             @PathVariable(ASSIGNEE_ID) String strAssigneeId
+    ) throws Exception {
+        checkParameter(ALARM_ID, strAlarmId);
+        checkParameter(ASSIGNEE_ID, strAssigneeId);
+        AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
+        Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
+        UserId assigneeId = new UserId(UUID.fromString(strAssigneeId));
+        checkUserId(assigneeId, Operation.READ);
+        return tbAlarmService.assign(alarm, assigneeId, System.currentTimeMillis(), getCurrentUser());
+    }
+
+    @ApiOperation(value = "Unassign Alarm (unassignAlarm)",
+            notes = "Unassign the Alarm. " +
+                    "Once unassigned, the 'assign_ts' field will be set to current timestamp and special rule chain event 'ALARM_UNASSIGNED' will be generated. " +
+                    "Referencing non-existing Alarm Id will cause an error." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/alarm/{alarmId}/assign", method = RequestMethod.DELETE)
+    @ResponseStatus(value = HttpStatus.OK)
+    public Alarm unassignAlarm(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION)
+                               @PathVariable(ALARM_ID) String strAlarmId
+    ) throws Exception {
+        checkParameter(ALARM_ID, strAlarmId);
+        AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
+        Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
+        return tbAlarmService.unassign(alarm, System.currentTimeMillis(), getCurrentUser());
     }
 
     @ApiOperation(value = "Get Alarms (getAlarms)",
@@ -194,6 +249,8 @@ public class AlarmController extends BaseController {
             @RequestParam(required = false) String searchStatus,
             @ApiParam(value = ALARM_QUERY_STATUS_DESCRIPTION, allowableValues = ALARM_QUERY_STATUS_ALLOWABLE_VALUES)
             @RequestParam(required = false) String status,
+            @ApiParam(value = ALARM_QUERY_ASSIGNEE_DESCRIPTION)
+            @RequestParam(required = false) String assigneeId,
             @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
             @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
@@ -210,7 +267,7 @@ public class AlarmController extends BaseController {
             @RequestParam(required = false) Long endTime,
             @ApiParam(value = ALARM_QUERY_FETCH_ORIGINATOR_DESCRIPTION)
             @RequestParam(required = false) Boolean fetchOriginator
-    ) throws ThingsboardException {
+    ) throws ThingsboardException, ExecutionException, InterruptedException {
         checkParameter("EntityId", strEntityId);
         checkParameter("EntityType", strEntityType);
         EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
@@ -221,13 +278,13 @@ public class AlarmController extends BaseController {
                     "and 'status' can't be specified at the same time!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
         checkEntityId(entityId, Operation.READ);
+        UserId assigneeUserId = null;
+        if (assigneeId != null) {
+            assigneeUserId = new UserId(UUID.fromString(assigneeId));
+        }
         TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
 
-        try {
-            return checkNotNull(alarmService.findAlarms(getCurrentUser().getTenantId(), new AlarmQuery(entityId, pageLink, alarmSearchStatus, alarmStatus, fetchOriginator)).get());
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        return checkNotNull(alarmService.findAlarms(getCurrentUser().getTenantId(), new AlarmQuery(entityId, pageLink, alarmSearchStatus, alarmStatus, assigneeUserId, fetchOriginator)).get());
     }
 
     @ApiOperation(value = "Get All Alarms (getAllAlarms)",
@@ -244,6 +301,8 @@ public class AlarmController extends BaseController {
             @RequestParam(required = false) String searchStatus,
             @ApiParam(value = ALARM_QUERY_STATUS_DESCRIPTION, allowableValues = ALARM_QUERY_STATUS_ALLOWABLE_VALUES)
             @RequestParam(required = false) String status,
+            @ApiParam(value = ALARM_QUERY_ASSIGNEE_DESCRIPTION)
+            @RequestParam(required = false) String assigneeId,
             @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
             @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
@@ -260,23 +319,149 @@ public class AlarmController extends BaseController {
             @RequestParam(required = false) Long endTime,
             @ApiParam(value = ALARM_QUERY_FETCH_ORIGINATOR_DESCRIPTION)
             @RequestParam(required = false) Boolean fetchOriginator
-    ) throws ThingsboardException {
+    ) throws ThingsboardException, ExecutionException, InterruptedException {
         AlarmSearchStatus alarmSearchStatus = StringUtils.isEmpty(searchStatus) ? null : AlarmSearchStatus.valueOf(searchStatus);
         AlarmStatus alarmStatus = StringUtils.isEmpty(status) ? null : AlarmStatus.valueOf(status);
         if (alarmSearchStatus != null && alarmStatus != null) {
             throw new ThingsboardException("Invalid alarms search query: Both parameters 'searchStatus' " +
                     "and 'status' can't be specified at the same time!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
+        UserId assigneeUserId = null;
+        if (assigneeId != null) {
+            assigneeUserId = new UserId(UUID.fromString(assigneeId));
+        }
         TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
 
-        try {
-            if (getCurrentUser().isCustomerUser()) {
-                return checkNotNull(alarmService.findCustomerAlarms(getCurrentUser().getTenantId(), getCurrentUser().getCustomerId(), new AlarmQuery(null, pageLink, alarmSearchStatus, alarmStatus, fetchOriginator)).get());
-            } else {
-                return checkNotNull(alarmService.findAlarms(getCurrentUser().getTenantId(), new AlarmQuery(null, pageLink, alarmSearchStatus, alarmStatus, fetchOriginator)).get());
+        if (getCurrentUser().isCustomerUser()) {
+            return checkNotNull(alarmService.findCustomerAlarms(getCurrentUser().getTenantId(), getCurrentUser().getCustomerId(), new AlarmQuery(null, pageLink, alarmSearchStatus, alarmStatus, assigneeUserId, fetchOriginator)).get());
+        } else {
+            return checkNotNull(alarmService.findAlarms(getCurrentUser().getTenantId(), new AlarmQuery(null, pageLink, alarmSearchStatus, alarmStatus, assigneeUserId, fetchOriginator)).get());
+        }
+    }
+
+    @ApiOperation(value = "Get Alarms (getAlarmsV2)",
+            notes = "Returns a page of alarms for the selected entity. " +
+                    PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/v2/alarm/{entityType}/{entityId}", method = RequestMethod.GET)
+    @ResponseBody
+    public PageData<AlarmInfo> getAlarmsV2(
+            @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, defaultValue = "DEVICE")
+            @PathVariable(ENTITY_TYPE) String strEntityType,
+            @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable(ENTITY_ID) String strEntityId,
+            @ApiParam(value = ALARM_QUERY_SEARCH_STATUS_ARRAY_DESCRIPTION, allowableValues = ALARM_QUERY_SEARCH_STATUS_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String[] statusList,
+            @ApiParam(value = ALARM_QUERY_SEVERITY_ARRAY_DESCRIPTION, allowableValues = ALARM_QUERY_SEVERITY_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String[] severityList,
+            @ApiParam(value = ALARM_QUERY_TYPE_ARRAY_DESCRIPTION)
+            @RequestParam(required = false) String[] typeList,
+            @ApiParam(value = ALARM_QUERY_ASSIGNEE_DESCRIPTION)
+            @RequestParam(required = false) String assigneeId,
+            @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+            @RequestParam int pageSize,
+            @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+            @RequestParam int page,
+            @ApiParam(value = ALARM_QUERY_TEXT_SEARCH_DESCRIPTION)
+            @RequestParam(required = false) String textSearch,
+            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = ALARM_SORT_PROPERTY_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortProperty,
+            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortOrder,
+            @ApiParam(value = ALARM_QUERY_START_TIME_DESCRIPTION)
+            @RequestParam(required = false) Long startTime,
+            @ApiParam(value = ALARM_QUERY_END_TIME_DESCRIPTION)
+            @RequestParam(required = false) Long endTime
+    ) throws ThingsboardException, ExecutionException, InterruptedException {
+        checkParameter("EntityId", strEntityId);
+        checkParameter("EntityType", strEntityType);
+        EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
+        checkEntityId(entityId, Operation.READ);
+        List<AlarmSearchStatus> alarmStatusList = new ArrayList<>();
+        if (statusList != null) {
+            for (String strStatus : statusList) {
+                if (!StringUtils.isEmpty(strStatus)) {
+                    alarmStatusList.add(AlarmSearchStatus.valueOf(strStatus));
+                }
             }
-        } catch (Exception e) {
-            throw handleException(e);
+        }
+        List<AlarmSeverity> alarmSeverityList = new ArrayList<>();
+        if (severityList != null) {
+            for (String strSeverity : severityList) {
+                if (!StringUtils.isEmpty(strSeverity)) {
+                    alarmSeverityList.add(AlarmSeverity.valueOf(strSeverity));
+                }
+            }
+        }
+        List<String> alarmTypeList = typeList != null ? Arrays.asList(typeList) : Collections.emptyList();
+        UserId assigneeUserId = null;
+        if (assigneeId != null) {
+            assigneeUserId = new UserId(UUID.fromString(assigneeId));
+        }
+        TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
+
+        return checkNotNull(alarmService.findAlarmsV2(getCurrentUser().getTenantId(), new AlarmQueryV2(entityId, pageLink, alarmTypeList, alarmStatusList, alarmSeverityList, assigneeUserId)).get());
+    }
+
+    @ApiOperation(value = "Get All Alarms (getAllAlarmsV2)",
+            notes = "Returns a page of alarms that belongs to the current user owner. " +
+                    "If the user has the authority of 'Tenant Administrator', the server returns alarms that belongs to the tenant of current user. " +
+                    "If the user has the authority of 'Customer User', the server returns alarms that belongs to the customer of current user. " +
+                    PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/v2/alarms", method = RequestMethod.GET)
+    @ResponseBody
+    public PageData<AlarmInfo> getAllAlarmsV2(
+            @ApiParam(value = ALARM_QUERY_SEARCH_STATUS_ARRAY_DESCRIPTION, allowableValues = ALARM_QUERY_SEARCH_STATUS_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String[] statusList,
+            @ApiParam(value = ALARM_QUERY_SEVERITY_ARRAY_DESCRIPTION, allowableValues = ALARM_QUERY_SEVERITY_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String[] severityList,
+            @ApiParam(value = ALARM_QUERY_TYPE_ARRAY_DESCRIPTION)
+            @RequestParam(required = false) String[] typeList,
+            @ApiParam(value = ALARM_QUERY_ASSIGNEE_DESCRIPTION)
+            @RequestParam(required = false) String assigneeId,
+            @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+            @RequestParam int pageSize,
+            @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+            @RequestParam int page,
+            @ApiParam(value = ALARM_QUERY_TEXT_SEARCH_DESCRIPTION)
+            @RequestParam(required = false) String textSearch,
+            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = ALARM_SORT_PROPERTY_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortProperty,
+            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortOrder,
+            @ApiParam(value = ALARM_QUERY_START_TIME_DESCRIPTION)
+            @RequestParam(required = false) Long startTime,
+            @ApiParam(value = ALARM_QUERY_END_TIME_DESCRIPTION)
+            @RequestParam(required = false) Long endTime
+    ) throws ThingsboardException, ExecutionException, InterruptedException {
+        List<AlarmSearchStatus> alarmStatusList = new ArrayList<>();
+        if (statusList != null) {
+            for (String strStatus : statusList) {
+                if (!StringUtils.isEmpty(strStatus)) {
+                    alarmStatusList.add(AlarmSearchStatus.valueOf(strStatus));
+                }
+            }
+        }
+        List<AlarmSeverity> alarmSeverityList = new ArrayList<>();
+        if (severityList != null) {
+            for (String strSeverity : severityList) {
+                if (!StringUtils.isEmpty(strSeverity)) {
+                    alarmSeverityList.add(AlarmSeverity.valueOf(strSeverity));
+                }
+            }
+        }
+        List<String> alarmTypeList = typeList != null ? Arrays.asList(typeList) : Collections.emptyList();
+        UserId assigneeUserId = null;
+        if (assigneeId != null) {
+            assigneeUserId = new UserId(UUID.fromString(assigneeId));
+        }
+        TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
+
+        if (getCurrentUser().isCustomerUser()) {
+            return checkNotNull(alarmService.findCustomerAlarmsV2(getCurrentUser().getTenantId(), getCurrentUser().getCustomerId(), new AlarmQueryV2(null, pageLink, alarmTypeList, alarmStatusList, alarmSeverityList, assigneeUserId)).get());
+        } else {
+            return checkNotNull(alarmService.findAlarmsV2(getCurrentUser().getTenantId(), new AlarmQueryV2(null, pageLink, alarmTypeList, alarmStatusList, alarmSeverityList, assigneeUserId)).get());
         }
     }
 
@@ -295,7 +480,9 @@ public class AlarmController extends BaseController {
             @ApiParam(value = ALARM_QUERY_SEARCH_STATUS_DESCRIPTION, allowableValues = ALARM_QUERY_SEARCH_STATUS_ALLOWABLE_VALUES)
             @RequestParam(required = false) String searchStatus,
             @ApiParam(value = ALARM_QUERY_STATUS_DESCRIPTION, allowableValues = ALARM_QUERY_STATUS_ALLOWABLE_VALUES)
-            @RequestParam(required = false) String status
+            @RequestParam(required = false) String status,
+            @ApiParam(value = ALARM_QUERY_ASSIGNEE_DESCRIPTION)
+            @RequestParam(required = false) String assigneeId
     ) throws ThingsboardException {
         checkParameter("EntityId", strEntityId);
         checkParameter("EntityType", strEntityType);
@@ -307,11 +494,8 @@ public class AlarmController extends BaseController {
                     "and 'status' can't be specified at the same time!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
         checkEntityId(entityId, Operation.READ);
-        try {
-            return alarmService.findHighestAlarmSeverity(getCurrentUser().getTenantId(), entityId, alarmSearchStatus, alarmStatus);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        return alarmService.findHighestAlarmSeverity(getCurrentUser().getTenantId(), entityId, alarmSearchStatus,
+                alarmStatus, assigneeId);
     }
 
 }

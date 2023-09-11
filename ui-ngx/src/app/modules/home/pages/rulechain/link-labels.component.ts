@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,14 +15,14 @@
 ///
 
 import { Component, ElementRef, forwardRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { LinkLabel } from '@shared/models/rule-node.models';
 import { Observable, of } from 'rxjs';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { deepClone } from '@core/utils';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 import { MatAutocomplete, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
-import { MatChipInputEvent, MatChipList } from '@angular/material/chips';
+import { MatChipInputEvent, MatChipGrid } from '@angular/material/chips';
 import { TranslateService } from '@ngx-translate/core';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { catchError, map, mergeMap, share, startWith } from 'rxjs/operators';
@@ -40,7 +40,7 @@ import { RuleChainService } from '@core/http/rule-chain.service';
 })
 export class LinkLabelsComponent implements ControlValueAccessor, OnInit, OnChanges {
 
-  @ViewChild('chipList') chipList: MatChipList;
+  @ViewChild('chipList') chipList: MatChipGrid;
   @ViewChild('labelAutocomplete') matAutocomplete: MatAutocomplete;
   @ViewChild('labelInput') labelInput: ElementRef<HTMLInputElement>;
 
@@ -72,7 +72,7 @@ export class LinkLabelsComponent implements ControlValueAccessor, OnInit, OnChan
   @Input()
   sourceRuleChainId: string;
 
-  linksFormGroup: FormGroup;
+  linksFormGroup: UntypedFormGroup;
 
   modelValue: Array<string>;
 
@@ -88,7 +88,7 @@ export class LinkLabelsComponent implements ControlValueAccessor, OnInit, OnChan
 
   private propagateChange = (v: any) => { };
 
-  constructor(private fb: FormBuilder,
+  constructor(private fb: UntypedFormBuilder,
               public truncate: TruncatePipe,
               public translate: TranslateService,
               private ruleChainService: RuleChainService) {

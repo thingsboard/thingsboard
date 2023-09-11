@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package org.thingsboard.server.dao.service;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -47,43 +49,17 @@ import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
-import org.thingsboard.server.dao.alarm.AlarmService;
-import org.thingsboard.server.dao.asset.AssetProfileService;
-import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.audit.AuditLogLevelFilter;
 import org.thingsboard.server.dao.audit.AuditLogLevelMask;
 import org.thingsboard.server.dao.audit.AuditLogLevelProperties;
-import org.thingsboard.server.dao.component.ComponentDescriptorService;
-import org.thingsboard.server.dao.customer.CustomerService;
-import org.thingsboard.server.dao.dashboard.DashboardService;
-import org.thingsboard.server.dao.device.DeviceCredentialsService;
-import org.thingsboard.server.dao.device.DeviceProfileService;
-import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.edge.EdgeEventService;
-import org.thingsboard.server.dao.edge.EdgeService;
-import org.thingsboard.server.dao.entity.EntityService;
-import org.thingsboard.server.dao.entityview.EntityViewService;
-import org.thingsboard.server.dao.event.EventService;
-import org.thingsboard.server.dao.ota.OtaPackageService;
-import org.thingsboard.server.dao.queue.QueueService;
-import org.thingsboard.server.dao.relation.RelationService;
-import org.thingsboard.server.dao.resource.ResourceService;
-import org.thingsboard.server.dao.rpc.RpcService;
-import org.thingsboard.server.dao.rule.RuleChainService;
-import org.thingsboard.server.dao.settings.AdminSettingsService;
-import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
-import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
-import org.thingsboard.server.dao.user.UserService;
-import org.thingsboard.server.dao.widget.WidgetTypeService;
-import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.junit.Assert.assertNotNull;
 
@@ -100,88 +76,19 @@ public abstract class AbstractServiceTest {
     public static final TenantId SYSTEM_TENANT_ID = TenantId.SYS_TENANT_ID;
 
     @Autowired
-    protected UserService userService;
-
-    @Autowired
-    protected ApiUsageStateService apiUsageStateService;
-
-    @Autowired
-    protected AdminSettingsService adminSettingsService;
-
-    @Autowired
     protected TenantService tenantService;
 
-    @Autowired
-    protected CustomerService customerService;
+    protected TenantId tenantId;
 
-    @Autowired
-    protected DeviceService deviceService;
+    @Before
+    public void beforeAbstractService() {
+        tenantId = createTenant();
+    }
 
-    @Autowired
-    protected AssetService assetService;
-
-    @Autowired
-    protected EntityViewService entityViewService;
-
-    @Autowired
-    protected EntityService entityService;
-
-    @Autowired
-    protected DeviceCredentialsService deviceCredentialsService;
-
-    @Autowired
-    protected WidgetsBundleService widgetsBundleService;
-
-    @Autowired
-    protected WidgetTypeService widgetTypeService;
-
-    @Autowired
-    protected DashboardService dashboardService;
-
-    @Autowired
-    protected TimeseriesService tsService;
-
-    @Autowired
-    protected EventService eventService;
-
-    @Autowired
-    protected RelationService relationService;
-
-    @Autowired
-    protected AlarmService alarmService;
-
-    @Autowired
-    protected RuleChainService ruleChainService;
-
-    @Autowired
-    protected EdgeService edgeService;
-
-    @Autowired
-    protected EdgeEventService edgeEventService;
-
-    @Autowired
-    private ComponentDescriptorService componentDescriptorService;
-
-    @Autowired
-    protected TenantProfileService tenantProfileService;
-
-    @Autowired
-    protected DeviceProfileService deviceProfileService;
-
-    @Autowired
-    protected AssetProfileService assetProfileService;
-
-    @Autowired
-    protected ResourceService resourceService;
-
-    @Autowired
-    protected OtaPackageService otaPackageService;
-
-    @Autowired
-    protected RpcService rpcService;
-
-    @Autowired
-    protected QueueService queueService;
+    @After
+    public void afterAbstractService() {
+        tenantService.deleteTenants();
+    }
 
     public class IdComparator<D extends HasId> implements Comparator<D> {
         @Override
@@ -267,7 +174,7 @@ public abstract class AbstractServiceTest {
 
     public TenantId createTenant() {
         Tenant tenant = new Tenant();
-        tenant.setTitle("My tenant " + Uuids.timeBased());
+        tenant.setTitle("My tenant " + UUID.randomUUID());
         Tenant savedTenant = tenantService.saveTenant(tenant);
         assertNotNull(savedTenant);
         return savedTenant.getId();

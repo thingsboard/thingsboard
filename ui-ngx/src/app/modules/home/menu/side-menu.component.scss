@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,11 +30,15 @@
     border-bottom: 1px solid rgba(0, 0, 0, .12);
   }
 
-  a.mat-button {
-    display: flex;
+  a.mat-mdc-button.mat-mdc-button-base {
+    display: inline-flex;
+    width: 100%;
+    height: 40px;
+    align-items: center;
     overflow: hidden;
     line-height: 40px;
     border-radius: 0;
+    padding: 0 16px;
     &:hover {
       border-bottom: none;
       background-color: rgba(255,255,255,0.08);
@@ -43,26 +47,27 @@
       border-bottom: none;
     }
     &.tb-active {
-      font-weight: 500;
       background-color: rgba(255, 255, 255, .15);
     }
-
-    .mat-button-wrapper {
+    mat-icon {
+      margin-right: 8px;
+      margin-left: 0;
+      min-width: 1.125rem;
+      min-height: 1.125rem;
+    }
+    span.mdc-button__label {
       width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
       display: inline-flex;
-      align-items: center;
-      mat-icon {
-        margin-right: 8px;
-        margin-left: 0;
-      }
-      span {
+      & > span {
         overflow: hidden;
         text-overflow: ellipsis;
-        white-space: nowrap;
-        &.tb-toggle-icon {
-          padding-top: 12px;
-          padding-bottom: 12px;
-        }
+      }
+      .tb-toggle-icon {
+        padding-top: 12px;
+        padding-bottom: 12px;
       }
     }
   }

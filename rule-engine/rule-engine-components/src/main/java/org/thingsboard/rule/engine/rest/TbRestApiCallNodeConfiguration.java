@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,8 +37,7 @@ public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestA
     private int readTimeoutMs;
     private int maxParallelRequestsCount;
     private boolean useRedisQueueForMsgPersistence;
-    private boolean trimQueue;
-    private int maxQueueSize;
+    private boolean trimDoubleQuotes;
     private boolean enableProxy;
     private boolean useSystemProxyProperties;
     private String proxyHost;
@@ -59,7 +58,7 @@ public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestA
         configuration.setReadTimeoutMs(0);
         configuration.setMaxParallelRequestsCount(0);
         configuration.setUseRedisQueueForMsgPersistence(false);
-        configuration.setTrimQueue(false);
+        configuration.setTrimDoubleQuotes(false);
         configuration.setEnableProxy(false);
         configuration.setCredentials(new AnonymousCredentials());
         configuration.setIgnoreRequestBody(false);

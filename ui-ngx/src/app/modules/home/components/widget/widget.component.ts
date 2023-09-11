@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -29,8 +29,10 @@ import {
   OnChanges,
   OnDestroy,
   OnInit,
+  Optional,
   Renderer2,
   SimpleChanges,
+  Type,
   ViewChild,
   ViewContainerRef,
   ViewEncapsulation
@@ -89,7 +91,7 @@ import {
 import { EntityId } from '@shared/models/id/entity-id';
 import { ActivatedRoute, Router } from '@angular/router';
 import cssjs from '@core/css/css';
-import { ResourcesService } from '@core/services/resources.service';
+import { ModulesWithFactories, ResourcesService } from '@core/services/resources.service';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TimeService } from '@core/services/time.service';
@@ -115,6 +117,8 @@ import { DialogService } from '@core/services/dialog.service';
 import { PopoverPlacement } from '@shared/components/popover.models';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { DASHBOARD_PAGE_COMPONENT_TOKEN } from '@home/components/tokens';
+import { MODULES_MAP } from '@shared/models/constants';
+import { IModulesMap } from '@modules/common/modules-map.models';
 
 @Component({
   selector: 'tb-widget',
@@ -190,6 +194,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
               private popoverService: TbPopoverService,
               @Inject(EMBED_DASHBOARD_DIALOG_TOKEN) private embedDashboardDialogComponent: ComponentType<any>,
               @Inject(DASHBOARD_PAGE_COMPONENT_TOKEN) private dashboardPageComponent: ComponentType<any>,
+              @Optional() @Inject(MODULES_MAP) private modulesMap: IModulesMap,
               private widgetService: WidgetService,
               private resources: ResourcesService,
               private timeService: TimeService,
@@ -466,7 +471,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   }
 
   private loadFromWidgetInfo() {
-    this.widgetContext.widgetNamespace = `widget-type-${(this.widget.isSystemType ? 'sys-' : '')}${this.widget.bundleAlias}-${this.widget.typeAlias}`;
+    this.widgetContext.widgetNamespace =
+      `widget-type-${(this.widget.isSystemType ? 'sys-' : '')}${this.widget.bundleAlias}-${this.widget.typeAlias}`;
     const elem = this.elementRef.nativeElement;
     elem.classList.add('tb-widget');
     elem.classList.add(this.widgetContext.widgetNamespace);
@@ -510,6 +516,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         this.onInit();
       },
       (err) => {
+        this.widgetContext.inited = true;
         // console.log(err);
       }
     );
@@ -691,7 +698,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
 
   private initialize(): Observable<any> {
 
-    const initSubject = new ReplaySubject();
+    const initSubject = new ReplaySubject<void>();
 
     this.rxSubscriptions.push(this.widgetContext.aliasController.entityAliasesChanged.subscribe(
       (aliasIds) => {
@@ -733,9 +740,13 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       this.createDefaultSubscription().subscribe(
         () => {
           this.subscriptionInited = true;
-          this.configureDynamicWidgetComponent();
-          initSubject.next();
-          initSubject.complete();
+          try {
+            this.configureDynamicWidgetComponent();
+            initSubject.next();
+            initSubject.complete();
+          } catch (err) {
+            initSubject.error(err);
+          }
         },
         (err) => {
           this.subscriptionInited = true;
@@ -745,9 +756,13 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     } else {
       this.loadingData = false;
       this.subscriptionInited = true;
-      this.configureDynamicWidgetComponent();
-      initSubject.next();
-      initSubject.complete();
+      try {
+        this.configureDynamicWidgetComponent();
+        initSubject.next();
+        initSubject.complete();
+      }  catch (err) {
+        initSubject.error(err);
+      }
     }
     return initSubject.asObservable();
   }
@@ -801,12 +816,15 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         this.dynamicWidgetComponentRef = this.widgetContentContainer.createComponent(this.widgetInfo.componentFactory, 0, injector);
         this.cd.detectChanges();
       } catch (e) {
-        console.error(e);
         if (this.dynamicWidgetComponentRef) {
           this.dynamicWidgetComponentRef.destroy();
           this.dynamicWidgetComponentRef = null;
         }
         this.widgetContentContainer.clear();
+        this.handleWidgetException(e);
+        this.widgetComponentService.clearWidgetInfo(this.widgetInfo, this.widget.bundleAlias, this.widget.typeAlias,
+          this.widget.isSystemType);
+        throw e;
       }
 
       if (this.dynamicWidgetComponentRef) {
@@ -966,7 +984,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   }
 
   private createDefaultSubscription(): Observable<any> {
-    const createSubscriptionSubject = new ReplaySubject();
+    const createSubscriptionSubject = new ReplaySubject<void>();
     let options: WidgetSubscriptionOptions;
     if (this.widget.type !== widgetType.rpc && this.widget.type !== widgetType.static) {
       const comparisonSettings: WidgetComparisonSettings = this.widgetContext.settings;
@@ -1159,8 +1177,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         if (isDefined(customHtml) && customHtml.length > 0) {
           htmlTemplate = customHtml;
         }
-        this.loadCustomActionResources(actionNamespace, customCss, customResources).subscribe(
-          () => {
+        this.loadCustomActionResources(actionNamespace, customCss, customResources, descriptor).subscribe({
+          next: () => {
             if (isDefined(customPrettyFunction) && customPrettyFunction.length > 0) {
               try {
                 if (!additionalParams) {
@@ -1168,16 +1186,17 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
                 }
                 const customActionPrettyFunction = new Function('$event', 'widgetContext', 'entityId',
                   'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel', customPrettyFunction);
+                this.widgetContext.customDialog.setAdditionalModules(descriptor.customModules);
                 customActionPrettyFunction($event, this.widgetContext, entityId, entityName, htmlTemplate, additionalParams, entityLabel);
               } catch (e) {
                 console.error(e);
               }
             }
           },
-          (errorMessages: string[]) => {
+          error: (errorMessages: string[]) => {
             this.processResourcesLoadErrors(errorMessages);
           }
-        );
+        });
         break;
       case WidgetActionType.mobileAction:
         const mobileAction = descriptor.mobileAction;
@@ -1472,33 +1491,69 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     }
   }
 
-  private loadCustomActionResources(actionNamespace: string, customCss: string, customResources: Array<WidgetResource>): Observable<any> {
+  private loadCustomActionResources(actionNamespace: string, customCss: string, customResources: Array<WidgetResource>, actionDescriptor: WidgetActionDescriptor): Observable<any> {
+    const resourceTasks: Observable<string>[] = [];
+    const modulesTasks: Observable<ModulesWithFactories | string>[] = [];
+
     if (isDefined(customCss) && customCss.length > 0) {
       this.cssParser.cssPreviewNamespace = actionNamespace;
       this.cssParser.createStyleElement(actionNamespace, customCss, 'nonamespace');
     }
-    const resourceTasks: Observable<string>[] = [];
+
     if (isDefined(customResources) && customResources.length > 0) {
-      customResources.forEach((resource) => {
-        resourceTasks.push(
-          this.resources.loadResource(resource.url).pipe(
-            catchError(e => of(`Failed to load custom action resource: '${resource.url}'`))
-          )
-        );
+      customResources.forEach(resource => {
+        if (resource.isModule) {
+          modulesTasks.push(
+            this.resources.loadFactories(resource.url, this.modulesMap).pipe(
+              catchError((e: Error) => of(e?.message ? e.message : `Failed to load custom action resource module: '${resource.url}'`))
+            )
+          );
+        } else {
+          resourceTasks.push(
+            this.resources.loadResource(resource.url).pipe(
+              catchError(() => of(`Failed to load custom action resource: '${resource.url}'`))
+            )
+          );
+        }
       });
+
+      if (modulesTasks.length) {
+        const modulesObservable: Observable<string | Type<any>[]> = forkJoin(modulesTasks).pipe(
+          map(res => {
+            const msg = res.find(r => typeof r === 'string');
+            if (msg) {
+              return msg as string;
+            } else {
+              const modulesWithFactoriesList = res as ModulesWithFactories[];
+              const resModulesWithFactories: ModulesWithFactories = {
+                modules: modulesWithFactoriesList.map(mf => mf.modules).flat(),
+                factories: modulesWithFactoriesList.map(mf => mf.factories).flat()
+              };
+              return resModulesWithFactories.modules;
+            }
+          })
+        );
+
+        resourceTasks.push(modulesObservable.pipe(
+          map((resolvedModules) => {
+            if (typeof resolvedModules === 'string') {
+              return resolvedModules;
+            } else {
+              actionDescriptor.customModules = resolvedModules;
+              return null;
+            }
+          })));
+      }
+
       return forkJoin(resourceTasks).pipe(
         switchMap(msgs => {
-            let errors: string[];
-            if (msgs && msgs.length) {
-              errors = msgs.filter(msg => msg && msg.length > 0);
-            }
-            if (errors && errors.length) {
-              return throwError(errors);
-            } else {
-              return of(null);
-            }
-          }
-      ));
+          const errors = msgs.filter(msg => msg && msg.length > 0);
+          if (errors.length > 0) {
+            return throwError(() => errors);
+          } else {
+            return of(null);
+          }}
+        ));
     } else {
       return of(null);
     }

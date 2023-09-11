@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--BSD 3-Clause License
+
+Copyright (c) 2019, Cloudminds
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M.xsd">
+  <Object ObjectType="MODefinition">
+    <Name>General Info</Name>
+    <Description1><![CDATA[This LWM2M Object contains the referrence to all general info objects of the robot.]]></Description1>
+    <ObjectID>10355</ObjectID>
+    <ObjectURN>urn:oma:lwm2m:x:10355</ObjectURN>
+    <LWM2MVersion>1.0</LWM2MVersion>
+    <ObjectVersion>1.0</ObjectVersion>
+    <MultipleInstances>Single</MultipleInstances>
+    <Mandatory>Optional</Mandatory>
+    <Resources>
+	  <Item ID="100">
+		<Name>Robot General Info</Name>
+		<Operations>R</Operations>
+		<MultipleInstances>Single</MultipleInstances>
+		<Mandatory>Mandatory</Mandatory>
+		<Type>Objlnk</Type>
+		<RangeEnumeration/>
+		<Units/>
+		<Description>
+		  <![CDATA[Contains the reference to the Robot General Info.]]>
+		</Description>
+	  </Item>
+	  <Item ID="101">
+		<Name>RCU General Info</Name>
+		<Operations>R</Operations>
+		<MultipleInstances>Single</MultipleInstances>
+		<Mandatory>Mandatory</Mandatory>
+		<Type>Objlnk</Type>
+		<RangeEnumeration/>
+		<Units/>
+		<Description>
+		  <![CDATA[Contains the reference to the RCU General info of the Robot.]]>
+		</Description>
+	  </Item>
+	  <Item ID="102">
+		<Name>CCU General Info</Name>
+		<Operations>R</Operations>
+		<MultipleInstances>Multiple</MultipleInstances>
+		<Mandatory>Optional</Mandatory>
+		<Type>Objlnk</Type>
+		<RangeEnumeration/>
+		<Units/>
+		<Description>
+		  <![CDATA[Contains the reference to general info of CCUs of the Robot.]]>
+		</Description>
+	  </Item>
+	  <Item ID="103">
+		<Name>ECU General Info</Name>
+		<Operations>R</Operations>
+		<MultipleInstances>Multiple</MultipleInstances>
+		<Mandatory>Optional</Mandatory>
+		<Type>Objlnk</Type>
+		<RangeEnumeration/>
+		<Units/>
+		<Description>
+		  <![CDATA[Contains the reference to general info of ECUs of the Robot.]]>
+		</Description>
+	  </Item>
+    </Resources>
+    <Description2 />
+  </Object>
+</LWM2M>

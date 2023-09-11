@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
       </mat-slide-toggle>
       <label translate>icon.show-all</label>
     </section>
-    <button mat-button mat-icon-button
+    <button mat-icon-button
             (click)="cancel()"
             type="button">
       <mat-icon class="material-icons">close</mat-icon>
@@ -43,7 +43,6 @@
           <ng-container #iconButtons>
             <button *ngIf="icon === selectedIcon"
                     class="tb-select-icon-button"
-                    mat-button mat-icon-button
                     mat-raised-button
                     color="primary"
                     (click)="selectIcon(icon)"
@@ -54,7 +53,7 @@
             </button>
             <button *ngIf="icon !== selectedIcon"
                     class="tb-select-icon-button"
-                    mat-button mat-icon-button
+                    mat-button
                     (click)="selectIcon(icon)"
                     matTooltip="{{ icon }}"
                     matTooltipPosition="above"

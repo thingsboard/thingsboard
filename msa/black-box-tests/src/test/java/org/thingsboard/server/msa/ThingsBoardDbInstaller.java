@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,9 @@ public class ThingsBoardDbInstaller {
         ));
         if (IS_HYBRID_MODE) {
             composeFiles.add(new File("./../../docker/docker-compose.cassandra.volumes.yml"));
+            composeFiles.add(new File("src/test/resources/docker-compose.hybrid-test-extras.yml"));
+        } else {
+            composeFiles.add(new File("src/test/resources/docker-compose.postgres-test-extras.yml"));
         }
 
         String identifier = Base58.randomString(6).toLowerCase();

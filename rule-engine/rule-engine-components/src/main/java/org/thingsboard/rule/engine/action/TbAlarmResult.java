@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.action;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 
 @Data
 @AllArgsConstructor
@@ -33,5 +34,9 @@ public class TbAlarmResult {
         this.isUpdated = isUpdated;
         this.isCleared = isCleared;
         this.alarm = alarm;
+    }
+
+    public static TbAlarmResult fromAlarmResult(AlarmApiCallResult result) {
+        return new TbAlarmResult(result.isCreated(), result.isModified(), result.isSeverityChanged(), result.isCleared(), result.getAlarm());
     }
 }

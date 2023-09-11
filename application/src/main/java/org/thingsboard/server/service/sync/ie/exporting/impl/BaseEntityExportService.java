@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.service.sync.vc.data.EntitiesExportCtx;
 
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public abstract class BaseEntityExportService<I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> extends DefaultEntityExportService<I, E, D> {
 
@@ -43,8 +44,8 @@ public abstract class BaseEntityExportService<I extends EntityId, E extends Expo
 
     public abstract Set<EntityType> getSupportedEntityTypes();
 
-    protected void replaceUuidsRecursively(EntitiesExportCtx<?> ctx, JsonNode node, Set<String> skipFieldsSet) {
-        JacksonUtil.replaceUuidsRecursively(node, skipFieldsSet, uuid -> getExternalIdOrElseInternalByUuid(ctx, uuid));
+    protected void replaceUuidsRecursively(EntitiesExportCtx<?> ctx, JsonNode node, Set<String> skipFieldsSet, Pattern includedFieldsPattern) {
+        JacksonUtil.replaceUuidsRecursively(node, skipFieldsSet, includedFieldsPattern, uuid -> getExternalIdOrElseInternalByUuid(ctx, uuid));
     }
 
 }

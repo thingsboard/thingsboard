@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public abstract class TbSubscription<T> {
     private final TenantId tenantId;
     private final EntityId entityId;
     private final TbSubscriptionType type;
-    private final BiConsumer<String, T> updateConsumer;
+    private final BiConsumer<? extends TbSubscription<T>, T> updateProcessor;
 
     @Override
     public boolean equals(Object o) {

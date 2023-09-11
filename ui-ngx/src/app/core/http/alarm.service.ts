@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import {
   Alarm,
   AlarmInfo,
-  AlarmQuery,
+  AlarmQuery, AlarmQueryV2,
   AlarmSearchStatus,
   AlarmSeverity,
   AlarmStatus
@@ -60,6 +60,14 @@ export class AlarmService {
     return this.http.post<void>(`/api/alarm/${alarmId}/clear`, null, defaultHttpOptionsFromConfig(config));
   }
 
+  public assignAlarm(alarmId: string, assigneeId: string, config?: RequestConfig): Observable<void> {
+    return this.http.post<void>(`/api/alarm/${alarmId}/assign/${assigneeId}`, null, defaultHttpOptionsFromConfig(config));
+  }
+
+  public unassignAlarm(alarmId: string, config?: RequestConfig): Observable<void> {
+    return this.http.delete<void>(`/api/alarm/${alarmId}/assign`, defaultHttpOptionsFromConfig(config));
+  }
+
   public deleteAlarm(alarmId: string, config?: RequestConfig): Observable<void> {
     return this.http.delete<void>(`/api/alarm/${alarmId}`, defaultHttpOptionsFromConfig(config));
   }
@@ -68,6 +76,24 @@ export class AlarmService {
                    config?: RequestConfig): Observable<PageData<AlarmInfo>> {
     return this.http.get<PageData<AlarmInfo>>(`/api/alarm${query.toQuery()}`,
       defaultHttpOptionsFromConfig(config));
+  }
+
+  public getAlarmsV2(query: AlarmQueryV2,
+                     config?: RequestConfig): Observable<PageData<AlarmInfo>> {
+    return this.http.get<PageData<AlarmInfo>>(`/api/v2/alarm${query.toQuery()}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public getAllAlarms(query: AlarmQuery,
+                      config?: RequestConfig): Observable<PageData<AlarmInfo>> {
+    return this.http.get<PageData<AlarmInfo>>(`/api/alarms${query.toQuery()}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public getAllAlarmsV2(query: AlarmQueryV2,
+      config?: RequestConfig): Observable<PageData<AlarmInfo>> {
+      return this.http.get<PageData<AlarmInfo>>(`/api/v2/alarms${query.toQuery()}`,
+        defaultHttpOptionsFromConfig(config));
   }
 
   public getHighestAlarmSeverity(entityId: EntityId, alarmSearchStatus: AlarmSearchStatus, alarmStatus: AlarmStatus,

@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- BSD-3 Clause License
+
+Copyright 2019 Zumtobel Group. 
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+1. Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+3. Neither the name of the copyright holder nor the names of its
+contributors may be used to endorse or promote products derived
+from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M-v1_1.xsd">
+  <Object ObjectType="MODefinition">
+		<Name>oA Logical Light-Point Actuator</Name>
+		<Description1><![CDATA[The 'oA Logical Light Point Actuator' represents the logical part of an actuator model for a dimmable light point. The corresponding physical device is a light channel and associated gear (e.g. LED driver).\nThe Object (module) supports several interactions that include basic On/Off as well as Up/Down dimming. Several device configuration parameters are mapped, which relate to behaviour or describe device limitations. For multi-channel luminaires where the configuration per channel may vary significantly (e.g. different max/min values), multiple instances of this Object should be used.]]></Description1>
+		<ObjectID>3393</ObjectID>
+		<ObjectURN>urn:oma:lwm2m:ext:3393</ObjectURN>
+		<LWM2MVersion>1.1</LWM2MVersion>
+		<ObjectVersion>1.0</ObjectVersion>
+		<MultipleInstances>Multiple</MultipleInstances>
+		<Mandatory>Optional</Mandatory>
+		<Resources>
+			<Item ID="4001">
+				<Name>ObjectVersion</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[LWM2M Object versioning label.]]></Description>
+			</Item>
+			<Item ID="901">
+				<Name>Documentary Description</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration>0..256 bytes</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Resource to hold a documentary text description of the object.]]></Description>
+			</Item>
+			<Item ID="100">
+				<Name>Target OnOff</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[This Resource represents the target on/off status requested to the Light Point. On reset this value should be set to ON. On a Power cycle, the Target intensity is set according to 'On Behaviour'.]]></Description>
+			</Item>
+			<Item ID="101">
+				<Name>Target Intensity</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Float</Type>
+				<RangeEnumeration>0.0..1.0</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[This Resource represents the target intensity requested to the Light Point. On reset this value should be set to 1. On a Power cycle, the Target intensity is set according to 'On Behaviour'.]]></Description>
+			</Item>
+			<Item ID="909">
+				<Name>Executing Object</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Corelnk</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Link to the Object Instance in CoRE Link Format [RFC6690](https://tools.ietf.org/html/rfc6690)]]></Description>
+			</Item>
+			<Item ID="921">
+				<Name>Priority</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0..5</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[The priority of this Logical Object. If a Logical Object with a higher priority controlles the same physical object, this instance will hold its settings until its priority is sufficient again. \nIf the priorities are the same the last one is served.]]></Description>
+			</Item>
+			<Item ID="106">
+				<Name>Dimming Time</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0..65535</RangeEnumeration>
+				<Units>ms</Units>
+				<Description><![CDATA[Defines the time needed to dim the light point from minimum intensity to maximum intensity. The resulting dimming rate is used for every 'Dim' request. Scaling is 100ms per unit]]></Description>
+			</Item>
+			<Item ID="108">
+				<Name>Transition Time</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0..65535</RangeEnumeration>
+				<Units>ms</Units>
+				<Description><![CDATA[Defines the default transition time to be used for 'Set_Intensity' and 'Step' requests, if that request has no value specified. A value of 0 means the transaction is immediate. Scaling is 100ms per unit]]></Description>
+			</Item>
+			<Item ID="109">
+				<Name>Step Size</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Float</Type>
+				<RangeEnumeration>0.000001..1.0</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Defines the default step size to be used for 'Step' requests, if that request has no value specified. The value is a factor to the intensity, a value of 0.2 defines a 20% change to the output intensity.]]></Description>
+			</Item>
+			<Item ID="903">
+				<Name>Application Group ID</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0..65535</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[The application group ID that the logical object is part of. This ID will define the application group the status reports are sent to. It is internally used as a pointer to the Group Object instance that hosts all the Group configurations.]]></Description>
+			</Item>
+			<Item ID="904">
+				<Name>Status Resend Time</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>1..600</RangeEnumeration>
+				<Units>s</Units>
+				<Description><![CDATA[The time specified as status resend time is used to resend the actual status to the application group the object is a member of, even if nothing changed.\nThe status resend time is restarted after every event. The actual interval is a random time with the maximum duration given by this resource. Randomization helps to avoid massive ongoing message collisions after system power up.\nFor example: Status resend time is set to 10 seconds;\n* 00:00 status is sent\n* 00:05 status changes and is sent immediatly\n* 00:15 (or before, depending on the randomization) status is sent even though it did not change]]></Description>
+			</Item>
+			<Item ID="919">
+				<Name>Status Report Structure ID</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0..255</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[The ID of the status resource structure that is used to code the cyclic status report. See object 4012 'oA Status Report Structure' for more information]]></Description>
+			</Item>
+			<Item ID="922">
+				<Name>Scene Cache</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Multiple</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Opaque</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[A cache for the scene values. These values should be called when a scene is recalled. It is buildt from a Scene_ID (UInt 16, a target resource (Corelnk) defineition, and a payload that operates on this resource), a transition time in ms (UInt16), and an action (Put/Post) defintion]]></Description>
+			</Item>
+			<Item ID="117">
+				<Name>Switch</Name>
+				<Operations>W</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Opaque</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[This Resource allows to perform On/Off Switch operations with additional input arguments on a light point:\n- *arg0: Action* - the action that is to be performed On or Off\n- *arg1: Intensity* - final intensity value\n- *arg2: Time* - transition time with 100ms resolution\n\t\t\t\nEither arg0: Action or arg1: Intensity need to be present.\nSome examples:\n- `POST coap://<target_IP_address>/<dir>/<Obj_ID>/<object-instance>/117 {0:false,2:2}`  \nor\n`POST coap://<target_IP_address>/<dir>/<Obj_ID>/<object-instance>/117 {1:0,2:2}` \nsets the light point to Off and takes 200ms to set the intensity to '0'\n- `POST coap://<target_IP_address>/<dir>/<Obj_ID>/<object-instance>/117 {0:true,2:2}`  \nsets the light point to On and takes 200ms to set the intensity to the intensity that was active before the lightpoint was switched off.\n- `POST coap://<target_IP_address>/<dir>/<Obj_ID>/<object-instance>/117 {1:1,2:2}` \nsets the light point to On and takes 200ms to set the intensity to '1'\n\t\t\t\n**Note:** When the optional argument time is not given, or if its value is empty the default configuration value is used.\nA request on this Resource will immediately impact the value of 'On/Off Status' and a continuous update of 'Remaining Transition Time' and 'Current Intensity' until the Switch operation is cloncluded.]]></Description>
+			</Item>
+			<Item ID="118">
+				<Name>Dim</Name>
+				<Operations>W</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[This Resource allows to perform 'Dim' operations on a light point:\n- *Direction* [mandatory] dim direction (UP=brighter, DOWN=darker)\n**Note:** During this process, the 'Current Intensity' and 'Remaining Transition Time' are continuously updated.If this Resource is written while another intensity variation process is running, the ongoing process is stopped and the dimming process begins using as starting point the intensity value at that specific moment.\n\t\t\t\nSome examples:\n- `POST coap://<target_IP_address>/<dir>/<Obj_ID>/<obj_instance>/118 0`  \ndims the light points down.\n- `POST coap://<target_IP_address>/<dir>/<Obj_ID>/<obj_instance>/118 1`  \ndims the light point up.\n\t\t\t\t\nDimming is also possible during off. This effects the intensity that 'On' requests without requested intensity will execute.]]></Description>
+			</Item>
+			<Item ID="119">
+				<Name>Stop Transition</Name>
+				<Operations>E</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type></Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[When executed, it immediately stops all ongoing transition process (Set Intensity or Dim). 'Current Intensity' maintains the value it has at that moment and 'Remaining Transition Time' is set to '0'. Payload is not required, however, a success/failure message is recommended.]]></Description>
+			</Item>
+			<Item ID="120">
+				<Name>Step</Name>
+				<Operations>W</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Opaque</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[This resource allows to increase and decrease the intensity of the light point by a given step size relative to the current intensity. \nE.g. a decrease by 0.2 of a current intensity of 0.5 results in an intensity of 0.4.\nThe following paramters are used:\n- *arg0: Direction* - step direction (true=brighter, false=darker)\n- *arg1: Step Size* - the size of the step, relative to the current intensity\n- *arg2: Transition Time* - transition time with 100ms resolution\n\t\t\t\t\n**Note:** During this process, the 'Remaining Transition Time' and 'Current Intensity' are continuously updated.\nIf this Resource is executed while another intensity variation process is running, the ongoing is stopped and this new process is started, using the current intensity value as a starting point.]]></Description>
+			</Item>
+			<Item ID="902">
+				<Name>Recall Scene</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0..65535</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[When written, the scene with the given ID is recalled.]]></Description>
+			</Item>
+			<Item ID="905">
+				<Name>Debug Mode Enabled</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Enables the object test mode. The physical representation of the object will be disabled. Stimuli can be injected to test the object remotely using inject test event.]]></Description>
+			</Item>
+			<Item ID="906">
+				<Name>Inject Test Event</Name>
+				<Operations>W</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0..65535</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Define a test events to be injected into the system when debug mode is enabled. Event definition is vendor specific.]]></Description>
+			</Item>
+			<Item ID="934">
+				<Name>Object Enabled</Name>
+				<Operations>E</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type></Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[When executed, a test event s specified in 906 will be injected \nIf an object instance is disabled it does process incoming events but does not create outgoing events.]]></Description>
+			</Item>
+			<Item ID="924">
+				<Name>Object Enabled</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[This resource allows to disable an object instance. \nIf an object instance is disabled it does process incoming events but does not create outgoing events.]]></Description>
+			</Item>
+		</Resources>
+		<Description2><![CDATA[]]></Description2>
+	</Object>
+</LWM2M>

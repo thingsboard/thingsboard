@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="selectDeviceProfileFormGroup" class="mat-block">
-  <input matInput type="text" placeholder="{{ 'device-profile.device-profile' | translate }}"
+<mat-form-field [formGroup]="selectDeviceProfileFormGroup" class="mat-block" subscriptSizing="{{ subscriptSizing }}">
+  <mat-label>{{ 'device-profile.device-profile' | translate }}</mat-label>
+  <input matInput type="text"
          #deviceProfileInput
          formControlName="deviceProfile"
          (focusin)="onFocus()"
@@ -30,13 +31,13 @@
   </a>
   <button *ngIf="selectDeviceProfileFormGroup.get('deviceProfile').value && !disabled"
           type="button"
-          matSuffix mat-button mat-icon-button aria-label="Clear"
+          matSuffix mat-icon-button aria-label="Clear"
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
   <button *ngIf="selectDeviceProfileFormGroup.get('deviceProfile').value && !disabled && editProfileEnabled"
           type="button"
-          matSuffix mat-button mat-icon-button aria-label="Edit"
+          matSuffix mat-icon-button aria-label="Edit"
           matTooltip="{{ 'device-profile.edit' | translate }}"
           matTooltipPosition="above"
           (click)="editDeviceProfile($event)">

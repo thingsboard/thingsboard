@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,16 +23,16 @@
 :host ::ng-deep {
   tb-details-panel {
     > .mat-content {
-      > .mat-tab-group {
-        > .mat-tab-body-wrapper {
+      > .mat-mdc-tab-group {
+        > .mat-mdc-tab-body-wrapper {
           position: absolute;
           top: 49px;
           left: 0;
           right: 0;
           bottom: 0;
         }
-        > .mat-tab-header {
-          .mat-tab-label {
+        > .mat-mdc-tab-header {
+          .mat-mdc-tab {
             min-width: 40px;
           }
         }

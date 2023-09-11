@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,7 @@ public class OpenRuleChainPageElements extends AbstractBasePage {
         super(driver);
     }
 
-    private static final String DONE_BTN = "//mat-icon[contains(text(),'done')]/../..";
-    private static final String DONE_BTN_DISABLE = "//mat-icon[contains(text(),'done')]/../parent::button[@disabled='true']";
+    private static final String DONE_BTN = "//mat-icon[contains(text(),'done')]/parent::button";
     private static final String INPUT_NODE = "//div[@class='tb-rule-node tb-input-type']";
     private static final String HEAD_RULE_CHAIN_NAME = "//div[@class='tb-breadcrumb']/span[2]";
 
@@ -35,10 +34,6 @@ public class OpenRuleChainPageElements extends AbstractBasePage {
 
     public WebElement headRuleChainName() {
         return waitUntilVisibilityOfElementLocated(HEAD_RULE_CHAIN_NAME);
-    }
-
-    public String getDoneBtnDisable() {
-        return DONE_BTN_DISABLE;
     }
 
     public WebElement doneBtn() {

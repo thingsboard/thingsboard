@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,6 @@ mat-fab-toolbar {
     display: block;
     position: relative;
     overflow: hidden;
-
     height: $button-fab-width + ($icon-button-margin * 2);
   }
 
@@ -72,9 +71,14 @@ mat-fab-toolbar {
     position: absolute;
     z-index: $z-index-fab;
 
-    button {
+    button.mat-mdc-fab {
       overflow: visible !important;
       opacity: .5;
+      mat-icon {
+        position: relative;
+        z-index: $z-index-fab + 2;
+        opacity: 1;
+      }
     }
 
     .mat-fab-toolbar-background {
@@ -83,15 +87,6 @@ mat-fab-toolbar {
       z-index: $z-index-fab + 1;
       opacity: 1;
     }
-
-    mat-icon {
-      position: relative;
-      z-index: $z-index-fab + 2;
-
-      opacity: 1;
-
-    }
-
   }
 
   &.mat-left {
@@ -102,16 +97,16 @@ mat-fab-toolbar {
     .mat-toolbar-tools {
       flex-direction: row-reverse;
 
-      > .mat-button:first-child {
+      > .mat-mdc-button:first-child {
         @include rtl-prop(margin-right, margin-left, 0.6rem, auto)
       }
 
-      > .mat-button:first-child {
+      > .mat-mdc-button:first-child {
         @include rtl-prop(margin-left, margin-right, -0.8rem, auto);
       }
 
 
-      > .mat-button:last-child {
+      > .mat-mdc-button:last-child {
         @include rtl-prop(margin-right, margin-left, 8px, auto);
       }
 
@@ -128,7 +123,7 @@ mat-fab-toolbar {
     }
   }
 
-  mat-toolbar {
+  .mat-toolbar.mat-toolbar-single-row {
     padding: 0 !important;
     background-color: transparent !important;
     pointer-events: none;
@@ -147,7 +142,7 @@ mat-fab-toolbar {
   }
 
   &.mat-is-open {
-    mat-fab-trigger > button {
+    mat-fab-trigger > button.mat-mdc-fab {
       box-shadow: none;
       opacity: 1;
 
@@ -156,32 +151,34 @@ mat-fab-toolbar {
       }
     }
 
-    .mat-fab-action-item {
-      opacity: 1;
-      transform: scale(1);
+    .mat-toolbar.mat-toolbar-single-row {
+      .mat-fab-action-item {
+        opacity: 1;
+        transform: scale(1);
+      }
     }
   }
 
   &.mat-animation {
     mat-fab-trigger {
-      button {
+      button.mat-mdc-fab {
         transition: opacity .3s cubic-bezier(.55, 0, .55, .2) .2s;
+        mat-icon {
+          transition: all $icon-delay ease-in;
+        }
       }
       .mat-fab-toolbar-background {
         transition: $swift-ease-in;
       }
-      mat-icon {
-        transition: all $icon-delay ease-in;
-      }
     }
-    mat-toolbar {
+    .mat-toolbar.mat-toolbar-single-row {
       .mat-fab-action-item {
         transition: $swift-ease-in;
         transition-duration: math.div($swift-ease-in-duration, 2);
       }
     }
     &.mat-is-open {
-      mat-fab-trigger > button {
+      mat-fab-trigger > button.mat-mdc-fab {
         transition: opacity .3s cubic-bezier(.55, 0, .55, .2);
       }
     }

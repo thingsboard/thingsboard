@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,14 +50,9 @@
         min-width: 32px;
         height: 32px;
         min-height: 32px;
-        padding: 0 0 2px;
         margin: 2px;
         line-height: 24px;
         z-index: 999;
-
-        &::ng-deep .mat-button-wrapper {
-          padding: 0;
-        }
 
         mat-icon {
           width: 24px;

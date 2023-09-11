@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -142,14 +142,10 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
       );
     } else if (ruleChainScope === 'edges') {
       columns.push(
-        new EntityTableColumn<RuleChain>('root', 'rulechain.edge-template-root', '60px',
-          entity => {
-            return checkBoxCell(entity.root);
-          }),
-        new EntityTableColumn<RuleChain>('assignToEdge', 'rulechain.assign-to-edge', '60px',
-          entity => {
-            return checkBoxCell(this.isAutoAssignToEdgeRuleChain(entity));
-          })
+        new EntityTableColumn<RuleChain>('root', 'rulechain.edge-template-root', '100px',
+          entity => checkBoxCell(entity.root)),
+        new EntityTableColumn<RuleChain>('assignToEdge', 'rulechain.assign-to-edge', '100px',
+          entity => checkBoxCell(this.isAutoAssignToEdgeRuleChain(entity)), () => ({}), false)
       );
     }
     return columns;
@@ -202,7 +198,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     } else if (ruleChainScope === 'edges') {
       return this.translate.instant('edge.rulechain-templates');
     } else if (ruleChainScope === 'edge') {
-      return this.config.tableTitle = edge.name + ': ' + this.translate.instant('edge.rulechains');
+      return this.config.tableTitle = edge.name + ': ' + this.translate.instant('rulechain.rulechains');
     }
   }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,9 @@
 package org.thingsboard.server.actors.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.thingsboard.server.actors.AbstractTbActor;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.ProcessFailureStrategy;
-import org.thingsboard.server.actors.TbActor;
-import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.common.msg.TbActorMsg;
 
 @Slf4j

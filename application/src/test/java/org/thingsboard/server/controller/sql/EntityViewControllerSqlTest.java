@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,8 @@
  */
 package org.thingsboard.server.controller.sql;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.controller.BaseEntityViewControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-
-import java.util.Arrays;
 
 /**
  * Created by Victor Basanets on 8/27/2017.

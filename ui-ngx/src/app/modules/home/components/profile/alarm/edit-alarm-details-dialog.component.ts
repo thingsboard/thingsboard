@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormGroupDirective, NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import { UtilsService } from '@core/services/utils.service';
@@ -41,7 +41,7 @@ export class EditAlarmDetailsDialogComponent extends DialogComponent<EditAlarmDe
 
   alarmDetails = this.data.alarmDetails;
 
-  editDetailsFormGroup: FormGroup;
+  editDetailsFormGroup: UntypedFormGroup;
 
   submitted = false;
 
@@ -50,7 +50,7 @@ export class EditAlarmDetailsDialogComponent extends DialogComponent<EditAlarmDe
               @Inject(MAT_DIALOG_DATA) public data: EditAlarmDetailsDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<EditAlarmDetailsDialogComponent, string>,
-              private fb: FormBuilder,
+              private fb: UntypedFormBuilder,
               private utils: UtilsService,
               public translate: TranslateService) {
     super(store, router, dialogRef);
@@ -66,7 +66,7 @@ export class EditAlarmDetailsDialogComponent extends DialogComponent<EditAlarmDe
   ngOnInit(): void {
   }
 
-  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
     const customErrorState = !!(control && control.invalid && this.submitted);
     return originalErrorState || customErrorState;

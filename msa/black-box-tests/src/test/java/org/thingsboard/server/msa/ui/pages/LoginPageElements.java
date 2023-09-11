@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ public class LoginPageElements extends AbstractBasePage {
     private static final String EMAIL_FIELD = "//input[@id='username-input']";
     private static final String PASSWORD_FIELD = "//input[@id='password-input']";
     private static final String SUBMIT_BTN = "//button[@type='submit']";
+    private static final String TITLE_LOGO = "//img[@class='tb-logo-title']";
 
     public WebElement emailField() {
         return waitUntilElementToBeClickable(EMAIL_FIELD);
@@ -38,6 +39,10 @@ public class LoginPageElements extends AbstractBasePage {
 
     public WebElement submitBtn() {
         return waitUntilElementToBeClickable(SUBMIT_BTN);
+    }
+
+    public WebElement titleLogo() {
+        return waitUntilVisibilityOfElementLocated(TITLE_LOGO);
     }
 
 }

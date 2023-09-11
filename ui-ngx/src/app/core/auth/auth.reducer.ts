@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 import { AuthPayload, AuthState } from './auth.models';
 import { AuthActions, AuthActionTypes } from './auth.actions';
+import { initialUserSettings } from '@shared/models/user-settings.models';
 
 const emptyUserAuthState: AuthPayload = {
   authUser: null,
@@ -25,7 +26,9 @@ const emptyUserAuthState: AuthPayload = {
   allowedDashboardIds: [],
   edgesSupportEnabled: false,
   hasRepository: false,
-  tbelEnabled: false
+  tbelEnabled: false,
+  persistDeviceStateToTelemetry: false,
+  userSettings: initialUserSettings
 };
 
 export const initialState: AuthState = {
@@ -35,10 +38,10 @@ export const initialState: AuthState = {
   ...emptyUserAuthState
 };
 
-export function authReducer(
+export const authReducer = (
   state: AuthState = initialState,
   action: AuthActions
-): AuthState {
+): AuthState => {
   switch (action.type) {
     case AuthActionTypes.AUTHENTICATED:
       return { ...state, isAuthenticated: true, ...action.payload };
@@ -59,7 +62,19 @@ export function authReducer(
     case AuthActionTypes.UPDATE_HAS_REPOSITORY:
       return { ...state, ...action.payload};
 
+    case AuthActionTypes.UPDATE_OPENED_MENU_SECTION:
+      const openedMenuSections = new Set(state.userSettings.openedMenuSections);
+      if (action.payload.opened) {
+        if (!openedMenuSections.has(action.payload.path)) {
+          openedMenuSections.add(action.payload.path);
+        }
+      } else {
+        openedMenuSections.delete(action.payload.path);
+      }
+      const userSettings = {...state.userSettings, ...{ openedMenuSections: Array.from(openedMenuSections)}};
+      return { ...state, ...{ userSettings }};
+
     default:
       return state;
   }
-}
+};

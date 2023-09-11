@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormGroupDirective, NgForm } from '@angular/forms';
 import { DeviceService } from '@core/http/device.service';
 import { DeviceCredentials, DeviceProfileInfo, DeviceTransportType } from '@shared/models/device.models';
 import { DialogComponent } from '@shared/components/dialog.component';
@@ -42,7 +42,7 @@ export interface DeviceCredentialsDialogData {
 export class DeviceCredentialsDialogComponent extends
   DialogComponent<DeviceCredentialsDialogComponent, DeviceCredentials> implements OnInit, ErrorStateMatcher {
 
-  deviceCredentialsFormGroup: FormGroup;
+  deviceCredentialsFormGroup: UntypedFormGroup;
   deviceTransportType: DeviceTransportType;
   isReadOnly: boolean;
   loadingCredentials = true;
@@ -57,7 +57,7 @@ export class DeviceCredentialsDialogComponent extends
               private deviceProfileService: DeviceProfileService,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<DeviceCredentialsDialogComponent, DeviceCredentials>,
-              public fb: FormBuilder) {
+              public fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
 
     this.isReadOnly = data.isReadOnly;
@@ -73,16 +73,17 @@ export class DeviceCredentialsDialogComponent extends
     this.loadDeviceCredentials();
   }
 
-  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
     const customErrorState = !!(control && control.invalid && this.submitted);
     return originalErrorState || customErrorState;
   }
 
   loadDeviceCredentials() {
-    const task = [];
-    task.push(this.deviceService.getDeviceCredentials(this.data.deviceId));
-    task.push(this.deviceProfileService.getDeviceProfileInfo(this.data.deviceProfileId));
+    const task = [
+      this.deviceService.getDeviceCredentials(this.data.deviceId),
+      this.deviceProfileService.getDeviceProfileInfo(this.data.deviceProfileId)
+    ];
     forkJoin(task).subscribe(([deviceCredentials, deviceProfile]: [DeviceCredentials, DeviceProfileInfo]) => {
       this.deviceTransportType = deviceProfile.transportType;
       this.deviceCredentials = deviceCredentials;

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@ import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
-  FormArray,
-  FormBuilder,
-  FormControl,
-  FormGroup,
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   Validator,
@@ -130,12 +130,12 @@ export class FlotWidgetSettingsComponent extends PageComponent implements OnInit
 
   private propagateChange = null;
 
-  public flotSettingsFormGroup: FormGroup;
+  public flotSettingsFormGroup: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
               private widgetService: WidgetService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
@@ -290,7 +290,7 @@ export class FlotWidgetSettingsComponent extends PageComponent implements OnInit
     this.updateValidators(false);
   }
 
-  validate(c: FormControl) {
+  validate(c: UntypedFormControl) {
     return (this.flotSettingsFormGroup.valid) ? null : {
       flotSettings: {
         valid: false,
@@ -376,8 +376,8 @@ export class FlotWidgetSettingsComponent extends PageComponent implements OnInit
     }
   }
 
-  dataKeysListForLabelsFormArray(): FormArray {
-    return this.flotSettingsFormGroup.get('dataKeysListForLabels') as FormArray;
+  dataKeysListForLabelsFormArray(): UntypedFormArray {
+    return this.flotSettingsFormGroup.get('dataKeysListForLabels') as UntypedFormArray;
   }
 
   public trackByLabelDataKey(index: number, labelDataKeyControl: AbstractControl): any {
@@ -385,7 +385,7 @@ export class FlotWidgetSettingsComponent extends PageComponent implements OnInit
   }
 
   public removeLabelDataKey(index: number) {
-    (this.flotSettingsFormGroup.get('dataKeysListForLabels') as FormArray).removeAt(index);
+    (this.flotSettingsFormGroup.get('dataKeysListForLabels') as UntypedFormArray).removeAt(index);
   }
 
   public addLabelDataKey() {
@@ -393,7 +393,7 @@ export class FlotWidgetSettingsComponent extends PageComponent implements OnInit
       name: null,
       type: DataKeyType.attribute
     };
-    const dataKeysListForLabelsArray = this.flotSettingsFormGroup.get('dataKeysListForLabels') as FormArray;
+    const dataKeysListForLabelsArray = this.flotSettingsFormGroup.get('dataKeysListForLabels') as UntypedFormArray;
     const labelDataKeyControl = this.fb.control(labelDataKey, [labelDataKeyValidator]);
     (labelDataKeyControl as any).new = true;
     dataKeysListForLabelsArray.push(labelDataKeyControl);
@@ -401,7 +401,7 @@ export class FlotWidgetSettingsComponent extends PageComponent implements OnInit
   }
 
   labelDataKeyDrop(event: CdkDragDrop<string[]>) {
-    const dataKeysListForLabelsArray = this.flotSettingsFormGroup.get('dataKeysListForLabels') as FormArray;
+    const dataKeysListForLabelsArray = this.flotSettingsFormGroup.get('dataKeysListForLabels') as UntypedFormArray;
     const labelDataKey = dataKeysListForLabelsArray.at(event.previousIndex);
     dataKeysListForLabelsArray.removeAt(event.previousIndex);
     dataKeysListForLabelsArray.insert(event.currentIndex, labelDataKey);

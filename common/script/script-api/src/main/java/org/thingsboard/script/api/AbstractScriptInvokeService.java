@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.util.Pair;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
@@ -151,7 +150,7 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
                 }
                 apiUsageReportClient.ifPresent(client -> client.report(tenantId, customerId, ApiUsageRecordKey.JS_EXEC_COUNT, 1));
                 pushedMsgs.incrementAndGet();
-                log.trace("InvokeScript uuid {} with timeout {}ms", scriptId, getMaxInvokeRequestsTimeout());
+                log.trace("[{}] InvokeScript uuid {} with timeout {}ms", tenantId, scriptId, getMaxInvokeRequestsTimeout());
                 var task = doInvokeFunction(scriptId, args);
 
                 var resultFuture = Futures.transformAsync(task.getResultFuture(), output -> {
@@ -168,7 +167,7 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
             } else {
                 String message = "Script invocation is blocked due to maximum error count "
                         + getMaxErrors() + ", scriptId " + scriptId + "!";
-                log.warn(message);
+                log.warn("[{}] " + message, tenantId);
                 return error(message);
             }
         } else {

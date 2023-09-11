@@ -1,0 +1,71 @@
+/**
+ * Copyright © 2016-2023 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+:host {
+  span.no-data-found {
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: 0.2px;
+    color: rgba(0, 0, 0, 0.76);
+  }
+
+  .tb-resource-usage {
+    cursor: default;
+    &.tb-status-warn, &.tb-status-critical {
+      position: relative;
+      overflow: visible;
+      &:before {
+        position: absolute;
+        top: 15px;
+        left: -24px;
+        font-family: 'Material Icons Round';
+        font-size: 20px;
+        line-height: 1;
+      }
+    }
+    &.tb-status-warn {
+      color: #FAA405;
+      &:before {
+        content: "warning";
+        color: #FAA405;
+      }
+    }
+    &.tb-status-critical {
+      color: #D12730;
+      &:before {
+        content: "warning";
+        color: #D12730;
+      }
+    }
+  }
+}
+
+:host ::ng-deep {
+  .mdc-data-table__header-cell {
+    font-weight: 500;
+    font-size: 11px;
+    line-height: 20px;
+    letter-spacing: 0.25px;
+    color: rgba(0, 0, 0, 0.54);
+  }
+  .mdc-data-table__cell {
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: 0.2px;
+    color: rgba(0, 0, 0, 0.76);
+  }
+}

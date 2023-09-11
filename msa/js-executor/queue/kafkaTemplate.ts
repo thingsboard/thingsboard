@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ export class KafkaTemplate implements IQueue {
     private maxBatchSize = Number(config.get('kafka.batch_size'));
     private linger = Number(config.get('kafka.linger_ms'));
     private requestTimeout = Number(config.get('kafka.requestTimeout'));
+    private connectionTimeout = Number(config.get('kafka.connectionTimeout'));
     private compressionType = (config.get('kafka.compression') === "gzip") ? CompressionTypes.GZIP : CompressionTypes.None;
     private partitionsConsumedConcurrently = Number(config.get('kafka.partitions_consumed_concurrently'));
 
@@ -79,6 +80,8 @@ export class KafkaTemplate implements IQueue {
         }
 
         kafkaConfig['requestTimeout'] = this.requestTimeout;
+
+        kafkaConfig['connectionTimeout'] = this.connectionTimeout;
 
         if (useConfluent) {
             kafkaConfig['sasl'] = {

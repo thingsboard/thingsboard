@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +27,20 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -48,24 +54,47 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
+import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.TbQueueAdmin;
+import org.thingsboard.server.queue.discovery.PartitionService;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.containsString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.common.data.DataConstants.MAIN_QUEUE_NAME;
+import static org.thingsboard.server.common.data.DataConstants.MAIN_QUEUE_TOPIC;
 
 @TestPropertySource(properties = {
         "js.evaluator=mock",
+        "queue.rule-engine.topic-deletion-delay=10"
 })
 @Slf4j
 public abstract class BaseTenantControllerTest extends AbstractControllerTest {
@@ -77,6 +106,13 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
 
     ListeningExecutorService executor;
 
+    @SpyBean
+    private PartitionService partitionService;
+    @SpyBean
+    private ActorSystemContext actorContext;
+    @SpyBean
+    private TbQueueAdmin queueAdmin;
+
     @Before
     public void setUp() throws Exception {
         executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(8, getClass()));
@@ -84,6 +120,12 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
 
     @After
     public void tearDown() throws Exception {
+        loginSysAdmin();
+        for (Queue queue : doGetTypedWithPageLink("/api/queues?serviceType=TB_RULE_ENGINE&", new TypeReference<PageData<Queue>>() {}, new PageLink(100)).getData()) {
+            if (!queue.getName().equals(MAIN_QUEUE_NAME)) {
+                doDelete("/api/queues/" + queue.getId()).andExpect(status().isOk());
+            }
+        }
         executor.shutdownNow();
     }
 
@@ -427,7 +469,7 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         tenantProfileData.setConfiguration(new DefaultTenantProfileConfiguration());
         tenantProfile.setProfileData(tenantProfileData);
         tenantProfile.setIsolatedTbRuleEngine(true);
-        addQueueConfig(tenantProfile, "Main");
+        addQueueConfig(tenantProfile, MAIN_QUEUE_NAME);
         addQueueConfig(tenantProfile, "Test");
         tenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
 
@@ -456,7 +498,7 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         tenantProfileData2.setConfiguration(new DefaultTenantProfileConfiguration());
         tenantProfile2.setProfileData(tenantProfileData2);
         tenantProfile2.setIsolatedTbRuleEngine(true);
-        addQueueConfig(tenantProfile2, "Main");
+        addQueueConfig(tenantProfile2, MAIN_QUEUE_NAME);
         addQueueConfig(tenantProfile2, "Test");
         addQueueConfig(tenantProfile2, "Test2");
         tenantProfile2 = doPost("/api/tenantProfile", tenantProfile2, TenantProfile.class);
@@ -510,17 +552,208 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         for (Queue queue : foundTenantQueues) {
             doGet("/api/queues/" + queue.getId())
                     .andExpect(status().isNotFound())
-                    .andExpect(statusReason(containsString(msgErrorNotFound)));
+                    .andExpect(statusReason(containsString(msgErrorNoFound("Queue", queue.getId().toString()))));
         }
 
         loginSysAdmin();
         doDelete("/api/tenant/" + tenant.getId().getId().toString()).andExpect(status().isOk());
     }
 
+    @Test
+    public void testUpdateTenantProfileToIsolated() throws Exception {
+        loginSysAdmin();
+        doPost("/api/queues?serviceType=TB_RULE_ENGINE", new Queue(TenantId.SYS_TENANT_ID, getQueueConfig(DataConstants.HP_QUEUE_NAME, DataConstants.HP_QUEUE_TOPIC))).andExpect(status().isOk());
+        TenantProfile tenantProfile = new TenantProfile();
+        tenantProfile.setName("Test profile");
+        TenantProfileData tenantProfileData = new TenantProfileData();
+        tenantProfileData.setConfiguration(new DefaultTenantProfileConfiguration());
+        tenantProfile.setProfileData(tenantProfileData);
+        tenantProfile.setIsolatedTbRuleEngine(false);
+        tenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
+        createDifferentTenant();
+        loginSysAdmin();
+        savedDifferentTenant.setTenantProfileId(tenantProfile.getId());
+        savedDifferentTenant = doPost("/api/tenant", savedDifferentTenant, Tenant.class);
+        TenantId tenantId = differentTenantId;
+
+        loginDifferentTenant();
+        DeviceProfile hpQueueProfile = createDeviceProfile("HighPriority profile");
+        hpQueueProfile.setDefaultQueueName(DataConstants.HP_QUEUE_NAME);
+        hpQueueProfile = doPost("/api/deviceProfile", hpQueueProfile, DeviceProfile.class);
+        Device hpQueueDevice = createDevice("HP", hpQueueProfile.getName(), "HP");
+
+        DeviceProfile mainQueueProfile = createDeviceProfile("Main profile");
+        mainQueueProfile.setDefaultQueueName(MAIN_QUEUE_NAME);
+        mainQueueProfile = doPost("/api/deviceProfile", mainQueueProfile, DeviceProfile.class);
+        Device mainQueueDevice = createDevice("Main", mainQueueProfile.getName(), "Main");
+
+        verifyUsedQueueAndMessage(DataConstants.HP_QUEUE_NAME, tenantId, hpQueueDevice.getId(), DataConstants.ATTRIBUTES_UPDATED, () -> {
+            doPost("/api/plugins/telemetry/DEVICE/" + hpQueueDevice.getId() + "/attributes/SERVER_SCOPE", "{\"test\":123}", String.class);
+        }, usedTpi -> {
+            assertThat(usedTpi.getTopic()).isEqualTo(DataConstants.HP_QUEUE_TOPIC);
+            assertThat(usedTpi.getTenantId()).get().isEqualTo(TenantId.SYS_TENANT_ID);
+        });
+        verifyUsedQueueAndMessage(MAIN_QUEUE_NAME, tenantId, mainQueueDevice.getId(), DataConstants.ATTRIBUTES_UPDATED, () -> {
+            doPost("/api/plugins/telemetry/DEVICE/" + mainQueueDevice.getId() + "/attributes/SERVER_SCOPE", "{\"test\":123}", String.class);
+        }, usedTpi -> {
+            assertThat(usedTpi.getTopic()).isEqualTo(MAIN_QUEUE_TOPIC);
+            assertThat(usedTpi.getTenantId()).get().isEqualTo(TenantId.SYS_TENANT_ID);
+        });
+
+        loginSysAdmin();
+        tenantProfile.setIsolatedTbRuleEngine(true);
+        tenantProfile.getProfileData().setQueueConfiguration(List.of(
+                getQueueConfig(MAIN_QUEUE_NAME, MAIN_QUEUE_TOPIC)
+        ));
+        tenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
+
+        loginDifferentTenant();
+        verifyUsedQueueAndMessage(MAIN_QUEUE_NAME, tenantId, mainQueueDevice.getId(), DataConstants.ATTRIBUTES_UPDATED, () -> {
+            doPost("/api/plugins/telemetry/DEVICE/" + mainQueueDevice.getId() + "/attributes/SERVER_SCOPE", "{\"test\":123}", String.class);
+        }, usedTpi -> {
+            assertThat(usedTpi.getTopic()).isEqualTo(MAIN_QUEUE_TOPIC);
+            assertThat(usedTpi.getTenantId()).get().isEqualTo(tenantId);
+        });
+        verifyUsedQueueAndMessage(DataConstants.HP_QUEUE_NAME, tenantId, hpQueueDevice.getId(), DataConstants.ATTRIBUTES_UPDATED, () -> {
+            doPost("/api/plugins/telemetry/DEVICE/" + hpQueueDevice.getId() + "/attributes/SERVER_SCOPE", "{\"test\":123}", String.class);
+        }, usedTpi -> {
+            assertThat(usedTpi.getTopic()).isEqualTo(DataConstants.HP_QUEUE_TOPIC);
+            assertThat(usedTpi.getTenantId()).get().isEqualTo(TenantId.SYS_TENANT_ID);
+        });
+
+        loginSysAdmin();
+        tenantProfile.setIsolatedTbRuleEngine(true);
+        tenantProfile.getProfileData().setQueueConfiguration(List.of(
+                getQueueConfig(MAIN_QUEUE_NAME, MAIN_QUEUE_TOPIC),
+                getQueueConfig(DataConstants.HP_QUEUE_NAME, DataConstants.HP_QUEUE_TOPIC)
+        ));
+        tenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
+
+        loginDifferentTenant();
+        verifyUsedQueueAndMessage(DataConstants.HP_QUEUE_NAME, tenantId, hpQueueDevice.getId(), DataConstants.ATTRIBUTES_UPDATED, () -> {
+            doPost("/api/plugins/telemetry/DEVICE/" + hpQueueDevice.getId() + "/attributes/SERVER_SCOPE", "{\"test\":123}", String.class);
+        }, usedTpi -> {
+            assertThat(usedTpi.getTopic()).isEqualTo(DataConstants.HP_QUEUE_TOPIC);
+            assertThat(usedTpi.getTenantId()).get().isEqualTo(tenantId);
+        });
+        verifyUsedQueueAndMessage(MAIN_QUEUE_NAME, tenantId, mainQueueDevice.getId(), DataConstants.ATTRIBUTES_UPDATED, () -> {
+            doPost("/api/plugins/telemetry/DEVICE/" + mainQueueDevice.getId() + "/attributes/SERVER_SCOPE", "{\"test\":123}", String.class);
+        }, usedTpi -> {
+            assertThat(usedTpi.getTopic()).isEqualTo(MAIN_QUEUE_TOPIC);
+            assertThat(usedTpi.getTenantId()).get().isEqualTo(tenantId);
+        });
+    }
+
+    @Test
+    public void testIsolatedQueueDeletion() throws Exception {
+        loginSysAdmin();
+        TenantProfile tenantProfile = new TenantProfile();
+        tenantProfile.setName("Test profile");
+        TenantProfileData tenantProfileData = new TenantProfileData();
+        tenantProfileData.setConfiguration(new DefaultTenantProfileConfiguration());
+        tenantProfile.setProfileData(tenantProfileData);
+        tenantProfile.setIsolatedTbRuleEngine(true);
+        addQueueConfig(tenantProfile, MAIN_QUEUE_NAME);
+        tenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
+        createDifferentTenant();
+        loginSysAdmin();
+        savedDifferentTenant.setTenantProfileId(tenantProfile.getId());
+        savedDifferentTenant = doPost("/api/tenant", savedDifferentTenant, Tenant.class);
+        TenantId tenantId = differentTenantId;
+        await().atMost(10, TimeUnit.SECONDS)
+                .until(() -> {
+                    TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, MAIN_QUEUE_NAME, tenantId, tenantId);
+                    return !tpi.getTenantId().get().isSysTenantId();
+                });
+        TopicPartitionInfo tpi = new TopicPartitionInfo(MAIN_QUEUE_TOPIC, tenantId, 0, false);
+        String isolatedTopic = tpi.getFullTopicName();
+        TbMsg expectedMsg = publishTbMsg(tenantId, tpi);
+        awaitTbMsg(tbMsg -> tbMsg.getId().equals(expectedMsg.getId()), 10000); // to wait for consumer start
+
+        loginSysAdmin();
+        tenantProfile.setIsolatedTbRuleEngine(false);
+        tenantProfile.getProfileData().setQueueConfiguration(Collections.emptyList());
+        tenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
+        await().atMost(10, TimeUnit.SECONDS)
+                .until(() -> partitionService.resolve(ServiceType.TB_RULE_ENGINE, MAIN_QUEUE_NAME, tenantId, tenantId)
+                        .getTenantId().get().isSysTenantId());
+
+        Deque<UUID> submittedMsgs = new LinkedList<>();
+        await().atLeast(8, TimeUnit.SECONDS) // due to topic-deletion-delay
+                .atMost(20, TimeUnit.SECONDS)
+                .pollInterval(1, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    TbMsg tbMsg = publishTbMsg(tenantId, tpi);
+                    submittedMsgs.add(tbMsg.getId());
+
+                    verify(queueAdmin, times(1)).deleteTopic(eq(isolatedTopic));
+                });
+        submittedMsgs.removeLast();
+        for (UUID msgId : submittedMsgs) {
+            verify(actorContext, timeout(2000)).tell(argThat(msg -> {
+                return msg instanceof QueueToRuleEngineMsg && ((QueueToRuleEngineMsg) msg).getMsg().getId().equals(msgId);
+            }));
+        }
+    }
+
+    private TbMsg publishTbMsg(TenantId tenantId, TopicPartitionInfo tpi) {
+        TbMsg tbMsg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", tenantId, TbMsgMetaData.EMPTY, "{\"test\":1}");
+        TransportProtos.ToRuleEngineMsg msg = TransportProtos.ToRuleEngineMsg.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setTbMsg(TbMsg.toByteString(tbMsg)).build();
+        tbClusterService.pushMsgToRuleEngine(tpi, tbMsg.getId(), msg, null);
+        return tbMsg;
+    }
+
+    private void verifyUsedQueueAndMessage(String queue, TenantId tenantId, EntityId entityId, String msgType, Runnable action, Consumer<TopicPartitionInfo> tpiAssert) {
+        await().atMost(15, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, queue, tenantId, entityId);
+                    tpiAssert.accept(tpi);
+                });
+        action.run();
+        TbMsg tbMsg = awaitTbMsg(msg -> msg.getOriginator().equals(entityId)
+                && msg.getType().equals(msgType), 10000);
+        assertThat(tbMsg.getQueueName()).isEqualTo(queue);
+
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, queue, tenantId, entityId);
+        tpiAssert.accept(tpi);
+    }
+
+    protected TbMsg awaitTbMsg(Predicate<TbMsg> predicate, int timeoutMillis) {
+        AtomicReference<TbMsg> tbMsgCaptor = new AtomicReference<>();
+        verify(actorContext, timeout(timeoutMillis).atLeastOnce()).tell(argThat(actorMsg -> {
+            if (!(actorMsg instanceof QueueToRuleEngineMsg)) {
+                return false;
+            }
+            TbMsg tbMsg = ((QueueToRuleEngineMsg) actorMsg).getMsg();
+            if (predicate.test(tbMsg)) {
+                tbMsgCaptor.set(tbMsg);
+                return true;
+            }
+            return false;
+        }));
+        return tbMsgCaptor.get();
+    }
+
     private void addQueueConfig(TenantProfile tenantProfile, String queueName) {
+        TenantProfileQueueConfiguration queueConfiguration = getQueueConfig(queueName, "tb_rule_engine." + queueName.toLowerCase());
+        TenantProfileData profileData = tenantProfile.getProfileData();
+
+        List<TenantProfileQueueConfiguration> configs = profileData.getQueueConfiguration();
+        if (configs == null) {
+            configs = new ArrayList<>();
+        }
+        configs.add(queueConfiguration);
+        profileData.setQueueConfiguration(configs);
+        tenantProfile.setProfileData(profileData);
+    }
+
+    private TenantProfileQueueConfiguration getQueueConfig(String queueName, String topic) {
         TenantProfileQueueConfiguration queueConfiguration = new TenantProfileQueueConfiguration();
         queueConfiguration.setName(queueName);
-        queueConfiguration.setTopic("tb_rule_engine." + queueName.toLowerCase());
+        queueConfiguration.setTopic(topic);
         queueConfiguration.setPollInterval(25);
         queueConfiguration.setPartitions(1 + new Random().nextInt(99));
         queueConfiguration.setConsumerPerPartition(true);
@@ -536,15 +769,7 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         processingStrategy.setPauseBetweenRetries(3);
         processingStrategy.setMaxPauseBetweenRetries(3);
         queueConfiguration.setProcessingStrategy(processingStrategy);
-        TenantProfileData profileData = tenantProfile.getProfileData();
-
-        List<TenantProfileQueueConfiguration> configs = profileData.getQueueConfiguration();
-        if (configs == null) {
-            configs = new ArrayList<>();
-        }
-        configs.add(queueConfiguration);
-        profileData.setQueueConfiguration(configs);
-        tenantProfile.setProfileData(profileData);
+        return queueConfiguration;
     }
 
     private List<Queue> getQueuesFromConfig(List<TenantProfileQueueConfiguration> queueConfiguration, List<Queue> queues) {

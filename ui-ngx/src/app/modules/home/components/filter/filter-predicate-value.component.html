@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,14 +19,12 @@
   <div fxFlex fxLayout="column" [fxShow]="!dynamicMode && !onlyUserDynamicSource">
     <div fxLayout="column" [ngSwitch]="valueType">
       <ng-template [ngSwitchCase]="valueTypeEnum.STRING">
-        <mat-form-field floatLabel="always" hideRequiredMarker class="mat-block">
-          <mat-label></mat-label>
+        <mat-form-field hideRequiredMarker class="mat-block">
           <input matInput formControlName="defaultValue" placeholder="{{'filter.value' | translate}}">
         </mat-form-field>
       </ng-template>
       <ng-template [ngSwitchCase]="valueTypeEnum.NUMERIC">
-        <mat-form-field floatLabel="always" hideRequiredMarker class="mat-block">
-          <mat-label></mat-label>
+        <mat-form-field hideRequiredMarker class="mat-block">
           <input required type="number" matInput formControlName="defaultValue"
                  placeholder="{{'filter.value' | translate}}">
         </mat-form-field>
@@ -48,8 +46,7 @@
   <div fxFlex fxLayout="column" [fxShow]="dynamicMode || onlyUserDynamicSource">
     <div formGroupName="dynamicValue" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
       <div fxFlex="35" fxLayout="column">
-        <mat-form-field floatLabel="always" hideRequiredMarker class="mat-block">
-          <mat-label></mat-label>
+        <mat-form-field hideRequiredMarker class="mat-block">
           <mat-select formControlName="sourceType" placeholder="{{'filter.dynamic-source-type' | translate}}">
             <mat-option [value]="null">
               {{'filter.no-dynamic-value' | translate}}
@@ -62,8 +59,7 @@
         <div class="tb-hint" translate>filter.dynamic-source-type</div>
       </div>
       <div fxFlex fxLayout="column">
-        <mat-form-field floatLabel="always" hideRequiredMarker class="mat-block">
-          <mat-label></mat-label>
+        <mat-form-field hideRequiredMarker class="mat-block">
           <input matInput formControlName="sourceAttribute" placeholder="{{'filter.source-attribute' | translate}}">
         </mat-form-field>
         <div class="tb-hint" translate>filter.source-attribute</div>

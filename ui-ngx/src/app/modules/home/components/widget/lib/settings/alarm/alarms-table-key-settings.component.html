@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -28,13 +28,13 @@
     <legend class="group-title" translate>widgets.table.cell-style</legend>
     <mat-expansion-panel class="tb-settings" [expanded]="alarmsTableKeySettingsForm.get('useCellStyleFunction').value">
       <mat-expansion-panel-header fxLayout="row wrap">
-        <mat-panel-title>
+        <mat-panel-title fxFlex="60">
           <mat-slide-toggle formControlName="useCellStyleFunction" (click)="$event.stopPropagation()"
                             fxLayoutAlign="center">
             {{ 'widgets.table.use-cell-style-function' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+        <mat-panel-description fxFlex="40" fxLayoutAlign="end center" fxHide.xs translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>
@@ -53,13 +53,13 @@
     <legend class="group-title" translate>widgets.table.cell-content</legend>
     <mat-expansion-panel class="tb-settings" [expanded]="alarmsTableKeySettingsForm.get('useCellContentFunction').value">
       <mat-expansion-panel-header fxLayout="row wrap">
-        <mat-panel-title>
+        <mat-panel-title fxFlex="60">
           <mat-slide-toggle formControlName="useCellContentFunction" (click)="$event.stopPropagation()"
                             fxLayoutAlign="center">
             {{ 'widgets.table.use-cell-content-function' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+        <mat-panel-description fxFlex="40" fxLayoutAlign="end center" fxHide.xs translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>

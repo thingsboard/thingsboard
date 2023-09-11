@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,10 +36,10 @@ public class DefaultJwtSettingsValidator implements JwtSettingsValidator {
         if (StringUtils.isEmpty(jwtSettings.getTokenIssuer())) {
             throw new DataValidationException("JWT token issuer should be specified!");
         }
-        if (Optional.ofNullable(jwtSettings.getRefreshTokenExpTime()).orElse(0) <= TimeUnit.MINUTES.toSeconds(15)) {
+        if (Optional.ofNullable(jwtSettings.getRefreshTokenExpTime()).orElse(0) < TimeUnit.MINUTES.toSeconds(15)) {
             throw new DataValidationException("JWT refresh token expiration time should be at least 15 minutes!");
         }
-        if (Optional.ofNullable(jwtSettings.getTokenExpirationTime()).orElse(0) <= TimeUnit.MINUTES.toSeconds(1)) {
+        if (Optional.ofNullable(jwtSettings.getTokenExpirationTime()).orElse(0) < TimeUnit.MINUTES.toSeconds(1)) {
             throw new DataValidationException("JWT token expiration time should be at least 1 minute!");
         }
         if (jwtSettings.getTokenExpirationTime() >= jwtSettings.getRefreshTokenExpTime()) {
