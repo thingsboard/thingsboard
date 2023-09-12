@@ -76,7 +76,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
             TbResource saved = resourceDao.save(resource.getTenantId(), resource);
             publishEvictEvent(new ResourceInfoEvictEvent(resource.getTenantId(), resource.getId()));
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(saved.getTenantId())
-                    .entityId(saved.getId()).added(saved.getId() == null).build());
+                    .entityId(saved.getId()).added(resource.getId() == null).build());
             return saved;
         } catch (Exception t) {
             publishEvictEvent(new ResourceInfoEvictEvent(resource.getTenantId(), resource.getId()));
