@@ -604,7 +604,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   }
 
   public inputChanged(source: MultipleInputWidgetSource, key: MultipleInputWidgetDataKey) {
-    if (!this.settings.showActionButtons && !this.isSavingInProgress && this.multipleInputFormGroup.get(key.formId).valid) {
+    const control = this.multipleInputFormGroup.get(key.formId);
+    if (!this.settings.showActionButtons && !this.isSavingInProgress && (Array.isArray(control.value) || control.valid)) {
       this.isSavingInProgress = true;
       const dataToSave: MultipleInputWidgetSource = {
         datasource: source.datasource,
@@ -775,6 +776,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         jsonValue: formControl.value,
+        required: key.settings.required,
         title:  key.settings.dialogTitle,
         saveLabel: key.settings.saveButtonLabel,
         cancelLabel: key.settings.cancelButtonLabel
@@ -790,5 +792,17 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
         }
       }
     );
+  }
+
+  invalid(): boolean {
+    for (const source of this.sources) {
+      for (const key of this.visibleKeys(source)) {
+        const control = this.multipleInputFormGroup.get(key.formId);
+        if (!Array.isArray(control.value) && control.invalid) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

@@ -91,7 +91,7 @@
                     (click)="openEditJSONDialog($event, key, source)">
               <mat-icon>open_in_new</mat-icon>
             </button>
-            <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
+            <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required') && !multipleInputFormGroup.get(key.formId).hasError('invalidJSON')">
               {{ getErrorMessageText(key.settings,'required') }}
             </mat-error>
             <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('invalidJSON')">
@@ -193,7 +193,7 @@
     </button>
     <button mat-button mat-raised-button color="primary" type="submit"
             class="tb-multiple-input--buttons-container__button"
-            [disabled]="!multipleInputFormGroup.dirty || multipleInputFormGroup.invalid">
+            [disabled]="!multipleInputFormGroup.dirty || invalid()">
       {{ saveButtonLabel }}
     </button>
   </div>
