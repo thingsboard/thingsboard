@@ -48,8 +48,8 @@ public abstract class BaseEntityExportService<I extends EntityId, E extends Expo
 
     public abstract Set<EntityType> getSupportedEntityTypes();
 
-    protected void replaceUuidsRecursively(EntitiesExportCtx<?> ctx, JsonNode node, Set<String> skipFieldsSet, Pattern includedFieldsPattern) {
-        JacksonUtil.replaceUuidsRecursively(node, skipFieldsSet, includedFieldsPattern, uuid -> getExternalIdOrElseInternalByUuid(ctx, uuid));
+    protected void replaceUuidsRecursively(EntitiesExportCtx<?> ctx, JsonNode node, Set<String> skippedRootFields, Pattern includedFieldsPattern) {
+        JacksonUtil.replaceUuidsRecursively(node, skippedRootFields, includedFieldsPattern, uuid -> getExternalIdOrElseInternalByUuid(ctx, uuid), true);
     }
 
     protected Stream<UUID> toExternalIds(Collection<UUID> internalIds, Function<UUID, EntityId> entityIdCreator,

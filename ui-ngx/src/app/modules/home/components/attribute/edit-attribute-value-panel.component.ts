@@ -62,6 +62,11 @@ export class EditAttributeValuePanelComponent extends PageComponent implements O
     return originalErrorState || customErrorState;
   }
 
+  invalid(): boolean {
+    const value = this.attributeFormGroup.get('value').value;
+    return !Array.isArray(value) && this.attributeFormGroup.invalid;
+  }
+
   cancel(): void {
     this.overlayRef.dispose();
   }

@@ -30,7 +30,7 @@ import java.util.List;
  */
 public interface RuleNodeDao extends Dao<RuleNode> {
 
-    List<RuleNode> findRuleNodesByTenantIdAndType(TenantId tenantId, String type, String search);
+    List<RuleNode> findRuleNodesByTenantIdAndType(TenantId tenantId, String type, String configurationSearch);
 
     PageData<RuleNode> findAllRuleNodesByType(String type, PageLink pageLink);
 
