@@ -32,6 +32,7 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataRequestMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.RuleNodeProto;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 
@@ -45,6 +46,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @DaoSqlTest
 public class RuleChainEdgeTest extends AbstractEdgeTest {
+
+    private static final int CONFIGURATION_VERSION = 5;
 
     @Test
     public void testRuleChains() throws Exception {
@@ -138,6 +141,10 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
         RuleChainId receivedRuleChainId =
                 new RuleChainId(new UUID(ruleChainMetadataUpdateMsg.getRuleChainIdMSB(), ruleChainMetadataUpdateMsg.getRuleChainIdLSB()));
         Assert.assertEquals(ruleChainId, receivedRuleChainId);
+
+        for (RuleNodeProto ruleNodeProto : ruleChainMetadataUpdateMsg.getNodesList()) {
+            Assert.assertEquals(CONFIGURATION_VERSION, ruleNodeProto.getConfigurationVersion());
+        }
     }
 
     private void createRuleChainMetadata(RuleChain ruleChain) {
@@ -147,7 +154,7 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
         RuleNode ruleNode1 = new RuleNode();
         ruleNode1.setName("name1");
         ruleNode1.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
-        ruleNode1.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
+        ruleNode1.setConfigurationVersion(CONFIGURATION_VERSION);
         TbGetAttributesNodeConfiguration configuration = new TbGetAttributesNodeConfiguration();
         configuration.setFetchTo(TbMsgSource.METADATA);
         configuration.setServerAttributeNames(Collections.singletonList("serverAttributeKey2"));
@@ -156,13 +163,13 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
         RuleNode ruleNode2 = new RuleNode();
         ruleNode2.setName("name2");
         ruleNode2.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
-        ruleNode2.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
+        ruleNode2.setConfigurationVersion(CONFIGURATION_VERSION);
         ruleNode2.setConfiguration(JacksonUtil.valueToTree(configuration));
 
         RuleNode ruleNode3 = new RuleNode();
         ruleNode3.setName("name3");
         ruleNode3.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
-        ruleNode3.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
+        ruleNode3.setConfigurationVersion(CONFIGURATION_VERSION);
         ruleNode3.setConfiguration(JacksonUtil.valueToTree(configuration));
 
         List<RuleNode> ruleNodes = new ArrayList<>();
