@@ -1,6 +1,6 @@
-## Install ThingsBoard Edge and connect to cloud instructions
+## Install ThingsBoard Edge using Docker
 
-Here is the list of commands, that can be used to quickly install and connect ThingsBoard Edge to the cloud using docker compose.
+Here is the list of commands, that can be used to quickly install ThingsBoard Edge using docker compose and connect to the cloud.
 
 ### Prerequisites
 
