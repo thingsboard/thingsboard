@@ -69,7 +69,7 @@ If ThingsBoard Edge is going to be running on the same machine where ThingsBoard
 
 Please update next lines of `docker-compose.yml` file:
 
-```bash
+```text
 ports:
   - "18080:8080"
   - "11883:1883"

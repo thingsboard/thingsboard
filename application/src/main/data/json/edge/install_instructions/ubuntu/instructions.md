@@ -86,10 +86,57 @@ Go to the download repository and install ThingsBoard Edge service
 
 ```bash
 sudo dpkg -i tb-edge-{TB_EDGE_VERSION}.deb
-{:copy-code}
+```
+{: .copy-code}
+
+### Configure ThingsBoard Edge
+To configure ThingsBoard Edge, you can either manually edit the configuration file or use a command to automate the process.
+
+#### Automated Configuration
+You can use the following command to automatically update the configuration file with specific values:
+
+```bash
+sudo sh -c 'cat <<EOL >> /etc/tb-edge/conf/tb-edge.conf
+export CLOUD_ROUTING_KEY=${CLOUD_ROUTING_KEY}
+export CLOUD_ROUTING_SECRET=${CLOUD_ROUTING_SECRET}
+export CLOUD_RPC_HOST=${BASE_URL}
+export CLOUD_RPC_PORT=${CLOUD_RPC_PORT}
+export CLOUD_RPC_SSL_ENABLED=${CLOUD_RPC_SSL_ENABLED}
+EOL'
+```
+{: .copy-code}
+
+#### Manual Configuration
+
+```bash
+sudo nano /etc/tb-edge/conf/tb-edge.conf
+```
+{: .copy-code}
+
+Please update the following lines in your configuration file. Make sure to replace:
+
+```text
+export CLOUD_ROUTING_KEY=${CLOUD_ROUTING_KEY}
+export CLOUD_ROUTING_SECRET=${CLOUD_ROUTING_SECRET}
+export CLOUD_RPC_HOST=${BASE_URL}
+export CLOUD_RPC_PORT=${CLOUD_RPC_PORT}
+export SPRING_DATASOURCE_PASSWORD=PUT_YOUR_POSTGRESQL_PASSWORD_HERE
+
 ```
 
-Edit ThingsBoard Edge configuration file
+#### [Optional] Update bind ports
+If ThingsBoard Edge is going to be running on the same machine where ThingsBoard server (cloud) is running, you'll need to update configuration parameters to avoid port collision between ThingsBoard server and ThingsBoard Edge.
+
+Please uncomment the following parameters in the ThingsBoard Edge configuration file (**/etc/tb-edge/conf/tb-edge.conf**):
+
+```text
+export HTTP_BIND_PORT=18080
+export MQTT_BIND_PORT=11883
+export COAP_BIND_PORT=15683
+export LWM2M_ENABLED=false
+```
+
+Or update using command:
 
 ```bash
 sudo sh -c 'cat <<EOL >> /etc/tb-edge/conf/tb-edge.conf
@@ -98,8 +145,10 @@ export MQTT_BIND_PORT=11883
 export COAP_BIND_PORT=15683
 export LWM2M_ENABLED=false
 EOL'
-{:copy-code}
 ```
+{: .copy-code}
+
+Make sure that ports above (18080, 11883, 15683-15688) are not used by any other application.
 
 #### Run installation script
 

@@ -562,7 +562,7 @@ public class EdgeController extends BaseController {
     public EdgeInstallInstructions getEdgeDockerInstallInstructions(
             @ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable("edgeId") String strEdgeId,
-            @ApiParam(value = "Installation method (e.g., 'docker', 'ubuntu', 'centos')")
+            @ApiParam(value = "Installation method ('docker', 'ubuntu' or 'centos')")
             @PathVariable("method") String installationMethod,
             HttpServletRequest request) throws ThingsboardException {
         if (isEdgesEnabled() && edgeInstallServiceOpt.isPresent()) {
