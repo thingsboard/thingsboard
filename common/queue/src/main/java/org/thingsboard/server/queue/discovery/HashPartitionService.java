@@ -179,7 +179,6 @@ public class HashPartitionService implements PartitionService {
     public void removeQueue(TransportProtos.QueueDeleteMsg queueDeleteMsg) {
         TenantId tenantId = new TenantId(new UUID(queueDeleteMsg.getTenantIdMSB(), queueDeleteMsg.getTenantIdLSB()));
         QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, queueDeleteMsg.getQueueName(), tenantId);
-        myPartitions.remove(queueKey);
         partitionTopicsMap.remove(queueKey);
         partitionSizesMap.remove(queueKey);
         //TODO: remove after merging tb entity services
@@ -272,11 +271,22 @@ public class HashPartitionService implements PartitionService {
         final ConcurrentMap<QueueKey, List<Integer>> oldPartitions = myPartitions;
         myPartitions = newPartitions;
 
+        Set<QueueKey> removed = new HashSet<>();
         oldPartitions.forEach((queueKey, partitions) -> {
-            if (!myPartitions.containsKey(queueKey)) {
-                log.info("[{}] NO MORE PARTITIONS FOR CURRENT KEY", queueKey);
-                applicationEventPublisher.publishEvent(new PartitionChangeEvent(this, queueKey, Collections.emptySet()));
+            if (!newPartitions.containsKey(queueKey)) {
+                removed.add(queueKey);
             }
+        });
+        if (serviceInfoProvider.isService(ServiceType.TB_RULE_ENGINE)) {
+            partitionSizesMap.keySet().stream()
+                    .filter(queueKey -> queueKey.getType() == ServiceType.TB_RULE_ENGINE &&
+                            !queueKey.getTenantId().isSysTenantId() &&
+                            !newPartitions.containsKey(queueKey))
+                    .forEach(removed::add);
+        }
+        removed.forEach(queueKey -> {
+            log.info("[{}] NO MORE PARTITIONS FOR CURRENT KEY", queueKey);
+            applicationEventPublisher.publishEvent(new PartitionChangeEvent(this, queueKey, Collections.emptySet()));
         });
 
         myPartitions.forEach((queueKey, partitions) -> {
@@ -306,7 +316,11 @@ public class HashPartitionService implements PartitionService {
             if (!changes.isEmpty()) {
                 applicationEventPublisher.publishEvent(new ClusterTopologyChangeEvent(this, changes));
                 responsibleServices.forEach((profileId, serviceInfos) -> {
-                    log.info("Servers responsible for tenant profile {}: {}", profileId, toServiceIds(serviceInfos));
+                    if (profileId != null) {
+                        log.info("Servers responsible for tenant profile {}: {}", profileId, toServiceIds(serviceInfos));
+                    } else {
+                        log.info("Servers responsible for system queues: {}", toServiceIds(serviceInfos));
+                    }
                 });
             }
         }
