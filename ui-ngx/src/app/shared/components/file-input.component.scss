@@ -83,6 +83,12 @@ $previewSize: 100px !default;
       }
     }
   }
+
+  .input-hint {
+    cursor:pointer;
+    transform: translate(5px,-3px);
+    position: absolute;
+  }
 }
 
 :host ::ng-deep {

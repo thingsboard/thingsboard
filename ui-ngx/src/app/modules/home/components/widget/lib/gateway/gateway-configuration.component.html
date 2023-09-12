@@ -556,9 +556,9 @@
         <div class="tb-form-panel-title" translate>gateway.statistics.commands</div>
         <div class="tb-form-panel-hint" translate>gateway.hints.commands</div>
         <ng-container formGroupName="statistics">
-          <div fxLayout="row" formArrayName="commands"
+          <div fxLayout="row" formArrayName="commands" class="statistics-container"
                *ngFor="let commandControl of commandFormArray().controls; let $index = index">
-            <section [formGroupName]="$index" class="tb-form-panel stroked no-padding-bottom no-gap">
+            <section [formGroupName]="$index" class="tb-form-panel stroked no-padding-bottom no-gap command-container">
               <section class="tb-form-row no-border no-padding tb-not-inline-field column-xs">
                 <mat-form-field appearance="outline" class="flex">
                   <mat-label translate>gateway.statistics.attribute-name</mat-label>
@@ -619,7 +619,7 @@
   <mat-tab label="{{ 'gateway.other' | translate }}">
     <div formGroupName="thingsboard" class="mat-content mat-padding configuration-block">
       <div class="tb-form-panel" formGroupName="checkingDeviceActivity"
-            [class.no-padding-bottom]="gatewayConfigGroup.get('thingsboard.checkingDeviceActivity.checkDeviceInactivity').value">
+           [class.no-padding-bottom]="gatewayConfigGroup.get('thingsboard.checkingDeviceActivity.checkDeviceInactivity').value">
         <div tb-hint-tooltip-icon="{{ 'gateway.hints.check-device-activity' | translate }}"
              class="tb-form-row no-border no-padding">
           <mat-slide-toggle class="mat-slide" color="primary" formControlName="checkDeviceInactivity">

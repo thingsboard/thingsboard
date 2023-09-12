@@ -7,13 +7,7 @@
     "description": "",
     "widgets": {
       "23b9adc5-b3bd-040f-e5eb-a45925c73257": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "entities_table",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 6.5,
         "config": {
@@ -50,7 +44,8 @@
             "enableSearch": true,
             "enableSelectColumnDisplay": false,
             "enableStickyHeader": true,
-            "enableStickyAction": true,
+            "enableStickyAction": false,
+            "showCellActionsMenu": true,
             "reserveSpaceForHiddenAction": "true",
             "displayEntityName": false,
             "displayEntityLabel": false,
@@ -249,16 +244,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "23b9adc5-b3bd-040f-e5eb-a45925c73257"
+        "id": "23b9adc5-b3bd-040f-e5eb-a45925c73257",
+        "typeFullFqn": "system.cards.entities_table"
       },
       "d4a1ffc4-c9f6-7b15-bca0-17feb58bac99": {
-        "isSystemType": true,
-        "bundleAlias": "gateway_widgets",
-        "typeAlias": "gateway_configuration2",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 9.5,
         "sizeY": 6,
         "config": {
@@ -319,16 +309,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "d4a1ffc4-c9f6-7b15-bca0-17feb58bac99"
+        "id": "d4a1ffc4-c9f6-7b15-bca0-17feb58bac99",
+        "typeFullFqn": "system.gateway_widgets.gateway_configuration2"
       },
       "02a05113-d878-b086-328e-75bd6f02b2bb": {
-        "isSystemType": true,
-        "bundleAlias": "gateway_widgets",
-        "typeAlias": "gateway_connector",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 11,
         "sizeY": 8,
         "config": {
@@ -398,16 +383,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "02a05113-d878-b086-328e-75bd6f02b2bb"
+        "id": "02a05113-d878-b086-328e-75bd6f02b2bb",
+        "typeFullFqn": "system.gateway_widgets.gateway_connector"
       },
       "79f59106-758f-c428-8b93-4341faea705d": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 5,
         "sizeY": 3.5,
         "config": {
@@ -558,9 +538,9 @@
           "padding": "8px",
           "settings": {
             "useMarkdownTextFunction": true,
-            "markdownTextFunction": "var blockData = '';\nfunction createDataBlock(value, label, dividerStyle, mobile) {\n    blockData += `\n        <mat-card style=\"flex-grow: 1; width: ${mobile? '100%': 'auto'}; min-height: ${mobile? 'auto': '57px'}\" class=\" ${dividerStyle}\">\n            <div class=\"divider\"></div>\n            <mat-divider vertical style=\"height:100%\"></mat-divider>\n            <mat-card-header>\n                <mat-card-subtitle>${label}</mat-card-subtitle>\n            </mat-card-header>\n            <mat-card-content> ${value}</mat-card-content>\n        </mat-card>`;\n}\ncreateDataBlock(data[0].Status, \"Status\", data[0].Status === \"Active\"? 'divider-green' : 'divider-red');\ncreateDataBlock(data[0].Name, \"Gateway Name\", '', ctx.isMobile);\ncreateDataBlock(data[0].Type, \"Gateway Type\", '');\ncreateDataBlock(\n    `<span style=\"color:rgb(25,128,56)\">${(data[1]?data[1].count:0)} </span>`\n    + \" | \" + \n    `<span style=\"color:rgb(203,37,48)\">${(data[2]?data[2][\"count 2\"]:0)} </span>`\n    , \"Devices\", '');\ncreateDataBlock(\n    `<span style=\"color:rgb(25,128,56)\">${(data[0].active_connectors?JSON.parse(data[0].active_connectors).length:0)} </span>`\n    + \" | \" + \n    `<span style=\"color:rgb(203,37,48)\">${(data[0].inactive_connectors?JSON.parse(data[0].inactive_connectors).length:0)} </span>`\n    , \"Connectors\", '');\ncreateDataBlock(data[0].ALL_ERRORS_COUNT || 0, \"Errors\", (data[0].ALL_ERRORS_COUNT || 0) === 0 ? 'divider-green' : 'divider-red');\nreturn `<div fxLayout=\"row wrap\" fxLayoutGap=\"8px\" class=\"cards-container\">${blockData}</div>`;",
+            "markdownTextFunction": "var blockData = '';\nvar connectorsIndex = ctx.actionsApi.getActionDescriptors('elementClick').findIndex(action=>action.name==\"Connecotrs\");\nvar logsIndex = ctx.actionsApi.getActionDescriptors('elementClick').findIndex(action=>action.name==\"Logs\");\nfunction generateMatHeader(index) {\n    if( index !== undefined && index > -1) {\n         return `<mat-card-header class='tb-home-widget-link'  (click)=\"ctx.actionsApi.handleWidgetAction($event, ctx.actionsApi.getActionDescriptors('elementClick')[${index}], ctx.datasources[0].entity.id)\">`\n    } else {\n       return \"<mat-card-header >\" \n    }\n}\nfunction createDataBlock(value, label, dividerStyle, mobile, index) {\n    blockData += `\n        <mat-card style=\"flex-grow: 1; width: ${mobile? '100%': 'auto'}; min-height: ${mobile? 'auto': '57px'}\" class=\" ${dividerStyle}\">\n            <div class=\"divider\"></div>\n            <mat-divider vertical style=\"height:100%\"></mat-divider>\n            ${generateMatHeader(index)}\n                <mat-card-subtitle>${label}</mat-card-subtitle>\n            </mat-card-header>\n            <mat-card-content> ${value}</mat-card-content>\n        </mat-card>`;\n}\ncreateDataBlock(data[0].Status, \"Status\", data[0].Status === \"Active\"? 'divider-green' : 'divider-red');\ncreateDataBlock(data[0].Name, \"Gateway Name\", '', ctx.isMobile);\ncreateDataBlock(data[0].Type, \"Gateway Type\", '');\ncreateDataBlock(\n    `<span style=\"color:rgb(25,128,56)\">${(data[1]?data[1].count:0)} </span>`\n    + \" | \" + \n    `<span style=\"color:rgb(203,37,48)\">${(data[2]?data[2][\"count 2\"]:0)} </span>`\n    , \"Devices <span class='tb-hint' style='padding-left: 0'>(Active | Inactive)</span>\", '');\ncreateDataBlock(\n    `<span style=\"color:rgb(25,128,56)\">${(data[0].active_connectors?JSON.parse(data[0].active_connectors).length:0)} </span>`\n    + \" | \" + \n    `<span style=\"color:rgb(203,37,48)\">${(data[0].inactive_connectors?JSON.parse(data[0].inactive_connectors).length:0)} </span>`\n    , \"Connectors <span class='tb-hint' style='padding-left: 0'>(Active | Inactive)</span>\", '', '',  connectorsIndex);\ncreateDataBlock(data[0].ALL_ERRORS_COUNT || 0, \"Errors\", (data[0].ALL_ERRORS_COUNT || 0) === 0 ? 'divider-green' : 'divider-red', '', logsIndex);\nreturn `<div fxLayout=\"row wrap\" fxLayoutGap=\"8px\" class=\"cards-container\">${blockData}</div>`;",
             "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".divider {\n    position: absolute;\n    width: 3px;\n    top: 8px;\n    border-radius: 2px;\n    bottom: 8px;\n    border: 1px solid rgba(31, 70, 144, 1);\n    background-color: rgba(31, 70, 144, 1);\n    left: 10px;\n}\n.divider-green .divider {\n    border: 1px solid rgb(25,128,56);\n    background-color: rgb(25,128,56);\n}\n\n.divider-green .mat-mdc-card-content {\n    color: rgb(25,128,56);\n}\n\n.divider-red .divider {\n    border: 1px solid rgb(203,37,48);\n    background-color: rgb(203,37,48);\n}\n\n.divider-red .mat-mdc-card-content {\n    color: rgb(203,37,48);\n}\n\n.mdc-card {\n    position: relative;\n    padding-left: 10px;\n    margin-bottom: 1px;\n}\n\n.mat-mdc-card-subtitle {\n    font-weight: 400;\n    font-size: 12px;\n}\n\n.mat-mdc-card-header {\n    padding: 8px 16px 0;\n}\n\n.mat-mdc-card-content:last-child {\n    padding-bottom: 8px;\n    font-size: 16px;\n}\n\n.cards-container {\n    height: calc(100% - 1px);\n    justify-content: stretch;\n    align-items: center;\n    margin-bottom: 1px;\n}"
+            "markdownCss": ".divider {\n    position: absolute;\n    width: 3px;\n    top: 8px;\n    border-radius: 2px;\n    bottom: 8px;\n    border: 1px solid rgba(31, 70, 144, 1);\n    background-color: rgba(31, 70, 144, 1);\n    left: 10px;\n}\n.divider-green .divider {\n    border: 1px solid rgb(25,128,56);\n    background-color: rgb(25,128,56);\n}\n\n.divider-green .mat-mdc-card-content {\n    color: rgb(25,128,56);\n}\n\n.divider-red .divider {\n    border: 1px solid rgb(203,37,48);\n    background-color: rgb(203,37,48);\n}\n\n.divider-red .mat-mdc-card-content {\n    color: rgb(203,37,48);\n}\n\n.mdc-card {\n    position: relative;\n    padding-left: 10px;\n    margin-bottom: 1px;\n}\n\n.mat-mdc-card-subtitle {\n    font-weight: 400;\n    font-size: 12px;\n}\n\n.mat-mdc-card-header {\n    padding: 8px 16px 0;\n}\n\n.mat-mdc-card-content:last-child {\n    padding-bottom: 8px;\n    font-size: 16px;\n}\n\n.cards-container {\n    height: calc(100% - 1px);\n    justify-content: stretch;\n    align-items: center;\n    margin-bottom: 1px;\n}\n\n::ng-deep.tb-home-widget-link > div {\n    flex-grow: 1;\n    cursor: pointer;\n}\n\n .tb-home-widget-link {\n     width: 100%;\n }\n\n .tb-home-widget-link:hover::after{\n     color: inherit;\n }\n \n .tb-home-widget-link::after{\n    content: 'arrow_forward';\n    display: inline-block;\n    transform: rotate(315deg);\n    font-family: 'Material Icons';\n    font-weight: normal;\n    font-style: normal;\n    font-size: 18px;\n    color: rgba(0, 0, 0, 0.12);\n    vertical-align: bottom;\n    margin-left: 6px;\n}"
           },
           "title": "New Markdown/HTML Card",
           "showTitleIcon": false,
@@ -583,20 +563,47 @@
           "pageSize": 1024,
           "noDataDisplayMessage": "",
           "enableDataExport": false,
-          "displayTimewindow": true
+          "displayTimewindow": true,
+          "actions": {
+            "elementClick": [
+              {
+                "name": "Connecotrs",
+                "icon": "more_horiz",
+                "useShowWidgetActionFunction": null,
+                "showWidgetActionFunction": "return true;",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "connectors",
+                "setEntityId": true,
+                "stateEntityParamName": null,
+                "openRightLayout": false,
+                "openInSeparateDialog": false,
+                "openInPopover": false,
+                "id": "ee7216d8-ad7a-20db-1abc-2531e221f24c"
+              },
+              {
+                "name": "Logs",
+                "icon": "more_horiz",
+                "useShowWidgetActionFunction": null,
+                "showWidgetActionFunction": "return true;",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "logs",
+                "setEntityId": true,
+                "stateEntityParamName": null,
+                "openRightLayout": false,
+                "openInSeparateDialog": false,
+                "openInPopover": false,
+                "id": "ceec0446-c25f-2b9b-b1b1-58ed751476ff"
+              }
+            ]
+          }
         },
         "row": 0,
         "col": 0,
-        "id": "79f59106-758f-c428-8b93-4341faea705d"
+        "id": "79f59106-758f-c428-8b93-4341faea705d",
+        "typeFullFqn": "system.cards.markdown_card"
       },
       "60dcf518-8fc3-3539-8ff8-ce94bda39f3a": {
-        "isSystemType": true,
-        "bundleAlias": "alarm_widgets",
-        "typeAlias": "alarms_table",
         "type": "alarm",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 10.5,
         "sizeY": 6.5,
         "config": {
@@ -737,16 +744,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "60dcf518-8fc3-3539-8ff8-ce94bda39f3a"
+        "id": "60dcf518-8fc3-3539-8ff8-ce94bda39f3a",
+        "typeFullFqn": "system.alarm_widgets.alarms_table"
       },
       "27e6b37c-085e-824d-fb13-69651a545ec1": {
-        "isSystemType": true,
-        "bundleAlias": "gateway_widgets",
-        "typeAlias": "gateway_logs",
         "type": "timeseries",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 3,
         "config": {
@@ -784,7 +786,7 @@
           "color": "rgba(0, 0, 0, 0.87)",
           "padding": "8px",
           "settings": {},
-          "title": "Gateway Logs",
+          "title": "Logs",
           "showTitleIcon": false,
           "dropShadow": false,
           "enableFullscreen": true,
@@ -806,16 +808,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "27e6b37c-085e-824d-fb13-69651a545ec1"
+        "id": "27e6b37c-085e-824d-fb13-69651a545ec1",
+        "typeFullFqn": "system.gateway_widgets.gateway_logs"
       },
       "bcd04dbf-c82a-ca13-6e88-a74f32b4348a": {
-        "isSystemType": true,
-        "bundleAlias": "gateway_widgets",
-        "typeAlias": "gateway_logs",
         "type": "timeseries",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 3,
         "config": {
@@ -878,16 +875,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "bcd04dbf-c82a-ca13-6e88-a74f32b4348a"
+        "id": "bcd04dbf-c82a-ca13-6e88-a74f32b4348a",
+        "typeFullFqn": "system.gateway_widgets.gateway_logs"
       },
       "9b88dc51-b186-90ef-5afb-9648e6e2ac9a": {
-        "isSystemType": true,
-        "bundleAlias": "gateway_widgets",
-        "typeAlias": "gateway_statistics",
         "type": "timeseries",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 8,
         "sizeY": 5,
         "config": {
@@ -973,7 +965,7 @@
             "customLegendEnabled": false,
             "dataKeysListForLabels": []
           },
-          "title": "Statistics",
+          "title": "Gateway Custom Statistics",
           "dropShadow": true,
           "enableFullscreen": true,
           "titleStyle": {
@@ -1005,16 +997,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "9b88dc51-b186-90ef-5afb-9648e6e2ac9a"
+        "id": "9b88dc51-b186-90ef-5afb-9648e6e2ac9a",
+        "typeFullFqn": "system.gateway_widgets.gateway_statistics"
       },
       "2a318e56-5c83-4f82-bf23-df72dd7e3edf": {
-        "isSystemType": true,
-        "bundleAlias": "control_widgets",
-        "typeAlias": "rpc_remote_shell",
         "type": "rpc",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 9.5,
         "sizeY": 5.5,
         "config": {
@@ -1083,16 +1070,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "2a318e56-5c83-4f82-bf23-df72dd7e3edf"
+        "id": "2a318e56-5c83-4f82-bf23-df72dd7e3edf",
+        "typeFullFqn": "system.control_widgets.rpc_remote_shell"
       },
       "c50e294a-265a-d13c-c772-b56c4df953fe": {
-        "isSystemType": true,
-        "bundleAlias": "gateway_widgets",
-        "typeAlias": "gateway_general_statistics",
         "type": "timeseries",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 8,
         "sizeY": 5,
         "config": {
@@ -1272,7 +1254,7 @@
             "customLegendEnabled": false,
             "dataKeysListForLabels": []
           },
-          "title": "General Statistics",
+          "title": "Gateway General Chart Statistics",
           "dropShadow": true,
           "enableFullscreen": true,
           "titleStyle": {
@@ -1304,16 +1286,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "c50e294a-265a-d13c-c772-b56c4df953fe"
+        "id": "c50e294a-265a-d13c-c772-b56c4df953fe",
+        "typeFullFqn": "system.gateway_widgets.gateway_general_statistics"
       },
       "da01e13f-c108-39fd-2a74-b40da088769a": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "timeseries_table",
         "type": "timeseries",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 8,
         "sizeY": 6.5,
         "config": {
@@ -1433,16 +1410,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "da01e13f-c108-39fd-2a74-b40da088769a"
+        "id": "da01e13f-c108-39fd-2a74-b40da088769a",
+        "typeFullFqn": "system.cards.timeseries_table"
       },
       "ce3065bf-d898-2c03-6236-ce1b6cdf1f3f": {
-        "isSystemType": true,
-        "bundleAlias": "control_widgets",
-        "typeAlias": "rpc_debug_terminal",
         "type": "rpc",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 9.5,
         "sizeY": 5.5,
         "config": {
@@ -1512,16 +1484,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "ce3065bf-d898-2c03-6236-ce1b6cdf1f3f"
+        "id": "ce3065bf-d898-2c03-6236-ce1b6cdf1f3f",
+        "typeFullFqn": "system.control_widgets.rpc_debug_terminal"
       },
       "46b68eb5-7e2d-bca1-c2ef-061b64575218": {
-        "isSystemType": true,
-        "bundleAlias": "gateway_widgets",
-        "typeAlias": "service_rpc",
         "type": "rpc",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 4,
         "sizeY": 2,
         "config": {
@@ -1590,16 +1557,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "46b68eb5-7e2d-bca1-c2ef-061b64575218"
+        "id": "46b68eb5-7e2d-bca1-c2ef-061b64575218",
+        "typeFullFqn": "system.gateway_widgets.service_rpc"
       },
       "878c68fd-71cb-21d4-684a-b5b5a4526b43": {
-        "isSystemType": true,
-        "bundleAlias": "gateway_widgets",
-        "typeAlias": "service_rpc",
         "type": "rpc",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 4,
         "sizeY": 2,
         "config": {
@@ -1635,16 +1597,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "878c68fd-71cb-21d4-684a-b5b5a4526b43"
+        "id": "878c68fd-71cb-21d4-684a-b5b5a4526b43",
+        "typeFullFqn": "system.gateway_widgets.service_rpc"
       },
       "0fc7dcf3-32a2-0159-738e-96956bf0d450": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "timeseries_table",
         "type": "timeseries",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 8,
         "sizeY": 6.5,
         "config": {
@@ -1765,16 +1722,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "0fc7dcf3-32a2-0159-738e-96956bf0d450"
+        "id": "0fc7dcf3-32a2-0159-738e-96956bf0d450",
+        "typeFullFqn": "system.cards.timeseries_table"
       },
       "6e136fbc-545b-4926-c0a9-79348f35628a": {
-        "isSystemType": true,
-        "bundleAlias": "control_widgets",
-        "typeAlias": "rpc_debug_terminal",
         "type": "rpc",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 9.5,
         "sizeY": 5.5,
         "config": {
@@ -1844,16 +1796,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "6e136fbc-545b-4926-c0a9-79348f35628a"
+        "id": "6e136fbc-545b-4926-c0a9-79348f35628a",
+        "typeFullFqn": "system.control_widgets.rpc_debug_terminal"
       },
       "fb9df382-6ef3-4aa6-bc13-8bf8e300ba19": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 5,
         "sizeY": 3.5,
         "config": {
@@ -1896,7 +1843,7 @@
           "padding": "8px",
           "settings": {
             "useMarkdownTextFunction": false,
-            "markdownTextPattern": "<div class=\"action-buttons-container\">\r\n<button mat-stroked-button\r\n(click)=\"ctx.actionsApi.handleWidgetAction($event, ctx.actionsApi.getActionDescriptors('elementClick')[0], ctx.datasources[0].entity.id)\"\r\n  >Launch command\r\n  </button>\r\n </div>",
+            "markdownTextPattern": "<div class=\"action-buttons-container\">\r\n<button mat-raised-button color=\"primary\"\r\n(click)=\"ctx.actionsApi.handleWidgetAction($event, ctx.actionsApi.getActionDescriptors('elementClick')[0], ctx.datasources[0].entity.id)\"\r\n  >Launch command\r\n  </button>\r\n </div>",
             "applyDefaultMarkdownStyle": false,
             "markdownCss": ".action-buttons-container {\r\n    display: flex;\r\n    flex-wrap: wrap;\r\n    flex-direction: row;\r\n    height: 100%;\r\n    width: 100%;\r\n    align-content: center;\r\n}\r\n\r\nbutton {\r\n    flex-grow: 1;\r\n    margin: 10px;\r\n    min-width: 150px;\r\n    height: auto;\r\n}"
           },
@@ -1945,16 +1892,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "fb9df382-6ef3-4aa6-bc13-8bf8e300ba19"
+        "id": "fb9df382-6ef3-4aa6-bc13-8bf8e300ba19",
+        "typeFullFqn": "system.cards.markdown_card"
       },
       "61d149e8-b249-5526-e5d7-6ad58413982e": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 5,
         "sizeY": 3.5,
         "config": {
@@ -2129,16 +2071,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "61d149e8-b249-5526-e5d7-6ad58413982e"
+        "id": "61d149e8-b249-5526-e5d7-6ad58413982e",
+        "typeFullFqn": "system.cards.markdown_card"
       },
       "3d661190-7463-ba61-6793-503c85af67ec": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 5,
         "sizeY": 3.5,
         "config": {
@@ -2213,16 +2150,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "3d661190-7463-ba61-6793-503c85af67ec"
+        "id": "3d661190-7463-ba61-6793-503c85af67ec",
+        "typeFullFqn": "system.cards.markdown_card"
       },
       "1615bd4e-c0a4-c32c-3706-3c83214cb8d7": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "entities_table",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 6.5,
         "config": {
@@ -2371,16 +2303,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "1615bd4e-c0a4-c32c-3706-3c83214cb8d7"
+        "id": "1615bd4e-c0a4-c32c-3706-3c83214cb8d7",
+        "typeFullFqn": "system.cards.entities_table"
       },
       "aafba3d8-a381-21c0-ecbe-446da3cdc041": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "entities_table",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 6.5,
         "config": {
@@ -2529,16 +2456,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "aafba3d8-a381-21c0-ecbe-446da3cdc041"
+        "id": "aafba3d8-a381-21c0-ecbe-446da3cdc041",
+        "typeFullFqn": "system.cards.entities_table"
       },
       "7f676bb2-bde2-10e7-80d8-25dd734e8e22": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "entities_table",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 6.5,
         "config": {
@@ -2687,16 +2609,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "7f676bb2-bde2-10e7-80d8-25dd734e8e22"
+        "id": "7f676bb2-bde2-10e7-80d8-25dd734e8e22",
+        "typeFullFqn": "system.cards.entities_table"
       },
       "d64482d8-001a-6f33-9b56-665530098fe5": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "entities_table",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 6.5,
         "config": {
@@ -2845,16 +2762,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "d64482d8-001a-6f33-9b56-665530098fe5"
+        "id": "d64482d8-001a-6f33-9b56-665530098fe5",
+        "typeFullFqn": "system.cards.entities_table"
       },
       "bb27723a-989c-2327-5808-b56d490b93ab": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "entities_table",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 6.5,
         "config": {
@@ -3003,16 +2915,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "bb27723a-989c-2327-5808-b56d490b93ab"
+        "id": "bb27723a-989c-2327-5808-b56d490b93ab",
+        "typeFullFqn": "system.cards.entities_table"
       },
       "e3a9539d-2ccb-96e0-2afa-36f93e40233d": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "entities_table",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 6.5,
         "config": {
@@ -3161,16 +3068,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "e3a9539d-2ccb-96e0-2afa-36f93e40233d"
+        "id": "e3a9539d-2ccb-96e0-2afa-36f93e40233d",
+        "typeFullFqn": "system.cards.entities_table"
       },
       "cf2eba6b-44f6-9cc2-6089-35c735f54898": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "entities_table",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 6.5,
         "config": {
@@ -3319,16 +3221,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "cf2eba6b-44f6-9cc2-6089-35c735f54898"
+        "id": "cf2eba6b-44f6-9cc2-6089-35c735f54898",
+        "typeFullFqn": "system.cards.entities_table"
       },
       "3f6ed61b-f5af-13e3-7505-f69fd53f8211": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "entities_table",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 6.5,
         "config": {
@@ -3477,16 +3374,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "3f6ed61b-f5af-13e3-7505-f69fd53f8211"
+        "id": "3f6ed61b-f5af-13e3-7505-f69fd53f8211",
+        "typeFullFqn": "system.cards.entities_table"
       },
       "b06cecaa-2806-65a9-782d-4f2d8cf95a6c": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "entities_table",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 6.5,
         "config": {
@@ -3635,16 +3527,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "b06cecaa-2806-65a9-782d-4f2d8cf95a6c"
+        "id": "b06cecaa-2806-65a9-782d-4f2d8cf95a6c",
+        "typeFullFqn": "system.cards.entities_table"
       },
       "c3d39b60-a668-7f5e-e6f4-cae27151f4aa": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "entities_table",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 6.5,
         "config": {
@@ -3793,16 +3680,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "c3d39b60-a668-7f5e-e6f4-cae27151f4aa"
+        "id": "c3d39b60-a668-7f5e-e6f4-cae27151f4aa",
+        "typeFullFqn": "system.cards.entities_table"
       },
       "f78a0d66-60cb-188f-857f-9acd4d24bd5a": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "entities_table",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 6.5,
         "config": {
@@ -3951,16 +3833,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "f78a0d66-60cb-188f-857f-9acd4d24bd5a"
+        "id": "f78a0d66-60cb-188f-857f-9acd4d24bd5a",
+        "typeFullFqn": "system.cards.entities_table"
       },
       "b81a171c-77c0-b857-21d2-cff02a1cb733": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "entities_table",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 6.5,
         "config": {
@@ -4109,16 +3986,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "b81a171c-77c0-b857-21d2-cff02a1cb733"
+        "id": "b81a171c-77c0-b857-21d2-cff02a1cb733",
+        "typeFullFqn": "system.cards.entities_table"
       },
       "0e399bef-01d2-4e4e-02d2-e254ebe91e56": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "entities_table",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 6.5,
         "config": {
@@ -4267,16 +4139,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "0e399bef-01d2-4e4e-02d2-e254ebe91e56"
+        "id": "0e399bef-01d2-4e4e-02d2-e254ebe91e56",
+        "typeFullFqn": "system.cards.entities_table"
       },
       "819c1d39-de7c-8ac3-858e-0040d286823e": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "entities_table",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 6.5,
         "config": {
@@ -4425,16 +4292,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "819c1d39-de7c-8ac3-858e-0040d286823e"
+        "id": "819c1d39-de7c-8ac3-858e-0040d286823e",
+        "typeFullFqn": "system.cards.entities_table"
       },
       "d4f73f32-f719-98bb-d427-b5c8957e8f47": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "entities_table",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 6.5,
         "config": {
@@ -4583,16 +4445,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "d4f73f32-f719-98bb-d427-b5c8957e8f47"
+        "id": "d4f73f32-f719-98bb-d427-b5c8957e8f47",
+        "typeFullFqn": "system.cards.entities_table"
       },
       "f16a258c-3f6c-9317-fda7-48b33d8fe8b9": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "entities_table",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 6.5,
         "config": {
@@ -4741,16 +4598,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "f16a258c-3f6c-9317-fda7-48b33d8fe8b9"
+        "id": "f16a258c-3f6c-9317-fda7-48b33d8fe8b9",
+        "typeFullFqn": "system.cards.entities_table"
       },
       "d1951ec7-ab13-87e4-bc05-ce2318dca353": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "entities_table",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 6.5,
         "config": {
@@ -4899,16 +4751,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "d1951ec7-ab13-87e4-bc05-ce2318dca353"
+        "id": "d1951ec7-ab13-87e4-bc05-ce2318dca353",
+        "typeFullFqn": "system.cards.entities_table"
       },
       "75b6372d-4def-42b4-8774-4edf413a8b83": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "entities_table",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 6.5,
         "config": {
@@ -5057,16 +4904,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "75b6372d-4def-42b4-8774-4edf413a8b83"
+        "id": "75b6372d-4def-42b4-8774-4edf413a8b83",
+        "typeFullFqn": "system.cards.entities_table"
       },
       "dfda1a57-6c04-3482-2054-84954bbef626": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 5,
         "sizeY": 3.5,
         "config": {
@@ -5152,7 +4994,8 @@
         },
         "row": 0,
         "col": 0,
-        "id": "dfda1a57-6c04-3482-2054-84954bbef626"
+        "id": "dfda1a57-6c04-3482-2054-84954bbef626",
+        "typeFullFqn": "system.cards.markdown_card"
       }
     },
     "states": {

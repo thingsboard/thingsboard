@@ -41,14 +41,14 @@ export class GatewayLogsSettingsComponent extends WidgetSettingsComponent {
   protected defaultSettings(): WidgetSettings {
     return {
       isConnectorLog: false,
-      connectorLogState: 'default'
+      connectorLogState: ''
     };
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
     this.gatewayLogSettingForm = this.fb.group({
       isConnectorLog: [false, []],
-      connectorLogState: ['default', Validators.required]
+      connectorLogState: ['', Validators.required]
     });
   }
 

@@ -45,6 +45,14 @@
   .saving-period {
     flex: 1;
   }
+
+  .statistics-container {
+    width: 50%;
+
+    .command-container {
+      width: 100%;
+    }
+  }
 }
 
 :host ::ng-deep {
