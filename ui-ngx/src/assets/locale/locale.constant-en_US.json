@@ -722,6 +722,8 @@
         "key-required": "Attribute key is required.",
         "value": "Value",
         "value-required": "Attribute value is required.",
+        "telemetry-key-required": "Telemetry key is required",
+        "telemetry-value-required": "Telemetry value is required",
         "delete-attributes-title": "Are you sure you want to delete { count, plural, =1 {1 attribute} other {# attributes} }?",
         "delete-attributes-text": "Be careful, after the confirmation all selected attributes will be removed.",
         "delete-attributes": "Delete attributes",
