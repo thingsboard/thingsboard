@@ -757,6 +757,13 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         } catch (Exception e) {
                         }
                         try {
+                            conn.createStatement().execute("UPDATE rule_node SET " +
+                                    "configuration = (configuration::jsonb || '{\"updateAttributesOnlyOnValueChange\": \"false\"}'::jsonb)::varchar, " +
+                                    "configuration_version = 1 " +
+                                    "WHERE type = 'org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode' AND configuration_version < 1;");
+                        } catch (Exception e) {
+                        }
+                        try {
                             conn.createStatement().execute("CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_unread ON notification(recipient_id) WHERE status <> 'READ';");
                         } catch (Exception e) {
                         }
