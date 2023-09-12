@@ -105,8 +105,8 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     boolean prometheusStatsEnabled;
     @Value("${queue.rule-engine.topic-deletion-delay:30}")
     private int topicDeletionDelayInSec;
-    @Value("${queue.rule-engine.repartition-thread-pool-size:1}")
-    private int repartitionThreadPoolSize;
+    @Value("${queue.rule-engine.subscribe-thread-pool-size:10}")
+    private int subscribeThreadPoolSize;
 
     private final StatsFactory statsFactory;
     private final TbRuleEngineSubmitStrategyFactory submitStrategyFactory;
@@ -122,8 +122,9 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     private final ConcurrentMap<QueueKey, Queue> consumerConfigurations = new ConcurrentHashMap<>();
     private final ConcurrentMap<QueueKey, TbRuleEngineConsumerStats> consumerStats = new ConcurrentHashMap<>();
     private final ConcurrentMap<QueueKey, TbTopicWithConsumerPerPartition> topicsConsumerPerPartition = new ConcurrentHashMap<>();
-    final ExecutorService submitExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-rule-engine-consumer-submit"));
-    private ScheduledExecutorService repartitionExecutor;
+    private final ExecutorService submitExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-rule-engine-consumer-submit"));
+    private final ScheduledExecutorService repartitionExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("tb-rule-engine-consumer-repartition"));
+    private ExecutorService subscribeExecutor;
 
     public DefaultTbRuleEngineConsumerService(TbRuleEngineProcessingStrategyFactory processingStrategyFactory,
                                               TbRuleEngineSubmitStrategyFactory submitStrategyFactory,
@@ -156,7 +157,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     @PostConstruct
     public void init() {
         super.init("tb-rule-engine-consumer", "tb-rule-engine-notifications-consumer");
-        this.repartitionExecutor = Executors.newScheduledThreadPool(repartitionThreadPoolSize, ThingsBoardThreadFactory.forName("tb-rule-engine-consumer-repartition"));
+        this.subscribeExecutor = Executors.newFixedThreadPool(subscribeThreadPoolSize, ThingsBoardThreadFactory.forName("tb-rule-engine-consumer-subscribe"));
 
         List<Queue> queues = queueService.findAllQueues();
         for (Queue configuration : queues) {
@@ -263,7 +264,9 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
 
     void removeConsumerForTopicByTpi(String queue, ConcurrentMap<TopicPartitionInfo, TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>>> consumers, TopicPartitionInfo tpi) {
         log.info("[{}] Removing consumer for topic: {}", queue, tpi);
-        consumers.get(tpi).unsubscribe();
+        subscribeExecutor.submit(() -> {
+            consumers.get(tpi).unsubscribe();
+        });
         consumers.remove(tpi);
     }
 
@@ -437,10 +440,10 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
             tbDeviceRpcService.processRpcResponseFromDevice(response);
             callback.onSuccess();
         } else if (nfMsg.hasQueueUpdateMsg()) {
-            repartitionExecutor.execute(() -> updateQueue(nfMsg.getQueueUpdateMsg()));
+            subscribeExecutor.execute(() -> updateQueue(nfMsg.getQueueUpdateMsg()));
             callback.onSuccess();
         } else if (nfMsg.hasQueueDeleteMsg()) {
-            repartitionExecutor.execute(() -> deleteQueue(nfMsg.getQueueDeleteMsg()));
+            subscribeExecutor.execute(() -> deleteQueue(nfMsg.getQueueDeleteMsg()));
             callback.onSuccess();
         } else {
             log.trace("Received notification with missing handler");
