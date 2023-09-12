@@ -1,0 +1,60 @@
+<!--
+
+    ThingsBoard, Inc. ("COMPANY") CONFIDENTIAL
+
+    Copyright © 2016-2023 ThingsBoard, Inc. All Rights Reserved.
+
+    NOTICE: All information contained herein is, and remains
+    the property of ThingsBoard, Inc. and its suppliers,
+    if any.  The intellectual and technical concepts contained
+    herein are proprietary to ThingsBoard, Inc.
+    and its suppliers and may be covered by U.S. and Foreign Patents,
+    patents in process, and are protected by trade secret or copyright law.
+
+    Dissemination of this information or reproduction of this material is strictly forbidden
+    unless prior written permission is obtained from COMPANY.
+
+    Access to the source code contained herein is hereby forbidden to anyone except current COMPANY employees,
+    managers or contractors who have executed Confidentiality and Non-disclosure agreements
+    explicitly covering such access.
+
+    The copyright notice above does not evidence any actual or intended publication
+    or disclosure  of  this source code, which includes
+    information that is confidential and/or proprietary, and is a trade secret, of  COMPANY.
+    ANY REPRODUCTION, MODIFICATION, DISTRIBUTION, PUBLIC  PERFORMANCE,
+    OR PUBLIC DISPLAY OF OR THROUGH USE  OF THIS  SOURCE CODE  WITHOUT
+    THE EXPRESS WRITTEN CONSENT OF COMPANY IS STRICTLY PROHIBITED,
+    AND IN VIOLATION OF APPLICABLE LAWS AND INTERNATIONAL TREATIES.
+    THE RECEIPT OR POSSESSION OF THIS SOURCE CODE AND/OR RELATED INFORMATION
+    DOES NOT CONVEY OR IMPLY ANY RIGHTS TO REPRODUCE, DISCLOSE OR DISTRIBUTE ITS CONTENTS,
+    OR TO MANUFACTURE, USE, OR SELL ANYTHING THAT IT  MAY DESCRIBE, IN WHOLE OR IN PART.
+
+-->
+<mat-form-field fxFlex appearance="outline" class="tb-inline-field tb-suffix-show-on-hover" subscriptSizing="dynamic" style="width: 100%">
+  <input matInput #nameInput [formControl]="selectionFormControl"
+         placeholder="{{ 'widget-config.set' | translate }}"
+         (focusin)="onFocus()"
+         [matAutocomplete]="optionsAutocomplete">
+  <button *ngIf="selectionFormControl.value && !disabled && selectionFormControl.valid"
+          type="button"
+          class="tb-icon-24"
+          matSuffix mat-icon-button aria-label="Clear"
+          (click)="clear()">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+  <mat-icon matSuffix
+            matTooltipPosition="above"
+            matTooltipClass="tb-error-tooltip"
+            [matTooltip]="'widget-config.units-required' | translate"
+            *ngIf="selectionFormControl.hasError('required')" class="material-icons tb-suffix-show-always tb-error">
+    warning
+  </mat-icon>
+  <mat-autocomplete
+    #optionsAutocomplete="matAutocomplete"
+    class="tb-autocomplete tb-options-input-autocomplete"
+    panelWidth="fit-content">
+    <mat-option *ngFor="let option of filteredOptions | async" [value]="option">
+      <span class="tb-option-name" fxFlex [innerHTML]="option | highlight:searchText:true:'ig'"></span>
+    </mat-option>
+  </mat-autocomplete>
+</mat-form-field>

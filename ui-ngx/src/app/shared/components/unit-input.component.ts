@@ -22,11 +22,19 @@ import {
   Input,
   OnInit,
   ViewChild,
-  ViewEncapsulation
+  ViewEncapsulation,
+  Injector,
+  AfterViewInit
 } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
+import {
+  ControlValueAccessor,
+  FormBuilder,
+  FormControl,
+  NG_VALUE_ACCESSOR,
+  Validators
+} from '@angular/forms';
 import { Observable, of, shareReplay, switchMap } from 'rxjs';
-import { getUnits, searchUnits, Unit, unitBySymbol } from '@shared/models/unit.models';
+import { getUnits, searchUnits, Unit, unitBySymbol, UnitsType } from '@shared/models/unit.models';
 import { map, mergeMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { ResourcesService } from '@core/services/resources.service';
@@ -44,7 +52,7 @@ import { ResourcesService } from '@core/services/resources.service';
   ],
   encapsulation: ViewEncapsulation.None
 })
-export class UnitInputComponent implements ControlValueAccessor, OnInit {
+export class UnitInputComponent implements ControlValueAccessor, OnInit, AfterViewInit {
 
   @HostBinding('style.display') get hostDisplay() {return 'flex';};
 
@@ -54,6 +62,12 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit {
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  required: boolean;
+
+  @Input()
+  tagFilter: UnitsType;
 
   @ViewChild('unitInput', {static: true}) unitInput: ElementRef;
 
@@ -67,7 +81,8 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit {
 
   private propagateChange = (_val: any) => {};
 
-  constructor(private fb: FormBuilder,
+  constructor(private injector: Injector,
+              private fb: FormBuilder,
               private resourcesService: ResourcesService,
               private translate: TranslateService) {
   }
@@ -82,6 +97,12 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit {
         map(value => (value as Unit)?.symbol ? (value as Unit).symbol : (value ? value as string : '')),
         mergeMap(symbol => this.fetchUnits(symbol))
       );
+  }
+
+  ngAfterViewInit() {
+    if (this.required) {
+      this.unitsFormControl.setValidators([Validators.required]);
+    }
   }
 
   writeValue(symbol?: string): void {
@@ -157,11 +178,16 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit {
   private unitsConstant(): Observable<Array<Unit>> {
     if (this.fetchUnits$ === null) {
       this.fetchUnits$ = getUnits(this.resourcesService).pipe(
-        map(units => units.map(u => ({
-          symbol: u.symbol,
-          name: this.translate.instant(u.name),
-          tags: u.tags
-        }))),
+        map((units) => {
+          if (this.tagFilter) {
+            units = units.filter(u => u.tags.includes(this.tagFilter));
+          }
+          return units.map(u => ({
+            symbol: u.symbol,
+            name: this.translate.instant(u.name),
+            tags: u.tags
+          }));
+        }),
         shareReplay(1)
       );
     }

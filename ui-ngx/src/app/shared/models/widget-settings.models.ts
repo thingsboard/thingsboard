@@ -393,6 +393,33 @@ export const textStyle = (font?: Font, letterSpacing = 'normal'): ComponentStyle
   return style;
 };
 
+export const inlineTextStyle = (font?: Font, letterSpacing = 'normal'): ComponentStyle => {
+  const style: ComponentStyle = {
+    letterSpacing
+  };
+  if (font?.style) {
+    style['font-style'] = font.style;
+  }
+  if (font?.weight) {
+    style['font-weight'] = font.weight;
+  }
+  if (font?.lineHeight) {
+    style['line-height'] = font.lineHeight;
+  }
+  if (font?.size) {
+    style['font-size'] = (font.size + (font.sizeUnit || 'px'));
+  }
+  if (font?.family) {
+    style['font-family'] = font.family +
+      (font.family !== 'Roboto' ? ', Roboto' : '');
+  }
+  return style;
+};
+
+export const cssTextFromInlineStyle = (styleObj: { [key: string]: string | number }): string => Object.entries(styleObj)
+  .map(([key, value]) => `${key}: ${value}`)
+  .join('; ');
+
 export const isFontSet = (font: Font): boolean => (!!font && !!font.style && !!font.weight && !!font.size && !!font.family);
 
 export const isFontPartiallySet = (font: Font): boolean => (!!font && (!!font.style || !!font.weight || !!font.size || !!font.family));

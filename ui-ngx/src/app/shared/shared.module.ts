@@ -199,6 +199,8 @@ import { MaterialIconsComponent } from '@shared/components/material-icons.compon
 import { ColorPickerPanelComponent } from '@shared/components/color-picker/color-picker-panel.component';
 import { TbIconComponent } from '@shared/components/icon.component';
 import { HintTooltipIconComponent } from '@shared/components/hint-tooltip-icon.component';
+import { StringAutocompleteComponent } from '@shared/components/string-autocomplete.component';
+import { MatFormFieldModule } from '@angular/material/form-field';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -374,6 +376,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ToggleOption,
     ToggleSelectComponent,
     UnitInputComponent,
+    StringAutocompleteComponent,
     MaterialIconsComponent,
     RuleChainSelectComponent,
     TbIconComponent,
@@ -398,6 +401,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     MatGridListModule,
     MatDialogModule,
     MatSelectModule,
+    MatFormFieldModule,
     MatTooltipModule,
     MatTableModule,
     MatPaginatorModule,
@@ -513,6 +517,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     MatGridListModule,
     MatDialogModule,
     MatSelectModule,
+    MatFormFieldModule,
     MatTooltipModule,
     MatTableModule,
     MatPaginatorModule,
@@ -609,6 +614,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ToggleOption,
     ToggleSelectComponent,
     UnitInputComponent,
+    StringAutocompleteComponent,
     MaterialIconsComponent,
     RuleChainSelectComponent,
     TbIconComponent,
