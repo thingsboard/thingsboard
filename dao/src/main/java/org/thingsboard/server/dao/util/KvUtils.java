@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.util;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -48,8 +49,8 @@ public class KvUtils {
 
         String key = tsKvEntry.getKey();
 
-        if (key == null) {
-            throw new DataValidationException("Key can't be null");
+        if (StringUtils.isBlank(key)) {
+            throw new DataValidationException("Key can't be null or empty");
         }
 
         if (key.length() > 255) {
