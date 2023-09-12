@@ -26,12 +26,44 @@
         overflow: hidden;
         white-space: break-spaces;
         word-break: break-all;
+        background: #F3F6FA;
+        border-color: #305680;
       }
 
       .code-wrapper {
         padding: 0;
       }
+
+      button.clipboard-btn {
+        right: 0;
+        p {
+          color: #305680;
+        }
+        p, div {
+          background-color: #F3F6FA;
+        }
+        div {
+          img {
+            display: none;
+          }
+
+          &:after {
+            content: "";
+            position: initial;
+            display: block;
+            width: 18px;
+            height: 18px;
+            background: #305680;
+            mask-image: url(/assets/copy-code-icon.svg);
+            mask-repeat: no-repeat;
+          }
+        }
+      }
     }
+  }
+
+  .tb-form-panel.tb-tab-body {
+    margin-top: 16px;
   }
 }
 

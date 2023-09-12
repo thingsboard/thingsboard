@@ -16,8 +16,8 @@
 :host {
   width: 100%;
   height: 100%;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: min-content minmax(auto, 1fr) min-content;
 
   .configuration-block {
     display: flex;
@@ -26,8 +26,16 @@
   }
 
   .mat-toolbar {
+    grid-row: 1;
     background: transparent;
     color: rgba(0, 0, 0, .87) !important;
+  }
+
+  .tab-group-block {
+    min-width: 0;
+    height: 100%;
+    min-height: 0;
+    grid-row: 2;
   }
 
   .toggle-group {
@@ -43,6 +51,15 @@
   }
 
   .saving-period {
+    flex: 1;
+  }
+
+  .actions {
+    grid-row: 3;
+    padding: 8px;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
     flex: 1;
   }
 }
