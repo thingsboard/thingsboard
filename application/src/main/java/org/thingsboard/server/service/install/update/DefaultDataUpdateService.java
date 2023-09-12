@@ -91,7 +91,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -233,14 +232,14 @@ public class DefaultDataUpdateService implements DataUpdateService {
     public void upgradeRuleNodes() {
         try {
             var futures = new ArrayList<ListenableFuture<?>>(100);
-            var totalRuleNodesUpgraded = new AtomicInteger(0);
+            int totalRuleNodesUpgraded = 0;
             log.info("Starting rule nodes upgrade ...");
             var nodeClassToVersionMap = componentDiscoveryService.getVersionedNodes();
             log.debug("Found {} versioned nodes to check for upgrade!", nodeClassToVersionMap.size());
-            nodeClassToVersionMap.forEach(clazz -> {
-                var ruleNodeType = clazz.getClassName();
-                var ruleNodeTypeForLogs = clazz.getSimpleName();
-                var toVersion = clazz.getCurrentVersion();
+            for (var ruleNodeClassInfo : nodeClassToVersionMap) {
+                var ruleNodeType = ruleNodeClassInfo.getClassName();
+                var ruleNodeTypeForLogs = ruleNodeClassInfo.getSimpleName();
+                var toVersion = ruleNodeClassInfo.getCurrentVersion();
                 log.debug("Going to check for nodes with type: {} to upgrade to version: {}.", ruleNodeTypeForLogs, toVersion);
                 var ruleNodesToUpdate = new PageDataIterable<>(
                         pageLink -> ruleChainService.findAllRuleNodesByTypeAndVersionLessThan(ruleNodeType, toVersion, pageLink), 1024
@@ -255,7 +254,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                         log.debug("Going to upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
                                 ruleNodeId, ruleNodeTypeForLogs, fromVersion, toVersion);
                         try {
-                            var tbVersionedNode = (TbNode) clazz.getClazz().getDeclaredConstructor().newInstance();
+                            var tbVersionedNode = (TbNode) ruleNodeClassInfo.getClazz().getDeclaredConstructor().newInstance();
                             TbPair<Boolean, JsonNode> upgradeRuleNodeConfigurationResult = tbVersionedNode.upgrade(fromVersion, oldConfiguration);
                             if (upgradeRuleNodeConfigurationResult.getFirst()) {
                                 ruleNode.setConfiguration(upgradeRuleNodeConfigurationResult.getSecond());
@@ -268,7 +267,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                             }));
                             if (futures.size() >= MAX_PENDING_SAVE_RULE_NODE_FUTURES) {
                                 log.info("{} upgraded rule nodes so far ...",
-                                        totalRuleNodesUpgraded.addAndGet(awaitFuturesToCompleteAndGetCount(futures)));
+                                        totalRuleNodesUpgraded += awaitFuturesToCompleteAndGetCount(futures));
                                 futures.clear();
                             }
                         } catch (Exception e) {
@@ -277,18 +276,17 @@ public class DefaultDataUpdateService implements DataUpdateService {
                         }
                     }
                 }
-            });
+            }
             log.info("Finished rule nodes upgrade. Upgraded rule nodes count: {}",
-                    totalRuleNodesUpgraded.addAndGet(awaitFuturesToCompleteAndGetCount(futures)));
+                    totalRuleNodesUpgraded + awaitFuturesToCompleteAndGetCount(futures));
         } catch (Exception e) {
             log.error("Unexpected error during rule nodes upgrade: ", e);
         }
     }
 
     private int awaitFuturesToCompleteAndGetCount(List<ListenableFuture<?>> futures) {
-        var batchFuture = Futures.allAsList(futures);
         try {
-            return batchFuture.get().size();
+            return Futures.allAsList(futures).get().size();
         } catch (ExecutionException | InterruptedException e) {
             throw new RuntimeException("Failed to process save rule nodes requests due to: ", e);
         }
