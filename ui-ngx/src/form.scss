@@ -221,7 +221,7 @@
     }
   }
 
-  .tb-form-row:not(.tb-not-inline-field) .mat-mdc-form-field, .mat-mdc-form-field.tb-inline-field {
+  .tb-form-row:not(.tb-standard-fields) .mat-mdc-form-field:not(.tb-not-inline-field), .mat-mdc-form-field.tb-inline-field {
     &.mat-form-field-appearance-fill {
       .mdc-text-field--filled:not(.mdc-text-field--disabled) {
         &:before {

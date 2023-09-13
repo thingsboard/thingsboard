@@ -16,14 +16,11 @@
 
 -->
 <div class="tb-container">
-  <ng-container *ngIf="hint; else title">
-    <label class="tb-title pointer-event" [class.tb-required]="!disabled && required"
-           tb-hint-tooltip-icon="{{ hint }}">{{ label }}
-    </label>
-  </ng-container>
-  <ng-template #title>
-    <label class="tb-title" [class.tb-required]="!disabled && required">{{ label }}</label>
-  </ng-template>
+  <label class="tb-title"
+         [class.tb-required]="!disabled && required"
+         [class.pointer-event]="hint"
+         tb-hint-tooltip-icon="{{ hint }}">{{ label }}
+  </label>
   <ng-container #flow="flow"
                 [flowConfig]="{allowDuplicateUploads: true}">
     <div class="tb-file-select-container">

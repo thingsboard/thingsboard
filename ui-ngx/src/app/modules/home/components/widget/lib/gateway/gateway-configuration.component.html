@@ -34,7 +34,7 @@
             {{ 'gateway.remote-shell' | translate }}
           </mat-slide-toggle>
         </div>
-        <div class="tb-form-row no-border no-padding tb-not-inline-field">
+        <div class="tb-form-row no-border no-padding tb-standard-fields">
           <mat-form-field appearance="outline" class="flex">
             <mat-label translate>gateway.thingsboard-host</mat-label>
             <input matInput formControlName="host"/>
@@ -84,7 +84,7 @@
                       matTooltip="{{ 'gateway.hints.token' | translate }}">info_outlined
             </mat-icon>
           </mat-form-field>
-          <div class="tb-form-row no-border no-padding tb-not-inline-field"
+          <div class="tb-form-row no-border no-padding tb-standard-fields"
                *ngIf="gatewayConfigGroup.get('thingsboard.security.type').value === 'usernamePassword'">
             <mat-form-field appearance="outline" class="flex" subscriptSizing="dynamic">
               <mat-label translate>security.clientId</mat-label>
@@ -181,7 +181,7 @@
                             class="first-capital">{{ localLogsConfigTranslateMap.get(logConfig) }}</tb-toggle-option>
         </tb-toggle-select>
         <ng-container [formGroup]="getLogFormGroup(logSelector.value)">
-          <div class="tb-form-row no-border no-padding tb-not-inline-field column-xs">
+          <div class="tb-form-row no-border no-padding tb-standard-fields column-xs">
             <mat-form-field appearance="outline" class="flex">
               <mat-label translate>gateway.logs.level</mat-label>
               <mat-select formControlName="logLevel">
@@ -196,8 +196,8 @@
               </mat-error>
             </mat-form-field>
           </div>
-          <div class="tb-form-row no-border no-padding tb-not-inline-field column-xs">
-            <div class="tb-form-row no-border no-padding tb-not-inline-field saving-period">
+          <div class="tb-form-row no-border no-padding tb-standard-fields column-xs">
+            <div class="tb-form-row no-border no-padding tb-standard-fields saving-period">
               <mat-form-field appearance="outline" class="flex">
                 <mat-label translate>gateway.logs.saving-period</mat-label>
                 <input matInput formControlName="savingTime" type="number" min="0"/>
@@ -250,7 +250,7 @@
         </tb-toggle-select>
         <div class="tb-form-panel-hint">{{ 'gateway.hints.' + gatewayConfigGroup.get('storage.type').value | translate }}</div>
         <ng-container [ngSwitch]="gatewayConfigGroup.get('storage.type').value">
-          <section *ngSwitchCase="StorageTypes.MEMORY" class="tb-form-row no-border no-padding tb-not-inline-field column-xs">
+          <section *ngSwitchCase="StorageTypes.MEMORY" class="tb-form-row no-border no-padding tb-standard-fields column-xs">
             <mat-form-field appearance="outline" class="flex">
               <mat-label translate>gateway.storage-read-record-count</mat-label>
               <input type="number" matInput formControlName="read_records_count"/>
@@ -285,7 +285,7 @@
             </mat-form-field>
           </section>
           <section *ngSwitchCase="StorageTypes.FILE">
-            <div class="tb-form-row no-border no-padding tb-not-inline-field column-xs">
+            <div class="tb-form-row no-border no-padding tb-standard-fields column-xs">
               <mat-form-field appearance="outline" class="flex">
                 <mat-label translate>gateway.storage-data-folder-path</mat-label>
                 <input matInput formControlName="data_folder_path"/>
@@ -315,7 +315,7 @@
                 </mat-icon>
               </mat-form-field>
             </div>
-            <div class="tb-form-row no-border no-padding tb-not-inline-field column-xs">
+            <div class="tb-form-row no-border no-padding tb-standard-fields column-xs">
               <mat-form-field appearance="outline" class="flex">
                 <mat-label translate>gateway.storage-max-read-record-count</mat-label>
                 <input matInput type="number" formControlName="max_read_records_count"/>
@@ -351,7 +351,7 @@
             </div>
           </section>
           <section *ngSwitchCase="StorageTypes.SQLITE">
-            <div class="tb-form-row no-border no-padding tb-not-inline-field column-xs">
+            <div class="tb-form-row no-border no-padding tb-standard-fields column-xs">
               <mat-form-field appearance="outline" class="flex">
                 <mat-label translate>gateway.storage-path</mat-label>
                 <input matInput formControlName="data_file_path"/>
@@ -413,7 +413,7 @@
           </mat-slide-toggle>
         </div>
         <section>
-          <section class="tb-form-row no-border no-padding tb-not-inline-field column-xs">
+          <section class="tb-form-row no-border no-padding tb-standard-fields column-xs">
             <mat-form-field appearance="outline" class="flex">
               <mat-label translate>gateway.server-port</mat-label>
               <input matInput formControlName="serverPort" type="number" min="0"/>
@@ -450,7 +450,7 @@
               </mat-error>
             </mat-form-field>
           </section>
-          <section class="tb-form-row no-border no-padding tb-not-inline-field column-xs">
+          <section class="tb-form-row no-border no-padding tb-standard-fields column-xs">
             <mat-form-field appearance="outline" class="flex">
               <mat-label translate>gateway.grpc-keep-alive</mat-label>
               <input matInput formControlName="keepAliveTimeMs" type="number" min="0"/>
@@ -484,7 +484,7 @@
               </mat-error>
             </mat-form-field>
           </section>
-          <section class="tb-form-row no-border no-padding tb-not-inline-field column-xs">
+          <section class="tb-form-row no-border no-padding tb-standard-fields column-xs">
             <mat-form-field appearance="outline" class="flex">
               <mat-label translate>gateway.grpc-max-pings-without-data</mat-label>
               <input matInput formControlName="maxPingsWithoutData" type="number" min="0"/>
@@ -552,7 +552,7 @@
           <div fxLayout="row" formArrayName="commands" class="statistics-container"
                *ngFor="let commandControl of commandFormArray().controls; let $index = index">
             <section [formGroupName]="$index" class="tb-form-panel stroked no-padding-bottom no-gap command-container">
-              <section class="tb-form-row no-border no-padding tb-not-inline-field column-xs">
+              <section class="tb-form-row no-border no-padding tb-standard-fields column-xs">
                 <mat-form-field appearance="outline" class="flex">
                   <mat-label translate>gateway.statistics.attribute-name</mat-label>
                   <input matInput formControlName="attributeOnGateway"/>
@@ -619,7 +619,7 @@
             {{ 'gateway.checking-device-activity'  | translate }}
           </mat-slide-toggle>
         </div>
-        <section class="tb-form-row no-border no-padding tb-not-inline-field column-xs"
+        <section class="tb-form-row no-border no-padding tb-standard-fields column-xs"
                  *ngIf="gatewayConfigGroup.get('thingsboard.checkingDeviceActivity.checkDeviceInactivity').value">
           <mat-form-field appearance="outline" class="flex">
             <mat-label translate>gateway.inactivity-timeout-seconds</mat-label>
@@ -655,7 +655,7 @@
       </div>
       <div class="tb-form-panel no-padding-bottom">
         <div class="tb-form-panel-title" translate>gateway.advanced</div>
-        <section class="tb-form-row no-border no-padding tb-not-inline-field column-xs">
+        <section class="tb-form-row no-border no-padding tb-standard-fields column-xs">
           <mat-form-field appearance="outline" class="flex">
             <mat-label translate>gateway.min-pack-send-delay</mat-label>
             <input matInput formControlName="minPackSendDelayMS" type="number" min="0"/>
