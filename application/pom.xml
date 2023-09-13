@@ -358,6 +358,10 @@
             <groupId>com.google.oauth-client</groupId>
             <artifactId>google-oauth-client</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.threadly</groupId>
+            <artifactId>threadly</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

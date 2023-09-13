@@ -59,8 +59,14 @@ public class InMemoryTbQueueConsumer<T extends TbQueueMsg> implements TbQueueCon
     }
 
     @Override
-    public void unsubscribe() {
+    public void stop() {
         stopped = true;
+    }
+
+    @Override
+    public void unsubscribe() {
+        stop();
+        subscribed = false;
     }
 
     @Override

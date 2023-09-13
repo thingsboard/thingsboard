@@ -152,6 +152,7 @@
         <slack-api.version>1.12.1</slack-api.version>
         <oshi.version>6.4.2</oshi.version>
         <google-oauth-client.version>1.34.1</google-oauth-client.version>
+        <threadly.version>7.0</threadly.version>
     </properties>
 
     <modules>
@@ -2022,6 +2023,11 @@
                 <groupId>com.google.oauth-client</groupId>
                 <artifactId>google-oauth-client</artifactId>
                 <version>${google-oauth-client.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.threadly</groupId>
+                <artifactId>threadly</artifactId>
+                <version>${threadly.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -164,10 +164,14 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
     }
 
     @Override
+    public void stop() {
+        log.info("Stopping consumer for topics {}", getFullTopicNames());
+        stopped = true;
+    }
+
+    @Override
     public void unsubscribe() {
-        log.info("Unsubscribing from topics and stopping consumer for topics {}", partitions.stream()
-                .map(TopicPartitionInfo::getFullTopicName)
-                .collect(Collectors.joining(", ")));
+        log.info("Unsubscribing from topics and stopping consumer for topics {}", getFullTopicNames());
         stopped = true;
         consumerLock.lock();
         try {
