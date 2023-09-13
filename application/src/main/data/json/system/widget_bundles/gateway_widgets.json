@@ -10,13 +10,12 @@
   "widgetTypeFqns": [
     "gateway_widgets.gateway_configuration",
     "gateway_widgets.attributes_card",
-    "gateway_widgets.gateway_configuration2",
+    "gateway_widgets.gateway_general_configuration",
     "gateway_widgets.config_form_latest",
-    "gateway_widgets.gateway_events",
-    "gateway_widgets.gateway_connector",
+    "gateway_widgets.gateway_connectors",
     "gateway_widgets.gateway_logs",
-    "gateway_widgets.gateway_statistics",
-    "gateway_widgets.gateway_general_statistics",
+    "gateway_widgets.gateway_custom_statistics",
+    "gateway_widgets.gateway_general_chart_statistics",
     "gateway_widgets.service_rpc"
   ]
 }

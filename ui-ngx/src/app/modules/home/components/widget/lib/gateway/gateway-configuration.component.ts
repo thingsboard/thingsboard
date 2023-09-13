@@ -15,15 +15,11 @@
 ///
 
 import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { Router } from '@angular/router';
 import {
   FormArray,
   FormBuilder,
   FormControl,
   FormGroup,
-  UntypedFormGroup,
   ValidationErrors,
   ValidatorFn,
   Validators
@@ -41,79 +37,18 @@ import { Observable, of } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 import { DeviceCredentials, DeviceCredentialsType } from '@shared/models/device.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
-
-export enum StorageTypes {
-  MEMORY = 'memory',
-  FILE = 'file',
-  SQLITE = 'sqlite'
-}
-
-export enum GatewayLogLevel {
-  none = 'NONE',
-  critical = 'CRITICAL',
-  error = 'ERROR',
-  warning = 'WARNING',
-  info = 'INFO',
-  debug = 'DEBUG'
-}
-
-export enum LogSavingPeriod {
-  days = 'D',
-  hours = 'H',
-  minutes = 'M',
-  seconds = 'S'
-}
-
-export enum LocalLogsConfigs {
-  service = 'service',
-  connector = 'connector',
-  converter = 'converter',
-  tb_connection = 'tb_connection',
-  storage = 'storage',
-  extension = 'extension'
-}
-
-export const localLogsConfigLabels = new Map<LocalLogsConfigs, string>([
-  [LocalLogsConfigs.service, 'Service'],
-  [LocalLogsConfigs.connector, 'Connector'],
-  [LocalLogsConfigs.converter, 'Converter'],
-  [LocalLogsConfigs.tb_connection, 'TB Connection'],
-  [LocalLogsConfigs.storage, 'Storage'],
-  [LocalLogsConfigs.extension, 'Extension']
-]);
-
-export const logSavingPeriodTranslations = new Map<LogSavingPeriod, string>(
-  [
-    [LogSavingPeriod.days, 'gateway.logs.days'],
-    [LogSavingPeriod.hours, 'gateway.logs.hours'],
-    [LogSavingPeriod.minutes, 'gateway.logs.minutes'],
-    [LogSavingPeriod.seconds, 'gateway.logs.seconds']
-  ]
-);
-
-export const storageTypesTranslations = new Map<StorageTypes, string>(
-  [
-    [StorageTypes.MEMORY, 'gateway.storage-types.memory-storage'],
-    [StorageTypes.FILE, 'gateway.storage-types.file-storage'],
-    [StorageTypes.SQLITE, 'gateway.storage-types.sqlite']
-  ]
-);
-
-export enum SecurityTypes {
-  ACCESS_TOKEN = 'accessToken',
-  USERNAME_PASSWORD = 'usernamePassword',
-  TLS_ACCESS_TOKEN = 'tlsAccessToken',
-  TLS_PRIVATE_KEY = 'tlsPrivateKey'
-}
-
-export const securityTypesTranslationsMap = new Map<SecurityTypes, string>(
-  [
-    [SecurityTypes.ACCESS_TOKEN, 'gateway.security-types.access-token'],
-    [SecurityTypes.USERNAME_PASSWORD, 'gateway.security-types.username-password'],
-    [SecurityTypes.TLS_ACCESS_TOKEN, 'gateway.security-types.tls-access-token'],
-    // [SecurityTypes.TLS_PRIVATE_KEY, 'gateway.security-types.tls-private-key'],
-  ]
-);
+import {
+  GatewayLogLevel,
+  GecurityTypesTranslationsMap,
+  LocalLogsConfigTranslateMap,
+  LocalLogsConfigs,
+  LogSavingPeriod,
+  LogSavingPeriodTranslations,
+  SecurityTypes,
+  StorageTypes,
+  StorageTypesTranslationMap
+} from './gateway-widget.models';
+import { deepTrim } from '@core/utils';
 
 @Component({
   selector: 'tb-gateway-configuration',
@@ -124,13 +59,16 @@ export class GatewayConfigurationComponent implements OnInit {
 
   gatewayConfigGroup: FormGroup;
 
-  storageTypes = storageTypesTranslations;
+  StorageTypes = StorageTypes;
+  storageTypes = Object.values(StorageTypes) as StorageTypes[];
+  storageTypesTranslationMap = StorageTypesTranslationMap;
 
-  logSavingPeriods = logSavingPeriodTranslations;
+  logSavingPeriods = LogSavingPeriodTranslations;
 
-  localLogsConfigLabels = localLogsConfigLabels;
+  localLogsConfigs = Object.keys(LocalLogsConfigs) as LocalLogsConfigs[];
+  localLogsConfigTranslateMap = LocalLogsConfigTranslateMap;
 
-  securityTypes = securityTypesTranslationsMap;
+  securityTypes = GecurityTypesTranslationsMap;
 
   gatewayLogLevel = Object.values(GatewayLogLevel);
 
@@ -142,24 +80,19 @@ export class GatewayConfigurationComponent implements OnInit {
 
   logSelector: FormControl;
 
-  securityType: SecurityTypes;
+  private initialCredentials: DeviceCredentials;
 
-  initialCredentials: DeviceCredentials;
-
-
-  constructor(protected router: Router,
-              protected store: Store<AppState>,
-              protected fb: FormBuilder,
-              protected attributeService: AttributeService,
-              protected deviceService: DeviceService,
+  constructor(private fb: FormBuilder,
+              private attributeService: AttributeService,
+              private deviceService: DeviceService,
               private cd: ChangeDetectorRef,
-              public dialog: MatDialog) {
+              private dialog: MatDialog) {
   }
 
   ngOnInit() {
     this.gatewayConfigGroup = this.fb.group({
       thingsboard: this.fb.group({
-        host: [window.location.hostname, [Validators.required]],
+        host: [window.location.hostname, [Validators.required, Validators.pattern(/^[^\s]+$/)]],
         port: [1883, [Validators.required, Validators.min(1), Validators.max(65535), Validators.pattern(/^-?[0-9]+$/)]],
         remoteShell: [false, []],
         remoteConfiguration: [true, []],
@@ -175,30 +108,30 @@ export class GatewayConfigurationComponent implements OnInit {
         handleDeviceRenaming: [true, []],
         checkingDeviceActivity: this.fb.group({
           checkDeviceInactivity: [false, []],
-          inactivityTimeoutSeconds: [200, [Validators.min(1)]],
-          inactivityCheckPeriodSeconds: [500, [Validators.min(1)]]
+          inactivityTimeoutSeconds: [200, [Validators.min(1), Validators.pattern(/^[^.\s]+$/)]],
+          inactivityCheckPeriodSeconds: [500, [Validators.min(1), Validators.pattern(/^[^.\s]+$/)]]
         }),
         security: this.fb.group({
           type: [SecurityTypes.ACCESS_TOKEN, [Validators.required]],
-          accessToken: [null, [Validators.required]],
-          clientId: [null, []],
-          username: [null, []],
-          password: [null, []],
+          accessToken: [null, [Validators.required, Validators.pattern(/^[^.\s]+$/)]],
+          clientId: [null, [Validators.pattern(/^[^.\s]+$/)]],
+          username: [null, [Validators.pattern(/^[^.\s]+$/)]],
+          password: [null, [Validators.pattern(/^[^.\s]+$/)]],
           caCert: [null, []],
           cert: [null, []],
           privateKey: [null, []],
         }),
-        qos: [1, [Validators.min(0), Validators.max(1), Validators.required]]
+        qos: [1, [Validators.min(0), Validators.max(1), Validators.required, Validators.pattern(/^[^.\s]+$/)]]
       }),
       storage: this.fb.group({
         type: [StorageTypes.MEMORY, [Validators.required]],
-        read_records_count: [100, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.required]],
-        max_records_count: [100000, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.required]],
-        data_folder_path: ['./data/', []],
+        read_records_count: [100, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.required, Validators.pattern(/^[^.\s]+$/)]],
+        max_records_count: [100000, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.required, Validators.pattern(/^[^.\s]+$/)]],
+        data_folder_path: ['./data/', [Validators.pattern(/^[^\s]+$/)]],
         max_file_count: [10, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
         max_read_records_count: [10, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
         max_records_per_file: [10000, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
-        data_file_path: ['./data/data.db', []],
+        data_file_path: ['./data/data.db', [Validators.pattern(/^[^\s]+$/)]],
         messages_ttl_check_in_hours: [1, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
         messages_ttl_in_days: [7, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
 
@@ -215,13 +148,13 @@ export class GatewayConfigurationComponent implements OnInit {
       }),
       connectors: this.fb.array([]),
       logs: this.fb.group({
-        dateFormat: ['%Y-%m-%d %H:%M:%S', [Validators.required]],
+        dateFormat: ['%Y-%m-%d %H:%M:%S', [Validators.required, Validators.pattern(/^[^\s].*[^\s]$/)]],
         logFormat: ['%(asctime)s - |%(levelname)s| - [%(filename)s] - %(module)s - %(funcName)s - %(lineno)d - %(message)s',
-          [Validators.required]],
+          [Validators.required, Validators.pattern(/^[^\s].*[^\s]$/)]],
         type: ['remote', [Validators.required]],
         remote: this.fb.group({
           enabled: [false],
-          logLevel: [GatewayLogLevel.info, [Validators.required]],
+          logLevel: [GatewayLogLevel.INFO, [Validators.required]],
         }),
         local: this.fb.group({})
       })
@@ -231,7 +164,7 @@ export class GatewayConfigurationComponent implements OnInit {
       if (password && password !== '') {
         this.gatewayConfigGroup.get('thingsboard.security.username').setValidators([Validators.required]);
       } else {
-        this.gatewayConfigGroup.get('thingsboard.security.username').setValidators([]);
+        this.gatewayConfigGroup.get('thingsboard.security.username').clearValidators();
       }
       this.gatewayConfigGroup.get('thingsboard.security.username').updateValueAndValidity({emitEvent: false});
     });
@@ -258,10 +191,10 @@ export class GatewayConfigurationComponent implements OnInit {
         checkingDeviceActivityGroup.get('inactivityCheckPeriodSeconds').setValidators([Validators.min(1), Validators.required]);
       } else {
         checkingDeviceActivityGroup.get('inactivityTimeoutSeconds').clearValidators();
-        checkingDeviceActivityGroup.get('inactivityTimeoutSeconds').setErrors(null);
         checkingDeviceActivityGroup.get('inactivityCheckPeriodSeconds').clearValidators();
-        checkingDeviceActivityGroup.get('inactivityCheckPeriodSeconds').setErrors(null);
       }
+      checkingDeviceActivityGroup.get('inactivityTimeoutSeconds').updateValueAndValidity({emitEvent: false});
+      checkingDeviceActivityGroup.get('inactivityCheckPeriodSeconds').updateValueAndValidity({emitEvent: false});
     });
 
     this.gatewayConfigGroup.get('grpc.enabled').valueChanges.subscribe(value => {
@@ -272,7 +205,7 @@ export class GatewayConfigurationComponent implements OnInit {
     securityGroup.get('type').valueChanges.subscribe(type => {
       this.removeAllSecurityValidators();
       if (type === SecurityTypes.ACCESS_TOKEN) {
-        securityGroup.get('accessToken').addValidators([Validators.required]);
+        securityGroup.get('accessToken').addValidators([Validators.required, Validators.pattern(/^[^.\s]+$/)]);
         securityGroup.get('accessToken').updateValueAndValidity();
       } else if (type === SecurityTypes.TLS_PRIVATE_KEY) {
         securityGroup.get('caCert').addValidators([Validators.required]);
@@ -282,21 +215,19 @@ export class GatewayConfigurationComponent implements OnInit {
         securityGroup.get('cert').addValidators([Validators.required]);
         securityGroup.get('cert').updateValueAndValidity();
       } else if (type === SecurityTypes.TLS_ACCESS_TOKEN) {
-        securityGroup.get('accessToken').addValidators([Validators.required]);
+        securityGroup.get('accessToken').addValidators([Validators.required, Validators.pattern(/^[^.\s]+$/)]);
         securityGroup.get('accessToken').updateValueAndValidity();
         securityGroup.get('caCert').addValidators([Validators.required]);
         securityGroup.get('caCert').updateValueAndValidity();
       } else if (type === SecurityTypes.USERNAME_PASSWORD) {
-        securityGroup.addValidators([this.atLeastOneRequired(Validators.required, ['clientId', 'username'])])
-        // securityGroup.get('password').addValidators([Validators.required]);
-        // securityGroup.get('password').updateValueAndValidity();
+        securityGroup.addValidators([this.atLeastOneRequired(Validators.required, ['clientId', 'username'])]);
       }
       securityGroup.updateValueAndValidity();
     });
 
-    securityGroup.get('caCert').valueChanges.subscribe(_ => this.cd.detectChanges());
-    securityGroup.get('privateKey').valueChanges.subscribe(_ => this.cd.detectChanges());
-    securityGroup.get('cert').valueChanges.subscribe(_ => this.cd.detectChanges());
+    securityGroup.get('caCert').valueChanges.subscribe(() => this.cd.detectChanges());
+    securityGroup.get('privateKey').valueChanges.subscribe(() => this.cd.detectChanges());
+    securityGroup.get('cert').valueChanges.subscribe(() => this.cd.detectChanges());
 
     const storageGroup = this.gatewayConfigGroup.get('storage') as FormGroup;
     storageGroup.get('type').valueChanges.subscribe(type => {
@@ -306,28 +237,37 @@ export class GatewayConfigurationComponent implements OnInit {
           [Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]);
         storageGroup.get('max_records_count').addValidators(
           [Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.required]);
+        storageGroup.get('read_records_count').updateValueAndValidity({emitEvent: false});
+        storageGroup.get('max_records_count').updateValueAndValidity({emitEvent: false});
       } else if (type === StorageTypes.FILE) {
-        storageGroup.get('data_folder_path').addValidators([Validators.required]);
+        storageGroup.get('data_folder_path').addValidators([Validators.required, Validators.pattern(/^[^.\s]+$/)]);
         storageGroup.get('max_file_count').addValidators(
           [Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.required]);
         storageGroup.get('max_read_records_count').addValidators(
           [Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.required]);
         storageGroup.get('max_records_per_file').addValidators(
           [Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.required]);
+        storageGroup.get('data_folder_path').updateValueAndValidity({emitEvent: false});
+        storageGroup.get('max_file_count').updateValueAndValidity({emitEvent: false});
+        storageGroup.get('max_read_records_count').updateValueAndValidity({emitEvent: false});
+        storageGroup.get('max_records_per_file').updateValueAndValidity({emitEvent: false});
       } else if (type === StorageTypes.SQLITE) {
-        storageGroup.get('data_file_path').addValidators([Validators.required]);
+        storageGroup.get('data_file_path').addValidators([Validators.required, Validators.pattern(/^[^.\s]+$/)]);
         storageGroup.get('messages_ttl_check_in_hours').addValidators(
           [Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.required]);
         storageGroup.get('messages_ttl_in_days').addValidators(
           [Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.required]);
+        storageGroup.get('data_file_path').updateValueAndValidity({emitEvent: false});
+        storageGroup.get('messages_ttl_check_in_hours').updateValueAndValidity({emitEvent: false});
+        storageGroup.get('messages_ttl_in_days').updateValueAndValidity({emitEvent: false});
       }
     });
 
     this.fetchConfigAttribute(this.device);
   }
 
-  atLeastOneRequired(validator: ValidatorFn, controls: string[] = null) {
-    return (group: UntypedFormGroup): ValidationErrors | null => {
+  private atLeastOneRequired(validator: ValidatorFn, controls: string[] = null) {
+    return (group: FormGroup): ValidationErrors | null => {
       if (!controls) {
         controls = Object.keys(group.controls);
       }
@@ -337,22 +277,10 @@ export class GatewayConfigurationComponent implements OnInit {
     };
   }
 
-  updateSecurityValidators(value: SecurityTypes) {
-    this.gatewayConfigGroup.get('thingsboard.security.type').setValue(value, {emitEvent: true});
-    this.gatewayConfigGroup.get('thingsboard.security.type').markAsDirty();
-  }
-
-  updateLogType(value: LocalLogsConfigs) {
-    this.logSelector.setValue(value);
-  }
-
-  updateStorageType(value: StorageTypes) {
-    this.gatewayConfigGroup.get('storage.type').setValue(value, {emitEvent: true});
-    this.gatewayConfigGroup.get('storage.type').markAsDirty();
-  }
-
-  fetchConfigAttribute(entityId: EntityId) {
-    if (entityId.id === NULL_UUID) return;
+  private fetchConfigAttribute(entityId: EntityId) {
+    if (entityId.id === NULL_UUID) {
+      return;
+    }
     this.attributeService.getEntityAttributes(entityId, AttributeScope.CLIENT_SCOPE,
       ['general_configuration', 'grpc_configuration', 'logs_configuration', 'storage_configuration', 'RemoteLoggingLevel']).pipe(
       mergeMap(attributes => attributes.length ? of(attributes) : this.attributeService.getEntityAttributes(
@@ -397,24 +325,26 @@ export class GatewayConfigurationComponent implements OnInit {
         if (remoteLoggingLevel) {
           const remoteLogsFormGroup = this.gatewayConfigGroup.get('logs.remote');
           remoteLogsFormGroup.patchValue({
-            enabled: remoteLoggingLevel !== GatewayLogLevel.none,
+            enabled: remoteLoggingLevel !== GatewayLogLevel.NONE,
             logLevel: remoteLoggingLevel
           }, {emitEvent: false});
           remoteLogsFormGroup.markAsPristine();
         }
         this.cd.detectChanges();
       } else {
-        this.checkAndFetchCredentials({});
+        this.checkAndFetchCredentials();
       }
     });
   }
 
-  checkAndFetchCredentials(security): void {
+  private checkAndFetchCredentials(security: any = {}): void {
     if (security.type !== SecurityTypes.TLS_PRIVATE_KEY) {
       this.deviceService.getDeviceCredentials(this.device.id).subscribe(credentials => {
         this.initialCredentials = credentials;
         if (credentials.credentialsType === DeviceCredentialsType.ACCESS_TOKEN || security.type === SecurityTypes.TLS_ACCESS_TOKEN) {
-          this.gatewayConfigGroup.get('thingsboard.security.type').setValue(security.type === SecurityTypes.TLS_ACCESS_TOKEN? SecurityTypes.TLS_ACCESS_TOKEN : SecurityTypes.ACCESS_TOKEN);
+          this.gatewayConfigGroup.get('thingsboard.security.type').setValue(security.type === SecurityTypes.TLS_ACCESS_TOKEN
+            ? SecurityTypes.TLS_ACCESS_TOKEN
+            : SecurityTypes.ACCESS_TOKEN);
           this.gatewayConfigGroup.get('thingsboard.security.accessToken').setValue(credentials.credentialsId);
           if(security.type === SecurityTypes.TLS_ACCESS_TOKEN) {
             this.gatewayConfigGroup.get('thingsboard.security.caCert').setValue(security.caCert);
@@ -432,7 +362,7 @@ export class GatewayConfigurationComponent implements OnInit {
     }
   }
 
-  logsToObj(logsConfig) {
+  private logsToObj(logsConfig: any) {
     const logsObject = {
       local: {}
     };
@@ -453,43 +383,42 @@ export class GatewayConfigurationComponent implements OnInit {
     return {local: logsObject, logFormat, dateFormat};
   }
 
-  toggleRpcFields(enable: boolean) {
+  private toggleRpcFields(enable: boolean) {
     const grpcGroup = this.gatewayConfigGroup.get('grpc') as FormGroup;
     if (enable) {
-      grpcGroup.get('serverPort').enable();
-      grpcGroup.get('keepAliveTimeMs').enable();
-      grpcGroup.get('keepAliveTimeoutMs').enable();
-      grpcGroup.get('keepalivePermitWithoutCalls').enable();
-      grpcGroup.get('maxPingsWithoutData').enable();
-      grpcGroup.get('minTimeBetweenPingsMs').enable();
-      grpcGroup.get('minPingIntervalWithoutDataMs').enable();
+      grpcGroup.get('serverPort').enable({emitEvent: false});
+      grpcGroup.get('keepAliveTimeMs').enable({emitEvent: false});
+      grpcGroup.get('keepAliveTimeoutMs').enable({emitEvent: false});
+      grpcGroup.get('keepalivePermitWithoutCalls').enable({emitEvent: false});
+      grpcGroup.get('maxPingsWithoutData').enable({emitEvent: false});
+      grpcGroup.get('minTimeBetweenPingsMs').enable({emitEvent: false});
+      grpcGroup.get('minPingIntervalWithoutDataMs').enable({emitEvent: false});
     } else {
-      grpcGroup.get('serverPort').disable();
-      grpcGroup.get('keepAliveTimeMs').disable();
-      grpcGroup.get('keepAliveTimeoutMs').disable();
-      grpcGroup.get('keepalivePermitWithoutCalls').disable();
-      grpcGroup.get('maxPingsWithoutData').disable();
-      grpcGroup.get('minTimeBetweenPingsMs').disable();
-      grpcGroup.get('minPingIntervalWithoutDataMs').disable();
+      grpcGroup.get('serverPort').disable({emitEvent: false});
+      grpcGroup.get('keepAliveTimeMs').disable({emitEvent: false});
+      grpcGroup.get('keepAliveTimeoutMs').disable({emitEvent: false});
+      grpcGroup.get('keepalivePermitWithoutCalls').disable({emitEvent: false});
+      grpcGroup.get('maxPingsWithoutData').disable({emitEvent: false});
+      grpcGroup.get('minTimeBetweenPingsMs').disable({emitEvent: false});
+      grpcGroup.get('minPingIntervalWithoutDataMs').disable({emitEvent: false});
     }
   }
 
 
-  addCommand(command?): void {
-    const data = command || {};
+  addCommand(command: any = {}): void {
     const commandsFormArray = this.commandFormArray();
     const commandFormGroup = this.fb.group({
-      attributeOnGateway: [data.attributeOnGateway || null, [Validators.required]],
-      command: [data.command || null, [Validators.required]],
-      timeout: [data.timeout || null, [Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
+      attributeOnGateway: [command.attributeOnGateway || null, [Validators.required, Validators.pattern(/^[^.\s]+$/)]],
+      command: [command.command || null, [Validators.required, Validators.pattern(/^[^.\s]+$/)]],
+      timeout: [command.timeout || null, [Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.pattern(/^[^.\s]+$/)]],
     });
     commandsFormArray.push(commandFormGroup);
   }
 
-  addLocalLogConfig(name, config): void {
+  private addLocalLogConfig(name: string, config: any): void {
     const localLogsFormGroup = this.gatewayConfigGroup.get('logs.local') as FormGroup;
     const configGroup = this.fb.group({
-      logLevel: [config.logLevel || GatewayLogLevel.info, [Validators.required]],
+      logLevel: [config.logLevel || GatewayLogLevel.INFO, [Validators.required]],
       filePath: [config.filePath || './logs', [Validators.required]],
       backupCount: [config.backupCount || 7, [Validators.required, Validators.min(0)]],
       savingTime: [config.savingTime || 3, [Validators.required, Validators.min(0)]],
@@ -507,12 +436,14 @@ export class GatewayConfigurationComponent implements OnInit {
   }
 
   removeCommandControl(index: number, event: any): void {
-    if (event.pointerType === '') return;
+    if (event.pointerType === '') {
+      return;
+    }
     this.commandFormArray().removeAt(index);
     this.gatewayConfigGroup.markAsDirty();
   }
 
-  removeAllSecurityValidators(): void {
+  private removeAllSecurityValidators(): void {
     const securityGroup = this.gatewayConfigGroup.get('thingsboard.security') as FormGroup;
     securityGroup.clearValidators();
     for (const controlsKey in securityGroup.controls) {
@@ -524,7 +455,7 @@ export class GatewayConfigurationComponent implements OnInit {
     }
   }
 
-  removeAllStorageValidators(): void {
+  private removeAllStorageValidators(): void {
     const storageGroup = this.gatewayConfigGroup.get('storage') as FormGroup;
     for (const storageKey in storageGroup.controls) {
       if (storageKey !== 'type') {
@@ -535,7 +466,7 @@ export class GatewayConfigurationComponent implements OnInit {
     }
   }
 
-  removeEmpty(obj) {
+  private removeEmpty(obj: any) {
     return Object.fromEntries(
       Object.entries(obj)
         .filter(([_, v]) => v != null)
@@ -543,7 +474,7 @@ export class GatewayConfigurationComponent implements OnInit {
     );
   }
 
-  generateLogsFile(logsObj) {
+  private generateLogsFile(logsObj: any) {
     const logAttrObj = {
       version: 1,
       disable_existing_loggers: false,
@@ -591,7 +522,7 @@ export class GatewayConfigurationComponent implements OnInit {
     return logAttrObj;
   }
 
-  createHandlerObj(logObj, key) {
+  private createHandlerObj(logObj: any, key: string) {
     return {
       class: 'thingsboard_gateway.tb_utility.tb_handler.TimedRotatingFileHandler',
       formatter: 'LogFormatter',
@@ -603,7 +534,7 @@ export class GatewayConfigurationComponent implements OnInit {
     };
   }
 
-  createLoggerObj(logObj, key) {
+  private createLoggerObj(logObj: any, key: string) {
     return {
       handlers: [`${key}Handler`, 'consoleHandler'],
       level: logObj.logLevel,
@@ -612,12 +543,12 @@ export class GatewayConfigurationComponent implements OnInit {
   }
 
   saveConfig(): void {
-    const value = this.removeEmpty(this.gatewayConfigGroup.value);
+    const value = deepTrim(this.removeEmpty(this.gatewayConfigGroup.value));
     value.thingsboard.statistics.commands = Object.values(value.thingsboard.statistics.commands);
     const attributes = [];
     attributes.push({
       key: 'RemoteLoggingLevel',
-      value: value.logs.remote.enabled ? value.logs.remote.logLevel : GatewayLogLevel.none
+      value: value.logs.remote.enabled ? value.logs.remote.logLevel : GatewayLogLevel.NONE
     });
     delete value.connectors;
     attributes.push({
@@ -642,18 +573,18 @@ export class GatewayConfigurationComponent implements OnInit {
 
 
     this.attributeService.saveEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, attributes).subscribe(_ => {
-      this.updateCredentials(value.thingsboard.security).subscribe(_ => {
+      this.updateCredentials(value.thingsboard.security).subscribe(() => {
         if (this.dialogRef) {
           this.dialogRef.close();
         } else {
           this.gatewayConfigGroup.markAsPristine();
           this.cd.detectChanges();
         }
-      })
+      });
     });
   }
 
-  updateCredentials(securityConfig): Observable<any> {
+  private updateCredentials(securityConfig: any): Observable<any> {
     let updateCredentials = false;
     let newCredentials = {};
     if (securityConfig.type === SecurityTypes.USERNAME_PASSWORD) {
@@ -661,17 +592,26 @@ export class GatewayConfigurationComponent implements OnInit {
         updateCredentials = true;
       } else {
         const parsedCredentials = JSON.parse(this.initialCredentials.credentialsValue);
-        updateCredentials = !(parsedCredentials.clientId === securityConfig.clientId && parsedCredentials.userName === securityConfig.username && parsedCredentials.password === securityConfig.password);
+        updateCredentials = !(
+          parsedCredentials.clientId === securityConfig.clientId &&
+          parsedCredentials.userName === securityConfig.username &&
+          parsedCredentials.password === securityConfig.password);
       }
       if (updateCredentials) {
-        let credentialsValue: { clientId?, userName?, password? } = {};
+        const credentialsValue: { clientId?: string; userName?: string; password?: string } = {};
         const credentialsType = DeviceCredentialsType.MQTT_BASIC;
-        if (securityConfig.clientId) credentialsValue.clientId = securityConfig.clientId;
-        if (securityConfig.username) credentialsValue.userName = securityConfig.username;
-        if (securityConfig.password) credentialsValue.password = securityConfig.password;
+        if (securityConfig.clientId) {
+          credentialsValue.clientId = securityConfig.clientId;
+        }
+        if (securityConfig.username) {
+          credentialsValue.userName = securityConfig.username;
+        }
+        if (securityConfig.password) {
+          credentialsValue.password = securityConfig.password;
+        }
         newCredentials = {
-            credentialsType,
-            credentialsValue: JSON.stringify(credentialsValue)
+          credentialsType,
+          credentialsValue: JSON.stringify(credentialsValue)
         };
       }
     } else if (securityConfig.type === SecurityTypes.ACCESS_TOKEN || securityConfig.type === SecurityTypes.TLS_ACCESS_TOKEN) {
@@ -684,12 +624,12 @@ export class GatewayConfigurationComponent implements OnInit {
         newCredentials = {
           credentialsType: DeviceCredentialsType.ACCESS_TOKEN,
           credentialsId: securityConfig.accessToken
-        }
+        };
       }
     }
 
     if (updateCredentials) {
-      return this.deviceService.saveDeviceCredentials({...this.initialCredentials,...newCredentials})
+      return this.deviceService.saveDeviceCredentials({...this.initialCredentials,...newCredentials});
     }
     return of(null);
   }
