@@ -14,33 +14,83 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
-import { DialogComponent } from "@shared/components/dialog.component";
-import { Store } from "@ngrx/store";
-import { AppState } from "@core/core.state";
-import { Router } from "@angular/router";
+import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { DialogComponent } from '@shared/components/dialog.component';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { Router } from '@angular/router';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { ActionPreferencesPutUserSettings } from '@core/auth/auth.actions';
+import { EdgeInfo, EdgeInstructionsMethod } from '@shared/models/edge.models';
+import { EdgeService } from '@core/http/edge.service';
 
-export interface EdgeInstructionsData {
-  instructions: string;
+export interface EdgeInstructionsDialogData {
+  edge: EdgeInfo;
+  afterAdd: boolean;
 }
 
 @Component({
-  selector: 'tb-edge-instructions',
-  templateUrl: './edge-instructions-dialog.component.html'
+  selector: 'tb-edge-installation-dialog',
+  templateUrl: './edge-instructions-dialog.component.html',
+  styleUrls: ['./edge-instructions-dialog.component.scss']
 })
-export class EdgeInstructionsDialogComponent extends DialogComponent<EdgeInstructionsDialogComponent, EdgeInstructionsData> {
+export class EdgeInstructionsDialogComponent extends DialogComponent<EdgeInstructionsDialogComponent> implements OnInit, OnDestroy {
 
-  instructions: string = this.data.instructions;
+  dialogTitle: string;
+  showDontShowAgain: boolean;
+
+  loadedInstructions = false;
+  notShowAgain = false;
+  tabIndex = 0;
+  instructionsMethod = EdgeInstructionsMethod;
+  contentData: any = {};
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
-              public dialogRef: MatDialogRef<EdgeInstructionsDialogComponent, EdgeInstructionsData>,
-              @Inject(MAT_DIALOG_DATA) public data: EdgeInstructionsData) {
+              @Inject(MAT_DIALOG_DATA) private data: EdgeInstructionsDialogData,
+              public dialogRef: MatDialogRef<EdgeInstructionsDialogComponent>,
+              private edgeService: EdgeService) {
     super(store, router, dialogRef);
+
+    if (this.data.afterAdd) {
+      this.dialogTitle = 'edge.install-connect-instructions-edge-created';
+      this.showDontShowAgain = true;
+    } else {
+      this.dialogTitle = 'edge.install-connect-instructions';
+      this.showDontShowAgain = false;
+    }
   }
 
-  cancel(): void {
-    this.dialogRef.close(null);
+  ngOnInit() {
+    this.getInstructions(this.instructionsMethod[this.tabIndex]);
+  }
+
+  ngOnDestroy() {
+    super.ngOnDestroy();
+  }
+
+  close(): void {
+    if (this.notShowAgain && this.showDontShowAgain) {
+      this.store.dispatch(new ActionPreferencesPutUserSettings({notDisplayInstructionsAfterAddEdge: true}));
+      this.dialogRef.close(null);
+    } else {
+      this.dialogRef.close(null);
+    }
+  }
+
+  selectedTabChange(index: number) {
+    this.getInstructions(this.instructionsMethod[index]);
+  }
+
+  getInstructions(method: string) {
+    if (!this.contentData[method]) {
+      this.loadedInstructions = false;
+      this.edgeService.getEdgeDockerInstallInstructions(this.data.edge.id.id, method).subscribe(
+        res => {
+          this.contentData[method] = res.installInstructions;
+          this.loadedInstructions = true;
+        }
+      );
+    }
   }
 }
