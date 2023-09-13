@@ -136,7 +136,7 @@ public class AlarmCommentControllerTest extends AbstractControllerTest {
         Assert.assertEquals("true", updatedAlarmComment.getComment().get("edited").asText());
         Assert.assertNotNull(updatedAlarmComment.getComment().get("editedOn"));
 
-        testLogEntityActionEntityEqClass(alarm, alarm.getId(), tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.UPDATED_COMMENT, 1, savedComment);
+        testLogEntityActionEntityEqClass(alarm, alarm.getId(), tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.UPDATED_COMMENT, 1, updatedAlarmComment);
     }
 
     @Test

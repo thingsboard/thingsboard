@@ -31,7 +31,7 @@ import {
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { AlarmFilterConfig, alarmFilterConfigEquals } from '@shared/models/query/query.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
+import { Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import {
   AlarmAssigneeOption,
@@ -40,12 +40,11 @@ import {
   AlarmSeverity,
   alarmSeverityTranslations
 } from '@shared/models/alarm.models';
-import { MatChipInputEvent } from '@angular/material/chips';
-import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { TranslateService } from '@ngx-translate/core';
 import { deepClone } from '@core/utils';
-import { Subscription } from 'rxjs';
-import { UtilsService } from '@core/services/utils.service';
+import { EntityType } from '@shared/models/entity-type.models';
+import { fromEvent, Subscription } from 'rxjs';
+import { POSITION_MAP } from '@shared/models/overlay.models';
 
 export const ALARM_FILTER_CONFIG_DATA = new InjectionToken<any>('AlarmFilterConfigData');
 
@@ -93,8 +92,6 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
 
   panelMode = false;
 
-  readonly separatorKeysCodes: number[] = [ENTER, COMMA, SEMICOLON];
-
   alarmSearchStatuses = [AlarmSearchStatus.ACTIVE,
     AlarmSearchStatus.CLEARED,
     AlarmSearchStatus.ACK,
@@ -115,6 +112,8 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
 
   panelResult: AlarmFilterConfig = null;
 
+  entityType = EntityType;
+
   private alarmFilterConfig: AlarmFilterConfig;
   private resizeWindows: Subscription;
 
@@ -128,7 +127,6 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
               private translate: TranslateService,
               private overlay: Overlay,
               private nativeElement: ElementRef,
-              private utils: UtilsService,
               private viewContainerRef: ViewContainerRef) {
   }
 
@@ -202,14 +200,9 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
       minWidth: ''
     });
     config.hasBackdrop = true;
-    const connectedPosition: ConnectedPosition = {
-      originX: 'start',
-      originY: 'bottom',
-      overlayX: 'start',
-      overlayY: 'top'
-    };
-    config.positionStrategy = this.overlay.position().flexibleConnectedTo(this.nativeElement)
-      .withPositions([connectedPosition]);
+    config.positionStrategy = this.overlay.position()
+      .flexibleConnectedTo(this.nativeElement)
+      .withPositions([POSITION_MAP.bottomLeft]);
 
     this.alarmFilterOverlayRef = this.overlay.create(config);
     this.alarmFilterOverlayRef.backdropClick().subscribe(() => {
@@ -217,7 +210,9 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
     });
     this.alarmFilterOverlayRef.attach(new TemplatePortal(this.alarmFilterPanel,
       this.viewContainerRef));
-    this.resizeWindows = this.utils.updateOverlayMaxHeigth(this.alarmFilterOverlayRef);
+    this.resizeWindows = fromEvent(window, 'resize').subscribe(() => {
+      this.alarmFilterOverlayRef.updatePosition();
+    });
   }
 
   cancel() {
@@ -260,40 +255,6 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
           this.propagateChange(this.alarmFilterConfig);
         }
       }
-    }
-  }
-
-  public alarmTypeList(): string[] {
-    return this.alarmFilterConfigForm.get('typeList').value;
-  }
-
-  public removeAlarmType(type: string): void {
-    const types: string[] = this.alarmFilterConfigForm.get('typeList').value;
-    const index = types.indexOf(type);
-    if (index >= 0) {
-      types.splice(index, 1);
-      this.alarmFilterConfigForm.get('typeList').setValue(types);
-      this.alarmFilterConfigForm.get('typeList').markAsDirty();
-    }
-  }
-
-  public addAlarmType(event: MatChipInputEvent): void {
-    const input = event.chipInput.inputElement;
-    const value = event.value;
-
-    let types: string[] = this.alarmFilterConfigForm.get('typeList').value;
-
-    if ((value || '').trim()) {
-      if (!types) {
-        types = [];
-      }
-      types.push(value.trim());
-      this.alarmFilterConfigForm.get('typeList').setValue(types);
-      this.alarmFilterConfigForm.get('typeList').markAsDirty();
-    }
-
-    if (input) {
-      input.value = '';
     }
   }
 

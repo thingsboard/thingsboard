@@ -1,24 +1,34 @@
 {
   "title": "Software",
   "image": null,
+  "mobileHide": false,
+  "mobileOrder": null,
   "configuration": {
     "description": "",
     "widgets": {
       "cd03188e-cd9d-9601-fd57-da4cb95fc016": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "entities_table",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 6.5,
         "config": {
           "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
             "realtime": {
+              "realtimeType": 1,
               "interval": 1000,
-              "timewindowMs": 86400000
+              "timewindowMs": 86400000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1694085343279,
+                "endTimeMs": 1694171743279
+              },
+              "quickInterval": "CURRENT_DAY"
             },
             "aggregation": {
               "type": "NONE",
@@ -299,16 +309,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "cd03188e-cd9d-9601-fd57-da4cb95fc016"
+        "id": "cd03188e-cd9d-9601-fd57-da4cb95fc016",
+        "typeFullFqn": "system.cards.entities_table"
       },
       "100b756c-0082-6505-3ae1-3603e6deea48": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "timeseries_table",
         "type": "timeseries",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 8,
         "sizeY": 6.5,
         "config": {
@@ -461,14 +466,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "100b756c-0082-6505-3ae1-3603e6deea48"
+        "id": "100b756c-0082-6505-3ae1-3603e6deea48",
+        "typeFullFqn": "system.cards.timeseries_table"
       },
       "17543c57-af4a-2c1e-bf12-53a7b46791e6": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "html_value_card",
         "type": "latest",
-        "title": "New widget",
         "sizeX": 8,
         "sizeY": 3,
         "config": {
@@ -496,8 +498,27 @@
             }
           ],
           "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
             "realtime": {
-              "timewindowMs": 60000
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1694085343280,
+                "endTimeMs": 1694171743280
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
             }
           },
           "showTitle": false,
@@ -545,14 +566,11 @@
           "enableDataExport": false,
           "displayTimewindow": true
         },
-        "id": "17543c57-af4a-2c1e-bf12-53a7b46791e6"
+        "id": "17543c57-af4a-2c1e-bf12-53a7b46791e6",
+        "typeFullFqn": "system.cards.html_value_card"
       },
       "6c1c4e1a-bce0-f5ad-ff8b-ba1dfc5a4ec6": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "html_value_card",
         "type": "latest",
-        "title": "New widget",
         "sizeX": 8,
         "sizeY": 3,
         "config": {
@@ -580,8 +598,27 @@
             }
           ],
           "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
             "realtime": {
-              "timewindowMs": 60000
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1694085343280,
+                "endTimeMs": 1694171743280
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
             }
           },
           "showTitle": false,
@@ -629,14 +666,11 @@
           "enableDataExport": false,
           "displayTimewindow": true
         },
-        "id": "6c1c4e1a-bce0-f5ad-ff8b-ba1dfc5a4ec6"
+        "id": "6c1c4e1a-bce0-f5ad-ff8b-ba1dfc5a4ec6",
+        "typeFullFqn": "system.cards.html_value_card"
       },
       "e6674227-9cf3-a2f6-ecac-5ccfc38a3c81": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "html_value_card",
         "type": "latest",
-        "title": "New widget",
         "sizeX": 8,
         "sizeY": 3,
         "config": {
@@ -664,8 +698,27 @@
             }
           ],
           "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
             "realtime": {
-              "timewindowMs": 60000
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1694085343280,
+                "endTimeMs": 1694171743280
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
             }
           },
           "showTitle": false,
@@ -713,14 +766,11 @@
           "enableDataExport": false,
           "displayTimewindow": true
         },
-        "id": "e6674227-9cf3-a2f6-ecac-5ccfc38a3c81"
+        "id": "e6674227-9cf3-a2f6-ecac-5ccfc38a3c81",
+        "typeFullFqn": "system.cards.html_value_card"
       },
       "77b10144-b904-edd5-8c7c-8fb75616c6d8": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "html_value_card",
         "type": "latest",
-        "title": "New widget",
         "sizeX": 8,
         "sizeY": 3,
         "config": {
@@ -748,8 +798,27 @@
             }
           ],
           "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
             "realtime": {
-              "timewindowMs": 60000
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1694085343280,
+                "endTimeMs": 1694171743280
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
             }
           },
           "showTitle": false,
@@ -797,23 +866,32 @@
           "enableDataExport": false,
           "displayTimewindow": true
         },
-        "id": "77b10144-b904-edd5-8c7c-8fb75616c6d8"
+        "id": "77b10144-b904-edd5-8c7c-8fb75616c6d8",
+        "typeFullFqn": "system.cards.html_value_card"
       },
       "21be08bb-ec90-f760-ad6f-e7678f12c401": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "entities_table",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 6.5,
         "config": {
           "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
             "realtime": {
+              "realtimeType": 1,
               "interval": 1000,
-              "timewindowMs": 86400000
+              "timewindowMs": 86400000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1694085343280,
+                "endTimeMs": 1694171743280
+              },
+              "quickInterval": "CURRENT_DAY"
             },
             "aggregation": {
               "type": "NONE",
@@ -1094,23 +1172,32 @@
         },
         "row": 0,
         "col": 0,
-        "id": "21be08bb-ec90-f760-ad6f-e7678f12c401"
+        "id": "21be08bb-ec90-f760-ad6f-e7678f12c401",
+        "typeFullFqn": "system.cards.entities_table"
       },
       "e8280043-d3dc-7acb-c2ff-a4522972ff91": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "entities_table",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 6.5,
         "config": {
           "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
             "realtime": {
+              "realtimeType": 1,
               "interval": 1000,
-              "timewindowMs": 86400000
+              "timewindowMs": 86400000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1694085343280,
+                "endTimeMs": 1694171743280
+              },
+              "quickInterval": "CURRENT_DAY"
             },
             "aggregation": {
               "type": "NONE",
@@ -1391,23 +1478,32 @@
         },
         "row": 0,
         "col": 0,
-        "id": "e8280043-d3dc-7acb-c2ff-a4522972ff91"
+        "id": "e8280043-d3dc-7acb-c2ff-a4522972ff91",
+        "typeFullFqn": "system.cards.entities_table"
       },
       "3624013b-378c-f110-5eba-ae95c25a4dcc": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "entities_table",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 6.5,
         "config": {
           "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
             "realtime": {
+              "realtimeType": 1,
               "interval": 1000,
-              "timewindowMs": 86400000
+              "timewindowMs": 86400000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1694085343280,
+                "endTimeMs": 1694171743280
+              },
+              "quickInterval": "CURRENT_DAY"
             },
             "aggregation": {
               "type": "NONE",
@@ -1688,23 +1784,32 @@
         },
         "row": 0,
         "col": 0,
-        "id": "3624013b-378c-f110-5eba-ae95c25a4dcc"
+        "id": "3624013b-378c-f110-5eba-ae95c25a4dcc",
+        "typeFullFqn": "system.cards.entities_table"
       },
       "d2d13e0d-4e71-889f-9343-ad2f0af9f176": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "entities_table",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 6.5,
         "config": {
           "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
             "realtime": {
+              "realtimeType": 1,
               "interval": 1000,
-              "timewindowMs": 86400000
+              "timewindowMs": 86400000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1694085343280,
+                "endTimeMs": 1694171743280
+              },
+              "quickInterval": "CURRENT_DAY"
             },
             "aggregation": {
               "type": "NONE",
@@ -1985,7 +2090,8 @@
         },
         "row": 0,
         "col": 0,
-        "id": "d2d13e0d-4e71-889f-9343-ad2f0af9f176"
+        "id": "d2d13e0d-4e71-889f-9343-ad2f0af9f176",
+        "typeFullFqn": "system.cards.entities_table"
       }
     },
     "states": {
@@ -2035,7 +2141,8 @@
               "autoFillHeight": true,
               "backgroundImageUrl": null,
               "mobileAutoFillHeight": true,
-              "mobileRowHeight": 70
+              "mobileRowHeight": 70,
+              "outerMargin": true
             }
           }
         }
@@ -2062,7 +2169,8 @@
               "autoFillHeight": true,
               "backgroundImageUrl": null,
               "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70
+              "mobileRowHeight": 70,
+              "outerMargin": true
             }
           }
         }
@@ -2089,7 +2197,8 @@
               "autoFillHeight": true,
               "backgroundImageUrl": null,
               "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70
+              "mobileRowHeight": 70,
+              "outerMargin": true
             }
           }
         }
@@ -2116,7 +2225,8 @@
               "autoFillHeight": true,
               "backgroundImageUrl": null,
               "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70
+              "mobileRowHeight": 70,
+              "outerMargin": true
             }
           }
         }
@@ -2143,7 +2253,8 @@
               "autoFillHeight": true,
               "backgroundImageUrl": null,
               "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70
+              "mobileRowHeight": 70,
+              "outerMargin": true
             }
           }
         }
@@ -2170,7 +2281,8 @@
               "autoFillHeight": true,
               "backgroundImageUrl": null,
               "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70
+              "mobileRowHeight": 70,
+              "outerMargin": true
             }
           }
         }
@@ -2488,5 +2600,6 @@
       "showUpdateDashboardImage": false
     }
   },
+  "externalId": null,
   "name": "Software"
 }

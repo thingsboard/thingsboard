@@ -33,7 +33,7 @@
     </button>
     <button mat-button mat-raised-button color="primary"
             type="submit"
-            [disabled]="(isLoading$ | async) || attributeFormGroup.invalid || !attributeFormGroup.dirty">
+            [disabled]="(isLoading$ | async) || invalid() || !attributeFormGroup.dirty">
       {{ 'action.update' | translate }}
     </button>
   </div>

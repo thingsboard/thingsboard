@@ -27,12 +27,12 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 @Component
-public class DefaultSchedulerComponent implements SchedulerComponent{
+public class DefaultSchedulerComponent implements SchedulerComponent {
 
     protected ScheduledExecutorService schedulerExecutor;
 
     @PostConstruct
-    public void init(){
+    public void init() {
         this.schedulerExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("queue-scheduler"));
     }
 

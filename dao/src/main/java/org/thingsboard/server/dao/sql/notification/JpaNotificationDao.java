@@ -82,7 +82,7 @@ public class JpaNotificationDao extends JpaAbstractDao<NotificationEntity, Notif
     }
 
     /**
-     * For this hot method, the partial index `idx_notification_recipient_id_unread` was introduced since 3.5.2
+     * For this hot method, the partial index `idx_notification_recipient_id_unread` was introduced since 3.6.0
      * */
     @Override
     public int countUnreadByRecipientId(TenantId tenantId, UserId recipientId) {

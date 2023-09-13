@@ -25,7 +25,7 @@ CREATE OR REPLACE PROCEDURE insert_tb_schema_settings()
 $$
 BEGIN
     IF (SELECT COUNT(*) FROM tb_schema_settings) = 0 THEN
-        INSERT INTO tb_schema_settings (schema_version) VALUES (3003000);
+        INSERT INTO tb_schema_settings (schema_version) VALUES (3005002);
     END IF;
 END;
 $$;
@@ -483,14 +483,15 @@ CREATE TABLE IF NOT EXISTS widget_type (
     id uuid NOT NULL CONSTRAINT widget_type_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     fqn varchar(512),
-    bundle_alias varchar(255),
     descriptor varchar(1000000),
     name varchar(255),
     tenant_id uuid,
     image varchar(1000000),
     deprecated boolean NOT NULL DEFAULT false,
     description varchar(255),
-    CONSTRAINT uq_widget_type_fqn UNIQUE (tenant_id, fqn)
+    external_id uuid,
+    CONSTRAINT uq_widget_type_fqn UNIQUE (tenant_id, fqn),
+    CONSTRAINT widget_type_external_id_unq_key UNIQUE (tenant_id, external_id)
 );
 
 CREATE TABLE IF NOT EXISTS widgets_bundle (
@@ -502,7 +503,17 @@ CREATE TABLE IF NOT EXISTS widgets_bundle (
     image varchar(1000000),
     description varchar(255),
     external_id uuid,
+    CONSTRAINT uq_widgets_bundle_alias UNIQUE (tenant_id, alias),
     CONSTRAINT widgets_bundle_external_id_unq_key UNIQUE (tenant_id, external_id)
+);
+
+CREATE TABLE IF NOT EXISTS widgets_bundle_widget (
+    widgets_bundle_id uuid NOT NULL,
+    widget_type_id uuid NOT NULL,
+    widget_type_order int NOT NULL DEFAULT 0,
+    CONSTRAINT widgets_bundle_widget_pkey PRIMARY KEY (widgets_bundle_id, widget_type_id),
+    CONSTRAINT fk_widgets_bundle FOREIGN KEY (widgets_bundle_id) REFERENCES widgets_bundle(id) ON DELETE CASCADE,
+    CONSTRAINT fk_widget_type FOREIGN KEY (widget_type_id) REFERENCES widget_type(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS entity_view (
@@ -855,4 +866,11 @@ CREATE TABLE IF NOT EXISTS user_settings (
     settings varchar(10000),
     CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES tb_user(id) ON DELETE CASCADE,
     CONSTRAINT user_settings_pkey PRIMARY KEY (user_id, type)
+);
+
+CREATE TABLE IF NOT EXISTS alarm_types (
+    tenant_id uuid NOT NULL,
+    type varchar(255) NOT NULL,
+    CONSTRAINT tenant_id_type_unq_key UNIQUE (tenant_id, type),
+    CONSTRAINT fk_entity_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenant(id) ON DELETE CASCADE
 );

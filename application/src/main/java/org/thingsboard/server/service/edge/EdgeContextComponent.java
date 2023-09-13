@@ -38,6 +38,7 @@ import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.EdgeEventStorageSettings;
@@ -116,6 +117,9 @@ public class EdgeContextComponent {
 
     @Autowired
     private CustomerService customerService;
+
+    @Autowired
+    private WidgetTypeService widgetTypeService;
 
     @Autowired
     private WidgetsBundleService widgetsBundleService;

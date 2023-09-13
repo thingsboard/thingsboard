@@ -744,7 +744,6 @@
         "name-starts-with": "Numele începe cu",
         "use-entity-name-filter": "Folosește filtru",
         "entity-list-empty": "Nicio entitate selectată",
-        "entity-type-list-empty": "Niciun tip entitate selectat",
         "entity-name-filter-required": "Filtrul pentru nume entitate este necesar",
         "entity-name-filter-no-entity-matched": "Nu a fost găsită nicio entitate al cărei nume începe cu '{{entity}}'",
         "all-subtypes": "Toate",

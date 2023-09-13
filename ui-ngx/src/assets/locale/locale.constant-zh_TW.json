@@ -1735,7 +1735,6 @@
         "help-text": "根據需要使用'%'：'%entity_name_contains%', '%entity_name_ends', 'entity_starts_with'.",
         "use-entity-name-filter": "用戶過濾",
         "entity-list-empty": "沒有選擇實體。",
-        "entity-type-list-empty": "沒有選擇實體類型。",
         "entity-name-filter-required": "實體名過濾器必填。",
         "entity-name-filter-no-entity-matched": "沒有找到以 '{{entity}}' 開頭的實體",
         "all-subtypes": "所有",

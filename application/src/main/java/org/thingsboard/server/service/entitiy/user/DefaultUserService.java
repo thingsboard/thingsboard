@@ -30,7 +30,6 @@ import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
-import org.thingsboard.server.service.entitiy.alarm.TbAlarmService;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 import javax.servlet.http.HttpServletRequest;
@@ -44,7 +43,6 @@ import static org.thingsboard.server.controller.UserController.ACTIVATE_URL_PATT
 public class DefaultUserService extends AbstractTbEntityService implements TbUserService {
 
     private final UserService userService;
-    private final TbAlarmService tbAlarmService;
     private final MailService mailService;
     private final SystemSecurityService systemSecurityService;
 
@@ -64,7 +62,7 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
                 try {
                     mailService.sendActivationEmail(activateUrl, email);
                 } catch (ThingsboardException e) {
-                    userService.deleteUser(tenantId, savedUser.getId());
+                    userService.deleteUser(tenantId, savedUser);
                     throw e;
                 }
             }
@@ -77,17 +75,16 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
     }
 
     @Override
-    public void delete(TenantId tenantId, CustomerId customerId, User tbUser, User user) throws ThingsboardException {
+    public void delete(TenantId tenantId, CustomerId customerId, User user, User responsibleUser) throws ThingsboardException {
         ActionType actionType = ActionType.DELETED;
-        UserId userId = tbUser.getId();
+        UserId userId = user.getId();
 
         try {
-            tbAlarmService.unassignUserAlarms(tbUser.getTenantId(), tbUser, System.currentTimeMillis());
-            userService.deleteUser(tenantId, userId);
-            notificationEntityService.logEntityAction(tenantId, userId, tbUser, customerId, actionType, user, customerId.toString());
+            userService.deleteUser(tenantId, user);
+            notificationEntityService.logEntityAction(tenantId, userId, user, customerId, actionType, responsibleUser, customerId.toString());
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.USER),
-                    actionType, user, e, userId.toString());
+                    actionType, responsibleUser, e, userId.toString());
             throw e;
         }
     }

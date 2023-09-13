@@ -30,6 +30,8 @@
     <logger name="org.apache.kafka.clients" level="WARN"/>
     <!-- To enable the logging of scanned rule engine components-->
     <!--    <logger name="org.thingsboard.server.service.component.AnnotationComponentDiscoveryService" level="DEBUG" />-->
+    <!-- To enable the debug logging of rule node upgrade -->
+    <!--    <logger name="org.thingsboard.server.service.install.update.DefaultDataUpdateService" level="DEBUG"/>-->
     <!-- Other useful logs -->
     <!--    <logger name="org.springframework.jdbc.core" level="TRACE" />-->
     <!--    <logger name="org.hibernate.SQL" level="DEBUG" />-->

@@ -51,7 +51,7 @@ public abstract class AbstractRuleChainMetadataConstructor implements RuleChainM
             builder.setMsgType(msgType);
             return builder.build();
         } catch (JsonProcessingException ex) {
-            log.error("Can't construct RuleChainMetadataUpdateMsg", ex);
+            log.error("[{}] Can't construct RuleChainMetadataUpdateMsg", tenantId, ex);
         }
         return null;
     }

@@ -15,15 +15,20 @@
  */
 package org.thingsboard.server.dao.sql.widget;
 
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
+import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.common.data.widget.WidgetsBundleWidget;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.widget.WidgetTypeDao;
+import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,15 +44,29 @@ public class JpaWidgetTypeDaoTest extends AbstractJpaDaoTest {
     final String BUNDLE_ALIAS = "BUNDLE_ALIAS";
     final int WIDGET_TYPE_COUNT = 3;
     List<WidgetType> widgetTypeList;
+    WidgetsBundle widgetsBundle;
 
     @Autowired
     private WidgetTypeDao widgetTypeDao;
 
+    @Autowired
+    private WidgetsBundleDao widgetsBundleDao;
+
     @Before
     public void setUp() {
         widgetTypeList = new ArrayList<>();
+
+        WidgetsBundle widgetsBundle = new WidgetsBundle();
+        widgetsBundle.setAlias(BUNDLE_ALIAS);
+        widgetsBundle.setTitle(BUNDLE_ALIAS);
+        widgetsBundle.setId(new WidgetsBundleId(Uuids.timeBased()));
+        widgetsBundle.setTenantId(TenantId.SYS_TENANT_ID);
+        this.widgetsBundle = widgetsBundleDao.save(TenantId.SYS_TENANT_ID, widgetsBundle);
+
         for (int i = 0; i < WIDGET_TYPE_COUNT; i++) {
-            widgetTypeList.add(createAndSaveWidgetType(i));
+            var widgetType = createAndSaveWidgetType(i);
+            widgetTypeList.add(widgetType);
+            widgetTypeDao.saveWidgetsBundleWidget(new WidgetsBundleWidget(this.widgetsBundle.getId(), widgetType.getId(), i));
         }
     }
 
@@ -56,20 +75,20 @@ public class JpaWidgetTypeDaoTest extends AbstractJpaDaoTest {
         widgetType.setTenantId(TenantId.SYS_TENANT_ID);
         widgetType.setName("WIDGET_TYPE_" + number);
         widgetType.setFqn("FQN_" + number);
-        widgetType.setBundleAlias(BUNDLE_ALIAS);
         return widgetTypeDao.save(TenantId.SYS_TENANT_ID, widgetType);
     }
 
     @After
-    public void deleteAllWidgetType() {
+    public void tearDown() {
+        widgetsBundleDao.removeById(TenantId.SYS_TENANT_ID, widgetsBundle.getUuidId());
         for (WidgetType widgetType : widgetTypeList) {
             widgetTypeDao.removeById(TenantId.SYS_TENANT_ID, widgetType.getUuidId());
         }
     }
 
     @Test
-    public void testFindByTenantIdAndBundleAlias() {
-        List<WidgetType> widgetTypes = widgetTypeDao.findWidgetTypesByTenantIdAndBundleAlias(TenantId.SYS_TENANT_ID.getId(), BUNDLE_ALIAS);
+    public void testFindByWidgetsBundleId() {
+        List<WidgetType> widgetTypes = widgetTypeDao.findWidgetTypesByWidgetsBundleId(TenantId.SYS_TENANT_ID.getId(), widgetsBundle.getUuidId());
         assertEquals(WIDGET_TYPE_COUNT, widgetTypes.size());
     }
 
