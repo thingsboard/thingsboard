@@ -19,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.ProcessingStrategy;
@@ -48,9 +47,7 @@ public class TenantProfileDataValidator extends DataValidator<TenantProfile> {
 
     @Override
     protected void validateDataImpl(TenantId tenantId, TenantProfile tenantProfile) {
-        if (StringUtils.isEmpty(tenantProfile.getName())) {
-            throw new DataValidationException("Tenant profile name should be specified!");
-        }
+        validateString("Tenant profile name", tenantProfile.getName());
         if (tenantProfile.getProfileData() == null) {
             throw new DataValidationException("Tenant profile data should be specified!");
         }
@@ -99,8 +96,6 @@ public class TenantProfileDataValidator extends DataValidator<TenantProfile> {
         TenantProfile old = tenantProfileDao.findById(TenantId.SYS_TENANT_ID, tenantProfile.getId().getId());
         if (old == null) {
             throw new DataValidationException("Can't update non existing tenant profile!");
-        } else if (old.isIsolatedTbRuleEngine() != tenantProfile.isIsolatedTbRuleEngine()) {
-            throw new DataValidationException("Can't update isolatedTbRuleEngine property!");
         }
         return old;
     }

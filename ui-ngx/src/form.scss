@@ -16,12 +16,16 @@
 
 @import './scss/constants';
 
-@mixin form-row-column($breakpoint) {
+@mixin form-row-column() {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  padding: 12px 7px 12px 16px;
+}
+
+@mixin form-row-column-breakpoint($breakpoint) {
   @media #{$breakpoint} {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-    padding: 12px 7px 12px 16px;
+    @include form-row-column;
     .mat-mdc-form-field, tb-unit-input {
       width: auto;
       &.medium-width {
@@ -122,18 +126,6 @@
         font: inherit;
       }
     }
-    .mat-slide {
-      margin: 0;
-      &.margin {
-        margin: 8px 0;
-      }
-      .mdc-form-field>label {
-        font-weight: 400;
-        font-size: 16px;
-        line-height: 24px;
-        margin-left: 12px;
-      }
-    }
   }
 
   .tb-form-panel-title {
@@ -143,6 +135,16 @@
   .tb-form-panel-hint {
     font-size: 12px;
     color: #808080;
+  }
+  .tb-form-hint {
+    padding: 12px 16px;
+    font-size: var(--mdc-typography-caption-font-size, 12px);
+    line-height: var(--mdc-typography-caption-line-height, 20px);
+    font-weight: var(--mdc-typography-caption-font-weight, 400);
+    letter-spacing: var(--mdc-typography-caption-letter-spacing, 0.0333333333em);
+    color: rgba(0, 0, 0, 0.6);
+    white-space: normal;
+    border-radius: 6px;
   }
   .tb-form-row {
     height: 100%;
@@ -154,11 +156,12 @@
     border: 1px solid rgba(0, 0, 0, 0.12);
     border-radius: 6px;
     &.column {
+      @include form-row-column;
       &-xs {
-        @include form-row-column($mat-xs)
+        @include form-row-column-breakpoint($mat-xs)
       }
       &-lt-md {
-        @include form-row-column($mat-lt-md)
+        @include form-row-column-breakpoint($mat-lt-md)
       }
     }
     &.no-border {
@@ -197,6 +200,21 @@
     }
     .mat-slide:only-child {
       margin: 8px 0;
+    }
+  }
+
+  .tb-form-panel, .tb-form-row {
+    .mat-slide {
+      margin: 0;
+      &.margin {
+        margin: 8px 0;
+      }
+      .mdc-form-field>label {
+        font-weight: 400;
+        font-size: 16px;
+        line-height: 24px;
+        margin-left: 12px;
+      }
     }
   }
 
@@ -307,6 +325,10 @@
       }
     }
     &.tb-chips {
+      &.flex {
+        flex: 1;
+        width: auto;
+      }
       .mat-mdc-text-field-wrapper {
         &.mdc-text-field--outlined, &:not(.mdc-text-field--outlined) {
           .mat-mdc-form-field-infix {
@@ -357,7 +379,7 @@
     }
 
     .tb-prompt {
-      height: 38px;
+      height: 40px;
     }
   }
 
@@ -366,11 +388,16 @@
     flex-direction: row;
     gap: 8px;
     padding-left: 8px;
+    padding-right: 8px;
     place-content: center flex-start;
     align-items: center;
+    &.no-padding-right {
+      padding-right: 0;
+    }
     @media #{$mat-gt-md} {
       gap: 12px;
       padding-left: 12px;
+      padding-right: 12px;
     }
     &-cell {
       font-weight: 400;
@@ -388,12 +415,18 @@
     }
   }
 
-  .tb-form-table-row {
-    &.tb-draggable {
-      gap: 0;
-      padding-left: 0;
-      background: #fff;
+  .tb-draggable-form-table-row {
+    background: #fff;
+    display: flex;
+    flex-direction: row;
+    place-content: center flex-start;
+    align-items: center;
+    .tb-form-table-row {
+      padding-right: 0;
     }
+  }
+
+  .tb-form-table-row {
 
     &-cell {
       color: rgba(0, 0, 0, 0.87);
@@ -432,7 +465,7 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: #305680;
+      background: $tb-primary-color;
       mask-image: url(/assets/home/no_data_folder_bg.svg);
       mask-repeat: no-repeat;
       mask-size: contain;
@@ -449,6 +482,23 @@
     @media #{$mat-md-lg} {
       font-size: 12px;
       line-height: 16px;
+    }
+  }
+
+  .tb-primary-fill {
+    position: relative;
+    overflow: hidden;
+    &:before {
+      display: block;
+      height: auto;
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: $tb-primary-color;
+      opacity: 0.04;
     }
   }
 

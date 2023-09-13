@@ -111,11 +111,6 @@ public class MqttServerSideRpcDefaultIntegrationTest extends AbstractMqttServerS
     }
 
     @Test
-    public void testSequenceServerMqttTwoWayRpc() throws Exception {
-        processSequenceTwoWayRpcTest();
-    }
-
-    @Test
     public void testGatewayServerMqttOneWayRpc() throws Exception {
         processJsonOneWayRpcTestGateway("Gateway Device OneWay RPC");
     }

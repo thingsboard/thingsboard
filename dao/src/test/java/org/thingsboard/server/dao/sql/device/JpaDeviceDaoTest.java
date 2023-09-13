@@ -45,6 +45,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -102,6 +103,12 @@ public class JpaDeviceDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
+    public void testSaveDeviceName0x00_thenSomeDatabaseException() {
+        Device device = getDevice(tenantId1, customerId1, "\u0000");
+        assertThatThrownBy(() -> deviceIds.add(deviceDao.save(TenantId.fromUUID(tenantId1), device).getUuidId()));
+    }
+
+    @Test
     public void testFindDevicesByTenantId() {
         PageLink pageLink = new PageLink(15, 0, PREFIX_FOR_DEVICE_NAME);
         PageData<Device> devices1 = deviceDao.findDevicesByTenantId(tenantId1, pageLink);
@@ -155,16 +162,16 @@ public class JpaDeviceDaoTest extends AbstractJpaDaoTest {
         return savedDevicesUUID;
     }
 
-    private Device getDevice(UUID tenantId, UUID customerID, int number) {
-        return getDevice(tenantId, customerID, Uuids.timeBased(), number);
+    private Device getDevice(UUID tenantId, UUID customerID, Object nameSuffix) {
+        return getDevice(tenantId, customerID, Uuids.timeBased(), nameSuffix);
     }
 
-    private Device getDevice(UUID tenantId, UUID customerID, UUID deviceId, int number) {
+    private Device getDevice(UUID tenantId, UUID customerID, UUID deviceId, Object nameSuffix) {
         Device device = new Device();
         device.setId(new DeviceId(deviceId));
         device.setTenantId(TenantId.fromUUID(tenantId));
         device.setCustomerId(new CustomerId(customerID));
-        device.setName(PREFIX_FOR_DEVICE_NAME + number);
+        device.setName(PREFIX_FOR_DEVICE_NAME + nameSuffix);
         device.setDeviceProfileId(savedDeviceProfile.getId());
         return device;
     }

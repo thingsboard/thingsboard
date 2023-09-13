@@ -27,6 +27,7 @@ import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
@@ -43,12 +44,14 @@ import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileCon
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
-import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.device.DeviceDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -59,20 +62,44 @@ import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.HTTP;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.HTTPS;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.MQTT;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.MQTTS;
+import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.PEM_CERT_FILE_NAME;
 
 @TestPropertySource(properties = {
         "device.connectivity.https.enabled=true",
+        "device.connectivity.http.port=8080",
+        "device.connectivity.https.port=444",
         "device.connectivity.mqtts.enabled=true",
+        "device.connectivity.mqtts.pem_cert_file=/tmp/" + PEM_CERT_FILE_NAME,
         "device.connectivity.coaps.enabled=true",
 })
 @ContextConfiguration(classes = {DeviceConnectivityControllerTest.Config.class})
 @DaoSqlTest
 public class DeviceConnectivityControllerTest extends AbstractControllerTest {
-    static final TypeReference<PageData<Device>> PAGE_DATA_DEVICE_TYPE_REF = new TypeReference<>() {
-    };
 
     private static final String DEVICE_TELEMETRY_TOPIC = "v1/devices/customTopic";
     private static final String CHECK_DOCUMENTATION = "Check documentation";
+
+    private static final String CERT = "-----BEGIN CERTIFICATE-----\n" +
+            "MIIBfzCCASmgAwIBAgIUC1dtaskm/SJLmFE2Ae+YojArg+swDQYJKoZIhvcNAQEL\n" +
+            "BQAwFDESMBAGA1UEAwwJbG9jYWxob3N0MB4XDTIzMDgyODEzMTAzM1oXDTI0MDgy\n" +
+            "NzEzMTAzM1owFDESMBAGA1UEAwwJbG9jYWxob3N0MFwwDQYJKoZIhvcNAQEBBQAD\n" +
+            "SwAwSAJBANpcs46MavFdv7onsxH178YgK5XbpMqzx8AKaLMP2X6UEXN0nlt5mpX5\n" +
+            "uCJmSwVaFn6lwTm8ThXFYOBydOQImIsCAwEAAaNTMFEwHQYDVR0OBBYEFDvN49bI\n" +
+            "LaWMmUZ+cMboWAaozfXTMB8GA1UdIwQYMBaAFDvN49bILaWMmUZ+cMboWAaozfXT\n" +
+            "MA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADQQAhIQL8zPvIhQvHJocU\n" +
+            "tnSmDAE0iR2rJVkousA+LiORE9BnuBtBUEv5SvFUv3VYUWA0eYFoyatpDHByIm6e\n" +
+            "/+1c\n" +
+            "-----END CERTIFICATE-----\n";
+    private static final String P_KEY = "-----BEGIN PRIVATE KEY-----\n" +
+            "MIIBVgIBADANBgkqhkiG9w0BAQEFAASCAUAwggE8AgEAAkEA2lyzjoxq8V2/uiez\n" +
+            "EfXvxiArldukyrPHwAposw/ZfpQRc3SeW3malfm4ImZLBVoWfqXBObxOFcVg4HJ0\n" +
+            "5AiYiwIDAQABAkEA1DYhPljSmc2dRcHNMphLtMWQ9iumpGRBrS2wgMzXdz2NF2+0\n" +
+            "4cicaaL06/Cw6XXx43s8cn7e1xZAkGtNRQuqMQIhAPbrqrcYsropURpI5HSemeha\n" +
+            "MJA3i67ZFaom39VSrNKJAiEA4mQ0qFKxFSh2xAOqDWDRkiCgdOS00J6hgrYJRPcI\n" +
+            "nXMCIQDBHGjkT72gGKYkT3PUvSGTdc3bTIXDFmZ6L3MJTGJ7OQIhAKO+6r9coCy3\n" +
+            "ib+ZDuSCRNK2upgR3B6Qvi020VmKfDa1AiBhCgpBlClv5OjnmC42EGxxFOaZtNQQ\n" +
+            "C3swkUdrR3pezg==\n" +
+            "-----END PRIVATE KEY-----\n";
 
     ListeningExecutorService executor;
 
@@ -166,7 +193,7 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
         assertThat(httpCommands.get(HTTP).asText()).isEqualTo(String.format("curl -v -X POST http://localhost:8080/api/v1/%s/telemetry " +
                         "--header Content-Type:application/json --data \"{temperature:25}\"",
                 credentials.getCredentialsId()));
-        assertThat(httpCommands.get(HTTPS).asText()).isEqualTo(String.format("curl -v -X POST https://localhost:443/api/v1/%s/telemetry " +
+        assertThat(httpCommands.get(HTTPS).asText()).isEqualTo(String.format("curl -v -X POST https://localhost:444/api/v1/%s/telemetry " +
                         "--header Content-Type:application/json --data \"{temperature:25}\"",
                 credentials.getCredentialsId()));
 
@@ -336,5 +363,45 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
                 });
         assertThat(commands).hasSize(1);
         assertThat(commands.get(COAP).get(COAPS).asText()).isEqualTo(CHECK_DOCUMENTATION);
+    }
+
+    @Test
+    @DirtiesContext
+    public void testDownloadMqttCert() throws Exception {
+        Path path = Files.createFile(Path.of("/tmp/" + PEM_CERT_FILE_NAME));
+        Files.writeString(path, CERT);
+
+        try {
+            String downloadedCert = doGet("/api/device-connectivity/mqtts/certificate/download", String.class);
+            Assert.assertEquals(CERT, downloadedCert);
+        } finally {
+            Files.deleteIfExists(path);
+        }
+    }
+
+    @Test
+    @DirtiesContext
+    public void testDownloadMqttCertFromFileWithPrivateKey() throws Exception {
+        Path path = Files.createFile(Path.of("/tmp/" + PEM_CERT_FILE_NAME));
+        Files.writeString(path, CERT + P_KEY);
+
+        try {
+            String downloadedCert = doGet("/api/device-connectivity/mqtts/certificate/download", String.class);
+            Assert.assertEquals(CERT, downloadedCert);
+        } finally {
+            Files.deleteIfExists(path);
+        }
+    }
+
+    @Test
+    @DirtiesContext
+    public void testDownloadMqttCertWithoutCertFile() throws Exception {
+        doGet("/api/device-connectivity/mqtts/certificate/download").andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DirtiesContext
+    public void testDownloadCertWithUnknownProtocol() throws Exception {
+        doGet("/api/device-connectivity/unknownProtocol/certificate/download").andExpect(status().isNotFound());
     }
 }

@@ -21,10 +21,15 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.WidgetTypeId;
+import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
+
+import java.util.List;
 
 @Service
 @TbCoreComponent
@@ -32,6 +37,7 @@ import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 public class DefaultWidgetsBundleService extends AbstractTbEntityService implements TbWidgetsBundleService {
 
     private final WidgetsBundleService widgetsBundleService;
+    private final WidgetTypeService widgetTypeService;
 
     @Override
     public WidgetsBundle save(WidgetsBundle widgetsBundle, User user) throws Exception {
@@ -60,5 +66,17 @@ public class DefaultWidgetsBundleService extends AbstractTbEntityService impleme
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.WIDGETS_BUNDLE), actionType, user, e, widgetsBundle.getId());
             throw e;
         }
+    }
+
+    @Override
+    public void updateWidgetsBundleWidgetTypes(WidgetsBundleId widgetsBundleId, List<WidgetTypeId> widgetTypeIds, User user) throws Exception {
+        widgetTypeService.updateWidgetsBundleWidgetTypes(user.getTenantId(), widgetsBundleId, widgetTypeIds);
+        autoCommit(user, widgetsBundleId);
+    }
+
+    @Override
+    public void updateWidgetsBundleWidgetFqns(WidgetsBundleId widgetsBundleId, List<String> widgetFqns, User user) throws Exception {
+        widgetTypeService.updateWidgetsBundleWidgetFqns(user.getTenantId(), widgetsBundleId, widgetFqns);
+        autoCommit(user, widgetsBundleId);
     }
 }

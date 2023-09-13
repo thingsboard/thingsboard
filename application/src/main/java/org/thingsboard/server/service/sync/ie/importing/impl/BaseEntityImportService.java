@@ -65,6 +65,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -386,9 +387,12 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
         return oldEntity == null ? null : getter.apply(oldEntity);
     }
 
-    protected void replaceIdsRecursively(EntitiesImportCtx ctx, IdProvider idProvider, JsonNode entityAlias, Set<String> skipFieldsSet, LinkedHashSet<EntityType> hints) {
-        JacksonUtil.replaceUuidsRecursively(entityAlias, skipFieldsSet,
-                uuid -> idProvider.getInternalIdByUuid(uuid, ctx.isFinalImportAttempt(), hints).map(EntityId::getId).orElse(uuid));
+    protected void replaceIdsRecursively(EntitiesImportCtx ctx, IdProvider idProvider, JsonNode json,
+                                         Set<String> skippedRootFields, Pattern includedFieldsPattern,
+                                         LinkedHashSet<EntityType> hints) {
+        JacksonUtil.replaceUuidsRecursively(json, skippedRootFields, includedFieldsPattern,
+                uuid -> idProvider.getInternalIdByUuid(uuid, ctx.isFinalImportAttempt(), hints)
+                        .map(EntityId::getId).orElse(uuid), true);
     }
 
 }

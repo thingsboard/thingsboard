@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.google.common.collect.Lists;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.KvEntry;
 
@@ -35,7 +36,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -44,6 +44,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.UnaryOperator;
+import java.util.regex.Pattern;
 
 /**
  * Created by Valerii Sosliuk on 5/12/2017.
@@ -227,22 +228,24 @@ public class JacksonUtil {
         return node;
     }
 
-    public static void replaceUuidsRecursively(JsonNode node, Set<String> skipFieldsSet, UnaryOperator<UUID> replacer) {
+    public static void replaceUuidsRecursively(JsonNode node, Set<String> skippedRootFields, Pattern includedFieldsPattern, UnaryOperator<UUID> replacer, boolean root) {
         if (node == null) {
             return;
         }
         if (node.isObject()) {
             ObjectNode objectNode = (ObjectNode) node;
-            List<String> fieldNames = new ArrayList<>(objectNode.size());
-            objectNode.fieldNames().forEachRemaining(fieldNames::add);
+            List<String> fieldNames = Lists.newArrayList(objectNode.fieldNames());
             for (String fieldName : fieldNames) {
-                if (skipFieldsSet.contains(fieldName)) {
+                if (root && skippedRootFields.contains(fieldName)) {
                     continue;
                 }
                 var child = objectNode.get(fieldName);
                 if (child.isObject() || child.isArray()) {
-                    replaceUuidsRecursively(child, skipFieldsSet, replacer);
+                    replaceUuidsRecursively(child, skippedRootFields, includedFieldsPattern, replacer, false);
                 } else if (child.isTextual()) {
+                    if (includedFieldsPattern != null && !RegexUtils.matches(fieldName, includedFieldsPattern)) {
+                        continue;
+                    }
                     String text = child.asText();
                     String newText = RegexUtils.replace(text, RegexUtils.UUID_PATTERN, uuid -> replacer.apply(UUID.fromString(uuid)).toString());
                     if (!text.equals(newText)) {
@@ -255,7 +258,7 @@ public class JacksonUtil {
             for (int i = 0; i < array.size(); i++) {
                 JsonNode arrayElement = array.get(i);
                 if (arrayElement.isObject() || arrayElement.isArray()) {
-                    replaceUuidsRecursively(arrayElement, skipFieldsSet, replacer);
+                    replaceUuidsRecursively(arrayElement, skippedRootFields, includedFieldsPattern, replacer, false);
                 } else if (arrayElement.isTextual()) {
                     String text = arrayElement.asText();
                     String newText = RegexUtils.replace(text, RegexUtils.UUID_PATTERN, uuid -> replacer.apply(UUID.fromString(uuid)).toString());

@@ -367,7 +367,7 @@
                           [isReadOnly]="true"
                           (closeDetails)="onEditWidgetClosed()">
           <div class="details-buttons" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
-            <tb-toggle-select *ngIf="tbEditWidget.hasBasicMode" appearance="fill-invert" selectMediaBreakpoint="xs" [(ngModel)]="tbEditWidget.widgetConfigMode">
+            <tb-toggle-select *ngIf="tbEditWidget.widgetConfig?.hasBasicMode" appearance="fill-invert" selectMediaBreakpoint="xs" [(ngModel)]="tbEditWidget.widgetConfigMode">
               <tb-toggle-option value="basic">{{ 'widget.basic-mode' | translate }}</tb-toggle-option>
               <tb-toggle-option value="advanced">{{ 'widget.advanced-mode' | translate }}</tb-toggle-option>
             </tb-toggle-select>
@@ -386,8 +386,9 @@
         </tb-details-panel>
         <tb-details-panel *ngIf="!isAddingWidgetClosed && !widgetEditMode" fxFlex
                           headerTitle="{{ isAddingWidget ?
-                            ((!dashboardWidgetSelectComponent?.widgetsBundle ?
-                               'widget.select-widgets-bundle' : 'dashboard.select-widget-value') | translate: dashboardWidgetSelectComponent?.widgetsBundle) : ''
+                            ((dashboardWidgetSelectComponent?.selectWidgetMode === 'allWidgets' ? ('widget.select-widget' | translate) :
+                               (!dashboardWidgetSelectComponent?.widgetsBundle ?
+                                   'widget.select-widgets-bundle' : 'dashboard.select-widget-value') | translate: dashboardWidgetSelectComponent?.widgetsBundle)) : ''
                           }}"
                           headerHeightPx="64"
                           [isShowSearch]="true"
@@ -404,11 +405,12 @@
           <div class="search-pane" *ngIf="isAddingWidget" fxLayout="row">
             <tb-widgets-bundle-search fxFlex
                                       [(ngModel)]="searchBundle"
-                                      placeholder="{{ (!dashboardWidgetSelectComponent?.widgetsBundle ? 'widgets-bundle.search' : 'widget.search') | translate }}"
+                                      placeholder="{{ ((!dashboardWidgetSelectComponent?.widgetsBundle && dashboardWidgetSelectComponent?.selectWidgetMode === 'bundles')
+                                                        ? 'widgets-bundle.search' : 'widget.search') | translate }}"
                                       (ngModelChange)="searchBundle = $event">
             </tb-widgets-bundle-search>
           </div>
-          <div class="details-buttons" *ngIf="isAddingWidget">
+          <div class="details-buttons" *ngIf="isAddingWidget" fxLayout="row" fxLayoutAlign="start center">
             <button mat-button type="button" (click)="importWidget($event)"
                     *ngIf="!dashboardWidgetSelectComponent?.widgetsBundle">
               <mat-icon>file_upload</mat-icon>{{ 'dashboard.import-widget' | translate }}</button>
@@ -419,6 +421,23 @@
                     matTooltipPosition="above">
               <mat-icon>filter_list</mat-icon>
             </button>
+            <tb-toggle-select *ngIf="dashboardWidgetSelectComponent && !dashboardWidgetSelectComponent.widgetsBundle"
+                              appearance="fill-invert"
+                              disablePagination
+                              selectMediaBreakpoint="xs"
+                              [(ngModel)]="dashboardWidgetSelectComponent.selectWidgetMode">
+              <tb-toggle-option value="bundles">{{ 'widgets-bundle.widgets-bundles' | translate }}</tb-toggle-option>
+              <tb-toggle-option value="allWidgets">{{ 'widget.all-widgets' | translate }}</tb-toggle-option>
+            </tb-toggle-select>
+            <tb-toggle-select *ngIf="dashboardWidgetSelectComponent?.hasDeprecated"
+                              appearance="fill-invert"
+                              disablePagination
+                              selectMediaBreakpoint="xs"
+                              [(ngModel)]="dashboardWidgetSelectComponent.widgetsListMode">
+              <tb-toggle-option value="all">{{ 'widget.all' | translate }}</tb-toggle-option>
+              <tb-toggle-option value="actual">{{ 'widget.actual' | translate }}</tb-toggle-option>
+              <tb-toggle-option value="deprecated">{{ 'widget.deprecated' | translate }}</tb-toggle-option>
+            </tb-toggle-select>
           </div>
           <tb-dashboard-widget-select #dashboardWidgetSelect
                                       *ngIf="isAddingWidget"

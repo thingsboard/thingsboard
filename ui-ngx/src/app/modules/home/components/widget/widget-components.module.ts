@@ -43,7 +43,19 @@ import { HomePageWidgetsModule } from '@home/components/widget/lib/home-page/hom
 import { WIDGET_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
 import { FlotWidgetComponent } from '@home/components/widget/lib/flot-widget.component';
 import { LegendComponent } from '@home/components/widget/lib/legend.component';
+import { GatewayConnectorComponent } from '@home/components/widget/lib/gateway/gateway-connectors.component';
+import { GatewayLogsComponent } from '@home/components/widget/lib/gateway/gateway-logs.component';
+import { GatewayStatisticsComponent } from '@home/components/widget/lib/gateway/gateway-statistics.component';
+import { GatewayServiceRPCComponent } from '@home/components/widget/lib/gateway/gateway-service-rpc.component';
+import { DeviceGatewayCommandComponent } from '@home/components/widget/lib/gateway/device-gateway-command.component';
+import { GatewayConfigurationComponent } from '@home/components/widget/lib/gateway/gateway-configuration.component';
+import {
+  GatewayRemoteConfigurationDialogComponent
+} from '@home/components/widget/lib/gateway/gateway-remote-configuration-dialog';
 import { ValueCardWidgetComponent } from '@home/components/widget/lib/cards/value-card-widget.component';
+import {
+  AggregatedValueCardWidgetComponent
+} from '@home/components/widget/lib/cards/aggregated-value-card-widget.component';
 
 @NgModule({
   declarations:
@@ -68,7 +80,15 @@ import { ValueCardWidgetComponent } from '@home/components/widget/lib/cards/valu
       SelectEntityDialogComponent,
       LegendComponent,
       FlotWidgetComponent,
-      ValueCardWidgetComponent
+      GatewayConnectorComponent,
+      GatewayLogsComponent,
+      GatewayStatisticsComponent,
+      GatewayServiceRPCComponent,
+      DeviceGatewayCommandComponent,
+      GatewayConfigurationComponent,
+      GatewayRemoteConfigurationDialogComponent,
+      ValueCardWidgetComponent,
+      AggregatedValueCardWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -97,7 +117,15 @@ import { ValueCardWidgetComponent } from '@home/components/widget/lib/cards/valu
         MarkdownWidgetComponent,
         LegendComponent,
         FlotWidgetComponent,
-        ValueCardWidgetComponent
+        GatewayConnectorComponent,
+        GatewayLogsComponent,
+        GatewayStatisticsComponent,
+        GatewayServiceRPCComponent,
+        DeviceGatewayCommandComponent,
+        GatewayConfigurationComponent,
+        GatewayRemoteConfigurationDialogComponent,
+        ValueCardWidgetComponent,
+        AggregatedValueCardWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }

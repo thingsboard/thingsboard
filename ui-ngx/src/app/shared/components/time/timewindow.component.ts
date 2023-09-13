@@ -18,9 +18,13 @@ import {
   ChangeDetectorRef,
   Component,
   ElementRef,
-  forwardRef, HostBinding,
+  forwardRef,
+  HostBinding,
   Injector,
-  Input, OnChanges, OnInit, SimpleChanges,
+  Input,
+  OnChanges,
+  OnInit,
+  SimpleChanges,
   StaticProvider,
   ViewContainerRef
 } from '@angular/core';
@@ -47,15 +51,18 @@ import { TimeService } from '@core/services/time.service';
 import { TooltipPosition } from '@angular/material/tooltip';
 import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
+import { Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import {
   ComponentStyle,
-  defaultTimewindowStyle, iconStyle,
+  defaultTimewindowStyle,
+  iconStyle,
   textStyle,
   TimewindowStyle
 } from '@shared/models/widget-settings.models';
+import { DEFAULT_OVERLAY_POSITIONS } from '@shared/models/overlay.models';
+import { fromEvent } from 'rxjs';
 
 // @dynamic
 @Component({
@@ -87,6 +94,11 @@ export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChan
 
   get historyOnly() {
     return this.historyOnlyValue;
+  }
+
+  get displayTypePrefix(): boolean {
+    return isDefinedAndNotNull(this.computedTimewindowStyle?.displayTypePrefix)
+      ? this.computedTimewindowStyle?.displayTypePrefix : true;
   }
 
   @HostBinding('class.no-margin')
@@ -198,6 +210,7 @@ export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChan
       if (!change.firstChange && change.currentValue !== change.previousValue) {
         if (propName === 'timewindowStyle') {
           this.updateTimewindowStyle();
+          this.updateDisplayValue();
         }
       }
     }
@@ -217,14 +230,10 @@ export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChan
       maxHeight: '80vh',
       height: 'min-content'
     });
-    const connectedPosition: ConnectedPosition = {
-      originX: 'start',
-      originY: 'bottom',
-      overlayX: 'start',
-      overlayY: 'top'
-    };
-    config.positionStrategy = this.overlay.position().flexibleConnectedTo(this.nativeElement)
-      .withPositions([connectedPosition]);
+
+    config.positionStrategy = this.overlay.position()
+      .flexibleConnectedTo(this.nativeElement)
+      .withPositions(DEFAULT_OVERLAY_POSITIONS);
 
     const overlayRef = this.overlay.create(config);
     overlayRef.backdropClick().subscribe(() => {
@@ -251,7 +260,11 @@ export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChan
     const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
     const componentRef = overlayRef.attach(new ComponentPortal(TimewindowPanelComponent,
       this.viewContainerRef, injector));
+    const resizeWindows$ = fromEvent(window, 'resize').subscribe(() => {
+      overlayRef.updatePosition();
+    });
     componentRef.onDestroy(() => {
+      resizeWindows$.unsubscribe();
       if (componentRef.instance.result) {
         this.innerValue = componentRef.instance.result;
         this.timewindowDisabled = this.isTimewindowDisabled();
@@ -316,7 +329,7 @@ export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChan
 
   updateDisplayValue() {
     if (this.innerValue.selectedTab === TimewindowType.REALTIME && !this.historyOnly) {
-      this.innerValue.displayValue = this.translate.instant('timewindow.realtime') + ' - ';
+      this.innerValue.displayValue = this.displayTypePrefix ? (this.translate.instant('timewindow.realtime') + ' - ') : '';
       if (this.innerValue.realtime.realtimeType === RealtimeWindowType.INTERVAL) {
         this.innerValue.displayValue += this.translate.instant(QuickTimeIntervalTranslationMap.get(this.innerValue.realtime.quickInterval));
       } else {
@@ -324,7 +337,7 @@ export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChan
           this.millisecondsToTimeStringPipe.transform(this.innerValue.realtime.timewindowMs);
       }
     } else {
-      this.innerValue.displayValue = (!this.historyOnly || this.alwaysDisplayTypePrefix) ?
+      this.innerValue.displayValue = this.displayTypePrefix && (!this.historyOnly || this.alwaysDisplayTypePrefix) ?
         (this.translate.instant('timewindow.history') + ' - ') : '';
       if (this.innerValue.history.historyType === HistoryWindowType.LAST_INTERVAL) {
         this.innerValue.displayValue += this.translate.instant('timewindow.last-prefix') + ' ' +

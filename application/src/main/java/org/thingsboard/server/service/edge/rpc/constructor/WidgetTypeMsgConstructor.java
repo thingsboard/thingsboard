@@ -33,11 +33,15 @@ public class WidgetTypeMsgConstructor {
                 .setMsgType(msgType)
                 .setIdMSB(widgetTypeDetails.getId().getId().getMostSignificantBits())
                 .setIdLSB(widgetTypeDetails.getId().getId().getLeastSignificantBits());
-        if (widgetTypeDetails.getBundleAlias() != null) {
-            builder.setBundleAlias(widgetTypeDetails.getBundleAlias());
-        }
-        if (widgetTypeDetails.getAlias() != null) {
-            builder.setAlias(widgetTypeDetails.getAlias());
+        if (widgetTypeDetails.getFqn() != null) {
+            builder.setFqn(widgetTypeDetails.getFqn());
+            if (widgetTypeDetails.getFqn().contains(".")) {
+                String[] aliases = widgetTypeDetails.getFqn().split("\\.", 2);
+                if (aliases.length == 2) {
+                    builder.setBundleAlias(aliases[0]);
+                    builder.setAlias(aliases[1]);
+                }
+            }
         }
         if (widgetTypeDetails.getName() != null) {
             builder.setName(widgetTypeDetails.getName());
@@ -54,6 +58,7 @@ public class WidgetTypeMsgConstructor {
         if (widgetTypeDetails.getDescription() != null) {
             builder.setDescription(widgetTypeDetails.getDescription());
         }
+        builder.setDeprecated(widgetTypeDetails.isDeprecated());
         return builder.build();
     }
 

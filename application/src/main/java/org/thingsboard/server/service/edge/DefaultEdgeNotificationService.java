@@ -155,9 +155,9 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
 
     @Override
     public void pushNotificationToEdge(TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg, TbCallback callback) {
-        log.debug("Pushing notification to edge {}", edgeNotificationMsg);
+        TenantId tenantId = TenantId.fromUUID(new UUID(edgeNotificationMsg.getTenantIdMSB(), edgeNotificationMsg.getTenantIdLSB()));
+        log.debug("[{}] Pushing notification to edge {}", tenantId, edgeNotificationMsg);
         try {
-            TenantId tenantId = TenantId.fromUUID(new UUID(edgeNotificationMsg.getTenantIdMSB(), edgeNotificationMsg.getTenantIdLSB()));
             EdgeEventType type = EdgeEventType.valueOf(edgeNotificationMsg.getType());
             ListenableFuture<Void> future;
             switch (type) {
@@ -216,7 +216,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                     future = tenantProfileEdgeProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
                     break;
                 default:
-                    log.warn("Edge event type [{}] is not designed to be pushed to edge", type);
+                    log.warn("[{}] Edge event type [{}] is not designed to be pushed to edge", tenantId, type);
                     future = Futures.immediateFuture(null);
             }
             Futures.addCallback(future, new FutureCallback<>() {
@@ -227,16 +227,16 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
 
                 @Override
                 public void onFailure(Throwable throwable) {
-                    callBackFailure(edgeNotificationMsg, callback, throwable);
+                    callBackFailure(tenantId, edgeNotificationMsg, callback, throwable);
                 }
             }, dbCallBackExecutor);
         } catch (Exception e) {
-            callBackFailure(edgeNotificationMsg, callback, e);
+            callBackFailure(tenantId, edgeNotificationMsg, callback, e);
         }
     }
 
-    private void callBackFailure(TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg, TbCallback callback, Throwable throwable) {
-        log.error("Can't push to edge updates, edgeNotificationMsg [{}]", edgeNotificationMsg, throwable);
+    private void callBackFailure(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg, TbCallback callback, Throwable throwable) {
+        log.error("[{}] Can't push to edge updates, edgeNotificationMsg [{}]", tenantId, edgeNotificationMsg, throwable);
         callback.onFailure(throwable);
     }
 

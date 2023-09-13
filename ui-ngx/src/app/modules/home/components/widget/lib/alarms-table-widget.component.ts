@@ -42,9 +42,9 @@ import cssjs from '@core/css/css';
 import { sortItems } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 import { CollectionViewer, DataSource, SelectionModel } from '@angular/cdk/collections';
-import { BehaviorSubject, forkJoin, fromEvent, merge, Observable, Subscription } from 'rxjs';
+import { BehaviorSubject, forkJoin, fromEvent, merge, Observable, Subject, Subscription } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
-import { debounceTime, distinctUntilChanged, map, take, tap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, map, take, takeUntil, tap } from 'rxjs/operators';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, SortDirection } from '@angular/material/sort';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -122,6 +122,8 @@ import {
   AlarmFilterConfigData
 } from '@home/components/alarm/alarm-filter-config.component';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { FormBuilder } from '@angular/forms';
+import { DEFAULT_OVERLAY_POSITIONS } from '@shared/models/overlay.models';
 
 interface AlarmsTableWidgetSettings extends TableWidgetSettings {
   alarmsTitle: string;
@@ -159,6 +161,8 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
 
+  textSearch = this.fb.control('', {nonNullable: true});
+
   public enableSelection = true;
   public displayPagination = true;
   public enableStickyHeader = true;
@@ -184,6 +188,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   private widgetConfig: WidgetConfig;
   private subscription: IWidgetSubscription;
   private widgetResize$: ResizeObserver;
+  private destroy$ = new Subject<void>();
 
   private displayActivity = false;
   private displayDetails = true;
@@ -244,7 +249,8 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
               private dialogService: DialogService,
               private entityService: EntityService,
               private alarmService: AlarmService,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private fb: FormBuilder) {
     super(store);
     this.pageLink = {
       page: 0,
@@ -285,28 +291,27 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     if (this.widgetResize$) {
       this.widgetResize$.disconnect();
     }
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   ngAfterViewInit(): void {
-    fromEvent(this.searchInputField.nativeElement, 'keyup')
-      .pipe(
-        debounceTime(150),
-        distinctUntilChanged(),
-        tap(() => {
-          this.resetPageIndex();
-          this.updateData();
-        })
-      )
-      .subscribe();
+    this.textSearch.valueChanges.pipe(
+      debounceTime(150),
+      distinctUntilChanged((prev, current) => (this.pageLink.textSearch ?? '') === current.trim()),
+      takeUntil(this.destroy$)
+    ).subscribe((value) => {
+      this.resetPageIndex();
+      this.pageLink.textSearch = value.trim();
+      this.updateData();
+    });
 
     if (this.displayPagination) {
-      this.sort.sortChange.subscribe(() => this.paginator.pageIndex = 0);
+      this.sort.sortChange.pipe(takeUntil(this.destroy$)).subscribe(() => this.paginator.pageIndex = 0);
     }
-    ((this.displayPagination ? merge(this.sort.sortChange, this.paginator.page) : this.sort.sortChange) as Observable<any>)
-      .pipe(
-        tap(() => this.updateData())
-      )
-      .subscribe();
+    ((this.displayPagination ? merge(this.sort.sortChange, this.paginator.page) : this.sort.sortChange) as Observable<any>).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => this.updateData());
     this.updateData();
   }
 
@@ -568,14 +573,9 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       height: 'fit-content',
       maxHeight: '75vh'
     });
-    const connectedPosition: ConnectedPosition = {
-      originX: 'end',
-      originY: 'bottom',
-      overlayX: 'end',
-      overlayY: 'top'
-    };
-    config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
-      .withPositions([connectedPosition]);
+    config.positionStrategy = this.overlay.position()
+      .flexibleConnectedTo(target as HTMLElement)
+      .withPositions(DEFAULT_OVERLAY_POSITIONS);
 
     const overlayRef = this.overlay.create(config);
     overlayRef.backdropClick().subscribe(() => {
@@ -610,10 +610,12 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     const componentRef = overlayRef.attach(new ComponentPortal(AlarmFilterConfigComponent,
       this.viewContainerRef, injector));
 
-    const resizeWindows = this.utils.updateOverlayMaxHeigth(overlayRef, componentRef.location);
+    const resizeWindows$ = fromEvent(window, 'resize').subscribe(() => {
+      overlayRef.updatePosition();
+    });
 
     componentRef.onDestroy(() => {
-      resizeWindows.unsubscribe();
+      resizeWindows$.unsubscribe();
       if (componentRef.instance.panelResult) {
         const result = componentRef.instance.panelResult;
         const alarmFilter = this.entityService.resolveAlarmFilter(result, false);
@@ -627,7 +629,6 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
 
   private enterFilterMode() {
     this.textSearchMode = true;
-    this.pageLink.textSearch = '';
     this.ctx.hideTitlePanel = true;
     this.ctx.detectChanges(true);
     setTimeout(() => {
@@ -638,9 +639,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
 
   exitFilterMode() {
     this.textSearchMode = false;
-    this.pageLink.textSearch = null;
-    this.resetPageIndex();
-    this.updateData();
+    this.textSearch.reset();
     this.ctx.hideTitlePanel = false;
     this.ctx.detectChanges(true);
   }
@@ -903,7 +902,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
         ).subscribe((res) => {
           if (res) {
             if (res) {
-              const tasks: Observable<void>[] = [];
+              const tasks: Observable<AlarmInfo>[] = [];
               for (const alarmId of alarmIds) {
                 tasks.push(this.alarmService.ackAlarm(alarmId));
               }
@@ -959,7 +958,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
         ).subscribe((res) => {
           if (res) {
             if (res) {
-              const tasks: Observable<void>[] = [];
+              const tasks: Observable<AlarmInfo>[] = [];
               for (const alarmId of alarmIds) {
                 tasks.push(this.alarmService.clearAlarm(alarmId));
               }

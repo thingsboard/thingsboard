@@ -40,7 +40,7 @@
           class="tb-box-button"
           [disabled]="disabled"
           #matButton
-          (click)="openColorPickerPopup($event, matButton)">
+          (click)="openColorPickerPopup($event, matButton._elementRef)">
     <div class="tb-color-preview no-margin box" [ngClass]="{'disabled': disabled}">
       <div class="tb-color-result" [style]="!disabled ? {background: colorFormGroup.get('color').value} : {}"></div>
     </div>

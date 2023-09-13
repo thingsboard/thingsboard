@@ -21,6 +21,7 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.util.concurrent.Future;
+import org.thingsboard.common.util.ListeningExecutor;
 
 public interface MqttClient {
 
@@ -70,6 +71,8 @@ public interface MqttClient {
      * @param eventLoop The new eventloop to use
      */
     void setEventLoop(EventLoopGroup eventLoop);
+
+    ListeningExecutor getHandlerExecutor();
 
     /**
      * Subscribe on the given topic. When a message is received, MqttClient will invoke the {@link MqttHandler#onMessage(String, ByteBuf)} function of the given handler
@@ -180,8 +183,8 @@ public interface MqttClient {
      * @param config The config object to use while looking for settings
      * @param defaultHandler The handler for incoming messages that do not match any topic subscriptions
      */
-    static MqttClient create(MqttClientConfig config, MqttHandler defaultHandler){
-        return new MqttClientImpl(config, defaultHandler);
+    static MqttClient create(MqttClientConfig config, MqttHandler defaultHandler, ListeningExecutor handlerExecutor){
+        return new MqttClientImpl(config, defaultHandler, handlerExecutor);
     }
 
     /**

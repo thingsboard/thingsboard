@@ -232,12 +232,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         String resourceIdStr = savedResource.getId().getId().toString();
 
         //create widget type
-        WidgetsBundle widgetsBundle = new WidgetsBundle();
-        widgetsBundle.setTitle("My widgets bundle");
-        WidgetsBundle savedWidgetsBundle = doPost("/api/widgetsBundle", widgetsBundle, WidgetsBundle.class);
-
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
-        widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
         widgetType.setName("Widget Type");
         widgetType.setDescriptor(JacksonUtil.fromString(String.format("{ \"resources\": [{\"url\":{\"entityType\":\"TB_RESOURCE\",\"id\":\"%s\"},\"isModule\":true}]}", savedResource.getId()), JsonNode.class));
         doPost("/api/widgetType", widgetType, WidgetTypeDetails.class);

@@ -59,9 +59,9 @@ export class FlotPieWidgetSettingsComponent extends WidgetSettingsComponent {
 
       // Common pie settings
 
-      radius: [settings.radius, [Validators.min(0)]],
-      innerRadius: [settings.innerRadius, [Validators.min(0)]],
-      tilt: [settings.tilt, [Validators.min(0)]],
+      radius: [settings.radius, [Validators.min(0), Validators.max(1)]],
+      innerRadius: [settings.innerRadius, [Validators.min(0), Validators.max(1)]],
+      tilt: [settings.tilt, [Validators.min(0), Validators.max(1)]],
 
       // Stroke settings
 

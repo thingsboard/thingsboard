@@ -23,7 +23,6 @@ public class RuleNodeClassInfo {
 
     private final Class<?> clazz;
     private final RuleNode annotation;
-    private final boolean versioned;
 
     public String getClassName(){
         return clazz.getName();
@@ -35,6 +34,10 @@ public class RuleNodeClassInfo {
 
     public int getCurrentVersion() {
         return annotation.version();
+    }
+
+    public boolean isVersioned() {
+        return annotation.version() > 0;
     }
 
 }

@@ -22,9 +22,9 @@ import com.google.common.util.concurrent.Futures;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.TbVersionedNode;
 import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.KvEntry;
@@ -35,7 +35,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import java.util.NoSuchElementException;
 
 @Slf4j
-public abstract class TbAbstractNodeWithFetchTo<C extends TbAbstractFetchToNodeConfiguration> implements TbVersionedNode {
+public abstract class TbAbstractNodeWithFetchTo<C extends TbAbstractFetchToNodeConfiguration> implements TbNode {
 
     protected final static String FETCH_TO_PROPERTY_NAME = "fetchTo";
 

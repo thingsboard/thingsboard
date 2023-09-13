@@ -58,6 +58,7 @@ import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
 import java.util.List;
@@ -103,6 +104,9 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
 
     @Autowired
     private WidgetsBundleService widgetsBundleService;
+
+    @Autowired
+    private WidgetTypeService widgetTypeService;
 
     @Autowired
     private DashboardService dashboardService;
@@ -220,6 +224,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         entityViewService.deleteEntityViewsByTenantId(tenantId);
         widgetsBundleService.deleteWidgetsBundlesByTenantId(tenantId);
+        widgetTypeService.deleteWidgetTypesByTenantId(tenantId);
         assetService.deleteAssetsByTenantId(tenantId);
         assetProfileService.deleteAssetProfilesByTenantId(tenantId);
         deviceService.deleteDevicesByTenantId(tenantId);

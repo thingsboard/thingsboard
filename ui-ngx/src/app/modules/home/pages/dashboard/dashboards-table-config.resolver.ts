@@ -103,9 +103,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
     this.config.deleteEntitiesContent = () => this.translate.instant('dashboard.delete-dashboards-text');
 
     this.config.loadEntity = id => this.dashboardService.getDashboard(id.id);
-    this.config.saveEntity = dashboard => {
-      return this.dashboardService.saveDashboard(dashboard as Dashboard);
-    };
+    this.config.saveEntity = dashboard => this.dashboardService.saveDashboard(dashboard as Dashboard);
     this.config.onEntityAction = action => this.onDashboardAction(action);
     this.config.detailsReadonly = () => (this.config.componentsData.dashboardScope === 'customer_user' ||
       this.config.componentsData.dashboardScope === 'edge_customer_user');
@@ -117,6 +115,10 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
         this.openDashboard($event, dashboard);
       }
       return true;
+    };
+
+    this.config.entityAdded = dashboard => {
+      this.openDashboard(null, dashboard);
     };
   }
 
@@ -178,13 +180,9 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
     if (dashboardScope === 'tenant') {
       columns.push(
         new EntityTableColumn<DashboardInfo>('customersTitle', 'dashboard.assignedToCustomers',
-          '50%', entity => {
-            return getDashboardAssignedCustomersText(entity);
-          }, () => ({}), false),
+          '50%', entity => getDashboardAssignedCustomersText(entity), () => ({}), false),
         new EntityTableColumn<DashboardInfo>('dashboardIsPublic', 'dashboard.public', '60px',
-          entity => {
-            return checkBoxCell(isPublicDashboard(entity));
-          }, () => ({}), false),
+          entity => checkBoxCell(isPublicDashboard(entity)), () => ({}), false),
       );
     }
     return columns;
@@ -269,7 +267,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
         {
           name: this.translate.instant('edge.unassign-from-edge'),
           icon: 'assignment_return',
-          isEnabled: (entity) => true,
+          isEnabled: () => true,
           onAction: ($event, entity) => this.unassignFromEdge($event, entity)
         }
       );
@@ -383,7 +381,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
     }
   }
 
-  importDashboard($event: Event) {
+  importDashboard(_$event: Event) {
     this.importExport.importDashboard().subscribe(
       (dashboard) => {
         if (dashboard) {

@@ -58,6 +58,10 @@ export const authReducer = (
     case AuthActionTypes.UPDATE_USER_DETAILS:
       return { ...state, ...action.payload};
 
+    case AuthActionTypes.UPDATE_AUTH_USER:
+      const authUser = {...state.authUser, ...action.payload};
+      return { ...state, ...{ authUser }};
+
     case AuthActionTypes.UPDATE_LAST_PUBLIC_DASHBOARD_ID:
       return { ...state, ...action.payload};
 

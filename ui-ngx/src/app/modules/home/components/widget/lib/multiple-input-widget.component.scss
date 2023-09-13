@@ -28,7 +28,7 @@
     }
 
     .fields-group {
-      padding: 0 8px;
+      padding: 8px 0 0 8px;
       margin: 10px 0;
       border: 1px groove rgba(0, 0, 0, .25);
 
@@ -38,50 +38,13 @@
     }
 
     .tb-multiple-input-layout {
-      display: flex;
-      flex-direction: row;
-      align-items: start;
-    }
-
-    .color-picker-input {
-      padding: 7px 16px 7px 12px;
-      margin: 0 10px 22px 0;
-      border-color: rgba(0, 0, 0, 0.4);
-
-      .label-container {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-      }
-
-      .mat-icon, img {
-        margin-right: 5px;
-      }
-    }
-
-    .input-field {
-      padding-right: 10px;
-
-      mat-form-field {
-        margin-bottom: 5px;
-      }
+      display: grid;
     }
 
     .mat-mdc-slide-toggle {
       display: block;
       margin-top: 10px;
       margin-bottom: 8px;
-    }
-
-    .date-time-input {
-      .mat-mdc-form-field {
-        width: 100%;
-        margin: 2px 0;
-      }
-    }
-
-    .vertical-alignment {
-      flex-direction: column;
     }
 
     &--buttons-container {
@@ -112,17 +75,32 @@
 
 :host ::ng-deep {
   .tb-multiple-input {
-    .mat-mdc-slide-toggle .mdc-form-field {
-      width: 100%;
-      & > label {
-        display: flex;
-        align-items: center;
+    .mat-mdc-slide-toggle, .mat-mdc-checkbox {
+      .mdc-form-field {
         width: 100%;
-        margin: 0;
-        .mat-icon {
-          margin-left: 8px;
-          margin-right: 8px;
+        & > label {
+          display: flex;
+          align-items: center;
+          width: 100%;
+          margin: 0;
+          .mat-icon {
+            margin-right: 8px;
+          }
         }
+      }
+    }
+    .mat-mdc-slide-toggle {
+      .mdc-form-field {
+        & > label {
+          .mat-icon {
+            margin-left: 8px;
+          }
+        }
+      }
+    }
+    .color-input {
+      .mat-mdc-form-field-icon-suffix {
+        padding: 0 8px 0 4px;
       }
     }
   }

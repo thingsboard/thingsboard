@@ -384,8 +384,10 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
                 "inactivityTimeout", "3600000");
         sendAttributesRequestAndVerify(device, DataConstants.SHARED_SCOPE, "{\"key2\":\"value2\"}",
                 "key2", "value2");
+        sendAttributesRequestAndVerify(device, DataConstants.SERVER_SCOPE, "{\"jsonKey\":{\"nestedJsonKey\":\"nestedJsonValue\"}}",
+                "jsonKey", "{\"nestedJsonKey\":\"nestedJsonValue\"}");
 
-        doDelete("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/" + DataConstants.SERVER_SCOPE, "keys", "key1, inactivityTimeout");
+        doDelete("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/" + DataConstants.SERVER_SCOPE, "keys", "key1, inactivityTimeout, jsonKey");
         doDelete("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/" + DataConstants.SHARED_SCOPE, "keys", "key2");
     }
 
@@ -648,6 +650,9 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
                         break;
                     case LONG_V:
                         Assert.assertEquals(Long.parseLong(expectedValue), keyValueProto.getLongV());
+                        break;
+                    case JSON_V:
+                        Assert.assertEquals(JacksonUtil.toJsonNode(expectedValue), JacksonUtil.toJsonNode(keyValueProto.getJsonV()));
                         break;
                     default:
                         Assert.fail("Unexpected data type: " + keyValueProto.getType());

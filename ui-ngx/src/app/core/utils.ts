@@ -130,7 +130,7 @@ export function isLiteralObject(value: any) {
   return (!!value) && (value.constructor === Object);
 }
 
-export function formatValue(value: any, dec?: number, units?: string, showZeroDecimals?: boolean): string | undefined {
+export const formatValue = (value: any, dec?: number, units?: string, showZeroDecimals?: boolean): string | undefined => {
   if (isDefinedAndNotNull(value) && isNumeric(value) &&
     (isDefinedAndNotNull(dec) || isDefinedAndNotNull(units) || Number(value).toString() === value)) {
     let formatted: string | number = Number(value);
@@ -147,6 +147,16 @@ export function formatValue(value: any, dec?: number, units?: string, showZeroDe
     return formatted;
   } else {
     return value !== null ? value : '';
+  }
+}
+
+export const formatNumberValue = (value: any, dec?: number): number | undefined => {
+  if (isDefinedAndNotNull(value) && isNumeric(value)) {
+    let formatted: string | number = Number(value);
+    if (isDefinedAndNotNull(dec)) {
+      formatted = formatted.toFixed(dec);
+    }
+    return Number(formatted);
   }
 }
 
@@ -190,6 +200,13 @@ export function objToBase64URI(obj: any): string {
 export function base64toObj(b64Encoded: string): any {
   const json = decodeURIComponent(atob(b64Encoded).split('').map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
   return JSON.parse(json);
+}
+
+export function stringToBase64(value: string): string {
+  return btoa(encodeURIComponent(value).replace(/%([0-9A-F]{2})/g,
+    function toSolidBytes(match, p1) {
+      return String.fromCharCode(Number('0x' + p1));
+    }));
 }
 
 const scrollRegex = /(auto|scroll)/;
@@ -404,18 +421,19 @@ export const createLabelFromDatasource = (datasource: Datasource, pattern: strin
 
 export const hasDatasourceLabelsVariables = (pattern: string): boolean => varsRegex.test(pattern) !== null;
 
-export function formattedDataFormDatasourceData(input: DatasourceData[], dataIndex?: number): FormattedData[] {
+export function formattedDataFormDatasourceData(input: DatasourceData[], dataIndex?: number, ts?: number): FormattedData[] {
   return _(input).groupBy(el => el.datasource.entityName + el.datasource.entityType)
     .values().value().map((entityArray, i) => {
       const datasource = entityArray[0].datasource;
       const obj = formattedDataFromDatasource(datasource, i);
       entityArray.filter(el => el.data.length).forEach(el => {
         const index = isDefined(dataIndex) ? dataIndex : el.data.length - 1;
-        if (!obj.hasOwnProperty(el.dataKey.label) || el.data[index][1] !== '') {
-          obj[el.dataKey.label] = el.data[index][1];
-          obj[el.dataKey.label + '|ts'] = el.data[index][0];
+        const dataSet = isDefined(ts) ? el.data.find(data => data[0] === ts) : el.data[index];
+        if (dataSet !== undefined && (!obj.hasOwnProperty(el.dataKey.label) || dataSet[1] !== '')) {
+          obj[el.dataKey.label] = dataSet[1];
+          obj[el.dataKey.label + '|ts'] = dataSet[0];
           if (el.dataKey.label.toLowerCase() === 'type') {
-            obj.deviceType = el.data[index][1];
+            obj.deviceType = dataSet[1];
           }
         }
       });

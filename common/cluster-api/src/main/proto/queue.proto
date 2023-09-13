@@ -28,6 +28,7 @@ message ServiceInfo {
   repeated string serviceTypes = 2;
   repeated string transports = 6;
   SystemInfoProto systemInfo = 10;
+  repeated string assignedTenantProfiles = 11;
 }
 
 message SystemInfoProto {
@@ -974,6 +975,8 @@ message ToCoreMsg {
   EdgeNotificationMsgProto edgeNotificationMsg = 5;
   DeviceActivityProto deviceActivityMsg = 6;
   NotificationSchedulerServiceMsg notificationSchedulerServiceMsg = 7;
+  LifecycleEventProto lifecycleEventMsg = 8;
+  ErrorEventProto errorEventMsg = 9;
 }
 
 /* High priority messages with low latency are handled by ThingsBoard Core Service separately */
@@ -1064,4 +1067,25 @@ message NotificationSchedulerServiceMsg {
 
 message NotificationRuleProcessorMsg {
   bytes trigger = 1;
+}
+
+message ErrorEventProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 entityIdMSB = 3;
+  int64 entityIdLSB = 4;
+  string serviceId = 5;
+  string method = 6;
+  string error = 7;
+}
+
+message LifecycleEventProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 entityIdMSB = 3;
+  int64 entityIdLSB = 4;
+  string serviceId = 5;
+  string lcEventType = 6;
+  bool success = 7;
+  string error = 8;
 }

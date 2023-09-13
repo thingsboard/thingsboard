@@ -89,7 +89,6 @@
           <ng-template matExpansionPanelContent>
             <tb-json-object-edit
               [editorStyle]="{minHeight: '100px'}"
-              required
               label="{{ 'widget-config.title-style' | translate }}"
               formControlName="titleStyle"
             ></tb-json-object-edit>
@@ -275,14 +274,14 @@
   <ng-template #appearance>
     <div *ngIf="displayAppearanceDataSettings" class="tb-form-panel" [formGroup]="widgetSettings">
       <div class="tb-form-panel-title" translate>widget-config.data-settings</div>
-      <div *ngIf="displayUnitsConfig" class="tb-form-row space-between column-xs">
-        <div translate>widget-config.units</div>
+      <div *ngIf="displayUnitsConfig" class="tb-form-row space-between">
+        <div tb-hint-tooltip-icon="{{'widget-config.default-data-key-parameter-hint' | translate}}" translate>widget-config.units-by-default</div>
         <tb-unit-input
           formControlName="units">
         </tb-unit-input>
       </div>
-      <div *ngIf="displayUnitsConfig" class="tb-form-row space-between column-xs">
-        <div translate>widget-config.decimals</div>
+      <div *ngIf="displayUnitsConfig" class="tb-form-row space-between">
+        <div tb-hint-tooltip-icon="{{'widget-config.default-data-key-parameter-hint' | translate}}" translate>widget-config.decimals-by-default</div>
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
