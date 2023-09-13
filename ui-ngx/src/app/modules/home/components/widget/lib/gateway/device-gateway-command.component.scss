@@ -22,18 +22,18 @@
 :host ::ng-deep {
   .tb-markdown-view {
     .start-code {
-      code[class*="language-"], pre[class*="language-"] {
-        overflow: hidden;
+      code[class*="language-"] {
         white-space: break-spaces;
         word-break: break-all;
+      }
+      pre[class*="language-"] {
+        overflow: hidden;
         background: #F3F6FA;
         border-color: #305680;
       }
-
       .code-wrapper {
         padding: 0;
       }
-
       button.clipboard-btn {
         right: 0;
         p {
@@ -46,7 +46,6 @@
           img {
             display: none;
           }
-
           &:after {
             content: "";
             position: initial;
