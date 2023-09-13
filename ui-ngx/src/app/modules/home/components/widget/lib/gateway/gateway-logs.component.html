@@ -25,13 +25,13 @@
        matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()"
        matSortDisableClear>
   <ng-container matColumnDef="ts">
-    <mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'widgets.gateway.created-time' | translate }}</mat-header-cell>
+    <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 20%">{{ 'widgets.gateway.created-time' | translate }}</mat-header-cell>
     <mat-cell *matCellDef="let attribute">
       {{ attribute.ts | date:'yyyy-MM-dd HH:mm:ss' }}
     </mat-cell>
   </ng-container>
   <ng-container matColumnDef="status">
-    <mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'widgets.gateway.status' | translate }}</mat-header-cell>
+    <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 10%">{{ 'widgets.gateway.status' | translate }}</mat-header-cell>
     <mat-cell *matCellDef="let attribute">
       <span [class]="statusClass(attribute.status)">{{ attribute.status }}</span>
     </mat-cell>

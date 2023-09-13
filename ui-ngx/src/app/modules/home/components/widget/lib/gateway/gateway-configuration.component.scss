@@ -54,6 +54,14 @@
     flex: 1;
   }
 
+  .statistics-container {
+    width: 50%;
+
+    .command-container {
+      width: 100%;
+    }
+  }
+
   .actions {
     grid-row: 3;
     padding: 8px;

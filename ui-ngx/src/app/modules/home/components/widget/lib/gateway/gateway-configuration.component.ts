@@ -48,6 +48,7 @@ import {
   StorageTypes,
   StorageTypesTranslationMap
 } from './gateway-widget.models';
+import { deepTrim } from '@core/utils';
 
 @Component({
   selector: 'tb-gateway-configuration',
@@ -91,7 +92,7 @@ export class GatewayConfigurationComponent implements OnInit {
   ngOnInit() {
     this.gatewayConfigGroup = this.fb.group({
       thingsboard: this.fb.group({
-        host: [window.location.hostname, [Validators.required]],
+        host: [window.location.hostname, [Validators.required, Validators.pattern(/^[^\s]+$/)]],
         port: [1883, [Validators.required, Validators.min(1), Validators.max(65535), Validators.pattern(/^-?[0-9]+$/)]],
         remoteShell: [false, []],
         remoteConfiguration: [true, []],
@@ -107,30 +108,30 @@ export class GatewayConfigurationComponent implements OnInit {
         handleDeviceRenaming: [true, []],
         checkingDeviceActivity: this.fb.group({
           checkDeviceInactivity: [false, []],
-          inactivityTimeoutSeconds: [200, [Validators.min(1)]],
-          inactivityCheckPeriodSeconds: [500, [Validators.min(1)]]
+          inactivityTimeoutSeconds: [200, [Validators.min(1), Validators.pattern(/^[^.\s]+$/)]],
+          inactivityCheckPeriodSeconds: [500, [Validators.min(1), Validators.pattern(/^[^.\s]+$/)]]
         }),
         security: this.fb.group({
           type: [SecurityTypes.ACCESS_TOKEN, [Validators.required]],
-          accessToken: [null, [Validators.required]],
-          clientId: [null, []],
-          username: [null, []],
-          password: [null, []],
+          accessToken: [null, [Validators.required, Validators.pattern(/^[^.\s]+$/)]],
+          clientId: [null, [Validators.pattern(/^[^.\s]+$/)]],
+          username: [null, [Validators.pattern(/^[^.\s]+$/)]],
+          password: [null, [Validators.pattern(/^[^.\s]+$/)]],
           caCert: [null, []],
           cert: [null, []],
           privateKey: [null, []],
         }),
-        qos: [1, [Validators.min(0), Validators.max(1), Validators.required]]
+        qos: [1, [Validators.min(0), Validators.max(1), Validators.required, Validators.pattern(/^[^.\s]+$/)]]
       }),
       storage: this.fb.group({
         type: [StorageTypes.MEMORY, [Validators.required]],
-        read_records_count: [100, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.required]],
-        max_records_count: [100000, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.required]],
-        data_folder_path: ['./data/', []],
+        read_records_count: [100, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.required, Validators.pattern(/^[^.\s]+$/)]],
+        max_records_count: [100000, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.required, Validators.pattern(/^[^.\s]+$/)]],
+        data_folder_path: ['./data/', [Validators.pattern(/^[^\s]+$/)]],
         max_file_count: [10, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
         max_read_records_count: [10, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
         max_records_per_file: [10000, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
-        data_file_path: ['./data/data.db', []],
+        data_file_path: ['./data/data.db', [Validators.pattern(/^[^\s]+$/)]],
         messages_ttl_check_in_hours: [1, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
         messages_ttl_in_days: [7, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
 
@@ -147,9 +148,9 @@ export class GatewayConfigurationComponent implements OnInit {
       }),
       connectors: this.fb.array([]),
       logs: this.fb.group({
-        dateFormat: ['%Y-%m-%d %H:%M:%S', [Validators.required]],
+        dateFormat: ['%Y-%m-%d %H:%M:%S', [Validators.required, Validators.pattern(/^[^\s].*[^\s]$/)]],
         logFormat: ['%(asctime)s - |%(levelname)s| - [%(filename)s] - %(module)s - %(funcName)s - %(lineno)d - %(message)s',
-          [Validators.required]],
+          [Validators.required, Validators.pattern(/^[^\s].*[^\s]$/)]],
         type: ['remote', [Validators.required]],
         remote: this.fb.group({
           enabled: [false],
@@ -204,7 +205,7 @@ export class GatewayConfigurationComponent implements OnInit {
     securityGroup.get('type').valueChanges.subscribe(type => {
       this.removeAllSecurityValidators();
       if (type === SecurityTypes.ACCESS_TOKEN) {
-        securityGroup.get('accessToken').addValidators([Validators.required]);
+        securityGroup.get('accessToken').addValidators([Validators.required, Validators.pattern(/^[^.\s]+$/)]);
         securityGroup.get('accessToken').updateValueAndValidity();
       } else if (type === SecurityTypes.TLS_PRIVATE_KEY) {
         securityGroup.get('caCert').addValidators([Validators.required]);
@@ -214,7 +215,7 @@ export class GatewayConfigurationComponent implements OnInit {
         securityGroup.get('cert').addValidators([Validators.required]);
         securityGroup.get('cert').updateValueAndValidity();
       } else if (type === SecurityTypes.TLS_ACCESS_TOKEN) {
-        securityGroup.get('accessToken').addValidators([Validators.required]);
+        securityGroup.get('accessToken').addValidators([Validators.required, Validators.pattern(/^[^.\s]+$/)]);
         securityGroup.get('accessToken').updateValueAndValidity();
         securityGroup.get('caCert').addValidators([Validators.required]);
         securityGroup.get('caCert').updateValueAndValidity();
@@ -239,7 +240,7 @@ export class GatewayConfigurationComponent implements OnInit {
         storageGroup.get('read_records_count').updateValueAndValidity({emitEvent: false});
         storageGroup.get('max_records_count').updateValueAndValidity({emitEvent: false});
       } else if (type === StorageTypes.FILE) {
-        storageGroup.get('data_folder_path').addValidators([Validators.required]);
+        storageGroup.get('data_folder_path').addValidators([Validators.required, Validators.pattern(/^[^.\s]+$/)]);
         storageGroup.get('max_file_count').addValidators(
           [Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.required]);
         storageGroup.get('max_read_records_count').addValidators(
@@ -251,7 +252,7 @@ export class GatewayConfigurationComponent implements OnInit {
         storageGroup.get('max_read_records_count').updateValueAndValidity({emitEvent: false});
         storageGroup.get('max_records_per_file').updateValueAndValidity({emitEvent: false});
       } else if (type === StorageTypes.SQLITE) {
-        storageGroup.get('data_file_path').addValidators([Validators.required]);
+        storageGroup.get('data_file_path').addValidators([Validators.required, Validators.pattern(/^[^.\s]+$/)]);
         storageGroup.get('messages_ttl_check_in_hours').addValidators(
           [Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.required]);
         storageGroup.get('messages_ttl_in_days').addValidators(
@@ -342,8 +343,8 @@ export class GatewayConfigurationComponent implements OnInit {
         this.initialCredentials = credentials;
         if (credentials.credentialsType === DeviceCredentialsType.ACCESS_TOKEN || security.type === SecurityTypes.TLS_ACCESS_TOKEN) {
           this.gatewayConfigGroup.get('thingsboard.security.type').setValue(security.type === SecurityTypes.TLS_ACCESS_TOKEN
-                                                                              ? SecurityTypes.TLS_ACCESS_TOKEN
-                                                                              : SecurityTypes.ACCESS_TOKEN);
+            ? SecurityTypes.TLS_ACCESS_TOKEN
+            : SecurityTypes.ACCESS_TOKEN);
           this.gatewayConfigGroup.get('thingsboard.security.accessToken').setValue(credentials.credentialsId);
           if(security.type === SecurityTypes.TLS_ACCESS_TOKEN) {
             this.gatewayConfigGroup.get('thingsboard.security.caCert').setValue(security.caCert);
@@ -407,9 +408,9 @@ export class GatewayConfigurationComponent implements OnInit {
   addCommand(command: any = {}): void {
     const commandsFormArray = this.commandFormArray();
     const commandFormGroup = this.fb.group({
-      attributeOnGateway: [command.attributeOnGateway || null, [Validators.required]],
-      command: [command.command || null, [Validators.required]],
-      timeout: [command.timeout || null, [Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
+      attributeOnGateway: [command.attributeOnGateway || null, [Validators.required, Validators.pattern(/^[^.\s]+$/)]],
+      command: [command.command || null, [Validators.required, Validators.pattern(/^[^.\s]+$/)]],
+      timeout: [command.timeout || null, [Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.pattern(/^[^.\s]+$/)]],
     });
     commandsFormArray.push(commandFormGroup);
   }
@@ -542,7 +543,7 @@ export class GatewayConfigurationComponent implements OnInit {
   }
 
   saveConfig(): void {
-    const value = this.removeEmpty(this.gatewayConfigGroup.value);
+    const value = deepTrim(this.removeEmpty(this.gatewayConfigGroup.value));
     value.thingsboard.statistics.commands = Object.values(value.thingsboard.statistics.commands);
     const attributes = [];
     attributes.push({
@@ -609,8 +610,8 @@ export class GatewayConfigurationComponent implements OnInit {
           credentialsValue.password = securityConfig.password;
         }
         newCredentials = {
-            credentialsType,
-            credentialsValue: JSON.stringify(credentialsValue)
+          credentialsType,
+          credentialsValue: JSON.stringify(credentialsValue)
         };
       }
     } else if (securityConfig.type === SecurityTypes.ACCESS_TOKEN || securityConfig.type === SecurityTypes.TLS_ACCESS_TOKEN) {

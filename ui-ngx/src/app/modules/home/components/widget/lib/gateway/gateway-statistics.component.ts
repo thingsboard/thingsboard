@@ -50,6 +50,7 @@ export class GatewayStatisticsComponent implements AfterViewInit {
   public general: boolean;
 
   public isNumericData = false;
+  public dataTypeDefined: boolean = false;
   public chartInited: boolean;
   private flot: TbFlot;
   private flotCtx: WidgetContext;
@@ -155,6 +156,7 @@ export class GatewayStatisticsComponent implements AfterViewInit {
     subscriptionInfo[0].timeseries = [{name: attr, label: attr}];
     this.subscriptionInfo = subscriptionInfo;
     this.changeSubscription(subscriptionInfo);
+    this.ctx.defaultSubscription.unsubscribe();
   }
 
   private createGeneralChartsSubscription(gateway: BaseData<EntityId>, attrData: string[]) {
@@ -175,8 +177,8 @@ export class GatewayStatisticsComponent implements AfterViewInit {
       subscriptionInfo[0].timeseries.push({name: dataKey.name, label: dataKey.label});
     });
 
-    this.subscriptionInfo = subscriptionInfo;
     this.changeSubscription(subscriptionInfo);
+    this.ctx.defaultSubscription.unsubscribe();
   }
 
   private init = () => {
@@ -252,7 +254,10 @@ export class GatewayStatisticsComponent implements AfterViewInit {
       return;
     }
     this.dataSource.data = this.subscription.data.length ? this.subscription.data[0].data : [];
-    this.isNumericData = this.dataSource.data.every(data => !isNaN(+data[1]));
+    if (this.dataSource.data.length && !this.dataTypeDefined) {
+      this.dataTypeDefined = true;
+      this.isNumericData = this.dataSource.data.every(data => !isNaN(+data[1]));
+    }
   }
 
 
@@ -263,6 +268,7 @@ export class GatewayStatisticsComponent implements AfterViewInit {
     if (this.ctx.datasources[0].entity) {
       this.ctx.subscriptionApi.createSubscriptionFromInfo(widgetType.timeseries, subscriptionInfo, this.subscriptionOptions,
         false, true).subscribe(subscription => {
+        this.dataTypeDefined = false;
         this.subscription = subscription;
         this.isDataOnlyNumbers();
         this.legendData = this.subscription.legendData;

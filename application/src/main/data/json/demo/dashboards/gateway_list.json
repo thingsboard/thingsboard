@@ -44,7 +44,8 @@
             "enableSearch": true,
             "enableSelectColumnDisplay": false,
             "enableStickyHeader": true,
-            "enableStickyAction": true,
+            "enableStickyAction": false,
+            "showCellActionsMenu": true,
             "reserveSpaceForHiddenAction": "true",
             "displayEntityName": false,
             "displayEntityLabel": false,
@@ -570,9 +571,9 @@
           "padding": "8px",
           "settings": {
             "useMarkdownTextFunction": true,
-            "markdownTextFunction": "var blockData = '';\nfunction createDataBlock(value, label, dividerStyle, mobile) {\n    blockData += `\n        <mat-card style=\"flex-grow: 1; width: ${mobile? '100%': 'auto'}; min-height: ${mobile? 'auto': '57px'}\" class=\" ${dividerStyle}\">\n            <div class=\"divider\"></div>\n            <mat-divider vertical style=\"height:100%\"></mat-divider>\n            <mat-card-header>\n                <mat-card-subtitle>${label}</mat-card-subtitle>\n            </mat-card-header>\n            <mat-card-content> ${value}</mat-card-content>\n        </mat-card>`;\n}\ncreateDataBlock(data[0].Status, \"Status\", data[0].Status === \"Active\"? 'divider-green' : 'divider-red');\ncreateDataBlock(data[0].Name, \"Gateway Name\", '', ctx.isMobile);\ncreateDataBlock(data[0].Type, \"Gateway Type\", '');\ncreateDataBlock(\n    `<span style=\"color:rgb(25,128,56)\">${(data[1]?data[1].count:0)} </span>`\n    + \" | \" + \n    `<span style=\"color:rgb(203,37,48)\">${(data[2]?data[2][\"count 2\"]:0)} </span>`\n    , \"Devices\", '');\ncreateDataBlock(\n    `<span style=\"color:rgb(25,128,56)\">${(data[0].active_connectors?JSON.parse(data[0].active_connectors).length:0)} </span>`\n    + \" | \" + \n    `<span style=\"color:rgb(203,37,48)\">${(data[0].inactive_connectors?JSON.parse(data[0].inactive_connectors).length:0)} </span>`\n    , \"Connectors\", '');\ncreateDataBlock(data[0].ALL_ERRORS_COUNT || 0, \"Errors\", (data[0].ALL_ERRORS_COUNT || 0) === 0 ? 'divider-green' : 'divider-red');\nreturn `<div fxLayout=\"row wrap\" fxLayoutGap=\"8px\" class=\"cards-container\">${blockData}</div>`;",
+            "markdownTextFunction": "var blockData = '';\nvar connectorsIndex = ctx.actionsApi.getActionDescriptors('elementClick').findIndex(action=>action.name==\"Connecotrs\");\nvar logsIndex = ctx.actionsApi.getActionDescriptors('elementClick').findIndex(action=>action.name==\"Logs\");\nfunction generateMatHeader(index) {\n    if( index !== undefined && index > -1) {\n         return `<mat-card-header class='tb-home-widget-link'  (click)=\"ctx.actionsApi.handleWidgetAction($event, ctx.actionsApi.getActionDescriptors('elementClick')[${index}], ctx.datasources[0].entity.id)\">`\n    } else {\n       return \"<mat-card-header >\" \n    }\n}\nfunction createDataBlock(value, label, dividerStyle, mobile, index) {\n    blockData += `\n        <mat-card style=\"flex-grow: 1; width: ${mobile? '100%': 'auto'}; min-height: ${mobile? 'auto': '57px'}\" class=\" ${dividerStyle}\">\n            <div class=\"divider\"></div>\n            <mat-divider vertical style=\"height:100%\"></mat-divider>\n            ${generateMatHeader(index)}\n                <mat-card-subtitle>${label}</mat-card-subtitle>\n            </mat-card-header>\n            <mat-card-content> ${value}</mat-card-content>\n        </mat-card>`;\n}\ncreateDataBlock(data[0].Status, \"Status\", data[0].Status === \"Active\"? 'divider-green' : 'divider-red');\ncreateDataBlock(data[0].Name, \"Gateway Name\", '', ctx.isMobile);\ncreateDataBlock(data[0].Type, \"Gateway Type\", '');\ncreateDataBlock(\n    `<span style=\"color:rgb(25,128,56)\">${(data[1]?data[1].count:0)} </span>`\n    + \" | \" + \n    `<span style=\"color:rgb(203,37,48)\">${(data[2]?data[2][\"count 2\"]:0)} </span>`\n    , \"Devices <span class='tb-hint' style='padding-left: 0'>(Active | Inactive)</span>\", '');\ncreateDataBlock(\n    `<span style=\"color:rgb(25,128,56)\">${(data[0].active_connectors?JSON.parse(data[0].active_connectors).length:0)} </span>`\n    + \" | \" + \n    `<span style=\"color:rgb(203,37,48)\">${(data[0].inactive_connectors?JSON.parse(data[0].inactive_connectors).length:0)} </span>`\n    , \"Connectors <span class='tb-hint' style='padding-left: 0'>(Active | Inactive)</span>\", '', '',  connectorsIndex);\ncreateDataBlock(data[0].ALL_ERRORS_COUNT || 0, \"Errors\", (data[0].ALL_ERRORS_COUNT || 0) === 0 ? 'divider-green' : 'divider-red', '', logsIndex);\nreturn `<div fxLayout=\"row wrap\" fxLayoutGap=\"8px\" class=\"cards-container\">${blockData}</div>`;",
             "applyDefaultMarkdownStyle": false,
-            "markdownCss": ".divider {\n    position: absolute;\n    width: 3px;\n    top: 8px;\n    border-radius: 2px;\n    bottom: 8px;\n    border: 1px solid rgba(31, 70, 144, 1);\n    background-color: rgba(31, 70, 144, 1);\n    left: 10px;\n}\n.divider-green .divider {\n    border: 1px solid rgb(25,128,56);\n    background-color: rgb(25,128,56);\n}\n\n.divider-green .mat-mdc-card-content {\n    color: rgb(25,128,56);\n}\n\n.divider-red .divider {\n    border: 1px solid rgb(203,37,48);\n    background-color: rgb(203,37,48);\n}\n\n.divider-red .mat-mdc-card-content {\n    color: rgb(203,37,48);\n}\n\n.mdc-card {\n    position: relative;\n    padding-left: 10px;\n    margin-bottom: 1px;\n}\n\n.mat-mdc-card-subtitle {\n    font-weight: 400;\n    font-size: 12px;\n}\n\n.mat-mdc-card-header {\n    padding: 8px 16px 0;\n}\n\n.mat-mdc-card-content:last-child {\n    padding-bottom: 8px;\n    font-size: 16px;\n}\n\n.cards-container {\n    height: calc(100% - 1px);\n    justify-content: stretch;\n    align-items: center;\n    margin-bottom: 1px;\n}"
+            "markdownCss": ".divider {\n    position: absolute;\n    width: 3px;\n    top: 8px;\n    border-radius: 2px;\n    bottom: 8px;\n    border: 1px solid rgba(31, 70, 144, 1);\n    background-color: rgba(31, 70, 144, 1);\n    left: 10px;\n}\n.divider-green .divider {\n    border: 1px solid rgb(25,128,56);\n    background-color: rgb(25,128,56);\n}\n\n.divider-green .mat-mdc-card-content {\n    color: rgb(25,128,56);\n}\n\n.divider-red .divider {\n    border: 1px solid rgb(203,37,48);\n    background-color: rgb(203,37,48);\n}\n\n.divider-red .mat-mdc-card-content {\n    color: rgb(203,37,48);\n}\n\n.mdc-card {\n    position: relative;\n    padding-left: 10px;\n    margin-bottom: 1px;\n}\n\n.mat-mdc-card-subtitle {\n    font-weight: 400;\n    font-size: 12px;\n}\n\n.mat-mdc-card-header {\n    padding: 8px 16px 0;\n}\n\n.mat-mdc-card-content:last-child {\n    padding-bottom: 8px;\n    font-size: 16px;\n}\n\n.cards-container {\n    height: calc(100% - 1px);\n    justify-content: stretch;\n    align-items: center;\n    margin-bottom: 1px;\n}\n\n::ng-deep.tb-home-widget-link > div {\n    flex-grow: 1;\n    cursor: pointer;\n}\n\n .tb-home-widget-link {\n     width: 100%;\n }\n\n .tb-home-widget-link:hover::after{\n     color: inherit;\n }\n \n .tb-home-widget-link::after{\n    content: 'arrow_forward';\n    display: inline-block;\n    transform: rotate(315deg);\n    font-family: 'Material Icons';\n    font-weight: normal;\n    font-style: normal;\n    font-size: 18px;\n    color: rgba(0, 0, 0, 0.12);\n    vertical-align: bottom;\n    margin-left: 6px;\n}"
           },
           "title": "New Markdown/HTML Card",
           "showTitleIcon": false,
@@ -594,7 +595,39 @@
           "noDataDisplayMessage": "",
           "enableDataExport": false,
           "displayTimewindow": true,
-          "borderRadius": "4px"
+          "borderRadius": "4px",
+          "actions": {
+            "elementClick": [
+              {
+                "name": "Connecotrs",
+                "icon": "more_horiz",
+                "useShowWidgetActionFunction": null,
+                "showWidgetActionFunction": "return true;",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "connectors",
+                "setEntityId": true,
+                "stateEntityParamName": null,
+                "openRightLayout": false,
+                "openInSeparateDialog": false,
+                "openInPopover": false,
+                "id": "ee7216d8-ad7a-20db-1abc-2531e221f24c"
+              },
+              {
+                "name": "Logs",
+                "icon": "more_horiz",
+                "useShowWidgetActionFunction": null,
+                "showWidgetActionFunction": "return true;",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "logs",
+                "setEntityId": true,
+                "stateEntityParamName": null,
+                "openRightLayout": false,
+                "openInSeparateDialog": false,
+                "openInPopover": false,
+                "id": "ceec0446-c25f-2b9b-b1b1-58ed751476ff"
+              }
+            ]
+          }
         },
         "row": 0,
         "col": 0,
@@ -784,7 +817,7 @@
           "color": "rgba(0, 0, 0, 0.87)",
           "padding": "8px",
           "settings": {},
-          "title": "Gateway Logs",
+          "title": "Logs",
           "showTitleIcon": false,
           "dropShadow": true,
           "enableFullscreen": true,
@@ -961,7 +994,7 @@
             "customLegendEnabled": false,
             "dataKeysListForLabels": []
           },
-          "title": "Statistics",
+          "title": "Gateway Custom Statistics",
           "dropShadow": true,
           "enableFullscreen": true,
           "titleStyle": {
@@ -1249,7 +1282,7 @@
             "customLegendEnabled": false,
             "dataKeysListForLabels": []
           },
-          "title": "General Statistics",
+          "title": "Gateway General Chart Statistics",
           "dropShadow": true,
           "enableFullscreen": true,
           "titleStyle": {
