@@ -343,7 +343,7 @@
         "row": 0,
         "col": 0,
         "id": "d4a1ffc4-c9f6-7b15-bca0-17feb58bac99",
-        "typeFullFqn": "system.gateway_widgets.gateway_configuration2"
+        "typeFullFqn": "system.gateway_widgets.gateway_general_configuration"
       },
       "02a05113-d878-b086-328e-75bd6f02b2bb": {
         "type": "latest",
@@ -417,7 +417,7 @@
         "row": 0,
         "col": 0,
         "id": "02a05113-d878-b086-328e-75bd6f02b2bb",
-        "typeFullFqn": "system.gateway_widgets.gateway_connector"
+        "typeFullFqn": "system.gateway_widgets.gateway_connectors"
       },
       "79f59106-758f-c428-8b93-4341faea705d": {
         "type": "latest",
@@ -1026,7 +1026,7 @@
         "row": 0,
         "col": 0,
         "id": "9b88dc51-b186-90ef-5afb-9648e6e2ac9a",
-        "typeFullFqn": "system.gateway_widgets.gateway_statistics"
+        "typeFullFqn": "system.gateway_widgets.gateway_custom_statistics"
       },
       "2a318e56-5c83-4f82-bf23-df72dd7e3edf": {
         "type": "rpc",
@@ -1314,7 +1314,7 @@
         "row": 0,
         "col": 0,
         "id": "c50e294a-265a-d13c-c772-b56c4df953fe",
-        "typeFullFqn": "system.gateway_widgets.gateway_general_statistics"
+        "typeFullFqn": "system.gateway_widgets.gateway_general_chart_statistics"
       },
       "da01e13f-c108-39fd-2a74-b40da088769a": {
         "type": "timeseries",

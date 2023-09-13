@@ -18,10 +18,10 @@
 <div class="tb-form-panel" [formGroup]="gatewayLogSettingForm">
   <div class="tb-form-row column-xs">
     <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="isConnectorLog">
-      {{"widgets.gateway.is-connector" | translate}}
+      {{ "widgets.gateway.show-connector" | translate }}
     </mat-slide-toggle>
     <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
-      <input matInput formControlName="connectorLogState" placeholder="{{ 'widgets.gateway.state-param-name' | translate }}">
+      <input matInput formControlName="connectorLogState" placeholder="{{ 'widgets.gateway.connector-state-param-key' | translate }}">
     </mat-form-field>
   </div>
 </div>
