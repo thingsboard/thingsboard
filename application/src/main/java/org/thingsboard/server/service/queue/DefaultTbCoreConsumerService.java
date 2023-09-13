@@ -136,8 +136,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     protected final TbQueueConsumer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> usageStatsConsumer;
     private final TbQueueConsumer<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> firmwareStatesConsumer;
 
+    private ExecutorService mainConsumerExecutor;
     protected volatile ExecutorService usageStatsExecutor;
-
     private volatile ExecutorService firmwareStatesExecutor;
 
     public DefaultTbCoreConsumerService(TbCoreQueueFactory tbCoreQueueFactory,
@@ -180,7 +180,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
 
     @PostConstruct
     public void init() {
-        super.init("tb-core-consumer", "tb-core-notifications-consumer");
+        super.init("tb-core-notifications-consumer");
+        this.mainConsumerExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("tb-core-consumer"));
         this.usageStatsExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-core-usage-stats-consumer"));
         this.firmwareStatesExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-core-firmware-notifications-consumer"));
     }
@@ -188,6 +189,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     @PreDestroy
     public void destroy() {
         super.destroy();
+        if (mainConsumerExecutor != null) {
+            mainConsumerExecutor.shutdownNow();
+        }
         if (usageStatsExecutor != null) {
             usageStatsExecutor.shutdownNow();
         }
@@ -220,7 +224,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
 
     @Override
     protected void launchMainConsumers() {
-        consumersExecutor.submit(() -> {
+        mainConsumerExecutor.submit(() -> {
             while (!stopped) {
                 try {
                     List<TbProtoQueueMsg<ToCoreMsg>> msgs = mainConsumer.poll(pollDuration);
@@ -234,7 +238,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                     TbPackProcessingContext<TbProtoQueueMsg<ToCoreMsg>> ctx = new TbPackProcessingContext<>(
                             processingTimeoutLatch, pendingMap, new ConcurrentHashMap<>());
                     PendingMsgHolder pendingMsgHolder = new PendingMsgHolder();
-                    Future<?> packSubmitFuture = consumersExecutor.submit(() -> {
+                    Future<?> packSubmitFuture = mainConsumerExecutor.submit(() -> {
                         orderedMsgList.forEach((element) -> {
                             UUID id = element.getUuid();
                             TbProtoQueueMsg<ToCoreMsg> msg = element.getMsg();

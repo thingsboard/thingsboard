@@ -28,6 +28,8 @@ public interface TbQueueConsumer<T extends TbQueueMsg> {
 
     void subscribe(Set<TopicPartitionInfo> partitions);
 
+    void stop();
+
     void unsubscribe();
 
     List<T> poll(long durationInMillis);
