@@ -7,11 +7,7 @@
     "description": "",
     "widgets": {
       "fd6df872-2ddf-0921-3929-2e7f55062fad": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "html_value_card",
         "type": "latest",
-        "title": "New widget",
         "sizeX": 7.5,
         "sizeY": 3,
         "config": {
@@ -117,8 +113,27 @@
             }
           ],
           "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
             "realtime": {
-              "timewindowMs": 60000
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1694083375825,
+                "endTimeMs": 1694169775825
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
             }
           },
           "showTitle": false,
@@ -162,14 +177,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "fd6df872-2ddf-0921-3929-2e7f55062fad"
+        "id": "fd6df872-2ddf-0921-3929-2e7f55062fad",
+        "typeFullFqn": "system.cards.html_value_card"
       },
       "7e235874-461b-e7c2-2fdd-d8762a020773": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "html_value_card",
         "type": "latest",
-        "title": "New widget",
         "sizeX": 7.5,
         "sizeY": 3,
         "config": {
@@ -275,8 +287,27 @@
             }
           ],
           "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
             "realtime": {
-              "timewindowMs": 60000
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1694083375826,
+                "endTimeMs": 1694169775826
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
             }
           },
           "showTitle": false,
@@ -320,14 +351,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "7e235874-461b-e7c2-2fdd-d8762a020773"
+        "id": "7e235874-461b-e7c2-2fdd-d8762a020773",
+        "typeFullFqn": "system.cards.html_value_card"
       },
       "08545554-a0e8-05c7-66df-6000cfeff8a4": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "html_value_card",
         "type": "latest",
-        "title": "New widget",
         "sizeX": 7.5,
         "sizeY": 3,
         "config": {
@@ -433,8 +461,27 @@
             }
           ],
           "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
             "realtime": {
-              "timewindowMs": 60000
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1694083375826,
+                "endTimeMs": 1694169775826
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
             }
           },
           "showTitle": false,
@@ -488,14 +535,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "08545554-a0e8-05c7-66df-6000cfeff8a4"
+        "id": "08545554-a0e8-05c7-66df-6000cfeff8a4",
+        "typeFullFqn": "system.cards.html_value_card"
       },
       "a245c67e-53ec-d299-fa89-69fe2062ccb2": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "html_value_card",
         "type": "latest",
-        "title": "New widget",
         "sizeX": 7.5,
         "sizeY": 3,
         "config": {
@@ -614,8 +658,27 @@
             }
           ],
           "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
             "realtime": {
-              "timewindowMs": 60000
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1694083375826,
+                "endTimeMs": 1694169775826
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
             }
           },
           "showTitle": false,
@@ -659,14 +722,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "a245c67e-53ec-d299-fa89-69fe2062ccb2"
+        "id": "a245c67e-53ec-d299-fa89-69fe2062ccb2",
+        "typeFullFqn": "system.cards.html_value_card"
       },
       "a151ae60-0326-6116-d818-9070dda8e9c7": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "html_value_card",
         "type": "latest",
-        "title": "New widget",
         "sizeX": 7.5,
         "sizeY": 3,
         "config": {
@@ -772,8 +832,27 @@
             }
           ],
           "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
             "realtime": {
-              "timewindowMs": 60000
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1694083375826,
+                "endTimeMs": 1694169775826
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
             }
           },
           "showTitle": false,
@@ -822,14 +901,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "a151ae60-0326-6116-d818-9070dda8e9c7"
+        "id": "a151ae60-0326-6116-d818-9070dda8e9c7",
+        "typeFullFqn": "system.cards.html_value_card"
       },
       "68e16e98-0420-f72c-4848-41dedffd3904": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "timeseries_bars_flot",
         "type": "timeseries",
-        "title": "New widget",
         "sizeX": 8,
         "sizeY": 5,
         "config": {
@@ -926,6 +1002,16 @@
             "xaxisSecond": {
               "axisPosition": "top",
               "showLabels": true
+            },
+            "showLegend": true,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "sortDataKeys": false,
+              "showMin": false,
+              "showMax": false,
+              "showAvg": false,
+              "showTotal": true
             }
           },
           "title": "{i18n:api-usage.rule-engine-hourly-activity}",
@@ -937,7 +1023,6 @@
           },
           "widgetStyle": {},
           "useDashboardTimewindow": false,
-          "showLegend": true,
           "actions": {
             "headerButton": [
               {
@@ -966,27 +1051,15 @@
           "showTitleIcon": false,
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
-          "titleTooltip": "",
-          "legendConfig": {
-            "direction": "column",
-            "position": "bottom",
-            "sortDataKeys": false,
-            "showMin": false,
-            "showMax": false,
-            "showAvg": false,
-            "showTotal": true
-          }
+          "titleTooltip": ""
         },
         "row": 0,
         "col": 0,
-        "id": "68e16e98-0420-f72c-4848-41dedffd3904"
+        "id": "68e16e98-0420-f72c-4848-41dedffd3904",
+        "typeFullFqn": "system.charts.timeseries_bars_flot"
       },
       "2aa6b499-6e27-b315-6833-89c4d58485ce": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "timeseries_bars_flot",
         "type": "timeseries",
-        "title": "New widget",
         "sizeX": 8,
         "sizeY": 5,
         "config": {
@@ -1119,7 +1192,17 @@
               "axisPosition": "top",
               "showLabels": true
             },
-            "tooltipCumulative": false
+            "tooltipCumulative": false,
+            "showLegend": true,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "sortDataKeys": false,
+              "showMin": false,
+              "showMax": false,
+              "showAvg": false,
+              "showTotal": true
+            }
           },
           "title": "{i18n:api-usage.transport-hourly-activity}",
           "dropShadow": true,
@@ -1130,7 +1213,6 @@
           },
           "widgetStyle": {},
           "useDashboardTimewindow": false,
-          "showLegend": true,
           "actions": {
             "headerButton": [
               {
@@ -1149,27 +1231,15 @@
           "showTitleIcon": false,
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
-          "titleTooltip": "",
-          "legendConfig": {
-            "direction": "column",
-            "position": "bottom",
-            "sortDataKeys": false,
-            "showMin": false,
-            "showMax": false,
-            "showAvg": false,
-            "showTotal": true
-          }
+          "titleTooltip": ""
         },
         "row": 0,
         "col": 0,
-        "id": "2aa6b499-6e27-b315-6833-89c4d58485ce"
+        "id": "2aa6b499-6e27-b315-6833-89c4d58485ce",
+        "typeFullFqn": "system.charts.timeseries_bars_flot"
       },
       "d890cea3-fba0-6474-9a21-fa780230dc62": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "timeseries_bars_flot",
         "type": "timeseries",
-        "title": "New widget",
         "sizeX": 8,
         "sizeY": 5,
         "config": {
@@ -1266,6 +1336,16 @@
             "xaxisSecond": {
               "axisPosition": "top",
               "showLabels": true
+            },
+            "showLegend": true,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "sortDataKeys": false,
+              "showMin": false,
+              "showMax": false,
+              "showAvg": false,
+              "showTotal": true
             }
           },
           "title": "{i18n:api-usage.javascript-functions-hourly-activity}",
@@ -1277,7 +1357,6 @@
           },
           "widgetStyle": {},
           "useDashboardTimewindow": false,
-          "showLegend": true,
           "actions": {
             "headerButton": [
               {
@@ -1296,27 +1375,15 @@
           "showTitleIcon": false,
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
-          "titleTooltip": "",
-          "legendConfig": {
-            "direction": "column",
-            "position": "bottom",
-            "sortDataKeys": false,
-            "showMin": false,
-            "showMax": false,
-            "showAvg": false,
-            "showTotal": true
-          }
+          "titleTooltip": ""
         },
         "row": 0,
         "col": 0,
-        "id": "d890cea3-fba0-6474-9a21-fa780230dc62"
+        "id": "d890cea3-fba0-6474-9a21-fa780230dc62",
+        "typeFullFqn": "system.charts.timeseries_bars_flot"
       },
       "84b6cfa5-1449-e0f2-3560-f810d2dd7ead": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "timeseries_bars_flot",
         "type": "timeseries",
-        "title": "New widget",
         "sizeX": 8,
         "sizeY": 5,
         "config": {
@@ -1413,6 +1480,16 @@
             "xaxisSecond": {
               "axisPosition": "top",
               "showLabels": true
+            },
+            "showLegend": true,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "sortDataKeys": false,
+              "showMin": false,
+              "showMax": false,
+              "showAvg": false,
+              "showTotal": true
             }
           },
           "title": "{i18n:api-usage.telemetry-persistence-hourly-activity}",
@@ -1424,7 +1501,6 @@
           },
           "widgetStyle": {},
           "useDashboardTimewindow": false,
-          "showLegend": true,
           "actions": {
             "headerButton": [
               {
@@ -1443,27 +1519,15 @@
           "showTitleIcon": false,
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
-          "titleTooltip": "",
-          "legendConfig": {
-            "direction": "column",
-            "position": "bottom",
-            "sortDataKeys": false,
-            "showMin": false,
-            "showMax": false,
-            "showAvg": false,
-            "showTotal": true
-          }
+          "titleTooltip": ""
         },
         "row": 0,
         "col": 0,
-        "id": "84b6cfa5-1449-e0f2-3560-f810d2dd7ead"
+        "id": "84b6cfa5-1449-e0f2-3560-f810d2dd7ead",
+        "typeFullFqn": "system.charts.timeseries_bars_flot"
       },
       "d296b566-a000-7402-ae9d-c815381c5435": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "timeseries_bars_flot",
         "type": "timeseries",
-        "title": "New widget",
         "sizeX": 8,
         "sizeY": 5,
         "config": {
@@ -1560,6 +1624,16 @@
             "xaxisSecond": {
               "axisPosition": "top",
               "showLabels": true
+            },
+            "showLegend": true,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "sortDataKeys": false,
+              "showMin": false,
+              "showMax": false,
+              "showAvg": false,
+              "showTotal": true
             }
           },
           "title": "{i18n:api-usage.alarms-created-hourly-activity}",
@@ -1571,7 +1645,6 @@
           },
           "widgetStyle": {},
           "useDashboardTimewindow": false,
-          "showLegend": true,
           "actions": {
             "headerButton": [
               {
@@ -1595,27 +1668,15 @@
           "showTitleIcon": false,
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
-          "titleTooltip": "",
-          "legendConfig": {
-            "direction": "column",
-            "position": "bottom",
-            "sortDataKeys": false,
-            "showMin": false,
-            "showMax": false,
-            "showAvg": false,
-            "showTotal": true
-          }
+          "titleTooltip": ""
         },
         "row": 0,
         "col": 0,
-        "id": "d296b566-a000-7402-ae9d-c815381c5435"
+        "id": "d296b566-a000-7402-ae9d-c815381c5435",
+        "typeFullFqn": "system.charts.timeseries_bars_flot"
       },
       "00a02464-9509-911b-3b5e-21fb37629822": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "timeseries_bars_flot",
         "type": "timeseries",
-        "title": "New widget",
         "sizeX": 8,
         "sizeY": 5,
         "config": {
@@ -1747,6 +1808,16 @@
             "xaxisSecond": {
               "axisPosition": "top",
               "showLabels": true
+            },
+            "showLegend": true,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "sortDataKeys": false,
+              "showMin": false,
+              "showMax": false,
+              "showAvg": false,
+              "showTotal": true
             }
           },
           "title": "{i18n:api-usage.notifications-hourly-activity}",
@@ -1758,7 +1829,6 @@
           },
           "widgetStyle": {},
           "useDashboardTimewindow": false,
-          "showLegend": true,
           "actions": {
             "headerButton": [
               {
@@ -1782,27 +1852,15 @@
           "showTitleIcon": false,
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
-          "titleTooltip": "",
-          "legendConfig": {
-            "direction": "column",
-            "position": "bottom",
-            "sortDataKeys": false,
-            "showMin": false,
-            "showMax": false,
-            "showAvg": false,
-            "showTotal": true
-          }
+          "titleTooltip": ""
         },
         "row": 0,
         "col": 0,
-        "id": "00a02464-9509-911b-3b5e-21fb37629822"
+        "id": "00a02464-9509-911b-3b5e-21fb37629822",
+        "typeFullFqn": "system.charts.timeseries_bars_flot"
       },
       "74199074-7873-6c6a-2a51-3fc614769f03": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "timeseries_bars_flot",
         "type": "timeseries",
-        "title": "New widget",
         "sizeX": 8,
         "sizeY": 5,
         "config": {
@@ -1900,6 +1958,16 @@
             "xaxisSecond": {
               "axisPosition": "top",
               "showLabels": true
+            },
+            "showLegend": true,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "sortDataKeys": false,
+              "showMin": false,
+              "showMax": false,
+              "showAvg": false,
+              "showTotal": true
             }
           },
           "title": "{i18n:api-usage.rule-engine-daily-activity}",
@@ -1911,33 +1979,20 @@
           },
           "widgetStyle": {},
           "useDashboardTimewindow": false,
-          "showLegend": true,
           "actions": {},
           "displayTimewindow": true,
           "showTitleIcon": false,
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
-          "titleTooltip": "",
-          "legendConfig": {
-            "direction": "column",
-            "position": "bottom",
-            "sortDataKeys": false,
-            "showMin": false,
-            "showMax": false,
-            "showAvg": false,
-            "showTotal": true
-          }
+          "titleTooltip": ""
         },
         "row": 0,
         "col": 0,
-        "id": "74199074-7873-6c6a-2a51-3fc614769f03"
+        "id": "74199074-7873-6c6a-2a51-3fc614769f03",
+        "typeFullFqn": "system.charts.timeseries_bars_flot"
       },
       "00006bc3-8a8d-b55e-ed39-e318f1bcd090": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "timeseries_bars_flot",
         "type": "timeseries",
-        "title": "New widget",
         "sizeX": 8,
         "sizeY": 5,
         "config": {
@@ -2035,6 +2090,16 @@
             "xaxisSecond": {
               "axisPosition": "top",
               "showLabels": true
+            },
+            "showLegend": true,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "sortDataKeys": false,
+              "showMin": false,
+              "showMax": false,
+              "showAvg": false,
+              "showTotal": true
             }
           },
           "title": "{i18n:api-usage.rule-engine-monthly-activity}",
@@ -2046,33 +2111,20 @@
           },
           "widgetStyle": {},
           "useDashboardTimewindow": false,
-          "showLegend": true,
           "actions": {},
           "displayTimewindow": true,
           "showTitleIcon": false,
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
-          "titleTooltip": "",
-          "legendConfig": {
-            "direction": "column",
-            "position": "bottom",
-            "sortDataKeys": false,
-            "showMin": false,
-            "showMax": false,
-            "showAvg": false,
-            "showTotal": true
-          }
+          "titleTooltip": ""
         },
         "row": 0,
         "col": 0,
-        "id": "00006bc3-8a8d-b55e-ed39-e318f1bcd090"
+        "id": "00006bc3-8a8d-b55e-ed39-e318f1bcd090",
+        "typeFullFqn": "system.charts.timeseries_bars_flot"
       },
       "5f5ca59c-e507-5301-5910-7ad8cd34df40": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "timeseries_bars_flot",
         "type": "timeseries",
-        "title": "New widget",
         "sizeX": 8,
         "sizeY": 5,
         "config": {
@@ -2170,6 +2222,16 @@
             "xaxisSecond": {
               "axisPosition": "top",
               "showLabels": true
+            },
+            "showLegend": true,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "sortDataKeys": false,
+              "showMin": false,
+              "showMax": false,
+              "showAvg": false,
+              "showTotal": true
             }
           },
           "title": "{i18n:api-usage.javascript-functions-daily-activity}",
@@ -2181,33 +2243,20 @@
           },
           "widgetStyle": {},
           "useDashboardTimewindow": false,
-          "showLegend": true,
           "actions": {},
           "displayTimewindow": true,
           "showTitleIcon": false,
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
-          "titleTooltip": "",
-          "legendConfig": {
-            "direction": "column",
-            "position": "bottom",
-            "sortDataKeys": false,
-            "showMin": false,
-            "showMax": false,
-            "showAvg": false,
-            "showTotal": true
-          }
+          "titleTooltip": ""
         },
         "row": 0,
         "col": 0,
-        "id": "5f5ca59c-e507-5301-5910-7ad8cd34df40"
+        "id": "5f5ca59c-e507-5301-5910-7ad8cd34df40",
+        "typeFullFqn": "system.charts.timeseries_bars_flot"
       },
       "ada32ee9-44ed-48d1-c368-fd0c94b7607f": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "timeseries_bars_flot",
         "type": "timeseries",
-        "title": "New widget",
         "sizeX": 8,
         "sizeY": 5,
         "config": {
@@ -2305,6 +2354,16 @@
             "xaxisSecond": {
               "axisPosition": "top",
               "showLabels": true
+            },
+            "showLegend": true,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "sortDataKeys": false,
+              "showMin": false,
+              "showMax": false,
+              "showAvg": false,
+              "showTotal": true
             }
           },
           "title": "{i18n:api-usage.javascript-functions-monthly-activity}",
@@ -2316,33 +2375,20 @@
           },
           "widgetStyle": {},
           "useDashboardTimewindow": false,
-          "showLegend": true,
           "actions": {},
           "displayTimewindow": true,
           "showTitleIcon": false,
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
-          "titleTooltip": "",
-          "legendConfig": {
-            "direction": "column",
-            "position": "bottom",
-            "sortDataKeys": false,
-            "showMin": false,
-            "showMax": false,
-            "showAvg": false,
-            "showTotal": true
-          }
+          "titleTooltip": ""
         },
         "row": 0,
         "col": 0,
-        "id": "ada32ee9-44ed-48d1-c368-fd0c94b7607f"
+        "id": "ada32ee9-44ed-48d1-c368-fd0c94b7607f",
+        "typeFullFqn": "system.charts.timeseries_bars_flot"
       },
       "98bae68b-0f35-72f2-a428-9b06889f1554": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "timeseries_bars_flot",
         "type": "timeseries",
-        "title": "New widget",
         "sizeX": 8,
         "sizeY": 5,
         "config": {
@@ -2476,7 +2522,17 @@
               "axisPosition": "top",
               "showLabels": true
             },
-            "tooltipCumulative": false
+            "tooltipCumulative": false,
+            "showLegend": true,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "sortDataKeys": false,
+              "showMin": false,
+              "showMax": false,
+              "showAvg": false,
+              "showTotal": true
+            }
           },
           "title": "{i18n:api-usage.transport-daily-activity}",
           "dropShadow": true,
@@ -2487,33 +2543,20 @@
           },
           "widgetStyle": {},
           "useDashboardTimewindow": false,
-          "showLegend": true,
           "actions": {},
           "displayTimewindow": true,
           "showTitleIcon": false,
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
-          "titleTooltip": "",
-          "legendConfig": {
-            "direction": "column",
-            "position": "bottom",
-            "sortDataKeys": false,
-            "showMin": false,
-            "showMax": false,
-            "showAvg": false,
-            "showTotal": true
-          }
+          "titleTooltip": ""
         },
         "row": 0,
         "col": 0,
-        "id": "98bae68b-0f35-72f2-a428-9b06889f1554"
+        "id": "98bae68b-0f35-72f2-a428-9b06889f1554",
+        "typeFullFqn": "system.charts.timeseries_bars_flot"
       },
       "e61e5477-5a09-cc25-966b-f613d81da833": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "timeseries_bars_flot",
         "type": "timeseries",
-        "title": "New widget",
         "sizeX": 8,
         "sizeY": 5,
         "config": {
@@ -2647,7 +2690,17 @@
               "axisPosition": "top",
               "showLabels": true
             },
-            "tooltipCumulative": false
+            "tooltipCumulative": false,
+            "showLegend": true,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "sortDataKeys": false,
+              "showMin": false,
+              "showMax": false,
+              "showAvg": false,
+              "showTotal": true
+            }
           },
           "title": "{i18n:api-usage.transport-monthly-activity}",
           "dropShadow": true,
@@ -2658,33 +2711,20 @@
           },
           "widgetStyle": {},
           "useDashboardTimewindow": false,
-          "showLegend": true,
           "actions": {},
           "displayTimewindow": true,
           "showTitleIcon": false,
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
-          "titleTooltip": "",
-          "legendConfig": {
-            "direction": "column",
-            "position": "bottom",
-            "sortDataKeys": false,
-            "showMin": false,
-            "showMax": false,
-            "showAvg": false,
-            "showTotal": true
-          }
+          "titleTooltip": ""
         },
         "row": 0,
         "col": 0,
-        "id": "e61e5477-5a09-cc25-966b-f613d81da833"
+        "id": "e61e5477-5a09-cc25-966b-f613d81da833",
+        "typeFullFqn": "system.charts.timeseries_bars_flot"
       },
       "85fe0738-5326-f069-ab3f-30594bde5fed": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "timeseries_bars_flot",
         "type": "timeseries",
-        "title": "New widget",
         "sizeX": 8,
         "sizeY": 5,
         "config": {
@@ -2782,6 +2822,16 @@
             "xaxisSecond": {
               "axisPosition": "top",
               "showLabels": true
+            },
+            "showLegend": true,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "sortDataKeys": false,
+              "showMin": false,
+              "showMax": false,
+              "showAvg": false,
+              "showTotal": true
             }
           },
           "title": "{i18n:api-usage.telemetry-persistence-daily-activity}",
@@ -2793,33 +2843,20 @@
           },
           "widgetStyle": {},
           "useDashboardTimewindow": false,
-          "showLegend": true,
           "actions": {},
           "displayTimewindow": true,
           "showTitleIcon": false,
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
-          "titleTooltip": "",
-          "legendConfig": {
-            "direction": "column",
-            "position": "bottom",
-            "sortDataKeys": false,
-            "showMin": false,
-            "showMax": false,
-            "showAvg": false,
-            "showTotal": true
-          }
+          "titleTooltip": ""
         },
         "row": 0,
         "col": 0,
-        "id": "85fe0738-5326-f069-ab3f-30594bde5fed"
+        "id": "85fe0738-5326-f069-ab3f-30594bde5fed",
+        "typeFullFqn": "system.charts.timeseries_bars_flot"
       },
       "eaeb381a-437e-f6e9-60c9-6bc8826fdd44": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "timeseries_bars_flot",
         "type": "timeseries",
-        "title": "New widget",
         "sizeX": 8,
         "sizeY": 5,
         "config": {
@@ -2917,6 +2954,16 @@
             "xaxisSecond": {
               "axisPosition": "top",
               "showLabels": true
+            },
+            "showLegend": true,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "sortDataKeys": false,
+              "showMin": false,
+              "showMax": false,
+              "showAvg": false,
+              "showTotal": true
             }
           },
           "title": "{i18n:api-usage.telemetry-persistence-monthly-activity}",
@@ -2928,33 +2975,20 @@
           },
           "widgetStyle": {},
           "useDashboardTimewindow": false,
-          "showLegend": true,
           "actions": {},
           "displayTimewindow": true,
           "showTitleIcon": false,
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
-          "titleTooltip": "",
-          "legendConfig": {
-            "direction": "column",
-            "position": "bottom",
-            "sortDataKeys": false,
-            "showMin": false,
-            "showMax": false,
-            "showAvg": false,
-            "showTotal": true
-          }
+          "titleTooltip": ""
         },
         "row": 0,
         "col": 0,
-        "id": "eaeb381a-437e-f6e9-60c9-6bc8826fdd44"
+        "id": "eaeb381a-437e-f6e9-60c9-6bc8826fdd44",
+        "typeFullFqn": "system.charts.timeseries_bars_flot"
       },
       "4b798823-b97d-9d6a-59dc-fcafd897fc23": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "timeseries_bars_flot",
         "type": "timeseries",
-        "title": "New widget",
         "sizeX": 8,
         "sizeY": 5,
         "config": {
@@ -3052,6 +3086,16 @@
             "xaxisSecond": {
               "axisPosition": "top",
               "showLabels": true
+            },
+            "showLegend": true,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "sortDataKeys": false,
+              "showMin": false,
+              "showMax": false,
+              "showAvg": false,
+              "showTotal": true
             }
           },
           "title": "{i18n:api-usage.alarms-created-daily-activity}",
@@ -3063,33 +3107,20 @@
           },
           "widgetStyle": {},
           "useDashboardTimewindow": false,
-          "showLegend": true,
           "actions": {},
           "displayTimewindow": true,
           "showTitleIcon": false,
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
-          "titleTooltip": "",
-          "legendConfig": {
-            "direction": "column",
-            "position": "bottom",
-            "sortDataKeys": false,
-            "showMin": false,
-            "showMax": false,
-            "showAvg": false,
-            "showTotal": true
-          }
+          "titleTooltip": ""
         },
         "row": 0,
         "col": 0,
-        "id": "4b798823-b97d-9d6a-59dc-fcafd897fc23"
+        "id": "4b798823-b97d-9d6a-59dc-fcafd897fc23",
+        "typeFullFqn": "system.charts.timeseries_bars_flot"
       },
       "6a981580-7490-19dd-f937-b64cbf67a982": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "timeseries_bars_flot",
         "type": "timeseries",
-        "title": "New widget",
         "sizeX": 8,
         "sizeY": 5,
         "config": {
@@ -3187,6 +3218,16 @@
             "xaxisSecond": {
               "axisPosition": "top",
               "showLabels": true
+            },
+            "showLegend": true,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "sortDataKeys": false,
+              "showMin": false,
+              "showMax": false,
+              "showAvg": false,
+              "showTotal": true
             }
           },
           "title": "{i18n:api-usage.alarms-created-monthly-activity}",
@@ -3198,33 +3239,20 @@
           },
           "widgetStyle": {},
           "useDashboardTimewindow": false,
-          "showLegend": true,
           "actions": {},
           "displayTimewindow": true,
           "showTitleIcon": false,
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
-          "titleTooltip": "",
-          "legendConfig": {
-            "direction": "column",
-            "position": "bottom",
-            "sortDataKeys": false,
-            "showMin": false,
-            "showMax": false,
-            "showAvg": false,
-            "showTotal": true
-          }
+          "titleTooltip": ""
         },
         "row": 0,
         "col": 0,
-        "id": "6a981580-7490-19dd-f937-b64cbf67a982"
+        "id": "6a981580-7490-19dd-f937-b64cbf67a982",
+        "typeFullFqn": "system.charts.timeseries_bars_flot"
       },
       "7302df65-1b0c-579e-bbdb-145126ae3392": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "timeseries_bars_flot",
         "type": "timeseries",
-        "title": "New widget",
         "sizeX": 8,
         "sizeY": 5,
         "config": {
@@ -3322,6 +3350,16 @@
             "xaxisSecond": {
               "axisPosition": "top",
               "showLabels": true
+            },
+            "showLegend": true,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "sortDataKeys": false,
+              "showMin": false,
+              "showMax": false,
+              "showAvg": false,
+              "showTotal": true
             }
           },
           "title": "{i18n:api-usage.sms-messages-daily-activity}",
@@ -3333,33 +3371,20 @@
           },
           "widgetStyle": {},
           "useDashboardTimewindow": false,
-          "showLegend": true,
           "actions": {},
           "displayTimewindow": true,
           "showTitleIcon": false,
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
-          "titleTooltip": "",
-          "legendConfig": {
-            "direction": "column",
-            "position": "bottom",
-            "sortDataKeys": false,
-            "showMin": false,
-            "showMax": false,
-            "showAvg": false,
-            "showTotal": true
-          }
+          "titleTooltip": ""
         },
         "row": 0,
         "col": 0,
-        "id": "7302df65-1b0c-579e-bbdb-145126ae3392"
+        "id": "7302df65-1b0c-579e-bbdb-145126ae3392",
+        "typeFullFqn": "system.charts.timeseries_bars_flot"
       },
       "fdb385e7-14fe-fc9f-ebdc-b400f26fc66b": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "timeseries_bars_flot",
         "type": "timeseries",
-        "title": "New widget",
         "sizeX": 8,
         "sizeY": 5,
         "config": {
@@ -3457,6 +3482,16 @@
             "xaxisSecond": {
               "axisPosition": "top",
               "showLabels": true
+            },
+            "showLegend": true,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "sortDataKeys": false,
+              "showMin": false,
+              "showMax": false,
+              "showAvg": false,
+              "showTotal": true
             }
           },
           "title": "{i18n:api-usage.sms-messages-monthly-activity}",
@@ -3468,33 +3503,20 @@
           },
           "widgetStyle": {},
           "useDashboardTimewindow": false,
-          "showLegend": true,
           "actions": {},
           "displayTimewindow": true,
           "showTitleIcon": false,
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
-          "titleTooltip": "",
-          "legendConfig": {
-            "direction": "column",
-            "position": "bottom",
-            "sortDataKeys": false,
-            "showMin": false,
-            "showMax": false,
-            "showAvg": false,
-            "showTotal": true
-          }
+          "titleTooltip": ""
         },
         "row": 0,
         "col": 0,
-        "id": "fdb385e7-14fe-fc9f-ebdc-b400f26fc66b"
+        "id": "fdb385e7-14fe-fc9f-ebdc-b400f26fc66b",
+        "typeFullFqn": "system.charts.timeseries_bars_flot"
       },
       "2408ad30-163e-8221-08e1-a82b638be564": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "basic_timeseries",
         "type": "timeseries",
-        "title": "New widget",
         "sizeX": 12,
         "sizeY": 7,
         "config": {
@@ -3642,6 +3664,15 @@
             "xaxisSecond": {
               "axisPosition": "top",
               "showLabels": true
+            },
+            "showLegend": true,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "showMin": true,
+              "showMax": true,
+              "showAvg": false,
+              "showTotal": true
             }
           },
           "title": "Queue Stats",
@@ -3660,25 +3691,13 @@
           "widgetStyle": {},
           "useDashboardTimewindow": false,
           "displayTimewindow": true,
-          "showLegend": true,
-          "actions": {},
-          "legendConfig": {
-            "direction": "column",
-            "position": "bottom",
-            "showMin": true,
-            "showMax": true,
-            "showAvg": false,
-            "showTotal": true
-          }
+          "actions": {}
         },
-        "id": "2408ad30-163e-8221-08e1-a82b638be564"
+        "id": "2408ad30-163e-8221-08e1-a82b638be564",
+        "typeFullFqn": "system.charts.basic_timeseries"
       },
       "e43dcfe1-b970-6a11-ce0e-5769f3eb5e88": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "basic_timeseries",
         "type": "timeseries",
-        "title": "New widget",
         "sizeX": 12,
         "sizeY": 7,
         "config": {
@@ -3796,6 +3815,15 @@
             "xaxisSecond": {
               "axisPosition": "top",
               "showLabels": true
+            },
+            "showLegend": true,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "showMin": true,
+              "showMax": true,
+              "showAvg": false,
+              "showTotal": true
             }
           },
           "title": "Processing Failures and Timeouts",
@@ -3814,25 +3842,13 @@
           "widgetStyle": {},
           "useDashboardTimewindow": false,
           "displayTimewindow": true,
-          "showLegend": true,
-          "actions": {},
-          "legendConfig": {
-            "direction": "column",
-            "position": "bottom",
-            "showMin": true,
-            "showMax": true,
-            "showAvg": false,
-            "showTotal": true
-          }
+          "actions": {}
         },
-        "id": "e43dcfe1-b970-6a11-ce0e-5769f3eb5e88"
+        "id": "e43dcfe1-b970-6a11-ce0e-5769f3eb5e88",
+        "typeFullFqn": "system.charts.basic_timeseries"
       },
       "a669cf86-e715-efa4-dd9a-b839abf499e9": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "timeseries_table",
         "type": "timeseries",
-        "title": "New widget",
         "sizeX": 24,
         "sizeY": 5,
         "config": {
@@ -3921,14 +3937,11 @@
           "titleTooltip": "",
           "displayTimewindow": true
         },
-        "id": "a669cf86-e715-efa4-dd9a-b839abf499e9"
+        "id": "a669cf86-e715-efa4-dd9a-b839abf499e9",
+        "typeFullFqn": "system.cards.timeseries_table"
       },
       "292eaded-4775-36f7-c896-98d57bdda936": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "html_value_card",
         "type": "latest",
-        "title": "New widget",
         "sizeX": 7.5,
         "sizeY": 3,
         "config": {
@@ -4047,8 +4060,27 @@
             }
           ],
           "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
             "realtime": {
-              "timewindowMs": 60000
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1694083375827,
+                "endTimeMs": 1694169775827
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
             }
           },
           "showTitle": false,
@@ -4097,14 +4129,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "292eaded-4775-36f7-c896-98d57bdda936"
+        "id": "292eaded-4775-36f7-c896-98d57bdda936",
+        "typeFullFqn": "system.cards.html_value_card"
       },
       "b3571a36-2106-1122-7d58-0d38bbb0e9c8": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "timeseries_bars_flot",
         "type": "timeseries",
-        "title": "New widget",
         "sizeX": 8,
         "sizeY": 5,
         "config": {
@@ -4202,6 +4231,16 @@
             "xaxisSecond": {
               "axisPosition": "top",
               "showLabels": true
+            },
+            "showLegend": true,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "sortDataKeys": false,
+              "showMin": false,
+              "showMax": false,
+              "showAvg": false,
+              "showTotal": true
             }
           },
           "title": "{i18n:api-usage.email-messages-daily-activity}",
@@ -4213,33 +4252,20 @@
           },
           "widgetStyle": {},
           "useDashboardTimewindow": false,
-          "showLegend": true,
           "actions": {},
           "displayTimewindow": true,
           "showTitleIcon": false,
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
-          "titleTooltip": "",
-          "legendConfig": {
-            "direction": "column",
-            "position": "bottom",
-            "sortDataKeys": false,
-            "showMin": false,
-            "showMax": false,
-            "showAvg": false,
-            "showTotal": true
-          }
+          "titleTooltip": ""
         },
         "row": 0,
         "col": 0,
-        "id": "b3571a36-2106-1122-7d58-0d38bbb0e9c8"
+        "id": "b3571a36-2106-1122-7d58-0d38bbb0e9c8",
+        "typeFullFqn": "system.charts.timeseries_bars_flot"
       },
       "aa875b7f-e7c8-7529-1ae7-f456211b59cc": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "timeseries_bars_flot",
         "type": "timeseries",
-        "title": "New widget",
         "sizeX": 8,
         "sizeY": 5,
         "config": {
@@ -4337,6 +4363,16 @@
             "xaxisSecond": {
               "axisPosition": "top",
               "showLabels": true
+            },
+            "showLegend": true,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "sortDataKeys": false,
+              "showMin": false,
+              "showMax": false,
+              "showAvg": false,
+              "showTotal": true
             }
           },
           "title": "{i18n:api-usage.email-messages-monthly-activity}",
@@ -4348,26 +4384,17 @@
           },
           "widgetStyle": {},
           "useDashboardTimewindow": false,
-          "showLegend": true,
           "actions": {},
           "displayTimewindow": true,
           "showTitleIcon": false,
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
-          "titleTooltip": "",
-          "legendConfig": {
-            "direction": "column",
-            "position": "bottom",
-            "sortDataKeys": false,
-            "showMin": false,
-            "showMax": false,
-            "showAvg": false,
-            "showTotal": true
-          }
+          "titleTooltip": ""
         },
         "row": 0,
         "col": 0,
-        "id": "aa875b7f-e7c8-7529-1ae7-f456211b59cc"
+        "id": "aa875b7f-e7c8-7529-1ae7-f456211b59cc",
+        "typeFullFqn": "system.charts.timeseries_bars_flot"
       }
     },
     "states": {
@@ -4465,7 +4492,8 @@
               "autoFillHeight": true,
               "backgroundImageUrl": null,
               "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70
+              "mobileRowHeight": 70,
+              "outerMargin": true
             }
           }
         }
@@ -4498,7 +4526,8 @@
               "autoFillHeight": true,
               "backgroundImageUrl": null,
               "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70
+              "mobileRowHeight": 70,
+              "outerMargin": true
             }
           }
         }
@@ -4531,7 +4560,8 @@
               "autoFillHeight": true,
               "backgroundImageUrl": null,
               "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70
+              "mobileRowHeight": 70,
+              "outerMargin": true
             }
           }
         }
@@ -4564,7 +4594,8 @@
               "autoFillHeight": true,
               "backgroundImageUrl": null,
               "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70
+              "mobileRowHeight": 70,
+              "outerMargin": true
             }
           }
         }
@@ -4597,7 +4628,8 @@
               "autoFillHeight": true,
               "backgroundImageUrl": null,
               "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70
+              "mobileRowHeight": 70,
+              "outerMargin": true
             }
           }
         }
@@ -4638,7 +4670,8 @@
               "autoFillHeight": true,
               "backgroundImageUrl": null,
               "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70
+              "mobileRowHeight": 70,
+              "outerMargin": true
             }
           }
         }
@@ -4683,7 +4716,8 @@
               "autoFillHeight": true,
               "backgroundImageUrl": null,
               "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70
+              "mobileRowHeight": 70,
+              "outerMargin": true
             }
           }
         }
@@ -4716,7 +4750,8 @@
               "autoFillHeight": true,
               "backgroundImageUrl": null,
               "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70
+              "mobileRowHeight": 70,
+              "outerMargin": true
             }
           }
         }
@@ -4737,8 +4772,10 @@
         "filter": {
           "type": "assetType",
           "resolveMultiple": true,
-          "assetType": "TbServiceQueue",
-          "assetNameFilter": ""
+          "assetNameFilter": "",
+          "assetTypes": [
+            "TbServiceQueue"
+          ]
         }
       }
     },
@@ -4770,5 +4807,6 @@
       "showDashboardLogo": false
     }
   },
+  "externalId": null,
   "name": "Api Usage"
 }

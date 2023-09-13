@@ -17,7 +17,7 @@
 -->
 <form [formGroup]="attributeFormGroup" (ngSubmit)="add()" style="min-width: 400px;">
   <mat-toolbar color="primary">
-    <h2>{{ title | translate }}</h2>
+    <h2>{{ (isTelemetry ? 'attribute.add-telemetry' : 'attribute.add') | translate }}</h2>
     <span fxFlex></span>
     <button mat-icon-button
             (click)="cancel()"
@@ -34,7 +34,7 @@
         <mat-label translate>attribute.key</mat-label>
         <input matInput formControlName="key" required>
         <mat-error *ngIf="attributeFormGroup.get('key').hasError('required')">
-          {{ 'attribute.key-required' | translate }}
+          {{ (isTelemetry ? 'attribute.telemetry-key-required' : 'attribute.key-required') | translate }}
         </mat-error>
         <mat-error *ngIf="attributeFormGroup.get('key').hasError('maxlength')">
           {{ 'attribute.key-max-length' | translate }}
@@ -42,7 +42,7 @@
       </mat-form-field>
       <tb-value-input
         formControlName="value"
-        requiredText="attribute.value-required">
+        [requiredText]="isTelemetry ? 'attribute.telemetry-value-required' : 'attribute.value-required'">
       </tb-value-input>
     </fieldset>
   </div>
@@ -55,7 +55,7 @@
     </button>
     <button mat-raised-button color="primary"
             type="submit"
-            [disabled]="(isLoading$ | async) || attributeFormGroup.invalid || !attributeFormGroup.dirty">
+            [disabled]="(isLoading$ | async) || invalid() || !attributeFormGroup.dirty">
       {{ 'action.add' | translate }}
     </button>
   </div>

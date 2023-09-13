@@ -66,6 +66,8 @@ import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.PEM_CERT_FI
 
 @TestPropertySource(properties = {
         "device.connectivity.https.enabled=true",
+        "device.connectivity.http.port=8080",
+        "device.connectivity.https.port=444",
         "device.connectivity.mqtts.enabled=true",
         "device.connectivity.mqtts.pem_cert_file=/tmp/" + PEM_CERT_FILE_NAME,
         "device.connectivity.coaps.enabled=true",
@@ -191,7 +193,7 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
         assertThat(httpCommands.get(HTTP).asText()).isEqualTo(String.format("curl -v -X POST http://localhost:8080/api/v1/%s/telemetry " +
                         "--header Content-Type:application/json --data \"{temperature:25}\"",
                 credentials.getCredentialsId()));
-        assertThat(httpCommands.get(HTTPS).asText()).isEqualTo(String.format("curl -v -X POST https://localhost:443/api/v1/%s/telemetry " +
+        assertThat(httpCommands.get(HTTPS).asText()).isEqualTo(String.format("curl -v -X POST https://localhost:444/api/v1/%s/telemetry " +
                         "--header Content-Type:application/json --data \"{temperature:25}\"",
                 credentials.getCredentialsId()));
 

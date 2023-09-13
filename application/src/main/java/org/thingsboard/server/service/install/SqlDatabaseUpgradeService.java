@@ -731,8 +731,8 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                 break;
             case "3.5.1":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
-                    log.info("Updating schema ...");
                     if (isOldSchema(conn, 3005001)) {
+                        log.info("Updating schema ...");
                         schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.5.1", SCHEMA_UPDATE_SQL);
                         loadSql(schemaUpdateFile, conn);
 
@@ -757,13 +757,22 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         } catch (Exception e) {
                         }
                         try {
+                            conn.createStatement().execute("UPDATE rule_node SET " +
+                                    "configuration = (configuration::jsonb || '{\"updateAttributesOnlyOnValueChange\": \"false\"}'::jsonb)::varchar, " +
+                                    "configuration_version = 1 " +
+                                    "WHERE type = 'org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode' AND configuration_version < 1;");
+                        } catch (Exception e) {
+                        }
+                        try {
                             conn.createStatement().execute("CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_unread ON notification(recipient_id) WHERE status <> 'READ';");
                         } catch (Exception e) {
                         }
 
                         conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3005002;");
+                        log.info("Schema updated to version 3.5.2.");
+                    } else {
+                        log.info("Skip schema re-update to version 3.5.2. Use env flag 'SKIP_SCHEMA_VERSION_CHECK' to force the re-update.");
                     }
-                    log.info("Schema updated.");
                 } catch (Exception e) {
                     log.error("Failed updating schema!!!", e);
                 }

@@ -235,6 +235,8 @@ services:
   tb-snmp-transport:
     restart: always
     image: "${DOCKER_REPO}/${SNMP_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
+    ports:
+      - "1620:1620/udp"
     environment:
       TB_SERVICE_ID: tb-snmp-transport
       JAVA_OPTS: "${JAVA_OPTS}"

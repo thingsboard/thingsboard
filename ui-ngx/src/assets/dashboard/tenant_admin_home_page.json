@@ -7,13 +7,7 @@
     "description": "",
     "widgets": {
       "d70cc256-4c7b-ee06-9905-b8c5e546605f": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 5,
         "sizeY": 3.5,
         "config": {
@@ -72,16 +66,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "d70cc256-4c7b-ee06-9905-b8c5e546605f"
+        "id": "d70cc256-4c7b-ee06-9905-b8c5e546605f",
+        "typeFullFqn": "system.cards.markdown_card"
       },
       "8ee72d43-678c-4e25-e9a8-7d4cfd7a5f8e": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "timeseries_bars_flot",
         "type": "timeseries",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 8,
         "sizeY": 5,
         "config": {
@@ -179,7 +168,18 @@
               "showLabels": true
             },
             "customLegendEnabled": false,
-            "dataKeysListForLabels": []
+            "dataKeysListForLabels": [],
+            "showLegend": false,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "sortDataKeys": false,
+              "showMin": false,
+              "showMax": false,
+              "showAvg": true,
+              "showTotal": false,
+              "showLatest": false
+            }
           },
           "title": "Transport messages",
           "dropShadow": false,
@@ -192,37 +192,21 @@
             "padding": "0"
           },
           "useDashboardTimewindow": false,
-          "showLegend": false,
           "actions": {},
           "displayTimewindow": true,
           "showTitleIcon": false,
           "titleTooltip": "",
           "widgetCss": ".tb-widget-container > .tb-widget {\n    border: none !important;\n    border-radius: 0 !important;\n    box-shadow: none !important;\n}\n\n.tb-widget-container > .tb-widget .flot-base {\n    opacity: 0.48;\n}\n",
           "pageSize": 1024,
-          "noDataDisplayMessage": "",
-          "legendConfig": {
-            "direction": "column",
-            "position": "bottom",
-            "sortDataKeys": false,
-            "showMin": false,
-            "showMax": false,
-            "showAvg": true,
-            "showTotal": false,
-            "showLatest": false
-          }
+          "noDataDisplayMessage": ""
         },
         "row": 0,
         "col": 0,
-        "id": "8ee72d43-678c-4e25-e9a8-7d4cfd7a5f8e"
+        "id": "8ee72d43-678c-4e25-e9a8-7d4cfd7a5f8e",
+        "typeFullFqn": "system.charts.timeseries_bars_flot"
       },
       "867f82cf-ecf2-2d5c-35cb-08c6f2edc3a4": {
-        "isSystemType": true,
-        "bundleAlias": "home_page_widgets",
-        "typeAlias": "documentation_links",
         "type": "static",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 3,
         "config": {
@@ -250,16 +234,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "867f82cf-ecf2-2d5c-35cb-08c6f2edc3a4"
+        "id": "867f82cf-ecf2-2d5c-35cb-08c6f2edc3a4",
+        "typeFullFqn": "system.home_page_widgets.documentation_links"
       },
       "a23185ad-dc46-806c-0e50-5b21fb080ace": {
-        "isSystemType": true,
-        "bundleAlias": "home_page_widgets",
-        "typeAlias": "getting_started",
         "type": "static",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 6.5,
         "config": {
@@ -287,16 +266,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "a23185ad-dc46-806c-0e50-5b21fb080ace"
+        "id": "a23185ad-dc46-806c-0e50-5b21fb080ace",
+        "typeFullFqn": "system.home_page_widgets.getting_started"
       },
       "d26e5cd7-75ef-d475-00c7-1a2d1114efe8": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "basic_timeseries",
         "type": "timeseries",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 8,
         "sizeY": 5,
         "config": {
@@ -412,7 +386,18 @@
               "showLabels": true
             },
             "customLegendEnabled": false,
-            "dataKeysListForLabels": []
+            "dataKeysListForLabels": [],
+            "showLegend": false,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "sortDataKeys": false,
+              "showMin": false,
+              "showMax": false,
+              "showAvg": true,
+              "showTotal": false,
+              "showLatest": false
+            }
           },
           "title": "Devices activity",
           "dropShadow": false,
@@ -430,31 +415,15 @@
           },
           "widgetCss": ".tb-widget-container > .tb-widget {\n    border: none !important;\n    border-radius: 0 !important;\n    box-shadow: none !important;\n}\n",
           "pageSize": 1024,
-          "noDataDisplayMessage": "",
-          "showLegend": false,
-          "legendConfig": {
-            "direction": "column",
-            "position": "bottom",
-            "sortDataKeys": false,
-            "showMin": false,
-            "showMax": false,
-            "showAvg": true,
-            "showTotal": false,
-            "showLatest": false
-          }
+          "noDataDisplayMessage": ""
         },
         "row": 0,
         "col": 0,
-        "id": "d26e5cd7-75ef-d475-00c7-1a2d1114efe8"
+        "id": "d26e5cd7-75ef-d475-00c7-1a2d1114efe8",
+        "typeFullFqn": "system.charts.basic_timeseries"
       },
       "ebbd0a6e-8a47-e770-5086-7f4974250f2d": {
-        "isSystemType": true,
-        "bundleAlias": "home_page_widgets",
-        "typeAlias": "usage_info",
         "type": "static",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 6.5,
         "config": {
@@ -475,16 +444,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "ebbd0a6e-8a47-e770-5086-7f4974250f2d"
+        "id": "ebbd0a6e-8a47-e770-5086-7f4974250f2d",
+        "typeFullFqn": "system.home_page_widgets.usage_info"
       },
       "9e3ef045-d8bc-1640-a3f4-2dd10b19d50e": {
-        "isSystemType": true,
-        "bundleAlias": "home_page_widgets",
-        "typeAlias": "quick_links",
         "type": "static",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 3,
         "config": {
@@ -507,16 +471,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "9e3ef045-d8bc-1640-a3f4-2dd10b19d50e"
+        "id": "9e3ef045-d8bc-1640-a3f4-2dd10b19d50e",
+        "typeFullFqn": "system.home_page_widgets.quick_links"
       },
       "6d6e2b1d-6ce7-4678-3745-c6b0897b2674": {
-        "isSystemType": true,
-        "bundleAlias": "home_page_widgets",
-        "typeAlias": "dashboards",
         "type": "static",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 6.5,
         "config": {
@@ -537,16 +496,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "6d6e2b1d-6ce7-4678-3745-c6b0897b2674"
+        "id": "6d6e2b1d-6ce7-4678-3745-c6b0897b2674",
+        "typeFullFqn": "system.home_page_widgets.dashboards"
       },
       "35d3ac3b-f1af-dc3d-a1d1-11f351d16fc6": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 5,
         "sizeY": 3.5,
         "config": {
@@ -672,16 +626,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "35d3ac3b-f1af-dc3d-a1d1-11f351d16fc6"
+        "id": "35d3ac3b-f1af-dc3d-a1d1-11f351d16fc6",
+        "typeFullFqn": "system.cards.markdown_card"
       },
       "7ac20b6a-dc40-b18e-9f5f-bca20bc693bb": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 5,
         "sizeY": 3.5,
         "config": {
@@ -826,7 +775,8 @@
         },
         "row": 0,
         "col": 0,
-        "id": "7ac20b6a-dc40-b18e-9f5f-bca20bc693bb"
+        "id": "7ac20b6a-dc40-b18e-9f5f-bca20bc693bb",
+        "typeFullFqn": "system.cards.markdown_card"
       }
     },
     "states": {
