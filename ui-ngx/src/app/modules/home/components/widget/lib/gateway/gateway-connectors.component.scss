@@ -30,9 +30,13 @@
       flex-direction: column;
     }
 
-    .table-container {
-      overflow: auto;
+    .table-section {
       min-height: 35vh;
+      overflow: hidden;
+
+      .table-container {
+        overflow: auto;
+      }
     }
 
     .flex {
@@ -41,6 +45,10 @@
 
     .input-container {
       height: auto;
+    }
+
+    .section-container {
+      background-color: #fff;
     }
   }
 
@@ -67,10 +75,6 @@
       background: rgba(203, 37, 48, .06);
       color: rgb(203, 37, 48);
     }
-  }
-
-  .action-button {
-    margin: 0 15px;
   }
 
   mat-row {

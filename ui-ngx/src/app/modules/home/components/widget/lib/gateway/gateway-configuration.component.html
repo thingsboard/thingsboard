@@ -15,17 +15,10 @@
     limitations under the License.
 
 -->
-<mat-toolbar color="primary">
+<mat-toolbar color="primary" *ngIf="!dialogRef">
   <h2 translate>gateway.gateway-configuration</h2>
-  <span fxFlex></span>
-  <button mat-icon-button
-          type="button"
-          (click)="cancel()"
-          *ngIf="dialogRef">
-    <mat-icon class="material-icons" style="color:#000;">close</mat-icon>
-  </button>
 </mat-toolbar>
-<mat-tab-group style="max-height: calc(100% - 117px); height: 100%;" [formGroup]="gatewayConfigGroup">
+<mat-tab-group class="tab-group-block" [formGroup]="gatewayConfigGroup">
   <mat-tab label="{{ 'gateway.thingsboard-general' | translate }}">
     <div formGroupName="thingsboard" class="mat-content mat-padding configuration-block">
       <div class="tb-form-panel no-padding-bottom">
@@ -713,7 +706,7 @@
     </div>
   </mat-tab>
 </mat-tab-group>
-<div mat-dialog-actions fxLayoutAlign="start center">
+<div class="actions">
   <button mat-button color="primary"
           type="button"
           *ngIf="dialogRef"

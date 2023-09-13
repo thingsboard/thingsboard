@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div mat-dialog-content fxLayout="column" style="padding: 0">
+<div mat-dialog-content fxLayout="column" style="padding: 0 8px 8px">
   <div fxLayout="row" fxLayoutAlign="space-between center">
     <span class="tb-no-data-text">{{ 'gateway.docker-label' | translate }}</span>
     <div fxFlexAlign="end" class="tb-help" [tb-help]="helpLink"></div>
@@ -60,7 +60,8 @@
 </div>
 
 <ng-template #commandsExample let-command="command">
-  <div class="tb-form-panel no-padding no-border tb-tab-body">
+  <div class="tb-form-panel stroked tb-tab-body">
+    <div class="tb-form-panel-title" translate>device.connectivity.execute-following-command</div>
     <tb-markdown usePlainMarkdown containerClass="start-code"
        data="
           ```bash

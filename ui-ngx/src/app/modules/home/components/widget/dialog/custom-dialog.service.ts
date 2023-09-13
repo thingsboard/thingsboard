@@ -17,8 +17,6 @@
 import { Inject, Injectable, Type } from '@angular/core';
 import { Observable } from 'rxjs';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
-import { TranslateService } from '@ngx-translate/core';
-import { AuthService } from '@core/auth/auth.service';
 import { DynamicComponentFactoryService } from '@core/services/dynamic-component-factory.service';
 import { CommonModule } from '@angular/common';
 import { mergeMap, tap } from 'rxjs/operators';
@@ -28,7 +26,11 @@ import {
   CustomDialogContainerData
 } from '@home/components/widget/dialog/custom-dialog-container.component';
 import { SHARED_MODULE_TOKEN } from '@shared/components/tokens';
-import { HOME_COMPONENTS_MODULE_TOKEN, SHARED_HOME_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
+import {
+  HOME_COMPONENTS_MODULE_TOKEN,
+  SHARED_HOME_COMPONENTS_MODULE_TOKEN,
+  WIDGET_COMPONENTS_MODULE_TOKEN
+} from '@home/components/tokens';
 
 @Injectable()
 export class CustomDialogService {
@@ -36,12 +38,11 @@ export class CustomDialogService {
   private customModules: Array<Type<any>>;
 
   constructor(
-    private translate: TranslateService,
-    private authService: AuthService,
     private dynamicComponentFactoryService: DynamicComponentFactoryService,
     @Inject(SHARED_MODULE_TOKEN) private sharedModule: Type<any>,
     @Inject(SHARED_HOME_COMPONENTS_MODULE_TOKEN) private sharedHomeComponentsModule: Type<any>,
     @Inject(HOME_COMPONENTS_MODULE_TOKEN) private homeComponentsModule: Type<any>,
+    @Inject(WIDGET_COMPONENTS_MODULE_TOKEN) private widgetComponentsModule: Type<any>,
     public dialog: MatDialog
   ) {
   }
@@ -52,7 +53,8 @@ export class CustomDialogService {
 
   customDialog(template: string, controller: (instance: CustomDialogComponent) => void, data?: any,
                config?: MatDialogConfig): Observable<any> {
-    const modules = [this.sharedModule, CommonModule, this.sharedHomeComponentsModule, this.homeComponentsModule];
+    const modules = [this.sharedModule, CommonModule, this.sharedHomeComponentsModule, this.homeComponentsModule,
+      this.widgetComponentsModule];
     if (Array.isArray(this.customModules)) {
       modules.push(...this.customModules);
     }
