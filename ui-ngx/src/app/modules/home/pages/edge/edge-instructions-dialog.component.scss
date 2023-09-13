@@ -46,11 +46,11 @@
   }
 
   @media #{$mat-sm} {
-    width: 470px;
+    width: 705px;
   }
 
   @media #{$mat-gt-sm} {
-    width: 720px;
+    width: 1080px;
   }
 }
 
@@ -110,6 +110,10 @@
           }
         }
       }
+    }
+    > p, h1, h2, h3, h4, h5, div {
+      padding-left: 16px !important;
+      padding-right: 16px !important;
     }
   }
   .mdc-button__label > span {

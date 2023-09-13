@@ -30,13 +30,13 @@
       <mat-tab-group [(selectedIndex)]="tabIndex" (selectedTabChange)="selectedTabChange(tabIndex)">
         <mat-tab>
           <ng-template mat-tab-label>
-            <mat-icon class="tabs-icon" svgIcon="linux"></mat-icon>
+            <mat-icon class="tabs-icon" svgIcon="mdi:ubuntu"></mat-icon>
             Ubuntu
           </ng-template>
           <ng-template matTabContent>
-            <div class="tb-form-panel no-padding no-border tb-tab-body">
-              <div class="tb-form-panel stroked">
-                <tb-markdown lineNumbers fallbackToPlainMarkdown [data]='contentData.ubuntu'></tb-markdown>
+            <div class="tb-form-panel no-padding no-border">
+              <div class="tb-form-panel no-padding stroked">
+                <tb-markdown [data]='contentData.ubuntu'></tb-markdown>
               </div>
             </div>
           </ng-template>
@@ -44,12 +44,12 @@
         <mat-tab>
           <ng-template mat-tab-label>
             <mat-icon class="tabs-icon" svgIcon="mdi:centos"></mat-icon>
-            CentOS
+            CentOS/RHEL
           </ng-template>
           <ng-template matTabContent>
-            <div class="tb-form-panel no-padding no-border tb-tab-body">
-              <div class="tb-form-panel stroked">
-                <tb-markdown lineNumbers fallbackToPlainMarkdown [data]='contentData.centos'></tb-markdown>
+            <div class="tb-form-panel no-padding no-border">
+              <div class="tb-form-panel no-padding stroked">
+                <tb-markdown [data]='contentData.centos'></tb-markdown>
               </div>
             </div>
           </ng-template>
@@ -60,9 +60,9 @@
             Docker
           </ng-template>
           <ng-template matTabContent>
-            <div class="tb-form-panel no-padding no-border tb-tab-body">
-              <div class="tb-form-panel stroked">
-                <tb-markdown lineNumbers fallbackToPlainMarkdown [data]='contentData.docker'></tb-markdown>
+            <div class="tb-form-panel no-padding no-border">
+              <div class="tb-form-panel no-padding stroked">
+                <tb-markdown [data]='contentData.docker'></tb-markdown>
               </div>
             </div>
           </ng-template>
