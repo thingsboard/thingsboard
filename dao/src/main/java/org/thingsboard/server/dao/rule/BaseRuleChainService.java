@@ -108,7 +108,20 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     @Override
     @Transactional
     public RuleChain saveRuleChain(RuleChain ruleChain) {
-        ruleChainValidator.validate(ruleChain, RuleChain::getTenantId);
+        return doSaveRuleChain(ruleChain, true);
+    }
+
+    @Override
+    @Transactional
+    public RuleChain saveRuleChain(RuleChain ruleChain, boolean doValidate) {
+        return doSaveRuleChain(ruleChain, doValidate);
+    }
+
+    private RuleChain doSaveRuleChain(RuleChain ruleChain, boolean doValidate) {
+        log.trace("Executing doSaveRuleChain [{}]", ruleChain);
+        if (doValidate) {
+            ruleChainValidator.validate(ruleChain, RuleChain::getTenantId);
+        }
         try {
             RuleChain savedRuleChain = ruleChainDao.save(ruleChain.getTenantId(), ruleChain);
             if (ruleChain.getId() == null) {
@@ -165,11 +178,15 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         if (nodes != null) {
             for (RuleNode node : nodes) {
                 setSingletonMode(node);
+                /* TODO: voba - merge comment
                 if (node.getId() != null) {
                     ruleNodeIndexMap.put(node.getId(), nodes.indexOf(node));
                 } else {
                     toAddOrUpdate.add(node);
                 }
+                 */
+                ruleNodeIndexMap.put(node.getId(), nodes.indexOf(node));
+                toAddOrUpdate.add(node);
             }
         }
 
@@ -180,8 +197,8 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             Integer index = ruleNodeIndexMap.get(existingNode.getId());
             RuleNode newRuleNode = null;
             if (index != null) {
-                newRuleNode = ruleChainMetaData.getNodes().get(index);
-                toAddOrUpdate.add(newRuleNode);
+//                newRuleNode = ruleChainMetaData.getNodes().get(index);
+//                toAddOrUpdate.add(newRuleNode);
             } else {
                 updatedRuleNodes.add(new RuleNodeUpdateResult(existingNode, null));
                 toDelete.add(existingNode);

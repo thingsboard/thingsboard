@@ -44,6 +44,8 @@ public interface RuleChainService extends EntityDaoService {
 
     RuleChain saveRuleChain(RuleChain ruleChain);
 
+    RuleChain saveRuleChain(RuleChain ruleChain, boolean doValidate);
+
     boolean setRootRuleChain(TenantId tenantId, RuleChainId ruleChainId);
 
     RuleChainUpdateResult saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData, Function<RuleNode, RuleNode> ruleNodeUpdater);

@@ -420,6 +420,7 @@ message TenantProfileUpdateMsg {
   bytes profileDataBytes = 8;
 }
 
+// deprecated
 message RuleChainMetadataRequestMsg {
   int64 ruleChainIdMSB = 1;
   int64 ruleChainIdLSB = 2;
@@ -557,7 +558,7 @@ message UplinkMsg {
   repeated DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg = 4;
   repeated AlarmUpdateMsg alarmUpdateMsg = 5;
   repeated RelationUpdateMsg relationUpdateMsg = 6;
-  repeated RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg = 7;
+  repeated RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg = 7; // deprecated
   repeated AttributesRequestMsg attributesRequestMsg = 8;
   repeated RelationRequestMsg relationRequestMsg = 9;
   repeated UserCredentialsRequestMsg userCredentialsRequestMsg = 10;
@@ -571,6 +572,8 @@ message UplinkMsg {
   repeated EntityViewUpdateMsg entityViewUpdateMsg = 18;
   repeated AssetProfileUpdateMsg assetProfileUpdateMsg = 19;
   repeated DeviceProfileUpdateMsg deviceProfileUpdateMsg = 20;
+  repeated RuleChainUpdateMsg ruleChainUpdateMsg = 21;
+  repeated RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = 22;
 }
 
 message UplinkResponseMsg {
