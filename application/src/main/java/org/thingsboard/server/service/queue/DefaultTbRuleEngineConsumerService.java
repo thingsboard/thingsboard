@@ -180,7 +180,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     @PreDestroy
     public void stop() {
         super.destroy();
-        ((ExecutorService) consumersExecutor.getExecutor()).shutdownNow();
+        ((ExecutorService) consumersExecutor.getExecutor()).shutdown();
         submitExecutor.shutdownNow();
         repartitionExecutor.shutdownNow();
     }
