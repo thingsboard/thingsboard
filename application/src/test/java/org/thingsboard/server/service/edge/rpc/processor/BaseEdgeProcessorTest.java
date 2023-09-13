@@ -78,7 +78,7 @@ import org.thingsboard.server.service.edge.rpc.constructor.TenantProfileMsgConst
 import org.thingsboard.server.service.edge.rpc.constructor.UserMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.WidgetTypeMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.WidgetsBundleMsgConstructor;
-import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
+import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
@@ -94,7 +94,7 @@ public abstract class BaseEdgeProcessorTest {
     protected TelemetrySubscriptionService tsSubService;
 
     @MockBean
-    protected TbNotificationEntityService notificationEntityService;
+    protected TbLogEntityActionService logEntityActionService;
 
     @MockBean
     protected RuleChainService ruleChainService;

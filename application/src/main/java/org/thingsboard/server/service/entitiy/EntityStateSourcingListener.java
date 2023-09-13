@@ -69,22 +69,40 @@ public class EntityStateSourcingListener {
         boolean isCreated = event.getAdded() != null && event.getAdded();
         ComponentLifecycleEvent lifecycleEvent = isCreated ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED;
 
-        if (isCommonEntityStateUpdated(entityId)) {
-            tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, lifecycleEvent);
-        } else if (EntityType.TENANT.equals(entityType)) {
-            onTenantUpdate((Tenant) event.getEntity(), isCreated);
-        } else if (EntityType.TENANT_PROFILE.equals(entityType)) {
-            onTenantProfileUpdate((TenantProfile) event.getEntity(), isCreated);
-        } else if (EntityType.DEVICE.equals(entityType)) {
-            onDeviceUpdate(event.getEntity(), event.getOldEntity());
-        } else if (EntityType.DEVICE_PROFILE.equals(entityType)) {
-            onDeviceProfileUpdate((DeviceProfile) event.getEntity(), event.getOldEntity(), isCreated);
-        } else if (EntityType.EDGE.equals(entityType)) {
-            handleEdgeEvent(tenantId, entityId, event.getEntity(), lifecycleEvent);
-        } else if (EntityType.TB_RESOURCE.equals(entityType)) {
-            tbClusterService.onResourceChange((TbResource) event.getEntity(), null);
-        } else if (EntityType.API_USAGE_STATE.equals(entityType) && !event.getAdded()) {
-            tbClusterService.onApiStateChange((ApiUsageState) event.getEntity(), null);
+        switch (entityType) {
+            case ASSET:
+            case ASSET_PROFILE:
+            case ENTITY_VIEW:
+                tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, lifecycleEvent);
+                break;
+            case TENANT:
+                Tenant tenant = (Tenant) event.getEntity();
+                onTenantUpdate(tenant, isCreated);
+                break;
+            case TENANT_PROFILE:
+                TenantProfile tenantProfile = (TenantProfile) event.getEntity();
+                onTenantProfileUpdate(tenantProfile, isCreated);
+                break;
+            case DEVICE:
+                onDeviceUpdate(event.getEntity(), event.getOldEntity());
+                break;
+            case DEVICE_PROFILE:
+                DeviceProfile deviceProfile = (DeviceProfile) event.getEntity();
+                onDeviceProfileUpdate(deviceProfile, event.getOldEntity(), isCreated);
+                break;
+            case EDGE:
+                handleEdgeEvent(tenantId, entityId, event.getEntity(), lifecycleEvent);
+                break;
+            case TB_RESOURCE:
+                TbResource tbResource = (TbResource) event.getEntity();
+                tbClusterService.onResourceChange(tbResource, null);
+                break;
+            case API_USAGE_STATE:
+                ApiUsageState apiUsageState = (ApiUsageState) event.getEntity();
+                tbClusterService.onApiStateChange(apiUsageState, null);
+                break;
+            default:
+                break;
         }
     }
 
@@ -95,20 +113,38 @@ public class EntityStateSourcingListener {
         EntityId entityId = event.getEntityId();
         EntityType entityType = entityId.getEntityType();
 
-        if (isCommonEntityStateUpdated(entityId) || EntityType.CUSTOMER.equals(entityType)) {
-            tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, ComponentLifecycleEvent.DELETED);
-        } else if (EntityType.TENANT.equals(event.getEntityId().getEntityType())) {
-            onTenantDeleted((Tenant) event.getEntity());
-        } else if (EntityType.TENANT_PROFILE.equals(entityType)) {
-            tbClusterService.onTenantProfileDelete((TenantProfile) event.getEntity(), null);
-        } else if (EntityType.DEVICE.equals(entityType)) {
-            tbClusterService.onDeviceDeleted((Device) event.getEntity(), null);
-        } else if (EntityType.DEVICE_PROFILE.equals(entityType)) {
-            onDeviceProfileDelete(event.getTenantId(), event.getEntityId(), (DeviceProfile) event.getEntity());
-        } else if (EntityType.EDGE.equals(entityType)) {
-            tbClusterService.broadcastEntityStateChangeEvent(event.getTenantId(), event.getEntityId(), ComponentLifecycleEvent.DELETED);
-        } else if (EntityType.TB_RESOURCE.equals(entityType)) {
-            tbClusterService.onResourceDeleted((TbResource) event.getEntity(), null);
+        switch (entityType) {
+            case ASSET:
+            case ASSET_PROFILE:
+            case ENTITY_VIEW:
+            case CUSTOMER:
+                tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, ComponentLifecycleEvent.DELETED);
+                break;
+            case TENANT:
+                Tenant tenant = (Tenant) event.getEntity();
+                onTenantDeleted(tenant);
+                break;
+            case TENANT_PROFILE:
+                TenantProfile tenantProfile = (TenantProfile) event.getEntity();
+                tbClusterService.onTenantProfileDelete(tenantProfile, null);
+                break;
+            case DEVICE:
+                Device device = (Device) event.getEntity();
+                tbClusterService.onDeviceDeleted(device, null);
+                break;
+            case DEVICE_PROFILE:
+                DeviceProfile deviceProfile = (DeviceProfile) event.getEntity();
+                onDeviceProfileDelete(event.getTenantId(), event.getEntityId(), deviceProfile);
+                break;
+            case EDGE:
+                tbClusterService.broadcastEntityStateChangeEvent(event.getTenantId(), event.getEntityId(), ComponentLifecycleEvent.DELETED);
+                break;
+            case TB_RESOURCE:
+                TbResource tbResource = (TbResource) event.getEntity();
+                tbClusterService.onResourceDeleted(tbResource, null);
+                break;
+            default:
+                break;
         }
     }
 
