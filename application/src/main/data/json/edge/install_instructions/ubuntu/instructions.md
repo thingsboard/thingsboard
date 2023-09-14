@@ -55,7 +55,7 @@ sudo service postgresql start
 ```
 
 Once PostgreSQL is installed you may want to create a new user or set the password for the main user.
-The instructions below will help to set the password for main postgresql user
+The instructions below will help to set the password for main PostgreSQL user:
 
 ```text
 sudo su - postgres
@@ -73,14 +73,14 @@ CREATE DATABASE tb_edge;
 ```
 
 #### Thingsboard Edge service installation
-Download installation package.
+Download installation package:
 
 ```bash
 wget https://github.com/thingsboard/thingsboard-edge/releases/download/v${TB_EDGE_VERSION}/tb-edge-${TB_EDGE_VERSION}.deb
 {:copy-code}
 ```
 
-Go to the download repository and install ThingsBoard Edge service
+Go to the download repository and install ThingsBoard Edge service:
 
 ```bash
 sudo dpkg -i tb-edge-${TB_EDGE_VERSION}.deb
@@ -102,8 +102,7 @@ EOL'
 ```
 
 ##### [Optional] Database Configuration
-In case you changed default PostgreSQL datasource settings please update the configuration file with your actual values (**/etc/tb-edge/conf/tb-edge.conf**).
-Edit ThingsBoard Edge configuration file:
+In case you changed default PostgreSQL datasource settings (**postgres**/**postgres**) please update the configuration file (**/etc/tb-edge/conf/tb-edge.conf**) with your actual values:
 
 ```bash
 sudo nano /etc/tb-edge/conf/tb-edge.conf
@@ -111,12 +110,12 @@ sudo nano /etc/tb-edge/conf/tb-edge.conf
 ```
 
 Please update the following lines in your configuration file. Make sure **to replace**:
-- PUT_YOUR_POSTGRESQL_PASSWORD_HERE with your actual postgres datasource username
-- PUT_YOUR_POSTGRESQL_PASSWORD_HERE with your actual postgres datasource password.
+- Replace 'postgres' with your actual PostgreSQL username;
+- Replace 'PUT_YOUR_POSTGRESQL_PASSWORD_HERE' with your actual PostgreSQL password.
 
 ```bash
 export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/tb_edge
-export SPRING_DATASOURCE_USERNAME=PUT_YOUR_POSTGRESQL_USERNAME_HERE
+export SPRING_DATASOURCE_USERNAME=postgres
 export SPRING_DATASOURCE_PASSWORD=PUT_YOUR_POSTGRESQL_PASSWORD_HERE
 {:copy-code}
 ```
@@ -136,7 +135,7 @@ EOL'
 {:copy-code}
 ```
 
-Make sure that ports above (18080, 11883, 15683-15688) are not used by any other application.
+Make sure that ports above (18080, 11883, 15683) are not used by any other application.
 
 #### Run installation script
 
