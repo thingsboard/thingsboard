@@ -179,10 +179,15 @@ public class HashPartitionService implements PartitionService {
     public void removeQueue(TransportProtos.QueueDeleteMsg queueDeleteMsg) {
         TenantId tenantId = new TenantId(new UUID(queueDeleteMsg.getTenantIdMSB(), queueDeleteMsg.getTenantIdLSB()));
         QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, queueDeleteMsg.getQueueName(), tenantId);
+        myPartitions.remove(queueKey);
         partitionTopicsMap.remove(queueKey);
         partitionSizesMap.remove(queueKey);
         //TODO: remove after merging tb entity services
         removeTenant(tenantId);
+
+        if (serviceInfoProvider.isService(ServiceType.TB_RULE_ENGINE)) {
+            publishPartitionChangeEvent(ServiceType.TB_RULE_ENGINE, Map.of(queueKey, Collections.emptySet()));
+        }
     }
 
     @Override
@@ -306,9 +311,7 @@ public class HashPartitionService implements PartitionService {
                 partitionsByServiceType.computeIfAbsent(queueKey.getType(), serviceType -> new HashMap<>())
                         .put(queueKey, partitions);
             });
-            partitionsByServiceType.forEach((serviceType, partitionsMap) -> {
-                applicationEventPublisher.publishEvent(new PartitionChangeEvent(this, serviceType, partitionsMap));
-            });
+            partitionsByServiceType.forEach(this::publishPartitionChangeEvent);
         }
 
         if (currentOtherServices == null) {
@@ -338,6 +341,18 @@ public class HashPartitionService implements PartitionService {
         }
 
         applicationEventPublisher.publishEvent(new ServiceListChangedEvent(otherServices, currentService));
+    }
+
+    private void publishPartitionChangeEvent(ServiceType serviceType, Map<QueueKey, Set<TopicPartitionInfo>> partitionsMap) {
+        if (log.isDebugEnabled()) {
+            log.debug("Publishing partition change event for service type " + serviceType + ":" + System.lineSeparator() +
+                    partitionsMap.entrySet().stream()
+                            .map(entry -> entry.getKey() + " - " + entry.getValue().stream()
+                                    .map(TopicPartitionInfo::getFullTopicName).sorted()
+                                    .collect(Collectors.toList()))
+                            .collect(Collectors.joining(System.lineSeparator())));
+        }
+        applicationEventPublisher.publishEvent(new PartitionChangeEvent(this, serviceType, partitionsMap));
     }
 
     @Override
@@ -504,6 +519,9 @@ public class HashPartitionService implements PartitionService {
                         log.debug("Using servers {} for profile {}", toServiceIds(responsible), profileId);
                     }
                     responsibleServices.put(profileId, responsible);
+                }
+                if (responsible.isEmpty()) {
+                    return null;
                 }
                 servers = responsible;
             }
