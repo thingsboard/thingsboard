@@ -6084,6 +6084,22 @@
             "aggregation": "Aggregation",
             "aggregated-value-card-style": "Aggregated value card style"
         },
+        "alarm-count": {
+            "alarm-count-card-style": "Alarm count card style"
+        },
+        "entity-count": {
+            "entity-count-card-style": "Entity count card style"
+        },
+        "count": {
+            "layout": "Layout",
+            "layout-column": "Column",
+            "layout-row": "Row",
+            "label": "Label",
+            "icon": "Icon",
+            "icon-background": "Icon background",
+            "value": "Value",
+            "chevron": "Chevron"
+        },
         "table": {
             "common-table-settings": "Common Table Settings",
             "enable-search": "Enable search",
@@ -6403,7 +6419,8 @@
             "element-click": "On HTML element click",
             "pie-slice-click": "On slice click",
             "row-double-click": "On row double click",
-            "action-button-click": "Action button click"
+            "action-button-click": "Action button click",
+            "card-click": "On card click"
         }
     },
     "paginator" : {

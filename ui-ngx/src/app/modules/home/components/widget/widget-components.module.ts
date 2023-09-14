@@ -17,12 +17,12 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@app/shared/shared.module';
-import { EntitiesTableWidgetComponent } from '@home/components/widget/lib/entities-table-widget.component';
+import { EntitiesTableWidgetComponent } from '@home/components/widget/lib/entity/entities-table-widget.component';
 import { DisplayColumnsPanelComponent } from '@home/components/widget/lib/display-columns-panel.component';
-import { AlarmsTableWidgetComponent } from '@home/components/widget/lib/alarms-table-widget.component';
+import { AlarmsTableWidgetComponent } from '@home/components/widget/lib/alarm/alarms-table-widget.component';
 import { SharedHomeComponentsModule } from '@home/components/shared-home-components.module';
 import { TimeseriesTableWidgetComponent } from '@home/components/widget/lib/timeseries-table-widget.component';
-import { EntitiesHierarchyWidgetComponent } from '@home/components/widget/lib/entities-hierarchy-widget.component';
+import { EntitiesHierarchyWidgetComponent } from '@home/components/widget/lib/entity/entities-hierarchy-widget.component';
 import { RpcWidgetsModule } from '@home/components/widget/lib/rpc/rpc-widgets.module';
 import {
   DateRangeNavigatorPanelComponent,
@@ -56,6 +56,7 @@ import { ValueCardWidgetComponent } from '@home/components/widget/lib/cards/valu
 import {
   AggregatedValueCardWidgetComponent
 } from '@home/components/widget/lib/cards/aggregated-value-card-widget.component';
+import { CountWidgetComponent } from '@home/components/widget/lib/count/count-widget.component';
 
 @NgModule({
   declarations:
@@ -88,7 +89,8 @@ import {
       GatewayConfigurationComponent,
       GatewayRemoteConfigurationDialogComponent,
       ValueCardWidgetComponent,
-      AggregatedValueCardWidgetComponent
+      AggregatedValueCardWidgetComponent,
+      CountWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -125,7 +127,8 @@ import {
         GatewayConfigurationComponent,
         GatewayRemoteConfigurationDialogComponent,
         ValueCardWidgetComponent,
-        AggregatedValueCardWidgetComponent
+        AggregatedValueCardWidgetComponent,
+        CountWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }
