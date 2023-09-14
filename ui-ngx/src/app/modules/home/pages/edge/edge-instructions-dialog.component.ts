@@ -85,7 +85,7 @@ export class EdgeInstructionsDialogComponent extends DialogComponent<EdgeInstruc
   getInstructions(method: string) {
     if (!this.contentData[method]) {
       this.loadedInstructions = false;
-      this.edgeService.getEdgeDockerInstallInstructions(this.data.edge.id.id, method).subscribe(
+      this.edgeService.getEdgeInstallInstructions(this.data.edge.id.id, method).subscribe(
         res => {
           this.contentData[method] = res.installInstructions;
           this.loadedInstructions = true;
