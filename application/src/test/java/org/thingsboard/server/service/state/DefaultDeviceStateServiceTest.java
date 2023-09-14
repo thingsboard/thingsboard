@@ -73,6 +73,7 @@ import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 import static org.thingsboard.server.service.state.DefaultDeviceStateService.ACTIVITY_STATE;
 import static org.thingsboard.server.service.state.DefaultDeviceStateService.INACTIVITY_ALARM_TIME;
 import static org.thingsboard.server.service.state.DefaultDeviceStateService.INACTIVITY_TIMEOUT;
+import static org.thingsboard.server.service.state.DefaultDeviceStateService.LAST_ACTIVITY_TIME;
 
 @ExtendWith(MockitoExtension.class)
 public class DefaultDeviceStateServiceTest {
@@ -354,6 +355,107 @@ public class DefaultDeviceStateServiceTest {
 
     private void activityVerify(boolean isActive) {
         verify(telemetrySubscriptionService, times(1)).saveAttrAndNotify(any(), eq(deviceId), any(), eq(ACTIVITY_STATE), eq(isActive), any());
+    }
+
+    @Test
+    public void givenStateDataIsNull_whenUpdateActivityState_thenShouldCleanupDevice() {
+        // GIVEN
+        service.deviceStates.put(deviceId, deviceStateDataMock);
+
+        // WHEN
+        service.updateActivityState(deviceId, deviceStateDataMock, System.currentTimeMillis());
+
+        // THEN
+        assertThat(service.deviceStates.get(deviceId)).isNull();
+        assertThat(service.deviceStates.size()).isEqualTo(0);
+        assertThat(service.deviceStates.isEmpty()).isTrue();
+    }
+
+
+    @ParameterizedTest
+    @MethodSource("provideParametersForUpdateActivityState")
+    public void givenTestParameters_whenUpdateActivityState_thenShouldBeInTheExpectedStateAndPerformExpectedActions(
+            boolean activityState, long previousActivityTime, long lastReportedActivity, long inactivityAlarmTime,
+            long expectedInactivityAlarmTime, boolean shouldSetInactivityAlarmTimeToZero,
+            boolean shouldUpdateActivityStateToActive
+    ) {
+        // GIVEN
+        DeviceState deviceState = DeviceState.builder()
+                .active(activityState)
+                .lastActivityTime(previousActivityTime)
+                .lastInactivityAlarmTime(inactivityAlarmTime)
+                .inactivityTimeout(10000)
+                .build();
+
+        DeviceStateData deviceStateData = DeviceStateData.builder()
+                .tenantId(tenantId)
+                .deviceId(deviceId)
+                .state(deviceState)
+                .metaData(new TbMsgMetaData())
+                .build();
+
+        // WHEN
+        service.updateActivityState(deviceId, deviceStateData, lastReportedActivity);
+
+        // THEN
+        assertThat(deviceState.isActive()).isEqualTo(true);
+        assertThat(deviceState.getLastActivityTime()).isEqualTo(lastReportedActivity);
+        then(telemetrySubscriptionService).should().saveAttrAndNotify(
+                any(), eq(deviceId), any(), eq(LAST_ACTIVITY_TIME), eq(lastReportedActivity), any()
+        );
+
+        assertThat(deviceState.getLastInactivityAlarmTime()).isEqualTo(expectedInactivityAlarmTime);
+        if (shouldSetInactivityAlarmTimeToZero) {
+            then(telemetrySubscriptionService).should().saveAttrAndNotify(
+                    any(), eq(deviceId), any(), eq(INACTIVITY_ALARM_TIME), eq(0L), any()
+            );
+        }
+
+        if (shouldUpdateActivityStateToActive) {
+            then(telemetrySubscriptionService).should().saveAttrAndNotify(
+                    eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(SERVER_SCOPE), eq(ACTIVITY_STATE), eq(true), any()
+            );
+
+            var msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+            then(clusterService).should().pushMsgToRuleEngine(eq(tenantId), eq(deviceId), msgCaptor.capture(), any());
+            var actualMsg = msgCaptor.getValue();
+            assertThat(actualMsg.getType()).isEqualTo(TbMsgType.ACTIVITY_EVENT.name());
+            assertThat(actualMsg.getOriginator()).isEqualTo(deviceId);
+
+            var notificationCaptor = ArgumentCaptor.forClass(DeviceActivityTrigger.class);
+            then(notificationRuleProcessor).should().process(notificationCaptor.capture());
+            var actualNotification = notificationCaptor.getValue();
+            assertThat(actualNotification.getTenantId()).isEqualTo(tenantId);
+            assertThat(actualNotification.getDeviceId()).isEqualTo(deviceId);
+            assertThat(actualNotification.isActive()).isTrue();
+        }
+    }
+
+    private static Stream<Arguments> provideParametersForUpdateActivityState() {
+        return Stream.of(
+                Arguments.of(true, 100, 120, 80, 80, false, false),
+
+                Arguments.of(true, 100, 120, 100, 100, false, false),
+
+                Arguments.of(false, 100, 120, 110, 110, false, true),
+
+
+                Arguments.of(true, 100, 100, 80, 80, false, false),
+
+                Arguments.of(true, 100, 100, 100, 100, false, false),
+
+                Arguments.of(false, 100, 100, 110, 0, true, true),
+
+
+                Arguments.of(false, 100, 110, 110, 0, true, true),
+
+                Arguments.of(false, 100, 110, 120, 0, true, true),
+
+
+                Arguments.of(true, 0, 0, 0, 0, false, false),
+
+                Arguments.of(false, 0, 0, 0, 0, true, true)
+        );
     }
 
     @ParameterizedTest

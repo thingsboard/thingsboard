@@ -250,6 +250,10 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             state.setLastActivityTime(lastReportedActivity);
             if (!state.isActive()) {
                 state.setActive(true);
+                if (lastReportedActivity <= state.getLastInactivityAlarmTime()) {
+                    state.setLastInactivityAlarmTime(0);
+                    save(deviceId, INACTIVITY_ALARM_TIME, 0);
+                }
                 onDeviceActivityStatusChange(deviceId, true, stateData);
             }
         } else {
