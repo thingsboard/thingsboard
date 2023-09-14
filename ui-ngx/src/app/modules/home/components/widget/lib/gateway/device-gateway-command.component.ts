@@ -15,15 +15,10 @@
 ///
 
 import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { TranslateService } from '@ngx-translate/core';
-import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { DeviceService } from '@core/http/device.service';
 import { helpBaseUrl } from '@shared/models/constants';
 import { getOS } from '@core/utils';
-
+import { PublishLaunchCommand } from '@shared/models/device.models';
 
 @Component({
   selector: 'tb-gateway-command',
@@ -39,17 +34,13 @@ export class DeviceGatewayCommandComponent implements OnInit {
   @Input()
   deviceId: string;
 
-  linuxCode: string;
-  windowsCode: string;
+  commands: PublishLaunchCommand;
 
   helpLink: string = helpBaseUrl + '/docs/iot-gateway/install/docker-installation/';
 
   tabIndex = 0;
 
-  constructor(protected router: Router,
-              protected store: Store<AppState>,
-              private translate: TranslateService,
-              private cd: ChangeDetectorRef,
+  constructor(private cd: ChangeDetectorRef,
               private deviceService: DeviceService) {
   }
 
@@ -57,7 +48,7 @@ export class DeviceGatewayCommandComponent implements OnInit {
   ngOnInit(): void {
     if (this.deviceId) {
       this.deviceService.getDevicePublishLaunchCommands(this.deviceId).subscribe(commands => {
-        this.createRunCode(commands.mqtt);
+        this.commands = commands;
         this.cd.detectChanges();
       });
     }
@@ -77,22 +68,5 @@ export class DeviceGatewayCommandComponent implements OnInit {
       default:
         this.tabIndex = 1;
     }
-  }
-
-  createRunCode(commands) {
-    this.linuxCode = commands.linux;
-    this.windowsCode = commands.windows;
-  }
-
-  onDockerCodeCopied() {
-    this.store.dispatch(new ActionNotificationShow(
-      {
-        message: this.translate.instant('gateway.command-copied-message'),
-        type: 'success',
-        target: 'dockerCommandDialogContent',
-        duration: 1200,
-        verticalPosition: 'bottom',
-        horizontalPosition: 'left'
-      }));
   }
 }
