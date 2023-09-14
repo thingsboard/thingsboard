@@ -22,23 +22,23 @@
   padding: 0;
 
   .command-form {
-    width: 100%;
     flex-wrap: nowrap;
-    padding: 0 15px 5px;
-    margin-bottom: 5px;
-
+    padding: 0 5px 5px;
     & > button {
       margin-top: 10px;
     }
   }
 
   .result-block {
-    padding: 0 15px;
+    padding: 0 5px;
     display: flex;
     flex-direction: column;
-
+    flex: 1;
     & > span {
       font-weight: 600;
+    }
+    tb-json-content {
+      flex: 1;
     }
   }
 }
@@ -46,10 +46,6 @@
 :host ::ng-deep {
   .tb-json-content {
     height: 100%;
-  }
-
-  .mat-mdc-form-field-icon-suffix {
-    z-index: 100;
   }
 }
 

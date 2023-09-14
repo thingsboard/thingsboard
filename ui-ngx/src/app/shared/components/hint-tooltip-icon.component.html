@@ -17,5 +17,6 @@
 -->
 <ng-content></ng-content>
 <tb-icon class="tb-hint-tooltip-icon tb-mat-18"
-          matTooltip="{{ tooltipText }}"
-          [matTooltipPosition]="tooltipPosition">{{ hintIcon }}</tb-icon>
+         *ngIf="tooltipText"
+         matTooltip="{{ tooltipText }}"
+         [matTooltipPosition]="tooltipPosition">{{ hintIcon }}</tb-icon>
