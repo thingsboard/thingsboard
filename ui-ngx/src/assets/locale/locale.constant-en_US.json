@@ -3201,6 +3201,7 @@
             "dashboard": "Open dashboard",
             "link": "Open URL link"
         },
+        "loading-notifications": "Loading notifications...",
         "management": "Notification management",
         "mark-all-as-read": "Mark all as read",
         "mark-as-read": "Mark as read",
