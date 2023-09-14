@@ -286,10 +286,8 @@ public class HashPartitionServiceTest {
         HashPartitionService partitionService_common = createPartitionService();
         partitionService_common.recalculatePartitions(commonRuleEngine, List.of(dedicatedRuleEngine));
         verifyPartitionChangeEvent(event -> {
-            return event.getQueueKey().getTenantId().isSysTenantId() &&
-                    event.getQueueKey().getQueueName().equals(DataConstants.MAIN_QUEUE_NAME) &&
-                    event.getPartitions().stream().map(TopicPartitionInfo::getPartition).collect(Collectors.toSet())
-                            .size() == systemQueue.getPartitions();
+            QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.MAIN_QUEUE_NAME, TenantId.SYS_TENANT_ID);
+            return event.getPartitionsMap().get(queueKey).size() == systemQueue.getPartitions();
         });
 
         Mockito.reset(applicationEventPublisher);
@@ -316,18 +314,15 @@ public class HashPartitionServiceTest {
         partitionService_common.recalculatePartitions(commonRuleEngine, List.of(dedicatedRuleEngine));
         // expecting event about no partitions for isolated queue key
         verifyPartitionChangeEvent(event -> {
-            return event.getQueueKey().getTenantId().equals(tenantId) &&
-                    event.getQueueKey().getQueueName().equals(DataConstants.MAIN_QUEUE_NAME) &&
-                    event.getPartitions().isEmpty();
+            QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.MAIN_QUEUE_NAME, tenantId);
+            return event.getPartitionsMap().get(queueKey).isEmpty();
         });
 
         partitionService_dedicated.updateQueue(queueUpdateMsg);
         partitionService_dedicated.recalculatePartitions(dedicatedRuleEngine, List.of(commonRuleEngine));
         verifyPartitionChangeEvent(event -> {
-            return event.getQueueKey().getTenantId().equals(tenantId) &&
-                    event.getQueueKey().getQueueName().equals(DataConstants.MAIN_QUEUE_NAME) &&
-                    event.getPartitions().stream().map(TopicPartitionInfo::getPartition).collect(Collectors.toSet())
-                            .size() == isolatedQueue.getPartitions();
+            QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.MAIN_QUEUE_NAME, tenantId);
+            return event.getPartitionsMap().get(queueKey).size() == isolatedQueue.getPartitions();
         });
 
 
@@ -345,9 +340,8 @@ public class HashPartitionServiceTest {
         partitionService_dedicated.removeQueue(queueDeleteMsg);
         partitionService_dedicated.recalculatePartitions(dedicatedRuleEngine, List.of(commonRuleEngine));
         verifyPartitionChangeEvent(event -> {
-            return event.getQueueKey().getTenantId().equals(tenantId) &&
-                    event.getQueueKey().getQueueName().equals(DataConstants.MAIN_QUEUE_NAME) &&
-                    event.getPartitions().isEmpty();
+            QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.MAIN_QUEUE_NAME, tenantId);
+            return event.getPartitionsMap().get(queueKey).isEmpty();
         });
     }
 

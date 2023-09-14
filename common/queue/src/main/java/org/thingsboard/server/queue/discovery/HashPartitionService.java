@@ -271,6 +271,8 @@ public class HashPartitionService implements PartitionService {
         final ConcurrentMap<QueueKey, List<Integer>> oldPartitions = myPartitions;
         myPartitions = newPartitions;
 
+        Map<QueueKey, Set<TopicPartitionInfo>> changedPartitionsMap = new HashMap<>();
+
         Set<QueueKey> removed = new HashSet<>();
         oldPartitions.forEach((queueKey, partitions) -> {
             if (!newPartitions.containsKey(queueKey)) {
@@ -286,7 +288,7 @@ public class HashPartitionService implements PartitionService {
         }
         removed.forEach(queueKey -> {
             log.info("[{}] NO MORE PARTITIONS FOR CURRENT KEY", queueKey);
-            applicationEventPublisher.publishEvent(new PartitionChangeEvent(this, queueKey, Collections.emptySet()));
+            changedPartitionsMap.put(queueKey, Collections.emptySet());
         });
 
         myPartitions.forEach((queueKey, partitions) -> {
@@ -295,9 +297,19 @@ public class HashPartitionService implements PartitionService {
                 Set<TopicPartitionInfo> tpiList = partitions.stream()
                         .map(partition -> buildTopicPartitionInfo(queueKey, partition))
                         .collect(Collectors.toSet());
-                applicationEventPublisher.publishEvent(new PartitionChangeEvent(this, queueKey, tpiList));
+                changedPartitionsMap.put(queueKey, tpiList);
             }
         });
+        if (!changedPartitionsMap.isEmpty()) {
+            Map<ServiceType, Map<QueueKey, Set<TopicPartitionInfo>>> partitionsByServiceType = new HashMap<>();
+            changedPartitionsMap.forEach((queueKey, partitions) -> {
+                partitionsByServiceType.computeIfAbsent(queueKey.getType(), serviceType -> new HashMap<>())
+                        .put(queueKey, partitions);
+            });
+            partitionsByServiceType.forEach((serviceType, partitionsMap) -> {
+                applicationEventPublisher.publishEvent(new PartitionChangeEvent(this, serviceType, partitionsMap));
+            });
+        }
 
         if (currentOtherServices == null) {
             currentOtherServices = new ArrayList<>(otherServices);
