@@ -79,6 +79,9 @@ public class DefaultEdgeInstallService implements EdgeInstallService {
             dockerInstallInstructions = dockerInstallInstructions.replace("${LOCALHOST_WARNING}", "");
             dockerInstallInstructions = dockerInstallInstructions.replace("${BASE_URL}", baseUrl);
         }
+        String edgeVersion = appVersion + "EDGE";
+        edgeVersion = edgeVersion.replace("-SNAPSHOT", "");
+        dockerInstallInstructions = dockerInstallInstructions.replace("${TB_EDGE_VERSION}", edgeVersion);
         dockerInstallInstructions = replacePlaceholders(dockerInstallInstructions, edge);
         return new EdgeInstallInstructions(dockerInstallInstructions);
     }
@@ -87,6 +90,8 @@ public class DefaultEdgeInstallService implements EdgeInstallService {
         String ubuntuInstallInstructions = readFile(resolveFile("ubuntu", "instructions.md"));
         ubuntuInstallInstructions = replacePlaceholders(ubuntuInstallInstructions, edge);
         ubuntuInstallInstructions = ubuntuInstallInstructions.replace("${BASE_URL}", request.getServerName());
+        String edgeVersion = appVersion.replace("-SNAPSHOT", "");
+        ubuntuInstallInstructions = ubuntuInstallInstructions.replace("${TB_EDGE_VERSION}", edgeVersion);
         return new EdgeInstallInstructions(ubuntuInstallInstructions);
     }
 
@@ -95,13 +100,12 @@ public class DefaultEdgeInstallService implements EdgeInstallService {
         String centosInstallInstructions = readFile(resolveFile("centos", "instructions.md"));
         centosInstallInstructions = replacePlaceholders(centosInstallInstructions, edge);
         centosInstallInstructions = centosInstallInstructions.replace("${BASE_URL}", request.getServerName());
+        String edgeVersion = appVersion.replace("-SNAPSHOT", "");
+        centosInstallInstructions = centosInstallInstructions.replace("${TB_EDGE_VERSION}", edgeVersion);
         return new EdgeInstallInstructions(centosInstallInstructions);
     }
 
     private String replacePlaceholders(String instructions, Edge edge) {
-        String edgeVersion = appVersion + "EDGE";
-        edgeVersion = edgeVersion.replace("-SNAPSHOT", "");
-        instructions = instructions.replace("${TB_EDGE_VERSION}", edgeVersion);
         instructions = instructions.replace("${CLOUD_ROUTING_KEY}", edge.getRoutingKey());
         instructions = instructions.replace("${CLOUD_ROUTING_SECRET}", edge.getSecret());
         instructions = instructions.replace("${CLOUD_RPC_PORT}", Integer.toString(rpcPort));
