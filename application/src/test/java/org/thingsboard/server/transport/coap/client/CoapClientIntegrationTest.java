@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.coap.client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapHandler;
 import org.eclipse.californium.core.CoapObserveRelation;
@@ -101,7 +102,7 @@ public class CoapClientIntegrationTest extends AbstractCoapIntegrationTest {
         client = createClientForFeatureWithConfirmableParameter(FeatureType.ATTRIBUTES, confirmable);
         CoapResponse coapResponse = client.postMethod(PAYLOAD_VALUES_STR.getBytes());
         assertEquals(CoAP.ResponseCode.CREATED, coapResponse.getCode());
-        validateConfirmableFlag(client, coapResponse);
+        assertEquals("CoAP response type is wrong!", client.getType(), coapResponse.advanced().getType());
 
         DeviceId deviceId = savedDevice.getId();
         List<String> actualKeys = getActualKeysList(deviceId);
@@ -185,7 +186,7 @@ public class CoapClientIntegrationTest extends AbstractCoapIntegrationTest {
         String featureTokenUrl = CoapTestClient.getFeatureTokenUrl(accessToken, FeatureType.ATTRIBUTES) + "?clientKeys=" + keysParam + "&sharedKeys=" + keysParam;
         client.setURI(featureTokenUrl);
         CoapResponse response = client.getMethod();
-        validateConfirmableFlag(client, response);
+        assertEquals("CoAP response type is wrong!", client.getType(), response.advanced().getType());
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -240,13 +241,6 @@ public class CoapClientIntegrationTest extends AbstractCoapIntegrationTest {
         assertArrayEquals(EMPTY_PAYLOAD, callback.getPayloadBytes());
     }
 
-    private void validateConfirmableFlag(CoapTestClient client, CoapResponse response) {
-        CoAP.Type responseType = response.advanced().getType();
-        if (CoAP.Type.CON.equals(responseType) || CoAP.Type.NON.equals(responseType)) {
-            assertEquals(client.getType(), responseType);
-        }
-    }
-
     private void validateTwoWayStateChangedNotification(CoapTestCallback callback, String actualResult) {
         assertEquals(DEVICE_RESPONSE, actualResult);
         assertNotNull(callback.getPayloadBytes());
@@ -255,6 +249,9 @@ public class CoapClientIntegrationTest extends AbstractCoapIntegrationTest {
     protected class TestCoapCallbackForRPC extends CoapTestCallback {
 
         private final CoapTestClient client;
+
+        @Getter
+        private boolean wasSuccessful = false;
 
         TestCoapCallbackForRPC(CoapTestClient client) {
             this.client = client;
@@ -265,7 +262,7 @@ public class CoapClientIntegrationTest extends AbstractCoapIntegrationTest {
             payloadBytes = response.getPayload();
             responseCode = response.getCode();
             observe = response.getOptions().getObserve();
-            validateConfirmableFlag(client, response);
+            wasSuccessful = client.getType().equals(response.advanced().getType());
             if (observe != null) {
                 if (observe > 0) {
                     processOnLoadResponse(response, client);
@@ -280,14 +277,12 @@ public class CoapClientIntegrationTest extends AbstractCoapIntegrationTest {
     }
 
     protected void processOnLoadResponse(CoapResponse response, CoapTestClient client) {
-        validateConfirmableFlag(client, response);
         JsonNode responseJson = JacksonUtil.fromBytes(response.getPayload());
         int requestId = responseJson.get("id").asInt();
         client.setURI(CoapTestClient.getFeatureTokenUrl(accessToken, FeatureType.RPC, requestId));
         client.postMethod(new CoapHandler() {
             @Override
             public void onLoad(CoapResponse response) {
-                validateConfirmableFlag(client, response);
                 log.warn("RPC {} command response ack: {}", requestId, response.getCode());
             }
 
