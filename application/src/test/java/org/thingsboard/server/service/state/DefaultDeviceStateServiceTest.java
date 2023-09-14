@@ -363,7 +363,7 @@ public class DefaultDeviceStateServiceTest {
         service.deviceStates.put(deviceId, deviceStateDataMock);
 
         // WHEN
-        service.updateActivityState(deviceId, deviceStateDataMock, System.currentTimeMillis());
+        service.updateActivityState(deviceId, null, System.currentTimeMillis());
 
         // THEN
         assertThat(service.deviceStates.get(deviceId)).isNull();
