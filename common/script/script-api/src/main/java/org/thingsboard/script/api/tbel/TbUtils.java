@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -63,6 +64,7 @@ public class TbUtils {
                 ExecutionContext.class, String.class)));
         parserConfig.addImport("stringToBytes", new MethodStub(TbUtils.class.getMethod("stringToBytes",
                 ExecutionContext.class, String.class, String.class)));
+        parserConfig.registerNonConvertableMethods(TbUtils.class, Collections.singleton("stringToBytes"));
         parserConfig.addImport("parseInt", new MethodStub(TbUtils.class.getMethod("parseInt",
                 String.class)));
         parserConfig.addImport("parseInt", new MethodStub(TbUtils.class.getMethod("parseInt",

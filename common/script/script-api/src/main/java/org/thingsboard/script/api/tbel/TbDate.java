@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,7 +34,6 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Locale;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 public class TbDate extends Date {
 
@@ -128,9 +127,9 @@ public class TbDate extends Date {
         });
     }
 
-    public String toLocaleString(String localeStr, String optionsStr, BiFunction<Locale, DateFormattingOptions, DateTimeFormatter> formatterBuilder) {
+    public String toLocaleString(String localeStr, String optionsStr, BiFunction<Locale, DateTimeFormatOptions, DateTimeFormatter> formatterBuilder) {
         Locale locale = StringUtils.isNotEmpty(localeStr) ? Locale.forLanguageTag(localeStr) : Locale.getDefault();
-        DateFormattingOptions options = getDateFormattingOptions(optionsStr);
+        DateTimeFormatOptions options = getDateFormattingOptions(optionsStr);
         ZonedDateTime zdt = this.toInstant().atZone(options.getTimeZone().toZoneId());
         DateTimeFormatter formatter;
         if (StringUtils.isNotEmpty(options.getPattern())) {
@@ -141,17 +140,17 @@ public class TbDate extends Date {
         return formatter.format(zdt);
     }
 
-    private static DateFormattingOptions getDateFormattingOptions(String options) {
-        DateFormattingOptions opt = null;
+    private static DateTimeFormatOptions getDateFormattingOptions(String options) {
+        DateTimeFormatOptions opt = null;
         if (StringUtils.isNotEmpty(options)) {
             try {
-                opt = JacksonUtil.fromString(options, DateFormattingOptions.class);
+                opt = JacksonUtil.fromString(options, DateTimeFormatOptions.class);
             } catch (IllegalArgumentException iae) {
-                opt = new DateFormattingOptions(options);
+                opt = new DateTimeFormatOptions(options);
             }
         }
         if (opt == null) {
-            opt = new DateFormattingOptions();
+            opt = new DateTimeFormatOptions();
         }
         return opt;
     }
