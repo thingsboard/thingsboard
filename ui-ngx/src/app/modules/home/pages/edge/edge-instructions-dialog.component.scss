@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
+@use '@angular/material' as mat;
 @import "../../../../../scss/constants";
+@import '../theme.scss';
 
+$tb-primary: mat.get-color-from-palette($tb-primary);
 :host {
   height: 100%;
   max-height: 100vh;
@@ -63,7 +66,8 @@
 
   .mat-mdc-dialog-content {
     max-height: 80vh;
-    padding: 16px;
+    padding: 0 16px 16px 16px;
+    border-top: 16px solid #fff;
   }
 }
 
@@ -73,10 +77,10 @@
     div.code-wrapper button.clipboard-btn {
       right: -2px !important;
       p {
-        color: #305680;
+        color: $tb-primary !important;
       }
       p, div {
-        background-color: #F3F6FA;
+        background-color: unset !important;
       }
       div {
         img {
@@ -88,9 +92,15 @@
           display: block;
           width: 18px;
           height: 18px;
-          background: #305680;
+          background: $tb-primary;
           mask-image: url(/assets/copy-code-icon.svg);
           mask-repeat: no-repeat;
+        }
+      }
+      a {
+        color: $tb-primary;
+        &:hover {
+          color: $tb-primary;
         }
       }
       &.multiline {
@@ -101,12 +111,25 @@
       padding-right: unset !important;
       padding-left: unset !important;
     }
+    pre[class*="language-"] {
+      border: 1px solid $tb-primary !important;
+    }
+    div {
+      background-color: #F3F6FA;
+    }
   }
   .mdc-button__label > span {
     .mat-icon {
       vertical-align: text-bottom;
       box-sizing: initial;
     }
+  }
+
+  .mat-mdc-tab-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: #fff;
   }
 
   .tabs-icon {
