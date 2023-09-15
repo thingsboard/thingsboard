@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.antlr.runtime.tree.Tree;
 import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Assert;
@@ -35,6 +36,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
+import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.DeviceTypeFilter;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.DynamicValueSourceType;
@@ -45,6 +47,7 @@ import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityDataSortOrder;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
+import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.EntityListFilter;
 import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
@@ -52,11 +55,16 @@ import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -501,6 +509,86 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testFindEntityDataByQueryByAttributes() throws Exception {
+        final int allDevicesCount = 67;
+        final int activeDevicesCount = 13;
+        final int inactiveDevicesCount = allDevicesCount - activeDevicesCount;
+
+        List<Device> devices = new ArrayList<>(allDevicesCount);
+
+        for (int i = 0; i < allDevicesCount; i++) {
+            Device device = new Device();
+            String name = "Device" + i;
+            device.setName(name);
+            device.setType("default");
+            device.setLabel("testLabel" + (int) (Math.random() * 1000));
+            devices.add(doPost("/api/device?accessToken=" + name, device, Device.class));
+            Thread.sleep(1);
+        }
+
+        Set<UUID> allDeviceIds = new TreeSet<>();
+
+        for (Device device : devices) {
+            String payload = "{\"active\":false}";
+            doPost("/api/plugins/telemetry/" + device.getId() + "/" + DataConstants.SERVER_SCOPE, payload, String.class, status().isOk());
+            allDeviceIds.add(device.getUuidId());
+        }
+
+        Set<UUID> activeDeviceIds = new TreeSet<>();
+
+        for (int i = 0; i < activeDevicesCount; i++) {
+            Device device = devices.get(i);
+            String payload = "{\"active\":true}";
+            doPost("/api/plugins/telemetry/" + device.getId() + "/" + DataConstants.SHARED_SCOPE, payload, String.class, status().isOk());
+            activeDeviceIds.add(device.getUuidId());
+        }
+
+        Set<UUID> inactiveDeviceIds = CollectionsUtil.diffSets(activeDeviceIds, allDeviceIds);
+
+        Thread.sleep(1000);
+
+        DeviceTypeFilter filter = new DeviceTypeFilter();
+        filter.setDeviceTypes(List.of("default"));
+        filter.setDeviceNameFilter("");
+
+        EntityDataSortOrder sortOrder = new EntityDataSortOrder(
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"), EntityDataSortOrder.Direction.ASC);
+        EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
+        List<EntityKey> entityFields = Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"));
+        List<EntityKey> latestValues = Collections.singletonList(new EntityKey(EntityKeyType.ATTRIBUTE, "active"));
+
+        EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, latestValues, null);
+
+        List<EntityData> allDevices = loadEntityDataByQuery(query);
+
+        Assert.assertEquals(allDevicesCount, allDevices.size());
+        Assert.assertEquals(allDeviceIds, allDevices.stream().map(ed -> ed.getEntityId().getId()).collect(Collectors.toCollection(TreeSet::new)));
+
+        KeyFilter keyFilter = new KeyFilter();
+        keyFilter.setKey(new EntityKey(EntityKeyType.ATTRIBUTE, "active"));
+        keyFilter.setValueType(EntityKeyValueType.BOOLEAN);
+        BooleanFilterPredicate booleanFilterPredicate = new BooleanFilterPredicate();
+        booleanFilterPredicate.setOperation(BooleanFilterPredicate.BooleanOperation.EQUAL);
+        booleanFilterPredicate.setValue(new FilterPredicateValue<>(true));
+        keyFilter.setPredicate(booleanFilterPredicate);
+
+        query = new EntityDataQuery(filter, pageLink, entityFields, latestValues, Collections.singletonList(keyFilter));
+
+        List<EntityData> activeDevices = loadEntityDataByQuery(query);
+
+        Assert.assertEquals(activeDevicesCount, activeDevices.size());
+        Assert.assertEquals(activeDeviceIds, activeDevices.stream().map(ed -> ed.getEntityId().getId()).collect(Collectors.toCollection(TreeSet::new)));
+
+        booleanFilterPredicate.setValue(new FilterPredicateValue<>(false));
+        query = new EntityDataQuery(filter, pageLink, entityFields, latestValues, Collections.singletonList(keyFilter));
+
+        List<EntityData> inactiveDevices = loadEntityDataByQuery(query);
+
+        Assert.assertEquals(inactiveDevicesCount, inactiveDevices.size());
+        Assert.assertEquals(inactiveDeviceIds, inactiveDevices.stream().map(ed -> ed.getEntityId().getId()).collect(Collectors.toCollection(TreeSet::new)));
+    }
+
+    @Test
     public void testFindEntityDataByQueryWithDynamicValue() throws Exception {
         int numOfDevices = 2;
 
@@ -554,12 +642,14 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
                 .alias("data by query")
                 .atMost(30, TimeUnit.SECONDS)
                 .until(() -> {
-                    var data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {});
+                    var data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
+                    });
                     var loadedEntities = new ArrayList<>(data.getData());
                     return loadedEntities.size() == numOfDevices;
                 });
 
-        var data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {});
+        var data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
+        });
         var loadedEntities = new ArrayList<>(data.getData());
 
         Assert.assertEquals(numOfDevices, loadedEntities.size());
@@ -593,4 +683,17 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         assertThat(getErrorMessage(result)).contains("Invalid").contains("sort property");
     }
 
+    private List<EntityData> loadEntityDataByQuery(EntityDataQuery query) throws Exception {
+        PageData<EntityData> data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<>() {
+        });
+
+        List<EntityData> loadedEntities = new ArrayList<>(data.getData());
+        while (data.hasNext()) {
+            query = query.next();
+            data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<>() {
+            });
+            loadedEntities.addAll(data.getData());
+        }
+        return loadedEntities;
+    }
 }

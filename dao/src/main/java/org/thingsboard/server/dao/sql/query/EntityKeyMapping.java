@@ -252,7 +252,11 @@ public class EntityKeyMapping {
                 .filter(StringUtils::isNotEmpty)
                 .collect(Collectors.joining(" and "));
         if (StringUtils.isNotEmpty(filterQuery)) {
-            filterQuery = " AND (" + filterQuery + ")";
+            if (entityKey.getType().equals(EntityKeyType.ATTRIBUTE)) {
+                filterQuery = "where " + filterQuery;
+            } else {
+                filterQuery = " AND (" + filterQuery + ")";
+            }
         }
         if (entityKey.getType().equals(EntityKeyType.TIME_SERIES)) {
             String join = (hasFilter() && hasFilterValues(ctx)) ? "inner join" : "left join";
@@ -275,9 +279,9 @@ public class EntityKeyMapping {
                 query = String.format("%s AND %s.attribute_type='%s' %s", query, alias, scope, filterQuery);
             } else {
                 String join = (hasFilter() && hasFilterValues(ctx)) ? "join LATERAL" : "left join LATERAL";
-                query = String.format("%s (select * from attribute_kv %s WHERE %s.entity_id=entities.id AND %s.entity_type=%s AND %s.attribute_key=:%s_key_id %s " +
-                                "ORDER BY %s.last_update_ts DESC limit 1) as %s ON true",
-                        join, alias, alias, alias, entityTypeStr, alias, alias, filterQuery, alias, alias);
+                query = String.format("%s (select * from (select * from attribute_kv %s WHERE %s.entity_id=entities.id AND %s.entity_type=%s AND %s.attribute_key=:%s_key_id " +
+                                "ORDER BY %s.last_update_ts DESC limit 1) as %s %s) as %s ON true",
+                        join, alias, alias, alias, entityTypeStr, alias, alias, alias, alias, filterQuery, alias);
             }
             return query;
         }
