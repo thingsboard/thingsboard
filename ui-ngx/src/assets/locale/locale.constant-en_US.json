@@ -2595,7 +2595,10 @@
            "attribute": "Attribute",
            "timeseries": "Timeseries",
            "entity-field": "Entity field",
-           "constant": "Constant"
+           "constant": "Constant",
+           "client-attribute": "Client attribute",
+           "server-attribute": "Server attribute",
+           "shared-attribute": "Shared attribute"
          },
          "value-type": {
            "value-type": "Value type",
