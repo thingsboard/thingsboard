@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.transform;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,9 +25,11 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
@@ -35,6 +38,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -70,8 +75,8 @@ public class TbRenameKeysNodeTest {
     @Test
     void givenDefaultConfig_whenVerify_thenOK() {
         TbRenameKeysNodeConfiguration defaultConfig = new TbRenameKeysNodeConfiguration().defaultConfiguration();
-        assertThat(defaultConfig.getRenameKeysMapping()).isEqualTo(Map.of("temp", "temperature"));
-        assertThat(defaultConfig.isFromMetadata()).isEqualTo(false);
+        assertThat(defaultConfig.getRenameKeysMapping()).isEqualTo(Map.of("temperatureCelsius", "temperature"));
+        assertThat(defaultConfig.getRenameIn()).isEqualTo(TbMsgSource.DATA);
     }
 
     @Test
@@ -95,7 +100,7 @@ public class TbRenameKeysNodeTest {
     void givenMetadata_whenOnMsg_thenVerifyOutput() throws Exception {
         config = new TbRenameKeysNodeConfiguration().defaultConfiguration();
         config.setRenameKeysMapping(Map.of("TestKey_1", "Attribute_1", "TestKey_2", "Attribute_2"));
-        config.setFromMetadata(true);
+        config.setRenameIn(TbMsgSource.METADATA);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
 
@@ -146,6 +151,20 @@ public class TbRenameKeysNodeTest {
         assertThat(newMsg).isNotNull();
 
         assertThat(newMsg).isSameAs(msg);
+    }
+
+    @Test
+    void givenOldConfig_whenUpgrade_thenShouldReturnTrueResultWithNewConfig() throws Exception {
+        // GIVEN
+        var config = new TbRenameKeysNodeConfiguration().defaultConfiguration();
+        var oldConfigJson = (ObjectNode) JacksonUtil.valueToTree(config);
+        oldConfigJson.remove("renameIn");
+        oldConfigJson.put("fromMetadata", "false");
+        // WHEN
+        TbPair<Boolean, JsonNode> upgrade = node.upgrade(0, oldConfigJson);
+        // THEN
+        assertTrue(upgrade.getFirst());
+        assertEquals(config, JacksonUtil.treeToValue(upgrade.getSecond(), config.getClass()));
     }
 
     private TbMsg getTbMsg(EntityId entityId, String data) {

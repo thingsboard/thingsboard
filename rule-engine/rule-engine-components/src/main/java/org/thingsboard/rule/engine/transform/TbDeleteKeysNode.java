@@ -21,84 +21,96 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RuleNode(
         type = ComponentType.TRANSFORMATION,
-        name = "delete keys",
+        name = "delete key-values",
+        version = 1,
         configClazz = TbDeleteKeysNodeConfiguration.class,
-        nodeDescription = "Removes keys from the msg data or metadata with the specified key names selected in the list",
-        nodeDetails = "Will fetch fields (regex) values specified in list. If specified field (regex) is not part of msg " +
-                "or metadata fields it will be ignored. Returns transformed messages via <code>Success</code> chain",
+        nodeDescription = "Removes key-values from message or metadata.",
+        nodeDetails = "Removes key-values from message or message metadata based on the keys list specified in the configuration. " +
+                "Use regular expression(s) as a key(s) to remove keys by pattern.<br><br>" +
+                "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbTransformationNodeDeleteKeysConfig",
         icon = "remove_circle"
 )
-public class TbDeleteKeysNode implements TbNode {
+public class TbDeleteKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
 
     private TbDeleteKeysNodeConfiguration config;
     private List<Pattern> patternKeys;
-    private boolean fromMetadata;
+    private TbMsgSource deleteFrom;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbDeleteKeysNodeConfiguration.class);
-        this.fromMetadata = config.isFromMetadata();
-        this.patternKeys = new ArrayList<>();
-        config.getKeys().forEach(key -> {
-            this.patternKeys.add(Pattern.compile(key));
-        });
+        this.deleteFrom = config.getDeleteFrom();
+        if (deleteFrom == null) {
+            throw new TbNodeException("DeleteFrom can't be null! Allowed values: " + Arrays.toString(TbMsgSource.values()));
+        }
+        this.patternKeys = config.getKeys().stream().map(Pattern::compile).collect(Collectors.toList());
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        TbMsgMetaData metaData = msg.getMetaData();
+        TbMsgMetaData metaDataCopy = msg.getMetaData().copy();
         String msgData = msg.getData();
         List<String> keysToDelete = new ArrayList<>();
-        if (fromMetadata) {
-            Map<String, String> metaDataMap = metaData.getData();
-            metaDataMap.forEach((keyMetaData, valueMetaData) -> {
-                if (checkKey(keyMetaData)) {
-                    keysToDelete.add(keyMetaData);
-                }
-            });
-            keysToDelete.forEach(metaDataMap::remove);
-            metaData = new TbMsgMetaData(metaDataMap);
-        } else {
-            JsonNode dataNode = JacksonUtil.toJsonNode(msgData);
-            if (dataNode.isObject()) {
-                ObjectNode msgDataObject = (ObjectNode) dataNode;
-                dataNode.fields().forEachRemaining(entry -> {
-                    String keyData = entry.getKey();
-                    if (checkKey(keyData)) {
-                        keysToDelete.add(keyData);
+        switch (deleteFrom) {
+            case METADATA:
+                Map<String, String> metaDataMap = metaDataCopy.getData();
+                metaDataMap.forEach((keyMetaData, valueMetaData) -> {
+                    if (checkKey(keyMetaData)) {
+                        keysToDelete.add(keyMetaData);
                     }
                 });
-                msgDataObject.remove(keysToDelete);
-                msgData = JacksonUtil.toString(msgDataObject);
-            }
+                keysToDelete.forEach(metaDataMap::remove);
+                metaDataCopy = new TbMsgMetaData(metaDataMap);
+                break;
+            case DATA:
+                JsonNode dataNode = JacksonUtil.toJsonNode(msgData);
+                if (dataNode.isObject()) {
+                    ObjectNode msgDataObject = (ObjectNode) dataNode;
+                    dataNode.fields().forEachRemaining(entry -> {
+                        String keyData = entry.getKey();
+                        if (checkKey(keyData)) {
+                            keysToDelete.add(keyData);
+                        }
+                    });
+                    msgDataObject.remove(keysToDelete);
+                    msgData = JacksonUtil.toString(msgDataObject);
+                }
+                break;
+            default:
+                log.debug("Unexpected DeleteFrom value: {}. Allowed values: {}", deleteFrom, TbMsgSource.values());
+                break;
         }
-        if (keysToDelete.isEmpty()) {
-            ctx.tellSuccess(msg);
-        } else {
-            ctx.tellSuccess(TbMsg.transformMsg(msg, metaData, msgData));
-        }
+        ctx.tellSuccess(keysToDelete.isEmpty() ? msg : TbMsg.transformMsg(msg, metaDataCopy, msgData));
+    }
+
+    @Override
+    protected String getKeyToUpgradeFromVersionZero() {
+        return "deleteFrom";
     }
 
     boolean checkKey(String key) {
         return patternKeys.stream().anyMatch(pattern -> pattern.matcher(key).matches());
     }
+
 }

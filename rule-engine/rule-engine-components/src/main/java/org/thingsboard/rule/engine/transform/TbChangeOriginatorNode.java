@@ -43,10 +43,14 @@ import java.util.NoSuchElementException;
         type = ComponentType.TRANSFORMATION,
         name = "change originator",
         configClazz = TbChangeOriginatorNodeConfiguration.class,
-        nodeDescription = "Change Message Originator To Tenant/Customer/Related Entity/Alarm Originator",
+        nodeDescription = "Change Message Originator To Tenant/Customer/Related Entity/Alarm Originator/Entity by name pattern",
         nodeDetails = "Related Entity found using configured relation direction and Relation Type. " +
-                "If multiple Related Entities are found, only first Entity is used as new Originator, other entities are discarded.<br/>" +
-                "Alarm Originator found only in case original Originator is <code>Alarm</code> entity.",
+                "If multiple related entities are found, only first entity is used as new originator, other entities are discarded.<br/>" +
+                "Alarm Originator might be found only if the original Originator is <code>Alarm</code> entity.<br/>" +
+                "Entity by name pattern lookup only if found only in case original Originator is <code>Alarm</code> entity.<br/> " +
+                "Lookup of an entity by name pattern requires selection of entity type and name pattern to be specified in the configuration. " +
+                "Allowed entity types to select: 'DEVICE', 'ASSET', 'ENTITY_VIEW', 'EDGE' and 'USER'.<br><br>" +
+                "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbTransformationNodeChangeOriginatorConfig",
         icon = "find_replace"
