@@ -102,7 +102,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @TestPropertySource(properties = {
         "edges.enabled=true",
-        "queue.rule-engine.stats.enabled=false"
+        "queue.rule-engine.stats.enabled=false",
+        "edges.storage.sleep_between_batches=1000"
 })
 abstract public class AbstractEdgeTest extends AbstractControllerTest {
 
