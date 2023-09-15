@@ -338,7 +338,6 @@ public class HashPartitionServiceTest {
                 .setQueueName(isolatedQueue.getName())
                 .build();
         partitionService_dedicated.removeQueue(queueDeleteMsg);
-        partitionService_dedicated.recalculatePartitions(dedicatedRuleEngine, List.of(commonRuleEngine));
         verifyPartitionChangeEvent(event -> {
             QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.MAIN_QUEUE_NAME, tenantId);
             return event.getPartitionsMap().get(queueKey).isEmpty();
