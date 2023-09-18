@@ -25,6 +25,7 @@ import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.stats.StatsType;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingResult;
 
 import java.util.ArrayList;
@@ -66,8 +67,8 @@ public class TbRuleEngineConsumerStats {
     private final String queueName;
     private final TenantId tenantId;
 
-    public TbRuleEngineConsumerStats(Queue queue, StatsFactory statsFactory) {
-        this.queueName = queue.getName();
+    public TbRuleEngineConsumerStats(QueueKey queue, StatsFactory statsFactory) {
+        this.queueName = queue.getQueueName();
         this.tenantId = queue.getTenantId();
         this.statsFactory = statsFactory;
 
