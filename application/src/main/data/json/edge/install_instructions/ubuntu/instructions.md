@@ -131,6 +131,7 @@ export HTTP_BIND_PORT=18080
 export MQTT_BIND_PORT=11883
 export COAP_BIND_PORT=15683
 export LWM2M_ENABLED=false
+export SNMP_ENABLED=false
 EOL'
 {:copy-code}
 ```
