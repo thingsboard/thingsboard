@@ -108,6 +108,10 @@
         padding: 0 6px;
         font-size: 14px;
 
+        .mat-mdc-form-field-icon-prefix {
+          -webkit-align-self: flex-end;
+        }
+
         .mat-mdc-icon-button {
           margin: 0;
 
