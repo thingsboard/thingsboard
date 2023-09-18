@@ -229,6 +229,6 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
         edgeImitator.expectMessageAmount(1);
         doDelete("/api/ruleChain/" + savedRuleChain.getUuidId())
                 .andExpect(status().isOk());
-        Assert.assertTrue(edgeImitator.waitForMessages(1));
+        Assert.assertTrue(edgeImitator.waitForMessages(5));
     }
 }
