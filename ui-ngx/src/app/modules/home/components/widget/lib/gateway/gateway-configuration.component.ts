@@ -108,8 +108,8 @@ export class GatewayConfigurationComponent implements OnInit {
         handleDeviceRenaming: [true, []],
         checkingDeviceActivity: this.fb.group({
           checkDeviceInactivity: [false, []],
-          inactivityTimeoutSeconds: [200, [Validators.min(1), Validators.pattern(/^[^.\s]+$/)]],
-          inactivityCheckPeriodSeconds: [500, [Validators.min(1), Validators.pattern(/^[^.\s]+$/)]]
+          inactivityTimeoutSeconds: [200, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
+          inactivityCheckPeriodSeconds: [500, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]]
         }),
         security: this.fb.group({
           type: [SecurityTypes.ACCESS_TOKEN, [Validators.required]],
@@ -187,8 +187,8 @@ export class GatewayConfigurationComponent implements OnInit {
     checkingDeviceActivityGroup.get('checkDeviceInactivity').valueChanges.subscribe(enabled => {
       checkingDeviceActivityGroup.updateValueAndValidity();
       if (enabled) {
-        checkingDeviceActivityGroup.get('inactivityTimeoutSeconds').setValidators([Validators.min(1), Validators.required]);
-        checkingDeviceActivityGroup.get('inactivityCheckPeriodSeconds').setValidators([Validators.min(1), Validators.required]);
+        checkingDeviceActivityGroup.get('inactivityTimeoutSeconds').setValidators([Validators.min(1), Validators.required, Validators.pattern(/^-?[0-9]+$/)]);
+        checkingDeviceActivityGroup.get('inactivityCheckPeriodSeconds').setValidators([Validators.min(1), Validators.required, Validators.pattern(/^-?[0-9]+$/)]);
       } else {
         checkingDeviceActivityGroup.get('inactivityTimeoutSeconds').clearValidators();
         checkingDeviceActivityGroup.get('inactivityCheckPeriodSeconds').clearValidators();
