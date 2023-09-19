@@ -44,7 +44,8 @@ import java.util.stream.Collectors;
         configClazz = TbCopyKeysNodeConfiguration.class,
         nodeDescription = "Copies key-values from message to message metadata or vice-versa.",
         nodeDetails = "Fetches key-values from message or message metadata based on the keys list specified in the configuration " +
-                "and copies them into message metadata or message. Keys that are absent in the fetch source will be ignored. " +
+                "and copies them into message metadata or into message itself in accordance with the fetch source. " +
+                "Keys that are absent in the fetch source will be ignored. " +
                 "Use regular expression(s) as a key(s) to copy keys by pattern.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},

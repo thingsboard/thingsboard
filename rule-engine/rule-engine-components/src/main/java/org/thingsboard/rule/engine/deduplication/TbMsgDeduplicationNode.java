@@ -49,11 +49,10 @@ import java.util.concurrent.TimeUnit;
         configClazz = TbMsgDeduplicationNodeConfiguration.class,
         nodeDescription = "Deduplicate messages within the same originator entity for a configurable period " +
                 "based on a specified deduplication strategy.",
-        nodeDetails = "Rule node allows you to select one of the following strategy to deduplicate messages: <br></br>" +
-                "<b>FIRST</b> - return first message that arrived during deduplication period.<br></br>" +
-                "<b>LAST</b> - return last message that arrived during deduplication period.<br></br>" +
-                "<b>ALL</b> - return all messages as a single JSON array message. " +
-                "Where each element represents object with <b>msg</b> and <b>metadata</b> inner properties.<br></br>",
+        nodeDetails = "Deduplication strategy: <ul><li><strong>FIRST</strong> - return first message that arrived during deduplication period.</li>" +
+                "<li><strong>LAST</strong> - return last message that arrived during deduplication period.</li>" +
+                "<li><strong>ALL</strong> - return all messages as a single JSON array message. " +
+                "Where each element represents object with <i>msg</i> and <i>metadata</i> inner properties.</li></ul>",
         icon = "content_copy",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeMsgDeduplicationConfig"

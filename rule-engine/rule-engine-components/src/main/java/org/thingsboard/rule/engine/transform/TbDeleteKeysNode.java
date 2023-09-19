@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
         name = "delete key-values",
         version = 1,
         configClazz = TbDeleteKeysNodeConfiguration.class,
-        nodeDescription = "Removes key-values from message or metadata.",
+        nodeDescription = "Removes key-values from message or message metadata.",
         nodeDetails = "Removes key-values from message or message metadata based on the keys list specified in the configuration. " +
                 "Use regular expression(s) as a key(s) to remove keys by pattern.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",

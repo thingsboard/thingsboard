@@ -40,9 +40,8 @@ import java.util.concurrent.ExecutionException;
         name = "split array msg",
         configClazz = EmptyNodeConfiguration.class,
         nodeDescription = "Split array message into several messages",
-        nodeDetails = "Split the array fetched from the message. If the msg data is not a JSON array returns the "
-                + "incoming message as outbound message with <code>Failure</code> chain, otherwise returns "
-                + "inner objects of the extracted array as separate messages via <code>Success</code> chain.<br><br>" +
+        nodeDetails = "Split array message and returns inner objects as separate messages. " +
+                "Message metadata and type for each output message will be taken from original message.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         icon = "content_copy",
