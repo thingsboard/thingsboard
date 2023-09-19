@@ -25,7 +25,7 @@ CREATE OR REPLACE PROCEDURE insert_tb_schema_settings()
 $$
 BEGIN
     IF (SELECT COUNT(*) FROM tb_schema_settings) = 0 THEN
-        INSERT INTO tb_schema_settings (schema_version) VALUES (3005002);
+        INSERT INTO tb_schema_settings (schema_version) VALUES (3006000);
     END IF;
 END;
 $$;
