@@ -2703,9 +2703,11 @@
         "inactivity-check-period-seconds": "Inactivity check period (in sec)",
         "inactivity-check-period-seconds-required": "Inactivity check period is required",
         "inactivity-check-period-seconds-min": "Inactivity check period can not be less then 1",
+        "inactivity-check-period-seconds-pattern": "Inactivity check period is not valid",
         "inactivity-timeout-seconds": "Inactivity timeout (in sec)",
         "inactivity-timeout-seconds-required": "Inactivity timeout is required",
         "inactivity-timeout-seconds-min": "Inactivity timeout can not be less then 1",
+        "inactivity-timeout-seconds-pattern": "Inactivity timeout is not valid",
         "json-parse": "Not valid JSON.",
         "json-required": "Field cannot be empty.",
         "logs": {

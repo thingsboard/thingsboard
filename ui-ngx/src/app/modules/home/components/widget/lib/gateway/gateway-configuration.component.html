@@ -632,6 +632,10 @@
               *ngIf="gatewayConfigGroup.get('thingsboard.checkingDeviceActivity.inactivityTimeoutSeconds').hasError('min')">
               {{ 'gateway.inactivity-timeout-seconds-min' | translate }}
             </mat-error>
+            <mat-error
+              *ngIf="gatewayConfigGroup.get('thingsboard.checkingDeviceActivity.inactivityTimeoutSeconds').hasError('pattern')">
+              {{ 'gateway.inactivity-timeout-seconds-pattern' | translate }}
+            </mat-error>
             <mat-icon matIconSuffix style="cursor:pointer;"
                       matTooltip="{{ 'gateway.hints.inactivity-timeout' | translate }}">info_outlined
             </mat-icon>
@@ -646,6 +650,10 @@
             <mat-error
               *ngIf="gatewayConfigGroup.get('thingsboard.checkingDeviceActivity.inactivityCheckPeriodSeconds').hasError('min')">
               {{ 'gateway.inactivity-check-period-seconds-min' | translate }}
+            </mat-error>
+            <mat-error
+              *ngIf="gatewayConfigGroup.get('thingsboard.checkingDeviceActivity.inactivityCheckPeriodSeconds').hasError('pattern')">
+              {{ 'gateway.inactivity-check-period-seconds-pattern' | translate }}
             </mat-error>
             <mat-icon matIconSuffix style="cursor:pointer;"
                       matTooltip="{{ 'gateway.hints.inactivity-period' | translate }}">info_outlined
