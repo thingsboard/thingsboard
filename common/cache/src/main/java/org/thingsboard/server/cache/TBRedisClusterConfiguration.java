@@ -40,7 +40,7 @@ public class TBRedisClusterConfiguration extends TBRedisCacheConfiguration {
     @Value("${redis.password:}")
     private String password;
 
-    @Value("${redis.ssl.enabled:}")
+    @Value("${redis.ssl.enabled:false}")
     private boolean useSsl;
 
     public JedisConnectionFactory loadFactory() {

@@ -43,7 +43,7 @@ public class TBRedisSentinelConfiguration extends TBRedisCacheConfiguration {
     @Value("${redis.db:}")
     private Integer database;
 
-    @Value("${redis.ssl.enabled:}")
+    @Value("${redis.ssl.enabled:false}")
     private boolean useSsl;
 
     @Value("${redis.password:}")

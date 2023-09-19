@@ -550,7 +550,7 @@ redis:
   password: "${REDIS_PASSWORD:}"
   # ssl config
   ssl:
-    enabled: "${TB_REDIS_SSL_ENABLED:true}"
+    enabled: "${TB_REDIS_SSL_ENABLED:false}"
     truststoreLocation: "${TB_REDIS_SSL_TRUSTSTORE_LOCATION:}"
     truststorePassword: "${TB_REDIS_SSL_TRUSTSTORE_PASSWORD:}"
     # client authentication could be optional and depends on redis server configuration
