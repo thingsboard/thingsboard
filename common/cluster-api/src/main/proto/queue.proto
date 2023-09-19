@@ -485,6 +485,7 @@ message DeviceConnectProto {
   int64 tenantIdLSB = 2;
   int64 deviceIdMSB = 3;
   int64 deviceIdLSB = 4;
+  int64 lastConnectTime = 5;
 }
 
 message DeviceActivityProto {
@@ -500,6 +501,7 @@ message DeviceDisconnectProto {
   int64 tenantIdLSB = 2;
   int64 deviceIdMSB = 3;
   int64 deviceIdLSB = 4;
+  int64 lastDisconnectTime = 5;
 }
 
 message DeviceInactivityProto {
@@ -507,6 +509,7 @@ message DeviceInactivityProto {
   int64 tenantIdLSB = 2;
   int64 deviceIdMSB = 3;
   int64 deviceIdLSB = 4;
+  int64 lastInactivityTime = 5;
 }
 
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.

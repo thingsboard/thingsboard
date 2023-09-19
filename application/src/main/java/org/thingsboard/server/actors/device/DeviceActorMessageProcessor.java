@@ -490,11 +490,11 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     }
 
     private void reportSessionOpen() {
-        systemContext.getDeviceStateService().onDeviceConnect(tenantId, deviceId);
+        systemContext.getDeviceStateService().onDeviceConnect(tenantId, deviceId, System.currentTimeMillis());
     }
 
     private void reportSessionClose() {
-        systemContext.getDeviceStateService().onDeviceDisconnect(tenantId, deviceId);
+        systemContext.getDeviceStateService().onDeviceDisconnect(tenantId, deviceId, System.currentTimeMillis());
     }
 
     private void handleGetAttributesRequest(SessionInfoProto sessionInfo, GetAttributeRequestMsg request) {

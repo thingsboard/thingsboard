@@ -25,6 +25,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceIdInfo;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -54,11 +55,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -128,7 +130,7 @@ public class DefaultDeviceStateServiceTest {
                 .willReturn(TopicPartitionInfo.builder().build());
 
         // WHEN
-        service.onDeviceInactivity(tenantId, deviceId);
+        service.onDeviceInactivity(tenantId, deviceId, System.currentTimeMillis());
 
         // THEN
         assertThat(service.deviceStates).isEmpty();
@@ -139,9 +141,13 @@ public class DefaultDeviceStateServiceTest {
     }
 
     @Test
-    public void givenDeviceBelongsToMyPartition_whenOnDeviceInactivity_thenReportsInactivity() throws InterruptedException {
+    public void givenDeviceBelongsToMyPartition_whenOnDeviceInactivity_thenReportsInactivity() {
         // GIVEN
-        initStateService(10000);
+        try {
+            initStateService(10000);
+        } catch (InterruptedException e) {
+            fail("Device state service failed to initialize!");
+        }
         var deviceStateData = DeviceStateData.builder()
                 .tenantId(tenantId)
                 .deviceId(deviceId)
@@ -150,33 +156,30 @@ public class DefaultDeviceStateServiceTest {
                 .build();
 
         service.deviceStates.put(deviceId, deviceStateData);
+        long lastInactivityTime = System.currentTimeMillis();
 
         // WHEN
-        long timeBeforeCall = System.currentTimeMillis();
-        service.onDeviceInactivity(tenantId, deviceId);
-        long timeAfterCall = System.currentTimeMillis();
+        service.onDeviceInactivity(tenantId, deviceId, lastInactivityTime);
 
         // THEN
-        var inactivityTimeCaptor = ArgumentCaptor.forClass(Long.class);
-        then(telemetrySubscriptionService).should().saveAttrAndNotify(
-                any(), eq(deviceId), any(), eq(INACTIVITY_ALARM_TIME), inactivityTimeCaptor.capture(), any()
+        then(telemetrySubscriptionService).should(times(1)).saveAttrAndNotify(
+                eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(DataConstants.SERVER_SCOPE),
+                eq(INACTIVITY_ALARM_TIME), eq(lastInactivityTime), any()
         );
-        var actualInactivityTime = inactivityTimeCaptor.getValue();
-        assertThat(actualInactivityTime).isGreaterThanOrEqualTo(timeBeforeCall);
-        assertThat(actualInactivityTime).isLessThanOrEqualTo(timeAfterCall);
-
-        then(telemetrySubscriptionService).should().saveAttrAndNotify(
-                any(), eq(deviceId), any(), eq(ACTIVITY_STATE), eq(false), any()
+        then(telemetrySubscriptionService).should(times(1)).saveAttrAndNotify(
+                eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(DataConstants.SERVER_SCOPE),
+                eq(ACTIVITY_STATE), eq(false), any()
         );
 
         var msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        then(clusterService).should().pushMsgToRuleEngine(eq(tenantId), eq(deviceId), msgCaptor.capture(), any());
+        then(clusterService).should(times(1))
+                .pushMsgToRuleEngine(eq(tenantId), eq(deviceId), msgCaptor.capture(), any());
         var actualMsg = msgCaptor.getValue();
         assertThat(actualMsg.getType()).isEqualTo(TbMsgType.INACTIVITY_EVENT.name());
         assertThat(actualMsg.getOriginator()).isEqualTo(deviceId);
 
         var notificationCaptor = ArgumentCaptor.forClass(DeviceActivityTrigger.class);
-        then(notificationRuleProcessor).should().process(notificationCaptor.capture());
+        then(notificationRuleProcessor).should(times(1)).process(notificationCaptor.capture());
         var actualNotification = notificationCaptor.getValue();
         assertThat(actualNotification.getTenantId()).isEqualTo(tenantId);
         assertThat(actualNotification.getDeviceId()).isEqualTo(deviceId);
@@ -199,21 +202,24 @@ public class DefaultDeviceStateServiceTest {
         service.updateInactivityStateIfExpired(System.currentTimeMillis(), deviceId, deviceStateData);
 
         // THEN
-        then(telemetrySubscriptionService).should().saveAttrAndNotify(
-                any(), eq(deviceId), any(), eq(INACTIVITY_ALARM_TIME), anyLong(), any()
+        then(telemetrySubscriptionService).should(times(1)).saveAttrAndNotify(
+                eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(DataConstants.SERVER_SCOPE),
+                eq(INACTIVITY_ALARM_TIME), anyLong(), any()
         );
-        then(telemetrySubscriptionService).should().saveAttrAndNotify(
-                any(), eq(deviceId), any(), eq(ACTIVITY_STATE), eq(false), any()
+        then(telemetrySubscriptionService).should(times(1)).saveAttrAndNotify(
+                eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(DataConstants.SERVER_SCOPE),
+                eq(ACTIVITY_STATE), eq(false), any()
         );
 
         var msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        then(clusterService).should().pushMsgToRuleEngine(eq(tenantId), eq(deviceId), msgCaptor.capture(), any());
+        then(clusterService).should(times(1))
+                .pushMsgToRuleEngine(eq(tenantId), eq(deviceId), msgCaptor.capture(), any());
         var actualMsg = msgCaptor.getValue();
         assertThat(actualMsg.getType()).isEqualTo(TbMsgType.INACTIVITY_EVENT.name());
         assertThat(actualMsg.getOriginator()).isEqualTo(deviceId);
 
         var notificationCaptor = ArgumentCaptor.forClass(DeviceActivityTrigger.class);
-        then(notificationRuleProcessor).should().process(notificationCaptor.capture());
+        then(notificationRuleProcessor).should(times(1)).process(notificationCaptor.capture());
         var actualNotification = notificationCaptor.getValue();
         assertThat(actualNotification.getTenantId()).isEqualTo(tenantId);
         assertThat(actualNotification.getDeviceId()).isEqualTo(deviceId);
@@ -461,35 +467,38 @@ public class DefaultDeviceStateServiceTest {
 
     @Test
     public void givenConcurrentAccess_whenGetOrFetchDeviceStateData_thenFetchDeviceStateDataInvokedOnce() {
-        var deviceStateData = DeviceStateData.builder().build();
-        var getOrFetchInvocationCounter = new AtomicInteger();
-
         doAnswer(invocation -> {
-            getOrFetchInvocationCounter.incrementAndGet();
             Thread.sleep(100);
-            return deviceStateData;
+            return deviceStateDataMock;
         }).when(service).fetchDeviceStateDataUsingSeparateRequests(deviceId);
 
         int numberOfThreads = 10;
         var allThreadsReadyLatch = new CountDownLatch(numberOfThreads);
-        var executor = Executors.newFixedThreadPool(numberOfThreads);
 
-        for (int i = 0; i < numberOfThreads; i++) {
-            executor.submit(() -> {
-                allThreadsReadyLatch.countDown();
-                try {
-                    allThreadsReadyLatch.await();
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-                service.getOrFetchDeviceStateData(deviceId);
-            });
+        ExecutorService executor = null;
+        try {
+            executor = Executors.newFixedThreadPool(numberOfThreads);
+            for (int i = 0; i < numberOfThreads; i++) {
+                executor.submit(() -> {
+                    allThreadsReadyLatch.countDown();
+                    try {
+                        allThreadsReadyLatch.await();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                    service.getOrFetchDeviceStateData(deviceId);
+                });
+            }
+
+            executor.shutdown();
+            await().atMost(10, TimeUnit.SECONDS).until(executor::isTerminated);
+        } finally {
+            if (executor != null) {
+                executor.shutdownNow();
+            }
         }
 
-        executor.shutdown();
-        await().atMost(10, TimeUnit.SECONDS).until(executor::isTerminated);
-
-        assertThat(getOrFetchInvocationCounter.get()).isEqualTo(1);
+        then(service).should(times(1)).fetchDeviceStateDataUsingSeparateRequests(deviceId);
     }
 
 }

@@ -27,13 +27,13 @@ import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
  */
 public interface DeviceStateService extends ApplicationListener<PartitionChangeEvent> {
 
-    void onDeviceConnect(TenantId tenantId, DeviceId deviceId);
+    void onDeviceConnect(TenantId tenantId, DeviceId deviceId, long lastConnectTime);
 
     void onDeviceActivity(TenantId tenantId, DeviceId deviceId, long lastReportedActivityTime);
 
-    void onDeviceDisconnect(TenantId tenantId, DeviceId deviceId);
+    void onDeviceDisconnect(TenantId tenantId, DeviceId deviceId, long lastDisconnectTime);
 
-    void onDeviceInactivity(TenantId tenantId, DeviceId deviceId);
+    void onDeviceInactivity(TenantId tenantId, DeviceId deviceId, long lastInactivityTime);
 
     void onDeviceInactivityTimeoutUpdate(TenantId tenantId, DeviceId deviceId, long inactivityTimeout);
 

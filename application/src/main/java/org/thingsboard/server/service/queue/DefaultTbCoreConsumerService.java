@@ -605,10 +605,10 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         var tenantId = toTenantId(deviceConnectMsg.getTenantIdMSB(), deviceConnectMsg.getTenantIdLSB());
         var deviceId = new DeviceId(new UUID(deviceConnectMsg.getDeviceIdMSB(), deviceConnectMsg.getDeviceIdLSB()));
         try {
-            stateService.onDeviceConnect(tenantId, deviceId);
+            stateService.onDeviceConnect(tenantId, deviceId, deviceConnectMsg.getLastConnectTime());
             callback.onSuccess();
         } catch (Exception e) {
-            log.warn("Failed to process device connect message for device [{}]", deviceId, e);
+            log.warn("[{}] Failed to process device connect message for device [{}]", tenantId.getId(), deviceId.getId(), e);
             callback.onFailure(e);
         }
     }
@@ -623,7 +623,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             stateService.onDeviceActivity(tenantId, deviceId, deviceActivityMsg.getLastActivityTime());
             callback.onSuccess();
         } catch (Exception e) {
-            log.warn("Failed to process device activity message for device [{}]", deviceId, e);
+            log.warn("[{}] Failed to process device activity message for device [{}]", tenantId.getId(), deviceId.getId(), e);
             callback.onFailure(e);
         }
     }
@@ -632,10 +632,10 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         var tenantId = toTenantId(deviceDisconnectMsg.getTenantIdMSB(), deviceDisconnectMsg.getTenantIdLSB());
         var deviceId = new DeviceId(new UUID(deviceDisconnectMsg.getDeviceIdMSB(), deviceDisconnectMsg.getDeviceIdLSB()));
         try {
-            stateService.onDeviceDisconnect(tenantId, deviceId);
+            stateService.onDeviceDisconnect(tenantId, deviceId, deviceDisconnectMsg.getLastDisconnectTime());
             callback.onSuccess();
         } catch (Exception e) {
-            log.warn("Failed to process device activity message for device [{}]", deviceId, e);
+            log.warn("[{}] Failed to process device activity message for device [{}]", tenantId.getId(), deviceId.getId(), e);
             callback.onFailure(e);
         }
     }
@@ -644,10 +644,10 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         var tenantId = toTenantId(deviceInactivityMsg.getTenantIdMSB(), deviceInactivityMsg.getTenantIdLSB());
         var deviceId = new DeviceId(new UUID(deviceInactivityMsg.getDeviceIdMSB(), deviceInactivityMsg.getDeviceIdLSB()));
         try {
-            stateService.onDeviceInactivity(tenantId, deviceId);
+            stateService.onDeviceInactivity(tenantId, deviceId, deviceInactivityMsg.getLastInactivityTime());
             callback.onSuccess();
         } catch (Exception e) {
-            log.warn("Failed to process device inactivity message for device [{}]", deviceId, e);
+            log.warn("[{}] Failed to process device inactivity message for device [{}]", tenantId.getId(), deviceId.getId(), e);
             callback.onFailure(e);
         }
     }

@@ -28,9 +28,9 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
-import org.thingsboard.server.queue.TbQueueMsgMetadata;
+import org.thingsboard.server.queue.common.SimpleTbQueueCallback;
 
-import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 @RuleNode(
@@ -39,8 +39,9 @@ import java.util.Map;
         nodeDescription = "Triggers device connectivity events",
         nodeDetails = "If incoming message originator is a device," +
                 " registers configured event for that device in the Device State Service," +
-                " which sends appropriate message to the Rule Engine. " +
-                "Incoming message is forwarded using the <code>Success</code> chain," +
+                " which sends appropriate message to the Rule Engine." +
+                " If metadata <code>ts</code> property is present, it will be used as event timestamp." +
+                " Incoming message is forwarded using the <code>Success</code> chain," +
                 " unless an unexpected error occurs during message processing" +
                 " then incoming message is forwarded using the <code>Failure</code> chain." +
                 "<br>" +
@@ -59,18 +60,9 @@ import java.util.Map;
 )
 public class TbDeviceStateNode implements TbNode {
 
-    private final Map<TbMsgType, ConnectivityEvent> SUPPORTED_EVENTS = Map.of(
-            TbMsgType.CONNECT_EVENT, this::sendDeviceConnectMsg,
-            TbMsgType.ACTIVITY_EVENT, this::sendDeviceActivityMsg,
-            TbMsgType.DISCONNECT_EVENT, this::sendDeviceDisconnectMsg,
-            TbMsgType.INACTIVITY_EVENT, this::sendDeviceInactivityMsg
+    private static final Set<TbMsgType> SUPPORTED_EVENTS = Set.of(
+            TbMsgType.CONNECT_EVENT, TbMsgType.ACTIVITY_EVENT, TbMsgType.DISCONNECT_EVENT, TbMsgType.INACTIVITY_EVENT
     );
-
-    private interface ConnectivityEvent {
-
-        void sendEvent(TbContext ctx, TbMsg msg);
-
-    }
 
     private TbMsgType event;
 
@@ -80,7 +72,7 @@ public class TbDeviceStateNode implements TbNode {
         if (event == null) {
             throw new TbNodeException("Event cannot be null!", true);
         }
-        if (!SUPPORTED_EVENTS.containsKey(event)) {
+        if (!SUPPORTED_EVENTS.contains(event)) {
             throw new TbNodeException("Unsupported event: " + event, true);
         }
         this.event = event;
@@ -90,15 +82,36 @@ public class TbDeviceStateNode implements TbNode {
     public void onMsg(TbContext ctx, TbMsg msg) {
         var originator = msg.getOriginator();
         if (!ctx.isLocalEntity(originator)) {
-            log.warn("[{}][device-state-node] Received message from non-local entity [{}]!", ctx.getSelfId(), originator);
+            log.warn("[{}] Node [{}] received message from non-local entity [{}]!",
+                    ctx.getTenantId().getId(), ctx.getSelfId().getId(), originator.getId());
+            ctx.ack(msg);
             return;
         }
         if (!EntityType.DEVICE.equals(originator.getEntityType())) {
             ctx.tellSuccess(msg);
             return;
         }
-        SUPPORTED_EVENTS.get(event).sendEvent(ctx, msg);
-        ctx.tellSuccess(msg);
+        switch (event) {
+            case CONNECT_EVENT: {
+                sendDeviceConnectMsg(ctx, msg);
+                break;
+            }
+            case ACTIVITY_EVENT: {
+                sendDeviceActivityMsg(ctx, msg);
+                break;
+            }
+            case DISCONNECT_EVENT: {
+                sendDeviceDisconnectMsg(ctx, msg);
+                break;
+            }
+            case INACTIVITY_EVENT: {
+                sendDeviceInactivityMsg(ctx, msg);
+                break;
+            }
+            default: {
+                ctx.tellFailure(msg, new IllegalStateException("Configured event [" + event + "] is not supported!"));
+            }
+        }
     }
 
     private void sendDeviceConnectMsg(TbContext ctx, TbMsg msg) {
@@ -109,12 +122,13 @@ public class TbDeviceStateNode implements TbNode {
                 .setTenantIdLSB(tenantUuid.getLeastSignificantBits())
                 .setDeviceIdMSB(deviceUuid.getMostSignificantBits())
                 .setDeviceIdLSB(deviceUuid.getLeastSignificantBits())
+                .setLastConnectTime(msg.getMetaDataTs())
                 .build();
         var toCoreMsg = TransportProtos.ToCoreMsg.newBuilder()
                 .setDeviceConnectMsg(deviceConnectMsg)
                 .build();
         ctx.getClusterService().pushMsgToCore(
-                ctx.getTenantId(), msg.getOriginator(), toCoreMsg, getMsgProcessedCallback(ctx, msg)
+                ctx.getTenantId(), msg.getOriginator(), toCoreMsg, getMsgEnqueuedCallback(ctx, msg)
         );
     }
 
@@ -126,13 +140,13 @@ public class TbDeviceStateNode implements TbNode {
                 .setTenantIdLSB(tenantUuid.getLeastSignificantBits())
                 .setDeviceIdMSB(deviceUuid.getMostSignificantBits())
                 .setDeviceIdLSB(deviceUuid.getLeastSignificantBits())
-                .setLastActivityTime(System.currentTimeMillis())
+                .setLastActivityTime(msg.getMetaDataTs())
                 .build();
         var toCoreMsg = TransportProtos.ToCoreMsg.newBuilder()
                 .setDeviceActivityMsg(deviceActivityMsg)
                 .build();
         ctx.getClusterService().pushMsgToCore(
-                ctx.getTenantId(), msg.getOriginator(), toCoreMsg, getMsgProcessedCallback(ctx, msg)
+                ctx.getTenantId(), msg.getOriginator(), toCoreMsg, getMsgEnqueuedCallback(ctx, msg)
         );
     }
 
@@ -144,12 +158,13 @@ public class TbDeviceStateNode implements TbNode {
                 .setTenantIdLSB(tenantUuid.getLeastSignificantBits())
                 .setDeviceIdMSB(deviceUuid.getMostSignificantBits())
                 .setDeviceIdLSB(deviceUuid.getLeastSignificantBits())
+                .setLastDisconnectTime(msg.getMetaDataTs())
                 .build();
         var toCoreMsg = TransportProtos.ToCoreMsg.newBuilder()
                 .setDeviceDisconnectMsg(deviceDisconnectMsg)
                 .build();
         ctx.getClusterService().pushMsgToCore(
-                ctx.getTenantId(), msg.getOriginator(), toCoreMsg, getMsgProcessedCallback(ctx, msg)
+                ctx.getTenantId(), msg.getOriginator(), toCoreMsg, getMsgEnqueuedCallback(ctx, msg)
         );
     }
 
@@ -161,27 +176,18 @@ public class TbDeviceStateNode implements TbNode {
                 .setTenantIdLSB(tenantUuid.getLeastSignificantBits())
                 .setDeviceIdMSB(deviceUuid.getMostSignificantBits())
                 .setDeviceIdLSB(deviceUuid.getLeastSignificantBits())
+                .setLastInactivityTime(msg.getMetaDataTs())
                 .build();
         var toCoreMsg = TransportProtos.ToCoreMsg.newBuilder()
                 .setDeviceInactivityMsg(deviceInactivityMsg)
                 .build();
         ctx.getClusterService().pushMsgToCore(
-                ctx.getTenantId(), msg.getOriginator(), toCoreMsg, getMsgProcessedCallback(ctx, msg)
+                ctx.getTenantId(), msg.getOriginator(), toCoreMsg, getMsgEnqueuedCallback(ctx, msg)
         );
     }
 
-    private TbQueueCallback getMsgProcessedCallback(TbContext ctx, TbMsg msg) {
-        return new TbQueueCallback() {
-            @Override
-            public void onSuccess(TbQueueMsgMetadata metadata) {
-                ctx.tellSuccess(msg);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                ctx.tellFailure(msg, t);
-            }
-        };
+    private TbQueueCallback getMsgEnqueuedCallback(TbContext ctx, TbMsg msg) {
+        return new SimpleTbQueueCallback(() -> ctx.tellSuccess(msg), t -> ctx.tellFailure(msg, t));
     }
 
 }
