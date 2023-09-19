@@ -70,6 +70,16 @@
     justify-content: flex-end;
     flex: 1;
   }
+
+  mat-form-field {
+    mat-error {
+      display: none !important;
+    }
+
+    mat-error:first-child {
+      display: block !important;
+    }
+  }
 }
 
 :host ::ng-deep {
