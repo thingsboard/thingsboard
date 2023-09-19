@@ -29,6 +29,7 @@
       <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
     </mat-chip-row>
     <input matInput type="text"
+           (blur)="onTouched()"
            placeholder="{{ placeholder }}"
            style="max-width: 300px;min-width: 250px"
            #stringItemInput

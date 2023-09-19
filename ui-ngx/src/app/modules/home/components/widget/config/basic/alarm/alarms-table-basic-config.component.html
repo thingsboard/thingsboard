@@ -49,7 +49,7 @@
     formControlName="columns">
   </tb-data-keys-panel>
   <div class="tb-form-panel">
-    <div class="tb-form-panel-title" translate>widget-config.card-appearance</div>
+    <div class="tb-form-panel-title" translate>widget-config.appearance</div>
     <div class="tb-form-row column-xs">
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTitle">
         {{ 'widget-config.card-title' | translate }}
@@ -85,6 +85,29 @@
         </tb-color-input>
       </div>
     </div>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.table.table-buttons</div>
+    <div class="tb-form-row column">
+      <mat-slide-toggle class="mat-slide" formControlName="displayActivity">
+        {{ 'widgets.table.display-alarm-activity' | translate }}
+      </mat-slide-toggle>
+      <mat-slide-toggle class="mat-slide" formControlName="displayDetails">
+        {{ 'widgets.table.display-alarm-details' | translate }}
+      </mat-slide-toggle>
+      <mat-slide-toggle class="mat-slide" formControlName="allowAssign">
+        {{ 'widgets.table.allow-alarms-assign' | translate }}
+      </mat-slide-toggle>
+      <mat-slide-toggle class="mat-slide" formControlName="allowAcknowledgment">
+        {{ 'widgets.table.allow-alarms-ack' | translate }}
+      </mat-slide-toggle>
+      <mat-slide-toggle class="mat-slide" formControlName="allowClear">
+        {{ 'widgets.table.allow-alarms-clear' | translate }}
+      </mat-slide-toggle>
+    </div>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widget-config.card-appearance</div>
     <div class="tb-form-row space-between column-lt-md">
       <div translate>widget-config.show-card-buttons</div>
       <mat-chip-listbox multiple formControlName="cardButtons">

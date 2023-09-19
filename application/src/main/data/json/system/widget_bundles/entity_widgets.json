@@ -9,6 +9,7 @@
   },
   "widgetTypeFqns": [
     "cards.entities_table",
+    "entity_count",
     "cards.entities_hierarchy"
   ]
 }

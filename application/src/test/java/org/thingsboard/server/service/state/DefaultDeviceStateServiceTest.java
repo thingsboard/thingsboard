@@ -179,7 +179,9 @@ public class DefaultDeviceStateServiceTest {
         var deviceIdInfo = new DeviceIdInfo(tenantId.getId(), null, deviceId.getId());
         when(deviceService.findDeviceIdInfos(any()))
                 .thenReturn(new PageData<>(List.of(deviceIdInfo), 0, 1, false));
-        PartitionChangeEvent event = new PartitionChangeEvent(this, new QueueKey(ServiceType.TB_CORE), Collections.singleton(tpi));
+        PartitionChangeEvent event = new PartitionChangeEvent(this, ServiceType.TB_CORE, Map.of(
+                new QueueKey(ServiceType.TB_CORE), Collections.singleton(tpi)
+        ));
         service.onApplicationEvent(event);
         Thread.sleep(100);
     }

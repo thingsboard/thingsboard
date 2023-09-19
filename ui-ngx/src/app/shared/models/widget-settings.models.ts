@@ -20,6 +20,8 @@ import { Injector } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
 import { TranslateService } from '@ngx-translate/core';
+import { AlarmFilterConfig } from '@shared/models/query/query.models';
+import { AlarmSearchStatus } from '@shared/models/alarm.models';
 
 export type ComponentStyle = {[klass: string]: any};
 
@@ -111,13 +113,15 @@ export const defaultTimewindowStyle: TimewindowStyle = {
 export const constantColor = (color: string): ColorSettings => ({
   type: ColorType.constant,
   color,
-  colorFunction: 'var temperature = value;\n' +
+  colorFunction: defaultColorFunction
+});
+
+export const defaultColorFunction = 'var temperature = value;\n' +
     'if (typeof temperature !== undefined) {\n' +
     '  var percent = (temperature + 60)/120 * 100;\n' +
     '  return tinycolor.mix(\'blue\', \'red\', percent).toHexString();\n' +
     '}\n' +
-    'return \'blue\';'
-});
+    'return \'blue\';';
 
 export const cssSizeToStrSize = (size?: number, unit?: cssUnit): string => (isDefinedAndNotNull(size) ? size + '' : '0') + (unit || 'px');
 
@@ -420,6 +424,22 @@ export const getDataKey = (datasources?: Datasource[]): DataKey => {
     }
   }
   return null;
+};
+
+export const getAlarmFilterConfig = (datasources?: Datasource[]): AlarmFilterConfig => {
+  if (datasources && datasources.length) {
+    const config = datasources[0].alarmFilterConfig;
+    if (config) {
+      return config;
+    }
+  }
+  return { statusList: [ AlarmSearchStatus.ACTIVE ] };
+};
+
+export const setAlarmFilterConfig = (config: AlarmFilterConfig, datasources?: Datasource[]): void => {
+  if (datasources && datasources.length) {
+    datasources[0].alarmFilterConfig = config;
+  }
 };
 
 export const getLabel = (datasources?: Datasource[]): string => {
