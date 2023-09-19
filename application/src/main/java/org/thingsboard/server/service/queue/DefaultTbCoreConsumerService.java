@@ -624,7 +624,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             callback.onSuccess();
         } catch (Exception e) {
             log.warn("[{}] Failed to process device activity message for device [{}]", tenantId.getId(), deviceId.getId(), e);
-            callback.onFailure(e);
+            callback.onFailure(new RuntimeException("Failed to update device activity for device [" + deviceId.getId() + "]!", e));
         }
     }
 
