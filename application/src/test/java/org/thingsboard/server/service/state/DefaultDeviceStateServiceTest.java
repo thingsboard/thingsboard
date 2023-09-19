@@ -160,7 +160,9 @@ public class DefaultDeviceStateServiceTest {
         Mockito.reset(service, telemetrySubscriptionService);
         ReflectionTestUtils.setField(service, "defaultInactivityTimeoutMs", timeout);
         service.init();
-        PartitionChangeEvent event = new PartitionChangeEvent(this, new QueueKey(ServiceType.TB_CORE), Collections.singleton(tpi));
+        PartitionChangeEvent event = new PartitionChangeEvent(this, ServiceType.TB_CORE, Map.of(
+                new QueueKey(ServiceType.TB_CORE), Collections.singleton(tpi)
+        ));
         service.onApplicationEvent(event);
         Thread.sleep(100);
     }
