@@ -2855,6 +2855,7 @@
             "password": "MQTT password for the gateway form ThingsBoard server",
             "ca-cert": "Path to CA certificate file",
             "date-form": "Date format in log message",
+            "data-folder": "Path to folder, that will contains data (Relative or Absolute)",
             "log-format": "Log message format",
             "remote-log": "Enables remote logging and logs reading from the gateway",
             "backup-count": "If backup count is > 0, when a rollover is done, no more than backup count files are kept - the oldest ones are deleted",
