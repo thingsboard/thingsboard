@@ -486,6 +486,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     const connectorName = attribute.key;
     const connector = this.subscription && this.subscription.data
       .find(data => data && data.dataKey.name === `${connectorName}_ERRORS_COUNT`);
-    return (connector && this.activeConnectors.includes(connectorName)) ? connector.data[0][1] : 'Inactive';
+    console.log(connector)
+    return (connector && this.activeConnectors.includes(connectorName)) ? (connector.data[0][1] || 0) : 'Inactive';
   }
 }
