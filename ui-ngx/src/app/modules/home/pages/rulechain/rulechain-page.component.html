@@ -41,11 +41,9 @@
           <mat-toolbar>
             <div class="mat-toolbar-tools">
               <mat-form-field fxFlex class="tb-appearance-transparent">
-                <button mat-icon-button matPrefix class="tb-small"
-                        matTooltip="{{'rulenode.search' | translate}}"
-                        matTooltipPosition="above">
+                <mat-icon matIconPrefix class="tb-small">
                   <mat-icon>search</mat-icon>
-                </button>
+                </mat-icon>
                 <input matInput
                        [formControl]="ruleNodeTypeSearch"
                        placeholder="{{'rulenode.search' | translate}}"/>
