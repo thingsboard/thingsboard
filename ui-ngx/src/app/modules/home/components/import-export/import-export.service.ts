@@ -399,7 +399,7 @@ export class ImportExportService {
                   const saveWidgetTypesObservables: Array<Observable<WidgetTypeDetails>> = [];
                   for (const widgetTypeDetails of widgetTypesDetails) {
                     saveWidgetTypesObservables.push(
-                      this.widgetService.saveImportedWidgetTypeDetails(this.prepareWidgetTypes(widgetTypeDetails, savedWidgetsBundle))
+                      this.widgetService.saveImportedWidgetTypeDetails(this.prepareWidgetType(widgetTypeDetails, savedWidgetsBundle))
                     );
                   }
                   widgetTypesObservable = forkJoin(saveWidgetTypesObservables);
@@ -434,13 +434,13 @@ export class ImportExportService {
     );
   }
 
-  private prepareWidgetTypes(widgetTypes: WidgetTypeDetails & {alias?: string}, widgetsBundle: WidgetsBundle): WidgetTypeDetails {
-    if (!widgetTypes.fqn) {
-      widgetTypes.fqn = `${widgetsBundle.alias}.${widgetTypes.alias
-                                                  ? widgetTypes.alias
-                                                  : widgetTypes.name.toLowerCase().replace(/\W/g, '_')}`;
+  private prepareWidgetType(widgetType: WidgetTypeDetails & {alias?: string}, widgetsBundle: WidgetsBundle): WidgetTypeDetails {
+    if (!widgetType.fqn) {
+      widgetType.fqn = `${widgetsBundle.alias}.${widgetType.alias
+                                                  ? widgetType.alias
+                                                  : widgetType.name.toLowerCase().replace(/\W/g, '_')}`;
     }
-    return widgetTypes;
+    return widgetType;
   }
 
   public bulkImportEntities(entitiesData: BulkImportRequest, entityType: EntityType, config?: RequestConfig): Observable<BulkImportResult> {
