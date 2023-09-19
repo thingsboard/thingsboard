@@ -55,6 +55,9 @@ import {
 import {
   EntityCountBasicConfigComponent
 } from '@home/components/widget/config/basic/entity/entity-count-basic-config.component';
+import {
+  BatteryLevelBasicConfigComponent
+} from '@home/components/widget/config/basic/indicator/battery-level-basic-config.component';
 
 @NgModule({
   declarations: [
@@ -71,7 +74,8 @@ import {
     DataKeyRowComponent,
     DataKeysPanelComponent,
     AlarmCountBasicConfigComponent,
-    EntityCountBasicConfigComponent
+    EntityCountBasicConfigComponent,
+    BatteryLevelBasicConfigComponent
   ],
   imports: [
     CommonModule,
@@ -92,7 +96,8 @@ import {
     DataKeyRowComponent,
     DataKeysPanelComponent,
     AlarmCountBasicConfigComponent,
-    EntityCountBasicConfigComponent
+    EntityCountBasicConfigComponent,
+    BatteryLevelBasicConfigComponent
   ]
 })
 export class BasicWidgetConfigModule {
@@ -107,5 +112,6 @@ export const basicWidgetConfigComponentsMap: {[key: string]: Type<IBasicWidgetCo
   'tb-value-card-basic-config': ValueCardBasicConfigComponent,
   'tb-aggregated-value-card-basic-config': AggregatedValueCardBasicConfigComponent,
   'tb-alarm-count-basic-config': AlarmCountBasicConfigComponent,
-  'tb-entity-count-basic-config': EntityCountBasicConfigComponent
+  'tb-entity-count-basic-config': EntityCountBasicConfigComponent,
+  'tb-battery-level-basic-config': BatteryLevelBasicConfigComponent
 };

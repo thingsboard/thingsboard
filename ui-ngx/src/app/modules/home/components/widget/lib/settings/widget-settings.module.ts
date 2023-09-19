@@ -285,6 +285,9 @@ import {
 import {
   EntityCountWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/entity/entity-count-widget-settings.component';
+import {
+  BatteryLevelWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/indicator/battery-level-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -390,7 +393,8 @@ import {
     AggregatedValueCardKeySettingsComponent,
     AggregatedValueCardWidgetSettingsComponent,
     AlarmCountWidgetSettingsComponent,
-    EntityCountWidgetSettingsComponent
+    EntityCountWidgetSettingsComponent,
+    BatteryLevelWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -501,7 +505,8 @@ import {
     AggregatedValueCardKeySettingsComponent,
     AggregatedValueCardWidgetSettingsComponent,
     AlarmCountWidgetSettingsComponent,
-    EntityCountWidgetSettingsComponent
+    EntityCountWidgetSettingsComponent,
+    BatteryLevelWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -577,5 +582,6 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-aggregated-value-card-key-settings': AggregatedValueCardKeySettingsComponent,
   'tb-aggregated-value-card-widget-settings': AggregatedValueCardWidgetSettingsComponent,
   'tb-alarm-count-widget-settings': AlarmCountWidgetSettingsComponent,
-  'tb-entity-count-widget-settings': EntityCountWidgetSettingsComponent
+  'tb-entity-count-widget-settings': EntityCountWidgetSettingsComponent,
+  'tb-battery-level-widget-settings': BatteryLevelWidgetSettingsComponent
 };
