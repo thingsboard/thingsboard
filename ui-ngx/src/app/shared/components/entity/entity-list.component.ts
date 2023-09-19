@@ -68,7 +68,7 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
   labelText = this.translate.instant('entity.entity-list');
 
   @Input()
-  placeholderText = this.translate.instant('entity.entity-list');
+  placeholderText: string;
 
   @Input()
   requiredText = this.translate.instant('entity.entity-list-empty');
