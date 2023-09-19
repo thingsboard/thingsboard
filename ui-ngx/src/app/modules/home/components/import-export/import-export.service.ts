@@ -398,7 +398,9 @@ export class ImportExportService {
                   const widgetTypesDetails = widgetsBundleItem.widgetTypes;
                   const saveWidgetTypesObservables: Array<Observable<WidgetTypeDetails>> = [];
                   for (const widgetTypeDetails of widgetTypesDetails) {
-                    saveWidgetTypesObservables.push(this.widgetService.saveImportedWidgetTypeDetails(widgetTypeDetails));
+                    saveWidgetTypesObservables.push(
+                      this.widgetService.saveImportedWidgetTypeDetails(this.prepareWidgetTypes(widgetTypeDetails, savedWidgetsBundle))
+                    );
                   }
                   widgetTypesObservable = forkJoin(saveWidgetTypesObservables);
                 } else {
@@ -430,6 +432,15 @@ export class ImportExportService {
         return of(null);
       })
     );
+  }
+
+  private prepareWidgetTypes(widgetTypes: WidgetTypeDetails & {alias?: string}, widgetsBundle: WidgetsBundle): WidgetTypeDetails {
+    if (!widgetTypes.fqn) {
+      widgetTypes.fqn = `${widgetsBundle.alias}.${widgetTypes.alias
+                                                  ? widgetTypes.alias
+                                                  : widgetTypes.name.toLowerCase().replace(/\W/g, '_')}`;
+    }
+    return widgetTypes;
   }
 
   public bulkImportEntities(entitiesData: BulkImportRequest, entityType: EntityType, config?: RequestConfig): Observable<BulkImportResult> {
