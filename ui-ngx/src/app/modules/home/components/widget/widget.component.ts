@@ -253,6 +253,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       getActionDescriptors: this.getActionDescriptors.bind(this),
       handleWidgetAction: this.handleWidgetAction.bind(this),
       elementClick: this.elementClick.bind(this),
+      cardClick: this.cardClick.bind(this),
       getActiveEntityInfo: this.getActiveEntityInfo.bind(this),
       openDashboardStateInSeparateDialog: this.openDashboardStateInSeparateDialog.bind(this),
       openDashboardStateInPopover: this.openDashboardStateInPopover.bind(this)
@@ -1415,6 +1416,19 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         const entityLabel = entityInfo && entityInfo.entityLabel ? entityInfo.entityLabel : null;
         this.handleWidgetAction($event, descriptor, entityId, entityName, null, entityLabel);
       }
+    }
+  }
+
+  private cardClick($event: Event) {
+    const descriptors = this.getActionDescriptors('cardClick');
+    if (descriptors.length) {
+      $event.stopPropagation();
+      const descriptor = descriptors[0];
+      const entityInfo = this.getActiveEntityInfo();
+      const entityId = entityInfo ? entityInfo.entityId : null;
+      const entityName = entityInfo ? entityInfo.entityName : null;
+      const entityLabel = entityInfo && entityInfo.entityLabel ? entityInfo.entityLabel : null;
+      this.handleWidgetAction($event, descriptor, entityId, entityName, null, entityLabel);
     }
   }
 

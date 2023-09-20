@@ -123,6 +123,14 @@ export class DatasourceComponent implements ControlValueAccessor, OnInit, Valida
     return this.widgetConfigComponent.widget;
   }
 
+  public get hideDatasourceLabel(): boolean {
+    return this.datasourcesComponent?.hideDatasourceLabel;
+  }
+
+  public get displayDatasourceFilterForBasicMode(): boolean {
+    return this.datasourcesComponent?.displayDatasourceFilterForBasicMode;
+  }
+
   public get hideDataKeyLabel(): boolean {
     return this.datasourcesComponent?.hideDataKeyLabel;
   }

@@ -17,12 +17,12 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@app/shared/shared.module';
-import { EntitiesTableWidgetComponent } from '@home/components/widget/lib/entities-table-widget.component';
+import { EntitiesTableWidgetComponent } from '@home/components/widget/lib/entity/entities-table-widget.component';
 import { DisplayColumnsPanelComponent } from '@home/components/widget/lib/display-columns-panel.component';
-import { AlarmsTableWidgetComponent } from '@home/components/widget/lib/alarms-table-widget.component';
+import { AlarmsTableWidgetComponent } from '@home/components/widget/lib/alarm/alarms-table-widget.component';
 import { SharedHomeComponentsModule } from '@home/components/shared-home-components.module';
 import { TimeseriesTableWidgetComponent } from '@home/components/widget/lib/timeseries-table-widget.component';
-import { EntitiesHierarchyWidgetComponent } from '@home/components/widget/lib/entities-hierarchy-widget.component';
+import { EntitiesHierarchyWidgetComponent } from '@home/components/widget/lib/entity/entities-hierarchy-widget.component';
 import { RpcWidgetsModule } from '@home/components/widget/lib/rpc/rpc-widgets.module';
 import {
   DateRangeNavigatorPanelComponent,
@@ -43,10 +43,21 @@ import { HomePageWidgetsModule } from '@home/components/widget/lib/home-page/hom
 import { WIDGET_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
 import { FlotWidgetComponent } from '@home/components/widget/lib/flot-widget.component';
 import { LegendComponent } from '@home/components/widget/lib/legend.component';
+import { GatewayConnectorComponent } from '@home/components/widget/lib/gateway/gateway-connectors.component';
+import { GatewayLogsComponent } from '@home/components/widget/lib/gateway/gateway-logs.component';
+import { GatewayStatisticsComponent } from '@home/components/widget/lib/gateway/gateway-statistics.component';
+import { GatewayServiceRPCComponent } from '@home/components/widget/lib/gateway/gateway-service-rpc.component';
+import { DeviceGatewayCommandComponent } from '@home/components/widget/lib/gateway/device-gateway-command.component';
+import { GatewayConfigurationComponent } from '@home/components/widget/lib/gateway/gateway-configuration.component';
+import {
+  GatewayRemoteConfigurationDialogComponent
+} from '@home/components/widget/lib/gateway/gateway-remote-configuration-dialog';
 import { ValueCardWidgetComponent } from '@home/components/widget/lib/cards/value-card-widget.component';
 import {
   AggregatedValueCardWidgetComponent
 } from '@home/components/widget/lib/cards/aggregated-value-card-widget.component';
+import { CountWidgetComponent } from '@home/components/widget/lib/count/count-widget.component';
+import { BatteryLevelWidgetComponent } from '@home/components/widget/lib/indicator/battery-level-widget.component';
 
 @NgModule({
   declarations:
@@ -71,8 +82,17 @@ import {
       SelectEntityDialogComponent,
       LegendComponent,
       FlotWidgetComponent,
+      GatewayConnectorComponent,
+      GatewayLogsComponent,
+      GatewayStatisticsComponent,
+      GatewayServiceRPCComponent,
+      DeviceGatewayCommandComponent,
+      GatewayConfigurationComponent,
+      GatewayRemoteConfigurationDialogComponent,
       ValueCardWidgetComponent,
-      AggregatedValueCardWidgetComponent
+      AggregatedValueCardWidgetComponent,
+      CountWidgetComponent,
+      BatteryLevelWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -101,8 +121,17 @@ import {
         MarkdownWidgetComponent,
         LegendComponent,
         FlotWidgetComponent,
+        GatewayConnectorComponent,
+        GatewayLogsComponent,
+        GatewayStatisticsComponent,
+        GatewayServiceRPCComponent,
+        DeviceGatewayCommandComponent,
+        GatewayConfigurationComponent,
+        GatewayRemoteConfigurationDialogComponent,
         ValueCardWidgetComponent,
-        AggregatedValueCardWidgetComponent
+        AggregatedValueCardWidgetComponent,
+        CountWidgetComponent,
+        BatteryLevelWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }

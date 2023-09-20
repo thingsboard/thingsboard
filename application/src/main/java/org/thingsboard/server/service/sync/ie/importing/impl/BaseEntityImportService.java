@@ -388,11 +388,11 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
     }
 
     protected void replaceIdsRecursively(EntitiesImportCtx ctx, IdProvider idProvider, JsonNode json,
-                                         Set<String> skipFieldsSet, Pattern includedFieldsPattern,
+                                         Set<String> skippedRootFields, Pattern includedFieldsPattern,
                                          LinkedHashSet<EntityType> hints) {
-        JacksonUtil.replaceUuidsRecursively(json, skipFieldsSet, includedFieldsPattern,
+        JacksonUtil.replaceUuidsRecursively(json, skippedRootFields, includedFieldsPattern,
                 uuid -> idProvider.getInternalIdByUuid(uuid, ctx.isFinalImportAttempt(), hints)
-                        .map(EntityId::getId).orElse(uuid));
+                        .map(EntityId::getId).orElse(uuid), true);
     }
 
 }

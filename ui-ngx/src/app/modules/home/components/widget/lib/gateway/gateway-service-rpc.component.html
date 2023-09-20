@@ -1,0 +1,63 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div fxLayout="row" fxLayout.lt-sm="column" class="command-form" fxLayoutGap="10px" [formGroup]="commandForm">
+  <ng-container *ngIf="!isConnector; else connectorForm">
+    <mat-form-field>
+      <mat-label>{{ 'gateway.statistics.command' | translate }}</mat-label>
+      <mat-select formControlName="command">
+        <mat-option *ngFor="let command of RPCCommands" [value]="command">
+          {{ command }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field fxFlex>
+      <mat-label>{{ 'gateway.statistics.timeout-ms' | translate }}</mat-label>
+      <input matInput formControlName="time" type="number" min="1"/>
+      <mat-error *ngIf="commandForm.get('time').hasError('min')">
+        {{ 'gateway.statistics.timeout-min' | translate }}
+      </mat-error>
+    </mat-form-field>
+  </ng-container>
+  <ng-template #connectorForm>
+    <mat-form-field>
+      <mat-label>{{ 'gateway.statistics.command' | translate }}</mat-label>
+      <input matInput formControlName="command" />
+    </mat-form-field>
+    <mat-form-field fxFlex>
+      <mat-label>{{ 'widget-config.datasource-parameters' | translate }}</mat-label>
+      <input matInput formControlName="params" type="JSON"/>
+      <mat-icon class="material-icons-outlined" aria-hidden="false" aria-label="help-icon"
+                matIconSuffix style="cursor:pointer;"
+                (click)="openEditJSONDialog($event)"
+                matTooltip="{{ 'gateway.rpc-command-edit-params' | translate }}">edit
+      </mat-icon>
+    </mat-form-field>
+  </ng-template>
+  <button mat-raised-button
+          color="primary"
+          (click)="sendCommand()"
+          [disabled]="commandForm.invalid">
+    {{ 'gateway.rpc-command-send' | translate }}
+  </button>
+</div>
+<section class="result-block" [formGroup]="commandForm">
+  <span>{{ 'gateway.rpc-command-result' | translate }}</span>
+  <mat-divider></mat-divider>
+  <tb-json-content [contentType]="contentTypes.JSON" readonly="true" formControlName="result"></tb-json-content>
+</section>
+

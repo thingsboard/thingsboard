@@ -1,0 +1,73 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div mat-dialog-content fxLayout="column" style="padding: 0 8px 8px">
+  <div fxLayout="row" fxLayoutAlign="space-between center">
+    <span class="tb-no-data-text">{{ 'gateway.docker-label' | translate }}</span>
+    <div fxFlexAlign="end" class="tb-help" [tb-help]="helpLink"></div>
+  </div>
+  <div fxFlex fxLayout="row" style="justify-content: space-between; flex-grow: 0; align-items: center">
+  </div>
+  <mat-tab-group [(selectedIndex)]="tabIndex">
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tabs-icon" svgIcon="windows"></mat-icon>
+        Windows
+      </ng-template>
+      <ng-template matTabContent>
+        <ng-container
+          *ngTemplateOutlet="commandsExample; context: {command: commands?.mqtt?.windows }">
+        </ng-container>
+      </ng-template>
+    </mat-tab>
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tabs-icon" svgIcon="linux"></mat-icon>
+        Linux
+      </ng-template>
+      <ng-template matTabContent>
+        <ng-container
+          *ngTemplateOutlet="commandsExample; context: {command: commands?.mqtt?.linux }">
+        </ng-container>
+      </ng-template>
+    </mat-tab>
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tabs-icon" svgIcon="macos"></mat-icon>
+        MacOS
+      </ng-template>
+      <ng-template matTabContent>
+        <ng-container
+          *ngTemplateOutlet="commandsExample; context: {command: commands?.mqtt?.linux }">
+        </ng-container>
+      </ng-template>
+    </mat-tab>
+  </mat-tab-group>
+</div>
+
+<ng-template #commandsExample let-command="command">
+  <div class="tb-form-panel stroked tb-tab-body">
+    <div class="tb-form-panel-title" translate>device.connectivity.execute-following-command</div>
+    <tb-markdown usePlainMarkdown containerClass="start-code"
+       data="
+          ```bash
+          {{ command }}
+          {:copy-code}
+          ```
+      "></tb-markdown>
+  </div>
+</ng-template>

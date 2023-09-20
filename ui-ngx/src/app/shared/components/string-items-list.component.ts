@@ -120,8 +120,8 @@ export class StringItemsListComponent implements ControlValueAccessor, OnInit {
     return this.stringItemsForm.get('item');
   }
 
-  private propagateChange = (v: any) => {
-  };
+  onTouched = () => {};
+  private propagateChange: (value: any) => void = () => {};
   private dirty = false;
 
   constructor(private fb: FormBuilder) {
@@ -159,6 +159,7 @@ export class StringItemsListComponent implements ControlValueAccessor, OnInit {
   }
 
   registerOnTouched(fn: any): void {
+    this.onTouched = fn;
   }
 
   setDisabledState(isDisabled: boolean): void {
