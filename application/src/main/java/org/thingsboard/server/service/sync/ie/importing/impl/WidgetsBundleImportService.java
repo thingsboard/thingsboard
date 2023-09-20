@@ -17,21 +17,18 @@ package org.thingsboard.server.service.sync.ie.importing.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.sync.ie.WidgetsBundleExportData;
-import org.thingsboard.server.common.data.widget.BaseWidgetType;
+import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
-import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
-
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @TbCoreComponent
@@ -53,8 +50,27 @@ public class WidgetsBundleImportService extends BaseEntityImportService<WidgetsB
 
     @Override
     protected WidgetsBundle saveOrUpdate(EntitiesImportCtx ctx, WidgetsBundle widgetsBundle, WidgetsBundleExportData exportData, IdProvider idProvider) {
+        if (CollectionsUtil.isNotEmpty(exportData.getWidgets())) {
+            exportData.getWidgets().forEach(widgetTypeNode -> {
+                String bundleAlias = widgetTypeNode.remove("bundleAlias").asText();
+                String alias = widgetTypeNode.remove("alias").asText();
+                String fqn = String.format("%s.%s", bundleAlias, alias);
+                exportData.addFqn(fqn);
+                WidgetTypeDetails widgetType = JacksonUtil.treeToValue(widgetTypeNode, WidgetTypeDetails.class);
+                widgetType.setTenantId(ctx.getTenantId());
+                widgetType.setFqn(fqn);
+                var existingWidgetType = widgetTypeService.findWidgetTypeByTenantIdAndFqn(ctx.getTenantId(), fqn);
+                if (existingWidgetType == null) {
+                    widgetType.setId(null);
+                } else {
+                    widgetType.setId(existingWidgetType.getId());
+                    widgetType.setCreatedTime(existingWidgetType.getCreatedTime());
+                }
+                widgetTypeService.saveWidgetType(widgetType);
+            });
+        }
         WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
-        widgetTypeService.updateWidgetsBundleWidgetFqns(ctx.getTenantId(), savedWidgetsBundle.getId(), exportData.getWidgets());
+        widgetTypeService.updateWidgetsBundleWidgetFqns(ctx.getTenantId(), savedWidgetsBundle.getId(), exportData.getFqns());
         return savedWidgetsBundle;
     }
 
