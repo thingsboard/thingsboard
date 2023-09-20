@@ -16,11 +16,10 @@
 
 -->
 <div class="tb-container">
-  <label class="tb-title" [ngClass]="{'tb-required': !disabled && required}">{{ label }}
-    <mat-icon *ngIf="hint" class="material-icons-outlined pointer-event"
-              style="cursor:pointer;"
-              matTooltip="{{hint}}">info_outlined
-    </mat-icon>
+  <label class="tb-title"
+         [class.tb-required]="!disabled && required"
+         [class.pointer-event]="hint"
+         tb-hint-tooltip-icon="{{ hint }}">{{ label }}
   </label>
   <ng-container #flow="flow"
                 [flowConfig]="{allowDuplicateUploads: true}">

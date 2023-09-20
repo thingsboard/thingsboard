@@ -42,8 +42,8 @@ public class WidgetsBundleExportService extends BaseEntityExportService<WidgetsB
             throw new IllegalArgumentException("Export of system Widget Bundles is not allowed");
         }
 
-        List<String> widgets = widgetTypeService.findWidgetFqnsByWidgetsBundleId(ctx.getTenantId(), widgetsBundle.getId());
-        exportData.setWidgets(widgets);
+        List<String> fqns = widgetTypeService.findWidgetFqnsByWidgetsBundleId(ctx.getTenantId(), widgetsBundle.getId());
+        exportData.setFqns(fqns);
     }
 
     @Override

@@ -1293,7 +1293,6 @@
         "device-details": "Device details",
         "add-device-text": "Add new device",
         "credentials": "Credentials",
-        "commands": "Commands",
         "manage-credentials": "Manage credentials",
         "delete": "Delete device",
         "assign-devices": "Assign devices",
@@ -1395,11 +1394,6 @@
         "copyId": "Copy device Id",
         "copyAccessToken": "Copy access token",
         "copy-mqtt-authentication": "Copy MQTT credentials",
-        "transport-command-copied-message": "Transport Command has been copied to clipboard",
-        "telemetry-commands-help-link": "In order to publish telemetry data to (<a href='{{helpLink}}' target='_blank'>ThingsBoard device</a>) with credentials of the current device you can use the following commands.",
-        "telemetry-command-setup-step": "1. Setup:",
-        "telemetry-command-send-step": "2. Send command:",
-        "telemetry-command-send-step-coap": "2. Send command: (based on CoAP cli)",
         "idCopiedMessage": "Device Id has been copied to clipboard",
         "accessTokenCopiedMessage": "Device access token has been copied to clipboard",
         "mqtt-authentication-copied-message": "Device MQTT authentication has been copied to clipboard",
@@ -1964,6 +1958,8 @@
         "make-private-edge-text": "After the confirmation the edge and all its data will be made private and won't be accessible by others.",
         "import": "Import edge",
         "install-connect-instructions": "Install & Connect Instructions",
+        "install-connect-instructions-edge-created": "Edge created! Check Install & Connect Instructions",
+        "loading-edge-instructions": "Loading edge instructions...",
         "label": "Label",
         "load-entity-error": "Failed to load data. Entity has been deleted.",
         "assign-new-edge": "Assign new edge",
@@ -2643,43 +2639,18 @@
     "gateway": {
         "add-entry": "Add configuration",
         "advanced": "Advanced",
-        "checking-device-activity": "Checking Device Activity:",
+        "checking-device-activity": "Checking device activity",
         "command": "Docker commands",
         "command-copied-message": "Docker command has been copied to clipboard",
         "configuration": "Configuration",
-        "connector-json": "Connector JSON",
         "connector-add": "Add new connector",
         "connector-enabled": "Enable connector",
         "connector-name": "Connector name",
         "connector-name-required": "Connector name is required.",
-        "connector-key": "Connector key",
-        "connector-key-required": "Connector key is required.",
-        "connector-configuration": "Configuration file name",
-        "connector-configuration-required": "Configuration file name is required.",
         "connector-type": "Connector type",
         "connector-type-required": "Connector type is required.",
-        "connector-types": {
-            "mqtt": "MQTT Broker Connector",
-            "modbus": "Modbus Connector",
-            "modbus_serial": "Modbus Connector (serial)",
-            "opcua": "OPC-UA Connector",
-            "opcua_asyncio": "OPC-UA Connector (asyncio)",
-            "ble": "BLE Connector",
-            "request": "REQUEST Connector",
-            "can": "CAN Connector",
-            "bacnet": "BACnet Connector",
-            "odbc": "ODBC Connector",
-            "rest": "REST Connector",
-            "snmp": "SNMP Connector",
-            "ftp": "FTP Connector",
-            "socket": "Socket TCP/UDP Connector",
-            "xmpp": "XMPP Connector",
-            "ocpp": "OCPP Connector"
-        },
         "connectors": "Connectors",
         "connectors-config": "Connectors configuration",
-        "connectors-active": "Connector active",
-        "connectors-inactive": "Connector inactive",
         "connectors-table-enabled": "Enabled",
         "connectors-table-name": "Name",
         "connectors-table-type": "Type",
@@ -2690,10 +2661,8 @@
         "rpc-command-send": "Send",
         "rpc-command-result": "Result",
         "rpc-command-edit-params": "Edit parameters",
-        "select-connector": "Select connector",
-        "gateway-configuration": "Gateway Configuration",
+        "gateway-configuration": "General Configuration",
         "docker-label": "In order to run ThingsBoard IoT gateway in docker with credentials for this device you can use the following commands.",
-        "copy-command": "Copy docker command",
         "create-new-gateway": "Create a new gateway",
         "create-new-gateway-text": "Are you sure you want create a new gateway with name: '{{gatewayName}}'?",
         "created-time": "Created time",
@@ -2710,7 +2679,6 @@
         "gateway-name": "Gateway name",
         "gateway-name-required": "Gateway name is required.",
         "gateway-saved": "Gateway configuration successfully saved.",
-        "gateway-search": "Gateway search",
         "grpc": "GRPC",
         "grpc-keep-alive-timeout": "Keep alive timeout (in ms)",
         "grpc-keep-alive-timeout-required": "Keep alive timeout is required",
@@ -2732,16 +2700,16 @@
         "grpc-max-pings-without-data-required": "Max pings without data is required",
         "grpc-max-pings-without-data-min": "Max pings without data can not be less then 1",
         "grpc-max-pings-without-data-pattern": "Max pings without data is not valid",
-        "handle-device-renaming": "Handle device renaming",
         "inactivity-check-period-seconds": "Inactivity check period (in sec)",
         "inactivity-check-period-seconds-required": "Inactivity check period is required",
         "inactivity-check-period-seconds-min": "Inactivity check period can not be less then 1",
+        "inactivity-check-period-seconds-pattern": "Inactivity check period is not valid",
         "inactivity-timeout-seconds": "Inactivity timeout (in sec)",
         "inactivity-timeout-seconds-required": "Inactivity timeout is required",
         "inactivity-timeout-seconds-min": "Inactivity timeout can not be less then 1",
+        "inactivity-timeout-seconds-pattern": "Inactivity timeout is not valid",
         "json-parse": "Not valid JSON.",
         "json-required": "Field cannot be empty.",
-        "linux-macos": "Linux/MacOS",
         "logs": {
             "logs": "Logs",
             "days": "days",
@@ -2792,7 +2760,6 @@
             "tls-private-key": "TLS + Private Key"
         },
         "server-port": "Server port",
-        "stats-send-period-in-sec": "Stats send period in seconds",
         "statistics": {
             "statistic": "Statistic",
             "statistics": "Statistics",
@@ -2851,7 +2818,7 @@
             "sqlite": "SQLITE"
         },
         "thingsboard": "ThingsBoard",
-        "thingsboard-general": "General",
+        "general": "General",
         "thingsboard-host": "ThingsBoard host",
         "thingsboard-host-required": "Host is required.",
         "thingsboard-port": "ThingsBoard port",
@@ -2879,7 +2846,6 @@
         "toggle-fullscreen": "Toggle fullscreen",
         "transformer-json-config": "Configuration JSON*",
         "update-config": "Add/update configuration JSON",
-        "windows": "Windows",
         "hints": {
             "remote-configuration": "Enables remote configuration and management of the gateway",
             "remote-shell": "Enables remote control of the operating system with the gateway from the Remote Shell widget",
@@ -2890,17 +2856,12 @@
             "username": "MQTT username for the gateway form ThingsBoard server",
             "password": "MQTT password for the gateway form ThingsBoard server",
             "ca-cert": "Path to CA certificate file",
-            "cert": "Path to certificate file",
-            "private-key": "Path to private key file",
             "date-form": "Date format in log message",
+            "data-folder": "Path to folder, that will contains data (Relative or Absolute)",
             "log-format": "Log message format",
             "remote-log": "Enables remote logging and logs reading from the gateway",
             "backup-count": "If backup count is > 0, when a rollover is done, no more than backup count files are kept - the oldest ones are deleted",
-            "storage": "Provides configuration for saving incoming data before it is sent to the ThingsBoard platform",
-            "file": "Received data saving to the hard drive",
-            "memory": "Received data saving to the RAM memory",
-            "sqlite": "Received data saving to the .db file",
-            "data-folder": "Path to folder, that will contains data (Relative or Absolute)",
+            "storage": "Provides configuration for saving incoming data before it is sent to the platform",
             "max-file-count": "Maximum count of file that will be created",
             "max-read-count": "Count of messages to get from storage and send to ThingsBoard",
             "max-records": "Maximum count of records that will be stored in one file",
@@ -3245,6 +3206,7 @@
             "dashboard": "Open dashboard",
             "link": "Open URL link"
         },
+        "loading-notifications": "Loading notifications...",
         "management": "Notification management",
         "mark-all-as-read": "Mark all as read",
         "mark-as-read": "Mark as read",
@@ -3505,14 +3467,7 @@
         "clientId-required": "Client ID is required",
         "username": "Username",
         "username-required": "Username is required",
-        "password": "Password",
-        "password-required": "Password is required",
         "ca-cert": "CA certificate",
-        "ca-cert-required": "CA certificate is required",
-        "cert": "Certificate",
-        "cert-required": "Certificate is required",
-        "private-key": "Private Key",
-        "private-key-required": "Private Key is required",
         "2fa": {
             "2fa": "Two-factor authentication",
             "2fa-description": "Two-factor authentication protects your account from unauthorized access. All you have to do is enter a security code when you log in.",
@@ -5084,6 +5039,19 @@
             "blur": "Blur",
             "preview": "Preview"
         },
+        "battery-level": {
+            "layout": "Layout",
+            "layout-vertical-solid": "Vertical. Solid",
+            "layout-horizontal-solid": "Horizontal. Solid",
+            "layout-vertical-divided": "Vertical. Divided",
+            "layout-horizontal-divided": "Horizontal. Divided",
+            "icon": "Icon",
+            "value": "Value",
+            "auto-scale": "Auto scale",
+            "battery-level-color": "Battery level color",
+            "battery-shape-color": "Battery shape color",
+            "battery-level-card-style": "Battery level card style"
+        },
         "chart": {
             "common-settings": "Common settings",
             "enable-stacking-mode": "Enable stacking mode",
@@ -5343,8 +5311,11 @@
             "events-title": "Gateway events form title",
             "events-filter": "Events filter",
             "event-key-contains": "Event key contains...",
-            "is-connector": "Is Connector",
-            "state-param-name": "State parameter connector name"
+            "show-connector": "Show for the connector",
+            "connector-state-param-key": "Connector state parameter key",
+            "status": "Status",
+            "message": "Message",
+            "created-time": "Created time"
         },
         "gauge": {
             "default-color": "Default color",
@@ -6084,6 +6055,22 @@
             "aggregation": "Aggregation",
             "aggregated-value-card-style": "Aggregated value card style"
         },
+        "alarm-count": {
+            "alarm-count-card-style": "Alarm count card style"
+        },
+        "entity-count": {
+            "entity-count-card-style": "Entity count card style"
+        },
+        "count": {
+            "layout": "Layout",
+            "layout-column": "Column",
+            "layout-row": "Row",
+            "label": "Label",
+            "icon": "Icon",
+            "icon-background": "Icon background",
+            "value": "Value",
+            "chevron": "Chevron"
+        },
         "table": {
             "common-table-settings": "Common Table Settings",
             "enable-search": "Enable search",
@@ -6175,7 +6162,8 @@
             "color": "Color",
             "shadow-color": "Shadow color",
             "preview": "Preview",
-            "line-height": "Line height"
+            "line-height": "Line height",
+            "auto": "Auto"
         },
         "home": {
             "no-data-available": "No data available"
@@ -6403,7 +6391,7 @@
             "element-click": "On HTML element click",
             "pie-slice-click": "On slice click",
             "row-double-click": "On row double click",
-            "action-button-click": "Action button click"
+            "card-click": "On card click"
         }
     },
     "paginator" : {

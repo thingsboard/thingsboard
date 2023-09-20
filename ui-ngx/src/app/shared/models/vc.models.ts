@@ -30,6 +30,7 @@ export const exportableEntityTypes: Array<EntityType> = [
   EntityType.DEVICE_PROFILE,
   EntityType.ASSET_PROFILE,
   EntityType.RULE_CHAIN,
+  EntityType.WIDGET_TYPE,
   EntityType.WIDGETS_BUNDLE,
   EntityType.NOTIFICATION_TEMPLATE,
   EntityType.NOTIFICATION_TARGET,

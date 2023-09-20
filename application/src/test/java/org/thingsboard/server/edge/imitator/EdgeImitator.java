@@ -173,6 +173,7 @@ public class EdgeImitator {
     }
 
     private ListenableFuture<List<Void>> processDownlinkMsg(DownlinkMsg downlinkMsg) {
+        log.trace("processDownlinkMsg: {}", downlinkMsg);
         List<ListenableFuture<Void>> result = new ArrayList<>();
         if (downlinkMsg.getAdminSettingsUpdateMsgCount() > 0) {
             for (AdminSettingsUpdateMsg adminSettingsUpdateMsg : downlinkMsg.getAdminSettingsUpdateMsgList()) {

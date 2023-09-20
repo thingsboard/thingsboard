@@ -15,8 +15,10 @@
     limitations under the License.
 
 -->
-<section class="tb-widget-settings" [formGroup]="GatewayLogSettingForm" fxLayout="column">
-  <mat-slide-toggle class="mat-slide" formControlName="isConnector">
-    {{"widgets.gateway.is-connector" | translate}}
-  </mat-slide-toggle>
-</section>
+<div class="tb-form-panel" [formGroup]="gatewayServiceRPCSettingForm">
+  <div class="tb-form-row column-xs">
+    <mat-slide-toggle class="mat-slide margin" formControlName="isConnector">
+      {{ "widgets.gateway.show-connector" | translate }}
+    </mat-slide-toggle>
+  </div>
+</div>

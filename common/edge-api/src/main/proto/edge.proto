@@ -163,6 +163,8 @@ message RuleNodeProto {
   bool debugMode = 5;
   string configuration = 6;
   string additionalInfo = 7;
+  bool singletonMode = 8;
+  int32 configurationVersion = 9;
 }
 
 message NodeConnectionInfoProto {

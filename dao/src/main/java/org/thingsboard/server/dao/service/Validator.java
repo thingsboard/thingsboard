@@ -157,4 +157,10 @@ public class Validator {
         return StringUtils.isEmpty(key) || RegexUtils.matches(key, PROPERTY_PATTERN);
     }
 
+    public static void checkNotNull(Object reference, String errorMessage) {
+        if (reference == null) {
+            throw new IncorrectParameterException(errorMessage);
+        }
+    }
+
 }
