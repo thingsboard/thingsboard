@@ -20,6 +20,7 @@ import {
   AggregationType,
   DAY,
   HistoryWindowType,
+  QuickTimeInterval,
   quickTimeIntervalPeriod,
   RealtimeWindowType,
   Timewindow,
@@ -184,6 +185,36 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
         Validators.max(this.maxDatapointsLimit())]);
     }
     this.timewindowForm.get('aggregation.limit').updateValueAndValidity({emitEvent: false});
+  }
+
+  onTimewindowTypeChange() {
+    const timewindowFormValue = this.timewindowForm.getRawValue();
+    if (this.timewindow.selectedTab === TimewindowType.REALTIME) {
+      this.timewindowForm.get('realtime').patchValue({
+        realtimeType: Object.keys(RealtimeWindowType).includes(HistoryWindowType[timewindowFormValue.history.historyType]) ?
+          RealtimeWindowType[HistoryWindowType[timewindowFormValue.history.historyType]] :
+          timewindowFormValue.realtime.realtimeType,
+        timewindowMs: timewindowFormValue.history.timewindowMs,
+        quickInterval: Object.values(QuickTimeInterval).filter(interval => interval.startsWith('CURRENT_'))
+          .includes(QuickTimeInterval[timewindowFormValue.history.quickInterval]) ? timewindowFormValue.history.quickInterval :
+          timewindowFormValue.realtime.quickInterval
+      });
+      setTimeout(() => this.timewindowForm.get('realtime.interval').patchValue(timewindowFormValue.history.interval));
+    } else {
+      this.timewindowForm.get('history').patchValue({
+        historyType: HistoryWindowType[RealtimeWindowType[timewindowFormValue.realtime.realtimeType]],
+        timewindowMs: timewindowFormValue.realtime.timewindowMs,
+        quickInterval: timewindowFormValue.realtime.quickInterval
+      });
+      setTimeout(() => this.timewindowForm.get('history.interval').patchValue(timewindowFormValue.realtime.interval));
+    }
+    this.timewindowForm.patchValue({
+      aggregation: {
+        type: timewindowFormValue.aggregation.type,
+        limit: timewindowFormValue.aggregation.limit
+      },
+      timezone: timewindowFormValue.timezone
+    });
   }
 
   update() {

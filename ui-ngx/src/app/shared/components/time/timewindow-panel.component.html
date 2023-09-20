@@ -17,7 +17,8 @@
 -->
 <form [formGroup]="timewindowForm" class="mat-content">
   <mat-tab-group [ngClass]="{'tb-headless': historyOnly}"
-                 (selectedIndexChange)="timewindowForm.markAsDirty()" [(selectedIndex)]="timewindow.selectedTab">
+                 (selectedIndexChange)="timewindowForm.markAsDirty()" [(selectedIndex)]="timewindow.selectedTab"
+                 (selectedTabChange)="onTimewindowTypeChange()">
     <mat-tab label="{{ 'timewindow.realtime' | translate }}">
       <section fxLayout="row">
         <section *ngIf="isEdit" fxLayout="column" fxLayoutAlign="start center"
