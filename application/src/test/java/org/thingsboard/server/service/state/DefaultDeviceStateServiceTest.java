@@ -60,14 +60,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -125,15 +124,13 @@ public class DefaultDeviceStateServiceTest {
     @Test
     public void givenDeviceBelongsToExternalPartition_whenOnDeviceInactivity_thenCleansStateAndDoesNotReportInactivity() {
         // GIVEN
-        service.deviceStates.put(deviceId, DeviceStateData.builder().build());
-        given(partitionService.resolve(ServiceType.TB_CORE, tenantId, deviceId))
-                .willReturn(TopicPartitionInfo.builder().build());
+        doReturn(true).when(service).cleanDeviceStateIfBelongsToExternalPartition(tenantId, deviceId);
 
         // WHEN
         service.onDeviceInactivity(tenantId, deviceId, System.currentTimeMillis());
 
         // THEN
-        assertThat(service.deviceStates).isEmpty();
+        then(service).should(times(1)).cleanDeviceStateIfBelongsToExternalPartition(tenantId, deviceId);
         then(service).should(never()).fetchDeviceStateDataUsingSeparateRequests(deviceId);
         then(clusterService).shouldHaveNoInteractions();
         then(notificationRuleProcessor).shouldHaveNoInteractions();
@@ -143,17 +140,14 @@ public class DefaultDeviceStateServiceTest {
     @Test
     public void givenDeviceBelongsToMyPartition_whenOnDeviceInactivity_thenReportsInactivity() {
         // GIVEN
-        try {
-            initStateService(10000);
-        } catch (InterruptedException e) {
-            fail("Device state service failed to initialize!");
-        }
         var deviceStateData = DeviceStateData.builder()
                 .tenantId(tenantId)
                 .deviceId(deviceId)
                 .state(DeviceState.builder().build())
                 .metaData(new TbMsgMetaData())
                 .build();
+
+        doReturn(false).when(service).cleanDeviceStateIfBelongsToExternalPartition(tenantId, deviceId);
 
         service.deviceStates.put(deviceId, deviceStateData);
         long lastInactivityTime = System.currentTimeMillis();
@@ -195,8 +189,6 @@ public class DefaultDeviceStateServiceTest {
                 .state(DeviceState.builder().build())
                 .metaData(new TbMsgMetaData())
                 .build();
-
-        given(partitionService.resolve(ServiceType.TB_CORE, tenantId, deviceId)).willReturn(tpi);
 
         // WHEN
         service.updateInactivityStateIfExpired(System.currentTimeMillis(), deviceId, deviceStateData);

@@ -554,7 +554,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                 .build());
     }
 
-    private boolean cleanDeviceStateIfBelongsToExternalPartition(TenantId tenantId, final DeviceId deviceId) {
+    boolean cleanDeviceStateIfBelongsToExternalPartition(TenantId tenantId, final DeviceId deviceId) {
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, deviceId);
         boolean cleanup = !partitionedEntities.containsKey(tpi);
         if (cleanup) {

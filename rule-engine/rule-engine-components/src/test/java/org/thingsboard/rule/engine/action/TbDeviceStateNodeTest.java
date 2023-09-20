@@ -41,6 +41,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
 
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -97,6 +98,10 @@ public class TbDeviceStateNodeTest {
 
         // THEN
         assertThat(config.getEvent()).isEqualTo(TbMsgType.ACTIVITY_EVENT);
+        assertThat(TbDeviceStateNode.SUPPORTED_EVENTS).isEqualTo(Set.of(
+                TbMsgType.CONNECT_EVENT, TbMsgType.ACTIVITY_EVENT,
+                TbMsgType.DISCONNECT_EVENT, TbMsgType.INACTIVITY_EVENT
+        ));
     }
 
     @Test

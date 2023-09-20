@@ -60,7 +60,7 @@ import java.util.Set;
 )
 public class TbDeviceStateNode implements TbNode {
 
-    private static final Set<TbMsgType> SUPPORTED_EVENTS = Set.of(
+    static final Set<TbMsgType> SUPPORTED_EVENTS = Set.of(
             TbMsgType.CONNECT_EVENT, TbMsgType.ACTIVITY_EVENT, TbMsgType.DISCONNECT_EVENT, TbMsgType.INACTIVITY_EVENT
     );
 
