@@ -179,6 +179,9 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         Validator.validateId(widgetsBundleId, INCORRECT_WIDGETS_BUNDLE_ID + widgetsBundleId);
         Validator.checkNotNull(widgetTypeIds, "Incorrect widgetTypeIds " + widgetTypeIds);
+        if (!widgetTypeIds.isEmpty()) {
+            validateIds(widgetTypeIds, "Incorrect widgetTypeIds " + widgetTypeIds);
+        }
         List<WidgetsBundleWidget> bundleWidgets = new ArrayList<>();
         for (int index = 0; index < widgetTypeIds.size(); index++) {
             bundleWidgets.add(new WidgetsBundleWidget(widgetsBundleId, widgetTypeIds.get(index), index));
