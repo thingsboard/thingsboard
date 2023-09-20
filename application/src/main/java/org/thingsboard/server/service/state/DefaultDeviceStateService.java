@@ -156,8 +156,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     private final DbTypeInfoComponent dbTypeInfoComponent;
     private final TbApiUsageReportClient apiUsageReportClient;
     private final NotificationRuleProcessor notificationRuleProcessor;
-    @Autowired
-    @Lazy
+    @Autowired @Lazy
     private TelemetrySubscriptionService tsSubService;
 
     @Value("${state.defaultInactivityTimeoutInSec}")

@@ -727,63 +727,63 @@ public class DefaultDeviceStateServiceTest {
 
     private static Stream<Arguments> provideParametersForUpdateInactivityStateIfExpired() {
         return Stream.of(
-                Arguments.of(false, 100, 70, 90, 70, 60, false, 90, false),
+                Arguments.of(false, 100, 70,  90,  70,  60,  false, 90,  false),
 
-                Arguments.of(false, 100, 40, 50, 70, 10, false, 50, false),
+                Arguments.of(false, 100, 40,  50,  70,  10,  false, 50,  false),
 
-                Arguments.of(false, 100, 25, 60, 75, 25, false, 60, false),
+                Arguments.of(false, 100, 25,  60,  75,  25,  false, 60,  false),
 
-                Arguments.of(false, 100, 60, 70, 10, 50, false, 70, false),
+                Arguments.of(false, 100, 60,  70,  10,  50,  false, 70,  false),
 
-                Arguments.of(false, 100, 10, 15, 90, 10, false, 15, false),
+                Arguments.of(false, 100, 10,  15,  90,  10,  false, 15,  false),
 
-                Arguments.of(false, 100, 0, 40, 75, 0, false, 40, false),
+                Arguments.of(false, 100, 0,   40,  75,  0,   false, 40,  false),
 
-                Arguments.of(true, 100, 90, 80, 80, 50, true, 80, false),
+                Arguments.of(true,  100, 90,  80,  80,  50,  true,  80,  false),
 
-                Arguments.of(true, 100, 95, 90, 10, 50, true, 90, false),
+                Arguments.of(true,  100, 95,  90,  10,  50,  true,  90,  false),
 
-                Arguments.of(true, 100, 10, 10, 90, 10, false, 100, true),
+                Arguments.of(true,  100, 10,  10,  90,  10,  false, 100, true),
 
-                Arguments.of(true, 100, 10, 10, 90, 11, true, 10, false),
+                Arguments.of(true,  100, 10,  10,  90,  11,  true,  10,  false),
 
-                Arguments.of(true, 100, 15, 10, 85, 5, false, 100, true),
+                Arguments.of(true,  100, 15,  10,  85,  5,   false, 100, true),
 
-                Arguments.of(true, 100, 15, 10, 75, 5, false, 100, true),
+                Arguments.of(true,  100, 15,  10,  75,  5,   false, 100, true),
 
-                Arguments.of(true, 100, 95, 90, 5, 50, false, 100, true),
+                Arguments.of(true,  100, 95,  90,  5,   50,  false, 100, true),
 
-                Arguments.of(true, 100, 0, 0, 101, 0, true, 0, false),
+                Arguments.of(true,  100, 0,   0,   101, 0,   true,  0,   false),
 
-                Arguments.of(true, 100, 0, 0, 100, 0, false, 100, true),
+                Arguments.of(true,  100, 0,   0,   100, 0,   false, 100, true),
 
-                Arguments.of(true, 100, 0, 0, 99, 0, false, 100, true),
+                Arguments.of(true,  100, 0,   0,   99,  0,   false, 100, true),
 
-                Arguments.of(true, 100, 0, 0, 120, 10, true, 0, false),
+                Arguments.of(true,  100, 0,   0,   120, 10,  true,  0,   false),
 
-                Arguments.of(true, 100, 50, 0, 100, 0, true, 0, false),
+                Arguments.of(true,  100, 50,  0,   100, 0,   true,  0,   false),
 
-                Arguments.of(true, 100, 10, 0, 91, 0, true, 0, false),
+                Arguments.of(true,  100, 10,  0,   91,  0,   true,  0,   false),
 
-                Arguments.of(true, 100, 90, 0, 10, 0, false, 100, true),
+                Arguments.of(true,  100, 90,  0,   10,  0,   false, 100, true),
 
-                Arguments.of(true, 100, 100, 100, 1, 0, true, 100, false),
+                Arguments.of(true,  100, 100, 100, 1,   0,   true,  100, false),
 
-                Arguments.of(true, 100, 100, 100, 100, 100, true, 100, false),
+                Arguments.of(true,  100, 100, 100, 100, 100, true,  100, false),
 
-                Arguments.of(false, 100, 59, 60, 30, 10, false, 60, false),
+                Arguments.of(false, 100, 59,  60,  30,  10,  false, 60,  false),
 
-                Arguments.of(true, 100, 60, 60, 30, 10, false, 100, true),
+                Arguments.of(true,  100, 60,  60,  30,  10,  false, 100, true),
 
-                Arguments.of(true, 100, 61, 60, 30, 10, false, 100, true),
+                Arguments.of(true,  100, 61,  60,  30,  10,  false, 100, true),
 
-                Arguments.of(true, 0, 0, 0, 1, 0, true, 0, false),
+                Arguments.of(true,  0,   0,   0,   1,   0,   true,  0,   false),
 
-                Arguments.of(true, 0, 0, 0, 0, 0, false, 0, true),
+                Arguments.of(true,  0,   0,   0,   0,   0,   false, 0,   true),
 
-                Arguments.of(true, 100, 90, 80, 20, 70, true, 80, false),
+                Arguments.of(true,  100, 90,  80,  20,  70,  true,  80,  false),
 
-                Arguments.of(true, 100, 80, 90, 30, 70, true, 90, false)
+                Arguments.of(true,  100, 80,  90,  30,  70,  true,  90,  false)
         );
     }
 
