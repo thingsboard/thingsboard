@@ -488,7 +488,7 @@ CREATE TABLE IF NOT EXISTS widget_type (
     tenant_id uuid,
     image varchar(1000000),
     deprecated boolean NOT NULL DEFAULT false,
-    description varchar(255),
+    description varchar(1024),
     external_id uuid,
     CONSTRAINT uq_widget_type_fqn UNIQUE (tenant_id, fqn),
     CONSTRAINT widget_type_external_id_unq_key UNIQUE (tenant_id, external_id)
@@ -501,7 +501,7 @@ CREATE TABLE IF NOT EXISTS widgets_bundle (
     tenant_id uuid,
     title varchar(255),
     image varchar(1000000),
-    description varchar(255),
+    description varchar(1024),
     external_id uuid,
     CONSTRAINT uq_widgets_bundle_alias UNIQUE (tenant_id, alias),
     CONSTRAINT widgets_bundle_external_id_unq_key UNIQUE (tenant_id, external_id)
