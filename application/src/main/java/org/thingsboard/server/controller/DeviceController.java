@@ -23,6 +23,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -124,7 +125,6 @@ import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
-@RequiredArgsConstructor
 @Slf4j
 public class DeviceController extends BaseController {
 
@@ -133,6 +133,12 @@ public class DeviceController extends BaseController {
     private final DeviceBulkImportService deviceBulkImportService;
 
     private final TbDeviceService tbDeviceService;
+
+    public DeviceController(DeviceBulkImportService deviceBulkImportService, TbDeviceService tbDeviceService) {
+        super(log);
+        this.deviceBulkImportService = deviceBulkImportService;
+        this.tbDeviceService = tbDeviceService;
+    }
 
     @ApiOperation(value = "Get Device (getDeviceById)",
             notes = "Fetch the Device object based on the provided Device Id. " +
@@ -179,6 +185,7 @@ public class DeviceController extends BaseController {
     public Device saveDevice(@ApiParam(value = "A JSON value representing the device.") @RequestBody Device device,
                              @ApiParam(value = "Optional value of the device credentials to be used during device creation. " +
                                      "If omitted, access token will be auto-generated.") @RequestParam(name = "accessToken", required = false) String accessToken) throws Exception {
+        log.info("TEST1");
         device.setTenantId(getCurrentUser().getTenantId());
         Device oldDevice = null;
         if (device.getId() != null) {

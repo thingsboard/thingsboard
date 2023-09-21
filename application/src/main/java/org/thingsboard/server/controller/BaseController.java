@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -174,7 +175,6 @@ import static org.thingsboard.server.common.data.query.EntityKeyType.ENTITY_FIEL
 import static org.thingsboard.server.controller.UserController.YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
-@Slf4j
 @TbCoreComponent
 public abstract class BaseController {
 
@@ -319,6 +319,16 @@ public abstract class BaseController {
     @Value("${edges.enabled}")
     @Getter
     protected boolean edgesEnabled;
+
+    private final Logger log;
+
+    public BaseController() {
+        this(org.slf4j.LoggerFactory.getLogger(BaseController.class));
+    }
+
+    public BaseController(Logger log) {
+        this.log = log;
+    }
 
     @ExceptionHandler(Exception.class)
     public void handleControllerException(Exception e, HttpServletResponse response) {
@@ -621,6 +631,7 @@ public abstract class BaseController {
     }
 
     Device checkDeviceId(DeviceId deviceId, Operation operation) throws ThingsboardException {
+        log.info("TEST2");
         return checkEntityId(deviceId, deviceService::findDeviceById, operation);
     }
 
