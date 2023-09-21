@@ -67,6 +67,7 @@ public class BasicUsageInfoService implements UsageInfoService {
         usageInfo.setMaxAlarms(profileConfiguration.getMaxCreatedAlarms());
         usageInfo.setMaxTransportMessages(profileConfiguration.getMaxTransportMessages());
         usageInfo.setMaxJsExecutions(profileConfiguration.getMaxJSExecutions());
+        usageInfo.setMaxTbelExecutions(profileConfiguration.getMaxTbelExecutions());
         usageInfo.setMaxEmails(profileConfiguration.getMaxEmails());
         usageInfo.setMaxSms(profileConfiguration.getMaxSms());
         usageInfo.setSmsEnabled(profileConfiguration.getSmsEnabled());
@@ -75,6 +76,7 @@ public class BasicUsageInfoService implements UsageInfoService {
             Collection<String> keys = Arrays.asList(
                     ApiUsageRecordKey.TRANSPORT_MSG_COUNT.getApiCountKey(),
                     ApiUsageRecordKey.JS_EXEC_COUNT.getApiCountKey(),
+                    ApiUsageRecordKey.TBEL_EXEC_COUNT.getApiCountKey(),
                     ApiUsageRecordKey.EMAIL_EXEC_COUNT.getApiCountKey(),
                     ApiUsageRecordKey.SMS_EXEC_COUNT.getApiCountKey(),
                     ApiUsageRecordKey.CREATED_ALARMS_COUNT.getApiCountKey());
@@ -82,6 +84,7 @@ public class BasicUsageInfoService implements UsageInfoService {
                 List<TsKvEntry> entries = tsService.findLatest(tenantId, apiUsageState.getId(), keys).get();
                 usageInfo.setTransportMessages(getLongValueFromTsEntries(entries, ApiUsageRecordKey.TRANSPORT_MSG_COUNT.getApiCountKey()));
                 usageInfo.setJsExecutions(getLongValueFromTsEntries(entries, ApiUsageRecordKey.JS_EXEC_COUNT.getApiCountKey()));
+                usageInfo.setTbelExecutions(getLongValueFromTsEntries(entries, ApiUsageRecordKey.TBEL_EXEC_COUNT.getApiCountKey()));
                 usageInfo.setEmails(getLongValueFromTsEntries(entries, ApiUsageRecordKey.EMAIL_EXEC_COUNT.getApiCountKey()));
                 usageInfo.setSms(getLongValueFromTsEntries(entries, ApiUsageRecordKey.SMS_EXEC_COUNT.getApiCountKey()));
                 usageInfo.setAlarms(getLongValueFromTsEntries(entries, ApiUsageRecordKey.CREATED_ALARMS_COUNT.getApiCountKey()));

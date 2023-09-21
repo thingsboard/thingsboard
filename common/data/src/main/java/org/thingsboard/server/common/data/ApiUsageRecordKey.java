@@ -24,6 +24,7 @@ public enum ApiUsageRecordKey {
     STORAGE_DP_COUNT(ApiFeature.DB, "storageDataPointsCount", "storageDataPointsLimit", "data point"),
     RE_EXEC_COUNT(ApiFeature.RE, "ruleEngineExecutionCount", "ruleEngineExecutionLimit", "Rule Engine execution"),
     JS_EXEC_COUNT(ApiFeature.JS, "jsExecutionCount", "jsExecutionLimit", "JavaScript execution"),
+    TBEL_EXEC_COUNT(ApiFeature.TBEL, "tbelExecutionCount", "tbelExecutionLimit", "Tbel execution"),
     EMAIL_EXEC_COUNT(ApiFeature.EMAIL, "emailCount", "emailLimit", "email message"),
     SMS_EXEC_COUNT(ApiFeature.SMS, "smsCount", "smsLimit", "SMS message"),
     CREATED_ALARMS_COUNT(ApiFeature.ALARM, "createdAlarmsCount", "createdAlarmsLimit", "alarm"),
@@ -31,6 +32,7 @@ public enum ApiUsageRecordKey {
     INACTIVE_DEVICES("inactiveDevicesCount");
 
     private static final ApiUsageRecordKey[] JS_RECORD_KEYS = {JS_EXEC_COUNT};
+    private static final ApiUsageRecordKey[] TBEL_RECORD_KEYS = {TBEL_EXEC_COUNT};
     private static final ApiUsageRecordKey[] RE_RECORD_KEYS = {RE_EXEC_COUNT};
     private static final ApiUsageRecordKey[] DB_RECORD_KEYS = {STORAGE_DP_COUNT};
     private static final ApiUsageRecordKey[] TRANSPORT_RECORD_KEYS = {TRANSPORT_MSG_COUNT, TRANSPORT_DP_COUNT};
@@ -75,6 +77,8 @@ public enum ApiUsageRecordKey {
                 return RE_RECORD_KEYS;
             case JS:
                 return JS_RECORD_KEYS;
+            case TBEL:
+                return TBEL_RECORD_KEYS;
             case EMAIL:
                 return EMAIL_RECORD_KEYS;
             case SMS:
