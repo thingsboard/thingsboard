@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.mail;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
@@ -30,7 +29,6 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.HashMap;
@@ -42,9 +40,13 @@ import java.util.Map;
         name = "to email",
         configClazz = TbMsgToEmailNodeConfiguration.class,
         nodeDescription = "Transforms message to email message",
-        nodeDetails = "Transforms message to email message. All email fields support templatization. " +
-                "Supports adding inline base64 images to the mail body from message metadata by checking for the <strong><i>images</i></strong> metadata key " +
-                "that should represent a map of entries: contentId to based64 image value.<br><br>" +
+        nodeDetails = "Transforms message to email message. All email fields support templatization.<br><br>" +
+                "Additionally, supports adding inline base64 images to the mail body from message metadata " +
+                "by extracting them from <strong><i>images</i></strong> metadata key-value.<br>" +
+                "<strong><i>images</strong></i> key-value should represent a map of entries: <strong><i>cid --> encodedImage</i></strong>.<br>" +
+                "E.g., <strong><i>cid</i></strong> is a <strong><i>tb.example.png</i></strong> and<br>" +
+                "<strong><i>encodedImage</i></strong> is a <strong><i>data:image/png;base64,...</i></strong>, " +
+                "then you can use <i><strong>img</i></strong> HTML tag with src: <i><strong>cid:tb.example.png</i></strong>.<br><br>" +
                 "Set <code>SEND_EMAIL</code> output message type if transformation completed successfully.<br><br>"  +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},

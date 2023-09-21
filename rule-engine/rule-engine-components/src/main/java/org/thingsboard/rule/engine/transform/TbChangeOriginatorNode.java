@@ -44,10 +44,10 @@ import java.util.NoSuchElementException;
         name = "change originator",
         configClazz = TbChangeOriginatorNodeConfiguration.class,
         nodeDescription = "Change message originator to Tenant/Customer/Related Entity/Alarm Originator/Entity by name pattern.",
-        nodeDetails = "Configuration: <ul><li><strong>Tenant</strong> - use current tenant as new originator.</li>" +
-                "<li><strong>Customer</strong> - use customer of incoming message originator as new originator. " +
-                "Only for originators with one of the following type: 'User', 'Asset', 'Device' that assigned to customers.</li>" +
-                "<li><strong>Related Entity</strong> - use related entity as new originator. Lookup based on configured relation direction and relation type. " +
+        nodeDetails = "Configuration: <ul><li><strong>Customer</strong> - use customer of incoming message originator as new originator. " +
+                "Only for assigned to customer originators with one of the following type: 'User', 'Asset', 'Device'.</li>" +
+                "<li><strong>Tenant</strong> - use current tenant as new originator.</li>" +
+                "<li><strong>Related Entity</strong> - use related entity as new originator. Lookup based on configured relation type and direction. " +
                 "If multiple related entities are found, only first entity is used as new originator, other entities are discarded.</li>" +
                 "<li><strong>Alarm Originator</strong> - use alarm originator as new originator. Only if incoming message originator is alarm entity.</li>" +
                 "<li><strong>Entity by name pattern</strong> - new originator lookup requires selection one of the following entity types: " +

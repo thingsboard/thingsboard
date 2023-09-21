@@ -81,7 +81,7 @@ public class TbCopyKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
                     Map<String, String> metaDataMap = metaDataCopy.getData();
                     for (Map.Entry<String, String> entry : metaDataMap.entrySet()) {
                         String keyData = entry.getKey();
-                        if (checkKey(keyData)) {
+                        if (matches(keyData)) {
                             msgChanged = true;
                             msgDataNode.put(keyData, entry.getValue());
                         }
@@ -93,7 +93,7 @@ public class TbCopyKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
                     while (iteratorNode.hasNext()) {
                         Map.Entry<String, JsonNode> entry = iteratorNode.next();
                         String keyData = entry.getKey();
-                        if (checkKey(keyData)) {
+                        if (matches(keyData)) {
                             msgChanged = true;
                             metaDataCopy.putValue(keyData, JacksonUtil.toString(entry.getValue()));
                         }
@@ -112,7 +112,7 @@ public class TbCopyKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
         return "copyFrom";
     }
 
-    boolean checkKey(String key) {
+    boolean matches(String key) {
         return patternKeys.stream().anyMatch(pattern -> pattern.matcher(key).matches());
     }
 

@@ -76,7 +76,7 @@ public class TbDeleteKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
             case METADATA:
                 Map<String, String> metaDataMap = metaDataCopy.getData();
                 metaDataMap.forEach((keyMetaData, valueMetaData) -> {
-                    if (checkKey(keyMetaData)) {
+                    if (matches(keyMetaData)) {
                         keysToDelete.add(keyMetaData);
                     }
                 });
@@ -89,7 +89,7 @@ public class TbDeleteKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
                     ObjectNode msgDataObject = (ObjectNode) dataNode;
                     dataNode.fields().forEachRemaining(entry -> {
                         String keyData = entry.getKey();
-                        if (checkKey(keyData)) {
+                        if (matches(keyData)) {
                             keysToDelete.add(keyData);
                         }
                     });
@@ -109,7 +109,7 @@ public class TbDeleteKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
         return "deleteFrom";
     }
 
-    boolean checkKey(String key) {
+    boolean matches(String key) {
         return patternKeys.stream().anyMatch(pattern -> pattern.matcher(key).matches());
     }
 

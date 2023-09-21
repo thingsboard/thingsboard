@@ -84,16 +84,6 @@ public class TbMsgToEmailNodeTest {
         assertThat(config.getBodyTemplate()).isEqualTo("Device ${deviceName} has high temperature $[temperature]");
     }
 
-    static Stream<MailBodyTypeTestConfig> MailBodyTypeTestConfig() {
-        return Stream.of(
-                new MailBodyTypeTestConfig(false, "false", null),
-                new MailBodyTypeTestConfig(false, null, null),
-                new MailBodyTypeTestConfig(false, DYNAMIC_MAIL_BODY_TYPE, "false"),
-                new MailBodyTypeTestConfig(true, DYNAMIC_MAIL_BODY_TYPE, "true"),
-                new MailBodyTypeTestConfig(true, "true", null)
-        );
-    }
-
     @ParameterizedTest
     @MethodSource("MailBodyTypeTestConfig")
     public void givenMailBodyTypeTestConfig_whenOnMsg_thenVerify(MailBodyTypeTestConfig testConfig) throws TbNodeException {
@@ -109,8 +99,8 @@ public class TbMsgToEmailNodeTest {
         md.putValue("userEmail", EXPECTED_TO_EMAIL);
         md.putValue("deviceType", EXPECTED_DEVICE_TYPE);
         md.putValue("deviceName", EXPECTED_DEVICE_NAME);
-        if (testConfig.getMdValue() != null) {
-            md.putValue("html", testConfig.getMdValue());
+        if (testConfig.getIsHtmlTemplateMdValue() != null) {
+            md.putValue("html", testConfig.getIsHtmlTemplateMdValue());
         }
 
         var msgDataStr = "{\"temperature\": " + EXPECTED_TEMPERATURE + "}";
@@ -154,12 +144,22 @@ public class TbMsgToEmailNodeTest {
                 .build();
     }
 
+    static Stream<MailBodyTypeTestConfig> MailBodyTypeTestConfig() {
+        return Stream.of(
+                new MailBodyTypeTestConfig(false, "false", null),
+                new MailBodyTypeTestConfig(false, null, null),
+                new MailBodyTypeTestConfig(false, DYNAMIC_MAIL_BODY_TYPE, "false"),
+                new MailBodyTypeTestConfig(true, DYNAMIC_MAIL_BODY_TYPE, "true"),
+                new MailBodyTypeTestConfig(true, "true", null)
+        );
+    }
+
     @Data
     @RequiredArgsConstructor
     static class MailBodyTypeTestConfig {
         private final boolean expectedHtmlValue;
         private final String mailBodyType;
-        private final String mdValue;
+        private final String isHtmlTemplateMdValue;
     }
 
 }
