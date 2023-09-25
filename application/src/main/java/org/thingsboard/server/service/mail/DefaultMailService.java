@@ -385,7 +385,7 @@ public class DefaultMailService implements MailService {
             case JS_EXEC_COUNT:
                 return "JavaScript functions " + recordState.getValueAsString() + " times";
             case TBEL_EXEC_COUNT:
-                return "Tbel functions " + recordState.getValueAsString() + " times";
+                return "TBEL functions " + recordState.getValueAsString() + " times";
             case RE_EXEC_COUNT:
                 return recordState.getValueAsString() + " Rule Engine messages";
             case EMAIL_EXEC_COUNT:
