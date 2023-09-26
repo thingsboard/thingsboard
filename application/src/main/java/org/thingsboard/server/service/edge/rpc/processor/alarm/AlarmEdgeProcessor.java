@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
@@ -47,9 +48,9 @@ import java.util.UUID;
 @TbCoreComponent
 public class AlarmEdgeProcessor extends BaseAlarmProcessor {
 
-    public DownlinkMsg convertAlarmEventToDownlink(EdgeEvent edgeEvent) {
-        AlarmUpdateMsg alarmUpdateMsg =
-                convertAlarmEventToAlarmMsg(edgeEvent.getTenantId(), edgeEvent.getEntityId(), edgeEvent.getAction(), edgeEvent.getBody());
+    public DownlinkMsg convertAlarmEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
+        AlarmUpdateMsg alarmUpdateMsg = convertAlarmEventToAlarmMsg(edgeEvent.getTenantId(), edgeEvent.getEntityId(),
+                edgeEvent.getAction(), edgeEvent.getBody(), edgeVersion);
         if (alarmUpdateMsg != null) {
             return DownlinkMsg.newBuilder()
                     .setDownlinkMsgId(EdgeUtils.nextPositiveInt())

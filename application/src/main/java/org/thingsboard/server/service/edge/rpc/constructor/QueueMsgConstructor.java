@@ -16,21 +16,32 @@
 package org.thingsboard.server.service.edge.rpc.constructor;
 
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.queue.ProcessingStrategy;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.queue.SubmitStrategy;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.ProcessingStrategyProto;
 import org.thingsboard.server.gen.edge.v1.QueueUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.SubmitStrategyProto;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 @Component
 @TbCoreComponent
 public class QueueMsgConstructor {
 
-    public QueueUpdateMsg constructQueueUpdatedMsg(UpdateMsgType msgType, Queue queue) {
+    public QueueUpdateMsg constructQueueUpdatedMsg(UpdateMsgType msgType, Queue queue, EdgeVersion edgeVersion) {
+        return EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)
+                ? constructDeprecatedQueueUpdatedMsg(msgType, queue)
+                : QueueUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(queue))
+                .setIdMSB(queue.getId().getId().getMostSignificantBits())
+                .setIdLSB(queue.getId().getId().getLeastSignificantBits()).build();
+    }
+
+    private QueueUpdateMsg constructDeprecatedQueueUpdatedMsg(UpdateMsgType msgType, Queue queue) {
         QueueUpdateMsg.Builder builder = QueueUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(queue.getId().getId().getMostSignificantBits())

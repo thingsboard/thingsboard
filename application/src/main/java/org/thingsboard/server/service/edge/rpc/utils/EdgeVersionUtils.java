@@ -13,17 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.id;
+package org.thingsboard.server.service.edge.rpc.utils;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 
-import java.util.UUID;
+@Slf4j
+public final class EdgeVersionUtils {
 
-public class UserCredentialsId extends UUIDBased {
-
-    @JsonCreator
-    public UserCredentialsId(@JsonProperty("id")UUID id){
-        super(id);
+    public static boolean isEdgeProtoDeprecated(EdgeVersion edgeVersion) {
+        switch (edgeVersion) {
+            case V_3_3_0:
+            case V_3_3_3:
+            case V_3_4_0:
+            case V_3_6_0:
+                return true;
+            case V_3_6_1:
+            default:
+                return false;
+        }
     }
 }

@@ -17,11 +17,14 @@ package org.thingsboard.server.service.edge.rpc.constructor;
 
 import com.google.protobuf.ByteString;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 import java.nio.charset.StandardCharsets;
 
@@ -29,7 +32,15 @@ import java.nio.charset.StandardCharsets;
 @TbCoreComponent
 public class AssetProfileMsgConstructor {
 
-    public AssetProfileUpdateMsg constructAssetProfileUpdatedMsg(UpdateMsgType msgType, AssetProfile assetProfile) {
+    public AssetProfileUpdateMsg constructAssetProfileUpdatedMsg(UpdateMsgType msgType, AssetProfile assetProfile, EdgeVersion edgeVersion) {
+        return EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)
+                ? constructDeprecatedAssetProfileUpdatedMsg(msgType, assetProfile)
+                : AssetProfileUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(assetProfile))
+                .setIdMSB(assetProfile.getId().getId().getMostSignificantBits())
+                .setIdLSB(assetProfile.getId().getId().getLeastSignificantBits()).build();
+    }
+
+    private AssetProfileUpdateMsg constructDeprecatedAssetProfileUpdatedMsg(UpdateMsgType msgType, AssetProfile assetProfile) {
         AssetProfileUpdateMsg.Builder builder = AssetProfileUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(assetProfile.getId().getId().getMostSignificantBits())

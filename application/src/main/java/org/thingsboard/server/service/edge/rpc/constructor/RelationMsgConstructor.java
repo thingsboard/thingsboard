@@ -18,15 +18,23 @@ package org.thingsboard.server.service.edge.rpc.constructor;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.RelationUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 @Component
 @TbCoreComponent
 public class RelationMsgConstructor {
 
-    public RelationUpdateMsg constructRelationUpdatedMsg(UpdateMsgType msgType, EntityRelation entityRelation) {
+    public RelationUpdateMsg constructRelationUpdatedMsg(UpdateMsgType msgType, EntityRelation entityRelation, EdgeVersion edgeVersion) {
+        return EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)
+                ? constructDeprecatedRelationUpdatedMsg(msgType, entityRelation)
+                : RelationUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(entityRelation)).build();
+    }
+
+    private RelationUpdateMsg constructDeprecatedRelationUpdatedMsg(UpdateMsgType msgType, EntityRelation entityRelation) {
         RelationUpdateMsg.Builder builder = RelationUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setFromIdMSB(entityRelation.getFrom().getId().getMostSignificantBits())

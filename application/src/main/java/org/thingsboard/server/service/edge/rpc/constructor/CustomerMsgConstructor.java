@@ -20,14 +20,24 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.gen.edge.v1.CustomerUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 @Component
 @TbCoreComponent
 public class CustomerMsgConstructor {
 
-    public CustomerUpdateMsg constructCustomerUpdatedMsg(UpdateMsgType msgType, Customer customer) {
+    public CustomerUpdateMsg constructCustomerUpdatedMsg(UpdateMsgType msgType, Customer customer, EdgeVersion edgeVersion) {
+        return EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)
+                ? constructDeprecatedCustomerUpdatedMsg(msgType, customer)
+                : CustomerUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(customer))
+                .setIdMSB(customer.getId().getId().getMostSignificantBits())
+                .setIdLSB(customer.getId().getId().getLeastSignificantBits()).build();
+    }
+
+    private CustomerUpdateMsg constructDeprecatedCustomerUpdatedMsg(UpdateMsgType msgType, Customer customer) {
         CustomerUpdateMsg.Builder builder = CustomerUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(customer.getId().getId().getMostSignificantBits())

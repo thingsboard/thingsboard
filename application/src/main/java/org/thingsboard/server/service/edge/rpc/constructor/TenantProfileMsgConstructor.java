@@ -18,11 +18,14 @@ package org.thingsboard.server.service.edge.rpc.constructor;
 import com.google.protobuf.ByteString;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.TenantProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 @Component
 @TbCoreComponent
@@ -31,7 +34,13 @@ public class TenantProfileMsgConstructor {
     @Autowired
     private DataDecodingEncodingService dataDecodingEncodingService;
 
-    public TenantProfileUpdateMsg constructTenantProfileUpdateMsg(UpdateMsgType msgType, TenantProfile tenantProfile) {
+    public TenantProfileUpdateMsg constructTenantProfileUpdateMsg(UpdateMsgType msgType, TenantProfile tenantProfile, EdgeVersion edgeVersion) {
+        return EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)
+                ? constructDeprecatedTenantProfileUpdateMsg(msgType, tenantProfile)
+                : TenantProfileUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(tenantProfile)).build();
+    }
+
+    private TenantProfileUpdateMsg constructDeprecatedTenantProfileUpdateMsg(UpdateMsgType msgType, TenantProfile tenantProfile) {
         TenantProfileUpdateMsg.Builder builder = TenantProfileUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(tenantProfile.getId().getId().getMostSignificantBits())

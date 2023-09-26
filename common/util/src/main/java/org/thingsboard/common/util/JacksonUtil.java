@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.json.JsonWriteFeature;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
@@ -60,6 +61,9 @@ public class JacksonUtil {
     public static ObjectMapper ALLOW_UNQUOTED_FIELD_NAMES_MAPPER = JsonMapper.builder()
             .configure(JsonWriteFeature.QUOTE_FIELD_NAMES.mappedFeature(), false)
             .configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true)
+            .build();
+    public static final ObjectMapper EDGE_OBJECT_MAPPER = JsonMapper.builder()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .build();
 
     public static ObjectMapper getObjectMapperWithJavaTimeModule() {
@@ -143,6 +147,15 @@ public class JacksonUtil {
             return PRETTY_SORTED_JSON_MAPPER.writeValueAsString(o);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public static <T> T fromEdgeString(String string, Class<T> clazz) {
+        try {
+            return string != null ? EDGE_OBJECT_MAPPER.readValue(string, clazz) : null;
+        } catch (IOException e) {
+            throw new IllegalArgumentException("The given string value: "
+                    + string + " cannot be transformed to Json object", e);
         }
     }
 

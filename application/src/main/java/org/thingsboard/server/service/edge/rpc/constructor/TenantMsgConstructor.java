@@ -18,15 +18,23 @@ package org.thingsboard.server.service.edge.rpc.constructor;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.TenantUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 @Component
 @TbCoreComponent
 public class TenantMsgConstructor {
 
-    public TenantUpdateMsg constructTenantUpdateMsg(UpdateMsgType msgType, Tenant tenant) {
+    public TenantUpdateMsg constructTenantUpdateMsg(UpdateMsgType msgType, Tenant tenant, EdgeVersion edgeVersion) {
+        return EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)
+                ? constructDeprecatedTenantUpdateMsg(msgType, tenant)
+                : TenantUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(tenant)).build();
+    }
+
+    private TenantUpdateMsg constructDeprecatedTenantUpdateMsg(UpdateMsgType msgType, Tenant tenant) {
         TenantUpdateMsg.Builder builder = TenantUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(tenant.getId().getId().getMostSignificantBits())
