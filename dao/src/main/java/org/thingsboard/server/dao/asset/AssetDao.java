@@ -189,6 +189,7 @@ public interface AssetDao extends Dao<Asset>, TenantEntityDao, ExportableEntityD
      *
      * @return the list of tenant asset type objects
      */
+    @Deprecated(since = "3.6.1")
     ListenableFuture<List<EntitySubtype>> findTenantAssetTypesAsync(UUID tenantId);
 
     Long countAssetsByAssetProfileId(TenantId tenantId, UUID assetProfileId);

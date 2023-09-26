@@ -15,10 +15,12 @@
  */
 package org.thingsboard.server.dao.sql.asset;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.asset.AssetProfileInfo;
@@ -31,12 +33,18 @@ import org.thingsboard.server.dao.asset.AssetProfileDao;
 import org.thingsboard.server.dao.model.sql.AssetProfileEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.thingsboard.server.dao.DaoUtil.convertTenantEntityTypesToDto;
+
 @Component
 public class JpaAssetProfileDao extends JpaAbstractDao<AssetProfileEntity, AssetProfile> implements AssetProfileDao {
+
+    @Autowired
+    private AssetRepository assetRepository;
 
     @Autowired
     private AssetProfileRepository assetProfileRepository;
@@ -95,6 +103,14 @@ public class JpaAssetProfileDao extends JpaAbstractDao<AssetProfileEntity, Asset
     @Override
     public AssetProfile findByName(TenantId tenantId, String profileName) {
         return DaoUtil.getData(assetProfileRepository.findByTenantIdAndName(tenantId.getId(), profileName));
+    }
+
+    @Override
+    public ListenableFuture<List<EntitySubtype>> findTenantAssetProfileNamesAsync(UUID tenantId, boolean activeOnly) {
+        return service.submit(() -> convertTenantEntityTypesToDto(tenantId, EntityType.ASSET,
+                activeOnly ?
+                        assetRepository.findTenantAssetTypes(tenantId) :
+                        assetProfileRepository.findTenantAssetProfileNames(tenantId)));
     }
 
     @Override

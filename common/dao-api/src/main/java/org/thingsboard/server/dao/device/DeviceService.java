@@ -95,6 +95,7 @@ public interface DeviceService extends EntityDaoService {
 
     ListenableFuture<List<Device>> findDevicesByQuery(TenantId tenantId, DeviceSearchQuery query);
 
+    @Deprecated(since = "3.6.1")
     ListenableFuture<List<EntitySubtype>> findDeviceTypesByTenantId(TenantId tenantId);
 
     Device assignDeviceToTenant(TenantId tenantId, Device device);

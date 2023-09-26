@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.asset.AssetProfileInfo;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.AssetProfileEntity;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface AssetProfileRepository extends JpaRepository<AssetProfileEntity, UUID>, ExportableEntityRepository<AssetProfileEntity> {
@@ -60,4 +61,6 @@ public interface AssetProfileRepository extends JpaRepository<AssetProfileEntity
     @Query("SELECT externalId FROM AssetProfileEntity WHERE id = :id")
     UUID getExternalIdById(@Param("id") UUID id);
 
+    @Query("SELECT DISTINCT a.name FROM AssetProfileEntity a WHERE a.tenantId = :tenantId")
+    List<String> findTenantAssetProfileNames(@Param("tenantId") UUID tenantId);
 }

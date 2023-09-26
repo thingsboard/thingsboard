@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.device;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,7 @@ import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
@@ -43,6 +45,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
+import org.thingsboard.server.dao.entity.EntityProfileDaoSupplier;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -59,6 +62,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -358,7 +362,26 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
         return EntityType.DEVICE_PROFILE;
     }
 
-    private PaginatedRemover<TenantId, DeviceProfile> tenantDeviceProfilesRemover =
+    @Override
+    public EntityProfileDaoSupplier getEntityProfileDaoSupplier() {
+        return deviceProfileDaoSupplier;
+    }
+
+    @Override
+    public ListenableFuture<List<EntitySubtype>> findEntityProfileNamesByTenantId(TenantId tenantId, boolean activeOnly) {
+        log.trace("Executing findEntityProfileNamesByTenantId, tenantId [{}] entityType [{}]", tenantId, getEntityType());
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        return doProcessFindEntityProfileNamesByTenantId(tenantId, activeOnly);
+    }
+
+    private final EntityProfileDaoSupplier deviceProfileDaoSupplier = new EntityProfileDaoSupplier() {
+        @Override
+        public ListenableFuture<List<EntitySubtype>> getEntityProfilesNames(UUID tenantId, boolean activeOnly) {
+            return deviceProfileDao.findTenantDeviceProfileNamesAsync(tenantId, activeOnly);
+        }
+    };
+
+    private final PaginatedRemover<TenantId, DeviceProfile> tenantDeviceProfilesRemover =
             new PaginatedRemover<>() {
 
                 @Override
@@ -407,7 +430,8 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
             if (certificates.length > 1) {
                 return EncryptionUtil.certTrimNewLinesForChainInDeviceProfile(certificateValue);
             }
-        } catch (CertificateException ignored) {}
+        } catch (CertificateException ignored) {
+        }
         return EncryptionUtil.certTrimNewLines(certificateValue);
     }
 

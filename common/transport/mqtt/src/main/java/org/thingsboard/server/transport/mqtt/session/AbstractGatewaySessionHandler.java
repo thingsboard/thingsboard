@@ -71,7 +71,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static org.springframework.util.ConcurrentReferenceHashMap.ReferenceType;
-import static org.thingsboard.server.common.data.DataConstants.DEFAULT_DEVICE_TYPE;
+import static org.thingsboard.server.common.data.DataConstants.DEFAULT_PROFILE_TYPE;
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SESSION_EVENT_MSG_CLOSED;
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SESSION_EVENT_MSG_OPEN;
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SUBSCRIBE_TO_ATTRIBUTE_UPDATES_ASYNC_MSG;
@@ -304,7 +304,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         try {
             TransportApiProtos.ConnectMsg connectProto = TransportApiProtos.ConnectMsg.parseFrom(getBytes(mqttMsg.payload()));
             String deviceName = checkDeviceName(connectProto.getDeviceName());
-            String deviceType = StringUtils.isEmpty(connectProto.getDeviceType()) ? DEFAULT_DEVICE_TYPE : connectProto.getDeviceType();
+            String deviceType = StringUtils.isEmpty(connectProto.getDeviceType()) ? DEFAULT_PROFILE_TYPE : connectProto.getDeviceType();
             processOnConnect(mqttMsg, deviceName, deviceType);
         } catch (RuntimeException | InvalidProtocolBufferException e) {
             throw new AdaptorException(e);
@@ -688,7 +688,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         T ctx = devices.get(deviceName);
         if (ctx == null) {
             log.debug("[{}] Missing device [{}] for the gateway session", sessionId, deviceName);
-            return onDeviceConnect(deviceName, DEFAULT_DEVICE_TYPE);
+            return onDeviceConnect(deviceName, DEFAULT_PROFILE_TYPE);
         } else {
             return Futures.immediateFuture(ctx);
         }
@@ -708,7 +708,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
 
     private String getDeviceType(JsonElement json) {
         JsonElement type = json.getAsJsonObject().get("type");
-        return type == null || type instanceof JsonNull ? DEFAULT_DEVICE_TYPE : type.getAsString();
+        return type == null || type instanceof JsonNull ? DEFAULT_PROFILE_TYPE : type.getAsString();
     }
 
     private JsonElement getJson(MqttPublishMessage mqttMsg) throws AdaptorException {

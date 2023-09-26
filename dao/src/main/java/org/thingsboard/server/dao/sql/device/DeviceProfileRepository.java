@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.DeviceProfileEntity;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface DeviceProfileRepository extends JpaRepository<DeviceProfileEntity, UUID>, ExportableEntityRepository<DeviceProfileEntity> {
@@ -70,5 +71,8 @@ public interface DeviceProfileRepository extends JpaRepository<DeviceProfileEnti
 
     @Query("SELECT externalId FROM DeviceProfileEntity WHERE id = :id")
     UUID getExternalIdById(@Param("id") UUID id);
+
+    @Query("SELECT DISTINCT d.name FROM DeviceProfileEntity d WHERE d.tenantId = :tenantId")
+    List<String> findTenantDeviceProfileNames(@Param("tenantId") UUID tenantId);
 
 }

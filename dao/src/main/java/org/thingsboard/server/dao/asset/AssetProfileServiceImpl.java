@@ -15,12 +15,14 @@
  */
 package org.thingsboard.server.dao.asset;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -33,6 +35,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
+import org.thingsboard.server.dao.entity.EntityProfileDaoSupplier;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -44,6 +47,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -303,7 +307,26 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
         return EntityType.ASSET_PROFILE;
     }
 
-    private PaginatedRemover<TenantId, AssetProfile> tenantAssetProfilesRemover =
+    @Override
+    public EntityProfileDaoSupplier getEntityProfileDaoSupplier() {
+        return assetProfileDaoSupplier;
+    }
+
+    @Override
+    public ListenableFuture<List<EntitySubtype>> findEntityProfileNamesByTenantId(TenantId tenantId, boolean activeOnly) {
+        log.trace("Executing findEntityProfileNamesByTenantId, tenantId [{}] entityType [{}]", tenantId, getEntityType());
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        return doProcessFindEntityProfileNamesByTenantId(tenantId, activeOnly);
+    }
+
+    private final EntityProfileDaoSupplier assetProfileDaoSupplier = new EntityProfileDaoSupplier() {
+        @Override
+        public ListenableFuture<List<EntitySubtype>> getEntityProfilesNames(UUID tenantId, boolean activeOnly) {
+            return assetProfileDao.findTenantAssetProfileNamesAsync(tenantId, activeOnly);
+        }
+    };
+
+    private final PaginatedRemover<TenantId, AssetProfile> tenantAssetProfilesRemover =
             new PaginatedRemover<>() {
 
                 @Override

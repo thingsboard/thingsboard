@@ -35,6 +35,8 @@ import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
 import org.thingsboard.server.common.data.StringUtils;
@@ -55,11 +57,13 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.common.data.DataConstants.DEFAULT_PROFILE_TYPE;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.SOFTWARE;
 
@@ -1043,6 +1047,66 @@ public class DeviceProfileControllerTest extends AbstractControllerTest {
     public void testDeleteDeviceProfileExceptionWithRelationsTransactional() throws Exception {
         DeviceProfileId deviceProfileId = savedDeviceProfile("DeviceProfile for Test WithRelations Transactional Exception").getId();
         testEntityDaoWithRelationsTransactionalException(deviceProfileDao, savedTenant.getId(), deviceProfileId, "/api/deviceProfile/" + deviceProfileId);
+    }
+
+    @Test
+    public void testGetDeviceProfileNames() throws Exception {
+        var pageLink = new PageLink(Integer.MAX_VALUE);
+        var deviceProfileInfos = doGetTypedWithPageLink("/api/deviceProfileInfos?",
+                new TypeReference<PageData<DeviceProfileInfo>>() {
+                }, pageLink);
+        Assert.assertNotNull("Device Profile Infos page data is null!", deviceProfileInfos);
+        Assert.assertEquals("Device Profile Infos Page data is empty! Expected to have default profile created!", 1, deviceProfileInfos.getTotalElements());
+        List<EntitySubtype> expectedDeviceProfileNames = deviceProfileInfos.getData().stream()
+                .map(DeviceProfileControllerTest::toEntitySubType)
+                .sorted(Comparator.comparing(EntitySubtype::getType))
+                .collect(Collectors.toList());
+        var deviceProfileNames = doGetTyped("/api/deviceProfileNames", new TypeReference<List<EntitySubtype>>() {
+        });
+        Assert.assertNotNull("Device Profile Names list is null!", deviceProfileNames);
+        Assert.assertFalse("Device Profile Names list is empty!", deviceProfileNames.isEmpty());
+        Assert.assertEquals(expectedDeviceProfileNames, deviceProfileNames);
+        Assert.assertEquals(1, deviceProfileNames.size());
+        Assert.assertEquals(DEFAULT_PROFILE_TYPE, deviceProfileNames.get(0).getType());
+
+        int count = 3;
+        for (int i = 0; i < count; i++) {
+            Device device = new Device();
+            device.setName("DeviceName" + i);
+            device.setType("DeviceProfileName" + i);
+            Device savedDevice = doPost("/api/device", device, Device.class);
+            Assert.assertNotNull(savedDevice);
+        }
+        deviceProfileInfos = doGetTypedWithPageLink("/api/deviceProfileInfos?",
+                new TypeReference<>() {
+                }, pageLink);
+        Assert.assertNotNull("Device Profile Infos page data is null!", deviceProfileInfos);
+        Assert.assertEquals("Device Profile Infos Page data is empty! Expected to have default profile created + count value!", 1 + count, deviceProfileInfos.getTotalElements());
+        expectedDeviceProfileNames = deviceProfileInfos.getData().stream()
+                .map(DeviceProfileControllerTest::toEntitySubType)
+                .sorted(Comparator.comparing(EntitySubtype::getType))
+                .collect(Collectors.toList());
+
+        deviceProfileNames = doGetTyped("/api/deviceProfileNames", new TypeReference<>() {
+        });
+        Assert.assertNotNull("Device Profile Names list is null!", deviceProfileNames);
+        Assert.assertFalse("Device Profile Names list is empty!", deviceProfileNames.isEmpty());
+        Assert.assertEquals(expectedDeviceProfileNames, deviceProfileNames);
+        Assert.assertEquals(1 + count, deviceProfileNames.size());
+
+        deviceProfileNames = doGetTyped("/api/deviceProfileNames?activeOnly=true", new TypeReference<>() {
+        });
+        Assert.assertNotNull("Device Profile Names list is null!", deviceProfileNames);
+        Assert.assertFalse("Device Profile Names list is empty!", deviceProfileNames.isEmpty());
+        var expectedDeviceProfileNamesWithoutDefault = expectedDeviceProfileNames.stream()
+                .filter(entitySubtype -> !entitySubtype.getType().equals(DEFAULT_PROFILE_TYPE))
+                .collect(Collectors.toList());
+        Assert.assertEquals(expectedDeviceProfileNamesWithoutDefault, deviceProfileNames);
+        Assert.assertEquals(count, deviceProfileNames.size());
+    }
+
+    private static EntitySubtype toEntitySubType(DeviceProfileInfo deviceProfileInfo) {
+        return new EntitySubtype(deviceProfileInfo.getTenantId(), EntityType.DEVICE, deviceProfileInfo.getName());
     }
 
     private DeviceProfile savedDeviceProfile(String name) {
