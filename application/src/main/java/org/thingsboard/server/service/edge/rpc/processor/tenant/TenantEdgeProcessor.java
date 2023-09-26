@@ -43,7 +43,7 @@ public class TenantEdgeProcessor extends BaseEdgeProcessor {
             Tenant tenant = tenantService.findTenantById(tenantId);
             if (tenant != null) {
                 UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                TenantUpdateMsg tenantUpdateMsg = tenantMsgConstructor.constructTenantUpdateMsg(msgType, tenant);
+                TenantUpdateMsg tenantUpdateMsg = tenantMsgConstructor.constructTenantUpdateMsg(msgType, tenant, edgeVersion);
                 TenantProfile tenantProfile = tenantProfileService.findTenantProfileById(tenantId, tenant.getTenantProfileId());
                 TenantProfileUpdateMsg tenantProfileUpdateMsg = tenantProfileMsgConstructor.constructTenantProfileUpdateMsg(msgType, tenantProfile, edgeVersion);
                 downlinkMsg = DownlinkMsg.newBuilder()

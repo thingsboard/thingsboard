@@ -20,14 +20,24 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 @Component
 @TbCoreComponent
 public class AssetMsgConstructor {
 
-    public AssetUpdateMsg constructAssetUpdatedMsg(UpdateMsgType msgType, Asset asset) {
+    public AssetUpdateMsg constructAssetUpdatedMsg(UpdateMsgType msgType, Asset asset, EdgeVersion edgeVersion) {
+        return EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)
+                ? constructDeprecatedAssetUpdateMsg(msgType, asset)
+                : AssetUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(asset))
+                .setIdMSB(asset.getUuidId().getMostSignificantBits())
+                .setIdLSB(asset.getUuidId().getLeastSignificantBits()).build();
+    }
+
+    private AssetUpdateMsg constructDeprecatedAssetUpdateMsg(UpdateMsgType msgType, Asset asset) {
         AssetUpdateMsg.Builder builder = AssetUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(asset.getUuidId().getMostSignificantBits())

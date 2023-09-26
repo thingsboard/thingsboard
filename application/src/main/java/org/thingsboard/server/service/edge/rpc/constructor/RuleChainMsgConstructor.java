@@ -29,19 +29,29 @@ import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.constructor.rule.RuleChainMetadataConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.rule.RuleChainMetadataConstructorFactory;
+import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 @Component
 @Slf4j
 @TbCoreComponent
 public class RuleChainMsgConstructor {
 
-    public RuleChainUpdateMsg constructRuleChainUpdatedMsg(UpdateMsgType msgType, RuleChain ruleChain, boolean isRoot) {
+    public RuleChainUpdateMsg constructRuleChainUpdatedMsg(UpdateMsgType msgType, RuleChain ruleChain, boolean isRoot, EdgeVersion edgeVersion) {
+        ruleChain.setRoot(isRoot);
+        return EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)
+                ? constructDeprecatedRuleChainUpdatedMsg(msgType, ruleChain)
+                : RuleChainUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(ruleChain))
+                .setIdMSB(ruleChain.getId().getId().getMostSignificantBits())
+                .setIdLSB(ruleChain.getId().getId().getLeastSignificantBits()).build();
+    }
+
+    private RuleChainUpdateMsg constructDeprecatedRuleChainUpdatedMsg(UpdateMsgType msgType, RuleChain ruleChain) {
         RuleChainUpdateMsg.Builder builder = RuleChainUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(ruleChain.getId().getId().getMostSignificantBits())
                 .setIdLSB(ruleChain.getId().getId().getLeastSignificantBits())
                 .setName(ruleChain.getName())
-                .setRoot(isRoot)
+                .setRoot(ruleChain.isRoot())
                 .setDebugMode(ruleChain.isDebugMode())
                 .setConfiguration(JacksonUtil.toString(ruleChain.getConfiguration()));
         if (ruleChain.getFirstRuleNodeId() != null) {
@@ -57,7 +67,7 @@ public class RuleChainMsgConstructor {
                                                                            EdgeVersion edgeVersion) {
         RuleChainMetadataConstructor ruleChainMetadataConstructor
                 = RuleChainMetadataConstructorFactory.getByEdgeVersion(edgeVersion);
-        return ruleChainMetadataConstructor.constructRuleChainMetadataUpdatedMsg(tenantId, msgType, ruleChainMetaData);
+        return ruleChainMetadataConstructor.constructRuleChainMetadataUpdatedMsg(tenantId, msgType, ruleChainMetaData, edgeVersion);
     }
 
     public RuleChainUpdateMsg constructRuleChainDeleteMsg(RuleChainId ruleChainId) {

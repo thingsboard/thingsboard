@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.OtaPackageUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -32,7 +33,7 @@ import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 @TbCoreComponent
 public class OtaPackageEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg convertOtaPackageEventToDownlink(EdgeEvent edgeEvent) {
+    public DownlinkMsg convertOtaPackageEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         OtaPackageId otaPackageId = new OtaPackageId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
@@ -42,7 +43,7 @@ public class OtaPackageEdgeProcessor extends BaseEdgeProcessor {
                 if (otaPackage != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     OtaPackageUpdateMsg otaPackageUpdateMsg =
-                            otaPackageMsgConstructor.constructOtaPackageUpdatedMsg(msgType, otaPackage);
+                            otaPackageMsgConstructor.constructOtaPackageUpdatedMsg(msgType, otaPackage, edgeVersion);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addOtaPackageUpdateMsg(otaPackageUpdateMsg)

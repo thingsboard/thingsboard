@@ -20,15 +20,25 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.id.OtaPackageId;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.OtaPackageUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 @Component
 @TbCoreComponent
 public class OtaPackageMsgConstructor {
 
-    public OtaPackageUpdateMsg constructOtaPackageUpdatedMsg(UpdateMsgType msgType, OtaPackage otaPackage) {
+    public OtaPackageUpdateMsg constructOtaPackageUpdatedMsg(UpdateMsgType msgType, OtaPackage otaPackage, EdgeVersion edgeVersion) {
+        return EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)
+                ? constructDeprecatedOtaPackageUpdatedMsg(msgType, otaPackage)
+                : OtaPackageUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(otaPackage))
+                .setIdMSB(otaPackage.getId().getId().getMostSignificantBits())
+                .setIdLSB(otaPackage.getId().getId().getLeastSignificantBits()).build();
+    }
+
+    private OtaPackageUpdateMsg constructDeprecatedOtaPackageUpdatedMsg(UpdateMsgType msgType, OtaPackage otaPackage) {
         OtaPackageUpdateMsg.Builder builder = OtaPackageUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(otaPackage.getId().getId().getMostSignificantBits())

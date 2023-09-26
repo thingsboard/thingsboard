@@ -24,11 +24,13 @@ import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.NodeConnectionInfoProto;
 import org.thingsboard.server.gen.edge.v1.RuleChainConnectionInfoProto;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleNodeProto;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
+import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +43,16 @@ public abstract class AbstractRuleChainMetadataConstructor implements RuleChainM
     @Override
     public RuleChainMetadataUpdateMsg constructRuleChainMetadataUpdatedMsg(TenantId tenantId,
                                                                            UpdateMsgType msgType,
-                                                                           RuleChainMetaData ruleChainMetaData) {
+                                                                           RuleChainMetaData ruleChainMetaData,
+                                                                           EdgeVersion edgeVersion) {
+        return EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)
+                ? constructDeprecatedRuleChainMetadataUpdatedMsg(tenantId, msgType, ruleChainMetaData)
+                : RuleChainMetadataUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(ruleChainMetaData)).build();
+    }
+
+    private RuleChainMetadataUpdateMsg constructDeprecatedRuleChainMetadataUpdatedMsg(TenantId tenantId,
+                                                                                      UpdateMsgType msgType,
+                                                                                      RuleChainMetaData ruleChainMetaData) {
         try {
             RuleChainMetadataUpdateMsg.Builder builder = RuleChainMetadataUpdateMsg.newBuilder();
             builder.setRuleChainIdMSB(ruleChainMetaData.getRuleChainId().getId().getMostSignificantBits())

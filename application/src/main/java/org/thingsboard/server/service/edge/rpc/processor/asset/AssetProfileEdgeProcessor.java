@@ -40,6 +40,7 @@ import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 import java.util.UUID;
 
@@ -48,7 +49,7 @@ import java.util.UUID;
 @TbCoreComponent
 public class AssetProfileEdgeProcessor extends BaseAssetProfileProcessor {
 
-    public ListenableFuture<Void> processAssetProfileMsgFromEdge(TenantId tenantId, Edge edge, AssetProfileUpdateMsg assetProfileUpdateMsg) {
+    public ListenableFuture<Void> processAssetProfileMsgFromEdge(TenantId tenantId, Edge edge, AssetProfileUpdateMsg assetProfileUpdateMsg, EdgeVersion edgeVersion) {
         log.trace("[{}] executing processAssetProfileMsgFromEdge [{}] from edge [{}]", tenantId, assetProfileUpdateMsg, edge.getId());
         AssetProfileId assetProfileId = new AssetProfileId(new UUID(assetProfileUpdateMsg.getIdMSB(), assetProfileUpdateMsg.getIdLSB()));
         try {
@@ -57,7 +58,7 @@ public class AssetProfileEdgeProcessor extends BaseAssetProfileProcessor {
             switch (assetProfileUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
                 case ENTITY_UPDATED_RPC_MESSAGE:
-                    saveOrUpdateAssetProfile(tenantId, assetProfileId, assetProfileUpdateMsg, edge);
+                    saveOrUpdateAssetProfile(tenantId, assetProfileId, assetProfileUpdateMsg, edge, edgeVersion);
                     return Futures.immediateFuture(null);
                 case ENTITY_DELETED_RPC_MESSAGE:
                 case UNRECOGNIZED:
@@ -72,8 +73,9 @@ public class AssetProfileEdgeProcessor extends BaseAssetProfileProcessor {
         }
     }
 
-    private void saveOrUpdateAssetProfile(TenantId tenantId, AssetProfileId assetProfileId, AssetProfileUpdateMsg assetProfileUpdateMsg, Edge edge) {
-        Pair<Boolean, Boolean> resultPair = super.saveOrUpdateAssetProfile(tenantId, assetProfileId, assetProfileUpdateMsg);
+    private void saveOrUpdateAssetProfile(TenantId tenantId, AssetProfileId assetProfileId, AssetProfileUpdateMsg assetProfileUpdateMsg, Edge edge, EdgeVersion edgeVersion) {
+        Pair<Boolean, Boolean> resultPair = super.saveOrUpdateAssetProfile(tenantId, assetProfileId, assetProfileUpdateMsg,
+                EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion));
         Boolean created = resultPair.getFirst();
         if (created) {
             createRelationFromEdge(tenantId, edge.getId(), assetProfileId);
@@ -107,7 +109,7 @@ public class AssetProfileEdgeProcessor extends BaseAssetProfileProcessor {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     assetProfile = checkIfAssetProfileDefaultFieldsAssignedToEdge(edgeEvent.getTenantId(), edgeId, assetProfile, edgeVersion);
                     AssetProfileUpdateMsg assetProfileUpdateMsg =
-                            assetProfileMsgConstructor.constructAssetProfileUpdatedMsg(msgType, assetProfile);
+                            assetProfileMsgConstructor.constructAssetProfileUpdatedMsg(msgType, assetProfile, edgeVersion);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addAssetProfileUpdateMsg(assetProfileUpdateMsg)
@@ -127,19 +129,24 @@ public class AssetProfileEdgeProcessor extends BaseAssetProfileProcessor {
     }
 
     @Override
-    protected void setDefaultRuleChainId(TenantId tenantId, AssetProfile assetProfile, AssetProfileUpdateMsg assetProfileUpdateMsg) {
+    protected void setDefaultRuleChainId(TenantId tenantId, AssetProfile assetProfile) {
         // do nothing on cloud
     }
 
     @Override
-    protected void setDefaultEdgeRuleChainId(TenantId tenantId,AssetProfile assetProfile, AssetProfileUpdateMsg assetProfileUpdateMsg) {
-        UUID defaultEdgeRuleChainUUID = safeGetUUID(assetProfileUpdateMsg.getDefaultRuleChainIdMSB(), assetProfileUpdateMsg.getDefaultRuleChainIdLSB());
+    protected void setDefaultEdgeRuleChainId(AssetProfile assetProfile, RuleChainId ruleChainId, AssetProfileUpdateMsg assetProfileUpdateMsg, boolean isEdgeVersionDeprecated) {
+        UUID defaultEdgeRuleChainUUID = isEdgeVersionDeprecated
+                ? safeGetUUID(assetProfileUpdateMsg.getDefaultRuleChainIdMSB(), assetProfileUpdateMsg.getDefaultRuleChainIdLSB())
+                : assetProfile.getDefaultRuleChainId() != null ? assetProfile.getDefaultRuleChainId().getId() : null;
         assetProfile.setDefaultEdgeRuleChainId(defaultEdgeRuleChainUUID != null ? new RuleChainId(defaultEdgeRuleChainUUID) : null);
+        assetProfile.setDefaultRuleChainId(ruleChainId);
     }
 
     @Override
-    protected void setDefaultDashboardId(TenantId tenantId, AssetProfile assetProfile, AssetProfileUpdateMsg assetProfileUpdateMsg) {
-        UUID defaultDashboardUUID = safeGetUUID(assetProfileUpdateMsg.getDefaultDashboardIdMSB(), assetProfileUpdateMsg.getDefaultDashboardIdLSB());
+    protected void setDefaultDashboardId(TenantId tenantId, AssetProfile assetProfile, AssetProfileUpdateMsg assetProfileUpdateMsg, boolean isEdgeVersionDeprecated) {
+        UUID defaultDashboardUUID = isEdgeVersionDeprecated
+                ? safeGetUUID(assetProfileUpdateMsg.getDefaultDashboardIdMSB(), assetProfileUpdateMsg.getDefaultDashboardIdLSB())
+                : assetProfile.getDefaultDashboardId() != null ? assetProfile.getDefaultDashboardId().getId() : null;
         assetProfile.setDefaultDashboardId(defaultDashboardUUID != null ? new DashboardId(defaultDashboardUUID) : null);
     }
 }

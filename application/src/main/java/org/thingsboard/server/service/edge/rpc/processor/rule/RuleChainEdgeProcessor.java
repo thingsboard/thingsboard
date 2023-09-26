@@ -37,7 +37,7 @@ import static org.thingsboard.server.service.edge.DefaultEdgeNotificationService
 @TbCoreComponent
 public class RuleChainEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg convertRuleChainEventToDownlink(EdgeEvent edgeEvent) {
+    public DownlinkMsg convertRuleChainEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         RuleChainId ruleChainId = new RuleChainId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
@@ -54,7 +54,7 @@ public class RuleChainEdgeProcessor extends BaseEdgeProcessor {
                     }
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     RuleChainUpdateMsg ruleChainUpdateMsg =
-                            ruleChainMsgConstructor.constructRuleChainUpdatedMsg(msgType, ruleChain, isRoot);
+                            ruleChainMsgConstructor.constructRuleChainUpdatedMsg(msgType, ruleChain, isRoot, edgeVersion);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addRuleChainUpdateMsg(ruleChainUpdateMsg)

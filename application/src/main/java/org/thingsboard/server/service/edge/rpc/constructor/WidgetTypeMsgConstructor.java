@@ -33,6 +33,14 @@ import java.util.Arrays;
 public class WidgetTypeMsgConstructor {
 
     public WidgetTypeUpdateMsg constructWidgetTypeUpdateMsg(UpdateMsgType msgType, WidgetTypeDetails widgetTypeDetails, EdgeVersion edgeVersion) {
+        return EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)
+                ? constructDeprecatedWidgetTypeUpdateMsg(msgType, widgetTypeDetails, edgeVersion)
+                : WidgetTypeUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(widgetTypeDetails))
+                .setIdMSB(widgetTypeDetails.getId().getId().getMostSignificantBits())
+                .setIdLSB(widgetTypeDetails.getId().getId().getLeastSignificantBits()).build();
+    }
+
+    private WidgetTypeUpdateMsg constructDeprecatedWidgetTypeUpdateMsg(UpdateMsgType msgType, WidgetTypeDetails widgetTypeDetails, EdgeVersion edgeVersion) {
         WidgetTypeUpdateMsg.Builder builder = WidgetTypeUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(widgetTypeDetails.getId().getId().getMostSignificantBits())

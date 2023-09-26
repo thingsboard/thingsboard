@@ -18,6 +18,7 @@ package org.thingsboard.server.edge;
 import com.google.protobuf.AbstractMessage;
 import org.junit.Assert;
 import org.junit.Test;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.queue.ProcessingStrategy;
@@ -55,12 +56,12 @@ public class TenantProfileEdgeTest extends AbstractEdgeTest {
         AbstractMessage latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof TenantProfileUpdateMsg);
         TenantProfileUpdateMsg tenantProfileUpdateMsg = (TenantProfileUpdateMsg) latestMessage;
+        TenantProfile tenantProfileMsg = JacksonUtil.fromEdgeString(tenantProfileUpdateMsg.getEntity(), TenantProfile.class);
+        Assert.assertNotNull(tenantProfileMsg);
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, tenantProfileUpdateMsg.getMsgType());
-        Assert.assertEquals(edgeTenantProfile.getUuidId().getMostSignificantBits(), tenantProfileUpdateMsg.getIdMSB());
-        Assert.assertEquals(edgeTenantProfile.getUuidId().getLeastSignificantBits(), tenantProfileUpdateMsg.getIdLSB());
-        Assert.assertEquals(edgeTenantProfile.getDescription(), tenantProfileUpdateMsg.getDescription());
-        Assert.assertEquals("Updated tenant profile Edge Test", tenantProfileUpdateMsg.getDescription());
-        Assert.assertEquals("Tenant Profile Edge Test", tenantProfileUpdateMsg.getName());
+        Assert.assertEquals(edgeTenantProfile, tenantProfileMsg);
+        Assert.assertEquals("Updated tenant profile Edge Test", tenantProfileMsg.getDescription());
+        Assert.assertEquals("Tenant Profile Edge Test", tenantProfileMsg.getName());
 
         loginTenantAdmin();
     }

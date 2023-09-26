@@ -21,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
@@ -32,20 +31,46 @@ import java.util.Set;
 @Slf4j
 public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
 
-    protected boolean saveOrUpdateDashboard(TenantId tenantId, DashboardId dashboardId, DashboardUpdateMsg dashboardUpdateMsg, CustomerId customerId) {
+    protected boolean saveOrUpdateDashboard(TenantId tenantId, DashboardId deprecatedDashboardId, DashboardUpdateMsg dashboardUpdateMsg, boolean isEdgeProtoDeprecated) {
         boolean created = false;
-        Dashboard dashboard = dashboardService.findDashboardById(tenantId, dashboardId);
+        Dashboard dashboard = isEdgeProtoDeprecated
+                ? createDashboard(tenantId, deprecatedDashboardId, dashboardUpdateMsg)
+                : JacksonUtil.fromEdgeString(dashboardUpdateMsg.getEntity(), Dashboard.class);
         if (dashboard == null) {
-            created = true;
-            dashboard = new Dashboard();
-            dashboard.setTenantId(tenantId);
-            dashboard.setCreatedTime(Uuids.unixTimestamp(dashboardId.getId()));
+            throw new RuntimeException("[{" + tenantId + "}] dashboardUpdateMsg {" + dashboardUpdateMsg + "} cannot be converted to dashboard");
         }
+        DashboardId dashboardId = dashboard.getId();
+        Dashboard dashboardById = dashboardService.findDashboardById(tenantId, dashboardId);
+        if (dashboardById == null) {
+            created = true;
+            dashboard.setId(null);
+        } else {
+            dashboard.setId(dashboardId);
+        }
+
+        dashboardValidator.validate(dashboard, Dashboard::getTenantId);
+        if (created) {
+            dashboard.setId(dashboardId);
+        }
+        Dashboard savedDashboard = dashboardService.saveDashboard(dashboard, false);
+        if (savedDashboard.getAssignedCustomers() != null && savedDashboard.getAssignedCustomers().isEmpty()) {
+            for (ShortCustomerInfo assignedCustomer : savedDashboard.getAssignedCustomers()) {
+                dashboardService.unassignDashboardFromCustomer(tenantId, savedDashboard.getId(), assignedCustomer.getCustomerId());
+            }
+        }
+        return created;
+    }
+
+    private Dashboard createDashboard(TenantId tenantId, DashboardId dashboardId, DashboardUpdateMsg dashboardUpdateMsg) {
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTenantId(tenantId);
+        dashboard.setId(dashboardId);
+        dashboard.setCreatedTime(Uuids.unixTimestamp(dashboardId.getId()));
         dashboard.setTitle(dashboardUpdateMsg.getTitle());
         dashboard.setImage(dashboardUpdateMsg.hasImage() ? dashboardUpdateMsg.getImage() : null);
         dashboard.setConfiguration(JacksonUtil.toJsonNode(dashboardUpdateMsg.getConfiguration()));
 
-        Set<ShortCustomerInfo> assignedCustomers = null;
+        Set<ShortCustomerInfo> assignedCustomers;
         if (dashboardUpdateMsg.hasAssignedCustomers()) {
             assignedCustomers = JacksonUtil.fromString(dashboardUpdateMsg.getAssignedCustomers(), new TypeReference<>() {});
             assignedCustomers = filterNonExistingCustomers(tenantId, assignedCustomers);
@@ -54,31 +79,9 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
 
         dashboard.setMobileOrder(dashboardUpdateMsg.hasMobileOrder() ? dashboardUpdateMsg.getMobileOrder() : null);
         dashboard.setMobileHide(dashboardUpdateMsg.getMobileHide());
-
-        dashboardValidator.validate(dashboard, Dashboard::getTenantId);
-        if (created) {
-            dashboard.setId(dashboardId);
-        }
-        Dashboard savedDashboard = dashboardService.saveDashboard(dashboard, false);
-        if (assignedCustomers != null && !assignedCustomers.isEmpty()) {
-            for (ShortCustomerInfo assignedCustomer : assignedCustomers) {
-                if (assignedCustomer.getCustomerId().equals(customerId)) {
-                    dashboardService.assignDashboardToCustomer(tenantId, dashboardId, assignedCustomer.getCustomerId());
-                }
-            }
-        } else {
-            unassignCustomersFromDashboard(tenantId, savedDashboard);
-        }
-        return created;
+        return dashboard;
     }
+
 
     protected abstract Set<ShortCustomerInfo> filterNonExistingCustomers(TenantId tenantId, Set<ShortCustomerInfo> assignedCustomers);
-
-    private void unassignCustomersFromDashboard(TenantId tenantId, Dashboard dashboard) {
-        if (dashboard.getAssignedCustomers() != null && !dashboard.getAssignedCustomers().isEmpty()) {
-            for (ShortCustomerInfo assignedCustomer : dashboard.getAssignedCustomers()) {
-                dashboardService.unassignDashboardFromCustomer(tenantId, dashboard.getId(), assignedCustomer.getCustomerId());
-            }
-        }
-    }
 }

@@ -40,6 +40,7 @@ import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 import java.util.UUID;
 
@@ -48,7 +49,7 @@ import java.util.UUID;
 @TbCoreComponent
 public class DeviceProfileEdgeProcessor extends BaseDeviceProfileProcessor {
 
-    public ListenableFuture<Void> processDeviceProfileMsgFromEdge(TenantId tenantId, Edge edge, DeviceProfileUpdateMsg deviceProfileUpdateMsg) {
+    public ListenableFuture<Void> processDeviceProfileMsgFromEdge(TenantId tenantId, Edge edge, DeviceProfileUpdateMsg deviceProfileUpdateMsg, EdgeVersion edgeVersion) {
         log.trace("[{}] executing processDeviceProfileMsgFromEdge [{}] from edge [{}]", tenantId, deviceProfileUpdateMsg, edge.getId());
         DeviceProfileId deviceProfileId = new DeviceProfileId(new UUID(deviceProfileUpdateMsg.getIdMSB(), deviceProfileUpdateMsg.getIdLSB()));
         try {
@@ -57,7 +58,7 @@ public class DeviceProfileEdgeProcessor extends BaseDeviceProfileProcessor {
             switch (deviceProfileUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
                 case ENTITY_UPDATED_RPC_MESSAGE:
-                    saveOrUpdateDeviceProfile(tenantId, deviceProfileId, deviceProfileUpdateMsg, edge);
+                    saveOrUpdateDeviceProfile(tenantId, deviceProfileId, deviceProfileUpdateMsg, edge, edgeVersion);
                     return Futures.immediateFuture(null);
                 case ENTITY_DELETED_RPC_MESSAGE:
                 case UNRECOGNIZED:
@@ -72,8 +73,9 @@ public class DeviceProfileEdgeProcessor extends BaseDeviceProfileProcessor {
         }
     }
 
-    private void saveOrUpdateDeviceProfile(TenantId tenantId, DeviceProfileId deviceProfileId, DeviceProfileUpdateMsg deviceProfileUpdateMsg, Edge edge) {
-        Pair<Boolean, Boolean> resultPair = super.saveOrUpdateDeviceProfile(tenantId, deviceProfileId, deviceProfileUpdateMsg);
+    private void saveOrUpdateDeviceProfile(TenantId tenantId, DeviceProfileId deviceProfileId, DeviceProfileUpdateMsg deviceProfileUpdateMsg, Edge edge, EdgeVersion edgeVersion) {
+        Pair<Boolean, Boolean> resultPair = super.saveOrUpdateDeviceProfile(tenantId, deviceProfileId, deviceProfileUpdateMsg,
+                EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion));
         Boolean created = resultPair.getFirst();
         if (created) {
             createRelationFromEdge(tenantId, edge.getId(), deviceProfileId);
@@ -107,7 +109,7 @@ public class DeviceProfileEdgeProcessor extends BaseDeviceProfileProcessor {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     deviceProfile = checkIfDeviceProfileDefaultFieldsAssignedToEdge(edgeEvent.getTenantId(), edgeId, deviceProfile, edgeVersion);
                     DeviceProfileUpdateMsg deviceProfileUpdateMsg =
-                            deviceProfileMsgConstructor.constructDeviceProfileUpdatedMsg(msgType, deviceProfile);
+                            deviceProfileMsgConstructor.constructDeviceProfileUpdatedMsg(msgType, deviceProfile, edgeVersion);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addDeviceProfileUpdateMsg(deviceProfileUpdateMsg)
@@ -127,19 +129,24 @@ public class DeviceProfileEdgeProcessor extends BaseDeviceProfileProcessor {
     }
 
     @Override
-    protected void setDefaultRuleChainId(TenantId tenantId, DeviceProfile deviceProfile, DeviceProfileUpdateMsg deviceProfileUpdateMsg) {
+    protected void setDefaultRuleChainId(TenantId tenantId, DeviceProfile deviceProfile) {
         // do nothing on cloud
     }
 
     @Override
-    protected void setDefaultEdgeRuleChainId(TenantId tenantId, DeviceProfile deviceProfile, DeviceProfileUpdateMsg deviceProfileUpdateMsg) {
-        UUID defaultEdgeRuleChainUUID = safeGetUUID(deviceProfileUpdateMsg.getDefaultRuleChainIdMSB(), deviceProfileUpdateMsg.getDefaultRuleChainIdLSB());
+    protected void setDefaultEdgeRuleChainId(DeviceProfile deviceProfile, RuleChainId ruleChainId, DeviceProfileUpdateMsg deviceProfileUpdateMsg, boolean isEdgeVersionDeprecated) {
+        UUID defaultEdgeRuleChainUUID = isEdgeVersionDeprecated
+                ? safeGetUUID(deviceProfileUpdateMsg.getDefaultRuleChainIdMSB(), deviceProfileUpdateMsg.getDefaultRuleChainIdLSB())
+                : deviceProfile.getDefaultRuleChainId() != null ? deviceProfile.getDefaultRuleChainId().getId() : null;
         deviceProfile.setDefaultEdgeRuleChainId(defaultEdgeRuleChainUUID != null ? new RuleChainId(defaultEdgeRuleChainUUID) : null);
+        deviceProfile.setDefaultRuleChainId(ruleChainId);
     }
 
     @Override
-    protected void setDefaultDashboardId(TenantId tenantId, DeviceProfile deviceProfile, DeviceProfileUpdateMsg deviceProfileUpdateMsg) {
-        UUID defaultDashboardUUID = safeGetUUID(deviceProfileUpdateMsg.getDefaultDashboardIdMSB(), deviceProfileUpdateMsg.getDefaultDashboardIdLSB());
+    protected void setDefaultDashboardId(TenantId tenantId, DeviceProfile deviceProfile, DeviceProfileUpdateMsg deviceProfileUpdateMsg, boolean isEdgeVersionDeprecated) {
+        UUID defaultDashboardUUID = isEdgeVersionDeprecated
+                ? safeGetUUID(deviceProfileUpdateMsg.getDefaultDashboardIdMSB(), deviceProfileUpdateMsg.getDefaultDashboardIdLSB())
+                : deviceProfile.getDefaultDashboardId() != null ? deviceProfile.getDefaultDashboardId().getId() : null;
         deviceProfile.setDefaultDashboardId(defaultDashboardUUID != null ? new DashboardId(defaultDashboardUUID) : null);
     }
 }

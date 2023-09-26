@@ -18,6 +18,7 @@ package org.thingsboard.server.service.edge.rpc.constructor;
 import com.google.protobuf.ByteString;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.TenantProfileUpdateMsg;
@@ -36,6 +37,12 @@ public class TenantProfileMsgConstructor {
     public TenantProfileUpdateMsg constructTenantProfileUpdateMsg(UpdateMsgType msgType, TenantProfile tenantProfile, EdgeVersion edgeVersion) {
         ByteString profileData = EdgeVersionUtils.isEdgeVersionOlderThan(edgeVersion, EdgeVersion.V_3_6_1) ?
                 ByteString.empty() : ByteString.copyFrom(dataDecodingEncodingService.encode(tenantProfile.getProfileData()));
+        return EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)
+                ? constructDeprecatedTenantProfileUpdateMsg(msgType, tenantProfile, profileData)
+                : TenantProfileUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(tenantProfile)).build();
+    }
+
+    private TenantProfileUpdateMsg constructDeprecatedTenantProfileUpdateMsg(UpdateMsgType msgType, TenantProfile tenantProfile, ByteString profileData) {
         TenantProfileUpdateMsg.Builder builder = TenantProfileUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(tenantProfile.getId().getId().getMostSignificantBits())
