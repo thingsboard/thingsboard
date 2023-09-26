@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.controller;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
@@ -280,8 +279,7 @@ public class DeviceProfileController extends BaseController {
             @RequestParam(value = "activeOnly", required = false, defaultValue = "false") boolean activeOnly) throws ThingsboardException, ExecutionException, InterruptedException {
         SecurityUser user = getCurrentUser();
         TenantId tenantId = user.getTenantId();
-        ListenableFuture<List<EntitySubtype>> deviceTypes = deviceProfileService.findEntityProfileNamesByTenantId(tenantId, activeOnly);
-        return checkNotNull(deviceTypes.get());
+        return checkNotNull(deviceProfileService.findEntityProfileNamesByTenantId(tenantId, activeOnly).get());
     }
 
 }
