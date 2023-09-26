@@ -216,7 +216,7 @@ public class AssetProfileController extends BaseController {
     @RequestMapping(value = "/assetProfileNames", method = RequestMethod.GET)
     @ResponseBody
     public List<EntitySubtype> getAssetProfileNames(
-            @ApiParam(value = "Flag indicating whether to retrieve exclusively the names of asset profiles that are associated with assets.")
+            @ApiParam(value = "Flag indicating whether to retrieve exclusively the names of asset profiles that are referenced by tenant's assets.")
             @RequestParam(value = "activeOnly", required = false, defaultValue = "false") boolean activeOnly) throws ThingsboardException, ExecutionException, InterruptedException {
         SecurityUser user = getCurrentUser();
         TenantId tenantId = user.getTenantId();

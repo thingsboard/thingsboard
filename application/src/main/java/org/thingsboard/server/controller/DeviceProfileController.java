@@ -275,7 +275,7 @@ public class DeviceProfileController extends BaseController {
     @RequestMapping(value = "/deviceProfileNames", method = RequestMethod.GET)
     @ResponseBody
     public List<EntitySubtype> getDeviceProfileNames(
-            @ApiParam(value = "Flag indicating whether to retrieve exclusively the names of device profiles that are associated with devices.")
+            @ApiParam(value = "Flag indicating whether to retrieve exclusively the names of device profiles that are referenced by tenant's devices.")
             @RequestParam(value = "activeOnly", required = false, defaultValue = "false") boolean activeOnly) throws ThingsboardException, ExecutionException, InterruptedException {
         SecurityUser user = getCurrentUser();
         TenantId tenantId = user.getTenantId();
