@@ -82,6 +82,8 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private int defaultStorageTtlDays;
     private int alarmsTtlDays;
     private int rpcTtlDays;
+    private int queueStatsTtlDays;
+    private int ruleEngineExceptionsTtlDays;
 
     private double warnThreshold;
 
