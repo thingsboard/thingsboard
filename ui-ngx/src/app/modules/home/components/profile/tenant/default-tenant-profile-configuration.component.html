@@ -169,15 +169,15 @@
             <mat-hint></mat-hint>
           </mat-form-field>
           <mat-form-field fxFlex class="mat-block" appearance="fill" subscriptSizing="dynamic">
-            <mat-label translate>tenant-profile.max-transport-data-points</mat-label>
+            <mat-label translate>tenant-profile.max-tbel-executions</mat-label>
             <input matInput required min="0" step="1"
-                   formControlName="maxTransportDataPoints"
+                   formControlName="maxTbelExecutions"
                    type="number">
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxTransportDataPoints').hasError('required')">
-              {{ 'tenant-profile.max-transport-data-points-required' | translate}}
+            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxTbelExecutions').hasError('required')">
+              {{ 'tenant-profile.max-tbel-executions-required' | translate}}
             </mat-error>
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxTransportDataPoints').hasError('min')">
-              {{ 'tenant-profile.max-transport-data-points-range' | translate}}
+            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxTbelExecutions').hasError('min')">
+              {{ 'tenant-profile.max-tbel-executions-range' | translate}}
             </mat-error>
             <mat-hint></mat-hint>
           </mat-form-field>
@@ -196,7 +196,19 @@
             </mat-error>
             <mat-hint></mat-hint>
           </mat-form-field>
-          <div fxFlex></div>
+          <mat-form-field fxFlex class="mat-block" appearance="fill" subscriptSizing="dynamic">
+            <mat-label translate>tenant-profile.max-transport-data-points</mat-label>
+            <input matInput required min="0" step="1"
+                   formControlName="maxTransportDataPoints"
+                   type="number">
+            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxTransportDataPoints').hasError('required')">
+              {{ 'tenant-profile.max-transport-data-points-required' | translate}}
+            </mat-error>
+            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxTransportDataPoints').hasError('min')">
+              {{ 'tenant-profile.max-transport-data-points-range' | translate}}
+            </mat-error>
+            <mat-hint></mat-hint>
+          </mat-form-field>
         </div>
       </ng-template>
     </mat-expansion-panel>

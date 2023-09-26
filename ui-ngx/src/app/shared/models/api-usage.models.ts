@@ -31,6 +31,7 @@ export enum ApiFeature {
   DB = 'DB',
   RE = 'RE',
   JS = 'JS',
+  TBEL = 'TBEL',
   EMAIL = 'EMAIL',
   SMS = 'SMS',
   ALARM = 'ALARM'
@@ -41,6 +42,7 @@ export const ApiFeatureTranslationMap = new Map<ApiFeature, string>([
   [ApiFeature.DB, 'api-usage.telemetry-persistence'],
   [ApiFeature.RE, 'api-usage.rule-engine-executions'],
   [ApiFeature.JS, 'api-usage.javascript-executions'],
+  [ApiFeature.TBEL, 'api-usage.tbel-executions'],
   [ApiFeature.EMAIL, 'api-usage.email-messages'],
   [ApiFeature.SMS, 'api-usage.sms-messages'],
   [ApiFeature.ALARM, 'api-usage.alarm'],
