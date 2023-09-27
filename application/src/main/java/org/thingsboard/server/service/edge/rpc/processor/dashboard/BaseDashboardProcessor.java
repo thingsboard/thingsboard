@@ -31,15 +31,14 @@ import java.util.Set;
 @Slf4j
 public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
 
-    protected boolean saveOrUpdateDashboard(TenantId tenantId, DashboardId deprecatedDashboardId, DashboardUpdateMsg dashboardUpdateMsg, boolean isEdgeProtoDeprecated) {
+    protected boolean saveOrUpdateDashboard(TenantId tenantId, DashboardId dashboardId, DashboardUpdateMsg dashboardUpdateMsg, boolean isEdgeProtoDeprecated) {
         boolean created = false;
         Dashboard dashboard = isEdgeProtoDeprecated
-                ? createDashboard(tenantId, deprecatedDashboardId, dashboardUpdateMsg)
+                ? createDashboard(tenantId, dashboardId, dashboardUpdateMsg)
                 : JacksonUtil.fromEdgeString(dashboardUpdateMsg.getEntity(), Dashboard.class);
         if (dashboard == null) {
             throw new RuntimeException("[{" + tenantId + "}] dashboardUpdateMsg {" + dashboardUpdateMsg + "} cannot be converted to dashboard");
         }
-        DashboardId dashboardId = dashboard.getId();
         Dashboard dashboardById = dashboardService.findDashboardById(tenantId, dashboardId);
         if (dashboardById == null) {
             created = true;
@@ -64,7 +63,6 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
     private Dashboard createDashboard(TenantId tenantId, DashboardId dashboardId, DashboardUpdateMsg dashboardUpdateMsg) {
         Dashboard dashboard = new Dashboard();
         dashboard.setTenantId(tenantId);
-        dashboard.setId(dashboardId);
         dashboard.setCreatedTime(Uuids.unixTimestamp(dashboardId.getId()));
         dashboard.setTitle(dashboardUpdateMsg.getTitle());
         dashboard.setImage(dashboardUpdateMsg.hasImage() ? dashboardUpdateMsg.getImage() : null);
