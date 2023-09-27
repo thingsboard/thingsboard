@@ -50,6 +50,10 @@ export class FontSettingsComponent implements OnInit, ControlValueAccessor {
   @coerceBoolean()
   clearButton = false;
 
+  @Input()
+  @coerceBoolean()
+  autoScale = false;
+
   private modelValue: Font;
 
   private propagateChange = null;
@@ -87,7 +91,8 @@ export class FontSettingsComponent implements OnInit, ControlValueAccessor {
       const ctx: any = {
         font: this.modelValue,
         initialPreviewStyle: this.initialPreviewStyle,
-        clearButton: this.clearButton
+        clearButton: this.clearButton,
+        autoScale: this.autoScale
       };
       if (isDefinedAndNotNull(this.previewText)) {
         const previewText = typeof this.previewText === 'string' ? this.previewText : this.previewText();

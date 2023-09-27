@@ -42,16 +42,16 @@ import {
 } from '@home/components/widget/lib/settings/cards/dashboard-state-widget-settings.component';
 import {
   EntitiesHierarchyWidgetSettingsComponent
-} from '@home/components/widget/lib/settings/cards/entities-hierarchy-widget-settings.component';
+} from '@home/components/widget/lib/settings/entity/entities-hierarchy-widget-settings.component';
 import {
   HtmlCardWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/cards/html-card-widget-settings.component';
 import {
   EntitiesTableWidgetSettingsComponent
-} from '@home/components/widget/lib/settings/cards/entities-table-widget-settings.component';
+} from '@home/components/widget/lib/settings/entity/entities-table-widget-settings.component';
 import {
   EntitiesTableKeySettingsComponent
-} from '@home/components/widget/lib/settings/cards/entities-table-key-settings.component';
+} from '@home/components/widget/lib/settings/entity/entities-table-key-settings.component';
 import {
   AlarmsTableWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/alarm/alarms-table-widget-settings.component';
@@ -279,6 +279,15 @@ import {
 import {
   AggregatedValueCardWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/cards/aggregated-value-card-widget-settings.component';
+import {
+  AlarmCountWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/alarm/alarm-count-widget-settings.component';
+import {
+  EntityCountWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/entity/entity-count-widget-settings.component';
+import {
+  BatteryLevelWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/indicator/battery-level-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -382,7 +391,10 @@ import {
     QuickLinksWidgetSettingsComponent,
     ValueCardWidgetSettingsComponent,
     AggregatedValueCardKeySettingsComponent,
-    AggregatedValueCardWidgetSettingsComponent
+    AggregatedValueCardWidgetSettingsComponent,
+    AlarmCountWidgetSettingsComponent,
+    EntityCountWidgetSettingsComponent,
+    BatteryLevelWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -491,7 +503,10 @@ import {
     QuickLinksWidgetSettingsComponent,
     ValueCardWidgetSettingsComponent,
     AggregatedValueCardKeySettingsComponent,
-    AggregatedValueCardWidgetSettingsComponent
+    AggregatedValueCardWidgetSettingsComponent,
+    AlarmCountWidgetSettingsComponent,
+    EntityCountWidgetSettingsComponent,
+    BatteryLevelWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -565,5 +580,8 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-quick-links-widget-settings': QuickLinksWidgetSettingsComponent,
   'tb-value-card-widget-settings': ValueCardWidgetSettingsComponent,
   'tb-aggregated-value-card-key-settings': AggregatedValueCardKeySettingsComponent,
-  'tb-aggregated-value-card-widget-settings': AggregatedValueCardWidgetSettingsComponent
+  'tb-aggregated-value-card-widget-settings': AggregatedValueCardWidgetSettingsComponent,
+  'tb-alarm-count-widget-settings': AlarmCountWidgetSettingsComponent,
+  'tb-entity-count-widget-settings': EntityCountWidgetSettingsComponent,
+  'tb-battery-level-widget-settings': BatteryLevelWidgetSettingsComponent
 };

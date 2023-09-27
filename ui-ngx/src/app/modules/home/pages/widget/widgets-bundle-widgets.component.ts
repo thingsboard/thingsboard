@@ -172,6 +172,7 @@ export class WidgetsBundleWidgetsComponent extends PageComponent implements OnIn
     this.widgetsService.updateWidgetsBundleWidgetTypes(this.widgetsBundle.id.id, widgetTypeIds).subscribe(() => {
       this.isDirty = false;
       this.editMode = false;
+      this.addMode = false;
     });
   }
 

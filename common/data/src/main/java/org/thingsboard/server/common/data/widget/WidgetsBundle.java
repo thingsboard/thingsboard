@@ -64,7 +64,7 @@ public class WidgetsBundle extends BaseData<WidgetsBundleId> implements HasName,
     private String image;
 
     @NoXss
-    @Length(fieldName = "description")
+    @Length(fieldName = "description", max = 1024)
     @Getter
     @Setter
     @ApiModelProperty(position = 7, value = "Description", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
