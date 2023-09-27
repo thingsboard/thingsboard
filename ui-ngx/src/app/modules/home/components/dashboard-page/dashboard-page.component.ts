@@ -351,7 +351,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
               private viewContainerRef: ViewContainerRef,
               private cd: ChangeDetectorRef,
               private sanitizer: DomSanitizer,
-              public elRef: ElementRef) {
+              public elRef: ElementRef,
+              private injector: Injector) {
     super(store);
     if (isDefinedAndNotNull(embeddedValue)) {
       this.embedded = embeddedValue;
@@ -1177,6 +1178,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
             disableClose: true,
             panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
             maxWidth: '95vw',
+            injector: this.injector,
             data: {
               dashboard: this.dashboard,
               aliasController: this.dashboardCtx.aliasController,

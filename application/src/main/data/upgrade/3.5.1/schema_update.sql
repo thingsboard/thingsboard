@@ -138,6 +138,9 @@ CREATE TABLE IF NOT EXISTS alarm_types (
 
 INSERT INTO alarm_types (tenant_id, type) SELECT DISTINCT tenant_id, type FROM alarm ON CONFLICT (tenant_id, type) DO NOTHING;
 
+ALTER TABLE widgets_bundle ALTER COLUMN description SET DATA TYPE varchar(1024);
+ALTER TABLE widget_type ALTER COLUMN description SET DATA TYPE varchar(1024);
+
 ALTER TABLE widget_type
     ADD COLUMN IF NOT EXISTS fqn varchar(512);
 ALTER TABLE widget_type

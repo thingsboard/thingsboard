@@ -34,7 +34,7 @@ import {
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { TbMissingTranslationHandler } from './translate/missing-translate-handler';
 import { MatButtonModule } from '@angular/material/button';
-import { MAT_DIALOG_DEFAULT_OPTIONS, MatDialogModule } from '@angular/material/dialog';
+import { MAT_DIALOG_DEFAULT_OPTIONS, MatDialogConfig, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { TranslateDefaultCompiler } from '@core/translate/translate-default-compiler';
@@ -103,6 +103,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     {
       provide: MAT_DIALOG_DEFAULT_OPTIONS,
       useValue: {
+        ...new MatDialogConfig(),
         restoreFocus: false
       }
     },

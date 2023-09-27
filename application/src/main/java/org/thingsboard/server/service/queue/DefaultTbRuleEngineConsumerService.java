@@ -183,19 +183,20 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
         if (event.getServiceType().equals(getServiceType())) {
-            String serviceQueue = event.getQueueKey().getQueueName();
-            log.info("[{}] Subscribing to partitions: {}", serviceQueue, event.getPartitions());
-            Queue configuration = consumerConfigurations.get(event.getQueueKey());
-            if (configuration == null) {
-                log.warn("Received invalid partition change event for {} that is not managed by this service", event.getQueueKey());
-                return;
-            }
-            if (!configuration.isConsumerPerPartition()) {
-                consumers.get(event.getQueueKey()).subscribe(event.getPartitions());
-            } else {
-                log.info("[{}] Subscribing consumer per partition: {}", serviceQueue, event.getPartitions());
-                subscribeConsumerPerPartition(event.getQueueKey(), event.getPartitions());
-            }
+            event.getPartitionsMap().forEach((queueKey, partitions) -> {
+                String serviceQueue = queueKey.getQueueName();
+                log.info("[{}] Subscribing to partitions: {}", serviceQueue, partitions);
+                Queue configuration = consumerConfigurations.get(queueKey);
+                if (configuration == null) {
+                    return;
+                }
+                if (!configuration.isConsumerPerPartition()) {
+                    consumers.get(queueKey).subscribe(partitions);
+                } else {
+                    log.info("[{}] Subscribing consumer per partition: {}", serviceQueue, partitions);
+                    subscribeConsumerPerPartition(queueKey, partitions);
+                }
+            });
         }
     }
 
@@ -501,7 +502,6 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                 }
             }
         }
-        partitionService.recalculatePartitions(serviceInfoProvider.getServiceInfo(), new ArrayList<>(partitionService.getOtherServices(ServiceType.TB_RULE_ENGINE)));
     }
 
     private void forwardToRuleEngineActor(String queueName, TenantId tenantId, ToRuleEngineMsg toRuleEngineMsg, TbMsgCallback callback) {

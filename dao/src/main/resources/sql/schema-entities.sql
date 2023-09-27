@@ -25,7 +25,7 @@ CREATE OR REPLACE PROCEDURE insert_tb_schema_settings()
 $$
 BEGIN
     IF (SELECT COUNT(*) FROM tb_schema_settings) = 0 THEN
-        INSERT INTO tb_schema_settings (schema_version) VALUES (3005002);
+        INSERT INTO tb_schema_settings (schema_version) VALUES (3006000);
     END IF;
 END;
 $$;
@@ -488,7 +488,7 @@ CREATE TABLE IF NOT EXISTS widget_type (
     tenant_id uuid,
     image varchar(1000000),
     deprecated boolean NOT NULL DEFAULT false,
-    description varchar(255),
+    description varchar(1024),
     external_id uuid,
     CONSTRAINT uq_widget_type_fqn UNIQUE (tenant_id, fqn),
     CONSTRAINT widget_type_external_id_unq_key UNIQUE (tenant_id, external_id)
@@ -501,7 +501,7 @@ CREATE TABLE IF NOT EXISTS widgets_bundle (
     tenant_id uuid,
     title varchar(255),
     image varchar(1000000),
-    description varchar(255),
+    description varchar(1024),
     external_id uuid,
     CONSTRAINT uq_widgets_bundle_alias UNIQUE (tenant_id, alias),
     CONSTRAINT widgets_bundle_external_id_unq_key UNIQUE (tenant_id, external_id)
@@ -696,6 +696,7 @@ CREATE TABLE IF NOT EXISTS api_usage_state (
     db_storage varchar(32),
     re_exec varchar(32),
     js_exec varchar(32),
+    tbel_exec varchar(32),
     email_exec varchar(32),
     sms_exec varchar(32),
     alarm_exec varchar(32),
