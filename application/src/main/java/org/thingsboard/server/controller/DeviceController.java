@@ -534,7 +534,7 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Get Device Types (getDeviceTypes)",
-            notes = "Deprecated. See 'getDeviceProfileNames API from Device Profile Controller' instead." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
+            notes = "Deprecated. See 'getDeviceProfileNames' API from Device Profile Controller instead." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device/types", method = RequestMethod.GET)

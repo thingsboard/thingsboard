@@ -397,7 +397,7 @@ public class AssetController extends BaseController {
     }
 
     @ApiOperation(value = "Get Asset Types (getAssetTypes)",
-            notes = "Deprecated. See 'getAssetProfileNames API from Asset Profile Controller' instead." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
+            notes = "Deprecated. See 'getAssetProfileNames' API from Asset Profile Controller instead." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/asset/types", method = RequestMethod.GET)
