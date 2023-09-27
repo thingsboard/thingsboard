@@ -74,6 +74,7 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
                 deviceNameUpdated = true;
             }
             device.setName(deviceName);
+            setCustomerId(tenantId, created ? null : deviceById.getCustomerId(), device, deviceUpdateMsg, isEdgeProtoDeprecated);
 
             deviceValidator.validate(device, Device::getTenantId);
             if (created) {
@@ -109,9 +110,6 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
 
         UUID deviceProfileUUID = safeGetUUID(deviceUpdateMsg.getDeviceProfileIdMSB(), deviceUpdateMsg.getDeviceProfileIdLSB());
         device.setDeviceProfileId(deviceProfileUUID != null ? new DeviceProfileId(deviceProfileUUID) : null);
-
-        CustomerId customerId = safeGetCustomerId(deviceUpdateMsg.getCustomerIdMSB(), deviceUpdateMsg.getCustomerIdLSB());
-        device.setCustomerId(customerId);
 
         Optional<DeviceData> deviceDataOpt = dataDecodingEncodingService.decode(deviceUpdateMsg.getDeviceDataBytes().toByteArray());
         device.setDeviceData(deviceDataOpt.orElse(null));
@@ -165,4 +163,6 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
                 ? deviceCredentialsUpdateMsg.getCredentialsValue() : null);
         return deviceCredentials;
     }
+
+    protected abstract void setCustomerId(TenantId tenantId, CustomerId customerId, Device device, DeviceUpdateMsg deviceUpdateMsg, boolean isEdgeVersionDeprecated);
 }

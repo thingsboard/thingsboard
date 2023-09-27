@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.edge.rpc.processor.asset;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +29,6 @@ import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -149,22 +147,11 @@ public class AssetEdgeProcessor extends BaseAssetProcessor {
         return downlinkMsg;
     }
 
-    private Asset createAsset(TenantId tenantId, AssetId assetId, AssetUpdateMsg assetUpdateMsg) {
-        Asset asset = new Asset();
-        asset.setId(assetId);
-        asset.setTenantId(tenantId);
-        asset.setName(assetUpdateMsg.getName());
-        asset.setCreatedTime(Uuids.unixTimestamp(assetId.getId()));
-        asset.setType(assetUpdateMsg.getType());
-        asset.setLabel(assetUpdateMsg.hasLabel() ? assetUpdateMsg.getLabel() : null);
-        asset.setAdditionalInfo(assetUpdateMsg.hasAdditionalInfo()
-                ? JacksonUtil.toJsonNode(assetUpdateMsg.getAdditionalInfo()) : null);
-
-        UUID assetProfileUUID = safeGetUUID(assetUpdateMsg.getAssetProfileIdMSB(), assetUpdateMsg.getAssetProfileIdLSB());
-        asset.setAssetProfileId(assetProfileUUID != null ? new AssetProfileId(assetProfileUUID) : null);
-
-        CustomerId customerId = safeGetCustomerId(assetUpdateMsg.getCustomerIdMSB(), assetUpdateMsg.getCustomerIdLSB());
-        asset.setCustomerId(customerId);
-        return asset;
+    @Override
+    protected void setCustomerId(TenantId tenantId, CustomerId customerId, Asset asset, AssetUpdateMsg assetUpdateMsg, boolean isEdgeVersionDeprecated) {
+        CustomerId customerUUID = isEdgeVersionDeprecated
+                ? safeGetCustomerId(assetUpdateMsg.getCustomerIdMSB(), assetUpdateMsg.getCustomerIdLSB())
+                : asset.getCustomerId() != null ? asset.getCustomerId() : customerId;
+        asset.setCustomerId(customerUUID);
     }
 }

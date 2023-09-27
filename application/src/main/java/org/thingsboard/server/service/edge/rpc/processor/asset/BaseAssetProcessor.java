@@ -60,6 +60,7 @@ public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
                 assetNameUpdated = true;
             }
             asset.setName(assetName);
+            setCustomerId(tenantId, created ? null : assetById.getCustomerId(), asset, assetUpdateMsg, isEdgeProtoDeprecated);
 
             assetValidator.validate(asset, Asset::getTenantId);
             if (created) {
@@ -92,4 +93,7 @@ public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
         asset.setCustomerId(customerId);
         return asset;
     }
+
+    protected abstract void setCustomerId(TenantId tenantId, CustomerId customerId, Asset asset, AssetUpdateMsg assetUpdateMsg, boolean isEdgeVersionDeprecated);
+
 }

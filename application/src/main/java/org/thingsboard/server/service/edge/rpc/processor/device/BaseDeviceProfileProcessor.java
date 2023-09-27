@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -74,7 +75,7 @@ public abstract class BaseDeviceProfileProcessor extends BaseEdgeProcessor {
 
             setDefaultRuleChainId(tenantId, deviceProfile);
             setDefaultEdgeRuleChainId(deviceProfile, created ? null : deviceProfileById.getDefaultRuleChainId(), deviceProfileUpdateMsg, isEdgeVersionProtoDeprecated);
-            setDefaultDashboardId(tenantId, deviceProfile, deviceProfileUpdateMsg, isEdgeVersionProtoDeprecated);
+            setDefaultDashboardId(tenantId, created ? null : deviceProfileById.getDefaultDashboardId(), deviceProfile, deviceProfileUpdateMsg, isEdgeVersionProtoDeprecated);
 
             deviceProfileValidator.validate(deviceProfile, DeviceProfile::getTenantId);
             if (created) {
@@ -127,5 +128,5 @@ public abstract class BaseDeviceProfileProcessor extends BaseEdgeProcessor {
 
     protected abstract void setDefaultEdgeRuleChainId(DeviceProfile deviceProfile, RuleChainId ruleChainId, DeviceProfileUpdateMsg deviceProfileUpdateMsg, boolean isEdgeVersionDeprecated);
 
-    protected abstract void setDefaultDashboardId(TenantId tenantId, DeviceProfile deviceProfile, DeviceProfileUpdateMsg deviceProfileUpdateMsg, boolean isEdgeVersionDeprecated);
+    protected abstract void setDefaultDashboardId(TenantId tenantId, DashboardId dashboardId, DeviceProfile deviceProfile, DeviceProfileUpdateMsg deviceProfileUpdateMsg, boolean isEdgeVersionDeprecated);
 }

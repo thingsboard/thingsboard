@@ -94,7 +94,7 @@ public class AssetProfileEdgeTest extends AbstractEdgeTest {
         DashboardId dashboardId = createDashboardAndAssignToEdge("Asset Profile Dashboard");
 
         AssetProfile assetProfileOnEdge = buildAssetProfileForUplinkMsg("Asset Profile On Edge");
-        assetProfileOnEdge.setDefaultEdgeRuleChainId(edgeRuleChainId);
+        assetProfileOnEdge.setDefaultRuleChainId(edgeRuleChainId);
         assetProfileOnEdge.setDefaultDashboardId(dashboardId);
 
         UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
