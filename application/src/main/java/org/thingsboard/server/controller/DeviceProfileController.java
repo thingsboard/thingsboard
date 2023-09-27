@@ -269,7 +269,7 @@ public class DeviceProfileController extends BaseController {
     }
 
     @ApiOperation(value = "Get Device Profile names (getDeviceProfileNames)",
-            notes = "Returns a set of unique device profile names based on devices that are owned by the tenant."
+            notes = "Returns a set of unique device profile names owned by the tenant."
                     + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/deviceProfileNames", method = RequestMethod.GET)

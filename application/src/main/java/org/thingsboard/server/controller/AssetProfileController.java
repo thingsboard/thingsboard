@@ -210,7 +210,7 @@ public class AssetProfileController extends BaseController {
     }
 
     @ApiOperation(value = "Get Asset Profile names (getAssetProfileNames)",
-            notes = "Returns a set of unique asset profile names based on assets that are owned by the tenant."
+            notes = "Returns a set of unique asset profile names owned by the tenant."
                     + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/assetProfileNames", method = RequestMethod.GET)
