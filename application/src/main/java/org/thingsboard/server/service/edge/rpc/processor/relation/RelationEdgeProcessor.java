@@ -46,12 +46,12 @@ import java.util.Set;
 @TbCoreComponent
 public class RelationEdgeProcessor extends BaseRelationProcessor {
 
-    public ListenableFuture<Void> processRelationMsgFromEdge(TenantId tenantId, Edge edge, RelationUpdateMsg relationUpdateMsg) {
+    public ListenableFuture<Void> processRelationMsgFromEdge(TenantId tenantId, Edge edge, RelationUpdateMsg relationUpdateMsg, EdgeVersion edgeVersion) {
         log.trace("[{}] executing processRelationMsgFromEdge [{}] from edge [{}]", tenantId, relationUpdateMsg, edge.getId());
         try {
             edgeSynchronizationManager.getEdgeId().set(edge.getId());
 
-            return processRelationMsg(tenantId, relationUpdateMsg);
+            return processRelationMsg(tenantId, relationUpdateMsg, edgeVersion);
         } finally {
             edgeSynchronizationManager.getEdgeId().remove();
         }

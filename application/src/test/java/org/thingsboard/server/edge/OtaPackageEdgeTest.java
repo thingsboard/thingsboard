@@ -58,7 +58,7 @@ public class OtaPackageEdgeTest extends AbstractEdgeTest {
         AbstractMessage latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof OtaPackageUpdateMsg);
         OtaPackageUpdateMsg otaPackageUpdateMsg = (OtaPackageUpdateMsg) latestMessage;
-        OtaPackage otaPackage = JacksonUtil.fromEdgeString(otaPackageUpdateMsg.getEntity(), OtaPackage.class);
+        OtaPackage otaPackage = JacksonUtil.fromStringIgnoreUnknownProperties(otaPackageUpdateMsg.getEntity(), OtaPackage.class);
         Assert.assertNotNull(otaPackage);
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, otaPackageUpdateMsg.getMsgType());
         Assert.assertEquals(savedFirmwareInfo.getId(), otaPackage.getId());
@@ -112,7 +112,7 @@ public class OtaPackageEdgeTest extends AbstractEdgeTest {
         AbstractMessage latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof OtaPackageUpdateMsg);
         OtaPackageUpdateMsg otaPackageUpdateMsg = (OtaPackageUpdateMsg) latestMessage;
-        OtaPackage otaPackage = JacksonUtil.fromEdgeString(otaPackageUpdateMsg.getEntity(), OtaPackage.class);
+        OtaPackage otaPackage = JacksonUtil.fromStringIgnoreUnknownProperties(otaPackageUpdateMsg.getEntity(), OtaPackage.class);
         Assert.assertNotNull(otaPackage);
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, otaPackageUpdateMsg.getMsgType());
         Assert.assertEquals(savedFirmwareInfo.getId(), otaPackage.getId());

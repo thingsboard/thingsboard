@@ -143,10 +143,10 @@ public class DeviceProfileEdgeProcessor extends BaseDeviceProfileProcessor {
     }
 
     @Override
-    protected void setDefaultDashboardId(TenantId tenantId, DeviceProfile deviceProfile, DeviceProfileUpdateMsg deviceProfileUpdateMsg, boolean isEdgeVersionDeprecated) {
+    protected void setDefaultDashboardId(TenantId tenantId, DashboardId dashboardId, DeviceProfile deviceProfile, DeviceProfileUpdateMsg deviceProfileUpdateMsg, boolean isEdgeVersionDeprecated) {
         UUID defaultDashboardUUID = isEdgeVersionDeprecated
                 ? safeGetUUID(deviceProfileUpdateMsg.getDefaultDashboardIdMSB(), deviceProfileUpdateMsg.getDefaultDashboardIdLSB())
-                : deviceProfile.getDefaultDashboardId() != null ? deviceProfile.getDefaultDashboardId().getId() : null;
+                : deviceProfile.getDefaultDashboardId() != null ? deviceProfile.getDefaultDashboardId().getId() : (dashboardId != null ? dashboardId.getId() : null);
         deviceProfile.setDefaultDashboardId(defaultDashboardUUID != null ? new DashboardId(defaultDashboardUUID) : null);
     }
 }

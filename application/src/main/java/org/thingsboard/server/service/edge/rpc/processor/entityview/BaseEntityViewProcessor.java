@@ -40,7 +40,7 @@ public abstract class BaseEntityViewProcessor extends BaseEdgeProcessor {
         boolean entityViewNameUpdated = false;
         EntityView entityView = isEdgeProtoDeprecated
                 ? createEntityView(tenantId, entityViewId, entityViewUpdateMsg)
-                : JacksonUtil.fromEdgeString(entityViewUpdateMsg.getEntity(), EntityView.class);
+                : JacksonUtil.fromStringIgnoreUnknownProperties(entityViewUpdateMsg.getEntity(), EntityView.class);
         if (entityView == null) {
             throw new RuntimeException("[{" + tenantId + "}] entityViewUpdateMsg {" + entityViewUpdateMsg + "} cannot be converted to entity view");
         }

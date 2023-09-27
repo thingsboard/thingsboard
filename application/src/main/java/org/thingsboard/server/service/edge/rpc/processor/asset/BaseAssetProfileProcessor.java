@@ -22,6 +22,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.id.AssetProfileId;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
@@ -39,7 +40,7 @@ public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
         try {
             AssetProfile assetProfile = isEdgeProtoDeprecated
                     ? createAssetProfile(tenantId, assetProfileId, assetProfileUpdateMsg)
-                    : JacksonUtil.fromEdgeString(assetProfileUpdateMsg.getEntity(), AssetProfile.class);
+                    : JacksonUtil.fromStringIgnoreUnknownProperties(assetProfileUpdateMsg.getEntity(), AssetProfile.class);
             if (assetProfile == null) {
                 throw new RuntimeException("[{" + tenantId + "}] assetProfileUpdateMsg {" + assetProfileUpdateMsg + "} cannot be converted to asset profile");
             }
@@ -62,7 +63,7 @@ public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
 
             setDefaultRuleChainId(tenantId, assetProfile);
             setDefaultEdgeRuleChainId(assetProfile, created ? null : assetProfileById.getDefaultRuleChainId(), assetProfileUpdateMsg, isEdgeProtoDeprecated);
-            setDefaultDashboardId(tenantId, assetProfile, assetProfileUpdateMsg, isEdgeProtoDeprecated);
+            setDefaultDashboardId(tenantId, created ? null : assetProfileById.getDefaultDashboardId(), assetProfile, assetProfileUpdateMsg, isEdgeProtoDeprecated);
 
             assetProfileValidator.validate(assetProfile, AssetProfile::getTenantId);
             if (created) {
@@ -95,5 +96,5 @@ public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
 
     protected abstract void setDefaultEdgeRuleChainId(AssetProfile assetProfile, RuleChainId ruleChainId, AssetProfileUpdateMsg assetProfileUpdateMsg, boolean isEdgeVersionDeprecated);
 
-    protected abstract void setDefaultDashboardId(TenantId tenantId, AssetProfile assetProfile, AssetProfileUpdateMsg assetProfileUpdateMsg, boolean isEdgeVersionDeprecated);
+    protected abstract void setDefaultDashboardId(TenantId tenantId, DashboardId dashboardId, AssetProfile assetProfile, AssetProfileUpdateMsg assetProfileUpdateMsg, boolean isEdgeVersionDeprecated);
 }

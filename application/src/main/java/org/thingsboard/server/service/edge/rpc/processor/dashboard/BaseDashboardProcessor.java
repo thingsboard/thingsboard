@@ -35,7 +35,7 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
         boolean created = false;
         Dashboard dashboard = isEdgeProtoDeprecated
                 ? createDashboard(tenantId, deprecatedDashboardId, dashboardUpdateMsg)
-                : JacksonUtil.fromEdgeString(dashboardUpdateMsg.getEntity(), Dashboard.class);
+                : JacksonUtil.fromStringIgnoreUnknownProperties(dashboardUpdateMsg.getEntity(), Dashboard.class);
         if (dashboard == null) {
             throw new RuntimeException("[{" + tenantId + "}] dashboardUpdateMsg {" + dashboardUpdateMsg + "} cannot be converted to dashboard");
         }

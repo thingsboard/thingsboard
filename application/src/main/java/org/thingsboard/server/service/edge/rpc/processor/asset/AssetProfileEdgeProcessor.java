@@ -143,10 +143,10 @@ public class AssetProfileEdgeProcessor extends BaseAssetProfileProcessor {
     }
 
     @Override
-    protected void setDefaultDashboardId(TenantId tenantId, AssetProfile assetProfile, AssetProfileUpdateMsg assetProfileUpdateMsg, boolean isEdgeVersionDeprecated) {
+    protected void setDefaultDashboardId(TenantId tenantId, DashboardId dashboardId, AssetProfile assetProfile, AssetProfileUpdateMsg assetProfileUpdateMsg, boolean isEdgeVersionDeprecated) {
         UUID defaultDashboardUUID = isEdgeVersionDeprecated
                 ? safeGetUUID(assetProfileUpdateMsg.getDefaultDashboardIdMSB(), assetProfileUpdateMsg.getDefaultDashboardIdLSB())
-                : assetProfile.getDefaultDashboardId() != null ? assetProfile.getDefaultDashboardId().getId() : null;
+                : assetProfile.getDefaultDashboardId() != null ? assetProfile.getDefaultDashboardId().getId() : (dashboardId != null ? dashboardId.getId() : null);
         assetProfile.setDefaultDashboardId(defaultDashboardUUID != null ? new DashboardId(defaultDashboardUUID) : null);
     }
 }

@@ -52,7 +52,7 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
         AlarmId alarmId = new AlarmId(new UUID(alarmUpdateMsg.getIdMSB(), alarmUpdateMsg.getIdLSB()));
         boolean isEdgeProtoDeprecated = EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion);
         Alarm alarm = isEdgeProtoDeprecated ? createDeprecatedAlarm(tenantId, alarmUpdateMsg)
-                : JacksonUtil.fromEdgeString(alarmUpdateMsg.getEntity(), Alarm.class);
+                : JacksonUtil.fromStringIgnoreUnknownProperties(alarmUpdateMsg.getEntity(), Alarm.class);
         if (alarm == null) {
             throw new RuntimeException("[{" + tenantId + "}] alarmUpdateMsg {" + alarmUpdateMsg + "} cannot be converted to alarm");
         }

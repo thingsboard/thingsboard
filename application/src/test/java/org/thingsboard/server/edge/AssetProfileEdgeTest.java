@@ -53,7 +53,7 @@ public class AssetProfileEdgeTest extends AbstractEdgeTest {
         AbstractMessage latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof AssetProfileUpdateMsg);
         AssetProfileUpdateMsg assetProfileUpdateMsg = (AssetProfileUpdateMsg) latestMessage;
-        AssetProfile assetProfileMsg = JacksonUtil.fromEdgeString(assetProfileUpdateMsg.getEntity(), AssetProfile.class);
+        AssetProfile assetProfileMsg = JacksonUtil.fromStringIgnoreUnknownProperties(assetProfileUpdateMsg.getEntity(), AssetProfile.class);
         Assert.assertNotNull(assetProfileMsg);
         Assert.assertEquals(assetProfile, assetProfileMsg);
         Assert.assertEquals("Building", assetProfileMsg.getName());
@@ -68,7 +68,7 @@ public class AssetProfileEdgeTest extends AbstractEdgeTest {
         latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof AssetProfileUpdateMsg);
         assetProfileUpdateMsg = (AssetProfileUpdateMsg) latestMessage;
-        assetProfileMsg = JacksonUtil.fromEdgeString(assetProfileUpdateMsg.getEntity(), AssetProfile.class);
+        assetProfileMsg = JacksonUtil.fromStringIgnoreUnknownProperties(assetProfileUpdateMsg.getEntity(), AssetProfile.class);
         Assert.assertNotNull(assetProfileMsg);
         Assert.assertEquals("IMAGE", assetProfileMsg.getImage());
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, assetProfileUpdateMsg.getMsgType());
@@ -94,7 +94,7 @@ public class AssetProfileEdgeTest extends AbstractEdgeTest {
         DashboardId dashboardId = createDashboardAndAssignToEdge("Asset Profile Dashboard");
 
         AssetProfile assetProfileOnEdge = buildAssetProfileForUplinkMsg("Asset Profile On Edge");
-        assetProfileOnEdge.setDefaultEdgeRuleChainId(edgeRuleChainId);
+        assetProfileOnEdge.setDefaultRuleChainId(edgeRuleChainId);
         assetProfileOnEdge.setDefaultDashboardId(dashboardId);
 
         UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
@@ -170,7 +170,7 @@ public class AssetProfileEdgeTest extends AbstractEdgeTest {
         Optional<AssetProfileUpdateMsg> assetProfileUpdateMsgOpt = edgeImitator.findMessageByType(AssetProfileUpdateMsg.class);
         Assert.assertTrue(assetProfileUpdateMsgOpt.isPresent());
         AssetProfileUpdateMsg latestAssetProfileUpdateMsg = assetProfileUpdateMsgOpt.get();
-        AssetProfile assetProfileMsg = JacksonUtil.fromEdgeString(latestAssetProfileUpdateMsg.getEntity(), AssetProfile.class);
+        AssetProfile assetProfileMsg = JacksonUtil.fromStringIgnoreUnknownProperties(latestAssetProfileUpdateMsg.getEntity(), AssetProfile.class);
         Assert.assertNotNull(assetProfileMsg);
         Assert.assertNotEquals(assetProfileOnCloudName, assetProfileMsg.getName());
 

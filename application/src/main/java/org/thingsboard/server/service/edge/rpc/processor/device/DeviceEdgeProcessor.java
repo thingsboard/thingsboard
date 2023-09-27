@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -96,12 +97,12 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
         }
     }
 
-    public ListenableFuture<Void> processDeviceCredentialsMsgFromEdge(TenantId tenantId, EdgeId edgeId, DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg) {
+    public ListenableFuture<Void> processDeviceCredentialsMsgFromEdge(TenantId tenantId, EdgeId edgeId, DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg, EdgeVersion edgeVersion) {
         log.debug("[{}] Executing processDeviceCredentialsMsgFromEdge, deviceCredentialsUpdateMsg [{}]", tenantId, deviceCredentialsUpdateMsg);
         try {
             edgeSynchronizationManager.getEdgeId().set(edgeId);
 
-            updateDeviceCredentials(tenantId, deviceCredentialsUpdateMsg);
+            updateDeviceCredentials(tenantId, deviceCredentialsUpdateMsg, edgeVersion);
         } finally {
             edgeSynchronizationManager.getEdgeId().remove();
         }
@@ -285,5 +286,13 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
                 .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                 .addDeviceCredentialsRequestMsg(deviceCredentialsRequestMsg);
         return builder.build();
+    }
+
+    @Override
+    protected void setCustomerId(TenantId tenantId, CustomerId customerId, Device device, DeviceUpdateMsg deviceUpdateMsg, boolean isEdgeVersionDeprecated) {
+        CustomerId customerUUID = isEdgeVersionDeprecated
+                ? safeGetCustomerId(deviceUpdateMsg.getCustomerIdMSB(), deviceUpdateMsg.getCustomerIdLSB())
+                : device.getCustomerId() != null ? device.getCustomerId() : customerId;
+        device.setCustomerId(customerUUID);
     }
 }

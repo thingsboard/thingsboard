@@ -47,11 +47,11 @@ import java.util.UUID;
 @TbCoreComponent
 public class AlarmEdgeProcessor extends BaseAlarmProcessor {
 
-    public ListenableFuture<Void> processAlarmMsgFromEdge(TenantId tenantId, EdgeId edgeId, AlarmUpdateMsg alarmUpdateMsg) {
+    public ListenableFuture<Void> processAlarmMsgFromEdge(TenantId tenantId, EdgeId edgeId, AlarmUpdateMsg alarmUpdateMsg, EdgeVersion edgeVersion) {
         log.trace("[{}] processAlarmMsgFromEdge [{}]", tenantId, alarmUpdateMsg);
         try {
             edgeSynchronizationManager.getEdgeId().set(edgeId);
-            return processAlarmMsg(tenantId, alarmUpdateMsg);
+            return processAlarmMsg(tenantId, alarmUpdateMsg, edgeVersion);
         } finally {
             edgeSynchronizationManager.getEdgeId().remove();
         }
@@ -123,4 +123,5 @@ public class AlarmEdgeProcessor extends BaseAlarmProcessor {
         } while (pageData != null && pageData.hasNext());
         return futures;
     }
+
 }

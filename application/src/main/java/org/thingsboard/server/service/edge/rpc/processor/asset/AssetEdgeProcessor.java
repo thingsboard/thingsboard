@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -144,5 +145,13 @@ public class AssetEdgeProcessor extends BaseAssetProcessor {
                 break;
         }
         return downlinkMsg;
+    }
+
+    @Override
+    protected void setCustomerId(TenantId tenantId, CustomerId customerId, Asset asset, AssetUpdateMsg assetUpdateMsg, boolean isEdgeVersionDeprecated) {
+        CustomerId customerUUID = isEdgeVersionDeprecated
+                ? safeGetCustomerId(assetUpdateMsg.getCustomerIdMSB(), assetUpdateMsg.getCustomerIdLSB())
+                : asset.getCustomerId() != null ? asset.getCustomerId() : customerId;
+        asset.setCustomerId(customerUUID);
     }
 }
