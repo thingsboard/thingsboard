@@ -130,28 +130,30 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
         if (deviceCredentials == null) {
             throw new RuntimeException("[{" + tenantId + "}] deviceCredentialsUpdateMsg {" + deviceCredentialsUpdateMsg + "} cannot be converted to device credentials");
         }
-        Device device = deviceService.findDeviceById(tenantId, deviceCredentials.getDeviceId());
-        if (device != null) {
-            log.debug("[{}] Updating device credentials for device [{}]. New device credentials Id [{}], value [{}]",
-                    tenantId, device.getName(), deviceCredentials.getCredentialsId(), deviceCredentials.getCredentialsValue());
-            try {
-                edgeSynchronizationManager.getSync().set(true);
-                DeviceCredentials deviceCredentialsById = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, device.getId());
-                deviceCredentialsById.setCredentialsType(deviceCredentials.getCredentialsType());
-                deviceCredentialsById.setCredentialsValue(deviceCredentials.getCredentialsValue());
-                deviceCredentialsById.setCredentialsId(deviceCredentials.getCredentialsId());
-                deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentialsById);
-            } catch (Exception e) {
-                log.error("[{}] Can't update device credentials for device [{}], deviceCredentialsUpdateMsg [{}]",
-                        tenantId, device.getName(), deviceCredentialsUpdateMsg, e);
-                throw new RuntimeException(e);
-            } finally {
-                edgeSynchronizationManager.getSync().remove();
+        return dbCallbackExecutorService.submit(() -> {
+            Device device = deviceService.findDeviceById(tenantId, deviceCredentials.getDeviceId());
+            if (device != null) {
+                log.debug("[{}] Updating device credentials for device [{}]. New device credentials Id [{}], value [{}]",
+                        tenantId, device.getName(), deviceCredentials.getCredentialsId(), deviceCredentials.getCredentialsValue());
+                try {
+                    edgeSynchronizationManager.getSync().set(true);
+                    DeviceCredentials deviceCredentialsById = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, device.getId());
+                    deviceCredentialsById.setCredentialsType(deviceCredentials.getCredentialsType());
+                    deviceCredentialsById.setCredentialsValue(deviceCredentials.getCredentialsValue());
+                    deviceCredentialsById.setCredentialsId(deviceCredentials.getCredentialsId());
+                    deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentialsById);
+                } catch (Exception e) {
+                    log.error("[{}] Can't update device credentials for device [{}], deviceCredentialsUpdateMsg [{}]",
+                            tenantId, device.getName(), deviceCredentialsUpdateMsg, e);
+                    throw new RuntimeException(e);
+                } finally {
+                    edgeSynchronizationManager.getSync().remove();
+                }
+            } else {
+                log.warn("[{}] Can't find device by id [{}], deviceCredentialsUpdateMsg [{}]", tenantId, deviceCredentials.getDeviceId(), deviceCredentialsUpdateMsg);
             }
-        } else {
-            log.warn("[{}] Can't find device by id [{}], deviceCredentialsUpdateMsg [{}]", tenantId, deviceCredentials.getDeviceId(), deviceCredentialsUpdateMsg);
-        }
-        return null;
+            return null;
+        });
     }
 
     private DeviceCredentials createDeviceCredentials(DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg) {
