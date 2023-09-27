@@ -188,6 +188,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
   }
 
   onTimewindowTypeChange() {
+    this.timewindowForm.markAsDirty();
     const timewindowFormValue = this.timewindowForm.getRawValue();
     if (this.timewindow.selectedTab === TimewindowType.REALTIME) {
       this.timewindowForm.get('realtime').patchValue({
