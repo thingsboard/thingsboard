@@ -715,7 +715,7 @@ public class RestClient implements Closeable {
 
     public List<EntitySubtype> getAssetProfileNames(boolean activeOnly) {
         return restTemplate.exchange(
-                baseURL + "/api/assetProfileNames?activeOnly={activeOnly}",
+                baseURL + "/api/assetProfile/names?activeOnly={activeOnly}",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<List<EntitySubtype>>() {
@@ -1416,7 +1416,7 @@ public class RestClient implements Closeable {
 
     public List<EntitySubtype> getDeviceProfileNames(boolean activeOnly) {
         return restTemplate.exchange(
-                baseURL + "/api/deviceProfileNames?activeOnly={activeOnly}",
+                baseURL + "/api/deviceProfile/names?activeOnly={activeOnly}",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<List<EntitySubtype>>() {

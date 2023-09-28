@@ -165,13 +165,13 @@ public abstract class DaoUtil {
         return list;
     }
 
-    public static List<EntitySubtype> convertTenantEntityInfosToDto(UUID tenantId, EntityType entityType, List<EntityInfo> profileNames) {
-        if (CollectionUtils.isEmpty(profileNames)) {
+    public static List<EntitySubtype> convertTenantEntityInfosToDto(UUID tenantId, EntityType entityType, List<EntityInfo> entityInfos) {
+        if (CollectionUtils.isEmpty(entityInfos)) {
             return Collections.emptyList();
         }
 
-        List<EntitySubtype> list = new ArrayList<>(profileNames.size());
-        for (var info : profileNames) {
+        List<EntitySubtype> list = new ArrayList<>(entityInfos.size());
+        for (var info : entityInfos) {
             list.add(new EntitySubtype(TenantId.fromUUID(tenantId), entityType, info.getName()));
         }
         return list;
