@@ -33,9 +33,10 @@ import java.nio.charset.StandardCharsets;
 public class AssetProfileMsgConstructor {
 
     public AssetProfileUpdateMsg constructAssetProfileUpdatedMsg(UpdateMsgType msgType, AssetProfile assetProfile, EdgeVersion edgeVersion) {
-        return EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)
-                ? constructDeprecatedAssetProfileUpdatedMsg(msgType, assetProfile)
-                : AssetProfileUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(assetProfile))
+        if (EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)) {
+            return constructDeprecatedAssetProfileUpdatedMsg(msgType, assetProfile);
+        }
+        return AssetProfileUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(assetProfile))
                 .setIdMSB(assetProfile.getId().getId().getMostSignificantBits())
                 .setIdLSB(assetProfile.getId().getId().getLeastSignificantBits()).build();
     }

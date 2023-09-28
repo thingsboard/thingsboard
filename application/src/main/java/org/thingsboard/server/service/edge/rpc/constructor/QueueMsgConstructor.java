@@ -34,9 +34,10 @@ import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 public class QueueMsgConstructor {
 
     public QueueUpdateMsg constructQueueUpdatedMsg(UpdateMsgType msgType, Queue queue, EdgeVersion edgeVersion) {
-        return EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)
-                ? constructDeprecatedQueueUpdatedMsg(msgType, queue)
-                : QueueUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(queue))
+        if (EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)) {
+            return constructDeprecatedQueueUpdatedMsg(msgType, queue);
+        }
+        return QueueUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(queue))
                 .setIdMSB(queue.getId().getId().getMostSignificantBits())
                 .setIdLSB(queue.getId().getId().getLeastSignificantBits()).build();
     }

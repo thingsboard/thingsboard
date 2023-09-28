@@ -29,9 +29,10 @@ import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 public class RelationMsgConstructor {
 
     public RelationUpdateMsg constructRelationUpdatedMsg(UpdateMsgType msgType, EntityRelation entityRelation, EdgeVersion edgeVersion) {
-        return EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)
-                ? constructDeprecatedRelationUpdatedMsg(msgType, entityRelation)
-                : RelationUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(entityRelation)).build();
+        if (EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)) {
+            return constructDeprecatedRelationUpdatedMsg(msgType, entityRelation);
+        }
+        return RelationUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(entityRelation)).build();
     }
 
     private RelationUpdateMsg constructDeprecatedRelationUpdatedMsg(UpdateMsgType msgType, EntityRelation entityRelation) {

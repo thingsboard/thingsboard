@@ -35,9 +35,10 @@ import java.util.List;
 public class WidgetsBundleMsgConstructor {
 
     public WidgetsBundleUpdateMsg constructWidgetsBundleUpdateMsg(UpdateMsgType msgType, WidgetsBundle widgetsBundle, List<String> widgets, EdgeVersion edgeVersion) {
-        return EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)
-                ? constructDeprecatedWidgetsBundleUpdateMsg(msgType, widgetsBundle, widgets)
-                : WidgetsBundleUpdateMsg.newBuilder().setWidgets(JacksonUtil.toString(widgets)).setEntity(JacksonUtil.toString(widgetsBundle))
+        if (EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)) {
+            return constructDeprecatedWidgetsBundleUpdateMsg(msgType, widgetsBundle, widgets);
+        }
+        return WidgetsBundleUpdateMsg.newBuilder().setWidgets(JacksonUtil.toString(widgets)).setEntity(JacksonUtil.toString(widgetsBundle))
                 .setMsgType(msgType).setIdMSB(widgetsBundle.getId().getId().getMostSignificantBits())
                 .setIdLSB(widgetsBundle.getId().getId().getLeastSignificantBits()).build();
     }

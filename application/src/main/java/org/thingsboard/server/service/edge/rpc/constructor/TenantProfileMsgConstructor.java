@@ -35,9 +35,10 @@ public class TenantProfileMsgConstructor {
     private DataDecodingEncodingService dataDecodingEncodingService;
 
     public TenantProfileUpdateMsg constructTenantProfileUpdateMsg(UpdateMsgType msgType, TenantProfile tenantProfile, EdgeVersion edgeVersion) {
-        return EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)
-                ? constructDeprecatedTenantProfileUpdateMsg(msgType, tenantProfile)
-                : TenantProfileUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(tenantProfile)).build();
+        if (EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)) {
+            return constructDeprecatedTenantProfileUpdateMsg(msgType, tenantProfile);
+        }
+        return TenantProfileUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(tenantProfile)).build();
     }
 
     private TenantProfileUpdateMsg constructDeprecatedTenantProfileUpdateMsg(UpdateMsgType msgType, TenantProfile tenantProfile) {
