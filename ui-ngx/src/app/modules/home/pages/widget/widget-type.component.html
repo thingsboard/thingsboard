@@ -58,6 +58,10 @@
         <textarea matInput formControlName="description" rows="2" maxlength="1024" #descriptionInput></textarea>
         <mat-hint align="end">{{descriptionInput.value?.length || 0}}/1024</mat-hint>
       </mat-form-field>
+      <tb-string-items-list
+        label="{{ 'widget.tags' | translate }}"
+        formControlName="tags">
+      </tb-string-items-list>
       <mat-slide-toggle formControlName="deprecated">
         {{ 'widget.deprecated' | translate }}
       </mat-slide-toggle>
