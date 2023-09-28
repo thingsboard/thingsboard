@@ -16,3 +16,6 @@
 
 ALTER TABLE widget_type
     ADD COLUMN IF NOT EXISTS tags text[];
+
+ALTER TABLE api_usage_state ADD COLUMN IF NOT EXISTS tbel_exec varchar(32);
+UPDATE api_usage_state SET tbel_exec = js_exec WHERE tbel_exec IS NULL;

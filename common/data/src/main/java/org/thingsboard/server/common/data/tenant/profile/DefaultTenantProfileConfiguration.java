@@ -56,6 +56,7 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxTransportDataPoints;
     private long maxREExecutions;
     private long maxJSExecutions;
+    private long maxTbelExecutions;
     private long maxDPStorageDays;
     private int maxRuleNodeExecutionsPerMessage;
     private long maxEmails;
@@ -94,6 +95,8 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
                 return maxTransportDataPoints;
             case JS_EXEC_COUNT:
                 return maxJSExecutions;
+            case TBEL_EXEC_COUNT:
+                return maxTbelExecutions;
             case RE_EXEC_COUNT:
                 return maxREExecutions;
             case STORAGE_DP_COUNT:
