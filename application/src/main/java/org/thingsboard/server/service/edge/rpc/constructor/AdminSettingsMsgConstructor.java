@@ -28,9 +28,10 @@ import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 public class AdminSettingsMsgConstructor {
 
     public AdminSettingsUpdateMsg constructAdminSettingsUpdateMsg(AdminSettings adminSettings, EdgeVersion edgeVersion) {
-        return EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)
-                ? constructDeprecatedWidgetTypeUpdateMsg(adminSettings)
-                : AdminSettingsUpdateMsg.newBuilder().setEntity(JacksonUtil.toString(adminSettings)).build();
+        if (EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)) {
+            return constructDeprecatedWidgetTypeUpdateMsg(adminSettings);
+        }
+        return AdminSettingsUpdateMsg.newBuilder().setEntity(JacksonUtil.toString(adminSettings)).build();
     }
 
     private AdminSettingsUpdateMsg constructDeprecatedWidgetTypeUpdateMsg(AdminSettings adminSettings) {

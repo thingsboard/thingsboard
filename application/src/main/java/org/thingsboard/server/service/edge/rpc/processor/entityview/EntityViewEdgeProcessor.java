@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -136,5 +137,13 @@ public class EntityViewEdgeProcessor extends BaseEntityViewProcessor {
                 break;
         }
         return downlinkMsg;
+    }
+
+    @Override
+    protected void setCustomerId(TenantId tenantId, CustomerId customerId, EntityView entityView, EntityViewUpdateMsg entityViewUpdateMsg, boolean isEdgeVersionDeprecated) {
+        CustomerId customerUUID = isEdgeVersionDeprecated
+                ? safeGetCustomerId(entityViewUpdateMsg.getCustomerIdMSB(), entityViewUpdateMsg.getCustomerIdLSB())
+                : entityView.getCustomerId() != null ? entityView.getCustomerId() : customerId;
+        entityView.setCustomerId(customerUUID);
     }
 }

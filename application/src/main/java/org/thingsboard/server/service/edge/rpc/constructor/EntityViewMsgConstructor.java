@@ -32,14 +32,15 @@ import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 public class EntityViewMsgConstructor {
 
     public EntityViewUpdateMsg constructEntityViewUpdatedMsg(UpdateMsgType msgType, EntityView entityView, EdgeVersion edgeVersion) {
-        return EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)
-                ? constructEntityViewUpdatedMsgDeprecated(msgType, entityView)
-                : EntityViewUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(entityView))
+        if (EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)) {
+            return constructDeprecatedEntityViewUpdatedMsg(msgType, entityView);
+        }
+        return EntityViewUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(entityView))
                 .setIdMSB(entityView.getId().getId().getMostSignificantBits())
                 .setIdLSB(entityView.getId().getId().getLeastSignificantBits()).build();
     }
 
-    private EntityViewUpdateMsg constructEntityViewUpdatedMsgDeprecated(UpdateMsgType msgType, EntityView entityView) {
+    private EntityViewUpdateMsg constructDeprecatedEntityViewUpdatedMsg(UpdateMsgType msgType, EntityView entityView) {
         EdgeEntityType edgeEntityType = checkEntityType(entityView.getEntityId().getEntityType());
         EntityViewUpdateMsg.Builder builder = EntityViewUpdateMsg.newBuilder()
                 .setMsgType(msgType)

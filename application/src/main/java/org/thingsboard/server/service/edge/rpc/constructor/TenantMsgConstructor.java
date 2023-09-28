@@ -29,9 +29,10 @@ import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 public class TenantMsgConstructor {
 
     public TenantUpdateMsg constructTenantUpdateMsg(UpdateMsgType msgType, Tenant tenant, EdgeVersion edgeVersion) {
-        return EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)
-                ? constructDeprecatedTenantUpdateMsg(msgType, tenant)
-                : TenantUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(tenant)).build();
+        if (EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)) {
+            return constructDeprecatedTenantUpdateMsg(msgType, tenant);
+        }
+        return TenantUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(tenant)).build();
     }
 
     private TenantUpdateMsg constructDeprecatedTenantUpdateMsg(UpdateMsgType msgType, Tenant tenant) {

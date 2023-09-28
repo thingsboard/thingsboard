@@ -32,9 +32,10 @@ import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 public class UserMsgConstructor {
 
     public UserUpdateMsg constructUserUpdatedMsg(UpdateMsgType msgType, User user, EdgeVersion edgeVersion) {
-        return EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)
-                ? constructDeprecatedUserUpdatedMsg(msgType, user)
-                : UserUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(user))
+        if (EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)) {
+            return constructDeprecatedUserUpdatedMsg(msgType, user);
+        }
+        return UserUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(user))
                 .setIdMSB(user.getId().getId().getMostSignificantBits())
                 .setIdLSB(user.getId().getId().getLeastSignificantBits()).build();
     }

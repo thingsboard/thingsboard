@@ -60,6 +60,7 @@ public abstract class BaseEntityViewProcessor extends BaseEdgeProcessor {
             entityViewNameUpdated = true;
         }
         entityView.setName(entityViewName);
+        setCustomerId(tenantId, created ? null : entityViewById.getCustomerId(), entityView, entityViewUpdateMsg, isEdgeProtoDeprecated);
 
         entityViewValidator.validate(entityView, EntityView::getTenantId);
         if (created) {
@@ -90,4 +91,6 @@ public abstract class BaseEntityViewProcessor extends BaseEdgeProcessor {
         }
         return entityView;
     }
+
+    protected abstract void setCustomerId(TenantId tenantId, CustomerId customerId, EntityView entityView, EntityViewUpdateMsg entityViewUpdateMsg, boolean isEdgeVersionDeprecated);
 }
