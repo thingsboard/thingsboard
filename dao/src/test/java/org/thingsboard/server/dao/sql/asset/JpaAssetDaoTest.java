@@ -213,9 +213,9 @@ public class JpaAssetDaoTest extends AbstractJpaDaoTest {
 
         assets.add(saveAsset(Uuids.timeBased(), tenantId2, customerId2, "TEST_ASSET_7", "TYPE_4"));
 
-        List<EntitySubtype> tenant1Types = assetDao.findTenantAssetTypesAsync(tenantId1).get(30, TimeUnit.SECONDS);
+        List<EntitySubtype> tenant1Types = assetDao.findTenantAssetTypes(tenantId1);
         assertNotNull(tenant1Types);
-        List<EntitySubtype> tenant2Types = assetDao.findTenantAssetTypesAsync(tenantId2).get(30, TimeUnit.SECONDS);
+        List<EntitySubtype> tenant2Types = assetDao.findTenantAssetTypes(tenantId2);
         assertNotNull(tenant2Types);
 
         List<String> types = List.of("default", "TYPE_1", "TYPE_2", "TYPE_3", "TYPE_4");

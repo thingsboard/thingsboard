@@ -369,12 +369,9 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     public ListenableFuture<List<EntitySubtype>> findAssetTypesByTenantId(TenantId tenantId) {
         log.trace("Executing findAssetTypesByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        ListenableFuture<List<EntitySubtype>> tenantAssetTypes = assetDao.findTenantAssetTypesAsync(tenantId.getId());
-        return Futures.transform(tenantAssetTypes,
-                assetTypes -> {
-                    assetTypes.sort(Comparator.comparing(EntitySubtype::getType));
-                    return assetTypes;
-                }, MoreExecutors.directExecutor());
+        var entitySubTypes = assetDao.findTenantAssetTypes(tenantId.getId())
+                .stream().sorted(Comparator.comparing(EntitySubtype::getType)).collect(Collectors.toList());
+        return Futures.immediateFuture(entitySubTypes);
     }
 
     @Override

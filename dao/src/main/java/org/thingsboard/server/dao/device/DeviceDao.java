@@ -163,7 +163,7 @@ public interface DeviceDao extends Dao<Device>, TenantEntityDao, ExportableEntit
      * @return the list of tenant device type objects
      */
     @Deprecated(since = "3.6.1")
-    ListenableFuture<List<EntitySubtype>> findTenantDeviceTypesAsync(UUID tenantId);
+    List<EntitySubtype> findTenantDeviceTypes(UUID tenantId);
 
     /**
      * Find devices by tenantId and device id.

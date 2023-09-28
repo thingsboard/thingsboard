@@ -83,6 +83,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -486,12 +487,9 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     public ListenableFuture<List<EntitySubtype>> findDeviceTypesByTenantId(TenantId tenantId) {
         log.trace("Executing findDeviceTypesByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        ListenableFuture<List<EntitySubtype>> tenantDeviceTypes = deviceDao.findTenantDeviceTypesAsync(tenantId.getId());
-        return Futures.transform(tenantDeviceTypes,
-                deviceTypes -> {
-                    deviceTypes.sort(Comparator.comparing(EntitySubtype::getType));
-                    return deviceTypes;
-                }, MoreExecutors.directExecutor());
+        var entitySubTypes = deviceDao.findTenantDeviceTypes(tenantId.getId())
+                .stream().sorted(Comparator.comparing(EntitySubtype::getType)).collect(Collectors.toList());
+        return Futures.immediateFuture(entitySubTypes);
     }
 
     @Transactional

@@ -28,8 +28,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
-import org.thingsboard.server.common.data.EntitySubtype;
-import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
@@ -471,17 +470,17 @@ public class AssetProfileControllerTest extends AbstractControllerTest {
                 }, pageLink);
         Assert.assertNotNull("Asset Profile Infos page data is null!", assetProfileInfos);
         Assert.assertEquals("Asset Profile Infos Page data is empty! Expected to have default profile created!", 1, assetProfileInfos.getTotalElements());
-        List<EntitySubtype> expectedAssetProfileNames = assetProfileInfos.getData().stream()
-                .map(AssetProfileControllerTest::toEntitySubType)
-                .sorted(Comparator.comparing(EntitySubtype::getType))
+        List<EntityInfo> expectedAssetProfileNames = assetProfileInfos.getData().stream()
+                .map(AssetProfileControllerTest::toEntityInfo)
+                .sorted(Comparator.comparing(EntityInfo::getName))
                 .collect(Collectors.toList());
-        var assetProfileNames = doGetTyped("/api/assetProfileNames", new TypeReference<List<EntitySubtype>>() {
+        var assetProfileNames = doGetTyped("/api/assetProfile/names", new TypeReference<List<EntityInfo>>() {
         });
         Assert.assertNotNull("Asset Profile Names list is null!", assetProfileNames);
         Assert.assertFalse("Asset Profile Names list is empty!", assetProfileNames.isEmpty());
         Assert.assertEquals(expectedAssetProfileNames, assetProfileNames);
         Assert.assertEquals(1, assetProfileNames.size());
-        Assert.assertEquals(DEFAULT_PROFILE_TYPE, assetProfileNames.get(0).getType());
+        Assert.assertEquals(DEFAULT_PROFILE_TYPE, assetProfileNames.get(0).getName());
 
         int count = 3;
         for (int i = 0; i < count; i++) {
@@ -497,30 +496,30 @@ public class AssetProfileControllerTest extends AbstractControllerTest {
         Assert.assertNotNull("Asset Profile Infos page data is null!", assetProfileInfos);
         Assert.assertEquals("Asset Profile Infos Page data is empty! Expected to have default profile created + count value!", 1 + count, assetProfileInfos.getTotalElements());
         expectedAssetProfileNames = assetProfileInfos.getData().stream()
-                .map(AssetProfileControllerTest::toEntitySubType)
-                .sorted(Comparator.comparing(EntitySubtype::getType))
+                .map(AssetProfileControllerTest::toEntityInfo)
+                .sorted(Comparator.comparing(EntityInfo::getName))
                 .collect(Collectors.toList());
 
-        assetProfileNames = doGetTyped("/api/assetProfileNames", new TypeReference<>() {
+        assetProfileNames = doGetTyped("/api/assetProfile/names", new TypeReference<>() {
         });
         Assert.assertNotNull("Asset Profile Names list is null!", assetProfileNames);
         Assert.assertFalse("Asset Profile Names list is empty!", assetProfileNames.isEmpty());
         Assert.assertEquals(expectedAssetProfileNames, assetProfileNames);
         Assert.assertEquals(1 + count, assetProfileNames.size());
 
-        assetProfileNames = doGetTyped("/api/assetProfileNames?activeOnly=true", new TypeReference<>() {
+        assetProfileNames = doGetTyped("/api/assetProfile/names?activeOnly=true", new TypeReference<>() {
         });
         Assert.assertNotNull("Asset Profile Names list is null!", assetProfileNames);
         Assert.assertFalse("Asset Profile Names list is empty!", assetProfileNames.isEmpty());
         var expectedAssetProfileNamesWithoutDefault = expectedAssetProfileNames.stream()
-                .filter(entitySubtype -> !entitySubtype.getType().equals(DEFAULT_PROFILE_TYPE))
+                .filter(entityInfo -> !entityInfo.getName().equals(DEFAULT_PROFILE_TYPE))
                 .collect(Collectors.toList());
         Assert.assertEquals(expectedAssetProfileNamesWithoutDefault, assetProfileNames);
         Assert.assertEquals(count, assetProfileNames.size());
     }
 
-    private static EntitySubtype toEntitySubType(AssetProfileInfo assetProfileInfo) {
-        return new EntitySubtype(assetProfileInfo.getTenantId(), EntityType.ASSET, assetProfileInfo.getName());
+    private static EntityInfo toEntityInfo(AssetProfileInfo info) {
+        return new EntityInfo(info.getId(), info.getName());
     }
 
     private AssetProfile savedAssetProfile(String name) {

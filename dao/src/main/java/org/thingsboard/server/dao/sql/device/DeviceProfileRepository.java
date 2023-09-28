@@ -22,6 +22,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.DeviceProfileEntity;
 
@@ -72,7 +73,12 @@ public interface DeviceProfileRepository extends JpaRepository<DeviceProfileEnti
     @Query("SELECT externalId FROM DeviceProfileEntity WHERE id = :id")
     UUID getExternalIdById(@Param("id") UUID id);
 
-    @Query("SELECT DISTINCT d.name FROM DeviceProfileEntity d WHERE d.tenantId = :tenantId")
-    List<String> findTenantDeviceProfileNames(@Param("tenantId") UUID tenantId);
+    @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(dp.id, 'DEVICE_PROFILE', dp.name) " +
+            "FROM DeviceProfileEntity dp WHERE dp.tenantId = :tenantId AND EXISTS (SELECT 1 FROM DeviceEntity dv WHERE dv.deviceProfileId = dp.id)")
+    List<EntityInfo> findActiveTenantDeviceProfileNames(@Param("tenantId") UUID tenantId);
+
+    @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(d.id, 'DEVICE_PROFILE', d.name) " +
+            "FROM DeviceProfileEntity d WHERE d.tenantId = :tenantId")
+    List<EntityInfo> findAllTenantDeviceProfileNames(@Param("tenantId") UUID tenantId);
 
 }

@@ -48,7 +48,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.DaoUtil.convertTenantEntityTypesToDto;
+import static org.thingsboard.server.dao.DaoUtil.convertTenantEntityInfosToDto;
 
 /**
  * Created by Valerii Sosliuk on 5/6/2017.
@@ -63,6 +63,9 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
 
     @Autowired
     private NativeDeviceRepository nativeDeviceRepository;
+
+    @Autowired
+    private DeviceProfileRepository deviceProfileRepository;
 
     @Override
     protected Class<DeviceEntity> getEntityClass() {
@@ -216,8 +219,8 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
     }
 
     @Override
-    public ListenableFuture<List<EntitySubtype>> findTenantDeviceTypesAsync(UUID tenantId) {
-        return service.submit(() -> convertTenantEntityTypesToDto(tenantId, EntityType.DEVICE, deviceRepository.findTenantDeviceTypes(tenantId)));
+    public List<EntitySubtype> findTenantDeviceTypes(UUID tenantId) {
+        return convertTenantEntityInfosToDto(tenantId, EntityType.DEVICE, deviceProfileRepository.findActiveTenantDeviceProfileNames(tenantId));
     }
 
     @Override

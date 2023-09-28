@@ -15,15 +15,18 @@
  */
 package org.thingsboard.server.dao.asset;
 
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.asset.AssetProfileInfo;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.entity.EntityProfileDaoService;
+import org.thingsboard.server.dao.entity.EntityDaoService;
 
-public interface AssetProfileService extends EntityProfileDaoService {
+import java.util.List;
+
+public interface AssetProfileService extends EntityDaoService {
 
     AssetProfile findAssetProfileById(TenantId tenantId, AssetProfileId assetProfileId);
 
@@ -52,5 +55,7 @@ public interface AssetProfileService extends EntityProfileDaoService {
     boolean setDefaultAssetProfile(TenantId tenantId, AssetProfileId assetProfileId);
 
     void deleteAssetProfilesByTenantId(TenantId tenantId);
+
+    List<EntityInfo> findAssetProfileNamesByTenantId(TenantId tenantId, boolean activeOnly);
 
 }

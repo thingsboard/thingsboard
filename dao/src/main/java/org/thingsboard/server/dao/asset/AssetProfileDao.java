@@ -15,8 +15,7 @@
  */
 package org.thingsboard.server.dao.asset;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.asset.AssetProfileInfo;
 import org.thingsboard.server.common.data.id.AssetProfileId;
@@ -47,6 +46,6 @@ public interface AssetProfileDao extends Dao<AssetProfile>, ExportableEntityDao<
 
     AssetProfile findByName(TenantId tenantId, String profileName);
 
-    ListenableFuture<List<EntitySubtype>> findTenantAssetProfileNamesAsync(UUID tenantId, boolean activeOnly);
+    List<EntityInfo> findTenantAssetProfileNames(UUID tenantId, boolean activeOnly);
 
 }

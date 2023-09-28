@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.sql.device;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
@@ -23,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -41,17 +40,12 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.DaoUtil.convertTenantEntityTypesToDto;
-
 @Component
 @SqlDao
 public class JpaDeviceProfileDao extends JpaAbstractDao<DeviceProfileEntity, DeviceProfile> implements DeviceProfileDao {
 
     @Autowired
     private DeviceProfileRepository deviceProfileRepository;
-
-    @Autowired
-    private DeviceRepository deviceRepository;
 
     @Override
     protected Class<DeviceProfileEntity> getEntityClass() {
@@ -124,11 +118,10 @@ public class JpaDeviceProfileDao extends JpaAbstractDao<DeviceProfileEntity, Dev
     }
 
     @Override
-    public ListenableFuture<List<EntitySubtype>> findTenantDeviceProfileNamesAsync(UUID tenantId, boolean activeOnly) {
-        return service.submit(() -> convertTenantEntityTypesToDto(tenantId, EntityType.DEVICE,
-                activeOnly ?
-                        deviceRepository.findTenantDeviceTypes(tenantId) :
-                        deviceProfileRepository.findTenantDeviceProfileNames(tenantId)));
+    public List<EntityInfo> findTenantDeviceProfileNames(UUID tenantId, boolean activeOnly) {
+        return activeOnly ?
+                deviceProfileRepository.findActiveTenantDeviceProfileNames(tenantId) :
+                deviceProfileRepository.findAllTenantDeviceProfileNames(tenantId);
     }
 
     @Override

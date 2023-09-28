@@ -17,13 +17,16 @@ package org.thingsboard.server.dao.device;
 
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.entity.EntityProfileDaoService;
+import org.thingsboard.server.dao.entity.EntityDaoService;
 
-public interface DeviceProfileService extends EntityProfileDaoService {
+import java.util.List;
+
+public interface DeviceProfileService extends EntityDaoService {
 
     DeviceProfile findDeviceProfileById(TenantId tenantId, DeviceProfileId deviceProfileId);
 
@@ -54,5 +57,7 @@ public interface DeviceProfileService extends EntityProfileDaoService {
     boolean setDefaultDeviceProfile(TenantId tenantId, DeviceProfileId deviceProfileId);
 
     void deleteDeviceProfilesByTenantId(TenantId tenantId);
+
+    List<EntityInfo> findDeviceProfileNamesByTenantId(TenantId tenantId, boolean activeOnly);
 
 }

@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.asset.AssetProfileInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -44,7 +44,6 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 import static org.thingsboard.server.controller.ControllerConstants.ASSET_PROFILE_ID;
 import static org.thingsboard.server.controller.ControllerConstants.ASSET_PROFILE_ID_PARAM_DESCRIPTION;
@@ -213,14 +212,14 @@ public class AssetProfileController extends BaseController {
             notes = "Returns a set of unique asset profile names owned by the tenant."
                     + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/assetProfileNames", method = RequestMethod.GET)
+    @RequestMapping(value = "/assetProfile/names", method = RequestMethod.GET)
     @ResponseBody
-    public List<EntitySubtype> getAssetProfileNames(
+    public List<EntityInfo> getAssetProfileNames(
             @ApiParam(value = "Flag indicating whether to retrieve exclusively the names of asset profiles that are referenced by tenant's assets.")
-            @RequestParam(value = "activeOnly", required = false, defaultValue = "false") boolean activeOnly) throws ThingsboardException, ExecutionException, InterruptedException {
+            @RequestParam(value = "activeOnly", required = false, defaultValue = "false") boolean activeOnly) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         TenantId tenantId = user.getTenantId();
-        return checkNotNull(assetProfileService.findEntityProfileNamesByTenantId(tenantId, activeOnly).get());
+        return checkNotNull(assetProfileService.findAssetProfileNamesByTenantId(tenantId, activeOnly));
     }
 
 }

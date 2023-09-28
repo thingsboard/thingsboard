@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.device;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +28,7 @@ import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
@@ -45,7 +44,6 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
-import org.thingsboard.server.dao.entity.EntityProfileDaoSupplier;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -59,12 +57,13 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateString;
@@ -363,23 +362,13 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     }
 
     @Override
-    public EntityProfileDaoSupplier getEntityProfileDaoSupplier() {
-        return deviceProfileDaoSupplier;
-    }
-
-    @Override
-    public ListenableFuture<List<EntitySubtype>> findEntityProfileNamesByTenantId(TenantId tenantId, boolean activeOnly) {
-        log.trace("Executing findEntityProfileNamesByTenantId, tenantId [{}] entityType [{}]", tenantId, getEntityType());
+    public List<EntityInfo> findDeviceProfileNamesByTenantId(TenantId tenantId, boolean activeOnly) {
+        log.trace("Executing findDeviceProfileNamesByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        return doProcessFindEntityProfileNamesByTenantId(tenantId, activeOnly);
+        return deviceProfileDao.findTenantDeviceProfileNames(tenantId.getId(), activeOnly)
+                .stream().sorted(Comparator.comparing(EntityInfo::getName))
+                .collect(Collectors.toList());
     }
-
-    private final EntityProfileDaoSupplier deviceProfileDaoSupplier = new EntityProfileDaoSupplier() {
-        @Override
-        public ListenableFuture<List<EntitySubtype>> getEntityProfilesNames(UUID tenantId, boolean activeOnly) {
-            return deviceProfileDao.findTenantDeviceProfileNamesAsync(tenantId, activeOnly);
-        }
-    };
 
     private final PaginatedRemover<TenantId, DeviceProfile> tenantDeviceProfilesRemover =
             new PaginatedRemover<>() {
