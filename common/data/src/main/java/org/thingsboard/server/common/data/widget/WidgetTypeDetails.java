@@ -35,7 +35,7 @@ public class WidgetTypeDetails extends WidgetType implements HasName, HasTenantI
     @Schema(description = "Base64 encoded thumbnail")
     private String image;
     @NoXss
-    @Length(fieldName = "description")
+    @Length(fieldName = "description", max = 1024)
     @Schema(description = "Description of the widget")
     private String description;
 

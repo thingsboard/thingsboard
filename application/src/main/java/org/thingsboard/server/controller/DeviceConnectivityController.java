@@ -17,6 +17,10 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -36,10 +40,8 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.device.DeviceConnectivityService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
@@ -64,16 +66,30 @@ public class DeviceConnectivityController extends BaseController {
             notes = "Fetch the list of commands to publish device telemetry based on device profile " +
                     "If the user has the authority of 'Tenant Administrator', the server checks that the device is owned by the same tenant. " +
                     "If the user has the authority of 'Customer User', the server checks that the device is assigned to the same customer. " +
-                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
-//    @ApiResponses(value = {
-//            @ApiResponse(code = 200, message = "OK",
-//                    examples = @io.swagger.annotations.Example(
-//                            value = {
-//                                    @io.swagger.annotations.ExampleProperty(
-//                                            mediaType = "application/json",
-//                                            value = "{\"http\":\"curl -v -X POST http://localhost:8080/api/v1/0ySs4FTOn5WU15XLmal8/telemetry --header Content-Type:application/json --data {temperature:25}\"," +
-//                                                    "\"mqtt\":\"mosquitto_pub -d -q 1 -h localhost -t v1/devices/me/telemetry -i myClient1 -u myUsername1 -P myPassword -m {temperature:25}\"," +
-//                                                    "\"coap\":\"coap-client -m POST coap://localhost:5683/api/v1/0ySs4FTOn5WU15XLmal8/telemetry -t json -e {temperature:25}\"}")}))})
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "OK",
+                            content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    examples = {
+                                            @ExampleObject(
+                                                    name = "http",
+                                                    value = "curl -v -X POST http://localhost:8080/api/v1/0ySs4FTOn5WU15XLmal8/telemetry --header Content-Type:application/json --data {temperature:25}"
+                                            ),
+                                            @ExampleObject(
+                                                    name = "mqtt",
+                                                    value = "mosquitto_pub -d -q 1 -h localhost -t v1/devices/me/telemetry -i myClient1 -u myUsername1 -P myPassword -m {temperature:25}"
+                                            ),
+                                            @ExampleObject(
+                                                    name = "coap",
+                                                    value = "coap-client -m POST coap://localhost:5683/api/v1/0ySs4FTOn5WU15XLmal8/telemetry -t json -e {temperature:25}"
+                                            )
+                                    }
+                            )
+                    )
+            })
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device-connectivity/{deviceId}", method = RequestMethod.GET)
     @ResponseBody
@@ -81,7 +97,7 @@ public class DeviceConnectivityController extends BaseController {
                                                       @PathVariable(DEVICE_ID) String strDeviceId, HttpServletRequest request) throws ThingsboardException, URISyntaxException {
         checkParameter(DEVICE_ID, strDeviceId);
         DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
-        Device device = checkDeviceId(deviceId, Operation.READ_CREDENTIALS);
+        Device device = checkDeviceId(deviceId, org.thingsboard.server.service.security.permission.Operation.READ_CREDENTIALS);
 
         String baseUrl = systemSecurityService.getBaseUrl(getTenantId(), getCurrentUser().getCustomerId(), request);
         return deviceConnectivityService.findDevicePublishTelemetryCommands(baseUrl, device);
@@ -89,25 +105,34 @@ public class DeviceConnectivityController extends BaseController {
 
     @ApiOperation(value = "Get commands to launch gateway (getGatewayLaunchCommands)",
             notes = "Fetch the list of commands for different operation systems to launch a gateway using docker." +
-                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
-//    @ApiResponses(value = {
-//            @ApiResponse(code = 200, message = "OK",
-//                    examples = @io.swagger.annotations.Example(
-//                            value = {
-//                                    @io.swagger.annotations.ExampleProperty(
-//                                            mediaType = "application/json",
-//                                            value = "{\"mqtt\": {\n" +
-//                                                    "    \"linux\": \"docker run --rm -it -v ~/.tb-gateway/logs:/thingsboard_gateway/logs -v ~/.tb-gateway/extensions:/thingsboard_gateway/extensions -v ~/.tb-gateway/config:/thingsboard_gateway/config --name tbGateway127001 -e host=localhost -e port=1883 -e accessToken=qTe5oDBHPJf0KCSKO8J3 --restart always thingsboard/tb-gateway\",\n" +
-//                                                    "    \"windows\": \"docker run --rm -it -v %HOMEPATH%/tb-gateway/logs:/thingsboard_gateway/logs -v %HOMEPATH%/tb-gateway/extensions:/thingsboard_gateway/extensions -v %HOMEPATH%/tb-gateway/config:/thingsboard_gateway/config --name tbGateway127001 -e host=localhost -e port=1883 -e accessToken=qTe5oDBHPJf0KCSKO8J3 --restart always thingsboard/tb-gateway\"}\n" +
-//                                                    "}")}))})
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "OK",
+                            content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    examples = {
+                                            @ExampleObject(
+                                                    name = "mqtt-linux",
+                                                    value = "docker run --rm -it -v ~/.tb-gateway/logs:/thingsboard_gateway/logs -v ~/.tb-gateway/extensions:/thingsboard_gateway/extensions -v ~/.tb-gateway/config:/thingsboard_gateway/config --name tbGateway127001 -e host=localhost -e port=1883 -e accessToken=qTe5oDBHPJf0KCSKO8J3 --restart always thingsboard/tb-gateway"
+                                            ),
+                                            @ExampleObject(
+                                                    name = "mqtt-windows",
+                                                    value = "docker run --rm -it -v %HOMEPATH%/tb-gateway/logs:/thingsboard_gateway/logs -v %HOMEPATH%/tb-gateway/extensions:/thingsboard_gateway/extensions -v %HOMEPATH%/tb-gateway/config:/thingsboard_gateway/config --name tbGateway127001 -e host=localhost -e port=1883 -e accessToken=qTe5oDBHPJf0KCSKO8J3 --restart always thingsboard/tb-gateway"
+                                            )
+                                    }
+                            )
+                    )
+            })
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device-connectivity/gateway-launch/{deviceId}", method = RequestMethod.GET)
     @ResponseBody
     public JsonNode getGatewayLaunchCommands(@Parameter(description = DEVICE_ID_PARAM_DESCRIPTION)
-                                                      @PathVariable(DEVICE_ID) String strDeviceId, HttpServletRequest request) throws ThingsboardException, URISyntaxException {
+                                             @PathVariable(DEVICE_ID) String strDeviceId, HttpServletRequest request) throws ThingsboardException, URISyntaxException {
         checkParameter(DEVICE_ID, strDeviceId);
         DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
-        Device device = checkDeviceId(deviceId, Operation.READ_CREDENTIALS);
+        Device device = checkDeviceId(deviceId, org.thingsboard.server.service.security.permission.Operation.READ_CREDENTIALS);
 
         if (!checkIsGateway(device)) {
             throw new ThingsboardException("The device must be a gateway!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);

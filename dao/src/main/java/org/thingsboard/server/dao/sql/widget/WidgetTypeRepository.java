@@ -39,7 +39,7 @@ public interface WidgetTypeRepository extends JpaRepository<WidgetTypeDetailsEnt
 
     @Query("SELECT new org.thingsboard.server.dao.model.sql.WidgetTypeInfoEntity(wtd) FROM WidgetTypeDetailsEntity wtd WHERE wtd.tenantId = :systemTenantId " +
             "AND (LOWER(wtd.name) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-            "OR ((:fullSearch) IS TRUE AND LOWER(wtd.description) LIKE LOWER(CONCAT('%', :searchText, '%'))))")
+            "OR ((:fullSearch) = TRUE AND LOWER(wtd.description) LIKE LOWER(CONCAT('%', :searchText, '%'))))")
     Page<WidgetTypeInfoEntity> findSystemWidgetTypes(@Param("systemTenantId") UUID systemTenantId,
                                                      @Param("searchText") String searchText,
                                                      @Param("fullSearch") boolean fullSearch,
@@ -47,7 +47,7 @@ public interface WidgetTypeRepository extends JpaRepository<WidgetTypeDetailsEnt
 
     @Query("SELECT new org.thingsboard.server.dao.model.sql.WidgetTypeInfoEntity(wtd) FROM WidgetTypeDetailsEntity wtd WHERE wtd.tenantId IN (:tenantId, :nullTenantId) " +
             "AND (LOWER(wtd.name) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-            "OR ((:fullSearch) IS TRUE AND LOWER(wtd.description) LIKE LOWER(CONCAT('%', :searchText, '%'))))")
+            "OR ((:fullSearch) = TRUE AND LOWER(wtd.description) LIKE LOWER(CONCAT('%', :searchText, '%'))))")
     Page<WidgetTypeInfoEntity> findAllTenantWidgetTypesByTenantId(@Param("tenantId") UUID tenantId,
                                                                   @Param("nullTenantId") UUID nullTenantId,
                                                                   @Param("searchText") String searchText,
@@ -56,7 +56,7 @@ public interface WidgetTypeRepository extends JpaRepository<WidgetTypeDetailsEnt
 
     @Query("SELECT new org.thingsboard.server.dao.model.sql.WidgetTypeInfoEntity(wtd) FROM WidgetTypeDetailsEntity wtd WHERE wtd.tenantId = :tenantId " +
             "AND (LOWER(wtd.name) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-            "OR ((:fullSearch) IS TRUE AND LOWER(wtd.description) LIKE LOWER(CONCAT('%', :searchText, '%'))))")
+            "OR ((:fullSearch) = TRUE AND LOWER(wtd.description) LIKE LOWER(CONCAT('%', :searchText, '%'))))")
     Page<WidgetTypeInfoEntity> findTenantWidgetTypesByTenantId(@Param("tenantId") UUID tenantId,
                                                                @Param("searchText") String searchText,
                                                                @Param("fullSearch") boolean fullSearch,
