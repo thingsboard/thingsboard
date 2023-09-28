@@ -22,6 +22,7 @@ import org.springframework.context.annotation.Lazy;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.TenantEntityWithDataDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -80,6 +81,18 @@ public abstract class DataValidator<D extends BaseData<?>> {
 
     protected D validateUpdate(TenantId tenantId, D data) {
         return null;
+    }
+
+    public void validateDelete(TenantId tenantId, EntityId entityId) {
+    }
+
+    public void validateString(String exceptionPrefix, String name) {
+        if (StringUtils.isEmpty(name) || name.trim().length() == 0) {
+            throw new DataValidationException(exceptionPrefix + " should be specified!");
+        }
+        if (StringUtils.contains0x00(name)) {
+            throw new DataValidationException(exceptionPrefix + " should not contain 0x00 symbol!");
+        }
     }
 
     protected boolean isSameData(D existentData, D actualData) {
@@ -147,8 +160,8 @@ public abstract class DataValidator<D extends BaseData<?>> {
         validateQueueNameOrTopic(topic, TOPIC);
     }
 
-    private static void validateQueueNameOrTopic(String value, String fieldName) {
-        if (StringUtils.isEmpty(value)) {
+    static void validateQueueNameOrTopic(String value, String fieldName) {
+        if (StringUtils.isEmpty(value) || value.trim().length() == 0 ) {
             throw new DataValidationException(String.format("Queue %s should be specified!", fieldName));
         }
         if (!QUEUE_PATTERN.matcher(value).matches()) {

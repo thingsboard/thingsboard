@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityInfo;
+import org.thingsboard.server.common.data.JavaSerDesUtil;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -44,6 +45,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @DaoSqlTest
 public class TenantProfileServiceTest extends AbstractServiceTest {
@@ -189,17 +193,6 @@ public class TenantProfileServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testSaveSameTenantProfileWithDifferentIsolatedTbRuleEngine() {
-        TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile");
-        TenantProfile savedTenantProfile = tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
-        savedTenantProfile.setIsolatedTbRuleEngine(true);
-        addMainQueueConfig(savedTenantProfile);
-        Assertions.assertThrows(DataValidationException.class, () -> {
-            tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, savedTenantProfile);
-        });
-    }
-
-    @Test
     public void testDeleteTenantProfileWithExistingTenant() {
         TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile");
         TenantProfile savedTenantProfile = tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
@@ -304,6 +297,25 @@ public class TenantProfileServiceTest extends AbstractServiceTest {
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
 
+    }
+
+    @Test
+    public void testTenantProfileSerialization_fst() {
+        TenantProfile tenantProfile = new TenantProfile();
+        TenantProfileData profileData = new TenantProfileData();
+        tenantProfile.setProfileData(profileData);
+        profileData.setConfiguration(new DefaultTenantProfileConfiguration());
+        addMainQueueConfig(tenantProfile);
+
+        byte[] serialized = assertDoesNotThrow(() -> JavaSerDesUtil.encode(tenantProfile));
+        assertDoesNotThrow(() -> {
+            JavaSerDesUtil.encode(profileData);
+        });
+
+        TenantProfile deserialized = assertDoesNotThrow(() -> JavaSerDesUtil.decode(serialized));
+        assertThat(deserialized).isEqualTo(tenantProfile);
+        assertThat(deserialized.getProfileData()).isNotNull();
+        assertThat(deserialized.getProfileData().getQueueConfiguration()).isNotEmpty();
     }
 
     public static TenantProfile createTenantProfile(String name) {

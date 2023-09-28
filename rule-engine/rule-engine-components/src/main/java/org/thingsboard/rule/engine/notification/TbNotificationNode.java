@@ -19,7 +19,6 @@ import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
@@ -71,16 +70,17 @@ public class TbNotificationNode extends TbAbstractExternalNode {
                 .originatorEntityId(ctx.getSelf().getRuleChainId())
                 .build();
 
+        var tbMsg = ackIfNeeded(ctx, msg);
+
         DonAsynchron.withCallback(ctx.getNotificationExecutor().executeAsync(() ->
                         ctx.getNotificationCenter().processNotificationRequest(ctx.getTenantId(), notificationRequest, stats -> {
-                            TbMsgMetaData metaData = msg.getMetaData().copy();
+                            TbMsgMetaData metaData = tbMsg.getMetaData().copy();
                             metaData.putValue("notificationRequestResult", JacksonUtil.toString(stats));
-                            tellSuccess(ctx, TbMsg.transformMsg(msg, metaData));
+                            tellSuccess(ctx, TbMsg.transformMsgMetadata(tbMsg, metaData));
                         })),
                 r -> {
                 },
-                e -> tellFailure(ctx, msg, e));
-        ackIfNeeded(ctx, msg);
+                e -> tellFailure(ctx, tbMsg, e));
     }
 
 }

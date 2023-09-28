@@ -19,13 +19,16 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Schema
-public class PageData<T> {
+public class PageData<T> implements Serializable {
+
+    public static final PageData EMPTY_PAGE_DATA = new PageData<>();
 
     private final List<T> data;
     private final int totalPages;
@@ -45,6 +48,11 @@ public class PageData<T> {
         this.totalPages = totalPages;
         this.totalElements = totalElements;
         this.hasNext = hasNext;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> PageData<T> emptyPageData() {
+        return (PageData<T>) EMPTY_PAGE_DATA;
     }
 
     @Schema(description = "Array of the entities", accessMode = Schema.AccessMode.READ_ONLY)

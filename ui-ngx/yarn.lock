@@ -6069,7 +6069,7 @@ flatted@^3.1.0, flatted@^3.2.7:
 
 "flot@https://github.com/thingsboard/flot.git#0.9-work":
   version "0.9.0-alpha"
-  resolved "https://github.com/thingsboard/flot.git#0ff0c775db7c74e705f6c3c2bba92080a202ccd4"
+  resolved "https://github.com/thingsboard/flot.git#c2734540477d8b261d04ee18d4d38af3b0ecb81b"
 
 follow-redirects@^1.0.0:
   version "1.15.2"

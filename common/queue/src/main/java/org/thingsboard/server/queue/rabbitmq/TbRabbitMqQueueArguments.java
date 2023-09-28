@@ -65,7 +65,7 @@ public class TbRabbitMqQueueArguments {
         vcArgs = getArgs(vcProperties);
     }
 
-    private Map<String, Object> getArgs(String properties) {
+    public static Map<String, Object> getArgs(String properties) {
         Map<String, Object> configs = new HashMap<>();
         if (StringUtils.isNotEmpty(properties)) {
             for (String property : properties.split(";")) {
@@ -78,7 +78,7 @@ public class TbRabbitMqQueueArguments {
         return configs;
     }
 
-    private Object getObjectValue(String str) {
+    private static Object getObjectValue(String str) {
         if (str.equalsIgnoreCase("true") || str.equalsIgnoreCase("false")) {
             return Boolean.valueOf(str);
         } else if (isNumeric(str)) {
@@ -87,7 +87,7 @@ public class TbRabbitMqQueueArguments {
         return str;
     }
 
-    private Object getNumericValue(String str) {
+    private static Object getNumericValue(String str) {
         if (str.contains(".")) {
             return Double.valueOf(str);
         } else {
@@ -97,7 +97,7 @@ public class TbRabbitMqQueueArguments {
 
     private static final Pattern PATTERN = Pattern.compile("-?\\d+(\\.\\d+)?");
 
-    public boolean isNumeric(String strNum) {
+    private static boolean isNumeric(String strNum) {
         if (strNum == null) {
             return false;
         }

@@ -17,7 +17,9 @@ package org.thingsboard.server.common.data;
 
 import org.thingsboard.server.common.data.id.TenantId;
 
-public class EntitySubtype {
+import java.io.Serializable;
+
+public class EntitySubtype implements Serializable {
 
     private static final long serialVersionUID = 8057240243059922101L;
 

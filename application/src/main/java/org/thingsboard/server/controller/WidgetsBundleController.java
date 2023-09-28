@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -41,7 +42,10 @@ import org.thingsboard.server.service.entitiy.widgets.bundle.TbWidgetsBundleServ
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.thingsboard.server.controller.ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
@@ -103,6 +107,49 @@ public class WidgetsBundleController extends BaseController {
         checkEntity(widgetsBundle.getId(), widgetsBundle, Resource.WIDGETS_BUNDLE);
 
         return tbWidgetsBundleService.save(widgetsBundle, currentUser);
+    }
+
+    @ApiOperation(value = "Update widgets bundle widgets types list (updateWidgetsBundleWidgetTypes)",
+            notes = "Updates widgets bundle widgets list." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/widgetsBundle/{widgetsBundleId}/widgetTypes", method = RequestMethod.POST)
+    @ResponseStatus(value = HttpStatus.OK)
+    public void updateWidgetsBundleWidgetTypes(
+            @Parameter(description = WIDGET_BUNDLE_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable("widgetsBundleId") String strWidgetsBundleId,
+            @Parameter(description = "Ordered list of widget type Ids to be included by widgets bundle")
+            @RequestBody List<String> strWidgetTypeIds) throws Exception {
+        checkParameter("widgetsBundleId", strWidgetsBundleId);
+        WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
+        checkNotNull(strWidgetTypeIds);
+        Set<WidgetTypeId> widgetTypeIds = new LinkedHashSet<>();
+        var currentUser = getCurrentUser();
+        TenantId tenantId = currentUser.getTenantId();
+        for (String strWidgetTypeId : strWidgetTypeIds) {
+            WidgetTypeId widgetTypeId = new WidgetTypeId(toUUID(strWidgetTypeId));
+            if (!widgetTypeIds.contains(widgetTypeId) &&
+                    widgetTypeService.widgetTypeExistsByTenantIdAndWidgetTypeId(tenantId, widgetTypeId)) {
+                widgetTypeIds.add(widgetTypeId);
+            }
+        }
+        tbWidgetsBundleService.updateWidgetsBundleWidgetTypes(widgetsBundleId, new ArrayList<>(widgetTypeIds), currentUser);
+    }
+
+    @ApiOperation(value = "Update widgets bundle widgets list from widget type FQNs list (updateWidgetsBundleWidgetFqns)",
+            notes = "Updates widgets bundle widgets list from widget type FQNs list." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/widgetsBundle/{widgetsBundleId}/widgetTypeFqns", method = RequestMethod.POST)
+    @ResponseStatus(value = HttpStatus.OK)
+    public void updateWidgetsBundleWidgetFqns(
+            @Parameter(description = WIDGET_BUNDLE_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable("widgetsBundleId") String strWidgetsBundleId,
+            @Parameter(description = "Ordered list of widget type FQNs to be included by widgets bundle")
+            @RequestBody List<String> widgetTypeFqns) throws Exception {
+        checkParameter("widgetsBundleId", strWidgetsBundleId);
+        WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
+        checkNotNull(widgetTypeFqns);
+        var currentUser = getCurrentUser();
+        tbWidgetsBundleService.updateWidgetsBundleWidgetFqns(widgetsBundleId, widgetTypeFqns, currentUser);
     }
 
     @ApiOperation(value = "Delete widgets bundle (deleteWidgetsBundle)",

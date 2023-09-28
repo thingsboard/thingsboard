@@ -200,14 +200,14 @@ public class TbHttpClient {
                         if (responseEntity.getStatusCode().is2xxSuccessful()) {
                             onSuccess.accept(processResponse(ctx, msg, responseEntity));
                         } else {
-                            onFailure.accept(processFailureResponse(ctx, msg, responseEntity), null);
+                            onFailure.accept(processFailureResponse(msg, responseEntity), null);
                         }
                     }, throwable -> {
                         if (semaphore != null) {
                             semaphore.release();
                         }
 
-                        onFailure.accept(processException(ctx, msg, throwable), throwable);
+                        onFailure.accept(processException(msg, throwable), throwable);
                     });
         } catch (InterruptedException e) {
             log.warn("Timeout during waiting for reply!", e);
@@ -255,8 +255,8 @@ public class TbHttpClient {
         metaData.putValue(STATUS_CODE, response.getStatusCode().value() + "");
         metaData.putValue(STATUS_REASON, httpStatus.getReasonPhrase());
         headersToMetaData(response.getHeaders(), metaData::putValue);
-        String body = response.getBody() == null ? "{}" : response.getBody();
-        return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, body);
+        String body = response.getBody() == null ? TbMsg.EMPTY_JSON_OBJECT : response.getBody();
+        return ctx.transformMsg(origMsg, metaData, body);
     }
 
     void headersToMetaData(Map<String, List<String>> headers, BiConsumer<String, String> consumer) {
@@ -274,18 +274,18 @@ public class TbHttpClient {
         });
     }
 
-    private TbMsg processFailureResponse(TbContext ctx, TbMsg origMsg, ResponseEntity<String> response) {
+    private TbMsg processFailureResponse(TbMsg origMsg, ResponseEntity<String> response) {
         HttpStatus httpStatus = (HttpStatus) response.getStatusCode();
         TbMsgMetaData metaData = origMsg.getMetaData();
         metaData.putValue(STATUS, httpStatus.name());
-        metaData.putValue(STATUS_CODE, response.getStatusCode().value() + "");
+        metaData.putValue(STATUS_CODE, httpStatus.value() + "");
         metaData.putValue(STATUS_REASON, httpStatus.getReasonPhrase());
         metaData.putValue(ERROR_BODY, response.getBody());
         headersToMetaData(response.getHeaders(), metaData::putValue);
-        return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
+        return TbMsg.transformMsgMetadata(origMsg, metaData);
     }
 
-    private TbMsg processException(TbContext ctx, TbMsg origMsg, Throwable e) {
+    private TbMsg processException(TbMsg origMsg, Throwable e) {
         TbMsgMetaData metaData = origMsg.getMetaData();
         metaData.putValue(ERROR, e.getClass() + ": " + e.getMessage());
         if (e instanceof RestClientResponseException) {
@@ -294,7 +294,7 @@ public class TbHttpClient {
             metaData.putValue(STATUS_CODE, restClientResponseException.getRawStatusCode() + "");
             metaData.putValue(ERROR_BODY, restClientResponseException.getResponseBodyAsString());
         }
-        return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
+        return TbMsg.transformMsgMetadata(origMsg, metaData);
     }
 
     private void prepareHeaders(HttpHeaders headers, TbMsg msg) {

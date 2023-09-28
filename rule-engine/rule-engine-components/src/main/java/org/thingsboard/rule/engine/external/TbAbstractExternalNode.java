@@ -17,7 +17,7 @@ package org.thingsboard.rule.engine.external;
 
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
-import org.thingsboard.rule.engine.api.TbRelationTypes;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 public abstract class TbAbstractExternalNode implements TbNode {
@@ -30,7 +30,7 @@ public abstract class TbAbstractExternalNode implements TbNode {
 
     protected void tellSuccess(TbContext ctx, TbMsg tbMsg) {
         if (forceAck) {
-            ctx.enqueueForTellNext(tbMsg.copyWithNewCtx(), TbRelationTypes.SUCCESS);
+            ctx.enqueueForTellNext(tbMsg.copyWithNewCtx(), TbNodeConnectionType.SUCCESS);
         } else {
             ctx.tellSuccess(tbMsg);
         }
@@ -39,22 +39,25 @@ public abstract class TbAbstractExternalNode implements TbNode {
     protected void tellFailure(TbContext ctx, TbMsg tbMsg, Throwable t) {
         if (forceAck) {
             if (t == null) {
-                ctx.enqueueForTellNext(tbMsg.copyWithNewCtx(), TbRelationTypes.FAILURE);
+                ctx.enqueueForTellNext(tbMsg.copyWithNewCtx(), TbNodeConnectionType.FAILURE);
             } else {
                 ctx.enqueueForTellFailure(tbMsg.copyWithNewCtx(), t);
             }
         } else {
             if (t == null) {
-                ctx.tellNext(tbMsg, TbRelationTypes.FAILURE);
+                ctx.tellNext(tbMsg, TbNodeConnectionType.FAILURE);
             } else {
                 ctx.tellFailure(tbMsg, t);
             }
         }
     }
 
-    protected void ackIfNeeded(TbContext ctx, TbMsg msg) {
+    protected TbMsg ackIfNeeded(TbContext ctx, TbMsg msg) {
         if (forceAck) {
             ctx.ack(msg);
+            return msg.copyWithNewCtx();
+        } else {
+            return msg;
         }
     }
 

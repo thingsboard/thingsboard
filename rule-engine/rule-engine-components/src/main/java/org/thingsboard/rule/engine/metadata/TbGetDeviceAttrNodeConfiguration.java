@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.metadata;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.rule.engine.data.DeviceRelationsQuery;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 
@@ -38,7 +39,7 @@ public class TbGetDeviceAttrNodeConfiguration extends TbGetAttributesNodeConfigu
         configuration.setLatestTsKeyNames(Collections.emptyList());
         configuration.setTellFailureIfAbsent(true);
         configuration.setGetLatestValueWithTs(false);
-        configuration.setFetchTo(FetchTo.METADATA);
+        configuration.setFetchTo(TbMsgSource.METADATA);
 
         var deviceRelationsQuery = new DeviceRelationsQuery();
         deviceRelationsQuery.setDirection(EntitySearchDirection.FROM);

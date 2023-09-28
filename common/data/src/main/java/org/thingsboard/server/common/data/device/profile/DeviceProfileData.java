@@ -26,6 +26,8 @@ import java.util.List;
 @Data
 public class DeviceProfileData implements Serializable {
 
+    private static final long serialVersionUID = -3864805547939495272L;
+
     @Schema(description = "JSON object of device profile configuration")
     private DeviceProfileConfiguration configuration;
     @Valid

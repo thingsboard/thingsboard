@@ -19,13 +19,17 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 
+import jakarta.validation.constraints.NotNull;;
+
 @Schema
 @Data
 public class SaveDeviceWithCredentialsRequest {
 
     @Schema(description = "The JSON with device entity.", required = true)
+    @NotNull
     private final Device device;
     @Schema(description = "The JSON with credentials entity.", required = true)
+    @NotNull
     private final DeviceCredentials credentials;
 
 }

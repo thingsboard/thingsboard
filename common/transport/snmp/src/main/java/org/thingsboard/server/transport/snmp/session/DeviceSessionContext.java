@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.snmp.session;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -26,9 +27,12 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
+import org.thingsboard.server.common.data.transport.snmp.SnmpCommunicationSpec;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
+import org.thingsboard.server.common.transport.service.DefaultTransportService;
 import org.thingsboard.server.common.transport.session.DeviceAwareSessionContext;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
@@ -57,17 +61,22 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
     private SnmpDeviceTransportConfiguration deviceTransportConfiguration;
     @Getter
     private final Device device;
+    @Getter
+    private final TenantId tenantId;
 
     private final SnmpTransportContext snmpTransportContext;
 
     private final AtomicInteger msgIdSeq = new AtomicInteger(0);
     @Getter
     private boolean isActive = true;
+    @Setter
+    private Runnable sessionTimeoutHandler;
 
     @Getter
     private final List<ScheduledFuture<?>> queryingTasks = new LinkedList<>();
 
-    public DeviceSessionContext(Device device, DeviceProfile deviceProfile, String token,
+    @Builder
+    public DeviceSessionContext(TenantId tenantId, Device device, DeviceProfile deviceProfile, String token,
                                 SnmpDeviceProfileTransportConfiguration profileTransportConfiguration,
                                 SnmpDeviceTransportConfiguration deviceTransportConfiguration,
                                 SnmpTransportContext snmpTransportContext) throws Exception {
@@ -75,6 +84,7 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
         super.setDeviceId(device.getId());
         super.setDeviceProfile(deviceProfile);
         this.device = device;
+        this.tenantId = tenantId;
 
         this.token = token;
         this.snmpTransportContext = snmpTransportContext;
@@ -131,19 +141,32 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
     @Override
     public void onAttributeUpdate(UUID sessionId, AttributeUpdateNotificationMsg attributeUpdateNotification) {
         log.trace("[{}] Received attributes update notification to device", sessionId);
-        snmpTransportContext.getSnmpTransportService().onAttributeUpdate(this, attributeUpdateNotification);
+        try {
+            snmpTransportContext.getSnmpTransportService().onAttributeUpdate(this, attributeUpdateNotification);
+        } catch (Exception e) {
+            snmpTransportContext.getTransportService().errorEvent(getTenantId(), getDeviceId(), SnmpCommunicationSpec.SHARED_ATTRIBUTES_SETTING.getLabel(), e);
+        }
     }
 
     @Override
     public void onRemoteSessionCloseCommand(UUID sessionId, SessionCloseNotificationProto sessionCloseNotification) {
         log.trace("[{}] Received the remote command to close the session: {}", sessionId, sessionCloseNotification.getMessage());
+        if (sessionCloseNotification.getMessage().equals(DefaultTransportService.SESSION_EXPIRED_MESSAGE)) {
+            if (sessionTimeoutHandler != null) {
+                sessionTimeoutHandler.run();
+            }
+        }
     }
 
     @Override
     public void onToDeviceRpcRequest(UUID sessionId, ToDeviceRpcRequestMsg toDeviceRequest) {
         log.trace("[{}] Received RPC command to device", sessionId);
-        snmpTransportContext.getSnmpTransportService().onToDeviceRpcRequest(this, toDeviceRequest);
-        snmpTransportContext.getTransportService().process(getSessionInfo(), toDeviceRequest, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
+        try {
+            snmpTransportContext.getSnmpTransportService().onToDeviceRpcRequest(this, toDeviceRequest);
+            snmpTransportContext.getTransportService().process(getSessionInfo(), toDeviceRequest, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
+        } catch (Exception e) {
+            snmpTransportContext.getTransportService().errorEvent(getTenantId(), getDeviceId(), SnmpCommunicationSpec.TO_DEVICE_RPC_REQUEST.getLabel(), e);
+        }
     }
 
     @Override

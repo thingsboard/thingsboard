@@ -445,6 +445,7 @@
     "attributes": "Öznitelikler",
     "latest-telemetry": "Son telemetri",
     "attributes-scope": "Varlık öznitelik kapsamı",
+    "scope-telemetry": "telemetri",
     "scope-latest-telemetry": "Son telemetri",
     "scope-client": "İstemci öznitelikler",
     "scope-server": "Sunucu öznitelikler",
@@ -1021,13 +1022,7 @@
     "device-configuration": "Cihaz yapılandırması",
     "transport-configuration": "Aktarım yapılandırması",
     "wizard": {
-      "device-wizard": "Cihaz Sihirbazı",
-      "device-details": "Cihaz ayrıntıları",
-      "new-device-profile": "Yeni cihaz profili oluştur",
-      "existing-device-profile": "Mevcut cihaz profilini seçin",
-      "specific-configuration": "Özel yapılandırma",
-      "customer-to-assign-device": "Cihazı atamak için kullanıcı grubu",
-      "add-credentials": "Kimlik bilgileri ekle"
+      "device-details": "Cihaz ayrıntıları"
     },
     "unassign-devices-from-edge-title": "{ count, plural, =1 {1 cihazın} other {# cihazın} } atamasını kaldırmak istediğinizden emin misiniz?",
     "unassign-devices-from-edge-text": "Onaydan sonra, seçilen tüm cihazların ataması kaldırılacak ve uç tarafından erişilemeyecek."
@@ -1048,8 +1043,6 @@
     "set-default": "Cihaz profilini varsayılan yap",
     "delete": "Cihaz profilini sil",
     "copyId": "Cihaz profili kimliğini kopyala",
-    "new-device-profile-name": "Cihaz profili adı",
-    "new-device-profile-name-required": "Cihaz profili adı gerekli.",
     "name": "İsim",
     "name-required": "İsim gerekli.",
     "type": "Profil türü",
@@ -1545,7 +1538,6 @@
     "help-text": "İhtiyaca göre '%' kullanın: '%entity_name_contains%', '%entity_name_ends', 'entity_starts_with'.",
     "use-entity-name-filter": "Filtre kullan",
     "entity-list-empty": "Hiçbir öğe seçilmedi.",
-    "entity-type-list-empty": "Hiçbir öğe türü seçilmedi.",
     "entity-name-filter-required": "Öğe ismi filtresi gerekli.",
     "entity-name-filter-no-entity-matched": "'{{entity}}' ile başlayan hiçbir öğe bulunamadı.",
     "all-subtypes": "Tümü",

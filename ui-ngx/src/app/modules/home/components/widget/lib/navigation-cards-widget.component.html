@@ -25,8 +25,7 @@
         <mat-grid-list rowHeight="170px" [cols]="sectionPlaces(section).length">
           <mat-grid-tile *ngFor="let place of sectionPlaces(section)">
             <a mat-raised-button color="primary" class="tb-card-button" href="{{place.path}}" (click)="navigate($event, place.path)">
-              <mat-icon *ngIf="!place.isMdiIcon" class="material-icons tb-mat-96">{{place.icon}}</mat-icon>
-              <mat-icon *ngIf="place.isMdiIcon" class="tb-mat-96" [svgIcon]="place.icon"></mat-icon>
+              <tb-icon matButtonIcon class="tb-mat-96">{{place.icon}}</tb-icon>
               <span translate>{{place.name}}</span>
             </a>
           </mat-grid-tile>

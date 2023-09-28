@@ -57,7 +57,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 @Component({
   selector: 'tb-data-key-config',
   templateUrl: './data-key-config.component.html',
-  styleUrls: ['./data-key-config.component.scss'],
+  styleUrls: [],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -128,6 +128,10 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
 
   @Input()
   @coerceBoolean()
+  hideDataKeyName = false;
+
+  @Input()
+  @coerceBoolean()
   hideDataKeyLabel = false;
 
   @Input()
@@ -144,8 +148,8 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
 
   @ViewChild('keyInput') keyInput: ElementRef;
 
-  @ViewChild('funcBodyEdit') funcBodyEdit: JsFuncComponent;
-  @ViewChild('postFuncBodyEdit') postFuncBodyEdit: JsFuncComponent;
+  @ViewChild('funcBodyEdit', {static: false}) funcBodyEdit: JsFuncComponent;
+  @ViewChild('postFuncBodyEdit', {static: false}) postFuncBodyEdit: JsFuncComponent;
 
   hasAdvanced = false;
 
@@ -438,10 +442,11 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
   }
 
   public validateOnSubmit() {
-    if (this.modelValue.type === DataKeyType.function) {
+    if (this.modelValue.type === DataKeyType.function && this.funcBodyEdit) {
       this.funcBodyEdit.validateOnSubmit();
     } else if ((this.modelValue.type === DataKeyType.timeseries ||
-                this.modelValue.type === DataKeyType.attribute) && this.dataKeyFormGroup.get('usePostProcessing').value) {
+                this.modelValue.type === DataKeyType.attribute) && this.dataKeyFormGroup.get('usePostProcessing').value &&
+                this.postFuncBodyEdit) {
       this.postFuncBodyEdit.validateOnSubmit();
     }
   }

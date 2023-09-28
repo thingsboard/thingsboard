@@ -50,4 +50,15 @@ public class WidgetTypeInfo extends BaseWidgetType {
         this.description = widgetTypeInfo.getDescription();
         this.widgetType = widgetTypeInfo.getWidgetType();
     }
+
+    public WidgetTypeInfo(WidgetTypeDetails widgetTypeDetails) {
+        super(widgetTypeDetails);
+        this.image = widgetTypeDetails.getImage();
+        this.description = widgetTypeDetails.getDescription();
+        if (widgetTypeDetails.getDescriptor() != null && widgetTypeDetails.getDescriptor().has("type")) {
+            this.widgetType = widgetTypeDetails.getDescriptor().get("type").asText();
+        } else {
+            this.widgetType = "";
+        }
+    }
 }

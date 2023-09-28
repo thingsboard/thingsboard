@@ -31,10 +31,11 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
         type = ComponentType.FILTER,
         name = "asset profile switch",
         customRelations = true,
-        relationTypes = {},
+        relationTypes = {"default"},
         configClazz = EmptyNodeConfiguration.class,
         nodeDescription = "Route incoming messages based on the name of the asset profile",
-        nodeDetails = "Route incoming messages based on the name of the asset profile. The asset profile name is case-sensitive",
+        nodeDetails = "Route incoming messages based on the name of the asset profile. The asset profile name is case-sensitive.<br><br>" +
+                "Output connections: <i>Asset profile name</i> or <code>Failure</code>",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbNodeEmptyConfig")
 public class TbAssetTypeSwitchNode extends TbAbstractTypeSwitchNode {
@@ -42,7 +43,8 @@ public class TbAssetTypeSwitchNode extends TbAbstractTypeSwitchNode {
     @Override
     protected String getRelationType(TbContext ctx, EntityId originator) throws TbNodeException {
         if (!EntityType.ASSET.equals(originator.getEntityType())) {
-            throw new TbNodeException("Unsupported originator type: " + originator.getEntityType() + "! Only 'ASSET' type is allowed.");
+            throw new TbNodeException("Unsupported originator type: " + originator.getEntityType().getNormalName() + "!" +
+                    " Only " + EntityType.ASSET.getNormalName() + " type is allowed.");
         }
         AssetProfile assetProfile = ctx.getAssetProfileCache().get(ctx.getTenantId(), (AssetId) originator);
         if (assetProfile == null) {

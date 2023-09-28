@@ -20,6 +20,7 @@ import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.api.gax.retrying.RetrySettings;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.protobuf.ByteString;
@@ -28,7 +29,6 @@ import com.google.pubsub.v1.PubsubMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
@@ -36,6 +36,7 @@ import org.thingsboard.rule.engine.external.TbAbstractExternalNode;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.threeten.bp.Duration;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -75,8 +76,8 @@ public class TbPubSubNode extends TbAbstractExternalNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
+        msg = ackIfNeeded(ctx, msg);
         publishMessage(ctx, msg);
-        ackIfNeeded(ctx, msg);
     }
 
     @Override
@@ -103,28 +104,28 @@ public class TbPubSubNode extends TbAbstractExternalNode {
         ApiFuture<String> messageIdFuture = this.pubSubClient.publish(pubsubMessageBuilder.build());
         ApiFutures.addCallback(messageIdFuture, new ApiFutureCallback<String>() {
                     public void onSuccess(String messageId) {
-                        TbMsg next = processPublishResult(ctx, msg, messageId);
+                        TbMsg next = processPublishResult(msg, messageId);
                         tellSuccess(ctx, next);
                     }
 
                     public void onFailure(Throwable t) {
-                        TbMsg next = processException(ctx, msg, t);
+                        TbMsg next = processException(msg, t);
                         tellFailure(ctx, next, t);
                     }
                 },
                 ctx.getExternalCallExecutor());
     }
 
-    private TbMsg processPublishResult(TbContext ctx, TbMsg origMsg, String messageId) {
+    private TbMsg processPublishResult(TbMsg origMsg, String messageId) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(MESSAGE_ID, messageId);
-        return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
+        return TbMsg.transformMsgMetadata(origMsg, metaData);
     }
 
-    private TbMsg processException(TbContext ctx, TbMsg origMsg, Throwable t) {
+    private TbMsg processException(TbMsg origMsg, Throwable t) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(ERROR, t.getClass() + ": " + t.getMessage());
-        return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
+        return TbMsg.transformMsgMetadata(origMsg, metaData);
     }
 
     private Publisher initPubSubClient() throws IOException {
@@ -134,8 +135,19 @@ public class TbPubSubNode extends TbAbstractExternalNode {
                         new ByteArrayInputStream(config.getServiceAccountKey().getBytes()));
         CredentialsProvider credProvider = FixedCredentialsProvider.create(credentials);
 
+        var retrySettings = RetrySettings.newBuilder()
+                .setTotalTimeout(Duration.ofSeconds(10))
+                .setInitialRetryDelay(Duration.ofMillis(50))
+                .setRetryDelayMultiplier(1.1)
+                .setMaxRetryDelay(Duration.ofSeconds(2))
+                .setInitialRpcTimeout(Duration.ofSeconds(2))
+                .setRpcTimeoutMultiplier(1)
+                .setMaxRpcTimeout(Duration.ofSeconds(10))
+                .build();
+
         return Publisher.newBuilder(topicName)
                 .setCredentialsProvider(credProvider)
+                .setRetrySettings(retrySettings)
                 .build();
     }
 }

@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.service.validator;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -32,9 +31,7 @@ public class AlarmDataValidator extends DataValidator<Alarm> {
 
     @Override
     protected void validateDataImpl(TenantId tenantId, Alarm alarm) {
-        if (StringUtils.isEmpty(alarm.getType())) {
-            throw new DataValidationException("Alarm type should be specified!");
-        }
+        validateString("Alarm type", alarm.getType());
         if (alarm.getOriginator() == null) {
             throw new DataValidationException("Alarm originator should be specified!");
         }

@@ -23,6 +23,5 @@ import jakarta.servlet.http.HttpServletRequest;
 
 public interface EdgeInstallService {
 
-    EdgeInstallInstructions getDockerInstallInstructions(TenantId tenantId, Edge edge, HttpServletRequest request);
-
+    EdgeInstallInstructions getInstallInstructions(TenantId tenantId, Edge edge, String installationMethod, HttpServletRequest request);
 }

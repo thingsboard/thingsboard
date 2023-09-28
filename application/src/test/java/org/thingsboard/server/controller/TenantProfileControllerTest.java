@@ -168,23 +168,6 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testSaveSameTenantProfileWithDifferentIsolatedTbRuleEngine() throws Exception {
-        loginSysAdmin();
-        TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile");
-        TenantProfile savedTenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
-        savedTenantProfile.setIsolatedTbRuleEngine(true);
-        addMainQueueConfig(savedTenantProfile);
-
-        Mockito.reset(tbClusterService);
-
-        doPost("/api/tenantProfile", savedTenantProfile)
-                .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Can't update isolatedTbRuleEngine property")));
-
-        testBroadcastEntityStateChangeEventNeverTenantProfile();
-    }
-
-    @Test
     public void testDeleteTenantProfileWithExistingTenant() throws Exception {
         loginSysAdmin();
         TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile");

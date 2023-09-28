@@ -52,6 +52,12 @@ export enum DeviceTransportType {
   SNMP = 'SNMP'
 }
 
+export enum BasicTransportType {
+  HTTP = 'HTTP'
+}
+export type TransportType =  BasicTransportType | DeviceTransportType;
+export type NetworkTransportType =  BasicTransportType | Exclude<DeviceTransportType, DeviceTransportType.DEFAULT>;
+
 export enum TransportPayloadType {
   JSON = 'JSON',
   PROTOBUF = 'PROTOBUF'
@@ -99,13 +105,14 @@ export const deviceProfileTypeConfigurationInfoMap = new Map<DeviceProfileType, 
   ]
 );
 
-export const deviceTransportTypeTranslationMap = new Map<DeviceTransportType, string>(
+export const deviceTransportTypeTranslationMap = new Map<TransportType, string>(
   [
     [DeviceTransportType.DEFAULT, 'device-profile.transport-type-default'],
     [DeviceTransportType.MQTT, 'device-profile.transport-type-mqtt'],
     [DeviceTransportType.COAP, 'device-profile.transport-type-coap'],
     [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m'],
-    [DeviceTransportType.SNMP, 'device-profile.transport-type-snmp']
+    [DeviceTransportType.SNMP, 'device-profile.transport-type-snmp'],
+    [BasicTransportType.HTTP, 'device-profile.transport-type-http']
   ]
 );
 
@@ -119,13 +126,14 @@ export const deviceProvisionTypeTranslationMap = new Map<DeviceProvisionType, st
   ]
 );
 
-export const deviceTransportTypeHintMap = new Map<DeviceTransportType, string>(
+export const deviceTransportTypeHintMap = new Map<TransportType, string>(
   [
     [DeviceTransportType.DEFAULT, 'device-profile.transport-type-default-hint'],
     [DeviceTransportType.MQTT, 'device-profile.transport-type-mqtt-hint'],
     [DeviceTransportType.COAP, 'device-profile.transport-type-coap-hint'],
     [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m-hint'],
-    [DeviceTransportType.SNMP, 'device-profile.transport-type-snmp-hint']
+    [DeviceTransportType.SNMP, 'device-profile.transport-type-snmp-hint'],
+    [BasicTransportType.HTTP, '']
   ]
 );
 
@@ -290,14 +298,16 @@ export enum SnmpSpecType {
   TELEMETRY_QUERYING = 'TELEMETRY_QUERYING',
   CLIENT_ATTRIBUTES_QUERYING = 'CLIENT_ATTRIBUTES_QUERYING',
   SHARED_ATTRIBUTES_SETTING = 'SHARED_ATTRIBUTES_SETTING',
-  TO_DEVICE_RPC_REQUEST = 'TO_DEVICE_RPC_REQUEST'
+  TO_DEVICE_RPC_REQUEST = 'TO_DEVICE_RPC_REQUEST',
+  TO_SERVER_RPC_REQUEST = 'TO_SERVER_RPC_REQUEST'
 }
 
 export const SnmpSpecTypeTranslationMap = new Map<SnmpSpecType, string>([
-  [SnmpSpecType.TELEMETRY_QUERYING, ' Telemetry'],
-  [SnmpSpecType.CLIENT_ATTRIBUTES_QUERYING, 'Client attributes'],
-  [SnmpSpecType.SHARED_ATTRIBUTES_SETTING, 'Shared attributes'],
-  [SnmpSpecType.TO_DEVICE_RPC_REQUEST, 'RPC request']
+  [SnmpSpecType.TELEMETRY_QUERYING, ' Telemetry (SNMP GET)'],
+  [SnmpSpecType.CLIENT_ATTRIBUTES_QUERYING, 'Client attributes (SNMP GET)'],
+  [SnmpSpecType.SHARED_ATTRIBUTES_SETTING, 'Shared attributes (SNMP SET)'],
+  [SnmpSpecType.TO_DEVICE_RPC_REQUEST, 'To-device RPC request (SNMP GET/SET)'],
+  [SnmpSpecType.TO_SERVER_RPC_REQUEST, 'From-device RPC request (SNMP TRAP)']
 ]);
 
 export interface SnmpCommunicationConfig {
@@ -705,7 +715,7 @@ export interface Device extends BaseData<DeviceId>, ExportableEntity<DeviceId> {
   tenantId?: TenantId;
   customerId?: CustomerId;
   name: string;
-  type: string;
+  type?: string;
   label: string;
   firmwareId?: OtaPackageId;
   softwareId?: OtaPackageId;
@@ -827,6 +837,39 @@ export enum ClaimResponse {
 export interface ClaimResult {
   device: Device;
   response: ClaimResponse;
+}
+
+export interface PublishTelemetryCommand {
+  http?: {
+    http?: string;
+    https?: string;
+  };
+  mqtt: {
+    mqtt?: string;
+    mqtts?: string | Array<string>;
+    docker?: {
+      mqtt?: string;
+      mqtts?: string | Array<string>;
+    };
+    sparkplug?: string;
+  };
+  coap: {
+    coap?: string;
+    coaps?: string | Array<string>;
+    docker?: {
+      coap?: string;
+      coaps?: string | Array<string>;
+    };
+  };
+  lwm2m?: string;
+  snmp?: string;
+}
+
+export interface PublishLaunchCommand {
+  mqtt: {
+    linux: string;
+    windows: string;
+  };
 }
 
 export const dayOfWeekTranslations = new Array<string>(

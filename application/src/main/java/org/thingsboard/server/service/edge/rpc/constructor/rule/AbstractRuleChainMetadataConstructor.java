@@ -51,7 +51,7 @@ public abstract class AbstractRuleChainMetadataConstructor implements RuleChainM
             builder.setMsgType(msgType);
             return builder.build();
         } catch (JsonProcessingException ex) {
-            log.error("Can't construct RuleChainMetadataUpdateMsg", ex);
+            log.error("[{}] Can't construct RuleChainMetadataUpdateMsg", tenantId, ex);
         }
         return null;
     }
@@ -97,6 +97,8 @@ public abstract class AbstractRuleChainMetadataConstructor implements RuleChainM
                 .setDebugMode(node.isDebugMode())
                 .setConfiguration(JacksonUtil.OBJECT_MAPPER.writeValueAsString(node.getConfiguration()))
                 .setAdditionalInfo(JacksonUtil.OBJECT_MAPPER.writeValueAsString(node.getAdditionalInfo()))
+                .setSingletonMode(node.isSingletonMode())
+                .setConfigurationVersion(node.getConfigurationVersion())
                 .build();
     }
 

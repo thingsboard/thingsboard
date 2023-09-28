@@ -36,9 +36,9 @@ public class Customer extends ContactBased<CustomerId> implements HasTenantId, E
 
     @NoXss
     @Length(fieldName = "title")
-    @Schema(description = "Title of the customer", example = "Company A")
+    @Schema(required = true, description = "Title of the customer", example = "Company A")
     private String title;
-    @Schema(required = true, description = "JSON object with Tenant Id")
+    @Schema(description = "JSON object with Tenant Id")
     private TenantId tenantId;
 
     @Getter @Setter
@@ -90,43 +90,43 @@ public class Customer extends ContactBased<CustomerId> implements HasTenantId, E
         return super.getCreatedTime();
     }
 
-    @Schema(required = true, description = "Country", example = "US")
+    @Schema(description = "Country", example = "US")
     @Override
     public String getCountry() {
         return super.getCountry();
     }
 
-    @Schema(required = true, description = "State", example = "NY")
+    @Schema(description = "State", example = "NY")
     @Override
     public String getState() {
         return super.getState();
     }
 
-    @Schema(required = true, description = "City", example = "New York")
+    @Schema(description = "City", example = "New York")
     @Override
     public String getCity() {
         return super.getCity();
     }
 
-    @Schema(required = true, description = "Address Line 1", example = "42 Broadway Suite 12-400")
+    @Schema(description = "Address Line 1", example = "42 Broadway Suite 12-400")
     @Override
     public String getAddress() {
         return super.getAddress();
     }
 
-    @Schema(required = true, description = "Address Line 2", example = "")
+    @Schema(description = "Address Line 2", example = "")
     @Override
     public String getAddress2() {
         return super.getAddress2();
     }
 
-    @Schema(required = true, description = "Zip code", example = "10004")
+    @Schema(description = "Zip code", example = "10004")
     @Override
     public String getZip() {
         return super.getZip();
     }
 
-    @Schema(required = true, description = "Phone number", example = "+1(415)777-7777")
+    @Schema(description = "Phone number", example = "+1(415)777-7777")
     @Override
     public String getPhone() {
         return super.getPhone();

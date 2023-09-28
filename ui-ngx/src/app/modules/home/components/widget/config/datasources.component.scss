@@ -13,18 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import "../../../../../../theme";
+@import "../../../../../../scss/constants";
 
 .tb-datasource-list-item {
   &.mat-mdc-list-item {
     height: auto;
     display: block;
     padding: 0;
-    &.bordered {
-      padding-top: 16px;
-      border: 1px solid rgba(0, 0, 0, 0.12);
-      border-radius: 6px;
-    }
   }
   &.tb-draggable {
     &.cdk-drag-preview {
@@ -34,7 +29,24 @@
 }
 
 .tb-datasource-list-item + .tb-datasource-list-item {
-  margin-top: 16px;
+  margin-top: 24px;
+}
+
+.tb-datasource-row {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  place-content: flex-start;
+  align-items: flex-start;
+}
+
+.tb-datasource-index-container {
+  width: 36px;
+  height: 56px;
+  display: flex;
+  flex-direction: row;
+  place-content: flex-start;
+  align-items: center;
 }
 
 .tb-datasource-index {
@@ -61,6 +73,25 @@
 
 .tb-datasource-params {
   position: relative;
+  flex: 1;
+  min-width: 0;
+  .tb-datasource-item {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    tb-datasource {
+      flex: 1;
+      min-width: 0;
+    }
+    .tb-datasource-buttons {
+      height: 56px;
+      display: flex;
+      flex-direction: row;
+      place-content: center;
+      align-items: center;
+    }
+  }
   tb-error.tb-datasource-error {
     position: absolute;
     bottom: 4px;

@@ -308,12 +308,21 @@ public class ModelConstants {
      */
     public static final String WIDGET_TYPE_TABLE_NAME = "widget_type";
     public static final String WIDGET_TYPE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
-    public static final String WIDGET_TYPE_BUNDLE_ALIAS_PROPERTY = "bundle_alias";
-    public static final String WIDGET_TYPE_ALIAS_PROPERTY = ALIAS_PROPERTY;
+
+    public static final String WIDGET_TYPE_FQN_PROPERTY = "fqn";
     public static final String WIDGET_TYPE_NAME_PROPERTY = "name";
     public static final String WIDGET_TYPE_IMAGE_PROPERTY = "image";
     public static final String WIDGET_TYPE_DESCRIPTION_PROPERTY = "description";
     public static final String WIDGET_TYPE_DESCRIPTOR_PROPERTY = "descriptor";
+
+    public static final String WIDGET_TYPE_DEPRECATED_PROPERTY = "deprecated";
+
+    /**
+     * Widgets bundle widget constants.
+     */
+    public static final String WIDGETS_BUNDLE_WIDGET_TABLE_NAME = "widgets_bundle_widget";
+
+    public static final String WIDGET_TYPE_ORDER_PROPERTY = "widget_type_order";
 
     /**
      * Dashboard constants.
@@ -468,6 +477,7 @@ public class ModelConstants {
     public static final String API_USAGE_STATE_DB_STORAGE_COLUMN = "db_storage";
     public static final String API_USAGE_STATE_RE_EXEC_COLUMN = "re_exec";
     public static final String API_USAGE_STATE_JS_EXEC_COLUMN = "js_exec";
+    public static final String API_USAGE_STATE_TBEL_EXEC_COLUMN = "tbel_exec";
     public static final String API_USAGE_STATE_EMAIL_EXEC_COLUMN = "email_exec";
     public static final String API_USAGE_STATE_SMS_EXEC_COLUMN = "sms_exec";
     public static final String API_USAGE_STATE_ALARM_EXEC_COLUMN = "alarm_exec";

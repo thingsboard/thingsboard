@@ -116,7 +116,7 @@ export interface NotificationRule extends Omit<BaseData<NotificationRuleId>, 'la
   triggerType: TriggerType;
   triggerConfig: NotificationRuleTriggerConfig;
   recipientsConfig: NotificationRuleRecipientConfig;
-  additionalConfig: {description: string};
+  additionalConfig?: {description: string};
 }
 
 export type NotificationRuleTriggerConfig = Partial<AlarmNotificationRuleTriggerConfig & DeviceInactivityNotificationRuleTriggerConfig &
@@ -246,7 +246,9 @@ export interface NotificationTarget extends Omit<BaseData<NotificationTargetId>,
   configuration: NotificationTargetConfig;
 }
 
-export interface NotificationTargetConfig extends Partial<PlatformUsersNotificationTargetConfig & SlackNotificationTargetConfig> {
+export interface NotificationTargetConfig extends Partial<PlatformUsersNotificationTargetConfig
+  & SlackNotificationTargetConfig
+  & MicrosoftTeamsNotificationTargetConfig> {
   description?: string;
   type: NotificationTargetType;
 }
@@ -276,14 +278,21 @@ export interface SlackNotificationTargetConfig {
   conversationType: SlackChanelType;
   conversation: SlackConversation;
 }
+
+export interface MicrosoftTeamsNotificationTargetConfig {
+  webhookUrl: string;
+  channelName: string;
+}
 export enum NotificationTargetType {
   PLATFORM_USERS = 'PLATFORM_USERS',
-  SLACK = 'SLACK'
+  SLACK = 'SLACK',
+  MICROSOFT_TEAMS = 'MICROSOFT_TEAMS'
 }
 
 export const NotificationTargetTypeTranslationMap = new Map<NotificationTargetType, string>([
   [NotificationTargetType.PLATFORM_USERS, 'notification.platform-users'],
-  [NotificationTargetType.SLACK, 'notification.delivery-method.slack']
+  [NotificationTargetType.SLACK, 'notification.delivery-method.slack'],
+  [NotificationTargetType.MICROSOFT_TEAMS, 'notification.delivery-method.microsoft-teams'],
 ]);
 
 export interface NotificationTemplate extends Omit<BaseData<NotificationTemplateId>, 'label'>, ExportableEntity<NotificationTemplateId> {
@@ -299,14 +308,17 @@ interface NotificationTemplateConfig {
 }
 
 export interface DeliveryMethodNotificationTemplate extends
-  Partial<WebDeliveryMethodNotificationTemplate & EmailDeliveryMethodNotificationTemplate & SlackDeliveryMethodNotificationTemplate>{
-  body?: string;
+  Partial<WebDeliveryMethodNotificationTemplate
+    & EmailDeliveryMethodNotificationTemplate
+    & SlackDeliveryMethodNotificationTemplate
+    & MicrosoftTeamsDeliveryMethodNotificationTemplate>{
+  body: string;
   enabled: boolean;
   method: NotificationDeliveryMethod;
 }
 
 interface WebDeliveryMethodNotificationTemplate {
-  subject?: string;
+  subject: string;
   additionalConfig: WebDeliveryMethodAdditionalConfig;
 }
 
@@ -316,15 +328,17 @@ interface WebDeliveryMethodAdditionalConfig {
     icon: string;
     color: string;
   };
-  actionButtonConfig: {
-    enabled: boolean;
-    text: string;
-    linkType: ActionButtonLinkType;
-    link?: string;
-    dashboardId?: string;
-    dashboardState?: string;
-    setEntityIdInState?: boolean;
-  };
+  actionButtonConfig: NotificationButtonConfig;
+}
+
+interface NotificationButtonConfig {
+  enabled: boolean;
+  text: string;
+  linkType: ActionButtonLinkType;
+  link?: string;
+  dashboardId?: string;
+  dashboardState?: string;
+  setEntityIdInState?: boolean;
 }
 
 interface EmailDeliveryMethodNotificationTemplate {
@@ -336,6 +350,11 @@ interface SlackDeliveryMethodNotificationTemplate {
   conversationId: string;
 }
 
+interface MicrosoftTeamsDeliveryMethodNotificationTemplate {
+  subject?: string;
+  button: NotificationButtonConfig;
+}
+
 export enum NotificationStatus {
   SENT = 'SENT',
   READ = 'READ'
@@ -345,14 +364,16 @@ export enum NotificationDeliveryMethod {
   WEB = 'WEB',
   SMS = 'SMS',
   EMAIL = 'EMAIL',
-  SLACK = 'SLACK'
+  SLACK = 'SLACK',
+  MICROSOFT_TEAMS = 'MICROSOFT_TEAMS'
 }
 
 export const NotificationDeliveryMethodTranslateMap = new Map<NotificationDeliveryMethod, string>([
   [NotificationDeliveryMethod.WEB, 'notification.delivery-method.web'],
   [NotificationDeliveryMethod.SMS, 'notification.delivery-method.sms'],
   [NotificationDeliveryMethod.EMAIL, 'notification.delivery-method.email'],
-  [NotificationDeliveryMethod.SLACK, 'notification.delivery-method.slack']
+  [NotificationDeliveryMethod.SLACK, 'notification.delivery-method.slack'],
+  [NotificationDeliveryMethod.MICROSOFT_TEAMS, 'notification.delivery-method.microsoft-teams'],
 ]);
 
 export enum NotificationRequestStatus {
@@ -591,3 +612,12 @@ export const TriggerTypeTranslationMap = new Map<TriggerType, string>([
   [TriggerType.NEW_PLATFORM_VERSION, 'notification.trigger.new-platform-version'],
   [TriggerType.RATE_LIMITS, 'notification.trigger.rate-limits'],
 ]);
+
+export interface NotificationUserSettings {
+  prefs: {[key: string]: NotificationUserSetting};
+}
+
+export interface NotificationUserSetting {
+  enabled: boolean;
+  enabledDeliveryMethods: {[key: string]: boolean};
+}

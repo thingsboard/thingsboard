@@ -99,7 +99,7 @@ public class RuleEngineTbQueueAdminFactory {
         return new TbQueueAdmin() {
 
             @Override
-            public void createTopicIfNotExists(String topic) {
+            public void createTopicIfNotExists(String topic, String properties) {
             }
 
             @Override
