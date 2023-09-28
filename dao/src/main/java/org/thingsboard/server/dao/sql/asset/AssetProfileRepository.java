@@ -63,7 +63,7 @@ public interface AssetProfileRepository extends JpaRepository<AssetProfileEntity
     UUID getExternalIdById(@Param("id") UUID id);
 
     @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(ap.id, 'ASSET_PROFILE', ap.name) " +
-            "FROM AssetProfileEntity ap WHERE ap.tenantId = :tenantId AND EXISTS (SELECT 1 FROM AssetEntity a WHERE a.assetProfileId = ap.id)")
+            "FROM AssetProfileEntity ap WHERE ap.tenantId = :tenantId AND EXISTS (SELECT 1 FROM AssetEntity a WHERE a.tenantId = :tenantId AND a.assetProfileId = ap.id)")
     List<EntityInfo> findActiveTenantAssetProfileNames(@Param("tenantId") UUID tenantId);
 
     @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(a.id, 'ASSET_PROFILE', a.name) " +

@@ -145,9 +145,6 @@ public interface DeviceRepository extends JpaRepository<DeviceEntity, UUID>, Exp
                                                    @Param("textSearch") String textSearch,
                                                    Pageable pageable);
 
-    @Query("SELECT DISTINCT d.type FROM DeviceEntity d WHERE d.tenantId = :tenantId")
-    List<String> findTenantDeviceTypes(@Param("tenantId") UUID tenantId);
-
     DeviceEntity findByTenantIdAndName(UUID tenantId, String name);
 
     List<DeviceEntity> findDevicesByTenantIdAndCustomerIdAndIdIn(UUID tenantId, UUID customerId, List<UUID> deviceIds);

@@ -74,7 +74,7 @@ public interface DeviceProfileRepository extends JpaRepository<DeviceProfileEnti
     UUID getExternalIdById(@Param("id") UUID id);
 
     @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(dp.id, 'DEVICE_PROFILE', dp.name) " +
-            "FROM DeviceProfileEntity dp WHERE dp.tenantId = :tenantId AND EXISTS (SELECT 1 FROM DeviceEntity dv WHERE dv.deviceProfileId = dp.id)")
+            "FROM DeviceProfileEntity dp WHERE dp.tenantId = :tenantId AND EXISTS (SELECT 1 FROM DeviceEntity dv WHERE dv.tenantId = :tenantId AND dv.deviceProfileId = dp.id)")
     List<EntityInfo> findActiveTenantDeviceProfileNames(@Param("tenantId") UUID tenantId);
 
     @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(d.id, 'DEVICE_PROFILE', d.name) " +
