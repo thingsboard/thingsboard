@@ -29,8 +29,6 @@ import org.thingsboard.common.util.JacksonUtil;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.InstantSource;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.chrono.IsoChronology;
