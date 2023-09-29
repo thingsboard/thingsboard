@@ -15,71 +15,91 @@
  */
 package org.thingsboard.script.api.tbel;
 
+import org.mvel2.ConversionException;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
-import java.time.LocalDate;
+import java.time.InstantSource;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.chrono.IsoChronology;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAccessor;
+import java.time.format.DateTimeParseException;
+import java.util.Arrays;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.Locale;
 import java.util.function.BiFunction;
 
-public class TbDate extends Date {
+public class TbDate  implements InstantSource {
 
-    private static final DateTimeFormatter isoDateFormatter = DateTimeFormatter.ofPattern(
-            "yyyy-MM-dd[[ ]['T']HH:mm[:ss[.SSS]][ ][XXX][Z][z][VV][O]]").withZone(ZoneId.systemDefault());
+    private static Instant instant;
 
-    private static final ThreadLocal<DateFormat> isoDateFormat = ThreadLocal.withInitial(() ->
-            new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
+    private static String patternDefault = "%s-%s-%sT%s:%s:%s.%d%s";
+
+//    private static final DateTimeFormatter isoDateFormatter = DateTimeFormatter.ofPattern(
+//            "yyyy-MM-dd[[ ]['T']HH:mm[:ss[.SSS]][ ][XXX][Z][z][VV][O]]").withZone(ZoneId.systemDefault());
+//
+//    private static final ThreadLocal<DateFormat> isoDateFormat = ThreadLocal.withInitial(() ->
+//            new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
 
     public TbDate() {
-        super();
+        instant = Instant.now();
     }
 
     public TbDate(String s) {
-        super(parse(s));
+        try{
+            if (s.length() > 0 && Character.isDigit(s.charAt(0))) {
+                // assuming UTC instant a la "2007-12-03T10:15:30.00Z"
+                instant = Instant.parse(s);
+            }
+            else {
+                // assuming RFC-1123 value a la "Tue, 3 Jun 2008 11:05:30 GMT"
+                instant = Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(s));
+            }
+        } catch (final DateTimeParseException ex) {
+            final ConversionException exception = new ConversionException("Cannot parse value [" + s + "] as instant", ex);
+            throw exception;
+        }
     }
 
-    public TbDate(long date) {
-        super(date);
+    public TbDate(long dateMilliSecond) {
+        instant = Instant.ofEpochMilli(dateMilliSecond);
     }
 
-    public TbDate(int year, int month, int date) {
-        this(year, month, date, 0, 0, 0);
+    public TbDate(int year, int month, int date, String... tz) {
+        this(year, month, date, 0, 0, 0, 0, tz);
     }
 
-    public TbDate(int year, int month, int date, int hrs, int min) {
-        this(year, month, date, hrs, min, 0);
+    public TbDate(int year, int month, int date, int hrs, int min, String... tz) {
+        this(year, month, date, hrs, min, 0, 0, tz);
     }
 
-    public TbDate(int year, int month, int date,
-                  int hrs, int min, int second) {
-        super(new GregorianCalendar(year, month, date, hrs, min, second).getTimeInMillis());
+    public TbDate(int year, int month, int date, int hrs, int min, int second, String... tz) {
+        this(year, month, date, hrs, min, second, 0, tz);
+    }
+
+    public TbDate(int year, int month, int date, int hrs, int min, int second, int secondMilli, String... tz) {
+        this(createDateTimeFromPattern (year, month, date, hrs, min, second, secondMilli, tz));
+    }
+
+    @Override
+    public Instant instant() {
+        return instant;
     }
 
     public String toDateString() {
-        DateFormat formatter = DateFormat.getDateInstance();
-        return formatter.format(this);
+        return toLocaleDateString();
     }
 
     public String toTimeString() {
-        DateFormat formatter = DateFormat.getTimeInstance(DateFormat.LONG);
-        return formatter.format(this);
+        return toLocaleTimeString();
     }
 
     public String toISOString() {
-        return isoDateFormat.get().format(this);
+        return instant.toString();
     }
 
     public String toLocaleDateString() {
@@ -106,9 +126,13 @@ public class TbDate extends Date {
         return toLocaleString(localeStr, optionsStr, (locale, options) -> DateTimeFormatter.ofLocalizedTime(options.getTimeStyle()).withLocale(locale));
     }
 
-    @Override
     public String toLocaleString() {
-        return toLocaleString(null, null);
+        LocalDateTime localDateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+        return localDateTime.toString();
+    }
+
+    public LocalDateTime getLocalDateTime() {
+        return LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
     }
 
     public String toLocaleString(String locale) {
@@ -130,7 +154,7 @@ public class TbDate extends Date {
     public String toLocaleString(String localeStr, String optionsStr, BiFunction<Locale, DateTimeFormatOptions, DateTimeFormatter> formatterBuilder) {
         Locale locale = StringUtils.isNotEmpty(localeStr) ? Locale.forLanguageTag(localeStr) : Locale.getDefault();
         DateTimeFormatOptions options = getDateFormattingOptions(optionsStr);
-        ZonedDateTime zdt = this.toInstant().atZone(options.getTimeZone().toZoneId());
+        ZonedDateTime zdt = this.instant().atZone(options.getTimeZone().toZoneId());
         DateTimeFormatter formatter;
         if (StringUtils.isNotEmpty(options.getPattern())) {
             formatter = new DateTimeFormatterBuilder().appendPattern(options.getPattern()).toFormatter(locale);
@@ -159,35 +183,53 @@ public class TbDate extends Date {
         return System.currentTimeMillis();
     }
 
-    public static long parse(String value, String format) {
-        try {
-            DateFormat dateFormat = new SimpleDateFormat(format);
-            return dateFormat.parse(value).getTime();
-        } catch (Exception e) {
-            return -1;
-        }
+//    public static long parse(String value, String format) {
+//        try {
+//            DateFormat dateFormat = new SimpleDateFormat(format);
+//            return dateFormat.parse(value).getTime();
+//        } catch (Exception e) {
+//            return -1;
+//        }
+//    }
+    public static long parseSecond() {
+        return instant.getEpochSecond();
     }
 
-    public static long parse(String value) {
-        try {
-            TemporalAccessor accessor = isoDateFormatter.parseBest(value,
-                    ZonedDateTime::from,
-                    LocalDateTime::from,
-                    LocalDate::from);
-            Instant instant = Instant.from(accessor);
-            return Instant.EPOCH.until(instant, ChronoUnit.MILLIS);
-        } catch (Exception e) {
-            try {
-                return Date.parse(value);
-            } catch (IllegalArgumentException e2) {
-                return -1;
-            }
-        }
+    public static long parseSecondMilli() {
+        return instant.toEpochMilli();
     }
+
+//    public static long parse(String value) {
+//        try {
+//            TemporalAccessor accessor = isoDateFormatter.parseBest(value,
+//                    ZonedDateTime::from,
+//                    LocalDateTime::from,
+//                    LocalDate::from);
+//            Instant instant = Instant.from(accessor);
+//            return Instant.EPOCH.until(instant, ChronoUnit.MILLIS);
+//        } catch (Exception e) {
+//            try {
+//                return Date.parse(value);
+//            } catch (IllegalArgumentException e2) {
+//                return -1;
+//            }
+//        }
+//    }
 
     public static long UTC(int year, int month, int date,
                            int hrs, int min, int sec) {
         return Date.UTC(year - 1900, month, date, hrs, min, sec);
     }
 
+    private static String createDateTimeFromPattern (int year, int month, int date, int hrs, int min, int second, int secondMilli, String... tz) {
+        String yearStr = String.format("%04d", year);
+        if (yearStr.substring(0, 2).equals("00"))  yearStr = "20" + yearStr.substring(2,4);
+        String monthStr = String.format("%02d", month);
+        String dateStr = String.format("%02d", date);
+        String hrsStr = String.format("%02d", hrs);
+        String minStr = String.format("%02d", min);
+        String secondStr = String.format("%02d", second);
+        String tzStr = tz.length > 0 ? Arrays.stream(tz).findFirst().get() : "Z";
+        return String.format(patternDefault, yearStr, monthStr, dateStr, hrsStr, minStr, secondStr, secondMilli, tzStr);
+    }
 }
