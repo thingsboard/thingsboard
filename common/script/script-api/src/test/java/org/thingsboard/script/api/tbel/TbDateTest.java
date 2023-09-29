@@ -121,22 +121,29 @@ class TbDateTest {
     @Test
     void testToISOStringThreadLocalStaticFormatter() throws ExecutionException, InterruptedException, TimeoutException {
         executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(1));
+        int hrs = 14;
+        String pattern = "2024-02-29T%s:35:42.987Z";
+        String tsStr = String.format(pattern, hrs);  //Thu Feb 29 2024 14:35:42.987 GMT+0000
+        TbDate tbDate = new TbDate(tsStr);
         long ts = 1709217342987L; //Thu Feb 29 2024 14:35:42.987 GMT+0000
+        Assert.assertEquals(ts, tbDate.millis());
         int offset = Calendar.getInstance().get(Calendar.ZONE_OFFSET); // for example 3600000 for GMT + 1
-        TbDate tbDate = new TbDate(ts - offset);
-        String datePrefix = "2024-02-29T12:35:42.987Z"; //without time zone
+
+        String datePrefix = tsStr; //without time zone
         assertThat(tbDate.toISOString())
                 .as("format in main thread")
                 .startsWith(datePrefix);
         assertThat(executor.submit(tbDate::toISOString).get(30, TimeUnit.SECONDS))
                 .as("format in executor thread")
                 .startsWith(datePrefix);
+        int offsetHrs = offset/1000/60/60;
+        String datePrefixLocal = String.format(pattern, (hrs - offsetHrs));
         assertThat(new TbDate(ts - offset).toISOString())
                 .as("new instance format in main thread")
-                .startsWith(datePrefix);
+                .startsWith(datePrefixLocal);
         assertThat(executor.submit(() -> new TbDate(ts - offset).toISOString()).get(30, TimeUnit.SECONDS))
                 .as("new instance format in executor thread")
-                .startsWith(datePrefix);
+                .startsWith(datePrefixLocal);
     }
 
     @Test
@@ -144,7 +151,6 @@ class TbDateTest {
         TbDate d = new TbDate(1693962245000L);
 
         Assert.assertEquals("2023-09-06T01:04:05Z", d.instant().toString());
-        Assert.assertEquals("06.09.23", d.toDateString());
 
         // Depends on time zone, so we just check it works;
         Assert.assertNotNull(d.toLocaleDateString());
@@ -193,8 +199,6 @@ class TbDateTest {
     @Test
     void testToLocaleTimeString() {
         TbDate d = new TbDate(1693962245000L);
-
-        Assert.assertEquals("04:04:05", d.toTimeString());
 
         // Depends on time zone, so we just check it works;
         Assert.assertNotNull(d.toLocaleTimeString());
@@ -306,6 +310,9 @@ class TbDateTest {
         String stringDateRFC_1123  = "Sat, 3 Jun 2023 11:05:30 GMT";
         d = new TbDate(stringDateRFC_1123);
         Assert.assertEquals("2023-06-03T11:05:30Z", d.instant().toString());
+        stringDateRFC_1123  = "Thu, 29 Feb 2024 11:05:30 GMT";
+        d = new TbDate(stringDateRFC_1123);
+        Assert.assertEquals("2024-02-29T11:05:30Z", d.instant().toString());
 
         String stringDateRFC_1123_error  = "Tue, 3 Jun 2023 11:05:30 GMT";
         Exception exception = assertThrows(ConversionException.class, () -> {
