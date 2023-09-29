@@ -42,6 +42,7 @@ import java.util.Optional;
 public class DefaultNotificationRequestService implements NotificationRequestService, EntityDaoService {
 
     private final NotificationRequestDao notificationRequestDao;
+    private final NotificationDao notificationDao;
 
     private final NotificationRequestValidator notificationRequestValidator = new NotificationRequestValidator();
 
@@ -81,10 +82,10 @@ public class DefaultNotificationRequestService implements NotificationRequestSer
         return notificationRequestDao.findByRuleIdAndOriginatorEntityId(tenantId, ruleId, originatorEntityId);
     }
 
-    // ON DELETE CASCADE is used: notifications for request are deleted as well
     @Override
     public void deleteNotificationRequest(TenantId tenantId, NotificationRequestId requestId) {
         notificationRequestDao.removeById(tenantId, requestId.getId());
+        notificationDao.deleteByRequestId(tenantId, requestId);
     }
 
     @Override
