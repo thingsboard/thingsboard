@@ -39,12 +39,6 @@ public class TbDate  implements InstantSource {
 
     private static String patternDefault = "%s-%s-%sT%s:%s:%s.%d%s";
 
-//    private static final DateTimeFormatter isoDateFormatter = DateTimeFormatter.ofPattern(
-//            "yyyy-MM-dd[[ ]['T']HH:mm[:ss[.SSS]][ ][XXX][Z][z][VV][O]]").withZone(ZoneId.systemDefault());
-//
-//    private static final ThreadLocal<DateFormat> isoDateFormat = ThreadLocal.withInitial(() ->
-//            new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
-
     public TbDate() {
         instant = Instant.now();
     }
@@ -183,14 +177,6 @@ public class TbDate  implements InstantSource {
         return System.currentTimeMillis();
     }
 
-//    public static long parse(String value, String format) {
-//        try {
-//            DateFormat dateFormat = new SimpleDateFormat(format);
-//            return dateFormat.parse(value).getTime();
-//        } catch (Exception e) {
-//            return -1;
-//        }
-//    }
     public static long parseSecond() {
         return instant.getEpochSecond();
     }
@@ -198,23 +184,6 @@ public class TbDate  implements InstantSource {
     public static long parseSecondMilli() {
         return instant.toEpochMilli();
     }
-
-//    public static long parse(String value) {
-//        try {
-//            TemporalAccessor accessor = isoDateFormatter.parseBest(value,
-//                    ZonedDateTime::from,
-//                    LocalDateTime::from,
-//                    LocalDate::from);
-//            Instant instant = Instant.from(accessor);
-//            return Instant.EPOCH.until(instant, ChronoUnit.MILLIS);
-//        } catch (Exception e) {
-//            try {
-//                return Date.parse(value);
-//            } catch (IllegalArgumentException e2) {
-//                return -1;
-//            }
-//        }
-//    }
 
     public static long UTC(int year, int month, int date,
                            int hrs, int min, int sec) {

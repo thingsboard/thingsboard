@@ -32,6 +32,16 @@ import java.math.RoundingMode;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -647,6 +657,29 @@ public class TbUtils {
                 throw new NumberFormatException("Failed radix: [" + radix + "] for value: \"" + value + "\"!");
         }
         return true;
+    }
+
+    public static long parse(String value, String format) {
+        try {
+            DateFormat dateFormat = new SimpleDateFormat(format);
+            return dateFormat.parse(value).getTime();
+        } catch (Exception e) {
+            return -1;
+        }
+    }
+    public static long parse(String value) {
+        DateTimeFormatter isoDateFormatter = DateTimeFormatter.ofPattern(
+            "yyyy-MM-dd[[ ]['T']HH:mm[:ss[.SSS]][ ][XXX][Z][z][VV][O]]").withZone(ZoneId.systemDefault());
+        try {
+            TemporalAccessor accessor = isoDateFormatter.parseBest(value,
+                    ZonedDateTime::from,
+                    LocalDateTime::from,
+                    LocalDate::from);
+            Instant instant = Instant.from(accessor);
+            return Instant.EPOCH.until(instant, ChronoUnit.MILLIS);
+        } catch (Exception e) {
+            return -1;
+        }
     }
 
 }
