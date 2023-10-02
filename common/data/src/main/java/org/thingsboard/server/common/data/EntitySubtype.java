@@ -28,4 +28,14 @@ public class EntitySubtype implements Serializable {
     private final TenantId tenantId;
     private final EntityType entityType;
     private final String type;
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("EntitySubtype{");
+        sb.append("tenantId=").append(tenantId);
+        sb.append(", entityType=").append(entityType);
+        sb.append(", type='").append(type).append('\'');
+        sb.append('}');
+        return sb.toString();
+    }
 }
