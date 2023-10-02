@@ -150,7 +150,7 @@ class TbDateTest {
     void testToLocaleDateString() {
         TbDate d = new TbDate(1693962245000L);
 
-        Assert.assertEquals("2023-09-06T01:04:05Z", d.instant().toString());
+        Assert.assertEquals("2023-09-06T01:04:05Z", d.toISOString());
 
         // Depends on time zone, so we just check it works;
         Assert.assertNotNull(d.toLocaleDateString());
@@ -300,19 +300,19 @@ class TbDateTest {
     void TestFromString () {
         String stringDateUTC = "2023-09-06T01:04:05.00Z";
         TbDate d = new TbDate(stringDateUTC);
-        Assert.assertEquals("2023-09-06T01:04:05Z", d.instant().toString());
+        Assert.assertEquals("2023-09-06T01:04:05Z", d.toISOString());
         String stringDateTZ = "2023-09-06T01:04:05.00+04:00";
         d = new TbDate(stringDateTZ);
-        Assert.assertEquals("2023-09-05T21:04:05Z", d.instant().toString());
+        Assert.assertEquals("2023-09-05T21:04:05Z", d.toISOString());
         stringDateTZ = "2023-09-06T01:04:05.00-02:00";
         d = new TbDate(stringDateTZ);
-        Assert.assertEquals("2023-09-06T03:04:05Z", d.instant().toString());
+        Assert.assertEquals("2023-09-06T03:04:05Z", d.toISOString());
         String stringDateRFC_1123  = "Sat, 3 Jun 2023 11:05:30 GMT";
         d = new TbDate(stringDateRFC_1123);
-        Assert.assertEquals("2023-06-03T11:05:30Z", d.instant().toString());
+        Assert.assertEquals("2023-06-03T11:05:30Z", d.toISOString());
         stringDateRFC_1123  = "Thu, 29 Feb 2024 11:05:30 GMT";
         d = new TbDate(stringDateRFC_1123);
-        Assert.assertEquals("2024-02-29T11:05:30Z", d.instant().toString());
+        Assert.assertEquals("2024-02-29T11:05:30Z", d.toISOString());
 
         String stringDateRFC_1123_error  = "Tue, 3 Jun 2023 11:05:30 GMT";
         Exception exception = assertThrows(ConversionException.class, () -> {
@@ -334,21 +334,21 @@ class TbDateTest {
     @Test
     void TestDate_Year_Moth_Date_Hs_Min_Sec () {
         TbDate d = new TbDate(2023, 8, 18);
-        Assert.assertEquals("2023-08-18T00:00:00Z", d.instant().toString());
+        Assert.assertEquals("2023-08-18T00:00:00Z", d.toISOString());
         d = new TbDate(2023, 9, 17, 17, 34);
-        Assert.assertEquals("2023-09-17T17:34:00Z", d.instant().toString());
+        Assert.assertEquals("2023-09-17T17:34:00Z", d.toISOString());
         d = new TbDate(23, 9, 7, 8, 4);
-        Assert.assertEquals("2023-09-07T08:04:00Z", d.instant().toString());
+        Assert.assertEquals("2023-09-07T08:04:00Z", d.toISOString());
         d = new TbDate(23, 9, 7, 8, 4, 5);
-        Assert.assertEquals("2023-09-07T08:04:05Z", d.instant().toString());
+        Assert.assertEquals("2023-09-07T08:04:05Z", d.toISOString());
         d = new TbDate(23, 9, 7, 8, 4, 5, "+04:00");
-        Assert.assertEquals("2023-09-07T04:04:05Z", d.instant().toString());
+        Assert.assertEquals("2023-09-07T04:04:05Z", d.toISOString());
         d = new TbDate(23, 9, 7, 8, 4, 5, "-03:00");
-        Assert.assertEquals("2023-09-07T11:04:05Z", d.instant().toString());
+        Assert.assertEquals("2023-09-07T11:04:05Z", d.toISOString());
         d = new TbDate(23, 9, 7, 23, 4, 5, "-03:00");
-        Assert.assertEquals("2023-09-08T02:04:05Z", d.instant().toString());
+        Assert.assertEquals("2023-09-08T02:04:05Z", d.toISOString());
         d = new TbDate(23, 9, 7, 23, 4, 5, 567,"-03:00");
-        Assert.assertEquals("2023-09-08T02:04:05.567Z", d.instant().toString());
+        Assert.assertEquals("2023-09-08T02:04:05.567Z", d.toISOString());
     }
 
     private static String toLocalString(TbDate d, Locale locale, ZoneId tz) {
