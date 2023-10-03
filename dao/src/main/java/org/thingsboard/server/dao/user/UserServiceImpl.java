@@ -49,7 +49,6 @@ import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
-import org.thingsboard.server.dao.notification.NotificationDao;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 
@@ -86,7 +85,6 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     private final UserDao userDao;
     private final UserCredentialsDao userCredentialsDao;
     private final UserAuthSettingsDao userAuthSettingsDao;
-    private final NotificationDao notificationDao;
     private final DataValidator<User> userValidator;
     private final DataValidator<UserCredentials> userCredentialsValidator;
     private final ApplicationEventPublisher eventPublisher;
@@ -257,7 +255,6 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         UserCredentials userCredentials = userCredentialsDao.findByUserId(tenantId, userId.getId());
         userCredentialsDao.removeById(tenantId, userCredentials.getUuidId());
         userAuthSettingsDao.removeByUserId(userId);
-        notificationDao.deleteByRecipientId(tenantId, userId);
         deleteEntityRelations(tenantId, userId);
         userDao.removeById(tenantId, userId.getId());
         eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(userId));
