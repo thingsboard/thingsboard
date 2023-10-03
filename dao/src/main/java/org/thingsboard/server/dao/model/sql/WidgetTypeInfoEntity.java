@@ -15,32 +15,41 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
+import io.hypersistence.utils.hibernate.type.array.StringArrayType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.Immutable;
+import org.hibernate.annotations.Type;
 import org.thingsboard.server.common.data.widget.BaseWidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
+import org.thingsboard.server.dao.model.ModelConstants;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
+@Entity
+@Immutable
+@Table(name = ModelConstants.WIDGET_TYPE_INFO_VIEW_TABLE_NAME)
 public final class WidgetTypeInfoEntity extends AbstractWidgetTypeEntity<WidgetTypeInfo> {
 
+    @Column(name = ModelConstants.WIDGET_TYPE_IMAGE_PROPERTY)
     private String image;
+
+    @Column(name = ModelConstants.WIDGET_TYPE_DESCRIPTION_PROPERTY)
     private String description;
+
+    @Type(StringArrayType.class)
+    @Column(name = ModelConstants.WIDGET_TYPE_TAGS_PROPERTY, columnDefinition = "text[]")
+    private String[] tags;
+
+    @Column(name = ModelConstants.WIDGET_TYPE_WIDGET_TYPE_PROPERTY)
     private String widgetType;
 
     public WidgetTypeInfoEntity() {
         super();
-    }
-
-    public WidgetTypeInfoEntity(WidgetTypeDetailsEntity widgetTypeDetailsEntity) {
-        super(widgetTypeDetailsEntity);
-        this.image = widgetTypeDetailsEntity.getImage();
-        this.description = widgetTypeDetailsEntity.getDescription();
-        if (widgetTypeDetailsEntity.getDescriptor() != null && widgetTypeDetailsEntity.getDescriptor().has("type")) {
-            this.widgetType = widgetTypeDetailsEntity.getDescriptor().get("type").asText();
-        } else {
-            this.widgetType = "";
-        }
     }
 
     @Override
@@ -49,6 +58,7 @@ public final class WidgetTypeInfoEntity extends AbstractWidgetTypeEntity<WidgetT
         WidgetTypeInfo widgetTypeInfo = new WidgetTypeInfo(baseWidgetType);
         widgetTypeInfo.setImage(image);
         widgetTypeInfo.setDescription(description);
+        widgetTypeInfo.setTags(tags);
         widgetTypeInfo.setWidgetType(widgetType);
         return widgetTypeInfo;
     }
