@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -72,6 +73,9 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
     private final Lock lock = new ReentrantLock();
     private final ConcurrentMap<TenantQueueKey, AssetId> tenantQueueAssets = new ConcurrentHashMap<>();
 
+    @Value("${queue.rule-engine.stats.max-error-message-length:4096}")
+    private int maxErrorMessageLength;
+
     @Override
     public void reportQueueStats(long ts, TbRuleEngineConsumerStats ruleEngineStats) {
         String queueName = ruleEngineStats.getQueueName();
@@ -97,7 +101,7 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
         });
         ruleEngineStats.getTenantExceptions().forEach((tenantId, e) -> {
             try {
-                TsKvEntry tsKv = new BasicTsKvEntry(e.getTs(), new JsonDataEntry(RULE_ENGINE_EXCEPTION, e.toJsonString()));
+                TsKvEntry tsKv = new BasicTsKvEntry(e.getTs(), new JsonDataEntry(RULE_ENGINE_EXCEPTION, e.toJsonString(maxErrorMessageLength)));
                 long ttl = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getRuleEngineExceptionsTtlDays);
                 ttl = TimeUnit.DAYS.toSeconds(ttl);
                 tsService.saveAndNotifyInternal(tenantId, getServiceAssetId(tenantId, queueName), Collections.singletonList(tsKv), ttl, CALLBACK);
