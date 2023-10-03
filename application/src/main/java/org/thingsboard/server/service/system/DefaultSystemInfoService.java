@@ -107,7 +107,7 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
                 if (myPartition) {
                     if (scheduler == null) {
                         scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("tb-system-info-scheduler"));
-                        scheduler.scheduleWithFixedDelay(this::saveCurrentSystemInfo, systemInfoPersistFrequencySeconds, systemInfoPersistFrequencySeconds, TimeUnit.SECONDS);
+                        scheduler.scheduleWithFixedDelay(this::saveCurrentSystemInfo, 0, systemInfoPersistFrequencySeconds, TimeUnit.SECONDS);
                     }
                 } else {
                     destroy();
