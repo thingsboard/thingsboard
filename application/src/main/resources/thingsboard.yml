@@ -1326,6 +1326,11 @@ metrics:
   timer:
     # Metrics percentiles returned by actuator for timer metrics. List of double values (divided by ,).
     percentiles: "${METRICS_TIMER_PERCENTILES:0.5}"
+  system_info:
+    # Persist frequency of system info (CPU, memory usage, etc.) in seconds
+    persist_frequency: "${METRICS_SYSTEM_INFO_PERSIST_FREQUENCY_SECONDS:60}"
+    # TTL in days for system info timeseries
+    ttl: "${METRICS_SYSTEM_INFO_TTL_DAYS:7}"
 
 vc:
   # Pool size for handling export tasks
