@@ -70,8 +70,7 @@ public class JacksonUtil {
         try {
             return fromValue != null ? OBJECT_MAPPER.convertValue(fromValue, toValueType) : null;
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("The given object value: "
-                    + fromValue + " cannot be converted to " + toValueType, e);
+            throw new IllegalArgumentException("The given object value cannot be converted to " + toValueType + ": " + fromValue, e);
         }
     }
 
@@ -79,8 +78,7 @@ public class JacksonUtil {
         try {
             return fromValue != null ? OBJECT_MAPPER.convertValue(fromValue, toValueTypeRef) : null;
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("The given object value: "
-                    + fromValue + " cannot be converted to " + toValueTypeRef, e);
+            throw new IllegalArgumentException("The given object value cannot be converted to " + toValueTypeRef + ": " + fromValue, e);
         }
     }
 
@@ -88,8 +86,7 @@ public class JacksonUtil {
         try {
             return string != null ? OBJECT_MAPPER.readValue(string, clazz) : null;
         } catch (IOException e) {
-            throw new IllegalArgumentException("The given string value: "
-                    + string + " cannot be transformed to Json object", e);
+            throw new IllegalArgumentException("The given string value cannot be transformed to Json object: " + string, e);
         }
     }
 
@@ -97,8 +94,7 @@ public class JacksonUtil {
         try {
             return string != null ? OBJECT_MAPPER.readValue(string, valueTypeRef) : null;
         } catch (IOException e) {
-            throw new IllegalArgumentException("The given string value: "
-                    + string + " cannot be transformed to Json object", e);
+            throw new IllegalArgumentException("The given string value cannot be transformed to Json object: " + string, e);
         }
     }
 
@@ -106,8 +102,7 @@ public class JacksonUtil {
         try {
             return string != null ? OBJECT_MAPPER.readValue(string, javaType) : null;
         } catch (IOException e) {
-            throw new IllegalArgumentException("The given String value: "
-                    + string + " cannot be transformed to Json object", e);
+            throw new IllegalArgumentException("The given String value cannot be transformed to Json object: " + string, e);
         }
     }
 
@@ -115,8 +110,7 @@ public class JacksonUtil {
         try {
             return bytes != null ? OBJECT_MAPPER.readValue(bytes, clazz) : null;
         } catch (IOException e) {
-            throw new IllegalArgumentException("The given string value: "
-                    + Arrays.toString(bytes) + " cannot be transformed to Json object", e);
+            throw new IllegalArgumentException("The given string value cannot be transformed to Json object: " + Arrays.toString(bytes), e);
         }
     }
 
@@ -124,8 +118,7 @@ public class JacksonUtil {
         try {
             return OBJECT_MAPPER.readTree(bytes);
         } catch (IOException e) {
-            throw new IllegalArgumentException("The given byte[] value: "
-                    + Arrays.toString(bytes) + " cannot be transformed to Json object", e);
+            throw new IllegalArgumentException("The given byte[] value cannot be transformed to Json object: " + Arrays.toString(bytes), e);
         }
     }
 
@@ -133,8 +126,7 @@ public class JacksonUtil {
         try {
             return value != null ? OBJECT_MAPPER.writeValueAsString(value) : null;
         } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("The given Json object value: "
-                    + value + " cannot be transformed to a String", e);
+            throw new IllegalArgumentException("The given Json object value cannot be transformed to a String: " + value, e);
         }
     }
 
@@ -208,8 +200,7 @@ public class JacksonUtil {
         try {
             return OBJECT_MAPPER.writeValueAsBytes(value);
         } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("The given Json object value: "
-                    + value + " cannot be transformed to a String", e);
+            throw new IllegalArgumentException("The given Json object value cannot be transformed to a String: " + value, e);
         }
     }
 
