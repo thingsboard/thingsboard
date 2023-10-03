@@ -15,6 +15,8 @@
  */
 package org.thingsboard.rule.engine.delay;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.thingsboard.rule.engine.api.RuleNode;
@@ -26,11 +28,14 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -46,17 +51,24 @@ import java.util.concurrent.TimeUnit;
                 "does not guarantee that message will be processed even if the \"retry failures and timeouts\" processing strategy will be chosen.",
         icon = "pause",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbActionNodeMsgDelayConfig"
+        configDirective = "tbActionNodeMsgDelayConfig",
+        version = 1
 )
 public class TbMsgDelayNode implements TbNode {
 
     private TbMsgDelayNodeConfiguration config;
     private Map<UUID, TbMsg> pendingMsgs;
+    private final Set<TimeUnit> supportedTimeUnits = EnumSet.of(
+            TimeUnit.MILLISECONDS, TimeUnit.SECONDS, TimeUnit.MINUTES, TimeUnit.HOURS, TimeUnit.DAYS
+    );
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgDelayNodeConfiguration.class);
         this.pendingMsgs = new HashMap<>();
+        if (!supportedTimeUnits.contains(config.getPeriodTimeUnit())) {
+            throw new TbNodeException("Unsupported time unit: " + config.getPeriodTimeUnit(), true);
+        }
     }
 
     @Override
@@ -89,17 +101,17 @@ public class TbMsgDelayNode implements TbNode {
     }
 
     private long getDelay(TbMsg msg) {
-        int periodInSeconds;
-        if (config.isUseMetadataPeriodInSecondsPatterns()) {
-            if (isParsable(msg, config.getPeriodInSecondsPattern())) {
-                periodInSeconds = Integer.parseInt(TbNodeUtils.processPattern(config.getPeriodInSecondsPattern(), msg));
+        int periodValue;
+        if (config.isUsePeriodValuePattern()) {
+            if (isParsable(msg, config.getPeriodValuePattern())) {
+                periodValue = Integer.parseInt(TbNodeUtils.processPattern(config.getPeriodValuePattern(), msg));
             } else {
-                throw new RuntimeException("Can't parse period in seconds from metadata using pattern: " + config.getPeriodInSecondsPattern());
+                throw new RuntimeException("Can't parse period value using pattern: " + config.getPeriodValuePattern());
             }
         } else {
-            periodInSeconds = config.getPeriodInSeconds();
+            periodValue = config.getPeriodValue();
         }
-        return TimeUnit.SECONDS.toMillis(periodInSeconds);
+        return config.getPeriodTimeUnit().toMillis(periodValue);
     }
 
     private boolean isParsable(TbMsg msg, String pattern) {
@@ -110,4 +122,61 @@ public class TbMsgDelayNode implements TbNode {
     public void destroy() {
         pendingMsgs.clear();
     }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0: {
+                var oldConfigurationNode = (ObjectNode) oldConfiguration;
+
+                final String periodInSecondsPropertyName = "periodInSeconds";
+                final String periodValuePropertyName = "periodValue";
+
+                if (oldConfigurationNode.has(periodInSecondsPropertyName)) {
+                    if (!oldConfigurationNode.hasNonNull(periodValuePropertyName)) {
+                        JsonNode periodInSecondsNode = oldConfigurationNode.get(periodInSecondsPropertyName);
+                        oldConfigurationNode.put(periodValuePropertyName, periodInSecondsNode.intValue());
+                    }
+                    oldConfigurationNode.remove(periodInSecondsPropertyName);
+                    hasChanges = true;
+                }
+
+                final String periodTimeUnitPropertyName = "periodTimeUnit";
+
+                if (!oldConfigurationNode.hasNonNull(periodTimeUnitPropertyName)) {
+                    oldConfigurationNode.put(periodTimeUnitPropertyName, "SECONDS");
+                    hasChanges = true;
+                }
+
+                final String periodInSecondsPatternPropertyName = "periodInSecondsPattern";
+                final String periodValuePatternPropertyName = "periodValuePattern";
+
+                if (oldConfigurationNode.has(periodInSecondsPatternPropertyName)) {
+                    if (!oldConfigurationNode.hasNonNull(periodValuePatternPropertyName)) {
+                        JsonNode periodInSecondsPatternNode = oldConfigurationNode.get(periodInSecondsPatternPropertyName);
+                        oldConfigurationNode.put(periodValuePatternPropertyName, periodInSecondsPatternNode.isNull() ? null : periodInSecondsPatternNode.asText());
+                    }
+                    oldConfigurationNode.remove(periodInSecondsPatternPropertyName);
+                    hasChanges = true;
+                }
+
+                final String useMetadataPeriodInSecondsPatternsPropertyName = "useMetadataPeriodInSecondsPatterns";
+                final String usePeriodValuePatternPropertyName = "usePeriodValuePattern";
+
+                if (oldConfigurationNode.has(useMetadataPeriodInSecondsPatternsPropertyName)) {
+                    if (!oldConfigurationNode.hasNonNull(usePeriodValuePatternPropertyName)) {
+                        JsonNode useMetadataPeriodInSecondsPatternsNode = oldConfigurationNode.get(useMetadataPeriodInSecondsPatternsPropertyName);
+                        oldConfigurationNode.put(usePeriodValuePatternPropertyName, useMetadataPeriodInSecondsPatternsNode.booleanValue());
+                    }
+                    oldConfigurationNode.remove(useMetadataPeriodInSecondsPatternsPropertyName);
+                    hasChanges = true;
+                }
+            }
+            default:
+                break;
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
+    }
+
 }
