@@ -49,6 +49,7 @@ public class TbQueueConsumerTask {
 
     public boolean await() {
         if (task != null) {
+            //TODO: maybe task.cancel() to interrupt the consumer?
             try {
                 this.task.get(3, TimeUnit.MINUTES);
             } catch (ExecutionException | InterruptedException | TimeoutException e) {
