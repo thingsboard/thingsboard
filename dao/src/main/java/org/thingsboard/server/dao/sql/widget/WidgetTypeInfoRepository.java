@@ -37,7 +37,7 @@ public interface WidgetTypeInfoRepository extends JpaRepository<WidgetTypeInfoEn
                     // "OR to_tsvector(lower(array_to_string(wti.tags, ' '))) @@ to_tsquery(lower(:searchText)))))",
             countQuery = "SELECT count(*) FROM widget_type_info_view wti WHERE wti.tenant_id = :systemTenantId " +
                     "AND ((:deprecatedFilterEnabled) IS FALSE OR wti.deprecated = :deprecatedFilter) " +
-                    "AND ((:widgetTypesEmpty) IS TRUE OR wti.widget_type IN (:widgetTypes) " +
+                    "AND ((:widgetTypesEmpty) IS TRUE OR wti.widget_type IN (:widgetTypes)) " +
                     "AND (wti.name ILIKE CONCAT('%', :searchText, '%') " +
                     "OR ((:fullSearch) IS TRUE AND (wti.description ILIKE CONCAT('%', :searchText, '%') " +
                     "OR lower(wti.tags\\:\\:text)\\:\\:text[] && string_to_array(lower(:searchText), ' '))))"
