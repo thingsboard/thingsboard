@@ -98,6 +98,7 @@ public class DefaultNotificationRequestService implements NotificationRequestSer
         notificationRequestDao.updateById(tenantId, requestId, requestStatus, stats);
     }
 
+    // notifications themselves are left in the database until removed by ttl
     @Override
     public void deleteNotificationRequestsByTenantId(TenantId tenantId) {
         notificationRequestDao.removeByTenantId(tenantId);

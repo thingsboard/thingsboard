@@ -90,7 +90,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
 @Slf4j
@@ -285,7 +284,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
     }
 
     @Test
-    public void whenTenantIsDeleted_thenDeleteNotifications() throws Exception {
+    public void whenTenantIsDeleted_thenDeleteNotificationRequests() throws Exception {
         createDifferentTenant();
         NotificationTarget target = createNotificationTarget(savedDifferentTenantUser.getId());
         int notificationsCount = 20;
@@ -295,36 +294,11 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         }
         List<NotificationRequest> requests = notificationRequestService.findNotificationRequestsByTenantIdAndOriginatorType(differentTenantId, EntityType.USER, new PageLink(100)).getData();
         assertThat(requests).size().isEqualTo(notificationsCount);
-        for (NotificationRequest request : requests) {
-            List<Notification> notifications = notificationDao.findByRequestId(differentTenantId, request.getId(), new PageLink(100)).getData();
-            assertThat(notifications).size().isNotZero();
-        }
 
         deleteDifferentTenant();
 
         assertThat(notificationRequestService.findNotificationRequestsByTenantIdAndOriginatorType(differentTenantId, EntityType.USER, new PageLink(1)).getTotalElements())
                 .isZero();
-        for (NotificationRequest request : requests) {
-            assertThat(notificationDao.findByRequestId(differentTenantId, request.getId(), new PageLink(100)).getTotalElements())
-                    .isZero();
-        }
-    }
-
-    @Test
-    public void whenUserIsDeleted_thenDeleteNotifications() throws Exception {
-        NotificationTarget target = createNotificationTarget(customerUserId);
-        int notificationsCount = 20;
-        for (int i = 0; i < notificationsCount; i++) {
-            NotificationRequest request = submitNotificationRequest(target.getId(), "Test " + i, NotificationDeliveryMethod.WEB);
-            awaitNotificationRequest(request.getId());
-        }
-        List<Notification> notifications = notificationDao.findByRecipientIdAndPageLink(tenantId, customerUserId, new PageLink(100)).getData();
-        assertThat(notifications).size().isGreaterThanOrEqualTo(notificationsCount);
-
-        doDelete("/api/user/" + customerUserId).andExpect(status().isOk());
-
-        notifications = notificationDao.findByRecipientIdAndPageLink(tenantId, customerUserId, new PageLink(100)).getData();
-        assertThat(notifications).isEmpty();
     }
 
     @Test
