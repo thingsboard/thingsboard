@@ -42,6 +42,7 @@ public class TbRuleEngineConsumerContext {
     @Value("${queue.rule-engine.topic-deletion-delay:30}")
     private int topicDeletionDelayInSec;
 
+    //TODO: check if they are set correctly.
     protected volatile boolean stopped = false;
     protected volatile boolean isReady = false;
 
@@ -59,6 +60,7 @@ public class TbRuleEngineConsumerContext {
     //TODO: add reasonable limit for mgmt pool.
     private final ExecutorService mgmtExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("tb-rule-engine-mgmt"));
     private final ExecutorService consumersExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("tb-rule-engine-consumer"));
+    //TODO: do we actually need this?
     private final ExecutorService submitExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-rule-engine-consumer-submit"));
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("tb-rule-engine-consumer-scheduler"));
 
@@ -68,6 +70,7 @@ public class TbRuleEngineConsumerContext {
 
     @PreDestroy
     public void stop() {
+        mgmtExecutor.shutdownNow();
         consumersExecutor.shutdownNow(); // TODO: shutdown or shutdownNow?
         submitExecutor.shutdownNow();
         scheduler.shutdownNow();
