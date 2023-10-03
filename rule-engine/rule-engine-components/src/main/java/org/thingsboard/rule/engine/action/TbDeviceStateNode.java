@@ -30,6 +30,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.common.SimpleTbQueueCallback;
 
+import java.util.EnumSet;
 import java.util.Set;
 
 @Slf4j
@@ -60,7 +61,7 @@ import java.util.Set;
 )
 public class TbDeviceStateNode implements TbNode {
 
-    static final Set<TbMsgType> SUPPORTED_EVENTS = Set.of(
+    static final Set<TbMsgType> SUPPORTED_EVENTS = EnumSet.of(
             TbMsgType.CONNECT_EVENT, TbMsgType.ACTIVITY_EVENT, TbMsgType.DISCONNECT_EVENT, TbMsgType.INACTIVITY_EVENT
     );
 
