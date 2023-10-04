@@ -179,6 +179,7 @@ export interface WidgetTypeParameters {
   previewWidth?: string;
   previewHeight?: string;
   embedTitlePanel?: boolean;
+  hideDataSettings?: boolean;
 }
 
 export interface WidgetControllerDescriptor {
@@ -231,12 +232,20 @@ export interface WidgetType extends BaseWidgetType {
 export interface WidgetTypeInfo extends BaseWidgetType {
   image: string;
   description: string;
+  tags: string[];
   widgetType: widgetType;
 }
 
 export interface WidgetTypeDetails extends WidgetType, ExportableEntity<WidgetTypeId> {
   image: string;
   description: string;
+  tags: string[];
+}
+
+export enum DeprecatedFilter {
+  ALL = 'ALL',
+  ACTUAL = 'ACTUAL',
+  DEPRECATED = 'DEPRECATED'
 }
 
 export enum LegendDirection {

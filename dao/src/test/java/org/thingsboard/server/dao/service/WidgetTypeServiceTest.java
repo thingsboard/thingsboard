@@ -218,4 +218,33 @@ public class WidgetTypeServiceTest extends AbstractServiceTest {
         widgetsBundleService.deleteWidgetsBundle(tenantId, savedWidgetsBundle.getId());
     }
 
+    @Test
+    public void testDeleteAllTypesFromWidgetsBundle() {
+        WidgetsBundle widgetsBundle = new WidgetsBundle();
+        widgetsBundle.setTenantId(tenantId);
+        widgetsBundle.setTitle("Widgets bundle");
+        WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
+
+        List<WidgetType> widgetTypes = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            WidgetTypeDetails widgetType = new WidgetTypeDetails();
+            widgetType.setTenantId(tenantId);
+            widgetType.setName("Widget Type " + i);
+            widgetType.setDescriptor(JacksonUtil.fromString("{ \"someKey\": \"someValue\" }", JsonNode.class));
+            widgetTypes.add(new WidgetType(widgetTypeService.saveWidgetType(widgetType)));
+        }
+
+        List<WidgetTypeId> widgetTypeIds = widgetTypes.stream().map(WidgetType::getId).collect(Collectors.toList());
+
+        widgetTypeService.updateWidgetsBundleWidgetTypes(tenantId, savedWidgetsBundle.getId(), widgetTypeIds);
+
+        List<WidgetType> loadedWidgetTypes = widgetTypeService.findWidgetTypesByWidgetsBundleId(tenantId, savedWidgetsBundle.getId());
+        Assert.assertEquals(widgetTypes.size(), loadedWidgetTypes.size());
+
+        widgetTypeService.updateWidgetsBundleWidgetTypes(tenantId, savedWidgetsBundle.getId(), Collections.emptyList());
+
+        loadedWidgetTypes = widgetTypeService.findWidgetTypesByWidgetsBundleId(tenantId, savedWidgetsBundle.getId());
+        Assert.assertEquals(0, loadedWidgetTypes.size());
+    }
+
 }

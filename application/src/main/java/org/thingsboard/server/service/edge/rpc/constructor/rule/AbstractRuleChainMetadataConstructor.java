@@ -97,6 +97,8 @@ public abstract class AbstractRuleChainMetadataConstructor implements RuleChainM
                 .setDebugMode(node.isDebugMode())
                 .setConfiguration(JacksonUtil.OBJECT_MAPPER.writeValueAsString(node.getConfiguration()))
                 .setAdditionalInfo(JacksonUtil.OBJECT_MAPPER.writeValueAsString(node.getAdditionalInfo()))
+                .setSingletonMode(node.isSingletonMode())
+                .setConfigurationVersion(node.getConfigurationVersion())
                 .build();
     }
 

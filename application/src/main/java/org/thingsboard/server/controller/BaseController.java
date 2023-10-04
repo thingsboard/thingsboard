@@ -21,7 +21,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -174,9 +174,10 @@ import static org.thingsboard.server.common.data.query.EntityKeyType.ENTITY_FIEL
 import static org.thingsboard.server.controller.UserController.YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
-@Slf4j
 @TbCoreComponent
 public abstract class BaseController {
+
+    private final Logger log = org.slf4j.LoggerFactory.getLogger(getClass());
 
     /*Swagger UI description*/
 

@@ -52,10 +52,10 @@ public class EdgeSyncCursor {
 
     public EdgeSyncCursor(EdgeContextComponent ctx, Edge edge, boolean fullSync) {
         if (fullSync) {
+            fetchers.add(new TenantEdgeEventFetcher(ctx.getTenantService()));
             fetchers.add(new QueuesEdgeEventFetcher(ctx.getQueueService()));
             fetchers.add(new RuleChainsEdgeEventFetcher(ctx.getRuleChainService()));
             fetchers.add(new AdminSettingsEdgeEventFetcher(ctx.getAdminSettingsService(), ctx.getFreemarkerConfig()));
-            fetchers.add(new TenantEdgeEventFetcher(ctx.getTenantService()));
             fetchers.add(new TenantAdminUsersEdgeEventFetcher(ctx.getUserService()));
             Customer publicCustomer = ctx.getCustomerService().findOrCreatePublicCustomer(edge.getTenantId());
             fetchers.add(new CustomerEdgeEventFetcher(publicCustomer.getId()));
