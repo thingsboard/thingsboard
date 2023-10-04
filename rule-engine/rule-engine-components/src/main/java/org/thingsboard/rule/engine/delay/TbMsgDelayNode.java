@@ -121,7 +121,7 @@ public class TbMsgDelayNode implements TbNode {
     }
 
     @Override
-    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) {
         boolean hasChanges = false;
         switch (fromVersion) {
             case 0: {
