@@ -4795,6 +4795,7 @@
         "latest-datakey-settings-schema": "Latest data key settings schema",
         "widget-settings": "Widget settings",
         "description": "Description",
+        "tags": "Tags",
         "image-preview": "Image preview",
         "settings-form-selector": "Settings form selector",
         "data-key-settings-form-selector": "Data key settings form selector",

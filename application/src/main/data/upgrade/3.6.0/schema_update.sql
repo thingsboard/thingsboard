@@ -24,3 +24,4 @@ ALTER TABLE notification DROP CONSTRAINT IF EXISTS fk_notification_request_id;
 ALTER TABLE notification DROP CONSTRAINT IF EXISTS fk_notification_recipient_id;
 CREATE INDEX IF NOT EXISTS idx_notification_notification_request_id ON notification(request_id);
 CREATE INDEX IF NOT EXISTS idx_notification_request_tenant_id ON notification_request(tenant_id);
+
