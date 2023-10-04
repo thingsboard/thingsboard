@@ -66,6 +66,10 @@ public class TbMsgDelayNode implements TbNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgDelayNodeConfiguration.class);
         this.pendingMsgs = new HashMap<>();
+        if (config.getMaxPendingMsgs() < 1 || config.getMaxPendingMsgs() > 100000) {
+            throw new TbNodeException("Invalid maximum pending messages limit [" + config.getMaxPendingMsgs() + "], " +
+                    "should be in range from 1 to 100000 (inclusive)!", true);
+        }
         if (!supportedTimeUnits.contains(config.getPeriodTimeUnit())) {
             throw new TbNodeException("Unsupported time unit: " + config.getPeriodTimeUnit(), true);
         }
