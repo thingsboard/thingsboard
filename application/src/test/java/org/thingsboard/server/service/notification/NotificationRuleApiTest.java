@@ -456,9 +456,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
         loginSysAdmin();
         notifications = await().atMost(30, TimeUnit.SECONDS)
-                .until(() -> getMyNotifications(true, 10).stream()
-                        .filter(notification -> notification.getType() == NotificationType.RATE_LIMITS)
-                        .collect(Collectors.toList()), list -> list.size() == 1);
+                .until(() -> getMyNotifications(true, 10), list -> list.size() == 1);
         assertThat(notifications).allSatisfy(notification -> {
             assertThat(notification.getSubject()).isEqualTo("Rate limits exceeded for tenant " + TEST_TENANT_NAME);
         });
