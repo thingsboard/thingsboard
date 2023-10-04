@@ -105,6 +105,16 @@ public class JpaNotificationDao extends JpaAbstractDao<NotificationEntity, Notif
     }
 
     @Override
+    public void deleteByRequestId(TenantId tenantId, NotificationRequestId requestId) {
+        notificationRepository.deleteByRequestId(requestId.getId());
+    }
+
+    @Override
+    public void deleteByRecipientId(TenantId tenantId, UserId recipientId) {
+        notificationRepository.deleteByRecipientId(recipientId.getId());
+    }
+
+    @Override
     protected Class<NotificationEntity> getEntityClass() {
         return NotificationEntity.class;
     }
