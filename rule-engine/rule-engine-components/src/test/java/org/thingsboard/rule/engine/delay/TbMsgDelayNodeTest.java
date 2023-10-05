@@ -200,12 +200,6 @@ public class TbMsgDelayNodeTest {
         // WHEN 3: tick message from delayed first message is received
         node.onMsg(ctxMock, expectedTickMsg);
 
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-
         // THEN 3: correct outbound message is sent
         var outboundMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         then(ctxMock).should(times(1)).enqueueForTellNext(
