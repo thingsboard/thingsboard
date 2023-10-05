@@ -187,6 +187,9 @@ public class TbMsgDelayNode implements TbNode {
                     oldConfigurationNode.remove(useMetadataPeriodInSecondsPatternsPropertyName);
                     hasChanges = true;
                 }
+
+                oldConfigurationNode.set("periodTimeUnitPattern", null);
+                oldConfigurationNode.put("usePeriodTimeUnitPattern", false);
             }
             default:
                 break;
