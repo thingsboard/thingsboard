@@ -31,7 +31,6 @@ import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
-import java.time.Duration;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -89,7 +88,7 @@ public class TbMsgDelayNode implements TbNode {
                 TbMsg tickMsg = ctx.newMsg(null, TbMsgType.DELAY_TIMEOUT_SELF_MSG, ctx.getSelfId(), msg.getCustomerId(), TbMsgMetaData.EMPTY, msg.getId().toString());
                 long periodValue = getDelayPeriodValue(msg);
                 TimeUnit periodTimeUnit = getDelayPeriodTimeUnit(msg);
-                ctx.tellSelf(tickMsg, Duration.of(periodValue, periodTimeUnit.toChronoUnit()).toMillis());
+                ctx.tellSelf(tickMsg, periodTimeUnit.toMillis(periodValue));
                 ctx.ack(msg);
             } else {
                 ctx.tellFailure(msg, new RuntimeException("Max limit of pending messages reached!"));
