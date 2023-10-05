@@ -103,7 +103,7 @@ public class TbMsgDelayNode implements TbNode {
         try {
             return Integer.parseInt(TbNodeUtils.processPattern(config.getPeriodValuePattern(), msg));
         } catch (NumberFormatException e) {
-            throw new RuntimeException("Can't parse period value using pattern: " + config.getPeriodValuePattern());
+            throw new RuntimeException("Can't parse period value using pattern: " + config.getPeriodValuePattern(), e);
         }
     }
 
@@ -115,7 +115,7 @@ public class TbMsgDelayNode implements TbNode {
         try {
             periodTimeUnit = TimeUnit.valueOf(TbNodeUtils.processPattern(config.getPeriodTimeUnitPattern(), msg));
         } catch (IllegalArgumentException | NullPointerException e) {
-            throw new RuntimeException("Can't parse period time unit using pattern: " + config.getPeriodTimeUnitPattern());
+            throw new RuntimeException("Can't parse period time unit using pattern: " + config.getPeriodTimeUnitPattern(), e);
         }
         if (!supportedTimeUnits.contains(periodTimeUnit)) {
             throw new RuntimeException("Unsupported time unit: " + periodTimeUnit);
