@@ -426,6 +426,37 @@ export const getDataKey = (datasources?: Datasource[]): DataKey => {
   return null;
 };
 
+export const getDataKeyByLabel = (datasources: Datasource[], label: string): DataKey => {
+  if (datasources && datasources.length) {
+    const dataKeys = datasources[0].dataKeys;
+    if (dataKeys && dataKeys.length) {
+      return dataKeys.find(k => k.label === label);
+    }
+  }
+  return null;
+};
+
+export const updateDataKeyByLabel = (datasources: Datasource[], dataKey: DataKey, label: string): void => {
+  if (datasources && datasources.length) {
+    let dataKeys = datasources[0].dataKeys;
+    if (!dataKeys) {
+      dataKeys = [];
+      datasources[0].dataKeys = dataKeys;
+    }
+    const existingIndex = dataKeys.findIndex(k => k.label === label || k === dataKey);
+    if (dataKey) {
+      dataKey.label = label;
+      if (existingIndex > -1) {
+        dataKeys[existingIndex] = dataKey;
+      } else {
+        dataKeys.push(dataKey);
+      }
+    } else if (existingIndex > -1) {
+      dataKeys.splice(existingIndex, 1);
+    }
+  }
+};
+
 export const getAlarmFilterConfig = (datasources?: Datasource[]): AlarmFilterConfig => {
   if (datasources && datasources.length) {
     const config = datasources[0].alarmFilterConfig;
@@ -461,6 +492,16 @@ export const getSingleTsValue = (data: Array<DatasourceData>): [number, any] => 
   if (data.length) {
     const dsData = data[0];
     if (dsData.data.length) {
+      return dsData.data[0];
+    }
+  }
+  return null;
+};
+
+export const getSingleTsValueByDataKey = (data: Array<DatasourceData>, dataKey: DataKey): [number, any] => {
+  if (data.length) {
+    const dsData = data.find(d => d.dataKey === dataKey);
+    if (dsData?.data?.length) {
       return dsData.data[0];
     }
   }

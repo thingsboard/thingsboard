@@ -1,0 +1,13 @@
+{
+  "widgetsBundle": {
+    "alias": "weather_widgets",
+    "title": "Weather widgets",
+    "image": null,
+    "description": null,
+    "externalId": null,
+    "name": "Weather widgets"
+  },
+  "widgetTypeFqns": [
+    "wind_speed_and_direction"
+  ]
+}

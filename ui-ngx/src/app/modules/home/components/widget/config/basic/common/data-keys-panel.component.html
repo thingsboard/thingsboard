@@ -36,9 +36,18 @@
            *ngFor="let keyControl of keysFormArray().controls; trackBy: trackByKey; let $index = index;">
         <tb-data-key-row fxFlex
                          [formControl]="keyControl"
+                         required
                          [datasourceType]="datasourceType"
                          [deviceId]="deviceId"
                          [entityAliasId]="entityAliasId"
+                         [hasAdditionalLatestDataKeys]="hasAdditionalLatestDataKeys"
+                         [hideDataKeyColor]="hideDataKeyColor"
+                         [hideDecimals]="hideDecimals"
+                         [hideUnits]="hideUnits"
+                         [dataKeyType]="dataKeyType"
+                         [singleRow]="false"
+                         [keySettingsTitle]="keySettingsTitle"
+                         [removeKeyTitle]="removeKeyTitle"
                          (keyRemoved)="removeKey($index)">
         </tb-data-key-row>
         <div class="tb-form-table-row-cell-buttons">

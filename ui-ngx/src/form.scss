@@ -204,6 +204,12 @@
     .mat-slide:only-child {
       margin: 8px 0;
     }
+    .tb-required::after {
+      font-size: 13px;
+      color: rgba(0, 0, 0, .54);
+      vertical-align: top;
+      content: " *";
+    }
   }
 
   .tb-form-panel, .tb-form-row {
@@ -227,8 +233,10 @@
         &:before {
           opacity: 0;
         }
-        .mdc-line-ripple::before {
-          border-bottom-color: rgba(0, 0, 0, 0.12);
+        &:not(.mdc-text-field--invalid) {
+          .mdc-line-ripple::before {
+            border-bottom-color: rgba(0, 0, 0, 0.12);
+          }
         }
       }
       .mat-mdc-form-field-focus-overlay {
