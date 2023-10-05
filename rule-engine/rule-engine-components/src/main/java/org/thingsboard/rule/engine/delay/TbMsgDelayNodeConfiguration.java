@@ -38,6 +38,8 @@ public class TbMsgDelayNodeConfiguration implements NodeConfiguration<TbMsgDelay
         configuration.setPeriodTimeUnit(TimeUnit.SECONDS);
         configuration.setMaxPendingMsgs(1000);
         configuration.setUsePeriodValuePattern(false);
+        configuration.setPeriodTimeUnitPattern(null);
+        configuration.setUsePeriodTimeUnitPattern(false);
         return configuration;
     }
 
