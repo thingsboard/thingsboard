@@ -286,18 +286,19 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
     @Test
     public void whenTenantIsDeleted_thenDeleteNotificationRequests() throws Exception {
         createDifferentTenant();
+        TenantId tenantId = differentTenantId;
         NotificationTarget target = createNotificationTarget(savedDifferentTenantUser.getId());
         int notificationsCount = 20;
         for (int i = 0; i < notificationsCount; i++) {
             NotificationRequest request = submitNotificationRequest(target.getId(), "Test " + i, NotificationDeliveryMethod.WEB);
             awaitNotificationRequest(request.getId());
         }
-        List<NotificationRequest> requests = notificationRequestService.findNotificationRequestsByTenantIdAndOriginatorType(differentTenantId, EntityType.USER, new PageLink(100)).getData();
+        List<NotificationRequest> requests = notificationRequestService.findNotificationRequestsByTenantIdAndOriginatorType(tenantId, EntityType.USER, new PageLink(100)).getData();
         assertThat(requests).size().isEqualTo(notificationsCount);
 
         deleteDifferentTenant();
 
-        assertThat(notificationRequestService.findNotificationRequestsByTenantIdAndOriginatorType(differentTenantId, EntityType.USER, new PageLink(1)).getTotalElements())
+        assertThat(notificationRequestService.findNotificationRequestsByTenantIdAndOriginatorType(tenantId, EntityType.USER, new PageLink(1)).getTotalElements())
                 .isZero();
     }
 
