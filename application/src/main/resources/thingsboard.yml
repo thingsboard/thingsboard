@@ -280,8 +280,8 @@ sql:
     batch_threads: "${SQL_TS_BATCH_THREADS:3}" # batch thread count have to be a prime number like 3 or 5 to gain perfect hash distribution
     value_no_xss_validation: "${SQL_TS_VALUE_NO_XSS_VALIDATION:false}"
   ts_latest:
-    batch_size: "${SQL_TS_LATEST_BATCH_SIZE:10000}"
-    batch_max_delay: "${SQL_TS_LATEST_BATCH_MAX_DELAY_MS:100}"
+    batch_size: "${SQL_TS_LATEST_BATCH_SIZE:1000}"
+    batch_max_delay: "${SQL_TS_LATEST_BATCH_MAX_DELAY_MS:50}"
     stats_print_interval_ms: "${SQL_TS_LATEST_BATCH_STATS_PRINT_MS:10000}"
     batch_threads: "${SQL_TS_LATEST_BATCH_THREADS:3}" # batch thread count have to be a prime number like 3 or 5 to gain perfect hash distribution
     update_by_latest_ts: "${SQL_TS_UPDATE_BY_LATEST_TIMESTAMP:true}"
