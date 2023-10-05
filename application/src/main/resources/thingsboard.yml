@@ -268,8 +268,8 @@ cassandra:
 sql:
   # Specify batch size for persisting attribute updates
   attributes:
-    batch_size: "${SQL_ATTRIBUTES_BATCH_SIZE:10000}"
-    batch_max_delay: "${SQL_ATTRIBUTES_BATCH_MAX_DELAY_MS:100}"
+    batch_size: "${SQL_ATTRIBUTES_BATCH_SIZE:1000}"
+    batch_max_delay: "${SQL_ATTRIBUTES_BATCH_MAX_DELAY_MS:50}"
     stats_print_interval_ms: "${SQL_ATTRIBUTES_BATCH_STATS_PRINT_MS:10000}"
     batch_threads: "${SQL_ATTRIBUTES_BATCH_THREADS:3}" # batch thread count have to be a prime number like 3 or 5 to gain perfect hash distribution
     value_no_xss_validation: "${SQL_ATTRIBUTES_VALUE_NO_XSS_VALIDATION:false}"
