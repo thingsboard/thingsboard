@@ -1,0 +1,24 @@
+name: Check yml parameters have description
+on:
+  pull_request:
+    paths:
+      - 'application/src/main/resources/thingsboard.yml'
+jobs:
+  build:
+    name: check
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.10.2"
+          architecture: "x64"
+        env:
+          AGENT_TOOLSDIRECTORY: /opt/hostedtoolcache
+
+      - name: Run Verification Script
+        run: python3 tools/src/main/python/check_env_variables.py
