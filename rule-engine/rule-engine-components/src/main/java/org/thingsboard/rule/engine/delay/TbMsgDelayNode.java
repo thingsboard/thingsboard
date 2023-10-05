@@ -18,7 +18,6 @@ package org.thingsboard.rule.engine.delay;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -101,9 +100,9 @@ public class TbMsgDelayNode implements TbNode {
     private long getDelayPeriodValue(TbMsg msg) {
         int periodValue;
         if (config.isUsePeriodValuePattern()) {
-            if (isParsable(msg, config.getPeriodValuePattern())) {
+            try {
                 periodValue = Integer.parseInt(TbNodeUtils.processPattern(config.getPeriodValuePattern(), msg));
-            } else {
+            } catch (NumberFormatException e) {
                 throw new RuntimeException("Can't parse period value using pattern: " + config.getPeriodValuePattern());
             }
         } else {
@@ -117,20 +116,16 @@ public class TbMsgDelayNode implements TbNode {
         if (config.isUsePeriodTimeUnitPattern()) {
             try {
                 periodTimeUnit = TimeUnit.valueOf(TbNodeUtils.processPattern(config.getPeriodTimeUnitPattern(), msg));
-                if (!supportedTimeUnits.contains(periodTimeUnit)) {
-                    throw new RuntimeException("Unsupported time unit: " + periodTimeUnit);
-                }
             } catch (IllegalArgumentException | NullPointerException e) {
                 throw new RuntimeException("Can't parse period time unit using pattern: " + config.getPeriodTimeUnitPattern());
+            }
+            if (!supportedTimeUnits.contains(periodTimeUnit)) {
+                throw new RuntimeException("Unsupported time unit: " + periodTimeUnit);
             }
         } else {
             periodTimeUnit = config.getPeriodTimeUnit();
         }
         return periodTimeUnit;
-    }
-
-    private boolean isParsable(TbMsg msg, String pattern) {
-        return NumberUtils.isParsable(TbNodeUtils.processPattern(pattern, msg));
     }
 
     @Override
