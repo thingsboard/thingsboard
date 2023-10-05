@@ -440,7 +440,13 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
 
     @Override
     public void deleteEntityAlarmRelations(TenantId tenantId, EntityId entityId) {
+        log.trace("Executing deleteEntityAlarms [{}]", entityId);
         alarmDao.deleteEntityAlarmRecords(tenantId, entityId);
+    }
+
+    @Override
+    public void deleteEntityAlarmRecordsByTenantId(TenantId tenantId) {
+        alarmDao.deleteEntityAlarmRecordsByTenantId(tenantId);
     }
 
     @Override

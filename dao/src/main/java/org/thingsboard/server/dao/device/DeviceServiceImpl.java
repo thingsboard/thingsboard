@@ -318,24 +318,28 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     public void deleteDevice(final TenantId tenantId, final DeviceId deviceId) {
         log.trace("Executing deleteDevice [{}]", deviceId);
         validateId(deviceId, INCORRECT_DEVICE_ID + deviceId);
-
-        Device device = deviceDao.findById(tenantId, deviceId.getId());
-        DeviceCacheEvictEvent deviceCacheEvictEvent = new DeviceCacheEvictEvent(device.getTenantId(), device.getId(), device.getName(), null);
-        List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityId(device.getTenantId(), deviceId);
-        if (entityViews != null && !entityViews.isEmpty()) {
+        if (entityViewService.existsByTenantIdAndEntityId(tenantId, deviceId)) {
             throw new DataValidationException("Can't delete device that has entity views!");
         }
-        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, deviceId);
+
+        Device device = deviceDao.findById(tenantId, deviceId.getId());
+        alarmService.deleteEntityAlarmRelations(tenantId, deviceId);
+        deleteDevice(tenantId, device);
+    }
+
+    private void deleteDevice(TenantId tenantId, Device device) {
+        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, device.getId());
         if (deviceCredentials != null) {
             deviceCredentialsService.deleteDeviceCredentials(tenantId, deviceCredentials);
         }
-        deleteEntityRelations(tenantId, deviceId);
+        relationService.deleteEntityRelations(tenantId, device.getId());
 
-        deviceDao.removeById(tenantId, deviceId.getId());
+        deviceDao.removeById(tenantId, device.getUuidId());
 
+        DeviceCacheEvictEvent deviceCacheEvictEvent = new DeviceCacheEvictEvent(device.getTenantId(), device.getId(), device.getName(), null);
         publishEvictEvent(deviceCacheEvictEvent);
         countService.publishCountEntityEvictEvent(tenantId, EntityType.DEVICE);
-        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(deviceId).build());
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(device.getId()).build());
     }
 
     @Override
@@ -650,21 +654,20 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         deleteDevice(tenantId, (DeviceId) id);
     }
 
-    private PaginatedRemover<TenantId, Device> tenantDevicesRemover =
-            new PaginatedRemover<>() {
+    private final PaginatedRemover<TenantId, Device> tenantDevicesRemover = new PaginatedRemover<>() {
 
-                @Override
-                protected PageData<Device> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-                    return deviceDao.findDevicesByTenantId(id.getId(), pageLink);
-                }
+        @Override
+        protected PageData<Device> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+            return deviceDao.findDevicesByTenantId(id.getId(), pageLink);
+        }
 
-                @Override
-                protected void removeEntity(TenantId tenantId, Device entity) {
-                    deleteDevice(tenantId, new DeviceId(entity.getUuidId()));
-                }
-            };
+        @Override
+        protected void removeEntity(TenantId tenantId, Device device) {
+            deleteDevice(tenantId, device);
+        }
+    };
 
-    private PaginatedRemover<CustomerId, Device> customerDeviceUnasigner = new PaginatedRemover<CustomerId, Device>() {
+    private final PaginatedRemover<CustomerId, Device> customerDeviceUnasigner = new PaginatedRemover<CustomerId, Device>() {
 
         @Override
         protected PageData<Device> findEntities(TenantId tenantId, CustomerId id, PageLink pageLink) {

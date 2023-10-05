@@ -28,4 +28,5 @@ public interface DeviceCredentialsRepository extends JpaRepository<DeviceCredent
     DeviceCredentialsEntity findByDeviceId(UUID deviceId);
 
     DeviceCredentialsEntity findByCredentialsId(String credentialsId);
+
 }
