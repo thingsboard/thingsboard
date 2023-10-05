@@ -120,7 +120,7 @@ public class TbMsgDelayNodeTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = TimeUnit.class, names = {"MILLISECONDS", "SECONDS", "MINUTES", "HOURS", "DAYS"})
+    @EnumSource(value = TimeUnit.class, names = {"SECONDS", "MINUTES", "HOURS"})
     public void givenValidPeriodTimeUnits_whenInit_thenNodeStartsSuccessfully(TimeUnit periodTimeUnit) {
         // GIVEN
         config = config.defaultConfiguration();
@@ -135,7 +135,7 @@ public class TbMsgDelayNodeTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = TimeUnit.class, mode = EnumSource.Mode.EXCLUDE, names = {"MILLISECONDS", "SECONDS", "MINUTES", "HOURS", "DAYS"})
+    @EnumSource(value = TimeUnit.class, mode = EnumSource.Mode.EXCLUDE, names = {"SECONDS", "MINUTES", "HOURS"})
     public void givenInvalidPeriodTimeUnits_whenInit_thenNodeFailsToStartWithCorrectException(TimeUnit periodTimeUnit) {
         // GIVEN
         config = config.defaultConfiguration();

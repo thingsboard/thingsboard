@@ -58,9 +58,7 @@ public class TbMsgDelayNode implements TbNode {
 
     private TbMsgDelayNodeConfiguration config;
     private Map<UUID, TbMsg> pendingMsgs;
-    private final Set<TimeUnit> supportedTimeUnits = EnumSet.of(
-            TimeUnit.MILLISECONDS, TimeUnit.SECONDS, TimeUnit.MINUTES, TimeUnit.HOURS, TimeUnit.DAYS
-    );
+    private final Set<TimeUnit> supportedTimeUnits = EnumSet.of(TimeUnit.SECONDS, TimeUnit.MINUTES, TimeUnit.HOURS);
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
