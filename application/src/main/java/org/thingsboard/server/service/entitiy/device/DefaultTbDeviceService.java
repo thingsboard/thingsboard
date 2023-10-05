@@ -40,7 +40,6 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.device.claim.ClaimResponse;
 import org.thingsboard.server.dao.device.claim.ClaimResult;
 import org.thingsboard.server.dao.device.claim.ReclaimResult;
-import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
@@ -53,7 +52,6 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
     private final DeviceService deviceService;
     private final DeviceCredentialsService deviceCredentialsService;
     private final ClaimDevicesService claimDevicesService;
-    private final TenantService tenantService;
 
     @Override
     public Device save(Device device, String accessToken, User user) throws Exception {
@@ -230,8 +228,7 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
         TenantId newTenantId = newTenant.getId();
         DeviceId deviceId = device.getId();
         try {
-            Tenant tenant = tenantService.findTenantById(tenantId);
-            Device assignedDevice = deviceService.assignDeviceToTenant(tenant, newTenantId, device);
+            Device assignedDevice = deviceService.assignDeviceToTenant(newTenantId, device);
 
             logEntityActionService.logEntityAction(tenantId, deviceId, assignedDevice, assignedDevice.getCustomerId(),
                     actionType, user, newTenantId.toString(), newTenant.getName());

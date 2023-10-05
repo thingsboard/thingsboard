@@ -98,9 +98,7 @@ public class EdgeEventSourcingListener {
         }
         EntityType entityType = event.getEntityId().getEntityType();
         try {
-            if (EntityType.EDGE.equals(entityType) ||
-                    EntityType.TENANT.equals(entityType) ||
-                    EntityType.TB_RESOURCE.equals(entityType)) {
+            if (EntityType.EDGE.equals(entityType) || EntityType.TENANT.equals(entityType)) {
                 return;
             }
             log.trace("[{}] DeleteEntityEvent called: {}", event.getTenantId(), event);

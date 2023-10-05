@@ -81,10 +81,10 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
 
         try {
             userService.deleteUser(tenantId, user);
-            logEntityActionService.logEntityAction(tenantId, userId, user, customerId, actionType, user, customerId.toString());
+            logEntityActionService.logEntityAction(tenantId, userId, user, customerId, actionType, responsibleUser, customerId.toString());
         } catch (Exception e) {
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.USER),
-                    actionType, user, e, userId.toString());
+                    actionType, responsibleUser, e, userId.toString());
             throw e;
         }
     }

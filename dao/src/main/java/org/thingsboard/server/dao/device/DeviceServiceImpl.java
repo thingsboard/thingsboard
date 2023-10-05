@@ -78,6 +78,7 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
+import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -113,6 +114,9 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
 
     @Autowired
     private EventService eventService;
+
+    @Autowired
+    private TenantService tenantService;
 
     @Autowired
     private DataValidator<Device> deviceValidator;
@@ -497,9 +501,10 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
 
     @Transactional
     @Override
-    public Device assignDeviceToTenant(Tenant oldTenant, TenantId tenantId, Device device) {
+    public Device assignDeviceToTenant(TenantId tenantId, Device device) {
         log.trace("Executing assignDeviceToTenant [{}][{}]", tenantId, device);
         TenantId oldTenantId = device.getTenantId();
+        Tenant oldTenant = tenantService.findTenantById(oldTenantId);
         List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityId(oldTenantId, device.getId());
         if (!CollectionUtils.isEmpty(entityViews)) {
             throw new DataValidationException("Can't assign device that has entity views to another tenant!");

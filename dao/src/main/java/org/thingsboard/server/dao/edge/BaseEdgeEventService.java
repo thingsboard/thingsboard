@@ -18,12 +18,12 @@ package org.thingsboard.server.dao.edge;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -32,9 +32,14 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.service.DataValidator;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 @Service
 @Slf4j
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class BaseEdgeEventService implements EdgeEventService {
 
     private final EdgeEventDao edgeEventDao;
@@ -42,6 +47,20 @@ public class BaseEdgeEventService implements EdgeEventService {
     private final DataValidator<EdgeEvent> edgeEventValidator;
 
     private final ApplicationEventPublisher eventPublisher;
+
+    private ExecutorService executor;
+
+    @PostConstruct
+    public void initExecutor() {
+        executor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("edge-event"));
+    }
+
+    @PreDestroy
+    public void shutdownExecutor() {
+        if (executor != null) {
+            executor.shutdown();
+        }
+    }
 
     @Override
     public ListenableFuture<Void> saveAsync(EdgeEvent edgeEvent) {
@@ -58,7 +77,7 @@ public class BaseEdgeEventService implements EdgeEventService {
 
             @Override
             public void onFailure(@NotNull Throwable throwable) {}
-        }, MoreExecutors.directExecutor());
+        }, executor);
 
         return saveFuture;
     }

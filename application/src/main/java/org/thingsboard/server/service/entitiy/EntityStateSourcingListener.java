@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -73,15 +74,16 @@ public class EntityStateSourcingListener {
             case ASSET:
             case ASSET_PROFILE:
             case ENTITY_VIEW:
+            case NOTIFICATION_RULE:
                 tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, lifecycleEvent);
                 break;
             case TENANT:
                 Tenant tenant = (Tenant) event.getEntity();
-                onTenantUpdate(tenant, isCreated);
+                onTenantUpdate(tenant, lifecycleEvent);
                 break;
             case TENANT_PROFILE:
                 TenantProfile tenantProfile = (TenantProfile) event.getEntity();
-                onTenantProfileUpdate(tenantProfile, isCreated);
+                onTenantProfileUpdate(tenantProfile, lifecycleEvent);
                 break;
             case DEVICE:
                 onDeviceUpdate(event.getEntity(), event.getOldEntity());
@@ -118,6 +120,8 @@ public class EntityStateSourcingListener {
             case ASSET_PROFILE:
             case ENTITY_VIEW:
             case CUSTOMER:
+            case EDGE:
+            case NOTIFICATION_RULE:
                 tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, ComponentLifecycleEvent.DELETED);
                 break;
             case TENANT:
@@ -136,13 +140,15 @@ public class EntityStateSourcingListener {
                 DeviceProfile deviceProfile = (DeviceProfile) event.getEntity();
                 onDeviceProfileDelete(event.getTenantId(), event.getEntityId(), deviceProfile);
                 break;
-            case EDGE:
-                tbClusterService.broadcastEntityStateChangeEvent(event.getTenantId(), event.getEntityId(), ComponentLifecycleEvent.DELETED);
-                break;
             case TB_RESOURCE:
                 TbResource tbResource = (TbResource) event.getEntity();
                 tbClusterService.onResourceDeleted(tbResource, null);
                 break;
+            case NOTIFICATION_REQUEST:
+                NotificationRequest request = (NotificationRequest) event.getEntity();
+                if (request.isScheduled()) {
+                    tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, ComponentLifecycleEvent.DELETED);
+                }
             default:
                 break;
         }
@@ -167,26 +173,14 @@ public class EntityStateSourcingListener {
         }
     }
 
-    private void onTenantUpdate(Tenant tenant, boolean isCreated) {
+    private void onTenantUpdate(Tenant tenant, ComponentLifecycleEvent lifecycleEvent) {
         tbClusterService.onTenantChange(tenant, null);
-        tbClusterService.broadcastEntityStateChangeEvent(tenant.getId(), tenant.getId(), isCreated ?
-                ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+        tbClusterService.broadcastEntityStateChangeEvent(tenant.getId(), tenant.getId(), lifecycleEvent);
     }
 
-    private void onTenantProfileUpdate(TenantProfile tenantProfile, boolean isCreated) {
+    private void onTenantProfileUpdate(TenantProfile tenantProfile, ComponentLifecycleEvent lifecycleEvent) {
         tbClusterService.onTenantProfileChange(tenantProfile, null);
-        tbClusterService.broadcastEntityStateChangeEvent(TenantId.SYS_TENANT_ID, tenantProfile.getId(),
-                isCreated ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
-    }
-
-    private boolean isCommonEntityStateUpdated(EntityId entityId) {
-        switch (entityId.getEntityType()) {
-            case ASSET:
-            case ASSET_PROFILE:
-            case ENTITY_VIEW:
-                return true;
-        }
-        return false;
+        tbClusterService.broadcastEntityStateChangeEvent(TenantId.SYS_TENANT_ID, tenantProfile.getId(), lifecycleEvent);
     }
 
     private void onDeviceProfileUpdate(DeviceProfile deviceProfile, Object oldEntity, boolean isCreated) {
