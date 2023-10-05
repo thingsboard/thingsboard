@@ -1,11 +1,11 @@
-name: Check yml parameters have description
+name: check_yml
 on:
   pull_request:
     paths:
       - 'application/src/main/resources/thingsboard.yml'
 jobs:
   build:
-    name: check
+    name: Check yml parameters have description
     runs-on: ubuntu-20.04
 
     steps:
