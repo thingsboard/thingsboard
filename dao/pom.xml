@@ -230,6 +230,10 @@
             <groupId>org.thingsboard.rule-engine</groupId>
             <artifactId>rule-engine-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.hypersistence</groupId>
+            <artifactId>hypersistence-utils-hibernate-55</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

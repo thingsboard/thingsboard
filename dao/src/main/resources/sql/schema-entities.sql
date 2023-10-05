@@ -853,8 +853,8 @@ CREATE TABLE IF NOT EXISTS notification_request (
 CREATE TABLE IF NOT EXISTS notification (
     id UUID NOT NULL,
     created_time BIGINT NOT NULL,
-    request_id UUID NULL CONSTRAINT fk_notification_request_id REFERENCES notification_request(id) ON DELETE CASCADE,
-    recipient_id UUID NOT NULL CONSTRAINT fk_notification_recipient_id REFERENCES tb_user(id) ON DELETE CASCADE,
+    request_id UUID,
+    recipient_id UUID NOT NULL,
     type VARCHAR(50) NOT NULL,
     subject VARCHAR(255),
     body VARCHAR(1000) NOT NULL,
