@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
+import java.time.Duration;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -87,7 +88,9 @@ public class TbMsgDelayNode implements TbNode {
             if (pendingMsgs.size() < config.getMaxPendingMsgs()) {
                 pendingMsgs.put(msg.getId(), msg);
                 TbMsg tickMsg = ctx.newMsg(null, TbMsgType.DELAY_TIMEOUT_SELF_MSG, ctx.getSelfId(), msg.getCustomerId(), TbMsgMetaData.EMPTY, msg.getId().toString());
-                ctx.tellSelf(tickMsg, getDelay(msg));
+                long periodValue = getDelayPeriodValue(msg);
+                TimeUnit periodTimeUnit = getDelayPeriodTimeUnit(msg);
+                ctx.tellSelf(tickMsg, Duration.of(periodValue, periodTimeUnit.toChronoUnit()).toMillis());
                 ctx.ack(msg);
             } else {
                 ctx.tellFailure(msg, new RuntimeException("Max limit of pending messages reached!"));
@@ -95,7 +98,7 @@ public class TbMsgDelayNode implements TbNode {
         }
     }
 
-    private long getDelay(TbMsg msg) {
+    private long getDelayPeriodValue(TbMsg msg) {
         int periodValue;
         if (config.isUsePeriodValuePattern()) {
             if (isParsable(msg, config.getPeriodValuePattern())) {
@@ -106,17 +109,24 @@ public class TbMsgDelayNode implements TbNode {
         } else {
             periodValue = config.getPeriodValue();
         }
+        return periodValue;
+    }
+
+    private TimeUnit getDelayPeriodTimeUnit(TbMsg msg) {
         TimeUnit periodTimeUnit;
         if (config.isUsePeriodTimeUnitPattern()) {
             try {
                 periodTimeUnit = TimeUnit.valueOf(TbNodeUtils.processPattern(config.getPeriodTimeUnitPattern(), msg));
+                if (!supportedTimeUnits.contains(periodTimeUnit)) {
+                    throw new RuntimeException("Unsupported time unit: " + periodTimeUnit);
+                }
             } catch (IllegalArgumentException | NullPointerException e) {
                 throw new RuntimeException("Can't parse period time unit using pattern: " + config.getPeriodTimeUnitPattern());
             }
         } else {
             periodTimeUnit = config.getPeriodTimeUnit();
         }
-        return periodTimeUnit.toMillis(periodValue);
+        return periodTimeUnit;
     }
 
     private boolean isParsable(TbMsg msg, String pattern) {
