@@ -98,32 +98,28 @@ public class TbMsgDelayNode implements TbNode {
     }
 
     private long getDelayPeriodValue(TbMsg msg) {
-        int periodValue;
-        if (config.isUsePeriodValuePattern()) {
-            try {
-                periodValue = Integer.parseInt(TbNodeUtils.processPattern(config.getPeriodValuePattern(), msg));
-            } catch (NumberFormatException e) {
-                throw new RuntimeException("Can't parse period value using pattern: " + config.getPeriodValuePattern());
-            }
-        } else {
-            periodValue = config.getPeriodValue();
+        if (!config.isUsePeriodValuePattern()) {
+            return config.getPeriodValue();
         }
-        return periodValue;
+        try {
+            return Integer.parseInt(TbNodeUtils.processPattern(config.getPeriodValuePattern(), msg));
+        } catch (NumberFormatException e) {
+            throw new RuntimeException("Can't parse period value using pattern: " + config.getPeriodValuePattern());
+        }
     }
 
     private TimeUnit getDelayPeriodTimeUnit(TbMsg msg) {
+        if (!config.isUsePeriodTimeUnitPattern()) {
+            return config.getPeriodTimeUnit();
+        }
         TimeUnit periodTimeUnit;
-        if (config.isUsePeriodTimeUnitPattern()) {
-            try {
-                periodTimeUnit = TimeUnit.valueOf(TbNodeUtils.processPattern(config.getPeriodTimeUnitPattern(), msg));
-            } catch (IllegalArgumentException | NullPointerException e) {
-                throw new RuntimeException("Can't parse period time unit using pattern: " + config.getPeriodTimeUnitPattern());
-            }
-            if (!supportedTimeUnits.contains(periodTimeUnit)) {
-                throw new RuntimeException("Unsupported time unit: " + periodTimeUnit);
-            }
-        } else {
-            periodTimeUnit = config.getPeriodTimeUnit();
+        try {
+            periodTimeUnit = TimeUnit.valueOf(TbNodeUtils.processPattern(config.getPeriodTimeUnitPattern(), msg));
+        } catch (IllegalArgumentException | NullPointerException e) {
+            throw new RuntimeException("Can't parse period time unit using pattern: " + config.getPeriodTimeUnitPattern());
+        }
+        if (!supportedTimeUnits.contains(periodTimeUnit)) {
+            throw new RuntimeException("Unsupported time unit: " + periodTimeUnit);
         }
         return periodTimeUnit;
     }
