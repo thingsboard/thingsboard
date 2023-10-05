@@ -87,6 +87,8 @@ public class TbMsgDelayNodeTest {
         assertThat(config.getMaxPendingMsgs()).isEqualTo(1000);
         assertThat(config.getPeriodValuePattern()).isNull();
         assertThat(config.isUsePeriodValuePattern()).isFalse();
+        assertThat(config.getPeriodTimeUnitPattern()).isNull();
+        assertThat(config.isUsePeriodTimeUnitPattern()).isFalse();
     }
 
     @ParameterizedTest
@@ -251,12 +253,14 @@ public class TbMsgDelayNodeTest {
     public void givenOneHourDelayWithPattern_whenOnMsg_thenShouldUseCorrectDelay() {
         // GIVEN
         config = config.defaultConfiguration();
-        config.setPeriodTimeUnit(TimeUnit.HOURS);
         config.setUsePeriodValuePattern(true);
-        config.setPeriodValuePattern("$[processingDelayInHours]");
+        config.setPeriodValuePattern("$[processingDelayValue]");
+        config.setUsePeriodTimeUnitPattern(true);
+        config.setPeriodTimeUnitPattern("$[processingDelayTimeUnit]");
 
         var data = JacksonUtil.newObjectNode();
-        data.put("processingDelayInHours", 1);
+        data.put("processingDelayValue", 1);
+        data.put("processingDelayTimeUnit", "HOURS");
         msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, customerId, new TbMsgMetaData(), JacksonUtil.toString(data));
 
         try {
@@ -273,15 +277,14 @@ public class TbMsgDelayNodeTest {
     }
 
     @Test
-    public void givenNotParsableDelayWithPattern_whenOnMsg_thenShouldThrowException() {
+    public void givenNotParsableValueWithPattern_whenOnMsg_thenShouldThrowException() {
         // GIVEN
         config = config.defaultConfiguration();
-        config.setPeriodTimeUnit(TimeUnit.HOURS);
         config.setUsePeriodValuePattern(true);
-        config.setPeriodValuePattern("$[processingDelayInHours]");
+        config.setPeriodValuePattern("$[processingDelayValue]");
 
         var data = JacksonUtil.newObjectNode();
-        data.put("processingDelayInHours", "one hour");
+        data.put("processingDelayValue", "one hour");
         msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, customerId, new TbMsgMetaData(), JacksonUtil.toString(data));
 
         try {
@@ -293,7 +296,53 @@ public class TbMsgDelayNodeTest {
         // WHEN-THEN
         assertThatThrownBy(() -> node.onMsg(ctxMock, msg))
                 .isInstanceOf(RuntimeException.class)
-                .hasMessage("Can't parse period value using pattern: $[processingDelayInHours]");
+                .hasMessage("Can't parse period value using pattern: $[processingDelayValue]");
+    }
+
+    @Test
+    public void givenNotParsableTimeUnitWithPattern_whenOnMsg_thenShouldThrowException() {
+        // GIVEN
+        config = config.defaultConfiguration();
+        config.setUsePeriodTimeUnitPattern(true);
+        config.setPeriodTimeUnitPattern("$[processingDelayTimeUnit]");
+
+        var data = JacksonUtil.newObjectNode();
+        data.put("processingDelayTimeUnit", "week");
+        msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, customerId, new TbMsgMetaData(), JacksonUtil.toString(data));
+
+        try {
+            node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        } catch (TbNodeException e) {
+            fail("Node failed to start!", e);
+        }
+
+        // WHEN-THEN
+        assertThatThrownBy(() -> node.onMsg(ctxMock, msg))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Can't parse period time unit using pattern: $[processingDelayTimeUnit]");
+    }
+
+    @Test
+    public void givenNotSupportedTimeUnitWithPattern_whenOnMsg_thenShouldThrowException() {
+        // GIVEN
+        config = config.defaultConfiguration();
+        config.setUsePeriodTimeUnitPattern(true);
+        config.setPeriodTimeUnitPattern("$[processingDelayTimeUnit]");
+
+        var data = JacksonUtil.newObjectNode();
+        data.put("processingDelayTimeUnit", "MILLISECONDS");
+        msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, customerId, new TbMsgMetaData(), JacksonUtil.toString(data));
+
+        try {
+            node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        } catch (TbNodeException e) {
+            fail("Node failed to start!", e);
+        }
+
+        // WHEN-THEN
+        assertThatThrownBy(() -> node.onMsg(ctxMock, msg))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Unsupported time unit: MILLISECONDS");
     }
 
     @ParameterizedTest
@@ -318,8 +367,8 @@ public class TbMsgDelayNodeTest {
 
     private static Stream<Arguments> provideOldConfigurations() {
         return Stream.of(
-                Arguments.of("{\"periodInSeconds\":60,\"maxPendingMsgs\":1000,\"periodInSecondsPattern\":null,\"useMetadataPeriodInSecondsPatterns\":false}", 0, "{\"periodValue\":60,\"periodTimeUnit\":\"SECONDS\",\"maxPendingMsgs\":1000,\"periodValuePattern\":null,\"usePeriodValuePattern\":false}"),
-                Arguments.of("{\"periodInSeconds\":60,\"maxPendingMsgs\":1000,\"periodInSecondsPattern\":\"${metadataKey}\",\"useMetadataPeriodInSecondsPatterns\":true}", 0, "{\"periodValue\":60,\"periodTimeUnit\":\"SECONDS\",\"maxPendingMsgs\":1000,\"periodValuePattern\":\"${metadataKey}\",\"usePeriodValuePattern\":true}")
+                Arguments.of("{\"periodInSeconds\":60,\"maxPendingMsgs\":1000,\"periodInSecondsPattern\":null,\"useMetadataPeriodInSecondsPatterns\":false}", 0, "{\"periodValue\":60,\"periodTimeUnit\":\"SECONDS\",\"maxPendingMsgs\":1000,\"periodValuePattern\":null,\"usePeriodValuePattern\":false,\"periodTimeUnitPattern\":null,\"usePeriodTimeUnitPattern\":false}"),
+                Arguments.of("{\"periodInSeconds\":60,\"maxPendingMsgs\":1000,\"periodInSecondsPattern\":\"${metadataKey}\",\"useMetadataPeriodInSecondsPatterns\":true}", 0, "{\"periodValue\":60,\"periodTimeUnit\":\"SECONDS\",\"maxPendingMsgs\":1000,\"periodValuePattern\":\"${metadataKey}\",\"usePeriodValuePattern\":true,\"periodTimeUnitPattern\":null,\"usePeriodTimeUnitPattern\":false}")
         );
     }
 
