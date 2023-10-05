@@ -1,3 +1,19 @@
+#
+# Copyright © 2016-2023 The Thingsboard Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 import sys
 import re
 
@@ -18,43 +34,44 @@ def parse_line(table_name, comment, key_level_map, parent_line_level, index, lin
         return
     line = lines[index]
     line_level = (len(line) - len(line.lstrip())) if line.strip() else 0
-    if line_level == 0:
-        key_level_map = {0 : ''}
     line = line.strip()
     # if line is empty - parse next line
     if not line:
         index = index + 1
         parse_line(table_name, comment, key_level_map, line_level, index, lines, properties)
     # if line is a comment - save comment and parse next line
-    elif line.startswith('#'):
-        if line_level == 0:
-            table_name = line.lstrip('#')
-        elif line_level == parent_line_level:
-            comment = comment + '\n' + line.lstrip('#')
-        else:
-            comment = line.lstrip('#')
-        index = index + 1
-        parse_line(table_name, comment, key_level_map, line_level, index, lines, properties)
     else:
-        # Check if it's a property line
-        if ':' in line:
-            # clean comment if level was changed
-            if line_level != parent_line_level:
-                comment = ''
-            key, value = line.split(':', 1)
-            if key.startswith('- '):
-                key = key.lstrip('- ')
-            key_level_map[line_level] = key
-            value = value.strip()
-            if value.split('#')[0]:
-                current_key = ''
-                for k in key_level_map.keys():
-                    if k <= line_level:
-                        current_key = ((current_key + '.') if current_key else '') + key_level_map[k]
-                properties[current_key] = (value, comment, table_name)
-                comment = ''
+        if line_level == 0:
+            key_level_map = {0 : ''}
+        if line.startswith('#'):
+            if line_level == 0:
+                table_name = line.lstrip('#')
+            elif line_level == parent_line_level:
+                comment = comment + '\n' + line.lstrip('#')
+            else:
+                comment = line.lstrip('#')
             index = index + 1
             parse_line(table_name, comment, key_level_map, line_level, index, lines, properties)
+        else:
+            # Check if it's a property line
+            if ':' in line:
+                # clean comment if level was changed
+                if line_level != parent_line_level:
+                    comment = ''
+                key, value = line.split(':', 1)
+                if key.startswith('- '):
+                    key = key.lstrip('- ')
+                key_level_map[line_level] = key
+                value = value.strip()
+                if value.split('#')[0]:
+                    current_key = ''
+                    for k in key_level_map.keys():
+                        if k <= line_level:
+                            current_key = ((current_key + '.') if current_key else '') + key_level_map[k]
+                    properties[current_key] = (value, comment, table_name)
+                    comment = ''
+                index = index + 1
+                parse_line(table_name, comment, key_level_map, line_level, index, lines, properties)
 
 def extract_property_info(properties):
     rows = []
