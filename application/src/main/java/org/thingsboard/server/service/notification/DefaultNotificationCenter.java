@@ -51,7 +51,6 @@ import org.thingsboard.server.common.data.notification.template.DeliveryMethodNo
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.WebDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.page.PageDataIterable;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -391,7 +390,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     public void deleteNotificationRequest(TenantId tenantId, NotificationRequestId notificationRequestId) {
         log.debug("Deleting notification request {}", notificationRequestId);
         NotificationRequest notificationRequest = notificationRequestService.findNotificationRequestById(tenantId, notificationRequestId);
-        notificationRequestService.deleteNotificationRequest(tenantId, notificationRequestId);
+        notificationRequestService.deleteNotificationRequest(tenantId, notificationRequest);
 
         if (notificationRequest.isSent()) {
             // TODO: no need to send request update for other than PLATFORM_USERS target type
@@ -401,7 +400,8 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                     .build());
         } else if (notificationRequest.isScheduled()) {
             // TODO: just forward to scheduler service
-            clusterService.broadcastEntityStateChangeEvent(tenantId, notificationRequestId, ComponentLifecycleEvent.DELETED);
+            // handling in EntityStateSourcingListener.class
+            // clusterService.broadcastEntityStateChangeEvent(tenantId, notificationRequestId, ComponentLifecycleEvent.DELETED);
         }
     }
 

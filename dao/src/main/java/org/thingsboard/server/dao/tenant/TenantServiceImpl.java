@@ -197,8 +197,6 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         boolean create = tenant.getId() == null;
         Tenant savedTenant = tenantDao.save(tenant.getId(), tenant);
         publishEvictEvent(new TenantEvictEvent(savedTenant.getId(), create));
-        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(TenantId.SYS_TENANT_ID)
-                .entityId(savedTenant.getId()).entity(savedTenant).added(create).build());
         if (tenant.getId() == null) {
             deviceProfileService.createDefaultDeviceProfile(savedTenant.getId());
             assetProfileService.createDefaultAssetProfile(savedTenant.getId());
@@ -209,6 +207,8 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
                 log.error("Failed to create default notification configs for tenant {}", savedTenant.getId(), e);
             }
         }
+        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(TenantId.SYS_TENANT_ID)
+                .entityId(savedTenant.getId()).entity(savedTenant).added(create).build());
         return savedTenant;
     }
 
