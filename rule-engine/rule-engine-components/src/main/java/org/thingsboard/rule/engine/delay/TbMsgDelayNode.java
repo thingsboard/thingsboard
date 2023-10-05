@@ -106,7 +106,17 @@ public class TbMsgDelayNode implements TbNode {
         } else {
             periodValue = config.getPeriodValue();
         }
-        return config.getPeriodTimeUnit().toMillis(periodValue);
+        TimeUnit periodTimeUnit;
+        if (config.isUsePeriodTimeUnitPattern()) {
+            try {
+                periodTimeUnit = TimeUnit.valueOf(TbNodeUtils.processPattern(config.getPeriodTimeUnitPattern(), msg));
+            } catch (IllegalArgumentException | NullPointerException e) {
+                throw new RuntimeException("Can't parse period time unit using pattern: " + config.getPeriodTimeUnitPattern());
+            }
+        } else {
+            periodTimeUnit = config.getPeriodTimeUnit();
+        }
+        return periodTimeUnit.toMillis(periodValue);
     }
 
     private boolean isParsable(TbMsg msg, String pattern) {

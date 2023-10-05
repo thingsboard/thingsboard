@@ -28,6 +28,8 @@ public class TbMsgDelayNodeConfiguration implements NodeConfiguration<TbMsgDelay
     private int maxPendingMsgs;
     private String periodValuePattern;
     private boolean usePeriodValuePattern;
+    private String periodTimeUnitPattern;
+    private boolean usePeriodTimeUnitPattern;
 
     @Override
     public TbMsgDelayNodeConfiguration defaultConfiguration() {
