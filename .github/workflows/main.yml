@@ -1,11 +1,11 @@
-name: check_yml
+name: check_yml_file
 on:
   pull_request:
     paths:
       - 'application/src/main/resources/thingsboard.yml'
 jobs:
   build:
-    name: Check yml parameters have description
+    name: check_yml_file
     runs-on: ubuntu-20.04
 
     steps:
