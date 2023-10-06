@@ -34,6 +34,7 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.util.TbPair;
@@ -148,6 +149,24 @@ public class TbMsgDelayNodeTest {
                 .isInstanceOf(TbNodeException.class)
                 .hasMessage("Unsupported time unit: " + periodTimeUnit)
                 .matches(e -> ((TbNodeException) e).isUnrecoverable());
+    }
+
+    @Test
+    public void givenNonLocalOriginator_whenOnMsg_thenAcksMsgAndReturns() {
+        // GIVEN
+        given(ctxMock.isLocalEntity(msg.getOriginator())).willReturn(false);
+        given(ctxMock.getSelfId()).willReturn(new RuleNodeId(UUID.randomUUID()));
+        given(ctxMock.getTenantId()).willReturn(TenantId.fromUUID(UUID.randomUUID()));
+
+        // WHEN
+        node.onMsg(ctxMock, msg);
+
+        // THEN
+        then(ctxMock).should(times(1)).isLocalEntity(msg.getOriginator());
+        then(ctxMock).should(times(1)).getTenantId();
+        then(ctxMock).should(times(1)).getSelfId();
+        then(ctxMock).should(times(1)).ack(msg);
+        then(ctxMock).shouldHaveNoMoreInteractions();
     }
 
     @Test

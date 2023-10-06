@@ -61,8 +61,8 @@ public class TbMsgDelayNode implements TbNode {
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbMsgDelayNodeConfiguration.class);
-        this.pendingMsgs = new HashMap<>();
+        config = TbNodeUtils.convert(configuration, TbMsgDelayNodeConfiguration.class);
+        pendingMsgs = new HashMap<>();
         if (config.getMaxPendingMsgs() < 1 || config.getMaxPendingMsgs() > 100000) {
             throw new TbNodeException("Invalid maximum pending messages limit [" + config.getMaxPendingMsgs() + "], " +
                     "should be in range from 1 to 100000 (inclusive)!", true);
@@ -74,6 +74,12 @@ public class TbMsgDelayNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
+        if (!ctx.isLocalEntity(msg.getOriginator())) {
+            log.warn("[{}][{}] Received message from non-local entity with id [{}]!",
+                    ctx.getTenantId().getId(), ctx.getSelfId().getId(), msg.getOriginator().getId());
+            ctx.ack(msg);
+            return;
+        }
         if (msg.isTypeOf(TbMsgType.DELAY_TIMEOUT_SELF_MSG)) {
             TbMsg pendingMsg = pendingMsgs.remove(UUID.fromString(msg.getData()));
             if (pendingMsg != null) {
