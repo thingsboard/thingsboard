@@ -658,28 +658,5 @@ public class TbUtils {
         }
         return true;
     }
-
-    public static long parse(String value, String format) {
-        try {
-            DateFormat dateFormat = new SimpleDateFormat(format);
-            return dateFormat.parse(value).getTime();
-        } catch (Exception e) {
-            return -1;
-        }
-    }
-    public static long parse(String value) {
-        DateTimeFormatter isoDateFormatter = DateTimeFormatter.ofPattern(
-            "yyyy-MM-dd[[ ]['T']HH:mm[:ss[.SSS]][ ][XXX][Z][z][VV][O]]").withZone(ZoneId.systemDefault());
-        try {
-            TemporalAccessor accessor = isoDateFormatter.parseBest(value,
-                    ZonedDateTime::from,
-                    LocalDateTime::from,
-                    LocalDate::from);
-            Instant instant = Instant.from(accessor);
-            return Instant.EPOCH.until(instant, ChronoUnit.MILLIS);
-        } catch (Exception e) {
-            return -1;
-        }
-    }
-
 }
+
