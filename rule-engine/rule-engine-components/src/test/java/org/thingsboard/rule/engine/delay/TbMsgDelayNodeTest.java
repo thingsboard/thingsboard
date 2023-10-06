@@ -183,6 +183,7 @@ public class TbMsgDelayNodeTest {
             fail("Node failed to start!", e);
         }
 
+        given(ctxMock.isLocalEntity(any())).willReturn(true);
         given(ctxMock.getSelfId()).willReturn(selfId);
 
         var expectedTickMsg = TbMsg.newMsg(
@@ -255,6 +256,8 @@ public class TbMsgDelayNodeTest {
         config = config.defaultConfiguration();
         config.setPeriodValue(30);
 
+        given(ctxMock.isLocalEntity(msg.getOriginator())).willReturn(true);
+
         try {
             node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
         } catch (TbNodeException e) {
@@ -276,6 +279,8 @@ public class TbMsgDelayNodeTest {
         config.setPeriodValuePattern("$[processingDelayValue]");
         config.setUsePeriodTimeUnitPattern(true);
         config.setPeriodTimeUnitPattern("$[processingDelayTimeUnit]");
+
+        given(ctxMock.isLocalEntity(msg.getOriginator())).willReturn(true);
 
         var data = JacksonUtil.newObjectNode();
         data.put("processingDelayValue", 1);
@@ -302,6 +307,8 @@ public class TbMsgDelayNodeTest {
         config.setUsePeriodValuePattern(true);
         config.setPeriodValuePattern("$[processingDelayValue]");
 
+        given(ctxMock.isLocalEntity(msg.getOriginator())).willReturn(true);
+
         var data = JacksonUtil.newObjectNode();
         data.put("processingDelayValue", "one hour");
         msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, customerId, new TbMsgMetaData(), JacksonUtil.toString(data));
@@ -325,6 +332,8 @@ public class TbMsgDelayNodeTest {
         config.setUsePeriodTimeUnitPattern(true);
         config.setPeriodTimeUnitPattern("$[processingDelayTimeUnit]");
 
+        given(ctxMock.isLocalEntity(msg.getOriginator())).willReturn(true);
+
         var data = JacksonUtil.newObjectNode();
         data.put("processingDelayTimeUnit", "week");
         msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, customerId, new TbMsgMetaData(), JacksonUtil.toString(data));
@@ -347,6 +356,8 @@ public class TbMsgDelayNodeTest {
         config = config.defaultConfiguration();
         config.setUsePeriodTimeUnitPattern(true);
         config.setPeriodTimeUnitPattern("$[processingDelayTimeUnit]");
+
+        given(ctxMock.isLocalEntity(msg.getOriginator())).willReturn(true);
 
         var data = JacksonUtil.newObjectNode();
         data.put("processingDelayTimeUnit", "MILLISECONDS");
