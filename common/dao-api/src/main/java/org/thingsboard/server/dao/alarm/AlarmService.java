@@ -81,27 +81,6 @@ public interface AlarmService extends EntityDaoService {
 
     void delAlarmTypes(TenantId tenantId, Set<String> types);
 
-    /*
-     *  Legacy API, before 3.5.
-     */
-    @Deprecated(since = "3.5.0", forRemoval = true)
-    AlarmOperationResult createOrUpdateAlarm(Alarm alarm);
-
-    @Deprecated(since = "3.5.0", forRemoval = true)
-    AlarmOperationResult createOrUpdateAlarm(Alarm alarm, boolean alarmCreationEnabled);
-
-    @Deprecated(since = "3.5.0", forRemoval = true)
-    ListenableFuture<AlarmOperationResult> ackAlarm(TenantId tenantId, AlarmId alarmId, long ackTs);
-
-    @Deprecated(since = "3.5.0", forRemoval = true)
-    ListenableFuture<AlarmOperationResult> clearAlarm(TenantId tenantId, AlarmId alarmId, JsonNode details, long clearTs);
-
-    @Deprecated(since = "3.5.0", forRemoval = true)
-    AlarmOperationResult deleteAlarm(TenantId tenantId, AlarmId alarmId);
-
-    @Deprecated(since = "3.5.0", forRemoval = true)
-    ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
-
     // Other API
     Alarm findAlarmById(TenantId tenantId, AlarmId alarmId);
 
@@ -109,13 +88,13 @@ public interface AlarmService extends EntityDaoService {
 
     AlarmInfo findAlarmInfoById(TenantId tenantId, AlarmId alarmId);
 
-    ListenableFuture<PageData<AlarmInfo>> findAlarms(TenantId tenantId, AlarmQuery query);
+    PageData<AlarmInfo> findAlarms(TenantId tenantId, AlarmQuery query);
 
-    ListenableFuture<PageData<AlarmInfo>> findCustomerAlarms(TenantId tenantId, CustomerId customerId, AlarmQuery query);
+    PageData<AlarmInfo> findCustomerAlarms(TenantId tenantId, CustomerId customerId, AlarmQuery query);
 
-    ListenableFuture<PageData<AlarmInfo>> findAlarmsV2(TenantId tenantId, AlarmQueryV2 query);
+    PageData<AlarmInfo> findAlarmsV2(TenantId tenantId, AlarmQueryV2 query);
 
-    ListenableFuture<PageData<AlarmInfo>> findCustomerAlarmsV2(TenantId tenantId, CustomerId customerId, AlarmQueryV2 query);
+    PageData<AlarmInfo> findCustomerAlarmsV2(TenantId tenantId, CustomerId customerId, AlarmQueryV2 query);
 
     AlarmSeverity findHighestAlarmSeverity(TenantId tenantId, EntityId entityId, AlarmSearchStatus alarmSearchStatus,
                                            AlarmStatus alarmStatus, String assigneeId);
