@@ -38,6 +38,9 @@ public class WidgetTypeDetails extends WidgetType implements HasName, HasTenantI
     @Length(fieldName = "description", max = 1024)
     @Schema(description = "Description of the widget")
     private String description;
+    @NoXss
+    @Schema(description = "Tags of the widget type")
+    private String[] tags;
 
     @Getter
     @Setter
@@ -59,6 +62,7 @@ public class WidgetTypeDetails extends WidgetType implements HasName, HasTenantI
         super(widgetTypeDetails);
         this.image = widgetTypeDetails.getImage();
         this.description = widgetTypeDetails.getDescription();
+        this.tags = widgetTypeDetails.getTags();
         this.externalId = widgetTypeDetails.getExternalId();
     }
 }

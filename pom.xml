@@ -125,6 +125,7 @@
         <wire-schema.version>3.4.0</wire-schema.version>
         <twilio.version>9.6.1</twilio.version>
         <hibernate-validator.version>8.0.0.Final</hibernate-validator.version>
+        <hypersistence-utils.version>3.5.2</hypersistence-utils.version>
         <jakarta.el.version>4.0.2</jakarta.el.version>
         <jakarta.validation-api.version>3.0.2</jakarta.validation-api.version>
         <antisamy.version>1.7.3</antisamy.version>
@@ -1967,6 +1968,11 @@
                 <groupId>org.hibernate.validator</groupId>
                 <artifactId>hibernate-validator</artifactId>
                 <version>${hibernate-validator.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.hypersistence</groupId>
+                <artifactId>hypersistence-utils-hibernate-62</artifactId>
+                <version>${hypersistence-utils.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.glassfish</groupId>

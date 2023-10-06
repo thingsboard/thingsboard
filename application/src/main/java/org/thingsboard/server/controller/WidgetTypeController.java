@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -37,6 +38,7 @@ import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.widget.DeprecatedFilter;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
@@ -48,6 +50,8 @@ import org.thingsboard.server.service.entitiy.widgets.type.TbWidgetTypeService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.thingsboard.server.controller.ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER;
@@ -75,7 +79,9 @@ public class WidgetTypeController extends AutoCommitController {
     private static final String WIDGET_TYPE_INFO_DESCRIPTION = "Widget Type Info is a lightweight object that represents Widget Type but does not contain the heavyweight widget descriptor JSON";
     private static final String TENANT_ONLY_PARAM_DESCRIPTION = "Optional boolean parameter indicating whether only tenant widget types should be returned";
     private static final String FULL_SEARCH_PARAM_DESCRIPTION = "Optional boolean parameter indicating whether search widgets by description not only by name";
+    private static final String DEPRECATED_FILTER_PARAM_DESCRIPTION = "Optional string parameter indicating whether to include deprecated widgets";
     private static final String UPDATE_EXISTING_BY_FQN_PARAM_DESCRIPTION = "Optional boolean parameter indicating whether to update existing widget type by FQN if present instead of creating new one";
+    private static final String WIDGET_TYPE_ARRAY_DESCRIPTION = "A list of string values separated by comma ',' representing one of the widget type value";
 
     @ApiOperation(value = "Get Widget Type Details (getWidgetTypeById)",
             notes = "Get the Widget Type Details based on the provided Widget Type Id. " + WIDGET_TYPE_DETAILS_DESCRIPTION + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
@@ -166,15 +172,22 @@ public class WidgetTypeController extends AutoCommitController {
             @Parameter(description = TENANT_ONLY_PARAM_DESCRIPTION)
             @RequestParam(required = false) Boolean tenantOnly,
             @Parameter(description = FULL_SEARCH_PARAM_DESCRIPTION)
-            @RequestParam(required = false) Boolean fullSearch) throws ThingsboardException {
+            @RequestParam(required = false) Boolean fullSearch,
+            @Parameter(description = DEPRECATED_FILTER_PARAM_DESCRIPTION, schema = @Schema(allowableValues = {"ALL", "ACTUAL", "DEPRECATED"}))
+            @RequestParam(required = false) String deprecatedFilter,
+            @Parameter(description = WIDGET_TYPE_ARRAY_DESCRIPTION, schema = @Schema(allowableValues = {"timeseries", "latest", "control", "alarm", "static"}))
+            @RequestParam(required = false) String[] widgetTypeList) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        List<String> widgetTypes = widgetTypeList != null ? Arrays.asList(widgetTypeList) : Collections.emptyList();
+        boolean fullSearchBool = fullSearch != null && fullSearch;
+        DeprecatedFilter widgetTypeDeprecatedFilter = StringUtils.isNotEmpty(deprecatedFilter) ? DeprecatedFilter.valueOf(deprecatedFilter) : DeprecatedFilter.ALL;
         if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
-            return checkNotNull(widgetTypeService.findSystemWidgetTypesByPageLink(getTenantId(), fullSearch != null && fullSearch, pageLink));
+            return checkNotNull(widgetTypeService.findSystemWidgetTypesByPageLink(getTenantId(), fullSearchBool, widgetTypeDeprecatedFilter, widgetTypes, pageLink));
         } else {
             if (tenantOnly != null && tenantOnly) {
-                return checkNotNull(widgetTypeService.findTenantWidgetTypesByTenantIdAndPageLink(getTenantId(), fullSearch != null && fullSearch, pageLink));
+                return checkNotNull(widgetTypeService.findTenantWidgetTypesByTenantIdAndPageLink(getTenantId(), fullSearchBool, widgetTypeDeprecatedFilter, widgetTypes, pageLink));
             } else {
-                return checkNotNull(widgetTypeService.findAllTenantWidgetTypesByTenantIdAndPageLink(getTenantId(), fullSearch != null && fullSearch, pageLink));
+                return checkNotNull(widgetTypeService.findAllTenantWidgetTypesByTenantIdAndPageLink(getTenantId(), fullSearchBool, widgetTypeDeprecatedFilter, widgetTypes, pageLink));
             }
         }
     }
@@ -272,19 +285,40 @@ public class WidgetTypeController extends AutoCommitController {
             tenantId = getCurrentUser().getTenantId();
         }
         WidgetsBundle widgetsBundle = checkNotNull(widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(tenantId, bundleAlias));
-        return checkNotNull(widgetTypeService.findWidgetTypesInfosByWidgetsBundleId(getTenantId(), widgetsBundle.getId()));
+        return checkNotNull(widgetTypeService.findWidgetTypesInfosByWidgetsBundleId(getTenantId(), widgetsBundle.getId(), false, DeprecatedFilter.ALL,
+                null, new PageLink(1024))).getData();
     }
 
     @ApiOperation(value = "Get Widget Type Info objects (getBundleWidgetTypesInfos)",
             notes = "Get the Widget Type Info objects based on the provided parameters. " + WIDGET_TYPE_INFO_DESCRIPTION + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/widgetTypesInfos", params = {"widgetsBundleId"}, method = RequestMethod.GET)
+    @RequestMapping(value = "/widgetTypesInfos", params = {"widgetsBundleId", "pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
-    public List<WidgetTypeInfo> getBundleWidgetTypesInfos(
+    public PageData<WidgetTypeInfo> getBundleWidgetTypesInfos(
             @Parameter(description = "Widget Bundle Id", required = true)
-            @RequestParam("widgetsBundleId") String strWidgetsBundleId) throws ThingsboardException {
+            @RequestParam("widgetsBundleId") String strWidgetsBundleId,
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
+            @RequestParam int pageSize,
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
+            @RequestParam int page,
+            @Parameter(description = WIDGET_TYPE_TEXT_SEARCH_DESCRIPTION)
+            @RequestParam(required = false) String textSearch,
+            @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "name", "deprecated", "tenantId"}))
+            @RequestParam(required = false) String sortProperty,
+            @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
+            @RequestParam(required = false) String sortOrder,
+            @Parameter(description = FULL_SEARCH_PARAM_DESCRIPTION)
+            @RequestParam(required = false) Boolean fullSearch,
+            @Parameter(description = DEPRECATED_FILTER_PARAM_DESCRIPTION, schema = @Schema(allowableValues = {"ALL", "ACTUAL", "DEPRECATED"}))
+            @RequestParam(required = false) String deprecatedFilter,
+            @Parameter(description = WIDGET_TYPE_ARRAY_DESCRIPTION, schema = @Schema(allowableValues = {"timeseries", "latest", "control", "alarm", "static"}))
+            @RequestParam(required = false) String[] widgetTypeList) throws ThingsboardException {
         WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
-        return checkNotNull(widgetTypeService.findWidgetTypesInfosByWidgetsBundleId(getTenantId(), widgetsBundleId));
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        List<String> widgetTypes = widgetTypeList != null ? Arrays.asList(widgetTypeList) : Collections.emptyList();
+        DeprecatedFilter widgetTypeDeprecatedFilter = StringUtils.isNotEmpty(deprecatedFilter) ? DeprecatedFilter.valueOf(deprecatedFilter) : DeprecatedFilter.ALL;
+        return checkNotNull(widgetTypeService.findWidgetTypesInfosByWidgetsBundleId(getTenantId(), widgetsBundleId, fullSearch != null && fullSearch,
+                widgetTypeDeprecatedFilter, widgetTypes, pageLink));
     }
 
     @ApiOperation(value = "Get Widget Type (getWidgetTypeByBundleAliasAndTypeAlias) (Deprecated)",

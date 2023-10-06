@@ -313,9 +313,14 @@ public class ModelConstants {
     public static final String WIDGET_TYPE_NAME_PROPERTY = "name";
     public static final String WIDGET_TYPE_IMAGE_PROPERTY = "image";
     public static final String WIDGET_TYPE_DESCRIPTION_PROPERTY = "description";
+    public static final String WIDGET_TYPE_TAGS_PROPERTY = "tags";
     public static final String WIDGET_TYPE_DESCRIPTOR_PROPERTY = "descriptor";
 
     public static final String WIDGET_TYPE_DEPRECATED_PROPERTY = "deprecated";
+
+    public static final String WIDGET_TYPE_WIDGET_TYPE_PROPERTY = "widget_type";
+
+    public static final String WIDGET_TYPE_INFO_VIEW_TABLE_NAME = "widget_type_info_view";
 
     /**
      * Widgets bundle widget constants.
