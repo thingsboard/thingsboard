@@ -5201,7 +5201,8 @@
             "value-range": "Value range",
             "from": "From",
             "to": "To",
-            "color-function": "Color function"
+            "color-function": "Color function",
+            "copy-color-settings-from": "Copy color settings from"
         },
         "dashboard-state": {
             "dashboard-state-settings": "Dashboard state settings",

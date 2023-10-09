@@ -87,6 +87,9 @@ export class AggregatedDataKeyRowComponent implements ControlValueAccessor, OnIn
   @Input()
   keyName: string;
 
+  @Input()
+  index: number;
+
   @Output()
   keyRemoved = new EventEmitter();
 

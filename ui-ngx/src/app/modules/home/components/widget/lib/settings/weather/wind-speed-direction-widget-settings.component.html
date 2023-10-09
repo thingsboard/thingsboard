@@ -36,7 +36,7 @@
                           [initialPreviewStyle]="{ color: windSpeedDirectionWidgetSettingsForm.get('centerValueColor').value?.color }"
                           [previewText]="centerValuePreviewFn">
         </tb-font-settings>
-        <tb-color-settings formControlName="centerValueColor">
+        <tb-color-settings formControlName="centerValueColor" settingsKey="{{ (hasCenterValue ? 'widgets.wind-speed-direction.center-value' : 'widgets.wind-speed-direction.wind-direction') | translate }}">
         </tb-color-settings>
       </div>
     </div>

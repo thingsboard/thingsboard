@@ -49,7 +49,7 @@
                           [previewText]="centerValuePreviewFn">
         </tb-font-settings>
         <tb-color-settings *ngIf="!windSpeedDirectionWidgetConfigForm.get('centerValueKey').value"
-                           formControlName="centerValueColor">
+                           formControlName="centerValueColor" settingsKey="{{'widgets.wind-speed-direction.wind-direction' | translate }}">
         </tb-color-settings>
       </div>
     </div>
@@ -71,7 +71,7 @@
                           [previewText]="centerValuePreviewFn">
         </tb-font-settings>
         <tb-color-settings *ngIf="windSpeedDirectionWidgetConfigForm.get('centerValueKey').value"
-                           formControlName="centerValueColor">
+                           formControlName="centerValueColor" settingsKey="{{'widgets.wind-speed-direction.center-value' | translate }}">
         </tb-color-settings>
       </div>
     </div>

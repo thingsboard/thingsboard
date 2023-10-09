@@ -42,7 +42,7 @@
       <tb-font-settings formControlName="labelFont"
                         [previewText]="countWidgetConfigForm.get('label').value">
       </tb-font-settings>
-      <tb-color-settings formControlName="labelColor">
+      <tb-color-settings formControlName="labelColor" settingsKey="{{'widgets.count.label' | translate }}">
       </tb-color-settings>
     </div>
   </div>
@@ -63,7 +63,7 @@
                                                           : ''"
                                formControlName="icon">
       </tb-material-icon-select>
-      <tb-color-settings formControlName="iconColor">
+      <tb-color-settings formControlName="iconColor" settingsKey="{{'widgets.count.icon' | translate }}">
       </tb-color-settings>
     </div>
   </div>
@@ -76,7 +76,7 @@
         <input matInput type="number" min="0" formControlName="iconBackgroundSize" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
       <tb-css-unit-select fxFlex formControlName="iconBackgroundSizeUnit"></tb-css-unit-select>
-      <tb-color-settings formControlName="iconBackgroundColor">
+      <tb-color-settings formControlName="iconBackgroundColor" settingsKey="{{'widgets.count.icon-background' | translate }}">
       </tb-color-settings>
     </div>
   </div>
@@ -86,7 +86,7 @@
       <tb-font-settings formControlName="valueFont"
                         previewText="10">
       </tb-font-settings>
-      <tb-color-settings formControlName="valueColor">
+      <tb-color-settings formControlName="valueColor" settingsKey="{{'widgets.count.value' | translate }}">
       </tb-color-settings>
     </div>
   </div>

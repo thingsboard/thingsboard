@@ -40,18 +40,18 @@
                           [autoScale]="batteryLevelWidgetSettingsForm.get('autoScaleValueSize').value"
                           [previewText]="valuePreviewFn">
         </tb-font-settings>
-        <tb-color-settings formControlName="valueColor">
+        <tb-color-settings formControlName="valueColor" settingsKey="{{'widgets.battery-level.value' | translate }}">
         </tb-color-settings>
       </div>
     </div>
     <div class="tb-form-row space-between">
       <div>{{ 'widgets.battery-level.battery-level-color' | translate }}</div>
-      <tb-color-settings formControlName="batteryLevelColor">
+      <tb-color-settings formControlName="batteryLevelColor" settingsKey="{{'widgets.battery-level.battery-level-color' | translate }}">
       </tb-color-settings>
     </div>
     <div class="tb-form-row space-between">
       <div>{{ 'widgets.battery-level.battery-shape-color' | translate }}</div>
-      <tb-color-settings formControlName="batteryShapeColor">
+      <tb-color-settings formControlName="batteryShapeColor" settingsKey="{{'widgets.battery-level.battery-shape-color' | translate }}">
       </tb-color-settings>
     </div>
     <div class="tb-form-row space-between">

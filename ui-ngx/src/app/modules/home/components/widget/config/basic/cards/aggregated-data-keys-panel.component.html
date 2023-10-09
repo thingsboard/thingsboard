@@ -32,6 +32,7 @@
       <div *ngFor="let keyControl of keysFormArray().controls; trackBy: trackByKey; let $index = index;">
         <tb-aggregated-data-key-row fxFlex
                          [formControl]="keyControl"
+                         [index]="$index"
                          [datasourceType]="datasourceType"
                          [keyName]="keyName"
                          (keyRemoved)="removeKey($index)">

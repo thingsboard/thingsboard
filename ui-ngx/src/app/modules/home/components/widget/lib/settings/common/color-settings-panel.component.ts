@@ -16,27 +16,14 @@
 
 import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
-import {
-  ColorRange,
-  ColorSettings,
-  ColorType,
-  colorTypeTranslations
-} from '@shared/models/widget-settings.models';
+import { ColorRange, ColorSettings, ColorType, colorTypeTranslations } from '@shared/models/widget-settings.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
-import {
-  AbstractControl,
-  FormControl,
-  FormGroup,
-  UntypedFormArray,
-  UntypedFormBuilder,
-  UntypedFormGroup
-} from '@angular/forms';
+import { AbstractControl, FormGroup, UntypedFormArray, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { Datasource, DatasourceType } from '@shared/models/widget.models';
 import { deepClone } from '@core/utils';
-import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetService } from '@core/http/widget.service';
+import { ColorSettingsComponent } from '@home/components/widget/lib/settings/common/color-settings.component';
 
 @Component({
   selector: 'tb-color-settings-panel',
@@ -52,6 +39,9 @@ export class ColorSettingsPanelComponent extends PageComponent implements OnInit
 
   @Input()
   popover: TbPopoverComponent<ColorSettingsPanelComponent>;
+
+  @Input()
+  settingsComponents: ColorSettingsComponent[];
 
   @Output()
   colorSettingsApplied = new EventEmitter<ColorSettings>();
@@ -119,6 +109,19 @@ export class ColorSettingsPanelComponent extends PageComponent implements OnInit
     this.rangeListFormArray.push(this.colorRangeControl(newRange));
     this.colorSettingsFormGroup.markAsDirty();
     setTimeout(() => {this.popover?.updatePosition();}, 0);
+  }
+
+  copyColorSettings(comp: ColorSettingsComponent) {
+    const sourceSettings = deepClone(comp.modelValue);
+    this.colorSettings = sourceSettings;
+    this.colorSettingsFormGroup.patchValue({
+      type: this.colorSettings.type,
+      color: this.colorSettings.color,
+      colorFunction: this.colorSettings.colorFunction
+    }, {emitEvent: false});
+    this.colorSettingsFormGroup.setControl('rangeList',
+      this.fb.array((this.colorSettings.rangeList || []).map(r => this.colorRangeControl(r))), {emitEvent: false});
+    this.colorSettingsFormGroup.markAsDirty();
   }
 
   cancel() {
