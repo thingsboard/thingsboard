@@ -24,8 +24,8 @@ on:
       - 'application/src/main/resources/thingsboard.yml'
 jobs:
   build:
-    name: check_yml_file
-    runs-on: ubuntu-22.04
+    name: Check thingsboard.yml file
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
