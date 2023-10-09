@@ -96,7 +96,7 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
         } else if (!update.toString().equals(testValue)) {
             throw new ServiceFailureException("Was expecting value " + testValue + " but got " + update);
         }
-        reporter.reportLatency(Latencies.WS_UPDATE, stopWatch.getTime());
+        reporter.reportLatency(Latencies.wsUpdate(getKey()), stopWatch.getTime());
     }
 
 

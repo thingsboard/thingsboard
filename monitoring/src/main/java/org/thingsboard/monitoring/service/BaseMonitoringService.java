@@ -36,7 +36,7 @@ import java.util.UUID;
 @Slf4j
 public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T extends MonitoringTarget> {
 
-    @Autowired
+    @Autowired(required = false)
     private List<C> configs;
     private final List<BaseHealthChecker<C, T>> healthCheckers = new LinkedList<>();
     private final List<UUID> devices = new LinkedList<>();
@@ -54,6 +54,9 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
 
     @PostConstruct
     private void init() {
+        if (configs == null || configs.isEmpty()) {
+            return;
+        }
         tbClient.logIn();
         configs.forEach(config -> {
             config.getTargets().forEach(target -> {
