@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.DaoUtil;
@@ -65,6 +66,11 @@ public class JpaDeviceCredentialsDao extends JpaAbstractDao<DeviceCredentialsEnt
     @Override
     public DeviceCredentials findByCredentialsId(TenantId tenantId, String credentialsId) {
         return DaoUtil.getData(deviceCredentialsRepository.findByCredentialsId(credentialsId));
+    }
+
+    @Override
+    public DeviceCredentials removeByDeviceId(TenantId tenantId, DeviceId deviceId) {
+        return DaoUtil.getData(deviceCredentialsRepository.deleteByDeviceId(deviceId.getId()));
     }
 
 }

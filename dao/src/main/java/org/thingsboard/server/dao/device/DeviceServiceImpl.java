@@ -316,7 +316,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     @Transactional
     @Override
     public void deleteDevice(final TenantId tenantId, final DeviceId deviceId) {
-        log.trace("Executing deleteDevice [{}]", deviceId);
         validateId(deviceId, INCORRECT_DEVICE_ID + deviceId);
         if (entityViewService.existsByTenantIdAndEntityId(tenantId, deviceId)) {
             throw new DataValidationException("Can't delete device that has entity views!");
@@ -328,10 +327,8 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     }
 
     private void deleteDevice(TenantId tenantId, Device device) {
-        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, device.getId());
-        if (deviceCredentials != null) {
-            deviceCredentialsService.deleteDeviceCredentials(tenantId, deviceCredentials);
-        }
+        log.trace("Executing deleteDevice [{}]", device.getId());
+        deviceCredentialsService.deleteDeviceCredentialsByDeviceId(tenantId, device.getId());
         relationService.deleteEntityRelations(tenantId, device.getId());
 
         deviceDao.removeById(tenantId, device.getUuidId());
@@ -422,7 +419,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return deviceDao.findDevicesByIdsAsync(toUUIDs(deviceIds));
     }
 
-    @Transactional
     @Override
     public void deleteDevicesByTenantId(TenantId tenantId) {
         log.trace("Executing deleteDevicesByTenantId, tenantId [{}]", tenantId);

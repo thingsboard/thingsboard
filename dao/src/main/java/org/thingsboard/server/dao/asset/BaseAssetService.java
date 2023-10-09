@@ -204,7 +204,6 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     @Override
     @Transactional
     public void deleteAsset(TenantId tenantId, AssetId assetId) {
-        log.trace("Executing deleteAsset [{}]", assetId);
         validateId(assetId, INCORRECT_ASSET_ID + assetId);
         if (entityViewService.existsByTenantIdAndEntityId(tenantId, assetId)) {
             throw new DataValidationException("Can't delete asset that has entity views!");
@@ -216,6 +215,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     }
 
     private void deleteAsset(TenantId tenantId, Asset asset) {
+        log.trace("Executing deleteAsset [{}]", asset.getId());
         relationService.deleteEntityRelations(tenantId, asset.getAssetProfileId());
 
         assetDao.removeById(tenantId, asset.getUuidId());
@@ -276,7 +276,6 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
         return assetDao.findAssetsByTenantIdAndIdsAsync(tenantId.getId(), toUUIDs(assetIds));
     }
 
-    @Transactional
     @Override
     public void deleteAssetsByTenantId(TenantId tenantId) {
         log.trace("Executing deleteAssetsByTenantId, tenantId [{}]", tenantId);
@@ -453,7 +452,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
         protected void removeEntity(TenantId tenantId, Asset asset) {
             deleteAsset(tenantId, asset);
         }
-            };
+    };
 
     private final PaginatedRemover<CustomerId, Asset> customerAssetsUnasigner = new PaginatedRemover<CustomerId, Asset>() {
 

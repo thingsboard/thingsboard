@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.device;
 
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.Dao;
@@ -52,5 +53,7 @@ public interface DeviceCredentialsDao extends Dao<DeviceCredentials> {
      * @return the device credentials object
      */
     DeviceCredentials findByCredentialsId(TenantId tenantId, String credentialsId);
+
+    DeviceCredentials removeByDeviceId(TenantId tenantId, DeviceId deviceId);
 
 }
