@@ -116,6 +116,7 @@ export class ValueCardBasicConfigComponent extends BasicWidgetConfigComponent {
       timewindowConfig: [getTimewindowConfig(configData.config), []],
       datasources: [configData.config.datasources, []],
       layout: [settings.layout, []],
+      autoScale: [settings.autoScale, []],
 
       showLabel: [settings.showLabel, []],
       label: [getLabel(configData.config.datasources), []],
@@ -154,6 +155,7 @@ export class ValueCardBasicConfigComponent extends BasicWidgetConfigComponent {
     this.widgetConfig.config.settings = this.widgetConfig.config.settings || {};
 
     this.widgetConfig.config.settings.layout = config.layout;
+    this.widgetConfig.config.settings.autoScale = config.autoScale;
 
     this.widgetConfig.config.settings.showLabel = config.showLabel;
     setLabel(config.label, this.widgetConfig.config.datasources);
