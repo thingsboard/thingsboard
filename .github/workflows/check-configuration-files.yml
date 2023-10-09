@@ -14,20 +14,21 @@
 # limitations under the License.
 #
 
-name: check_yml_file
+name: Check configuration files
 on:
+  push:
+    branches:
+      - master
   pull_request:
     paths:
       - 'application/src/main/resources/thingsboard.yml'
 jobs:
   build:
     name: check_yml_file
-    runs-on: ubuntu-20.04
-
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-
       - name: Set up Python 3.10
         uses: actions/setup-python@v3
         with:
@@ -35,6 +36,5 @@ jobs:
           architecture: "x64"
         env:
           AGENT_TOOLSDIRECTORY: /opt/hostedtoolcache
-
       - name: Run Verification Script
         run: python3 tools/src/main/python/check_yml_file.py
