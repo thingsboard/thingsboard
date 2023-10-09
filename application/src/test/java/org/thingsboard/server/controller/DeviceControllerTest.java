@@ -538,7 +538,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
 
         doGet("/api/device/info/" + alarm.getId())
                 .andExpect(status().isNotFound())
-                .andExpect(statusReason(containsString(msgErrorNoFound("Alarm", alarm.getId().getId().toString()))));
+                .andExpect(statusReason(containsString(msgErrorNoFound("Device", alarm.getId().getId().toString()))));
     }
 
     @Test
