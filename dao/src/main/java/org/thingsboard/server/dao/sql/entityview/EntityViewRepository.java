@@ -118,6 +118,8 @@ public interface EntityViewRepository extends JpaRepository<EntityViewEntity, UU
 
     List<EntityViewEntity> findAllByTenantIdAndEntityId(UUID tenantId, UUID entityId);
 
+    boolean existsByTenantIdAndEntityId(UUID tenantId, UUID entityId);
+
     @Query("SELECT DISTINCT ev.type FROM EntityViewEntity ev WHERE ev.tenantId = :tenantId")
     List<String> findTenantEntityViewTypes(@Param("tenantId") UUID tenantId);
 
