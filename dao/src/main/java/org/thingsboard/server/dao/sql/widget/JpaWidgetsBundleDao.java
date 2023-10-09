@@ -62,13 +62,22 @@ public class JpaWidgetsBundleDao extends JpaAbstractDao<WidgetsBundleEntity, Wid
     }
 
     @Override
-    public PageData<WidgetsBundle> findSystemWidgetsBundles(TenantId tenantId, PageLink pageLink) {
-        return DaoUtil.toPageData(
-                widgetsBundleRepository
-                        .findSystemWidgetsBundles(
-                                NULL_UUID,
-                                pageLink.getTextSearch(),
-                                DaoUtil.toPageable(pageLink)));
+    public PageData<WidgetsBundle> findSystemWidgetsBundles(TenantId tenantId, boolean fullSearch, PageLink pageLink) {
+        if (fullSearch) {
+            return DaoUtil.toPageData(
+                    widgetsBundleRepository
+                            .findSystemWidgetsBundlesFullSearch(
+                                    NULL_UUID,
+                                    pageLink.getTextSearch(),
+                                    DaoUtil.toPageable(pageLink)));
+        } else {
+            return DaoUtil.toPageData(
+                    widgetsBundleRepository
+                            .findSystemWidgetsBundles(
+                                    NULL_UUID,
+                                    pageLink.getTextSearch(),
+                                    DaoUtil.toPageable(pageLink)));
+        }
     }
 
     @Override
@@ -82,14 +91,24 @@ public class JpaWidgetsBundleDao extends JpaAbstractDao<WidgetsBundleEntity, Wid
     }
 
     @Override
-    public PageData<WidgetsBundle> findAllTenantWidgetsBundlesByTenantId(UUID tenantId, PageLink pageLink) {
-        return DaoUtil.toPageData(
-                widgetsBundleRepository
-                        .findAllTenantWidgetsBundlesByTenantId(
-                                tenantId,
-                                NULL_UUID,
-                                pageLink.getTextSearch(),
-                                DaoUtil.toPageable(pageLink)));
+    public PageData<WidgetsBundle> findAllTenantWidgetsBundlesByTenantId(UUID tenantId, boolean fullSearch, PageLink pageLink) {
+        if (fullSearch) {
+            return DaoUtil.toPageData(
+                    widgetsBundleRepository
+                            .findAllTenantWidgetsBundlesByTenantIdFullSearch(
+                                    tenantId,
+                                    NULL_UUID,
+                                    pageLink.getTextSearch(),
+                                    DaoUtil.toPageable(pageLink)));
+        } else {
+            return DaoUtil.toPageData(
+                    widgetsBundleRepository
+                            .findAllTenantWidgetsBundlesByTenantId(
+                                    tenantId,
+                                    NULL_UUID,
+                                    pageLink.getTextSearch(),
+                                    DaoUtil.toPageable(pageLink)));
+        }
     }
 
     @Override

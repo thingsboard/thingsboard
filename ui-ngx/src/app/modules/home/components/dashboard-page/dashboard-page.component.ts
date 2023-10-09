@@ -230,7 +230,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   forceDashboardMobileMode = false;
   isAddingWidget = false;
   isAddingWidgetClosed = true;
-  searchBundle = '';
   filterWidgetTypes: widgetType[] = null;
 
   isToolbarOpened = false;
@@ -1153,7 +1152,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   addWidgetFromType(widget: WidgetInfo) {
     this.onAddWidgetClosed();
-    this.searchBundle = '';
     this.widgetComponentService.getWidgetInfo(widget.typeFullFqn).subscribe(
       (widgetTypeInfo) => {
         const config: WidgetConfig = this.dashboardUtils.widgetConfigFromWidgetType(widgetTypeInfo);
@@ -1426,13 +1424,10 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     return widgetContextActions;
   }
 
-  widgetBundleSelected(){
-    this.searchBundle = '';
-  }
-
   clearSelectedWidgetBundle() {
-    this.searchBundle = '';
+    this.dashboardWidgetSelectComponent.search = '';
     this.dashboardWidgetSelectComponent.widgetsBundle = null;
+    this.dashboardWidgetSelectComponent.selectWidgetMode = 'bundles';
   }
 
   editWidgetsTypesToDisplay($event: Event) {
@@ -1480,10 +1475,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
     overlayRef.attach(new ComponentPortal(DisplayWidgetTypesPanelComponent, this.viewContainerRef, injector));
     this.cd.markForCheck();
-  }
-
-  onCloseSearchBundle() {
-    this.searchBundle = '';
   }
 
   public updateDashboardImage($event: Event) {

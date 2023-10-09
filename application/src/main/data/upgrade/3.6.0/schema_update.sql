@@ -14,5 +14,14 @@
 -- limitations under the License.
 --
 
+ALTER TABLE widget_type
+    ADD COLUMN IF NOT EXISTS tags text[];
+
 ALTER TABLE api_usage_state ADD COLUMN IF NOT EXISTS tbel_exec varchar(32);
 UPDATE api_usage_state SET tbel_exec = js_exec WHERE tbel_exec IS NULL;
+
+ALTER TABLE notification DROP CONSTRAINT IF EXISTS fk_notification_request_id;
+ALTER TABLE notification DROP CONSTRAINT IF EXISTS fk_notification_recipient_id;
+CREATE INDEX IF NOT EXISTS idx_notification_notification_request_id ON notification(request_id);
+CREATE INDEX IF NOT EXISTS idx_notification_request_tenant_id ON notification_request(tenant_id);
+

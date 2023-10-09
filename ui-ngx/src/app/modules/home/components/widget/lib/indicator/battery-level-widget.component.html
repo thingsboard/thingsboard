@@ -17,9 +17,7 @@
 -->
 <div class="tb-battery-level-panel" [style]="backgroundStyle" [class.tb-battery-level-pointer]="hasCardClickAction" (click)="cardClick($event)">
   <div class="tb-battery-level-overlay" [style]="overlayStyle"></div>
-  <div class="tb-battery-level-title-panel">
-    <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
-  </div>
+  <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
   <div #batteryLevelContent class="tb-battery-level-content" [class]="layoutClass">
     <div #batteryLevelBox class="tb-battery-level-box">
       <div #batteryLevelRectangle class="tb-battery-level-rectangle" [class]="layoutClass" [class.solid]="solid" [class.divided]="!solid">

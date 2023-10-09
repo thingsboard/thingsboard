@@ -489,6 +489,7 @@ CREATE TABLE IF NOT EXISTS widget_type (
     image varchar(1000000),
     deprecated boolean NOT NULL DEFAULT false,
     description varchar(1024),
+    tags text[],
     external_id uuid,
     CONSTRAINT uq_widget_type_fqn UNIQUE (tenant_id, fqn),
     CONSTRAINT widget_type_external_id_unq_key UNIQUE (tenant_id, external_id)
@@ -852,8 +853,8 @@ CREATE TABLE IF NOT EXISTS notification_request (
 CREATE TABLE IF NOT EXISTS notification (
     id UUID NOT NULL,
     created_time BIGINT NOT NULL,
-    request_id UUID NULL CONSTRAINT fk_notification_request_id REFERENCES notification_request(id) ON DELETE CASCADE,
-    recipient_id UUID NOT NULL CONSTRAINT fk_notification_recipient_id REFERENCES tb_user(id) ON DELETE CASCADE,
+    request_id UUID,
+    recipient_id UUID NOT NULL,
     type VARCHAR(50) NOT NULL,
     subject VARCHAR(255),
     body VARCHAR(1000) NOT NULL,

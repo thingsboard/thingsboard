@@ -24,7 +24,8 @@ import {
   OnInit,
   Renderer2,
   TemplateRef,
-  ViewChild
+  ViewChild,
+  ViewEncapsulation
 } from '@angular/core';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { formatValue, isDefinedAndNotNull, isNumeric } from '@core/utils';
@@ -74,7 +75,8 @@ const horizontalBatteryDimensions = {
 @Component({
   selector: 'tb-battery-level-widget',
   templateUrl: './battery-level-widget.component.html',
-  styleUrls: ['./battery-level-widget.component.scss']
+  styleUrls: ['./battery-level-widget.component.scss'],
+  encapsulation: ViewEncapsulation.None
 })
 export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
 

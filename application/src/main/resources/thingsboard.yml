@@ -268,8 +268,8 @@ cassandra:
 sql:
   # Specify batch size for persisting attribute updates
   attributes:
-    batch_size: "${SQL_ATTRIBUTES_BATCH_SIZE:10000}"
-    batch_max_delay: "${SQL_ATTRIBUTES_BATCH_MAX_DELAY_MS:100}"
+    batch_size: "${SQL_ATTRIBUTES_BATCH_SIZE:1000}"
+    batch_max_delay: "${SQL_ATTRIBUTES_BATCH_MAX_DELAY_MS:50}"
     stats_print_interval_ms: "${SQL_ATTRIBUTES_BATCH_STATS_PRINT_MS:10000}"
     batch_threads: "${SQL_ATTRIBUTES_BATCH_THREADS:3}" # batch thread count have to be a prime number like 3 or 5 to gain perfect hash distribution
     value_no_xss_validation: "${SQL_ATTRIBUTES_VALUE_NO_XSS_VALIDATION:false}"
@@ -280,8 +280,8 @@ sql:
     batch_threads: "${SQL_TS_BATCH_THREADS:3}" # batch thread count have to be a prime number like 3 or 5 to gain perfect hash distribution
     value_no_xss_validation: "${SQL_TS_VALUE_NO_XSS_VALIDATION:false}"
   ts_latest:
-    batch_size: "${SQL_TS_LATEST_BATCH_SIZE:10000}"
-    batch_max_delay: "${SQL_TS_LATEST_BATCH_MAX_DELAY_MS:100}"
+    batch_size: "${SQL_TS_LATEST_BATCH_SIZE:1000}"
+    batch_max_delay: "${SQL_TS_LATEST_BATCH_MAX_DELAY_MS:50}"
     stats_print_interval_ms: "${SQL_TS_LATEST_BATCH_STATS_PRINT_MS:10000}"
     batch_threads: "${SQL_TS_LATEST_BATCH_THREADS:3}" # batch thread count have to be a prime number like 3 or 5 to gain perfect hash distribution
     update_by_latest_ts: "${SQL_TS_UPDATE_BY_LATEST_TIMESTAMP:true}"
@@ -363,7 +363,7 @@ actors:
     app_dispatcher_pool_size: "${ACTORS_SYSTEM_APP_DISPATCHER_POOL_SIZE:1}"
     tenant_dispatcher_pool_size: "${ACTORS_SYSTEM_TENANT_DISPATCHER_POOL_SIZE:2}"
     device_dispatcher_pool_size: "${ACTORS_SYSTEM_DEVICE_DISPATCHER_POOL_SIZE:4}"
-    rule_dispatcher_pool_size: "${ACTORS_SYSTEM_RULE_DISPATCHER_POOL_SIZE:4}"
+    rule_dispatcher_pool_size: "${ACTORS_SYSTEM_RULE_DISPATCHER_POOL_SIZE:8}"
   tenant:
     create_components_on_init: "${ACTORS_TENANT_CREATE_COMPONENTS_ON_INIT:true}"
   session:
@@ -1249,6 +1249,7 @@ queue:
     stats:
       enabled: "${TB_QUEUE_RULE_ENGINE_STATS_ENABLED:true}"
       print-interval-ms: "${TB_QUEUE_RULE_ENGINE_STATS_PRINT_INTERVAL_MS:60000}"
+      max-error-message-length: "${TB_QUEUE_RULE_ENGINE_MAX_ERROR_MESSAGE_LENGTH:4096}"
     queues:
       - name: "${TB_QUEUE_RE_MAIN_QUEUE_NAME:Main}"
         topic: "${TB_QUEUE_RE_MAIN_TOPIC:tb_rule_engine.main}"
@@ -1327,6 +1328,11 @@ metrics:
   timer:
     # Metrics percentiles returned by actuator for timer metrics. List of double values (divided by ,).
     percentiles: "${METRICS_TIMER_PERCENTILES:0.5}"
+  system_info:
+    # Persist frequency of system info (CPU, memory usage, etc.) in seconds
+    persist_frequency: "${METRICS_SYSTEM_INFO_PERSIST_FREQUENCY_SECONDS:60}"
+    # TTL in days for system info timeseries
+    ttl: "${METRICS_SYSTEM_INFO_TTL_DAYS:7}"
 
 vc:
   # Pool size for handling export tasks

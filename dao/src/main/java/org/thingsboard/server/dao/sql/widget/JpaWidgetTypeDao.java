@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.widget.DeprecatedFilter;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
@@ -35,6 +36,7 @@ import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 import org.thingsboard.server.dao.widget.WidgetTypeDao;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -53,6 +55,9 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
 
     @Autowired
     private WidgetTypeRepository widgetTypeRepository;
+
+    @Autowired
+    private WidgetTypeInfoRepository widgetTypeInfoRepository;
 
     @Autowired
     private WidgetsBundleWidgetRepository widgetsBundleWidgetRepository;
@@ -78,36 +83,57 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
     }
 
     @Override
-    public PageData<WidgetTypeInfo> findSystemWidgetTypes(TenantId tenantId, boolean fullSearch, PageLink pageLink) {
+    public PageData<WidgetTypeInfo> findSystemWidgetTypes(TenantId tenantId, boolean fullSearch, DeprecatedFilter deprecatedFilter, List<String> widgetTypes, PageLink pageLink) {
+        boolean deprecatedFilterEnabled = !DeprecatedFilter.ALL.equals(deprecatedFilter);
+        boolean deprecatedFilterBool = DeprecatedFilter.DEPRECATED.equals(deprecatedFilter);
+        boolean widgetTypesEmpty = widgetTypes == null || widgetTypes.isEmpty();
         return DaoUtil.toPageData(
-                widgetTypeRepository
+                widgetTypeInfoRepository
                         .findSystemWidgetTypes(
                                 NULL_UUID,
                                 pageLink.getTextSearch(),
                                 fullSearch,
+                                deprecatedFilterEnabled,
+                                deprecatedFilterBool,
+                                widgetTypesEmpty,
+                                widgetTypes == null ? Collections.emptyList() : widgetTypes,
                                 DaoUtil.toPageable(pageLink)));
     }
 
     @Override
-    public PageData<WidgetTypeInfo> findAllTenantWidgetTypesByTenantId(UUID tenantId, boolean fullSearch, PageLink pageLink) {
+    public PageData<WidgetTypeInfo> findAllTenantWidgetTypesByTenantId(UUID tenantId, boolean fullSearch, DeprecatedFilter deprecatedFilter, List<String> widgetTypes, PageLink pageLink) {
+        boolean deprecatedFilterEnabled = !DeprecatedFilter.ALL.equals(deprecatedFilter);
+        boolean deprecatedFilterBool = DeprecatedFilter.DEPRECATED.equals(deprecatedFilter);
+        boolean widgetTypesEmpty = widgetTypes == null || widgetTypes.isEmpty();
         return DaoUtil.toPageData(
-                widgetTypeRepository
+                widgetTypeInfoRepository
                         .findAllTenantWidgetTypesByTenantId(
                                 tenantId,
                                 NULL_UUID,
                                 pageLink.getTextSearch(),
                                 fullSearch,
+                                deprecatedFilterEnabled,
+                                deprecatedFilterBool,
+                                widgetTypesEmpty,
+                                widgetTypes == null ? Collections.emptyList() : widgetTypes,
                                 DaoUtil.toPageable(pageLink)));
     }
 
     @Override
-    public PageData<WidgetTypeInfo> findTenantWidgetTypesByTenantId(UUID tenantId, boolean fullSearch, PageLink pageLink) {
+    public PageData<WidgetTypeInfo> findTenantWidgetTypesByTenantId(UUID tenantId, boolean fullSearch, DeprecatedFilter deprecatedFilter, List<String> widgetTypes,  PageLink pageLink) {
+        boolean deprecatedFilterEnabled = !DeprecatedFilter.ALL.equals(deprecatedFilter);
+        boolean deprecatedFilterBool = DeprecatedFilter.DEPRECATED.equals(deprecatedFilter);
+        boolean widgetTypesEmpty = widgetTypes == null || widgetTypes.isEmpty();
         return DaoUtil.toPageData(
-                widgetTypeRepository
+                widgetTypeInfoRepository
                         .findTenantWidgetTypesByTenantId(
                                 tenantId,
                                 pageLink.getTextSearch(),
                                 fullSearch,
+                                deprecatedFilterEnabled,
+                                deprecatedFilterBool,
+                                widgetTypesEmpty,
+                                widgetTypes == null ? Collections.emptyList() : widgetTypes,
                                 DaoUtil.toPageable(pageLink)));
     }
 
@@ -122,8 +148,21 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
     }
 
     @Override
-    public List<WidgetTypeInfo> findWidgetTypesInfosByWidgetsBundleId(UUID tenantId, UUID widgetsBundleId) {
-        return DaoUtil.convertDataList(widgetTypeRepository.findWidgetTypesInfosByWidgetsBundleId(widgetsBundleId));
+    public PageData<WidgetTypeInfo> findWidgetTypesInfosByWidgetsBundleId(UUID tenantId, UUID widgetsBundleId, boolean fullSearch, DeprecatedFilter deprecatedFilter, List<String> widgetTypes, PageLink pageLink) {
+        boolean deprecatedFilterEnabled = !DeprecatedFilter.ALL.equals(deprecatedFilter);
+        boolean deprecatedFilterBool = DeprecatedFilter.DEPRECATED.equals(deprecatedFilter);
+        boolean widgetTypesEmpty = widgetTypes == null || widgetTypes.isEmpty();
+        return DaoUtil.toPageData(
+                widgetTypeInfoRepository
+                        .findWidgetTypesInfosByWidgetsBundleId(
+                                widgetsBundleId,
+                                Objects.toString(pageLink.getTextSearch(), ""),
+                                fullSearch,
+                                deprecatedFilterEnabled,
+                                deprecatedFilterBool,
+                                widgetTypesEmpty,
+                                widgetTypes == null ? Collections.emptyList() : widgetTypes,
+                                DaoUtil.toPageable(pageLink)));
     }
 
     @Override

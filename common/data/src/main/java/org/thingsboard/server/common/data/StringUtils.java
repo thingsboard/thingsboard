@@ -20,6 +20,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.function.Function;
 
 import static org.apache.commons.lang3.StringUtils.repeat;
 
@@ -226,6 +227,18 @@ public class StringUtils {
 
     public static String generateSafeToken() {
         return generateSafeToken(DEFAULT_TOKEN_LENGTH);
+    }
+
+    public static String truncate(String string, int maxLength) {
+        return truncate(string, maxLength, n -> "...[truncated " + n + " symbols]");
+    }
+
+    public static String truncate(String string, int maxLength, Function<Integer, String> truncationMarkerFunc) {
+        if (string == null || maxLength <= 0 || string.length() <= maxLength) {
+            return string;
+        }
+        int truncatedSymbols = string.length() - maxLength;
+        return string.substring(0, maxLength) + truncationMarkerFunc.apply(truncatedSymbols);
     }
 
 }
