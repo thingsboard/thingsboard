@@ -41,7 +41,6 @@ import { DataKey, DatasourceType, JsonSettingsSchema, widgetType } from '@shared
 import { dataKeyRowValidator } from '@home/components/widget/config/basic/common/data-key-row.component';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { alarmFields } from '@shared/models/alarm.models';
 import { UtilsService } from '@core/services/utils.service';
 import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
@@ -113,8 +112,6 @@ export class DataKeysPanelComponent implements ControlValueAccessor, OnInit, OnC
   hideSourceSelection = false;
 
   dataKeyType: DataKeyType;
-  alarmKeys: Array<DataKey>;
-  functionTypeKeys: Array<DataKey>;
 
   keysListFormGroup: UntypedFormGroup;
 
@@ -165,20 +162,6 @@ export class DataKeysPanelComponent implements ControlValueAccessor, OnInit, OnC
     this.keysListFormGroup.valueChanges.subscribe(
       (val) => this.propagateChange(this.keysListFormGroup.get('keys').value)
     );
-    this.alarmKeys = [];
-    for (const name of Object.keys(alarmFields)) {
-      this.alarmKeys.push({
-        name,
-        type: DataKeyType.alarm
-      });
-    }
-    this.functionTypeKeys = [];
-    for (const type of this.utils.getPredefinedFunctionsList()) {
-      this.functionTypeKeys.push({
-        name: type,
-        type: DataKeyType.function
-      });
-    }
     this.updateParams();
   }
 

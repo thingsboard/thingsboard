@@ -6144,6 +6144,27 @@
             "table-tabs": "Table tabs",
             "show-cell-actions-menu-mobile": "Show cell actions dropdown menu in mobile mode"
         },
+        "wind-speed-direction": {
+            "layout": "Layout",
+            "layout-default": "Default",
+            "layout-advanced": "Advanced",
+            "layout-simplified": "Simplified",
+            "values": "Values",
+            "wind-direction": "Wind direction",
+            "center-value": "Center value",
+            "icon": "Icon",
+            "arrow": "Arrow",
+            "ticks": "Ticks",
+            "labels-type": "Labels type",
+            "directional-names": "Directional names",
+            "degrees": "Degrees",
+            "major-ticks": "Major ticks",
+            "minor-ticks": "Minor ticks",
+            "wind-speed-direction-card-style": "Wind speed and direction card style",
+            "ticks-color": "Ticks color",
+            "ticks-labels-type": "Ticks labels type",
+            "arrow-color": "Arrow color"
+        },
         "value-source": {
             "value-source": "Value source",
             "predefined-value": "Predefined value",
