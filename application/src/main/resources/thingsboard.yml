@@ -1681,3 +1681,7 @@ management:
       exposure:
         # Expose metrics endpoint (use value 'prometheus' to enable prometheus metrics).
         include: '${METRICS_ENDPOINTS_EXPOSE:info}'
+
+fst:
+  stats:
+    printInterval: "${FST_STATS_PRINT_INTERVAL:600000}" # 10 min by default
