@@ -5057,7 +5057,8 @@
             "auto-scale": "Auto scale",
             "battery-level-color": "Battery level color",
             "battery-shape-color": "Battery shape color",
-            "battery-level-card-style": "Battery level card style"
+            "battery-level-card-style": "Battery level card style",
+            "sections-count": "Sections count"
         },
         "chart": {
             "common-settings": "Common settings",
