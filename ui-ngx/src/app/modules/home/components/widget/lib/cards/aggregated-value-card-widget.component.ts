@@ -20,7 +20,9 @@ import {
   Component,
   ElementRef,
   Input,
+  OnDestroy,
   OnInit,
+  Renderer2,
   TemplateRef,
   ViewChild
 } from '@angular/core';
@@ -43,21 +45,30 @@ import {
   overlayStyle,
   textStyle
 } from '@shared/models/widget-settings.models';
-import { DatePipe } from '@angular/common';
 import { TbFlot } from '@home/components/widget/lib/flot-widget';
 import { TbFlotKeySettings, TbFlotSettings } from '@home/components/widget/lib/flot-widget.models';
 import { DataKey } from '@shared/models/widget.models';
 import { formatNumberValue, formatValue, isDefined } from '@core/utils';
 import { map } from 'rxjs/operators';
+import { ResizeObserver } from '@juggle/resize-observer';
+
+const valuesLayoutHeight = 66;
+const valuesLayoutVerticalPadding = 16;
 
 @Component({
   selector: 'tb-aggregated-value-card-widget',
   templateUrl: './aggregated-value-card-widget.component.html',
   styleUrls: ['./aggregated-value-card-widget.component.scss']
 })
-export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit {
+export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild('chartElement', {static: false}) chartElement: ElementRef;
+
+  @ViewChild('valueCardValues', {static: false})
+  valueCardValues: ElementRef<HTMLElement>;
+
+  @ViewChild('valueCardValueContainer', {static: false})
+  valueCardValueContainer: ElementRef<HTMLElement>;
 
   aggregatedValueCardKeyPosition = AggregatedValueCardKeyPosition;
 
@@ -96,7 +107,9 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
   tickMin$: Observable<string>;
   tickMax$: Observable<string>;
 
-  constructor(private date: DatePipe,
+  private panelResize$: ResizeObserver;
+
+  constructor(private renderer: Renderer2,
               private cd: ChangeDetectorRef) {
   }
 
@@ -174,6 +187,22 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
           (this.flotDataKey?.units || this.ctx.units))
         ));
     }
+    if (this.settings.autoScale && this.showValues) {
+      this.renderer.setStyle(this.valueCardValueContainer.nativeElement, 'height', valuesLayoutHeight + 'px');
+      this.renderer.setStyle(this.valueCardValueContainer.nativeElement, 'overflow', 'visible');
+      this.renderer.setStyle(this.valueCardValueContainer.nativeElement, 'position', 'absolute');
+      this.panelResize$ = new ResizeObserver(() => {
+        this.onValueCardValuesResize();
+      });
+      this.panelResize$.observe(this.valueCardValues.nativeElement);
+      this.onValueCardValuesResize();
+    }
+  }
+
+  ngOnDestroy() {
+    if (this.panelResize$) {
+      this.panelResize$.disconnect();
+    }
   }
 
   public onInit() {
@@ -247,6 +276,19 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
       this.lastUpdateTs = ts;
       this.dateFormat.update(ts);
     }
+  }
+
+  private onValueCardValuesResize() {
+    const panelWidth = this.valueCardValues.nativeElement.getBoundingClientRect().width;
+    const panelHeight = this.valueCardValues.nativeElement.getBoundingClientRect().height - valuesLayoutVerticalPadding;
+    const targetWidth = panelWidth;
+    const minAspect = 0.25;
+    const aspect = Math.min(panelHeight / targetWidth, minAspect);
+    const targetHeight = targetWidth * aspect;
+    const scale = targetHeight / valuesLayoutHeight;
+    const width = targetWidth / scale;
+    this.renderer.setStyle(this.valueCardValueContainer.nativeElement, 'width', width + 'px');
+    this.renderer.setStyle(this.valueCardValueContainer.nativeElement, 'transform', `scale(${scale})`);
   }
 
 }

@@ -18,7 +18,6 @@ package org.thingsboard.server.dao.alarm;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Function;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -163,48 +162,8 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
     }
 
     @Override
-    public AlarmOperationResult createOrUpdateAlarm(Alarm alarm) {
-        return createOrUpdateAlarm(alarm, true);
-    }
-
-    @Override
-    public AlarmOperationResult createOrUpdateAlarm(Alarm alarm, boolean alarmCreationEnabled) {
-        alarmDataValidator.validate(alarm, Alarm::getTenantId);
-        try {
-            if (alarm.getStartTs() == 0L) {
-                alarm.setStartTs(System.currentTimeMillis());
-            }
-            if (alarm.getEndTs() == 0L) {
-                alarm.setEndTs(alarm.getStartTs());
-            }
-            alarm.setCustomerId(entityService.fetchEntityCustomerId(alarm.getTenantId(), alarm.getOriginator()).orElse(null));
-            if (alarm.getId() == null) {
-                // Atomic update and return alarm + assignee.
-                Alarm existing = alarmDao.findLatestByOriginatorAndType(alarm.getTenantId(), alarm.getOriginator(), alarm.getType());
-                if (existing == null || existing.getStatus().isCleared()) {
-                    if (!alarmCreationEnabled) {
-                        throw new ApiUsageLimitsExceededException("Alarms creation is disabled");
-                    }
-                    return createAlarm(alarm);
-                } else {
-                    return updateAlarm(existing, alarm);
-                }
-            } else {
-                return updateAlarm(alarm);
-            }
-        } catch (ExecutionException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
     public Alarm findLatestActiveByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
         return alarmDao.findLatestActiveByOriginatorAndType(tenantId, originator, type);
-    }
-
-    @Override
-    public ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
-        return alarmDao.findLatestByOriginatorAndTypeAsync(tenantId, originator, type);
     }
 
     @Override
@@ -248,27 +207,6 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
         }
     }
 
-    @Override
-    @Transactional
-    public AlarmOperationResult deleteAlarm(TenantId tenantId, AlarmId alarmId) {
-        log.debug("Deleting Alarm Id: {}", alarmId);
-        Alarm alarm = alarmDao.findAlarmById(tenantId, alarmId.getId());
-        if (alarm == null) {
-            return new AlarmOperationResult(alarm, false);
-        }
-        AlarmOperationResult result = new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)));
-        deleteEntityRelations(tenantId, alarm.getId());
-        alarmDao.removeById(tenantId, alarm.getUuidId());
-        return result;
-    }
-
-    private AlarmOperationResult createAlarm(Alarm alarm) throws InterruptedException, ExecutionException {
-        log.debug("New Alarm : {}", alarm);
-        Alarm saved = alarmDao.save(alarm.getTenantId(), alarm);
-        List<EntityId> propagatedEntitiesList = createEntityAlarmRecords(saved);
-        return new AlarmOperationResult(saved, true, true, propagatedEntitiesList);
-    }
-
     private List<EntityId> createEntityAlarmRecords(Alarm alarm) throws ExecutionException, InterruptedException {
         Set<EntityId> propagatedEntitiesSet = new LinkedHashSet<>();
         propagatedEntitiesSet.add(alarm.getOriginator());
@@ -297,61 +235,6 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
             relations = relations.filter(entityRelation -> propagateRelationTypes.contains(entityRelation.getType()));
         }
         return relations.map(EntityRelation::getFrom).collect(Collectors.toCollection(LinkedHashSet::new));
-    }
-
-    private AlarmOperationResult updateAlarm(Alarm update) {
-        alarmDataValidator.validate(update, Alarm::getTenantId);
-        return getAndUpdate(update.getTenantId(), update.getId(),
-                (alarm) -> alarm == null ? null : updateAlarm(alarm, update));
-    }
-
-    private AlarmOperationResult updateAlarm(Alarm oldAlarm, Alarm newAlarm) {
-        boolean propagationEnabled = !oldAlarm.isPropagate() && newAlarm.isPropagate();
-        boolean propagationToOwnerEnabled = !oldAlarm.isPropagateToOwner() && newAlarm.isPropagateToOwner();
-        boolean propagationToTenantEnabled = !oldAlarm.isPropagateToTenant() && newAlarm.isPropagateToTenant();
-        AlarmSeverity oldAlarmSeverity = oldAlarm.getSeverity();
-        Alarm result = alarmDao.save(newAlarm.getTenantId(), merge(oldAlarm, newAlarm));
-        List<EntityId> propagatedEntitiesList;
-        if (propagationEnabled || propagationToOwnerEnabled || propagationToTenantEnabled) {
-            try {
-                propagatedEntitiesList = createEntityAlarmRecords(result);
-            } catch (InterruptedException | ExecutionException e) {
-                log.warn("Failed to update alarm relations [{}]", result, e);
-                throw new RuntimeException(e);
-            }
-        } else {
-            propagatedEntitiesList = new ArrayList<>(getPropagationEntityIds(result));
-        }
-        return new AlarmOperationResult(result, true, false, oldAlarmSeverity, propagatedEntitiesList);
-    }
-
-    @Override
-    public ListenableFuture<AlarmOperationResult> ackAlarm(TenantId tenantId, AlarmId alarmId, long ackTime) {
-        Alarm alarm = alarmDao.findAlarmById(tenantId, alarmId.getId());
-        if (alarm == null || alarm.getStatus().isAck()) {
-            return Futures.immediateFuture(new AlarmOperationResult(alarm, false));
-        } else {
-            alarm.setAcknowledged(true);
-            alarm.setAckTs(ackTime);
-            alarm = alarmDao.save(alarm.getTenantId(), alarm);
-            return Futures.immediateFuture(new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm))));
-        }
-    }
-
-    @Override
-    public ListenableFuture<AlarmOperationResult> clearAlarm(TenantId tenantId, AlarmId alarmId, JsonNode details, long clearTime) {
-        Alarm alarm = alarmDao.findAlarmById(tenantId, alarmId.getId());
-        if (alarm == null || alarm.getStatus().isCleared()) {
-            return Futures.immediateFuture(new AlarmOperationResult(alarm, false));
-        } else {
-            alarm.setCleared(true);
-            alarm.setClearTs(clearTime);
-            if (details != null) {
-                alarm.setDetails(details);
-            }
-            alarm = alarmDao.save(alarm.getTenantId(), alarm);
-            return Futures.immediateFuture(new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm))));
-        }
     }
 
     @Override
@@ -396,23 +279,23 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
     }
 
     @Override
-    public ListenableFuture<PageData<AlarmInfo>> findAlarms(TenantId tenantId, AlarmQuery query) {
-        return Futures.immediateFuture(alarmDao.findAlarms(tenantId, query));
+    public PageData<AlarmInfo> findAlarms(TenantId tenantId, AlarmQuery query) {
+        return alarmDao.findAlarms(tenantId, query);
     }
 
     @Override
-    public ListenableFuture<PageData<AlarmInfo>> findCustomerAlarms(TenantId tenantId, CustomerId customerId, AlarmQuery query) {
-        return Futures.immediateFuture(alarmDao.findCustomerAlarms(tenantId, customerId, query));
+    public PageData<AlarmInfo> findCustomerAlarms(TenantId tenantId, CustomerId customerId, AlarmQuery query) {
+        return alarmDao.findCustomerAlarms(tenantId, customerId, query);
     }
 
     @Override
-    public ListenableFuture<PageData<AlarmInfo>> findAlarmsV2(TenantId tenantId, AlarmQueryV2 query) {
-        return Futures.immediateFuture(alarmDao.findAlarmsV2(tenantId, query));
+    public PageData<AlarmInfo> findAlarmsV2(TenantId tenantId, AlarmQueryV2 query) {
+        return alarmDao.findAlarmsV2(tenantId, query);
     }
 
     @Override
-    public ListenableFuture<PageData<AlarmInfo>> findCustomerAlarmsV2(TenantId tenantId, CustomerId customerId, AlarmQueryV2 query) {
-        return Futures.immediateFuture(alarmDao.findCustomerAlarmsV2(tenantId, customerId, query));
+    public PageData<AlarmInfo> findCustomerAlarmsV2(TenantId tenantId, CustomerId customerId, AlarmQueryV2 query) {
+        return alarmDao.findCustomerAlarmsV2(tenantId, customerId, query);
     }
 
     @Override
@@ -440,7 +323,14 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
 
     @Override
     public void deleteEntityAlarmRelations(TenantId tenantId, EntityId entityId) {
+        log.trace("Executing deleteEntityAlarms [{}]", entityId);
         alarmDao.deleteEntityAlarmRecords(tenantId, entityId);
+    }
+
+    @Override
+    public void deleteEntityAlarmRecordsByTenantId(TenantId tenantId) {
+        log.trace("Executing deleteEntityAlarmRecordsByTenantId [{}]", tenantId);
+        alarmDao.deleteEntityAlarmRecordsByTenantId(tenantId);
     }
 
     @Override

@@ -5201,7 +5201,8 @@
             "value-range": "Value range",
             "from": "From",
             "to": "To",
-            "color-function": "Color function"
+            "color-function": "Color function",
+            "copy-color-settings-from": "Copy color settings from"
         },
         "dashboard-state": {
             "dashboard-state-settings": "Dashboard state settings",
@@ -6039,7 +6040,8 @@
             "icon": "Icon",
             "value": "Value",
             "date": "Date",
-            "value-card-style": "Value card style"
+            "value-card-style": "Value card style",
+            "auto-scale": "Auto scale"
         },
         "aggregated-value-card": {
             "subtitle": "Subtitle",
@@ -6060,7 +6062,8 @@
             "remove-value": "Remove value",
             "no-values": "No values configured",
             "aggregation": "Aggregation",
-            "aggregated-value-card-style": "Aggregated value card style"
+            "aggregated-value-card-style": "Aggregated value card style",
+            "auto-scale": "Auto scale"
         },
         "alarm-count": {
             "alarm-count-card-style": "Alarm count card style"
@@ -6076,7 +6079,8 @@
             "icon": "Icon",
             "icon-background": "Icon background",
             "value": "Value",
-            "chevron": "Chevron"
+            "chevron": "Chevron",
+            "auto-scale": "Auto scale"
         },
         "table": {
             "common-table-settings": "Common Table Settings",
