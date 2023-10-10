@@ -310,8 +310,12 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
 
     @Override
     public void deleteEntityAlarmRecords(TenantId tenantId, EntityId entityId) {
-        log.trace("[{}] Try to delete entity alarm records using [{}]", tenantId, entityId);
         entityAlarmRepository.deleteByEntityId(entityId.getId());
+    }
+
+    @Override
+    public void deleteEntityAlarmRecordsByTenantId(TenantId tenantId) {
+        entityAlarmRepository.deleteByTenantId(tenantId.getId());
     }
 
     @Override
