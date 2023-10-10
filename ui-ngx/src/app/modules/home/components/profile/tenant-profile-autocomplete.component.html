@@ -35,7 +35,7 @@
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
-  <button *ngIf="selectTenantProfileFormGroup.get('tenantProfile').value && !disabled"
+  <button *ngIf="selectTenantProfileFormGroup.get('tenantProfile').value?.id && !disabled"
           type="button"
           matSuffix mat-icon-button aria-label="Edit"
           matTooltip="{{ 'tenant-profile.edit' | translate }}"
