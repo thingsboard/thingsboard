@@ -2783,6 +2783,7 @@
             "attribute-name-required": "Attribute name is required",
             "command": "Command",
             "command-required": "Command is required",
+            "command-pattern": "Command is not valid",
             "remove": "Remove command"
         },
         "storage": "Storage",
