@@ -51,7 +51,6 @@ import org.thingsboard.server.dao.entity.EntityStateSyncManager;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
-import org.thingsboard.server.dao.tenant.TenantService;
 
 import javax.annotation.PostConstruct;
 import java.util.Set;
@@ -62,7 +61,6 @@ import java.util.Set;
 public class EntityStateSourcingListener {
 
     private final TbClusterService tbClusterService;
-    private final TenantService tenantService;
     private final EntityStateSyncManager entityStateSyncManager;
 
     @PostConstruct

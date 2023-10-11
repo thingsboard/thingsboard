@@ -48,17 +48,17 @@ public class BaseEdgeEventService implements EdgeEventService {
 
     private final ApplicationEventPublisher eventPublisher;
 
-    private ExecutorService executor;
+    private ExecutorService edgeEventExecutor;
 
     @PostConstruct
     public void initExecutor() {
-        executor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("edge-event"));
+        edgeEventExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("edge-event-service"));
     }
 
     @PreDestroy
     public void shutdownExecutor() {
-        if (executor != null) {
-            executor.shutdown();
+        if (edgeEventExecutor != null) {
+            edgeEventExecutor.shutdown();
         }
     }
 
@@ -77,7 +77,7 @@ public class BaseEdgeEventService implements EdgeEventService {
 
             @Override
             public void onFailure(@NotNull Throwable throwable) {}
-        }, executor);
+        }, edgeEventExecutor);
 
         return saveFuture;
     }

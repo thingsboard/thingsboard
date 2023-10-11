@@ -167,7 +167,7 @@ public class InstallScripts {
         return paths;
     }
 
-    public RuleChain createDefaultRuleChain(TenantId tenantId, String ruleChainName) throws IOException {
+    public RuleChain createDefaultRuleChain(TenantId tenantId, String ruleChainName) {
         return createRuleChainFromFile(tenantId, getDeviceProfileDefaultRuleChainTemplateFilePath(), ruleChainName);
     }
 

@@ -132,10 +132,6 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
     protected void onEntitySaved(User user, RuleChain savedRuleChain, RuleChain oldRuleChain) {
         entityActionService.logEntityAction(user, savedRuleChain.getId(), savedRuleChain, null,
                 oldRuleChain == null ? ActionType.ADDED : ActionType.UPDATED, null);
-        if (savedRuleChain.getType() == RuleChainType.CORE) {
-            clusterService.broadcastEntityStateChangeEvent(user.getTenantId(), savedRuleChain.getId(),
-                    oldRuleChain == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
-        }
     }
 
     @Override

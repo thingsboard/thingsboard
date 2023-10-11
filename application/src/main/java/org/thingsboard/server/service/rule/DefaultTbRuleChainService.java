@@ -192,14 +192,7 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
         TenantId tenantId = ruleChain.getTenantId();
         RuleChainId ruleChainId = ruleChain.getId();
         try {
-            List<RuleNode> referencingRuleNodes = ruleChainService.getReferencingRuleChainNodes(tenantId, ruleChainId);
-
-            Set<RuleChainId> referencingRuleChainIds = referencingRuleNodes.stream().map(RuleNode::getRuleChainId).collect(Collectors.toSet());
-
             ruleChainService.deleteRuleChainById(tenantId, ruleChainId);
-
-            referencingRuleChainIds.remove(ruleChain.getId());
-
             logEntityActionService.logEntityAction(tenantId, ruleChainId, ruleChain, null, ActionType.DELETED, user, ruleChainId.toString());
         } catch (Exception e) {
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.RULE_CHAIN), ActionType.DELETED,

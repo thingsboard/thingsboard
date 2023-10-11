@@ -94,7 +94,7 @@ public class EdgeEventSourcingListener {
         }
         EntityType entityType = event.getEntityId().getEntityType();
         try {
-            if (EntityType.EDGE.equals(entityType) || EntityType.TENANT.equals(entityType)) {
+            if (EntityType.EDGE.equals(entityType) || EntityType.TENANT.equals(entityType) || EntityType.TB_RESOURCE.equals(entityType)) {
                 return;
             }
             log.trace("[{}] DeleteEntityEvent called: {}", event.getTenantId(), event);
@@ -155,8 +155,11 @@ public class EdgeEventSourcingListener {
                 User user = (User) event.getEntity();
                 return !Authority.SYS_ADMIN.equals(user.getAuthority());
             case OTA_PACKAGE:
-                OtaPackageInfo otaPackageInfo = (OtaPackageInfo) event.getEntity();
-                return otaPackageInfo.hasUrl() || otaPackageInfo.isHasData();
+                if (event.getEntity() instanceof OtaPackageInfo) {
+                    OtaPackageInfo otaPackageInfo = (OtaPackageInfo) event.getEntity();
+                    return otaPackageInfo.hasUrl() || otaPackageInfo.isHasData();
+                }
+                break;
             case ALARM:
                 if (event.getEntity() instanceof AlarmApiCallResult) {
                     AlarmApiCallResult alarmApiCallResult = (AlarmApiCallResult) event.getEntity();

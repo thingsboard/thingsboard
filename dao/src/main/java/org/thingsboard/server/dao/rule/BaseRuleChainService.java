@@ -432,7 +432,6 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             }
         }
         checkRuleNodesAndDelete(tenantId, ruleChain, referencingRuleChainIds);
-        referencingRuleChainIds.remove(ruleChainId);
     }
 
     @Override

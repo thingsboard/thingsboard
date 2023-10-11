@@ -672,7 +672,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
                 }
             };
 
-    private PaginatedRemover<CustomerId, Device> customerDeviceUnasigner = new PaginatedRemover<CustomerId, Device>() {
+    private PaginatedRemover<CustomerId, Device> customerDeviceUnasigner = new PaginatedRemover<>() {
 
         @Override
         protected PageData<Device> findEntities(TenantId tenantId, CustomerId id, PageLink pageLink) {
