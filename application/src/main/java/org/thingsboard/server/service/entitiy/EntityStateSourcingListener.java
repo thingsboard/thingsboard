@@ -138,6 +138,7 @@ public class EntityStateSourcingListener {
             case CUSTOMER:
             case EDGE:
             case NOTIFICATION_RULE:
+            case NOTIFICATION_REQUEST:
                 tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, ComponentLifecycleEvent.DELETED);
                 break;
             case RULE_CHAIN:
@@ -171,11 +172,6 @@ public class EntityStateSourcingListener {
                 TbResource tbResource = (TbResource) event.getEntity();
                 tbClusterService.onResourceDeleted(tbResource, null);
                 break;
-            case NOTIFICATION_REQUEST:
-                NotificationRequest request = (NotificationRequest) event.getEntity();
-                if (request.isScheduled()) {
-                    tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, ComponentLifecycleEvent.DELETED);
-                }
             default:
                 break;
         }

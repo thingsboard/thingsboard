@@ -398,10 +398,6 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                     .notificationRequestId(notificationRequestId)
                     .deleted(true)
                     .build());
-        } else if (notificationRequest.isScheduled()) {
-            // TODO: just forward to scheduler service
-            // handling in EntityStateSourcingListener.class
-            // clusterService.broadcastEntityStateChangeEvent(tenantId, notificationRequestId, ComponentLifecycleEvent.DELETED);
         }
     }
 

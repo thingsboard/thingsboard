@@ -89,7 +89,9 @@ public class DefaultNotificationRequestService implements NotificationRequestSer
     @Override
     public void deleteNotificationRequest(TenantId tenantId, NotificationRequest request) {
         notificationRequestDao.removeById(tenantId, request.getUuidId());
-        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entity(request).entityId(request.getId()).build());
+        if (request.isScheduled()) {
+            eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(request.getId()).build());
+        }
     }
 
     @Override
