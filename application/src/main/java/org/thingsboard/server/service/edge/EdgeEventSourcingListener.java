@@ -21,16 +21,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
-import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.OtaPackageInfo;
-import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -79,7 +75,7 @@ public class EdgeEventSourcingListener {
             return;
         }
         try {
-            if (!isValidEdgeEventEntity(event.getEntity())) {
+            if (!isValidEdgeEventEntity(event)) {
                 return;
             }
             log.trace("[{}] SaveEntityEvent called: {}", event.getTenantId(), event);
@@ -150,24 +146,29 @@ public class EdgeEventSourcingListener {
         }
     }
 
-    private boolean isValidEdgeEventEntity(Object entity) {
-        if (entity instanceof OtaPackageInfo) {
-            OtaPackageInfo otaPackageInfo = (OtaPackageInfo) entity;
-            return otaPackageInfo.hasUrl() || otaPackageInfo.isHasData();
-        } else if (entity instanceof RuleChain) {
-            RuleChain ruleChain = (RuleChain) entity;
-            return RuleChainType.EDGE.equals(ruleChain.getType());
-        } else if (entity instanceof User) {
-            User user = (User) entity;
-            return !Authority.SYS_ADMIN.equals(user.getAuthority());
-        } else if (entity instanceof AlarmApiCallResult) {
-            AlarmApiCallResult alarmApiCallResult = (AlarmApiCallResult) entity;
-            return alarmApiCallResult.isModified();
-        } else if (entity instanceof Edge ||
-                entity instanceof ApiUsageState ||
-                entity instanceof TbResource ||
-                entity instanceof EdgeEvent) {
-            return false;
+    private boolean isValidEdgeEventEntity(SaveEntityEvent<?> event) {
+        switch (event.getEntityId().getEntityType()) {
+            case RULE_CHAIN:
+                RuleChain ruleChain = (RuleChain) event.getEntity();
+                return RuleChainType.EDGE.equals(ruleChain.getType());
+            case USER:
+                User user = (User) event.getEntity();
+                return !Authority.SYS_ADMIN.equals(user.getAuthority());
+            case OTA_PACKAGE:
+                OtaPackageInfo otaPackageInfo = (OtaPackageInfo) event.getEntity();
+                return otaPackageInfo.hasUrl() || otaPackageInfo.isHasData();
+            case ALARM:
+                if (event.getEntity() instanceof AlarmApiCallResult) {
+                    AlarmApiCallResult alarmApiCallResult = (AlarmApiCallResult) event.getEntity();
+                    return alarmApiCallResult.isModified();
+                }
+                break;
+            case TENANT:
+                return !event.getAdded();
+            case API_USAGE_STATE:
+            case TB_RESOURCE:
+            case EDGE:
+                return false;
         }
         // Default: If the entity doesn't match any of the conditions, consider it as valid.
         return true;

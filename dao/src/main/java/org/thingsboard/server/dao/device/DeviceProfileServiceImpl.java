@@ -143,16 +143,12 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     }
 
     @Override
-    public DeviceProfile saveDeviceProfile(DeviceProfile deviceProfile, boolean doValidate) {
-        return doSaveDeviceProfile(deviceProfile, doValidate);
+    public DeviceProfile saveDeviceProfile(DeviceProfile deviceProfile) {
+        return saveDeviceProfile(deviceProfile, true);
     }
 
     @Override
-    public DeviceProfile saveDeviceProfile(DeviceProfile deviceProfile) {
-        return doSaveDeviceProfile(deviceProfile, true);
-    }
-
-    private DeviceProfile doSaveDeviceProfile(DeviceProfile deviceProfile, boolean doValidate) {
+    public DeviceProfile saveDeviceProfile(DeviceProfile deviceProfile, boolean doValidate) {
         log.trace("Executing saveDeviceProfile [{}]", deviceProfile);
         if (deviceProfile.getProfileData() != null && deviceProfile.getProfileData().getProvisionConfiguration() instanceof X509CertificateChainProvisionConfiguration) {
             X509CertificateChainProvisionConfiguration x509Configuration = (X509CertificateChainProvisionConfiguration) deviceProfile.getProfileData().getProvisionConfiguration();

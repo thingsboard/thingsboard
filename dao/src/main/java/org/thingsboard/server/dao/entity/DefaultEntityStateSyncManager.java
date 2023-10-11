@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.eventsourcing;
+package org.thingsboard.server.dao.entity;
 
-import lombok.Builder;
-import lombok.Data;
-import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
-@Builder
-@Data
-public class DeleteEntityEvent<T> {
-    private final TenantId tenantId;
-    private final EntityId entityId;
-    private final EdgeId edgeId;
-    private final T entity;
-    private final String body;
+@Component
+@Slf4j
+public class DefaultEntityStateSyncManager implements EntityStateSyncManager {
 
-    @Builder.Default
-    private final long ts = System.currentTimeMillis();
+    @Getter
+    private final ThreadLocal<Boolean> sync = new ThreadLocal<>();
+
+    @Override
+    public boolean isSync() {
+        Boolean sync = this.sync.get();
+        return sync != null && sync;
+    }
 }

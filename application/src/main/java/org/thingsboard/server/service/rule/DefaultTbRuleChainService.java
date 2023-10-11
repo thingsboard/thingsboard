@@ -179,10 +179,6 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
         try {
             RuleChain savedRuleChain = checkNotNull(ruleChainService.saveRuleChain(ruleChain));
             autoCommit(user, savedRuleChain.getId());
-            if (RuleChainType.CORE.equals(savedRuleChain.getType())) {
-                tbClusterService.broadcastEntityStateChangeEvent(tenantId, savedRuleChain.getId(),
-                        actionType.equals(ActionType.ADDED) ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
-            }
             logEntityActionService.logEntityAction(tenantId, savedRuleChain.getId(), savedRuleChain, null, actionType, user);
             return savedRuleChain;
         } catch (Exception e) {
@@ -204,13 +200,6 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
 
             referencingRuleChainIds.remove(ruleChain.getId());
 
-            if (RuleChainType.CORE.equals(ruleChain.getType())) {
-                referencingRuleChainIds.forEach(referencingRuleChainId ->
-                        tbClusterService.broadcastEntityStateChangeEvent(tenantId, referencingRuleChainId, ComponentLifecycleEvent.UPDATED));
-
-                tbClusterService.broadcastEntityStateChangeEvent(tenantId, ruleChain.getId(), ComponentLifecycleEvent.DELETED);
-            }
-
             logEntityActionService.logEntityAction(tenantId, ruleChainId, ruleChain, null, ActionType.DELETED, user, ruleChainId.toString());
         } catch (Exception e) {
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.RULE_CHAIN), ActionType.DELETED,
@@ -224,7 +213,6 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
         try {
             RuleChain savedRuleChain = installScripts.createDefaultRuleChain(tenantId, request.getName());
             autoCommit(user, savedRuleChain.getId());
-            tbClusterService.broadcastEntityStateChangeEvent(tenantId, savedRuleChain.getId(), ComponentLifecycleEvent.CREATED);
             logEntityActionService.logEntityAction(tenantId, savedRuleChain.getId(), savedRuleChain, ActionType.ADDED, user);
             return savedRuleChain;
         } catch (Exception e) {
@@ -243,18 +231,11 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
             RuleChain previousRootRuleChain = ruleChainService.getRootTenantRuleChain(tenantId);
             if (ruleChainService.setRootRuleChain(tenantId, ruleChainId)) {
                 if (previousRootRuleChain != null) {
-                    RuleChainId previousRootRuleChainId = previousRootRuleChain.getId();
-                    previousRootRuleChain = ruleChainService.findRuleChainById(tenantId, previousRootRuleChainId);
-
-                    tbClusterService.broadcastEntityStateChangeEvent(tenantId, previousRootRuleChainId,
-                            ComponentLifecycleEvent.UPDATED);
-                    logEntityActionService.logEntityAction(tenantId, previousRootRuleChainId, previousRootRuleChain,
+                    previousRootRuleChain = ruleChainService.findRuleChainById(tenantId, previousRootRuleChain.getId());
+                    logEntityActionService.logEntityAction(tenantId, previousRootRuleChain.getId(), previousRootRuleChain,
                             ActionType.UPDATED, user);
                 }
                 ruleChain = ruleChainService.findRuleChainById(tenantId, ruleChainId);
-
-                tbClusterService.broadcastEntityStateChangeEvent(tenantId, ruleChainId,
-                        ComponentLifecycleEvent.UPDATED);
                 logEntityActionService.logEntityAction(tenantId, ruleChainId, ruleChain, ActionType.UPDATED, user);
             }
             return ruleChain;
@@ -293,7 +274,6 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
             RuleChainMetaData savedRuleChainMetaData = checkNotNull(ruleChainService.loadRuleChainMetaData(tenantId, ruleChainMetaDataId));
 
             if (RuleChainType.CORE.equals(ruleChain.getType())) {
-                tbClusterService.broadcastEntityStateChangeEvent(tenantId, ruleChainId, ComponentLifecycleEvent.UPDATED);
                 updatedRuleChains.forEach(updatedRuleChain ->
                         tbClusterService.broadcastEntityStateChangeEvent(tenantId, updatedRuleChain.getId(), ComponentLifecycleEvent.UPDATED));
             }

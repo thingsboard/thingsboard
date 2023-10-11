@@ -13,23 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.eventsourcing;
+package org.thingsboard.server.dao.entity;
 
-import lombok.Builder;
-import lombok.Data;
-import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
+public interface EntityStateSyncManager {
 
-@Builder
-@Data
-public class DeleteEntityEvent<T> {
-    private final TenantId tenantId;
-    private final EntityId entityId;
-    private final EdgeId edgeId;
-    private final T entity;
-    private final String body;
+    ThreadLocal<Boolean> getSync();
 
-    @Builder.Default
-    private final long ts = System.currentTimeMillis();
+    boolean isSync();
 }

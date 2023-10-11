@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.entitiy;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -35,19 +36,25 @@ import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.dao.entity.EntityStateSyncManager;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
+import org.thingsboard.server.dao.tenant.TenantService;
 
 import javax.annotation.PostConstruct;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -55,6 +62,8 @@ import javax.annotation.PostConstruct;
 public class EntityStateSourcingListener {
 
     private final TbClusterService tbClusterService;
+    private final TenantService tenantService;
+    private final EntityStateSyncManager entityStateSyncManager;
 
     @PostConstruct
     public void init() {
@@ -63,6 +72,9 @@ public class EntityStateSourcingListener {
 
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(SaveEntityEvent<?> event) {
+        if (entityStateSyncManager.isSync()) {
+            return;
+        }
         log.trace("[{}] SaveEntityEvent called: {}", event.getTenantId(), event);
         TenantId tenantId = event.getTenantId();
         EntityId entityId = event.getEntityId();
@@ -76,6 +88,12 @@ public class EntityStateSourcingListener {
             case ENTITY_VIEW:
             case NOTIFICATION_RULE:
                 tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, lifecycleEvent);
+                break;
+            case RULE_CHAIN:
+                RuleChain ruleChain = (RuleChain) event.getEntity();
+                if (RuleChainType.CORE.equals(ruleChain.getType())) {
+                    tbClusterService.broadcastEntityStateChangeEvent(ruleChain.getTenantId(), ruleChain.getId(), lifecycleEvent);
+                }
                 break;
             case TENANT:
                 Tenant tenant = (Tenant) event.getEntity();
@@ -124,6 +142,17 @@ public class EntityStateSourcingListener {
             case NOTIFICATION_RULE:
                 tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, ComponentLifecycleEvent.DELETED);
                 break;
+            case RULE_CHAIN:
+                RuleChain ruleChain = (RuleChain) event.getEntity();
+                Set<RuleChainId> referencingRuleChainIds = JacksonUtil.fromString(event.getBody(), new TypeReference<>() {});
+                if (RuleChainType.CORE.equals(ruleChain.getType())) {
+                    if (referencingRuleChainIds != null) {
+                        referencingRuleChainIds.forEach(referencingRuleChainId ->
+                                tbClusterService.broadcastEntityStateChangeEvent(tenantId, referencingRuleChainId, ComponentLifecycleEvent.UPDATED));
+                    }
+                    tbClusterService.broadcastEntityStateChangeEvent(tenantId, ruleChain.getId(), ComponentLifecycleEvent.DELETED);
+                }
+                break;
             case TENANT:
                 Tenant tenant = (Tenant) event.getEntity();
                 onTenantDeleted(tenant);
@@ -154,11 +183,6 @@ public class EntityStateSourcingListener {
         }
     }
 
-    private void onDeviceProfileDelete(TenantId tenantId, EntityId entityId, DeviceProfile deviceProfile) {
-        tbClusterService.onDeviceProfileDelete(deviceProfile, null);
-        tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, ComponentLifecycleEvent.DELETED);
-    }
-
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(ActionEntityEvent<?> event) {
         log.trace("[{}] ActionEntityEvent called: {}", event.getTenantId(), event);
@@ -176,6 +200,11 @@ public class EntityStateSourcingListener {
     private void onTenantUpdate(Tenant tenant, ComponentLifecycleEvent lifecycleEvent) {
         tbClusterService.onTenantChange(tenant, null);
         tbClusterService.broadcastEntityStateChangeEvent(tenant.getId(), tenant.getId(), lifecycleEvent);
+    }
+
+    private void onTenantDeleted(Tenant tenant) {
+        tbClusterService.onTenantDelete(tenant, null);
+        tbClusterService.broadcastEntityStateChangeEvent(tenant.getId(), tenant.getId(), ComponentLifecycleEvent.DELETED);
     }
 
     private void onTenantProfileUpdate(TenantProfile tenantProfile, ComponentLifecycleEvent lifecycleEvent) {
@@ -198,6 +227,11 @@ public class EntityStateSourcingListener {
         return null;
     }
 
+    private void onDeviceProfileDelete(TenantId tenantId, EntityId entityId, DeviceProfile deviceProfile) {
+        tbClusterService.onDeviceProfileDelete(deviceProfile, null);
+        tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, ComponentLifecycleEvent.DELETED);
+    }
+
     private void onDeviceUpdate(Object entity, Object oldEntity) {
         Device device = (Device) entity;
         Device oldDevice = null;
@@ -205,11 +239,6 @@ public class EntityStateSourcingListener {
             oldDevice = (Device) oldEntity;
         }
         tbClusterService.onDeviceUpdated(device, oldDevice);
-    }
-
-    private void onTenantDeleted(Tenant tenant) {
-        tbClusterService.onTenantDelete(tenant, null);
-        tbClusterService.broadcastEntityStateChangeEvent(tenant.getId(), tenant.getId(), ComponentLifecycleEvent.DELETED);
     }
 
     private void handleEdgeEvent(TenantId tenantId, EntityId entityId, Object entity, ComponentLifecycleEvent lifecycleEvent) {

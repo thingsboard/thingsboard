@@ -527,7 +527,7 @@ public class DashboardController extends BaseController {
         }
         Tenant tenant = tenantService.findTenantById(getTenantId());
         JsonNode additionalInfo = tenant.getAdditionalInfo();
-        if (additionalInfo == null || !(additionalInfo instanceof ObjectNode)) {
+        if (!(additionalInfo instanceof ObjectNode)) {
             additionalInfo = JacksonUtil.newObjectNode();
         }
         if (homeDashboardInfo.getDashboardId() != null) {
@@ -553,8 +553,7 @@ public class DashboardController extends BaseController {
                 }
                 return new HomeDashboardInfo(dashboardId, hideDashboardToolbar);
             }
-        } catch (Exception e) {
-        }
+        } catch (Exception ignored) {}
         return null;
     }
 
@@ -570,8 +569,7 @@ public class DashboardController extends BaseController {
                 }
                 return new HomeDashboard(dashboard, hideDashboardToolbar);
             }
-        } catch (Exception e) {
-        }
+        } catch (Exception ignored) {}
         return null;
     }
 
