@@ -586,6 +586,9 @@
                 <mat-error *ngIf="commandControl.get('command').hasError('required')">
                   {{ 'gateway.statistics.command-required' | translate }}
                 </mat-error>
+                <mat-error *ngIf="commandControl.get('command').hasError('pattern')">
+                  {{ 'gateway.statistics.command-pattern' | translate }}
+                </mat-error>
                 <mat-icon matIconSuffix style="cursor:pointer;"
                           matTooltip="{{ 'gateway.hints.command' | translate }}">info_outlined
                 </mat-icon>
