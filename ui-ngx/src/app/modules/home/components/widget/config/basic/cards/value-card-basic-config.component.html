@@ -41,6 +41,11 @@
       </tb-image-cards-select-option>
     </tb-image-cards-select>
     <div class="tb-form-row">
+      <mat-slide-toggle class="mat-slide" formControlName="autoScale">
+        {{ 'widgets.value-card.auto-scale' | translate }}
+      </mat-slide-toggle>
+    </div>
+    <div class="tb-form-row">
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showLabel">
         {{ 'widgets.value-card.label' | translate }}
       </mat-slide-toggle>

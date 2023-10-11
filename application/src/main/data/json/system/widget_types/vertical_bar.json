@@ -3,7 +3,7 @@
   "name": "Vertical bar",
   "deprecated": false,
   "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAABQVBMVEVqampra2tsbGxtbW1ubm5vb29wcHBycnJzc3N0dHR2dnZ3d3d5eXl6enp7e3t8fHx+fn6BgYGDg4OFhYWHh4eIiIiKioqNjY2Ojo6RkZGTk5OWlpaZmZmbm5uenp6fn5+goKCkpKSlpaWmpqanp6eoqKiqqqqrq6usrKytra2xsbGysrK0tLS1tbW2tra4uLi6urq7u7u9vb2+vr7AwMDBwcHExMTFxcXHx8fIyMjJycnKysrMzMzNzc3Ozs7Pz8/Q0NDR0dHS0tLT09PU1NTV1dXX19fY2NjZ2dnb29vc3Nzd3d3f39/g4ODh4eHj4+Pk5OTl5eXm5ubn5+fo6Ojp6enq6urr6+vs7Ozt7e3u7u7v7+/w8PDx8fHy8vLz8/P09PT1fAD19fX29vb39/f6+vr7+/v8/Pz9/f3+/v7///8uFkw3AAAAAWJLR0RqJWKVDgAAAkBJREFUeNrt3ElTE3EQhvGebKMIiUExGkSNuCEiKAqKRKJsIuISN0giwQFC5v3+H8BD5uDBE2WV9tTTp1x/lTyd/6lNKRkDAgQIECBA/jtIHEXx4FOv3fMMWTSLJOn9eN4+OoZ0zg4gjZxduvXDMWQim7FIaoe5hutGXtn90CJp2mZcx340cv44tEgas9kLufKyW8ht21BokVSwTPWKBdtOIdvBDSm0SH2zFWnaxn1CeqPB03o9b88+9C2IpV0r+YTsWDJ3NWQdqWNDPiGH9Xp98I3ous1Ji1b1/NYKLZI+FzKTd3LBG/cQbZXNii9T8frttGKe8UCAAJGaS5J6j2/O96TuzOTz2CfkxZhVJF0tTY1MqF++eK/w0Cdkar5akdrBa60EnTXb04NzXn9a1yrSln1V094+yUvLduQYsmp7+m5rs2ekhrUdQ9ZtV99sYy6UGrbvGPLJdvTOmkvBsRay8T+CtE45v0NOirVurdRvZR/tX67KMUSbwza8KS2ENvrFKySZA0lSfMgTBUjqIH+pESBAiB0IjQBhawEBQuxAaAQIWwsIEGIHQiNA2FpAgBA7EBoBwtYCAoTYgdAIELYWECDEDoRGgKQK8vOUAwQIsQOhESBsLWIHQuxAaAQIW4vYgRA7EBoBwtYidiDEDoRGgLC1iB0IsQOhESBsrXTHnlws9g8ZXCz230hysdg/JLlY7B+SXCz230hysdg/JLlY7B9yUqx1a8V+CtZvcrE4Df/sBzxRgAABAgQIECB/mF+DKtRemhqPQgAAAABJRU5ErkJggg==",
-  "description": "Preconfigured gauge to display any value reading as a bar. Allows to configure value range, gradient colors and other settings.",
+  "description": "Preconfigured gauge to display any value reading as a bar. Allows to configure value range, gradient colors, and other settings.",
   "descriptor": {
     "type": "latest",
     "sizeX": 2,

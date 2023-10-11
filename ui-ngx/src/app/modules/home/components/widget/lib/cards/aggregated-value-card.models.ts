@@ -32,6 +32,7 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { AggregationType } from '@shared/models/time/time.models';
 
 export interface AggregatedValueCardWidgetSettings {
+  autoScale: boolean;
   showSubtitle: boolean;
   subtitle: string;
   subtitleFont: Font;
@@ -112,6 +113,7 @@ export const getTsValueByLatestDataKey = (latestData: Array<DatasourceData>, dat
 };
 
 export const aggregatedValueCardDefaultSettings: AggregatedValueCardWidgetSettings = {
+  autoScale: true,
   showSubtitle: true,
   subtitle: '${entityName}',
   subtitleFont: {

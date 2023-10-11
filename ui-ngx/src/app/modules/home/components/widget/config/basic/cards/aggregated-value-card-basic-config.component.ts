@@ -119,6 +119,7 @@ export class AggregatedValueCardBasicConfigComponent extends BasicWidgetConfigCo
       timewindowConfig: [getTimewindowConfig(configData.config), []],
       datasources: [configData.config.datasources, []],
 
+      autoScale: [settings.autoScale, []],
       showTitle: [configData.config.showTitle, []],
       title: [configData.config.title, []],
       titleFont: [configData.config.titleFont, []],
@@ -172,6 +173,7 @@ export class AggregatedValueCardBasicConfigComponent extends BasicWidgetConfigCo
 
     this.widgetConfig.config.settings = this.widgetConfig.config.settings || {};
 
+    this.widgetConfig.config.settings.autoScale = config.autoScale;
     this.widgetConfig.config.settings.showSubtitle = config.showSubtitle;
     this.widgetConfig.config.settings.subtitle = config.subtitle;
     this.widgetConfig.config.settings.subtitleFont = config.subtitleFont;

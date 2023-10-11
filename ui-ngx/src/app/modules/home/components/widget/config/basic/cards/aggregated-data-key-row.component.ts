@@ -225,6 +225,7 @@ export class AggregatedDataKeyRowComponent implements ControlValueAccessor, OnIn
         this.keyRowFormGroup.get('units').patchValue(this.modelValue.units, {emitEvent: false});
         this.keyRowFormGroup.get('decimals').patchValue(this.modelValue.decimals, {emitEvent: false});
         this.updateModel();
+        this.cd.markForCheck();
       }
     });
   }

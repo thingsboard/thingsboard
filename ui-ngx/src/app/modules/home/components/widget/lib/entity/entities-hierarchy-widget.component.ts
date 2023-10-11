@@ -64,7 +64,7 @@ import {
   NodeRelationQueryFunction,
   NodesSortFunction,
   NodeTextFunction
-} from '@home/components/widget/lib/entities-hierarchy-widget.models';
+} from '@home/components/widget/lib/entity/entities-hierarchy-widget.models';
 import { EntityRelationsQuery } from '@shared/models/relation.models';
 import { AliasFilterType, RelationsQueryFilter } from '@shared/models/alias.models';
 import { EntityFilter } from '@shared/models/query/query.models';

@@ -90,6 +90,7 @@ export class ValueCardWidgetSettingsComponent extends WidgetSettingsComponent {
   protected onSettingsSet(settings: WidgetSettings) {
     this.valueCardWidgetSettingsForm = this.fb.group({
       layout: [settings.layout, []],
+      autoScale: [settings.autoScale, []],
 
       showLabel: [settings.showLabel, []],
       labelFont: [settings.labelFont, []],

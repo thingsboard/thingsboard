@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thingsboard</groupId>
     <artifactId>thingsboard</artifactId>
-    <version>3.6.0-SNAPSHOT</version>
+    <version>3.6.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Thingsboard</name>
@@ -121,6 +121,7 @@
         <wire-schema.version>3.4.0</wire-schema.version>
         <twilio.version>8.17.0</twilio.version>
         <hibernate-validator.version>6.0.20.Final</hibernate-validator.version>
+        <hypersistence-utils.version>3.5.2</hypersistence-utils.version>
         <javax.el.version>3.0.0</javax.el.version>
         <javax.validation-api.version>2.0.1.Final</javax.validation-api.version>
         <antisamy.version>1.7.2</antisamy.version>
@@ -1922,6 +1923,11 @@
                 <groupId>org.hibernate.validator</groupId>
                 <artifactId>hibernate-validator</artifactId>
                 <version>${hibernate-validator.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.hypersistence</groupId>
+                <artifactId>hypersistence-utils-hibernate-55</artifactId>
+                <version>${hypersistence-utils.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.glassfish</groupId>

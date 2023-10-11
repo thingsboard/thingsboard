@@ -52,7 +52,7 @@ export class NotificationSubscriber extends WsSubscriber {
     cmdUpdateType: undefined,
     errorCode: 0,
     errorMsg: '',
-    notifications: [],
+    notifications: null,
     totalUnreadCount: 0
   });
 

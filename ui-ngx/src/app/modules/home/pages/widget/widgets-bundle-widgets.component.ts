@@ -152,7 +152,7 @@ export class WidgetsBundleWidgetsComponent extends PageComponent implements OnIn
 
   cancel() {
     if (this.isDirty) {
-      this.widgetsService.getBundleWidgetTypeInfos(this.widgetsBundle.id.id).subscribe(
+      this.widgetsService.getBundleWidgetTypeInfosList(this.widgetsBundle.id.id).subscribe(
         (widgets) => {
           this.widgets = [...widgets];
           this.isDirty = false;
@@ -172,6 +172,7 @@ export class WidgetsBundleWidgetsComponent extends PageComponent implements OnIn
     this.widgetsService.updateWidgetsBundleWidgetTypes(this.widgetsBundle.id.id, widgetTypeIds).subscribe(() => {
       this.isDirty = false;
       this.editMode = false;
+      this.addMode = false;
     });
   }
 

@@ -27,7 +27,7 @@ import {
 } from '@home/components/widget/config/basic/common/widget-actions-panel.component';
 import {
   EntitiesTableBasicConfigComponent
-} from '@home/components/widget/config/basic/cards/entities-table-basic-config.component';
+} from '@home/components/widget/config/basic/entity/entities-table-basic-config.component';
 import { DataKeysPanelComponent } from '@home/components/widget/config/basic/common/data-keys-panel.component';
 import { DataKeyRowComponent } from '@home/components/widget/config/basic/common/data-key-row.component';
 import {
@@ -49,6 +49,18 @@ import {
 import {
   AggregatedDataKeysPanelComponent
 } from '@home/components/widget/config/basic/cards/aggregated-data-keys-panel.component';
+import {
+  AlarmCountBasicConfigComponent
+} from '@home/components/widget/config/basic/alarm/alarm-count-basic-config.component';
+import {
+  EntityCountBasicConfigComponent
+} from '@home/components/widget/config/basic/entity/entity-count-basic-config.component';
+import {
+  BatteryLevelBasicConfigComponent
+} from '@home/components/widget/config/basic/indicator/battery-level-basic-config.component';
+import {
+  WindSpeedDirectionBasicConfigComponent
+} from '@home/components/widget/config/basic/weather/wind-speed-direction-basic-config.component';
 
 @NgModule({
   declarations: [
@@ -63,7 +75,11 @@ import {
     AggregatedDataKeyRowComponent,
     AggregatedDataKeysPanelComponent,
     DataKeyRowComponent,
-    DataKeysPanelComponent
+    DataKeysPanelComponent,
+    AlarmCountBasicConfigComponent,
+    EntityCountBasicConfigComponent,
+    BatteryLevelBasicConfigComponent,
+    WindSpeedDirectionBasicConfigComponent
   ],
   imports: [
     CommonModule,
@@ -82,7 +98,11 @@ import {
     AggregatedDataKeyRowComponent,
     AggregatedDataKeysPanelComponent,
     DataKeyRowComponent,
-    DataKeysPanelComponent
+    DataKeysPanelComponent,
+    AlarmCountBasicConfigComponent,
+    EntityCountBasicConfigComponent,
+    BatteryLevelBasicConfigComponent,
+    WindSpeedDirectionBasicConfigComponent
   ]
 })
 export class BasicWidgetConfigModule {
@@ -95,5 +115,9 @@ export const basicWidgetConfigComponentsMap: {[key: string]: Type<IBasicWidgetCo
   'tb-flot-basic-config': FlotBasicConfigComponent,
   'tb-alarms-table-basic-config': AlarmsTableBasicConfigComponent,
   'tb-value-card-basic-config': ValueCardBasicConfigComponent,
-  'tb-aggregated-value-card-basic-config': AggregatedValueCardBasicConfigComponent
+  'tb-aggregated-value-card-basic-config': AggregatedValueCardBasicConfigComponent,
+  'tb-alarm-count-basic-config': AlarmCountBasicConfigComponent,
+  'tb-entity-count-basic-config': EntityCountBasicConfigComponent,
+  'tb-battery-level-basic-config': BatteryLevelBasicConfigComponent,
+  'tb-wind-speed-direction-basic-config': WindSpeedDirectionBasicConfigComponent
 };

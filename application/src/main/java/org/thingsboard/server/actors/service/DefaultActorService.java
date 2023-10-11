@@ -74,7 +74,7 @@ public class DefaultActorService extends TbApplicationEventListener<PartitionCha
     @Value("${actors.system.device_dispatcher_pool_size:4}")
     private int deviceDispatcherSize;
 
-    @Value("${actors.system.rule_dispatcher_pool_size:4}")
+    @Value("${actors.system.rule_dispatcher_pool_size:8}")
     private int ruleDispatcherSize;
 
     @PostConstruct
@@ -121,7 +121,7 @@ public class DefaultActorService extends TbApplicationEventListener<PartitionCha
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
         log.info("Received partition change event.");
-        this.appActor.tellWithHighPriority(new PartitionChangeMsg(event.getQueueKey().getType(), event.getPartitions()));
+        this.appActor.tellWithHighPriority(new PartitionChangeMsg(event.getServiceType()));
     }
 
     @PreDestroy
