@@ -14,13 +14,12 @@
 # limitations under the License.
 #
 
-# If you enabled process metrics you should also enable 'web-environment'.
-spring.main.web-environment: "${WEB_APPLICATION_ENABLE:false}"
-# If you enabled process metrics you should set 'web-application-type' to 'servlet' value.
-spring.main.web-application-type: "${WEB_APPLICATION_TYPE:none}"
+# Spring common parameters
+spring.main.web-environment: "${WEB_APPLICATION_ENABLE:false}" # If you enabled process metrics you should also enable 'web-environment'.
+spring.main.web-application-type: "${WEB_APPLICATION_TYPE:none}" # If you enabled process metrics you should set 'web-application-type' to 'servlet' value.
+spring.main.allow-circular-references: "true" # Spring Boot configuration property that controls whether circular dependencies between beans are allowed.
 
-spring.main.allow-circular-references: "true"
-
+# Server common parameters
 server:
   # Server bind address (has no effect if web-environment is disabled).
   address: "${HTTP_BIND_ADDRESS:0.0.0.0}"
@@ -41,18 +40,28 @@ zk:
   session_timeout_ms: "${ZOOKEEPER_SESSION_TIMEOUT_MS:3000}"
   # Name of the directory in zookeeper 'filesystem'
   zk_dir: "${ZOOKEEPER_NODES_DIR:/thingsboard}"
+  # The recalculate_delay property is recommended in a microservices architecture setup for rule-engine services.
+  # This property provides a pause to ensure that when a rule-engine service is restarted, other nodes don't immediately attempt to recalculate their partitions.
+  # The delay is recommended because the initialization of rule chain actors is time-consuming. Avoiding unnecessary recalculations during a restart can enhance system performance and stability.
   recalculate_delay: "${ZOOKEEPER_RECALCULATE_DELAY_MS:0}"
 
+# Cache parameters
 cache:
+  # caffeine or redis
   type: "${CACHE_TYPE:redis}"
 
+# Redis configuration parameters
 redis:
   # standalone or cluster or sentinel
   connection:
+    # Redis deployment type: Standalone (single Redis node deployment) OR Cluster
     type: "${REDIS_CONNECTION_TYPE:standalone}"
   standalone:
+    # Redis connection host
     host: "${REDIS_HOST:localhost}"
+    # Redis connection port
     port: "${REDIS_PORT:6379}"
+    # Use default Redis configuration file
     useDefaultClientConfig: "${REDIS_USE_DEFAULT_CLIENT_CONFIG:true}"
     # this value may be used only if you used not default ClientConfig
     clientName: "${REDIS_CLIENT_NAME:standalone}"
@@ -84,39 +93,58 @@ redis:
   password: "${REDIS_PASSWORD:}"
   # pool config
   pool_config:
+    # Maximum number of connections that can be allocated by the connection pool
     maxTotal: "${REDIS_POOL_CONFIG_MAX_TOTAL:128}"
+    # Maximum number of idle connections that can be maintained in the pool without being closed
     maxIdle: "${REDIS_POOL_CONFIG_MAX_IDLE:128}"
+    # Minumum number of idle connections that can be maintained in the pool without being closed
     minIdle: "${REDIS_POOL_CONFIG_MIN_IDLE:16}"
+    # Enable/Disable PING command send when a connection is borrowed
     testOnBorrow: "${REDIS_POOL_CONFIG_TEST_ON_BORROW:true}"
+    # The property is used to specify whether to test the connection before returning it to the connection pool.
     testOnReturn: "${REDIS_POOL_CONFIG_TEST_ON_RETURN:true}"
+    # The property is used in the context of connection pooling in Redis
     testWhileIdle: "${REDIS_POOL_CONFIG_TEST_WHILE_IDLE:true}"
+    # Minimum amount of time that an idle connection should be idle before it can be evicted from the connection pool. Value set in milliseconds
     minEvictableMs: "${REDIS_POOL_CONFIG_MIN_EVICTABLE_MS:60000}"
+    # Specifies the time interval in milliseconds between two consecutive eviction runs
     evictionRunsMs: "${REDIS_POOL_CONFIG_EVICTION_RUNS_MS:30000}"
+    # Maximum time in milliseconds where a client is willing to wait for a connection from the pool when all connections are exhausted
     maxWaitMills: "${REDIS_POOL_CONFIG_MAX_WAIT_MS:60000}"
+    # Specifies the number of connections to test for eviction during each eviction run
     numberTestsPerEvictionRun: "${REDIS_POOL_CONFIG_NUMBER_TESTS_PER_EVICTION_RUN:3}"
+    # Determines the behavior when a thread requests a connection from the pool but there are no available connections and the pool cannot create more due to the maxTotal configuration
     blockWhenExhausted: "${REDIS_POOL_CONFIG_BLOCK_WHEN_EXHAUSTED:true}"
 
 # MQTT server parameters
 transport:
   mqtt:
+    # MQTT bind-address
     bind_address: "${MQTT_BIND_ADDRESS:0.0.0.0}"
+    # MQTT bind port
     bind_port: "${MQTT_BIND_PORT:1883}"
     # Enable proxy protocol support. Disabled by default. If enabled, supports both v1 and v2.
     # Useful to get the real IP address of the client in the logs and for rate limits.
     proxy_enabled: "${MQTT_PROXY_PROTOCOL_ENABLED:false}"
+    # MQTT processing timeout in milliseconds
     timeout: "${MQTT_TIMEOUT:10000}"
     msg_queue_size_per_device_limit: "${MQTT_MSG_QUEUE_SIZE_PER_DEVICE_LIMIT:100}" # messages await in the queue before device connected state. This limit works on low level before TenantProfileLimits mechanism
     netty:
+      # Netty leak detector level
       leak_detector_level: "${NETTY_LEAK_DETECTOR_LVL:DISABLED}"
+      # Netty BOSS threads count
       boss_group_thread_count: "${NETTY_BOSS_GROUP_THREADS:1}"
+      # Netty worker threads count
       worker_group_thread_count: "${NETTY_WORKER_GROUP_THREADS:12}"
+      # Max payload size in bytes
       max_payload_size: "${NETTY_MAX_PAYLOAD_SIZE:65536}"
+      # Enables TCP keepalive. This means that TCP starts sending keepalive probes when a connection is idle for some time
       so_keep_alive: "${NETTY_SO_KEEPALIVE:false}"
     # MQTT SSL configuration
     ssl:
       # Enable/disable SSL support
       enabled: "${MQTT_SSL_ENABLED:false}"
-      # MQTT SSL bind address
+      # MQTT SSL bind-address
       bind_address: "${MQTT_SSL_BIND_ADDRESS:0.0.0.0}"
       # MQTT SSL bind port
       bind_port: "${MQTT_SSL_BIND_PORT:8883}"
@@ -149,7 +177,9 @@ transport:
       # Skip certificate validity check for client certificates.
       skip_validity_check_for_client_cert: "${MQTT_SSL_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
   sessions:
+    # Inactivity timeout for device session in transport service. The last activity time of the device session is updated if the device sends any message, including keepalive messages
     inactivity_timeout: "${TB_TRANSPORT_SESSIONS_INACTIVITY_TIMEOUT:300000}"
+    # Interval of periodic check for expired sessions and report of the changes to session last activity time
     report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:3000}"
   json:
     # Cast String data types to Numeric if possible when processing Telemetry/Attributes JSON
@@ -157,12 +187,17 @@ transport:
     # Maximum allowed string value length when processing Telemetry/Attributes JSON (0 value disables string value length check)
     max_string_value_length: "${JSON_MAX_STRING_VALUE_LENGTH:0}"
   log:
+    # Enable/Disable log of transport messages to telemetry. For example, logging of LwM2M registration update
     enabled: "${TB_TRANSPORT_LOG_ENABLED:true}"
+    # Maximum length of the log message. The content will be truncated to the specified value if needed
     max_length: "${TB_TRANSPORT_LOG_MAX_LENGTH:1024}"
   stats:
+    # Enable/Disable the collection of transport statistics
     enabled: "${TB_TRANSPORT_STATS_ENABLED:true}"
+    # Interval of transport statistics logging
     print-interval-ms: "${TB_TRANSPORT_STATS_PRINT_INTERVAL_MS:60000}"
   client_side_rpc:
+    # Processing timeout interval of the RPC command on the CLIENT SIDE. Time in milliseconds
     timeout: "${CLIENT_SIDE_RPC_TIMEOUT:60000}"
   rate_limits:
     # Enable or disable generic rate limits. Device and Tenant specific rate limits are controlled in Tenant Profile.
@@ -172,39 +207,64 @@ transport:
     # Timeout to expire block IP addresses
     ip_block_timeout: "${TB_TRANSPORT_IP_BLOCK_TIMEOUT:60000}"
 
-
+# Queue configuration parameters
 queue:
   type: "${TB_QUEUE_TYPE:kafka}" # kafka (Apache Kafka) or aws-sqs (AWS SQS) or pubsub (PubSub) or service-bus (Azure Service Bus) or rabbitmq (RabbitMQ)
   kafka:
+    # Kafka Bootstrap Servers
     bootstrap.servers: "${TB_KAFKA_SERVERS:localhost:9092}"
     ssl:
+      # Enable/Disable SSL Kafka communication
       enabled: "${TB_KAFKA_SSL_ENABLED:false}"
+      # The location of the trust store file
       truststore.location: "${TB_KAFKA_SSL_TRUSTSTORE_LOCATION:}"
+      # The password of trust store file if specified
       truststore.password: "${TB_KAFKA_SSL_TRUSTSTORE_PASSWORD:}"
+      # The location of the key store file. This is optional for the client and can be used for two-way authentication for the client
       keystore.location: "${TB_KAFKA_SSL_KEYSTORE_LOCATION:}"
+      # The store password for the key store file. This is optional for the client and only needed if ‘ssl.keystore.location’ is configured. Key store password is not supported for PEM format
       keystore.password: "${TB_KAFKA_SSL_KEYSTORE_PASSWORD:}"
+      # The password of the private key in the key store file or the PEM key specified in ‘keystore.key’
       key.password: "${TB_KAFKA_SSL_KEY_PASSWORD:}"
+    # The number of acknowledgments the producer requires the leader to have received before considering a request complete. This controls the durability of records that are sent. The following settings are allowed:0,1 and all
     acks: "${TB_KAFKA_ACKS:all}"
+    # Number of retries. Resend any record whose send fails with a potentially transient error
     retries: "${TB_KAFKA_RETRIES:1}"
+    # The compression type for all data generated by the producer. The default is none (i.e. no compression). Valid values none or gzip
     compression.type: "${TB_KAFKA_COMPRESSION_TYPE:none}" # none or gzip
+    # Default batch size. This setting gives the upper bound of the batch size to be sent
     batch.size: "${TB_KAFKA_BATCH_SIZE:16384}"
+    # This variable creates a small amount of artificial delay—that is, rather than immediately sending out a record
     linger.ms: "${TB_KAFKA_LINGER_MS:1}"
+    # The maximum size of a request in bytes. This setting will limit the number of record batches the producer will send in a single request to avoid sending huge requests
     max.request.size: "${TB_KAFKA_MAX_REQUEST_SIZE:1048576}"
+    # The maximum number of unacknowledged requests the client will send on a single connection before blocking
     max.in.flight.requests.per.connection: "${TB_KAFKA_MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION:5}"
+    # The total bytes of memory the producer can use to buffer records waiting to be sent to the server
     buffer.memory: "${TB_BUFFER_MEMORY:33554432}"
+    # The multiple copies of data over the multiple brokers of Kafka
     replication_factor: "${TB_QUEUE_KAFKA_REPLICATION_FACTOR:1}"
+    # The maximum delay between invocations of poll() when using consumer group management. This places an upper bound on the amount of time that the consumer can be idle before fetching more records
     max_poll_interval_ms: "${TB_QUEUE_KAFKA_MAX_POLL_INTERVAL_MS:300000}"
+    # The maximum number of records returned in a single call to poll()
     max_poll_records: "${TB_QUEUE_KAFKA_MAX_POLL_RECORDS:8192}"
+    # The maximum amount of data per-partition the server will return. Records are fetched in batches by the consumer
     max_partition_fetch_bytes: "${TB_QUEUE_KAFKA_MAX_PARTITION_FETCH_BYTES:16777216}"
+    # The maximum amount of data the server will return. Records are fetched in batches by the consumer
     fetch_max_bytes: "${TB_QUEUE_KAFKA_FETCH_MAX_BYTES:134217728}"
     request.timeout.ms: "${TB_QUEUE_KAFKA_REQUEST_TIMEOUT_MS:30000}" # (30 seconds) # refer to https://docs.confluent.io/platform/current/installation/configuration/producer-configs.html#producerconfigs_request.timeout.ms
     session.timeout.ms: "${TB_QUEUE_KAFKA_SESSION_TIMEOUT_MS:10000}" # (10 seconds) # refer to https://docs.confluent.io/platform/current/installation/configuration/consumer-configs.html#consumerconfigs_session.timeout.ms
     auto_offset_reset: "${TB_QUEUE_KAFKA_AUTO_OFFSET_RESET:earliest}" # earliest, latest or none
+    # Enable/Disable using of Confluent Cloud
     use_confluent_cloud: "${TB_QUEUE_KAFKA_USE_CONFLUENT_CLOUD:false}"
     confluent:
+      # The endpoint identification algorithm used by clients to validate server hostname. The default value is https
       ssl.algorithm: "${TB_QUEUE_KAFKA_CONFLUENT_SSL_ALGORITHM:https}"
+      # The mechanism used to authenticate Schema Registry requests. SASL/PLAIN should only be used with TLS/SSL as a transport layer to ensure that clear passwords are not transmitted on the wire without encryption
       sasl.mechanism: "${TB_QUEUE_KAFKA_CONFLUENT_SASL_MECHANISM:PLAIN}"
+      # Using JAAS Configuration for specifying multiple SASL mechanisms on a broker
       sasl.config: "${TB_QUEUE_KAFKA_CONFLUENT_SASL_JAAS_CONFIG:org.apache.kafka.common.security.plain.PlainLoginModule required username=\"CLUSTER_API_KEY\" password=\"CLUSTER_API_SECRET\";}"
+      # Protocol used to communicate with brokers. Valid values are: PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL
       security.protocol: "${TB_QUEUE_KAFKA_CONFLUENT_SECURITY_PROTOCOL:SASL_SSL}"
     other-inline: "${TB_QUEUE_KAFKA_OTHER_PROPERTIES:}" # In this section you can specify custom parameters (semicolon separated) for Kafka consumer/producer/admin # Example "metrics.recording.level:INFO;metrics.sample.window.ms:30000"
     other: # DEPRECATED. In this section you can specify custom parameters for Kafka consumer/producer and expose the env variables to configure outside
@@ -213,75 +273,130 @@ queue:
     #  - key: "session.timeout.ms" # refer to https://docs.confluent.io/platform/current/installation/configuration/consumer-configs.html#consumerconfigs_session.timeout.ms
     #    value: "${TB_QUEUE_KAFKA_SESSION_TIMEOUT_MS:10000}" # (10 seconds)
     topic-properties:
+      # Kafka properties for Rule Engine
       rule-engine: "${TB_QUEUE_KAFKA_RE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      # Kafka properties for Core topics
       core: "${TB_QUEUE_KAFKA_CORE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      # Kafka properties for Transport Api topics
       transport-api: "${TB_QUEUE_KAFKA_TA_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
+      # Kafka properties for Notifications topics
       notifications: "${TB_QUEUE_KAFKA_NOTIFICATIONS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
   aws_sqs:
+    # Use the default credentials provider for AWS SQS
     use_default_credential_provider_chain: "${TB_QUEUE_AWS_SQS_USE_DEFAULT_CREDENTIAL_PROVIDER_CHAIN:false}"
+    # Access key ID from AWS IAM user
     access_key_id: "${TB_QUEUE_AWS_SQS_ACCESS_KEY_ID:YOUR_KEY}"
+    # Secret access key from AWS IAM user
     secret_access_key: "${TB_QUEUE_AWS_SQS_SECRET_ACCESS_KEY:YOUR_SECRET}"
+    # Region from AWS account
     region: "${TB_QUEUE_AWS_SQS_REGION:YOUR_REGION}"
+    # Number of threads per each AWS SQS queue in consumer
     threads_per_topic: "${TB_QUEUE_AWS_SQS_THREADS_PER_TOPIC:1}"
     queue-properties:
+      # AWS SQS queue properties. VisibilityTimeout in seconds;MaximumMessageSize in bytes;MessageRetentionPeriod in seconds
       rule-engine: "${TB_QUEUE_AWS_SQS_RE_QUEUE_PROPERTIES:VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800}"
+      # AWS SQS queue properties. VisibilityTimeout in seconds;MaximumMessageSize in bytes;MessageRetentionPeriod in seconds
       core: "${TB_QUEUE_AWS_SQS_CORE_QUEUE_PROPERTIES:VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800}"
+      # AWS SQS queue properties. VisibilityTimeout in seconds;MaximumMessageSize in bytes;MessageRetentionPeriod in seconds
       transport-api: "${TB_QUEUE_AWS_SQS_TA_QUEUE_PROPERTIES:VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800}"
+      # AWS SQS queue properties. VisibilityTimeout in seconds;MaximumMessageSize in bytes;MessageRetentionPeriod in seconds
       notifications: "${TB_QUEUE_AWS_SQS_NOTIFICATIONS_QUEUE_PROPERTIES:VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800}"
-      #    VisibilityTimeout in seconds;MaximumMessageSize in bytes;MessageRetentionPeriod in seconds
   pubsub:
+    # Project ID from Google Cloud
     project_id: "${TB_QUEUE_PUBSUB_PROJECT_ID:YOUR_PROJECT_ID}"
+    # API Credentials in JSON format
     service_account: "${TB_QUEUE_PUBSUB_SERVICE_ACCOUNT:YOUR_SERVICE_ACCOUNT}"
-    max_msg_size: "${TB_QUEUE_PUBSUB_MAX_MSG_SIZE:1048576}" #in bytes
+    # Message size for PubSub queue.Value in bytes
+    max_msg_size: "${TB_QUEUE_PUBSUB_MAX_MSG_SIZE:1048576}"
+    # Number of messages per consumer
     max_messages: "${TB_QUEUE_PUBSUB_MAX_MESSAGES:1000}"
     queue-properties:
+      # Pub/Sub properties for Rule Engine subscribers, messages which will commit after ackDeadlineInSec period can be consumed again
       rule-engine: "${TB_QUEUE_PUBSUB_RE_QUEUE_PROPERTIES:ackDeadlineInSec:30;messageRetentionInSec:604800}"
+      # Pub/Sub properties for Core subscribers, messages which will commit after ackDeadlineInSec period can be consumed again
       core: "${TB_QUEUE_PUBSUB_CORE_QUEUE_PROPERTIES:ackDeadlineInSec:30;messageRetentionInSec:604800}"
+      # Pub/Sub properties for Transport API subscribers, messages which will commit after ackDeadlineInSec period can be consumed again
       transport-api: "${TB_QUEUE_PUBSUB_TA_QUEUE_PROPERTIES:ackDeadlineInSec:30;messageRetentionInSec:604800}"
+      # Pub/Sub properties for Version Control subscribers, messages which will commit after ackDeadlineInSec period can be consumed again
       notifications: "${TB_QUEUE_PUBSUB_NOTIFICATIONS_QUEUE_PROPERTIES:ackDeadlineInSec:30;messageRetentionInSec:604800}"
   service_bus:
+    # Azure namespace
     namespace_name: "${TB_QUEUE_SERVICE_BUS_NAMESPACE_NAME:YOUR_NAMESPACE_NAME}"
+    # Azure Service Bus Shared Access Signatures key name
     sas_key_name: "${TB_QUEUE_SERVICE_BUS_SAS_KEY_NAME:YOUR_SAS_KEY_NAME}"
+    # Azure Service Bus Shared Access Signatures key
     sas_key: "${TB_QUEUE_SERVICE_BUS_SAS_KEY:YOUR_SAS_KEY}"
+    # Number of messages per a consumer
     max_messages: "${TB_QUEUE_SERVICE_BUS_MAX_MESSAGES:1000}"
     queue-properties:
+      # Azure Service Bus properties for Rule Engine queues
       rule-engine: "${TB_QUEUE_SERVICE_BUS_RE_QUEUE_PROPERTIES:lockDurationInSec:30;maxSizeInMb:1024;messageTimeToLiveInSec:604800}"
+      # Azure Service Bus properties for Core queues
       core: "${TB_QUEUE_SERVICE_BUS_CORE_QUEUE_PROPERTIES:lockDurationInSec:30;maxSizeInMb:1024;messageTimeToLiveInSec:604800}"
+      # Azure Service Bus properties for Transport Api queues
       transport-api: "${TB_QUEUE_SERVICE_BUS_TA_QUEUE_PROPERTIES:lockDurationInSec:30;maxSizeInMb:1024;messageTimeToLiveInSec:604800}"
+      # Azure Service Bus properties for Notification queues
       notifications: "${TB_QUEUE_SERVICE_BUS_NOTIFICATIONS_QUEUE_PROPERTIES:lockDurationInSec:30;maxSizeInMb:1024;messageTimeToLiveInSec:604800}"
   rabbitmq:
+    # By default empty
     exchange_name: "${TB_QUEUE_RABBIT_MQ_EXCHANGE_NAME:}"
+    # RabbitMQ host used to establish connection
     host: "${TB_QUEUE_RABBIT_MQ_HOST:localhost}"
+    # RabbitMQ host used to establish a connection
     port: "${TB_QUEUE_RABBIT_MQ_PORT:5672}"
+    # Virtual hosts provide logical grouping and separation of resources
     virtual_host: "${TB_QUEUE_RABBIT_MQ_VIRTUAL_HOST:/}"
+    # Username for RabbitMQ user account
     username: "${TB_QUEUE_RABBIT_MQ_USERNAME:YOUR_USERNAME}"
+    # User password for RabbitMQ user account
     password: "${TB_QUEUE_RABBIT_MQ_PASSWORD:YOUR_PASSWORD}"
+    # Network connection between clients and RabbitMQ nodes can fail. RabbitMQ Java client supports automatic recovery of connections and topology (queues, exchanges, bindings, and consumers)
     automatic_recovery_enabled: "${TB_QUEUE_RABBIT_MQ_AUTOMATIC_RECOVERY_ENABLED:false}"
+    # The connection timeout for the RabbitMQ connection factory
     connection_timeout: "${TB_QUEUE_RABBIT_MQ_CONNECTION_TIMEOUT:60000}"
+    # RabbitMQ has a timeout for connection handshake. When clients run in heavily constrained environments, it may be necessary to increase the timeout
     handshake_timeout: "${TB_QUEUE_RABBIT_MQ_HANDSHAKE_TIMEOUT:10000}"
     queue-properties:
+      # RabbitMQ properties for Rule Engine queues
       rule-engine: "${TB_QUEUE_RABBIT_MQ_RE_QUEUE_PROPERTIES:x-max-length-bytes:1048576000;x-message-ttl:604800000}"
+      # RabbitMQ properties for Core queues
       core: "${TB_QUEUE_RABBIT_MQ_CORE_QUEUE_PROPERTIES:x-max-length-bytes:1048576000;x-message-ttl:604800000}"
+      # RabbitMQ properties for Transport API queues
       transport-api: "${TB_QUEUE_RABBIT_MQ_TA_QUEUE_PROPERTIES:x-max-length-bytes:1048576000;x-message-ttl:604800000}"
+      # RabbitMQ properties for Notification queues
       notifications: "${TB_QUEUE_RABBIT_MQ_NOTIFICATIONS_QUEUE_PROPERTIES:x-max-length-bytes:1048576000;x-message-ttl:604800000}"
   partitions:
-    hash_function_name: "${TB_QUEUE_PARTITIONS_HASH_FUNCTION_NAME:murmur3_128}"
+    hash_function_name: "${TB_QUEUE_PARTITIONS_HASH_FUNCTION_NAME:murmur3_128}" # murmur3_32, murmur3_128 or sha256
   transport_api:
+    # Topic used to consume api requests from transport microservices
     requests_topic: "${TB_QUEUE_TRANSPORT_API_REQUEST_TOPIC:tb_transport.api.requests}"
+    # Topic used to produce api responses to transport microservices
     responses_topic: "${TB_QUEUE_TRANSPORT_API_RESPONSE_TOPIC:tb_transport.api.responses}"
+    # Maximum pending api requests from transport microservices to be handled by server
     max_pending_requests: "${TB_QUEUE_TRANSPORT_MAX_PENDING_REQUESTS:10000}"
+    # Maximum timeout in milliseconds to handle api request from transport microservice by server
     max_requests_timeout: "${TB_QUEUE_TRANSPORT_MAX_REQUEST_TIMEOUT:10000}"
+    # Amount of threads used to invoke callbacks
     max_callback_threads: "${TB_QUEUE_TRANSPORT_MAX_CALLBACK_THREADS:100}"
+    # Interval in milliseconds to poll api requests from transport microservices
     request_poll_interval: "${TB_QUEUE_TRANSPORT_REQUEST_POLL_INTERVAL_MS:25}"
+    # Interval in milliseconds to poll api response from transport microservices
     response_poll_interval: "${TB_QUEUE_TRANSPORT_RESPONSE_POLL_INTERVAL_MS:25}"
   core:
+    # Default topic name of Kafka, RabbitMQ, etc. queue
     topic: "${TB_QUEUE_CORE_TOPIC:tb_core}"
+    # Interval in milliseconds to poll messages by Core microservices
     poll-interval: "${TB_QUEUE_CORE_POLL_INTERVAL_MS:25}"
+    # Amount of partitions used by Core microservices
     partitions: "${TB_QUEUE_CORE_PARTITIONS:10}"
+    # Timeout for processing a message pack by Core microservices
     pack-processing-timeout: "${TB_QUEUE_CORE_PACK_PROCESSING_TIMEOUT_MS:60000}"
+    # Default topic name for queue Kafka, RabbitMQ, etc.
     usage-stats-topic: "${TB_QUEUE_US_TOPIC:tb_usage_stats}"
     stats:
+      # Enable/disable statistics for Core microservices
       enabled: "${TB_QUEUE_CORE_STATS_ENABLED:false}"
+      # Statistics printing interval for Core microservices
       print-interval-ms: "${TB_QUEUE_CORE_STATS_PRINT_INTERVAL_MS:10000}"
   js:
     # JS Eval request topic
@@ -295,19 +410,26 @@ queue:
     # JS response poll interval
     response_poll_interval: "${REMOTE_JS_RESPONSE_POLL_INTERVAL_MS:25}"
   rule-engine:
+    # Deprecated. It will be removed in the nearest releases
     topic: "${TB_QUEUE_RULE_ENGINE_TOPIC:tb_rule_engine}"
+    # Interval in milliseconds to poll messages by Rule Engine
     poll-interval: "${TB_QUEUE_RULE_ENGINE_POLL_INTERVAL_MS:25}"
+    # Timeout for processing a message pack of Rule Engine
     pack-processing-timeout: "${TB_QUEUE_RULE_ENGINE_PACK_PROCESSING_TIMEOUT_MS:60000}"
     stats:
+      # Enable/disable statistics for Rule Engine
       enabled: "${TB_QUEUE_RULE_ENGINE_STATS_ENABLED:true}"
+      # Statistics printing interval for Rule Engine
       print-interval-ms: "${TB_QUEUE_RULE_ENGINE_STATS_PRINT_INTERVAL_MS:60000}"
   transport:
     # For high priority notifications that require minimum latency and processing time
     notifications_topic: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_TOPIC:tb_transport.notifications}"
+    # Interval in milliseconds to poll messages
     poll_interval: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_POLL_INTERVAL_MS:25}"
 
+# Service common properties
 service:
-  type: "${TB_SERVICE_TYPE:tb-transport}"
+  type: "${TB_SERVICE_TYPE:tb-transport}" # service type
   # Unique id for this service (autogenerated if empty)
   id: "${TB_SERVICE_ID:}"
 
@@ -315,14 +437,19 @@ service:
 usage:
   stats:
     report:
+      # Enable/Disable the collection of statistics about API usage. Collected on a system and tenant level by default
       enabled: "${USAGE_STATS_REPORT_ENABLED:true}"
+      # Enable/Disable collection of statistics about API usage on a customer level
       enabled_per_customer: "${USAGE_STATS_REPORT_PER_CUSTOMER_ENABLED:false}"
+      # Interval of reporting the statistics. By default, the summarized statistics are sent every 10 seconds
       interval: "${USAGE_STATS_REPORT_INTERVAL:10}"
 
+# Metrics parameters
 metrics:
   # Enable/disable actuator metrics.
   enabled: "${METRICS_ENABLED:false}"
 
+# General management parameters
 management:
   endpoints:
     web:
@@ -330,6 +457,7 @@ management:
         # Expose metrics endpoint (use value 'prometheus' to enable prometheus metrics).
         include: '${METRICS_ENDPOINTS_EXPOSE:info}'
 
+# Notification system parameters
 notification_system:
   rules:
     # Semicolon-separated deduplication durations (in millis) for trigger types. Format: 'NotificationRuleTriggerType1:123;NotificationRuleTriggerType2:456'
