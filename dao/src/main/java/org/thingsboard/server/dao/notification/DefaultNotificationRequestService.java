@@ -44,6 +44,7 @@ import java.util.Optional;
 public class DefaultNotificationRequestService implements NotificationRequestService, EntityDaoService {
 
     private final NotificationRequestDao notificationRequestDao;
+    private final NotificationDao notificationDao;
 
     private final ApplicationEventPublisher eventPublisher;
 
@@ -85,10 +86,10 @@ public class DefaultNotificationRequestService implements NotificationRequestSer
         return notificationRequestDao.findByRuleIdAndOriginatorEntityId(tenantId, ruleId, originatorEntityId);
     }
 
-    // ON DELETE CASCADE is used: notifications for request are deleted as well
     @Override
     public void deleteNotificationRequest(TenantId tenantId, NotificationRequest request) {
         notificationRequestDao.removeById(tenantId, request.getUuidId());
+        notificationDao.deleteByRequestId(tenantId, request.getId());
         if (request.isScheduled()) {
             eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(request.getId()).build());
         }
@@ -104,6 +105,7 @@ public class DefaultNotificationRequestService implements NotificationRequestSer
         notificationRequestDao.updateById(tenantId, requestId, requestStatus, stats);
     }
 
+    // notifications themselves are left in the database until removed by ttl
     @Override
     public void deleteNotificationRequestsByTenantId(TenantId tenantId) {
         notificationRequestDao.removeByTenantId(tenantId);
@@ -118,7 +120,6 @@ public class DefaultNotificationRequestService implements NotificationRequestSer
     public EntityType getEntityType() {
         return EntityType.NOTIFICATION_REQUEST;
     }
-
 
     private static class NotificationRequestValidator extends DataValidator<NotificationRequest> {
 

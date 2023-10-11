@@ -4003,6 +4003,12 @@
         "rpc-ttl-days": "RPC TTL days",
         "rpc-ttl-days-required": "RPC TTL days required",
         "rpc-ttl-days-days-range": "RPC TTL days can't be negative",
+        "queue-stats-ttl-days": "Queue stats TTL days",
+        "queue-stats-ttl-days-required": "Queue stats TTL days required",
+        "queue-stats-ttl-days-range": "Queue stats TTL days can't be negative",
+        "rule-engine-exceptions-ttl-days": "Rule Engine exceptions TTL days",
+        "rule-engine-exceptions-ttl-days-required": "Rule Engine exceptions TTL days required",
+        "rule-engine-exceptions-ttl-days-range": "Rule Engine exceptions TTL days can't be negative",
         "max-rule-node-executions-per-message": "Rule node per message executions maximum number",
         "max-rule-node-executions-per-message-required": "MRule node per message executions maximum number is required.",
         "max-rule-node-executions-per-message-range": "Rule node per message executions maximum number can't be negative",
@@ -5051,7 +5057,8 @@
             "auto-scale": "Auto scale",
             "battery-level-color": "Battery level color",
             "battery-shape-color": "Battery shape color",
-            "battery-level-card-style": "Battery level card style"
+            "battery-level-card-style": "Battery level card style",
+            "sections-count": "Sections count"
         },
         "chart": {
             "common-settings": "Common settings",
@@ -5195,7 +5202,8 @@
             "value-range": "Value range",
             "from": "From",
             "to": "To",
-            "color-function": "Color function"
+            "color-function": "Color function",
+            "copy-color-settings-from": "Copy color settings from"
         },
         "dashboard-state": {
             "dashboard-state-settings": "Dashboard state settings",
@@ -6033,7 +6041,8 @@
             "icon": "Icon",
             "value": "Value",
             "date": "Date",
-            "value-card-style": "Value card style"
+            "value-card-style": "Value card style",
+            "auto-scale": "Auto scale"
         },
         "aggregated-value-card": {
             "subtitle": "Subtitle",
@@ -6054,7 +6063,8 @@
             "remove-value": "Remove value",
             "no-values": "No values configured",
             "aggregation": "Aggregation",
-            "aggregated-value-card-style": "Aggregated value card style"
+            "aggregated-value-card-style": "Aggregated value card style",
+            "auto-scale": "Auto scale"
         },
         "alarm-count": {
             "alarm-count-card-style": "Alarm count card style"
@@ -6070,7 +6080,8 @@
             "icon": "Icon",
             "icon-background": "Icon background",
             "value": "Value",
-            "chevron": "Chevron"
+            "chevron": "Chevron",
+            "auto-scale": "Auto scale"
         },
         "table": {
             "common-table-settings": "Common Table Settings",
@@ -6137,6 +6148,27 @@
             "timeseries-column-error": "At least one timeseries column should be specified",
             "table-tabs": "Table tabs",
             "show-cell-actions-menu-mobile": "Show cell actions dropdown menu in mobile mode"
+        },
+        "wind-speed-direction": {
+            "layout": "Layout",
+            "layout-default": "Default",
+            "layout-advanced": "Advanced",
+            "layout-simplified": "Simplified",
+            "values": "Values",
+            "wind-direction": "Wind direction",
+            "center-value": "Center value",
+            "icon": "Icon",
+            "arrow": "Arrow",
+            "ticks": "Ticks",
+            "labels-type": "Labels type",
+            "directional-names": "Directional names",
+            "degrees": "Degrees",
+            "major-ticks": "Major ticks",
+            "minor-ticks": "Minor ticks",
+            "wind-speed-direction-card-style": "Wind speed and direction card style",
+            "ticks-color": "Ticks color",
+            "ticks-labels-type": "Ticks labels type",
+            "arrow-color": "Arrow color"
         },
         "value-source": {
             "value-source": "Value source",

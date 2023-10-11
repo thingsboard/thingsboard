@@ -400,4 +400,13 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
         publishEvictEvent(new DeviceCredentialsEvictEvent(deviceCredentials.getCredentialsId(), null));
     }
 
+    @Override
+    public void deleteDeviceCredentialsByDeviceId(TenantId tenantId, DeviceId deviceId) {
+        log.trace("Executing deleteDeviceCredentialsByDeviceId [{}]", deviceId);
+        DeviceCredentials credentials = deviceCredentialsDao.removeByDeviceId(tenantId, deviceId);
+        if (credentials != null) {
+            publishEvictEvent(new DeviceCredentialsEvictEvent(credentials.getCredentialsId(), null));
+        }
+    }
+
 }

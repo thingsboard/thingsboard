@@ -44,6 +44,7 @@
     "@ngrx/store-devtools": "^15.4.0",
     "@ngx-translate/core": "^14.0.0",
     "@ngx-translate/http-loader": "^7.0.0",
+    "@svgdotjs/svg.js": "^3.2.0",
     "@tinymce/tinymce-angular": "^7.0.0",
     "ace-builds": "1.4.13",
     "ace-diff": "^3.0.3",

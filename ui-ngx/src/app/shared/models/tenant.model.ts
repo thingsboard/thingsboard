@@ -76,6 +76,8 @@ export interface DefaultTenantProfileConfiguration {
   defaultStorageTtlDays: number;
   alarmsTtlDays: number;
   rpcTtlDays: number;
+  queueStatsTtlDays: number;
+  ruleEngineExceptionsTtlDays: number;
 }
 
 export type TenantProfileConfigurations = DefaultTenantProfileConfiguration;
@@ -124,6 +126,8 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
           defaultStorageTtlDays: 0,
           alarmsTtlDays: 0,
           rpcTtlDays: 0,
+          queueStatsTtlDays: 0,
+          ruleEngineExceptionsTtlDays: 0
         };
         configuration = {...defaultConfiguration, type: TenantProfileType.DEFAULT};
         break;

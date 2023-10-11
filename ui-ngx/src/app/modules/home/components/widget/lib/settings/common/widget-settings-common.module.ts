@@ -27,7 +27,10 @@ import {
 } from '@home/components/widget/lib/settings/common/image-cards-select.component';
 import { FontSettingsComponent } from '@home/components/widget/lib/settings/common/font-settings.component';
 import { FontSettingsPanelComponent } from '@home/components/widget/lib/settings/common/font-settings-panel.component';
-import { ColorSettingsComponent } from '@home/components/widget/lib/settings/common/color-settings.component';
+import {
+  ColorSettingsComponent,
+  ColorSettingsComponentService
+} from '@home/components/widget/lib/settings/common/color-settings.component';
 import {
   ColorSettingsPanelComponent
 } from '@home/components/widget/lib/settings/common/color-settings-panel.component';
@@ -83,6 +86,9 @@ import {
     LegendConfigComponent,
     WidgetFontComponent,
     CountWidgetSettingsComponent
+  ],
+  providers: [
+    ColorSettingsComponentService
   ]
 })
 export class WidgetSettingsCommonModule {
