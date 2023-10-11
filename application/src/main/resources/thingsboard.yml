@@ -16,6 +16,7 @@
 
 # Server common properties
 server:
+  smth: "new"
   # Server bind address
   address: "${HTTP_BIND_ADDRESS:0.0.0.0}"
   # Server bind port
