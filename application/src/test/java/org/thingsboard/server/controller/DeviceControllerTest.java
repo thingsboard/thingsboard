@@ -48,6 +48,10 @@ import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -502,6 +506,39 @@ public class DeviceControllerTest extends AbstractControllerTest {
         doGet("/api/device/" + savedDeviceId)
                 .andExpect(status().isNotFound())
                 .andExpect(statusReason(containsString(msgErrorNoFound("Device", savedDeviceId.getId().toString()))));
+    }
+
+    @Test
+    public void testDeleteDeviceWithAlarmsAndAlarmTypes() throws Exception {
+        Device device = new Device();
+        device.setName("My device");
+        device.setType("default");
+        Device savedDevice = doPost("/api/device", device, Device.class);
+
+        Alarm alarm = Alarm.builder()
+                .tenantId(tenantId)
+                .originator(savedDevice.getId())
+                .severity(AlarmSeverity.CRITICAL)
+                .type("test_type")
+                .build();
+
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+        Assert.assertNotNull(alarm);
+
+        AlarmInfo foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
+        Assert.assertNotNull(foundAlarm);
+
+        doDelete("/api/device/" + savedDevice.getId().getId().toString())
+                .andExpect(status().isOk());
+
+        String DeviceIdStr = savedDevice.getId().getId().toString();
+        doGet("/api/device/" + DeviceIdStr)
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(containsString(msgErrorNoFound("Device", DeviceIdStr))));
+
+        doGet("/api/device/info/" + alarm.getId())
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(containsString(msgErrorNoFound("Device", alarm.getId().getId().toString()))));
     }
 
     @Test

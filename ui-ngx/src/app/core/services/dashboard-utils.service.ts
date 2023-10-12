@@ -223,6 +223,15 @@ export class DashboardUtilsService {
   public validateAndUpdateWidget(widget: Widget): Widget {
     widget.config = this.validateAndUpdateWidgetConfig(widget.config, widget.type);
     widget = this.validateAndUpdateWidgetTypeFqn(widget);
+    if (isDefined((widget as any).title)) {
+      delete (widget as any).title;
+    }
+    if (isDefined((widget as any).image)) {
+      delete (widget as any).image;
+    }
+    if (isDefined((widget as any).description)) {
+      delete (widget as any).description;
+    }
     // Temp workaround
     if (['system.charts.state_chart',
          'system.charts.basic_timeseries',
@@ -246,11 +255,20 @@ export class DashboardUtilsService {
   }
 
   private validateAndUpdateWidgetTypeFqn(widget: Widget): Widget {
+    const w = widget as any;
     if (!isValidWidgetFullFqn(widget.typeFullFqn)) {
-      const w = widget as any;
       if (isDefinedAndNotNull(w.isSystemType) && isNotEmptyStr(w.bundleAlias) && isNotEmptyStr(w.typeAlias)) {
         widget.typeFullFqn = (w.isSystemType ? 'system' : 'tenant') + '.' + w.bundleAlias + '.' + w.typeAlias;
       }
+    }
+    if (isDefined(w.isSystemType)) {
+      delete w.isSystemType;
+    }
+    if (isDefined(w.bundleAlias)) {
+      delete w.bundleAlias;
+    }
+    if (isDefined(w.typeAlias)) {
+      delete w.typeAlias;
     }
     // Temp workaround
     if (widget.typeFullFqn === 'system.charts.timeseries') {
@@ -379,6 +397,7 @@ export class DashboardUtilsService {
     const newDatasource = deepClone(datasource);
     if (newDatasource.type === DatasourceType.function) {
       newDatasource.type = DatasourceType.entity;
+      newDatasource.name = '';
       if (widgetTypeDescriptor.hasBasicMode && config.configMode === WidgetConfigMode.basic) {
         newDatasource.type = DatasourceType.device;
       }

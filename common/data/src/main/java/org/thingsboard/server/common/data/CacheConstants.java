@@ -45,4 +45,5 @@ public class CacheConstants {
     public static final String DASHBOARD_TITLES_CACHE = "dashboardTitles";
     public static final String ENTITY_COUNT_CACHE = "entityCount";
     public static final String RESOURCE_INFO_CACHE = "resourceInfo";
+    public static final String ALARM_TYPES_CACHE = "alarmTypes";
 }

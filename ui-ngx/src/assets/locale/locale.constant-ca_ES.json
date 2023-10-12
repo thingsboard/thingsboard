@@ -1990,7 +1990,6 @@
         "help-text": "Utilitzeu '%' segons les necessitats: '%entity_name_contains%', '%entity_name_ends', 'entity_starts_with'.",
         "use-entity-name-filter": "Utilitza filtre",
         "entity-list-empty": "No hi ha entitats seleccionades.",
-        "entity-type-list-empty": "No hi ha tipus d'entitat seleccionats.",
         "entity-name-filter-required": "Cal filtre de nom d'entitat.",
         "entity-name-filter-no-entity-matched": "No hi ha entitats que comencen amb '{{entity}}' .",
         "all-subtypes": "Tots",

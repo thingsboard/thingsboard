@@ -787,7 +787,6 @@
     "name-starts-with": "O nome começa com",
     "use-entity-name-filter": "Usar filtro",
     "entity-list-empty": "Nenhuma entidade selecionada.",
-    "entity-type-list-empty": "Nenhum tipo de entidade selecionado.",
     "entity-name-filter-required": "O filtro do nome de entidade é obrigatório.",
     "entity-name-filter-no-entity-matched": "Nenhuma entidade encontrada que comece com '{{entity}}'.",
     "all-subtypes": "Tudo",

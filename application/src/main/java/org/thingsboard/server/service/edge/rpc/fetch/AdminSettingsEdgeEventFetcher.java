@@ -85,7 +85,7 @@ public class AdminSettingsEdgeEventFetcher implements EdgeEventFetcher {
         result.add(EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.ADMIN_SETTINGS,
                 EdgeEventActionType.UPDATED, null, JacksonUtil.OBJECT_MAPPER.valueToTree(tenantMailSettings)));
 
-        AdminSettings systemMailTemplates = loadMailTemplates();
+        AdminSettings systemMailTemplates = loadMailTemplates(tenantId);
         result.add(EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.ADMIN_SETTINGS,
                 EdgeEventActionType.UPDATED, null, JacksonUtil.OBJECT_MAPPER.valueToTree(systemMailTemplates)));
 
@@ -97,7 +97,7 @@ public class AdminSettingsEdgeEventFetcher implements EdgeEventFetcher {
         return new PageData<>(result, 1, result.size(), false);
     }
 
-    private AdminSettings loadMailTemplates() throws Exception {
+    private AdminSettings loadMailTemplates(TenantId tenantId) throws Exception {
         Map<String, Object> mailTemplates = new HashMap<>();
         for (String templatesName : templatesNames) {
             Template template = freemarkerConfig.getTemplate(templatesName);
@@ -107,7 +107,7 @@ public class AdminSettingsEdgeEventFetcher implements EdgeEventFetcher {
                 if (mailTemplate != null) {
                     mailTemplates.put(name, mailTemplate);
                 } else {
-                    log.error("Can't load mail template from file {}", template.getName());
+                    log.error("[{}] Can't load mail template from file {}", tenantId, template.getName());
                 }
             }
         }

@@ -22,7 +22,7 @@ $previewSize: 78px !default;
 
   .tb-container {
     margin-top: 0;
-    padding: 0;
+    padding: 0 0 16px;
     label.tb-title {
       display: block;
       padding-bottom: 8px;
@@ -121,6 +121,7 @@ $previewSize: 78px !default;
 
   .tb-hint{
     margin-top: 8px;
+    padding-bottom: 0;
   }
 }
 

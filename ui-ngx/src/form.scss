@@ -65,6 +65,9 @@
       box-shadow: none;
       border-radius: 0;
     }
+    &.no-gap {
+      gap: 0;
+    }
     &.tb-slide-toggle {
       padding: 0;
       gap: 0;
@@ -201,6 +204,12 @@
     .mat-slide:only-child {
       margin: 8px 0;
     }
+    .tb-required::after {
+      font-size: 13px;
+      color: rgba(0, 0, 0, .54);
+      vertical-align: top;
+      content: " *";
+    }
   }
 
   .tb-form-panel, .tb-form-row {
@@ -218,14 +227,16 @@
     }
   }
 
-  .tb-form-row .mat-mdc-form-field, .mat-mdc-form-field.tb-inline-field {
+  .tb-form-row:not(.tb-standard-fields) .mat-mdc-form-field:not(.tb-not-inline-field), .mat-mdc-form-field.tb-inline-field {
     &.mat-form-field-appearance-fill {
       .mdc-text-field--filled:not(.mdc-text-field--disabled) {
         &:before {
           opacity: 0;
         }
-        .mdc-line-ripple::before {
-          border-bottom-color: rgba(0, 0, 0, 0.12);
+        &:not(.mdc-text-field--invalid) {
+          .mdc-line-ripple::before {
+            border-bottom-color: rgba(0, 0, 0, 0.12);
+          }
         }
       }
       .mat-mdc-form-field-focus-overlay {

@@ -15,6 +15,9 @@
  */
 package org.thingsboard.script.api.tbel;
 
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.StringUtils;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -22,20 +25,23 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.chrono.IsoChronology;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAccessor;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Locale;
-import java.util.TimeZone;
+import java.util.function.BiFunction;
 
 public class TbDate extends Date {
 
     private static final DateTimeFormatter isoDateFormatter = DateTimeFormatter.ofPattern(
             "yyyy-MM-dd[[ ]['T']HH:mm[:ss[.SSS]][ ][XXX][Z][z][VV][O]]").withZone(ZoneId.systemDefault());
 
-    private static final DateFormat isoDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+    private static final ThreadLocal<DateFormat> isoDateFormat = ThreadLocal.withInitial(() ->
+            new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
 
     public TbDate() {
         super();
@@ -73,18 +79,80 @@ public class TbDate extends Date {
     }
 
     public String toISOString() {
-        return isoDateFormat.format(this);
+        return isoDateFormat.get().format(this);
+    }
+
+    public String toLocaleDateString() {
+        return toLocaleDateString(null, null);
+    }
+
+    public String toLocaleDateString(String locale) {
+        return toLocaleDateString(locale, null);
+    }
+
+    public String toLocaleDateString(String localeStr, String optionsStr) {
+        return toLocaleString(localeStr, optionsStr, (locale, options) -> DateTimeFormatter.ofLocalizedDate(options.getDateStyle()).withLocale(locale));
+    }
+
+    public String toLocaleTimeString() {
+        return toLocaleTimeString(null, null);
+    }
+
+    public String toLocaleTimeString(String locale) {
+        return toLocaleTimeString(locale, null);
+    }
+
+    public String toLocaleTimeString(String localeStr, String optionsStr) {
+        return toLocaleString(localeStr, optionsStr, (locale, options) -> DateTimeFormatter.ofLocalizedTime(options.getTimeStyle()).withLocale(locale));
+    }
+
+    @Override
+    public String toLocaleString() {
+        return toLocaleString(null, null);
     }
 
     public String toLocaleString(String locale) {
-        DateFormat formatter = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM, Locale.forLanguageTag(locale));
-        return formatter.format(this);
+        return toLocaleString(locale, null);
     }
 
-    public String toLocaleString(String locale, String tz) {
-        DateFormat formatter = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM, Locale.forLanguageTag(locale));
-        formatter.setTimeZone(TimeZone.getTimeZone(tz));
-        return formatter.format(this);
+    public String toLocaleString(String localeStr, String optionsStr) {
+        return toLocaleString(localeStr, optionsStr, (locale, options) -> {
+            String formatPattern =
+                    DateTimeFormatterBuilder.getLocalizedDateTimePattern(
+                            options.getDateStyle(),
+                            options.getTimeStyle(),
+                            IsoChronology.INSTANCE,
+                            locale);
+            return DateTimeFormatter.ofPattern(formatPattern, locale);
+        });
+    }
+
+    public String toLocaleString(String localeStr, String optionsStr, BiFunction<Locale, DateTimeFormatOptions, DateTimeFormatter> formatterBuilder) {
+        Locale locale = StringUtils.isNotEmpty(localeStr) ? Locale.forLanguageTag(localeStr) : Locale.getDefault();
+        DateTimeFormatOptions options = getDateFormattingOptions(optionsStr);
+        ZonedDateTime zdt = this.toInstant().atZone(options.getTimeZone().toZoneId());
+        DateTimeFormatter formatter;
+        if (StringUtils.isNotEmpty(options.getPattern())) {
+            formatter = new DateTimeFormatterBuilder().appendPattern(options.getPattern()).toFormatter(locale);
+        } else {
+            formatter = formatterBuilder.apply(locale, options);
+        }
+        return formatter.format(zdt);
+    }
+
+    private static DateTimeFormatOptions getDateFormattingOptions(String options) {
+        DateTimeFormatOptions opt = null;
+        if (StringUtils.isNotEmpty(options)) {
+            try {
+                opt = JacksonUtil.fromString(options, DateTimeFormatOptions.class);
+            } catch (IllegalArgumentException iae) {
+                opt = new DateTimeFormatOptions(options);
+            }
+        }
+        if (opt == null) {
+            opt = new DateTimeFormatOptions();
+        }
+        return opt;
     }
 
     public static long now() {

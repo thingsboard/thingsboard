@@ -40,6 +40,22 @@
     <ng-container *ngTemplateOutlet="function"></ng-container>
   </div>
   <div class="tb-color-settings-panel-buttons">
+    <button *ngIf="settingsComponents?.length"
+            #copySettingsButton
+            mat-stroked-button
+            color="primary"
+            type="button"
+            [matMenuTriggerFor]="settingsSourcesMenu" [matMenuTriggerData]="{menuWidth: copySettingsButton._elementRef.nativeElement.clientWidth}">
+      {{ 'widgets.color.copy-color-settings-from' | translate }}
+    </button>
+    <mat-menu #settingsSourcesMenu="matMenu">
+      <ng-template matMenuContent let-menuWidth="menuWidth">
+        <div [style.min-width.px]="menuWidth">
+          <button mat-menu-item *ngFor="let comp of settingsComponents" (click)="copyColorSettings(comp)">{{ comp.settingsKey }}</button>
+        </div>
+      </ng-template>
+    </mat-menu>
+    <span fxFlex></span>
     <button mat-button
             color="primary"
             type="button"

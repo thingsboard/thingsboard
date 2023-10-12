@@ -32,7 +32,8 @@
   <button type="button"
           mat-stroked-button
           class="tb-box-button"
-          [ngStyle]="color && !disabled ? { color: color } : {}"
+          [style.color]="color && !disabled ? color : ''"
+          [style.background-color]="backgroundColor && !disabled ? backgroundColor : ''"
           [disabled]="disabled"
           #matButton
           (click)="openIconPopup($event, matButton)">

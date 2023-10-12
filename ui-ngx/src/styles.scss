@@ -699,7 +699,7 @@ mat-label {
       }
 
       .mat-mdc-cell {
-        background: inherit;
+        background-color: transparent;
         color: inherit;
         font-size: inherit;
         font-family: inherit;
@@ -738,16 +738,21 @@ mat-label {
     }
   }
 
-  .mat-mdc-row {
-    transition: background-color .2s;
-    &:hover:not(.tb-current-entity) {
-      background-color: #f4f4f4;
-    }
-    &.tb-current-entity {
-      background-color: #e9e9e9;
-    }
-    &.tb-pointer {
-      cursor: pointer;
+  .mat-mdc-table {
+    .mat-mdc-row {
+      transition: background-color .2s;
+
+      &:hover:not(.tb-current-entity) {
+        background-color: #f4f4f4;
+      }
+
+      &.tb-current-entity {
+        background-color: #e9e9e9;
+      }
+
+      &.tb-pointer {
+        cursor: pointer;
+      }
     }
   }
 

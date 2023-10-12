@@ -82,7 +82,7 @@ public class JpaNotificationDao extends JpaAbstractDao<NotificationEntity, Notif
     }
 
     /**
-     * For this hot method, the partial index `idx_notification_recipient_id_unread` was introduced since 3.5.2
+     * For this hot method, the partial index `idx_notification_recipient_id_unread` was introduced since 3.6.0
      * */
     @Override
     public int countUnreadByRecipientId(TenantId tenantId, UserId recipientId) {
@@ -102,6 +102,16 @@ public class JpaNotificationDao extends JpaAbstractDao<NotificationEntity, Notif
     @Override
     public int updateStatusByRecipientId(TenantId tenantId, UserId recipientId, NotificationStatus status) {
         return notificationRepository.updateStatusByRecipientId(recipientId.getId(), status);
+    }
+
+    @Override
+    public void deleteByRequestId(TenantId tenantId, NotificationRequestId requestId) {
+        notificationRepository.deleteByRequestId(requestId.getId());
+    }
+
+    @Override
+    public void deleteByRecipientId(TenantId tenantId, UserId recipientId) {
+        notificationRepository.deleteByRecipientId(recipientId.getId());
     }
 
     @Override

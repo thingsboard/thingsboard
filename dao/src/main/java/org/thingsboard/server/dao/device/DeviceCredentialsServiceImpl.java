@@ -176,9 +176,6 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
         } else {
             deviceCredentials.setCredentialsId(EncryptionUtil.getSha3Hash("|", mqttCredentials.getClientId(), mqttCredentials.getUserName()));
         }
-        if (StringUtils.isNotEmpty(mqttCredentials.getPassword())) {
-            mqttCredentials.setPassword(mqttCredentials.getPassword());
-        }
         deviceCredentials.setCredentialsValue(JacksonUtil.toString(mqttCredentials));
     }
 
@@ -401,6 +398,15 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
         log.trace("Executing deleteDeviceCredentials [{}]", deviceCredentials);
         deviceCredentialsDao.removeById(tenantId, deviceCredentials.getUuidId());
         publishEvictEvent(new DeviceCredentialsEvictEvent(deviceCredentials.getCredentialsId(), null));
+    }
+
+    @Override
+    public void deleteDeviceCredentialsByDeviceId(TenantId tenantId, DeviceId deviceId) {
+        log.trace("Executing deleteDeviceCredentialsByDeviceId [{}]", deviceId);
+        DeviceCredentials credentials = deviceCredentialsDao.removeByDeviceId(tenantId, deviceId);
+        if (credentials != null) {
+            publishEvictEvent(new DeviceCredentialsEvictEvent(credentials.getCredentialsId(), null));
+        }
     }
 
 }

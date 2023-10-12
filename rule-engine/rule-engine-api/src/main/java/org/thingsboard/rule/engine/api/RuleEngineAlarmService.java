@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.api;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
@@ -34,9 +35,9 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
-import org.thingsboard.server.dao.alarm.AlarmOperationResult;
 
 import java.util.Collection;
 
@@ -54,6 +55,7 @@ public interface RuleEngineAlarmService {
      * Only one active alarm may exist for the pair {originatorId, alarmType}
      */
     AlarmApiCallResult createAlarm(AlarmCreateOrUpdateActiveRequest request);
+
     /**
      * Designed to update existing alarm. Accepts only part of the alarm fields.
      */
@@ -67,21 +69,6 @@ public interface RuleEngineAlarmService {
 
     AlarmApiCallResult unassignAlarm(TenantId tenantId, AlarmId alarmId, long assignTs);
 
-    /*
-     *  Legacy API, before 3.5.
-     */
-    @Deprecated(since = "3.5", forRemoval = true)
-    Alarm createOrUpdateAlarm(Alarm alarm);
-
-    @Deprecated(since = "3.5", forRemoval = true)
-    ListenableFuture<Boolean> ackAlarm(TenantId tenantId, AlarmId alarmId, long ackTs);
-
-    @Deprecated(since = "3.5", forRemoval = true)
-    ListenableFuture<Boolean> clearAlarm(TenantId tenantId, AlarmId alarmId, JsonNode details, long clearTs);
-
-    @Deprecated(since = "3.5", forRemoval = true)
-    ListenableFuture<AlarmOperationResult> clearAlarmForResult(TenantId tenantId, AlarmId alarmId, JsonNode details, long clearTs);
-
     // Other API
     Boolean deleteAlarm(TenantId tenantId, AlarmId alarmId);
 
@@ -91,7 +78,7 @@ public interface RuleEngineAlarmService {
 
     Alarm findLatestActiveByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
 
-    ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
+    Alarm findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
 
     AlarmInfo findAlarmInfoById(TenantId tenantId, AlarmId alarmId);
 
@@ -99,15 +86,17 @@ public interface RuleEngineAlarmService {
         return Futures.immediateFuture(findAlarmInfoById(tenantId, alarmId));
     }
 
-    ListenableFuture<PageData<AlarmInfo>> findAlarms(TenantId tenantId, AlarmQuery query);
+    PageData<AlarmInfo> findAlarms(TenantId tenantId, AlarmQuery query);
 
-    ListenableFuture<PageData<AlarmInfo>> findCustomerAlarms(TenantId tenantId, CustomerId customerId, AlarmQuery query);
+    PageData<AlarmInfo> findCustomerAlarms(TenantId tenantId, CustomerId customerId, AlarmQuery query);
 
-    ListenableFuture<PageData<AlarmInfo>> findAlarmsV2(TenantId tenantId, AlarmQueryV2 query);
+    PageData<AlarmInfo> findAlarmsV2(TenantId tenantId, AlarmQueryV2 query);
 
-    ListenableFuture<PageData<AlarmInfo>> findCustomerAlarmsV2(TenantId tenantId, CustomerId customerId, AlarmQueryV2 query);
+    PageData<AlarmInfo> findCustomerAlarmsV2(TenantId tenantId, CustomerId customerId, AlarmQueryV2 query);
 
     AlarmSeverity findHighestAlarmSeverity(TenantId tenantId, EntityId entityId, AlarmSearchStatus alarmSearchStatus, AlarmStatus alarmStatus, String assigneeId);
 
     PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, AlarmDataQuery query, Collection<EntityId> orderedEntityIds);
+
+    PageData<EntitySubtype> findAlarmTypesByTenantId(TenantId tenantId, PageLink pageLink);
 }

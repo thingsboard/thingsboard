@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.google.common.collect.Lists;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.KvEntry;
 
@@ -35,7 +36,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -70,8 +70,7 @@ public class JacksonUtil {
         try {
             return fromValue != null ? OBJECT_MAPPER.convertValue(fromValue, toValueType) : null;
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("The given object value: "
-                    + fromValue + " cannot be converted to " + toValueType, e);
+            throw new IllegalArgumentException("The given object value cannot be converted to " + toValueType + ": " + fromValue, e);
         }
     }
 
@@ -79,8 +78,7 @@ public class JacksonUtil {
         try {
             return fromValue != null ? OBJECT_MAPPER.convertValue(fromValue, toValueTypeRef) : null;
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("The given object value: "
-                    + fromValue + " cannot be converted to " + toValueTypeRef, e);
+            throw new IllegalArgumentException("The given object value cannot be converted to " + toValueTypeRef + ": " + fromValue, e);
         }
     }
 
@@ -88,8 +86,7 @@ public class JacksonUtil {
         try {
             return string != null ? OBJECT_MAPPER.readValue(string, clazz) : null;
         } catch (IOException e) {
-            throw new IllegalArgumentException("The given string value: "
-                    + string + " cannot be transformed to Json object", e);
+            throw new IllegalArgumentException("The given string value cannot be transformed to Json object: " + string, e);
         }
     }
 
@@ -97,8 +94,7 @@ public class JacksonUtil {
         try {
             return string != null ? OBJECT_MAPPER.readValue(string, valueTypeRef) : null;
         } catch (IOException e) {
-            throw new IllegalArgumentException("The given string value: "
-                    + string + " cannot be transformed to Json object", e);
+            throw new IllegalArgumentException("The given string value cannot be transformed to Json object: " + string, e);
         }
     }
 
@@ -106,8 +102,7 @@ public class JacksonUtil {
         try {
             return string != null ? OBJECT_MAPPER.readValue(string, javaType) : null;
         } catch (IOException e) {
-            throw new IllegalArgumentException("The given String value: "
-                    + string + " cannot be transformed to Json object", e);
+            throw new IllegalArgumentException("The given String value cannot be transformed to Json object: " + string, e);
         }
     }
 
@@ -115,8 +110,7 @@ public class JacksonUtil {
         try {
             return bytes != null ? OBJECT_MAPPER.readValue(bytes, clazz) : null;
         } catch (IOException e) {
-            throw new IllegalArgumentException("The given string value: "
-                    + Arrays.toString(bytes) + " cannot be transformed to Json object", e);
+            throw new IllegalArgumentException("The given string value cannot be transformed to Json object: " + Arrays.toString(bytes), e);
         }
     }
 
@@ -124,8 +118,7 @@ public class JacksonUtil {
         try {
             return OBJECT_MAPPER.readTree(bytes);
         } catch (IOException e) {
-            throw new IllegalArgumentException("The given byte[] value: "
-                    + Arrays.toString(bytes) + " cannot be transformed to Json object", e);
+            throw new IllegalArgumentException("The given byte[] value cannot be transformed to Json object: " + Arrays.toString(bytes), e);
         }
     }
 
@@ -133,8 +126,7 @@ public class JacksonUtil {
         try {
             return value != null ? OBJECT_MAPPER.writeValueAsString(value) : null;
         } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("The given Json object value: "
-                    + value + " cannot be transformed to a String", e);
+            throw new IllegalArgumentException("The given Json object value cannot be transformed to a String: " + value, e);
         }
     }
 
@@ -208,8 +200,7 @@ public class JacksonUtil {
         try {
             return OBJECT_MAPPER.writeValueAsBytes(value);
         } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("The given Json object value: "
-                    + value + " cannot be transformed to a String", e);
+            throw new IllegalArgumentException("The given Json object value cannot be transformed to a String: " + value, e);
         }
     }
 
@@ -228,27 +219,24 @@ public class JacksonUtil {
         return node;
     }
 
-    public static void replaceUuidsRecursively(JsonNode node, Set<String> skipFieldsSet, Pattern includedFieldsPattern, UnaryOperator<UUID> replacer) {
+    public static void replaceUuidsRecursively(JsonNode node, Set<String> skippedRootFields, Pattern includedFieldsPattern, UnaryOperator<UUID> replacer, boolean root) {
         if (node == null) {
             return;
         }
         if (node.isObject()) {
             ObjectNode objectNode = (ObjectNode) node;
-            List<String> fieldNames = new ArrayList<>(objectNode.size());
-            objectNode.fieldNames().forEachRemaining(fieldNames::add);
+            List<String> fieldNames = Lists.newArrayList(objectNode.fieldNames());
             for (String fieldName : fieldNames) {
-                if (skipFieldsSet.contains(fieldName)) {
+                if (root && skippedRootFields.contains(fieldName)) {
                     continue;
-                }
-                if (includedFieldsPattern != null) {
-                    if (!RegexUtils.matches(fieldName, includedFieldsPattern)) {
-                        continue;
-                    }
                 }
                 var child = objectNode.get(fieldName);
                 if (child.isObject() || child.isArray()) {
-                    replaceUuidsRecursively(child, skipFieldsSet, includedFieldsPattern, replacer);
+                    replaceUuidsRecursively(child, skippedRootFields, includedFieldsPattern, replacer, false);
                 } else if (child.isTextual()) {
+                    if (includedFieldsPattern != null && !RegexUtils.matches(fieldName, includedFieldsPattern)) {
+                        continue;
+                    }
                     String text = child.asText();
                     String newText = RegexUtils.replace(text, RegexUtils.UUID_PATTERN, uuid -> replacer.apply(UUID.fromString(uuid)).toString());
                     if (!text.equals(newText)) {
@@ -261,7 +249,7 @@ public class JacksonUtil {
             for (int i = 0; i < array.size(); i++) {
                 JsonNode arrayElement = array.get(i);
                 if (arrayElement.isObject() || arrayElement.isArray()) {
-                    replaceUuidsRecursively(arrayElement, skipFieldsSet, includedFieldsPattern, replacer);
+                    replaceUuidsRecursively(arrayElement, skippedRootFields, includedFieldsPattern, replacer, false);
                 } else if (arrayElement.isTextual()) {
                     String text = arrayElement.asText();
                     String newText = RegexUtils.replace(text, RegexUtils.UUID_PATTERN, uuid -> replacer.apply(UUID.fromString(uuid)).toString());

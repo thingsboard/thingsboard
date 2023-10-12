@@ -86,6 +86,15 @@ public abstract class DataValidator<D extends BaseData<?>> {
     public void validateDelete(TenantId tenantId, EntityId entityId) {
     }
 
+    public void validateString(String exceptionPrefix, String name) {
+        if (StringUtils.isEmpty(name) || name.trim().length() == 0) {
+            throw new DataValidationException(exceptionPrefix + " should be specified!");
+        }
+        if (StringUtils.contains0x00(name)) {
+            throw new DataValidationException(exceptionPrefix + " should not contain 0x00 symbol!");
+        }
+    }
+
     protected boolean isSameData(D existentData, D actualData) {
         return actualData.getId() != null && existentData.getId().equals(actualData.getId());
     }
@@ -151,8 +160,8 @@ public abstract class DataValidator<D extends BaseData<?>> {
         validateQueueNameOrTopic(topic, TOPIC);
     }
 
-    private static void validateQueueNameOrTopic(String value, String fieldName) {
-        if (StringUtils.isEmpty(value)) {
+    static void validateQueueNameOrTopic(String value, String fieldName) {
+        if (StringUtils.isEmpty(value) || value.trim().length() == 0 ) {
             throw new DataValidationException(String.format("Queue %s should be specified!", fieldName));
         }
         if (!QUEUE_PATTERN.matcher(value).matches()) {

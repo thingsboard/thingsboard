@@ -22,7 +22,7 @@
       <mat-form-field class="tb-widget-title tb-appearance-transparent">
         <input [disabled]="isReadOnly" matInput required maxlength="255"
                [(ngModel)]="widget.widgetName" (ngModelChange)="isDirty = true"
-               placeholder="{{ 'widget.title' | translate }}"/>
+               placeholder="{{ 'widget.widget-title' | translate }}"/>
       </mat-form-field>
       <mat-form-field class="tb-appearance-transparent">
         <mat-select [disabled]="isReadOnly" matInput placeholder="{{ 'widget.type' | translate }}"
@@ -66,15 +66,6 @@
         <mat-icon>save_as</mat-icon>
         <span translate>action.saveAs</span>
       </button>
-      <button mat-raised-button
-              fxHide.lt-md [disabled]="(isLoading$ | async) || moveDisabled()"
-              (click)="moveWidget()"
-              [tb-circular-progress]="moveWidgetPending"
-              matTooltip="{{ 'widget.move' | translate }} (Shift + CTRL + M)"
-              matTooltipPosition="below">
-        <tb-icon matButtonIcon>mdi:content-save-move</tb-icon>
-        <span translate>action.move</span>
-      </button>
       <button mat-button
               fxHide.lt-lg
               (click)="fullscreen = !fullscreen"
@@ -117,12 +108,6 @@
                 (click)="saveWidgetAs()">
           <mat-icon>save_as</mat-icon>
           <span translate>action.saveAs</span>
-        </button>
-        <button mat-menu-item
-                [disabled]="(isLoading$ | async) || moveDisabled()"
-                (click)="moveWidget()">
-          <tb-icon matMenuItemIcon>mdi:content-save-move</tb-icon>
-          <span translate>action.move</span>
         </button>
       </mat-menu>
     </mat-toolbar>
@@ -268,6 +253,11 @@
                                 rows="2" maxlength="255"></textarea>
                       <mat-hint align="end">{{descriptionInput.value?.length || 0}}/255</mat-hint>
                     </mat-form-field>
+                    <tb-string-items-list
+                      label="{{ 'widget.tags' | translate }}"
+                      [(ngModel)]="widget.tags"
+                      (ngModelChange)="isDirty = true">
+                    </tb-string-items-list>
                     <mat-slide-toggle class="mat-block" style="padding-bottom: 16px;"
                                       [(ngModel)]="widget.deprecated"
                                       (ngModelChange)="isDirty = true">
