@@ -25,10 +25,5 @@ import org.thingsboard.server.common.data.id.EdgeId;
 public class DefaultEdgeSynchronizationManager implements EdgeSynchronizationManager {
 
     @Getter
-    private final ThreadLocal<EdgeId> sync = new ThreadLocal<>();
-
-    @Override
-    public EdgeId getEdgeId() {
-        return this.sync.get();
-    }
+    private final ThreadLocal<EdgeId> edgeId = new ThreadLocal<>();
 }

@@ -49,10 +49,10 @@ import java.util.UUID;
 public class DeviceProfileEdgeProcessor extends BaseDeviceProfileProcessor {
 
     public ListenableFuture<Void> processDeviceProfileMsgFromEdge(TenantId tenantId, Edge edge, DeviceProfileUpdateMsg deviceProfileUpdateMsg) {
-        log.trace("[{}] executing processDeviceProfileMsgFromEdge [{}] from edge [{}]", tenantId, deviceProfileUpdateMsg, edge.getName());
+        log.trace("[{}] executing processDeviceProfileMsgFromEdge [{}] from edge [{}]", tenantId, deviceProfileUpdateMsg, edge.getId());
         DeviceProfileId deviceProfileId = new DeviceProfileId(new UUID(deviceProfileUpdateMsg.getIdMSB(), deviceProfileUpdateMsg.getIdLSB()));
         try {
-            edgeSynchronizationManager.getSync().set(edge.getId());
+            edgeSynchronizationManager.getEdgeId().set(edge.getId());
 
             switch (deviceProfileUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
@@ -68,7 +68,7 @@ public class DeviceProfileEdgeProcessor extends BaseDeviceProfileProcessor {
             log.warn("[{}] Failed to process DeviceProfileUpdateMsg from Edge [{}]", tenantId, deviceProfileUpdateMsg, e);
             return Futures.immediateFailedFuture(e);
         } finally {
-            edgeSynchronizationManager.getSync().remove();
+            edgeSynchronizationManager.getEdgeId().remove();
         }
     }
 

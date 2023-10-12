@@ -431,6 +431,8 @@ public abstract class BaseEdgeProcessor {
                                 return Futures.immediateFuture(null);
                             }
                         }, dbCallbackExecutorService);
+                    } else {
+                        return Futures.immediateFuture(null);
                     }
                 default:
                     return Futures.immediateFuture(null);

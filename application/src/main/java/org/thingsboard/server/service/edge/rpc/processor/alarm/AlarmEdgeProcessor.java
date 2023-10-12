@@ -50,10 +50,10 @@ public class AlarmEdgeProcessor extends BaseAlarmProcessor {
     public ListenableFuture<Void> processAlarmMsgFromEdge(TenantId tenantId, EdgeId edgeId, AlarmUpdateMsg alarmUpdateMsg) {
         log.trace("[{}] processAlarmMsgFromEdge [{}]", tenantId, alarmUpdateMsg);
         try {
-            edgeSynchronizationManager.getSync().set(edgeId);
+            edgeSynchronizationManager.getEdgeId().set(edgeId);
             return processAlarmMsg(tenantId, alarmUpdateMsg);
         } finally {
-            edgeSynchronizationManager.getSync().remove();
+            edgeSynchronizationManager.getEdgeId().remove();
         }
     }
 
@@ -77,7 +77,7 @@ public class AlarmEdgeProcessor extends BaseAlarmProcessor {
             case DELETED:
                 Alarm deletedAlarm = JacksonUtil.OBJECT_MAPPER.readValue(edgeNotificationMsg.getBody(), Alarm.class);
                 List<ListenableFuture<Void>> delFutures = pushEventToAllRelatedEdges(tenantId, deletedAlarm.getOriginator(),
-                        alarmId, actionType, JacksonUtil.OBJECT_MAPPER.valueToTree(deletedAlarm), sourceEdgeId);
+                        alarmId, actionType, JacksonUtil.valueToTree(deletedAlarm), sourceEdgeId);
                 return Futures.transform(Futures.allAsList(delFutures), voids -> null, dbCallbackExecutorService);
             default:
                 ListenableFuture<Alarm> alarmFuture = alarmService.findAlarmByIdAsync(tenantId, alarmId);

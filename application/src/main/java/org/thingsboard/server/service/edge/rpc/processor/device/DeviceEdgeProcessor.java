@@ -66,10 +66,10 @@ import java.util.UUID;
 public class DeviceEdgeProcessor extends BaseDeviceProcessor {
 
     public ListenableFuture<Void> processDeviceMsgFromEdge(TenantId tenantId, Edge edge, DeviceUpdateMsg deviceUpdateMsg) {
-        log.trace("[{}] executing processDeviceMsgFromEdge [{}] from edge [{}]", tenantId, deviceUpdateMsg, edge.getName());
+        log.trace("[{}] executing processDeviceMsgFromEdge [{}] from edge [{}]", tenantId, deviceUpdateMsg, edge.getId());
         DeviceId deviceId = new DeviceId(new UUID(deviceUpdateMsg.getIdMSB(), deviceUpdateMsg.getIdLSB()));
         try {
-            edgeSynchronizationManager.getSync().set(edge.getId());
+            edgeSynchronizationManager.getEdgeId().set(edge.getId());
 
             switch (deviceUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
@@ -94,18 +94,18 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
                 return Futures.immediateFailedFuture(e);
             }
         } finally {
-            edgeSynchronizationManager.getSync().remove();
+            edgeSynchronizationManager.getEdgeId().remove();
         }
     }
 
     public ListenableFuture<Void> processDeviceCredentialsMsgFromEdge(TenantId tenantId, EdgeId edgeId, DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg) {
         log.debug("[{}] Executing processDeviceCredentialsMsgFromEdge, deviceCredentialsUpdateMsg [{}]", tenantId, deviceCredentialsUpdateMsg);
         try {
-            edgeSynchronizationManager.getSync().set(edgeId);
+            edgeSynchronizationManager.getEdgeId().set(edgeId);
 
             updateDeviceCredentials(tenantId, deviceCredentialsUpdateMsg);
         } finally {
-            edgeSynchronizationManager.getSync().remove();
+            edgeSynchronizationManager.getEdgeId().remove();
         }
         return Futures.immediateFuture(null);
     }
