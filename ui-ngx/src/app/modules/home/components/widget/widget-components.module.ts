@@ -61,6 +61,7 @@ import { BatteryLevelWidgetComponent } from '@home/components/widget/lib/indicat
 import {
   WindSpeedDirectionWidgetComponent
 } from '@home/components/widget/lib/weather/wind-speed-direction-widget.component';
+import { SignalStrengthWidgetComponent } from '@home/components/widget/lib/indicator/signal-strength-widget.component';
 
 @NgModule({
   declarations:
@@ -96,7 +97,8 @@ import {
       AggregatedValueCardWidgetComponent,
       CountWidgetComponent,
       BatteryLevelWidgetComponent,
-      WindSpeedDirectionWidgetComponent
+      WindSpeedDirectionWidgetComponent,
+      SignalStrengthWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -136,7 +138,8 @@ import {
         AggregatedValueCardWidgetComponent,
         CountWidgetComponent,
         BatteryLevelWidgetComponent,
-        WindSpeedDirectionWidgetComponent
+        WindSpeedDirectionWidgetComponent,
+        SignalStrengthWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }
