@@ -22,6 +22,13 @@ on:
   pull_request:
     paths:
       - 'application/src/main/resources/thingsboard.yml'
+      - 'transport/http/src/main/resources/tb-http-transport.yml'
+      - 'transport/http/src/main/resources/tb-mqtt-transport.yml'
+      - 'transport/http/src/main/resources/tb-coap-transport.yml'
+      - 'transport/http/src/main/resources/tb-lwm2m-transport.yml'
+      - 'transport/http/src/main/resources/tb-snmp-transport.yml'
+      - 'msa/vc-executor/src/main/resources/tb-vc-executor.yml'
+
 jobs:
   build:
     name: Check thingsboard.yml file
