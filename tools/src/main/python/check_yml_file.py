@@ -122,7 +122,8 @@ if __name__ == '__main__':
                       "transport/mqtt/src/main/resources/tb-mqtt-transport.yml",
                       "transport/coap/src/main/resources/tb-coap-transport.yml",
                       "transport/lwm2m/src/main/resources/tb-lwm2m-transport.yml",
-                      "transport/snmp/src/main/resources/tb-snmp-transport.yml"]
+                      "transport/snmp/src/main/resources/tb-snmp-transport.yml",
+                      "msa/vc-executor/src/main/resources/tb-vc-executor.yml"]
 
     total_list = []
     for file in files_to_check:
