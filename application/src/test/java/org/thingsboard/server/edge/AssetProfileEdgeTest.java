@@ -16,7 +16,6 @@
 package org.thingsboard.server.edge;
 
 import com.google.protobuf.AbstractMessage;
-import com.google.protobuf.ByteString;
 import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
@@ -31,7 +30,6 @@ import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UplinkResponseMsg;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.UUID;
 

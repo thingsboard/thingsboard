@@ -56,9 +56,9 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
         if (alarm == null) {
             throw new RuntimeException("[{" + tenantId + "}] alarmUpdateMsg {" + alarmUpdateMsg + "} cannot be converted to alarm");
         }
-        EntityType entityType = isEdgeProtoDeprecated ? EntityType.valueOf(alarmUpdateMsg.getOriginatorType())
-                : alarm.getOriginator().getEntityType();
-        EntityId originatorId = getAlarmOriginator(tenantId, alarmUpdateMsg.getOriginatorName(), entityType);
+        EntityId originatorId = isEdgeProtoDeprecated
+                ? getAlarmOriginator(tenantId, alarmUpdateMsg.getOriginatorName(), EntityType.valueOf(alarmUpdateMsg.getOriginatorType()))
+                : alarm.getOriginator();
         if (originatorId == null) {
             log.warn("[{}] Originator not found for the alarm msg {}", tenantId, alarmUpdateMsg);
             return Futures.immediateFuture(null);

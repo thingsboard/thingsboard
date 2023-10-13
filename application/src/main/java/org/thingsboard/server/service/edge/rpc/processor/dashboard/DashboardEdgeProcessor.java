@@ -80,7 +80,7 @@ public class DashboardEdgeProcessor extends BaseDashboardProcessor {
 
     private void saveOrUpdateDashboard(TenantId tenantId, DashboardId dashboardId, DashboardUpdateMsg dashboardUpdateMsg, Edge edge, EdgeVersion edgeVersion) {
         boolean created = super.saveOrUpdateDashboard(tenantId, dashboardId, dashboardUpdateMsg,
-                EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion));
+                EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion), edge.getCustomerId());
         if (created) {
             createRelationFromEdge(tenantId, edge.getId(), dashboardId);
             pushDashboardCreatedEventToRuleEngine(tenantId, edge, dashboardId);

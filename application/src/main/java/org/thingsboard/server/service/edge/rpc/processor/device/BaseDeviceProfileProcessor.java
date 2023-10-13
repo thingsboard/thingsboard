@@ -73,8 +73,9 @@ public abstract class BaseDeviceProfileProcessor extends BaseEdgeProcessor {
             }
             deviceProfile.setName(deviceProfileName);
 
-            setDefaultRuleChainId(tenantId, deviceProfile);
-            setDefaultEdgeRuleChainId(deviceProfile, created ? null : deviceProfileById.getDefaultRuleChainId(), deviceProfileUpdateMsg, isEdgeVersionProtoDeprecated);
+            RuleChainId ruleChainId = deviceProfile.getDefaultRuleChainId();
+            setDefaultRuleChainId(tenantId, deviceProfile, created ? null : deviceProfileById.getDefaultRuleChainId());
+            setDefaultEdgeRuleChainId(deviceProfile, ruleChainId, deviceProfileUpdateMsg, isEdgeVersionProtoDeprecated);
             setDefaultDashboardId(tenantId, created ? null : deviceProfileById.getDefaultDashboardId(), deviceProfile, deviceProfileUpdateMsg, isEdgeVersionProtoDeprecated);
 
             deviceProfileValidator.validate(deviceProfile, DeviceProfile::getTenantId);
@@ -124,7 +125,7 @@ public abstract class BaseDeviceProfileProcessor extends BaseEdgeProcessor {
         return deviceProfile;
     }
 
-    protected abstract void setDefaultRuleChainId(TenantId tenantId, DeviceProfile deviceProfile);
+    protected abstract void setDefaultRuleChainId(TenantId tenantId, DeviceProfile deviceProfile, RuleChainId ruleChainId);
 
     protected abstract void setDefaultEdgeRuleChainId(DeviceProfile deviceProfile, RuleChainId ruleChainId, DeviceProfileUpdateMsg deviceProfileUpdateMsg, boolean isEdgeVersionDeprecated);
 
