@@ -102,7 +102,7 @@ import static org.thingsboard.server.common.data.StringUtils.isBlank;
 public class DefaultDataUpdateService implements DataUpdateService {
 
     private static final int MAX_PENDING_SAVE_RULE_NODE_FUTURES = 100;
-    public static final int BATCH_SIZE = 1024;
+    private static final int BATCH_SIZE = 1024;
 
     @Autowired
     private TenantService tenantService;
