@@ -16,7 +16,7 @@
 package org.thingsboard.server.common.data.widget;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,12 +32,15 @@ import org.thingsboard.server.common.data.validation.NoXss;
 public class WidgetTypeDetails extends WidgetType implements HasName, HasTenantId, ExportableEntity<WidgetTypeId> {
 
     @Length(fieldName = "image", max = 1000000)
-    @ApiModelProperty(position = 9, value = "Base64 encoded thumbnail")
+    @Schema(description = "Base64 encoded thumbnail")
     private String image;
     @NoXss
     @Length(fieldName = "description", max = 1024)
-    @ApiModelProperty(position = 10, value = "Description of the widget")
+    @Schema(description = "Description of the widget")
     private String description;
+    @NoXss
+    @Schema(description = "Tags of the widget type")
+    private String[] tags;
 
     @Getter
     @Setter
@@ -59,6 +62,7 @@ public class WidgetTypeDetails extends WidgetType implements HasName, HasTenantI
         super(widgetTypeDetails);
         this.image = widgetTypeDetails.getImage();
         this.description = widgetTypeDetails.getDescription();
+        this.tags = widgetTypeDetails.getTags();
         this.externalId = widgetTypeDetails.getExternalId();
     }
 }

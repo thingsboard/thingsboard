@@ -40,7 +40,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.executors.NotificationExecutorService;
 import org.thingsboard.server.service.partition.AbstractPartitionBasedService;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;

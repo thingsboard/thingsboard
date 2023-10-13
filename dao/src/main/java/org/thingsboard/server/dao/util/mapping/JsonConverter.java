@@ -13,26 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport.adaptor;
+package org.thingsboard.server.dao.util.mapping;
 
-public class AdaptorException extends Exception {
+import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
+import org.thingsboard.common.util.JacksonUtil;
 
-    private static final long serialVersionUID = 1L;
-
-    public AdaptorException() {
-        super();
+@Converter
+public class JsonConverter implements AttributeConverter<JsonNode, String> {
+    @Override
+    public String convertToDatabaseColumn(JsonNode jsonNode) {
+        return JacksonUtil.toString(jsonNode);
     }
 
-    public AdaptorException(String cause) {
-        super(cause);
+    @Override
+    public JsonNode convertToEntityAttribute(String s) {
+        return JacksonUtil.toJsonNode(s);
     }
-
-    public AdaptorException(Exception cause) {
-        super(cause);
-    }
-
-    public AdaptorException(String message, Exception cause) {
-        super(message, cause);
-    }
-
 }

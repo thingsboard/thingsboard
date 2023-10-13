@@ -58,7 +58,7 @@ export class WidgetsBundleWidgetsResolver implements Resolve<Array<WidgetTypeInf
 
   resolve(route: ActivatedRouteSnapshot): Observable<Array<WidgetTypeInfo>> {
     const widgetsBundleId = route.params.widgetsBundleId;
-    return this.widgetsService.getBundleWidgetTypeInfos(widgetsBundleId);
+    return this.widgetsService.getBundleWidgetTypeInfosList(widgetsBundleId);
   }
 }
 

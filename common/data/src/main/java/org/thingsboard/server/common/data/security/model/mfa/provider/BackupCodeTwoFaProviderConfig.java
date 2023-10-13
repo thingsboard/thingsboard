@@ -17,7 +17,7 @@ package org.thingsboard.server.common.data.security.model.mfa.provider;
 
 import lombok.Data;
 
-import javax.validation.constraints.Min;
+import jakarta.validation.constraints.Min;
 
 @Data
 public class BackupCodeTwoFaProviderConfig implements TwoFaProviderConfig {

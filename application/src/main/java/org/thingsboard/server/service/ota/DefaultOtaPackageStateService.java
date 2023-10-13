@@ -51,7 +51,7 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.provider.TbRuleEngineQueueFactory;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

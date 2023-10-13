@@ -13,20 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.cache;
+package org.thingsboard.server.common.adaptor;
 
-import org.springframework.data.redis.serializer.SerializationException;
-import org.thingsboard.server.common.data.FSTUtils;
+public class AdaptorException extends Exception {
 
-public class TbFSTRedisSerializer<K, V> implements TbRedisSerializer<K, V> {
+    private static final long serialVersionUID = 1L;
 
-    @Override
-    public byte[] serialize(V value) throws SerializationException {
-        return FSTUtils.encode(value);
+    public AdaptorException() {
+        super();
     }
 
-    @Override
-    public V deserialize(K key, byte[] bytes) throws SerializationException {
-        return FSTUtils.decode(bytes);
+    public AdaptorException(String cause) {
+        super(cause);
     }
+
+    public AdaptorException(Exception cause) {
+        super(cause);
+    }
+
+    public AdaptorException(String message, Exception cause) {
+        super(message, cause);
+    }
+
 }

@@ -31,7 +31,7 @@ import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionaryComposite
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
 import org.thingsboard.server.dao.sqlts.dictionary.TsKvDictionaryRepository;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -53,11 +53,15 @@ public abstract class BaseAbstractSqlTimeseriesDao extends JpaAbstractDaoListeni
         if (keyId == null) {
             Optional<TsKvDictionary> tsKvDictionaryOptional;
             tsKvDictionaryOptional = dictionaryRepository.findById(new TsKvDictionaryCompositeKey(strKey));
-            if (!tsKvDictionaryOptional.isPresent()) {
+            if (tsKvDictionaryOptional.isEmpty()) {
                 tsCreationLock.lock();
                 try {
+                    keyId = tsKvDictionaryMap.get(strKey);
+                    if (keyId != null) {
+                        return keyId;
+                    }
                     tsKvDictionaryOptional = dictionaryRepository.findById(new TsKvDictionaryCompositeKey(strKey));
-                    if (!tsKvDictionaryOptional.isPresent()) {
+                    if (tsKvDictionaryOptional.isEmpty()) {
                         TsKvDictionary tsKvDictionary = new TsKvDictionary();
                         tsKvDictionary.setKey(strKey);
                         try {

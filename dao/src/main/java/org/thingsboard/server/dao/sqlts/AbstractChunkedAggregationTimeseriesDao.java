@@ -17,6 +17,8 @@ package org.thingsboard.server.dao.sqlts;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -38,8 +40,6 @@ import org.thingsboard.server.dao.sqlts.insert.InsertTsRepository;
 import org.thingsboard.server.dao.sqlts.ts.TsKvRepository;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;

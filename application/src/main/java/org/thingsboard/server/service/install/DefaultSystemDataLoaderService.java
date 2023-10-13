@@ -63,6 +63,7 @@ import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
@@ -83,6 +84,8 @@ import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
+import org.thingsboard.server.common.data.widget.DeprecatedFilter;
+import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerService;
@@ -103,9 +106,9 @@ import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 
-import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -489,10 +492,15 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     public void deleteSystemWidgetBundle(String bundleAlias) throws Exception {
         WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(TenantId.SYS_TENANT_ID, bundleAlias);
         if (widgetsBundle != null) {
-            var widgetTypes = widgetTypeService.findWidgetTypesInfosByWidgetsBundleId(TenantId.SYS_TENANT_ID, widgetsBundle.getId());
-            for (var widgetType : widgetTypes) {
-                widgetTypeService.deleteWidgetType(TenantId.SYS_TENANT_ID, widgetType.getId());
-            }
+            PageData<WidgetTypeInfo> widgetTypes;
+            var pageLink = new PageLink(1024);
+            do {
+                widgetTypes = widgetTypeService.findWidgetTypesInfosByWidgetsBundleId(TenantId.SYS_TENANT_ID, widgetsBundle.getId(), false, DeprecatedFilter.ALL, null, pageLink);
+                for (var widgetType : widgetTypes.getData()) {
+                    widgetTypeService.deleteWidgetType(TenantId.SYS_TENANT_ID, widgetType.getId());
+                }
+                pageLink.nextPageLink();
+            } while (widgetTypes.hasNext());
             widgetsBundleService.deleteWidgetsBundle(TenantId.SYS_TENANT_ID, widgetsBundle.getId());
         }
     }

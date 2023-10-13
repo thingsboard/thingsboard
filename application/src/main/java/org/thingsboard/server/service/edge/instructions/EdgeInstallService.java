@@ -19,7 +19,7 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInstallInstructions;
 import org.thingsboard.server.common.data.id.TenantId;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 public interface EdgeInstallService {
 

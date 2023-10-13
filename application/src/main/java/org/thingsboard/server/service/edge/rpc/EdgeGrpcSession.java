@@ -280,9 +280,9 @@ public final class EdgeGrpcSession implements Closeable {
         try {
             if (msg.getSuccess()) {
                 sessionState.getPendingMsgsMap().remove(msg.getDownlinkMsgId());
-                log.debug("[{}][{}] Msg has been processed successfully!Msd Id: [{}], Msg: {}", this.tenantId, edge.getRoutingKey(), msg.getDownlinkMsgId(), msg);
+                log.debug("[{}][{}] Msg has been processed successfully!Msg Id: [{}], Msg: {}", this.tenantId, edge.getRoutingKey(), msg.getDownlinkMsgId(), msg);
             } else {
-                log.error("[{}][{}] Msg processing failed! Msd Id: [{}], Error msg: {}", this.tenantId, edge.getRoutingKey(), msg.getDownlinkMsgId(), msg.getErrorMsg());
+                log.error("[{}][{}] Msg processing failed! Msg Id: [{}], Error msg: {}", this.tenantId, edge.getRoutingKey(), msg.getDownlinkMsgId(), msg.getErrorMsg());
             }
             if (sessionState.getPendingMsgsMap().isEmpty()) {
                 log.debug("[{}][{}] Pending msgs map is empty. Stopping current iteration", this.tenantId, edge.getRoutingKey());

@@ -36,9 +36,9 @@ import org.thingsboard.server.common.data.objects.AttributesEntityView;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.transport.adaptor.JsonConverter;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;

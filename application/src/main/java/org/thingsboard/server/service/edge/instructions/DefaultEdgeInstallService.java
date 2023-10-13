@@ -26,7 +26,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.install.InstallScripts;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;

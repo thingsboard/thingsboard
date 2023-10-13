@@ -20,7 +20,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 
-import javax.persistence.Transient;
+import jakarta.persistence.Transient;
 import java.io.Serializable;
 import java.util.UUID;
 

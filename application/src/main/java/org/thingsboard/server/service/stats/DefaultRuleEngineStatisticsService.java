@@ -32,7 +32,7 @@ import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.queue.TbRuleEngineConsumerStats;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;

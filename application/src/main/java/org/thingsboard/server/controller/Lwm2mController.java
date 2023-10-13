@@ -15,11 +15,13 @@
  */
 package org.thingsboard.server.controller;
 
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,6 +35,7 @@ import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MServerSecurityConfigDefault;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.service.lwm2m.LwM2MService;
 
 import java.util.Map;
@@ -57,12 +60,12 @@ public class Lwm2mController extends BaseController {
     @ApiOperation(value = "Get Lwm2m Bootstrap SecurityInfo (getLwm2mBootstrapSecurityInfo)",
             notes = "Get the Lwm2m Bootstrap SecurityInfo object (of the current server) based on the provided isBootstrapServer parameter. If isBootstrapServer == true, get the parameters of the current Bootstrap Server. If isBootstrapServer == false, get the parameters of the current Lwm2m Server. Used for client settings when starting the client in Bootstrap mode. " +
                     TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
-            produces = "application/json")
+            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/lwm2m/deviceProfile/bootstrap/{isBootstrapServer}", method = RequestMethod.GET)
     @ResponseBody
     public LwM2MServerSecurityConfigDefault getLwm2mBootstrapSecurityInfo(
-        @ApiParam(value = IS_BOOTSTRAP_SERVER_PARAM_DESCRIPTION)
+        @Parameter(description = IS_BOOTSTRAP_SERVER_PARAM_DESCRIPTION)
         @PathVariable(IS_BOOTSTRAP_SERVER) boolean bootstrapServer) throws ThingsboardException {
             return lwM2MService.getServerSecurityInfo(bootstrapServer);
     }

@@ -31,8 +31,8 @@ import org.thingsboard.script.api.TbScriptException;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.common.stats.TbApiUsageStateClient;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;

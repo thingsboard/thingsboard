@@ -26,6 +26,8 @@ import org.thingsboard.server.gen.edge.v1.WidgetTypeUpdateMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
+import java.util.Arrays;
+
 @Component
 @TbCoreComponent
 public class WidgetTypeMsgConstructor {
@@ -70,6 +72,9 @@ public class WidgetTypeMsgConstructor {
             builder.setDescription(widgetTypeDetails.getDescription());
         }
         builder.setDeprecated(widgetTypeDetails.isDeprecated());
+        if (widgetTypeDetails.getTags() != null) {
+            builder.addAllTags(Arrays.asList(widgetTypeDetails.getTags()));
+        }
         return builder.build();
     }
 

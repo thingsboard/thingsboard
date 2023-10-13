@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.controller;
 
-import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 @RestController

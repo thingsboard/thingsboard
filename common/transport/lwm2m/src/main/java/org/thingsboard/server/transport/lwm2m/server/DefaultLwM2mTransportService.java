@@ -39,7 +39,7 @@ import org.thingsboard.server.transport.lwm2m.server.store.TbSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PreDestroy;
 import java.security.cert.X509Certificate;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;

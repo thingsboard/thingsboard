@@ -26,8 +26,8 @@ import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.util.concurrent.ExecutorService;
 
 /**

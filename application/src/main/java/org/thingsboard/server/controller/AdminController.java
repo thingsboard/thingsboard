@@ -28,11 +28,14 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -52,13 +55,12 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.FeaturesInfo;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.FeaturesInfo;
-import org.thingsboard.server.common.data.FeaturesInfo;
 import org.thingsboard.server.common.data.SystemInfo;
 import org.thingsboard.server.common.data.UpdateMessage;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -71,11 +73,12 @@ import org.thingsboard.server.common.data.sync.vc.AutoCommitSettings;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettingsInfo;
 import org.thingsboard.server.common.data.sync.vc.VcUtils;
+import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.security.auth.oauth2.CookieUtils;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
+import org.thingsboard.server.service.security.auth.oauth2.CookieUtils;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -86,14 +89,10 @@ import org.thingsboard.server.service.sync.vc.autocommit.TbAutoCommitSettingsSer
 import org.thingsboard.server.service.system.SystemInfoService;
 import org.thingsboard.server.service.update.UpdateService;
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
-import static org.thingsboard.server.controller.ControllerConstants.*;
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
 
@@ -129,7 +128,7 @@ public class AdminController extends BaseController {
     @RequestMapping(value = "/settings/{key}", method = RequestMethod.GET)
     @ResponseBody
     public AdminSettings getAdminSettings(
-            @ApiParam(value = "A string value of the key (e.g. 'general' or 'mail').")
+            @Parameter(description = "A string value of the key (e.g. 'general' or 'mail').")
             @PathVariable("key") String key) throws ThingsboardException {
         accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
         AdminSettings adminSettings = checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, key), "No Administration settings found for key: " + key);
@@ -148,7 +147,7 @@ public class AdminController extends BaseController {
     @RequestMapping(value = "/settings", method = RequestMethod.POST)
     @ResponseBody
     public AdminSettings saveAdminSettings(
-            @ApiParam(value = "A JSON value representing the Administration Settings.")
+            @Parameter(description = "A JSON value representing the Administration Settings.")
             @RequestBody AdminSettings adminSettings) throws ThingsboardException {
         accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.WRITE);
         adminSettings.setTenantId(getTenantId());
@@ -179,7 +178,7 @@ public class AdminController extends BaseController {
     @RequestMapping(value = "/securitySettings", method = RequestMethod.POST)
     @ResponseBody
     public SecuritySettings saveSecuritySettings(
-            @ApiParam(value = "A JSON value representing the Security Settings.")
+            @Parameter(description = "A JSON value representing the Security Settings.")
             @RequestBody SecuritySettings securitySettings) throws ThingsboardException {
         accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.WRITE);
         securitySettings = checkNotNull(systemSecurityService.saveSecuritySettings(TenantId.SYS_TENANT_ID, securitySettings));
@@ -188,7 +187,7 @@ public class AdminController extends BaseController {
 
     @ApiOperation(value = "Get the JWT Settings object (getJwtSettings)",
             notes = "Get the JWT Settings object that contains JWT token policy, etc. " + SYSTEM_AUTHORITY_PARAGRAPH,
-            produces = MediaType.APPLICATION_JSON_VALUE)
+            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/jwtSettings", method = RequestMethod.GET)
     @ResponseBody
@@ -199,12 +198,12 @@ public class AdminController extends BaseController {
 
     @ApiOperation(value = "Update JWT Settings (saveJwtSettings)",
             notes = "Updates the JWT Settings object that contains JWT token policy, etc. The tokenSigningKey field is a Base64 encoded string." + SYSTEM_AUTHORITY_PARAGRAPH,
-            produces = MediaType.APPLICATION_JSON_VALUE)
+            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/jwtSettings", method = RequestMethod.POST)
     @ResponseBody
     public JwtPair saveJwtSettings(
-            @ApiParam(value = "A JSON value representing the JWT Settings.")
+            @Parameter(description = "A JSON value representing the JWT Settings.")
             @RequestBody JwtSettings jwtSettings) throws ThingsboardException {
         SecurityUser securityUser = getCurrentUser();
         accessControlService.checkPermission(securityUser, Resource.ADMIN_SETTINGS, Operation.WRITE);
@@ -218,12 +217,12 @@ public class AdminController extends BaseController {
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/settings/testMail", method = RequestMethod.POST)
     public void sendTestMail(
-            @ApiParam(value = "A JSON value representing the Mail Settings.")
+            @Parameter(description = "A JSON value representing the Mail Settings.")
             @RequestBody AdminSettings adminSettings) throws ThingsboardException {
         accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
         adminSettings = checkNotNull(adminSettings);
         if (adminSettings.getKey().equals("mail")) {
-            if (adminSettings.getJsonValue().has("enableOauth2") && adminSettings.getJsonValue().get("enableOauth2").asBoolean()){
+            if (adminSettings.getJsonValue().has("enableOauth2") && adminSettings.getJsonValue().get("enableOauth2").asBoolean()) {
                 AdminSettings mailSettings = checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail"));
                 JsonNode refreshToken = mailSettings.getJsonValue().get("refreshToken");
                 if (refreshToken == null) {
@@ -231,8 +230,7 @@ public class AdminController extends BaseController {
                 }
                 ObjectNode settings = (ObjectNode) adminSettings.getJsonValue();
                 settings.put("refreshToken", refreshToken.asText());
-            }
-            else {
+            } else {
                 if (!adminSettings.getJsonValue().has("password")) {
                     AdminSettings mailSettings = checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail"));
                     ((ObjectNode) adminSettings.getJsonValue()).put("password", mailSettings.getJsonValue().get("password").asText());
@@ -249,7 +247,7 @@ public class AdminController extends BaseController {
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/settings/testSms", method = RequestMethod.POST)
     public void sendTestSms(
-            @ApiParam(value = "A JSON value representing the Test SMS request.")
+            @Parameter(description = "A JSON value representing the Test SMS request.")
             @RequestBody TestSmsRequest testSmsRequest) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         accessControlService.checkPermission(user, Resource.ADMIN_SETTINGS, Operation.READ);
@@ -332,7 +330,7 @@ public class AdminController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/repositorySettings/checkAccess", method = RequestMethod.POST)
     public DeferredResult<Void> checkRepositoryAccess(
-            @ApiParam(value = "A JSON value representing the Repository Settings.")
+            @Parameter(description = "A JSON value representing the Repository Settings.")
             @RequestBody RepositorySettings settings) throws Exception {
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
         settings = checkNotNull(settings);
@@ -415,12 +413,12 @@ public class AdminController extends BaseController {
     @RequestMapping(value = "/mail/oauth2/loginProcessingUrl", method = RequestMethod.GET)
     @ResponseBody
     public String getMailProcessingUrl() throws ThingsboardException {
-         accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
-         return "\"/api/admin/mail/oauth2/code\"";
+        accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
+        return "\"/api/admin/mail/oauth2/code\"";
     }
 
     @ApiOperation(value = "Redirect user to mail provider login page. ", notes = "After user logged in and provided access" +
-            "provider sends authorization code to specified redirect uri.)" )
+            "provider sends authorization code to specified redirect uri.)")
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/mail/oauth2/authorize", method = RequestMethod.GET, produces = "application/text")
     public String getAuthorizationUrl(HttpServletRequest request, HttpServletResponse response) throws ThingsboardException {
@@ -437,7 +435,7 @@ public class AdminController extends BaseController {
         String clientId = checkNotNull(jsonValue.get("clientId"), "No clientId was configured").asText();
         String authUri = checkNotNull(jsonValue.get("authUri"), "No authorization uri was configured").asText();
         String redirectUri = checkNotNull(jsonValue.get("redirectUri"), "No Redirect uri was configured").asText();
-        List<String> scope =  JacksonUtil.convertValue(checkNotNull(jsonValue.get("scope"), "No scope was configured"), new TypeReference<>() {
+        List<String> scope = JacksonUtil.convertValue(checkNotNull(jsonValue.get("scope"), "No scope was configured"), new TypeReference<>() {
         });
 
         return "\"" + new AuthorizationCodeRequestUrl(authUri, clientId)
@@ -455,7 +453,7 @@ public class AdminController extends BaseController {
         Optional<Cookie> cookieState = CookieUtils.getCookie(request, STATE_COOKIE_NAME);
 
         String baseUrl = this.systemSecurityService.getBaseUrl(TenantId.SYS_TENANT_ID, new CustomerId(EntityId.NULL_UUID), request);
-        String prevUri = baseUrl + (prevUrlOpt.isPresent() ? prevUrlOpt.get().getValue(): "/settings/outgoing-mail");
+        String prevUri = baseUrl + (prevUrlOpt.isPresent() ? prevUrlOpt.get().getValue() : "/settings/outgoing-mail");
 
         if (cookieState.isEmpty() || !cookieState.get().getValue().equals(state)) {
             CookieUtils.deleteCookie(request, response, STATE_COOKIE_NAME);
@@ -482,8 +480,8 @@ public class AdminController extends BaseController {
             log.warn("Unable to retrieve refresh token: {}", e.getMessage());
             throw new ThingsboardException("Error while requesting access token: " + e.getMessage(), ThingsboardErrorCode.GENERAL);
         }
-        ((ObjectNode)jsonValue).put("refreshToken", tokenResponse.getRefreshToken());
-        ((ObjectNode)jsonValue).put("tokenGenerated", true);
+        ((ObjectNode) jsonValue).put("refreshToken", tokenResponse.getRefreshToken());
+        ((ObjectNode) jsonValue).put("tokenGenerated", true);
 
         adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminSettings);
         response.sendRedirect(prevUri);

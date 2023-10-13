@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM thingsboard/openjdk11:bullseye-slim
+FROM thingsboard/openjdk17:bullseye-slim
 
 COPY start-tb-vc-executor.sh ${pkg.name}.deb /tmp/
 

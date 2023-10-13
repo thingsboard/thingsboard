@@ -48,8 +48,8 @@ import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
-import javax.annotation.Nullable;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.Nullable;
+import jakarta.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;

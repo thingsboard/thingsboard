@@ -41,6 +41,7 @@ public class TbSqlBlockingQueue<E> implements TbSqlQueue<E> {
 
     private ExecutorService executor;
     private final MessagesStats stats;
+    private volatile boolean stopped = false;
 
     public TbSqlBlockingQueue(TbSqlBlockingQueueParams params, MessagesStats stats) {
         this.params = params;
@@ -55,7 +56,7 @@ public class TbSqlBlockingQueue<E> implements TbSqlQueue<E> {
             int batchSize = params.getBatchSize();
             long maxDelay = params.getMaxDelay();
             List<TbSqlQueueElement<E>> entities = new ArrayList<>(batchSize);
-            while (!Thread.interrupted()) {
+            while (!stopped) {
                 try {
                     long currentTs = System.currentTimeMillis();
                     TbSqlQueueElement<E> attr = queue.poll(maxDelay, TimeUnit.MILLISECONDS);
@@ -109,6 +110,7 @@ public class TbSqlBlockingQueue<E> implements TbSqlQueue<E> {
 
     @Override
     public void destroy() {
+        stopped = true;
         if (executor != null) {
             executor.shutdownNow();
         }

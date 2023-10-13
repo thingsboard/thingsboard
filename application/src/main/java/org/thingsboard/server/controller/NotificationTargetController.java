@@ -15,8 +15,8 @@
  */
 package org.thingsboard.server.controller;
 
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -48,12 +48,12 @@ import org.thingsboard.server.common.data.notification.targets.platform.UserList
 import org.thingsboard.server.common.data.notification.targets.platform.UsersFilter;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 
-import javax.validation.Valid;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -134,9 +134,9 @@ public class NotificationTargetController extends BaseController {
     @PostMapping("/target/recipients")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public PageData<User> getRecipientsForNotificationTargetConfig(@RequestBody NotificationTarget notificationTarget,
-                                                                   @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+                                                                   @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
                                                                    @RequestParam int pageSize,
-                                                                   @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+                                                                   @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
                                                                    @RequestParam int page,
                                                                    @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         // generic permission
@@ -156,7 +156,7 @@ public class NotificationTargetController extends BaseController {
                     SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @GetMapping(value = "/targets", params = {"ids"})
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    public List<NotificationTarget> getNotificationTargetsByIds(@ApiParam(value = "Comma-separated list of uuids representing targets ids", required = true)
+    public List<NotificationTarget> getNotificationTargetsByIds(@Parameter(description = "Comma-separated list of uuids representing targets ids", required = true)
                                                                 @RequestParam("ids") UUID[] ids,
                                                                 @AuthenticationPrincipal SecurityUser user) {
         // generic permission
@@ -170,15 +170,15 @@ public class NotificationTargetController extends BaseController {
                     SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @GetMapping("/targets")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    public PageData<NotificationTarget> getNotificationTargets(@ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+    public PageData<NotificationTarget> getNotificationTargets(@Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
                                                                @RequestParam int pageSize,
-                                                               @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+                                                               @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
                                                                @RequestParam int page,
-                                                               @ApiParam(value = "Case-insensitive 'substring' filed based on the target's name")
+                                                               @Parameter(description = "Case-insensitive 'substring' filed based on the target's name")
                                                                @RequestParam(required = false) String textSearch,
-                                                               @ApiParam(value = SORT_PROPERTY_DESCRIPTION)
+                                                               @Parameter(description = SORT_PROPERTY_DESCRIPTION)
                                                                @RequestParam(required = false) String sortProperty,
-                                                               @ApiParam(value = SORT_ORDER_DESCRIPTION)
+                                                               @Parameter(description = SORT_ORDER_DESCRIPTION)
                                                                @RequestParam(required = false) String sortOrder,
                                                                @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         // generic permission

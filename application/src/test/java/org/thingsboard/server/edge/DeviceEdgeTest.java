@@ -52,7 +52,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.msg.session.FeatureType;
-import org.thingsboard.server.common.transport.adaptor.JsonConverter;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.AttributesRequestMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsRequestMsg;
@@ -273,7 +273,7 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
                 (DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration();
         profileConfiguration.setMaxDevices(1);
         tenantProfile.getProfileData().setConfiguration(profileConfiguration);
-        doPost("/api/tenantProfile/", tenantProfile, TenantProfile.class);
+        doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
 
         edgeImitator.expectMessageAmount(2);
         loginTenantAdmin();

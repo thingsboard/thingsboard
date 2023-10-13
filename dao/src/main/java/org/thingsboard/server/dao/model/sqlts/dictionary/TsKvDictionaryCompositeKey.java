@@ -19,7 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Transient;
+import jakarta.persistence.Transient;
 import java.io.Serializable;
 
 @Data

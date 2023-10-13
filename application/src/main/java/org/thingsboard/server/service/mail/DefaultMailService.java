@@ -18,6 +18,7 @@ package org.thingsboard.server.service.mail;
 import com.fasterxml.jackson.databind.JsonNode;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
+import jakarta.xml.bind.DatatypeConverter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,8 +48,8 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
-import javax.annotation.PostConstruct;
-import javax.mail.internet.MimeMessage;
+import jakarta.annotation.PostConstruct;
+import jakarta.mail.internet.MimeMessage;
 import java.io.ByteArrayInputStream;
 import java.util.HashMap;
 import java.util.Locale;
@@ -362,6 +363,8 @@ public class DefaultMailService implements MailService {
                 return valueInM + " out of " + thresholdInM + " allowed messages";
             case JS_EXEC_COUNT:
                 return valueInM + " out of " + thresholdInM + " allowed JavaScript functions";
+            case TBEL_EXEC_COUNT:
+                return valueInM + " out of " + thresholdInM + " allowed Tbel functions";
             case RE_EXEC_COUNT:
                 return valueInM + " out of " + thresholdInM + " allowed Rule Engine messages";
             case EMAIL_EXEC_COUNT:
@@ -382,6 +385,8 @@ public class DefaultMailService implements MailService {
                 return recordState.getValueAsString() + " messages";
             case JS_EXEC_COUNT:
                 return "JavaScript functions " + recordState.getValueAsString() + " times";
+            case TBEL_EXEC_COUNT:
+                return "TBEL functions " + recordState.getValueAsString() + " times";
             case RE_EXEC_COUNT:
                 return recordState.getValueAsString() + " Rule Engine messages";
             case EMAIL_EXEC_COUNT:

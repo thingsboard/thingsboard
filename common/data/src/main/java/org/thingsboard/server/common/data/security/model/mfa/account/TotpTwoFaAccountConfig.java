@@ -19,8 +19,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 
 @Data
 @EqualsAndHashCode(callSuper = true)

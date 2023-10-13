@@ -19,8 +19,8 @@ import org.springframework.stereotype.Repository;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
 import org.thingsboard.server.dao.util.SqlTsLatestAnyDao;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.util.List;
 import java.util.UUID;
 

@@ -130,7 +130,7 @@ public interface DeviceRepository extends JpaRepository<DeviceEntity, UUID>, Exp
             "AND (:edgeId IS NULL OR d.id IN (SELECT re.toId FROM RelationEntity re WHERE re.toType = 'DEVICE' AND re.relationTypeGroup = 'EDGE' AND re.relationType = 'Contains' AND re.fromType = 'EDGE' AND re.fromId = uuid(:edgeId))) " +
             "AND ((:deviceType) IS NULL OR d.type = :deviceType) " +
             "AND (:deviceProfileId IS NULL OR d.deviceProfileId = uuid(:deviceProfileId)) " +
-            "AND ((:filterByActive) IS FALSE OR d.active = :deviceActive) " +
+            "AND ((:filterByActive) = FALSE OR d.active = :deviceActive) " +
             "AND (LOWER(d.name) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
             "OR LOWER(d.label) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
             "OR LOWER(d.type) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +

@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityInfo;
-import org.thingsboard.server.common.data.FSTUtils;
+import org.thingsboard.server.common.data.JavaSerDesUtil;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -307,16 +307,12 @@ public class TenantProfileServiceTest extends AbstractServiceTest {
         profileData.setConfiguration(new DefaultTenantProfileConfiguration());
         addMainQueueConfig(tenantProfile);
 
-        byte[] serialized = assertDoesNotThrow(() -> {
-            return FSTUtils.encode(tenantProfile);
-        });
+        byte[] serialized = assertDoesNotThrow(() -> JavaSerDesUtil.encode(tenantProfile));
         assertDoesNotThrow(() -> {
-            FSTUtils.encode(profileData);
+            JavaSerDesUtil.encode(profileData);
         });
 
-        TenantProfile deserialized = assertDoesNotThrow(() -> {
-            return FSTUtils.decode(serialized);
-        });
+        TenantProfile deserialized = assertDoesNotThrow(() -> JavaSerDesUtil.decode(serialized));
         assertThat(deserialized).isEqualTo(tenantProfile);
         assertThat(deserialized.getProfileData()).isNotNull();
         assertThat(deserialized.getProfileData().getQueueConfiguration()).isNotEmpty();

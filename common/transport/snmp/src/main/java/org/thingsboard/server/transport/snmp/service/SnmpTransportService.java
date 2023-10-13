@@ -53,14 +53,14 @@ import org.thingsboard.server.common.data.transport.snmp.SnmpMethod;
 import org.thingsboard.server.common.data.transport.snmp.config.RepeatingQueryingSnmpCommunicationConfig;
 import org.thingsboard.server.common.data.transport.snmp.config.SnmpCommunicationConfig;
 import org.thingsboard.server.common.transport.TransportService;
-import org.thingsboard.server.common.transport.adaptor.JsonConverter;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbSnmpTransportComponent;
 import org.thingsboard.server.transport.snmp.SnmpTransportContext;
 import org.thingsboard.server.transport.snmp.session.DeviceSessionContext;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;

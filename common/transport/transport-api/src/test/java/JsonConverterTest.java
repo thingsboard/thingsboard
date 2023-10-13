@@ -19,7 +19,7 @@ import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.thingsboard.server.common.transport.adaptor.JsonConverter;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 
 import java.util.ArrayList;
 

@@ -81,9 +81,9 @@ import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.UnsubscribeCmd;
 import org.thingsboard.server.service.ws.telemetry.sub.TelemetrySubscriptionUpdate;
 
-import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;

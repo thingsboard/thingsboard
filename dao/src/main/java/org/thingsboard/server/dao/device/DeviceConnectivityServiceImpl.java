@@ -37,7 +37,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.util.DeviceConnectivityUtil;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;

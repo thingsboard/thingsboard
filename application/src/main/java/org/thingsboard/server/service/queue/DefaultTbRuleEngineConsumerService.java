@@ -69,8 +69,8 @@ import org.thingsboard.server.service.queue.processing.TbRuleEngineSubmitStrateg
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
 import org.thingsboard.server.service.stats.RuleEngineStatisticsService;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
