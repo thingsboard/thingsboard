@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.edge.rpc.processor.relation;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -67,10 +66,9 @@ public class RelationEdgeProcessor extends BaseRelationProcessor {
                 .build();
     }
 
-    public ListenableFuture<Void> processRelationNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) throws JsonProcessingException {
-        EntityRelation relation = JacksonUtil.OBJECT_MAPPER.readValue(edgeNotificationMsg.getBody(), EntityRelation.class);
-        if (relation.getFrom().getEntityType().equals(EntityType.EDGE) ||
-                relation.getTo().getEntityType().equals(EntityType.EDGE)) {
+    public ListenableFuture<Void> processRelationNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
+        EntityRelation relation = JacksonUtil.fromString(edgeNotificationMsg.getBody(), EntityRelation.class);
+        if (relation == null || (relation.getFrom().getEntityType().equals(EntityType.EDGE) || relation.getTo().getEntityType().equals(EntityType.EDGE))) {
             return Futures.immediateFuture(null);
         }
 

@@ -45,7 +45,7 @@ import java.util.UUID;
 @Slf4j
 public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
 
-    public ListenableFuture<Void> processAlarmMsg(TenantId tenantId, AlarmUpdateMsg alarmUpdateMsg) {
+    protected ListenableFuture<Void> processAlarmMsg(TenantId tenantId, AlarmUpdateMsg alarmUpdateMsg) {
         EntityId originatorId = getAlarmOriginator(tenantId, alarmUpdateMsg.getOriginatorName(),
                 EntityType.valueOf(alarmUpdateMsg.getOriginatorType()));
         AlarmId alarmId = new AlarmId(new UUID(alarmUpdateMsg.getIdMSB(), alarmUpdateMsg.getIdLSB()));
@@ -72,7 +72,7 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
                     alarm.setAcknowledged(alarmStatus.isAck());
                     alarm.setAckTs(alarmUpdateMsg.getAckTs());
                     alarm.setEndTs(alarmUpdateMsg.getEndTs());
-                    alarm.setDetails(JacksonUtil.OBJECT_MAPPER.readTree(alarmUpdateMsg.getDetails()));
+                    alarm.setDetails(JacksonUtil.toJsonNode(alarmUpdateMsg.getDetails()));
                     if (UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE.equals(alarmUpdateMsg.getMsgType())) {
                         alarmService.createAlarm(AlarmCreateOrUpdateActiveRequest.fromAlarm(alarm, null, alarmId));
                     } else {
@@ -89,7 +89,7 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
                     Alarm alarmToClear = alarmService.findAlarmById(tenantId, alarmId);
                     if (alarmToClear != null) {
                         alarmService.clearAlarm(tenantId, alarmId, alarmUpdateMsg.getClearTs(),
-                                JacksonUtil.OBJECT_MAPPER.readTree(alarmUpdateMsg.getDetails()));
+                                JacksonUtil.toJsonNode(alarmUpdateMsg.getDetails()));
                     }
                     break;
                 case ENTITY_DELETED_RPC_MESSAGE:

@@ -33,7 +33,7 @@ import java.util.UUID;
 @Slf4j
 public abstract class BaseRelationProcessor extends BaseEdgeProcessor {
 
-    public ListenableFuture<Void> processRelationMsg(TenantId tenantId, RelationUpdateMsg relationUpdateMsg) {
+    protected ListenableFuture<Void> processRelationMsg(TenantId tenantId, RelationUpdateMsg relationUpdateMsg) {
         try {
             EntityRelation entityRelation = new EntityRelation();
 
