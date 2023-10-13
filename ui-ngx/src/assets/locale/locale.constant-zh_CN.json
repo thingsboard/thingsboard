@@ -715,8 +715,6 @@
         "executions": "执行数",
         "javascript": "JavaScript",
         "javascript-executions": "JavaScript 执行数",
-        "javascript-functions-daily-activity": "每天执行的JavaScript函数",
-        "javascript-functions-monthly-activity": "每月执行的JavaScript函数",
         "latest-error": "最新错误",
         "messages": "消息",
         "notifications": "通知",

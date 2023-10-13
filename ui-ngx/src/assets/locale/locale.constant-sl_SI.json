@@ -447,8 +447,6 @@
     "executions": "Executions",
     "javascript": "JavaScript",
     "javascript-executions": "JavaScript executions",
-    "javascript-functions-daily-activity": "JavaScript functions daily activity",
-    "javascript-functions-monthly-activity": "JavaScript functions monthly activity",
     "latest-error": "Latest Error",
     "messages": "Messages",
     "permanent-failures": "${entityName} Permanent Failures",
