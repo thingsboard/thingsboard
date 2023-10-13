@@ -17,7 +17,6 @@ package org.thingsboard.server.service.install.update;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -49,7 +48,6 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.query.DynamicValue;
@@ -89,6 +87,7 @@ import org.thingsboard.server.service.install.SystemDataLoaderService;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
@@ -241,16 +240,25 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 var ruleNodeTypeForLogs = ruleNodeClassInfo.getSimpleName();
                 var toVersion = ruleNodeClassInfo.getCurrentVersion();
                 log.debug("Going to check for nodes with type: {} to upgrade to version: {}.", ruleNodeTypeForLogs, toVersion);
-                var ruleNodesToUpdate = new PageDataIterable<>(
-                        pageLink -> ruleChainService.findAllRuleNodesByTypeAndVersionLessThan(ruleNodeType, toVersion, pageLink), 1024
-                );
-                if (Iterables.isEmpty(ruleNodesToUpdate)) {
-                    log.debug("There are no active nodes with type: {}, or all nodes with this type already set to latest version!", ruleNodeTypeForLogs);
-                } else {
-                    for (var ruleNode : ruleNodesToUpdate) {
+                PageLink pageLink = new PageLink(1024, 0);
+                while (true) {
+                    var failedRuleNodes = new HashSet<RuleNode>();
+                    var toUpgradePageData = ruleChainService.findAllRuleNodesByTypeAndVersionLessThan(ruleNodeType, toVersion, pageLink);
+                    var toUpgradeList = toUpgradePageData.getData();
+                    if (toUpgradeList.isEmpty()) {
+                        log.debug("There are no active nodes with type: {}, or all nodes with this type already set to latest version!", ruleNodeTypeForLogs);
+                        break;
+                    }
+                    for (var ruleNode : toUpgradeList) {
                         var ruleNodeId = ruleNode.getId();
                         var oldConfiguration = ruleNode.getConfiguration();
                         int fromVersion = ruleNode.getConfigurationVersion();
+                        if (failedRuleNodes.contains(ruleNode)) {
+                            log.debug("Skip node upgrade with id: {}, type: {}, fromVersion: {} toVersion: {} " +
+                                            "because it was failed to upgrade in previous iterations!",
+                                    ruleNodeId, ruleNodeTypeForLogs, fromVersion, toVersion);
+                            continue;
+                        }
                         log.debug("Going to upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
                                 ruleNodeId, ruleNodeTypeForLogs, fromVersion, toVersion);
                         try {
@@ -273,7 +281,15 @@ public class DefaultDataUpdateService implements DataUpdateService {
                         } catch (Exception e) {
                             log.warn("Failed to upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {} due to: ",
                                     ruleNodeId, ruleNodeTypeForLogs, fromVersion, toVersion, e);
+                            failedRuleNodes.add(ruleNode);
                         }
+                    }
+                    if (!toUpgradePageData.hasNext()) {
+                        log.debug("Upgrade for rule nodes with type: {} completed!", ruleNodeTypeForLogs);
+                        break;
+                    }
+                    if (failedRuleNodes.size() == toUpgradeList.size() && failedRuleNodes.containsAll(toUpgradeList)) {
+                        pageLink = pageLink.nextPageLink();
                     }
                 }
             }
