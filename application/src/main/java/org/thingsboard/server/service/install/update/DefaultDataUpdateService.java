@@ -82,12 +82,12 @@ import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
+import org.thingsboard.server.service.component.RuleNodeClassInfo;
 import org.thingsboard.server.service.install.InstallScripts;
 import org.thingsboard.server.service.install.SystemDataLoaderService;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
@@ -102,6 +102,7 @@ import static org.thingsboard.server.common.data.StringUtils.isBlank;
 public class DefaultDataUpdateService implements DataUpdateService {
 
     private static final int MAX_PENDING_SAVE_RULE_NODE_FUTURES = 100;
+    public static final int BATCH_SIZE = 1024;
 
     @Autowired
     private TenantService tenantService;
@@ -236,61 +237,19 @@ public class DefaultDataUpdateService implements DataUpdateService {
             var nodeClassToVersionMap = componentDiscoveryService.getVersionedNodes();
             log.debug("Found {} versioned nodes to check for upgrade!", nodeClassToVersionMap.size());
             for (var ruleNodeClassInfo : nodeClassToVersionMap) {
-                var ruleNodeType = ruleNodeClassInfo.getClassName();
                 var ruleNodeTypeForLogs = ruleNodeClassInfo.getSimpleName();
                 var toVersion = ruleNodeClassInfo.getCurrentVersion();
                 log.debug("Going to check for nodes with type: {} to upgrade to version: {}.", ruleNodeTypeForLogs, toVersion);
-                PageLink pageLink = new PageLink(1024, 0);
-                while (true) {
-                    var failedRuleNodes = new HashSet<RuleNode>();
-                    var toUpgradePageData = ruleChainService.findAllRuleNodesByTypeAndVersionLessThan(ruleNodeType, toVersion, pageLink);
-                    var toUpgradeList = toUpgradePageData.getData();
-                    if (toUpgradeList.isEmpty()) {
-                        log.debug("There are no active nodes with type: {}, or all nodes with this type already set to latest version!", ruleNodeTypeForLogs);
-                        break;
-                    }
-                    for (var ruleNode : toUpgradeList) {
-                        var ruleNodeId = ruleNode.getId();
-                        var oldConfiguration = ruleNode.getConfiguration();
-                        int fromVersion = ruleNode.getConfigurationVersion();
-                        if (failedRuleNodes.contains(ruleNode)) {
-                            log.debug("Skip node upgrade with id: {}, type: {}, fromVersion: {} toVersion: {} " +
-                                            "because it was failed to upgrade in previous iterations!",
-                                    ruleNodeId, ruleNodeTypeForLogs, fromVersion, toVersion);
-                            continue;
-                        }
-                        log.debug("Going to upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
-                                ruleNodeId, ruleNodeTypeForLogs, fromVersion, toVersion);
-                        try {
-                            var tbVersionedNode = (TbNode) ruleNodeClassInfo.getClazz().getDeclaredConstructor().newInstance();
-                            TbPair<Boolean, JsonNode> upgradeRuleNodeConfigurationResult = tbVersionedNode.upgrade(fromVersion, oldConfiguration);
-                            if (upgradeRuleNodeConfigurationResult.getFirst()) {
-                                ruleNode.setConfiguration(upgradeRuleNodeConfigurationResult.getSecond());
-                            }
-                            ruleNode.setConfigurationVersion(toVersion);
-                            futures.add(jpaExecutorService.submit(() -> {
-                                ruleChainService.saveRuleNode(TenantId.SYS_TENANT_ID, ruleNode);
-                                log.debug("Successfully upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
-                                        ruleNodeId, ruleNodeTypeForLogs, fromVersion, toVersion);
-                            }));
-                            if (futures.size() >= MAX_PENDING_SAVE_RULE_NODE_FUTURES) {
-                                log.info("{} upgraded rule nodes so far ...",
-                                        totalRuleNodesUpgraded += awaitFuturesToCompleteAndGetCount(futures));
-                                futures.clear();
-                            }
-                        } catch (Exception e) {
-                            log.warn("Failed to upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {} due to: ",
-                                    ruleNodeId, ruleNodeTypeForLogs, fromVersion, toVersion, e);
-                            failedRuleNodes.add(ruleNode);
-                        }
-                    }
-                    if (!toUpgradePageData.hasNext()) {
-                        log.debug("Upgrade for rule nodes with type: {} completed!", ruleNodeTypeForLogs);
-                        break;
-                    }
-                    if (failedRuleNodes.size() == toUpgradeList.size() && failedRuleNodes.containsAll(toUpgradeList)) {
-                        pageLink = pageLink.nextPageLink();
-                    }
+                var ruleNodesIdsToUpgrade = getRuleNodesIdsWithTypeAndVersionLessThan(ruleNodeClassInfo.getClassName(), toVersion);
+                if (ruleNodesIdsToUpgrade.isEmpty()) {
+                    log.debug("There are no active nodes with type {}, or all nodes with this type already set to latest version!", ruleNodeTypeForLogs);
+                    continue;
+                }
+                int totalNodes = ruleNodesIdsToUpgrade.size();
+                for (int startIndex = 0; startIndex < totalNodes; startIndex += BATCH_SIZE) {
+                    int endIndex = Math.min(startIndex + BATCH_SIZE, totalNodes);
+                    var ruleNodePack = ruleNodesIdsToUpgrade.subList(startIndex, endIndex);
+                    processRuleNodePack(ruleNodePack, ruleNodeClassInfo, futures, totalRuleNodesUpgraded);
                 }
             }
             log.info("Finished rule nodes upgrade. Upgraded rule nodes count: {}",
@@ -298,6 +257,59 @@ public class DefaultDataUpdateService implements DataUpdateService {
         } catch (Exception e) {
             log.error("Unexpected error during rule nodes upgrade: ", e);
         }
+    }
+
+    private void processRuleNodePack(List<RuleNodeId> ruleNodeIdsBatch, RuleNodeClassInfo ruleNodeClassInfo,
+                                     List<ListenableFuture<?>> futures, int totalRuleNodesUpgraded) {
+        String ruleNodeType = ruleNodeClassInfo.getSimpleName();
+        int toVersion = ruleNodeClassInfo.getCurrentVersion();
+        var ruleNodesPack = ruleChainService.findAllRuleNodesByIds(ruleNodeIdsBatch);
+        for (var ruleNode : ruleNodesPack) {
+            var ruleNodeId = ruleNode.getId();
+            var oldConfiguration = ruleNode.getConfiguration();
+            int fromVersion = ruleNode.getConfigurationVersion();
+            log.debug("Going to upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
+                    ruleNodeId, ruleNodeType, fromVersion, toVersion);
+            try {
+                var tbVersionedNode = (TbNode) ruleNodeClassInfo.getClazz().getDeclaredConstructor().newInstance();
+                TbPair<Boolean, JsonNode> upgradeRuleNodeConfigurationResult = tbVersionedNode.upgrade(fromVersion, oldConfiguration);
+                if (upgradeRuleNodeConfigurationResult.getFirst()) {
+                    ruleNode.setConfiguration(upgradeRuleNodeConfigurationResult.getSecond());
+                }
+                ruleNode.setConfigurationVersion(toVersion);
+                futures.add(jpaExecutorService.submit(() -> {
+                    ruleChainService.saveRuleNode(TenantId.SYS_TENANT_ID, ruleNode);
+                    log.debug("Successfully upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
+                            ruleNodeId, ruleNodeType, fromVersion, toVersion);
+                }));
+                if (futures.size() >= MAX_PENDING_SAVE_RULE_NODE_FUTURES) {
+                    log.info("{} upgraded rule nodes so far ...",
+                            totalRuleNodesUpgraded += awaitFuturesToCompleteAndGetCount(futures));
+                    futures.clear();
+                }
+            } catch (Exception e) {
+                log.warn("Failed to upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {} due to: ",
+                        ruleNodeId, ruleNodeType, fromVersion, toVersion, e);
+            }
+
+        }
+
+    }
+
+    private List<RuleNodeId> getRuleNodesIdsWithTypeAndVersionLessThan(String type, int toVersion) {
+        var ruleNodeIds = new ArrayList<RuleNodeId>();
+        var pageLink = new PageLink(BATCH_SIZE);
+        boolean hasNext = true;
+        while (hasNext) {
+            var ruleNodeIdsData = ruleChainService.findAllRuleNodeIdsByTypeAndVersionLessThan(type, toVersion, pageLink);
+            ruleNodeIds.addAll(ruleNodeIdsData.getData());
+            if (ruleNodeIdsData.hasNext()) {
+                pageLink = pageLink.nextPageLink();
+                continue;
+            }
+            hasNext = false;
+        }
+        return ruleNodeIds;
     }
 
     private int awaitFuturesToCompleteAndGetCount(List<ListenableFuture<?>> futures) {
@@ -389,7 +401,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
     private void updateNestedRuleChains() {
         try {
-            var packSize = 1024;
+            var packSize = BATCH_SIZE;
             var updated = 0;
             boolean hasNext = true;
             while (hasNext) {
