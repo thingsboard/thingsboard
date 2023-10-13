@@ -61,7 +61,7 @@ export class GatewayServiceRPCComponent implements AfterViewInit {
     this.commandForm = this.fb.group({
       command: [null,[Validators.required]],
       time: [60, [Validators.required, Validators.min(1)]],
-      params: [{}, [jsonRequired]],
+      params: ['{}', [jsonRequired]],
       result: [null]
     });
   }
