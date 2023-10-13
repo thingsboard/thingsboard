@@ -61,6 +61,9 @@ import {
 import {
   WindSpeedDirectionBasicConfigComponent
 } from '@home/components/widget/config/basic/weather/wind-speed-direction-basic-config.component';
+import {
+  SignalStrengthBasicConfigComponent
+} from '@home/components/widget/config/basic/indicator/signal-strength-basic-config.component';
 
 @NgModule({
   declarations: [
@@ -79,7 +82,8 @@ import {
     AlarmCountBasicConfigComponent,
     EntityCountBasicConfigComponent,
     BatteryLevelBasicConfigComponent,
-    WindSpeedDirectionBasicConfigComponent
+    WindSpeedDirectionBasicConfigComponent,
+    SignalStrengthBasicConfigComponent
   ],
   imports: [
     CommonModule,
@@ -102,7 +106,8 @@ import {
     AlarmCountBasicConfigComponent,
     EntityCountBasicConfigComponent,
     BatteryLevelBasicConfigComponent,
-    WindSpeedDirectionBasicConfigComponent
+    WindSpeedDirectionBasicConfigComponent,
+    SignalStrengthBasicConfigComponent
   ]
 })
 export class BasicWidgetConfigModule {
@@ -119,5 +124,6 @@ export const basicWidgetConfigComponentsMap: {[key: string]: Type<IBasicWidgetCo
   'tb-alarm-count-basic-config': AlarmCountBasicConfigComponent,
   'tb-entity-count-basic-config': EntityCountBasicConfigComponent,
   'tb-battery-level-basic-config': BatteryLevelBasicConfigComponent,
-  'tb-wind-speed-direction-basic-config': WindSpeedDirectionBasicConfigComponent
+  'tb-wind-speed-direction-basic-config': WindSpeedDirectionBasicConfigComponent,
+  'tb-signal-strength-basic-config': SignalStrengthBasicConfigComponent
 };

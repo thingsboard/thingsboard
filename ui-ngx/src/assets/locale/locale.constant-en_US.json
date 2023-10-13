@@ -5060,6 +5060,22 @@
             "battery-level-card-style": "Battery level card style",
             "sections-count": "Sections count"
         },
+        "signal-strength": {
+            "value": "Value",
+            "last-update": "Last update",
+            "no-signal": "No signal",
+            "layout": "Layout",
+            "layout-wifi": "Wi-Fi",
+            "layout-cellular-bar": "Cellular bar",
+            "icon": "Icon",
+            "date": "Date",
+            "active-bars-color": "Active signal bars color",
+            "inactive-bars-color": "Inactive signal bars color",
+            "tooltip": "Tooltip",
+            "background-color": "Background color",
+            "background-blur": "Background blur",
+            "signal-strength-card-style": "Signal strength card style"
+        },
         "chart": {
             "common-settings": "Common settings",
             "enable-stacking-mode": "Enable stacking mode",
