@@ -17,7 +17,7 @@
 -->
 <div class="tb-color-settings-panel" [formGroup]="colorSettingsFormGroup">
   <div class="tb-color-settings-title" translate>widgets.color.color-settings</div>
-  <div fxLayout="row">
+  <div fxLayout="row" *ngIf="colorTypes.length > 1">
     <tb-toggle-select formControlName="type" fxFlex.xs fxFlex="70%">
       <tb-toggle-option *ngFor="let type of colorTypes"
                         [value]="type">
@@ -25,7 +25,7 @@
       </tb-toggle-option>
     </tb-toggle-select>
   </div>
-  <div class="tb-form-row space-between">
+  <div class="tb-form-row space-between" *ngIf="colorTypes.includes(colorType.constant)">
     <div translate>widgets.color.color</div>
     <tb-color-input asBoxInput
                     formControlName="color">
@@ -74,7 +74,7 @@
 
 <ng-template #range>
   <div fxFlex class="tb-color-ranges-panel">
-    <div class="tb-form-panel-title" translate>widgets.color.value-range</div>
+    <div class="tb-form-panel-title" *ngIf="colorTypes.length > 1" translate>widgets.color.value-range</div>
     <div class="tb-color-ranges" [formGroup]="colorSettingsFormGroup">
       <div class="tb-form-row no-padding no-border" [formGroup]="rangeFormGroup" *ngFor="let rangeFormGroup of rangeListFormGroups; trackBy: trackByRange; let $index = index;">
         <div fxFlex fxLayout="row" fxLayoutGap="24px">

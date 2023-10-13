@@ -79,6 +79,9 @@ export class ColorSettingsComponent implements OnInit, ControlValueAccessor, OnD
   @Input()
   settingsKey: string;
 
+  @Input()
+  disabledColorType: Array<ColorType> = [];
+
   colorType = ColorType;
 
   modelValue: ColorSettings;
@@ -127,7 +130,8 @@ export class ColorSettingsComponent implements OnInit, ControlValueAccessor, OnD
     } else {
       const ctx: any = {
         colorSettings: this.modelValue,
-        settingsComponents: this.colorSettingsComponentService.getOtherColorSettingsComponents(this)
+        settingsComponents: this.colorSettingsComponentService.getOtherColorSettingsComponents(this),
+        disabledColorType: this.disabledColorType
       };
       const colorSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
         this.viewContainerRef, ColorSettingsPanelComponent, 'left', true, null,
@@ -147,14 +151,21 @@ export class ColorSettingsComponent implements OnInit, ControlValueAccessor, OnD
   private updateColorStyle() {
     if (!this.disabled && this.modelValue) {
       let colors: string[] = [this.modelValue.color];
+      let colorsLength = 2;
+      if (this.disabledColorType.length && this.disabledColorType.includes(ColorType.constant)) {
+        colorsLength = 3;
+      }
       if (this.modelValue.type === ColorType.range && this.modelValue.rangeList?.length) {
-        const rangeColors = this.modelValue.rangeList.slice(0, Math.min(2, this.modelValue.rangeList.length)).map(r => r.color);
+        const rangeColors = this.modelValue.rangeList.slice(0, Math.min(colorsLength, this.modelValue.rangeList.length)).map(r => r.color);
         colors = colors.concat(rangeColors);
       }
       if (colors.length === 1) {
         this.colorStyle = {backgroundColor: colors[0]};
       } else {
         const gradientValues: string[] = [];
+        if (this.disabledColorType.includes(ColorType.constant) && !colors[0]) {
+          colors.shift();
+        }
         const step = 100 / colors.length;
         for (let i = 0; i < colors.length; i++) {
           gradientValues.push(`${colors[i]} ${step*i}%`);

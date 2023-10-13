@@ -38,6 +38,9 @@ export class ColorSettingsPanelComponent extends PageComponent implements OnInit
   colorSettings: ColorSettings;
 
   @Input()
+  disabledColorType: Array<ColorType> = [];
+
+  @Input()
   popover: TbPopoverComponent<ColorSettingsPanelComponent>;
 
   @Input()
@@ -71,6 +74,13 @@ export class ColorSettingsPanelComponent extends PageComponent implements OnInit
         colorFunction: [this.colorSettings?.colorFunction, []]
       }
     );
+    if (this.disabledColorType.length) {
+      if (this.disabledColorType.includes(this.colorType.constant)) {
+        this.colorSettingsFormGroup.get('color').disable();
+      }
+      this.settingsComponents = this.settingsComponents.filter(settings => !this.disabledColorType.includes(settings.modelValue.type));
+      this.colorTypes = this.colorTypes.filter(type => !this.disabledColorType.includes(type));
+    }
     this.colorSettingsFormGroup.get('type').valueChanges.subscribe(() => {
       setTimeout(() => {this.popover?.updatePosition();}, 0);
     });
