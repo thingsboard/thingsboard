@@ -291,9 +291,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 log.warn("Failed to upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {} due to: ",
                         ruleNodeId, ruleNodeType, fromVersion, toVersion, e);
             }
-
         }
-
     }
 
     private List<RuleNodeId> getRuleNodesIdsWithTypeAndVersionLessThan(String type, int toVersion) {
