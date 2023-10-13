@@ -1509,7 +1509,7 @@
         "condition-duration-value-required": "Se requiere valor de duración.",
         "condition-duration-time-unit-required": "Se requiere una unidad de tiempo.",
         "advanced-settings": "Ajustes avanzados",
-        "alarm-rule-details-hint": "Ayuda: usa <code><span style=\"color: #000;\">$&#123;</span>nombredeClave<span style=\"color: #000;\">&#125;</span></code> para sustituir los valores de atributos o telemetrías usadas en la condición de la regla de alarma.",
+        "alarm-rule-additional-info-hint": "Ayuda: usa <code><span style=\"color: #000;\">$&#123;</span>nombredeClave<span style=\"color: #000;\">&#125;</span></code> para sustituir los valores de atributos o telemetrías usadas en la condición de la regla de alarma.",
         "alarm-rule-mobile-dashboard": "Panel Móvil",
         "alarm-rule-mobile-dashboard-hint": "Usado por la aplicación móvil como panel de detalle de alarmas",
         "alarm-rule-no-mobile-dashboard": "No hay panel seleccionado",
