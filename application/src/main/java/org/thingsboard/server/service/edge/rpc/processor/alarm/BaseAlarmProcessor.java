@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.edge.rpc.processor.alarm;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -53,13 +52,13 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
         AlarmId alarmId = new AlarmId(new UUID(alarmUpdateMsg.getIdMSB(), alarmUpdateMsg.getIdLSB()));
         boolean isEdgeProtoDeprecated = EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion);
         Alarm alarm = isEdgeProtoDeprecated ? createDeprecatedAlarm(tenantId, alarmUpdateMsg)
-                : JacksonUtil.fromEdgeString(alarmUpdateMsg.getEntity(), Alarm.class);
+                : JacksonUtil.fromStringIgnoreUnknownProperties(alarmUpdateMsg.getEntity(), Alarm.class);
         if (alarm == null) {
             throw new RuntimeException("[{" + tenantId + "}] alarmUpdateMsg {" + alarmUpdateMsg + "} cannot be converted to alarm");
         }
-        EntityType entityType = isEdgeProtoDeprecated ? EntityType.valueOf(alarmUpdateMsg.getOriginatorType())
-                : alarm.getOriginator().getEntityType();
-        EntityId originatorId = getAlarmOriginator(tenantId, alarmUpdateMsg.getOriginatorName(), entityType);
+        EntityId originatorId = isEdgeProtoDeprecated
+                ? getAlarmOriginator(tenantId, alarmUpdateMsg.getOriginatorName(), EntityType.valueOf(alarmUpdateMsg.getOriginatorType()))
+                : alarm.getOriginator();
         if (originatorId == null) {
             log.warn("[{}] Originator not found for the alarm msg {}", tenantId, alarmUpdateMsg);
             return Futures.immediateFuture(null);
@@ -121,11 +120,7 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
         alarm.setAcknowledged(alarmStatus.isAck());
         alarm.setAckTs(alarmUpdateMsg.getAckTs());
         alarm.setEndTs(alarmUpdateMsg.getEndTs());
-        try {
-            alarm.setDetails(JacksonUtil.OBJECT_MAPPER.readTree(alarmUpdateMsg.getDetails()));
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        alarm.setDetails(JacksonUtil.toJsonNode(alarmUpdateMsg.getDetails()));
         return alarm;
     }
 
@@ -156,7 +151,7 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
                 }
                 break;
             case DELETED:
-                Alarm deletedAlarm = JacksonUtil.OBJECT_MAPPER.convertValue(body, Alarm.class);
+                Alarm deletedAlarm = JacksonUtil.convertValue(body, Alarm.class);
                 return alarmMsgConstructor.constructAlarmUpdatedMsg(msgType, deletedAlarm, findOriginatorEntityName(tenantId, deletedAlarm), edgeVersion);
         }
         return null;

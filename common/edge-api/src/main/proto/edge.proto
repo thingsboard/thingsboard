@@ -310,7 +310,7 @@ message AlarmUpdateMsg {
   string name = 4 [deprecated = true];
   string type = 5 [deprecated = true];
   string originatorType = 6 [deprecated = true];
-  string originatorName = 7;
+  string originatorName = 7 [deprecated = true];
   string severity = 8 [deprecated = true];
   string status = 9 [deprecated = true];
   int64 startTs = 10 [deprecated = true];

@@ -129,17 +129,16 @@ public class AssetProfileEdgeProcessor extends BaseAssetProfileProcessor {
     }
 
     @Override
-    protected void setDefaultRuleChainId(TenantId tenantId, AssetProfile assetProfile) {
-        // do nothing on cloud
+    protected void setDefaultRuleChainId(TenantId tenantId, AssetProfile assetProfile, RuleChainId ruleChainId) {
+        assetProfile.setDefaultRuleChainId(ruleChainId);
     }
 
     @Override
     protected void setDefaultEdgeRuleChainId(AssetProfile assetProfile, RuleChainId ruleChainId, AssetProfileUpdateMsg assetProfileUpdateMsg, boolean isEdgeVersionDeprecated) {
         UUID defaultEdgeRuleChainUUID = isEdgeVersionDeprecated
                 ? safeGetUUID(assetProfileUpdateMsg.getDefaultRuleChainIdMSB(), assetProfileUpdateMsg.getDefaultRuleChainIdLSB())
-                : assetProfile.getDefaultRuleChainId() != null ? assetProfile.getDefaultRuleChainId().getId() : null;
+                : ruleChainId != null ? ruleChainId.getId() : null;
         assetProfile.setDefaultEdgeRuleChainId(defaultEdgeRuleChainUUID != null ? new RuleChainId(defaultEdgeRuleChainUUID) : null);
-        assetProfile.setDefaultRuleChainId(ruleChainId);
     }
 
     @Override

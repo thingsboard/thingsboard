@@ -62,7 +62,7 @@ public class JacksonUtil {
             .configure(JsonWriteFeature.QUOTE_FIELD_NAMES.mappedFeature(), false)
             .configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true)
             .build();
-    public static final ObjectMapper EDGE_OBJECT_MAPPER = JsonMapper.builder()
+    public static final ObjectMapper IGNORE_UNKNOWN_PROPERTIES_JSON_MAPPER = JsonMapper.builder()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .build();
 
@@ -150,9 +150,9 @@ public class JacksonUtil {
         }
     }
 
-    public static <T> T fromEdgeString(String string, Class<T> clazz) {
+    public static <T> T fromStringIgnoreUnknownProperties(String string, Class<T> clazz) {
         try {
-            return string != null ? EDGE_OBJECT_MAPPER.readValue(string, clazz) : null;
+            return string != null ? IGNORE_UNKNOWN_PROPERTIES_JSON_MAPPER.readValue(string, clazz) : null;
         } catch (IOException e) {
             throw new IllegalArgumentException("The given string value: "
                     + string + " cannot be transformed to Json object", e);

@@ -21,51 +21,57 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
-import java.util.HashSet;
 import java.util.Set;
 
 @Slf4j
 public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
 
-    protected boolean saveOrUpdateDashboard(TenantId tenantId, DashboardId dashboardId, DashboardUpdateMsg dashboardUpdateMsg, boolean isEdgeProtoDeprecated) {
+    protected boolean saveOrUpdateDashboard(TenantId tenantId, DashboardId dashboardId, DashboardUpdateMsg dashboardUpdateMsg, boolean isEdgeProtoDeprecated, CustomerId customerId) {
         boolean created = false;
         Dashboard dashboard = isEdgeProtoDeprecated
                 ? createDashboard(tenantId, dashboardId, dashboardUpdateMsg)
-                : JacksonUtil.fromEdgeString(dashboardUpdateMsg.getEntity(), Dashboard.class);
+                : JacksonUtil.fromStringIgnoreUnknownProperties(dashboardUpdateMsg.getEntity(), Dashboard.class);
         if (dashboard == null) {
             throw new RuntimeException("[{" + tenantId + "}] dashboardUpdateMsg {" + dashboardUpdateMsg + "} cannot be converted to dashboard");
         }
-        Set<ShortCustomerInfo> assignedCustomers = new HashSet<>();
+        Set<ShortCustomerInfo> assignedCustomers = null;
         Dashboard dashboardById = dashboardService.findDashboardById(tenantId, dashboardId);
         if (dashboardById == null) {
             created = true;
             dashboard.setId(null);
         } else {
             dashboard.setId(dashboardId);
-            assignedCustomers = dashboardById.getAssignedCustomers();
+            assignedCustomers = filterNonExistingCustomers(tenantId, dashboardById.getAssignedCustomers());
         }
 
         dashboardValidator.validate(dashboard, Dashboard::getTenantId);
         if (created) {
             dashboard.setId(dashboardId);
         }
-        if (dashboard.getAssignedCustomers() != null) {
-            assignedCustomers.addAll(dashboard.getAssignedCustomers());
-            assignedCustomers = filterNonExistingCustomers(tenantId, assignedCustomers);
-            dashboard.setAssignedCustomers(assignedCustomers);
+        Set<ShortCustomerInfo> msgAssignedCustomers = filterNonExistingCustomers(tenantId, dashboard.getAssignedCustomers());
+        if (msgAssignedCustomers != null) {
+            if (assignedCustomers == null) {
+                assignedCustomers = msgAssignedCustomers;
+            } else {
+                assignedCustomers.addAll(msgAssignedCustomers);
+            }
         }
+        dashboard.setAssignedCustomers(assignedCustomers);
         Dashboard savedDashboard = dashboardService.saveDashboard(dashboard, false);
-        if (assignedCustomers != null && !assignedCustomers.isEmpty()) {
-            for (ShortCustomerInfo assignedCustomer : savedDashboard.getAssignedCustomers()) {
-                dashboardService.assignDashboardToCustomer(tenantId, savedDashboard.getId(), assignedCustomer.getCustomerId());
+        if (msgAssignedCustomers != null && !msgAssignedCustomers.isEmpty()) {
+            for (ShortCustomerInfo assignedCustomer : msgAssignedCustomers) {
+                if (assignedCustomer.getCustomerId().equals(customerId)) {
+                    dashboardService.assignDashboardToCustomer(tenantId, savedDashboard.getId(), assignedCustomer.getCustomerId());
+                }
             }
         } else {
-            unassignCustomersFromDashboard(tenantId, savedDashboard);
+            unassignCustomersFromDashboard(tenantId, savedDashboard, customerId);
         }
         return created;
     }
@@ -90,10 +96,12 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
 
     protected abstract Set<ShortCustomerInfo> filterNonExistingCustomers(TenantId tenantId, Set<ShortCustomerInfo> assignedCustomers);
 
-    private void unassignCustomersFromDashboard(TenantId tenantId, Dashboard dashboard) {
+    private void unassignCustomersFromDashboard(TenantId tenantId, Dashboard dashboard, CustomerId customerId) {
         if (dashboard.getAssignedCustomers() != null && !dashboard.getAssignedCustomers().isEmpty()) {
             for (ShortCustomerInfo assignedCustomer : dashboard.getAssignedCustomers()) {
-                dashboardService.unassignDashboardFromCustomer(tenantId, dashboard.getId(), assignedCustomer.getCustomerId());
+                if (assignedCustomer.getCustomerId().equals(customerId)) {
+                    dashboardService.unassignDashboardFromCustomer(tenantId, dashboard.getId(), assignedCustomer.getCustomerId());
+                }
             }
         }
     }

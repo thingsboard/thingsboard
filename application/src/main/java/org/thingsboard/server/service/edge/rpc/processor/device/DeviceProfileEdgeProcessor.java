@@ -129,17 +129,16 @@ public class DeviceProfileEdgeProcessor extends BaseDeviceProfileProcessor {
     }
 
     @Override
-    protected void setDefaultRuleChainId(TenantId tenantId, DeviceProfile deviceProfile) {
-        // do nothing on cloud
+    protected void setDefaultRuleChainId(TenantId tenantId, DeviceProfile deviceProfile, RuleChainId ruleChainId) {
+        deviceProfile.setDefaultRuleChainId(ruleChainId);
     }
 
     @Override
     protected void setDefaultEdgeRuleChainId(DeviceProfile deviceProfile, RuleChainId ruleChainId, DeviceProfileUpdateMsg deviceProfileUpdateMsg, boolean isEdgeVersionDeprecated) {
         UUID defaultEdgeRuleChainUUID = isEdgeVersionDeprecated
                 ? safeGetUUID(deviceProfileUpdateMsg.getDefaultRuleChainIdMSB(), deviceProfileUpdateMsg.getDefaultRuleChainIdLSB())
-                : deviceProfile.getDefaultRuleChainId() != null ? deviceProfile.getDefaultRuleChainId().getId() : null;
+                : ruleChainId != null ? ruleChainId.getId() : null;
         deviceProfile.setDefaultEdgeRuleChainId(defaultEdgeRuleChainUUID != null ? new RuleChainId(defaultEdgeRuleChainUUID) : null);
-        deviceProfile.setDefaultRuleChainId(ruleChainId);
     }
 
     @Override

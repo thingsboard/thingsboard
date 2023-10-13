@@ -15,7 +15,6 @@
  */
 package org.thingsboard.common.util;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Assert;
@@ -28,7 +27,7 @@ import java.util.UUID;
 public class JacksonUtilTest {
 
     @Test
-    public void allow_unquoted_field_mapper_test() {
+    public void allowUnquotedFieldMapperTest() {
         String data = "{data: 123}";
         JsonNode actualResult = JacksonUtil.toJsonNode(data, JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER); // should be: {"data": 123}
         ObjectNode expectedResult = JacksonUtil.newObjectNode();
@@ -38,18 +37,19 @@ public class JacksonUtilTest {
     }
 
     @Test
-    public void fail_on_unknown_properties_edge_mapper_test() throws JsonProcessingException {
+    public void failOnUnknownPropertiesMapperTest() {
         Asset asset = new Asset();
         asset.setId(new AssetId(UUID.randomUUID()));
         asset.setName("Test");
         asset.setType("type");
         String serializedAsset = JacksonUtil.toString(asset);
-        JsonNode jsonNode = JacksonUtil.EDGE_OBJECT_MAPPER.readTree(serializedAsset);
+        JsonNode jsonNode = JacksonUtil.toJsonNode(serializedAsset, JacksonUtil.IGNORE_UNKNOWN_PROPERTIES_JSON_MAPPER);
         // case: add new field to serialized Asset string and check for backward compatibility with original Asset object
+        Assert.assertNotNull(jsonNode);
         ((ObjectNode) jsonNode).put("test", (String) null);
         serializedAsset = JacksonUtil.toString(jsonNode);
         // deserialize with FAIL_ON_UNKNOWN_PROPERTIES = false
-        Asset result = JacksonUtil.fromEdgeString(serializedAsset, Asset.class);
+        Asset result = JacksonUtil.fromStringIgnoreUnknownProperties(serializedAsset, Asset.class);
         Assert.assertNotNull(result);
         Assert.assertEquals(asset.getId(), result.getId());
         Assert.assertEquals(asset.getName(), result.getName());

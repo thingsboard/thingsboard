@@ -48,10 +48,10 @@ public class TenantEdgeTest extends AbstractEdgeTest {
         Optional<TenantProfileUpdateMsg> tenantProfileUpdateMsgOpt = edgeImitator.findMessageByType(TenantProfileUpdateMsg.class);
         Assert.assertTrue(tenantProfileUpdateMsgOpt.isPresent());
         TenantProfileUpdateMsg tenantProfileUpdateMsg = tenantProfileUpdateMsgOpt.get();
-        Tenant tenantMsg = JacksonUtil.fromEdgeString(tenantUpdateMsg.getEntity(), Tenant.class);
+        Tenant tenantMsg = JacksonUtil.fromStringIgnoreUnknownProperties(tenantUpdateMsg.getEntity(), Tenant.class);
         Assert.assertNotNull(tenantMsg);
         Assert.assertEquals(savedTenant, tenantMsg);
-        TenantProfile tenantProfileMsg = JacksonUtil.fromEdgeString(tenantProfileUpdateMsg.getEntity(), TenantProfile.class);
+        TenantProfile tenantProfileMsg = JacksonUtil.fromStringIgnoreUnknownProperties(tenantProfileUpdateMsg.getEntity(), TenantProfile.class);
         Assert.assertNotNull(tenantProfileMsg);
         Assert.assertEquals(tenantMsg.getTenantProfileId(), tenantProfileMsg.getId());
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, tenantUpdateMsg.getMsgType());
@@ -66,12 +66,12 @@ public class TenantEdgeTest extends AbstractEdgeTest {
         tenantUpdateMsgOpt = edgeImitator.findMessageByType(TenantUpdateMsg.class);
         Assert.assertTrue(tenantUpdateMsgOpt.isPresent());
         tenantUpdateMsg = tenantUpdateMsgOpt.get();
-        tenantMsg = JacksonUtil.fromEdgeString(tenantUpdateMsg.getEntity(), Tenant.class);
+        tenantMsg = JacksonUtil.fromStringIgnoreUnknownProperties(tenantUpdateMsg.getEntity(), Tenant.class);
         Assert.assertNotNull(tenantMsg);
         tenantProfileUpdateMsgOpt = edgeImitator.findMessageByType(TenantProfileUpdateMsg.class);
         Assert.assertTrue(tenantProfileUpdateMsgOpt.isPresent());
         tenantProfileUpdateMsg = tenantProfileUpdateMsgOpt.get();
-        tenantProfileMsg = JacksonUtil.fromEdgeString(tenantProfileUpdateMsg.getEntity(), TenantProfile.class);
+        tenantProfileMsg = JacksonUtil.fromStringIgnoreUnknownProperties(tenantProfileUpdateMsg.getEntity(), TenantProfile.class);
         Assert.assertNotNull(tenantProfileMsg);
         // tenant update
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, tenantUpdateMsg.getMsgType());

@@ -40,7 +40,7 @@ public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
         try {
             AssetProfile assetProfile = isEdgeProtoDeprecated
                     ? createAssetProfile(tenantId, assetProfileId, assetProfileUpdateMsg)
-                    : JacksonUtil.fromEdgeString(assetProfileUpdateMsg.getEntity(), AssetProfile.class);
+                    : JacksonUtil.fromStringIgnoreUnknownProperties(assetProfileUpdateMsg.getEntity(), AssetProfile.class);
             if (assetProfile == null) {
                 throw new RuntimeException("[{" + tenantId + "}] assetProfileUpdateMsg {" + assetProfileUpdateMsg + "} cannot be converted to asset profile");
             }
@@ -61,8 +61,9 @@ public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
             }
             assetProfile.setName(assetProfileName);
 
-            setDefaultRuleChainId(tenantId, assetProfile);
-            setDefaultEdgeRuleChainId(assetProfile, created ? null : assetProfileById.getDefaultRuleChainId(), assetProfileUpdateMsg, isEdgeProtoDeprecated);
+            RuleChainId ruleChainId = assetProfile.getDefaultRuleChainId();
+            setDefaultRuleChainId(tenantId, assetProfile, created ? null : assetProfileById.getDefaultRuleChainId());
+            setDefaultEdgeRuleChainId(assetProfile, ruleChainId, assetProfileUpdateMsg, isEdgeProtoDeprecated);
             setDefaultDashboardId(tenantId, created ? null : assetProfileById.getDefaultDashboardId(), assetProfile, assetProfileUpdateMsg, isEdgeProtoDeprecated);
 
             assetProfileValidator.validate(assetProfile, AssetProfile::getTenantId);
@@ -92,7 +93,7 @@ public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
         return assetProfile;
     }
 
-    protected abstract void setDefaultRuleChainId(TenantId tenantId, AssetProfile assetProfile);
+    protected abstract void setDefaultRuleChainId(TenantId tenantId, AssetProfile assetProfile, RuleChainId ruleChainId);
 
     protected abstract void setDefaultEdgeRuleChainId(AssetProfile assetProfile, RuleChainId ruleChainId, AssetProfileUpdateMsg assetProfileUpdateMsg, boolean isEdgeVersionDeprecated);
 

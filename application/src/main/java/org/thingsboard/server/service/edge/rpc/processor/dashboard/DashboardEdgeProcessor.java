@@ -81,7 +81,7 @@ public class DashboardEdgeProcessor extends BaseDashboardProcessor {
 
     private void saveOrUpdateDashboard(TenantId tenantId, DashboardId dashboardId, DashboardUpdateMsg dashboardUpdateMsg, Edge edge, EdgeVersion edgeVersion) {
         boolean created = super.saveOrUpdateDashboard(tenantId, dashboardId, dashboardUpdateMsg,
-                EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion));
+                EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion), edge.getCustomerId());
         if (created) {
             createRelationFromEdge(tenantId, edge.getId(), dashboardId);
             pushDashboardCreatedEventToRuleEngine(tenantId, edge, dashboardId);

@@ -43,7 +43,7 @@ public class TenantProfileEdgeTest extends AbstractEdgeTest {
         AbstractMessage latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof TenantProfileUpdateMsg);
         TenantProfileUpdateMsg tenantProfileUpdateMsg = (TenantProfileUpdateMsg) latestMessage;
-        TenantProfile tenantProfileMsg = JacksonUtil.fromEdgeString(tenantProfileUpdateMsg.getEntity(), TenantProfile.class);
+        TenantProfile tenantProfileMsg = JacksonUtil.fromStringIgnoreUnknownProperties(tenantProfileUpdateMsg.getEntity(), TenantProfile.class);
         Assert.assertNotNull(tenantProfileMsg);
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, tenantProfileUpdateMsg.getMsgType());
         Assert.assertEquals(edgeTenantProfile, tenantProfileMsg);

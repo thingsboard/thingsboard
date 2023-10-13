@@ -41,7 +41,7 @@ public abstract class BaseRelationProcessor extends BaseEdgeProcessor {
             edgeSynchronizationManager.getSync().set(true);
             EntityRelation entityRelation = EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)
                     ? createEntityRelation(relationUpdateMsg)
-                    : JacksonUtil.fromEdgeString(relationUpdateMsg.getEntity(), EntityRelation.class);
+                    : JacksonUtil.fromStringIgnoreUnknownProperties(relationUpdateMsg.getEntity(), EntityRelation.class);
             if (entityRelation == null) {
                 throw new RuntimeException("[{" + tenantId + "}] relationUpdateMsg {" + relationUpdateMsg + "} cannot be converted to entity relation");
             }

@@ -40,7 +40,7 @@ public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
         try {
             Asset asset = isEdgeProtoDeprecated
                     ? createAsset(tenantId, assetId, assetUpdateMsg)
-                    : JacksonUtil.fromEdgeString(assetUpdateMsg.getEntity(), Asset.class);
+                    : JacksonUtil.fromStringIgnoreUnknownProperties(assetUpdateMsg.getEntity(), Asset.class);
             if (asset == null) {
                 throw new RuntimeException("[{" + tenantId + "}] assetUpdateMsg {" + assetUpdateMsg + " } cannot be converted to asset");
             }

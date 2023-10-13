@@ -54,7 +54,7 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
         try {
             Device device = isEdgeProtoDeprecated
                     ? createDevice(tenantId, deviceId, deviceUpdateMsg)
-                    : JacksonUtil.fromEdgeString(deviceUpdateMsg.getEntity(), Device.class);
+                    : JacksonUtil.fromStringIgnoreUnknownProperties(deviceUpdateMsg.getEntity(), Device.class);
             if (device == null) {
                 throw new RuntimeException("[{" + tenantId + "}] deviceUpdateMsg {" + deviceUpdateMsg + "} cannot be converted to device");
             }
@@ -126,7 +126,7 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
         log.debug("[{}] Executing processDeviceCredentialsMsg, deviceCredentialsUpdateMsg [{}]", tenantId, deviceCredentialsUpdateMsg);
         DeviceCredentials deviceCredentials = EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)
                 ? createDeviceCredentials(deviceCredentialsUpdateMsg)
-                : JacksonUtil.fromEdgeString(deviceCredentialsUpdateMsg.getEntity(), DeviceCredentials.class);
+                : JacksonUtil.fromStringIgnoreUnknownProperties(deviceCredentialsUpdateMsg.getEntity(), DeviceCredentials.class);
         if (deviceCredentials == null) {
             throw new RuntimeException("[{" + tenantId + "}] deviceCredentialsUpdateMsg {" + deviceCredentialsUpdateMsg + "} cannot be converted to device credentials");
         }
