@@ -40,12 +40,7 @@
     </mat-form-field>
     <mat-form-field fxFlex>
       <mat-label>{{ 'widget-config.datasource-parameters' | translate }}</mat-label>
-      <input matInput formControlName="params" type="JSON"/>
-      <mat-icon class="material-icons-outlined" aria-hidden="false" aria-label="help-icon"
-                matIconSuffix style="cursor:pointer;"
-                (click)="openEditJSONDialog($event)"
-                matTooltip="{{ 'gateway.rpc-command-edit-params' | translate }}">edit
-      </mat-icon>
+      <input matInput formControlName="params"/>
     </mat-form-field>
   </ng-template>
   <button mat-raised-button
