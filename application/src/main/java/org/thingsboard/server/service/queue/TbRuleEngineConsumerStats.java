@@ -67,9 +67,9 @@ public class TbRuleEngineConsumerStats {
     private final String queueName;
     private final TenantId tenantId;
 
-    public TbRuleEngineConsumerStats(QueueKey queue, StatsFactory statsFactory) {
-        this.queueName = queue.getQueueName();
-        this.tenantId = queue.getTenantId();
+    public TbRuleEngineConsumerStats(QueueKey queueKey, StatsFactory statsFactory) {
+        this.queueName = queueKey.getQueueName();
+        this.tenantId = queueKey.getTenantId();
         this.statsFactory = statsFactory;
 
         String statsKey = StatsType.RULE_ENGINE.getName() + "." + queueName;

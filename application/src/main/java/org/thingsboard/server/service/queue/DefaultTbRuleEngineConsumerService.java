@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.queue;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
+import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
@@ -35,6 +37,7 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbRuleEngineQueueFactory;
+import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
@@ -59,6 +62,7 @@ import java.util.concurrent.ConcurrentMap;
 public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<ToRuleEngineNotificationMsg> implements TbRuleEngineConsumerService {
 
     private final TbRuleEngineConsumerContext ctx;
+    private final QueueService queueService;
     private final TbRuleEngineDeviceRpcService tbDeviceRpcService;
 
     private final ConcurrentMap<QueueKey, TbRuleEngineQueueConsumerManager> consumers = new ConcurrentHashMap<>();
@@ -68,6 +72,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                                               ActorSystemContext actorContext,
                                               DataDecodingEncodingService encodingService,
                                               TbRuleEngineDeviceRpcService tbDeviceRpcService,
+                                              QueueService queueService,
                                               TbDeviceProfileCache deviceProfileCache,
                                               TbAssetProfileCache assetProfileCache,
                                               TbTenantProfileCache tenantProfileCache,
@@ -77,12 +82,13 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                 eventPublisher, tbRuleEngineQueueFactory.createToRuleEngineNotificationsMsgConsumer(), Optional.empty());
         this.ctx = ctx;
         this.tbDeviceRpcService = tbDeviceRpcService;
+        this.queueService = queueService;
     }
 
     @PostConstruct
     public void init() {
-        super.init("tb-rule-engine-notifications-consumer"); // TODO: restore init of the main consumer?
-        List<Queue> queues = ctx.findAllQueues();
+        super.init("tb-rule-engine-notifications-consumer");
+        List<Queue> queues = queueService.findAllQueues();
         for (Queue configuration : queues) {
             if (partitionService.isManagedByCurrentService(configuration.getTenantId())) {
                 initConsumer(configuration);
@@ -91,20 +97,27 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     }
 
     private void initConsumer(Queue configuration) {
-        consumers.computeIfAbsent(new QueueKey(ServiceType.TB_RULE_ENGINE, configuration),
-                key -> new TbRuleEngineQueueConsumerManager(ctx, key)).init(configuration);
+        getOrCreateConsumer(new QueueKey(ServiceType.TB_RULE_ENGINE, configuration)).init(configuration);
     }
 
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
         if (event.getServiceType().equals(getServiceType())) {
-            var consumer = consumers.get(event.getQueueKey());
-            if (consumer != null) {
-                consumer.subscribe(event);
-            } else {
-                log.warn("Received invalid partition change event for {} that is not managed by this service", event.getQueueKey());
-            }
+            event.getPartitionsMap().forEach((queueKey, partitions) -> {
+                var consumer = consumers.get(queueKey);
+                if (consumer != null) {
+                    consumer.update(partitions);
+                } else {
+                    log.warn("Received invalid partition change event for {} that is not managed by this service", queueKey);
+                }
+            });
         }
+    }
+
+    @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
+    public void onApplicationEvent(ApplicationReadyEvent event) {
+        super.onApplicationEvent(event);
+        ctx.setReady(true);
     }
 
     @Override
@@ -113,8 +126,9 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     }
 
     @Override
-    protected void stopMainConsumers() {
+    protected void stopConsumers() {
         consumers.values().forEach(TbRuleEngineQueueConsumerManager::stop);
+        ctx.stop();
     }
 
     @Override
@@ -164,8 +178,15 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
             QueueId queueId = new QueueId(new UUID(queueUpdateMsg.getQueueIdMSB(), queueUpdateMsg.getQueueIdLSB()));
             String queueName = queueUpdateMsg.getQueueName();
             QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, queueName, tenantId);
-            Queue queue = ctx.getQueueService().findQueueById(tenantId, queueId);
-            consumers.computeIfAbsent(queueKey, key -> new TbRuleEngineQueueConsumerManager(ctx, key)).update(queue);
+            Queue queue = queueService.findQueueById(tenantId, queueId);
+
+            TbRuleEngineQueueConsumerManager consumerManager = getOrCreateConsumer(queueKey);
+            Queue oldQueue = consumerManager.getQueue();
+            consumerManager.update(queue);
+
+            if (oldQueue != null && queue.getPartitions() == oldQueue.getPartitions()) {
+                return;
+            }
         }
 
         partitionService.updateQueue(queueUpdateMsg);
@@ -177,13 +198,17 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
         log.info("Received queue delete msg: [{}]", queueDeleteMsg);
         TenantId tenantId = new TenantId(new UUID(queueDeleteMsg.getTenantIdMSB(), queueDeleteMsg.getTenantIdLSB()));
         QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, queueDeleteMsg.getQueueName(), tenantId);
+        var consumerManager = consumers.remove(queueKey);
+        if (consumerManager != null) {
+            consumerManager.delete();
+        }
 
         partitionService.removeQueue(queueDeleteMsg);
-        var manager = consumers.remove(queueKey);
-        if (manager != null) {
-            manager.delete();
-        }
         partitionService.recalculatePartitions(ctx.getServiceInfoProvider().getServiceInfo(), new ArrayList<>(partitionService.getOtherServices(ServiceType.TB_RULE_ENGINE)));
+    }
+
+    private TbRuleEngineQueueConsumerManager getOrCreateConsumer(QueueKey queueKey) {
+        return consumers.computeIfAbsent(queueKey, key -> new TbRuleEngineQueueConsumerManager(ctx, key));
     }
 
     @Scheduled(fixedDelayString = "${queue.rule-engine.stats.print-interval-ms}")
