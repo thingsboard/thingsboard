@@ -289,7 +289,11 @@ public class DefaultDataUpdateService implements DataUpdateService {
                         ruleNodeId, ruleNodeType, fromVersion, toVersion, e);
             }
         }
-        return awaitFuturesToCompleteAndGetCount(saveFutures);
+        try {
+            return Futures.allAsList(saveFutures).get().size();
+        } catch (ExecutionException | InterruptedException e) {
+            throw new RuntimeException("Failed to process save rule nodes requests due to: ", e);
+        }
     }
 
     private List<RuleNodeId> getRuleNodesIdsWithTypeAndVersionLessThan(String type, int toVersion) {
@@ -298,14 +302,6 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 ruleChainService.findAllRuleNodeIdsByTypeAndVersionLessThan(type, toVersion, pageLink), DEFAULT_PAGE_SIZE
         ).forEach(ruleNodeIds::add);
         return ruleNodeIds;
-    }
-
-    private int awaitFuturesToCompleteAndGetCount(List<ListenableFuture<?>> futures) {
-        try {
-            return Futures.allAsList(futures).get().size();
-        } catch (ExecutionException | InterruptedException e) {
-            throw new RuntimeException("Failed to process save rule nodes requests due to: ", e);
-        }
     }
 
     private final PaginatedUpdater<String, DeviceProfileEntity> deviceProfileEntityDynamicConditionsUpdater =
