@@ -36,9 +36,21 @@ public class TbCoreConsumerStats {
     public static final String DEVICE_CLAIMS = "claimDevice";
     public static final String DEVICE_STATES = "deviceState";
     public static final String SUBSCRIPTION_MSGS = "subMsgs";
-    public static final String TO_CORE_NOTIFICATIONS = "coreNfs";
     public static final String EDGE_NOTIFICATIONS = "edgeNfs";
     public static final String DEVICE_ACTIVITIES = "deviceActivity";
+
+    public static final String TO_CORE_NF_OTHER = "coreNfOther"; // normally, there is no messages when codebase is fine
+    public static final String TO_CORE_NF_COMPONENT_LIFECYCLE = "coreNfCompLfcl";
+    public static final String TO_CORE_NF_DEVICE_RPC_RESPONSE = "coreNfDevRpcRsp";
+    public static final String TO_CORE_NF_EDGE_EVENT_UPDATE = "coreNfEdgeUpd";
+    public static final String TO_CORE_NF_EDGE_SYNC_REQUEST = "coreNfEdgeSyncReq";
+    public static final String TO_CORE_NF_EDGE_SYNC_RESPONSE = "coreNfEdgeSyncResp";
+    public static final String TO_CORE_NF_NOTIFICATION_RULE_PROCESSOR = "coreNfNfRlProc";
+    public static final String TO_CORE_NF_QUEUE_UPDATE = "coreNfQueueUpd";
+    public static final String TO_CORE_NF_QUEUE_DELETE = "coreNfQueueDel";
+    public static final String TO_CORE_NF_SUBSCRIPTION_SERVICE = "coreNfSubSvc";
+    public static final String TO_CORE_NF_SUBSCRIPTION_MANAGER = "coreNfSubMgr";
+    public static final String TO_CORE_NF_VC_RESPONSE = "coreNfVCRsp";
 
     private final StatsCounter totalCounter;
     private final StatsCounter sessionEventCounter;
@@ -48,14 +60,25 @@ public class TbCoreConsumerStats {
     private final StatsCounter toDeviceRPCCallResponseCounter;
     private final StatsCounter subscriptionInfoCounter;
     private final StatsCounter claimDeviceCounter;
-
     private final StatsCounter deviceStateCounter;
     private final StatsCounter subscriptionMsgCounter;
-    private final StatsCounter toCoreNotificationsCounter;
     private final StatsCounter edgeNotificationsCounter;
     private final StatsCounter deviceActivitiesCounter;
 
-    private final List<StatsCounter> counters = new ArrayList<>();
+    private final StatsCounter toCoreNfOtherCounter;
+    private final StatsCounter toCoreNfComponentLifecycleCounter;
+    private final StatsCounter toCoreNfDeviceRpcResponseCounter;
+    private final StatsCounter toCoreNfEdgeEventUpdateCounter;
+    private final StatsCounter toCoreNfEdgeSyncRequestCounter;
+    private final StatsCounter toCoreNfEdgeSyncResponseCounter;
+    private final StatsCounter toCoreNfNotificationRuleProcessorCounter;
+    private final StatsCounter toCoreNfQueueUpdateCounter;
+    private final StatsCounter toCoreNfQueueDeleteCounter;
+    private final StatsCounter toCoreNfSubscriptionServiceCounter;
+    private final StatsCounter toCoreNfSubscriptionManagerCounter;
+    private final StatsCounter toCoreNfVersionControlResponseCounter;
+
+    private final List<StatsCounter> counters = new ArrayList<>(24);
 
     public TbCoreConsumerStats(StatsFactory statsFactory) {
         String statsKey = StatsType.CORE.getName();
@@ -70,9 +93,23 @@ public class TbCoreConsumerStats {
         this.claimDeviceCounter = register(statsFactory.createStatsCounter(statsKey, DEVICE_CLAIMS));
         this.deviceStateCounter = register(statsFactory.createStatsCounter(statsKey, DEVICE_STATES));
         this.subscriptionMsgCounter = register(statsFactory.createStatsCounter(statsKey, SUBSCRIPTION_MSGS));
-        this.toCoreNotificationsCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NOTIFICATIONS));
         this.edgeNotificationsCounter = register(statsFactory.createStatsCounter(statsKey, EDGE_NOTIFICATIONS));
         this.deviceActivitiesCounter = register(statsFactory.createStatsCounter(statsKey, DEVICE_ACTIVITIES));
+
+        // Core notification counters
+        this.toCoreNfOtherCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_OTHER));
+        this.toCoreNfComponentLifecycleCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_COMPONENT_LIFECYCLE));
+        this.toCoreNfDeviceRpcResponseCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_DEVICE_RPC_RESPONSE));
+        this.toCoreNfEdgeEventUpdateCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_EDGE_EVENT_UPDATE));
+        this.toCoreNfEdgeSyncRequestCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_EDGE_SYNC_REQUEST));
+        this.toCoreNfEdgeSyncResponseCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_EDGE_SYNC_RESPONSE));
+        this.toCoreNfNotificationRuleProcessorCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_NOTIFICATION_RULE_PROCESSOR));
+        this.toCoreNfQueueUpdateCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_QUEUE_UPDATE));
+        this.toCoreNfQueueDeleteCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_QUEUE_DELETE));
+        this.toCoreNfSubscriptionServiceCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_SUBSCRIPTION_SERVICE));
+        this.toCoreNfSubscriptionManagerCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_SUBSCRIPTION_MANAGER));
+        this.toCoreNfVersionControlResponseCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_VC_RESPONSE));
+
     }
 
     private StatsCounter register(StatsCounter counter){
@@ -127,7 +164,31 @@ public class TbCoreConsumerStats {
 
     public void log(TransportProtos.ToCoreNotificationMsg msg) {
         totalCounter.increment();
-        toCoreNotificationsCounter.increment();
+        if (msg.hasToLocalSubscriptionServiceMsg()) {
+            toCoreNfSubscriptionServiceCounter.increment();
+        } else if (msg.hasFromDeviceRpcResponse()) {
+            toCoreNfDeviceRpcResponseCounter.increment();
+        } else if (!msg.getComponentLifecycleMsg().isEmpty()) {
+            toCoreNfComponentLifecycleCounter.increment();
+        } else if (!msg.getEdgeEventUpdateMsg().isEmpty()) {
+            toCoreNfEdgeEventUpdateCounter.increment();
+        } else if (!msg.getToEdgeSyncRequestMsg().isEmpty()) {
+            toCoreNfEdgeSyncRequestCounter.increment();
+        } else if (!msg.getFromEdgeSyncResponseMsg().isEmpty()) {
+            toCoreNfEdgeSyncResponseCounter.increment();
+        } else if (msg.hasQueueUpdateMsg()) {
+            toCoreNfQueueUpdateCounter.increment();
+        } else if (msg.hasQueueDeleteMsg()) {
+            toCoreNfQueueDeleteCounter.increment();
+        } else if (msg.hasVcResponseMsg()) {
+            toCoreNfVersionControlResponseCounter.increment();
+        } else if (msg.hasToSubscriptionMgrMsg()) {
+            toCoreNfSubscriptionManagerCounter.increment();
+        } else if (msg.hasNotificationRuleProcessorMsg()) {
+            toCoreNfNotificationRuleProcessorCounter.increment();
+        } else {
+            toCoreNfOtherCounter.increment();
+        }
     }
 
     public void printStats() {
