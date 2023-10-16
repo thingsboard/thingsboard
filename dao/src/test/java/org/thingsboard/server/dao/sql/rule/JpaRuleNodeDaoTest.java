@@ -21,8 +21,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -41,7 +41,6 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 public class JpaRuleNodeDaoTest extends AbstractJpaDaoTest {
 
@@ -139,7 +138,7 @@ public class JpaRuleNodeDaoTest extends AbstractJpaDaoTest {
         assertEquals(10, ruleNodeIds.getData().size());
 
         // test - search text ignored
-        ruleNodeIds = ruleNodeDao.findAllRuleNodeIdsByTypeAndVersionLessThan( "A", 1, new PageLink(10, 0, RandomStringUtils.randomAlphabetic(5)));
+        ruleNodeIds = ruleNodeDao.findAllRuleNodeIdsByTypeAndVersionLessThan( "A", 1, new PageLink(10, 0, StringUtils.randomAlphabetic(5)));
         assertEquals(20, ruleNodeIds.getTotalElements());
         assertEquals(2, ruleNodeIds.getTotalPages());
         assertEquals(10, ruleNodeIds.getData().size());
