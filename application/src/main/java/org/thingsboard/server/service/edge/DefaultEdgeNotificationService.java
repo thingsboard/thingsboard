@@ -157,7 +157,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     public void pushNotificationToEdge(TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg, TbCallback callback) {
         TenantId tenantId = TenantId.fromUUID(new UUID(edgeNotificationMsg.getTenantIdMSB(), edgeNotificationMsg.getTenantIdLSB()));
         log.debug("[{}] Pushing notification to edge {}", tenantId, edgeNotificationMsg);
-        final long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+        final long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(60);
         try {
             executor.submit(() -> {
                 try {
