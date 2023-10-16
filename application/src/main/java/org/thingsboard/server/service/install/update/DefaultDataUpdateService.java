@@ -265,6 +265,9 @@ public class DefaultDataUpdateService implements DataUpdateService {
         int toVersion = ruleNodeClassInfo.getCurrentVersion();
         var ruleNodesPack = ruleChainService.findAllRuleNodesByIds(ruleNodeIdsBatch);
         for (var ruleNode : ruleNodesPack) {
+            if (ruleNode == null) {
+                continue;
+            }
             var ruleNodeId = ruleNode.getId();
             var oldConfiguration = ruleNode.getConfiguration();
             int fromVersion = ruleNode.getConfigurationVersion();
