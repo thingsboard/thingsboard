@@ -395,7 +395,7 @@ message WidgetTypeUpdateMsg {
   optional string description = 10 [deprecated = true];
   optional string fqn = 11 [deprecated = true];
   bool deprecated = 12 [deprecated = true];
-  repeated string tags = 13;
+  repeated string tags = 13 [deprecated = true];
   string entity = 14;
 }
 
