@@ -61,7 +61,7 @@ export class GatewayServiceRPCComponent implements AfterViewInit {
     this.commandForm = this.fb.group({
       command: [null,[Validators.required]],
       time: [60, [Validators.required, Validators.min(1)]],
-      params: [{}, [jsonRequired]],
+      params: ['{}', [jsonRequired]],
       result: [null]
     });
   }
@@ -78,7 +78,7 @@ export class GatewayServiceRPCComponent implements AfterViewInit {
   sendCommand() {
     const formValues = this.commandForm.value;
     const commandPrefix = this.isConnector ? `${this.connectorType}_` : 'gateway_';
-    this.ctx.controlApi.sendTwoWayCommand(commandPrefix+formValues.command.toLowerCase(), {},formValues.time).subscribe({
+    this.ctx.controlApi.sendTwoWayCommand(commandPrefix+formValues.command.toLowerCase(), formValues.params,formValues.time).subscribe({
       next: resp => this.commandForm.get('result').setValue(JSON.stringify(resp)),
       error: error => {
         console.log(error);
