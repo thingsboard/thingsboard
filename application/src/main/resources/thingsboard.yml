@@ -1182,8 +1182,8 @@ device:
       host: "${DEVICE_CONNECTIVITY_MQTTS_HOST:}"
       # Port of mqtt transport service. If empty, the default port for mqtts will be used.
       port: "${DEVICE_CONNECTIVITY_MQTTS_PORT:8883}"
-      # Path to the server certificate file
-      pem_cert_file: "${DEVICE_CONNECTIVITY_MQTT_SSL_PEM_CERT:mqttserver.pem}"
+      # Path to the MQTT CA root certificate file
+      pem_cert_file: "${DEVICE_CONNECTIVITY_MQTTS_CA_ROOT_CERT:cafile.pem}"
     coap:
       # If true coap command will be included in the list of all test commands using DEVICE_CONNECTIVITY_COAP_HOST and DEVICE_CONNECTIVITY_COAP_PORT.
       enabled: "${DEVICE_CONNECTIVITY_COAP_ENABLED:true}"
