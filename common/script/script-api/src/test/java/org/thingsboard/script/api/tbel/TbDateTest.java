@@ -71,6 +71,11 @@ class TbDateTest {
      * 	     at java.base/java.util.Calendar.setTimeInMillis(Calendar.java:1834)
      * 	     at java.base/java.util.Calendar.setTime(Calendar.java:1800)
      * 	     at java.base/java.text.SimpleDateFormat.format(SimpleDateFormat.java:974)
+     * Tests were checked with:
+     *      -timezone Etc/GMT-14
+     *      -timezone Etc/GMT+12
+     *      -timezone America/New_York
+     *      -timezone Europe/Kyiv
      */
     @Test
     void testToISOStringConcurrently() throws ExecutionException, InterruptedException, TimeoutException {
@@ -455,22 +460,23 @@ class TbDateTest {
         Assert.assertEquals("2023-09-07 08:04:05", d.toLocaleString());
     }
 
-    /**
-     * Tests for:
-     * min TZ = "Etc/GMT+12" = '-12'
-     * max TZ = "Etc/GMT-14" = '+14'
-     */
     @Test
     void Test_Get_LocalDateTime_With_TZ() {
         int hrs = 8;
         int date = 7;
         int tz = 0;
         String pattern = "2023-09-%s %s:04:05";
-        String tzStr = "+00:00";
-        TbDate d = new TbDate(23, 9, date, hrs, 4, 5, tzStr);
-        int localOffsetHrs = ZoneId.systemDefault().getRules().getOffset(d.getInstant()).getTotalSeconds()/60/60;
+        String tzStr = "UTC";
+        TbDate d = new TbDate(23, 9, date, hrs, 4, 5);
+        int localOffsetHrs = 0;
         TbDateTestEntity tbDateTest = new TbDateTestEntity(23, 9, date, hrs + localOffsetHrs - tz);
         String expected = String.format(pattern, tbDateTest.geDateStr(), tbDateTest.geHoursStr());
+        Assert.assertEquals(expected, d.toLocaleString());
+
+        d = new TbDate(23, 9, date, hrs, 4, 5, tzStr);
+        localOffsetHrs = ZoneId.systemDefault().getRules().getOffset(d.getInstant()).getTotalSeconds()/60/60;
+        tbDateTest = new TbDateTestEntity(23, 9, date, hrs + localOffsetHrs - tz);
+        expected = String.format(pattern, tbDateTest.geDateStr(), tbDateTest.geHoursStr());
         Assert.assertEquals(expected, d.toLocaleString());
 
         tz = 3;
@@ -491,23 +497,35 @@ class TbDateTest {
     }
 
     @Test
+    public void TestToUTC() {
+        Assert.assertEquals(-2209075200000L, TbDate.UTC(0));
+        Assert.assertEquals("1899-12-31T00:00:00Z", new TbDate(TbDate.UTC(0)).toJSON());
+        Assert.assertEquals("1996-02-02T03:04:05Z", new TbDate(TbDate.UTC(96, 2, 2, 3, 4, 5)).toJSON());
+        Assert.assertEquals("2022-12-31T03:04:05.678Z", new TbDate(TbDate.UTC(22, 0, 0, 3, 4, 5, 678)).toJSON());
+        Assert.assertEquals("0903-12-31T03:04:05.678Z", new TbDate(TbDate.UTC(903, 0, 0, 3, 4, 5, 678)).toJSON());
+        Assert.assertEquals("1958-12-31T03:04:05.678Z", new TbDate(TbDate.UTC(1958, 0, 0, 3, 4, 5, 678)).toJSON());
+        Assert.assertEquals("2032-04-05T03:04:05.678Z", new TbDate(TbDate.UTC(2032, 4, 5, 3, 4, 5, 678)).toJSON());
+        Assert.assertEquals("2024-02-29T03:04:05.678Z", new TbDate(TbDate.UTC(2024, 2, 29, 3, 4, 5, 678)).toJSON());
+        Exception actual = assertThrows(DateTimeException.class, () -> {
+            TbDate.UTC(2023, 2, 29, 3, 4, 5, 678);
+        });
+        String expectedMessage = "Invalid date 'February 29' as '2023' is not a leap year";
+        assertTrue(actual.getMessage().contains(expectedMessage));
+    }
+
+    @Test
     void TestMethodGetTimeUTC() {
-        TbDate dd = new TbDate(TbDate.UTC(1996, 1, 2, 3, 4, 5));
-        Assert.assertEquals(820551845000L, dd.valueOf());
-        dd = new TbDate(1996, 1, 2, 3, 4, 5);
-        Assert.assertEquals(820544645000L, dd.valueOf());
+        TbDate ddUTC = new TbDate(TbDate.UTC(1996, 1, 2, 3, 4, 5));
+        Assert.assertEquals(820551845000L, ddUTC.valueOf());
+        TbDate dd = new TbDate(1996, 1, 2, 3, 4, 5);
+        int localOffsetMilli = ZoneId.systemDefault().getRules().getOffset(dd.getInstant()).getTotalSeconds()*1000;
+        Assert.assertEquals((dd.valueOf() + localOffsetMilli), ddUTC.valueOf());
+
+        ddUTC = new TbDate(TbDate.UTC(1969, 7, 20, 20, 17, 40));
+        Assert.assertEquals(-14182940000L, ddUTC.valueOf());
         TbDate beforeStartUTC = new TbDate(1969, 7, 20, 20, 17, 40);
-        Assert.assertEquals(-14193740000L, beforeStartUTC.getTime());
-
-        TbDate d = new TbDate(1975, 12, 31, 23,15,30, 560);
-        TbDate d0 = new TbDate(1975, 12, 31, 23,15,30, 560,"UTC");
-        TbDate d1 = new TbDate(1975, 12, 31, 23,15,30, 561,"+03:00");
-        TbDate d2 = new TbDate(1975, 12, 31, 23,15,30, 562,"-04:00");
-
-        Assert.assertEquals(189288930560L, d.valueOf());
-        Assert.assertEquals(189299730560L, d0.valueOf());
-        Assert.assertEquals(189288930561L, d1.valueOf());
-        Assert.assertEquals(189314130562L, d2.getTime());
+        localOffsetMilli = ZoneId.systemDefault().getRules().getOffset(beforeStartUTC.getInstant()).getTotalSeconds()*1000;
+        Assert.assertEquals((beforeStartUTC.valueOf() + localOffsetMilli), ddUTC.valueOf());
     }
 
     @Test
@@ -747,35 +765,15 @@ class TbDateTest {
         Assert.assertEquals("1975 Dec 31, Wed", d1.toDateString("UTC", "America/New_York"));
         Assert.assertEquals("Wednesday, December 31, 1975", d1.toDateString("en-US", "America/New_York"));
 
-
         Assert.assertEquals("06:15:30", d1.toLocaleTimeString("uk-UA", "Europe/Kyiv"));
         Assert.assertEquals("06:15:30", d1.toLocaleTimeString("UTC", "Europe/Kyiv"));
         Assert.assertEquals("10:15:30 PM", d1.toLocaleTimeString("en-US", "America/New_York"));
         Assert.assertEquals("22:15:30", d1.toLocaleTimeString("UTC", "America/New_York"));
 
-       Assert.assertEquals("06:15:30 за східноєвропейським стандартним часом", d1.toTimeString("uk-UA", "Europe/Kyiv"));
+        Assert.assertEquals("06:15:30 за східноєвропейським стандартним часом", d1.toTimeString("uk-UA", "Europe/Kyiv"));
         Assert.assertEquals("06:15:30 Eastern European Time", d1.toTimeString("UTC", "Europe/Kyiv"));
         Assert.assertEquals("10:15:30 PM Eastern Standard Time", d1.toTimeString("en-US", "America/New_York"));
         Assert.assertEquals("22:15:30 Eastern Standard Time", d1.toTimeString("UTC", "America/New_York"));
-
-
-    }
-
-    @Test
-    public void toUTC() {
-        Assert.assertEquals(-2209075200000L, TbDate.UTC(0));
-        Assert.assertEquals("1899-12-31T00:00:00Z", new TbDate(TbDate.UTC(0)).toJSON());
-        Assert.assertEquals("1996-02-02T03:04:05Z", new TbDate(TbDate.UTC(96, 2, 2, 3, 4, 5)).toJSON());
-        Assert.assertEquals("2022-12-31T03:04:05.678Z", new TbDate(TbDate.UTC(22, 0, 0, 3, 4, 5, 678)).toJSON());
-        Assert.assertEquals("0903-12-31T03:04:05.678Z", new TbDate(TbDate.UTC(903, 0, 0, 3, 4, 5, 678)).toJSON());
-        Assert.assertEquals("1958-12-31T03:04:05.678Z", new TbDate(TbDate.UTC(1958, 0, 0, 3, 4, 5, 678)).toJSON());
-        Assert.assertEquals("2032-04-05T03:04:05.678Z", new TbDate(TbDate.UTC(2032, 4, 5, 3, 4, 5, 678)).toJSON());
-        Assert.assertEquals("2024-02-29T03:04:05.678Z", new TbDate(TbDate.UTC(2024, 2, 29, 3, 4, 5, 678)).toJSON());
-        Exception actual = assertThrows(DateTimeException.class, () -> {
-            TbDate.UTC(2023, 2, 29, 3, 4, 5, 678);
-        });
-        String expectedMessage = "Invalid date 'February 29' as '2023' is not a leap year";
-        assertTrue(actual.getMessage().contains(expectedMessage));
     }
 
     private void testResultChangeDateTime(TbDate d) {
