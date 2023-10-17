@@ -119,7 +119,7 @@ export class WidgetsBundleWidgetsComponent extends PageComponent implements OnIn
     if ($event) {
       $event.stopPropagation();
     }
-    this.router.navigateByUrl(`resources/widgets-library/widget-types/${widgetType.id.id}`);
+    this.router.navigate([widgetType.id.id], {relativeTo: this.route}).then(()=> {});
   }
 
   exportWidgetType($event: Event, widgetType: WidgetTypeInfo) {
