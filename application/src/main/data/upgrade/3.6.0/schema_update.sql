@@ -29,5 +29,5 @@ CREATE INDEX IF NOT EXISTS idx_notification_request_tenant_id ON notification_re
 DELETE
 FROM widgets_bundle_widget wbw
 WHERE (SELECT tenant_id FROM widgets_bundle wb WHERE wb.id = wbw.widgets_bundle_id) !=
-      (SELECT tenant_id FROM widget_type WHERE id = wbw.widget_type_id);
+      (SELECT tenant_id FROM widget_type wt WHERE wt.id = wbw.widget_type_id);
 
