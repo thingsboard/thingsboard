@@ -80,9 +80,6 @@ public abstract class BaseEntityViewProcessor extends BaseEdgeProcessor {
         entityView.setAdditionalInfo(entityViewUpdateMsg.hasAdditionalInfo() ?
                 JacksonUtil.toJsonNode(entityViewUpdateMsg.getAdditionalInfo()) : null);
 
-        CustomerId customerId = safeGetCustomerId(entityViewUpdateMsg.getCustomerIdMSB(), entityViewUpdateMsg.getCustomerIdLSB());
-        entityView.setCustomerId(customerId);
-
         UUID entityIdUUID = safeGetUUID(entityViewUpdateMsg.getEntityIdMSB(), entityViewUpdateMsg.getEntityIdLSB());
         if (EdgeEntityType.DEVICE.equals(entityViewUpdateMsg.getEntityType())) {
             entityView.setEntityId(entityIdUUID != null ? new DeviceId(entityIdUUID) : null);
@@ -93,4 +90,5 @@ public abstract class BaseEntityViewProcessor extends BaseEdgeProcessor {
     }
 
     protected abstract void setCustomerId(TenantId tenantId, CustomerId customerId, EntityView entityView, EntityViewUpdateMsg entityViewUpdateMsg, boolean isEdgeVersionDeprecated);
+
 }

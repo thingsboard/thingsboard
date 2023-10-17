@@ -87,5 +87,4 @@ public class OtaPackageMsgConstructor {
                 .setIdMSB(otaPackageId.getId().getMostSignificantBits())
                 .setIdLSB(otaPackageId.getId().getLeastSignificantBits()).build();
     }
-
 }

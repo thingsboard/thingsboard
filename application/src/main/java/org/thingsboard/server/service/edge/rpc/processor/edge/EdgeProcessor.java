@@ -72,9 +72,9 @@ public class EdgeProcessor extends BaseEdgeProcessor {
             EdgeId edgeId = new EdgeId(new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB()));
             switch (actionType) {
                 case ASSIGNED_TO_CUSTOMER:
-                    CustomerId customerId = JacksonUtil.OBJECT_MAPPER.readValue(edgeNotificationMsg.getBody(), CustomerId.class);
+                    CustomerId customerId = JacksonUtil.fromString(edgeNotificationMsg.getBody(), CustomerId.class);
                     Edge edge = edgeService.findEdgeById(tenantId, edgeId);
-                    if (edge == null || customerId.isNullUid()) {
+                    if (edge == null || customerId  == null || customerId.isNullUid()) {
                         return Futures.immediateFuture(null);
                     }
                     List<ListenableFuture<Void>> futures = new ArrayList<>();
@@ -96,9 +96,9 @@ public class EdgeProcessor extends BaseEdgeProcessor {
                     } while (pageData != null && pageData.hasNext());
                     return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
                 case UNASSIGNED_FROM_CUSTOMER:
-                    CustomerId customerIdToDelete = JacksonUtil.OBJECT_MAPPER.readValue(edgeNotificationMsg.getBody(), CustomerId.class);
+                    CustomerId customerIdToDelete = JacksonUtil.fromString(edgeNotificationMsg.getBody(), CustomerId.class);
                     edge = edgeService.findEdgeById(tenantId, edgeId);
-                    if (edge == null || customerIdToDelete.isNullUid()) {
+                    if (edge == null || customerIdToDelete == null || customerIdToDelete.isNullUid()) {
                         return Futures.immediateFuture(null);
                     }
                     return Futures.transformAsync(saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.EDGE, EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER, edgeId, null),

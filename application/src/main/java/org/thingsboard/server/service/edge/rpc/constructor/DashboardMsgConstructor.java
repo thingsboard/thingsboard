@@ -64,5 +64,4 @@ public class DashboardMsgConstructor {
                 .setIdMSB(dashboardId.getId().getMostSignificantBits())
                 .setIdLSB(dashboardId.getId().getLeastSignificantBits()).build();
     }
-
 }

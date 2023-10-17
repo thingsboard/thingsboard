@@ -98,5 +98,4 @@ public class DeviceProfileMsgConstructor {
                 .setIdMSB(deviceProfileId.getId().getMostSignificantBits())
                 .setIdLSB(deviceProfileId.getId().getLeastSignificantBits()).build();
     }
-
 }

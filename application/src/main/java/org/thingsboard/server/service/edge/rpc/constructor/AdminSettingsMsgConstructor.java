@@ -43,5 +43,4 @@ public class AdminSettingsMsgConstructor {
         }
         return builder.build();
     }
-
 }

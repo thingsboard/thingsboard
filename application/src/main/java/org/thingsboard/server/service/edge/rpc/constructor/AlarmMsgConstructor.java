@@ -33,7 +33,7 @@ public class AlarmMsgConstructor {
             return constructDeprecatedAlarmUpdatedMsg(msgType, alarm, entityName);
         }
         return AlarmUpdateMsg.newBuilder().setMsgType(msgType)
-                .setEntity(JacksonUtil.toString(alarm)).setOriginatorName(entityName)
+                .setEntity(JacksonUtil.toString(alarm))
                 .setIdMSB(alarm.getId().getId().getMostSignificantBits())
                 .setIdLSB(alarm.getId().getId().getLeastSignificantBits()).build();
     }
@@ -59,5 +59,4 @@ public class AlarmMsgConstructor {
                 .setPropagateToTenant(alarm.isPropagateToTenant());
         return builder.build();
     }
-
 }

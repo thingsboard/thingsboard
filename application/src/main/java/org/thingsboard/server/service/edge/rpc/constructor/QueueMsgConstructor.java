@@ -83,5 +83,4 @@ public class QueueMsgConstructor {
                 .setIdMSB(queueId.getId().getMostSignificantBits())
                 .setIdLSB(queueId.getId().getLeastSignificantBits()).build();
     }
-
 }
