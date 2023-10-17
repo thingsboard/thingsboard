@@ -18,15 +18,26 @@ package org.thingsboard.rule.engine.credentials;
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class CertPemCredentialsTest {
 
     private final CertPemCredentials credentials = new CertPemCredentials();
+
+    private static final String PASS = "test";
+    private static final String EMPTY_PASS = "";
+    private static final String RSA = "RSA";
+    private static final String ECDSA = "ECDSA";
 
     @Test
     public void testChainOfCertificates() throws Exception {
@@ -63,6 +74,23 @@ public class CertPemCredentialsTest {
         List<X509Certificate> x509Certificates = credentials.readCertFile(fileContent);
 
         Assert.assertEquals(0, x509Certificates.size());
+    }
+
+    private static Stream<Arguments> testReadPrivateKey() {
+        return Stream.of(
+                Arguments.of("pem/rsa_key.pem", EMPTY_PASS, RSA),
+                Arguments.of("pem/rsa_encrypted_key.pem", PASS, RSA),
+                Arguments.of("pem/rsa_encrypted_traditional_key.pem", PASS, RSA),
+                Arguments.of("pem/ec_key.pem", EMPTY_PASS, ECDSA)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    public void testReadPrivateKey(String keyPath, String password, String algorithm) throws Exception {
+        PrivateKey privateKey = credentials.readPrivateKey(fileContent(keyPath), password);
+        Assertions.assertNotNull(privateKey);
+        Assertions.assertEquals(algorithm, privateKey.getAlgorithm());
     }
 
     private String fileContent(String fileName) throws IOException {
