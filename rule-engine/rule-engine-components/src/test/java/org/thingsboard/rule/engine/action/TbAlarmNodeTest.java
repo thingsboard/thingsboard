@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.alarm.AlarmPropagationInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
 import org.thingsboard.server.common.data.id.AlarmId;
@@ -55,11 +56,13 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import javax.script.ScriptException;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.function.Consumer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.anyLong;
@@ -583,6 +586,98 @@ public class TbAlarmNodeTest {
             Alarm actualAlarm = JacksonUtil.fromBytes(dataCaptor.getValue().getBytes(), Alarm.class);
             assertEquals(expectedAlarm, actualAlarm);
         }
+    }
+
+    @Test
+    public void propagationConfigIsUsedIfEnabledAndParsingFromMessage() {
+        var config = new TbCreateAlarmNodeConfiguration().defaultConfiguration();
+        config.setUseMessageAlarmData(true);
+        config.setPropagateToOwner(true);
+        config.setUsePropagationConfigWhenParsingAlarmFromMsg(true);
+
+        when(ctx.createScriptEngine(eq(ScriptLanguage.TBEL), any())).thenReturn(detailsJs);
+        when(ctx.getTenantId()).thenReturn(tenantId);
+        when(ctx.getAlarmService()).thenReturn(alarmService);
+        when(ctx.getDbCallbackExecutor()).thenReturn(dbExecutor);
+
+        node = new TbCreateAlarmNode();
+        try {
+            node.init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        } catch (TbNodeException e) {
+            fail("Node failed to start!");
+        }
+
+        var newAlarm = Alarm.builder()
+                .type("Test Alarm Type")
+                .originator(originator)
+                .severity(AlarmSeverity.CRITICAL)
+                .acknowledged(false)
+                .cleared(false)
+                .startTs(System.currentTimeMillis())
+                .build();
+
+        var expectedAlarmInfo = new AlarmInfo(newAlarm);
+
+        var expectedCreateAlarmRequest = AlarmCreateOrUpdateActiveRequest.builder()
+                .tenantId(tenantId)
+                .type(newAlarm.getType())
+                .originator(originator)
+                .severity(newAlarm.getSeverity())
+                .startTs(newAlarm.getStartTs())
+                .details(JacksonUtil.OBJECT_MAPPER.nullNode())
+                .propagation(AlarmPropagationInfo.builder()
+                        .propagate(false)
+                        .propagateToOwner(true)
+                        .propagateToTenant(false)
+                        .propagateRelationTypes(Collections.emptyList())
+                        .build())
+                .build();
+
+        var expectedApiCallResult = AlarmApiCallResult.builder()
+                .successful(true)
+                .created(true)
+                .alarm(expectedAlarmInfo)
+                .old(newAlarm)
+                .propagatedEntitiesList(Collections.emptyList())
+                .build();
+
+        when(alarmService.createAlarm(expectedCreateAlarmRequest)).thenReturn(expectedApiCallResult);
+
+        var alarmActionMsg = TbMsg.newMsg(
+                "defaultQueueName", TbMsgType.ENTITY_CREATED, originator, metaData, JacksonUtil.toString(newAlarm), new RuleChainId(Uuids.timeBased()), null
+        );
+        when(ctx.alarmActionMsg(eq(expectedAlarmInfo), any(), eq(TbMsgType.ENTITY_CREATED))).thenReturn(alarmActionMsg);
+
+        var msg = TbMsg.newMsg(TbMsgType.ALARM, originator, metaData, JacksonUtil.toString(newAlarm));
+
+        var successMetaData = msg.getMetaData().copy();
+        successMetaData.putValue(DataConstants.IS_NEW_ALARM, "true");
+        var expectedSuccessMsg = TbMsg.transformMsg(msg, TbMsgType.ALARM, originator, successMetaData, JacksonUtil.toString(expectedAlarmInfo));
+        when(ctx.transformMsg(msg, TbMsgType.ALARM, msg.getOriginator(), successMetaData, JacksonUtil.toString(expectedAlarmInfo))).thenReturn(expectedSuccessMsg);
+
+        node.onMsg(ctx, msg);
+
+        ArgumentCaptor<AlarmCreateOrUpdateActiveRequest> alarmRequestCaptor = ArgumentCaptor.forClass(AlarmCreateOrUpdateActiveRequest.class);
+        verify(alarmService, times(1)).createAlarm(alarmRequestCaptor.capture());
+
+        var actualCreateAlarmRequest = alarmRequestCaptor.getValue();
+        assertEquals(expectedCreateAlarmRequest, actualCreateAlarmRequest);
+
+        var enqueuedMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        verify(ctx, times(1)).enqueue(enqueuedMsgCaptor.capture(), successCaptor.capture(), failureCaptor.capture());
+
+        var actualEnqueuedMsg = enqueuedMsgCaptor.getValue();
+        assertEquals(TbMsgType.ENTITY_CREATED, actualEnqueuedMsg.getInternalType());
+        assertEquals(expectedAlarmInfo, JacksonUtil.fromString(actualEnqueuedMsg.getData(), AlarmInfo.class));
+
+        var successMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        successCaptor.getValue().run();
+        verify(ctx, times(1)).tellNext(successMsgCaptor.capture(), eq("Created"));
+        assertEquals(expectedSuccessMsg, successMsgCaptor.getValue());
+
+        var throwable = new Throwable();
+        failureCaptor.getValue().accept(throwable);
+        verify(ctx, times(1)).tellFailure(any(), eq(throwable));
     }
 
     private void initWithCreateAlarmScript() {

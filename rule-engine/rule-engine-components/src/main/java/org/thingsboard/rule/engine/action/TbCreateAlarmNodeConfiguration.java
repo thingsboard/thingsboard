@@ -33,6 +33,7 @@ public class TbCreateAlarmNodeConfiguration extends TbAbstractAlarmNodeConfigura
     private boolean propagateToOwner;
     private boolean propagateToTenant;
     private boolean useMessageAlarmData;
+    private boolean usePropagationConfigWhenParsingAlarmFromMsg;
     private boolean overwriteAlarmDetails = true;
     private boolean dynamicSeverity;
 
@@ -50,6 +51,7 @@ public class TbCreateAlarmNodeConfiguration extends TbAbstractAlarmNodeConfigura
         configuration.setPropagateToOwner(false);
         configuration.setPropagateToTenant(false);
         configuration.setUseMessageAlarmData(false);
+        configuration.setUsePropagationConfigWhenParsingAlarmFromMsg(false);
         configuration.setOverwriteAlarmDetails(false);
         configuration.setRelationTypes(Collections.emptyList());
         configuration.setDynamicSeverity(false);

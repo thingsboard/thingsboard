@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.action;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -34,6 +35,7 @@ import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.io.IOException;
@@ -53,7 +55,8 @@ import java.util.List;
                         "Message metadata can be accessed via <code>metadata</code> property. For example <code>'name = ' + metadata.customerName;</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeCreateAlarmConfig",
-        icon = "notifications_active"
+        icon = "notifications_active",
+        version = 1
 )
 public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConfiguration> {
 
@@ -111,6 +114,12 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
         msgAlarm.setTenantId(ctx.getTenantId());
         if (msgAlarm.getOriginator() == null) {
             msgAlarm.setOriginator(msg.getOriginator());
+        }
+        if (config.isUsePropagationConfigWhenParsingAlarmFromMsg()) {
+            msgAlarm.setPropagate(config.isPropagate());
+            msgAlarm.setPropagateToOwner(config.isPropagateToOwner());
+            msgAlarm.setPropagateToTenant(config.isPropagateToTenant());
+            msgAlarm.setPropagateRelationTypes(relationTypes);
         }
         return msgAlarm;
     }
@@ -207,6 +216,18 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
             throw new RuntimeException("Used incorrect pattern or Alarm Severity not included in message");
         }
         return severity;
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0: {
+                ((ObjectNode) oldConfiguration).put("usePropagationConfigWhenParsingAlarmFromMsg", false);
+                hasChanges = true;
+            }
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
     }
 
 }
