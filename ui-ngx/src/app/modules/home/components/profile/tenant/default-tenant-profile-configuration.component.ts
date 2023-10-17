@@ -81,6 +81,7 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       maxTransportDataPoints: [null, [Validators.required, Validators.min(0)]],
       maxREExecutions: [null, [Validators.required, Validators.min(0)]],
       maxJSExecutions: [null, [Validators.required, Validators.min(0)]],
+      maxTbelExecutions: [null, [Validators.required, Validators.min(0)]],
       maxDPStorageDays: [null, [Validators.required, Validators.min(0)]],
       maxRuleNodeExecutionsPerMessage: [null, [Validators.required, Validators.min(0)]],
       maxEmails: [null, [Validators.required, Validators.min(0)]],
