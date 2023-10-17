@@ -166,55 +166,57 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
         });
     }
 
+    // To be removed in 3.6.1 in favour of handleComponentLifecycleMsg(UUID id, TbActorMsg actorMsg)
     protected void handleComponentLifecycleMsg(UUID id, ByteString nfMsg) {
         Optional<TbActorMsg> actorMsgOpt = encodingService.decode(nfMsg.toByteArray());
-        if (actorMsgOpt.isPresent()) {
-            TbActorMsg actorMsg = actorMsgOpt.get();
-            if (actorMsg instanceof ComponentLifecycleMsg) {
-                ComponentLifecycleMsg componentLifecycleMsg = (ComponentLifecycleMsg) actorMsg;
-                log.debug("[{}][{}][{}] Received Lifecycle event: {}", componentLifecycleMsg.getTenantId(), componentLifecycleMsg.getEntityId().getEntityType(),
-                        componentLifecycleMsg.getEntityId(), componentLifecycleMsg.getEvent());
-                if (EntityType.TENANT_PROFILE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
-                    TenantProfileId tenantProfileId = new TenantProfileId(componentLifecycleMsg.getEntityId().getId());
-                    tenantProfileCache.evict(tenantProfileId);
+        actorMsgOpt.ifPresent(tbActorMsg -> handleComponentLifecycleMsg(id, tbActorMsg));
+    }
+
+    protected void handleComponentLifecycleMsg(UUID id, TbActorMsg actorMsg) {
+        if (actorMsg instanceof ComponentLifecycleMsg) {
+            ComponentLifecycleMsg componentLifecycleMsg = (ComponentLifecycleMsg) actorMsg;
+            log.debug("[{}][{}][{}] Received Lifecycle event: {}", componentLifecycleMsg.getTenantId(), componentLifecycleMsg.getEntityId().getEntityType(),
+                    componentLifecycleMsg.getEntityId(), componentLifecycleMsg.getEvent());
+            if (EntityType.TENANT_PROFILE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
+                TenantProfileId tenantProfileId = new TenantProfileId(componentLifecycleMsg.getEntityId().getId());
+                tenantProfileCache.evict(tenantProfileId);
+                if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED)) {
+                    apiUsageStateService.onTenantProfileUpdate(tenantProfileId);
+                }
+            } else if (EntityType.TENANT.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
+                if (TenantId.SYS_TENANT_ID.equals(componentLifecycleMsg.getTenantId())) {
+                    jwtSettingsService.ifPresent(JwtSettingsService::reloadJwtSettings);
+                    return;
+                } else {
+                    tenantProfileCache.evict(componentLifecycleMsg.getTenantId());
+                    partitionService.removeTenant(componentLifecycleMsg.getTenantId());
                     if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED)) {
-                        apiUsageStateService.onTenantProfileUpdate(tenantProfileId);
-                    }
-                } else if (EntityType.TENANT.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
-                    if (TenantId.SYS_TENANT_ID.equals(componentLifecycleMsg.getTenantId())) {
-                        jwtSettingsService.ifPresent(JwtSettingsService::reloadJwtSettings);
-                        return;
-                    } else {
-                        tenantProfileCache.evict(componentLifecycleMsg.getTenantId());
-                        partitionService.removeTenant(componentLifecycleMsg.getTenantId());
-                        if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED)) {
-                            apiUsageStateService.onTenantUpdate(componentLifecycleMsg.getTenantId());
-                        } else if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.DELETED)) {
-                            apiUsageStateService.onTenantDelete((TenantId) componentLifecycleMsg.getEntityId());
-                        }
-                    }
-                } else if (EntityType.DEVICE_PROFILE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
-                    deviceProfileCache.evict(componentLifecycleMsg.getTenantId(), new DeviceProfileId(componentLifecycleMsg.getEntityId().getId()));
-                } else if (EntityType.DEVICE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
-                    deviceProfileCache.evict(componentLifecycleMsg.getTenantId(), new DeviceId(componentLifecycleMsg.getEntityId().getId()));
-                } else if (EntityType.ASSET_PROFILE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
-                    assetProfileCache.evict(componentLifecycleMsg.getTenantId(), new AssetProfileId(componentLifecycleMsg.getEntityId().getId()));
-                } else if (EntityType.ASSET.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
-                    assetProfileCache.evict(componentLifecycleMsg.getTenantId(), new AssetId(componentLifecycleMsg.getEntityId().getId()));
-                } else if (EntityType.ENTITY_VIEW.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
-                    actorContext.getTbEntityViewService().onComponentLifecycleMsg(componentLifecycleMsg);
-                } else if (EntityType.API_USAGE_STATE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
-                    apiUsageStateService.onApiUsageStateUpdate(componentLifecycleMsg.getTenantId());
-                } else if (EntityType.CUSTOMER.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
-                    if (componentLifecycleMsg.getEvent() == ComponentLifecycleEvent.DELETED) {
-                        apiUsageStateService.onCustomerDelete((CustomerId) componentLifecycleMsg.getEntityId());
+                        apiUsageStateService.onTenantUpdate(componentLifecycleMsg.getTenantId());
+                    } else if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.DELETED)) {
+                        apiUsageStateService.onTenantDelete((TenantId) componentLifecycleMsg.getEntityId());
                     }
                 }
-                eventPublisher.publishEvent(componentLifecycleMsg);
+            } else if (EntityType.DEVICE_PROFILE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
+                deviceProfileCache.evict(componentLifecycleMsg.getTenantId(), new DeviceProfileId(componentLifecycleMsg.getEntityId().getId()));
+            } else if (EntityType.DEVICE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
+                deviceProfileCache.evict(componentLifecycleMsg.getTenantId(), new DeviceId(componentLifecycleMsg.getEntityId().getId()));
+            } else if (EntityType.ASSET_PROFILE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
+                assetProfileCache.evict(componentLifecycleMsg.getTenantId(), new AssetProfileId(componentLifecycleMsg.getEntityId().getId()));
+            } else if (EntityType.ASSET.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
+                assetProfileCache.evict(componentLifecycleMsg.getTenantId(), new AssetId(componentLifecycleMsg.getEntityId().getId()));
+            } else if (EntityType.ENTITY_VIEW.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
+                actorContext.getTbEntityViewService().onComponentLifecycleMsg(componentLifecycleMsg);
+            } else if (EntityType.API_USAGE_STATE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
+                apiUsageStateService.onApiUsageStateUpdate(componentLifecycleMsg.getTenantId());
+            } else if (EntityType.CUSTOMER.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
+                if (componentLifecycleMsg.getEvent() == ComponentLifecycleEvent.DELETED) {
+                    apiUsageStateService.onCustomerDelete((CustomerId) componentLifecycleMsg.getEntityId());
+                }
             }
-            log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg);
-            actorContext.tellWithHighPriority(actorMsg);
+            eventPublisher.publishEvent(componentLifecycleMsg);
         }
+        log.trace("[{}] Forwarding component lifecycle message to App Actor {}", id, actorMsg);
+        actorContext.tellWithHighPriority(actorMsg);
     }
 
     protected abstract void handleNotification(UUID id, TbProtoQueueMsg<N> msg, TbCallback callback) throws Exception;
