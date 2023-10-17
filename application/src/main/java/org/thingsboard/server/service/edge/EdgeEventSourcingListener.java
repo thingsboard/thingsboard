@@ -25,6 +25,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
@@ -78,7 +79,7 @@ public class EdgeEventSourcingListener {
             return;
         }
         try {
-            if (!isValidEdgeEventEntity(event.getEntity(), event.getOldEntity())) {
+            if (!isValidSaveEntityEventForEdgeProcessing(event.getEntity(), event.getOldEntity())) {
                 return;
             }
             log.trace("[{}] SaveEntityEvent called: {}", event.getTenantId(), event);
@@ -141,7 +142,7 @@ public class EdgeEventSourcingListener {
         }
     }
 
-    private boolean isValidEdgeEventEntity(Object entity, Object oldEntity) {
+    private boolean isValidSaveEntityEventForEdgeProcessing(Object entity, Object oldEntity) {
         if (entity instanceof OtaPackageInfo) {
             OtaPackageInfo otaPackageInfo = (OtaPackageInfo) entity;
             return otaPackageInfo.hasUrl() || otaPackageInfo.isHasData();
@@ -159,9 +160,8 @@ public class EdgeEventSourcingListener {
                 cleanUpUserAdditionalInfo(user);
                 return !user.equals(oldUser);
             }
-        } else if (entity instanceof AlarmApiCallResult) {
-            AlarmApiCallResult alarmApiCallResult = (AlarmApiCallResult) entity;
-            return alarmApiCallResult.isModified();
+        } else if (entity instanceof AlarmApiCallResult || entity instanceof Alarm) {
+            return false;
         }
         // Default: If the entity doesn't match any of the conditions, consider it as valid.
         return true;
