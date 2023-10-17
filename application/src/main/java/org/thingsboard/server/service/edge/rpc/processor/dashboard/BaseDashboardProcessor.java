@@ -32,9 +32,9 @@ import java.util.Set;
 @Slf4j
 public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
 
-    protected boolean saveOrUpdateDashboard(TenantId tenantId, DashboardId dashboardId, DashboardUpdateMsg dashboardUpdateMsg, boolean isEdgeProtoDeprecated, CustomerId customerId) {
+    protected boolean saveOrUpdateDashboard(TenantId tenantId, DashboardId dashboardId, DashboardUpdateMsg dashboardUpdateMsg, boolean isEdgeVersionOlderThan_3_6_2, CustomerId customerId) {
         boolean created = false;
-        Dashboard dashboard = isEdgeProtoDeprecated
+        Dashboard dashboard = isEdgeVersionOlderThan_3_6_2
                 ? createDashboard(tenantId, dashboardId, dashboardUpdateMsg)
                 : JacksonUtil.fromStringIgnoreUnknownProperties(dashboardUpdateMsg.getEntity(), Dashboard.class);
         if (dashboard == null) {

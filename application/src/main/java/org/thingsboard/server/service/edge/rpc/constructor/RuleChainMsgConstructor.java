@@ -38,7 +38,7 @@ public class RuleChainMsgConstructor {
 
     public RuleChainUpdateMsg constructRuleChainUpdatedMsg(UpdateMsgType msgType, RuleChain ruleChain, boolean isRoot, EdgeVersion edgeVersion) {
         ruleChain.setRoot(isRoot);
-        if (EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)) {
+        if (EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)) {
             return constructDeprecatedRuleChainUpdatedMsg(msgType, ruleChain);
         }
         return RuleChainUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(ruleChain))

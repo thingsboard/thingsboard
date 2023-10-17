@@ -45,7 +45,7 @@ public abstract class AbstractRuleChainMetadataConstructor implements RuleChainM
                                                                            UpdateMsgType msgType,
                                                                            RuleChainMetaData ruleChainMetaData,
                                                                            EdgeVersion edgeVersion) {
-        return EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)
+        return EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)
                 ? constructDeprecatedRuleChainMetadataUpdatedMsg(tenantId, msgType, ruleChainMetaData)
                 : RuleChainMetadataUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(ruleChainMetaData)).build();
     }
@@ -53,17 +53,12 @@ public abstract class AbstractRuleChainMetadataConstructor implements RuleChainM
     private RuleChainMetadataUpdateMsg constructDeprecatedRuleChainMetadataUpdatedMsg(TenantId tenantId,
                                                                                       UpdateMsgType msgType,
                                                                                       RuleChainMetaData ruleChainMetaData) {
-        try {
-            RuleChainMetadataUpdateMsg.Builder builder = RuleChainMetadataUpdateMsg.newBuilder();
-            builder.setRuleChainIdMSB(ruleChainMetaData.getRuleChainId().getId().getMostSignificantBits())
-                    .setRuleChainIdLSB(ruleChainMetaData.getRuleChainId().getId().getLeastSignificantBits());
-            constructRuleChainMetadataUpdatedMsg(tenantId, builder, ruleChainMetaData);
-            builder.setMsgType(msgType);
-            return builder.build();
-        } catch (Exception ex) {
-            log.error("[{}] Can't construct RuleChainMetadataUpdateMsg", tenantId, ex);
-        }
-        return null;
+        RuleChainMetadataUpdateMsg.Builder builder = RuleChainMetadataUpdateMsg.newBuilder();
+        builder.setRuleChainIdMSB(ruleChainMetaData.getRuleChainId().getId().getMostSignificantBits())
+                .setRuleChainIdLSB(ruleChainMetaData.getRuleChainId().getId().getLeastSignificantBits());
+        constructRuleChainMetadataUpdatedMsg(tenantId, builder, ruleChainMetaData);
+        builder.setMsgType(msgType);
+        return builder.build();
     }
 
     protected abstract void constructRuleChainMetadataUpdatedMsg(TenantId tenantId,

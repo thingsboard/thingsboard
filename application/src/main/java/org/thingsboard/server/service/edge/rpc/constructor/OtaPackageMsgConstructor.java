@@ -31,7 +31,7 @@ import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 public class OtaPackageMsgConstructor {
 
     public OtaPackageUpdateMsg constructOtaPackageUpdatedMsg(UpdateMsgType msgType, OtaPackage otaPackage, EdgeVersion edgeVersion) {
-        if (EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)) {
+        if (EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)) {
             return constructDeprecatedOtaPackageUpdatedMsg(msgType, otaPackage);
         }
         return OtaPackageUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(otaPackage))
@@ -87,5 +87,4 @@ public class OtaPackageMsgConstructor {
                 .setIdMSB(otaPackageId.getId().getMostSignificantBits())
                 .setIdLSB(otaPackageId.getId().getLeastSignificantBits()).build();
     }
-
 }

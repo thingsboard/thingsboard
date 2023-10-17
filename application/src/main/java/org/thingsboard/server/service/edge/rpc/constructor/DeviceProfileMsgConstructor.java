@@ -38,7 +38,7 @@ public class DeviceProfileMsgConstructor {
     private DataDecodingEncodingService dataDecodingEncodingService;
 
     public DeviceProfileUpdateMsg constructDeviceProfileUpdatedMsg(UpdateMsgType msgType, DeviceProfile deviceProfile, EdgeVersion edgeVersion) {
-        if (EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)) {
+        if (EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)) {
             return constructDeprecatedDeviceProfileUpdatedMsg(msgType, deviceProfile);
         }
         return DeviceProfileUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(deviceProfile))
@@ -98,5 +98,4 @@ public class DeviceProfileMsgConstructor {
                 .setIdMSB(deviceProfileId.getId().getMostSignificantBits())
                 .setIdLSB(deviceProfileId.getId().getLeastSignificantBits()).build();
     }
-
 }

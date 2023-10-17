@@ -30,7 +30,7 @@ import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 public class AssetMsgConstructor {
 
     public AssetUpdateMsg constructAssetUpdatedMsg(UpdateMsgType msgType, Asset asset, EdgeVersion edgeVersion) {
-        if (EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)) {
+        if (EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)) {
             return constructDeprecatedAssetUpdateMsg(msgType, asset);
         }
         return AssetUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(asset))

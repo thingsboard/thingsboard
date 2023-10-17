@@ -35,10 +35,10 @@ import java.util.UUID;
 @Slf4j
 public abstract class BaseEntityViewProcessor extends BaseEdgeProcessor {
 
-    protected Pair<Boolean, Boolean> saveOrUpdateEntityView(TenantId tenantId, EntityViewId entityViewId, EntityViewUpdateMsg entityViewUpdateMsg, boolean isEdgeProtoDeprecated) {
+    protected Pair<Boolean, Boolean> saveOrUpdateEntityView(TenantId tenantId, EntityViewId entityViewId, EntityViewUpdateMsg entityViewUpdateMsg, boolean isEdgeVersionOlderThan_3_6_2) {
         boolean created = false;
         boolean entityViewNameUpdated = false;
-        EntityView entityView = isEdgeProtoDeprecated
+        EntityView entityView = isEdgeVersionOlderThan_3_6_2
                 ? createEntityView(tenantId, entityViewId, entityViewUpdateMsg)
                 : JacksonUtil.fromStringIgnoreUnknownProperties(entityViewUpdateMsg.getEntity(), EntityView.class);
         if (entityView == null) {
@@ -60,7 +60,7 @@ public abstract class BaseEntityViewProcessor extends BaseEdgeProcessor {
             entityViewNameUpdated = true;
         }
         entityView.setName(entityViewName);
-        setCustomerId(tenantId, created ? null : entityViewById.getCustomerId(), entityView, entityViewUpdateMsg, isEdgeProtoDeprecated);
+        setCustomerId(tenantId, created ? null : entityViewById.getCustomerId(), entityView, entityViewUpdateMsg, isEdgeVersionOlderThan_3_6_2);
 
         entityViewValidator.validate(entityView, EntityView::getTenantId);
         if (created) {

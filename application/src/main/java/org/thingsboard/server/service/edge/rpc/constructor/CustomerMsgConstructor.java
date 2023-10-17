@@ -30,7 +30,7 @@ import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 public class CustomerMsgConstructor {
 
     public CustomerUpdateMsg constructCustomerUpdatedMsg(UpdateMsgType msgType, Customer customer, EdgeVersion edgeVersion) {
-        if (EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)) {
+        if (EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)) {
             return constructDeprecatedCustomerUpdatedMsg(msgType, customer);
         }
         return CustomerUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(customer))

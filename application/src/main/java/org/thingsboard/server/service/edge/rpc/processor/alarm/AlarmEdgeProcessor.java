@@ -123,5 +123,4 @@ public class AlarmEdgeProcessor extends BaseAlarmProcessor {
         } while (pageData != null && pageData.hasNext());
         return futures;
     }
-
 }

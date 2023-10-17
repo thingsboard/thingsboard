@@ -44,7 +44,7 @@ public class DeviceMsgConstructor {
     private DataDecodingEncodingService dataDecodingEncodingService;
 
     public DeviceUpdateMsg constructDeviceUpdatedMsg(UpdateMsgType msgType, Device device, EdgeVersion edgeVersion) {
-        if (EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)) {
+        if (EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)) {
             return constructDeprecatedDeviceUpdateMsg(msgType, device);
         }
         return DeviceUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(device))
@@ -88,7 +88,7 @@ public class DeviceMsgConstructor {
     }
 
     public DeviceCredentialsUpdateMsg constructDeviceCredentialsUpdatedMsg(DeviceCredentials deviceCredentials, EdgeVersion edgeVersion) {
-        return EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)
+        return EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)
                 ? constructDeprecatedDeviceCredentialsUpdatedMsg(deviceCredentials)
                 : DeviceCredentialsUpdateMsg.newBuilder().setEntity(JacksonUtil.toString(deviceCredentials)).build();
     }

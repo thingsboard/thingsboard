@@ -50,13 +50,13 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
     public ListenableFuture<Void> processAlarmMsg(TenantId tenantId, AlarmUpdateMsg alarmUpdateMsg, EdgeVersion edgeVersion) {
         log.trace("[{}] processAlarmMsg [{}]", tenantId, alarmUpdateMsg);
         AlarmId alarmId = new AlarmId(new UUID(alarmUpdateMsg.getIdMSB(), alarmUpdateMsg.getIdLSB()));
-        boolean isEdgeProtoDeprecated = EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion);
-        Alarm alarm = isEdgeProtoDeprecated ? createDeprecatedAlarm(tenantId, alarmUpdateMsg)
+        boolean isEdgeVersionOlderThan_3_6_2 = EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion);
+        Alarm alarm = isEdgeVersionOlderThan_3_6_2 ? createDeprecatedAlarm(tenantId, alarmUpdateMsg)
                 : JacksonUtil.fromStringIgnoreUnknownProperties(alarmUpdateMsg.getEntity(), Alarm.class);
         if (alarm == null) {
             throw new RuntimeException("[{" + tenantId + "}] alarmUpdateMsg {" + alarmUpdateMsg + "} cannot be converted to alarm");
         }
-        EntityId originatorId = isEdgeProtoDeprecated
+        EntityId originatorId = isEdgeVersionOlderThan_3_6_2
                 ? getAlarmOriginator(tenantId, alarmUpdateMsg.getOriginatorName(), EntityType.valueOf(alarmUpdateMsg.getOriginatorType()))
                 : alarm.getOriginator();
         if (originatorId == null) {

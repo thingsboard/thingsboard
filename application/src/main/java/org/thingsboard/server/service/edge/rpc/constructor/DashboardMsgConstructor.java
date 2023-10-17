@@ -30,7 +30,7 @@ import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 public class DashboardMsgConstructor {
 
     public DashboardUpdateMsg constructDashboardUpdatedMsg(UpdateMsgType msgType, Dashboard dashboard, EdgeVersion edgeVersion) {
-        if (EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)) {
+        if (EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)) {
             return constructDeprecatedDashboardUpdatedMsg(msgType, dashboard);
         }
         return DashboardUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(dashboard))
@@ -64,5 +64,4 @@ public class DashboardMsgConstructor {
                 .setIdMSB(dashboardId.getId().getMostSignificantBits())
                 .setIdLSB(dashboardId.getId().getLeastSignificantBits()).build();
     }
-
 }

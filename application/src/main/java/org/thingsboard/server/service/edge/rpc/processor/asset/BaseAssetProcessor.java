@@ -33,12 +33,12 @@ import java.util.UUID;
 @Slf4j
 public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
 
-    protected Pair<Boolean, Boolean> saveOrUpdateAsset(TenantId tenantId, AssetId assetId, AssetUpdateMsg assetUpdateMsg, boolean isEdgeProtoDeprecated) {
+    protected Pair<Boolean, Boolean> saveOrUpdateAsset(TenantId tenantId, AssetId assetId, AssetUpdateMsg assetUpdateMsg, boolean isEdgeVersionOlderThan_3_6_2) {
         boolean created = false;
         boolean assetNameUpdated = false;
         assetCreationLock.lock();
         try {
-            Asset asset = isEdgeProtoDeprecated
+            Asset asset = isEdgeVersionOlderThan_3_6_2
                     ? createAsset(tenantId, assetId, assetUpdateMsg)
                     : JacksonUtil.fromStringIgnoreUnknownProperties(assetUpdateMsg.getEntity(), Asset.class);
             if (asset == null) {
@@ -60,7 +60,7 @@ public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
                 assetNameUpdated = true;
             }
             asset.setName(assetName);
-            setCustomerId(tenantId, created ? null : assetById.getCustomerId(), asset, assetUpdateMsg, isEdgeProtoDeprecated);
+            setCustomerId(tenantId, created ? null : assetById.getCustomerId(), asset, assetUpdateMsg, isEdgeVersionOlderThan_3_6_2);
 
             assetValidator.validate(asset, Asset::getTenantId);
             if (created) {

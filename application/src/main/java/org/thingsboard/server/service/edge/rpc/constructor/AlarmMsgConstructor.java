@@ -29,11 +29,11 @@ import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 public class AlarmMsgConstructor {
 
     public AlarmUpdateMsg constructAlarmUpdatedMsg(UpdateMsgType msgType, Alarm alarm, String entityName, EdgeVersion edgeVersion) {
-        if (EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)) {
+        if (EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)) {
             return constructDeprecatedAlarmUpdatedMsg(msgType, alarm, entityName);
         }
         return AlarmUpdateMsg.newBuilder().setMsgType(msgType)
-                .setEntity(JacksonUtil.toString(alarm)).setOriginatorName(entityName)
+                .setEntity(JacksonUtil.toString(alarm))
                 .setIdMSB(alarm.getId().getId().getMostSignificantBits())
                 .setIdLSB(alarm.getId().getId().getLeastSignificantBits()).build();
     }
@@ -59,5 +59,4 @@ public class AlarmMsgConstructor {
                 .setPropagateToTenant(alarm.isPropagateToTenant());
         return builder.build();
     }
-
 }

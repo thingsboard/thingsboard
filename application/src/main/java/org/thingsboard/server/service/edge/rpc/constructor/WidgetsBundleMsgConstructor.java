@@ -35,7 +35,7 @@ import java.util.List;
 public class WidgetsBundleMsgConstructor {
 
     public WidgetsBundleUpdateMsg constructWidgetsBundleUpdateMsg(UpdateMsgType msgType, WidgetsBundle widgetsBundle, List<String> widgets, EdgeVersion edgeVersion) {
-        if (EdgeVersionUtils.isEdgeProtoDeprecated(edgeVersion)) {
+        if (EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)) {
             return constructDeprecatedWidgetsBundleUpdateMsg(msgType, widgetsBundle, widgets);
         }
         return WidgetsBundleUpdateMsg.newBuilder().setWidgets(JacksonUtil.toString(widgets)).setEntity(JacksonUtil.toString(widgetsBundle))

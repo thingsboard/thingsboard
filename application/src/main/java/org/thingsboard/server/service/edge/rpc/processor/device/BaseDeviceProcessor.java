@@ -46,12 +46,12 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
     @Autowired
     protected DataDecodingEncodingService dataDecodingEncodingService;
 
-    protected Pair<Boolean, Boolean> saveOrUpdateDevice(TenantId tenantId, DeviceId deviceId, DeviceUpdateMsg deviceUpdateMsg, boolean isEdgeProtoDeprecated) {
+    protected Pair<Boolean, Boolean> saveOrUpdateDevice(TenantId tenantId, DeviceId deviceId, DeviceUpdateMsg deviceUpdateMsg, boolean isEdgeVersionOlderThan_3_6_2) {
         boolean created = false;
         boolean deviceNameUpdated = false;
         deviceCreationLock.lock();
         try {
-            Device device = isEdgeProtoDeprecated
+            Device device = isEdgeVersionOlderThan_3_6_2
                     ? createDevice(tenantId, deviceId, deviceUpdateMsg)
                     : JacksonUtil.fromStringIgnoreUnknownProperties(deviceUpdateMsg.getEntity(), Device.class);
             if (device == null) {
@@ -73,7 +73,7 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
                 deviceNameUpdated = true;
             }
             device.setName(deviceName);
-            setCustomerId(tenantId, created ? null : deviceById.getCustomerId(), device, deviceUpdateMsg, isEdgeProtoDeprecated);
+            setCustomerId(tenantId, created ? null : deviceById.getCustomerId(), device, deviceUpdateMsg, isEdgeVersionOlderThan_3_6_2);
 
             deviceValidator.validate(device, Device::getTenantId);
             if (created) {
