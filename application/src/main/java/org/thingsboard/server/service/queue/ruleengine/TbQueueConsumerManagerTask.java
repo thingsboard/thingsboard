@@ -15,18 +15,33 @@
  */
 package org.thingsboard.server.service.queue.ruleengine;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import lombok.Getter;
+import lombok.ToString;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 
 import java.util.Set;
 
-@Data
+@Getter
+@ToString
 public class TbQueueConsumerManagerTask {
 
     private final QueueEvent event;
-    private final Queue queue;
-    private final Set<TopicPartitionInfo> partitions;
+    private Queue queue;
+    private Set<TopicPartitionInfo> partitions;
+
+    public TbQueueConsumerManagerTask(QueueEvent event) {
+        this.event = event;
+    }
+
+    public TbQueueConsumerManagerTask(QueueEvent event, Queue queue) {
+        this.event = event;
+        this.queue = queue;
+    }
+
+    public TbQueueConsumerManagerTask(QueueEvent event, Set<TopicPartitionInfo> partitions) {
+        this.event = event;
+        this.partitions = partitions;
+    }
 
 }
