@@ -263,6 +263,7 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
         if (this.autoScaleValueSize) {
           const valueFontSize = ratios.valueFontSizeRatio * boxSize;
           const valueLineHeight = ratios.valueLineHeightRaio * boxSize;
+          this.renderer.setStyle(this.batteryLevelValue.nativeElement, 'minWidth', '0');
           this.setValueFontSize(valueFontSize, valueLineHeight, boxWidth);
         }
         const fontSize = parseInt(window.getComputedStyle(this.batteryLevelValue.nativeElement).fontSize, 10) || 10;

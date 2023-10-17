@@ -6096,6 +6096,22 @@
             "chart": "Chart",
             "value-chart-card-style": "Value chart card style"
         },
+        "progress-bar": {
+            "layout": "Layout",
+            "layout-default": "Default",
+            "layout-simplified": "Simplified",
+            "auto-scale": "Auto scale",
+            "icon": "Icon",
+            "value": "Value",
+            "range": "Range",
+            "min": "min",
+            "max": "max",
+            "range-ticks": "Range ticks",
+            "bar": "Bar",
+            "bar-color": "Bar color",
+            "bar-background": "Bar background",
+            "progress-bar-card-style": "Progress bar card style"
+        },
         "alarm-count": {
             "alarm-count-card-style": "Alarm count card style"
         },
