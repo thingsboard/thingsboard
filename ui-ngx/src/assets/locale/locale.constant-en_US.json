@@ -6086,6 +6086,16 @@
             "aggregated-value-card-style": "Aggregated value card style",
             "auto-scale": "Auto scale"
         },
+        "value-chart-card": {
+            "layout": "Layout",
+            "layout-left": "Left",
+            "layout-right": "Right",
+            "auto-scale": "Auto scale",
+            "icon": "Icon",
+            "value": "Value",
+            "chart": "Chart",
+            "value-chart-card-style": "Value chart card style"
+        },
         "alarm-count": {
             "alarm-count-card-style": "Alarm count card style"
         },
