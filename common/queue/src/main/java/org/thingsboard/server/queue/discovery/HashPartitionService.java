@@ -71,6 +71,7 @@ public class HashPartitionService implements PartitionService {
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TenantRoutingInfoService tenantRoutingInfoService;
     private final QueueRoutingInfoService queueRoutingInfoService;
+    private final TopicService topicService;
 
     protected volatile ConcurrentMap<QueueKey, List<Integer>> myPartitions = new ConcurrentHashMap<>();
 
@@ -88,11 +89,13 @@ public class HashPartitionService implements PartitionService {
     public HashPartitionService(TbServiceInfoProvider serviceInfoProvider,
                                 TenantRoutingInfoService tenantRoutingInfoService,
                                 ApplicationEventPublisher applicationEventPublisher,
-                                QueueRoutingInfoService queueRoutingInfoService) {
+                                QueueRoutingInfoService queueRoutingInfoService,
+                                TopicService topicService) {
         this.serviceInfoProvider = serviceInfoProvider;
         this.tenantRoutingInfoService = tenantRoutingInfoService;
         this.applicationEventPublisher = applicationEventPublisher;
         this.queueRoutingInfoService = queueRoutingInfoService;
+        this.topicService = topicService;
     }
 
     @PostConstruct
@@ -100,11 +103,11 @@ public class HashPartitionService implements PartitionService {
         this.hashFunction = forName(hashFunctionName);
         QueueKey coreKey = new QueueKey(ServiceType.TB_CORE);
         partitionSizesMap.put(coreKey, corePartitions);
-        partitionTopicsMap.put(coreKey, coreTopic);
+        partitionTopicsMap.put(coreKey, topicService.buildTopicName(coreTopic));
 
         QueueKey vcKey = new QueueKey(ServiceType.TB_VC_EXECUTOR);
         partitionSizesMap.put(vcKey, vcPartitions);
-        partitionTopicsMap.put(vcKey, vcTopic);
+        partitionTopicsMap.put(vcKey, topicService.buildTopicName(topicService.buildTopicName(vcTopic)));
 
         if (!isTransport(serviceInfoProvider.getServiceType())) {
             doInitRuleEnginePartitions();
@@ -122,7 +125,7 @@ public class HashPartitionService implements PartitionService {
         List<QueueRoutingInfo> queueRoutingInfoList = getQueueRoutingInfos();
         queueRoutingInfoList.forEach(queue -> {
             QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, queue);
-            partitionTopicsMap.put(queueKey, queue.getQueueTopic());
+            partitionTopicsMap.put(queueKey, topicService.buildTopicName(queue.getQueueTopic()));
             partitionSizesMap.put(queueKey, queue.getPartitions());
         });
     }

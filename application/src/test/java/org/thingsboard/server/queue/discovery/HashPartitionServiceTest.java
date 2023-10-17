@@ -77,6 +77,7 @@ public class HashPartitionServiceTest {
     private TenantRoutingInfoService routingInfoService;
     private ApplicationEventPublisher applicationEventPublisher;
     private QueueRoutingInfoService queueRoutingInfoService;
+    private TopicService topicService;
 
     private String hashFunctionName = "murmur3_128";
 
@@ -86,6 +87,7 @@ public class HashPartitionServiceTest {
         applicationEventPublisher = mock(ApplicationEventPublisher.class);
         routingInfoService = mock(TenantRoutingInfoService.class);
         queueRoutingInfoService = mock(QueueRoutingInfoService.class);
+        topicService = mock(TopicService.class);
         clusterRoutingService = createPartitionService();
         ServiceInfo currentServer = ServiceInfo.newBuilder()
                 .setServiceId("tb-core-0")
@@ -393,7 +395,8 @@ public class HashPartitionServiceTest {
         HashPartitionService partitionService = new HashPartitionService(discoveryService,
                 routingInfoService,
                 applicationEventPublisher,
-                queueRoutingInfoService);
+                queueRoutingInfoService,
+                topicService);
         ReflectionTestUtils.setField(partitionService, "coreTopic", "tb.core");
         ReflectionTestUtils.setField(partitionService, "corePartitions", 10);
         ReflectionTestUtils.setField(partitionService, "vcTopic", "tb.vc");
