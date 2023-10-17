@@ -27,7 +27,9 @@ import org.junit.jupiter.api.Test;
 import org.mvel2.ConversionException;
 import org.thingsboard.common.util.JacksonUtil;
 
-import java.time.format.DateTimeParseException;
+import java.time.DateTimeException;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -113,12 +115,14 @@ class TbDateTest {
     void testToISOStringThreadLocalStaticFormatter() throws ExecutionException, InterruptedException, TimeoutException {
         executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(1));
         int hrs = 14;
-        String pattern = "2024-02-29T%s:35:42.987Z";
-        String tsStr = String.format(pattern, hrs);  //Thu Feb 29 2024 14:35:42.987 GMT+0000
+        int date = 29;
+        int month = 2;
+        String pattern = "2024-%s-%sT%s:35:42.987Z";
+        String tsStr = String.format(pattern, String.format("%02d", month), date, hrs);  //Thu Feb 29 2024 14:35:42.987 GMT+0000
         TbDate tbDate = new TbDate(tsStr);
         long ts = 1709217342987L; //Thu Feb 29 2024 14:35:42.987 GMT+0000
         Assert.assertEquals(ts, tbDate.parseSecondMilli());
-        int offsetMin = tbDate.getTimezoneOffset(); // for example 3600000 for GMT + 1
+        int offsetLocalSecond = tbDate.getLocaleZoneOffset().getTotalSeconds(); // for example 7200 for GMT + 2
 
         String datePrefix = tsStr; //without time zone
         assertThat(tbDate.toISOString())
@@ -127,13 +131,13 @@ class TbDateTest {
         assertThat(executor.submit(tbDate::toISOString).get(30, TimeUnit.SECONDS))
                 .as("format in executor thread")
                 .startsWith(datePrefix);
-        int offsetHrs = offsetMin/60;
-        String datePrefixLocal = String.format(pattern, (hrs - offsetHrs));
-        long offsetMilli = offsetMin*60*1000;
-        assertThat(new TbDate(ts - offsetMilli).toISOString())
+        TbDateTestEntity tbDateTest = new TbDateTestEntity(tbDate.getFullYear(), month, date,hrs + offsetLocalSecond/60/60);
+        String datePrefixLocal = String.format(pattern, tbDateTest.geMonthStr(), tbDateTest.geDateStr(), tbDateTest.geHoursStr());
+        long offsetLocalMilli = offsetLocalSecond*1000;
+        assertThat(new TbDate(ts + offsetLocalMilli).toISOString())
                 .as("new instance format in main thread")
                 .startsWith(datePrefixLocal);
-        assertThat(executor.submit(() -> new TbDate(ts - offsetMilli).toISOString()).get(30, TimeUnit.SECONDS))
+        assertThat(executor.submit(() -> new TbDate(ts + offsetLocalMilli).toISOString()).get(30, TimeUnit.SECONDS))
                 .as("new instance format in executor thread")
                 .startsWith(datePrefixLocal);
     }
@@ -143,11 +147,21 @@ class TbDateTest {
         String s = "09:15:30 PM, Sun 10/09/2022";
         String pattern = "hh:mm:ss a, EEE M/d/uuuu";
         TbDate d = new TbDate(s, pattern, Locale.US);
-        Assert.assertEquals("2022-10-09T18:15:30Z", d.toISOString());
+        Assert.assertEquals("2022-10-09T21:15:30Z", d.toISOString());
+            // tz = "-04:00"
+        d = new TbDate(s, pattern, Locale.US, "-04:00");
+        Assert.assertEquals("2022-10-10T01:15:30Z", d.toISOString());
+        d = new TbDate(s, pattern, Locale.US, "America/New_York");
+        Assert.assertEquals("2022-10-10T01:15:30Z", d.toISOString());
+            // tz = "+02:00"
+        s = "09:15:30 PM, So. 10/09/2022";
+        d = new TbDate(s, pattern, Locale.GERMAN, ZoneId.of("Europe/Berlin"));
+        Assert.assertEquals("2022-10-09T19:15:30Z", d.toISOString());
+
         s = "09:15:30 пп, середа, 4 жовтня 2023 р.";
         pattern = "hh:mm:ss a, EEEE, d MMMM y 'р.'";
         d = new TbDate(s, pattern, Locale.forLanguageTag("uk-UA"));
-        Assert.assertEquals("2023-10-04T18:15:30Z", d.toISOString());
+        Assert.assertEquals("2023-10-04T21:15:30Z", d.toISOString());
 
         d = new TbDate(1693962245000L);
         Assert.assertEquals("2023-09-06T01:04:05Z", d.toISOString());
@@ -204,41 +218,41 @@ class TbDateTest {
         Assert.assertNotNull(d.toLocaleTimeString());
         Assert.assertNotNull(d.toLocaleTimeString("en-US"));
 
-        Assert.assertEquals("9:04:05 PM", d.toLocaleTimeString("en-US", "America/New_York"));
-        Assert.assertEquals("오후 9:04:05", d.toLocaleTimeString("ko-KR",  "America/New_York"));
-        Assert.assertEquals("04:04:05",  d.toLocaleTimeString( "uk-UA", "Europe/Kiev"));
-        Assert.assertEquals("9:04:05 م",  d.toLocaleTimeString( "ar-EG", "America/New_York"));
+        Assert.assertEquals("9:04:05 PM", d.toLocaleTbTimeString("en-US", "America/New_York"));
+        Assert.assertEquals("오후 9:04:05", d.toLocaleTbTimeString("ko-KR",  "America/New_York"));
+        Assert.assertEquals("04:04:05",  d.toLocaleTbTimeString( "uk-UA", "Europe/Kiev"));
+        Assert.assertEquals("9:04:05 م",  d.toLocaleTbTimeString( "ar-EG", "America/New_York"));
 
-        Assert.assertEquals("9:04:05 PM Eastern Daylight Time", d.toLocaleTimeString("en-US", JacksonUtil.newObjectNode()
+        Assert.assertEquals("9:04:05 PM Eastern Daylight Time", d.toLocaleTbTimeString("en-US", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
                 .put("timeStyle", "full")
                 .toString()));
-        Assert.assertEquals("오후 9시 4분 5초 미 동부 하계 표준시", d.toLocaleTimeString("ko-KR", JacksonUtil.newObjectNode()
+        Assert.assertEquals("오후 9시 4분 5초 미 동부 하계 표준시", d.toLocaleTbTimeString("ko-KR", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
                 .put("timeStyle", "full")
                 .toString()));
-        Assert.assertEquals("04:04:05 за східноєвропейським літнім часом", d.toLocaleTimeString("uk-UA", JacksonUtil.newObjectNode()
+        Assert.assertEquals("04:04:05 за східноєвропейським літнім часом", d.toLocaleTbTimeString("uk-UA", JacksonUtil.newObjectNode()
                 .put("timeZone", "Europe/Kiev")
                 .put("timeStyle", "full")
                 .toString()));
-        Assert.assertEquals("9:04:05 م التوقيت الصيفي الشرقي لأمريكا الشمالية", d.toLocaleTimeString("ar-EG", JacksonUtil.newObjectNode()
+        Assert.assertEquals("9:04:05 م التوقيت الصيفي الشرقي لأمريكا الشمالية", d.toLocaleTbTimeString("ar-EG", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
                 .put("timeStyle", "full")
                 .toString()));
 
-        Assert.assertEquals("9:04:05 PM", d.toLocaleTimeString("en-US", JacksonUtil.newObjectNode()
+        Assert.assertEquals("9:04:05 PM", d.toLocaleTbTimeString("en-US", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
                 .put("pattern", "h:mm:ss a")
                 .toString()));
-        Assert.assertEquals("9:04:05 오후", d.toLocaleTimeString("ko-KR", JacksonUtil.newObjectNode()
+        Assert.assertEquals("9:04:05 오후", d.toLocaleTbTimeString("ko-KR", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
                 .put("pattern", "h:mm:ss a")
                 .toString()));
-        Assert.assertEquals("4:04:05 дп", d.toLocaleTimeString("uk-UA", JacksonUtil.newObjectNode()
+        Assert.assertEquals("4:04:05 дп", d.toLocaleTbTimeString("uk-UA", JacksonUtil.newObjectNode()
                 .put("timeZone", "Europe/Kiev")
                 .put("pattern", "h:mm:ss a")
                 .toString()));
-        Assert.assertEquals("9:04:05 م", d.toLocaleTimeString("ar-EG", JacksonUtil.newObjectNode()
+        Assert.assertEquals("9:04:05 م", d.toLocaleTbTimeString("ar-EG", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
                 .put("pattern", "h:mm:ss a")
                 .toString()));
@@ -252,45 +266,45 @@ class TbDateTest {
         Assert.assertNotNull(d.toLocaleString());
         Assert.assertNotNull(d.toLocaleString("en-US"));
 
-        Assert.assertEquals("9/5/23, 9:04:05 PM", d.toLocaleString("en-US", "America/New_York"));
-        Assert.assertEquals("23. 9. 5. 오후 9:04:05", d.toLocaleString("ko-KR",  "America/New_York"));
-        Assert.assertEquals("06.09.23, 04:04:05",  d.toLocaleString( "uk-UA", "Europe/Kiev"));
-        Assert.assertEquals("5\u200F/9\u200F/2023, 9:04:05 م",  d.toLocaleString( "ar-EG", "America/New_York"));
+        Assert.assertEquals("9/5/23, 9:04:05 PM", d.toLocaleTbString("en-US", "America/New_York"));
+        Assert.assertEquals("23. 9. 5. 오후 9:04:05", d.toLocaleTbString("ko-KR",  "America/New_York"));
+        Assert.assertEquals("06.09.23, 04:04:05",  d.toLocaleTbString( "uk-UA", "Europe/Kiev"));
+        Assert.assertEquals("5\u200F/9\u200F/2023, 9:04:05 م",  d.toLocaleTbString( "ar-EG", "America/New_York"));
 
-        Assert.assertEquals("Tuesday, September 5, 2023 at 9:04:05 PM Eastern Daylight Time", d.toLocaleString("en-US", JacksonUtil.newObjectNode()
+        Assert.assertEquals("Tuesday, September 5, 2023 at 9:04:05 PM Eastern Daylight Time", d.toLocaleTbString("en-US", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
                 .put("dateStyle", "full")
                 .put("timeStyle", "full")
                 .toString()));
-        Assert.assertEquals("2023년 9월 5일 화요일 오후 9시 4분 5초 미 동부 하계 표준시", d.toLocaleString("ko-KR", JacksonUtil.newObjectNode()
+        Assert.assertEquals("2023년 9월 5일 화요일 오후 9시 4분 5초 미 동부 하계 표준시", d.toLocaleTbString("ko-KR", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
                 .put("dateStyle", "full")
                 .put("timeStyle", "full")
                 .toString()));
-        Assert.assertEquals("середа, 6 вересня 2023 р. о 04:04:05 за східноєвропейським літнім часом", d.toLocaleString("uk-UA", JacksonUtil.newObjectNode()
+        Assert.assertEquals("середа, 6 вересня 2023 р. о 04:04:05 за східноєвропейським літнім часом", d.toLocaleTbString("uk-UA", JacksonUtil.newObjectNode()
                 .put("timeZone", "Europe/Kiev")
                 .put("dateStyle", "full")
                 .put("timeStyle", "full")
                 .toString()));
-        Assert.assertEquals("الثلاثاء، 5 سبتمبر 2023 في 9:04:05 م التوقيت الصيفي الشرقي لأمريكا الشمالية", d.toLocaleString("ar-EG", JacksonUtil.newObjectNode()
+        Assert.assertEquals("الثلاثاء، 5 سبتمبر 2023 في 9:04:05 م التوقيت الصيفي الشرقي لأمريكا الشمالية", d.toLocaleTbString("ar-EG", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
                 .put("dateStyle", "full")
                 .put("timeStyle", "full")
                 .toString()));
 
-        Assert.assertEquals("9/5/2023, 9:04:05 PM", d.toLocaleString("en-US", JacksonUtil.newObjectNode()
+        Assert.assertEquals("9/5/2023, 9:04:05 PM", d.toLocaleTbString("en-US", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
                 .put("pattern", "M/d/yyyy, h:mm:ss a")
                 .toString()));
-        Assert.assertEquals("9/5/2023, 9:04:05 오후", d.toLocaleString("ko-KR", JacksonUtil.newObjectNode()
+        Assert.assertEquals("9/5/2023, 9:04:05 오후", d.toLocaleTbString("ko-KR", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
                 .put("pattern", "M/d/yyyy, h:mm:ss a")
                 .toString()));
-        Assert.assertEquals("9/6/2023, 4:04:05 дп", d.toLocaleString("uk-UA", JacksonUtil.newObjectNode()
+        Assert.assertEquals("9/6/2023, 4:04:05 дп", d.toLocaleTbString("uk-UA", JacksonUtil.newObjectNode()
                 .put("timeZone", "Europe/Kiev")
                 .put("pattern", "M/d/yyyy, h:mm:ss a")
                 .toString()));
-        Assert.assertEquals("9/5/2023, 9:04:05 م", d.toLocaleString("ar-EG", JacksonUtil.newObjectNode()
+        Assert.assertEquals("9/5/2023, 9:04:05 م", d.toLocaleTbString("ar-EG", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
                 .put("pattern", "M/d/yyyy, h:mm:ss a")
                 .toString()));
@@ -301,27 +315,63 @@ class TbDateTest {
         String stringDateUTC = "2023-09-06T01:04:05.00Z";
         TbDate d = new TbDate(stringDateUTC);
         Assert.assertEquals("2023-09-06T01:04:05Z", d.toISOString());
-        String stringDateTZ = "2023-09-06T01:04:05.00+04:00";
+        String stringDateTZ = "2023-09-06T01:04:05.00+04:00:00";
         d = new TbDate(stringDateTZ);
         Assert.assertEquals("2023-09-05T21:04:05Z", d.toISOString());
+        stringDateTZ = "2023-09-06T01:04:05.00-04:00";
+        d = new TbDate(stringDateTZ);
+        Assert.assertEquals("2023-09-06T05:04:05Z", d.toISOString());
+       stringDateTZ = "2023-09-06T01:04:05.00+04:30:56";
+        d = new TbDate(stringDateTZ);
+        Assert.assertEquals("2023-09-05T20:33:09Z", d.toISOString());
         stringDateTZ = "2023-09-06T01:04:05.00-02:00";
         d = new TbDate(stringDateTZ);
         Assert.assertEquals("2023-09-06T03:04:05Z", d.toISOString());
         String stringDateRFC_1123  = "Sat, 3 Jun 2023 11:05:30 GMT";
         d = new TbDate(stringDateRFC_1123);
-        stringDateRFC_1123  = "Sat, 3 Jun 2023 11:05:30 +0400";
+        Assert.assertEquals("2023-06-03T11:05:30Z", d.toISOString());
+        stringDateRFC_1123  = "Sat, 3 Jun 2023 01:04:05 +043056";
+        d = new TbDate(stringDateRFC_1123);
+        Assert.assertEquals("2023-06-02T20:33:09Z", d.toISOString());
+       stringDateRFC_1123  = "Sat, 3 Jun 2023 11:05:30 +0400";
         d = new TbDate(stringDateRFC_1123);
         Assert.assertEquals("2023-06-03T07:05:30Z", d.toISOString());
         stringDateRFC_1123  = "Thu, 29 Feb 2024 11:05:30 -03";
         d = new TbDate(stringDateRFC_1123);
         Assert.assertEquals("2024-02-29T14:05:30Z", d.toISOString());
 
-        String stringDateRFC_1123_error  = "Tue, 3 Jun 2023 11:05:30 GMT";
+        String stringDateZ_error  = "2023-09-06T01:04:05.00+04";
         Exception actual = assertThrows(ConversionException.class, () -> {
-            new TbDate(stringDateRFC_1123_error);
+            new TbDate(stringDateZ_error);
         });
         String expectedMessage = "Cannot parse value";
         assertTrue(actual.getMessage().contains(expectedMessage));
+
+       String stringDateRFC_1123_error  = "Tue, 3 Jun 2023 11:05:30 GMT";
+       actual = assertThrows(ConversionException.class, () -> {
+            new TbDate(stringDateRFC_1123_error);
+        });
+       assertTrue(actual.getMessage().contains(expectedMessage));
+    }
+
+    @Test
+    void TestDateTimeFormatterToString () {
+        TbDate d1 = new TbDate(23, 9, 7, 8, 4, 5, "+04:00");
+        TbDate d2 = new TbDate(23, 9, 7, 8, 4, 5, "-03:00");
+
+        Assert.assertEquals("2023-09-07T04:04:05Z[UTC]", d1.toISOZonedDateTimeString());
+        Assert.assertEquals("2023-09-07T04:04:05Z", d1.toISOZonedDateTimeString(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        Assert.assertEquals("2023-09-07T04:04:05Z[UTC]", d1.toISOZonedDateTimeString(DateTimeFormatter.ISO_ZONED_DATE_TIME));
+        Assert.assertEquals("2023-09-07T04:04:05", d1.toISOZonedDateTimeString(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        Assert.assertEquals("Thu, 7 Sep 2023 04:04:05 GMT", d1.toISOZonedDateTimeString(DateTimeFormatter.RFC_1123_DATE_TIME));
+        Assert.assertEquals("2023-09-07T04:04:05Z", d1.toISOZonedDateTimeString(DateTimeFormatter.ISO_INSTANT));
+
+        Assert.assertEquals("2023-09-07T11:04:05Z[UTC]", d2.toISOZonedDateTimeString());
+        Assert.assertEquals("2023-09-07T11:04:05Z", d2.toISOZonedDateTimeString(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        Assert.assertEquals("2023-09-07T11:04:05Z[UTC]", d2.toISOZonedDateTimeString(DateTimeFormatter.ISO_ZONED_DATE_TIME));
+        Assert.assertEquals("2023-09-07T11:04:05", d2.toISOZonedDateTimeString(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        Assert.assertEquals("Thu, 7 Sep 2023 11:04:05 GMT", d2.toISOZonedDateTimeString(DateTimeFormatter.RFC_1123_DATE_TIME));
+        Assert.assertEquals("2023-09-07T11:04:05Z", d2.toISOZonedDateTimeString(DateTimeFormatter.ISO_INSTANT));
     }
 
     @Test
@@ -333,188 +383,231 @@ class TbDateTest {
         String stringDateStart = "1970-01-01T00:00:00Z";
         d = new TbDate(stringDateStart);
         long actualMillis = TbDate.parse("1970-01-01 T00:00:00");
-        Assert.assertEquals(d.getTimezoneOffset(), actualMillis/60/1000);
+        Assert.assertEquals(-d.getLocaleZoneOffset().getTotalSeconds() * 1000, actualMillis);
         String pattern = "yyyy-MM-dd HH:mm:ss.SSS";
         String stringDate = "1995-12-04 00:12:00.000";
         Assert.assertNotEquals(-1L,  TbDate.parse(stringDate, pattern));
     }
 
     @Test
-    void TestDate_Year_Moth_Date_Hs_Min_Sec () {
-        TbDate d = new TbDate(2023, 8, 18);
-        Assert.assertEquals("2023-08-18T00:00:00Z", d.toISOString());
-        d = new TbDate(2023, 9, 17, 17, 34);
-        Assert.assertEquals("2023-09-17T17:34:00Z", d.toISOString());
-        d = new TbDate(23, 9, 7, 8, 4);
-        Assert.assertEquals("2023-09-07T08:04:00Z", d.toISOString());
-        d = new TbDate(23, 9, 7, 8, 4, 5);
-        Assert.assertEquals("2023-09-07T08:04:05Z", d.toISOString());
-        d = new TbDate(23, 9, 7, 8, 4, 5, "+04:00");
-        Assert.assertEquals("2023-09-07T04:04:05Z", d.toISOString());
-        d = new TbDate(23, 9, 7, 8, 4, 5, "-03:00");
-        Assert.assertEquals("2023-09-07T11:04:05Z", d.toISOString());
-        d = new TbDate(23, 9, 7, 23, 4, 5, "-03:00");
-        Assert.assertEquals("2023-09-08T02:04:05Z", d.toISOString());
-        d = new TbDate(23, 9, 7, 23, 4, 5, 567,"-03:00");
-        Assert.assertEquals("2023-09-08T02:04:05.567Z", d.toISOString());
-    }
+    void TestMethodGetAsDateTimeLocal() {
+        TbDate d = new TbDate(1975, 12, 31, 23,15,30, 560);
+        TbDate d0 = new TbDate(1975, 12, 31, 23,15,30, 560,"UTC");
+        TbDate d1 = new TbDate(1975, 12, 31, 23,15,30, 561,"+03:00");
+        TbDate d2 = new TbDate(1975, 12, 31, 23,15,30, 562,"-02:00");
+        TbDate dLocal = new TbDate(d.parseSecondMilli() + d.getLocaleZoneOffset().getTotalSeconds()*1000);
+        TbDate dLocal0 = new TbDate(d0.parseSecondMilli() + d0.getLocaleZoneOffset().getTotalSeconds()*1000);
+        TbDate dLocal1 = new TbDate(d1.parseSecondMilli() + d1.getLocaleZoneOffset().getTotalSeconds()*1000);
+        TbDate dLocal2 = new TbDate(d2.parseSecondMilli() + d2.getLocaleZoneOffset().getTotalSeconds()*1000);
 
-    @Test
-    void TestMethodGetAsDateUTC () {
-        TbDate dd = new TbDate(TbDate.UTC(1996, 2, 2, 3, 4, 5));
-        Assert.assertEquals(823230245000L, dd.valueOf());
-        dd = new TbDate(1996, 2, 2, 3, 4, 5);
-        Assert.assertEquals(823230245000L, dd.valueOf());
-        TbDate beforeStartUTC = new TbDate(1969, 7, 20, 20, 17, 40);
-        Assert.assertEquals(-14182940000L, beforeStartUTC.getTime());
-
-        TbDate d1 = new TbDate(1975, 12, 31, 23,15,30, 567,"+02:00");
-        TbDate d2 = new TbDate(1975, 12, 31, 23,15,30, 567,"-02:00");
-
-        Assert.assertEquals(189292530567L, d1.getTime());
-        Assert.assertEquals(189306930567L, d2.getTime());
-        Assert.assertEquals(d1.getTimezoneOffset(), d2.getTimezoneOffset());
-
-        Assert.assertEquals(1975, d1.getUTCFullYear());
-        Assert.assertEquals(1976, d2.getUTCFullYear());
-
-        Assert.assertEquals(12, d1.getUTCMonth());
-        Assert.assertEquals(1, d2.getUTCMonth());
-
-        Assert.assertEquals(31, d1.getUTCDate());
-        Assert.assertEquals(1, d2.getUTCDate());
-
-        Assert.assertEquals(3, d1.getUTCDay());
-        Assert.assertEquals(4, d2.getUTCDay());
-
-        Assert.assertEquals(21, d1.getUTCHours());
-        Assert.assertEquals(1, d2.getUTCHours());
-
-        Assert.assertEquals(15, d1.getUTCMinutes());
-        Assert.assertEquals(15, d2.getUTCMinutes());
-
-        Assert.assertEquals(30, d1.getUTCSeconds());
-        Assert.assertEquals(30, d2.getUTCSeconds());
-
-        Assert.assertEquals(567, d1.getUTCMilliseconds());
-        Assert.assertEquals(567, d2.getUTCMilliseconds());
-    }    @Test
-    void TestMethodGetAsDateLocal () {
-        TbDate d1 = new TbDate(1975, 12, 31, 23,15,30, 567,"+02:00");
-        TbDate d2 = new TbDate(1975, 12, 31, 23,15,30, 567,"-02:00");
-        TbDate dLocal1 = new TbDate(d1.parseSecondMilli()-d1.getTimezoneOffset()*60*1000);
-        TbDate dLocal2 = new TbDate(d2.parseSecondMilli()-d2.getTimezoneOffset()*60*1000);
-
+        Assert.assertEquals(dLocal.getUTCFullYear(), d.getFullYear());
+        Assert.assertEquals(dLocal0.getUTCFullYear(), d0.getFullYear());
         Assert.assertEquals(dLocal1.getUTCFullYear(), d1.getFullYear());
         Assert.assertEquals(dLocal2.getUTCFullYear(), d2.getFullYear());
 
+        Assert.assertEquals(dLocal.getUTCMonth(), d.getMonth());
+        Assert.assertEquals(dLocal0.getUTCMonth(), d0.getMonth());
         Assert.assertEquals(dLocal1.getUTCMonth(), d1.getMonth());
         Assert.assertEquals(dLocal2.getUTCMonth(), d2.getMonth());
 
+        Assert.assertEquals(dLocal.getUTCDate(), d.getDate());
+        Assert.assertEquals(dLocal0.getUTCDate(), d0.getDate());
         Assert.assertEquals(dLocal1.getUTCDate(), d1.getDate());
         Assert.assertEquals(dLocal2.getUTCDate(), d2.getDate());
 
+        Assert.assertEquals(dLocal.getUTCDay(), d.getDay());
+        Assert.assertEquals(dLocal0.getUTCDay(), d0.getDay());
         Assert.assertEquals(dLocal1.getUTCDay(), d1.getDay());
-        Assert.assertEquals(dLocal1.getUTCDay(), d2.getDay());
+        Assert.assertEquals(dLocal2.getUTCDay(), d2.getDay());
 
+        Assert.assertEquals(dLocal.getUTCHours(), d.getHours());
+        Assert.assertEquals(dLocal0.getUTCHours(), d0.getHours());
         Assert.assertEquals(dLocal1.getUTCHours(), d1.getHours());
         Assert.assertEquals(dLocal2.getUTCHours(), d2.getHours());
 
+        Assert.assertEquals(dLocal.getUTCMinutes(), d.getMinutes());
+        Assert.assertEquals(dLocal0.getUTCMinutes(), d0.getMinutes());
         Assert.assertEquals(dLocal1.getUTCMinutes(), d1.getMinutes());
         Assert.assertEquals(dLocal2.getUTCMinutes(), d2.getMinutes());
 
+        Assert.assertEquals(dLocal.getUTCSeconds(), d.getSeconds());
+        Assert.assertEquals(dLocal0.getUTCSeconds(), d0.getSeconds());
         Assert.assertEquals(dLocal1.getUTCSeconds(), d1.getSeconds());
         Assert.assertEquals(dLocal2.getUTCSeconds(), d2.getSeconds());
 
+        Assert.assertEquals(dLocal.getUTCMilliseconds(), d.getMilliseconds());
+        Assert.assertEquals(dLocal0.getUTCMilliseconds(), d0.getMilliseconds());
         Assert.assertEquals(dLocal1.getUTCMilliseconds(), d1.getMilliseconds());
         Assert.assertEquals(dLocal2.getUTCMilliseconds(), d2.getMilliseconds());
     }
 
     @Test
+    void Test_Year_Moth_Date_Hours_Min_Sec_Without_TZ() {
+        TbDate d = new TbDate(2023, 8, 18);
+        Assert.assertEquals("2023-08-18 00:00:00", d.toLocaleString());
+        d = new TbDate(2023, 9, 17, 17, 34);
+        Assert.assertEquals("2023-09-17 17:34:00", d.toLocaleString());
+        d = new TbDate(23, 9, 7, 8, 4);
+        Assert.assertEquals("2023-09-07 08:04:00", d.toLocaleString());
+        d = new TbDate(23, 9, 7, 8, 4, 5);
+        Assert.assertEquals("2023-09-07 08:04:05", d.toLocaleString());
+        d = new TbDate(23, 9, 7, 8, 4, 5, 567);
+        Assert.assertEquals("2023-09-07 08:04:05", d.toLocaleString());
+    }
+
+    /**
+     * Tests for:
+     * min TZ = "Etc/GMT+12" = '-12'
+     * max TZ = "Etc/GMT-14" = '+14'
+     */
+    @Test
+    void Test_Get_LocalDateTime_With_TZ() {
+        int hrs = 8;
+        int date = 7;
+        int tz = 0;
+        String pattern = "2023-09-%s %s:04:05";
+        String tzStr = "+00:00";
+        TbDate d = new TbDate(23, 9, date, hrs, 4, 5, tzStr);
+        int localOffsetHrs = ZoneId.systemDefault().getRules().getOffset(d.getInstant()).getTotalSeconds()/60/60;
+        TbDateTestEntity tbDateTest = new TbDateTestEntity(23, 9, date, hrs + localOffsetHrs - tz);
+        String expected = String.format(pattern, tbDateTest.geDateStr(), tbDateTest.geHoursStr());
+        Assert.assertEquals(expected, d.toLocaleString());
+
+        tz = 3;
+        tzStr = "+03:00";
+        d = new TbDate(23, 9, date, hrs, 4, 5, tzStr);
+        localOffsetHrs = ZoneId.systemDefault().getRules().getOffset(d.getInstant()).getTotalSeconds()/60/60;
+        tbDateTest = new TbDateTestEntity(23, 9, date, hrs + localOffsetHrs - tz);
+        expected = String.format(pattern, tbDateTest.geDateStr(), tbDateTest.geHoursStr());
+        Assert.assertEquals(expected, d.toLocaleString());
+
+        tz = -4;
+        tzStr = "-04:00";
+        d = new TbDate(23, 9, date, hrs, 4, 5, tzStr);
+        localOffsetHrs = ZoneId.systemDefault().getRules().getOffset(d.getInstant()).getTotalSeconds()/60/60;
+        tbDateTest = new TbDateTestEntity(23, 9, date, hrs + localOffsetHrs - tz);
+        expected = String.format(pattern, tbDateTest.geDateStr(), tbDateTest.geHoursStr());
+        Assert.assertEquals(expected, d.toLocaleString());
+    }
+
+    @Test
+    void TestMethodGetTimeUTC() {
+        TbDate dd = new TbDate(TbDate.UTC(1996, 1, 2, 3, 4, 5));
+        Assert.assertEquals(820551845000L, dd.valueOf());
+        dd = new TbDate(1996, 1, 2, 3, 4, 5);
+        Assert.assertEquals(820544645000L, dd.valueOf());
+        TbDate beforeStartUTC = new TbDate(1969, 7, 20, 20, 17, 40);
+        Assert.assertEquals(-14193740000L, beforeStartUTC.getTime());
+
+        TbDate d = new TbDate(1975, 12, 31, 23,15,30, 560);
+        TbDate d0 = new TbDate(1975, 12, 31, 23,15,30, 560,"UTC");
+        TbDate d1 = new TbDate(1975, 12, 31, 23,15,30, 561,"+03:00");
+        TbDate d2 = new TbDate(1975, 12, 31, 23,15,30, 562,"-04:00");
+
+        Assert.assertEquals(189288930560L, d.valueOf());
+        Assert.assertEquals(189299730560L, d0.valueOf());
+        Assert.assertEquals(189288930561L, d1.valueOf());
+        Assert.assertEquals(189314130562L, d2.getTime());
+    }
+
+    @Test
     void TestMethodSetUTCFullYearMonthDate() {
-        TbDate d1 = new TbDate(1975, 12, 31, 23,15,30, 567,"-03:00");
-        Assert.assertEquals(1976, d1.getUTCFullYear());
-        Assert.assertEquals(4, d1.getUTCDay());
+        TbDate d1 = new TbDate(1975, 12, 31, 23,15,30, 567,"-04:00");
+        TbDate d2 = new TbDate(1975, 12, 31, 23,15,30, 567,"+04:00");
+        testResultChangeDateTime(d1);
+        testResultChangeDateTime(d2);
+
         d1.setUTCFullYear(1969);
-        Assert.assertEquals(1969, d1.getUTCFullYear());
-        d1.setUTCFullYear(1975);
-        Assert.assertEquals(1975, d1.getUTCFullYear());
-        Assert.assertEquals(3, d1.getUTCDay());
-        d1.setUTCFullYear(1977, 4);
-        Assert.assertEquals(1977, d1.getUTCFullYear());
-        Assert.assertEquals(4, d1.getUTCMonth());
-        Assert.assertEquals(5, d1.getUTCDay());
-        d1.setUTCFullYear(2023, 2, 24);
-        Assert.assertEquals(2023, d1.getUTCFullYear());
-        Assert.assertEquals(2, d1.getUTCMonth());
-        Assert.assertEquals(24, d1.getUTCDate());
-        Assert.assertEquals(5, d1.getUTCDay());
+        d2.setUTCFullYear(1969);
+        testResultChangeDateTime(d1);
+        testResultChangeDateTime(d2);
+
+        d1.setUTCFullYear(1975, 5);
+        d2.setUTCFullYear(2023, 11);
+        testResultChangeDateTime(d1);
+        testResultChangeDateTime(d2);
+
+        d1.setUTCFullYear(2023, 2, 28);
+        d2.setUTCFullYear(2023, 12, 31);
+        testResultChangeDateTime(d1);
+        testResultChangeDateTime(d2);
 
         d1.setUTCMonth(11);
-        Assert.assertEquals(11, d1.getUTCMonth());
-        Assert.assertEquals(5, d1.getUTCDay());
-        d1.setUTCMonth(2, 28);
-        Assert.assertEquals(2, d1.getUTCMonth());
-        Assert.assertEquals(28, d1.getUTCDate());
-        Assert.assertEquals(2, d1.getUTCDay());
+        d2.setUTCMonth(2);
+        testResultChangeDateTime(d1);
+        testResultChangeDateTime(d2);
 
-        d1.setUTCDate(11);
-        Assert.assertEquals(11, d1.getUTCDate());
-        Assert.assertEquals(6, d1.getUTCDay());
+        d1.setUTCMonth(5, 20);
+        d2.setUTCMonth(2, 8);
+        testResultChangeDateTime(d1);
+        testResultChangeDateTime(d2);
+
+        d1.setUTCDate(6);
+        d2.setUTCDate(15);
+        testResultChangeDateTime(d1);
+        testResultChangeDateTime(d2);
     }
 
     @Test
     void TestMethodSetUTCHoursMinutesSecondsMilliSec() {
-        TbDate d1 = new TbDate(1975, 12, 31, 23, 15, 30, 567, "-03:00");
-        Assert.assertEquals(2, d1.getUTCHours());
-        Assert.assertEquals(4, d1.getUTCDay());
+        TbDate d1 = new TbDate(1975, 12, 31, 23, 15, 30, 567, "+02:00");
+        TbDate d2 = new TbDate(1975, 12, 31, 23, 15, 30, 567, "-02:00");
+
+        testResultChangeDateTime(d1);
+        testResultChangeDateTime(d2);
 
         d1.setUTCHours(5);
-        Assert.assertEquals(5, d1.getUTCHours());
-        Assert.assertEquals(4, d1.getUTCDay());
-        d1.setUTCHours(12, 45);
-        Assert.assertEquals(12, d1.getUTCHours());
-        Assert.assertEquals(45, d1.getUTCMinutes());
-        Assert.assertEquals(4, d1.getUTCDay());
+        d2.setUTCHours(23);
+        testResultChangeDateTime(d1);
+        testResultChangeDateTime(d2);
+
+        d1.setUTCHours(23, 45);
+        d2.setUTCHours(1, 5);
+        testResultChangeDateTime(d1);
+        testResultChangeDateTime(d2);
+
         d1.setUTCHours(0, 12, 59);
-        Assert.assertEquals(0, d1.getUTCHours());
-        Assert.assertEquals(12, d1.getUTCMinutes());
-        Assert.assertEquals(59, d1.getUTCSeconds());
-        Assert.assertEquals(4, d1.getUTCDay());
-        d1.setUTCHours(4, 58, 2, 456);
-        Assert.assertEquals(4, d1.getUTCHours());
-        Assert.assertEquals(58, d1.getUTCMinutes());
-        Assert.assertEquals(2, d1.getUTCSeconds());
-        Assert.assertEquals(456, d1.getUTCMilliseconds());
-        Assert.assertEquals(4, d1.getUTCDay());
+        d2.setUTCHours(4, 45, 01);
+        testResultChangeDateTime(d1);
+        testResultChangeDateTime(d2);
+
+        d1.setUTCHours(2, 32, 49, 123);
+        d2.setUTCHours(8, 45, 12, 234);
+        testResultChangeDateTime(d1);
+        testResultChangeDateTime(d2);
 
         d1.setUTCMinutes(5);
-        Assert.assertEquals(5, d1.getUTCMinutes());
-        Assert.assertEquals(4, d1.getUTCDay());
-        d1.setUTCMinutes(15, 32);
-        Assert.assertEquals(15, d1.getUTCMinutes());
-        Assert.assertEquals(32, d1.getUTCSeconds());
-        Assert.assertEquals(4, d1.getUTCDay());
-        d1.setUTCMinutes(10, 42, 321);
-        Assert.assertEquals(10, d1.getUTCMinutes());
-        Assert.assertEquals(42, d1.getUTCSeconds());
-        Assert.assertEquals(321, d1.getUTCMilliseconds());
-        Assert.assertEquals(4, d1.getUTCDay());
+        d2.setUTCMinutes(15);
+        testResultChangeDateTime(d1);
+        testResultChangeDateTime(d2);
+
+        d1.setUTCMinutes(5, 34);
+        d2.setUTCMinutes(25, 43);
+        testResultChangeDateTime(d1);
+        testResultChangeDateTime(d2);
+
+        d1.setUTCMinutes(25, 14, 567);
+        d2.setUTCMinutes(45, 3, 876);
+        testResultChangeDateTime(d1);
+        testResultChangeDateTime(d2);
 
         d1.setUTCSeconds(5);
-        Assert.assertEquals(5, d1.getUTCSeconds());
-        Assert.assertEquals(4, d1.getUTCDay());
-        d1.setUTCSeconds(15, 32);
-        Assert.assertEquals(15, d1.getUTCSeconds());
-        Assert.assertEquals(32, d1.getUTCMilliseconds());
-        Assert.assertEquals(4, d1.getUTCDay());
+        d2.setUTCSeconds(23);
+        testResultChangeDateTime(d1);
+        testResultChangeDateTime(d2);
 
-        d1.setUTCMilliseconds(5);
-        Assert.assertEquals(5, d1.getUTCMilliseconds());
-        Assert.assertEquals(4, d1.getUTCDay());
+        d1.setUTCSeconds(45, 987);
+        d2.setUTCSeconds(54, 842);
+        testResultChangeDateTime(d1);
+        testResultChangeDateTime(d2);
+
+        d1.setUTCMilliseconds(675);
+        d1.setUTCMilliseconds(923);
+        testResultChangeDateTime(d1);
+        testResultChangeDateTime(d2);
     }
     @Test
-    void TestMethodSetTome() {
+    void TestMethodSetTime() {
         TbDate d1 = new TbDate(1975, 12, 31, 23, 15, 30, 567, "-03:00");
         long dateMilliSecond = d1.getTime();
         int fiveMinutesInMillis = 5 * 60 * 1000;
@@ -533,121 +626,141 @@ class TbDateTest {
         Assert.assertEquals(567, d1.getUTCMilliseconds());
         Assert.assertEquals(3, d1.getUTCDay());
     }
-
-    @Test
+     @Test
     void TestMethodSeFullYearMonthDate() {
-        TbDate d1 = new TbDate(1975, 12, 31, 23,15,30, 567,"-03:00");
-        Assert.assertEquals(1976, d1.getFullYear());
-        Assert.assertEquals(1, d1.getMonth());
-        Assert.assertEquals(1, d1.getDate());
-        Assert.assertEquals(4, d1.getUTCDay());
-        d1.setFullYear(1969);
-        Assert.assertEquals(1969, d1.getFullYear());
-        d1.setUTCFullYear(1975);
-        Assert.assertEquals(1975, d1.getFullYear());
-        Assert.assertEquals(3, d1.getUTCDay());
-        d1.setFullYear(1977, 4);
-        Assert.assertEquals(1977, d1.getFullYear());
-        Assert.assertEquals(4, d1.getMonth());
-        Assert.assertEquals(5, d1.getDay());
-        d1.setFullYear(2023, 2, 24);
-        Assert.assertEquals(2023, d1.getFullYear());
-        Assert.assertEquals(2, d1.getMonth());
-        Assert.assertEquals(24, d1.getDate());
-        Assert.assertEquals(5, d1.getDay());
+         TbDate d = new TbDate(2024, 1, 1, 1, 15, 30, 567);
+         testResultChangeDateTime(d);
 
-        d1.setMonth(11);
-        Assert.assertEquals(11, d1.getMonth());
-        Assert.assertEquals(5, d1.getDay());
-        d1.setMonth(2, 28);
-        Assert.assertEquals(2, d1.getMonth());
-        Assert.assertEquals(28, d1.getDate());
-        Assert.assertEquals(2, d1.getDay());
+         d = new TbDate(2023, 12, 31, 22, 15, 30, 567);
+         testResultChangeDateTime(d);
 
-        d1.setDate(11);
-        Assert.assertEquals(11, d1.getDate());
-        Assert.assertEquals(6, d1.getDay());
-    }
-    @Test
+         d = new TbDate(1975, 12, 31, 1, 15, 30, 567);
+         testResultChangeDateTime(d);
+
+         d.setFullYear(1969);
+         testResultChangeDateTime(d);
+
+         d.setFullYear(1975, 2);
+         testResultChangeDateTime(d);
+
+         d.setFullYear(2023, 6, 30);
+         testResultChangeDateTime(d);
+
+         d.setMonth(2);
+         testResultChangeDateTime(d);
+
+         d.setMonth(1, 24);
+         testResultChangeDateTime(d);
+
+         d.setDate(6);
+         testResultChangeDateTime(d);
+     }
+     @Test
     void TestMethodSeHoursMinutesSecondsMilliSec() {
-        TbDate d1 = new TbDate(1975, 12, 31, 23, 15, 30, 567, "-03:00");
-        Assert.assertEquals(5, d1.getHours());
-        Assert.assertEquals(4, d1.getDay());
+        TbDate d1 = new TbDate(1975, 12, 31, 23, 15, 30, 567, "+02:00");
+        TbDate d2 = new TbDate(1975, 12, 31, 23, 15, 30, 567, "-02:00");
+        testResultChangeDateTime(d1);
+        testResultChangeDateTime(d2);
 
         d1.setHours(5);
-        Assert.assertEquals(8, d1.getHours());
-        Assert.assertEquals(4, d1.getDay());
+        d2.setHours(23);
+        testResultChangeDateTime(d1);
+        testResultChangeDateTime(d2);
+
         d1.setHours(23, 45);
-        Assert.assertEquals(1, d1.getMonth());
-        Assert.assertEquals(2, d1.getDate());
-        Assert.assertEquals(2, d1.getHours());
-        Assert.assertEquals(45, d1.getMinutes());
-        Assert.assertEquals(5, d1.getDay());
-        d1.setUTCHours(0, 12, 59);
-        Assert.assertEquals(3, d1.getHours());
-        Assert.assertEquals(12, d1.getMinutes());
-        Assert.assertEquals(59, d1.getSeconds());
-        Assert.assertEquals(4, d1.getDay());
-        d1.setUTCHours(4, 58, 2, 456);
-        Assert.assertEquals(7, d1.getHours());
-        Assert.assertEquals(58, d1.getMinutes());
-        Assert.assertEquals(2, d1.getSeconds());
-        Assert.assertEquals(456, d1.getMilliseconds());
-        Assert.assertEquals(4, d1.getDay());
+        d2.setHours(1, 5);
+        testResultChangeDateTime(d1);
+        testResultChangeDateTime(d2);
+
+        d1.setHours(0, 12, 59);
+        d2.setHours(4, 45, 1);
+        testResultChangeDateTime(d1);
+        testResultChangeDateTime(d2);
+
+        d1.setHours(2, 32, 49, 123);
+        d2.setHours(8, 45, 12, 234);
+        testResultChangeDateTime(d1);
+        testResultChangeDateTime(d2);
 
         d1.setMinutes(5);
+        d2.setMinutes(15);
         Assert.assertEquals(5, d1.getMinutes());
-        Assert.assertEquals(4, d1.getUTCDay());
-        d1.setMinutes(15, 32);
-        Assert.assertEquals(15, d1.getMinutes());
-        Assert.assertEquals(32, d1.getSeconds());
-        Assert.assertEquals(4, d1.getDay());
-        d1.setMinutes(10, 42, 321);
-        Assert.assertEquals(10, d1.getMinutes());
-        Assert.assertEquals(42, d1.getSeconds());
-        Assert.assertEquals(321, d1.getMilliseconds());
-        Assert.assertEquals(4, d1.getDay());
+        Assert.assertEquals(15, d2.getMinutes());
+
+        d1.setMinutes(5, 34);
+        d2.setMinutes(25, 43);
+        Assert.assertEquals(5, d1.getMinutes());
+        Assert.assertEquals(34, d1.getSeconds());
+        Assert.assertEquals(25, d2.getMinutes());
+        Assert.assertEquals(43, d2.getSeconds());
+
+        d1.setMinutes(25, 14, 567);
+        d2.setMinutes(45, 3, 876);
+        Assert.assertEquals(25, d1.getMinutes());
+        Assert.assertEquals(14, d1.getSeconds());
+        Assert.assertEquals(567, d1.getMilliseconds());
+        Assert.assertEquals(45, d2.getMinutes());
+        Assert.assertEquals(3, d2.getSeconds());
+        Assert.assertEquals(876, d2.getMilliseconds());
 
         d1.setSeconds(5);
+        d2.setSeconds(23);
         Assert.assertEquals(5, d1.getSeconds());
-        Assert.assertEquals(4, d1.getDay());
-        d1.setSeconds(15, 32);
-        Assert.assertEquals(15, d1.getSeconds());
-        Assert.assertEquals(32, d1.getMilliseconds());
-        Assert.assertEquals(4, d1.getDay());
+        Assert.assertEquals(23, d2.getSeconds());
 
-        d1.setMilliseconds(5);
-        Assert.assertEquals(5, d1.getMilliseconds());
-        Assert.assertEquals(4, d1.getDay());
+        d1.setSeconds(45, 987);
+        d2.setSeconds(54, 842);
+        Assert.assertEquals(45, d1.getSeconds());
+        Assert.assertEquals(987, d1.getMilliseconds());
+        Assert.assertEquals(54, d2.getSeconds());
+        Assert.assertEquals(842, d2.getMilliseconds());
+
+        d1.setMilliseconds(675);
+        d2.setMilliseconds(923);
+        Assert.assertEquals(675, d1.getMilliseconds());
+        Assert.assertEquals(923, d2.getMilliseconds());
     }
     @Test
     public void toStringAsJs() {
-        TbDate d1 = new TbDate(1975, 12, 31, 23,15,30, 567,"-14:00");
-        Assert.assertEquals("1976 Jan 1, Thu 16:15:30 Eastern European Time", d1.toString());
-        Assert.assertEquals("1976 Jan 1, Thu 16:15:30 Eastern European Time", d1.toString("GMT"));
-        Assert.assertEquals("1976 Jan 1, Thu 16:15:30 Eastern European Time", d1.toString("UTC"));
-        Assert.assertEquals("Thursday, January 1, 1976 at 4:15:30 PM Eastern European Standard Time", d1.toString("en-US"));
-        Assert.assertEquals("1976 Jan 1, Thu 16:15:30", d1.toUTCString());
-        Assert.assertEquals("четвер, 1 січня 1976 р., 16:15:30", d1.toUTCString("uk-UA"));
-        Assert.assertEquals("Thursday, January 1, 1976, 4:15:30 PM", d1.toUTCString("en-US"));
-        Assert.assertEquals("четвер, 1 січня 1976 р., 16:15:30", d1.toUTCString("uk-UA"));
-        Assert.assertEquals("Thursday, January 1, 1976, 4:15:30 PM", d1.toUTCString("en-US"));
-        Assert.assertEquals("1976 Jan 1, Thu", d1.toDateString());
-        Assert.assertEquals("четвер, 1 січня 1976 р.", d1.toDateString("uk-UA"));
-        Assert.assertEquals("Thursday, January 1, 1976", d1.toDateString("en-US"));
-        Assert.assertEquals("16:15:30 Eastern European Time", d1.toTimeString());
-        Assert.assertEquals("16:15:30 за східноєвропейським стандартним часом", d1.toTimeString("uk-UA"));
-        Assert.assertEquals("4:15:30 PM Eastern European Standard Time", d1.toTimeString("en-US"));
-        Assert.assertEquals("1976-01-01T13:15:30.567Z", d1.toJSON());
+        TbDate d1 = new TbDate(1975, 12, 31, 23,15,30, 567,"-04:00");
+        Assert.assertEquals("четвер, 1 січня 1976 р. о 06:15:30 за східноєвропейським стандартним часом", d1.toString("uk-UA", "Europe/Kyiv"));
+        Assert.assertEquals("Thursday, January 1, 1976 at 6:15:30 AM Eastern European Standard Time", d1.toString("en-US", "Europe/Kyiv"));
+        Assert.assertEquals("1976 Jan 1, Thu 06:15:30 Eastern European Time", d1.toString("UTC", "Europe/Kyiv"));
+        Assert.assertEquals("Wednesday, December 31, 1975 at 10:15:30 PM Eastern Standard Time", d1.toString("en-US", "America/New_York"));
+        Assert.assertEquals("1975 Dec 31, Wed 22:15:30 Eastern Standard Time", d1.toString("GMT", "America/New_York"));
+        Assert.assertEquals("1975 Dec 31, Wed 22:15:30 Eastern Standard Time", d1.toString("UTC", "America/New_York"));
+
+        Assert.assertEquals(d1.toUTCString("UTC"), d1.toUTCString());
+        Assert.assertEquals("четвер, 1 січня 1976 р., 03:15:30", d1.toUTCString("uk-UA"));
+        Assert.assertEquals("Thursday, January 1, 1976, 3:15:30 AM", d1.toUTCString("en-US"));
+
+        Assert.assertEquals("1976-01-01T03:15:30.567Z", d1.toJSON());
+        Assert.assertEquals("1976-01-01T03:15:30.567Z", d1.toISOString());
+
+        Assert.assertEquals("1976-01-01 06:15:30", d1.toLocaleString("UTC", "Europe/Kyiv"));
+        Assert.assertEquals("01.01.76, 06:15:30", d1.toLocaleString("uk-UA", "Europe/Kyiv"));
+        Assert.assertEquals("1975-12-31 22:15:30", d1.toLocaleString("UTC", "America/New_York"));
+        Assert.assertEquals("12/31/75, 10:15:30 PM", d1.toLocaleString("en-US", "America/New_York"));
+
+        Assert.assertEquals("1976 Jan 1, Thu", d1.toDateString("UTC", "Europe/Kyiv"));
+        Assert.assertEquals("четвер, 1 січня 1976 р.", d1.toDateString("uk-UA", "Europe/Kyiv"));
+        Assert.assertEquals("1975 Dec 31, Wed", d1.toDateString("UTC", "America/New_York"));
+        Assert.assertEquals("Wednesday, December 31, 1975", d1.toDateString("en-US", "America/New_York"));
+
+
+        Assert.assertEquals("06:15:30", d1.toLocaleTimeString("uk-UA", "Europe/Kyiv"));
+        Assert.assertEquals("06:15:30", d1.toLocaleTimeString("UTC", "Europe/Kyiv"));
+        Assert.assertEquals("10:15:30 PM", d1.toLocaleTimeString("en-US", "America/New_York"));
+        Assert.assertEquals("22:15:30", d1.toLocaleTimeString("UTC", "America/New_York"));
+
+       Assert.assertEquals("06:15:30 за східноєвропейським стандартним часом", d1.toTimeString("uk-UA", "Europe/Kyiv"));
+        Assert.assertEquals("06:15:30 Eastern European Time", d1.toTimeString("UTC", "Europe/Kyiv"));
+        Assert.assertEquals("10:15:30 PM Eastern Standard Time", d1.toTimeString("en-US", "America/New_York"));
+        Assert.assertEquals("22:15:30 Eastern Standard Time", d1.toTimeString("UTC", "America/New_York"));
+
+
     }
 
-    /**
-     * Date.UTC(0)
-     * -2208988800000
-     * > "Mon, 01 Jan 1900 00:00:00 GMT"
-     * new Date(Date.UTC(0, 0, 0, 0, 0, 0));
-     * "Sun, 31 Dec 1899 00:00:00 GMT"
-     */
     @Test
     public void toUTC() {
         Assert.assertEquals(-2209075200000L, TbDate.UTC(0));
@@ -658,11 +771,23 @@ class TbDateTest {
         Assert.assertEquals("1958-12-31T03:04:05.678Z", new TbDate(TbDate.UTC(1958, 0, 0, 3, 4, 5, 678)).toJSON());
         Assert.assertEquals("2032-04-05T03:04:05.678Z", new TbDate(TbDate.UTC(2032, 4, 5, 3, 4, 5, 678)).toJSON());
         Assert.assertEquals("2024-02-29T03:04:05.678Z", new TbDate(TbDate.UTC(2024, 2, 29, 3, 4, 5, 678)).toJSON());
-        Exception actual = assertThrows(DateTimeParseException.class, () -> {
+        Exception actual = assertThrows(DateTimeException.class, () -> {
             TbDate.UTC(2023, 2, 29, 3, 4, 5, 678);
         });
-        String expectedMessage = "could not be parsed";
+        String expectedMessage = "Invalid date 'February 29' as '2023' is not a leap year";
         assertTrue(actual.getMessage().contains(expectedMessage));
+    }
+
+    private void testResultChangeDateTime(TbDate d) {
+        int localOffset = ZoneId.systemDefault().getRules().getOffset(d.getInstant()).getTotalSeconds();
+        TbDateTestEntity tbDateTestEntity = new TbDateTestEntity(d.getFullYear(), d.getMonth(), d.getDate(), (d.getHours() - (localOffset/60/60)));
+        Assert.assertEquals(tbDateTestEntity.getYear(), d.getUTCFullYear());
+        Assert.assertEquals(tbDateTestEntity.getMonth(), d.getUTCMonth());
+        Assert.assertEquals(tbDateTestEntity.getDate(), d.getUTCDate());
+        Assert.assertEquals(tbDateTestEntity.getHours(), d.getUTCHours());
+        Assert.assertEquals(d.getMinutes(), d.getUTCMinutes());
+        Assert.assertEquals(d.getSeconds(), d.getUTCSeconds());
+        Assert.assertEquals(d.getMilliseconds(), d.getUTCMilliseconds());
     }
 }
 

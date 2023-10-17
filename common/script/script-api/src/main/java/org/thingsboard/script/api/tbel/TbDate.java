@@ -26,11 +26,13 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.chrono.IsoChronology;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
+import java.time.format.FormatStyle;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAccessor;
 import java.util.Arrays;
@@ -40,38 +42,31 @@ import java.util.function.BiFunction;
 public class TbDate implements Serializable, Cloneable {
 
     private Instant instant;
-    private ZonedDateTime zonedDateTime;
-    private LocalDateTime localDateTime;
-    private final ZoneId zoneIdUTC = ZoneId.of("UTC");
 
-    private static String patternDefault = "%s-%s-%sT%s:%s:%s.%s%s";
+    private static final ZoneId zoneIdUTC = ZoneId.of("UTC");
+    private static final Locale localeUTC = Locale.forLanguageTag("UTC");
 
     public TbDate() {
         this.instant = Instant.now();
-        initZonedLocalDateTime();
     }
 
     public TbDate(String s) {
-        parseInstant(s);
+        this.instant = parseInstant(s);
     }
 
-    /**
-     * String s = "09:15:30 PM, Sun 10/09/2022";
-     * String pattern = "hh:mm:ss a, EEE M/d/uuuu";
-     * @param s
-     * @param pattern
-     */
     public TbDate(String s, String pattern, Locale locale) {
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(pattern, locale);
-        LocalDateTime localDateTime = LocalDateTime.parse(s, dateTimeFormatter);
-        ZonedDateTime zonedDateTime = localDateTime.atZone(ZoneId.systemDefault());
-        instant = zonedDateTime.toInstant();
-        initZonedLocalDateTime();
+        instant =  parseInstant(s, pattern, locale, zoneIdUTC);
+    }
+    public TbDate(String s, String pattern, Locale locale, String zoneIdStr) {
+        ZoneId zoneId = ZoneId.of(zoneIdStr);
+        instant =  parseInstant(s, pattern, locale, zoneId);
+    }
+    public TbDate(String s, String pattern, Locale locale, ZoneId zoneId) {
+        instant =  parseInstant(s, pattern, locale, zoneId);
     }
 
     public TbDate(long dateMilliSecond) {
         instant = Instant.ofEpochMilli(dateMilliSecond);
-        initZonedLocalDateTime();
     }
 
     public TbDate(int year, int month, int date, String... tz) {
@@ -87,51 +82,45 @@ public class TbDate implements Serializable, Cloneable {
     }
 
     public TbDate(int year, int month, int date, int hrs, int min, int second, int secondMilli, String... tz) {
-        this(createDateTimeFromPattern(year, month, date, hrs, min, second, secondMilli, tz));
+        ZoneId zoneId = tz.length > 0 ? ZoneId.of(Arrays.stream(tz).findFirst().get()) : ZoneId.systemDefault();
+        instant = parseInstant(year, month, date, hrs, min, second,  secondMilli, zoneId);
     }
 
     public Instant getInstant() {
         return instant;
     }
 
-    public void setInstant(Instant instant) {
-       this.instant = instant;
-    }
     public ZonedDateTime getZonedDateTime() {
-        return zonedDateTime;
+        return instant.atZone(zoneIdUTC);
     }
 
-    private void initZonedLocalDateTime() {
-        setZonedDateTime(zoneIdUTC);
-        setLocalDateTime();
-    }
-    public void setZonedDateTime(ZoneId z) {
-       this.zonedDateTime = instant.atZone(z);;
-    }
-
-    public void setLocalDateTime() {
-        this.localDateTime = LocalDateTime.ofInstant(this.getInstant(),  ZoneId.systemDefault());
-    }
     public LocalDateTime getLocalDateTime() {
-        return this.localDateTime ;
+        return LocalDateTime.ofInstant(this.instant,  ZoneId.systemDefault());
+    }
+
+    public LocalDateTime getUTCDateTime() {
+        return LocalDateTime.ofInstant(this.instant,  zoneIdUTC);
     }
 
     public String toDateString() {
-        return toLocaleDateString("UTC", JacksonUtil.newObjectNode().put("dateStyle", "full").toString());
+        return toDateString(localeUTC.getLanguage());
     }
     public String toDateString(String locale) {
-        return toLocaleDateString(locale, JacksonUtil.newObjectNode().put("dateStyle", "full").toString());
+        return toDateString(locale, ZoneId.systemDefault().toString());
+    }
+    public String toDateString(String locale, String zoneStr) {
+        return toLocaleDateString(locale, JacksonUtil.newObjectNode().put("dateStyle", FormatStyle.FULL.name()).put("timeZone", zoneStr).toString());
     }
     public String toTimeString() {
-        return toLocaleTimeString("UTC", JacksonUtil.newObjectNode().put("timeStyle", "full").toString());
+        return toTimeString(Locale.getDefault().getLanguage());
     }
     public String toTimeString(String locale) {
-        return toLocaleTimeString(locale, JacksonUtil.newObjectNode().put("timeStyle", "full").toString());
+        return toTimeString(locale, ZoneId.systemDefault().toString());
     }
-    /**
-     * "2011-10-05T14:48:00.000Z"
-     * @return
-     */
+    public String toTimeString(String locale, String zoneStr) {
+        return toLocaleTbTimeString(locale, JacksonUtil.newObjectNode().put("timeStyle", FormatStyle.FULL.name()).put("timeZone", zoneStr).toString());
+    }
+
     public String toISOString() {
         return instant.toString();
     }
@@ -139,59 +128,73 @@ public class TbDate implements Serializable, Cloneable {
         return toISOString();
     }
     public String toUTCString() {
-        return toLocaleString("UTC", JacksonUtil.newObjectNode().put("dateStyle", "full").put("timeStyle", "medium").toString());
+        return toUTCString(localeUTC.getLanguage());
     }
 
     public String toUTCString(String locale) {
-        return toLocaleString(locale, JacksonUtil.newObjectNode().put("dateStyle", "full").put("timeStyle", "medium").toString());
+        return toLocaleTbString(locale, JacksonUtil.newObjectNode().put("dateStyle", FormatStyle.FULL.name()).put("timeStyle", FormatStyle.MEDIUM.name()).put("timeZone", zoneIdUTC.getId()).toString());
     }
 
-    /**
-     * "Tue Aug 19 1975 23:15:30 GMT+0300 (за східноєвропейським стандартним часом)"
-     * @return
-     */
     public String toString() {
-        return toLocaleString(Locale.getDefault().toString(), JacksonUtil.newObjectNode().put("dateStyle", "full").put("timeStyle", "full").toString());
+        return toString(Locale.getDefault().getLanguage());
     }
+
     public String toString(String locale) {
-        return toLocaleString(locale, JacksonUtil.newObjectNode().put("dateStyle", "full").put("timeStyle", "full").toString());
+        return toString(locale, ZoneId.systemDefault().toString());
+    }
+
+    public String toString(String locale, String zoneStr) {
+        return toLocaleTbString(locale, JacksonUtil.newObjectNode().put("dateStyle", FormatStyle.FULL.name()).put("timeStyle", FormatStyle.FULL.name()).put("timeZone", zoneStr).toString());
+    }
+    public String toISOZonedDateTimeString() {
+        return getZonedDateTime().toString();
+    }
+    public String toISOZonedDateTimeString(DateTimeFormatter formatter) {
+        return getZonedDateTime().format(formatter);
     }
 
     public String toLocaleDateString() {
-        return toLocaleDateString(null, null);
+        return toLocaleDateString(localeUTC.getLanguage());
     }
 
     public String toLocaleDateString(String locale) {
-        return toLocaleDateString(locale, null);
+        return toLocaleDateString(locale, JacksonUtil.newObjectNode().put("dateStyle", FormatStyle.FULL.name()).put("timeZone", ZoneId.systemDefault().toString()).toString());
     }
 
     public String toLocaleDateString(String localeStr, String optionsStr) {
-        return toLocaleString(localeStr, optionsStr, (locale, options) -> DateTimeFormatter.ofLocalizedDate(options.getDateStyle()).withLocale(locale));
+        return toLocaleTbString(localeStr, optionsStr, (locale, options) -> DateTimeFormatter.ofLocalizedDate(options.getDateStyle()).withLocale(locale));
     }
 
     public String toLocaleTimeString() {
-        return toLocaleTimeString(null, null);
+        return toLocaleTimeString(Locale.getDefault().getLanguage());
     }
 
-    public String toLocaleTimeString(String locale) {
-        return toLocaleTimeString(locale, null);
+    public String toLocaleTimeString(String localeStr) {
+        return toLocaleTimeString(localeStr, ZoneId.systemDefault().toString());
     }
 
-    public String toLocaleTimeString(String localeStr, String optionsStr) {
-        return toLocaleString(localeStr, optionsStr, (locale, options) -> DateTimeFormatter.ofLocalizedTime(options.getTimeStyle()).withLocale(locale));
+    public String toLocaleTimeString(String localeStr, String zoneStr) {
+        return toLocaleTbTimeString(localeStr, JacksonUtil.newObjectNode().put("timeStyle", FormatStyle.MEDIUM.name()).put("timeZone", zoneStr).toString());
+    }
+
+    public String toLocaleTbTimeString(String localeStr, String optionsStr) {
+        return toLocaleTbString(localeStr, optionsStr, (locale, options) -> DateTimeFormatter.ofLocalizedTime(options.getTimeStyle()).withLocale(locale));
     }
 
     public String toLocaleString() {
-        LocalDateTime localDateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
-        return localDateTime.toString();
+        return toLocaleString(localeUTC.getLanguage(), ZoneId.systemDefault().toString());
     }
 
     public String toLocaleString(String locale) {
-        return toLocaleString(locale, null);
+        return toLocaleString(locale, ZoneId.systemDefault().toString());
     }
 
-    public String toLocaleString(String localeStr, String optionsStr) {
-        return toLocaleString(localeStr, optionsStr, (locale, options) -> {
+    public String toLocaleString(String locale, String zoneStr) {
+        return toLocaleTbString(locale, JacksonUtil.newObjectNode().put("dateStyle", FormatStyle.SHORT.name()).put("timeStyle", FormatStyle.MEDIUM.name()).put("timeZone", zoneStr).toString());
+    }
+
+    public String toLocaleTbString(String localeStr, String optionsStr) {
+        return toLocaleTbString(localeStr, optionsStr, (locale, options) -> {
             String formatPattern =
                     DateTimeFormatterBuilder.getLocalizedDateTimePattern(
                             options.getDateStyle(),
@@ -202,7 +205,7 @@ public class TbDate implements Serializable, Cloneable {
         });
     }
 
-    public String toLocaleString(String localeStr, String optionsStr, BiFunction<Locale, DateTimeFormatOptions, DateTimeFormatter> formatterBuilder) {
+    public String toLocaleTbString(String localeStr, String optionsStr, BiFunction<Locale, DateTimeFormatOptions, DateTimeFormatter> formatterBuilder) {
         Locale locale = StringUtils.isNotEmpty(localeStr) ? Locale.forLanguageTag(localeStr) : Locale.getDefault();
         DateTimeFormatOptions options = getDateFormattingOptions(optionsStr);
         ZonedDateTime zdt = this.getInstant().atZone(options.getTimeZone().toZoneId());
@@ -264,116 +267,130 @@ public class TbDate implements Serializable, Cloneable {
         year = year == 0 ? year = 1899 : year;
         month = month == 0 ? month = 12 : month;
         date = date == 0 ? date = 31 : date;
-        return Instant.parse(createDateTimeFromPattern (year, month, date, hrs, min, sec, ms)).toEpochMilli();
+        return parseInstant(year, month, date, hrs, min, sec, ms, zoneIdUTC).toEpochMilli();
     }
     public int getUTCFullYear() {
-        return zonedDateTime.getYear();
+        return getUTCDateTime().getYear();
     }
 
     public int getUTCMonth() {
-        return zonedDateTime.getMonthValue();
+        return getUTCDateTime().getMonthValue();
     }
     // day in month
     public int getUTCDate() {
-        return zonedDateTime.getDayOfMonth();
+        return getUTCDateTime().getDayOfMonth();
     }
     // day in week
     public int getUTCDay() {
-       return zonedDateTime.getDayOfWeek().getValue();
+       return getUTCDateTime().getDayOfWeek().getValue();
     }
 
     public int getUTCHours() {
-       return zonedDateTime.getHour();
+       return getUTCDateTime().getHour();
     }
 
     public int getUTCMinutes() {
-       return zonedDateTime.getMinute();
+       return getZonedDateTime().getMinute();
     }
 
     public int getUTCSeconds() {
-       return zonedDateTime.getSecond();
+       return getUTCDateTime().getSecond();
     }
     public int getUTCMilliseconds() {
-       return zonedDateTime.getNano()/1000000;
+       return getUTCDateTime().getNano()/1000000;
     }
 
     public void setUTCFullYear(int year) {
-        parseInstant(createDateTimeFromPattern(year, getUTCMonth(), getUTCDate(), getUTCHours(), getUTCMinutes(), getUTCSeconds(), getUTCMilliseconds()));
+        if (getUTCDate() > 28) {
+            long time = getZonedDateTime().withYear(year).withDayOfMonth(1).toInstant().toEpochMilli() + (getUTCDate() - 1) * 24 * 60 * 60 * 1000L;
+            this.instant = Instant.ofEpochMilli(time);
+        } else {
+            this.instant = getZonedDateTime().withYear(year).toInstant();
+        }
     }
     public void setUTCFullYear(int year, int month) {
-        parseInstant(createDateTimeFromPattern(year, month, getUTCDate(), getUTCHours(), getUTCMinutes(), getUTCSeconds(), getUTCMilliseconds()));
+        if (getUTCDate() > 28) {
+            long time = getZonedDateTime().withYear(year).withMonth(month).withDayOfMonth(1).toInstant().toEpochMilli() + (getUTCDate() - 1) * 24 * 60 * 60 * 1000L;
+            this.instant = Instant.ofEpochMilli(time);
+        } else {
+            this.instant = getZonedDateTime().withYear(year).withMonth(month).toInstant();
+        }
     }
     public void setUTCFullYear(int year, int month, int date) {
-        parseInstant(createDateTimeFromPattern(year, month, date, getUTCHours(), getUTCMinutes(), getUTCSeconds(), getUTCMilliseconds()));
+        this.instant = getZonedDateTime().withYear(year).withMonth(month).withDayOfMonth(date).toInstant();
     }
     public void setUTCMonth(int month) {
-        parseInstant(createDateTimeFromPattern(getUTCFullYear(), month, getUTCDate(), getUTCHours(), getUTCMinutes(), getUTCSeconds(), getUTCMilliseconds()));
+        if (getUTCDate() > 28) {
+            long time = getZonedDateTime().withMonth(month).withDayOfMonth(1).toInstant().toEpochMilli() + (getUTCDate() - 1) * 24 * 60 * 60 * 1000L;
+            this.instant = Instant.ofEpochMilli(time);
+        } else {
+            this.instant = getZonedDateTime().withMonth(month).toInstant();
+        }
     }
     public void setUTCMonth(int month, int date) {
-        parseInstant(createDateTimeFromPattern(getUTCFullYear(), month, date, getUTCHours(), getUTCMinutes(), getUTCSeconds(), getUTCMilliseconds()));
+        this.instant = getZonedDateTime().withMonth(month).withDayOfMonth(date).toInstant();
     }
     public void setUTCDate(int date) {
-        parseInstant(createDateTimeFromPattern(getUTCFullYear(), getUTCMonth(), date, getUTCHours(), getUTCMinutes(), getUTCSeconds(), getUTCMilliseconds()));
+        this.instant = getZonedDateTime().withDayOfMonth(date).toInstant();
     }
     public void setUTCHours(int hrs) {
-         parseInstant(createDateTimeFromPattern(getUTCFullYear(), getUTCMonth(), getUTCDate(), hrs, getUTCMinutes(), getUTCSeconds(), getUTCMilliseconds()));
+        this.instant = getZonedDateTime().withHour(hrs).toInstant();
     }
     public void setUTCHours(int hrs, int minutes) {
-         parseInstant(createDateTimeFromPattern(getUTCFullYear(), getUTCMonth(), getUTCDate(), hrs, minutes, getUTCSeconds(), getUTCMilliseconds()));
+        this.instant = getZonedDateTime().withHour(hrs).withMinute(minutes).toInstant();
     }
     public void setUTCHours(int hrs, int minutes, int seconds) {
-         parseInstant(createDateTimeFromPattern(getUTCFullYear(), getUTCMonth(), getUTCDate(), hrs, minutes, seconds, getUTCMilliseconds()));
+        this.instant = getZonedDateTime().withHour(hrs).withMinute(minutes).withSecond(seconds).toInstant();
     }
     public void setUTCHours(int hrs, int minutes, int seconds, int ms) {
-         parseInstant(createDateTimeFromPattern(getUTCFullYear(), getUTCMonth(), getUTCDate(), hrs, minutes, seconds, ms));
+        this.instant = getZonedDateTime().withHour(hrs).withMinute(minutes).withSecond(seconds).withNano(ms*1000000).toInstant();
     }
     public void setUTCMinutes(int minutes) {
-       parseInstant(createDateTimeFromPattern(getUTCFullYear(), getUTCMonth(), getUTCDate(), getUTCHours(), minutes, getUTCSeconds(), getUTCMilliseconds()));
+        this.instant = getZonedDateTime().withMinute(minutes).toInstant();
     }
     public void setUTCMinutes(int minutes, int seconds) {
-       parseInstant(createDateTimeFromPattern(getUTCFullYear(), getUTCMonth(), getUTCDate(), getUTCHours(), minutes, seconds, getUTCMilliseconds()));
-    }
+        this.instant = getZonedDateTime().withMinute(minutes).withSecond(seconds).toInstant();    }
     public void setUTCMinutes(int minutes, int seconds, int ms) {
-       parseInstant(createDateTimeFromPattern(getUTCFullYear(), getUTCMonth(), getUTCDate(), getUTCHours(), minutes, seconds, ms));
+        this.instant = parseInstant(getUTCFullYear(), getUTCMonth(), getUTCDate(), getUTCHours(), minutes, seconds, ms, zoneIdUTC);
     }
     public void setUTCSeconds(int seconds) {
-        parseInstant(createDateTimeFromPattern(getUTCFullYear(), getUTCMonth(), getUTCDate(), getUTCHours(), getUTCMinutes(), seconds, getUTCMilliseconds()));
+        this.instant = getZonedDateTime().withSecond(seconds).toInstant();
     }
     public void setUTCSeconds(int seconds, int ms) {
-        parseInstant(createDateTimeFromPattern(getUTCFullYear(), getUTCMonth(), getUTCDate(), getUTCHours(), getUTCMinutes(), seconds, ms));
+        this.instant = getZonedDateTime().withSecond(seconds).withNano(ms*1000000).toInstant();
     }
     public void setUTCMilliseconds(int ms) {
-        parseInstant(createDateTimeFromPattern(getUTCFullYear(), getUTCMonth(), getUTCDate(), getUTCHours(), getUTCMinutes(), getUTCSeconds(), ms));
+        this.instant = getZonedDateTime().withNano(ms*1000000).toInstant();
     }
     public int getFullYear() {
-        return localDateTime.getYear();
+        return getLocalDateTime().getYear();
     }
 
     public int getMonth() {
-        return localDateTime.getMonthValue();
+        return getLocalDateTime().getMonthValue();
     }
     // day in month
     public int getDate() {
-        return localDateTime.getDayOfMonth();
+        return getLocalDateTime().getDayOfMonth();
     }
     // day in week
     public int getDay() {
-       return localDateTime.getDayOfWeek().getValue();
+       return getLocalDateTime().getDayOfWeek().getValue();
     }
 
     public int getHours() {
-       return localDateTime.getHour();
+       return getLocalDateTime().getHour();
     }
 
     public int getMinutes() {
-       return localDateTime.getMinute();
+       return getLocalDateTime().getMinute();
     }
 
     public int getSeconds() {
-       return localDateTime.getSecond();
+       return getLocalDateTime().getSecond();
     }
     public int getMilliseconds() {
-        return localDateTime.getNano()/1000000;
+        return getLocalDateTime().getNano()/1000000;
     }
     // Milliseconds since Jan 1, 1970, 00:00:00.000 GMT
      public long getTime() {
@@ -383,61 +400,84 @@ public class TbDate implements Serializable, Cloneable {
         return getTime() ;
     }
     public void setFullYear(int year) {
-        setUTCFullYear(year);
+        Instant instantEpochWithYear = getZonedDateTime().withYear(year).toInstant();
+        if (getDate() > 28) {
+            long time = getLocalDateTime().withYear(year).withDayOfMonth(1).toInstant(getLocaleZoneOffset(instantEpochWithYear)).toEpochMilli() + (getDate() - 1) * 24 * 60 * 60 * 1000L;
+            this.instant = Instant.ofEpochMilli(time);
+        } else {
+            this.instant = getLocalDateTime().withYear(year).toInstant(getLocaleZoneOffset(instantEpochWithYear));
+        }
     }
     public void setFullYear(int year, int month) {
-        setUTCFullYear(year, month);
-    }    public void setFullYear(int year, int month, int date) {
-        setUTCFullYear(year, month, date);
+        Instant instantEpochWithYear = getZonedDateTime().withYear(year).withMonth(month).toInstant();
+        if (getDate() > 28) {
+            long time = getLocalDateTime().withYear(year).withMonth(month).withDayOfMonth(1).toInstant(getLocaleZoneOffset(instantEpochWithYear)).toEpochMilli() + (getDate() - 1) * 24 * 60 * 60 * 1000L;
+            this.instant = Instant.ofEpochMilli(time);
+        } else {
+            this.instant = getLocalDateTime().withYear(year).withMonth(month).toInstant(getLocaleZoneOffset(instantEpochWithYear));
+        }
+    }
+    public void setFullYear(int year, int month, int date) {
+        Instant instantEpochWithYearMonthDate = getZonedDateTime().withYear(year).withMonth(month).withDayOfMonth(date).toInstant();
+        this.instant = getLocalDateTime().withYear(year).withMonth(month).withDayOfMonth(date).toInstant(getLocaleZoneOffset(instantEpochWithYearMonthDate));
     }
     public void setMonth(int month) {
-        setUTCMonth(month);
+        Instant instantEpochWithYear = getZonedDateTime().withMonth(month).toInstant();
+        if (getDate() > 28) {
+            long time = getLocalDateTime().withMonth(month).withDayOfMonth(1).toInstant(getLocaleZoneOffset(instantEpochWithYear)).toEpochMilli() + (getDate() - 1) * 24 * 60 * 60 * 1000L;
+            this.instant = Instant.ofEpochMilli(time);
+        } else {
+            this.instant = getLocalDateTime().withMonth(month).toInstant(getLocaleZoneOffset(instantEpochWithYear));
+        }
+
     }
     public void setMonth(int month, int date) {
-        setUTCMonth(month, date) ;
+        Instant instantEpochWithMonthDate = getZonedDateTime().withMonth(month).withDayOfMonth(date).toInstant();
+        this.instant = getLocalDateTime().withMonth(month).withDayOfMonth(date).toInstant(getLocaleZoneOffset(instantEpochWithMonthDate));
     }
     public void setDate(int date) {
-        setUTCDate(date);
+        Instant instantEpochWithDate = getZonedDateTime().withDayOfMonth(date).toInstant();
+        this.instant = getLocalDateTime().withDayOfMonth(date).toInstant(getLocaleZoneOffset(instantEpochWithDate));
     }
     public void setHours(int hrs) {
-        setUTCHours(hrs);
+        this.instant = getLocalDateTime().withHour(hrs).toInstant(getLocaleZoneOffset(this.instant));
     }
     public void setHours(int hrs, int minutes) {
-        setUTCHours(hrs, minutes);
+        this.instant = getLocalDateTime().withHour(hrs).withMinute(minutes).toInstant(getLocaleZoneOffset(this.instant));
     }
     public void setHours(int hrs, int minutes, int seconds) {
-        setUTCHours(hrs, minutes, seconds);
+        this.instant = getLocalDateTime().withHour(hrs).withMinute(minutes).withSecond(seconds).toInstant(getLocaleZoneOffset(this.instant));
     }
     public void setHours(int hrs, int minutes, int seconds, int ms) {
-        setUTCHours(hrs, minutes, seconds, ms);
+        this.instant = getLocalDateTime().withHour(hrs).withMinute(minutes).withSecond(seconds).withNano(ms*1000000).toInstant(getLocaleZoneOffset(this.instant));
     }
     public void setMinutes(int minutes) {
-        setUTCMinutes(minutes);
+        this.instant = getLocalDateTime().withMinute(minutes).toInstant(getLocaleZoneOffset(this.instant));
     }
     public void setMinutes(int minutes, int seconds) {
-        setUTCMinutes(minutes, seconds);
+        this.instant = getLocalDateTime().withMinute(minutes).withSecond(seconds).toInstant(getLocaleZoneOffset(this.instant));
+
     }
     public void setMinutes(int minutes, int seconds, int ms) {
-        setUTCMinutes(minutes, seconds, ms);
+        this.instant = getLocalDateTime().withMinute(minutes).withSecond(seconds).withNano(ms*1000000).toInstant(getLocaleZoneOffset(this.instant));
     }
     public void setSeconds(int seconds) {
-        setUTCSeconds(seconds);
+        this.instant = getLocalDateTime().withSecond(seconds).toInstant(getLocaleZoneOffset(this.instant));
     }
     public void setSeconds(int seconds, int ms) {
-        setUTCSeconds(seconds, ms);
+        this.instant = getLocalDateTime().withSecond(seconds).withNano(ms*1000000).toInstant(getLocaleZoneOffset(this.instant));
     }
     public void setMilliseconds(int ms) {
-        setUTCMilliseconds(ms);
+        this.instant = getLocalDateTime().withNano(ms*1000000).toInstant(getLocaleZoneOffset(this.instant));
     }
 
     // Milliseconds since Jan 1, 1970, 00:00:00.000 GMT
      public void setTime(long dateMilliSecond) {
          instant = Instant.ofEpochMilli(dateMilliSecond);
-         initZonedLocalDateTime();
     }
-    public int getTimezoneOffset() {
-        int seconds = ZoneId.systemDefault().getRules().getOffset(instant).getTotalSeconds();
-        return -seconds/60;
+
+    public ZoneOffset getLocaleZoneOffset(Instant... instants){
+        return ZoneId.systemDefault().getRules().getOffset(instants.length > 0 ? instants[0] : this.instant);
     }
 
     public static long parse(String value, String format) {
@@ -462,33 +502,32 @@ public class TbDate implements Serializable, Cloneable {
             return -1;
         }
     }
-    private static String createDateTimeFromPattern(int year, int month, int date, int hrs, int min, int second, int secondMilli, String... tz) {
-        String yearStr = String.format("%04d", year);
-        yearStr = yearStr.substring(0, 2).equals("00") ? year < 70 ? "20" + yearStr.substring(2,4) : "19" + yearStr.substring(2,4) : yearStr;
-        String monthStr = String.format("%02d", month);
-        String dateStr = String.format("%02d", date);
-        String hrsStr = String.format("%02d", hrs);
-        String minStr = String.format("%02d", min);
-        String secondStr = String.format("%02d", second);
-        String secondMilliStr = String.format("%03d", secondMilli);
-        String tzStr = tz.length > 0 ? Arrays.stream(tz).findFirst().get() : "Z";
-        return String.format(patternDefault, yearStr, monthStr, dateStr, hrsStr, minStr, secondStr, secondMilliStr, tzStr);
-    }
 
-    private void parseInstant(String s) {
+    private static Instant parseInstant(String s) {
         try{
             if (s.length() > 0 && Character.isDigit(s.charAt(0))) {
                 // assuming UTC instant  "2007-12-03T10:15:30.00Z"
-                instant = Instant.parse(s);
+                return Instant.parse(s);
             }
             else {
                 // assuming RFC-1123 value "Tue, 3 Jun 2008 11:05:30 GMT-02:00"
-                instant = Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(s));
+                return Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(s));
             }
-            initZonedLocalDateTime();
         } catch (final DateTimeParseException ex) {
             final ConversionException exception = new ConversionException("Cannot parse value [" + s + "] as instant", ex);
             throw exception;
         }
+    }
+
+    private static Instant parseInstant(int year, int month, int date, int hrs, int min, int second, int secondMilli, ZoneId zoneId) {
+        year = year < 70 ? 2000 + year : year <= 99 ? 1900 + year : year;
+        ZonedDateTime zonedDateTime = ZonedDateTime.of(year, month, date, hrs, min, second, secondMilli*1000000, zoneId);
+        return zonedDateTime.toInstant();
+    }
+    private static Instant parseInstant(String s, String pattern, Locale locale, ZoneId zoneId) {
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(pattern, locale);
+        LocalDateTime localDateTime = LocalDateTime.parse(s, dateTimeFormatter);
+        ZonedDateTime zonedDateTime = localDateTime.atZone(zoneId);
+        return zonedDateTime.toInstant();
     }
 }
