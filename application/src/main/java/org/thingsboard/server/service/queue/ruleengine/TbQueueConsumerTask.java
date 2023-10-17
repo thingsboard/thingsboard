@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,51 +21,44 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.QueueKey;
 
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 @Data
 @Slf4j
 public class TbQueueConsumerTask {
 
-    private final QueueKey key;
-    private final Object id;
+    private final Object key;
     private final TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> consumer;
     private volatile Future<?> task;
 
-    public void stop() {
-        this.consumer.stop();
+    public void subscribe(Set<TopicPartitionInfo> partitions) {
+        log.trace("[{}] Subscribing to partitions: {}", key, partitions);
+        consumer.subscribe(partitions);
     }
 
-    public boolean stopAndAwait() {
-        this.consumer.stop();
-        return await();
+    public void initiateStop() {
+        log.debug("[{}] Initiating stop", key);
+        consumer.stop();
     }
 
-    public boolean await() {
-        if (task != null) {
-            //TODO: maybe task.cancel() to interrupt the consumer?
+    public void awaitFinish() {
+        log.trace("[{}] Awaiting finish", key);
+        if (isRunning()) {
             try {
-                this.task.get(3, TimeUnit.MINUTES);
-            } catch (ExecutionException | InterruptedException | TimeoutException e) {
-                log.warn("[{}][{}] Failed to await for consumer to stop", key, id, e);
-                return false;
+                task.get(60, TimeUnit.SECONDS);
+                task = null;
+            } catch (Exception e) {
+                log.warn("[{}] Failed to await for consumer to stop", key, e);
             }
         }
-        return true;
+        log.trace("[{}] Awaited finish", key);
     }
 
-    public void subscribe(Set<TopicPartitionInfo> partitions) {
-        this.consumer.subscribe(partitions);
+    public boolean isRunning() {
+        return task != null && !task.isDone();
     }
 
-
-    public void unsubscribe() {
-        this.consumer.unsubscribe();
-    }
 }
