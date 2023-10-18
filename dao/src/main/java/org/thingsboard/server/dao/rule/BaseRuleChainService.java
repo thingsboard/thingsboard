@@ -78,6 +78,7 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.DataConstants.TENANT;
 import static org.thingsboard.server.dao.service.Validator.validateId;
+import static org.thingsboard.server.dao.service.Validator.validateIds;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 import static org.thingsboard.server.dao.service.Validator.validatePositiveNumber;
 import static org.thingsboard.server.dao.service.Validator.validateString;
@@ -724,6 +725,23 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         validatePositiveNumber(version, "Incorrect version to compare with. Version should be greater than 0!");
         validatePageLink(pageLink);
         return ruleNodeDao.findAllRuleNodesByTypeAndVersionLessThan(type, version, pageLink);
+    }
+
+    @Override
+    public PageData<RuleNodeId> findAllRuleNodeIdsByTypeAndVersionLessThan(String type, int version, PageLink pageLink) {
+        log.trace("Executing findAllRuleNodeIdsByTypeAndVersionLessThan, type {}, pageLink {}, version {}", type, pageLink, version);
+        validateString(type, "Incorrect type of the rule node");
+        validatePositiveNumber(version, "Incorrect version to compare with. Version should be greater than 0!");
+        validatePageLink(pageLink);
+        return ruleNodeDao.findAllRuleNodeIdsByTypeAndVersionLessThan(type, version, pageLink);
+    }
+
+    @Override
+    public List<RuleNode> findAllRuleNodesByIds(List<RuleNodeId> ruleNodeIds) {
+        log.trace("Executing findAllRuleNodesByIds, ruleNodeIds {}", ruleNodeIds);
+        validateIds(ruleNodeIds, "Incorrect ruleNodeIds " + ruleNodeIds);
+        assert ruleNodeIds.size() <= 1024;
+        return ruleNodeDao.findAllRuleNodeByIds(ruleNodeIds);
     }
 
     @Override
