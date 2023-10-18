@@ -240,9 +240,7 @@ export class EntityService {
           entityIds);
         break;
       case EntityType.ALARM:
-        observable = this.getEntitiesByIdsObservable(
-          (id) => this.alarmService.getAlarm(id, config),
-          entityIds);
+        console.error('Get Alarm Entity is not implemented!');
         break;
       case EntityType.DEVICE_PROFILE:
         observable = this.getEntitiesByIdsObservable(
