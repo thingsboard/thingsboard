@@ -28,6 +28,11 @@
         {{ valueCardLayoutTranslationMap.get(layout) | translate }}
       </tb-image-cards-select-option>
     </tb-image-cards-select>
+    <div class="tb-form-row">
+      <mat-slide-toggle class="mat-slide" formControlName="autoScale">
+        {{ 'widgets.value-card.auto-scale' | translate }}
+      </mat-slide-toggle>
+    </div>
     <div class="tb-form-row space-between">
       <mat-slide-toggle class="mat-slide" formControlName="showLabel">
         {{ 'widgets.value-card.label' | translate }}
@@ -36,7 +41,7 @@
         <tb-font-settings formControlName="labelFont"
                           [previewText]="label">
         </tb-font-settings>
-        <tb-color-settings formControlName="labelColor">
+        <tb-color-settings formControlName="labelColor" settingsKey="{{'widgets.value-card.label' | translate }}">
         </tb-color-settings>
       </div>
     </div>
@@ -54,7 +59,7 @@
                                  [color]="valueCardWidgetSettingsForm.get('iconColor').value?.color"
                                  formControlName="icon">
         </tb-material-icon-select>
-        <tb-color-settings formControlName="iconColor">
+        <tb-color-settings formControlName="iconColor" settingsKey="{{'widgets.value-card.icon' | translate }}">
         </tb-color-settings>
       </div>
     </div>
@@ -64,7 +69,7 @@
         <tb-font-settings formControlName="valueFont"
                           [previewText]="valuePreviewFn">
         </tb-font-settings>
-        <tb-color-settings formControlName="valueColor">
+        <tb-color-settings formControlName="valueColor" settingsKey="{{'widgets.value-card.value' | translate }}">
         </tb-color-settings>
       </div>
     </div>
@@ -77,7 +82,7 @@
         <tb-font-settings formControlName="dateFont"
                           [previewText]="datePreviewFn">
         </tb-font-settings>
-        <tb-color-settings formControlName="dateColor">
+        <tb-color-settings formControlName="dateColor" settingsKey="{{'widgets.value-card.date' | translate }}">
         </tb-color-settings>
       </div>
     </div>

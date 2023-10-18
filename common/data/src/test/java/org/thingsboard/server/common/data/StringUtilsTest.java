@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -35,6 +36,16 @@ class StringUtilsTest {
     @ValueSource(strings = {"", "  ", "abc", "世界", "\001", "\uD83D\uDC0C"})
     void testContains0x00_thenFalse(String sample) {
         assertThat(StringUtils.contains0x00(sample)).isFalse();
+    }
+
+    @Test
+    void testTruncate() {
+        int maxLength = 5;
+        assertThat(StringUtils.truncate(null, maxLength)).isNull();
+        assertThat(StringUtils.truncate("", maxLength)).isEmpty();
+        assertThat(StringUtils.truncate("123", maxLength)).isEqualTo("123");
+        assertThat(StringUtils.truncate("1234567", maxLength)).isEqualTo("12345...[truncated 2 symbols]");
+        assertThat(StringUtils.truncate("1234567", 0)).isEqualTo("1234567");
     }
 
 }

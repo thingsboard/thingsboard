@@ -38,7 +38,7 @@ public class BaseWidgetType extends BaseData<WidgetTypeId> implements HasName, H
     private String fqn;
     @NoXss
     @Length(fieldName = "name")
-    @ApiModelProperty(position = 6, value = "Widget name used in search and UI", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @ApiModelProperty(position = 6, value = "Widget name used in search and UI")
     private String name;
 
     @ApiModelProperty(position = 7, value = "Whether widget type is deprecated.", example = "true")

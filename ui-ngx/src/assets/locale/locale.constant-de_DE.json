@@ -10,6 +10,10 @@
     "permission-denied": "Zugriff verweigert",
     "permission-denied-text": "Sie haben keine Berechtigung, um diesen Vorgang auszuführen!"
   },
+  "account": {
+    "account": "Benutzerkonto",
+    "notification-settings": "Benachrichtigungseinstellungen"
+  },
   "action": {
     "activate": "Aktivieren",
     "suspend": "Unterbrechen",

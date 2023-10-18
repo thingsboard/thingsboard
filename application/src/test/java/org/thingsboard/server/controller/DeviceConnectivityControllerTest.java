@@ -62,14 +62,14 @@ import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.HTTP;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.HTTPS;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.MQTT;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.MQTTS;
-import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.PEM_CERT_FILE_NAME;
+import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.CA_ROOT_CERT_PEM;
 
 @TestPropertySource(properties = {
         "device.connectivity.https.enabled=true",
         "device.connectivity.http.port=8080",
         "device.connectivity.https.port=444",
         "device.connectivity.mqtts.enabled=true",
-        "device.connectivity.mqtts.pem_cert_file=/tmp/" + PEM_CERT_FILE_NAME,
+        "device.connectivity.mqtts.pem_cert_file=/tmp/" + CA_ROOT_CERT_PEM,
         "device.connectivity.coaps.enabled=true",
 })
 @ContextConfiguration(classes = {DeviceConnectivityControllerTest.Config.class})
@@ -202,8 +202,8 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
         assertThat(mqttCommands.get(MQTT).asText()).isEqualTo(String.format("mosquitto_pub -d -q 1 -h localhost -p 1883 -t v1/devices/me/telemetry " +
                         "-u %s -m \"{temperature:25}\"",
                 credentials.getCredentialsId()));
-        assertThat(mqttCommands.get(MQTTS).get(0).asText()).isEqualTo("curl -f -S -o tb-server-chain.pem http://localhost:80/api/device-connectivity/mqtts/certificate/download");
-        assertThat(mqttCommands.get(MQTTS).get(1).asText()).isEqualTo(String.format("mosquitto_pub -d -q 1 --cafile tb-server-chain.pem -h localhost -p 8883 " +
+        assertThat(mqttCommands.get(MQTTS).get(0).asText()).isEqualTo("curl -f -S -o ca-root.pem http://localhost:80/api/device-connectivity/mqtts/certificate/download");
+        assertThat(mqttCommands.get(MQTTS).get(1).asText()).isEqualTo(String.format("mosquitto_pub -d -q 1 --cafile ca-root.pem -h localhost -p 8883 " +
                 "-t v1/devices/me/telemetry -u %s -m \"{temperature:25}\"", credentials.getCredentialsId()));
 
         JsonNode dockerMqttCommands = commands.get(MQTT).get(DOCKER);
@@ -211,8 +211,8 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
                         " -p 1883 -t v1/devices/me/telemetry -u %s -m \"{temperature:25}\"",
                 credentials.getCredentialsId()));
         assertThat(dockerMqttCommands.get(MQTTS).asText()).isEqualTo(String.format("docker run --rm -it thingsboard/mosquitto-clients " +
-                        "/bin/sh -c \"curl -f -S -o tb-server-chain.pem http://localhost:80/api/device-connectivity/mqtts/certificate/download && " +
-                        "mosquitto_pub -d -q 1 --cafile tb-server-chain.pem -h localhost -p 8883 -t v1/devices/me/telemetry -u %s -m \"{temperature:25}\"\"",
+                        "/bin/sh -c \"curl -f -S -o ca-root.pem http://localhost:80/api/device-connectivity/mqtts/certificate/download && " +
+                        "mosquitto_pub -d -q 1 --cafile ca-root.pem -h localhost -p 8883 -t v1/devices/me/telemetry -u %s -m \"{temperature:25}\"\"",
                 credentials.getCredentialsId()));
 
         JsonNode linuxCoapCommands = commands.get(COAP);
@@ -240,8 +240,8 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
         JsonNode mqttCommands = commands.get(MQTT);
         assertThat(mqttCommands.get(MQTT).asText()).isEqualTo(String.format("mosquitto_pub -d -q 1 -h localhost -p 1883 -t %s " +
                 "-u %s -m \"{temperature:25}\"", DEVICE_TELEMETRY_TOPIC, credentials.getCredentialsId()));
-        assertThat(mqttCommands.get(MQTTS).get(0).asText()).isEqualTo("curl -f -S -o tb-server-chain.pem http://localhost:80/api/device-connectivity/mqtts/certificate/download");
-        assertThat(mqttCommands.get(MQTTS).get(1).asText()).isEqualTo(String.format("mosquitto_pub -d -q 1 --cafile tb-server-chain.pem -h localhost -p 8883 " +
+        assertThat(mqttCommands.get(MQTTS).get(0).asText()).isEqualTo("curl -f -S -o ca-root.pem http://localhost:80/api/device-connectivity/mqtts/certificate/download");
+        assertThat(mqttCommands.get(MQTTS).get(1).asText()).isEqualTo(String.format("mosquitto_pub -d -q 1 --cafile ca-root.pem -h localhost -p 8883 " +
                 "-t %s -u %s -m \"{temperature:25}\"", DEVICE_TELEMETRY_TOPIC, credentials.getCredentialsId()));
 
         JsonNode dockerMqttCommands = commands.get(MQTT).get(DOCKER);
@@ -249,8 +249,8 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
                         " -p 1883 -t %s -u %s -m \"{temperature:25}\"",
                 DEVICE_TELEMETRY_TOPIC, credentials.getCredentialsId()));
         assertThat(dockerMqttCommands.get(MQTTS).asText()).isEqualTo(String.format("docker run --rm -it thingsboard/mosquitto-clients " +
-                        "/bin/sh -c \"curl -f -S -o tb-server-chain.pem http://localhost:80/api/device-connectivity/mqtts/certificate/download && " +
-                        "mosquitto_pub -d -q 1 --cafile tb-server-chain.pem -h localhost -p 8883 -t %s -u %s -m \"{temperature:25}\"\"",
+                        "/bin/sh -c \"curl -f -S -o ca-root.pem http://localhost:80/api/device-connectivity/mqtts/certificate/download && " +
+                        "mosquitto_pub -d -q 1 --cafile ca-root.pem -h localhost -p 8883 -t %s -u %s -m \"{temperature:25}\"\"",
                 DEVICE_TELEMETRY_TOPIC, credentials.getCredentialsId()));
     }
 
@@ -284,8 +284,8 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
         JsonNode mqttCommands = commands.get(MQTT);
         assertThat(mqttCommands.get(MQTT).asText()).isEqualTo(String.format("mosquitto_pub -d -q 1 -h localhost -p 1883 -t %s " +
                 "-i %s -u %s -P %s -m \"{temperature:25}\"", DEVICE_TELEMETRY_TOPIC, clientId, userName, password));
-        assertThat(mqttCommands.get(MQTTS).get(0).asText()).isEqualTo("curl -f -S -o tb-server-chain.pem http://localhost:80/api/device-connectivity/mqtts/certificate/download");
-        assertThat(mqttCommands.get(MQTTS).get(1).asText()).isEqualTo(String.format("mosquitto_pub -d -q 1 --cafile tb-server-chain.pem -h localhost -p 8883 " +
+        assertThat(mqttCommands.get(MQTTS).get(0).asText()).isEqualTo("curl -f -S -o ca-root.pem http://localhost:80/api/device-connectivity/mqtts/certificate/download");
+        assertThat(mqttCommands.get(MQTTS).get(1).asText()).isEqualTo(String.format("mosquitto_pub -d -q 1 --cafile ca-root.pem -h localhost -p 8883 " +
                 "-t %s -i %s -u %s -P %s -m \"{temperature:25}\"", DEVICE_TELEMETRY_TOPIC, clientId, userName, password));
 
         JsonNode dockerMqttCommands = commands.get(MQTT).get(DOCKER);
@@ -293,8 +293,8 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
                         " -p 1883 -t %s -i %s -u %s -P %s -m \"{temperature:25}\"",
                 DEVICE_TELEMETRY_TOPIC, clientId, userName, password));
         assertThat(dockerMqttCommands.get(MQTTS).asText()).isEqualTo(String.format("docker run --rm -it thingsboard/mosquitto-clients " +
-                        "/bin/sh -c \"curl -f -S -o tb-server-chain.pem http://localhost:80/api/device-connectivity/mqtts/certificate/download && " +
-                        "mosquitto_pub -d -q 1 --cafile tb-server-chain.pem -h localhost -p 8883 -t %s -i %s -u %s -P %s -m \"{temperature:25}\"\"",
+                        "/bin/sh -c \"curl -f -S -o ca-root.pem http://localhost:80/api/device-connectivity/mqtts/certificate/download && " +
+                        "mosquitto_pub -d -q 1 --cafile ca-root.pem -h localhost -p 8883 -t %s -i %s -u %s -P %s -m \"{temperature:25}\"\"",
                 DEVICE_TELEMETRY_TOPIC, clientId, userName, password));
     }
 
@@ -368,7 +368,7 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
     @Test
     @DirtiesContext
     public void testDownloadMqttCert() throws Exception {
-        Path path = Files.createFile(Path.of("/tmp/" + PEM_CERT_FILE_NAME));
+        Path path = Files.createFile(Path.of("/tmp/" + CA_ROOT_CERT_PEM));
         Files.writeString(path, CERT);
 
         try {
@@ -382,7 +382,7 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
     @Test
     @DirtiesContext
     public void testDownloadMqttCertFromFileWithPrivateKey() throws Exception {
-        Path path = Files.createFile(Path.of("/tmp/" + PEM_CERT_FILE_NAME));
+        Path path = Files.createFile(Path.of("/tmp/" + CA_ROOT_CERT_PEM));
         Files.writeString(path, CERT + P_KEY);
 
         try {

@@ -770,12 +770,14 @@
         "email-messages-monthly-activity": "Email messages monthly activity",
         "exceptions": "Exceptions",
         "executions": "Executions",
+        "scripts": "Scripts",
+        "scripts-hourly-activity": "Scripts hourly activity",
+        "scripts-daily-activity": "Scripts daily activity",
+        "scripts-monthly-activity": "Scripts monthly activity",
         "javascript": "JavaScript",
         "javascript-executions": "JavaScript executions",
-        "javascript-functions": "JavaScript functions",
-        "javascript-functions-daily-activity": "JavaScript functions daily activity",
-        "javascript-functions-hourly-activity": "JavaScript functions hourly activity",
-        "javascript-functions-monthly-activity": "JavaScript functions monthly activity",
+        "tbel": "TBEL",
+        "tbel-executions": "TBEL executions",
         "latest-error": "Latest Error",
         "messages": "Messages",
         "notifications": "Notifications",
@@ -1622,9 +1624,10 @@
         "condition-duration-value-required": "Duration value is required.",
         "condition-duration-time-unit-required": "Time unit is required.",
         "advanced-settings": "Advanced settings",
-        "alarm-rule-details": "Details",
-        "alarm-rule-details-hint": "Hint: use <code><span style=\"color: #000;\">$&#123;</span>keyName<span style=\"color: #000;\">&#125;</span></code> to substitute values of the attribute or telemetry keys that are used in alarm rule condition.",
-        "add-alarm-rule-details": "Add details",
+        "alarm-rule-additional-info": "Additional info",
+        "edit-alarm-rule-additional-info": "Edit additional info",
+        "alarm-rule-additional-info-placeholder": "Please provide your comments and adjustments here to display them within Alarm details under Additional info",
+        "alarm-rule-additional-info-hint": "Hint: use <code><span style=\"color: #000;\">$&#123;</span>keyName<span style=\"color: #000;\">&#125;</span></code> to substitute values of the attribute or telemetry keys that are used in alarm rule condition.",
         "alarm-rule-mobile-dashboard": "Mobile dashboard",
         "alarm-rule-mobile-dashboard-hint": "Used by mobile application as an alarm details dashboard",
         "alarm-rule-no-mobile-dashboard": "No dashboard selected",
@@ -1633,7 +1636,6 @@
         "alarm-rule-relation-types-list-hint": "If Propagate relation types are not selected, alarms will be propagated without filtering by relation type.",
         "propagate-alarm-to-owner": "Propagate alarm to entity owner (Customer or Tenant)",
         "propagate-alarm-to-tenant": "Propagate alarm to Tenant",
-        "alarm-details": "Alarm details",
         "alarm-rule-condition": "Alarm rule condition",
         "enter-alarm-rule-condition-prompt": "Please add alarm rule condition",
         "edit-alarm-rule-condition": "Edit alarm rule condition",
@@ -2595,7 +2597,10 @@
            "attribute": "Attribute",
            "timeseries": "Timeseries",
            "entity-field": "Entity field",
-           "constant": "Constant"
+           "constant": "Constant",
+           "client-attribute": "Client attribute",
+           "server-attribute": "Server attribute",
+           "shared-attribute": "Shared attribute"
          },
          "value-type": {
            "value-type": "Value type",
@@ -2783,6 +2788,7 @@
             "attribute-name-required": "Attribute name is required",
             "command": "Command",
             "command-required": "Command is required",
+            "command-pattern": "Command is not valid",
             "remove": "Remove command"
         },
         "storage": "Storage",
@@ -3991,6 +3997,9 @@
         "max-j-s-executions": "JavaScript executions maximum number ",
         "max-j-s-executions-required": "JavaScript executions maximum number  is required.",
         "max-j-s-executions-range": "JavaScript executions maximum number  can't be negative",
+        "max-tbel-executions": "TBEL executions maximum number ",
+        "max-tbel-executions-required": "TBEL executions maximum number is required.",
+        "max-tbel-executions-range": "TBEL executions maximum number can't be negative",
         "max-d-p-storage-days": "Data points storage days maximum number",
         "max-d-p-storage-days-required": "Data points storage days maximum number is required.",
         "max-d-p-storage-days-range": "Data points storage days maximum number can't be negative",
@@ -4003,6 +4012,12 @@
         "rpc-ttl-days": "RPC TTL days",
         "rpc-ttl-days-required": "RPC TTL days required",
         "rpc-ttl-days-days-range": "RPC TTL days can't be negative",
+        "queue-stats-ttl-days": "Queue stats TTL days",
+        "queue-stats-ttl-days-required": "Queue stats TTL days required",
+        "queue-stats-ttl-days-range": "Queue stats TTL days can't be negative",
+        "rule-engine-exceptions-ttl-days": "Rule Engine exceptions TTL days",
+        "rule-engine-exceptions-ttl-days-required": "Rule Engine exceptions TTL days required",
+        "rule-engine-exceptions-ttl-days-range": "Rule Engine exceptions TTL days can't be negative",
         "max-rule-node-executions-per-message": "Rule node per message executions maximum number",
         "max-rule-node-executions-per-message-required": "MRule node per message executions maximum number is required.",
         "max-rule-node-executions-per-message-range": "Rule node per message executions maximum number can't be negative",
@@ -4789,6 +4804,7 @@
         "latest-datakey-settings-schema": "Latest data key settings schema",
         "widget-settings": "Widget settings",
         "description": "Description",
+        "tags": "Tags",
         "image-preview": "Image preview",
         "settings-form-selector": "Settings form selector",
         "data-key-settings-form-selector": "Data key settings form selector",
@@ -5050,7 +5066,24 @@
             "auto-scale": "Auto scale",
             "battery-level-color": "Battery level color",
             "battery-shape-color": "Battery shape color",
-            "battery-level-card-style": "Battery level card style"
+            "battery-level-card-style": "Battery level card style",
+            "sections-count": "Sections count"
+        },
+        "signal-strength": {
+            "value": "Value",
+            "last-update": "Last update",
+            "no-signal": "No signal",
+            "layout": "Layout",
+            "layout-wifi": "Wi-Fi",
+            "layout-cellular-bar": "Cellular bar",
+            "icon": "Icon",
+            "date": "Date",
+            "active-bars-color": "Active signal bars color",
+            "inactive-bars-color": "Inactive signal bars color",
+            "tooltip": "Tooltip",
+            "background-color": "Background color",
+            "background-blur": "Background blur",
+            "signal-strength-card-style": "Signal strength card style"
         },
         "chart": {
             "common-settings": "Common settings",
@@ -5194,7 +5227,8 @@
             "value-range": "Value range",
             "from": "From",
             "to": "To",
-            "color-function": "Color function"
+            "color-function": "Color function",
+            "copy-color-settings-from": "Copy color settings from"
         },
         "dashboard-state": {
             "dashboard-state-settings": "Dashboard state settings",
@@ -6032,7 +6066,8 @@
             "icon": "Icon",
             "value": "Value",
             "date": "Date",
-            "value-card-style": "Value card style"
+            "value-card-style": "Value card style",
+            "auto-scale": "Auto scale"
         },
         "aggregated-value-card": {
             "subtitle": "Subtitle",
@@ -6053,7 +6088,34 @@
             "remove-value": "Remove value",
             "no-values": "No values configured",
             "aggregation": "Aggregation",
-            "aggregated-value-card-style": "Aggregated value card style"
+            "aggregated-value-card-style": "Aggregated value card style",
+            "auto-scale": "Auto scale"
+        },
+        "value-chart-card": {
+            "layout": "Layout",
+            "layout-left": "Left",
+            "layout-right": "Right",
+            "auto-scale": "Auto scale",
+            "icon": "Icon",
+            "value": "Value",
+            "chart": "Chart",
+            "value-chart-card-style": "Value chart card style"
+        },
+        "progress-bar": {
+            "layout": "Layout",
+            "layout-default": "Default",
+            "layout-simplified": "Simplified",
+            "auto-scale": "Auto scale",
+            "icon": "Icon",
+            "value": "Value",
+            "range": "Range",
+            "min": "min",
+            "max": "max",
+            "range-ticks": "Range ticks",
+            "bar": "Bar",
+            "bar-color": "Bar color",
+            "bar-background": "Bar background",
+            "progress-bar-card-style": "Progress bar card style"
         },
         "alarm-count": {
             "alarm-count-card-style": "Alarm count card style"
@@ -6069,7 +6131,8 @@
             "icon": "Icon",
             "icon-background": "Icon background",
             "value": "Value",
-            "chevron": "Chevron"
+            "chevron": "Chevron",
+            "auto-scale": "Auto scale"
         },
         "table": {
             "common-table-settings": "Common Table Settings",
@@ -6136,6 +6199,27 @@
             "timeseries-column-error": "At least one timeseries column should be specified",
             "table-tabs": "Table tabs",
             "show-cell-actions-menu-mobile": "Show cell actions dropdown menu in mobile mode"
+        },
+        "wind-speed-direction": {
+            "layout": "Layout",
+            "layout-default": "Default",
+            "layout-advanced": "Advanced",
+            "layout-simplified": "Simplified",
+            "values": "Values",
+            "wind-direction": "Wind direction",
+            "center-value": "Center value",
+            "icon": "Icon",
+            "arrow": "Arrow",
+            "ticks": "Ticks",
+            "labels-type": "Labels type",
+            "directional-names": "Directional names",
+            "degrees": "Degrees",
+            "major-ticks": "Major ticks",
+            "minor-ticks": "Minor ticks",
+            "wind-speed-direction-card-style": "Wind speed and direction card style",
+            "ticks-color": "Ticks color",
+            "ticks-labels-type": "Ticks labels type",
+            "arrow-color": "Arrow color"
         },
         "value-source": {
             "value-source": "Value source",

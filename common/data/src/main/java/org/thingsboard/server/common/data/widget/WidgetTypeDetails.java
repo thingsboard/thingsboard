@@ -32,12 +32,15 @@ import org.thingsboard.server.common.data.validation.NoXss;
 public class WidgetTypeDetails extends WidgetType implements HasName, HasTenantId, ExportableEntity<WidgetTypeId> {
 
     @Length(fieldName = "image", max = 1000000)
-    @ApiModelProperty(position = 9, value = "Base64 encoded thumbnail", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @ApiModelProperty(position = 9, value = "Base64 encoded thumbnail")
     private String image;
     @NoXss
-    @Length(fieldName = "description")
-    @ApiModelProperty(position = 10, value = "Description of the widget", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Length(fieldName = "description", max = 1024)
+    @ApiModelProperty(position = 10, value = "Description of the widget")
     private String description;
+    @NoXss
+    @ApiModelProperty(position = 11, value = "Tags of the widget type")
+    private String[] tags;
 
     @Getter
     @Setter
@@ -59,6 +62,7 @@ public class WidgetTypeDetails extends WidgetType implements HasName, HasTenantI
         super(widgetTypeDetails);
         this.image = widgetTypeDetails.getImage();
         this.description = widgetTypeDetails.getDescription();
+        this.tags = widgetTypeDetails.getTags();
         this.externalId = widgetTypeDetails.getExternalId();
     }
 }

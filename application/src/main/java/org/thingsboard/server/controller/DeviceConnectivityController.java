@@ -50,7 +50,7 @@ import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID_PA
 import static org.thingsboard.server.controller.ControllerConstants.PROTOCOL;
 import static org.thingsboard.server.controller.ControllerConstants.PROTOCOL_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
-import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.PEM_CERT_FILE_NAME;
+import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.CA_ROOT_CERT_PEM;
 
 @RestController
 @TbCoreComponent
@@ -129,8 +129,8 @@ public class DeviceConnectivityController extends BaseController {
                 checkNotNull(deviceConnectivityService.getPemCertFile(protocol), protocol + " pem cert file is not found!");
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + PEM_CERT_FILE_NAME)
-                .header("x-filename", PEM_CERT_FILE_NAME)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + CA_ROOT_CERT_PEM)
+                .header("x-filename", CA_ROOT_CERT_PEM)
                 .contentLength(pemCert.contentLength())
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(pemCert);

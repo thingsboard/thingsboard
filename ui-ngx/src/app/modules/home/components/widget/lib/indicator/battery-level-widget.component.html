@@ -17,14 +17,12 @@
 -->
 <div class="tb-battery-level-panel" [style]="backgroundStyle" [class.tb-battery-level-pointer]="hasCardClickAction" (click)="cardClick($event)">
   <div class="tb-battery-level-overlay" [style]="overlayStyle"></div>
-  <div class="tb-battery-level-title-panel">
-    <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
-  </div>
+  <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
   <div #batteryLevelContent class="tb-battery-level-content" [class]="layoutClass">
     <div #batteryLevelBox class="tb-battery-level-box">
       <div #batteryLevelRectangle class="tb-battery-level-rectangle" [class]="layoutClass" [class.solid]="solid" [class.divided]="!solid">
         <div class="tb-battery-level-shape" [style.background]="batteryShapeColor.color"></div>
-        <div class="tb-battery-level-container">
+        <div class="tb-battery-level-container" [style.gap]="dividedGap">
           <div *ngIf="solid; else dividedIndicator" class="tb-battery-level-indicator-box solid"
                [style.background-image]="'linear-gradient(0deg, ' + batteryLevelColor.color + ' 0% 100%)'"
                [style.background-size]="vertical ? '100% ' + (value + 1) + '%' : (value + 1) + '% 100%'">
@@ -40,5 +38,6 @@
 <ng-template #dividedIndicator>
   <div *ngFor="let section of batterySections; trackBy: trackBySection" class="tb-battery-level-indicator-box divided"
        [style.background]="batteryLevelColor.color"
+       [style.border-radius]="dividedBorderRadius"
        [style.opacity]="section ? '1': '0'"></div>
 </ng-template>

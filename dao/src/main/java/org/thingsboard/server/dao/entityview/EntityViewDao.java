@@ -148,6 +148,8 @@ public interface EntityViewDao extends Dao<EntityView>, ExportableEntityDao<Enti
 
     List<EntityView> findEntityViewsByTenantIdAndEntityId(UUID tenantId, UUID entityId);
 
+    boolean existsByTenantIdAndEntityId(UUID tenantId, UUID entityId);
+
     /**
      * Find tenants entity view types.
      *
