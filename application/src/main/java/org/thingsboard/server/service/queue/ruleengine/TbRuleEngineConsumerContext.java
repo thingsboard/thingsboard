@@ -36,7 +36,6 @@ import javax.annotation.PostConstruct;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 @Component
 @TbRuleEngineComponent
@@ -83,12 +82,7 @@ public class TbRuleEngineConsumerContext {
 
     public void stop() {
         scheduler.shutdownNow();
-        consumersExecutor.shutdown();
-        mgmtExecutor.shutdown();
-        try {
-            mgmtExecutor.awaitTermination(15, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            log.warn("Failed to await mgmtExecutor termination");
-        }
+        consumersExecutor.shutdownNow();
+        mgmtExecutor.shutdownNow();
     }
 }
