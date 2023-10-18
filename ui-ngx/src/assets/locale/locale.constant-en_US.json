@@ -4388,6 +4388,7 @@
         "volt": "Volt",
         "kilovolts": "Kilovolts",
         "dbmV": "dBmV",
+        "dbm": "dBm",
         "volt-meter": "Volt-Meter",
         "kilovolt-meter": "Kilovolt-Meter",
         "megavolt-meter": "Megavolt-Meter",
