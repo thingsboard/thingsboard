@@ -1,0 +1,20 @@
+{
+  "widgetsBundle": {
+    "alias": "outdoor_environment",
+    "title": "Outdoor Environment",
+    "image": null,
+    "description": null,
+    "externalId": null,
+    "name": "Outdoor Environment"
+  },
+  "widgetTypeFqns": [
+    "temperature_card",
+    "temperature_card_with_background",
+    "horizontal_temperature_card",
+    "horizontal_temperature_card_with_background",
+    "temperature_chart_card",
+    "temperature_chart_card_with_background",
+    "simple_temperature_chart_card",
+    "simple_temperature_chart_card_with_background"
+  ]
+}

@@ -607,7 +607,9 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     this.gotError = false;
     this.iframeWidgetEditModeInited = false;
     const config: WidgetConfig = JSON.parse(this.widget.defaultConfig);
-    config.title = this.widget.widgetName;
+    if (!config.title) {
+      config.title = this.widget.widgetName;
+    }
     this.widget.defaultConfig = JSON.stringify(config);
     this.iframe.attr('data-widget', JSON.stringify(this.widget));
     // @ts-ignore

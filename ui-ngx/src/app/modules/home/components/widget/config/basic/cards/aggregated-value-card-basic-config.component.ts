@@ -117,27 +117,81 @@ export class AggregatedValueCardBasicConfigComponent extends BasicWidgetConfigCo
   }
 
   protected defaultLatestDataKeys(configData: WidgetConfigComponentData): DataKey[] {
-    return this.createDefaultAggregatedValueLatestDataKeys('watermeter', 'm³');
+    return this.createDefaultAggregatedValueLatestDataKeys(configData, 'watermeter', 'm³');
   }
 
-  createDefaultAggregatedValueLatestDataKeys(keyName: string, units): DataKey[] {
+  createDefaultAggregatedValueLatestDataKeys(configData: WidgetConfigComponentData, keyName: string, units): DataKey[] {
+    let centerKeySettings: AggregatedValueCardKeySettings = {
+      position: AggregatedValueCardKeyPosition.center,
+      font: {
+        family: 'Roboto',
+        size: 52,
+        sizeUnit: 'px',
+        style: 'normal',
+        weight: '500',
+        lineHeight: '1'
+      },
+      color: constantColor('rgba(0, 0, 0, 0.87)'),
+      showArrow: false
+    };
+    let rightTopKeySettings: AggregatedValueCardKeySettings = {
+      position: AggregatedValueCardKeyPosition.rightTop,
+      font: {
+        family: 'Roboto',
+        size: 14,
+        sizeUnit: 'px',
+        style: 'normal',
+        weight: '500',
+        lineHeight: '1'
+      },
+      color: {
+        color: 'rgba(0, 0, 0, 0.87)',
+        type: ColorType.range,
+        rangeList: [
+          {to: 0, color: '#198038'},
+          {from: 0, to: 0, color: 'rgba(0, 0, 0, 0.87)'},
+          {from: 0, color: '#D12730'}
+        ],
+        colorFunction: ''
+      },
+      showArrow: true
+    };
+    let rightBottomKeySettings: AggregatedValueCardKeySettings = {
+      position: AggregatedValueCardKeyPosition.rightBottom,
+      font: {
+        family: 'Roboto',
+        size: 11,
+        sizeUnit: 'px',
+        style: 'normal',
+        weight: '400',
+        lineHeight: '1'
+      },
+      color: constantColor('rgba(0, 0, 0, 0.38)'),
+      showArrow: false
+    };
+    const datasources: Datasource[] = configData.config.datasources;
+    if (datasources?.length) {
+      const latestDataKeys = datasources[0].latestDataKeys;
+      if (latestDataKeys) {
+        const center = latestDataKeys.find(dataKey => dataKey.settings?.position === AggregatedValueCardKeyPosition.center);
+        if (center) {
+          centerKeySettings = {...centerKeySettings, ...center.settings};
+        }
+        const rightTop = latestDataKeys.find(dataKey => dataKey.settings?.position === AggregatedValueCardKeyPosition.rightTop);
+        if (rightTop) {
+          rightTopKeySettings = {...rightTopKeySettings, ...rightTop.settings};
+        }
+        const rightBottom = latestDataKeys.find(dataKey => dataKey.settings?.position === AggregatedValueCardKeyPosition.rightBottom);
+        if (rightBottom) {
+          rightBottomKeySettings = {...rightBottomKeySettings, ...rightBottom.settings};
+        }
+      }
+    }
     return [
       {
         name: keyName, label: 'Latest', type: DataKeyType.timeseries, units, decimals: 0,
         aggregationType: AggregationType.NONE,
-        settings: {
-          position: AggregatedValueCardKeyPosition.center,
-          font: {
-            family: 'Roboto',
-            size: 52,
-            sizeUnit: 'px',
-            style: 'normal',
-            weight: '500',
-            lineHeight: '1'
-          },
-          color: constantColor('rgba(0, 0, 0, 0.87)'),
-          showArrow: false
-        } as AggregatedValueCardKeySettings
+        settings: centerKeySettings
       },
       {
         name: keyName, label: 'Delta percent', type: DataKeyType.timeseries, units: '%', decimals: 0,
@@ -145,28 +199,7 @@ export class AggregatedValueCardBasicConfigComponent extends BasicWidgetConfigCo
         comparisonEnabled: true,
         timeForComparison: 'previousInterval',
         comparisonResultType: ComparisonResultType.DELTA_PERCENT,
-        settings: {
-          position: AggregatedValueCardKeyPosition.rightTop,
-          font: {
-            family: 'Roboto',
-            size: 14,
-            sizeUnit: 'px',
-            style: 'normal',
-            weight: '500',
-            lineHeight: '1'
-          },
-          color: {
-            color: 'rgba(0, 0, 0, 0.87)',
-            type: ColorType.range,
-            rangeList: [
-              {to: 0, color: '#198038'},
-              {from: 0, to: 0, color: 'rgba(0, 0, 0, 0.87)'},
-              {from: 0, color: '#D12730'}
-            ],
-            colorFunction: ''
-          },
-          showArrow: true
-        } as AggregatedValueCardKeySettings
+        settings: rightTopKeySettings
       },
       {
         name: keyName, label: 'Delta absolute', type: DataKeyType.timeseries, units, decimals: 1,
@@ -174,19 +207,7 @@ export class AggregatedValueCardBasicConfigComponent extends BasicWidgetConfigCo
         comparisonEnabled: true,
         timeForComparison: 'previousInterval',
         comparisonResultType: ComparisonResultType.DELTA_ABSOLUTE,
-        settings: {
-          position: AggregatedValueCardKeyPosition.rightBottom,
-          font: {
-            family: 'Roboto',
-            size: 11,
-            sizeUnit: 'px',
-            style: 'normal',
-            weight: '400',
-            lineHeight: '1'
-          },
-          color: constantColor('rgba(0, 0, 0, 0.38)'),
-          showArrow: false
-        } as AggregatedValueCardKeySettings
+        settings: rightBottomKeySettings
       }
     ];
   }
