@@ -126,6 +126,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     @Override
     protected void stopConsumers() {
         consumers.values().forEach(TbRuleEngineQueueConsumerManager::stop);
+        consumers.values().forEach(TbRuleEngineQueueConsumerManager::awaitStop);
         ctx.stop();
     }
 

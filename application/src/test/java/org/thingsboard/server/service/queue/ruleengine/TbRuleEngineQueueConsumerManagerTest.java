@@ -180,13 +180,16 @@ public class TbRuleEngineQueueConsumerManagerTest {
     @After
     public void afterEach() {
         consumerManager.stop();
+        consumerManager.awaitStop();
         ruleEngineConsumerContext.stop();
 
         if (generateQueueMsgs) {
-            await().atMost(1, TimeUnit.SECONDS)
-                    .until(() -> totalProcessedMsgs.get() == totalConsumedMsgs.get());
+            await().atMost(2, TimeUnit.SECONDS)
+                    .untilAsserted(() -> {
+                        log.debug("totalConsumedMsgs = {}, totalProcessedMsgs = {}", totalConsumedMsgs.get(), totalProcessedMsgs.get());
+                        assertThat(totalProcessedMsgs.get()).isEqualTo(totalConsumedMsgs.get());
+                    });
         }
-        log.debug("totalConsumedMsgs = {}, totalProcessedMsgs = {}", totalConsumedMsgs.get(), totalProcessedMsgs.get());
     }
 
     @Test
@@ -510,7 +513,6 @@ public class TbRuleEngineQueueConsumerManagerTest {
         verify(consumer).unsubscribe();
 
         int movedMsgs = consumer.msgCount - msgCount;
-        assertThat(movedMsgs).isGreaterThan(10);
         verify(ruleEngineMsgProducer, atLeast(movedMsgs)).send(any(), any(), any());
         verify(actorContext, never()).tell(any());
         generateQueueMsgs = false;

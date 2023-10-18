@@ -85,7 +85,13 @@ public class TbRuleEngineQueueConsumerManager {
     }
 
     public void init(Queue queue) {
-        doInit(queue);
+        this.queue = queue;
+        if (queue.isConsumerPerPartition()) {
+            this.consumerWrapper = new ConsumerPerPartitionWrapper();
+        } else {
+            this.consumerWrapper = new SingleConsumerWrapper();
+        }
+        log.debug("[{}] Initialized consumer for queue: {}", queueKey, queue);
     }
 
     public void update(Queue queue) {
@@ -94,10 +100,6 @@ public class TbRuleEngineQueueConsumerManager {
 
     public void update(Set<TopicPartitionInfo> partitions) {
         addTask(new TbQueueConsumerManagerTask(QueueEvent.PARTITION_CHANGE, partitions));
-    }
-
-    public void stop() {
-        addTask(new TbQueueConsumerManagerTask(QueueEvent.STOP));
     }
 
     public void delete() {
@@ -135,13 +137,13 @@ public class TbRuleEngineQueueConsumerManager {
                             newPartitions = task.getPartitions();
                         } else if (task.getEvent() == QueueEvent.CONFIG_UPDATE) {
                             newConfiguration = task.getQueue();
-                        } else if (task.getEvent() == QueueEvent.STOP) {
-                            doStop();
-                            return;
                         } else if (task.getEvent() == QueueEvent.DELETE) {
                             doDelete();
                             return;
                         }
+                    }
+                    if (stopped) {
+                        return;
                     }
                     if (newConfiguration != null) {
                         doUpdate(newConfiguration);
@@ -149,6 +151,8 @@ public class TbRuleEngineQueueConsumerManager {
                     if (newPartitions != null) {
                         doUpdate(newPartitions);
                     }
+                } catch (Exception e) {
+                    log.error("[{}] Failed to process tasks", queueKey, e);
                 } finally {
                     lock.unlock();
                 }
@@ -157,16 +161,6 @@ public class TbRuleEngineQueueConsumerManager {
                 ctx.getScheduler().schedule(this::tryProcessTasks, 1, TimeUnit.SECONDS);
             }
         });
-    }
-
-    private void doInit(Queue queue) {
-        this.queue = queue;
-        if (queue.isConsumerPerPartition()) {
-            consumerWrapper = new ConsumerPerPartitionWrapper();
-        } else {
-            consumerWrapper = new SingleConsumerWrapper();
-        }
-        log.debug("[{}] Initialized consumer for queue: {}", queueKey, queue);
     }
 
     private void doUpdate(Queue newQueue) {
@@ -179,12 +173,12 @@ public class TbRuleEngineQueueConsumerManager {
         }
 
         if (oldQueue == null) {
-            doInit(queue);
+            init(queue);
         } else if (newQueue.isConsumerPerPartition() != oldQueue.isConsumerPerPartition()) {
             consumerWrapper.getConsumers().forEach(TbQueueConsumerTask::initiateStop);
-            consumerWrapper.getConsumers().forEach(TbQueueConsumerTask::awaitFinish);
+            consumerWrapper.getConsumers().forEach(TbQueueConsumerTask::awaitCompletion);
 
-            doInit(queue);
+            init(queue);
             if (partitions != null) {
                 doUpdate(partitions); // even if partitions number was changed, there can be no partition change event
             }
@@ -200,17 +194,21 @@ public class TbRuleEngineQueueConsumerManager {
         consumerWrapper.updatePartitions(partitions);
     }
 
-    private void doStop() {
+    public void stop() {
+        log.debug("[{}] Stopping consumers", queueKey);
         consumerWrapper.getConsumers().forEach(TbQueueConsumerTask::initiateStop);
-        consumerWrapper.getConsumers().forEach(TbQueueConsumerTask::awaitFinish);
-        log.debug("[{}] Unsubscribed and stopped consumers", queueKey);
         stopped = true;
+    }
+
+    public void awaitStop() {
+        consumerWrapper.getConsumers().forEach(TbQueueConsumerTask::awaitCompletion);
+        log.debug("[{}] Unsubscribed and stopped consumers", queueKey);
     }
 
     private void doDelete() {
         stopped = true;
         log.info("[{}] Handling queue deletion", queueKey);
-        consumerWrapper.getConsumers().forEach(TbQueueConsumerTask::awaitFinish);
+        consumerWrapper.getConsumers().forEach(TbQueueConsumerTask::awaitCompletion);
 
         List<TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>>> queueConsumers = consumerWrapper.getConsumers().stream()
                 .map(TbQueueConsumerTask::getConsumer).collect(Collectors.toList());
@@ -240,6 +238,7 @@ public class TbRuleEngineQueueConsumerManager {
         Future<?> consumerLoop = ctx.getConsumersExecutor().submit(() -> {
             ThingsBoardThreadFactory.updateCurrentThreadName(consumerTask.getKey().toString());
             consumerLoop(consumerTask.getConsumer());
+            consumerTask.finished();
         });
         consumerTask.setTask(consumerLoop);
     }
@@ -253,7 +252,7 @@ public class TbRuleEngineQueueConsumerManager {
                 }
                 processMsgs(msgs, consumer, queue);
             } catch (Exception e) {
-                if (!stopped) {
+                if (!consumer.isStopped()) {
                     log.warn("Failed to process messages from queue", e);
                     try {
                         Thread.sleep(ctx.getPollDuration());
@@ -279,7 +278,7 @@ public class TbRuleEngineQueueConsumerManager {
             TbMsgPackProcessingContext packCtx = new TbMsgPackProcessingContext(queue.getName(), submitStrategy, ackStrategy.isSkipTimeoutMsgs());
             submitStrategy.submitAttempt((id, msg) -> submitMessage(packCtx, id, msg));
 
-            final boolean timeout = !packCtx.await(queue.getPackProcessingTimeout(), TimeUnit.MILLISECONDS);
+            final boolean timeout = !awaitPackProcessing(packCtx, queue.getPackProcessingTimeout(), true);
 
             TbRuleEngineProcessingResult result = new TbRuleEngineProcessingResult(queue.getName(), timeout, packCtx);
             if (timeout) {
@@ -303,6 +302,19 @@ public class TbRuleEngineQueueConsumerManager {
                 break;
             } else {
                 submitStrategy.update(decision.getReprocessMap());
+            }
+        }
+    }
+
+    private boolean awaitPackProcessing(TbMsgPackProcessingContext packCtx, long processingTimeout, boolean ignoreInterrupt) throws InterruptedException {
+        try {
+            return packCtx.await(processingTimeout, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            if (ignoreInterrupt) {
+                log.debug("Interrupt happened while waiting for pack processing, trying to await one more time");
+                return awaitPackProcessing(packCtx, processingTimeout, false);
+            } else {
+                throw new RuntimeException("Failed to await pack processing due to thread interrupt", e);
             }
         }
     }
@@ -430,7 +442,7 @@ public class TbRuleEngineQueueConsumerManager {
                 consumers.get(tpi).initiateStop();
             });
             removedPartitions.forEach((tpi) -> {
-                consumers.remove(tpi).awaitFinish();
+                consumers.remove(tpi).awaitCompletion();
             });
 
             addedPartitions.forEach((tpi) -> {
@@ -457,7 +469,7 @@ public class TbRuleEngineQueueConsumerManager {
             if (partitions.isEmpty()) {
                 if (consumer != null && consumer.isRunning()) {
                     consumer.initiateStop();
-                    consumer.awaitFinish();
+                    consumer.awaitCompletion();
                 }
                 consumer = null;
                 return;
