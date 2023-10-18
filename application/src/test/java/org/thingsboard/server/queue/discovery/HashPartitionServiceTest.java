@@ -62,6 +62,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -88,6 +89,7 @@ public class HashPartitionServiceTest {
         routingInfoService = mock(TenantRoutingInfoService.class);
         queueRoutingInfoService = mock(QueueRoutingInfoService.class);
         topicService = mock(TopicService.class);
+        when(topicService.buildTopicName(Mockito.any())).thenAnswer(i -> i.getArguments()[0]);
         clusterRoutingService = createPartitionService();
         ServiceInfo currentServer = ServiceInfo.newBuilder()
                 .setServiceId("tb-core-0")

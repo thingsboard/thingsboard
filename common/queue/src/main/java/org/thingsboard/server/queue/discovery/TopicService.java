@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.queue.discovery;
 
-import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -28,7 +27,6 @@ import java.util.Map;
 @Service
 public class TopicService {
 
-    @Getter
     @Value("${queue.prefix}")
     private String prefix;
 
