@@ -70,6 +70,10 @@ export class FontSettingsPanelComponent extends PageComponent implements OnInit 
   autoScale = false;
 
   @Input()
+  @coerceBoolean()
+  disabledLineHeight = false;
+
+  @Input()
   popover: TbPopoverComponent<FontSettingsPanelComponent>;
 
   @Output()
@@ -106,7 +110,7 @@ export class FontSettingsPanelComponent extends PageComponent implements OnInit 
         family: [this.font?.family, []],
         weight: [this.font?.weight, []],
         style: [this.font?.style, []],
-        lineHeight: [{ value: this.font?.lineHeight, disabled: this.autoScale }, []]
+        lineHeight: [{ value: this.font?.lineHeight, disabled: this.autoScale || this.disabledLineHeight }, []]
       }
     );
     this.updatePreviewStyle(this.font);
