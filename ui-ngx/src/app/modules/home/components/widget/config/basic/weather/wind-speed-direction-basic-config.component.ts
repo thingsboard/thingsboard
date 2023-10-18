@@ -107,10 +107,10 @@ export class WindSpeedDirectionBasicConfigComponent extends BasicWidgetConfigCom
     return this.windSpeedDirectionWidgetConfigForm;
   }
 
-  protected setupDefaults(configData: WidgetConfigComponentData) {
-    this.setupDefaultDatasource(configData, [{ name: 'winddirection', label: windDirectionLabel, type: DataKeyType.timeseries },
-                                                   { name: 'windspeed', label: centerValueLabel, type: DataKeyType.timeseries,
-                                                     units: 'm/s', decimals: 1 }]);
+  protected defaultDataKeys(configData: WidgetConfigComponentData): DataKey[] {
+    return [{ name: 'winddirection', label: windDirectionLabel, type: DataKeyType.timeseries },
+      { name: 'windspeed', label: centerValueLabel, type: DataKeyType.timeseries,
+        units: 'm/s', decimals: 1 }];
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {

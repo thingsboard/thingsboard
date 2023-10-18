@@ -20,7 +20,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { BasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
-import { DataKey, Datasource, WidgetConfig, } from '@shared/models/widget.models';
+import { ComparisonResultType, DataKey, Datasource, WidgetConfig, } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import {
@@ -29,15 +29,19 @@ import {
 } from '@home/components/widget/config/timewindow-config-panel.component';
 import { isUndefined } from '@core/utils';
 import {
+  ColorType,
+  constantColor,
   cssSizeToStrSize,
   DateFormatProcessor,
-  DateFormatSettings, getDataKey,
+  DateFormatSettings,
+  getDataKey,
   resolveCssSize
 } from '@shared/models/widget-settings.models';
 import {
   aggregatedValueCardDefaultSettings,
-  AggregatedValueCardWidgetSettings,
-  createDefaultAggregatedValueLatestDataKeys
+  AggregatedValueCardKeyPosition,
+  AggregatedValueCardKeySettings,
+  AggregatedValueCardWidgetSettings
 } from '@home/components/widget/lib/cards/aggregated-value-card.models';
 import {
   AggregationType,
@@ -89,11 +93,7 @@ export class AggregatedValueCardBasicConfigComponent extends BasicWidgetConfigCo
   }
 
   protected setupDefaults(configData: WidgetConfigComponentData) {
-    this.setupDefaultDatasource(configData, [
-        { name: 'watermeter', label: 'Watermeter', type: DataKeyType.timeseries, color: 'rgba(0, 0, 0, 0.87)', units: 'm³', decimals: 0 }
-      ],
-      createDefaultAggregatedValueLatestDataKeys('watermeter', 'm³')
-    );
+    super.setupDefaults(configData);
     configData.config.useDashboardTimewindow = false;
     configData.config.displayTimewindow = true;
     configData.config.timewindow = {
@@ -108,6 +108,87 @@ export class AggregatedValueCardBasicConfigComponent extends BasicWidgetConfigCo
         limit: 5000
       }
     };
+  }
+
+  protected defaultDataKeys(configData: WidgetConfigComponentData): DataKey[] {
+    return [
+      { name: 'watermeter', label: 'Watermeter', type: DataKeyType.timeseries, color: 'rgba(0, 0, 0, 0.87)', units: 'm³', decimals: 0 }
+    ];
+  }
+
+  protected defaultLatestDataKeys(configData: WidgetConfigComponentData): DataKey[] {
+    return this.createDefaultAggregatedValueLatestDataKeys('watermeter', 'm³');
+  }
+
+  createDefaultAggregatedValueLatestDataKeys(keyName: string, units): DataKey[] {
+    return [
+      {
+        name: keyName, label: 'Latest', type: DataKeyType.timeseries, units, decimals: 0,
+        aggregationType: AggregationType.NONE,
+        settings: {
+          position: AggregatedValueCardKeyPosition.center,
+          font: {
+            family: 'Roboto',
+            size: 52,
+            sizeUnit: 'px',
+            style: 'normal',
+            weight: '500',
+            lineHeight: '1'
+          },
+          color: constantColor('rgba(0, 0, 0, 0.87)'),
+          showArrow: false
+        } as AggregatedValueCardKeySettings
+      },
+      {
+        name: keyName, label: 'Delta percent', type: DataKeyType.timeseries, units: '%', decimals: 0,
+        aggregationType: AggregationType.AVG,
+        comparisonEnabled: true,
+        timeForComparison: 'previousInterval',
+        comparisonResultType: ComparisonResultType.DELTA_PERCENT,
+        settings: {
+          position: AggregatedValueCardKeyPosition.rightTop,
+          font: {
+            family: 'Roboto',
+            size: 14,
+            sizeUnit: 'px',
+            style: 'normal',
+            weight: '500',
+            lineHeight: '1'
+          },
+          color: {
+            color: 'rgba(0, 0, 0, 0.87)',
+            type: ColorType.range,
+            rangeList: [
+              {to: 0, color: '#198038'},
+              {from: 0, to: 0, color: 'rgba(0, 0, 0, 0.87)'},
+              {from: 0, color: '#D12730'}
+            ],
+            colorFunction: ''
+          },
+          showArrow: true
+        } as AggregatedValueCardKeySettings
+      },
+      {
+        name: keyName, label: 'Delta absolute', type: DataKeyType.timeseries, units, decimals: 1,
+        aggregationType: AggregationType.AVG,
+        comparisonEnabled: true,
+        timeForComparison: 'previousInterval',
+        comparisonResultType: ComparisonResultType.DELTA_ABSOLUTE,
+        settings: {
+          position: AggregatedValueCardKeyPosition.rightBottom,
+          font: {
+            family: 'Roboto',
+            size: 11,
+            sizeUnit: 'px',
+            style: 'normal',
+            weight: '400',
+            lineHeight: '1'
+          },
+          color: constantColor('rgba(0, 0, 0, 0.38)'),
+          showArrow: false
+        } as AggregatedValueCardKeySettings
+      }
+    ];
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {

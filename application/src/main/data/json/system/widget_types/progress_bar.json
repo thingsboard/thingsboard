@@ -11,7 +11,7 @@
     "resources": [],
     "templateHtml": "<tb-progress-bar-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-progress-bar-widget>",
     "templateCss": "",
-    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.progressBarWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.progressBarWidget.onDataUpdated();\n};\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        previewWidth: '280px',\n        previewHeight: '180px',\n        embedTitlePanel: true\n    };\n};\n\n\nself.onDestroy = function() {\n};\n",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.progressBarWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.progressBarWidget.onDataUpdated();\n};\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        previewWidth: '280px',\n        previewHeight: '180px',\n        embedTitlePanel: true,\n        defaultDataKeysFunction: function() {\n            return [{ name: 'humidity', label: 'humidity', type: 'timeseries' }];\n        }\n    };\n};\n\n\nself.onDestroy = function() {\n};\n",
     "settingsSchema": "",
     "dataKeySettingsSchema": "",
     "settingsDirective": "tb-progress-bar-widget-settings",

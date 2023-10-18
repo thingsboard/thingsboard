@@ -72,12 +72,14 @@ export class ValueChartCardBasicConfigComponent extends BasicWidgetConfigCompone
     return this.valueChartCardWidgetConfigForm;
   }
 
-  protected setupDefaults(configData: WidgetConfigComponentData) {
-    this.setupDefaultDatasource(configData, [
-        { name: 'temperature', label: 'Temperature', type: DataKeyType.timeseries, color: 'rgba(63, 82, 221, 1)'}
-      ],
-      [{ name: 'temperature', label: 'Latest', type: DataKeyType.timeseries}]
-    );
+  protected defaultDataKeys(configData: WidgetConfigComponentData): DataKey[] {
+    return [
+      { name: 'temperature', label: 'Temperature', type: DataKeyType.timeseries, color: 'rgba(63, 82, 221, 1)'}
+    ];
+  }
+
+  protected defaultLatestDataKeys(configData: WidgetConfigComponentData): DataKey[] {
+    return [{ name: 'temperature', label: 'Latest', type: DataKeyType.timeseries}];
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {
