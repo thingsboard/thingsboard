@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.sql.notification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -42,7 +43,9 @@ public interface NotificationTemplateRepository extends JpaRepository<Notificati
                                                                                      Pageable pageable);
 
     @Transactional
-    void deleteByTenantId(UUID tenantId);
+    @Modifying
+    @Query("DELETE FROM NotificationTemplateEntity t WHERE t.tenantId = :tenantId")
+    void deleteByTenantId(@Param("tenantId") UUID tenantId);
 
     NotificationTemplateEntity findByTenantIdAndName(UUID tenantId, String name);
 
