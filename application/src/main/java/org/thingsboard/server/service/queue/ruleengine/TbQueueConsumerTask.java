@@ -15,57 +15,70 @@
  */
 package org.thingsboard.server.service.queue.ruleengine;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.QueueKey;
 
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
-@Data
+@RequiredArgsConstructor
 @Slf4j
 public class TbQueueConsumerTask {
 
-    private final QueueKey key;
-    private final Object id;
+    @Getter
+    private final Object key;
+    @Getter
     private final TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> consumer;
-    private volatile Future<?> task;
 
-    public void stop() {
-        this.consumer.stop();
-    }
+    private Future<?> task;
+    private CountDownLatch completionLatch;
 
-    public boolean stopAndAwait() {
-        this.consumer.stop();
-        return await();
-    }
-
-    public boolean await() {
-        if (task != null) {
-            //TODO: maybe task.cancel() to interrupt the consumer?
-            try {
-                this.task.get(3, TimeUnit.MINUTES);
-            } catch (ExecutionException | InterruptedException | TimeoutException e) {
-                log.warn("[{}][{}] Failed to await for consumer to stop", key, id, e);
-                return false;
-            }
-        }
-        return true;
+    public void setTask(Future<?> task) {
+        this.task = task;
+        this.completionLatch = new CountDownLatch(1);
     }
 
     public void subscribe(Set<TopicPartitionInfo> partitions) {
-        this.consumer.subscribe(partitions);
+        log.trace("[{}] Subscribing to partitions: {}", key, partitions);
+        consumer.subscribe(partitions);
     }
 
-
-    public void unsubscribe() {
-        this.consumer.unsubscribe();
+    public void initiateStop() {
+        log.debug("[{}] Initiating stop", key);
+        consumer.stop();
+        if (isRunning()) {
+            task.cancel(true);
+        }
     }
+
+    public void awaitCompletion() {
+        log.trace("[{}] Awaiting finish", key);
+        if (isRunning()) {
+            try {
+                if (!completionLatch.await(30, TimeUnit.SECONDS)) {
+                    throw new IllegalStateException("timeout of 30 seconds expired");
+                }
+            } catch (Exception e) {
+                log.warn("[{}] Failed to await for consumer to stop", key, e);
+            }
+            task = null;
+        }
+        log.trace("[{}] Awaited finish", key);
+    }
+
+    public boolean isRunning() {
+        return task != null;
+    }
+
+    public void finished() {
+        completionLatch.countDown();
+    }
+
 }

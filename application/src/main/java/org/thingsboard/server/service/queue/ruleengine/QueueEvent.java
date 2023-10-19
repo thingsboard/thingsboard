@@ -19,6 +19,6 @@ import java.io.Serializable;
 
 public enum QueueEvent implements Serializable {
 
-    CREATED, LAUNCHED, UPDATED, PARTITION_CHANGE, STOP, DELETED
+    PARTITION_CHANGE, CONFIG_UPDATE, DELETE
 
 }

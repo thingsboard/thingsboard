@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
@@ -54,12 +55,12 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
-import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.discovery.PartitionService;
@@ -67,9 +68,7 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Deque;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -680,26 +679,29 @@ public class TenantControllerTest extends AbstractControllerTest {
                 .until(() -> partitionService.resolve(ServiceType.TB_RULE_ENGINE, MAIN_QUEUE_NAME, tenantId, tenantId)
                         .getTenantId().get().isSysTenantId());
 
-        Deque<UUID> submittedMsgs = new LinkedList<>();
-        await().atLeast(8, TimeUnit.SECONDS) // due to topic-deletion-delay
-                .atMost(20, TimeUnit.SECONDS)
-                .pollInterval(1, TimeUnit.SECONDS)
-                .untilAsserted(() -> {
-                    TbMsg tbMsg = publishTbMsg(tenantId, tpi);
-                    submittedMsgs.add(tbMsg.getId());
-
-                    verify(queueAdmin, times(1)).deleteTopic(eq(isolatedTopic));
-                });
-        submittedMsgs.removeLast();
-        for (UUID msgId : submittedMsgs) {
-            verify(actorContext, timeout(2000)).tell(argThat(msg -> {
-                return msg instanceof QueueToRuleEngineMsg && ((QueueToRuleEngineMsg) msg).getMsg().getId().equals(msgId);
-            }));
+        List<UUID> submittedMsgs = new ArrayList<>();
+        long timeLeft = TimeUnit.SECONDS.toMillis(7); // based on topic-deletion-delay
+        int msgs = 100;
+        for (int i = 1; i <= msgs; i++) {
+            TbMsg tbMsg = publishTbMsg(tenantId, tpi);
+            submittedMsgs.add(tbMsg.getId());
+            Thread.sleep(timeLeft / msgs);
         }
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            verify(queueAdmin, times(1)).deleteTopic(eq(isolatedTopic));
+        });
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            for (UUID msgId : submittedMsgs) {
+                verify(actorContext).tell(argThat(msg -> {
+                    return msg instanceof QueueToRuleEngineMsg && ((QueueToRuleEngineMsg) msg).getMsg().getId().equals(msgId);
+                }));
+            }
+        });
     }
 
     private TbMsg publishTbMsg(TenantId tenantId, TopicPartitionInfo tpi) {
-        TbMsg tbMsg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", tenantId, TbMsgMetaData.EMPTY, "{\"test\":1}");
+        TbMsg tbMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, tenantId, TbMsgMetaData.EMPTY, "{\"test\":1}");
         TransportProtos.ToRuleEngineMsg msg = TransportProtos.ToRuleEngineMsg.newBuilder()
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
