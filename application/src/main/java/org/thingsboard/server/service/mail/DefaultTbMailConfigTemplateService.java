@@ -32,7 +32,15 @@ public class DefaultTbMailConfigTemplateService implements TbMailConfigTemplateS
 
     @PostConstruct
     private void postConstruct() throws IOException {
-        mailConfigTemplates = JacksonUtil.toJsonNode(new ClassPathResource("/templates/mail_config_templates.json").getFile());
+    	try (InputStream inputStream = getClass().getResourceAsStream("/templates/mail_config_templates.json")) {
+            if (inputStream == null) {
+                throw new FileNotFoundException("File not found: mail_config_templates.json");
+            }
+            mailConfigTemplates = JacksonUtil.toJsonNode(new String(inputStream.readAllBytes(), StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            log.error("Error loading mail configuration templates", e);
+            throw e;
+        }
     }
 
     @Override
