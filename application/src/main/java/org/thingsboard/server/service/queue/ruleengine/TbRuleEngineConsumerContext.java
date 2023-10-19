@@ -74,7 +74,7 @@ public class TbRuleEngineConsumerContext {
     private volatile boolean isReady = false;
 
     @PostConstruct
-    public void init() {
+    void init() {
         this.consumersExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("tb-rule-engine-consumer"));
         this.mgmtExecutor = Executors.newFixedThreadPool(mgmtThreadPoolSize, ThingsBoardThreadFactory.forName("tb-rule-engine-mgmt"));
         this.scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("tb-rule-engine-consumer-scheduler"));
