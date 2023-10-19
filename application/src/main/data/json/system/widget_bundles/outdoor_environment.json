@@ -35,6 +35,16 @@
     "simple_pressure_chart_card",
     "simple_pressure_chart_card_with_background",
     "pressure_progress_bar",
-    "pressure_progress_bar_with_background"
+    "pressure_progress_bar_with_background",
+    "wind_speed_card",
+    "wind_speed_card_with_background",
+    "horizontal_wind_speed_card",
+    "horizontal_wind_speed_card_with_background",
+    "wind_speed_chart_card",
+    "wind_speed_chart_card_with_background",
+    "simple_wind_speed_chart_card",
+    "simple_wind_speed_chart_card_with_background",
+    "wind_speed_and_direction",
+    "wind_speed_and_direction_with_background"
   ]
 }
