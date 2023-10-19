@@ -125,9 +125,12 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
         JsonNode connectivity = adminSettings.getJsonValue();
 
         ((ObjectNode)connectivity.get("http")).put("port", 8080);
+        ((ObjectNode)connectivity.get("http")).put("enabled", true);
         ((ObjectNode)connectivity.get("https")).put("enabled", true);
         ((ObjectNode)connectivity.get("https")).put("port", 444);
+        ((ObjectNode)connectivity.get("mqtt")).put("enabled", true);
         ((ObjectNode)connectivity.get("mqtts")).put("enabled", true);
+        ((ObjectNode)connectivity.get("coap")).put("enabled", true);
         ((ObjectNode)connectivity.get("coaps")).put("enabled", true);
         doPost("/api/admin/settings", adminSettings);
 
