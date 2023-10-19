@@ -1610,7 +1610,7 @@ queue:
           max-pause-between-retries: "${TB_QUEUE_RE_SQ_PROCESSING_STRATEGY_MAX_RETRY_PAUSE:5}" # Max allowed time in seconds for pause between retries.
     # After a queue is deleted (or profile's isolation option was disabled), Rule Engine will continue reading related topics during this period, before deleting the actual topics
     topic-deletion-delay: "${TB_QUEUE_RULE_ENGINE_TOPIC_DELETION_DELAY_SEC:15}"
-    # Size of the thread pool that handles management operations such as subscribe, unsubscribe, queue delete, etc.
+    # Size of the thread pool that handles such operations as partition changes, config updates, queue deletion
     management-thread-pool-size: "${TB_QUEUE_RULE_ENGINE_MGMT_THREAD_POOL_SIZE:12}"
   transport:
     # For high priority notifications that require minimum latency and processing time
