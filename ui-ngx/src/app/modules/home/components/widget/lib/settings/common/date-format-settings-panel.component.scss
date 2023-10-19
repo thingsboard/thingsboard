@@ -48,9 +48,12 @@
     }
     .mat-mdc-form-field.tb-date-format-input {
       .mat-mdc-text-field-wrapper.mdc-text-field--outlined {
-        .mat-mdc-form-field-icon-suffix {
-          display: flex;
-          align-items: center;
+        .mat-mdc-form-field-flex {
+          .mat-mdc-form-field-icon-suffix {
+            display: flex;
+            align-items: center;
+            line-height: normal;
+          }
         }
       }
     }
