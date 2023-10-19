@@ -181,7 +181,9 @@ export class ProgressBarWidgetComponent implements OnInit, OnDestroy, AfterViewI
     this.valueColor.update(this.value);
     this.barColor.update(this.value);
     const range = this.settings.tickMax - this.settings.tickMin;
-    this.barWidth = `${(this.value / range) * 100}%`;
+    let barWidthValue = ((this.value - this.settings.tickMin) / range) * 100;
+    barWidthValue = Math.max(0, Math.min(100, barWidthValue));
+    this.barWidth = `${barWidthValue}%`;
     this.cd.detectChanges();
   }
 
