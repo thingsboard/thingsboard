@@ -576,7 +576,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             TransportProtos.NotificationRequestUpdateProto updateProto = msg.getNotificationRequestUpdate();
             TenantId tenantId = toTenantId(updateProto.getTenantIdMSB(), updateProto.getTenantIdLSB());
             NotificationRequestUpdate update = JacksonUtil.fromString(updateProto.getUpdate(), NotificationRequestUpdate.class);
-            subscriptionManagerService.onNotificationRequestUpdate(tenantId, update, callback);
+            localSubscriptionService.onNotificationRequestUpdate(tenantId, update, callback);
         } else {
             throwNotHandled(msg, callback);
         }

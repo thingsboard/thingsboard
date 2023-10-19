@@ -31,9 +31,7 @@ import java.util.List;
 
 public interface SubscriptionManagerService extends ApplicationListener<PartitionChangeEvent> {
 
-    void addSubscription(TbSubscription subscription, TbCallback callback);
-
-    void cancelSubscription(String sessionId, int subscriptionId, TbCallback callback);
+    void onSubEvent(String serviceId, TbEntitySubEvent event, TbCallback empty);
 
     void onTimeSeriesUpdate(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, TbCallback callback);
 
@@ -50,7 +48,5 @@ public interface SubscriptionManagerService extends ApplicationListener<Partitio
     void onAlarmDeleted(TenantId tenantId, EntityId entityId, AlarmInfo alarm, TbCallback callback);
 
     void onNotificationUpdate(TenantId tenantId, UserId recipientId, NotificationUpdate notificationUpdate, TbCallback callback);
-
-    void onNotificationRequestUpdate(TenantId tenantId, NotificationRequestUpdate notificationRequestUpdate, TbCallback callback);
 
 }

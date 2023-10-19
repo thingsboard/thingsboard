@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,15 +22,20 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
+import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.discovery.event.ClusterTopologyChangeEvent;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscriptionUpdate;
 import org.thingsboard.server.service.ws.telemetry.sub.AlarmSubscriptionUpdate;
 import org.thingsboard.server.service.ws.telemetry.sub.TelemetrySubscriptionUpdate;
@@ -42,7 +47,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 @Slf4j
 @TbCoreComponent
@@ -50,7 +58,11 @@ import java.util.concurrent.ExecutorService;
 public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionService {
 
     private final Set<TopicPartitionInfo> currentPartitions = ConcurrentHashMap.newKeySet();
-    private final Map<String, Map<Integer, TbSubscription>> subscriptionsBySessionId = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Map<Integer, TbSubscription>> subscriptionsBySessionId = new ConcurrentHashMap<>();
+    private final ConcurrentMap<EntityId, TbEntityLocalSubsInfo> subscriptionsByEntityId = new ConcurrentHashMap<>();
+
+    @Autowired
+    private TbServiceInfoProvider serviceInfoProvider;
 
     @Autowired
     private PartitionService partitionService;
@@ -62,6 +74,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     @Lazy
     private SubscriptionManagerService subscriptionManagerService;
 
+    private String serviceId;
     private ExecutorService subscriptionUpdateExecutor;
 
     private TbApplicationEventListener<PartitionChangeEvent> partitionChangeListener = new TbApplicationEventListener<>() {
@@ -95,6 +108,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     @PostConstruct
     public void initExecutor() {
         subscriptionUpdateExecutor = ThingsBoardExecutors.newWorkStealingPool(20, getClass());
+        serviceId = serviceInfoProvider.getServiceId();
     }
 
     @PreDestroy
@@ -160,21 +174,43 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
 
     @Override
     @SuppressWarnings("unchecked")
-    public void onSubscriptionUpdate(String sessionId, AlarmSubscriptionUpdate update, TbCallback callback) {
-        TbSubscription subscription = subscriptionsBySessionId
-                .getOrDefault(sessionId, Collections.emptyMap()).get(update.getSubscriptionId());
-        if (subscription != null && subscription.getType() == TbSubscriptionType.ALARMS) {
-            subscriptionUpdateExecutor.submit(() -> subscription.getUpdateProcessor().accept(subscription, update));
-        }
-        callback.onSuccess();
+    public void onAlarmUpdate(EntityId entityId, AlarmSubscriptionUpdate update, TbCallback callback) {
+        processSubscriptionUpdate(entityId,
+                sub -> TbSubscriptionType.ALARMS.equals(sub.getType()),
+                update, callback);
     }
 
     @Override
-    public void onSubscriptionUpdate(String sessionId, int subscriptionId, NotificationsSubscriptionUpdate update, TbCallback callback) {
-        TbSubscription subscription = subscriptionsBySessionId.getOrDefault(sessionId, Collections.emptyMap()).get(subscriptionId);
-        if (subscription != null && (subscription.getType() == TbSubscriptionType.NOTIFICATIONS
-                || subscription.getType() == TbSubscriptionType.NOTIFICATIONS_COUNT)) {
-            subscriptionUpdateExecutor.submit(() -> subscription.getUpdateProcessor().accept(subscription, update));
+    public void onNotificationUpdate(EntityId entityId, NotificationsSubscriptionUpdate update, TbCallback callback) {
+        processSubscriptionUpdate(entityId,
+                sub -> TbSubscriptionType.NOTIFICATIONS.equals(sub.getType()) || TbSubscriptionType.NOTIFICATIONS_COUNT.equals(sub.getType()),
+                update, callback);
+    }
+
+    public void onNotificationRequestUpdate(TenantId tenantId, NotificationRequestUpdate update, TbCallback callback) {
+        log.trace("[{}] Received notification request update: {}", tenantId, update);
+        NotificationsSubscriptionUpdate theUpdate = new NotificationsSubscriptionUpdate(update);
+        subscriptionsByEntityId.values().forEach(subInfo -> {
+            if(subInfo.notifications && tenantId.equals(subInfo.getTenantId()) && EntityType.USER.equals(subInfo.getEntityId().getEntityType())){
+                subInfo.getSubs().forEach(sub -> {
+                    subscriptionUpdateExecutor.submit(() -> sub.getUpdateProcessor().accept(sub, theUpdate));
+                });
+            }
+        });
+        callback.onSuccess();
+    }
+
+    private <T> void processSubscriptionUpdate(EntityId entityId,
+                                               Predicate<TbSubscription<?>> filter,
+                                               T update, TbCallback callback) {
+        log.trace("[{}] Received subscription update: {}", entityId, update);
+        var subs = subscriptionsByEntityId.get(entityId);
+        if (subs != null) {
+            subs.getSubs().forEach(sub -> {
+                if (filter.test(sub)) {
+                    subscriptionUpdateExecutor.submit(() -> sub.getUpdateProcessor().accept(sub, update));
+                }
+            });
         }
         callback.onSuccess();
     }
@@ -216,8 +252,33 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     }
 
     private void registerSubscription(TbSubscription subscription) {
+        TenantId tenantId = subscription.getTenantId();
+        EntityId entityId = subscription.getEntityId();
+        log.trace("[{}][{}] Register subscription: {}", tenantId, entityId, subscription);
         Map<Integer, TbSubscription> sessionSubscriptions = subscriptionsBySessionId.computeIfAbsent(subscription.getSessionId(), k -> new ConcurrentHashMap<>());
         sessionSubscriptions.put(subscription.getSubscriptionId(), subscription);
+        TbEntityLocalSubsInfo entitySubs = subscriptionsByEntityId.computeIfAbsent(entityId, TbEntityLocalSubsInfo::new);
+        entitySubs.getLock().lock();
+        try {
+            TbEntitySubEvent event = entitySubs.add(subscription);
+            if (event != null) {
+                pushSubEventToManagerService(tenantId, entityId, event);
+            }
+        } finally {
+            entitySubs.getLock().unlock();
+        }
+    }
+
+    private void pushSubEventToManagerService(TenantId tenantId, EntityId entityId, TbEntitySubEvent event) {
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
+        if (currentPartitions.contains(tpi)) {
+            // Subscription is managed on the same server;
+            subscriptionManagerService.onSubEvent(serviceId, event, TbCallback.EMPTY);
+        } else {
+            // Push to the queue;
+            TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toNewSubEventProto(event);
+            clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
+        }
     }
 
 }
