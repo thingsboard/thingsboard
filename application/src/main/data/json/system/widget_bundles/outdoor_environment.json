@@ -15,6 +15,16 @@
     "temperature_chart_card",
     "temperature_chart_card_with_background",
     "simple_temperature_chart_card",
-    "simple_temperature_chart_card_with_background"
+    "simple_temperature_chart_card_with_background",
+    "humidity_card",
+    "humidity_card_with_background",
+    "horizontal_humidity_card",
+    "horizontal_humidity_card_with_background",
+    "humidity_chart_card",
+    "humidity_chart_card_with_background",
+    "simple_humidity_chart_card",
+    "simple_humidity_chart_card_with_background",
+    "humidity_progress_bar",
+    "humidity_progress_bar_with_background"
   ]
 }
