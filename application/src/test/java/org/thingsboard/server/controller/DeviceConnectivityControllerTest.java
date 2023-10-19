@@ -17,12 +17,14 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
 import org.springframework.context.annotation.Bean;
@@ -32,6 +34,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
@@ -44,6 +47,7 @@ import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileCon
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
@@ -65,12 +69,7 @@ import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.MQTTS;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.CA_ROOT_CERT_PEM;
 
 @TestPropertySource(properties = {
-        "device.connectivity.https.enabled=true",
-        "device.connectivity.http.port=8080",
-        "device.connectivity.https.port=444",
-        "device.connectivity.mqtts.enabled=true",
-        "device.connectivity.mqtts.pem_cert_file=/tmp/" + CA_ROOT_CERT_PEM,
-        "device.connectivity.coaps.enabled=true",
+        "device.connectivity.mqtts.pem_cert_file=/tmp/" + CA_ROOT_CERT_PEM
 })
 @ContextConfiguration(classes = {DeviceConnectivityControllerTest.Config.class})
 @DaoSqlTest
@@ -121,6 +120,16 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
         executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(8, getClass()));
 
         loginSysAdmin();
+
+        AdminSettings adminSettings = doGet("/api/admin/settings/connectivity", AdminSettings.class);
+        JsonNode connectivity = adminSettings.getJsonValue();
+
+        ((ObjectNode)connectivity.get("http")).put("port", 8080);
+        ((ObjectNode)connectivity.get("https")).put("enabled", true);
+        ((ObjectNode)connectivity.get("https")).put("port", 444);
+        ((ObjectNode)connectivity.get("mqtts")).put("enabled", true);
+        ((ObjectNode)connectivity.get("coaps")).put("enabled", true);
+        doPost("/api/admin/settings", adminSettings);
 
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
