@@ -83,7 +83,7 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     private final DeviceProfileService deviceProfileService;
     private final AdminSettingsService adminSettingsService;
 
-    @Value("${device.connectivity.mqtts.pem_cert_file}")
+    @Value("${device.connectivity.mqtts.pem_cert_file:}")
     private String mqttsPemCertFile;
 
     @PostConstruct
