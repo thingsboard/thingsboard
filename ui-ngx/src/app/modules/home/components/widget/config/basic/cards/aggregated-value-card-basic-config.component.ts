@@ -117,10 +117,11 @@ export class AggregatedValueCardBasicConfigComponent extends BasicWidgetConfigCo
   }
 
   protected defaultLatestDataKeys(configData: WidgetConfigComponentData): DataKey[] {
-    return this.createDefaultAggregatedValueLatestDataKeys(configData, 'watermeter', 'm³');
+    return this.createDefaultAggregatedValueLatestDataKeys(configData, 'watermeter', 'm³', 0);
   }
 
-  createDefaultAggregatedValueLatestDataKeys(configData: WidgetConfigComponentData, keyName: string, units): DataKey[] {
+  createDefaultAggregatedValueLatestDataKeys(configData: WidgetConfigComponentData, keyName: string,
+                                             units: string, decimals: number): DataKey[] {
     let centerKeySettings: AggregatedValueCardKeySettings = {
       position: AggregatedValueCardKeyPosition.center,
       font: {
@@ -189,7 +190,7 @@ export class AggregatedValueCardBasicConfigComponent extends BasicWidgetConfigCo
     }
     return [
       {
-        name: keyName, label: 'Latest', type: DataKeyType.timeseries, units, decimals: 0,
+        name: keyName, label: 'Latest', type: DataKeyType.timeseries, units, decimals,
         aggregationType: AggregationType.NONE,
         settings: centerKeySettings
       },
