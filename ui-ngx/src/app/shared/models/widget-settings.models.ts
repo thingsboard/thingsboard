@@ -422,15 +422,22 @@ export const overlayStyle = (overlay: OverlaySettings): ComponentStyle => (
   }
 );
 
-export const getDataKey = (datasources?: Datasource[]): DataKey => {
+export const getDataKey = (datasources?: Datasource[], index = 0): DataKey => {
   if (datasources && datasources.length) {
     const dataKeys = datasources[0].dataKeys;
-    if (dataKeys && dataKeys.length) {
-      return dataKeys[0];
+    if (dataKeys && dataKeys.length > index) {
+      return dataKeys[index];
     }
   }
   return null;
 };
+
+export const updateDataKeys = (datasources: Datasource[], dataKeys: DataKey[]): void => {
+  if (datasources && datasources.length) {
+    datasources[0].dataKeys = dataKeys;
+  }
+};
+
 
 export const getDataKeyByLabel = (datasources: Datasource[], label: string): DataKey => {
   if (datasources && datasources.length) {
