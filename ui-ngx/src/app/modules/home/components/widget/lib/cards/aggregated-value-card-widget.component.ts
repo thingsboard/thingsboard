@@ -179,12 +179,10 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
       } as TbFlotSettings;
       this.flot = new TbFlot(this.ctx, 'line', $(this.chartElement.nativeElement), settings);
       this.tickMin$ = this.flot.yMin$.pipe(
-        map((value) => formatValue(value, (this.flotDataKey?.decimals || this.ctx.decimals),
-            (this.flotDataKey?.units || this.ctx.units))
+        map((value) => formatValue(value, (this.flotDataKey?.decimals || this.ctx.decimals))
       ));
       this.tickMax$ = this.flot.yMax$.pipe(
-        map((value) => formatValue(value, (this.flotDataKey?.decimals || this.ctx.decimals),
-          (this.flotDataKey?.units || this.ctx.units))
+        map((value) => formatValue(value, (this.flotDataKey?.decimals || this.ctx.decimals))
         ));
     }
     if (this.settings.autoScale && this.showValues) {
