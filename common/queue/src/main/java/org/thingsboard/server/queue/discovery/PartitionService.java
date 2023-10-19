@@ -37,6 +37,8 @@ public interface PartitionService {
 
     boolean isMyPartition(ServiceType serviceType, TenantId tenantId, EntityId entityId);
 
+    List<Integer> getMyPartitions(QueueKey queueKey);
+
     /**
      * Received from the Discovery service when network topology is changed.
      * @param currentService - current service information {@link org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo}

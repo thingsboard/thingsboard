@@ -33,7 +33,7 @@ public class NotificationsCountSubscription extends TbSubscription<Notifications
 
     @Builder
     public NotificationsCountSubscription(String serviceId, String sessionId, int subscriptionId, TenantId tenantId, EntityId entityId,
-                                          BiConsumer<NotificationsCountSubscription, NotificationsSubscriptionUpdate> updateProcessor) {
+                                          BiConsumer<TbSubscription<NotificationsSubscriptionUpdate>, NotificationsSubscriptionUpdate> updateProcessor) {
         super(serviceId, sessionId, subscriptionId, tenantId, entityId, TbSubscriptionType.NOTIFICATIONS_COUNT, updateProcessor);
     }
 
