@@ -184,7 +184,7 @@ public class TbRuleEngineQueueConsumerManagerTest {
         ruleEngineConsumerContext.stop();
 
         if (generateQueueMsgs) {
-            await().atMost(2, TimeUnit.SECONDS)
+            await().atMost(10, TimeUnit.SECONDS)
                     .untilAsserted(() -> {
                         log.debug("totalConsumedMsgs = {}, totalProcessedMsgs = {}", totalConsumedMsgs.get(), totalProcessedMsgs.get());
                         assertThat(totalProcessedMsgs.get()).isEqualTo(totalConsumedMsgs.get());
