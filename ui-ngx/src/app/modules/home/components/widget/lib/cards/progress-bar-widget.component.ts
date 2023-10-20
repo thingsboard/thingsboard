@@ -174,7 +174,7 @@ export class ProgressBarWidgetComponent implements OnInit, OnDestroy, AfterViewI
     this.value = 0;
     if (tsValue && isDefinedAndNotNull(tsValue[1]) && isNumeric(tsValue[1])) {
       this.value = tsValue[1];
-      this.valueText = formatValue(this.value, this.decimals, this.units, true);
+      this.valueText = formatValue(this.value, this.decimals, this.units, false);
     } else {
       this.valueText = 'N/A';
     }

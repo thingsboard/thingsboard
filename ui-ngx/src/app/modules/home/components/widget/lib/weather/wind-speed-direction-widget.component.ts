@@ -174,7 +174,7 @@ export class WindSpeedDirectionWidgetComponent implements OnInit, OnDestroy, Aft
         this.windDirection = windDirectionTsValue[1];
         if (!this.centerValueDataKey) {
           value = this.windDirection;
-          this.centerValueText = formatValue(value, 0, '') + '°';
+          this.centerValueText = formatValue(value, 0, '', false) + '°';
         }
       }
     }
@@ -182,7 +182,7 @@ export class WindSpeedDirectionWidgetComponent implements OnInit, OnDestroy, Aft
       const centerValueTsValue = getSingleTsValueByDataKey(this.ctx.data, this.centerValueDataKey);
       if (centerValueTsValue && isDefinedAndNotNull(centerValueTsValue[1]) && isNumeric(centerValueTsValue[1])) {
         value = centerValueTsValue[1];
-        this.centerValueText = formatValue(value, this.decimals, '', true);
+        this.centerValueText = formatValue(value, this.decimals, '', false);
       }
     }
     this.centerValueColor.update(value);

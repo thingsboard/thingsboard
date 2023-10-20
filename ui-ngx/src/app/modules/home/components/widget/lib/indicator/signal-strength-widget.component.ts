@@ -232,7 +232,7 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
     if (!this.noData) {
       this.rssi = Number(value);
       if (this.showTooltipValue) {
-        this.tooltipValueText = formatValue(value, this.decimals, this.units, true);
+        this.tooltipValueText = formatValue(value, this.decimals, this.units, false);
       }
     } else {
       this.rssi = -100;
