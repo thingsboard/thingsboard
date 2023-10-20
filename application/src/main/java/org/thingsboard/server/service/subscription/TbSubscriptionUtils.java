@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
 import org.thingsboard.server.gen.transport.TransportProtos.KeyValueType;
@@ -41,8 +42,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.TbAlarmUpdateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAttributeDeleteProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAttributeSubscriptionProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAttributeUpdateProto;
-import org.thingsboard.server.gen.transport.TransportProtos.TbSubscriptionCloseProto;
-import org.thingsboard.server.gen.transport.TransportProtos.TbSubscriptionKetStateProto;
+import org.thingsboard.server.gen.transport.TransportProtos.TbEntitySubEventProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbSubscriptionProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbSubscriptionUpdateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbSubscriptionUpdateTsValue;
@@ -62,6 +62,7 @@ import org.thingsboard.server.service.ws.telemetry.sub.TelemetrySubscriptionUpda
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -69,73 +70,43 @@ import java.util.UUID;
 
 public class TbSubscriptionUtils {
 
-    public static ToCoreMsg toNewSubscriptionProto(TbSubscription subscription) {
+    public static ToCoreMsg toSubEventProto(String serviceId, TbEntitySubEvent event) {
         SubscriptionMgrMsgProto.Builder msgBuilder = SubscriptionMgrMsgProto.newBuilder();
-        TbSubscriptionProto subscriptionProto = TbSubscriptionProto.newBuilder()
-                .setServiceId(subscription.getServiceId())
-                .setSessionId(subscription.getSessionId())
-                .setSubscriptionId(subscription.getSubscriptionId())
-                .setTenantIdMSB(subscription.getTenantId().getId().getMostSignificantBits())
-                .setTenantIdLSB(subscription.getTenantId().getId().getLeastSignificantBits())
-                .setEntityType(subscription.getEntityId().getEntityType().name())
-                .setEntityIdMSB(subscription.getEntityId().getId().getMostSignificantBits())
-                .setEntityIdLSB(subscription.getEntityId().getId().getLeastSignificantBits()).build();
-
-        switch (subscription.getType()) {
-            case TIMESERIES:
-                TbTimeseriesSubscription tSub = (TbTimeseriesSubscription) subscription;
-                TbTimeSeriesSubscriptionProto.Builder tSubProto = TbTimeSeriesSubscriptionProto.newBuilder()
-                        .setSub(subscriptionProto)
-                        .setAllKeys(tSub.isAllKeys());
-                tSub.getKeyStates().forEach((key, value) -> tSubProto.addKeyStates(
-                        TbSubscriptionKetStateProto.newBuilder().setKey(key).setTs(value).build()));
-                tSubProto.setStartTime(tSub.getStartTime());
-                tSubProto.setEndTime(tSub.getEndTime());
-                tSubProto.setLatestValues(tSub.isLatestValues());
-                msgBuilder.setTelemetrySub(tSubProto.build());
-                break;
-            case ATTRIBUTES:
-                TbAttributeSubscription aSub = (TbAttributeSubscription) subscription;
-                TbAttributeSubscriptionProto.Builder aSubProto = TbAttributeSubscriptionProto.newBuilder()
-                        .setSub(subscriptionProto)
-                        .setAllKeys(aSub.isAllKeys())
-                        .setScope(aSub.getScope().name());
-                aSub.getKeyStates().forEach((key, value) -> aSubProto.addKeyStates(
-                        TbSubscriptionKetStateProto.newBuilder().setKey(key).setTs(value).build()));
-                msgBuilder.setAttributeSub(aSubProto.build());
-                break;
-            case ALARMS:
-                TbAlarmsSubscription alarmSub = (TbAlarmsSubscription) subscription;
-                TransportProtos.TbAlarmSubscriptionProto.Builder alarmSubProto = TransportProtos.TbAlarmSubscriptionProto.newBuilder()
-                        .setSub(subscriptionProto)
-                        .setTs(alarmSub.getTs());
-                msgBuilder.setAlarmSub(alarmSubProto.build());
-                break;
-            case NOTIFICATIONS:
-                NotificationsSubscription notificationsSub = (NotificationsSubscription) subscription;
-                msgBuilder.setNotificationsSub(TransportProtos.NotificationsSubscriptionProto.newBuilder()
-                        .setSub(subscriptionProto)
-                        .setLimit(notificationsSub.getLimit()));
-                break;
-            case NOTIFICATIONS_COUNT:
-                NotificationsCountSubscription notificationsCountSub = (NotificationsCountSubscription) subscription;
-                msgBuilder.setNotificationsCountSub(TransportProtos.NotificationsCountSubscriptionProto.newBuilder()
-                        .setSub(subscriptionProto));
-                break;
+        TbSubscriptionsInfo info = event.getInfo();
+        var builder = TbEntitySubEventProto.newBuilder()
+                .setServiceId(serviceId)
+                .setTenantIdMSB(event.getTenantId().getId().getMostSignificantBits())
+                .setTenantIdLSB(event.getTenantId().getId().getLeastSignificantBits())
+                .setEntityType(event.getEntityId().getEntityType().name())
+                .setEntityIdMSB(event.getEntityId().getId().getMostSignificantBits())
+                .setEntityIdLSB(event.getEntityId().getId().getLeastSignificantBits())
+                .setType(event.getType().name())
+                .setNotifications(info.notifications)
+                .setAlarms(info.alarms)
+                .setTsAllKeys(info.tsAllKeys)
+                .setAttrAllKeys(info.attrAllKeys);
+        if (info.tsKeys != null) {
+            builder.addAllTsKeys(info.tsKeys);
         }
-        return ToCoreMsg.newBuilder().setToSubscriptionMgrMsg(msgBuilder.build()).build();
+        if (info.attrKeys != null) {
+            builder.addAllAttrKeys(info.attrKeys);
+        }
+        msgBuilder.setSubEvent(builder);
+        return ToCoreMsg.newBuilder().setToSubscriptionMgrMsg(msgBuilder).build();
     }
 
-    public static ToCoreMsg toCloseSubscriptionProto(TbSubscription subscription) {
-        SubscriptionMgrMsgProto.Builder msgBuilder = SubscriptionMgrMsgProto.newBuilder();
-        TbSubscriptionCloseProto closeProto = TbSubscriptionCloseProto.newBuilder()
-                .setSessionId(subscription.getSessionId())
-                .setSubscriptionId(subscription.getSubscriptionId()).build();
-        msgBuilder.setSubClose(closeProto);
-        return ToCoreMsg.newBuilder().setToSubscriptionMgrMsg(msgBuilder.build()).build();
+    public static TbEntitySubEvent fromProto(TbEntitySubEventProto proto) {
+        TbSubscriptionsInfo info = new TbSubscriptionsInfo(proto.getNotifications(), proto.getAlarms(),
+                proto.getTsAllKeys(), proto.getTsKeysCount() > 0 ? new HashSet<>(proto.getTsKeysList()) : null,
+                proto.getAttrAllKeys(), proto.getAttrKeysCount() > 0 ? new HashSet<>(proto.getAttrKeysCount()) : null);
+        return TbEntitySubEvent.builder()
+                .tenantId(TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())))
+                .entityId(EntityIdFactory.getByTypeAndUuid(proto.getEntityType(), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB())))
+                .type(ComponentLifecycleEvent.valueOf(proto.getType()))
+                .info(info).build();
     }
 
-    public static TbSubscription fromProto(TbAttributeSubscriptionProto attributeSub) {
+    public static TbAttributeSubscription fromProto(TbAttributeSubscriptionProto attributeSub) {
         TbSubscriptionProto subProto = attributeSub.getSub();
         TbAttributeSubscription.TbAttributeSubscriptionBuilder builder = TbAttributeSubscription.builder()
                 .serviceId(subProto.getServiceId())
@@ -152,7 +123,7 @@ public class TbSubscriptionUtils {
         return builder.build();
     }
 
-    public static TbSubscription fromProto(TbTimeSeriesSubscriptionProto telemetrySub) {
+    public static TbTimeseriesSubscription fromProto(TbTimeSeriesSubscriptionProto telemetrySub) {
         TbSubscriptionProto subProto = telemetrySub.getSub();
         TbTimeseriesSubscription.TbTimeseriesSubscriptionBuilder builder = TbTimeseriesSubscription.builder()
                 .serviceId(subProto.getServiceId())

@@ -66,6 +66,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMs
 import org.thingsboard.server.gen.transport.TransportProtos.ToOtaPackageStateServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.TbEntitySubEventProto;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
@@ -514,19 +515,19 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     }
 
     private void forwardToSubMgrService(SubscriptionMgrMsgProto msg, TbCallback callback) {
-        if (msg.hasAttributeSub()) {
-            subscriptionManagerService.addSubscription(TbSubscriptionUtils.fromProto(msg.getAttributeSub()), callback);
+        if (msg.hasSubEvent()) {
+            TbEntitySubEventProto subEvent = msg.getSubEvent();
+            subscriptionManagerService.onSubEvent(subEvent.getServiceId(), TbSubscriptionUtils.fromProto(subEvent), callback);
         } else if (msg.hasTelemetrySub()) {
-            subscriptionManagerService.addSubscription(TbSubscriptionUtils.fromProto(msg.getTelemetrySub()), callback);
+            // Deprecated, for removal; Left intentionally to avoid throwNotHandled
         } else if (msg.hasAlarmSub()) {
-            subscriptionManagerService.addSubscription(TbSubscriptionUtils.fromProto(msg.getAlarmSub()), callback);
+            // Deprecated, for removal; Left intentionally to avoid throwNotHandled
         } else if (msg.hasNotificationsSub()) {
-            subscriptionManagerService.addSubscription(TbSubscriptionUtils.fromProto(msg.getNotificationsSub()), callback);
+            // Deprecated, for removal; Left intentionally to avoid throwNotHandled
         } else if (msg.hasNotificationsCountSub()) {
-            subscriptionManagerService.addSubscription(TbSubscriptionUtils.fromProto(msg.getNotificationsCountSub()), callback);
+            // Deprecated, for removal; Left intentionally to avoid throwNotHandled
         } else if (msg.hasSubClose()) {
-            TbSubscriptionCloseProto closeProto = msg.getSubClose();
-            subscriptionManagerService.cancelSubscription(closeProto.getSessionId(), closeProto.getSubscriptionId(), callback);
+            // Deprecated, for removal; Left intentionally to avoid throwNotHandled
         } else if (msg.hasTsUpdate()) {
             TbTimeSeriesUpdateProto proto = msg.getTsUpdate();
             long tenantIdMSB = proto.getTenantIdMSB();

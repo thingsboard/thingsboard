@@ -269,8 +269,9 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
     }
 
     private void processAttributesUpdate(String targetId, EntityId entityId, List<AttributeKvEntry> update) {
+        List<TsKvEntry> tsKvEntryList = update.stream().map(attr -> new BasicTsKvEntry(attr.getLastUpdateTs(), attr)).collect(Collectors.toList());
         if (serviceId.equals(targetId)) {
-            localSubscriptionService.onAttributesUpdate(entityId, update, TbCallback.EMPTY);
+            localSubscriptionService.onAttributesUpdate(entityId, tsKvEntryList, TbCallback.EMPTY);
         } else {
             TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, targetId);
             //TODO: ignoreEmptyUpdates ???

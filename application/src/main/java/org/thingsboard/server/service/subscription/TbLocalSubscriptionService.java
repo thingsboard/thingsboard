@@ -32,17 +32,15 @@ import java.util.List;
 
 public interface TbLocalSubscriptionService {
 
-    void addSubscription(TbSubscription subscription);
+    void addSubscription(TbSubscription<?> subscription);
 
     void cancelSubscription(String sessionId, int subscriptionId);
 
     void cancelAllSessionSubscriptions(String sessionId);
 
-    void onSubscriptionUpdate(String sessionId, TelemetrySubscriptionUpdate update, TbCallback callback);
-
     void onTimeSeriesUpdate(EntityId entityId, List<TsKvEntry> update, TbCallback callback);
 
-    void onAttributesUpdate(EntityId entityId, List<AttributeKvEntry> update, TbCallback callback);
+    void onAttributesUpdate(EntityId entityId, List<TsKvEntry> update, TbCallback callback);
 
     void onAlarmUpdate(EntityId entityId, AlarmInfo alarm, boolean deleted, TbCallback callback);
 

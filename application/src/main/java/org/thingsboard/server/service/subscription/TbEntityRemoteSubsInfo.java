@@ -23,16 +23,15 @@ public class TbEntityRemoteSubsInfo {
     public boolean updateAndCheckIsEmpty(String serviceId, TbEntitySubEvent event) {
         switch (event.getType()) {
             case CREATED:
-                var newSubsInfo = new TbSubscriptionsInfo();
-                newSubsInfo.update(event);
-                subs.put(serviceId, newSubsInfo);
+                subs.put(serviceId, event.getInfo());
                 break;
             case UPDATED:
-                var oldSubsInfo = subs.computeIfAbsent(serviceId, id -> new TbSubscriptionsInfo());
-                oldSubsInfo.update(event);
-                if (oldSubsInfo.isEmpty()) {
+                var newSubInfo = event.getInfo();
+                if (newSubInfo.isEmpty()) {
                     subs.remove(serviceId);
                     return isEmpty();
+                } else {
+                    subs.put(serviceId, newSubInfo);
                 }
                 break;
             case DELETED:

@@ -9,6 +9,7 @@ import org.thingsboard.server.service.ws.notification.sub.NotificationsCountSubs
 import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscription;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
@@ -18,7 +19,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * Information about the local websocket subscriptions.
  */
 @RequiredArgsConstructor
-public class TbEntityLocalSubsInfo extends TbSubscriptionsInfo {
+public class TbEntityLocalSubsInfo {
 
     @Getter
     private final TenantId tenantId;
@@ -27,51 +28,117 @@ public class TbEntityLocalSubsInfo extends TbSubscriptionsInfo {
     @Getter
     private final Lock lock = new ReentrantLock();
     @Getter
-    private final Set<TbSubscription> subs = ConcurrentHashMap.newKeySet();
+    private final Set<TbSubscription<?>> subs = ConcurrentHashMap.newKeySet();
 
-    public TbEntitySubEvent add(TbSubscription subscription) {
+    // volatile every field or RW locks?
+    private TbSubscriptionsInfo state = new TbSubscriptionsInfo();
+
+    public TbEntitySubEvent add(TbSubscription<?> subscription) {
         subs.add(subscription);
+        boolean stateChanged = false;
         if (subscription instanceof NotificationsSubscription || subscription instanceof NotificationsCountSubscription) {
-            if (!notifications) {
-                notifications = true;
-                return newEvent().notifications(true).build();
+            if (!state.notifications) {
+                state.notifications = true;
+                stateChanged = true;
             }
         } else if (subscription instanceof TbAlarmsSubscription) {
-            if (!alarms) {
-                alarms = true;
-                return newEvent().alarms(true).build();
+            if (!state.alarms) {
+                state.alarms = true;
+                stateChanged = true;
             }
         } else if (subscription instanceof TbTimeseriesSubscription) {
             var tsSub = (TbTimeseriesSubscription) subscription;
-            if (!tsAllKeys && tsSub.isAllKeys()) {
-                tsAllKeys = true;
-                return newEvent().tsAllKeys(true).build();
-            }
-            if (tsKeys == null) {
-                tsKeys = new HashSet<>(tsSub.getKeyStates().keySet());
-                return newEvent().tsKeys(tsKeys).build();
-            } else if (tsKeys.addAll(tsSub.getKeyStates().keySet())) {
-                //TODO: We may want to send only new keys.
-                return newEvent().tsKeys(tsKeys).build();
+            if (!state.tsAllKeys) {
+                if (tsSub.isAllKeys()) {
+                    state.tsAllKeys = true;
+                    stateChanged = true;
+                } else {
+                    if (state.tsKeys == null) {
+                        state.tsKeys = new HashSet<>(tsSub.getKeyStates().keySet());
+                        stateChanged = true;
+                    } else if (state.tsKeys.addAll(tsSub.getKeyStates().keySet())) {
+                        stateChanged = true;
+                    }
+                }
             }
         } else if (subscription instanceof TbAttributeSubscription) {
             var attrSub = (TbAttributeSubscription) subscription;
-            if (!attrAllKeys && attrSub.isAllKeys()) {
-                attrAllKeys = true;
-                return newEvent().attrAllKeys(true).build();
-            }
-            if (attrKeys == null) {
-                attrKeys = new HashSet<>(attrSub.getKeyStates().keySet());
-                return newEvent().attrKeys(attrKeys).build();
-            } else if (attrKeys.addAll(attrSub.getKeyStates().keySet())) {
-                //TODO: We may want to send only new keys.
-                return newEvent().attrKeys(attrKeys).build();
+            if (!state.attrAllKeys) {
+                if (attrSub.isAllKeys()) {
+                    state.attrAllKeys = true;
+                    stateChanged = true;
+                } else {
+                    if (state.attrKeys == null) {
+                        state.attrKeys = new HashSet<>(attrSub.getKeyStates().keySet());
+                        stateChanged = true;
+                    } else if (state.attrKeys.addAll(attrSub.getKeyStates().keySet())) {
+                        stateChanged = true;
+                    }
+                }
             }
         }
-        return null;
+        return stateChanged ? toEvent(ComponentLifecycleEvent.UPDATED) : null;
     }
 
-    private TbEntitySubEvent.TbEntitySubEventBuilder newEvent() {
-        return TbEntitySubEvent.builder().entityId(entityId).type(subs.isEmpty() ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+    public TbEntitySubEvent remove(TbSubscription<?> toRemove) {
+        if (!subs.remove(toRemove)) {
+            return null;
+        }
+        if (subs.isEmpty()) {
+            return TbEntitySubEvent.builder().entityId(entityId).type(ComponentLifecycleEvent.DELETED).build();
+        }
+        TbSubscriptionsInfo oldState = state.copy();
+        TbSubscriptionsInfo newState = new TbSubscriptionsInfo();
+        for (TbSubscription<?> subscription : subs) {
+            if (subscription instanceof NotificationsSubscription || subscription instanceof NotificationsCountSubscription) {
+                if (!newState.notifications) {
+                    newState.notifications = true;
+                }
+            } else if (subscription instanceof TbAlarmsSubscription) {
+                if (!newState.alarms) {
+                    newState.alarms = true;
+                }
+            } else if (subscription instanceof TbTimeseriesSubscription) {
+                var tsSub = (TbTimeseriesSubscription) subscription;
+                if (!newState.tsAllKeys && tsSub.isAllKeys()) {
+                    newState.tsAllKeys = true;
+                    continue;
+                }
+                if (newState.tsKeys == null) {
+                    newState.tsKeys = new HashSet<>(tsSub.getKeyStates().keySet());
+                } else {
+                    newState.tsKeys.addAll(tsSub.getKeyStates().keySet());
+                }
+            } else if (subscription instanceof TbAttributeSubscription) {
+                var attrSub = (TbAttributeSubscription) subscription;
+                if (!newState.attrAllKeys && attrSub.isAllKeys()) {
+                    newState.attrAllKeys = true;
+                    continue;
+                }
+                if (newState.attrKeys == null) {
+                    newState.attrKeys = new HashSet<>(attrSub.getKeyStates().keySet());
+                } else {
+                    newState.attrKeys.addAll(attrSub.getKeyStates().keySet());
+                }
+            }
+        }
+        if (newState.equals(oldState)) {
+            return null;
+        } else {
+            this.state = newState;
+            return toEvent(ComponentLifecycleEvent.UPDATED);
+        }
+    }
+
+    public TbEntitySubEvent toEvent(ComponentLifecycleEvent type) {
+        var result = TbEntitySubEvent.builder().entityId(entityId).type(type);
+        if (!ComponentLifecycleEvent.DELETED.equals(type)) {
+            result.info(state.copy());
+        }
+        return result.build();
+    }
+
+    public boolean isNf() {
+        return state.notifications;
     }
 }
