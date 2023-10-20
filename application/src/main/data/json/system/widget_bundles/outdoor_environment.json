@@ -45,6 +45,14 @@
     "simple_wind_speed_chart_card",
     "simple_wind_speed_chart_card_with_background",
     "wind_speed_and_direction",
-    "wind_speed_and_direction_with_background"
+    "wind_speed_and_direction_with_background",
+    "rainfall_card",
+    "rainfall_card_with_background",
+    "horizontal_rainfall_card",
+    "horizontal_rainfall_card_with_background",
+    "rainfall_chart_card",
+    "rainfall_chart_card_with_background",
+    "simple_rainfall_chart_card",
+    "simple_rainfall_chart_card_with_background"
   ]
 }
