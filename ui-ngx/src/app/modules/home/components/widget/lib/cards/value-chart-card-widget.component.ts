@@ -194,7 +194,7 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
       let value;
       if (tsValue) {
         value = tsValue[1];
-        this.valueText = formatValue(value, this.decimals, this.units, true);
+        this.valueText = formatValue(value, this.decimals, this.units, false);
       } else {
         this.valueText = 'N/A';
       }

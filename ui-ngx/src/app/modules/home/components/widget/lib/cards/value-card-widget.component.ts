@@ -182,7 +182,7 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
     if (tsValue) {
       ts = tsValue[0];
       value = tsValue[1];
-      this.valueText = formatValue(value, this.decimals, this.units, true);
+      this.valueText = formatValue(value, this.decimals, this.units, false);
     } else {
       this.valueText = 'N/A';
     }
