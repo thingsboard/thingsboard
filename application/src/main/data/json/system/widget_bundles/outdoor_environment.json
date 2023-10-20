@@ -53,6 +53,14 @@
     "rainfall_chart_card",
     "rainfall_chart_card_with_background",
     "simple_rainfall_chart_card",
-    "simple_rainfall_chart_card_with_background"
+    "simple_rainfall_chart_card_with_background",
+    "solar_radiation_card",
+    "solar_radiation_card_with_background",
+    "horizontal_solar_radiation_card",
+    "horizontal_solar_radiation_card_with_background",
+    "solar_radiation_chart_card",
+    "solar_radiation_chart_card_with_background",
+    "simple_solar_radiation_chart_card",
+    "simple_solar_radiation_chart_card_with_background"
   ]
 }
