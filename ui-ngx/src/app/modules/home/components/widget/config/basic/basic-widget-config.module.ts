@@ -70,6 +70,18 @@ import {
 import {
   ProgressBarBasicConfigComponent
 } from '@home/components/widget/config/basic/cards/progress-bar-basic-config.component';
+import {
+  RadialGaugeBasicConfigComponent
+} from '@home/components/widget/config/basic/gauge/radial-gauge-basic-config.component';
+import {
+  SpeedGaugeBasicConfigComponent
+} from '@home/components/widget/config/basic/gauge/speed-gauge-basic-config.component';
+import {
+  ThermometerScaleGaugeBasicConfigComponent
+} from '@home/components/widget/config/basic/gauge/thermometer-scale-gauge-basic-config.component';
+import {
+  CompassGaugeBasicConfigComponent
+} from '@home/components/widget/config/basic/gauge/compass-gauge-basic-config.component';
 
 @NgModule({
   declarations: [
@@ -91,7 +103,11 @@ import {
     WindSpeedDirectionBasicConfigComponent,
     SignalStrengthBasicConfigComponent,
     ValueChartCardBasicConfigComponent,
-    ProgressBarBasicConfigComponent
+    ProgressBarBasicConfigComponent,
+    RadialGaugeBasicConfigComponent,
+    SpeedGaugeBasicConfigComponent,
+    ThermometerScaleGaugeBasicConfigComponent,
+    CompassGaugeBasicConfigComponent
   ],
   imports: [
     CommonModule,
@@ -117,7 +133,11 @@ import {
     WindSpeedDirectionBasicConfigComponent,
     SignalStrengthBasicConfigComponent,
     ValueChartCardBasicConfigComponent,
-    ProgressBarBasicConfigComponent
+    ProgressBarBasicConfigComponent,
+    RadialGaugeBasicConfigComponent,
+    SpeedGaugeBasicConfigComponent,
+    ThermometerScaleGaugeBasicConfigComponent,
+    CompassGaugeBasicConfigComponent
   ]
 })
 export class BasicWidgetConfigModule {
@@ -137,5 +157,9 @@ export const basicWidgetConfigComponentsMap: {[key: string]: Type<IBasicWidgetCo
   'tb-wind-speed-direction-basic-config': WindSpeedDirectionBasicConfigComponent,
   'tb-signal-strength-basic-config': SignalStrengthBasicConfigComponent,
   'tb-value-chart-card-basic-config': ValueChartCardBasicConfigComponent,
-  'tb-progress-bar-basic-config': ProgressBarBasicConfigComponent
+  'tb-progress-bar-basic-config': ProgressBarBasicConfigComponent,
+  'tb-radial-gauge-basic-config': RadialGaugeBasicConfigComponent,
+  'tb-speed-gauge-basic-config': SpeedGaugeBasicConfigComponent,
+  'tb-thermometer-scale-gauge-basic-config': ThermometerScaleGaugeBasicConfigComponent,
+  'tb-compass-gauge-basic-config': CompassGaugeBasicConfigComponent
 };
