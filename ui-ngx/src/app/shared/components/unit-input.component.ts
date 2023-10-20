@@ -22,8 +22,7 @@ import {
   Input,
   OnInit,
   ViewChild,
-  ViewEncapsulation,
-  Injector
+  ViewEncapsulation
 } from '@angular/core';
 import {
   ControlValueAccessor,
@@ -80,8 +79,7 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit {
 
   private propagateChange = (_val: any) => {};
 
-  constructor(private injector: Injector,
-              private fb: FormBuilder,
+  constructor(private fb: FormBuilder,
               private resourcesService: ResourcesService,
               private translate: TranslateService) {
   }
