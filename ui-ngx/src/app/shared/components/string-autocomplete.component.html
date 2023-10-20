@@ -15,30 +15,36 @@
     limitations under the License.
 
 -->
-<mat-form-field fxFlex appearance="outline" class="tb-inline-field tb-suffix-show-on-hover" subscriptSizing="dynamic" style="width: 100%">
+<mat-form-field [appearance]="appearance" [ngClass]="ngClass"
+                [subscriptSizing]="subscriptSizing" style="width: 100%">
+  <mat-label *ngIf="label">{{label}}</mat-label>
   <input matInput #nameInput [formControl]="selectionFormControl"
-         placeholder="{{ 'widget-config.set' | translate }}"
+         [placeholder]="placeholderText"
          (focusin)="onFocus()"
          [matAutocomplete]="optionsAutocomplete">
-  <button *ngIf="selectionFormControl.value && !disabled && selectionFormControl.valid"
+  <button *ngIf="selectionFormControl.value && !disabled"
           type="button"
           class="tb-icon-24"
           matSuffix mat-icon-button aria-label="Clear"
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
-  <mat-icon matSuffix
+  <mat-icon *ngIf="selectionFormControl.hasError('required') && !showInlineError"
+            matIconSuffix
+            [matTooltip]="errorText"
             matTooltipPosition="above"
-            matTooltipClass="tb-error-tooltip"
-            [matTooltip]="'widget-config.units-required' | translate"
-            *ngIf="selectionFormControl.hasError('required')" class="material-icons tb-suffix-show-always tb-error">
+            [matTooltipClass]="tooltipClass"
+            class="material-icons tb-suffix-show-always tb-error">
     warning
   </mat-icon>
+  <mat-error *ngIf="selectionFormControl.hasError('required') && showInlineError">
+    {{errorText}}
+  </mat-error>
   <mat-autocomplete
     #optionsAutocomplete="matAutocomplete"
     class="tb-autocomplete tb-options-input-autocomplete"
     panelWidth="fit-content">
-    <mat-option *ngFor="let option of filteredOptions | async" [value]="option">
+    <mat-option *ngFor="let option of filteredOptions$ | async" [value]="option">
       <span class="tb-option-name" fxFlex [innerHTML]="option | highlight:searchText:true:'ig'"></span>
     </mat-option>
   </mat-autocomplete>

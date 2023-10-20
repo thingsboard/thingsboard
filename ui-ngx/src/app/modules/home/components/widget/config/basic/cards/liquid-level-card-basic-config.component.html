@@ -93,6 +93,7 @@
         <div class="fixed-title-width tb-required" translate>widgets.liquid-level-card.shape-attribute-name</div>
         <tb-string-autocomplete [fetchOptionsFn]="fetchOptions.bind(this)"
                                 [required]="isRequired('shapeAttributeName')"
+                                [errorText]="'widgets.liquid-level-card.attribute-name-required' | translate"
                                 style="flex: 1; width: auto;"
                                 asBoxInput colorClearButton class="flex"
                                 formControlName="shapeAttributeName">
@@ -151,6 +152,7 @@
         <tb-string-autocomplete [fxShow]="levelCardWidgetConfigForm.get('widgetUnitsSource')?.value === levelOptions.attribute"
                                 [fetchOptionsFn]="fetchOptions.bind(this)"
                                 [required]="isRequired('widgetUnitsAttributeName')"
+                                [errorText]="'widgets.liquid-level-card.attribute-name-required' | translate"
                                 style="flex: 1; width: auto;"
                                 asBoxInput colorClearButton class="flex"
                                 formControlName="widgetUnitsAttributeName">
@@ -183,6 +185,7 @@
         <tb-string-autocomplete style="max-width: 25%"
                                 [fxShow]="levelCardWidgetConfigForm.get('volumeSource')?.value === levelOptions.attribute"
                                 [fetchOptionsFn]="fetchOptions.bind(this)"
+                                [errorText]="'widgets.liquid-level-card.attribute-name-required' | translate"
                                 [required]="isRequired('volumeAttributeName')"
                                 style="flex: 1; width: auto;"
                                 asBoxInput colorClearButton class="flex"
@@ -315,7 +318,6 @@
     <div class="tb-form-row space-between column-lt-md">
       <div translate>widget-config.show-card-buttons</div>
       <mat-chip-listbox multiple formControlName="cardButtons">
-        <mat-chip-option value="dataExport">{{ 'widget-config.data-export' | translate }}</mat-chip-option>
         <mat-chip-option value="fullscreen">{{ 'fullscreen.fullscreen' | translate }}</mat-chip-option>
       </mat-chip-listbox>
     </div>

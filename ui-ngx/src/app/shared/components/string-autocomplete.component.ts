@@ -19,11 +19,8 @@ import {
   Input,
   forwardRef,
   OnInit,
-  AfterViewInit,
-  HostBinding,
   ViewChild,
-  ElementRef,
-  Injector
+  ElementRef
 } from '@angular/core';
 import {
   ControlValueAccessor,
@@ -33,7 +30,9 @@ import {
   FormBuilder
 } from '@angular/forms';
 import { Observable, of } from 'rxjs';
-import { tap, map, switchMap } from 'rxjs/operators';
+import { tap, map, switchMap, take } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-string-autocomplete',
@@ -47,13 +46,12 @@ import { tap, map, switchMap } from 'rxjs/operators';
     }
   ]
 })
-export class StringAutocompleteComponent implements ControlValueAccessor, OnInit, AfterViewInit {
-
-  @HostBinding('style.display') get hostDisplay() {return 'flex';};
+export class StringAutocompleteComponent implements ControlValueAccessor, OnInit {
 
   @Input()
   disabled: boolean;
 
+  @coerceBoolean()
   @Input()
   required: boolean;
 
@@ -61,11 +59,36 @@ export class StringAutocompleteComponent implements ControlValueAccessor, OnInit
 
   @ViewChild('nameInput', {static: true}) nameInput: ElementRef;
 
+  @Input()
+  placeholderText: string = this.translate.instant('widget-config.set');
+
+  @Input()
+  subscriptSizing: string = 'dynamic';
+
+  @Input()
+  ngClass: string | string[] | Set<string> | { [klass: string]: any; } = 'tb-inline-field tb-suffix-show-on-hover';
+
+  @Input()
+  appearance: string = 'outline';
+
+  @Input()
+  label: string;
+
+  @Input()
+  tooltipClass: string = 'tb-error-tooltip';
+
+  @Input()
+  errorText: string;
+
+  @coerceBoolean()
+  @Input()
+  showInlineError: boolean = false;
+
   selectionFormControl: FormControl;
 
   modelValue: string | null;
 
-  filteredOptions: Observable<Array<string>>;
+  filteredOptions$: Observable<Array<string>>;
 
   searchText = '';
 
@@ -73,24 +96,18 @@ export class StringAutocompleteComponent implements ControlValueAccessor, OnInit
 
   private propagateChange = (_val: any) => {};
 
-  constructor(private injector: Injector,
-              private fb: FormBuilder) {
+  constructor(private fb: FormBuilder,
+              private translate: TranslateService) {
   }
 
   ngOnInit() {
-    this.selectionFormControl = this.fb.control('', []);
-    this.filteredOptions = this.selectionFormControl.valueChanges
+    this.selectionFormControl = this.fb.control('', this.required ? [Validators.required] : []);
+    this.filteredOptions$ = this.selectionFormControl.valueChanges
       .pipe(
         tap(value => this.updateView(value)),
         map(value => value ? value : ''),
         switchMap(value => this.fetchOptionsFn ? this.fetchOptionsFn(value) : of([]))
       );
-  }
-
-  ngAfterViewInit() {
-    if (this.required) {
-      this.selectionFormControl.setValidators([Validators.required]);
-    }
   }
 
   writeValue(option?: string): void {
@@ -107,7 +124,8 @@ export class StringAutocompleteComponent implements ControlValueAccessor, OnInit
             }
 
             return option;
-          })
+          }),
+          take(1)
         )
         .subscribe(result => {
           this.selectionFormControl.patchValue(result, { emitEvent: false });

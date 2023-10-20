@@ -48,6 +48,7 @@
           <div class="fixed-title-width" translate>widgets.liquid-level-card.shape-attribute-name</div>
           <tb-string-autocomplete [fetchOptionsFn]="fetchOptions.bind(this)"
                                   [required]="isRequired('shapeAttributeName')"
+                                  [errorText]="'widgets.liquid-level-card.attribute-name-required' | translate"
                                   style="flex: 1; width: auto;"
                                   asBoxInput colorClearButton class="flex"
                                   formControlName="shapeAttributeName">
@@ -110,6 +111,7 @@
           <tb-string-autocomplete [fxShow]="levelCardWidgetSettingsForm.get('widgetUnitsSource')?.value === volumeOptions.attribute"
                                   [fetchOptionsFn]="fetchOptions.bind(this)"
                                   [required]="isRequired('widgetUnitsAttributeName')"
+                                  [errorText]="'widgets.liquid-level-card.attribute-name-required' | translate"
                                   style="flex: 1; width: auto;"
                                   asBoxInput colorClearButton class="flex"
                                   formControlName="widgetUnitsAttributeName">
@@ -143,6 +145,7 @@
                                   [fxShow]="levelCardWidgetSettingsForm.get('volumeSource')?.value === volumeOptions.attribute"
                                   [fetchOptionsFn]="fetchOptions.bind(this)"
                                   [required]="isRequired('volumeAttributeName')"
+                                  [errorText]="'widgets.liquid-level-card.attribute-name-required' | translate"
                                   style="flex: 1; width: auto;"
                                   asBoxInput colorClearButton class="flex"
                                   formControlName="volumeAttributeName">

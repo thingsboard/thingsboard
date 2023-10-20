@@ -16,7 +16,8 @@
 
 import {
   ColorSettings,
-  constantColor, cssTextFromInlineStyle,
+  constantColor,
+  cssTextFromInlineStyle,
   DateFormatSettings,
   Font,
   lastUpdateAgoDateFormat

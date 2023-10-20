@@ -43,13 +43,11 @@ import {
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import { ResourcesService } from '@core/services/resources.service';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
-import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 
 @Component({
   selector: 'tb-liquid-level-widget',
-  template: '',
-  styleUrls: [],
-  encapsulation: ViewEncapsulation.None
+  template: ''
 })
 export class LiquidLevelWidgetComponent implements OnInit {
 
@@ -98,17 +96,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
   ngOnInit(): void {
     this.ctx.$scope.liquidLevelWidget = this;
     this.settings = {...levelCardDefaultSettings(), ...this.ctx.widgetConfig, ...this.ctx.settings};
-
-    this.tankColor = ColorProcessor.fromSettings(this.settings.tankColor);
-    this.volumeColor = ColorProcessor.fromSettings(this.settings.volumeColor);
-    this.valueColor = ColorProcessor.fromSettings(this.settings.valueColor);
-    this.liquidColor =  ColorProcessor.fromSettings(this.settings.liquidColor);
-    this.backgroundOverlayColor = ColorProcessor.fromSettings(this.settings.backgroundOverlayColor);
-    this.tooltipLevelColor = ColorProcessor.fromSettings(this.settings.tooltipLevelColor);
-    this.tooltipDateColor = ColorProcessor.fromSettings(this.settings.tooltipDateColor);
-    this.tooltipBackgroundColor = ColorProcessor.fromSettings(this.settings.tooltipBackgroundColor);
-
-    this.tooltipDateFormat = DateFormatProcessor.fromSettings(this.ctx.$injector, this.settings.tooltipDateFormat);
+    this.declareStyles();
   }
 
   public onInit() {
@@ -138,6 +126,19 @@ export class LiquidLevelWidgetComponent implements OnInit {
         this.update();
       }
     });
+  }
+
+  private declareStyles():void {
+    this.tankColor = ColorProcessor.fromSettings(this.settings.tankColor);
+    this.volumeColor = ColorProcessor.fromSettings(this.settings.volumeColor);
+    this.valueColor = ColorProcessor.fromSettings(this.settings.valueColor);
+    this.liquidColor =  ColorProcessor.fromSettings(this.settings.liquidColor);
+    this.backgroundOverlayColor = ColorProcessor.fromSettings(this.settings.backgroundOverlayColor);
+    this.tooltipLevelColor = ColorProcessor.fromSettings(this.settings.tooltipLevelColor);
+    this.tooltipDateColor = ColorProcessor.fromSettings(this.settings.tooltipDateColor);
+    this.tooltipBackgroundColor = ColorProcessor.fromSettings(this.settings.tooltipBackgroundColor);
+
+    this.tooltipDateFormat = DateFormatProcessor.fromSettings(this.ctx.$injector, this.settings.tooltipDateFormat);
   }
 
   private getData(): Observable<{ svg: string; volume: number; units: string }> {
