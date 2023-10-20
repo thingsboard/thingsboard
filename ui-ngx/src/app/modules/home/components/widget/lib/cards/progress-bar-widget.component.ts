@@ -124,7 +124,7 @@ export class ProgressBarWidgetComponent implements OnInit, OnDestroy, AfterViewI
     this.layout = this.settings.layout;
 
     this.showValue = this.settings.showValue;
-    this.valueStyle = textStyle(this.settings.valueFont,  '0.1px');
+    this.valueStyle = textStyle(this.settings.valueFont);
     this.valueColor = ColorProcessor.fromSettings(this.settings.valueColor);
 
     this.showTitleValueRow = this.showValue ||
@@ -140,7 +140,7 @@ export class ProgressBarWidgetComponent implements OnInit, OnDestroy, AfterViewI
 
     this.showTicks = this.settings.showTicks && this.layout === ProgressBarLayout.default;
     if (this.showTicks) {
-      this.ticksStyle = textStyle(this.settings.ticksFont,  '0.1px');
+      this.ticksStyle = textStyle(this.settings.ticksFont);
       this.ticksStyle.color = this.settings.ticksColor;
     }
 

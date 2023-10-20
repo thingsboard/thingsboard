@@ -28,7 +28,7 @@ import {
   ViewEncapsulation
 } from '@angular/core';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { formatValue, isDefinedAndNotNull } from '@core/utils';
+import { formatValue, isDefinedAndNotNull, isNumeric } from '@core/utils';
 import {
   backgroundStyle,
   ColorProcessor,
@@ -126,7 +126,7 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
     this.layout = this.settings.layout;
 
     this.showValue = this.settings.showValue;
-    this.valueStyle = textStyle(this.settings.valueFont,  '0.25px');
+    this.valueStyle = textStyle(this.settings.valueFont);
     this.valueColor = ColorProcessor.fromSettings(this.settings.valueColor);
 
     this.backgroundStyle = backgroundStyle(this.settings.background);
@@ -192,7 +192,7 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
     if (this.showValue && this.valueKey) {
       const tsValue = getTsValueByLatestDataKey(this.ctx.latestData, this.valueKey);
       let value;
-      if (tsValue) {
+      if (tsValue && isDefinedAndNotNull(tsValue[1]) && isNumeric(tsValue[1])) {
         value = tsValue[1];
         this.valueText = formatValue(value, this.decimals, this.units, false);
       } else {

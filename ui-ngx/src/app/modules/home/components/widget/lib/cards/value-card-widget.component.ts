@@ -27,7 +27,7 @@ import {
   ViewChild
 } from '@angular/core';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { formatValue, isDefinedAndNotNull } from '@core/utils';
+import { formatValue, isDefinedAndNotNull, isNumeric } from '@core/utils';
 import {
   backgroundStyle,
   ColorProcessor,
@@ -132,14 +132,14 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
     this.showLabel = this.settings.showLabel;
     const label = getLabel(this.ctx.datasources);
     this.label$ = this.ctx.registerLabelPattern(label, this.label$);
-    this.labelStyle = textStyle(this.settings.labelFont, '0.25px');
+    this.labelStyle = textStyle(this.settings.labelFont);
     this.labelColor =  ColorProcessor.fromSettings(this.settings.labelColor);
-    this.valueStyle = textStyle(this.settings.valueFont,  '0.13px');
+    this.valueStyle = textStyle(this.settings.valueFont);
     this.valueColor = ColorProcessor.fromSettings(this.settings.valueColor);
 
     this.showDate = this.settings.showDate;
     this.dateFormat = DateFormatProcessor.fromSettings(this.ctx.$injector, this.settings.dateFormat);
-    this.dateStyle = textStyle(this.settings.dateFont,  '0.25px');
+    this.dateStyle = textStyle(this.settings.dateFont);
     this.dateColor = ColorProcessor.fromSettings(this.settings.dateColor);
 
     this.backgroundStyle = backgroundStyle(this.settings.background);
@@ -179,7 +179,7 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
     const tsValue = getSingleTsValue(this.ctx.data);
     let ts;
     let value;
-    if (tsValue) {
+    if (tsValue && isDefinedAndNotNull(tsValue[1]) && isNumeric(tsValue[1])) {
       ts = tsValue[0];
       value = tsValue[1];
       this.valueText = formatValue(value, this.decimals, this.units, false);

@@ -183,7 +183,7 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
 
     this.showValue = this.settings.showValue;
     this.autoScaleValueSize = this.showValue && this.settings.autoScaleValueSize;
-    this.valueStyle = textStyle(this.settings.valueFont,  '0.1px');
+    this.valueStyle = textStyle(this.settings.valueFont);
     this.valueColor = ColorProcessor.fromSettings(this.settings.valueColor);
 
     this.batteryLevelColor = ColorProcessor.fromSettings(this.settings.batteryLevelColor);

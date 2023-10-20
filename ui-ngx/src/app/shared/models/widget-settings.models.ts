@@ -302,7 +302,11 @@ export class SimpleDateFormatProcessor extends DateFormatProcessor {
   }
 
   update(ts: string| number | Date): void {
-    this.formatted = this.datePipe.transform(ts, this.settings.format);
+    if (ts) {
+      this.formatted = this.datePipe.transform(ts, this.settings.format);
+    } else {
+      this.formatted = '&nbsp;';
+    }
   }
 
 }
@@ -320,12 +324,16 @@ export class LastUpdateAgoDateFormatProcessor extends DateFormatProcessor {
   }
 
   update(ts: string| number | Date): void {
-    const agoText = this.dateAgoPipe.transform(ts, {applyAgo: true, short: true, textPart: true});
-    if (this.settings.hideLastUpdatePrefix) {
-      this.formatted = agoText;
+    if (ts) {
+      const agoText = this.dateAgoPipe.transform(ts, {applyAgo: true, short: true, textPart: true});
+      if (this.settings.hideLastUpdatePrefix) {
+        this.formatted = agoText;
+      } else {
+        this.formatted = this.translate.instant('date.last-update-n-ago-text',
+          {agoText});
+      }
     } else {
-      this.formatted = this.translate.instant('date.last-update-n-ago-text',
-        {agoText});
+      this.formatted = '&nbsp;';
     }
   }
 
