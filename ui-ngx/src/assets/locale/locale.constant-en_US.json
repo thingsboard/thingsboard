@@ -4828,6 +4828,8 @@
         "details": "Details",
         "widget-type-details": "Widget type details",
         "add": "Add Widget",
+        "add-existing-widget": "Add existing widget",
+        "add-new-widget": "Add new widget",
         "no-widget-types-text": "No widget types found",
         "search-widget-types": "Search widget types",
         "selected-widget-types": "{ count, plural, =1 {1 widget type} other {# widget types} } selected",

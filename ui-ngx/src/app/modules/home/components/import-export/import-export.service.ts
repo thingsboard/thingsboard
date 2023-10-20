@@ -297,7 +297,7 @@ export class ImportExportService {
     );
   }
 
-  public importWidgetType(): Observable<WidgetType> {
+  public importWidgetType(): Observable<WidgetTypeDetails> {
     return this.openImportDialog('widget-type.import', 'widget-type.widget-type-file').pipe(
       mergeMap((widgetTypeDetails: WidgetTypeDetails) => {
         if (!this.validateImportedWidgetTypeDetails(widgetTypeDetails)) {
@@ -309,9 +309,7 @@ export class ImportExportService {
           return this.widgetService.saveImportedWidgetTypeDetails(widgetTypeDetails);
         }
       }),
-      catchError((err) => {
-        return of(null);
-      })
+      catchError(() => of(null))
     );
   }
 
