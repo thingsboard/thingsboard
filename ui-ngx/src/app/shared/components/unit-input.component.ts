@@ -23,8 +23,7 @@ import {
   OnInit,
   ViewChild,
   ViewEncapsulation,
-  Injector,
-  AfterViewInit
+  Injector
 } from '@angular/core';
 import {
   ControlValueAccessor,
@@ -52,7 +51,7 @@ import { ResourcesService } from '@core/services/resources.service';
   ],
   encapsulation: ViewEncapsulation.None
 })
-export class UnitInputComponent implements ControlValueAccessor, OnInit, AfterViewInit {
+export class UnitInputComponent implements ControlValueAccessor, OnInit {
 
   @HostBinding('style.display') get hostDisplay() {return 'flex';};
 
@@ -88,7 +87,7 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, AfterVi
   }
 
   ngOnInit() {
-    this.unitsFormControl = this.fb.control('', []);
+    this.unitsFormControl = this.fb.control('', this.required ? [Validators.required] : []);
     this.filteredUnits = this.unitsFormControl.valueChanges
       .pipe(
         tap(value => {
@@ -97,12 +96,6 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, AfterVi
         map(value => (value as Unit)?.symbol ? (value as Unit).symbol : (value ? value as string : '')),
         mergeMap(symbol => this.fetchUnits(symbol))
       );
-  }
-
-  ngAfterViewInit() {
-    if (this.required) {
-      this.unitsFormControl.setValidators([Validators.required]);
-    }
   }
 
   writeValue(symbol?: string): void {
