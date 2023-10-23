@@ -116,7 +116,7 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
   ngOnInit(): void {
     this.ctx.$scope.aggregatedValueCardWidget = this;
     this.settings = {...aggregatedValueCardDefaultSettings, ...this.ctx.settings};
-    this.showSubtitle = this.settings.showSubtitle;
+    this.showSubtitle = this.settings.showSubtitle && this.ctx.datasources?.length > 0;
     const subtitle = this.settings.subtitle;
     this.subtitle$ = this.ctx.registerLabelPattern(subtitle, this.subtitle$);
     this.subtitleStyle = textStyle(this.settings.subtitleFont);
@@ -156,7 +156,7 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
   }
 
   ngAfterViewInit(): void {
-    if (this.showChart) {
+    if (this.showChart && this.ctx.datasources?.length) {
       const settings = {
         shadowSize: 0,
         enableSelection: false,

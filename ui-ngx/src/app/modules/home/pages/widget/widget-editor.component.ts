@@ -52,7 +52,7 @@ import {
   SaveWidgetTypeAsDialogComponent,
   SaveWidgetTypeAsDialogResult
 } from '@home/pages/widget/save-widget-type-as-dialog.component';
-import { forkJoin, Subscription } from 'rxjs';
+import { forkJoin, mergeMap, of, Subscription } from 'rxjs';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { widgetEditorCompleter } from '@home/pages/widget/widget-editor.models';
 import { Observable } from 'rxjs/internal/Observable';
@@ -563,7 +563,17 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   private commitSaveWidget() {
     const id = (this.widgetTypeDetails && this.widgetTypeDetails.id) ? this.widgetTypeDetails.id : undefined;
     const createdTime = (this.widgetTypeDetails && this.widgetTypeDetails.createdTime) ? this.widgetTypeDetails.createdTime : undefined;
-    this.widgetService.saveWidgetTypeDetails(this.widget, id, createdTime).subscribe({
+    this.widgetService.saveWidgetTypeDetails(this.widget, id, createdTime).pipe(
+      mergeMap((widgetTypeDetails) => {
+        const widgetsBundleId = this.route.snapshot.params.widgetsBundleId as string;
+        if (widgetsBundleId && !id) {
+          return this.widgetService.addWidgetFqnToWidgetBundle(widgetsBundleId, widgetTypeDetails.fqn).pipe(
+            map(() => widgetTypeDetails)
+          );
+        }
+        return of(widgetTypeDetails);
+      })
+    ).subscribe({
       next: (widgetTypeDetails) => {
         this.saveWidgetPending = false;
         if (!this.widgetTypeDetails?.id) {
@@ -595,11 +605,25 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
           config.title = this.widget.widgetName;
           this.widget.defaultConfig = JSON.stringify(config);
           this.isDirty = false;
-          this.widgetService.saveWidgetTypeDetails(this.widget, undefined, undefined).subscribe(
+          this.widgetService.saveWidgetTypeDetails(this.widget, undefined, undefined).pipe(
+            mergeMap((widget) => {
+              if (saveWidgetAsData.widgetBundleId) {
+                return this.widgetService.addWidgetFqnToWidgetBundle(saveWidgetAsData.widgetBundleId, widget.fqn).pipe(
+                  map(() => widget)
+                );
+              }
+              return of(widget);
+            })
+          ).subscribe(
             {
               next: (widgetTypeDetails) => {
                 this.saveWidgetAsPending = false;
-                this.router.navigate(['..', widgetTypeDetails.id.id], {relativeTo: this.route});
+                if (saveWidgetAsData.widgetBundleId) {
+                  this.router.navigate(['resources', 'widgets-library', 'widgets-bundles',
+                    saveWidgetAsData.widgetBundleId, widgetTypeDetails.id.id]);
+                } else {
+                  this.router.navigate(['resources', 'widgets-library', 'widget-types', widgetTypeDetails.id.id]);
+                }
               },
               error: () => {
                 this.saveWidgetAsPending = false;

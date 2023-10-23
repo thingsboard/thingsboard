@@ -3366,7 +3366,7 @@
         "ui-resources-load-error": "加载配置UI资源失败。",
         "invalid-target-rulechain": "无法解析目标规则链！",
         "test-script-function": "测试脚本功能",
-        "script-lang-java-script": "Java Script",
+        "script-lang-java-script": "JavaScript",
         "script-lang-tbel": "TBEL",
         "message": "消息",
         "message-type": "消息类型",
