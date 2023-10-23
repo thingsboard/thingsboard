@@ -493,22 +493,17 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     }
 
     private void forwardToLocalSubMgrService(LocalSubscriptionServiceMsgProto msg, TbCallback callback) {
-        if (msg.hasSubUpdate()) {
-            localSubscriptionService.onSubscriptionUpdate(msg.getSubUpdate().getSessionId(), TbSubscriptionUtils.fromProto(msg.getSubUpdate()), callback);
-        } else if (msg.hasAlarmSubUpdate()) {
-            localSubscriptionService.onSubscriptionUpdate(msg.getAlarmSubUpdate().getSessionId(), TbSubscriptionUtils.fromProto(msg.getAlarmSubUpdate()), callback);
-        } else if (msg.hasNotificationsSubUpdate()) {
-            TransportProtos.NotificationsSubscriptionUpdateProto subUpdateProto = msg.getNotificationsSubUpdate();
-            NotificationsSubscriptionUpdate notificationsSubscriptionUpdate;
-            if (StringUtils.isNotEmpty(subUpdateProto.getNotificationUpdate())) {
-                NotificationUpdate notificationUpdate = JacksonUtil.fromString(subUpdateProto.getNotificationUpdate(), NotificationUpdate.class);
-                notificationsSubscriptionUpdate = new NotificationsSubscriptionUpdate(notificationUpdate);
-            } else {
-                NotificationRequestUpdate notificationRequestUpdate = JacksonUtil.fromString(subUpdateProto.getNotificationRequestUpdate(), NotificationRequestUpdate.class);
-                notificationsSubscriptionUpdate = new NotificationsSubscriptionUpdate(notificationRequestUpdate);
-            }
-            localSubscriptionService.onSubscriptionUpdate(subUpdateProto.getSessionId(),
-                    subUpdateProto.getSubscriptionId(), notificationsSubscriptionUpdate, callback);
+        if (msg.hasTsUpdate()) {
+            localSubscriptionService.onTimeSeriesUpdate(msg.getTsUpdate(), callback);
+        } else if (msg.hasAttrUpdate()) {
+            localSubscriptionService.onAttributesUpdate(msg.getAttrUpdate(), callback);
+        } else if (msg.hasAlarmUpdate()) {
+            localSubscriptionService.onAlarmUpdate(msg.getAlarmUpdate(), callback);
+        } else if (msg.hasNotificationsUpdate()) {
+            localSubscriptionService.onNotificationUpdate(msg.getNotificationsUpdate(), callback);
+        } else if (msg.hasSubUpdate() || msg.hasAlarmSubUpdate() || msg.hasTimeSeriesSubUpdate()){
+            //OLD CODE -> Do NOTHING.
+            callback.onSuccess();
         } else {
             throwNotHandled(msg, callback);
         }

@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.event.ClusterTopologyChangeEvent;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpdate;
@@ -38,11 +39,17 @@ public interface TbLocalSubscriptionService {
 
     void cancelAllSessionSubscriptions(String sessionId);
 
+    void onTimeSeriesUpdate(TransportProtos.TbSubUpdateProto tsUpdate, TbCallback callback);
+
     void onTimeSeriesUpdate(EntityId entityId, List<TsKvEntry> update, TbCallback callback);
+
+    void onAttributesUpdate(TransportProtos.TbSubUpdateProto attrUpdate, TbCallback callback);
 
     void onAttributesUpdate(EntityId entityId, List<TsKvEntry> update, TbCallback callback);
 
     void onAlarmUpdate(EntityId entityId, AlarmInfo alarm, boolean deleted, TbCallback callback);
+
+    void onAlarmUpdate(TransportProtos.TbAlarmSubUpdateProto update, TbCallback callback);
 
     void onNotificationUpdate(EntityId entityId, NotificationsSubscriptionUpdate subscriptionUpdate, TbCallback callback);
 
@@ -51,5 +58,7 @@ public interface TbLocalSubscriptionService {
     void onApplicationEvent(ClusterTopologyChangeEvent event);
 
     void onNotificationRequestUpdate(TenantId tenantId, NotificationRequestUpdate update, TbCallback callback);
+
+    void onNotificationUpdate(TransportProtos.NotificationsSubUpdateProto notificationsUpdate, TbCallback callback);
 
 }
