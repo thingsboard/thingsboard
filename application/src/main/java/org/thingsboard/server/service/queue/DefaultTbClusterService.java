@@ -132,8 +132,8 @@ public class DefaultTbClusterService implements TbClusterService {
     public void pushMsgToCore(ToDeviceActorNotificationMsg msg, TbQueueCallback callback) {
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, msg.getTenantId(), msg.getDeviceId());
         log.trace("PUSHING msg: {} to:{}", msg, tpi);
-        byte[] msgBytes = encodingService.encode(msg);
-        ToCoreMsg toCoreMsg = ToCoreMsg.newBuilder().setToDeviceActorNotificationMsg(ByteString.copyFrom(msgBytes)).build();
+        TransportProtos.ToDeviceActorNotificationMsgProto proto = ProtoUtils.toProto(msg);
+        ToCoreMsg toCoreMsg = ToCoreMsg.newBuilder().setToDeviceActorNotification(proto).build();
         producerProvider.getTbCoreMsgProducer().send(tpi, new TbProtoQueueMsg<>(msg.getDeviceId().getId(), toCoreMsg), callback);
         toCoreMsgs.incrementAndGet();
     }
@@ -362,25 +362,24 @@ public class DefaultTbClusterService implements TbClusterService {
     @Override
     public void onEdgeEventUpdate(TenantId tenantId, EdgeId edgeId) {
         log.trace("[{}] Processing edge {} event update ", tenantId, edgeId);
-        EdgeEventUpdateMsg msg = new EdgeEventUpdateMsg(tenantId, edgeId);
-        byte[] msgBytes = encodingService.encode(msg);
-        ToCoreNotificationMsg toCoreMsg = ToCoreNotificationMsg.newBuilder().setEdgeEventUpdateMsg(ByteString.copyFrom(msgBytes)).build();
+        TransportProtos.EdgeEventUpdateMsgProto edgeEventUpdateMsgProto = ProtoUtils.toProto(new EdgeEventUpdateMsg(tenantId, edgeId));
+        ToCoreNotificationMsg toCoreMsg = ToCoreNotificationMsg.newBuilder().setEdgeEventUpdate(edgeEventUpdateMsgProto).build();
         pushEdgeSyncMsgToCore(edgeId, toCoreMsg);
     }
 
     @Override
     public void pushEdgeSyncRequestToCore(ToEdgeSyncRequest toEdgeSyncRequest) {
         log.trace("[{}] Processing edge sync request {} ", toEdgeSyncRequest.getTenantId(), toEdgeSyncRequest);
-        byte[] msgBytes = encodingService.encode(toEdgeSyncRequest);
-        ToCoreNotificationMsg toCoreMsg = ToCoreNotificationMsg.newBuilder().setToEdgeSyncRequestMsg(ByteString.copyFrom(msgBytes)).build();
+        TransportProtos.ToEdgeSyncRequestMsgProto toEdgeSyncRequestMsgProto = ProtoUtils.toProto(toEdgeSyncRequest);
+        ToCoreNotificationMsg toCoreMsg = ToCoreNotificationMsg.newBuilder().setToEdgeSyncRequest(toEdgeSyncRequestMsgProto).build();
         pushEdgeSyncMsgToCore(toEdgeSyncRequest.getEdgeId(), toCoreMsg);
     }
 
     @Override
     public void pushEdgeSyncResponseToCore(FromEdgeSyncResponse fromEdgeSyncResponse) {
         log.trace("[{}] Processing edge sync response {}", fromEdgeSyncResponse.getTenantId(), fromEdgeSyncResponse);
-        byte[] msgBytes = encodingService.encode(fromEdgeSyncResponse);
-        ToCoreNotificationMsg toCoreMsg = ToCoreNotificationMsg.newBuilder().setFromEdgeSyncResponseMsg(ByteString.copyFrom(msgBytes)).build();
+        TransportProtos.FromEdgeSyncResponseMsgProto fromEdgeSyncResponseMsgProto = ProtoUtils.toProto(fromEdgeSyncResponse);
+        ToCoreNotificationMsg toCoreMsg = ToCoreNotificationMsg.newBuilder().setFromEdgeSyncResponse(fromEdgeSyncResponseMsgProto).build();
         pushEdgeSyncMsgToCore(fromEdgeSyncResponse.getEdgeId(), toCoreMsg);
     }
 

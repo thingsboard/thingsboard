@@ -271,9 +271,13 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     }
 
     private ToDeviceRpcRequestMsg createToDeviceRpcRequestMsg(ToDeviceRpcRequest request) {
+        return createToDeviceRpcRequestMsg(request, rpcSeq++);
+    }
+
+    private ToDeviceRpcRequestMsg createToDeviceRpcRequestMsg(ToDeviceRpcRequest request, int rpcSeq) {
         ToDeviceRpcRequestBody body = request.getBody();
         return ToDeviceRpcRequestMsg.newBuilder()
-                .setRequestId(rpcSeq++)
+                .setRequestId(rpcSeq)
                 .setMethodName(body.getMethod())
                 .setParams(body.getParams())
                 .setExpirationTime(request.getExpirationTime())

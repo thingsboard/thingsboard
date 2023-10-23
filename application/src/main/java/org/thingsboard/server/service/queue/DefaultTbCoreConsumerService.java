@@ -264,15 +264,14 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                 } else if (toCoreMsg.hasDeviceActivityMsg()) {
                                     log.trace("[{}] Forwarding message to device state service {}", id, toCoreMsg.getDeviceActivityMsg());
                                     forwardToStateService(toCoreMsg.getDeviceActivityMsg(), callback);
-                                } else if (!toCoreMsg.getToDeviceActorNotificationMsg().isEmpty()) {
-                                    Optional<TbActorMsg> actorMsg = encodingService.decode(toCoreMsg.getToDeviceActorNotificationMsg().toByteArray());
-                                    if (actorMsg.isPresent()) {
-                                        TbActorMsg tbActorMsg = actorMsg.get();
-                                        if (tbActorMsg.getMsgType().equals(MsgType.DEVICE_RPC_REQUEST_TO_DEVICE_ACTOR_MSG)) {
-                                            tbCoreDeviceRpcService.forwardRpcRequestToDeviceActor((ToDeviceRpcRequestActorMsg) tbActorMsg);
+                                } else if (toCoreMsg.hasToDeviceActorNotification()) {
+                                    TbActorMsg actorMsg = ProtoUtils.fromProto(toCoreMsg.getToDeviceActorNotification());
+                                    if (actorMsg != null) {
+                                        if (actorMsg.getMsgType().equals(MsgType.DEVICE_RPC_REQUEST_TO_DEVICE_ACTOR_MSG)) {
+                                            tbCoreDeviceRpcService.forwardRpcRequestToDeviceActor((ToDeviceRpcRequestActorMsg) actorMsg);
                                         } else {
-                                            log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg.get());
-                                            actorContext.tell(actorMsg.get());
+                                            log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg);
+                                            actorContext.tell(actorMsg);
                                         }
                                     }
                                     callback.onSuccess();
@@ -353,12 +352,15 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             //will be removed in 3.6.1 in favour of hasComponentLifecycle()
             handleComponentLifecycleMsg(id, toCoreNotification.getComponentLifecycleMsg());
             callback.onSuccess();
-        } else if (!toCoreNotification.getEdgeEventUpdateMsg().isEmpty()) {
-            forwardToAppActor(id, encodingService.decode(toCoreNotification.getEdgeEventUpdateMsg().toByteArray()), callback);
-        } else if (!toCoreNotification.getToEdgeSyncRequestMsg().isEmpty()) {
-            forwardToAppActor(id, encodingService.decode(toCoreNotification.getToEdgeSyncRequestMsg().toByteArray()), callback);
-        } else if (!toCoreNotification.getFromEdgeSyncResponseMsg().isEmpty()) {
-            forwardToAppActor(id, encodingService.decode(toCoreNotification.getFromEdgeSyncResponseMsg().toByteArray()), callback);
+        } else if (toCoreNotification.hasEdgeEventUpdate()) {
+            forwardToAppActor(id, ProtoUtils.fromProto(toCoreNotification.getEdgeEventUpdate()));
+            callback.onSuccess();
+        } else if (toCoreNotification.hasToEdgeSyncRequest()) {
+            forwardToAppActor(id, ProtoUtils.fromProto(toCoreNotification.getToEdgeSyncRequest()));
+            callback.onSuccess();
+        } else if (toCoreNotification.hasFromEdgeSyncResponse()) {
+            forwardToAppActor(id, ProtoUtils.fromProto(toCoreNotification.getFromEdgeSyncResponse()));
+            callback.onSuccess();
         } else if (toCoreNotification.hasQueueUpdateMsg()) {
             TransportProtos.QueueUpdateMsg queue = toCoreNotification.getQueueUpdateMsg();
             partitionService.updateQueue(queue);
@@ -635,12 +637,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         actorContext.tell(new TransportToDeviceActorMsgWrapper(toDeviceActorMsg, callback));
     }
 
-    private void forwardToAppActor(UUID id, Optional<TbActorMsg> actorMsg, TbCallback callback) {
-        if (actorMsg.isPresent()) {
-            log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg.get());
-            actorContext.tell(actorMsg.get());
-        }
-        callback.onSuccess();
+    private void forwardToAppActor(UUID id, TbActorMsg actorMsg) {
+        log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg);
+        actorContext.tell(actorMsg);
     }
 
     private void forwardToEventService(ErrorEventProto eventProto, TbCallback callback) {

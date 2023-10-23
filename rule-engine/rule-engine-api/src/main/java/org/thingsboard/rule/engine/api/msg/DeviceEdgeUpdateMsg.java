@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.api.msg;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -24,8 +23,9 @@ import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
 
 @Data
-@AllArgsConstructor
 public class DeviceEdgeUpdateMsg implements ToDeviceActorNotificationMsg {
+
+    private static final long serialVersionUID = 4679029228395462172L;
 
     private final TenantId tenantId;
     private final DeviceId deviceId;
