@@ -192,7 +192,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
     if (isDefinedAndNotNull(data) && data.length && typeof Number(data[1]) === 'number') {
       const percentage = this.convertInputData(Number(data[1]));
       this.updateSvg(percentage);
-      this.updateValueElement(this.convertOutputData(percentage));
+      this.updateValueElement(this.convertOutputData(percentage), percentage);
 
       if (this.settings.showTooltip) {
         this.updateTooltip(data);
@@ -382,7 +382,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
     });
   }
 
-  private updateValueElement(data: number): void {
+  private updateValueElement(data: number, percentage: number): void {
     let content: string;
     let container: JQuery<HTMLElement>;
 
@@ -390,13 +390,13 @@ export class LiquidLevelWidgetComponent implements OnInit {
       .toFixed(this.settings.decimals || 0);
     const valueTextStyle = cssTextFromInlineStyle({...inlineTextStyle(this.settings.valueFont),
                                                           color: this.valueColor.color});
-    this.backgroundOverlayColor.update(data);
+    this.backgroundOverlayColor.update(percentage);
     if (this.overlayContainer) {
       this.overlayContainer.attr('fill', this.backgroundOverlayColor.color);
     }
 
     if (this.settings.layout === LevelCardLayout.absolute) {
-      this.volumeColor.update(data);
+      this.volumeColor.update(percentage);
 
       const volumeInLiters: number = convertLiters(this.volume, this.settings.volumeUnits as CapacityUnits, ConversionType.to);
       const volume = convertLiters(volumeInLiters, this.widgetUnits as CapacityUnits, ConversionType.from)
