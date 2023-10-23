@@ -67,6 +67,16 @@
     "horizontal_uv_index_card",
     "horizontal_uv_index_card_with_background",
     "uv_index_chart_card",
-    "uv_index_chart_card_with_background"
+    "uv_index_chart_card_with_background",
+    "simple_uv_index_chart_card",
+    "simple_uv_index_chart_card_with_background",
+    "air_quality_card",
+    "air_quality_card_with_background",
+    "horizontal_air_quality_card",
+    "horizontal_air_quality_card_with_background",
+    "air_quality_chart_card",
+    "air_quality_chart_card_with_background",
+    "simple_air_quality_chart_card",
+    "simple_air_quality_chart_card_with_background"
   ]
 }
