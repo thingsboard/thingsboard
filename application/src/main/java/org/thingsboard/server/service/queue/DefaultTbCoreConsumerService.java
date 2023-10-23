@@ -501,7 +501,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             localSubscriptionService.onAlarmUpdate(msg.getAlarmUpdate(), callback);
         } else if (msg.hasNotificationsUpdate()) {
             localSubscriptionService.onNotificationUpdate(msg.getNotificationsUpdate(), callback);
-        } else if (msg.hasSubUpdate() || msg.hasAlarmSubUpdate() || msg.hasTimeSeriesSubUpdate()){
+        } else if (msg.hasSubUpdate() || msg.hasAlarmSubUpdate() || msg.hasNotificationsSubUpdate()){
             //OLD CODE -> Do NOTHING.
             callback.onSuccess();
         } else {

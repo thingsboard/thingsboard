@@ -20,18 +20,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.cluster.TbClusterService;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.Aggregation;
-import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
-import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
-import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -59,6 +53,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -87,6 +83,8 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
 
     private String serviceId;
     private ExecutorService subscriptionUpdateExecutor;
+
+    private final Lock subsLock = new ReentrantLock();
 
     private final TbApplicationEventListener<PartitionChangeEvent> partitionChangeListener = new TbApplicationEventListener<>() {
         @Override
@@ -144,7 +142,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     public void addSubscription(TbSubscription<?> subscription) {
         TenantId tenantId = subscription.getTenantId();
         EntityId entityId = subscription.getEntityId();
-        log.trace("[{}][{}] Register subscription: {}", tenantId, entityId, subscription);
+        log.debug("[{}][{}] Register subscription: {}", tenantId, entityId, subscription);
         Map<Integer, TbSubscription<?>> sessionSubscriptions = subscriptionsBySessionId.computeIfAbsent(subscription.getSessionId(), k -> new ConcurrentHashMap<>());
         sessionSubscriptions.put(subscription.getSubscriptionId(), subscription);
         modifySubscription(tenantId, entityId, subscription, TbEntityLocalSubsInfo::add);
@@ -338,16 +336,22 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     }
 
     private void modifySubscription(TenantId tenantId, EntityId entityId, TbSubscription<?> subscription, BiFunction<TbEntityLocalSubsInfo, TbSubscription<?>, TbEntitySubEvent> modification) {
-        TbEntityLocalSubsInfo entitySubs = subscriptionsByEntityId.computeIfAbsent(entityId.getId(), id -> new TbEntityLocalSubsInfo(tenantId, entityId));
-        entitySubs.getLock().lock();
+        TbEntitySubEvent event;
+        subsLock.lock();
         try {
-            TbEntitySubEvent event = modification.apply(entitySubs, subscription);
-            if (event != null) {
-                pushSubEventToManagerService(tenantId, entityId, event);
+            TbEntityLocalSubsInfo entitySubs = subscriptionsByEntityId.computeIfAbsent(entityId.getId(), id -> new TbEntityLocalSubsInfo(tenantId, entityId));
+            event = modification.apply(entitySubs, subscription);
+            if (entitySubs.isEmpty()) {
+                subscriptionsByEntityId.remove(entityId.getId());
             }
-            //TODO: remove entitySubs if it is empty. Requires global lock?
         } finally {
-            entitySubs.getLock().unlock();
+            subsLock.unlock();
+        }
+        if (event != null) {
+            log.trace("[{}][{}][{}] Event: {}", tenantId, entityId, subscription.getSubscriptionId(), event);
+            pushSubEventToManagerService(tenantId, entityId, event);
+        } else {
+            log.trace("[{}][{}][{}] No changes detected.", tenantId, entityId, subscription.getSubscriptionId());
         }
     }
 

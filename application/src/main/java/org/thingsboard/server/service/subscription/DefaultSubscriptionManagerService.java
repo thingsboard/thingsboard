@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,8 +37,6 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.dao.attributes.AttributesService;
-import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
@@ -64,7 +62,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
@@ -82,8 +82,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
     private final DeviceStateService deviceStateService;
     private final TbClusterService clusterService;
 
-    //TODO: decide on the type of locks we will use?
-    private final ReadWriteLock subsLock = new ReentrantReadWriteLock();
+    private final Lock subsLock = new ReentrantLock(); //TODO: decide on the type of locks we will use?
     private final ConcurrentMap<EntityId, TbEntityRemoteSubsInfo> subscriptionsByEntityId = new ConcurrentHashMap<>();
     private final Set<TopicPartitionInfo> currentPartitions = ConcurrentHashMap.newKeySet();
 
@@ -112,7 +111,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
         log.trace("[{}][{}][{}] Processing subscription event {}", tenantId, entityId, serviceId, event);
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
         if (currentPartitions.contains(tpi)) {
-            subsLock.writeLock().lock();
+            subsLock.lock();
             try {
                 var entitySubs = subscriptionsByEntityId.computeIfAbsent(entityId, id -> new TbEntityRemoteSubsInfo(tenantId, entityId));
                 boolean empty = entitySubs.updateAndCheckIsEmpty(serviceId, event);
@@ -120,7 +119,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
                     subscriptionsByEntityId.remove(entityId);
                 }
             } finally {
-                subsLock.writeLock().unlock();
+                subsLock.unlock();
             }
             callback.onSuccess();
             // TODO: send notification back to local sub service that we have done the subscription.
