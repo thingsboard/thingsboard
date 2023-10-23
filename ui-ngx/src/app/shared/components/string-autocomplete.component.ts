@@ -53,7 +53,7 @@ export class StringAutocompleteComponent implements ControlValueAccessor, OnInit
 
   @coerceBoolean()
   @Input()
-  required: boolean;
+  required: boolean = false;
 
   @Input() fetchOptionsFn: (searchText?: string) => Observable<Array<string>>;
 

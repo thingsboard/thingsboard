@@ -36,6 +36,7 @@ import { getUnits, searchUnits, Unit, unitBySymbol, UnitsType } from '@shared/mo
 import { map, mergeMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { ResourcesService } from '@core/services/resources.service';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-unit-input',
@@ -61,8 +62,9 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit {
   @Input()
   disabled: boolean;
 
+  @coerceBoolean()
   @Input()
-  required: boolean;
+  required: boolean = false;
 
   @Input()
   tagFilter: UnitsType;
