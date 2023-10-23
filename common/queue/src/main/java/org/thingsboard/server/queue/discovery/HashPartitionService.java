@@ -103,11 +103,11 @@ public class HashPartitionService implements PartitionService {
         this.hashFunction = forName(hashFunctionName);
         QueueKey coreKey = new QueueKey(ServiceType.TB_CORE);
         partitionSizesMap.put(coreKey, corePartitions);
-        partitionTopicsMap.put(coreKey, topicService.buildTopicName(coreTopic));
+        partitionTopicsMap.put(coreKey, coreTopic);
 
         QueueKey vcKey = new QueueKey(ServiceType.TB_VC_EXECUTOR);
         partitionSizesMap.put(vcKey, vcPartitions);
-        partitionTopicsMap.put(vcKey, topicService.buildTopicName(vcTopic));
+        partitionTopicsMap.put(vcKey, vcTopic);
 
         if (!isTransport(serviceInfoProvider.getServiceType())) {
             doInitRuleEnginePartitions();
@@ -125,7 +125,7 @@ public class HashPartitionService implements PartitionService {
         List<QueueRoutingInfo> queueRoutingInfoList = getQueueRoutingInfos();
         queueRoutingInfoList.forEach(queue -> {
             QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, queue);
-            partitionTopicsMap.put(queueKey, topicService.buildTopicName(queue.getQueueTopic()));
+            partitionTopicsMap.put(queueKey, queue.getQueueTopic());
             partitionSizesMap.put(queueKey, queue.getPartitions());
         });
     }
@@ -423,7 +423,7 @@ public class HashPartitionService implements PartitionService {
 
     private TopicPartitionInfo buildTopicPartitionInfo(QueueKey queueKey, int partition) {
         TopicPartitionInfo.TopicPartitionInfoBuilder tpi = TopicPartitionInfo.builder();
-        tpi.topic(partitionTopicsMap.get(queueKey));
+        tpi.topic(topicService.buildTopicName(partitionTopicsMap.get(queueKey)));
         tpi.partition(partition);
         tpi.tenantId(queueKey.getTenantId());
 

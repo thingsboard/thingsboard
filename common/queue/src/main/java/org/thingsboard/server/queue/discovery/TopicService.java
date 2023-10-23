@@ -27,7 +27,7 @@ import java.util.Map;
 @Service
 public class TopicService {
 
-    @Value("${queue.prefix}")
+    @Value("${queue.prefix:}")
     private String prefix;
 
     private Map<String, TopicPartitionInfo> tbCoreNotificationTopics = new HashMap<>();
@@ -57,8 +57,8 @@ public class TopicService {
         return buildTopicPartitionInfo(serviceType.name().toLowerCase() + ".notifications." + serviceId, null, null, false);
     }
 
-    public TopicPartitionInfo buildTopicPartitionInfo(String topic, TenantId tenantId, Integer partition, boolean myPartiotion) {
-        return new TopicPartitionInfo(buildTopicName(topic), tenantId, partition, myPartiotion);
+    public TopicPartitionInfo buildTopicPartitionInfo(String topic, TenantId tenantId, Integer partition, boolean myPartition) {
+        return new TopicPartitionInfo(buildTopicName(topic), tenantId, partition, myPartition);
     }
 
     public String buildTopicName(String topic) {
