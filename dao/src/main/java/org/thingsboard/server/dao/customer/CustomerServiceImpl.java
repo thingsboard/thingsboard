@@ -15,15 +15,20 @@
  */
 package org.thingsboard.server.dao.customer;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.cache.customer.CustomerCacheEvictEvent;
+import org.thingsboard.server.cache.customer.CustomerCacheKey;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
@@ -33,7 +38,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.entity.EntityCountService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
@@ -44,17 +49,21 @@ import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.dao.user.UserService;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service("CustomerDaoService")
 @Slf4j
-public class CustomerServiceImpl extends AbstractEntityService implements CustomerService {
+public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCacheKey, Customer, CustomerCacheEvictEvent> implements CustomerService {
 
     public static final String PUBLIC_CUSTOMER_TITLE = "Public";
     public static final String INCORRECT_CUSTOMER_ID = "Incorrect customerId ";
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
+    public static final String PUBLIC_CUSTOMER_ADDITIONAL_INFO_STR = "{ \"isPublic\": true }";
+    public static final JsonNode PUBLIC_CUSTOMER_ADDITIONAL_INFO_JSON = JacksonUtil.toJsonNode(PUBLIC_CUSTOMER_ADDITIONAL_INFO_STR);
 
     @Autowired
     private CustomerDao customerDao;
@@ -81,6 +90,17 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
     @Autowired
     private EntityCountService countService;
 
+    @TransactionalEventListener(classes = CustomerCacheEvictEvent.class)
+    @Override
+    public void handleEvictEvent(CustomerCacheEvictEvent event) {
+        List<CustomerCacheKey> keys = new ArrayList<>(2);
+        keys.add(new CustomerCacheKey(event.getTenantId(), event.getNewTitle()));
+        if (StringUtils.isNotEmpty(event.getOldTitle()) && !event.getOldTitle().equals(event.getNewTitle())) {
+            keys.add(new CustomerCacheKey(event.getTenantId(), event.getOldTitle()));
+        }
+        cache.evict(keys);
+    }
+
     @Override
     public Customer findCustomerById(TenantId tenantId, CustomerId customerId) {
         log.trace("Executing findCustomerById [{}]", customerId);
@@ -89,10 +109,17 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
     }
 
     @Override
-    public Optional<Customer> findCustomerByTenantIdAndTitle(TenantId tenantId, String title) {
-        log.trace("Executing findCustomerByTenantIdAndTitle [{}] [{}]", tenantId, title);
+    public Customer findCustomerByTenantIdAndTitleUsingCache(TenantId tenantId, String title) {
+        log.trace("Executing findCustomerByTenantIdAndTitleUsingCache [{}] [{}]", tenantId, title);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        return customerDao.findCustomersByTenantIdAndTitle(tenantId.getId(), title);
+        return cache.getAndPutInTransaction(new CustomerCacheKey(tenantId, title),
+                () -> customerDao.findCustomersByTenantIdAndTitle(tenantId.getId(), title)
+                        .orElse(null), true);
+    }
+
+    @Override
+    public Optional<Customer> findCustomerByTenantIdAndTitle(TenantId tenantId, String title) {
+        return Optional.ofNullable(findCustomerByTenantIdAndTitleUsingCache(tenantId, title));
     }
 
     @Override
@@ -104,22 +131,34 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
 
     @Override
     public Customer saveCustomer(Customer customer) {
+        return saveCustomer(customer, true);
+    }
+
+    private Customer saveCustomer(Customer customer, boolean doValidate) {
         log.trace("Executing saveCustomer [{}]", customer);
-        customerValidator.validate(customer, Customer::getTenantId);
+        String oldCustomerTitle = null;
+        if (doValidate) {
+            Customer oldCustomer = customerValidator.validate(customer, Customer::getTenantId);
+            oldCustomerTitle = oldCustomer != null ? oldCustomer.getTitle() : null;
+        }
+        var evictEvent = new CustomerCacheEvictEvent(customer.getTenantId(), customer.getTitle(), oldCustomerTitle);
         try {
             Customer savedCustomer = customerDao.save(customer.getTenantId(), customer);
             dashboardService.updateCustomerDashboards(savedCustomer.getTenantId(), savedCustomer.getId());
             if (customer.getId() == null) {
                 countService.publishCountEntityEvictEvent(savedCustomer.getTenantId(), EntityType.CUSTOMER);
             }
+            publishEvictEvent(evictEvent);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedCustomer.getTenantId())
                     .entityId(savedCustomer.getId()).added(customer.getId() == null).build());
             return savedCustomer;
         } catch (Exception e) {
-            checkConstraintViolation(e, "customer_external_id_unq_key", "Customer with such external id already exists!");
+            handleEvictEvent(evictEvent);
+            checkConstraintViolation(e,
+                    "customer_title_unq_key", "Customer with such title already exists!",
+                    "customer_external_id_unq_key", "Customer with such external id already exists!");
             throw e;
         }
-
     }
 
     @Override
@@ -142,27 +181,26 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
         customerDao.removeById(tenantId, customerId.getId());
         countService.publishCountEntityEvictEvent(tenantId, EntityType.CUSTOMER);
         eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(customerId).build());
+        publishEvictEvent(new CustomerCacheEvictEvent(customer.getTenantId(), customer.getTitle(), null));
     }
 
     @Override
     public Customer findOrCreatePublicCustomer(TenantId tenantId) {
         log.trace("Executing findOrCreatePublicCustomer, tenantId [{}]", tenantId);
         Validator.validateId(tenantId, INCORRECT_CUSTOMER_ID + tenantId);
-        Optional<Customer> publicCustomerOpt = customerDao.findCustomersByTenantIdAndTitle(tenantId.getId(), PUBLIC_CUSTOMER_TITLE);
+        Optional<Customer> publicCustomerOpt = Optional.ofNullable(findCustomerByTenantIdAndTitleUsingCache(tenantId, PUBLIC_CUSTOMER_TITLE));
         if (publicCustomerOpt.isPresent()) {
             return publicCustomerOpt.get();
         } else {
-            Customer publicCustomer = new Customer();
+            var publicCustomer = new Customer();
             publicCustomer.setTenantId(tenantId);
             publicCustomer.setTitle(PUBLIC_CUSTOMER_TITLE);
             try {
-                publicCustomer.setAdditionalInfo(JacksonUtil.toJsonNode("{ \"isPublic\": true }"));
+                publicCustomer.setAdditionalInfo(PUBLIC_CUSTOMER_ADDITIONAL_INFO_JSON);
             } catch (IllegalArgumentException e) {
                 throw new IncorrectParameterException("Unable to create public customer.", e);
             }
-            Customer savedCustomer = customerDao.save(tenantId, publicCustomer);
-            countService.publishCountEntityEvictEvent(tenantId, EntityType.CUSTOMER);
-            return savedCustomer;
+            return saveCustomer(publicCustomer, false);
         }
     }
 
@@ -181,8 +219,8 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
         customersByTenantRemover.removeEntities(tenantId, tenantId);
     }
 
-    private PaginatedRemover<TenantId, Customer> customersByTenantRemover =
-            new PaginatedRemover<TenantId, Customer>() {
+    private final PaginatedRemover<TenantId, Customer> customersByTenantRemover =
+            new PaginatedRemover<>() {
 
                 @Override
                 protected PageData<Customer> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {

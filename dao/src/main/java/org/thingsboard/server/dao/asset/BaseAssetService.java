@@ -197,6 +197,9 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     @Override
     public Asset unassignAssetFromCustomer(TenantId tenantId, AssetId assetId) {
         Asset asset = findAssetById(tenantId, assetId);
+        if (asset.getCustomerId() == null) {
+            return asset;
+        }
         asset.setCustomerId(null);
         return saveAsset(asset);
     }

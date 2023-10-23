@@ -13,13 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.action;
+package org.thingsboard.server.cache.customer;
 
-import lombok.Data;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.thingsboard.server.common.data.id.TenantId;
 
-@Data
-public abstract class TbAbstractCustomerActionNodeConfiguration {
+import java.io.Serializable;
 
-    private String customerNamePattern;
+@Getter
+@EqualsAndHashCode
+@RequiredArgsConstructor
+@Builder
+public class CustomerCacheKey implements Serializable {
+
+    private static final long serialVersionUID = 4196610233744512673L;
+
+    private final TenantId tenantId;
+    private final String title;
+
+    @Override
+    public String toString() {
+        return tenantId + "_" + title;
+    }
 
 }

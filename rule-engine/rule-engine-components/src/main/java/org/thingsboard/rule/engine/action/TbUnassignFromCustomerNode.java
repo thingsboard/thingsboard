@@ -15,12 +15,16 @@
  */
 package org.thingsboard.rule.engine.action;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
@@ -34,11 +38,12 @@ import org.thingsboard.server.common.msg.TbMsg;
         type = ComponentType.ACTION,
         name = "unassign from customer",
         configClazz = TbUnassignFromCustomerNodeConfiguration.class,
-        nodeDescription = "Unassign Message Originator Entity from Customer",
-        nodeDetails = "Finds target Entity Customer by Customer name pattern and then unassign Originator Entity from this customer.",
+        nodeDescription = "Unassign message originator entity from customer",
+        nodeDetails = "Finds target customer by title and then unassign originator entity from this customer.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeUnAssignToCustomerConfig",
-        icon = "remove_circle"
+        icon = "remove_circle",
+        version = 1
 )
 public class TbUnassignFromCustomerNode extends TbAbstractCustomerActionNode<TbUnassignFromCustomerNodeConfiguration> {
 
@@ -53,29 +58,39 @@ public class TbUnassignFromCustomerNode extends TbAbstractCustomerActionNode<TbU
     }
 
     @Override
-    protected void doProcessCustomerAction(TbContext ctx, TbMsg msg, CustomerId customerId) {
-        EntityType originatorType = msg.getOriginator().getEntityType();
-        switch (originatorType) {
-            case DEVICE:
-                processUnnasignDevice(ctx, msg);
-                break;
-            case ASSET:
-                processUnnasignAsset(ctx, msg);
-                break;
-            case ENTITY_VIEW:
-                processUnassignEntityView(ctx, msg);
-                break;
-            case EDGE:
-                processUnassignEdge(ctx, msg);
-                break;
-            case DASHBOARD:
-                processUnnasignDashboard(ctx, msg, customerId);
-                break;
-            default:
-                ctx.tellFailure(msg, new RuntimeException("Unsupported originator type '" + originatorType +
-                        "'! Only 'DEVICE', 'ASSET',  'ENTITY_VIEW' or 'DASHBOARD' types are allowed."));
-                break;
+    protected ListenableFuture<Void> processCustomerAction(TbContext ctx, TbMsg msg) {
+        var originatorType = msg.getOriginator().getEntityType();
+        if (EntityType.DASHBOARD.equals(originatorType)) {
+            if (StringUtils.isEmpty(config.getCustomerNamePattern())) {
+                throw new RuntimeException("Failed to unassign dashboard with id '" +
+                        msg.getOriginator().getId() + "' from customer! Customer title should be specified!");
+            }
+            var customerIdFuture = getCustomerIdFuture(ctx, msg);
+            return Futures.transformAsync(customerIdFuture, customerId ->
+                    ctx.getDbCallbackExecutor().submit(() -> {
+                        processUnnasignDashboard(ctx, msg, customerId);
+                        return null;
+                    }), MoreExecutors.directExecutor());
         }
+        return ctx.getDbCallbackExecutor().submit(() -> {
+            switch (originatorType) {
+                case DEVICE:
+                    processUnnasignDevice(ctx, msg);
+                    break;
+                case ASSET:
+                    processUnnasignAsset(ctx, msg);
+                    break;
+                case ENTITY_VIEW:
+                    processUnassignEntityView(ctx, msg);
+                    break;
+                case EDGE:
+                    processUnassignEdge(ctx, msg);
+                    break;
+                default:
+                    throw new RuntimeException(unsupportedOriginatorTypeErrorMessage(originatorType));
+            }
+            return null;
+        });
     }
 
     private void processUnnasignAsset(TbContext ctx, TbMsg msg) {

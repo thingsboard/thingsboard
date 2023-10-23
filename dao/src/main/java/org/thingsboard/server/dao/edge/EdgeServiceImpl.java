@@ -197,6 +197,9 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     public Edge unassignEdgeFromCustomer(TenantId tenantId, EdgeId edgeId) {
         log.trace("[{}] Executing unassignEdgeFromCustomer [{}]", tenantId, edgeId);
         Edge edge = findEdgeById(tenantId, edgeId);
+        if (edge.getCustomerId() == null) {
+            return edge;
+        }
         var customerId = edge.getCustomerId();
         edge.setCustomerId(null);
         Edge result = saveEdge(edge);

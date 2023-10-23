@@ -15,13 +15,15 @@
  */
 package org.thingsboard.rule.engine.action;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
@@ -36,12 +38,13 @@ import org.thingsboard.server.common.msg.TbMsg;
         type = ComponentType.ACTION,
         name = "assign to customer",
         configClazz = TbAssignToCustomerNodeConfiguration.class,
-        nodeDescription = "Assign Message Originator Entity to Customer",
-        nodeDetails = "Finds target Customer by customer name pattern and then assign Originator Entity to this customer. " +
-                "Will create new Customer if it doesn't exists and 'Create new Customer if not exists' is set to true.",
+        nodeDescription = "Assign message originator entity to customer",
+        nodeDetails = "Finds target customer by title and assign message originator entity to this customer. " +
+                "Will create a new customer if it doesn't exist, and 'Create new customer if it doesn't exist' enabled.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeAssignToCustomerConfig",
-        icon = "add_circle"
+        icon = "add_circle",
+        version = 1
 )
 public class TbAssignToCustomerNode extends TbAbstractCustomerActionNode<TbAssignToCustomerNodeConfiguration> {
 
@@ -56,33 +59,32 @@ public class TbAssignToCustomerNode extends TbAbstractCustomerActionNode<TbAssig
     }
 
     @Override
-    protected void doProcessCustomerAction(TbContext ctx, TbMsg msg, CustomerId customerId) {
-        processAssign(ctx, msg, customerId);
-    }
-
-    private void processAssign(TbContext ctx, TbMsg msg, CustomerId customerId) {
-        EntityType originatorType = msg.getOriginator().getEntityType();
-        switch (originatorType) {
-            case DEVICE:
-                processAssignDevice(ctx, msg, customerId);
-                break;
-            case ASSET:
-                processAssignAsset(ctx, msg, customerId);
-                break;
-            case ENTITY_VIEW:
-                processAssignEntityView(ctx, msg, customerId);
-                break;
-            case EDGE:
-                processAssignEdge(ctx, msg, customerId);
-                break;
-            case DASHBOARD:
-                processAssignDashboard(ctx, msg, customerId);
-                break;
-            default:
-                ctx.tellFailure(msg, new RuntimeException("Unsupported originator type '" + originatorType +
-                        "'! Only 'DEVICE', 'ASSET',  'ENTITY_VIEW' or 'DASHBOARD' types are allowed."));
-                break;
-        }
+    protected ListenableFuture<Void> processCustomerAction(TbContext ctx, TbMsg msg) {
+        var customerIdFuture = getCustomerIdFuture(ctx, msg);
+        return Futures.transformAsync(customerIdFuture, customerId ->
+                ctx.getDbCallbackExecutor().submit(() -> {
+                    var originatorType = msg.getOriginator().getEntityType();
+                    switch (originatorType) {
+                        case DEVICE:
+                            processAssignDevice(ctx, msg, customerId);
+                            break;
+                        case ASSET:
+                            processAssignAsset(ctx, msg, customerId);
+                            break;
+                        case ENTITY_VIEW:
+                            processAssignEntityView(ctx, msg, customerId);
+                            break;
+                        case EDGE:
+                            processAssignEdge(ctx, msg, customerId);
+                            break;
+                        case DASHBOARD:
+                            processAssignDashboard(ctx, msg, customerId);
+                            break;
+                        default:
+                            throw new RuntimeException(unsupportedOriginatorTypeErrorMessage(originatorType));
+                    }
+                    return null;
+                }), MoreExecutors.directExecutor());
     }
 
     private void processAssignAsset(TbContext ctx, TbMsg msg, CustomerId customerId) {

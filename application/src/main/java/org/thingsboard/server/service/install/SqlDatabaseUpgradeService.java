@@ -792,6 +792,25 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     log.error("Failed updating schema!!!", e);
                 }
                 break;
+            case "3.6.1":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    if (isOldSchema(conn, 3006001)) {
+                        log.info("Updating schema ...");
+                        try {
+                            conn.createStatement().execute("ALTER TABLE customer DROP CONSTRAINT IF EXISTS customer_title_unq_key;"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+                            conn.createStatement().execute("ALTER TABLE customer ADD CONSTRAINT customer_title_unq_key UNIQUE (tenant_id, title);"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+                            conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3006002;");
+                            log.info("Schema updated to version 3.6.2.");
+                        } catch (Exception e) {
+                            log.error("Failed updating schema!!!", e);
+                        }
+                    } else {
+                        log.info("Skip schema re-update to version 3.6.2. Use env flag 'SKIP_SCHEMA_VERSION_CHECK' to force the re-update.");
+                    }
+                } catch (Exception e) {
+                    log.error("Failed updating schema!!!", e);
+                }
+                break;
             default:
                 throw new RuntimeException("Unable to upgrade SQL database, unsupported fromVersion: " + fromVersion);
         }

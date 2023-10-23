@@ -15,13 +15,9 @@
  */
 package org.thingsboard.rule.engine.action;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.util.concurrent.Futures;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -29,12 +25,12 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.dao.customer.CustomerService;
 
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
@@ -43,17 +39,9 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
 
     protected C config;
 
-    private LoadingCache<CustomerKey, Optional<CustomerId>> customerIdCache;
-
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = loadCustomerNodeActionConfig(configuration);
-        CacheBuilder<Object, Object> cacheBuilder = CacheBuilder.newBuilder();
-        if (this.config.getCustomerCacheExpiration() > 0) {
-            cacheBuilder.expireAfterWrite(this.config.getCustomerCacheExpiration(), TimeUnit.SECONDS);
-        }
-        customerIdCache = cacheBuilder
-                .build(new CustomerCacheLoader(ctx, createCustomerIfNotExists()));
     }
 
     protected abstract boolean createCustomerIfNotExists();
@@ -67,72 +55,44 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
                 t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 
-    private ListenableFuture<Void> processCustomerAction(TbContext ctx, TbMsg msg) {
-        ListenableFuture<CustomerId> customerIdFeature = getCustomer(ctx, msg);
-        return Futures.transform(customerIdFeature, customerId -> {
-                    doProcessCustomerAction(ctx, msg, customerId);
-                    return null;
-                }, ctx.getDbCallbackExecutor()
-        );
-    }
+    protected abstract ListenableFuture<Void> processCustomerAction(TbContext ctx, TbMsg msg);
 
-    protected abstract void doProcessCustomerAction(TbContext ctx, TbMsg msg, CustomerId customerId);
-
-    protected ListenableFuture<CustomerId> getCustomer(TbContext ctx, TbMsg msg) {
+    protected ListenableFuture<CustomerId> getCustomerIdFuture(TbContext ctx, TbMsg msg) {
         String customerTitle = TbNodeUtils.processPattern(this.config.getCustomerNamePattern(), msg);
-        CustomerKey key = new CustomerKey(customerTitle);
-        return ctx.getDbCallbackExecutor().executeAsync(() -> {
-            Optional<CustomerId> customerId = customerIdCache.get(key);
-            if (!customerId.isPresent()) {
-                throw new RuntimeException("No customer found with name '" + key.getCustomerTitle() + "'.");
-            }
-            return customerId.get();
-        });
-    }
-
-    @Override
-    public void destroy() {
-        if (customerIdCache != null) {
-            customerIdCache.invalidateAll();
-        }
-    }
-
-    @Data
-    @AllArgsConstructor
-    private static class CustomerKey {
-        private String customerTitle;
-    }
-
-    private static class CustomerCacheLoader extends CacheLoader<CustomerKey, Optional<CustomerId>> {
-
-        private final TbContext ctx;
-        private final boolean createIfNotExists;
-
-        private CustomerCacheLoader(TbContext ctx, boolean createIfNotExists) {
-            this.ctx = ctx;
-            this.createIfNotExists = createIfNotExists;
-        }
-
-        @Override
-        public Optional<CustomerId> load(CustomerKey key) {
-            CustomerService service = ctx.getCustomerService();
-            Optional<Customer> customerOptional =
-                    service.findCustomerByTenantIdAndTitle(ctx.getTenantId(), key.getCustomerTitle());
+        return ctx.getDbCallbackExecutor().submit(() -> {
+            var customerOptional = Optional.ofNullable(ctx.getCustomerService().findCustomerByTenantIdAndTitleUsingCache(ctx.getTenantId(), customerTitle));
             if (customerOptional.isPresent()) {
-                return Optional.of(customerOptional.get().getId());
-            } else if (createIfNotExists) {
-                Customer newCustomer = new Customer();
-                newCustomer.setTitle(key.getCustomerTitle());
+                return customerOptional.get().getId();
+            }
+            if (createCustomerIfNotExists()) {
+                var newCustomer = new Customer();
+                newCustomer.setTitle(customerTitle);
                 newCustomer.setTenantId(ctx.getTenantId());
-                Customer savedCustomer = service.saveCustomer(newCustomer);
+                Customer savedCustomer = ctx.getCustomerService().saveCustomer(newCustomer);
                 ctx.enqueue(ctx.customerCreatedMsg(savedCustomer, ctx.getSelfId()),
                         () -> log.trace("Pushed Customer Created message: {}", savedCustomer),
                         throwable -> log.warn("Failed to push Customer Created message: {}", savedCustomer, throwable));
-                return Optional.of(savedCustomer.getId());
+                return savedCustomer.getId();
             }
-            return Optional.empty();
-        }
+            throw new RuntimeException("No customer found with name '" + customerTitle + "'.");
+        });
+    }
 
+    protected static String unsupportedOriginatorTypeErrorMessage(EntityType originatorType) {
+        return "Unsupported originator type '" + originatorType +
+                "'! Only 'DEVICE', 'ASSET', 'ENTITY_VIEW', 'DASHBOARD' types are allowed.";
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0: {
+                ((ObjectNode) oldConfiguration).remove("customerCacheExpiration");
+                hasChanges = true;
+            }
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
     }
 
 }
