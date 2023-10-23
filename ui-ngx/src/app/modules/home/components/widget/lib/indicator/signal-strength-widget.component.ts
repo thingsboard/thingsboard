@@ -142,7 +142,7 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
     this.showDate = this.settings.showDate;
     if (this.showDate) {
       this.dateFormat = DateFormatProcessor.fromSettings(this.ctx.$injector, this.settings.dateFormat);
-      this.dateStyle = textStyle(this.settings.dateFont,  '0.25px');
+      this.dateStyle = textStyle(this.settings.dateFont);
       this.dateStyle.color = this.settings.dateColor;
     }
 
@@ -173,7 +173,7 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
       if (dataKey?.units) {
         this.units = dataKey.units;
       }
-      this.tooltipValueStyle = textStyle(this.settings.tooltipValueFont,  '0.13px');
+      this.tooltipValueStyle = textStyle(this.settings.tooltipValueFont);
       this.tooltipValueStyle.color = this.settings.tooltipValueColor;
       this.tooltipValueLabelStyle = {...this.tooltipValueStyle, ...this.tooltipValueLabelStyle};
     }
@@ -181,7 +181,7 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
     if (this.showTooltipDate) {
       this.tooltipDateFormat = DateFormatProcessor.fromSettings(this.ctx.$injector,
         {...this.settings.tooltipDateFormat, ...{hideLastUpdatePrefix: true}});
-      this.tooltipDateStyle = textStyle(this.settings.tooltipDateFont,  '0.13px');
+      this.tooltipDateStyle = textStyle(this.settings.tooltipDateFont);
       this.tooltipDateStyle.color = this.settings.tooltipDateColor;
       this.tooltipDateLabelStyle = {...this.tooltipDateStyle, ...this.tooltipDateLabelStyle};
     }
@@ -232,7 +232,7 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
     if (!this.noData) {
       this.rssi = Number(value);
       if (this.showTooltipValue) {
-        this.tooltipValueText = formatValue(value, this.decimals, this.units, true);
+        this.tooltipValueText = formatValue(value, this.decimals, this.units, false);
       }
     } else {
       this.rssi = -100;

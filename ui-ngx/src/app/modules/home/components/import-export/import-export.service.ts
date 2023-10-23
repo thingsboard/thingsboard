@@ -298,13 +298,13 @@ export class ImportExportService {
   }
 
   public importWidgetType(): Observable<WidgetTypeDetails> {
-    return this.openImportDialog('widget-type.import', 'widget-type.widget-type-file').pipe(
+    return this.openImportDialog('widget.import', 'widget-type.widget-file').pipe(
       mergeMap((widgetTypeDetails: WidgetTypeDetails) => {
         if (!this.validateImportedWidgetTypeDetails(widgetTypeDetails)) {
           this.store.dispatch(new ActionNotificationShow(
-            {message: this.translate.instant('widget-type.invalid-widget-type-file-error'),
+            {message: this.translate.instant('widget-type.invalid-widget-file-error'),
               type: 'error'}));
-          throw new Error('Invalid widget type file');
+          throw new Error('Invalid widget file');
         } else {
           return this.widgetService.saveImportedWidgetTypeDetails(widgetTypeDetails);
         }

@@ -11,6 +11,8 @@
     "cards.value_card",
     "cards.horizontal_value_card",
     "cards.aggregated_value_card",
+    "simple_value_and_chart_card",
+    "progress_bar",
     "cards.label_widget",
     "cards.dashboard_state_widget",
     "cards.qr_code",

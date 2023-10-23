@@ -9,6 +9,7 @@
   },
   "widgetTypeFqns": [
     "battery_level",
-    "signal_strength"
+    "signal_strength",
+    "progress_bar"
   ]
 }

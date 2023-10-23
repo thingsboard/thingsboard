@@ -552,6 +552,12 @@ export class WidgetComponentService {
       if (isUndefined(result.typeParameters.hideDataSettings)) {
         result.typeParameters.hideDataSettings = false;
       }
+      if (!isFunction(result.typeParameters.defaultDataKeysFunction)) {
+        result.typeParameters.defaultDataKeysFunction = null;
+      }
+      if (!isFunction(result.typeParameters.defaultLatestDataKeysFunction)) {
+        result.typeParameters.defaultLatestDataKeysFunction = null;
+      }
       if (isFunction(widgetTypeInstance.actionSources)) {
         result.actionSources = widgetTypeInstance.actionSources();
       } else {

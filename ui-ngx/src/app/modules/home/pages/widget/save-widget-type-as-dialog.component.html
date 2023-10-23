@@ -17,7 +17,7 @@
 -->
 <form [formGroup]="saveWidgetTypeAsFormGroup" (ngSubmit)="saveAs()">
   <mat-toolbar color="primary">
-    <h2 translate>widget.save-widget-type-as</h2>
+    <h2 translate>widget.save-widget-as</h2>
     <span fxFlex></span>
     <button mat-icon-button
             (click)="cancel()"
@@ -30,7 +30,7 @@
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div mat-dialog-content>
     <fieldset>
-      <span translate>widget.save-widget-type-as-text</span>
+      <span translate>widget.save-widget-as-text</span>
       <mat-form-field class="mat-block">
         <mat-label translate>widget.title</mat-label>
         <input matInput formControlName="title" required>

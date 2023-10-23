@@ -14,7 +14,8 @@
 /// limitations under the License.
 ///
 
-export type WindowMessageType = 'widgetException' | 'widgetEditModeInited' | 'widgetEditUpdated' | 'openDashboardMessage' | 'reloadUserMessage' | 'toggleDashboardLayout';
+export type WindowMessageType = 'widgetException' | 'widgetEditModeInited' | 'widgetEditUpdated' | 'openDashboardMessage'
+  | 'reloadUserMessage' | 'toggleDashboardLayout' | 'widgetEditModeToggle';
 
 export interface WindowMessage {
   type: WindowMessageType;

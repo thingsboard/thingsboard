@@ -20,7 +20,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 24px;
+  padding: 20px 24px 24px 24px;
   &.tb-battery-level-pointer {
     cursor: pointer;
   }
@@ -33,6 +33,9 @@
     left: 12px;
     bottom: 12px;
     right: 12px;
+  }
+  div.tb-widget-title {
+    padding: 0;
   }
   .tb-battery-level-content {
     min-height: 0;

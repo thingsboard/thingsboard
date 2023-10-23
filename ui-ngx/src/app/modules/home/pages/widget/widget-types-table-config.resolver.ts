@@ -87,13 +87,13 @@ export class WidgetTypesTableConfigResolver implements Resolve<EntityTableConfig
 
     this.config.addActionDescriptors.push(
       {
-        name: this.translate.instant('widget-type.create-new-widget-type'),
+        name: this.translate.instant('dashboard.create-new-widget'),
         icon: 'insert_drive_file',
         isEnabled: () => true,
         onAction: ($event) => this.addWidgetType($event)
       },
       {
-        name: this.translate.instant('widget-type.import'),
+        name: this.translate.instant('widget.import'),
         icon: 'file_upload',
         isEnabled: () => true,
         onAction: ($event) => this.importWidgetType($event)
@@ -102,13 +102,13 @@ export class WidgetTypesTableConfigResolver implements Resolve<EntityTableConfig
 
     this.config.cellActionDescriptors.push(
       {
-        name: this.translate.instant('widget-type.export'),
+        name: this.translate.instant('widget.export'),
         icon: 'file_download',
         isEnabled: () => true,
         onAction: ($event, entity) => this.exportWidgetType($event, entity)
       },
       {
-        name: this.translate.instant('widget.widget-type-details'),
+        name: this.translate.instant('widget.widget-details'),
         icon: 'edit',
         isEnabled: () => true,
         onAction: ($event, entity) => this.config.toggleEntityDetails($event, entity)
@@ -117,18 +117,18 @@ export class WidgetTypesTableConfigResolver implements Resolve<EntityTableConfig
 
     this.config.groupActionDescriptors.push(
       {
-        name: this.translate.instant('widget-type.export-widget-types'),
+        name: this.translate.instant('widget.export-widgets'),
         icon: 'file_download',
         isEnabled: true,
         onAction: ($event, entities) => this.exportWidgetTypes($event, entities)
       }
     );
 
-    this.config.deleteEntityTitle = widgetType => this.translate.instant('widget.delete-widget-type-title',
-      { widgetTypeName: widgetType.name });
-    this.config.deleteEntityContent = () => this.translate.instant('widget.delete-widget-type-text');
-    this.config.deleteEntitiesTitle = count => this.translate.instant('widget.delete-widget-types-title', {count});
-    this.config.deleteEntitiesContent = () => this.translate.instant('widget.delete-widget-types-text');
+    this.config.deleteEntityTitle = widgetType => this.translate.instant('widget.delete-widget-title',
+      { widgetName: widgetType.name });
+    this.config.deleteEntityContent = () => this.translate.instant('widget.delete-widget-text');
+    this.config.deleteEntitiesTitle = count => this.translate.instant('widget.delete-widgets-title', {count});
+    this.config.deleteEntitiesContent = () => this.translate.instant('widget.delete-widgets-text');
 
 
     this.config.loadEntity = id => this.widgetsService.getWidgetTypeById(id.id);
@@ -147,7 +147,7 @@ export class WidgetTypesTableConfigResolver implements Resolve<EntityTableConfig
   }
 
   resolve(): EntityTableConfig<WidgetTypeInfo | WidgetTypeDetails> {
-    this.config.tableTitle = this.translate.instant('widget.widget-types');
+    this.config.tableTitle = this.translate.instant('widget.widgets');
     const authUser = getCurrentAuthUser(this.store);
     this.config.deleteEnabled = (widgetType) => this.isWidgetTypeEditable(widgetType, authUser.authority);
     this.config.entitySelectionEnabled = (widgetType) => this.isWidgetTypeEditable(widgetType, authUser.authority);

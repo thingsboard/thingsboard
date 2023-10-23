@@ -62,6 +62,8 @@ import {
   WindSpeedDirectionWidgetComponent
 } from '@home/components/widget/lib/weather/wind-speed-direction-widget.component';
 import { SignalStrengthWidgetComponent } from '@home/components/widget/lib/indicator/signal-strength-widget.component';
+import { ValueChartCardWidgetComponent } from '@home/components/widget/lib/cards/value-chart-card-widget.component';
+import { ProgressBarWidgetComponent } from '@home/components/widget/lib/cards/progress-bar-widget.component';
 
 @NgModule({
   declarations:
@@ -98,7 +100,9 @@ import { SignalStrengthWidgetComponent } from '@home/components/widget/lib/indic
       CountWidgetComponent,
       BatteryLevelWidgetComponent,
       WindSpeedDirectionWidgetComponent,
-      SignalStrengthWidgetComponent
+      SignalStrengthWidgetComponent,
+      ValueChartCardWidgetComponent,
+      ProgressBarWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -139,7 +143,9 @@ import { SignalStrengthWidgetComponent } from '@home/components/widget/lib/indic
         CountWidgetComponent,
         BatteryLevelWidgetComponent,
         WindSpeedDirectionWidgetComponent,
-        SignalStrengthWidgetComponent
+        SignalStrengthWidgetComponent,
+        ValueChartCardWidgetComponent,
+        ProgressBarWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }
