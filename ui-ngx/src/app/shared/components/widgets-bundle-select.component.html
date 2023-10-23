@@ -30,7 +30,6 @@
       </div>
     </mat-select-trigger>
     <mat-option [value]="null" *ngIf="!required">
-      ---
     </mat-option>
     <mat-option *ngFor="let widgetsBundle of widgetsBundles$ | async" [value]="widgetsBundle">
       <div class="tb-bundle-item">
