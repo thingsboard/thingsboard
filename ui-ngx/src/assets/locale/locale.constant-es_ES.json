@@ -3735,7 +3735,7 @@
         "ui-resources-load-error": "Error al cargar los recursos de configuración UI.",
         "invalid-target-rulechain": "No se puede resolver la cadena de reglas objetivo!",
         "test-script-function": "Probar Script de función",
-        "script-lang-java-script": "Java Script",
+        "script-lang-java-script": "JavaScript",
         "script-lang-tbel": "TBEL",
         "message": "Mensaje",
         "message-type": "Tipo de mensaje",
