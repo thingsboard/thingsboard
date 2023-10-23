@@ -956,6 +956,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   public toggleDashboardEditMode() {
     this.setEditMode(!this.isEdit, true);
+    this.notifyDashboardToggleEditMode();
   }
 
   public saveDashboard() {
@@ -1061,6 +1062,16 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   private filtersUpdated() {
     this.dashboardCtx.aliasController.updateFilters(this.dashboard.configuration.filters);
+  }
+
+  private notifyDashboardToggleEditMode() {
+    if (this.widgetEditMode) {
+      const message: WindowMessage = {
+        type: 'widgetEditModeToggle',
+        data: this.isEdit
+      };
+      this.window.parent.postMessage(JSON.stringify(message), '*');
+    }
   }
 
   private notifyDashboardUpdated() {
