@@ -52,11 +52,11 @@ import {
   SaveWidgetTypeAsDialogComponent,
   SaveWidgetTypeAsDialogResult
 } from '@home/pages/widget/save-widget-type-as-dialog.component';
-import { forkJoin, mergeMap, of, Subscription, throwError } from 'rxjs';
+import { forkJoin, mergeMap, of, Subscription } from 'rxjs';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { widgetEditorCompleter } from '@home/pages/widget/widget-editor.models';
 import { Observable } from 'rxjs/internal/Observable';
-import { catchError, map, tap } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { beautifyCss, beautifyHtml, beautifyJs } from '@shared/models/beautify.models';
 import Timeout = NodeJS.Timeout;
 
@@ -566,12 +566,9 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     this.widgetService.saveWidgetTypeDetails(this.widget, id, createdTime).pipe(
       mergeMap((widgetTypeDetails) => {
         const widgetsBundleId = this.route.snapshot.params.widgetsBundleId as string;
-        if (widgetsBundleId) {
+        if (widgetsBundleId && !id) {
           return this.widgetService.addWidgetFqnToWidgetBundle(widgetsBundleId, widgetTypeDetails.fqn).pipe(
-            map(() => widgetTypeDetails),
-            catchError((error) => this.widgetService.deleteWidgetType(widgetTypeDetails.id.id).pipe(
-              mergeMap(() => throwError(() => error))
-            ))
+            map(() => widgetTypeDetails)
           );
         }
         return of(widgetTypeDetails);

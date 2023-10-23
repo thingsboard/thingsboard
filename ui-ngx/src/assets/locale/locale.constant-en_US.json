@@ -4759,7 +4759,7 @@
         "no-widgets-text": "No widgets found",
         "management": "Widget management",
         "editor": "Widget Editor",
-        "confirm-to-exit-editor-html": "You have unsaved default widget settings.<br>Are you sure you want to leave this page?",
+        "confirm-to-exit-editor-html": "You have unsaved widget settings.<br>Are you sure you want to leave this page?",
         "widget-type-not-found": "Problem loading widget configuration.<br>Probably associated\n    widget type was removed.",
         "widget-type-load-error": "Widget wasn't loaded due to the following errors:",
         "remove": "Remove widget",

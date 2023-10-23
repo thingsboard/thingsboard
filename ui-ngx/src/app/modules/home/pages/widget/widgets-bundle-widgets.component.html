@@ -28,7 +28,7 @@
         <span class="mat-headline-5">{{ widgetsBundle.title }}: {{ 'widget.widgets' | translate }}</span>
         <span fxFlex></span>
         <button mat-icon-button [disabled]="isLoading$ | async"
-                *ngIf="editMode"
+                *ngIf="!isReadOnly"
                 matTooltip="{{ 'widget.add-new-widget' | translate }}"
                 matTooltipPosition="above"
                 [matMenuTriggerFor]="addWidgetMenu">
