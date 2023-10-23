@@ -28,7 +28,7 @@
         <span class="mat-headline-5">{{ widgetsBundle.title }}: {{ 'widget.widgets' | translate }}</span>
         <span fxFlex></span>
         <button mat-icon-button [disabled]="isLoading$ | async"
-                *ngIf="editMode"
+                *ngIf="!isReadOnly"
                 matTooltip="{{ 'widget.add-new-widget' | translate }}"
                 matTooltipPosition="above"
                 [matMenuTriggerFor]="addWidgetMenu">
@@ -71,14 +71,14 @@
         <button *ngIf="!editMode"
                 mat-icon-button
                 (click)="openWidgetEditor($event, widget)"
-                matTooltip="{{'widget.edit-widget-type' | translate }}"
+                matTooltip="{{ 'widget.edit' | translate }}"
                 matTooltipPosition="above">
           <mat-icon>edit</mat-icon>
         </button>
         <button *ngIf="!editMode"
                 mat-icon-button
                 (click)="exportWidgetType($event, widget)"
-                matTooltip="{{'widget-type.export' | translate }}"
+                matTooltip="{{ 'widget.export' | translate }}"
                 matTooltipPosition="above">
           <mat-icon>file_download</mat-icon>
         </button>

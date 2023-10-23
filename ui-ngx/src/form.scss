@@ -225,6 +225,13 @@
         margin-left: 12px;
       }
     }
+    .tb-small-label {
+      height: 40px;
+      font-size: 14px;
+      line-height: 40px;
+      letter-spacing: 0.2px;
+      color: rgba(0, 0, 0, 0.38);
+    }
   }
 
   .tb-form-row:not(.tb-standard-fields) .mat-mdc-form-field:not(.tb-not-inline-field), .mat-mdc-form-field.tb-inline-field {

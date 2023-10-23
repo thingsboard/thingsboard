@@ -21,6 +21,7 @@ import { AppState } from '@core/core.state';
 import { BasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 import {
+  DataKey,
   datasourcesHasAggregation,
   datasourcesHasOnlyComparisonAggregation,
   WidgetConfig,
@@ -83,8 +84,8 @@ export class BatteryLevelBasicConfigComponent extends BasicWidgetConfigComponent
     return this.batteryLevelWidgetConfigForm;
   }
 
-  protected setupDefaults(configData: WidgetConfigComponentData) {
-    this.setupDefaultDatasource(configData, [{ name: 'batteryLevel', label: 'batteryLevel', type: DataKeyType.timeseries }]);
+  protected defaultDataKeys(configData: WidgetConfigComponentData): DataKey[] {
+    return [{ name: 'batteryLevel', label: 'batteryLevel', type: DataKeyType.timeseries }];
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {

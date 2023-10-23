@@ -183,7 +183,7 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
 
     this.showValue = this.settings.showValue;
     this.autoScaleValueSize = this.showValue && this.settings.autoScaleValueSize;
-    this.valueStyle = textStyle(this.settings.valueFont,  '0.1px');
+    this.valueStyle = textStyle(this.settings.valueFont);
     this.valueColor = ColorProcessor.fromSettings(this.settings.valueColor);
 
     this.batteryLevelColor = ColorProcessor.fromSettings(this.settings.batteryLevelColor);
@@ -224,7 +224,7 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
     this.value = 0;
     if (tsValue && isDefinedAndNotNull(tsValue[1]) && isNumeric(tsValue[1])) {
       this.value = tsValue[1];
-      this.valueText = formatValue(this.value, this.decimals, this.units, true);
+      this.valueText = formatValue(this.value, this.decimals, this.units, false);
     } else {
       this.valueText = 'N/A';
     }
@@ -263,6 +263,7 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
         if (this.autoScaleValueSize) {
           const valueFontSize = ratios.valueFontSizeRatio * boxSize;
           const valueLineHeight = ratios.valueLineHeightRaio * boxSize;
+          this.renderer.setStyle(this.batteryLevelValue.nativeElement, 'minWidth', '0');
           this.setValueFontSize(valueFontSize, valueLineHeight, boxWidth);
         }
         const fontSize = parseInt(window.getComputedStyle(this.batteryLevelValue.nativeElement).fontSize, 10) || 10;

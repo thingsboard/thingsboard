@@ -202,13 +202,18 @@ export class WidgetsBundleWidgetsComponent extends PageComponent implements OnIn
     this.importExport.importWidgetType().subscribe(
       (widgetType) => {
         if (widgetType) {
-          if (this.widgets.some(widget => widget.id.id === widgetType.id.id)) {
+          const isExistWidget = this.widgets.some(widget => widget.id.id === widgetType.id.id);
+          if (isExistWidget) {
             this.widgets = this.widgets.map(widget => widget.id.id !== widgetType.id.id ? widget : widgetType);
           } else {
             this.widgets.push(widgetType);
           }
-          this.isDirty = true;
-          this.cd.markForCheck();
+          if (this.editMode) {
+            this.isDirty = true;
+            this.cd.markForCheck();
+          } else if (!isExistWidget) {
+            this.widgetsService.addWidgetFqnToWidgetBundle(this.widgetsBundle.id.id, widgetType.fqn).subscribe(() => {});
+          }
         }
       }
     );

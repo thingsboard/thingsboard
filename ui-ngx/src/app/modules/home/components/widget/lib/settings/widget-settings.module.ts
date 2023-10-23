@@ -294,6 +294,12 @@ import {
 import {
   SignalStrengthWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/indicator/signal-strength-widget-settings.component';
+import {
+  ValueChartCardWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/value-chart-card-widget-settings.component';
+import {
+  ProgressBarWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/progress-bar-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -402,7 +408,9 @@ import {
     EntityCountWidgetSettingsComponent,
     BatteryLevelWidgetSettingsComponent,
     WindSpeedDirectionWidgetSettingsComponent,
-    SignalStrengthWidgetSettingsComponent
+    SignalStrengthWidgetSettingsComponent,
+    ValueChartCardWidgetSettingsComponent,
+    ProgressBarWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -516,7 +524,9 @@ import {
     EntityCountWidgetSettingsComponent,
     BatteryLevelWidgetSettingsComponent,
     WindSpeedDirectionWidgetSettingsComponent,
-    SignalStrengthWidgetSettingsComponent
+    SignalStrengthWidgetSettingsComponent,
+    ValueChartCardWidgetSettingsComponent,
+    ProgressBarWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -595,5 +605,7 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-entity-count-widget-settings': EntityCountWidgetSettingsComponent,
   'tb-battery-level-widget-settings': BatteryLevelWidgetSettingsComponent,
   'tb-wind-speed-direction-widget-settings': WindSpeedDirectionWidgetSettingsComponent,
-  'tb-signal-strength-widget-settings': SignalStrengthWidgetSettingsComponent
+  'tb-signal-strength-widget-settings': SignalStrengthWidgetSettingsComponent,
+  'tb-value-chart-card-widget-settings': ValueChartCardWidgetSettingsComponent,
+  'tb-progress-bar-widget-settings': ProgressBarWidgetSettingsComponent
 };

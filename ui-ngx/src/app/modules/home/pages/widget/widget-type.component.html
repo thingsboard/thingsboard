@@ -20,19 +20,19 @@
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'edit')"
           [fxShow]="!isEdit">
-    {{'widget.edit-widget-type' | translate }}
+    {{ 'widget.edit' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'export')"
           [fxShow]="!isEdit">
-    {{'widget-type.export' | translate }}
+    {{ 'widget.export' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
           [fxShow]="!hideDelete() && !isEdit">
-    {{'widget.delete-widget-type' | translate }}
+    {{ 'widget.delete-widget' | translate }}
   </button>
 </div>
 <div class="mat-padding" fxLayout="column">
