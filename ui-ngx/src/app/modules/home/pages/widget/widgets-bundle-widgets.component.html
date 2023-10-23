@@ -54,14 +54,14 @@
         <button *ngIf="!editMode"
                 mat-icon-button
                 (click)="openWidgetEditor($event, widget)"
-                matTooltip="{{'widget.edit-widget-type' | translate }}"
+                matTooltip="{{ 'widget.edit' | translate }}"
                 matTooltipPosition="above">
           <mat-icon>edit</mat-icon>
         </button>
         <button *ngIf="!editMode"
                 mat-icon-button
                 (click)="exportWidgetType($event, widget)"
-                matTooltip="{{'widget-type.export' | translate }}"
+                matTooltip="{{ 'widget.export' | translate }}"
                 matTooltipPosition="above">
           <mat-icon>file_download</mat-icon>
         </button>
