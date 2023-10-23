@@ -107,7 +107,7 @@ public class HashPartitionService implements PartitionService {
 
         QueueKey vcKey = new QueueKey(ServiceType.TB_VC_EXECUTOR);
         partitionSizesMap.put(vcKey, vcPartitions);
-        partitionTopicsMap.put(vcKey, topicService.buildTopicName(topicService.buildTopicName(vcTopic)));
+        partitionTopicsMap.put(vcKey, topicService.buildTopicName(vcTopic));
 
         if (!isTransport(serviceInfoProvider.getServiceType())) {
             doInitRuleEnginePartitions();
