@@ -479,7 +479,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
       backgroundColor: this.backgroundColor,
       padding: this.padding,
       margin: this.margin,
-      borderRadius: this.borderRadius};
+      borderRadius: this.borderRadius || 'unset' };
     if (this.widget.config.widgetStyle) {
       this.style = {...this.style, ...this.widget.config.widgetStyle};
     }
