@@ -84,7 +84,7 @@
                              label="{{ 'widgets.liquid-level-card.shape-type' | translate }}" formControlName="selectedShape">
         <tb-image-cards-select-option *ngFor="let shape of shapes"
                                       [value]="shape"
-                                      [image]="createShapeLayout(shapesImageMap.get(shape), this.levelCardLayouts.simple)">
+                                      [image]="createShape(shapesImageMap.get(shape), this.levelCardLayouts.simple)">
           {{ shapesTranslationMap.get(shape) | translate }}
         </tb-image-cards-select-option>
       </tb-image-cards-select>
@@ -94,8 +94,7 @@
         <tb-string-autocomplete [fetchOptionsFn]="fetchOptions.bind(this)"
                                 [required]="isRequired('shapeAttributeName')"
                                 [errorText]="'widgets.liquid-level-card.attribute-name-required' | translate"
-                                style="flex: 1; width: auto;"
-                                asBoxInput colorClearButton class="flex"
+                                style="flex: 1"
                                 formControlName="shapeAttributeName">
         </tb-string-autocomplete>
       </div>
@@ -118,7 +117,7 @@
       <tb-image-cards-select-option
         *ngFor="let layout of [levelCardLayouts.simple, levelCardLayouts.percentage, levelCardLayouts.absolute]"
         [value]="layout"
-        [image]="createShapeLayout(shapesImageMap.get(levelCardWidgetConfigForm.get('selectedShape').value), layout)">
+        [image]="createShape(shapesImageMap.get(levelCardWidgetConfigForm.get('selectedShape').value), layout)">
         {{ levelCardLayoutTranslationMap.get(layout) | translate }}
       </tb-image-cards-select-option>
     </tb-image-cards-select>
@@ -144,7 +143,7 @@
           </mat-select>
         </mat-form-field>
         <tb-unit-input [fxShow]="levelCardWidgetConfigForm.get('widgetUnitsSource')?.value !== levelOptions.attribute"
-                       asBoxInput colorClearButton class="flex"
+                       class="flex"
                        [tagFilter]="unitsType.capacity"
                        [required]="isRequired('units')"
                        formControlName="units">
@@ -153,8 +152,7 @@
                                 [fetchOptionsFn]="fetchOptions.bind(this)"
                                 [required]="isRequired('widgetUnitsAttributeName')"
                                 [errorText]="'widgets.liquid-level-card.attribute-name-required' | translate"
-                                style="flex: 1; width: auto;"
-                                asBoxInput colorClearButton class="flex"
+                                style="flex: 1"
                                 formControlName="widgetUnitsAttributeName">
         </tb-string-autocomplete>
       </div>
@@ -182,17 +180,14 @@
             warning
           </mat-icon>
         </mat-form-field>
-        <tb-string-autocomplete style="max-width: 25%"
-                                [fxShow]="levelCardWidgetConfigForm.get('volumeSource')?.value === levelOptions.attribute"
+        <tb-string-autocomplete [fxShow]="levelCardWidgetConfigForm.get('volumeSource')?.value === levelOptions.attribute"
                                 [fetchOptionsFn]="fetchOptions.bind(this)"
                                 [errorText]="'widgets.liquid-level-card.attribute-name-required' | translate"
                                 [required]="isRequired('volumeAttributeName')"
-                                style="flex: 1; width: auto;"
-                                asBoxInput colorClearButton class="flex"
+                                style="flex: 1"
                                 formControlName="volumeAttributeName">
         </tb-string-autocomplete>
-        <tb-unit-input asBoxInput colorClearButton
-                       [tagFilter]="unitsType.capacity"
+        <tb-unit-input [tagFilter]="unitsType.capacity"
                        [required]="isRequired('volumeUnits')"
                        style="max-width: 25%" class="flex"
                        formControlName="volumeUnits">

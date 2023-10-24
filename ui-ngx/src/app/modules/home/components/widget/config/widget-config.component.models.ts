@@ -25,6 +25,7 @@ import { AppState } from '@core/core.state';
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { DataKey, DatasourceType, KeyInfo, WidgetConfigMode } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { isDefinedAndNotNull } from '@core/utils';
 
 export type WidgetConfigCallbacks = DatasourceCallbacks & WidgetActionCallbacks;

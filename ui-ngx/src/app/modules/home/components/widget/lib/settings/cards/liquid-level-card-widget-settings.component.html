@@ -16,7 +16,7 @@
 
 -->
 <ng-container *ngIf="levelCardWidgetSettingsForm"  [formGroup]="levelCardWidgetSettingsForm">
-  <div style="display: flex; flex-direction: column; gap: 16px;">
+  <div class="tb-form-panel no-padding no-border">
     <div class="tb-form-panel">
       <div fxFlex fxLayout="column" class="tb-form-row space-between">
         <div fxFlex fxLayout="row" style="width: 100%;" fxLayoutAlign="space-between center">
@@ -39,7 +39,7 @@
                                label="{{ 'widgets.liquid-level-card.shape-type' | translate }}" formControlName="selectedShape">
           <tb-image-cards-select-option *ngFor="let shape of shapes"
                                         [value]="shape"
-                                        [image]="createShapeLayout(shapesImageMap.get(shape), this.levelCardLayouts.simple)">
+                                        [image]="createShape(shapesImageMap.get(shape), this.levelCardLayouts.simple)">
             {{ shapesTranslationMap.get(shape) | translate }}
           </tb-image-cards-select-option>
         </tb-image-cards-select>
@@ -49,8 +49,7 @@
           <tb-string-autocomplete [fetchOptionsFn]="fetchOptions.bind(this)"
                                   [required]="isRequired('shapeAttributeName')"
                                   [errorText]="'widgets.liquid-level-card.attribute-name-required' | translate"
-                                  style="flex: 1; width: auto;"
-                                  asBoxInput colorClearButton class="flex"
+                                  style="flex: 1"
                                   formControlName="shapeAttributeName">
           </tb-string-autocomplete>
         </div>
@@ -77,7 +76,7 @@
         <tb-image-cards-select-option
           *ngFor="let layout of [levelCardLayouts.simple, levelCardLayouts.percentage, levelCardLayouts.absolute]"
           [value]="layout"
-          [image]="createShapeLayout(shapesImageMap.get(levelCardWidgetSettingsForm.get('selectedShape').value), layout)">
+          [image]="createShape(shapesImageMap.get(levelCardWidgetSettingsForm.get('selectedShape').value), layout)">
           {{ levelCardLayoutTranslationMap.get(layout) | translate }}
         </tb-image-cards-select-option>
       </tb-image-cards-select>
@@ -103,7 +102,7 @@
             </mat-select>
           </mat-form-field>
           <tb-unit-input [fxShow]="levelCardWidgetSettingsForm.get('widgetUnitsSource')?.value !== volumeOptions.attribute"
-                         asBoxInput colorClearButton class="flex"
+                         class="flex"
                          [tagFilter]="unitsType.capacity"
                          [required]="isRequired('units')"
                          formControlName="units">
@@ -112,8 +111,7 @@
                                   [fetchOptionsFn]="fetchOptions.bind(this)"
                                   [required]="isRequired('widgetUnitsAttributeName')"
                                   [errorText]="'widgets.liquid-level-card.attribute-name-required' | translate"
-                                  style="flex: 1; width: auto;"
-                                  asBoxInput colorClearButton class="flex"
+                                  style="flex: 1"
                                   formControlName="widgetUnitsAttributeName">
           </tb-string-autocomplete>
         </div>
@@ -141,17 +139,14 @@
               warning
             </mat-icon>
           </mat-form-field>
-          <tb-string-autocomplete style="max-width: 25%"
-                                  [fxShow]="levelCardWidgetSettingsForm.get('volumeSource')?.value === volumeOptions.attribute"
+          <tb-string-autocomplete [fxShow]="levelCardWidgetSettingsForm.get('volumeSource')?.value === volumeOptions.attribute"
                                   [fetchOptionsFn]="fetchOptions.bind(this)"
                                   [required]="isRequired('volumeAttributeName')"
                                   [errorText]="'widgets.liquid-level-card.attribute-name-required' | translate"
-                                  style="flex: 1; width: auto;"
-                                  asBoxInput colorClearButton class="flex"
+                                  style="flex: 1"
                                   formControlName="volumeAttributeName">
           </tb-string-autocomplete>
-          <tb-unit-input asBoxInput colorClearButton
-                         [tagFilter]="unitsType.capacity"
+          <tb-unit-input [tagFilter]="unitsType.capacity"
                          [required]="isRequired('volumeUnits')"
                          style="max-width: 25%" class="flex"
                          formControlName="volumeUnits">

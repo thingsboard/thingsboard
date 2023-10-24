@@ -27,30 +27,26 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { formatValue, isDefined } from '@core/utils';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
+import { DateFormatProcessor, DateFormatSettings } from '@shared/models/widget-settings.models';
 import {
-  DateFormatProcessor,
-  DateFormatSettings
-} from '@shared/models/widget-settings.models';
-import {
+  CapacityUnits,
+  createShapeLayout,
+  fetchEntityKeys,
+  fetchEntityKeysForDevice,
   levelCardDefaultSettings,
   LevelCardLayout,
   levelCardLayoutTranslations,
-  Shapes,
-  shapesTranslations,
-  svgMapping,
-  CapacityUnits,
   LevelSelectOptions,
-  createPercentLayout,
-  createAbsoluteLayout,
+  loadSvgShapesMapping,
   optionsFilter,
-  fetchEntityKeysForDevice,
-  fetchEntityKeys
+  Shapes,
+  shapesTranslations
 } from '@home/components/widget/lib/indicator/liquid-level-widget.models';
 import { UnitsType } from '@shared/models/unit.models';
 import { ImageCardsSelectComponent } from '@home/components/widget/lib/settings/common/image-cards-select.component';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { forkJoin, Observable, of } from 'rxjs';
-import { map, publishReplay, refCount, tap } from 'rxjs/operators';
+import { Observable, of, ReplaySubject } from 'rxjs';
+import { map, share, tap } from 'rxjs/operators';
 import { ResourcesService } from '@core/services/resources.service';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
@@ -201,7 +197,7 @@ export class LiquidLevelCardWidgetSettingsComponent extends WidgetSettingsCompon
       tooltipBackgroundBlur: [settings.tooltipBackgroundBlur, []],
     });
 
-    this.levelCardWidgetSettingsForm.get('selectedShape').valueChanges.subscribe((shape) => {
+    this.levelCardWidgetSettingsForm.get('selectedShape').valueChanges.subscribe(() => {
       this.cd.detectChanges();
       this.layoutsImageCardsSelect?.imageCardsSelectOptions.notifyOnChanges();
     });
@@ -390,21 +386,8 @@ export class LiquidLevelCardWidgetSettingsComponent extends WidgetSettingsCompon
   }
 
   private createSvgShapesMapping(): void {
-    const obsArray: Array<Observable<{svg: string; shape: Shapes}>> = [];
-    for (const shape of this.shapes) {
-      const svgUrl = svgMapping.get(shape).svg;
-
-      const obs = this.resourcesService.loadJsonResource<string>(svgUrl).pipe(
-        map((svg) => ({svg, shape}))
-      );
-
-      obsArray.push(obs);
-    }
-
-    forkJoin(obsArray).subscribe((svgData) => {
-      for (const data of svgData) {
-        this.shapesImageMap.set(data.shape, data.svg);
-      }
+    loadSvgShapesMapping(this.resourcesService).subscribe(shapeMap => {
+      this.shapesImageMap = shapeMap;
 
       this.cd.detectChanges();
       this.layoutsImageCardsSelect?.imageCardsSelectOptions.notifyOnChanges();
@@ -412,25 +395,8 @@ export class LiquidLevelCardWidgetSettingsComponent extends WidgetSettingsCompon
     });
   }
 
-  public createShapeLayout(svg: string, layout: LevelCardLayout): SafeUrl {
-    if (svg && layout) {
-      const parser = new DOMParser();
-      const svgImage = parser.parseFromString(svg, 'image/svg+xml');
-
-      if (layout === this.levelCardLayouts.simple) {
-        svgImage.querySelector('.container-overlay').remove();
-      } else if (layout === this.levelCardLayouts.percentage) {
-        svgImage.querySelector('.absolute-overlay').remove();
-        svgImage.querySelector('.percentage-value-container').innerHTML = createPercentLayout();
-      } else {
-        svgImage.querySelector('.absolute-value-container').innerHTML = createAbsoluteLayout();
-        svgImage.querySelector('.percentage-overlay').remove();
-      }
-
-      const encodedSvg = encodeURIComponent(svgImage.documentElement.outerHTML);
-
-      return this.sanitizer.bypassSecurityTrustResourceUrl(`data:image/svg+xml,${encodedSvg}`);
-    }
+  createShape(svg: string, layout: LevelCardLayout): SafeUrl {
+    return createShapeLayout(svg, layout, this.sanitizer);
   }
 
   public isRequired(formControlName: string): boolean {
@@ -509,8 +475,12 @@ export class LiquidLevelCardWidgetSettingsComponent extends WidgetSettingsCompon
       fetchObservable = of([]);
     }
     return fetchObservable.pipe(
-      publishReplay(1),
-      refCount()
+      share({
+        connector: () => new ReplaySubject(1),
+        resetOnError: false,
+        resetOnComplete: false,
+        resetOnRefCountZero: false
+      })
     );
   }
 }

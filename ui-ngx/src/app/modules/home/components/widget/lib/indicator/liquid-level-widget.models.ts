@@ -24,12 +24,14 @@ import {
 } from '@shared/models/widget-settings.models';
 import { DataKey, WidgetConfig } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { Observable, of } from 'rxjs';
+import { forkJoin, Observable, of } from 'rxjs';
 import { singleEntityFilterFromDeviceId } from '@shared/models/query/query.models';
 import { EntityType } from '@shared/models/entity-type.models';
-import { catchError, mergeMap } from 'rxjs/operators';
+import { catchError, map, mergeMap } from 'rxjs/operators';
 import { EntityService } from '@core/http/entity.service';
 import { IAliasController } from '@core/api/widget-api.models';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { ResourcesService } from '@core/services/resources.service';
 
 export interface SvgInfo {
   svg: string;
@@ -123,7 +125,7 @@ export enum ConversionType {
   from = 'from',
 }
 
-export const svgMapping = new Map<string, SvgInfo>(
+export const svgMapping = new Map<Shapes, SvgInfo>(
   [
     [
       Shapes.vOval,
@@ -421,8 +423,49 @@ export const fetchEntityKeys = (entityAliasId: string, dataKeyTypes: Array<DataK
       aliasInfo.entityFilter,
       dataKeyTypes,  [],
       {ignoreLoading: true, ignoreErrors: true}
-    ).pipe(
-      catchError(() => of([]))
     )),
     catchError(() => of([] as Array<DataKey>))
   );
+
+
+export const createShapeLayout = (svg: string, layout: LevelCardLayout, sanitizer: DomSanitizer): SafeUrl => {
+  if (svg && layout) {
+    const parser = new DOMParser();
+    const svgImage = parser.parseFromString(svg, 'image/svg+xml');
+
+    if (layout === LevelCardLayout.simple) {
+      svgImage.querySelector('.container-overlay').remove();
+    } else if (layout === LevelCardLayout.percentage) {
+      svgImage.querySelector('.absolute-overlay').remove();
+      svgImage.querySelector('.percentage-value-container').innerHTML = createPercentLayout();
+    } else {
+      svgImage.querySelector('.absolute-value-container').innerHTML = createAbsoluteLayout();
+      svgImage.querySelector('.percentage-overlay').remove();
+    }
+
+    const encodedSvg = encodeURIComponent(svgImage.documentElement.outerHTML);
+
+    return sanitizer.bypassSecurityTrustResourceUrl(`data:image/svg+xml,${encodedSvg}`);
+  }
+};
+
+export const loadSvgShapesMapping = (resourcesService: ResourcesService): Observable<Map<Shapes, string>> => {
+  const obsArray: Array<Observable<{svg: string; shape: Shapes}>> = [];
+  const shapesImageMap: Map<Shapes, string> = new Map();
+  svgMapping.forEach((value, shape) => {
+    const obs = resourcesService.loadJsonResource<string>(value.svg).pipe(
+      map((svg) => ({svg, shape}))
+    );
+
+    obsArray.push(obs);
+  });
+
+  return forkJoin(obsArray).pipe(
+    map(svgData => {
+      for (const data of svgData) {
+        shapesImageMap.set(data.shape, data.svg);
+      }
+      return shapesImageMap;
+    })
+  );
+};

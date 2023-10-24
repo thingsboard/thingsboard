@@ -20,7 +20,9 @@ import { isDefined, isDefinedAndNotNull, isNumber, isString } from '@core/utils'
 import {
   CapacityUnits,
   ConversionType,
-  convertLiters, createAbsoluteLayout, createPercentLayout,
+  convertLiters,
+  createAbsoluteLayout,
+  createPercentLayout,
   extractValue,
   levelCardDefaultSettings,
   LevelCardLayout,
@@ -40,10 +42,11 @@ import {
   DateFormatProcessor,
   inlineTextStyle
 } from '@shared/models/widget-settings.models';
-import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import { ResourcesService } from '@core/services/resources.service';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { Component, Input, OnInit } from '@angular/core';
+
+import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 
 @Component({
   selector: 'tb-liquid-level-widget',
@@ -128,7 +131,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
     });
   }
 
-  private declareStyles():void {
+  private declareStyles(): void {
     this.tankColor = ColorProcessor.fromSettings(this.settings.tankColor);
     this.volumeColor = ColorProcessor.fromSettings(this.settings.volumeColor);
     this.valueColor = ColorProcessor.fromSettings(this.settings.valueColor);
@@ -328,7 +331,12 @@ export class LiquidLevelWidgetComponent implements OnInit {
     this.updateLevel(newYPos, percentage);
   }
 
-  private calculatePosition(percentage, limits): number {
+  private calculatePosition(percentage: number, limits: SvgLimits): number {
+    if (percentage > 100) {
+      return limits.max;
+    } if (percentage <= 0) {
+      return limits.min;
+    }
     return limits.min + (percentage / 100) * (limits.max - limits.min);
   }
 
@@ -368,7 +376,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
     }
   }
 
-  private updateShapeColor(value): void {
+  private updateShapeColor(value: number): void {
     const shapeStrokes = this.ctx.$container.find('.tb-shape-stroke');
     const shapeFill = this.ctx.$container.find('.tb-shape-fill');
     this.tankColor.update(value);
@@ -504,7 +512,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
     }
   }
 
-  public cardClick($event) {
+  public cardClick($event: Event) {
     this.ctx.actionsApi.cardClick($event);
   }
 }

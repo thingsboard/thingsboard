@@ -33,6 +33,7 @@ import { Observable, of } from 'rxjs';
 import { tap, map, switchMap, take } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 
 @Component({
   selector: 'tb-string-autocomplete',
@@ -48,41 +49,42 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 })
 export class StringAutocompleteComponent implements ControlValueAccessor, OnInit {
 
+  @ViewChild('nameInput', {static: true}) nameInput: ElementRef;
+
   @Input()
   disabled: boolean;
 
-  @coerceBoolean()
   @Input()
-  required: boolean = false;
+  @coerceBoolean()
+  required = false;
 
-  @Input() fetchOptionsFn: (searchText?: string) => Observable<Array<string>>;
-
-  @ViewChild('nameInput', {static: true}) nameInput: ElementRef;
+  @Input()
+  fetchOptionsFn: (searchText?: string) => Observable<Array<string>>;
 
   @Input()
   placeholderText: string = this.translate.instant('widget-config.set');
 
   @Input()
-  subscriptSizing: string = 'dynamic';
+  subscriptSizing: SubscriptSizing = 'dynamic';
 
   @Input()
-  ngClass: string | string[] | Set<string> | { [klass: string]: any; } = 'tb-inline-field tb-suffix-show-on-hover';
+  additionalClass: string | string[] | Record<string, boolean | undefined | null> = 'tb-inline-field tb-suffix-show-on-hover';
 
   @Input()
-  appearance: string = 'outline';
+  appearance: MatFormFieldAppearance = 'outline';
 
   @Input()
   label: string;
 
   @Input()
-  tooltipClass: string = 'tb-error-tooltip';
+  tooltipClass = 'tb-error-tooltip';
 
   @Input()
   errorText: string;
 
-  @coerceBoolean()
   @Input()
-  showInlineError: boolean = false;
+  @coerceBoolean()
+  showInlineError = false;
 
   selectionFormControl: FormControl;
 

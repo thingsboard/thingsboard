@@ -64,7 +64,7 @@ import {
 import { SignalStrengthWidgetComponent } from '@home/components/widget/lib/indicator/signal-strength-widget.component';
 import { ValueChartCardWidgetComponent } from '@home/components/widget/lib/cards/value-chart-card-widget.component';
 import { ProgressBarWidgetComponent } from '@home/components/widget/lib/cards/progress-bar-widget.component';
-import { LiquidLevelWidgetComponent } from '@home/components/widget/lib/indicator/liquid-level-widget';
+import { LiquidLevelWidgetComponent } from '@home/components/widget/lib/indicator/liquid-level-widget.component';
 
 @NgModule({
   declarations:

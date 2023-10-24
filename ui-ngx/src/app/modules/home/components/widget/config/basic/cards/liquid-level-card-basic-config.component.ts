@@ -43,23 +43,22 @@ import {
 } from '@shared/models/widget-settings.models';
 import {
   CapacityUnits,
-  createAbsoluteLayout,
-  createPercentLayout,
+  createShapeLayout,
   levelCardDefaultSettings,
   LevelCardLayout,
   levelCardLayoutTranslations,
   LevelCardWidgetSettings,
   LevelSelectOptions,
+  loadSvgShapesMapping,
   optionsFilter,
   Shapes,
-  shapesTranslations,
-  svgMapping
+  shapesTranslations
 } from '@home/components/widget/lib/indicator/liquid-level-widget.models';
 import { UnitsType } from '@shared/models/unit.models';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ImageCardsSelectComponent } from '@home/components/widget/lib/settings/common/image-cards-select.component';
-import { map, publishReplay, refCount, tap } from 'rxjs/operators';
-import { forkJoin, Observable, of } from 'rxjs';
+import { map, share, tap } from 'rxjs/operators';
+import { Observable, of, ReplaySubject } from 'rxjs';
 import { ResourcesService } from '@core/services/resources.service';
 import { UnitInputComponent } from '@shared/components/unit-input.component';
 import { UtilsService } from '@core/services/utils.service';
@@ -242,7 +241,7 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
       actions: [configData.config.actions || {}, []]
     });
 
-    this.levelCardWidgetConfigForm.get('selectedShape').valueChanges.subscribe((shape) => {
+    this.levelCardWidgetConfigForm.get('selectedShape').valueChanges.subscribe(() => {
       this.cd.detectChanges();
       this.layoutsImageCardsSelect?.imageCardsSelectOptions.notifyOnChanges();
     });
@@ -562,21 +561,8 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
   }
 
   private createSvgShapesMapping(): void {
-    const obsArray: Array<Observable<{svg: string; shape: Shapes}>> = [];
-    for (const shape of this.shapes) {
-      const svgUrl = svgMapping.get(shape).svg;
-
-      const obs = this.resourcesService.loadJsonResource<string>(svgUrl).pipe(
-        map((svg) => ({svg, shape}))
-      );
-
-      obsArray.push(obs);
-    }
-
-    forkJoin(obsArray).subscribe((svgData) => {
-      for (const data of svgData) {
-        this.shapesImageMap.set(data.shape, data.svg);
-      }
+    loadSvgShapesMapping(this.resourcesService).subscribe(shapeMap => {
+      this.shapesImageMap = shapeMap;
 
       this.cd.detectChanges();
       this.layoutsImageCardsSelect?.imageCardsSelectOptions.notifyOnChanges();
@@ -584,25 +570,8 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
     });
   }
 
-  public createShapeLayout(svg: string, layout: LevelCardLayout): SafeUrl {
-    if (svg && layout) {
-      const parser = new DOMParser();
-      const svgImage = parser.parseFromString(svg, 'image/svg+xml');
-
-      if (layout === this.levelCardLayouts.simple) {
-        svgImage.querySelector('.container-overlay').remove();
-      } else if (layout === this.levelCardLayouts.percentage) {
-        svgImage.querySelector('.absolute-overlay').remove();
-        svgImage.querySelector('.percentage-value-container').innerHTML = createPercentLayout();
-      } else {
-        svgImage.querySelector('.absolute-value-container').innerHTML = createAbsoluteLayout();
-        svgImage.querySelector('.percentage-overlay').remove();
-      }
-
-      const encodedSvg = encodeURIComponent(svgImage.documentElement.outerHTML);
-
-      return this.sanitizer.bypassSecurityTrustResourceUrl(`data:image/svg+xml,${encodedSvg}`);
-    }
+  createShape(svg: string, layout: LevelCardLayout): SafeUrl {
+    return createShapeLayout(svg, layout, this.sanitizer);
   }
 
   public isRequired(formControlName: string): boolean {
@@ -649,8 +618,12 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
       fetchObservable = of([]);
     }
     return fetchObservable.pipe(
-      publishReplay(1),
-      refCount()
+      share({
+        connector: () => new ReplaySubject(1),
+        resetOnError: false,
+        resetOnComplete: false,
+        resetOnRefCountZero: false
+      })
     );
   }
 }
