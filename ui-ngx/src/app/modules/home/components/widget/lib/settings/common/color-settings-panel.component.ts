@@ -67,7 +67,7 @@ export class ColorSettingsPanelComponent extends PageComponent implements OnInit
       {
         type: [this.colorSettings?.type, []],
         color: [this.colorSettings?.color, []],
-        rangeList: this.fb.array((this.colorSettings?.rangeList || []).map(r => this.colorRangeControl(r))),
+        rangeList: [this.colorSettings?.rangeList, []],
         colorFunction: [this.colorSettings?.colorFunction, []]
       }
     );
