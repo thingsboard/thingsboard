@@ -21,6 +21,7 @@ import { AppState } from '@core/core.state';
 import { BasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 import {
+  DataKey,
   datasourcesHasAggregation,
   datasourcesHasOnlyComparisonAggregation,
   WidgetConfig,
@@ -85,8 +86,8 @@ export class SignalStrengthBasicConfigComponent extends BasicWidgetConfigCompone
     return this.signalStrengthWidgetConfigForm;
   }
 
-  protected setupDefaults(configData: WidgetConfigComponentData) {
-    this.setupDefaultDatasource(configData, [{ name: 'rssi', label: 'rssi', type: DataKeyType.timeseries }]);
+  protected defaultDataKeys(configData: WidgetConfigComponentData): DataKey[] {
+    return [{ name: 'rssi', label: 'rssi', type: DataKeyType.timeseries }];
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {

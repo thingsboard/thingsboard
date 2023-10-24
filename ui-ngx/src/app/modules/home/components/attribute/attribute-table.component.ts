@@ -501,7 +501,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     this.widgetsLoaded = false;
     this.widgetBundleSet = false;
     this.widgetsCarouselIndex = 0;
-    this.selectedWidgetsBundleAlias = 'cards';
+    this.selectedWidgetsBundleAlias = 'tables';
 
     const entityAlias: EntityAlias = {
       id: this.utils.guid(),
