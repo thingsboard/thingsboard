@@ -103,6 +103,14 @@
     "simple_soil_moisture_chart_card",
     "simple_soil_moisture_chart_card_with_background",
     "soil_moisture_progress_bar",
-    "soil_moisture_progress_bar_with_background"
+    "soil_moisture_progress_bar_with_background",
+    "noise_level_card",
+    "noise_level_card_with_background",
+    "horizontal_noise_level_card",
+    "horizontal_noise_level_card_with_background",
+    "noise_level_chart_card",
+    "noise_level_chart_card_with_background",
+    "simple_noise_level_chart_card",
+    "simple_noise_level_chart_card_with_background"
   ]
 }
