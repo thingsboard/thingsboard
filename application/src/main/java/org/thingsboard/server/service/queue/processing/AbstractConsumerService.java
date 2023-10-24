@@ -65,7 +65,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public abstract class AbstractConsumerService<N extends com.google.protobuf.GeneratedMessageV3> extends TbApplicationEventListener<PartitionChangeEvent> {
 
-    protected volatile ExecutorService consumersExecutor;
     protected volatile ExecutorService notificationsConsumerExecutor;
     protected volatile boolean stopped = false;
     protected volatile boolean isReady = false;
@@ -99,8 +98,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
         this.jwtSettingsService = jwtSettingsService;
     }
 
-    public void init(String mainConsumerThreadName, String nfConsumerThreadName) {
-        this.consumersExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName(mainConsumerThreadName));
+    public void init(String nfConsumerThreadName) {
         this.notificationsConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName(nfConsumerThreadName));
     }
 
@@ -117,7 +115,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
 
     protected abstract void launchMainConsumers();
 
-    protected abstract void stopMainConsumers();
+    protected abstract void stopConsumers();
 
     protected abstract long getNotificationPollDuration();
 
@@ -224,12 +222,9 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     @PreDestroy
     public void destroy() {
         stopped = true;
-        stopMainConsumers();
+        stopConsumers();
         if (nfConsumer != null) {
             nfConsumer.unsubscribe();
-        }
-        if (consumersExecutor != null) {
-            consumersExecutor.shutdownNow();
         }
         if (notificationsConsumerExecutor != null) {
             notificationsConsumerExecutor.shutdownNow();
