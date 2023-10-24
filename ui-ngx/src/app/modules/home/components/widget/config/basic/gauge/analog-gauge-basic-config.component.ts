@@ -14,8 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Injector } from '@angular/core';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { BasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
@@ -27,33 +26,13 @@ import {
   WidgetConfig,
 } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
-import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import {
   getTimewindowConfig,
   setTimewindowConfig
 } from '@home/components/widget/config/timewindow-config-panel.component';
-import { formatValue, isDefinedAndNotNull, isUndefined } from '@core/utils';
-import {
-  ColorType,
-  DateFormatProcessor,
-  DateFormatSettings,
-  getLabel,
-  setLabel
-} from '@shared/models/widget-settings.models';
-import {
-  valueCardDefaultSettings,
-  ValueCardLayout,
-  valueCardLayoutImages,
-  valueCardLayouts,
-  valueCardLayoutTranslations,
-  ValueCardWidgetSettings
-} from '@home/components/widget/lib/cards/value-card-widget.models';
+import { formatValue, isUndefined } from '@core/utils';
+import { ColorType } from '@shared/models/widget-settings.models';
 
-// @Component({
-//   selector: 'tb-radial-gauge-basic-config',
-//   templateUrl: './analog-gauge-basic-config.component.html',
-//   styleUrls: ['../basic-config.scss']
-// })
 export class GaugeBasicConfigComponent extends BasicWidgetConfigComponent {
 
   public get displayTimewindowConfig(): boolean {
@@ -94,21 +73,21 @@ export class GaugeBasicConfigComponent extends BasicWidgetConfigComponent {
       showUnitTitle: [configData.config.settings?.showUnitTitle, []],
       unitTitle: [configData.config.settings?.unitTitle, []],
       titleFont: [configData.config.settings?.titleFont, []],
-      titleColor: [configData.config.settings?.titleFont.color, []],
+      titleColor: [configData.config.settings?.titleFont?.color, []],
 
       units: [configData.config.units, []],
       unitsFont: [configData.config.settings?.unitsFont, []],
-      unitsColor: [configData.config.settings?.unitsFont.color, []],
+      unitsColor: [configData.config.settings?.unitsFont?.color, []],
 
       valueBox: [configData.config.settings?.valueBox, []],
       valueInt: [configData.config.settings?.valueInt, []],
       valueFont: [configData.config.settings?.valueFont, []],
-      valueColor: [configData.config.settings?.valueFont.color, []],
+      valueColor: [configData.config.settings?.valueFont?.color, []],
 
       minValue: [configData.config.settings?.minValue, []],
       maxValue: [configData.config.settings?.maxValue, []],
       numbersFont: [configData.config.settings?.numbersFont, []],
-      numbersColor: [configData.config.settings?.numbersFont.color, []],
+      numbersColor: [configData.config.settings?.numbersFont?.color, []],
 
       colorBarStroke: [configData.config.settings?.colorBarStroke, []],
 
@@ -129,7 +108,6 @@ export class GaugeBasicConfigComponent extends BasicWidgetConfigComponent {
   protected prepareOutputConfig(config: any): WidgetConfigComponentData {
     setTimewindowConfig(this.widgetConfig.config, config.timewindowConfig);
     this.widgetConfig.config.datasources = config.datasources;
-    // setLabel(config.label, this.widgetConfig.config.datasources);
     this.widgetConfig.config.actions = config.actions;
 
     this.widgetConfig.config.settings = this.widgetConfig.config.settings || {};
