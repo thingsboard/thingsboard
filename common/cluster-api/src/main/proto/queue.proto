@@ -32,28 +32,28 @@ enum EntityTypeProto {
   ASSET                 = 5;
   DEVICE                = 6;
   ALARM                 = 7;
+  // next 3 reserved for PE;
+  RULE_CHAIN            = 11;
+  RULE_NODE             = 12;
   // next 2 reserved for PE;
-  RULE_CHAIN            = 10;
-  RULE_NODE             = 11;
+  ENTITY_VIEW           = 15;
+  WIDGETS_BUNDLE        = 16;
+  WIDGET_TYPE           = 17;
   // next 2 reserved for PE;
-  ENTITY_VIEW           = 14;
-  WIDGETS_BUNDLE        = 15;
-  WIDGET_TYPE           = 16;
-  // next 2 reserved for PE;
-  TENANT_PROFILE        = 19;
-  DEVICE_PROFILE        = 20;
-  ASSET_PROFILE         = 21;
-  API_USAGE_STATE       = 22;
-  TB_RESOURCE           = 23;
-  OTA_PACKAGE           = 24;
-  EDGE                  = 25;
-  RPC                   = 26;
-  QUEUE                 = 27;
-  NOTIFICATION_TARGET   = 28;
-  NOTIFICATION_TEMPLATE = 29;
-  NOTIFICATION_REQUEST  = 30;
-  NOTIFICATION          = 31;
-  NOTIFICATION_RULE     = 32;
+  TENANT_PROFILE        = 20;
+  DEVICE_PROFILE        = 21;
+  ASSET_PROFILE         = 22;
+  API_USAGE_STATE       = 23;
+  TB_RESOURCE           = 24;
+  OTA_PACKAGE           = 25;
+  EDGE                  = 26;
+  RPC                   = 27;
+  QUEUE                 = 28;
+  NOTIFICATION_TARGET   = 29;
+  NOTIFICATION_TEMPLATE = 30;
+  NOTIFICATION_REQUEST  = 31;
+  NOTIFICATION          = 32;
+  NOTIFICATION_RULE     = 33;
 }
 
 /**

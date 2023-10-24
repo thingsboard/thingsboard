@@ -33,32 +33,32 @@ public enum EntityType {
     ASSET(5),
     DEVICE(6),
     ALARM (7),
-    RULE_CHAIN (10),
-    RULE_NODE (11),
+    RULE_CHAIN (11),
+    RULE_NODE (12),
 
-    ENTITY_VIEW (14) {
+    ENTITY_VIEW (15) {
         // backward compatibility for TbOriginatorTypeSwitchNode to return correct rule node connection.
         @Override
         public String getNormalName () {
             return "Entity View";
         }
     },
-    WIDGETS_BUNDLE (15),
-    WIDGET_TYPE (16),
-    TENANT_PROFILE (19),
-    DEVICE_PROFILE (20),
-    ASSET_PROFILE (21),
-    API_USAGE_STATE (22),
-    TB_RESOURCE (23),
-    OTA_PACKAGE (24),
-    EDGE (25),
-    RPC (26),
-    QUEUE (27),
-    NOTIFICATION_TARGET (28),
-    NOTIFICATION_TEMPLATE (29),
-    NOTIFICATION_REQUEST (30),
-    NOTIFICATION (31),
-    NOTIFICATION_RULE (32);
+    WIDGETS_BUNDLE (16),
+    WIDGET_TYPE (17),
+    TENANT_PROFILE (20),
+    DEVICE_PROFILE (21),
+    ASSET_PROFILE (22),
+    API_USAGE_STATE (23),
+    TB_RESOURCE (24),
+    OTA_PACKAGE (25),
+    EDGE (26),
+    RPC (27),
+    QUEUE (28),
+    NOTIFICATION_TARGET (29),
+    NOTIFICATION_TEMPLATE (30),
+    NOTIFICATION_REQUEST (31),
+    NOTIFICATION (32),
+    NOTIFICATION_RULE (33);
 
     @Getter
     private final int protoNumber; // Corresponds to EntityTypeProto
