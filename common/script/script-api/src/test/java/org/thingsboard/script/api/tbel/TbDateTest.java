@@ -765,10 +765,10 @@ class TbDateTest {
         Assert.assertEquals("1975 Dec 31, Wed", d1.toDateString("UTC", "America/New_York"));
         Assert.assertEquals("Wednesday, December 31, 1975", d1.toDateString("en-US", "America/New_York"));
 
-        Assert.assertEquals("06:15:30", d1.toLocaleTimeStringWithZoneId("uk-UA", "Europe/Kyiv"));
-        Assert.assertEquals("06:15:30", d1.toLocaleTimeStringWithZoneId("UTC", "Europe/Kyiv"));
-        Assert.assertEquals("10:15:30 PM", d1.toLocaleTimeStringWithZoneId("en-US", "America/New_York"));
-        Assert.assertEquals("22:15:30", d1.toLocaleTimeStringWithZoneId("UTC", "America/New_York"));
+        Assert.assertEquals("06:15:30", d1.toLocaleTimeString("uk-UA", "Europe/Kyiv"));
+        Assert.assertEquals("06:15:30", d1.toLocaleTimeString("UTC", "Europe/Kyiv"));
+        Assert.assertEquals("10:15:30 PM", d1.toLocaleTimeString("en-US", "America/New_York"));
+        Assert.assertEquals("22:15:30", d1.toLocaleTimeString("UTC", "America/New_York"));
 
         Assert.assertEquals("06:15:30 за східноєвропейським стандартним часом", d1.toTimeString("uk-UA", "Europe/Kyiv"));
         Assert.assertEquals("06:15:30 Eastern European Time", d1.toTimeString("UTC", "Europe/Kyiv"));

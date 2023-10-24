@@ -111,8 +111,8 @@ public class TbDate implements Serializable, Cloneable {
     public String toDateString(String locale) {
         return toDateString(locale, ZoneId.systemDefault().toString());
     }
-    public String toDateString(String localeStr, String zoneStr) {
-        return toLocaleTbString(localeStr, zoneStr, (locale, options) -> DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(locale));
+    public String toDateString(String localeStr, String optionsStr) {
+        return toLocaleString(localeStr, optionsStr, (locale, options) -> DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(locale));
     }
     public String toTimeString() {
         return toTimeString(Locale.getDefault().getLanguage());
@@ -120,8 +120,8 @@ public class TbDate implements Serializable, Cloneable {
     public String toTimeString(String locale) {
         return toTimeString(locale, ZoneId.systemDefault().toString());
     }
-    public String toTimeString(String localeStr, String zoneStr) {
-        return toLocaleTbString(localeStr, zoneStr, (locale, options) -> DateTimeFormatter.ofLocalizedTime(FormatStyle.FULL).withLocale(locale));
+    public String toTimeString(String localeStr, String optionsStr) {
+        return toLocaleString(localeStr, optionsStr, (locale, options) -> DateTimeFormatter.ofLocalizedTime(FormatStyle.FULL).withLocale(locale));
     }
 
     public String toISOString() {
@@ -135,7 +135,7 @@ public class TbDate implements Serializable, Cloneable {
     }
 
     public String toUTCString(String localeStr) {
-        return toLocaleTbString(localeStr, zoneIdUTC.getId(), (locale, options) -> DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL, FormatStyle.MEDIUM).withLocale(locale));
+        return toLocaleString(localeStr, zoneIdUTC.getId(), (locale, options) -> DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL, FormatStyle.MEDIUM).withLocale(locale));
     }
 
     public String toString() {
@@ -146,8 +146,8 @@ public class TbDate implements Serializable, Cloneable {
         return toString(locale, ZoneId.systemDefault().toString());
     }
 
-    public String toString(String localeStr, String zoneStr) {
-        return toLocaleTbString(localeStr, zoneStr, (locale, options) -> DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL, FormatStyle.FULL).withLocale(locale));
+    public String toString(String localeStr, String optionsStr) {
+        return toLocaleString(localeStr, optionsStr, (locale, options) -> DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL, FormatStyle.FULL).withLocale(locale));
     }
     public String toISOZonedDateTimeString() {
         return getZonedDateTime().toString();
@@ -161,11 +161,11 @@ public class TbDate implements Serializable, Cloneable {
     }
 
     public String toLocaleDateString(String localeStr) {
-        return toLocaleTbString(localeStr, ZoneId.systemDefault().toString(), (locale, options) -> DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(locale));
+        return toLocaleString(localeStr, ZoneId.systemDefault().toString(), (locale, options) -> DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(locale));
     }
 
     public String toLocaleDateString(String localeStr, String optionsStr) {
-        return toLocaleTbString(localeStr, optionsStr, (locale, options) -> DateTimeFormatter.ofLocalizedDate(options.getDateStyle()).withLocale(locale));
+        return toLocaleString(localeStr, optionsStr, (locale, options) -> DateTimeFormatter.ofLocalizedDate(options.getDateStyle()).withLocale(locale));
     }
 
     public String toLocaleTimeString() {
@@ -173,15 +173,11 @@ public class TbDate implements Serializable, Cloneable {
     }
 
     public String toLocaleTimeString(String localeStr) {
-        return toLocaleTimeStringWithZoneId(localeStr, ZoneId.systemDefault().toString());
-    }
-
-    public String toLocaleTimeStringWithZoneId(String localeStr, String zoneStr) {
-        return toLocaleTbString(localeStr, zoneStr, (locale, options) -> DateTimeFormatter.ofLocalizedTime(options.getTimeStyle()).withLocale(locale));
+        return toLocaleTimeString(localeStr, ZoneId.systemDefault().toString());
     }
 
     public String toLocaleTimeString(String localeStr, String optionsStr) {
-        return toLocaleTbString(localeStr, optionsStr, (locale, options) -> DateTimeFormatter.ofLocalizedTime(options.getTimeStyle()).withLocale(locale));
+        return toLocaleString(localeStr, optionsStr, (locale, options) -> DateTimeFormatter.ofLocalizedTime(options.getTimeStyle()).withLocale(locale));
     }
 
     public String toLocaleString() {
@@ -192,12 +188,12 @@ public class TbDate implements Serializable, Cloneable {
         return toLocaleString(locale, ZoneId.systemDefault().toString());
     }
 
-    public String toLocaleString(String localeStr, String zoneStr) {
-        return toLocaleTbString(localeStr, zoneStr, (locale, options) -> DateTimeFormatter.ofLocalizedDateTime(options.getDateStyle(), options.getTimeStyle()).withLocale(locale));
+    public String toLocaleString(String localeStr, String optionsStr) {
+        return toLocaleString(localeStr, optionsStr, (locale, options) -> DateTimeFormatter.ofLocalizedDateTime(options.getDateStyle(), options.getTimeStyle()).withLocale(locale));
     }
 
     public String toLocaleTbString(String localeStr, String optionsStr) {
-        return toLocaleTbString(localeStr, optionsStr, (locale, options) -> {
+        return toLocaleString(localeStr, optionsStr, (locale, options) -> {
             String formatPattern =
                     DateTimeFormatterBuilder.getLocalizedDateTimePattern(
                             options.getDateStyle(),
@@ -208,7 +204,7 @@ public class TbDate implements Serializable, Cloneable {
         });
     }
 
-    public String toLocaleTbString(String localeStr, String optionsStr, BiFunction<Locale, DateTimeFormatOptions, DateTimeFormatter> formatterBuilder) {
+    public String toLocaleString(String localeStr, String optionsStr, BiFunction<Locale, DateTimeFormatOptions, DateTimeFormatter> formatterBuilder) {
         Locale locale = StringUtils.isNotEmpty(localeStr) ? Locale.forLanguageTag(localeStr) : Locale.getDefault();
         DateTimeFormatOptions options = getDateFormattingOptions(optionsStr);
         ZonedDateTime zdt = this.getInstant().atZone(options.getTimeZone().toZoneId());
@@ -221,13 +217,13 @@ public class TbDate implements Serializable, Cloneable {
         return formatter.format(zdt);
     }
 
-    private DateTimeFormatOptions getDateFormattingOptions(String options) {
+    private DateTimeFormatOptions getDateFormattingOptions(String optionsStr) {
         DateTimeFormatOptions opt = null;
-        if (StringUtils.isNotEmpty(options)) {
+        if (StringUtils.isNotEmpty(optionsStr)) {
             try {
-                opt = JacksonUtil.fromString(options, DateTimeFormatOptions.class);
+                opt = JacksonUtil.fromString(optionsStr, DateTimeFormatOptions.class);
             } catch (IllegalArgumentException iae) {
-                opt = new DateTimeFormatOptions(options);
+                opt = new DateTimeFormatOptions(optionsStr);
             }
         }
         if (opt == null) {
