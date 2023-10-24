@@ -111,6 +111,14 @@
     "noise_level_chart_card",
     "noise_level_chart_card_with_background",
     "simple_noise_level_chart_card",
-    "simple_noise_level_chart_card_with_background"
+    "simple_noise_level_chart_card_with_background",
+    "vibration_card",
+    "vibration_card_with_background",
+    "horizontal_vibration_card",
+    "horizontal_vibration_card_with_background",
+    "vibration_chart_card",
+    "vibration_chart_card_with_background",
+    "simple_vibration_chart_card",
+    "simple_vibration_chart_card_with_background"
   ]
 }
