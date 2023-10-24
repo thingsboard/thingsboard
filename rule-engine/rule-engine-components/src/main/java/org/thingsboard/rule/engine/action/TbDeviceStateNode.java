@@ -83,7 +83,7 @@ public class TbDeviceStateNode implements TbNode {
     public void onMsg(TbContext ctx, TbMsg msg) {
         var originator = msg.getOriginator();
         if (!ctx.isLocalEntity(originator)) {
-            log.warn("[{}] Node [{}] received message from non-local entity [{}]!",
+            log.warn("[{}][{}] Received message from non-local entity [{}]!",
                     ctx.getTenantId().getId(), ctx.getSelfId().getId(), originator.getId());
             ctx.ack(msg);
             return;
