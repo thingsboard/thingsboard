@@ -77,6 +77,14 @@
     "air_quality_chart_card",
     "air_quality_chart_card_with_background",
     "simple_air_quality_chart_card",
-    "simple_air_quality_chart_card_with_background"
+    "simple_air_quality_chart_card_with_background",
+    "visibility_card",
+    "visibility_card_with_background",
+    "horizontal_visibility_card",
+    "horizontal_visibility_card_with_background",
+    "visibility_chart_card",
+    "visibility_chart_card_with_background",
+    "simple_visibility_chart_card",
+    "simple_visibility_chart_card_with_background"
   ]
 }
