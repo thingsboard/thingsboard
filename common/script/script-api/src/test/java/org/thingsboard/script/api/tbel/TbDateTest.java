@@ -223,41 +223,41 @@ class TbDateTest {
         Assert.assertNotNull(d.toLocaleTimeString());
         Assert.assertNotNull(d.toLocaleTimeString("en-US"));
 
-        Assert.assertEquals("9:04:05 PM", d.toLocaleTbTimeString("en-US", "America/New_York"));
-        Assert.assertEquals("오후 9:04:05", d.toLocaleTbTimeString("ko-KR",  "America/New_York"));
-        Assert.assertEquals("04:04:05",  d.toLocaleTbTimeString( "uk-UA", "Europe/Kiev"));
-        Assert.assertEquals("9:04:05 م",  d.toLocaleTbTimeString( "ar-EG", "America/New_York"));
+        Assert.assertEquals("9:04:05 PM", d.toLocaleTimeString("en-US", "America/New_York"));
+        Assert.assertEquals("오후 9:04:05", d.toLocaleTimeString("ko-KR",  "America/New_York"));
+        Assert.assertEquals("04:04:05",  d.toLocaleTimeString( "uk-UA", "Europe/Kiev"));
+        Assert.assertEquals("9:04:05 م",  d.toLocaleTimeString( "ar-EG", "America/New_York"));
 
-        Assert.assertEquals("9:04:05 PM Eastern Daylight Time", d.toLocaleTbTimeString("en-US", JacksonUtil.newObjectNode()
+        Assert.assertEquals("9:04:05 PM Eastern Daylight Time", d.toLocaleTimeString("en-US", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
                 .put("timeStyle", "full")
                 .toString()));
-        Assert.assertEquals("오후 9시 4분 5초 미 동부 하계 표준시", d.toLocaleTbTimeString("ko-KR", JacksonUtil.newObjectNode()
+        Assert.assertEquals("오후 9시 4분 5초 미 동부 하계 표준시", d.toLocaleTimeString("ko-KR", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
                 .put("timeStyle", "full")
                 .toString()));
-        Assert.assertEquals("04:04:05 за східноєвропейським літнім часом", d.toLocaleTbTimeString("uk-UA", JacksonUtil.newObjectNode()
+        Assert.assertEquals("04:04:05 за східноєвропейським літнім часом", d.toLocaleTimeString("uk-UA", JacksonUtil.newObjectNode()
                 .put("timeZone", "Europe/Kiev")
                 .put("timeStyle", "full")
                 .toString()));
-        Assert.assertEquals("9:04:05 م التوقيت الصيفي الشرقي لأمريكا الشمالية", d.toLocaleTbTimeString("ar-EG", JacksonUtil.newObjectNode()
+        Assert.assertEquals("9:04:05 م التوقيت الصيفي الشرقي لأمريكا الشمالية", d.toLocaleTimeString("ar-EG", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
                 .put("timeStyle", "full")
                 .toString()));
 
-        Assert.assertEquals("9:04:05 PM", d.toLocaleTbTimeString("en-US", JacksonUtil.newObjectNode()
+        Assert.assertEquals("9:04:05 PM", d.toLocaleTimeString("en-US", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
                 .put("pattern", "h:mm:ss a")
                 .toString()));
-        Assert.assertEquals("9:04:05 오후", d.toLocaleTbTimeString("ko-KR", JacksonUtil.newObjectNode()
+        Assert.assertEquals("9:04:05 오후", d.toLocaleTimeString("ko-KR", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
                 .put("pattern", "h:mm:ss a")
                 .toString()));
-        Assert.assertEquals("4:04:05 дп", d.toLocaleTbTimeString("uk-UA", JacksonUtil.newObjectNode()
+        Assert.assertEquals("4:04:05 дп", d.toLocaleTimeString("uk-UA", JacksonUtil.newObjectNode()
                 .put("timeZone", "Europe/Kiev")
                 .put("pattern", "h:mm:ss a")
                 .toString()));
-        Assert.assertEquals("9:04:05 م", d.toLocaleTbTimeString("ar-EG", JacksonUtil.newObjectNode()
+        Assert.assertEquals("9:04:05 م", d.toLocaleTimeString("ar-EG", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
                 .put("pattern", "h:mm:ss a")
                 .toString()));
@@ -765,10 +765,10 @@ class TbDateTest {
         Assert.assertEquals("1975 Dec 31, Wed", d1.toDateString("UTC", "America/New_York"));
         Assert.assertEquals("Wednesday, December 31, 1975", d1.toDateString("en-US", "America/New_York"));
 
-        Assert.assertEquals("06:15:30", d1.toLocaleTimeString("uk-UA", "Europe/Kyiv"));
-        Assert.assertEquals("06:15:30", d1.toLocaleTimeString("UTC", "Europe/Kyiv"));
-        Assert.assertEquals("10:15:30 PM", d1.toLocaleTimeString("en-US", "America/New_York"));
-        Assert.assertEquals("22:15:30", d1.toLocaleTimeString("UTC", "America/New_York"));
+        Assert.assertEquals("06:15:30", d1.toLocaleTimeStringWithZoneId("uk-UA", "Europe/Kyiv"));
+        Assert.assertEquals("06:15:30", d1.toLocaleTimeStringWithZoneId("UTC", "Europe/Kyiv"));
+        Assert.assertEquals("10:15:30 PM", d1.toLocaleTimeStringWithZoneId("en-US", "America/New_York"));
+        Assert.assertEquals("22:15:30", d1.toLocaleTimeStringWithZoneId("UTC", "America/New_York"));
 
         Assert.assertEquals("06:15:30 за східноєвропейським стандартним часом", d1.toTimeString("uk-UA", "Europe/Kyiv"));
         Assert.assertEquals("06:15:30 Eastern European Time", d1.toTimeString("UTC", "Europe/Kyiv"));
@@ -788,4 +788,3 @@ class TbDateTest {
         Assert.assertEquals(d.getMilliseconds(), d.getUTCMilliseconds());
     }
 }
-

@@ -46,6 +46,9 @@ public class TbDate implements Serializable, Cloneable {
     private static final ZoneId zoneIdUTC = ZoneId.of("UTC");
     private static final Locale localeUTC = Locale.forLanguageTag("UTC");
 
+    private static final DateTimeFormatter isoDateFormatter = DateTimeFormatter.ofPattern(
+            "yyyy-MM-dd[[ ]['T']HH:mm[:ss[.SSS]][ ][XXX][Z][z][VV][O]]").withZone(ZoneId.systemDefault());
+
     public TbDate() {
         this.instant = Instant.now();
     }
@@ -108,8 +111,8 @@ public class TbDate implements Serializable, Cloneable {
     public String toDateString(String locale) {
         return toDateString(locale, ZoneId.systemDefault().toString());
     }
-    public String toDateString(String locale, String zoneStr) {
-        return toLocaleDateString(locale, JacksonUtil.newObjectNode().put("dateStyle", FormatStyle.FULL.name()).put("timeZone", zoneStr).toString());
+    public String toDateString(String localeStr, String zoneStr) {
+        return toLocaleTbString(localeStr, zoneStr, (locale, options) -> DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(locale));
     }
     public String toTimeString() {
         return toTimeString(Locale.getDefault().getLanguage());
@@ -117,8 +120,8 @@ public class TbDate implements Serializable, Cloneable {
     public String toTimeString(String locale) {
         return toTimeString(locale, ZoneId.systemDefault().toString());
     }
-    public String toTimeString(String locale, String zoneStr) {
-        return toLocaleTbTimeString(locale, JacksonUtil.newObjectNode().put("timeStyle", FormatStyle.FULL.name()).put("timeZone", zoneStr).toString());
+    public String toTimeString(String localeStr, String zoneStr) {
+        return toLocaleTbString(localeStr, zoneStr, (locale, options) -> DateTimeFormatter.ofLocalizedTime(FormatStyle.FULL).withLocale(locale));
     }
 
     public String toISOString() {
@@ -131,8 +134,8 @@ public class TbDate implements Serializable, Cloneable {
         return toUTCString(localeUTC.getLanguage());
     }
 
-    public String toUTCString(String locale) {
-        return toLocaleTbString(locale, JacksonUtil.newObjectNode().put("dateStyle", FormatStyle.FULL.name()).put("timeStyle", FormatStyle.MEDIUM.name()).put("timeZone", zoneIdUTC.getId()).toString());
+    public String toUTCString(String localeStr) {
+        return toLocaleTbString(localeStr, zoneIdUTC.getId(), (locale, options) -> DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL, FormatStyle.MEDIUM).withLocale(locale));
     }
 
     public String toString() {
@@ -143,8 +146,8 @@ public class TbDate implements Serializable, Cloneable {
         return toString(locale, ZoneId.systemDefault().toString());
     }
 
-    public String toString(String locale, String zoneStr) {
-        return toLocaleTbString(locale, JacksonUtil.newObjectNode().put("dateStyle", FormatStyle.FULL.name()).put("timeStyle", FormatStyle.FULL.name()).put("timeZone", zoneStr).toString());
+    public String toString(String localeStr, String zoneStr) {
+        return toLocaleTbString(localeStr, zoneStr, (locale, options) -> DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL, FormatStyle.FULL).withLocale(locale));
     }
     public String toISOZonedDateTimeString() {
         return getZonedDateTime().toString();
@@ -157,8 +160,8 @@ public class TbDate implements Serializable, Cloneable {
         return toLocaleDateString(localeUTC.getLanguage());
     }
 
-    public String toLocaleDateString(String locale) {
-        return toLocaleDateString(locale, JacksonUtil.newObjectNode().put("dateStyle", FormatStyle.FULL.name()).put("timeZone", ZoneId.systemDefault().toString()).toString());
+    public String toLocaleDateString(String localeStr) {
+        return toLocaleTbString(localeStr, ZoneId.systemDefault().toString(), (locale, options) -> DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(locale));
     }
 
     public String toLocaleDateString(String localeStr, String optionsStr) {
@@ -170,14 +173,14 @@ public class TbDate implements Serializable, Cloneable {
     }
 
     public String toLocaleTimeString(String localeStr) {
-        return toLocaleTimeString(localeStr, ZoneId.systemDefault().toString());
+        return toLocaleTimeStringWithZoneId(localeStr, ZoneId.systemDefault().toString());
     }
 
-    public String toLocaleTimeString(String localeStr, String zoneStr) {
-        return toLocaleTbTimeString(localeStr, JacksonUtil.newObjectNode().put("timeStyle", FormatStyle.MEDIUM.name()).put("timeZone", zoneStr).toString());
+    public String toLocaleTimeStringWithZoneId(String localeStr, String zoneStr) {
+        return toLocaleTbString(localeStr, zoneStr, (locale, options) -> DateTimeFormatter.ofLocalizedTime(options.getTimeStyle()).withLocale(locale));
     }
 
-    public String toLocaleTbTimeString(String localeStr, String optionsStr) {
+    public String toLocaleTimeString(String localeStr, String optionsStr) {
         return toLocaleTbString(localeStr, optionsStr, (locale, options) -> DateTimeFormatter.ofLocalizedTime(options.getTimeStyle()).withLocale(locale));
     }
 
@@ -189,8 +192,8 @@ public class TbDate implements Serializable, Cloneable {
         return toLocaleString(locale, ZoneId.systemDefault().toString());
     }
 
-    public String toLocaleString(String locale, String zoneStr) {
-        return toLocaleTbString(locale, JacksonUtil.newObjectNode().put("dateStyle", FormatStyle.SHORT.name()).put("timeStyle", FormatStyle.MEDIUM.name()).put("timeZone", zoneStr).toString());
+    public String toLocaleString(String localeStr, String zoneStr) {
+        return toLocaleTbString(localeStr, zoneStr, (locale, options) -> DateTimeFormatter.ofLocalizedDateTime(options.getDateStyle(), options.getTimeStyle()).withLocale(locale));
     }
 
     public String toLocaleTbString(String localeStr, String optionsStr) {
@@ -489,8 +492,6 @@ public class TbDate implements Serializable, Cloneable {
         }
     }
     public static long parse(String value) {
-        DateTimeFormatter isoDateFormatter = DateTimeFormatter.ofPattern(
-                "yyyy-MM-dd[[ ]['T']HH:mm[:ss[.SSS]][ ][XXX][Z][z][VV][O]]").withZone(ZoneId.systemDefault());
         try {
             TemporalAccessor accessor = isoDateFormatter.parseBest(value,
                     ZonedDateTime::from,
