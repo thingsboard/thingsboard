@@ -124,12 +124,11 @@
     </div>
     <div class="tb-form-row space-between">
       <div translate>widgets.gauge.scale-color</div>
-      <tb-color-settings formControlName="highlights">
-<!--        [disabledColorType]="[colorType.constant, colorType.function]"-->
-      </tb-color-settings>
+      <tb-color-range-settings formControlName="highlights">
+      </tb-color-range-settings>
     </div>
 
-    <div class="tb-form-panel" *ngIf="gaugeType === 'thermometer'">
+    <div class="tb-form-panel" *ngIf="gaugeType === 'linear'">
       <div class="tb-form-panel-title" translate>widgets.gauge.progress-bar</div>
       <div class="tb-form-row space-between">
         <div translate>widgets.gauge.progress-bar-color-start</div>

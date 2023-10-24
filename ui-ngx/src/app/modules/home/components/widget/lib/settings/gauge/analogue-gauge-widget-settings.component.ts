@@ -18,7 +18,6 @@ import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.m
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { GaugeHighlight } from '@home/components/widget/lib/settings/gauge/gauge-highlight.component';
 
 export class AnalogueGaugeWidgetSettingsComponent extends WidgetSettingsComponent {
 
@@ -153,7 +152,7 @@ export class AnalogueGaugeWidgetSettingsComponent extends WidgetSettingsComponen
 
       // Highlights settings
       highlightsWidth: [settings.highlightsWidth, [Validators.min(0)]],
-      highlights: this.prepareHighlights(settings.highlights),
+      highlights: [settings.highlights, []],
 
       // Animation settings
       animation: [settings.animation, []],
@@ -229,10 +228,6 @@ export class AnalogueGaugeWidgetSettingsComponent extends WidgetSettingsComponen
       settings.valueFont.shadowColor = this.analogueGaugeWidgetSettingsForm.get('valueColorShadow').value;
     }
     return settings;
-  }
-
-  private prepareHighlights(highlights: GaugeHighlight[] | undefined) {
-    return {type: 'range', rangeList: highlights};
   }
 
 }

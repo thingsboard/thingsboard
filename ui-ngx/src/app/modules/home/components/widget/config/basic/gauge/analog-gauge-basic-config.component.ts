@@ -20,7 +20,6 @@ import { AppState } from '@core/core.state';
 import { BasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 import {
-  DataKey,
   datasourcesHasAggregation,
   datasourcesHasOnlyComparisonAggregation,
   WidgetConfig,
@@ -61,8 +60,8 @@ export class GaugeBasicConfigComponent extends BasicWidgetConfigComponent {
     return this.radialGaugeWidgetConfigForm;
   }
 
-  protected setupDefaults(configData: WidgetConfigComponentData, key?: DataKey[]) {
-    this.setupDefaultDatasource(configData, key);
+  protected setupDefaults(configData: WidgetConfigComponentData) {
+    super.setupDefaults(configData);
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {
@@ -93,10 +92,7 @@ export class GaugeBasicConfigComponent extends BasicWidgetConfigComponent {
 
       defaultColor: [configData.config.settings?.defaultColor, []],
       colorPlate: [configData.config.settings?.colorPlate, []],
-      highlights: [{
-        type: 'range',
-        rangeList: configData.config.settings?.highlights
-      }, []],
+      highlights: [configData.config.settings?.highlights, []],
 
       cardButtons: [this.getCardButtons(configData.config), []],
       borderRadius: [configData.config.borderRadius, []],
