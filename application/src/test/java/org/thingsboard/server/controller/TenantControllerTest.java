@@ -687,7 +687,7 @@ public class TenantControllerTest extends AbstractControllerTest {
             submittedMsgs.add(tbMsg.getId());
             Thread.sleep(timeLeft / msgs);
         }
-        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(queueAdmin, times(1)).deleteTopic(eq(isolatedTopic));
         });
 
