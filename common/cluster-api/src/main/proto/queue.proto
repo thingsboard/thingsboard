@@ -23,33 +23,37 @@ option java_outer_classname = "TransportProtos";
 /**
  * Common data structures
  */
-enum EntityType {
-  TENANT                = 0;
-  CUSTOMER              = 1;
-  USER                  = 2;
-  DASHBOARD             = 3;
-  ASSET                 = 4;
-  DEVICE                = 5;
-  ALARM                 = 6;
-  RULE_CHAIN            = 7;
-  RULE_NODE             = 8;
-  ENTITY_VIEW           = 9;
-  WIDGETS_BUNDLE        = 10;
-  WIDGET_TYPE           = 11;
-  TENANT_PROFILE        = 12;
-  DEVICE_PROFILE        = 13;
-  ASSET_PROFILE         = 14;
-  API_USAGE_STATE       = 15;
-  TB_RESOURCE           = 16;
-  OTA_PACKAGE           = 17;
-  EDGE                  = 18;
-  RPC                   = 19;
-  QUEUE                 = 20;
-  NOTIFICATION_TARGET   = 21;
-  NOTIFICATION_TEMPLATE = 22;
-  NOTIFICATION_REQUEST  = 23;
-  NOTIFICATION          = 24;
-  NOTIFICATION_RULE     = 25;
+enum EntityTypeProto {
+  UNSPECIFIED           = 0;
+  TENANT                = 1;
+  CUSTOMER              = 2;
+  USER                  = 3;
+  DASHBOARD             = 4;
+  ASSET                 = 5;
+  DEVICE                = 6;
+  ALARM                 = 7;
+  // next 2 reserved for PE;
+  RULE_CHAIN            = 10;
+  RULE_NODE             = 11;
+  // next 2 reserved for PE;
+  ENTITY_VIEW           = 14;
+  WIDGETS_BUNDLE        = 15;
+  WIDGET_TYPE           = 16;
+  // next 2 reserved for PE;
+  TENANT_PROFILE        = 19;
+  DEVICE_PROFILE        = 20;
+  ASSET_PROFILE         = 21;
+  API_USAGE_STATE       = 22;
+  TB_RESOURCE           = 23;
+  OTA_PACKAGE           = 24;
+  EDGE                  = 25;
+  RPC                   = 26;
+  QUEUE                 = 27;
+  NOTIFICATION_TARGET   = 28;
+  NOTIFICATION_TEMPLATE = 29;
+  NOTIFICATION_REQUEST  = 30;
+  NOTIFICATION          = 31;
+  NOTIFICATION_RULE     = 32;
 }
 
 /**
@@ -776,7 +780,7 @@ enum ComponentLifecycleEvent {
 message ComponentLifecycleMsgProto {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
-  EntityType entityType = 3;
+  EntityTypeProto entityType = 3;
   int64 entityIdMSB = 4;
   int64 entityIdLSB = 5;
   ComponentLifecycleEvent event = 6;

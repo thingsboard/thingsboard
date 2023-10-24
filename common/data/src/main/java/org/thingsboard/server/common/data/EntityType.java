@@ -26,39 +26,46 @@ import java.util.stream.Collectors;
  * @author Andrew Shvayka
  */
 public enum EntityType {
-    // In sync with EntityType proto
-    TENANT,
-    CUSTOMER,
-    USER,
-    DASHBOARD,
-    ASSET,
-    DEVICE,
-    ALARM,
-    RULE_CHAIN,
-    RULE_NODE,
-    ENTITY_VIEW {
+    TENANT(1),
+    CUSTOMER(2),
+    USER(3),
+    DASHBOARD(4),
+    ASSET(5),
+    DEVICE(6),
+    ALARM (7),
+    RULE_CHAIN (10),
+    RULE_NODE (11),
+
+    ENTITY_VIEW (14) {
         // backward compatibility for TbOriginatorTypeSwitchNode to return correct rule node connection.
         @Override
-        public String getNormalName() {
+        public String getNormalName () {
             return "Entity View";
         }
     },
-    WIDGETS_BUNDLE,
-    WIDGET_TYPE,
-    TENANT_PROFILE,
-    DEVICE_PROFILE,
-    ASSET_PROFILE,
-    API_USAGE_STATE,
-    TB_RESOURCE,
-    OTA_PACKAGE,
-    EDGE,
-    RPC,
-    QUEUE,
-    NOTIFICATION_TARGET,
-    NOTIFICATION_TEMPLATE,
-    NOTIFICATION_REQUEST,
-    NOTIFICATION,
-    NOTIFICATION_RULE;
+    WIDGETS_BUNDLE (15),
+    WIDGET_TYPE (16),
+    TENANT_PROFILE (19),
+    DEVICE_PROFILE (20),
+    ASSET_PROFILE (21),
+    API_USAGE_STATE (22),
+    TB_RESOURCE (23),
+    OTA_PACKAGE (24),
+    EDGE (25),
+    RPC (26),
+    QUEUE (27),
+    NOTIFICATION_TARGET (28),
+    NOTIFICATION_TEMPLATE (29),
+    NOTIFICATION_REQUEST (30),
+    NOTIFICATION (31),
+    NOTIFICATION_RULE (32);
+
+    @Getter
+    private final int protoNumber; // Corresponds to EntityTypeProto
+
+    private EntityType(int protoNumber) {
+        this.protoNumber = protoNumber;
+    }
 
     public static final List<String> NORMAL_NAMES = EnumSet.allOf(EntityType.class).stream()
             .map(EntityType::getNormalName).collect(Collectors.toUnmodifiableList());

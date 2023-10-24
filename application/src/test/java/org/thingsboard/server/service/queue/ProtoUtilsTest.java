@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.queue;
 
 import org.junit.jupiter.api.Test;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -31,41 +32,18 @@ class ProtoUtilsTest {
     TenantId tenantId = TenantId.fromUUID(UUID.fromString("35e10f77-16e7-424d-ae46-ee780f87ac4f"));
     EntityId entityId = new RuleChainId(UUID.fromString("c640b635-4f0f-41e6-b10b-25a86003094e"));
     @Test
-    void toProtoComponentLifecycleMsg() {
+    void protoComponentLifecycleSerialization() {
         ComponentLifecycleMsg msg = new ComponentLifecycleMsg(tenantId, entityId, ComponentLifecycleEvent.UPDATED);
-
-        TransportProtos.ComponentLifecycleMsgProto proto = ProtoUtils.toProto(msg);
-
-        assertThat(proto).as("to proto").isEqualTo(TransportProtos.ComponentLifecycleMsgProto.newBuilder()
-                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
-                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
-                .setEntityType(TransportProtos.EntityType.forNumber(entityId.getEntityType().ordinal()))
-                .setEntityIdMSB(entityId.getId().getMostSignificantBits())
-                .setEntityIdLSB(entityId.getId().getLeastSignificantBits())
-                .setEvent(TransportProtos.ComponentLifecycleEvent.forNumber(ComponentLifecycleEvent.UPDATED.ordinal()))
-                .build()
-        );
-
-        assertThat(ProtoUtils.fromProto(proto)).as("from proto").isEqualTo(msg);
+        assertThat(ProtoUtils.fromProto(ProtoUtils.toProto(msg))).as("deserialized").isEqualTo(msg);
+        msg = new ComponentLifecycleMsg(tenantId, entityId, ComponentLifecycleEvent.STARTED);
+        assertThat(ProtoUtils.fromProto(ProtoUtils.toProto(msg))).as("deserialized").isEqualTo(msg);
     }
 
     @Test
-    void fromProtoComponentLifecycleMsg() {
-        TransportProtos.ComponentLifecycleMsgProto proto = TransportProtos.ComponentLifecycleMsgProto.newBuilder()
-                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
-                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
-                .setEntityType(TransportProtos.EntityType.forNumber(entityId.getEntityType().ordinal()))
-                .setEntityIdMSB(entityId.getId().getMostSignificantBits())
-                .setEntityIdLSB(entityId.getId().getLeastSignificantBits())
-                .setEvent(TransportProtos.ComponentLifecycleEvent.forNumber(ComponentLifecycleEvent.STARTED.ordinal()))
-                .build();
-
-        ComponentLifecycleMsg msg = ProtoUtils.fromProto(proto);
-
-        assertThat(msg).as("from proto").isEqualTo(
-                new ComponentLifecycleMsg(tenantId, entityId, ComponentLifecycleEvent.STARTED));
-
-        assertThat(ProtoUtils.toProto(msg)).as("to proto").isEqualTo(proto);
+    void protoEntityTypeSerialization() {
+        for(EntityType entityType : EntityType.values()){
+            assertThat(ProtoUtils.fromProto(ProtoUtils.toProto(entityType))).as(entityType.getNormalName()).isEqualTo(entityType);
+        }
     }
 
 }
