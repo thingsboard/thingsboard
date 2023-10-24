@@ -27,15 +27,25 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import java.util.Map;
 import java.util.Optional;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 @Slf4j
 public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerActionNodeConfiguration> implements TbNode {
+
+    protected final Map<EntityType, CustomerAssigner> assignersMap = Map.of(
+            EntityType.ASSET, this::processAsset,
+            EntityType.DEVICE, this::processDevice,
+            EntityType.ENTITY_VIEW, this::processEntityView,
+            EntityType.DASHBOARD, this::processDashboard,
+            EntityType.EDGE, this::processEdge
+    );
 
     protected C config;
 
@@ -50,6 +60,11 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
+        EntityType entityType = msg.getOriginator().getEntityType();
+        boolean originatorSupportedByNode = assignersMap.containsKey(entityType);
+        if (!originatorSupportedByNode) {
+            throw new RuntimeException(unsupportedOriginatorTypeErrorMessage(entityType));
+        }
         withCallback(processCustomerAction(ctx, msg),
                 m -> ctx.tellSuccess(msg),
                 t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
@@ -93,6 +108,23 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
             }
         }
         return new TbPair<>(hasChanges, oldConfiguration);
+    }
+
+    protected abstract void processAsset(TbContext ctx, EntityId originator, CustomerId customerId);
+
+    protected abstract void processDevice(TbContext ctx, EntityId originator, CustomerId customerId);
+
+    protected abstract void processEntityView(TbContext ctx, EntityId originator, CustomerId customerId);
+
+    protected abstract void processDashboard(TbContext ctx, EntityId originator, CustomerId customerId);
+
+    protected abstract void processEdge(TbContext ctx, EntityId originator, CustomerId customerId);
+
+    @FunctionalInterface
+    interface CustomerAssigner {
+
+        void apply(TbContext ctx, EntityId originator, CustomerId customerId);
+
     }
 
 }

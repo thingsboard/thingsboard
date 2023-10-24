@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -40,7 +41,7 @@ import org.thingsboard.server.common.msg.TbMsg;
         configClazz = TbAssignToCustomerNodeConfiguration.class,
         nodeDescription = "Assign message originator entity to customer",
         nodeDetails = "Finds target customer by title and assign message originator entity to this customer. " +
-                "Will create a new customer if it doesn't exist, and 'Create new customer if it doesn't exist' enabled.",
+                "Rule node will create a new customer if it doesn't exist, and 'Create new customer if it doesn't exist' enabled.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeAssignToCustomerConfig",
         icon = "add_circle",
@@ -63,48 +64,31 @@ public class TbAssignToCustomerNode extends TbAbstractCustomerActionNode<TbAssig
         var customerIdFuture = getCustomerIdFuture(ctx, msg);
         return Futures.transformAsync(customerIdFuture, customerId ->
                 ctx.getDbCallbackExecutor().submit(() -> {
-                    var originatorType = msg.getOriginator().getEntityType();
-                    switch (originatorType) {
-                        case DEVICE:
-                            processAssignDevice(ctx, msg, customerId);
-                            break;
-                        case ASSET:
-                            processAssignAsset(ctx, msg, customerId);
-                            break;
-                        case ENTITY_VIEW:
-                            processAssignEntityView(ctx, msg, customerId);
-                            break;
-                        case EDGE:
-                            processAssignEdge(ctx, msg, customerId);
-                            break;
-                        case DASHBOARD:
-                            processAssignDashboard(ctx, msg, customerId);
-                            break;
-                        default:
-                            throw new RuntimeException(unsupportedOriginatorTypeErrorMessage(originatorType));
-                    }
+                    var originator = msg.getOriginator();
+                    var customerAssigner = assignersMap.get(originator.getEntityType());
+                    customerAssigner.apply(ctx, originator, customerId);
                     return null;
                 }), MoreExecutors.directExecutor());
     }
 
-    private void processAssignAsset(TbContext ctx, TbMsg msg, CustomerId customerId) {
-        ctx.getAssetService().assignAssetToCustomer(ctx.getTenantId(), new AssetId(msg.getOriginator().getId()), customerId);
+    protected void processAsset(TbContext ctx, EntityId originator, CustomerId customerId) {
+        ctx.getAssetService().assignAssetToCustomer(ctx.getTenantId(), new AssetId(originator.getId()), customerId);
     }
 
-    private void processAssignDevice(TbContext ctx, TbMsg msg, CustomerId customerId) {
-        ctx.getDeviceService().assignDeviceToCustomer(ctx.getTenantId(), new DeviceId(msg.getOriginator().getId()), customerId);
+    protected void processDevice(TbContext ctx, EntityId originator, CustomerId customerId) {
+        ctx.getDeviceService().assignDeviceToCustomer(ctx.getTenantId(), new DeviceId(originator.getId()), customerId);
     }
 
-    private void processAssignEntityView(TbContext ctx, TbMsg msg, CustomerId customerId) {
-        ctx.getEntityViewService().assignEntityViewToCustomer(ctx.getTenantId(), new EntityViewId(msg.getOriginator().getId()), customerId);
+    protected void processEntityView(TbContext ctx, EntityId originator, CustomerId customerId) {
+        ctx.getEntityViewService().assignEntityViewToCustomer(ctx.getTenantId(), new EntityViewId(originator.getId()), customerId);
     }
 
-    private void processAssignEdge(TbContext ctx, TbMsg msg, CustomerId customerId) {
-        ctx.getEdgeService().assignEdgeToCustomer(ctx.getTenantId(), new EdgeId(msg.getOriginator().getId()), customerId);
+    protected void processEdge(TbContext ctx, EntityId originator, CustomerId customerId) {
+        ctx.getEdgeService().assignEdgeToCustomer(ctx.getTenantId(), new EdgeId(originator.getId()), customerId);
     }
 
-    private void processAssignDashboard(TbContext ctx, TbMsg msg, CustomerId customerId) {
-        ctx.getDashboardService().assignDashboardToCustomer(ctx.getTenantId(), new DashboardId(msg.getOriginator().getId()), customerId);
+    protected void processDashboard(TbContext ctx, EntityId originator, CustomerId customerId) {
+        ctx.getDashboardService().assignDashboardToCustomer(ctx.getTenantId(), new DashboardId(originator.getId()), customerId);
     }
 
 }
