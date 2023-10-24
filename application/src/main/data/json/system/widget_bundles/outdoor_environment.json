@@ -93,6 +93,16 @@
     "ground_temperature_chart_card",
     "ground_temperature_chart_card_with_background",
     "simple_ground_temperature_chart_card",
-    "simple_ground_temperature_chart_card_with_background"
+    "simple_ground_temperature_chart_card_with_background",
+    "soil_moisture_card",
+    "soil_moisture_card_with_background",
+    "horizontal_soil_moisture_card",
+    "horizontal_soil_moisture_card_with_background",
+    "soil_moisture_chart_card",
+    "soil_moisture_chart_card_with_background",
+    "simple_soil_moisture_chart_card",
+    "simple_soil_moisture_chart_card_with_background",
+    "soil_moisture_progress_bar",
+    "soil_moisture_progress_bar_with_background"
   ]
 }
