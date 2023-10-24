@@ -85,6 +85,14 @@
     "visibility_chart_card",
     "visibility_chart_card_with_background",
     "simple_visibility_chart_card",
-    "simple_visibility_chart_card_with_background"
+    "simple_visibility_chart_card_with_background",
+    "ground_temperature_card",
+    "ground_temperature_card_with_background",
+    "horizontal_ground_temperature_card",
+    "horizontal_ground_temperature_card_with_background",
+    "ground_temperature_chart_card",
+    "ground_temperature_chart_card_with_background",
+    "simple_ground_temperature_chart_card",
+    "simple_ground_temperature_chart_card_with_background"
   ]
 }
