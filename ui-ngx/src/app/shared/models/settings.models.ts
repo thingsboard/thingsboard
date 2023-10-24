@@ -87,6 +87,39 @@ export interface GeneralSettings {
   baseUrl: string;
 }
 
+export interface DeviceConnectivitySettings {
+  http: {
+    enabled: boolean;
+    host: string;
+    port: number;
+  },
+  https: {
+    enabled: boolean;
+    host: string;
+    port: number;
+  },
+  mqtt: {
+    enabled: boolean;
+    host: string;
+    port: number;
+  },
+  mqtts: {
+    enabled: boolean;
+    host: string;
+    port: number;
+  },
+  coap: {
+    enabled: boolean;
+    host: string;
+    port: number;
+  },
+  coaps: {
+    enabled: boolean;
+    host: string;
+    port: number;
+  }
+}
+
 export interface UserPasswordPolicy {
   minimumLength: number;
   minimumUppercaseLetters: number;

@@ -14,13 +14,13 @@
 /// limitations under the License.
 ///
 
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
 import { Router } from '@angular/router';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { AdminSettings, GeneralSettings } from '@shared/models/settings.models';
+import { AdminSettings, DeviceConnectivitySettings, GeneralSettings } from '@shared/models/settings.models';
 import { AdminService } from '@core/http/admin.service';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 
@@ -29,26 +29,27 @@ import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
   templateUrl: './general-settings.component.html',
   styleUrls: ['./general-settings.component.scss', './settings-card.scss']
 })
-export class GeneralSettingsComponent extends PageComponent implements OnInit, HasConfirmForm {
+export class GeneralSettingsComponent extends PageComponent implements HasConfirmForm {
 
   generalSettings: UntypedFormGroup;
-  adminSettings: AdminSettings<GeneralSettings>;
+  private adminSettings: AdminSettings<GeneralSettings>;
+
+  deviceConnectivitySettingsForm: UntypedFormGroup;
+  private deviceConnectivitySettings: AdminSettings<DeviceConnectivitySettings>;
+
+  protocol = 'http';
 
   constructor(protected store: Store<AppState>,
               private router: Router,
               private adminService: AdminService,
               public fb: UntypedFormBuilder) {
     super(store);
-  }
-
-  ngOnInit() {
     this.buildGeneralServerSettingsForm();
-    this.adminService.getAdminSettings<GeneralSettings>('general').subscribe(
-      (adminSettings) => {
-        this.adminSettings = adminSettings;
-        this.generalSettings.reset(this.adminSettings.jsonValue);
-      }
-    );
+    this.adminService.getAdminSettings<GeneralSettings>('general')
+      .subscribe(adminSettings => this.processGeneralSettings(adminSettings));
+    this.buildDeviceConnectivitySettingsForm();
+    this.adminService.getAdminSettings<DeviceConnectivitySettings>('connectivity')
+      .subscribe(deviceConnectivitySettings => this.processDeviceConnectivitySettings(deviceConnectivitySettings));
   }
 
   buildGeneralServerSettingsForm() {
@@ -58,18 +59,73 @@ export class GeneralSettingsComponent extends PageComponent implements OnInit, H
     });
   }
 
+  buildDeviceConnectivitySettingsForm() {
+    this.deviceConnectivitySettingsForm = this.fb.group({
+      http: this.fb.group({
+        enabled: [false, []],
+        host: ['', []],
+        port: [null, [Validators.min(1), Validators.max(65535), Validators.pattern('[0-9]*')]]
+      }),
+      https: this.fb.group({
+        enabled: [false, []],
+        host: ['', []],
+        port: [null, [Validators.min(1), Validators.max(65535), Validators.pattern('[0-9]*')]]
+      }),
+      mqtt: this.fb.group({
+        enabled: [false, []],
+        host: ['', []],
+        port: [null, [Validators.min(1), Validators.max(65535), Validators.pattern('[0-9]*')]]
+      }),
+      mqtts: this.fb.group({
+        enabled: [false, []],
+        host: ['', []],
+        port: [null, [Validators.min(1), Validators.max(65535), Validators.pattern('[0-9]*')]]
+      }),
+      coap: this.fb.group({
+        enabled: [false, []],
+        host: ['', []],
+        port: [null, [Validators.min(1), Validators.max(65535), Validators.pattern('[0-9]*')]]
+      }),
+      coaps: this.fb.group({
+        enabled: [false, []],
+        host: ['', []],
+        port: [null, [Validators.min(1), Validators.max(65535), Validators.pattern('[0-9]*')]]
+      }),
+    });
+  }
+
   save(): void {
     this.adminSettings.jsonValue = {...this.adminSettings.jsonValue, ...this.generalSettings.value};
-    this.adminService.saveAdminSettings(this.adminSettings).subscribe(
-      (adminSettings) => {
-        this.adminSettings = adminSettings;
-        this.generalSettings.reset(this.adminSettings.jsonValue);
-      }
-    );
+    this.adminService.saveAdminSettings(this.adminSettings)
+      .subscribe(adminSettings => this.processGeneralSettings(adminSettings));
+  }
+
+  saveDeviceConnectivitySettings(): void {
+    this.deviceConnectivitySettings.jsonValue = {...this.deviceConnectivitySettings.jsonValue, ...this.deviceConnectivitySettingsForm.value};
+    this.adminService.saveAdminSettings<DeviceConnectivitySettings>(this.deviceConnectivitySettings)
+      .subscribe(deviceConnectivitySettings => this.processDeviceConnectivitySettings(deviceConnectivitySettings));
+  }
+
+  discardGeneralSettings(): void {
+    this.generalSettings.reset(this.adminSettings.jsonValue);
+  }
+
+  discardDeviceConnectivitySettings(): void {
+    this.deviceConnectivitySettingsForm.reset(this.deviceConnectivitySettings.jsonValue);
+  }
+
+  private processGeneralSettings(generalSettings: AdminSettings<GeneralSettings>): void {
+    this.adminSettings = generalSettings;
+    this.generalSettings.reset(this.adminSettings.jsonValue);
+  }
+
+  private processDeviceConnectivitySettings(deviceConnectivitySettings: AdminSettings<DeviceConnectivitySettings>): void {
+    this.deviceConnectivitySettings = deviceConnectivitySettings;
+    this.deviceConnectivitySettingsForm.reset(this.deviceConnectivitySettings.jsonValue);
   }
 
   confirmForm(): UntypedFormGroup {
-    return this.generalSettings;
+    return this.generalSettings.dirty ? this.generalSettings : this.deviceConnectivitySettingsForm;
   }
 
 }
