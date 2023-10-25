@@ -145,6 +145,16 @@
     "co2_chart_card",
     "co2_chart_card_with_background",
     "simple_co2_chart_card",
-    "simple_co2_chart_card_with_background"
+    "simple_co2_chart_card_with_background",
+    "flooding_level_card",
+    "flooding_level_card_with_background",
+    "horizontal_flooding_level_card",
+    "horizontal_flooding_level_card_with_background",
+    "flooding_level_chart_card",
+    "flooding_level_chart_card_with_background",
+    "simple_flooding_level_chart_card",
+    "simple_flooding_level_chart_card_with_background",
+    "flooding_level_progress_bar",
+    "flooding_level_progress_bar_with_background"
   ]
 }
