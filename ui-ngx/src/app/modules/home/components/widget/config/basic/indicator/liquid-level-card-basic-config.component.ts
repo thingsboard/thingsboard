@@ -319,6 +319,7 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
     const datasourceUnits: string = this.levelCardWidgetConfigForm.get('datasourceUnits').value;
     const layout: LevelCardLayout = this.levelCardWidgetConfigForm.get('layout').value;
     const showTitleIcon: AbstractControl<boolean> = this.levelCardWidgetConfigForm.get('showTitleIcon');
+    const showTitle: boolean = this.levelCardWidgetConfigForm.get('showTitle').value;
     const volumeSource: AbstractControl<LevelSelectOptions> = this.levelCardWidgetConfigForm.get('volumeSource');
     const units: AbstractControl<string> = this.levelCardWidgetConfigForm.get('units');
     const tooltipUnits: AbstractControl<string> = this.levelCardWidgetConfigForm.get('tooltipUnits');
@@ -374,8 +375,7 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
       }
     }
 
-    if (trigger === 'showTitle') {
-      const showTitle: boolean = this.levelCardWidgetConfigForm.get('showTitle').value;
+    if (trigger === 'showTitle' || !trigger) {
       if (showTitle) {
         this.levelCardWidgetConfigForm.get('title').enable({emitEvent: false});
         this.levelCardWidgetConfigForm.get('titleFont').enable({emitEvent: false});
@@ -390,18 +390,20 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
       emitEventFields.push('title', 'titleFont', 'titleColor', 'showTitleIcon');
     }
 
-    if (showTitleIcon?.value) {
-      this.levelCardWidgetConfigForm.get('titleIcon').enable({emitEvent: false});
-      this.levelCardWidgetConfigForm.get('iconColor').enable({emitEvent: false});
-      this.levelCardWidgetConfigForm.get('iconSize').enable({emitEvent: false});
-      this.levelCardWidgetConfigForm.get('iconSizeUnit').enable({emitEvent: false});
-    } else {
-      this.levelCardWidgetConfigForm.get('titleIcon').disable({emitEvent: false});
-      this.levelCardWidgetConfigForm.get('iconColor').disable({emitEvent: false});
-      this.levelCardWidgetConfigForm.get('iconSize').disable({emitEvent: false});
-      this.levelCardWidgetConfigForm.get('iconSizeUnit').disable({emitEvent: false});
+    if (trigger === 'showTitleIcon' || !trigger) {
+      if (showTitleIcon?.value && !showTitleIcon.disabled && showTitle) {
+        this.levelCardWidgetConfigForm.get('titleIcon').enable({emitEvent: false});
+        this.levelCardWidgetConfigForm.get('iconColor').enable({emitEvent: false});
+        this.levelCardWidgetConfigForm.get('iconSize').enable({emitEvent: false});
+        this.levelCardWidgetConfigForm.get('iconSizeUnit').enable({emitEvent: false});
+      } else {
+        this.levelCardWidgetConfigForm.get('titleIcon').disable({emitEvent: false});
+        this.levelCardWidgetConfigForm.get('iconColor').disable({emitEvent: false});
+        this.levelCardWidgetConfigForm.get('iconSize').disable({emitEvent: false});
+        this.levelCardWidgetConfigForm.get('iconSizeUnit').disable({emitEvent: false});
+      }
+      emitEventFields.push('titleIcon', 'iconColor', 'iconSize', 'iconSizeUnit');
     }
-    emitEventFields.push('titleIcon', 'iconColor', 'iconSize', 'iconSizeUnit');
 
     if (trigger === 'showBackgroundOverlay') {
       const showBackgroundOverlay: boolean = this.levelCardWidgetConfigForm.get('showBackgroundOverlay').value;
