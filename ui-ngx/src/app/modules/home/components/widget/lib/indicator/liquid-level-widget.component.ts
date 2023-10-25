@@ -124,7 +124,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
           this.widgetUnits = units;
         }
 
-        this.update();
+        this.update(true);
       }
     });
   }
@@ -169,9 +169,9 @@ export class LiquidLevelWidgetComponent implements OnInit {
     );
   }
 
-  public update() {
+  public update(ignoreAnimation?: boolean) {
     if (this.svg) {
-      this.updateData();
+      this.updateData(ignoreAnimation);
     }
   }
 
@@ -188,11 +188,11 @@ export class LiquidLevelWidgetComponent implements OnInit {
     }
   }
 
-  private updateData() {
+  private updateData(ignoreAnimation?: boolean) {
     const data = this.ctx.data[0]?.data[0]?.map(value => Number(value));
     if (isDefinedAndNotNull(data) && data.length && typeof Number(data[1]) === 'number') {
       const percentage = this.convertInputData(Number(data[1]));
-      this.updateSvg(percentage);
+      this.updateSvg(percentage, ignoreAnimation);
       this.updateValueElement(this.convertOutputData(percentage), percentage);
 
       if (this.settings.showTooltip) {
@@ -319,7 +319,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
     return names;
   }
 
-  private updateSvg(percentage: number) {
+  private updateSvg(percentage: number, ignoreAnimation?: boolean) {
     const yLimits: SvgLimits = {
       min: this.svgParams.limits.min,
       max: this.svgParams.limits.max
@@ -327,7 +327,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
 
     const newYPos = this.calculatePosition(percentage, yLimits);
     this.updateShapeColor(percentage);
-    this.updateLevel(newYPos, percentage);
+    this.updateLevel(newYPos, percentage, ignoreAnimation);
   }
 
   private calculatePosition(percentage: number, limits: SvgLimits): number {
@@ -347,7 +347,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
     }
   }
 
-  private updateLevel(newY: number, percentage: number): void {
+  private updateLevel(newY: number, percentage: number, ignoreAnimation = false): void {
     this.liquidColor.update(percentage);
     const jQueryContainerElement = $(this.elementRef.nativeElement);
     const fill = jQueryContainerElement.find('.tb-liquid-fill');
@@ -355,12 +355,20 @@ export class LiquidLevelWidgetComponent implements OnInit {
     const surfacePositionAttr = this.shape !== Shapes.vCylinder ? 'y' : 'cy';
     const animationSpeed = 500;
 
-    fill.animate({y : newY}, animationSpeed);
+    if (ignoreAnimation) {
+      fill.css({y : newY});
+    } else {
+      fill.animate({y : newY}, animationSpeed);
+    }
     fill.attr('fill', this.liquidColor.color);
 
     surfaces.each((index, element) => {
       const $element = $(element);
-      $element.animate({[surfacePositionAttr]: newY}, animationSpeed);
+      if (ignoreAnimation) {
+        $element.css({[surfacePositionAttr]: newY});
+      } else {
+        $element.animate({[surfacePositionAttr]: newY}, animationSpeed);
+      }
       if ($element.hasClass('tb-liquid')) {
         $element.attr('fill', this.liquidColor.color);
       }

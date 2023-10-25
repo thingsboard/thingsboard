@@ -187,7 +187,7 @@ export const svgMapping = new Map<Shapes, SvgInfo>(
       Shapes.hCapsule,
       {
         svg: 'assets/widget/liquid-level/shapes/horizontal-capsule.svg',
-        limits: { min: 158, max: 52 }
+        limits: { min: 171, max: 52 }
       }
     ],
     [
