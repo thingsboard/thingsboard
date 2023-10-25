@@ -18,6 +18,7 @@ package org.thingsboard.server.service.subscription;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -29,6 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(exclude = {"seqNumber"})
+@ToString
 public class TbSubscriptionsInfo {
 
     protected boolean notifications;

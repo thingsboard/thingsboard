@@ -172,6 +172,8 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
                     }
                 }
             });
+        } else {
+            log.trace("[{}] No time-series subscriptions for entity.", entityId);
         }
     }
 
@@ -223,7 +225,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
     public void processAttributesUpdate(TenantId tenantId, EntityId entityId, List<AttributeKvEntry> update) {
         TbEntityRemoteSubsInfo subInfo = entitySubscriptions.get(entityId);
         if (subInfo != null) {
-            log.trace("[{}] Handling time-series update: {}", entityId, update);
+            log.trace("[{}] Handling attributes update: {}", entityId, update);
             subInfo.getSubs().forEach((serviceId, sub) -> {
                 if (sub.attrAllKeys) {
                     processAttributesUpdate(serviceId, entityId, update);
@@ -234,6 +236,8 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
                     }
                 }
             });
+        } else {
+            log.trace("[{}] No attributes subscriptions for entity.", entityId);
         }
     }
 

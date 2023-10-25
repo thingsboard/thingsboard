@@ -22,10 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
-import org.thingsboard.server.service.ws.notification.sub.NotificationsCountSubscription;
-import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscription;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -103,7 +100,7 @@ public class TbEntityLocalSubsInfo {
                 }
                 break;
             case TIMESERIES:
-                var tsSub = (TbTimeseriesSubscription) subscription;
+                var tsSub = (TbTimeSeriesSubscription) subscription;
                 if (!newState.tsAllKeys) {
                     if (tsSub.isAllKeys()) {
                         newState.tsAllKeys = true;
@@ -167,7 +164,7 @@ public class TbEntityLocalSubsInfo {
                     }
                     break;
                 case TIMESERIES:
-                    var tsSub = (TbTimeseriesSubscription) subscription;
+                    var tsSub = (TbTimeSeriesSubscription) subscription;
                     if (!newState.tsAllKeys && tsSub.isAllKeys()) {
                         newState.tsAllKeys = true;
                         continue;
@@ -219,7 +216,7 @@ public class TbEntityLocalSubsInfo {
             } else {
                 return subscription;
             }
-        } else if (subscription instanceof TbTimeseriesSubscription) {
+        } else if (subscription instanceof TbTimeSeriesSubscription) {
             if (event != null) {
                 log.trace("[{}][{}] Registering new pending time-series subscription event: {} for subscription: {}", tenantId, entityId, event.getSeqNumber(), subscription.getSubscriptionId());
                 pendingTimeSeriesEvent = event.getSeqNumber();

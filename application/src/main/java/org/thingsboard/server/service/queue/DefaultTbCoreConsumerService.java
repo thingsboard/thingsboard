@@ -516,14 +516,19 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             TbEntitySubEventProto subEvent = msg.getSubEvent();
             subscriptionManagerService.onSubEvent(subEvent.getServiceId(), TbSubscriptionUtils.fromProto(subEvent), callback);
         } else if (msg.hasTelemetrySub()) {
+            callback.onSuccess();
             // Deprecated, for removal; Left intentionally to avoid throwNotHandled
         } else if (msg.hasAlarmSub()) {
+            callback.onSuccess();
             // Deprecated, for removal; Left intentionally to avoid throwNotHandled
         } else if (msg.hasNotificationsSub()) {
+            callback.onSuccess();
             // Deprecated, for removal; Left intentionally to avoid throwNotHandled
         } else if (msg.hasNotificationsCountSub()) {
+            callback.onSuccess();
             // Deprecated, for removal; Left intentionally to avoid throwNotHandled
         } else if (msg.hasSubClose()) {
+            callback.onSuccess();
             // Deprecated, for removal; Left intentionally to avoid throwNotHandled
         } else if (msg.hasTsUpdate()) {
             TbTimeSeriesUpdateProto proto = msg.getTsUpdate();

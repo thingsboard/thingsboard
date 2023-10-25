@@ -116,7 +116,7 @@ public class TbSubscriptionUtils {
         if (!ComponentLifecycleEvent.DELETED.equals(event)) {
             builder.info(new TbSubscriptionsInfo(proto.getNotifications(), proto.getAlarms(),
                     proto.getTsAllKeys(), proto.getTsKeysCount() > 0 ? new HashSet<>(proto.getTsKeysList()) : null,
-                    proto.getAttrAllKeys(), proto.getAttrKeysCount() > 0 ? new HashSet<>(proto.getAttrKeysCount()) : null,
+                    proto.getAttrAllKeys(), proto.getAttrKeysCount() > 0 ? new HashSet<>(proto.getAttrKeysList()) : null,
                     proto.getSeqNumber()));
         }
         return builder.build();
@@ -411,7 +411,7 @@ public class TbSubscriptionUtils {
         return result;
     }
 
-    static ToCoreNotificationMsg toProto(boolean timeseries, EntityId entityId, List<TsKvEntry> updates) {
+    static ToCoreNotificationMsg toProto(boolean timeSeries, EntityId entityId, List<TsKvEntry> updates) {
         TransportProtos.TbSubUpdateProto.Builder builder = TransportProtos.TbSubUpdateProto.newBuilder();
 
         builder.setEntityIdMSB(entityId.getId().getMostSignificantBits());
@@ -431,7 +431,7 @@ public class TbSubscriptionUtils {
         });
 
         var result = TransportProtos.LocalSubscriptionServiceMsgProto.newBuilder();
-        if (timeseries) {
+        if (timeSeries) {
             result.setTsUpdate(builder);
         } else {
             result.setAttrUpdate(builder);

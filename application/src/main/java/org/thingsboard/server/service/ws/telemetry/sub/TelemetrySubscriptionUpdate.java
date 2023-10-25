@@ -19,6 +19,7 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.service.subscription.SubscriptionErrorCode;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -94,7 +95,14 @@ public class TelemetrySubscriptionUpdate {
 
     @Override
     public String toString() {
-        return "TelemetrySubscriptionUpdate [subscriptionId=" + subscriptionId + ", errorCode=" + errorCode + ", errorMsg=" + errorMsg + ", data="
-                + data + "]";
+        StringBuilder result = new StringBuilder("TelemetrySubscriptionUpdate [subscriptionId=" + subscriptionId + ", errorCode=" + errorCode + ", errorMsg=" + errorMsg + ", data=");
+        data.forEach((k, v) -> {
+            result.append(k).append("=[");
+            for(Object a : v){
+                result.append(Arrays.toString((Object[])a)).append("|");
+            }
+            result.append("]");
+        });
+        return result.toString();
     }
 }

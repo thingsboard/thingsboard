@@ -24,10 +24,10 @@ import org.thingsboard.server.service.ws.telemetry.sub.TelemetrySubscriptionUpda
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-public class TbTimeseriesSubscription extends TbSubscription<TelemetrySubscriptionUpdate> {
+public class TbTimeSeriesSubscription extends TbSubscription<TelemetrySubscriptionUpdate> {
 
     @Getter
-    private final long createdTime;
+    private final long queryTs;
     @Getter
     private final boolean allKeys;
     @Getter
@@ -40,11 +40,11 @@ public class TbTimeseriesSubscription extends TbSubscription<TelemetrySubscripti
     private final boolean latestValues;
 
     @Builder
-    public TbTimeseriesSubscription(String serviceId, String sessionId, int subscriptionId, TenantId tenantId, EntityId entityId,
+    public TbTimeSeriesSubscription(String serviceId, String sessionId, int subscriptionId, TenantId tenantId, EntityId entityId,
                                     BiConsumer<TbSubscription<TelemetrySubscriptionUpdate>, TelemetrySubscriptionUpdate> updateProcessor,
-                                    boolean allKeys, Map<String, Long> keyStates, long startTime, long endTime, boolean latestValues) {
+                                    long queryTs, boolean allKeys, Map<String, Long> keyStates, long startTime, long endTime, boolean latestValues) {
         super(serviceId, sessionId, subscriptionId, tenantId, entityId, TbSubscriptionType.TIMESERIES, updateProcessor);
-        this.createdTime = System.currentTimeMillis();
+        this.queryTs = queryTs;
         this.allKeys = allKeys;
         this.keyStates = keyStates;
         this.startTime = startTime;
