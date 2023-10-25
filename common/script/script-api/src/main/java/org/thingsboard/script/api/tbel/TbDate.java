@@ -189,19 +189,8 @@ public class TbDate implements Serializable, Cloneable {
     }
 
     public String toLocaleString(String localeStr, String optionsStr) {
-        return toLocaleString(localeStr, optionsStr, (locale, options) -> DateTimeFormatter.ofLocalizedDateTime(options.getDateStyle(), options.getTimeStyle()).withLocale(locale));
-    }
-
-    public String toLocaleTbString(String localeStr, String optionsStr) {
-        return toLocaleString(localeStr, optionsStr, (locale, options) -> {
-            String formatPattern =
-                    DateTimeFormatterBuilder.getLocalizedDateTimePattern(
-                            options.getDateStyle(),
-                            options.getTimeStyle(),
-                            IsoChronology.INSTANCE,
-                            locale);
-            return DateTimeFormatter.ofPattern(formatPattern, locale);
-        });
+        return toLocaleString(localeStr, optionsStr, (locale, options) ->
+                DateTimeFormatter.ofLocalizedDateTime(options.getDateStyle(), options.getTimeStyle()).withLocale(locale));
     }
 
     public String toLocaleString(String localeStr, String optionsStr, BiFunction<Locale, DateTimeFormatOptions, DateTimeFormatter> formatterBuilder) {
