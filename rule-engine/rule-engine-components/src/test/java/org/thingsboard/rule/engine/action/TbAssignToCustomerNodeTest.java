@@ -36,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -154,5 +155,20 @@ class TbAssignToCustomerNodeTest extends TbAbstractCustomerActionNodeTest<TbAssi
         verifyNoMoreInteractions(customerServiceMock);
         verifyNoMoreInteractions(ctxMock);
     }
+
+    @Test
+    void testUpgrade_fromVersion0() {
+        var node = mock(TbAssignToCustomerNode.class);
+        var config = new TbAssignToCustomerNodeConfiguration().defaultConfiguration();
+        processTestUpgrade_fromVersion0(node, config);
+    }
+
+    @Test
+    void testUpgrade_fromVersion0_alreadyHasLatestConfig() {
+        var node = mock(TbAssignToCustomerNode.class);
+        var config = new TbAssignToCustomerNodeConfiguration().defaultConfiguration();
+        processTestUpgrade_fromVersion0_alreadyHasLatestConfig(node, config);
+    }
+
 
 }

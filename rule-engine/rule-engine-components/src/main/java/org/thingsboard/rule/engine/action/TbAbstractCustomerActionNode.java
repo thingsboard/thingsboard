@@ -103,8 +103,10 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
         boolean hasChanges = false;
         switch (fromVersion) {
             case 0: {
-                ((ObjectNode) oldConfiguration).remove("customerCacheExpiration");
-                hasChanges = true;
+                if (oldConfiguration.has("customerCacheExpiration")) {
+                    ((ObjectNode) oldConfiguration).remove("customerCacheExpiration");
+                    hasChanges = true;
+                }
             }
         }
         return new TbPair<>(hasChanges, oldConfiguration);

@@ -15,11 +15,14 @@
  */
 package org.thingsboard.rule.engine.action;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.provider.Arguments;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.TestDbCallbackExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -42,6 +45,7 @@ import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -62,7 +66,9 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.willCallRealMethod;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -72,22 +78,22 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class TbAbstractCustomerActionNodeTest<N extends TbAbstractCustomerActionNode<C>, C extends TbAbstractCustomerActionNodeConfiguration> {
 
-
-    protected static final TenantId TENANT_ID = new TenantId(UUID.randomUUID());
-    protected static final ListeningExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
-    protected static final RuleNodeId RULE_NODE_ID = new RuleNodeId(UUID.randomUUID());
-
     private static final Device DEVICE = new Device();
     private static final Asset ASSET = new Asset();
     private static final EntityView ENTITY_VIEW = new EntityView();
     private static final Edge EDGE = new Edge();
     private static final Dashboard DASHBOARD = new Dashboard();
 
-    protected static final List<EntityType> supportedEntityTypes = List.of(EntityType.DEVICE, EntityType.ASSET,
+    private static final List<EntityType> supportedEntityTypes = List.of(EntityType.DEVICE, EntityType.ASSET,
             EntityType.ENTITY_VIEW, EntityType.EDGE, EntityType.DASHBOARD);
 
-    protected static final List<EntityType> unsupportedEntityTypes = Arrays.stream(EntityType.values())
+    private static final List<EntityType> unsupportedEntityTypes = Arrays.stream(EntityType.values())
             .filter(type -> !supportedEntityTypes.contains(type)).collect(Collectors.toList());
+
+    protected static final String CUSTOMER_CACHE_EXPIRATION_FIELD = "customerCacheExpiration";
+    protected static final TenantId TENANT_ID = new TenantId(UUID.randomUUID());
+    protected static final ListeningExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
+    protected static final RuleNodeId RULE_NODE_ID = new RuleNodeId(UUID.randomUUID());
 
     protected static Stream<Arguments> provideUnsupportedTypeAndVerifyExceptionThrown() {
         return unsupportedEntityTypes.stream().flatMap(type -> Stream.of(Arguments.of(type)));
@@ -189,6 +195,33 @@ class TbAbstractCustomerActionNodeTest<N extends TbAbstractCustomerActionNode<C>
                     }
                 }
         );
+    }
+
+    protected void processTestUpgrade_fromVersion0(N node, C config) {
+        willCallRealMethod().given(node).upgrade(anyInt(), any());
+
+        ObjectNode jsonNode = (ObjectNode) JacksonUtil.valueToTree(config);
+        jsonNode.put(CUSTOMER_CACHE_EXPIRATION_FIELD, 300);
+        assertThat(jsonNode.has(CUSTOMER_CACHE_EXPIRATION_FIELD)).as("pre condition has " + CUSTOMER_CACHE_EXPIRATION_FIELD).isTrue();
+
+        TbPair<Boolean, JsonNode> upgradeResult = node.upgrade(0, jsonNode);
+
+        ObjectNode resultNode = (ObjectNode) upgradeResult.getSecond();
+        assertThat(upgradeResult.getFirst()).as("upgrade result has changes").isTrue();
+        assertThat(resultNode.has(CUSTOMER_CACHE_EXPIRATION_FIELD)).as("upgrade result has no key " + CUSTOMER_CACHE_EXPIRATION_FIELD).isFalse();
+    }
+
+    protected void processTestUpgrade_fromVersion0_alreadyHasLatestConfig(N node, C config) {
+        willCallRealMethod().given(node).upgrade(anyInt(), any());
+
+        ObjectNode jsonNode = (ObjectNode) JacksonUtil.valueToTree(config);
+        assertThat(jsonNode.has(CUSTOMER_CACHE_EXPIRATION_FIELD)).as("pre condition has no " + CUSTOMER_CACHE_EXPIRATION_FIELD).isFalse();
+
+        TbPair<Boolean, JsonNode> upgradeResult = node.upgrade(0, jsonNode);
+
+        ObjectNode resultNode = (ObjectNode) upgradeResult.getSecond();
+        assertThat(upgradeResult.getFirst()).as("upgrade result has changes").isFalse();
+        assertThat(resultNode.has(CUSTOMER_CACHE_EXPIRATION_FIELD)).as("upgrade result has no key " + CUSTOMER_CACHE_EXPIRATION_FIELD).isFalse();
     }
 
     protected void verifyMsgSuccess(TbMsg expectedMsg) {
