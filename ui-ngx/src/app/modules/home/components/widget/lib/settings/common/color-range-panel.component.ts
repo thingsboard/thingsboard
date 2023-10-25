@@ -55,11 +55,9 @@ export class ColorRangePanelComponent extends PageComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.colorRangeFormGroup = this.fb.group(
-      {
+    this.colorRangeFormGroup = this.fb.group({
         rangeList: [this.colorRangeSettings, []]
-      }
-    );
+    });
   }
 
   copyColorSettings(comp: ColorRangeSettingsComponent) {

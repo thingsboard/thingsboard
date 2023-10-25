@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -24,9 +24,10 @@ import {
   UntypedFormBuilder,
   UntypedFormGroup
 } from '@angular/forms';
-import { MatDialog } from '@angular/material/dialog';
 import { ColorRange } from '@shared/models/widget-settings.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-color-range-list',
@@ -40,9 +41,10 @@ import { TbPopoverComponent } from '@shared/components/popover.component';
     }
   ]
 })
-export class ColorRangeListComponent implements OnInit, ControlValueAccessor {
+export class ColorRangeListComponent implements OnInit, ControlValueAccessor, OnDestroy {
 
-  @Input() disabled: boolean;
+  @Input()
+  disabled: boolean;
 
   @Input()
   popover: TbPopoverComponent;
@@ -54,23 +56,26 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor {
 
   colorRangeListFormGroup: UntypedFormGroup;
 
+  private destroy$ = new Subject<void>();
+
   private propagateChange = null;
 
-  constructor(private fb: UntypedFormBuilder,
-              public dialog: MatDialog) {
-
-  }
+  constructor(private fb: UntypedFormBuilder) {}
 
   ngOnInit(): void {
     this.colorRangeListFormGroup = this.fb.group({
         rangeList: this.fb.array([])
     });
 
-    this.colorRangeListFormGroup.valueChanges.subscribe(() => {
-      this.updateModel();
-    });
+    this.colorRangeListFormGroup.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => this.updateModel());
   }
 
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
@@ -89,7 +94,7 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor {
     }
   }
 
-  private colorRangeControl(range: ColorRange): AbstractControl {
+  private colorRangeControl(range: ColorRange): UntypedFormGroup {
     return this.fb.group({
       from: [range?.from, []],
       to: [range?.to, []],
