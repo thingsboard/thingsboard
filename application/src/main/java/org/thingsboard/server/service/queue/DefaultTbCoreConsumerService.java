@@ -83,7 +83,7 @@ import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
 import org.thingsboard.server.service.queue.processing.IdMsgPair;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
-import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
+import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.subscription.SubscriptionManagerService;
@@ -142,8 +142,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     protected final TbQueueConsumer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> usageStatsConsumer;
     private final TbQueueConsumer<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> firmwareStatesConsumer;
 
+    protected volatile ExecutorService consumersExecutor;
     protected volatile ExecutorService usageStatsExecutor;
-
     private volatile ExecutorService firmwareStatesExecutor;
 
     public DefaultTbCoreConsumerService(TbCoreQueueFactory tbCoreQueueFactory,
@@ -186,7 +186,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
 
     @PostConstruct
     public void init() {
-        super.init("tb-core-consumer", "tb-core-notifications-consumer");
+        super.init("tb-core-notifications-consumer");
+        this.consumersExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("tb-core-consumer"));
         this.usageStatsExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-core-usage-stats-consumer"));
         this.firmwareStatesExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-core-firmware-notifications-consumer"));
     }
@@ -194,6 +195,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     @PreDestroy
     public void destroy() {
         super.destroy();
+        if (consumersExecutor != null) {
+            consumersExecutor.shutdownNow();
+        }
         if (usageStatsExecutor != null) {
             usageStatsExecutor.shutdownNow();
         }
@@ -684,7 +688,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     }
 
     @Override
-    protected void stopMainConsumers() {
+    protected void stopConsumers() {
         if (mainConsumer != null) {
             mainConsumer.unsubscribe();
         }

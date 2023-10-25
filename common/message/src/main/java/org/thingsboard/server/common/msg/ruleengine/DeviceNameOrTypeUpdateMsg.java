@@ -13,38 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.rpc;
+package org.thingsboard.server.common.msg.ruleengine;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
-import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 
-/**
- * Created by ashvayka on 16.04.18.
- */
 @Data
-public class ToDeviceRpcRequestActorMsg implements ToDeviceActorNotificationMsg {
+public class DeviceNameOrTypeUpdateMsg implements ToDeviceActorNotificationMsg {
 
-    private static final long serialVersionUID = -8592877558138716589L;
+    private static final long serialVersionUID = -5738949227650536685L;
 
-    private final String serviceId;
-    private final ToDeviceRpcRequest msg;
-
-    @Override
-    public DeviceId getDeviceId() {
-        return msg.getDeviceId();
-    }
-
-    @Override
-    public TenantId getTenantId() {
-        return msg.getTenantId();
-    }
+    private final TenantId tenantId;
+    private final DeviceId deviceId;
+    private final String deviceName;
+    private final String deviceType;
 
     @Override
     public MsgType getMsgType() {
-        return MsgType.DEVICE_RPC_REQUEST_TO_DEVICE_ACTOR_MSG;
+        return MsgType.DEVICE_NAME_OR_TYPE_UPDATE_TO_DEVICE_ACTOR_MSG;
     }
 }

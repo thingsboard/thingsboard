@@ -13,22 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api.msg;
+package org.thingsboard.server.service.queue.ruleengine;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.id.DeviceId;
+import java.io.Serializable;
 
-/**
- * Contains basic device metadata;
- *
- * @author ashvayka
- */
-@Data
-public final class DeviceMetaData {
+public enum QueueEvent implements Serializable {
 
-    final DeviceId deviceId;
-    final String deviceName;
-    final String deviceType;
-    final DeviceAttributes deviceAttributes;
+    PARTITION_CHANGE, CONFIG_UPDATE, DELETE
 
 }

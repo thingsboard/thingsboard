@@ -13,26 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api.msg;
+package org.thingsboard.server.common.msg.ruleengine;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
 
+/**
+ * Contains basic device metadata;
+ *
+ * @author ashvayka
+ */
 @Data
-public class DeviceNameOrTypeUpdateMsg implements ToDeviceActorNotificationMsg {
+public final class DeviceMetaData {
 
-    private static final long serialVersionUID = -5738949227650536685L;
+    final DeviceId deviceId;
+    final String deviceName;
+    final String deviceType;
+    final DeviceAttributes deviceAttributes;
 
-    private final TenantId tenantId;
-    private final DeviceId deviceId;
-    private final String deviceName;
-    private final String deviceType;
-
-    @Override
-    public MsgType getMsgType() {
-        return MsgType.DEVICE_NAME_OR_TYPE_UPDATE_TO_DEVICE_ACTOR_MSG;
-    }
 }

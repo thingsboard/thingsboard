@@ -13,26 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api.msg;
+package org.thingsboard.server.common.msg.rpc;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
 
-@Data
-public class DeviceEdgeUpdateMsg implements ToDeviceActorNotificationMsg {
+import java.util.UUID;
 
-    private static final long serialVersionUID = 4679029228395462172L;
+@Data
+public class RemoveRpcActorMsg implements ToDeviceActorNotificationMsg {
+
+    private static final long serialVersionUID = -6112720854949677477L;
 
     private final TenantId tenantId;
     private final DeviceId deviceId;
-    private final EdgeId edgeId;
+    private final UUID requestId;
 
     @Override
     public MsgType getMsgType() {
-        return MsgType.DEVICE_EDGE_UPDATE_TO_DEVICE_ACTOR_MSG;
+        return MsgType.REMOVE_RPC_TO_DEVICE_ACTOR_MSG;
     }
 }

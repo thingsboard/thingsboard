@@ -32,6 +32,8 @@ import java.util.Optional;
  */
 @Data
 public class ComponentLifecycleMsg implements TenantAwareMsg, ToAllNodesMsg {
+    private static final long serialVersionUID = -5303421482781273062L;
+
     private final TenantId tenantId;
     private final EntityId entityId;
     private final ComponentLifecycleEvent event;
