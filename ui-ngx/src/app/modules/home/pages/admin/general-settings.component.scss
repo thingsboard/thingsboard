@@ -17,27 +17,9 @@
   .settings-card {
     .toggle-group {
       display: block;
+    }
+    .margin-bottom {
       margin-bottom: 12px;
     }
-    .hint {
-      display: block;
-    }
-    .fields-group {
-      .slide {
-        padding: 16px 0;
-      }
-      .fields-row {
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        gap: 12px;
-      }
-    }
-  }
-}
-
-:host ::ng-deep {
-  .mat-checkbox-layout {
-    white-space: normal;
   }
 }

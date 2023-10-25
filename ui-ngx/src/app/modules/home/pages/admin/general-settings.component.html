@@ -28,7 +28,7 @@
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <mat-card-content>
     <form [formGroup]="generalSettings" (ngSubmit)="save()">
-      <fieldset [disabled]="isLoading$ | async" style="margin-bottom: 10px">
+      <fieldset [disabled]="isLoading$ | async" class="margin-bottom">
         <mat-form-field class="mat-block">
           <mat-label translate>admin.base-url</mat-label>
           <input matInput formControlName="baseUrl" required/>
@@ -65,145 +65,49 @@
   </mat-progress-bar>
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <mat-card-content style="padding-top: 16px">
-    <tb-toggle-select class="toggle-group" appearance="fill" selectMediaBreakpoint="xs" [(ngModel)]="protocol">
+    <tb-toggle-select class="toggle-group margin-bottom" appearance="fill" selectMediaBreakpoint="xs" [(ngModel)]="protocol">
       <tb-toggle-option value="http">{{ "admin.device-connectivity.http-https" | translate }}</tb-toggle-option>
       <tb-toggle-option value="mqtt">{{ 'admin.device-connectivity.mqtt-mqtts' | translate }}</tb-toggle-option>
       <tb-toggle-option value="coap">{{ 'admin.device-connectivity.coap-coaps' | translate }}</tb-toggle-option>
     </tb-toggle-select>
-    <mat-hint class="tb-form-hint tb-primary-fill hint">{{ 'admin.device-connectivity.hint' | translate }}</mat-hint>
+    <div class="tb-form-hint tb-primary-fill margin-bottom">{{ 'admin.device-connectivity.hint' | translate }}</div>
     <form [formGroup]="deviceConnectivitySettingsForm" (ngSubmit)="saveDeviceConnectivitySettings()">
-      <fieldset *ngIf="protocol === 'http'" [disabled]="isLoading$ | async" formGroupName="http" class="fields-group">
-        <mat-slide-toggle class="slide" formControlName="enabled">
-          {{ 'admin.device-connectivity.http' | translate }}
-        </mat-slide-toggle>
-        <div class="fields-row">
-          <mat-form-field class="mat-block" fxFlex>
-            <mat-label translate>admin.device-connectivity.host</mat-label>
-            <input matInput formControlName="host"/>
-          </mat-form-field>
-          <mat-form-field class="mat-block" fxFlex>
-            <mat-label translate>admin.device-connectivity.port</mat-label>
-            <input matInput type="number" min="0" max="65535" formControlName="port"/>
-            <mat-error *ngIf="deviceConnectivitySettingsForm.get('http.port').hasError('pattern')">
-              {{ 'admin.device-connectivity.port-pattern' | translate }}
-            </mat-error>
-            <mat-error *ngIf="deviceConnectivitySettingsForm.get('http.port').hasError('min') ||
-                         deviceConnectivitySettingsForm.get('http.port').hasError('max')">
-              {{ 'admin.device-connectivity.port-range' | translate }}
-            </mat-error>
-          </mat-form-field>
+      <ng-container *ngIf="protocol === 'http'">
+        <ng-container *ngTemplateOutlet="connectivitySettings; context:{protocol: protocol}"></ng-container>
+        <ng-container *ngTemplateOutlet="connectivitySettings; context:{protocol: protocol + 's'}"></ng-container>
+      </ng-container>
+      <ng-container *ngIf="protocol === 'mqtt'">
+        <ng-container *ngTemplateOutlet="connectivitySettings; context:{protocol: protocol}"></ng-container>
+        <ng-container *ngTemplateOutlet="connectivitySettings; context:{protocol: protocol + 's'}"></ng-container>
+      </ng-container>
+      <ng-container *ngIf="protocol === 'coap'">
+        <ng-container *ngTemplateOutlet="connectivitySettings; context:{protocol: protocol}"></ng-container>
+        <ng-container *ngTemplateOutlet="connectivitySettings; context:{protocol: protocol + 's'}"></ng-container>
+      </ng-container>
+      <ng-template #connectivitySettings let-protocol="protocol">
+        <div class="tb-form-panel stroked margin-bottom" [formGroupName]="protocol">
+          <mat-slide-toggle class="mat-slide" formControlName="enabled">
+            {{ 'admin.device-connectivity.' + protocol | translate }}
+          </mat-slide-toggle>
+          <div class="tb-form-row no-border no-padding tb-standard-fields">
+            <mat-form-field fxFlex>
+              <mat-label translate>admin.device-connectivity.host</mat-label>
+              <input matInput formControlName="host"/>
+            </mat-form-field>
+            <mat-form-field fxFlex>
+              <mat-label translate>admin.device-connectivity.port</mat-label>
+              <input matInput type="number" min="0" max="65535" formControlName="port"/>
+              <mat-error *ngIf="deviceConnectivitySettingsForm.get(protocol + '.port').hasError('pattern')">
+                {{ 'admin.device-connectivity.port-pattern' | translate }}
+              </mat-error>
+              <mat-error *ngIf="deviceConnectivitySettingsForm.get(protocol + '.port').hasError('min') ||
+                       deviceConnectivitySettingsForm.get(protocol + '.port').hasError('max')">
+                {{ 'admin.device-connectivity.port-range' | translate }}
+              </mat-error>
+            </mat-form-field>
+          </div>
         </div>
-      </fieldset>
-      <fieldset *ngIf="protocol === 'http'" [disabled]="isLoading$ | async" formGroupName="https" class="fields-group">
-        <mat-slide-toggle class="slide" formControlName="enabled">
-          {{ 'admin.device-connectivity.https' | translate }}
-        </mat-slide-toggle>
-        <div class="fields-row">
-          <mat-form-field class="mat-block" fxFlex>
-            <mat-label translate>admin.device-connectivity.host</mat-label>
-            <input matInput formControlName="host"/>
-          </mat-form-field>
-          <mat-form-field class="mat-block" fxFlex>
-            <mat-label translate>admin.device-connectivity.port</mat-label>
-            <input matInput type="number" min="0" max="65535" formControlName="port"/>
-            <mat-error *ngIf="deviceConnectivitySettingsForm.get('https.port').hasError('pattern')">
-              {{ 'admin.device-connectivity.port-pattern' | translate }}
-            </mat-error>
-            <mat-error *ngIf="deviceConnectivitySettingsForm.get('https.port').hasError('min') ||
-                         deviceConnectivitySettingsForm.get('https.port').hasError('max')">
-              {{ 'admin.device-connectivity.port-range' | translate }}
-            </mat-error>
-          </mat-form-field>
-        </div>
-      </fieldset>
-      <fieldset *ngIf="protocol === 'mqtt'" [disabled]="isLoading$ | async" formGroupName="mqtt" class="fields-group">
-        <mat-slide-toggle class="slide" formControlName="enabled">
-          {{ 'admin.device-connectivity.mqtt' | translate }}
-        </mat-slide-toggle>
-        <div class="fields-row">
-          <mat-form-field class="mat-block" fxFlex>
-            <mat-label translate>admin.device-connectivity.host</mat-label>
-            <input matInput formControlName="host"/>
-          </mat-form-field>
-          <mat-form-field class="mat-block" fxFlex>
-            <mat-label translate>admin.device-connectivity.port</mat-label>
-            <input matInput type="number" min="0" max="65535" formControlName="port"/>
-            <mat-error *ngIf="deviceConnectivitySettingsForm.get('mqtt.port').hasError('pattern')">
-              {{ 'admin.device-connectivity.port-pattern' | translate }}
-            </mat-error>
-            <mat-error *ngIf="deviceConnectivitySettingsForm.get('mqtt.port').hasError('min') ||
-                         deviceConnectivitySettingsForm.get('mqtt.port').hasError('max')">
-              {{ 'admin.device-connectivity.port-range' | translate }}
-            </mat-error>
-          </mat-form-field>
-        </div>
-      </fieldset>
-      <fieldset *ngIf="protocol === 'mqtt'" [disabled]="isLoading$ | async" formGroupName="mqtts" class="fields-group">
-        <mat-slide-toggle class="slide" formControlName="enabled">
-          {{ 'admin.device-connectivity.mqtts' | translate }}
-        </mat-slide-toggle>
-        <div class="fields-row">
-          <mat-form-field class="mat-block" fxFlex>
-            <mat-label translate>admin.device-connectivity.host</mat-label>
-            <input matInput formControlName="host"/>
-          </mat-form-field>
-          <mat-form-field class="mat-block" fxFlex>
-            <mat-label translate>admin.device-connectivity.port</mat-label>
-            <input matInput type="number" min="0" max="65535" formControlName="port"/>
-            <mat-error *ngIf="deviceConnectivitySettingsForm.get('mqtts.port').hasError('pattern')">
-              {{ 'admin.device-connectivity.port-pattern' | translate }}
-            </mat-error>
-            <mat-error *ngIf="deviceConnectivitySettingsForm.get('mqtts.port').hasError('min') ||
-                         deviceConnectivitySettingsForm.get('mqtts.port').hasError('max')">
-              {{ 'admin.device-connectivity.port-range' | translate }}
-            </mat-error>
-          </mat-form-field>
-        </div>
-      </fieldset>
-      <fieldset *ngIf="protocol === 'coap'" [disabled]="isLoading$ | async" formGroupName="coap" class="fields-group">
-        <mat-slide-toggle class="slide" formControlName="enabled">
-          {{ 'admin.device-connectivity.coap' | translate }}
-        </mat-slide-toggle>
-        <div class="fields-row">
-          <mat-form-field class="mat-block" fxFlex>
-            <mat-label translate>admin.device-connectivity.host</mat-label>
-            <input matInput formControlName="host"/>
-          </mat-form-field>
-          <mat-form-field class="mat-block" fxFlex>
-            <mat-label translate>admin.device-connectivity.port</mat-label>
-            <input matInput type="number" min="0" max="65535" formControlName="port"/>
-            <mat-error *ngIf="deviceConnectivitySettingsForm.get('coap.port').hasError('pattern')">
-              {{ 'admin.device-connectivity.port-pattern' | translate }}
-            </mat-error>
-            <mat-error *ngIf="deviceConnectivitySettingsForm.get('coap.port').hasError('min') ||
-                         deviceConnectivitySettingsForm.get('coap.port').hasError('max')">
-              {{ 'admin.device-connectivity.port-range' | translate }}
-            </mat-error>
-          </mat-form-field>
-        </div>
-      </fieldset>
-      <fieldset *ngIf="protocol === 'coap'" [disabled]="isLoading$ | async" formGroupName="coaps" class="fields-group">
-        <mat-slide-toggle class="slide" formControlName="enabled">
-          {{ 'admin.device-connectivity.coaps' | translate }}
-        </mat-slide-toggle>
-        <div class="fields-row">
-          <mat-form-field class="mat-block" fxFlex>
-            <mat-label translate>admin.device-connectivity.host</mat-label>
-            <input matInput formControlName="host"/>
-          </mat-form-field>
-          <mat-form-field class="mat-block" fxFlex>
-            <mat-label translate>admin.device-connectivity.port</mat-label>
-            <input matInput type="number" min="0" max="65535" formControlName="port"/>
-            <mat-error *ngIf="deviceConnectivitySettingsForm.get('coaps.port').hasError('pattern')">
-              {{ 'admin.device-connectivity.port-pattern' | translate }}
-            </mat-error>
-            <mat-error *ngIf="deviceConnectivitySettingsForm.get('coaps.port').hasError('min') ||
-                         deviceConnectivitySettingsForm.get('coaps.port').hasError('max')">
-              {{ 'admin.device-connectivity.port-range' | translate }}
-            </mat-error>
-          </mat-form-field>
-        </div>
-      </fieldset>
+      </ng-template>
       <div fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="8px" class="layout-wrap">
         <button mat-button color="primary"
                 [disabled]="deviceConnectivitySettingsForm.pristine"
