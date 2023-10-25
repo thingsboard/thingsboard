@@ -137,6 +137,14 @@
     "snow_depth_chart_card",
     "snow_depth_chart_card_with_background",
     "simple_snow_depth_chart_card",
-    "simple_snow_depth_chart_card_with_background"
+    "simple_snow_depth_chart_card_with_background",
+    "co2_card",
+    "co2_card_with_background",
+    "horizontal_co2_card",
+    "horizontal_co2_card_with_background",
+    "co2_chart_card",
+    "co2_chart_card_with_background",
+    "simple_co2_chart_card",
+    "simple_co2_chart_card_with_background"
   ]
 }
