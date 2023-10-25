@@ -984,6 +984,13 @@ message VersionControlResponseMsg {
 }
 
 /**
+   TB Core to Edge Service
+ */
+message ToEdgeMsg {
+  EdgeNotificationMsgProto edgeNotificationMsg = 1;
+}
+
+/**
  * Main messages;
  */
 
@@ -1027,7 +1034,7 @@ message ToCoreMsg {
   DeviceStateServiceMsgProto deviceStateServiceMsg = 2;
   SubscriptionMgrMsgProto toSubscriptionMgrMsg = 3;
   bytes toDeviceActorNotificationMsg = 4;
-  EdgeNotificationMsgProto edgeNotificationMsg = 5;
+  EdgeNotificationMsgProto edgeNotificationMsg = 5 [deprecated = true];
   DeviceActivityProto deviceActivityMsg = 6;
   NotificationSchedulerServiceMsg notificationSchedulerServiceMsg = 7;
   LifecycleEventProto lifecycleEventMsg = 8;

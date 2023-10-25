@@ -33,6 +33,7 @@ import org.thingsboard.server.common.msg.edge.FromEdgeSyncResponse;
 import org.thingsboard.server.common.msg.edge.ToEdgeSyncRequest;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
@@ -61,6 +62,8 @@ public interface TbClusterService extends TbQueueClusterService {
     void pushNotificationToRuleEngine(String targetServiceId, FromDeviceRpcResponse response, TbQueueCallback callback);
 
     void pushNotificationToTransport(String targetServiceId, ToTransportMsg response, TbQueueCallback callback);
+
+    void pushMsgToEdge(TenantId tenantId, EntityId entityId, TransportProtos.ToEdgeMsg msg, TbQueueCallback callback);
 
     void broadcastEntityStateChangeEvent(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent state);
 

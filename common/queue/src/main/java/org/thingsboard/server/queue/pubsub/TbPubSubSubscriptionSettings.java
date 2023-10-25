@@ -39,6 +39,8 @@ public class TbPubSubSubscriptionSettings {
     private String jsExecutorProperties;
     @Value("${queue.pubsub.queue-properties.version-control:}")
     private String vcProperties;
+    @Value("${queue.pubsub.queue-properties.edge:}")
+    private String edgeProperties;
 
     @Getter
     private Map<String, String> coreSettings;
@@ -52,6 +54,8 @@ public class TbPubSubSubscriptionSettings {
     private Map<String, String> jsExecutorSettings;
     @Getter
     private Map<String, String> vcSettings;
+    @Getter
+    private Map<String, String> edgeSettings;
 
     @PostConstruct
     private void init() {
@@ -61,6 +65,6 @@ public class TbPubSubSubscriptionSettings {
         notificationsSettings = PropertyUtils.getProps(notificationsProperties);
         jsExecutorSettings = PropertyUtils.getProps(jsExecutorProperties);
         vcSettings = PropertyUtils.getProps(vcProperties);
+        edgeSettings = PropertyUtils.getProps(edgeProperties);
     }
-
 }

@@ -1137,6 +1137,8 @@ queue:
       js-executor: "${TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:104857600;partitions:100;min.insync.replicas:1}"
       ota-updates: "${TB_QUEUE_KAFKA_OTA_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
       version-control: "${TB_QUEUE_KAFKA_VC_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
+      # Kafka properties for Edge topic
+      edge: "${TB_QUEUE_KAFKA_EDGE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
     consumer-stats:
       enabled: "${TB_QUEUE_KAFKA_CONSUMER_STATS_ENABLED:true}"
       print-interval-ms: "${TB_QUEUE_KAFKA_CONSUMER_STATS_MIN_PRINT_INTERVAL_MS:60000}"
@@ -1155,7 +1157,8 @@ queue:
       js-executor: "${TB_QUEUE_AWS_SQS_JE_QUEUE_PROPERTIES:VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800}"
       ota-updates: "${TB_QUEUE_AWS_SQS_OTA_QUEUE_PROPERTIES:VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800}"
       version-control: "${TB_QUEUE_AWS_SQS_VC_QUEUE_PROPERTIES:VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800}"
-      #    VisibilityTimeout in seconds;MaximumMessageSize in bytes;MessageRetentionPeriod in seconds
+      # VisibilityTimeout in seconds;MaximumMessageSize in bytes;MessageRetentionPeriod in seconds
+      edge: "${TB_QUEUE_AWS_SQS_EDGE_QUEUE_PROPERTIES:VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800}"
   pubsub:
     project_id: "${TB_QUEUE_PUBSUB_PROJECT_ID:YOUR_PROJECT_ID}"
     service_account: "${TB_QUEUE_PUBSUB_SERVICE_ACCOUNT:YOUR_SERVICE_ACCOUNT}"
@@ -1168,6 +1171,8 @@ queue:
       notifications: "${TB_QUEUE_PUBSUB_NOTIFICATIONS_QUEUE_PROPERTIES:ackDeadlineInSec:30;messageRetentionInSec:604800}"
       js-executor: "${TB_QUEUE_PUBSUB_JE_QUEUE_PROPERTIES:ackDeadlineInSec:30;messageRetentionInSec:604800}"
       version-control: "${TB_QUEUE_PUBSUB_VC_QUEUE_PROPERTIES:ackDeadlineInSec:30;messageRetentionInSec:604800}"
+      # Pub/Sub properties for Edge subscribers, messages which will commit after ackDeadlineInSec period can be consumed again
+      edge: "${TB_QUEUE_PUBSUB_EDGE_QUEUE_PROPERTIES:ackDeadlineInSec:30;messageRetentionInSec:604800}"
   service_bus:
     namespace_name: "${TB_QUEUE_SERVICE_BUS_NAMESPACE_NAME:YOUR_NAMESPACE_NAME}"
     sas_key_name: "${TB_QUEUE_SERVICE_BUS_SAS_KEY_NAME:YOUR_SAS_KEY_NAME}"
@@ -1180,6 +1185,8 @@ queue:
       notifications: "${TB_QUEUE_SERVICE_BUS_NOTIFICATIONS_QUEUE_PROPERTIES:lockDurationInSec:30;maxSizeInMb:1024;messageTimeToLiveInSec:604800}"
       js-executor: "${TB_QUEUE_SERVICE_BUS_JE_QUEUE_PROPERTIES:lockDurationInSec:30;maxSizeInMb:1024;messageTimeToLiveInSec:604800}"
       version-control: "${TB_QUEUE_SERVICE_BUS_VC_QUEUE_PROPERTIES:lockDurationInSec:30;maxSizeInMb:1024;messageTimeToLiveInSec:604800}"
+      # Azure Service Bus properties for Edge queues
+      edge: "${TB_QUEUE_SERVICE_BUS_EDGE_QUEUE_PROPERTIES:lockDurationInSec:30;maxSizeInMb:1024;messageTimeToLiveInSec:604800}"
   rabbitmq:
     exchange_name: "${TB_QUEUE_RABBIT_MQ_EXCHANGE_NAME:}"
     host: "${TB_QUEUE_RABBIT_MQ_HOST:localhost}"
@@ -1197,6 +1204,8 @@ queue:
       notifications: "${TB_QUEUE_RABBIT_MQ_NOTIFICATIONS_QUEUE_PROPERTIES:x-max-length-bytes:1048576000;x-message-ttl:604800000}"
       js-executor: "${TB_QUEUE_RABBIT_MQ_JE_QUEUE_PROPERTIES:x-max-length-bytes:1048576000;x-message-ttl:604800000}"
       version-control: "${TB_QUEUE_RABBIT_MQ_VC_QUEUE_PROPERTIES:x-max-length-bytes:1048576000;x-message-ttl:604800000}"
+      # RabbitMQ properties for Edge queues
+      edge: "${TB_QUEUE_RABBIT_MQ_EDGE_QUEUE_PROPERTIES:x-max-length-bytes:1048576000;x-message-ttl:604800000}"
   partitions:
     hash_function_name: "${TB_QUEUE_PARTITIONS_HASH_FUNCTION_NAME:murmur3_128}" # murmur3_32, murmur3_128 or sha256
   transport_api:
@@ -1310,6 +1319,22 @@ queue:
     # For high priority notifications that require minimum latency and processing time
     notifications_topic: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_TOPIC:tb_transport.notifications}"
     poll_interval: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_POLL_INTERVAL_MS:25}"
+  edge:
+    # Default topic name for Kafka, RabbitMQ, etc.
+    topic: "${TB_QUEUE_EDGE_TOPIC:tb_edge}"
+    # Amount of partitions used by Edge microservices
+    partitions: "${TB_QUEUE_EDGE_PARTITIONS:3}"
+    # Interval in milliseconds to poll messages by Edge microservices
+    poll-interval: "${TB_QUEUE_EDGE_POLL_INTERVAL_MS:25}"
+    # Timeout for processing a message pack by Edge microservices
+    pack-processing-timeout: "${TB_QUEUE_EDGE_PACK_PROCESSING_TIMEOUT_MS:10000}"
+    # Timeout for processing a message pack by Edge microservices
+    pack-processing-retries: "${TB_QUEUE_EDGE_MESSAGE_PROCESSING_RETRIES:5}"
+    stats:
+      # Enable/disable statistics for Edge
+      enabled: "${TB_QUEUE_EDGE_STATS_ENABLED:true}"
+      # Statistics printing interval for Edge
+      print-interval-ms: "${TB_QUEUE_EDGE_STATS_PRINT_INTERVAL_MS:60000}"
 
 event:
   debug:

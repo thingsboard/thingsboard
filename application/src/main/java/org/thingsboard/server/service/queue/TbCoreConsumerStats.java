@@ -36,7 +36,6 @@ public class TbCoreConsumerStats {
     public static final String DEVICE_CLAIMS = "claimDevice";
     public static final String DEVICE_STATES = "deviceState";
     public static final String SUBSCRIPTION_MSGS = "subMsgs";
-    public static final String EDGE_NOTIFICATIONS = "edgeNfs";
     public static final String DEVICE_ACTIVITIES = "deviceActivity";
 
     public static final String TO_CORE_NF_OTHER = "coreNfOther"; // normally, there is no messages when codebase is fine
@@ -62,7 +61,6 @@ public class TbCoreConsumerStats {
     private final StatsCounter claimDeviceCounter;
     private final StatsCounter deviceStateCounter;
     private final StatsCounter subscriptionMsgCounter;
-    private final StatsCounter edgeNotificationsCounter;
     private final StatsCounter deviceActivitiesCounter;
 
     private final StatsCounter toCoreNfOtherCounter;
@@ -78,7 +76,7 @@ public class TbCoreConsumerStats {
     private final StatsCounter toCoreNfSubscriptionManagerCounter;
     private final StatsCounter toCoreNfVersionControlResponseCounter;
 
-    private final List<StatsCounter> counters = new ArrayList<>(24);
+    private final List<StatsCounter> counters = new ArrayList<>(23);
 
     public TbCoreConsumerStats(StatsFactory statsFactory) {
         String statsKey = StatsType.CORE.getName();
@@ -93,7 +91,6 @@ public class TbCoreConsumerStats {
         this.claimDeviceCounter = register(statsFactory.createStatsCounter(statsKey, DEVICE_CLAIMS));
         this.deviceStateCounter = register(statsFactory.createStatsCounter(statsKey, DEVICE_STATES));
         this.subscriptionMsgCounter = register(statsFactory.createStatsCounter(statsKey, SUBSCRIPTION_MSGS));
-        this.edgeNotificationsCounter = register(statsFactory.createStatsCounter(statsKey, EDGE_NOTIFICATIONS));
         this.deviceActivitiesCounter = register(statsFactory.createStatsCounter(statsKey, DEVICE_ACTIVITIES));
 
         // Core notification counters
@@ -112,7 +109,7 @@ public class TbCoreConsumerStats {
 
     }
 
-    private StatsCounter register(StatsCounter counter){
+    private StatsCounter register(StatsCounter counter) {
         counters.add(counter);
         return counter;
     }
@@ -145,11 +142,6 @@ public class TbCoreConsumerStats {
     public void log(TransportProtos.DeviceStateServiceMsgProto msg) {
         totalCounter.increment();
         deviceStateCounter.increment();
-    }
-
-    public void log(TransportProtos.EdgeNotificationMsgProto msg) {
-        totalCounter.increment();
-        edgeNotificationsCounter.increment();
     }
 
     public void log(TransportProtos.DeviceActivityProto msg) {

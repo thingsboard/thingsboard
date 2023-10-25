@@ -13,13 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge;
+package org.thingsboard.server.queue.settings;
 
-import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.id.RuleChainId;
-import org.thingsboard.server.common.data.id.TenantId;
+import lombok.Data;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Component;
 
-public interface EdgeNotificationService {
+@Lazy
+@Data
+@Component
+public class TbQueueEdgeSettings {
 
-    Edge setEdgeRootRuleChain(TenantId tenantId, Edge edge, RuleChainId ruleChainId) throws Exception;
+    @Value("${queue.edge.topic}")
+    private String topic;
+
 }

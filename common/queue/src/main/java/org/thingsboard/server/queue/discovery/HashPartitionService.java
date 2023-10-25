@@ -64,6 +64,10 @@ public class HashPartitionService implements PartitionService {
     private String vcTopic;
     @Value("${queue.vc.partitions:10}")
     private Integer vcPartitions;
+    @Value("${queue.edge.topic:tb_edge}")
+    private String edgeTopic;
+    @Value("${queue.edge.partitions:3}")
+    private Integer edgePartitions;
     @Value("${queue.partitions.hash_function_name:murmur3_128}")
     private String hashFunctionName;
 
@@ -109,6 +113,10 @@ public class HashPartitionService implements PartitionService {
         if (!isTransport(serviceInfoProvider.getServiceType())) {
             doInitRuleEnginePartitions();
         }
+
+        QueueKey edgeKey = new QueueKey(ServiceType.TB_EDGE);
+        partitionSizesMap.put(edgeKey, edgePartitions);
+        partitionTopicsMap.put(edgeKey, edgeTopic);
     }
 
     @AfterStartUp(order = AfterStartUp.QUEUE_INFO_INITIALIZATION)
@@ -481,7 +489,7 @@ public class HashPartitionService implements PartitionService {
                         responsibleServices.computeIfAbsent(profileId, k -> new ArrayList<>()).add(instance);
                     }
                 }
-            } else if (ServiceType.TB_CORE.equals(serviceType) || ServiceType.TB_VC_EXECUTOR.equals(serviceType)) {
+            } else if (ServiceType.TB_CORE.equals(serviceType) || ServiceType.TB_VC_EXECUTOR.equals(serviceType) || ServiceType.TB_EDGE.equals(serviceType)) {
                 queueServiceList.computeIfAbsent(new QueueKey(serviceType), key -> new ArrayList<>()).add(instance);
             }
         }

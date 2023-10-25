@@ -34,6 +34,7 @@ import org.thingsboard.server.queue.memory.InMemoryStorage;
 import org.thingsboard.server.queue.memory.InMemoryTbQueueConsumer;
 import org.thingsboard.server.queue.memory.InMemoryTbQueueProducer;
 import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
+import org.thingsboard.server.queue.settings.TbQueueEdgeSettings;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.settings.TbQueueTransportApiSettings;
 import org.thingsboard.server.queue.settings.TbQueueTransportNotificationSettings;
@@ -51,6 +52,7 @@ public class InMemoryMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
     private final TbQueueVersionControlSettings vcSettings;
     private final TbQueueTransportApiSettings transportApiSettings;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
+    private final TbQueueEdgeSettings edgeSettings;
     private final InMemoryStorage storage;
 
     public InMemoryMonolithQueueFactory(NotificationsTopicService notificationsTopicService, TbQueueCoreSettings coreSettings,
@@ -59,6 +61,7 @@ public class InMemoryMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
                                         TbServiceInfoProvider serviceInfoProvider,
                                         TbQueueTransportApiSettings transportApiSettings,
                                         TbQueueTransportNotificationSettings transportNotificationSettings,
+                                        TbQueueEdgeSettings edgeSettings,
                                         InMemoryStorage storage) {
         this.notificationsTopicService = notificationsTopicService;
         this.coreSettings = coreSettings;
@@ -67,6 +70,7 @@ public class InMemoryMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
         this.ruleEngineSettings = ruleEngineSettings;
         this.transportApiSettings = transportApiSettings;
         this.transportNotificationSettings = transportNotificationSettings;
+        this.edgeSettings = edgeSettings;
         this.storage = storage;
     }
 
@@ -146,6 +150,11 @@ public class InMemoryMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
     }
 
     @Override
+    public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToEdgeMsg>> createEdgeMsgConsumer() {
+        return new InMemoryTbQueueConsumer<>(storage, edgeSettings.getTopic());
+    }
+
+    @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToOtaPackageStateServiceMsg>> createToOtaPackageStateServiceMsgProducer() {
         return new InMemoryTbQueueProducer<>(storage, coreSettings.getOtaPackageTopic());
     }
@@ -158,6 +167,11 @@ public class InMemoryMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToVersionControlServiceMsg>> createVersionControlMsgProducer() {
         return new InMemoryTbQueueProducer<>(storage, vcSettings.getTopic());
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToEdgeMsg>> createEdgeMsgProducer() {
+        return new InMemoryTbQueueProducer<>(storage, edgeSettings.getTopic());
     }
 
     @Scheduled(fixedRateString = "${queue.in_memory.stats.print-interval-ms:60000}")

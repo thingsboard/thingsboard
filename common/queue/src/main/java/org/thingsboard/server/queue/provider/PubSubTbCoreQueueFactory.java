@@ -46,6 +46,7 @@ import org.thingsboard.server.queue.pubsub.TbPubSubProducerTemplate;
 import org.thingsboard.server.queue.pubsub.TbPubSubSettings;
 import org.thingsboard.server.queue.pubsub.TbPubSubSubscriptionSettings;
 import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
+import org.thingsboard.server.queue.settings.TbQueueEdgeSettings;
 import org.thingsboard.server.queue.settings.TbQueueRemoteJsInvokeSettings;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.settings.TbQueueTransportApiSettings;
@@ -66,12 +67,14 @@ public class PubSubTbCoreQueueFactory implements TbCoreQueueFactory {
     private final TbQueueRemoteJsInvokeSettings jsInvokeSettings;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
     private final TbQueueRuleEngineSettings ruleEngineSettings;
+    private final TbQueueEdgeSettings edgeSettings;
 
     private final TbQueueAdmin coreAdmin;
     private final TbQueueAdmin jsExecutorAdmin;
     private final TbQueueAdmin transportApiAdmin;
     private final TbQueueAdmin notificationAdmin;
     private final TbQueueAdmin ruleEngineAdmin;
+    private final TbQueueAdmin edgeAdmin;
 
     public PubSubTbCoreQueueFactory(TbPubSubSettings pubSubSettings,
                                     TbQueueCoreSettings coreSettings,
@@ -81,6 +84,7 @@ public class PubSubTbCoreQueueFactory implements TbCoreQueueFactory {
                                     TbQueueRemoteJsInvokeSettings jsInvokeSettings,
                                     TbQueueTransportNotificationSettings transportNotificationSettings,
                                     TbQueueRuleEngineSettings ruleEngineSettings,
+                                    TbQueueEdgeSettings edgeSettings,
                                     TbPubSubSubscriptionSettings pubSubSubscriptionSettings) {
         this.pubSubSettings = pubSubSettings;
         this.coreSettings = coreSettings;
@@ -90,12 +94,14 @@ public class PubSubTbCoreQueueFactory implements TbCoreQueueFactory {
         this.jsInvokeSettings = jsInvokeSettings;
         this.transportNotificationSettings = transportNotificationSettings;
         this.ruleEngineSettings = ruleEngineSettings;
+        this.edgeSettings = edgeSettings;
 
         this.coreAdmin = new TbPubSubAdmin(pubSubSettings, pubSubSubscriptionSettings.getCoreSettings());
         this.jsExecutorAdmin = new TbPubSubAdmin(pubSubSettings, pubSubSubscriptionSettings.getJsExecutorSettings());
         this.transportApiAdmin = new TbPubSubAdmin(pubSubSettings, pubSubSubscriptionSettings.getTransportApiSettings());
         this.notificationAdmin = new TbPubSubAdmin(pubSubSettings, pubSubSubscriptionSettings.getNotificationsSettings());
         this.ruleEngineAdmin = new TbPubSubAdmin(pubSubSettings, pubSubSubscriptionSettings.getRuleEngineSettings());
+        this.edgeAdmin = new TbPubSubAdmin(pubSubSettings, pubSubSubscriptionSettings.getEdgeSettings());
     }
 
     @Override
@@ -198,6 +204,16 @@ public class PubSubTbCoreQueueFactory implements TbCoreQueueFactory {
         return null;
     }
 
+    @Override
+    public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToEdgeMsg>> createEdgeMsgConsumer() {
+        return null;
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToEdgeMsg>> createEdgeMsgProducer() {
+        return new TbPubSubProducerTemplate<>(edgeAdmin, pubSubSettings, edgeSettings.getTopic());
+    }
+
     @PreDestroy
     private void destroy() {
         if (coreAdmin != null) {
@@ -214,6 +230,9 @@ public class PubSubTbCoreQueueFactory implements TbCoreQueueFactory {
         }
         if (ruleEngineAdmin != null) {
             ruleEngineAdmin.destroy();
+        }
+        if (edgeAdmin != null) {
+            edgeAdmin.destroy();
         }
     }
 }

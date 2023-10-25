@@ -23,6 +23,7 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToOtaPackageStateServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
@@ -47,6 +48,7 @@ import org.thingsboard.server.queue.kafka.TbKafkaProducerTemplate;
 import org.thingsboard.server.queue.kafka.TbKafkaSettings;
 import org.thingsboard.server.queue.kafka.TbKafkaTopicConfigs;
 import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
+import org.thingsboard.server.queue.settings.TbQueueEdgeSettings;
 import org.thingsboard.server.queue.settings.TbQueueRemoteJsInvokeSettings;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.settings.TbQueueTransportApiSettings;
@@ -68,6 +70,7 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
     private final TbQueueTransportApiSettings transportApiSettings;
     private final TbQueueRemoteJsInvokeSettings jsInvokeSettings;
     private final TbQueueVersionControlSettings vcSettings;
+    private final TbQueueEdgeSettings edgeSettings;
     private final TbKafkaConsumerStatsService consumerStatsService;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
 
@@ -80,6 +83,7 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
     private final TbQueueAdmin notificationAdmin;
     private final TbQueueAdmin fwUpdatesAdmin;
     private final TbQueueAdmin vcAdmin;
+    private final TbQueueAdmin edgeAdmin;
 
     public KafkaTbCoreQueueFactory(NotificationsTopicService notificationsTopicService,
                                    TbKafkaSettings kafkaSettings,
@@ -89,6 +93,7 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
                                    TbQueueTransportApiSettings transportApiSettings,
                                    TbQueueRemoteJsInvokeSettings jsInvokeSettings,
                                    TbQueueVersionControlSettings vcSettings,
+                                   TbQueueEdgeSettings edgeSettings,
                                    TbKafkaConsumerStatsService consumerStatsService,
                                    TbQueueTransportNotificationSettings transportNotificationSettings,
                                    TbKafkaTopicConfigs kafkaTopicConfigs) {
@@ -100,6 +105,7 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
         this.transportApiSettings = transportApiSettings;
         this.jsInvokeSettings = jsInvokeSettings;
         this.vcSettings = vcSettings;
+        this.edgeSettings = edgeSettings;
         this.consumerStatsService = consumerStatsService;
         this.transportNotificationSettings = transportNotificationSettings;
 
@@ -112,6 +118,7 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
         this.notificationAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getNotificationsConfigs());
         this.fwUpdatesAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getFwUpdatesConfigs());
         this.vcAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getVcConfigs());
+        this.edgeAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getEdgeConfigs());
     }
 
     @Override
@@ -261,6 +268,19 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
     }
 
     @Override
+    public TbQueueConsumer<TbProtoQueueMsg<ToEdgeMsg>> createEdgeMsgConsumer() {
+        TbKafkaConsumerTemplate.TbKafkaConsumerTemplateBuilder<TbProtoQueueMsg<ToEdgeMsg>> consumerBuilder = TbKafkaConsumerTemplate.builder();
+        consumerBuilder.settings(kafkaSettings);
+        consumerBuilder.topic(edgeSettings.getTopic());
+        consumerBuilder.clientId("tb-core-edge-consumer-" + serviceInfoProvider.getServiceId());
+        consumerBuilder.groupId("tb-core-edge-consumer");
+        consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToEdgeMsg.parseFrom(msg.getData()), msg.getHeaders()));
+        consumerBuilder.admin(edgeAdmin);
+        consumerBuilder.statsService(consumerStatsService);
+        return consumerBuilder.build();
+    }
+
+    @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> createToOtaPackageStateServiceMsgConsumer() {
         TbKafkaConsumerTemplate.TbKafkaConsumerTemplateBuilder<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> consumerBuilder = TbKafkaConsumerTemplate.builder();
         consumerBuilder.settings(kafkaSettings);
@@ -303,6 +323,16 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
         return requestBuilder.build();
     }
 
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToEdgeMsg>> createEdgeMsgProducer() {
+        TbKafkaProducerTemplate.TbKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToEdgeMsg>> requestBuilder = TbKafkaProducerTemplate.builder();
+        requestBuilder.settings(kafkaSettings);
+        requestBuilder.clientId("tb-core-edge-producer-" + serviceInfoProvider.getServiceId());
+        requestBuilder.defaultTopic(edgeSettings.getTopic());
+        requestBuilder.admin(edgeAdmin);
+        return requestBuilder.build();
+    }
+
     @PreDestroy
     private void destroy() {
         if (coreAdmin != null) {
@@ -331,6 +361,9 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
         }
         if (vcAdmin != null) {
             vcAdmin.destroy();
+        }
+        if (edgeAdmin != null) {
+            edgeAdmin.destroy();
         }
     }
 }

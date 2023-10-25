@@ -57,13 +57,22 @@ import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
-import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.DeviceStateServiceMsgProto;
+import org.thingsboard.server.gen.transport.TransportProtos.EdgeNotificationMsgProto;
+import org.thingsboard.server.gen.transport.TransportProtos.EntityDeleteMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.EntityUpdateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.FromDeviceRPCResponseProto;
+import org.thingsboard.server.gen.transport.TransportProtos.QueueDeleteMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.QueueUpdateMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ResourceDeleteMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ResourceUpdateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToVersionControlServiceMsg;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.MultipleTbQueueCallbackWrapper;
@@ -96,6 +105,7 @@ public class DefaultTbClusterService implements TbClusterService {
     private final AtomicInteger toRuleEngineMsgs = new AtomicInteger(0);
     private final AtomicInteger toRuleEngineNfs = new AtomicInteger(0);
     private final AtomicInteger toTransportNfs = new AtomicInteger(0);
+    private final AtomicInteger toEdgeMsgs = new AtomicInteger(0);
 
     @Autowired
     @Lazy
@@ -139,7 +149,7 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     @Override
-    public void pushMsgToVersionControl(TenantId tenantId, TransportProtos.ToVersionControlServiceMsg msg, TbQueueCallback callback) {
+    public void pushMsgToVersionControl(TenantId tenantId, ToVersionControlServiceMsg msg, TbQueueCallback callback) {
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_VC_EXECUTOR, tenantId, tenantId);
         log.trace("PUSHING msg: {} to:{}", msg, tpi);
         producerProvider.getTbVersionControlMsgProducer().send(tpi, new TbProtoQueueMsg<>(tenantId.getId(), msg), callback);
@@ -189,6 +199,13 @@ public class DefaultTbClusterService implements TbClusterService {
                 .setTbMsg(TbMsg.toByteString(tbMsg)).build();
         producerProvider.getRuleEngineMsgProducer().send(tpi, new TbProtoQueueMsg<>(tbMsg.getId(), msg), callback);
         toRuleEngineMsgs.incrementAndGet();
+    }
+
+    @Override
+    public void pushMsgToEdge(TenantId tenantId, EntityId entityId, ToEdgeMsg msg, TbQueueCallback callback) {
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_EDGE, tenantId, entityId);
+        producerProvider.getTbEdgeMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), callback);
+        toEdgeMsgs.incrementAndGet();
     }
 
     private HasRuleEngineProfile getRuleEngineProfileForEntityOrElseNull(TenantId tenantId, EntityId entityId) {
@@ -304,7 +321,7 @@ public class DefaultTbClusterService implements TbClusterService {
     public void onResourceChange(TbResource resource, TbQueueCallback callback) {
         TenantId tenantId = resource.getTenantId();
         log.trace("[{}][{}][{}] Processing change resource", tenantId, resource.getResourceType(), resource.getResourceKey());
-        TransportProtos.ResourceUpdateMsg resourceUpdateMsg = TransportProtos.ResourceUpdateMsg.newBuilder()
+        ResourceUpdateMsg resourceUpdateMsg = ResourceUpdateMsg.newBuilder()
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
                 .setResourceType(resource.getResourceType().name())
@@ -317,7 +334,7 @@ public class DefaultTbClusterService implements TbClusterService {
     @Override
     public void onResourceDeleted(TbResource resource, TbQueueCallback callback) {
         log.trace("[{}] Processing delete resource", resource);
-        TransportProtos.ResourceDeleteMsg resourceUpdateMsg = TransportProtos.ResourceDeleteMsg.newBuilder()
+        ResourceDeleteMsg resourceUpdateMsg = ResourceDeleteMsg.newBuilder()
                 .setTenantIdMSB(resource.getTenantId().getId().getMostSignificantBits())
                 .setTenantIdLSB(resource.getTenantId().getId().getLeastSignificantBits())
                 .setResourceType(resource.getResourceType().name())
@@ -330,7 +347,7 @@ public class DefaultTbClusterService implements TbClusterService {
     public <T> void broadcastEntityChangeToTransport(TenantId tenantId, EntityId entityid, T entity, TbQueueCallback callback) {
         String entityName = (entity instanceof HasName) ? ((HasName) entity).getName() : entity.getClass().getName();
         log.trace("[{}][{}][{}] Processing [{}] change event", tenantId, entityid.getEntityType(), entityid.getId(), entityName);
-        TransportProtos.EntityUpdateMsg entityUpdateMsg = TransportProtos.EntityUpdateMsg.newBuilder()
+        EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
                 .setEntityType(entityid.getEntityType().name())
                 .setData(ByteString.copyFrom(encodingService.encode(entity))).build();
         ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setEntityUpdateMsg(entityUpdateMsg).build();
@@ -339,7 +356,7 @@ public class DefaultTbClusterService implements TbClusterService {
 
     private void broadcastEntityDeleteToTransport(TenantId tenantId, EntityId entityId, String name, TbQueueCallback callback) {
         log.trace("[{}][{}][{}] Processing [{}] delete event", tenantId, entityId.getEntityType(), entityId.getId(), name);
-        TransportProtos.EntityDeleteMsg entityDeleteMsg = TransportProtos.EntityDeleteMsg.newBuilder()
+        EntityDeleteMsg entityDeleteMsg = EntityDeleteMsg.newBuilder()
                 .setEntityType(entityId.getEntityType().name())
                 .setEntityIdMSB(entityId.getId().getMostSignificantBits())
                 .setEntityIdLSB(entityId.getId().getLeastSignificantBits())
@@ -436,15 +453,16 @@ public class DefaultTbClusterService implements TbClusterService {
             int toRuleEngineMsgsCnt = toRuleEngineMsgs.getAndSet(0);
             int toRuleEngineNfsCnt = toRuleEngineNfs.getAndSet(0);
             int toTransportNfsCnt = toTransportNfs.getAndSet(0);
-            if (toCoreMsgCnt > 0 || toCoreNfsCnt > 0 || toRuleEngineMsgsCnt > 0 || toRuleEngineNfsCnt > 0 || toTransportNfsCnt > 0) {
-                log.info("To TbCore: [{}] messages [{}] notifications; To TbRuleEngine: [{}] messages [{}] notifications; To Transport: [{}] notifications",
-                        toCoreMsgCnt, toCoreNfsCnt, toRuleEngineMsgsCnt, toRuleEngineNfsCnt, toTransportNfsCnt);
+            int toEdgeMsgCnt = toEdgeMsgs.getAndSet(0);
+            if (toCoreMsgCnt > 0 || toCoreNfsCnt > 0 || toRuleEngineMsgsCnt > 0 || toRuleEngineNfsCnt > 0 || toTransportNfsCnt > 0 || toEdgeMsgCnt > 0) {
+                log.info("To TbCore: [{}] messages [{}] notifications; To TbRuleEngine: [{}] messages [{}] notifications; To Transport: [{}] notifications;" +
+                                "To Edge: [{}] messages", toCoreMsgCnt, toCoreNfsCnt, toRuleEngineMsgsCnt, toRuleEngineNfsCnt, toTransportNfsCnt, toEdgeMsgCnt);
             }
         }
     }
 
     private void sendDeviceStateServiceEvent(TenantId tenantId, DeviceId deviceId, boolean added, boolean updated, boolean deleted) {
-        TransportProtos.DeviceStateServiceMsgProto.Builder builder = TransportProtos.DeviceStateServiceMsgProto.newBuilder();
+        DeviceStateServiceMsgProto.Builder builder = DeviceStateServiceMsgProto.newBuilder();
         builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
         builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
         builder.setDeviceIdMSB(deviceId.getId().getMostSignificantBits());
@@ -452,8 +470,8 @@ public class DefaultTbClusterService implements TbClusterService {
         builder.setAdded(added);
         builder.setUpdated(updated);
         builder.setDeleted(deleted);
-        TransportProtos.DeviceStateServiceMsgProto msg = builder.build();
-        pushMsgToCore(tenantId, deviceId, TransportProtos.ToCoreMsg.newBuilder().setDeviceStateServiceMsg(msg).build(), null);
+        DeviceStateServiceMsgProto msg = builder.build();
+        pushMsgToCore(tenantId, deviceId, ToCoreMsg.newBuilder().setDeviceStateServiceMsg(msg).build(), null);
     }
 
     @Override
@@ -491,7 +509,7 @@ public class DefaultTbClusterService implements TbClusterService {
                 return;
             }
         }
-        TransportProtos.EdgeNotificationMsgProto.Builder builder = TransportProtos.EdgeNotificationMsgProto.newBuilder();
+        EdgeNotificationMsgProto.Builder builder = EdgeNotificationMsgProto.newBuilder();
         builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
         builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
         builder.setType(type.name());
@@ -508,9 +526,9 @@ public class DefaultTbClusterService implements TbClusterService {
         if (body != null) {
             builder.setBody(body);
         }
-        TransportProtos.EdgeNotificationMsgProto msg = builder.build();
+        EdgeNotificationMsgProto msg = builder.build();
         log.trace("[{}] sending notification to edge service {}", tenantId.getId(), msg);
-        pushMsgToCore(tenantId, entityId != null ? entityId : tenantId, TransportProtos.ToCoreMsg.newBuilder().setEdgeNotificationMsg(msg).build(), null);
+        pushMsgToEdge(tenantId, entityId != null ? entityId : tenantId, ToEdgeMsg.newBuilder().setEdgeNotificationMsg(msg).build(), null);
 
         if (entityId != null && EntityType.DEVICE.equals(entityId.getEntityType())) {
             pushDeviceUpdateMessage(tenantId, edgeId, entityId, action);
@@ -533,7 +551,7 @@ public class DefaultTbClusterService implements TbClusterService {
     public void onQueueChange(Queue queue) {
         log.trace("[{}][{}] Processing queue change [{}] event", queue.getTenantId(), queue.getId(), queue.getName());
 
-        TransportProtos.QueueUpdateMsg queueUpdateMsg = TransportProtos.QueueUpdateMsg.newBuilder()
+        QueueUpdateMsg queueUpdateMsg = QueueUpdateMsg.newBuilder()
                 .setTenantIdMSB(queue.getTenantId().getId().getMostSignificantBits())
                 .setTenantIdLSB(queue.getTenantId().getId().getLeastSignificantBits())
                 .setQueueIdMSB(queue.getId().getId().getMostSignificantBits())
@@ -553,7 +571,7 @@ public class DefaultTbClusterService implements TbClusterService {
     public void onQueueDelete(Queue queue) {
         log.trace("[{}][{}] Processing queue delete [{}] event", queue.getTenantId(), queue.getId(), queue.getName());
 
-        TransportProtos.QueueDeleteMsg queueDeleteMsg = TransportProtos.QueueDeleteMsg.newBuilder()
+        QueueDeleteMsg queueDeleteMsg = QueueDeleteMsg.newBuilder()
                 .setTenantIdMSB(queue.getTenantId().getId().getMostSignificantBits())
                 .setTenantIdLSB(queue.getTenantId().getId().getLeastSignificantBits())
                 .setQueueIdMSB(queue.getId().getId().getMostSignificantBits())
