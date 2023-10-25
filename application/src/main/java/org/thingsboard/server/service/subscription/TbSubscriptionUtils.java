@@ -64,38 +64,46 @@ public class TbSubscriptionUtils {
 
     public static ToCoreMsg toSubEventProto(String serviceId, TbEntitySubEvent event) {
         SubscriptionMgrMsgProto.Builder msgBuilder = SubscriptionMgrMsgProto.newBuilder();
-        TbSubscriptionsInfo info = event.getInfo();
         var builder = TbEntitySubEventProto.newBuilder()
                 .setServiceId(serviceId)
+                .setSeqNumber(event.getSeqNumber())
                 .setTenantIdMSB(event.getTenantId().getId().getMostSignificantBits())
                 .setTenantIdLSB(event.getTenantId().getId().getLeastSignificantBits())
                 .setEntityType(event.getEntityId().getEntityType().name())
                 .setEntityIdMSB(event.getEntityId().getId().getMostSignificantBits())
                 .setEntityIdLSB(event.getEntityId().getId().getLeastSignificantBits())
-                .setType(event.getType().name())
-                .setNotifications(info.notifications)
-                .setAlarms(info.alarms)
-                .setTsAllKeys(info.tsAllKeys)
-                .setAttrAllKeys(info.attrAllKeys);
-        if (info.tsKeys != null) {
-            builder.addAllTsKeys(info.tsKeys);
-        }
-        if (info.attrKeys != null) {
-            builder.addAllAttrKeys(info.attrKeys);
+                .setType(event.getType().name());
+        TbSubscriptionsInfo info = event.getInfo();
+        if (info != null) {
+            builder.setNotifications(info.notifications)
+                    .setAlarms(info.alarms)
+                    .setTsAllKeys(info.tsAllKeys)
+                    .setAttrAllKeys(info.attrAllKeys);
+            if (info.tsKeys != null) {
+                builder.addAllTsKeys(info.tsKeys);
+            }
+            if (info.attrKeys != null) {
+                builder.addAllAttrKeys(info.attrKeys);
+            }
         }
         msgBuilder.setSubEvent(builder);
         return ToCoreMsg.newBuilder().setToSubscriptionMgrMsg(msgBuilder).build();
     }
 
     public static TbEntitySubEvent fromProto(TbEntitySubEventProto proto) {
-        TbSubscriptionsInfo info = new TbSubscriptionsInfo(proto.getNotifications(), proto.getAlarms(),
-                proto.getTsAllKeys(), proto.getTsKeysCount() > 0 ? new HashSet<>(proto.getTsKeysList()) : null,
-                proto.getAttrAllKeys(), proto.getAttrKeysCount() > 0 ? new HashSet<>(proto.getAttrKeysCount()) : null);
-        return TbEntitySubEvent.builder()
+        ComponentLifecycleEvent event = ComponentLifecycleEvent.valueOf(proto.getType());
+        var builder = TbEntitySubEvent.builder()
                 .tenantId(TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())))
+                .seqNumber(proto.getSeqNumber())
                 .entityId(EntityIdFactory.getByTypeAndUuid(proto.getEntityType(), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB())))
-                .type(ComponentLifecycleEvent.valueOf(proto.getType()))
-                .info(info).build();
+                .type(event);
+        if (!ComponentLifecycleEvent.DELETED.equals(event)) {
+            builder.info(new TbSubscriptionsInfo(proto.getNotifications(), proto.getAlarms(),
+                    proto.getTsAllKeys(), proto.getTsKeysCount() > 0 ? new HashSet<>(proto.getTsKeysList()) : null,
+                    proto.getAttrAllKeys(), proto.getAttrKeysCount() > 0 ? new HashSet<>(proto.getAttrKeysCount()) : null,
+                    proto.getSeqNumber()));
+        }
+        return builder.build();
     }
 
     public static AlarmSubscriptionUpdate fromProto(TransportProtos.TbAlarmSubUpdateProto proto) {

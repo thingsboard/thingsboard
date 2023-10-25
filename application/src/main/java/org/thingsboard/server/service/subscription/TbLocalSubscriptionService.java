@@ -35,6 +35,8 @@ public interface TbLocalSubscriptionService {
 
     void addSubscription(TbSubscription<?> subscription);
 
+    void onSubEventCallback(EntityId entityId, int seqNumber, TbEntityUpdatesInfo entityUpdatesInfo, TbCallback empty);
+
     void cancelSubscription(String sessionId, int subscriptionId);
 
     void cancelAllSessionSubscriptions(String sessionId);
@@ -60,5 +62,6 @@ public interface TbLocalSubscriptionService {
     void onNotificationRequestUpdate(TenantId tenantId, NotificationRequestUpdate update, TbCallback callback);
 
     void onNotificationUpdate(TransportProtos.NotificationsSubUpdateProto notificationsUpdate, TbCallback callback);
+
 
 }

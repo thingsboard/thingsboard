@@ -27,6 +27,8 @@ import java.util.function.BiConsumer;
 public class TbTimeseriesSubscription extends TbSubscription<TelemetrySubscriptionUpdate> {
 
     @Getter
+    private final long createdTime;
+    @Getter
     private final boolean allKeys;
     @Getter
     private final Map<String, Long> keyStates;
@@ -42,6 +44,7 @@ public class TbTimeseriesSubscription extends TbSubscription<TelemetrySubscripti
                                     BiConsumer<TbSubscription<TelemetrySubscriptionUpdate>, TelemetrySubscriptionUpdate> updateProcessor,
                                     boolean allKeys, Map<String, Long> keyStates, long startTime, long endTime, boolean latestValues) {
         super(serviceId, sessionId, subscriptionId, tenantId, entityId, TbSubscriptionType.TIMESERIES, updateProcessor);
+        this.createdTime = System.currentTimeMillis();
         this.allKeys = allKeys;
         this.keyStates = keyStates;
         this.startTime = startTime;

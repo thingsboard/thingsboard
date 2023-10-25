@@ -18,7 +18,6 @@ package org.thingsboard.server.service.subscription;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
@@ -53,19 +52,14 @@ import org.thingsboard.server.service.ws.notification.sub.NotificationUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscriptionUpdate;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -83,25 +77,22 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
     private final TbClusterService clusterService;
 
     private final Lock subsLock = new ReentrantLock(); //TODO: decide on the type of locks we will use?
-    private final ConcurrentMap<EntityId, TbEntityRemoteSubsInfo> subscriptionsByEntityId = new ConcurrentHashMap<>();
+    private final ConcurrentMap<EntityId, TbEntityRemoteSubsInfo> entitySubscriptions = new ConcurrentHashMap<>();
+
+    private final ConcurrentMap<EntityId, TbEntityUpdatesInfo> entityUpdates = new ConcurrentHashMap<>();
+
     private final Set<TopicPartitionInfo> currentPartitions = ConcurrentHashMap.newKeySet();
 
-    private ExecutorService tsCallBackExecutor;
     private String serviceId;
     private TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> toCoreNotificationsProducer;
 
+    private long initTs;
+
     @PostConstruct
     public void initExecutor() {
-        tsCallBackExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("ts-sub-callback"));
         serviceId = serviceInfoProvider.getServiceId();
+        initTs = System.currentTimeMillis();
         toCoreNotificationsProducer = producerProvider.getTbCoreNotificationsMsgProducer();
-    }
-
-    @PreDestroy
-    public void shutdownExecutor() {
-        if (tsCallBackExecutor != null) {
-            tsCallBackExecutor.shutdownNow();
-        }
     }
 
     @Override
@@ -113,20 +104,31 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
         if (currentPartitions.contains(tpi)) {
             subsLock.lock();
             try {
-                var entitySubs = subscriptionsByEntityId.computeIfAbsent(entityId, id -> new TbEntityRemoteSubsInfo(tenantId, entityId));
+                var entitySubs = entitySubscriptions.computeIfAbsent(entityId, id -> new TbEntityRemoteSubsInfo(tenantId, entityId));
                 boolean empty = entitySubs.updateAndCheckIsEmpty(serviceId, event);
                 if (empty) {
-                    subscriptionsByEntityId.remove(entityId);
+                    entitySubscriptions.remove(entityId);
                 }
             } finally {
                 subsLock.unlock();
             }
             callback.onSuccess();
-            // TODO: send notification back to local sub service that we have done the subscription.
+            if (event.hasTsOrAttrSub()) {
+                sendSubEventCallback(serviceId, entityId, event.getSeqNumber());
+            }
         } else {
-            log.warn("[{}][{}][{}] Event belongs to external partition. Probably rebalancing is in progress. Topic: {}"
+            log.warn("[{}][{}][{}] Event belongs to external partition. Probably re-balancing is in progress. Topic: {}"
                     , tenantId, entityId, serviceId, tpi.getFullTopicName());
             callback.onFailure(new RuntimeException("Entity belongs to external partition " + tpi.getFullTopicName() + "!"));
+        }
+    }
+
+    private void sendSubEventCallback(String targetId, EntityId entityId, int seqNumber) {
+        if (serviceId.equals(targetId)) {
+            localSubscriptionService.onSubEventCallback(entityId, seqNumber, getEntityUpdatesInfo(entityId), TbCallback.EMPTY);
+        } else {
+//            TODO
+//            sendCoreNotification(targetId, entityId, TbSubscriptionUtils.toProto(true, entityId, update));
         }
     }
 
@@ -135,7 +137,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
         if (ServiceType.TB_CORE.equals(partitionChangeEvent.getServiceType())) {
             currentPartitions.clear();
             currentPartitions.addAll(partitionChangeEvent.getPartitions());
-            subscriptionsByEntityId.values().removeIf(sub ->
+            entitySubscriptions.values().removeIf(sub ->
                     !currentPartitions.contains(partitionService.resolve(ServiceType.TB_CORE, sub.getTenantId(), sub.getEntityId())));
         }
     }
@@ -160,7 +162,8 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
     }
 
     public void processTimeSeriesUpdate(TenantId tenantId, EntityId entityId, List<TsKvEntry> update) {
-        TbEntityRemoteSubsInfo subInfo = subscriptionsByEntityId.get(entityId);
+        getEntityUpdatesInfo(entityId).timeSeriesUpdateTs = System.currentTimeMillis();
+        TbEntityRemoteSubsInfo subInfo = entitySubscriptions.get(entityId);
         if (subInfo != null) {
             log.trace("[{}] Handling time-series update: {}", entityId, update);
             subInfo.getSubs().forEach((serviceId, sub) -> {
@@ -191,6 +194,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
 
     @Override
     public void onAttributesUpdate(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, boolean notifyDevice, TbCallback callback) {
+        getEntityUpdatesInfo(entityId).attributesUpdateTs = System.currentTimeMillis();
         processAttributesUpdate(tenantId, entityId, attributes);
         if (entityId.getEntityType() == EntityType.DEVICE) {
             if (TbAttributeSubscriptionScope.SERVER_SCOPE.name().equalsIgnoreCase(scope)) {
@@ -221,7 +225,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
     }
 
     public void processAttributesUpdate(TenantId tenantId, EntityId entityId, List<AttributeKvEntry> update) {
-        TbEntityRemoteSubsInfo subInfo = subscriptionsByEntityId.get(entityId);
+        TbEntityRemoteSubsInfo subInfo = entitySubscriptions.get(entityId);
         if (subInfo != null) {
             log.trace("[{}] Handling time-series update: {}", entityId, update);
             subInfo.getSubs().forEach((serviceId, sub) -> {
@@ -273,7 +277,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
     }
 
     private void onAlarmSubUpdate(TenantId tenantId, EntityId entityId, AlarmInfo alarm, boolean deleted, TbCallback callback) {
-        TbEntityRemoteSubsInfo subInfo = subscriptionsByEntityId.get(entityId);
+        TbEntityRemoteSubsInfo subInfo = entitySubscriptions.get(entityId);
         if (subInfo != null) {
             log.trace("[{}][{}] Handling alarm update {}: {}", tenantId, entityId, alarm, deleted);
             for (Map.Entry<String, TbSubscriptionsInfo> entry : subInfo.getSubs().entrySet()) {
@@ -308,7 +312,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
 
     @Override
     public void onNotificationUpdate(TenantId tenantId, UserId entityId, NotificationUpdate notificationUpdate, TbCallback callback) {
-        TbEntityRemoteSubsInfo subInfo = subscriptionsByEntityId.get(entityId);
+        TbEntityRemoteSubsInfo subInfo = entitySubscriptions.get(entityId);
         if (subInfo != null) {
             NotificationsSubscriptionUpdate subscriptionUpdate = new NotificationsSubscriptionUpdate(notificationUpdate);
             log.trace("[{}][{}] Handling notificationUpdate for user {}", tenantId, entityId, notificationUpdate);
@@ -365,6 +369,10 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
             }
         }
         return update;
+    }
+
+    private TbEntityUpdatesInfo getEntityUpdatesInfo(EntityId entityId) {
+        return entityUpdates.computeIfAbsent(entityId, id -> new TbEntityUpdatesInfo(initTs));
     }
 
 }

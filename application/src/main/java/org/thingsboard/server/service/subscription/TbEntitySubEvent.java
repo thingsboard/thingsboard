@@ -34,5 +34,9 @@ public class TbEntitySubEvent {
     private final EntityId entityId;
     private final ComponentLifecycleEvent type;
     private final TbSubscriptionsInfo info;
+    private final int seqNumber;
 
+    public boolean hasTsOrAttrSub() {
+        return info != null && (info.tsAllKeys || info.attrAllKeys || info.tsKeys != null || info.attrKeys != null);
+    }
 }

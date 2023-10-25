@@ -28,7 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @RequiredArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode
+@EqualsAndHashCode(exclude = {"seqNumber"})
 public class TbSubscriptionsInfo {
 
     protected boolean notifications;
@@ -37,13 +37,18 @@ public class TbSubscriptionsInfo {
     protected Set<String> tsKeys;
     protected boolean attrAllKeys;
     protected Set<String> attrKeys;
+    protected int seqNumber;
 
     public boolean isEmpty() {
         return !notifications && !alarms && !tsAllKeys && !attrAllKeys && tsKeys == null && attrKeys == null;
     }
 
     protected TbSubscriptionsInfo copy() {
-        return new TbSubscriptionsInfo(notifications, alarms, tsAllKeys, tsKeys, attrAllKeys, attrKeys);
+        return copy(0);
+    }
+
+    protected TbSubscriptionsInfo copy(int seqNumber) {
+        return new TbSubscriptionsInfo(notifications, alarms, tsAllKeys, tsKeys, attrAllKeys, attrKeys, seqNumber);
     }
 
 }

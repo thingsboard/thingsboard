@@ -533,7 +533,7 @@ message TransportToRuleEngineMsg {
 
 message TbEntitySubEventProto {
   string serviceId = 1;
-  string sessionId = 2;
+  int32 seqNumber = 2;
   int64 tenantIdMSB = 3;
   int64 tenantIdLSB = 4;
   string entityType = 5;

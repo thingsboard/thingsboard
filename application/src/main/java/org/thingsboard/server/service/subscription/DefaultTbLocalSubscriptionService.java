@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,17 +20,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.Aggregation;
+import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
@@ -53,6 +62,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiFunction;
@@ -68,18 +78,26 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     private final ConcurrentMap<String, Map<Integer, TbSubscription<?>>> subscriptionsBySessionId = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, TbEntityLocalSubsInfo> subscriptionsByEntityId = new ConcurrentHashMap<>();
 
-    @Autowired
-    private TbServiceInfoProvider serviceInfoProvider;
+    private final ConcurrentMap<EntityId, TbEntityUpdatesInfo> entityUpdates = new ConcurrentHashMap<>();
 
-    @Autowired
-    private PartitionService partitionService;
+    private final AttributesService attrService;
+    private final TimeseriesService tsService;
+    private final TbServiceInfoProvider serviceInfoProvider;
+    private final PartitionService partitionService;
+    private final TbClusterService clusterService;
+    private final SubscriptionManagerService subscriptionManagerService;
 
-    @Autowired
-    private TbClusterService clusterService;
+    private ExecutorService tsCallBackExecutor;
 
-    @Autowired
-    @Lazy
-    private SubscriptionManagerService subscriptionManagerService;
+    public DefaultTbLocalSubscriptionService(AttributesService attrService, TimeseriesService tsService, TbServiceInfoProvider serviceInfoProvider,
+                                             PartitionService partitionService, TbClusterService clusterService, @Lazy SubscriptionManagerService subscriptionManagerService) {
+        this.attrService = attrService;
+        this.tsService = tsService;
+        this.serviceInfoProvider = serviceInfoProvider;
+        this.partitionService = partitionService;
+        this.clusterService = clusterService;
+        this.subscriptionManagerService = subscriptionManagerService;
+    }
 
     private String serviceId;
     private ExecutorService subscriptionUpdateExecutor;
@@ -116,6 +134,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     @PostConstruct
     public void initExecutor() {
         subscriptionUpdateExecutor = ThingsBoardExecutors.newWorkStealingPool(20, getClass());
+        tsCallBackExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("ts-sub-callback"));
         serviceId = serviceInfoProvider.getServiceId();
     }
 
@@ -123,6 +142,9 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     public void shutdownExecutor() {
         if (subscriptionUpdateExecutor != null) {
             subscriptionUpdateExecutor.shutdownNow();
+        }
+        if (tsCallBackExecutor != null) {
+            tsCallBackExecutor.shutdownNow();
         }
     }
 
@@ -146,6 +168,24 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         Map<Integer, TbSubscription<?>> sessionSubscriptions = subscriptionsBySessionId.computeIfAbsent(subscription.getSessionId(), k -> new ConcurrentHashMap<>());
         sessionSubscriptions.put(subscription.getSubscriptionId(), subscription);
         modifySubscription(tenantId, entityId, subscription, TbEntityLocalSubsInfo::add);
+    }
+
+    @Override
+    public void onSubEventCallback(EntityId entityId, int seqNumber, TbEntityUpdatesInfo entityUpdatesInfo, TbCallback empty) {
+        entityUpdates.put(entityId, entityUpdatesInfo);
+        Set<TbSubscription<?>> pendingSubs = null;
+        subsLock.lock();
+        try {
+            TbEntityLocalSubsInfo entitySubs = subscriptionsByEntityId.get(entityId.getId());
+            if (entitySubs != null) {
+                pendingSubs = entitySubs.clearPendingSubscriptions(seqNumber);
+            }
+        } finally {
+            subsLock.unlock();
+        }
+        if (pendingSubs != null) {
+            pendingSubs.forEach(this::checkMissedUpdates);
+        }
     }
 
     @Override
@@ -182,6 +222,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
 
     @Override
     public void onTimeSeriesUpdate(TransportProtos.TbSubUpdateProto proto, TbCallback callback) {
+        //TODO: optimize to avoid re-wrapping
         onTimeSeriesUpdate(new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()), TbSubscriptionUtils.fromProto(proto), callback);
     }
 
@@ -209,7 +250,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
                         }
                     }
                     if (updateData != null) {
-                        TelemetrySubscriptionUpdate update = new TelemetrySubscriptionUpdate(sub.getSubscriptionId(), data);
+                        TelemetrySubscriptionUpdate update = new TelemetrySubscriptionUpdate(sub.getSubscriptionId(), updateData);
                         update.getLatestValues().forEach((key, value) -> sub.getKeyStates().put(key, value));
                         subscriptionUpdateExecutor.submit(() -> sub.getUpdateProcessor().accept(sub, update));
                     }
@@ -245,7 +286,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
                         }
                     }
                     if (updateData != null) {
-                        TelemetrySubscriptionUpdate update = new TelemetrySubscriptionUpdate(sub.getSubscriptionId(), data);
+                        TelemetrySubscriptionUpdate update = new TelemetrySubscriptionUpdate(sub.getSubscriptionId(), updateData);
                         update.getLatestValues().forEach((key, value) -> sub.getKeyStates().put(key, value));
                         subscriptionUpdateExecutor.submit(() -> sub.getUpdateProcessor().accept(sub, update));
                     }
@@ -335,7 +376,10 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         callback.onSuccess();
     }
 
-    private void modifySubscription(TenantId tenantId, EntityId entityId, TbSubscription<?> subscription, BiFunction<TbEntityLocalSubsInfo, TbSubscription<?>, TbEntitySubEvent> modification) {
+    private void modifySubscription(TenantId tenantId, EntityId entityId,
+                                    TbSubscription<?> subscription, BiFunction<TbEntityLocalSubsInfo, TbSubscription<?>,
+            TbEntitySubEvent> modification) {
+        TbSubscription<?> missedUpdatesCandidate = null;
         TbEntitySubEvent event;
         subsLock.lock();
         try {
@@ -343,6 +387,8 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
             event = modification.apply(entitySubs, subscription);
             if (entitySubs.isEmpty()) {
                 subscriptionsByEntityId.remove(entityId.getId());
+            } else {
+                missedUpdatesCandidate = entitySubs.registerPendingSubscription(subscription, event);
             }
         } finally {
             subsLock.unlock();
@@ -350,6 +396,9 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         if (event != null) {
             log.trace("[{}][{}][{}] Event: {}", tenantId, entityId, subscription.getSubscriptionId(), event);
             pushSubEventToManagerService(tenantId, entityId, event);
+            if (missedUpdatesCandidate != null) {
+                checkMissedUpdates(missedUpdatesCandidate);
+            }
         } else {
             log.trace("[{}][{}][{}] No changes detected.", tenantId, entityId, subscription.getSubscriptionId());
         }
@@ -367,81 +416,84 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         }
     }
 
-//            switch (subscription.getType()) {
-//                case TIMESERIES:
-//                    handleNewTelemetrySubscription((TbTimeseriesSubscription) subscription);
-//                    break;
-//                case ATTRIBUTES:
-//                    handleNewAttributeSubscription((TbAttributeSubscription) subscription);
-//                    break;
-//                case ALARMS:
-//                    handleNewAlarmsSubscription((TbAlarmsSubscription) subscription);
-//                    break;
-//            }
+    private void checkMissedUpdates(TbSubscription<?> subscription) {
+        log.trace("[{}][{}][{}] Check missed updates for subscription: {}",
+                subscription.getTenantId(), subscription.getEntityId(), subscription.getSubscriptionId(), subscription);
+        switch (subscription.getType()) {
+            case TIMESERIES:
+                handleNewTelemetrySubscription((TbTimeseriesSubscription) subscription);
+                break;
+            case ATTRIBUTES:
+                handleNewAttributeSubscription((TbAttributeSubscription) subscription);
+                break;
+        }
+    }
 
-//    private void handleNewAttributeSubscription(TbAttributeSubscription subscription) {
-//        log.trace("[{}][{}][{}] Processing remote attribute subscription for entity [{}]",
-//                serviceId, subscription.getSessionId(), subscription.getSubscriptionId(), subscription.getEntityId());
-//
-//        final Map<String, Long> keyStates = subscription.getKeyStates();
-//        DonAsynchron.withCallback(attrService.find(subscription.getTenantId(), subscription.getEntityId(), DataConstants.CLIENT_SCOPE, keyStates.keySet()), values -> {
-//                    List<TsKvEntry> missedUpdates = new ArrayList<>();
-//                    values.forEach(latestEntry -> {
-//                        if (latestEntry.getLastUpdateTs() > keyStates.get(latestEntry.getKey())) {
-//                            missedUpdates.add(new BasicTsKvEntry(latestEntry.getLastUpdateTs(), latestEntry));
-//                        }
-//                    });
-//                    if (!missedUpdates.isEmpty()) {
-//                        TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, subscription.getServiceId());
-//                        toCoreNotificationsProducer.send(tpi, toProto(subscription, missedUpdates), null);
-//                    }
-//                },
-//                e -> log.error("Failed to fetch missed updates.", e), tsCallBackExecutor);
-//    }
-//
-//    private void handleNewAlarmsSubscription(TbAlarmsSubscription subscription) {
-//        log.trace("[{}][{}][{}] Processing remote alarm subscription for entity [{}]",
-//                serviceId, subscription.getSessionId(), subscription.getSubscriptionId(), subscription.getEntityId());
-//        //TODO: @dlandiak search all new alarms for this entity.
-//    }
-//
-//    private void handleNewTelemetrySubscription(TbTimeseriesSubscription subscription) {
-//        log.trace("[{}][{}][{}] Processing remote telemetry subscription for entity [{}]",
-//                serviceId, subscription.getSessionId(), subscription.getSubscriptionId(), subscription.getEntityId());
-//
-//        long curTs = System.currentTimeMillis();
-//
-//        if (subscription.isLatestValues()) {
-//            DonAsynchron.withCallback(tsService.findLatest(subscription.getTenantId(), subscription.getEntityId(), subscription.getKeyStates().keySet()),
-//                    missedUpdates -> {
-//                        if (missedUpdates != null && !missedUpdates.isEmpty()) {
-//                            TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, subscription.getServiceId());
-//                            toCoreNotificationsProducer.send(tpi, toProto(subscription, missedUpdates), null);
-//                        }
-//                    },
-//                    e -> log.error("Failed to fetch missed updates.", e),
-//                    tsCallBackExecutor);
-//        } else {
-//            List<ReadTsKvQuery> queries = new ArrayList<>();
-//            subscription.getKeyStates().forEach((key, value) -> {
-//                if (curTs > value) {
-//                    long startTs = subscription.getStartTime() > 0 ? Math.max(subscription.getStartTime(), value + 1L) : (value + 1L);
-//                    long endTs = subscription.getEndTime() > 0 ? Math.min(subscription.getEndTime(), curTs) : curTs;
-//                    queries.add(new BaseReadTsKvQuery(key, startTs, endTs, 0, 1000, Aggregation.NONE));
-//                }
-//            });
-//            if (!queries.isEmpty()) {
-//                DonAsynchron.withCallback(tsService.findAll(subscription.getTenantId(), subscription.getEntityId(), queries),
-//                        missedUpdates -> {
-//                            if (missedUpdates != null && !missedUpdates.isEmpty()) {
-//                                TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, subscription.getServiceId());
-//                                toCoreNotificationsProducer.send(tpi, toProto(subscription, missedUpdates), null);
-//                            }
-//                        },
-//                        e -> log.error("Failed to fetch missed updates.", e),
-//                        tsCallBackExecutor);
-//            }
-//        }
-//    }
+    private void handleNewAttributeSubscription(TbAttributeSubscription subscription) {
+        log.trace("[{}][{}][{}] Processing attribute subscription for entity [{}]",
+                subscription.getTenantId(), subscription.getSessionId(), subscription.getSubscriptionId(), subscription.getEntityId());
+        var entityUpdateInfo = entityUpdates.get(subscription.getEntityId());
+        if (entityUpdateInfo != null && entityUpdateInfo.attributesUpdateTs > 0 && entityUpdateInfo.attributesUpdateTs < subscription.getCreatedTime()) {
+            log.trace("[{}][{}][{}] No need to check for missed updates [{}]",
+                    subscription.getTenantId(), subscription.getSessionId(), subscription.getSubscriptionId(), subscription.getEntityId());
+            return;
+        }
+        final Map<String, Long> keyStates = subscription.getKeyStates();
+        DonAsynchron.withCallback(attrService.find(subscription.getTenantId(), subscription.getEntityId(), DataConstants.CLIENT_SCOPE, keyStates.keySet()), values -> {
+                    List<TsKvEntry> missedUpdates = new ArrayList<>();
+                    values.forEach(latestEntry -> {
+                        if (latestEntry.getLastUpdateTs() > keyStates.get(latestEntry.getKey())) {
+                            missedUpdates.add(new BasicTsKvEntry(latestEntry.getLastUpdateTs(), latestEntry));
+                        }
+                    });
+                    if (!missedUpdates.isEmpty()) {
+                        onAttributesUpdate(subscription.getEntityId(), missedUpdates, TbCallback.EMPTY);
+                    }
+                },
+                e -> log.error("Failed to fetch missed updates.", e), tsCallBackExecutor);
+    }
+
+    private void handleNewTelemetrySubscription(TbTimeseriesSubscription subscription) {
+        log.trace("[{}][{}][{}] Processing telemetry subscription for entity [{}]",
+                subscription.getTenantId(), subscription.getSessionId(), subscription.getSubscriptionId(), subscription.getEntityId());
+        var entityUpdateInfo = entityUpdates.get(subscription.getEntityId());
+        if (entityUpdateInfo != null && entityUpdateInfo.timeSeriesUpdateTs > 0 && entityUpdateInfo.timeSeriesUpdateTs < subscription.getCreatedTime()) {
+            log.trace("[{}][{}][{}] No need to check for missed updates [{}]",
+                    subscription.getTenantId(), subscription.getSessionId(), subscription.getSubscriptionId(), subscription.getEntityId());
+            return;
+        }
+
+        long curTs = System.currentTimeMillis();
+
+        if (subscription.isLatestValues()) {
+            DonAsynchron.withCallback(tsService.findLatest(subscription.getTenantId(), subscription.getEntityId(), subscription.getKeyStates().keySet()),
+                    missedUpdates -> {
+                        if (missedUpdates != null && !missedUpdates.isEmpty()) {
+                            onTimeSeriesUpdate(subscription.getEntityId(), missedUpdates, TbCallback.EMPTY);
+                        }
+                    },
+                    e -> log.error("Failed to fetch missed updates.", e),
+                    tsCallBackExecutor);
+        } else {
+            List<ReadTsKvQuery> queries = new ArrayList<>();
+            subscription.getKeyStates().forEach((key, value) -> {
+                if (curTs > value) {
+                    long startTs = subscription.getStartTime() > 0 ? Math.max(subscription.getStartTime(), value + 1L) : (value + 1L);
+                    long endTs = subscription.getEndTime() > 0 ? Math.min(subscription.getEndTime(), curTs) : curTs;
+                    queries.add(new BaseReadTsKvQuery(key, startTs, endTs, 0, 1000, Aggregation.NONE));
+                }
+            });
+            if (!queries.isEmpty()) {
+                DonAsynchron.withCallback(tsService.findAll(subscription.getTenantId(), subscription.getEntityId(), queries),
+                        missedUpdates -> {
+                            if (missedUpdates != null && !missedUpdates.isEmpty()) {
+                                onTimeSeriesUpdate(subscription.getEntityId(), missedUpdates, TbCallback.EMPTY);
+                            }
+                        },
+                        e -> log.error("Failed to fetch missed updates.", e),
+                        tsCallBackExecutor);
+            }
+        }
+    }
 
 }
