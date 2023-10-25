@@ -331,7 +331,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
   }
 
   private calculatePosition(percentage: number, limits: SvgLimits): number {
-    if (percentage > 100) {
+    if (percentage >= 100) {
       return limits.max;
     } if (percentage <= 0) {
       return limits.min;
@@ -355,25 +355,16 @@ export class LiquidLevelWidgetComponent implements OnInit {
     const surfacePositionAttr = this.shape !== Shapes.vCylinder ? 'y' : 'cy';
     const animationSpeed = 500;
 
-    if (percentage > 1) {
-      fill.css('visibility', 'visible');
-      fill.animate({y : newY}, animationSpeed);
-      fill.attr('fill', this.liquidColor.color);
+    fill.animate({y : newY}, animationSpeed);
+    fill.attr('fill', this.liquidColor.color);
 
-      surfaces.each((index, element) => {
-        const $element = $(element);
-        $element.css('visibility', 'visible');
-        $element.animate({[surfacePositionAttr]: newY}, animationSpeed);
-        if ($element.hasClass('tb-liquid')) {
-          $element.attr('fill', this.liquidColor.color);
-        }
-      });
-    } else {
-      fill.css('visibility', 'hidden').stop().clearQueue();
-      surfaces.each((index, element) => {
-        $(element).css('visibility', 'hidden').stop().clearQueue();
-      });
-    }
+    surfaces.each((index, element) => {
+      const $element = $(element);
+      $element.animate({[surfacePositionAttr]: newY}, animationSpeed);
+      if ($element.hasClass('tb-liquid')) {
+        $element.attr('fill', this.liquidColor.color);
+      }
+    });
   }
 
   private updateShapeColor(value: number): void {

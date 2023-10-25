@@ -131,7 +131,7 @@ export const svgMapping = new Map<Shapes, SvgInfo>(
       Shapes.vOval,
       {
         svg: 'assets/widget/liquid-level/shapes/vertical-oval.svg',
-        limits: { min: 170, max: 50 }
+        limits: { min: 170, max: 51 }
       }
     ],
     [
@@ -166,7 +166,7 @@ export const svgMapping = new Map<Shapes, SvgInfo>(
       Shapes.hEllipse,
       {
         svg: 'assets/widget/liquid-level/shapes/horizontal-ellipse.svg',
-        limits: { min: 160, max: 65 }
+        limits: { min: 160, max: 64 }
       }
     ],
     [
@@ -180,7 +180,7 @@ export const svgMapping = new Map<Shapes, SvgInfo>(
       Shapes.hCylinder,
       {
         svg: 'assets/widget/liquid-level/shapes/horizontal-cylinder.svg',
-        limits: { min: 165, max: 55 }
+        limits: { min: 165, max: 56 }
       }
     ],
     [
