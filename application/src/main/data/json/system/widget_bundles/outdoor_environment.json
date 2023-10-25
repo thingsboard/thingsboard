@@ -155,6 +155,16 @@
     "simple_flooding_level_chart_card",
     "simple_flooding_level_chart_card_with_background",
     "flooding_level_progress_bar",
-    "flooding_level_progress_bar_with_background"
+    "flooding_level_progress_bar_with_background",
+    "illuminance_card",
+    "illuminance_card_with_background",
+    "horizontal_illuminance_card",
+    "horizontal_illuminance_card_with_background",
+    "illuminance_chart_card",
+    "illuminance_chart_card_with_background",
+    "simple_illuminance_chart_card",
+    "simple_illuminance_chart_card_with_background",
+    "illuminance_progress_bar",
+    "illuminance_progress_bar_with_background"
   ]
 }
