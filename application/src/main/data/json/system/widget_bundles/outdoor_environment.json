@@ -119,6 +119,16 @@
     "vibration_chart_card",
     "vibration_chart_card_with_background",
     "simple_vibration_chart_card",
-    "simple_vibration_chart_card_with_background"
+    "simple_vibration_chart_card_with_background",
+    "leaf_wetness_card",
+    "leaf_wetness_card_with_background",
+    "horizontal_leaf_wetness_card",
+    "horizontal_leaf_wetness_card_with_background",
+    "leaf_wetness_chart_card",
+    "leaf_wetness_chart_card_with_background",
+    "simple_leaf_wetness_chart_card",
+    "simple_leaf_wetness_chart_card_with_background",
+    "leaf_wetness_progress_bar",
+    "leaf_wetness_progress_bar_with_background"
   ]
 }
