@@ -129,6 +129,14 @@
     "simple_leaf_wetness_chart_card",
     "simple_leaf_wetness_chart_card_with_background",
     "leaf_wetness_progress_bar",
-    "leaf_wetness_progress_bar_with_background"
+    "leaf_wetness_progress_bar_with_background",
+    "snow_depth_card",
+    "snow_depth_card_with_background",
+    "horizontal_snow_depth_card",
+    "horizontal_snow_depth_card_with_background",
+    "snow_depth_chart_card",
+    "snow_depth_chart_card_with_background",
+    "simple_snow_depth_chart_card",
+    "simple_snow_depth_chart_card_with_background"
   ]
 }
