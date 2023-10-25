@@ -20,7 +20,12 @@ import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
 import { Router } from '@angular/router';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { AdminSettings, DeviceConnectivitySettings, GeneralSettings } from '@shared/models/settings.models';
+import {
+  AdminSettings,
+  DeviceConnectivityProtocol,
+  DeviceConnectivitySettings,
+  GeneralSettings
+} from '@shared/models/settings.models';
 import { AdminService } from '@core/http/admin.service';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 
@@ -37,7 +42,7 @@ export class GeneralSettingsComponent extends PageComponent implements HasConfir
   deviceConnectivitySettingsForm: UntypedFormGroup;
   private deviceConnectivitySettings: AdminSettings<DeviceConnectivitySettings>;
 
-  protocol = 'http';
+  protocol: DeviceConnectivityProtocol = 'http';
 
   constructor(protected store: Store<AppState>,
               private router: Router,

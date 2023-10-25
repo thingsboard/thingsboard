@@ -87,38 +87,15 @@ export interface GeneralSettings {
   baseUrl: string;
 }
 
-export interface DeviceConnectivitySettings {
-  http: {
-    enabled: boolean;
-    host: string;
-    port: number;
-  },
-  https: {
-    enabled: boolean;
-    host: string;
-    port: number;
-  },
-  mqtt: {
-    enabled: boolean;
-    host: string;
-    port: number;
-  },
-  mqtts: {
-    enabled: boolean;
-    host: string;
-    port: number;
-  },
-  coap: {
-    enabled: boolean;
-    host: string;
-    port: number;
-  },
-  coaps: {
-    enabled: boolean;
-    host: string;
-    port: number;
-  }
+export type DeviceConnectivityProtocol = 'http' | 'https' | 'mqtt' | 'mqtts' | 'coap' | 'coaps';
+
+export interface DeviceConnectivityInfo {
+  enabled: boolean;
+  host: string;
+  port: number;
 }
+
+export type DeviceConnectivitySettings = Record<DeviceConnectivityProtocol, DeviceConnectivityInfo>;
 
 export interface UserPasswordPolicy {
   minimumLength: number;
