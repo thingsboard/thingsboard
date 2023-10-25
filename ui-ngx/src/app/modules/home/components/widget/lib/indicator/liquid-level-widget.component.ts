@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-
+import { Component, ElementRef, Input, OnInit } from '@angular/core';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { isDefined, isDefinedAndNotNull, isNumber, isString } from '@core/utils';
 import {
@@ -44,7 +44,6 @@ import {
 } from '@shared/models/widget-settings.models';
 import { ResourcesService } from '@core/services/resources.service';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
-import { Component, ElementRef, Host, HostBinding, Input, OnInit } from '@angular/core';
 
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 
@@ -53,9 +52,6 @@ import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
   template: ''
 })
 export class LiquidLevelWidgetComponent implements OnInit {
-
-  @HostBinding('style.width') width = '100%';
-  @HostBinding('style.height') height = '100%';
 
   @Input()
   ctx: WidgetContext;
@@ -96,7 +92,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
 
   widgetUnits: string;
 
-  constructor(@Host() private elementRef: ElementRef) {
+  constructor(private elementRef: ElementRef) {
   }
 
   ngOnInit(): void {
