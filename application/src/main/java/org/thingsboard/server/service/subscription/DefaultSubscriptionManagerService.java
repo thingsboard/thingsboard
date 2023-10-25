@@ -76,12 +76,10 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
     private final DeviceStateService deviceStateService;
     private final TbClusterService clusterService;
 
-    private final Lock subsLock = new ReentrantLock(); //TODO: decide on the type of locks we will use?
+    private final Lock subsLock = new ReentrantLock();
     private final ConcurrentMap<EntityId, TbEntityRemoteSubsInfo> entitySubscriptions = new ConcurrentHashMap<>();
 
     private final ConcurrentMap<EntityId, TbEntityUpdatesInfo> entityUpdates = new ConcurrentHashMap<>();
-
-    private final Set<TopicPartitionInfo> currentPartitions = ConcurrentHashMap.newKeySet();
 
     private String serviceId;
     private TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> toCoreNotificationsProducer;
@@ -101,7 +99,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
         var entityId = event.getEntityId();
         log.trace("[{}][{}][{}] Processing subscription event {}", tenantId, entityId, serviceId, event);
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
-        if (currentPartitions.contains(tpi)) {
+        if (tpi.isMyPartition()) {
             subsLock.lock();
             try {
                 var entitySubs = entitySubscriptions.computeIfAbsent(entityId, id -> new TbEntityRemoteSubsInfo(tenantId, entityId));
@@ -124,21 +122,19 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
     }
 
     private void sendSubEventCallback(String targetId, EntityId entityId, int seqNumber) {
+        var update = getEntityUpdatesInfo(entityId);
         if (serviceId.equals(targetId)) {
-            localSubscriptionService.onSubEventCallback(entityId, seqNumber, getEntityUpdatesInfo(entityId), TbCallback.EMPTY);
+            localSubscriptionService.onSubEventCallback(entityId, seqNumber, update, TbCallback.EMPTY);
         } else {
-//            TODO
-//            sendCoreNotification(targetId, entityId, TbSubscriptionUtils.toProto(true, entityId, update));
+            sendCoreNotification(targetId, entityId, TbSubscriptionUtils.toProto(entityId.getId(), seqNumber, update));
         }
     }
 
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
         if (ServiceType.TB_CORE.equals(partitionChangeEvent.getServiceType())) {
-            currentPartitions.clear();
-            currentPartitions.addAll(partitionChangeEvent.getPartitions());
             entitySubscriptions.values().removeIf(sub ->
-                    !currentPartitions.contains(partitionService.resolve(ServiceType.TB_CORE, sub.getTenantId(), sub.getEntityId())));
+                    !partitionService.resolve(ServiceType.TB_CORE, sub.getTenantId(), sub.getEntityId()).isMyPartition());
         }
     }
 

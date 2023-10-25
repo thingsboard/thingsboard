@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.subscription;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -42,10 +41,8 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.discovery.event.ClusterTopologyChangeEvent;
-import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscriptionUpdate;
@@ -78,7 +75,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     private final ConcurrentMap<String, Map<Integer, TbSubscription<?>>> subscriptionsBySessionId = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, TbEntityLocalSubsInfo> subscriptionsByEntityId = new ConcurrentHashMap<>();
 
-    private final ConcurrentMap<EntityId, TbEntityUpdatesInfo> entityUpdates = new ConcurrentHashMap<>();
+    private final ConcurrentMap<UUID, TbEntityUpdatesInfo> entityUpdates = new ConcurrentHashMap<>();
 
     private final AttributesService attrService;
     private final TimeseriesService tsService;
@@ -104,33 +101,6 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
 
     private final Lock subsLock = new ReentrantLock();
 
-    private final TbApplicationEventListener<PartitionChangeEvent> partitionChangeListener = new TbApplicationEventListener<>() {
-        @Override
-        protected void onTbApplicationEvent(PartitionChangeEvent event) {
-            if (ServiceType.TB_CORE.equals(event.getServiceType())) {
-                currentPartitions.clear();
-                currentPartitions.addAll(event.getPartitions());
-            }
-        }
-    };
-
-    private final TbApplicationEventListener<ClusterTopologyChangeEvent> clusterTopologyChangeListener = new TbApplicationEventListener<>() {
-        @Override
-        protected void onTbApplicationEvent(ClusterTopologyChangeEvent event) {
-            if (event.getQueueKeys().stream().anyMatch(key -> ServiceType.TB_CORE.equals(key.getType()))) {
-                /*
-                 * If the cluster topology has changed, we need to push all current subscriptions to SubscriptionManagerService again.
-                 * Otherwise, the SubscriptionManagerService may "forget" those subscriptions in case of restart.
-                 * Although this is resource consuming operation, it is cheaper than sending ping/pong commands periodically
-                 * It is also cheaper than caching the subscriptions by entity id and then lookup of those caches every time we have new telemetry in SubscriptionManagerService.
-                 * Even if we cache locally the list of active subscriptions by entity id, it is still time-consuming operation to get them from cache
-                 * Since number of subscriptions is usually much less than number of devices that are pushing data.
-                 */
-                subscriptionsByEntityId.values().forEach(sub -> pushSubEventToManagerService(sub.getTenantId(), sub.getEntityId(), sub.toEvent(ComponentLifecycleEvent.UPDATED)));
-            }
-        }
-    };
-
     @PostConstruct
     public void initExecutor() {
         subscriptionUpdateExecutor = ThingsBoardExecutors.newWorkStealingPool(20, getClass());
@@ -149,15 +119,19 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     }
 
     @Override
-    @EventListener(PartitionChangeEvent.class)
-    public void onApplicationEvent(PartitionChangeEvent event) {
-        partitionChangeListener.onApplicationEvent(event);
-    }
-
-    @Override
     @EventListener(ClusterTopologyChangeEvent.class)
     public void onApplicationEvent(ClusterTopologyChangeEvent event) {
-        clusterTopologyChangeListener.onApplicationEvent(event);
+        if (event.getQueueKeys().stream().anyMatch(key -> ServiceType.TB_CORE.equals(key.getType()))) {
+            /*
+             * If the cluster topology has changed, we need to push all current subscriptions to SubscriptionManagerService again.
+             * Otherwise, the SubscriptionManagerService may "forget" those subscriptions in case of restart.
+             * Although this is resource consuming operation, it is cheaper than sending ping/pong commands periodically
+             * It is also cheaper than caching the subscriptions by entity id and then lookup of those caches every time we have new telemetry in SubscriptionManagerService.
+             * Even if we cache locally the list of active subscriptions by entity id, it is still time-consuming operation to get them from cache
+             * Since number of subscriptions is usually much less than number of devices that are pushing data.
+             */
+            subscriptionsByEntityId.values().forEach(sub -> pushSubEventToManagerService(sub.getTenantId(), sub.getEntityId(), sub.toEvent(ComponentLifecycleEvent.UPDATED)));
+        }
     }
 
     @Override
@@ -167,16 +141,26 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         log.debug("[{}][{}] Register subscription: {}", tenantId, entityId, subscription);
         Map<Integer, TbSubscription<?>> sessionSubscriptions = subscriptionsBySessionId.computeIfAbsent(subscription.getSessionId(), k -> new ConcurrentHashMap<>());
         sessionSubscriptions.put(subscription.getSubscriptionId(), subscription);
-        modifySubscription(tenantId, entityId, subscription, TbEntityLocalSubsInfo::add);
+        modifySubscription(tenantId, entityId, subscription, true);
     }
 
     @Override
-    public void onSubEventCallback(EntityId entityId, int seqNumber, TbEntityUpdatesInfo entityUpdatesInfo, TbCallback empty) {
+    public void onSubEventCallback(TransportProtos.TbEntitySubEventCallbackProto subEventCallback, TbCallback callback) {
+        UUID entityId = new UUID(subEventCallback.getEntityIdMSB(), subEventCallback.getEntityIdLSB());
+        onSubEventCallback(entityId, subEventCallback.getSeqNumber(), new TbEntityUpdatesInfo(subEventCallback.getAttributesUpdateTs(), subEventCallback.getTimeSeriesUpdateTs()), callback);
+    }
+
+    @Override
+    public void onSubEventCallback(EntityId entityId, int seqNumber, TbEntityUpdatesInfo entityUpdatesInfo, TbCallback callback) {
+        onSubEventCallback(entityId.getId(), seqNumber, entityUpdatesInfo, callback);
+    }
+
+    public void onSubEventCallback(UUID entityId, int seqNumber, TbEntityUpdatesInfo entityUpdatesInfo, TbCallback callback) {
         entityUpdates.put(entityId, entityUpdatesInfo);
         Set<TbSubscription<?>> pendingSubs = null;
         subsLock.lock();
         try {
-            TbEntityLocalSubsInfo entitySubs = subscriptionsByEntityId.get(entityId.getId());
+            TbEntityLocalSubsInfo entitySubs = subscriptionsByEntityId.get(entityId);
             if (entitySubs != null) {
                 pendingSubs = entitySubs.clearPendingSubscriptions(seqNumber);
             }
@@ -186,6 +170,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         if (pendingSubs != null) {
             pendingSubs.forEach(this::checkMissedUpdates);
         }
+        callback.onSuccess();
     }
 
     @Override
@@ -198,7 +183,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
                 if (sessionSubscriptions.isEmpty()) {
                     subscriptionsBySessionId.remove(sessionId);
                 }
-                modifySubscription(subscription.getTenantId(), subscription.getEntityId(), subscription, TbEntityLocalSubsInfo::remove);
+                modifySubscription(subscription.getTenantId(), subscription.getEntityId(), subscription, false);
             } else {
                 log.debug("[{}][{}] Subscription not found!", sessionId, subscriptionId);
             }
@@ -213,7 +198,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         Map<Integer, TbSubscription<?>> sessionSubscriptions = subscriptionsBySessionId.remove(sessionId);
         if (sessionSubscriptions != null) {
             for (TbSubscription<?> subscription : sessionSubscriptions.values()) {
-                modifySubscription(subscription.getTenantId(), subscription.getEntityId(), subscription, TbEntityLocalSubsInfo::remove);
+                modifySubscription(subscription.getTenantId(), subscription.getEntityId(), subscription, false);
             }
         } else {
             log.debug("[{}] No session subscriptions found!", sessionId);
@@ -222,7 +207,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
 
     @Override
     public void onTimeSeriesUpdate(TransportProtos.TbSubUpdateProto proto, TbCallback callback) {
-        //TODO: optimize to avoid re-wrapping
+        //TODO: optimize to avoid re-wrapping from TsValueListProto -> List<KV> -> Map<String, List<Object>>. Low priority.
         onTimeSeriesUpdate(new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()), TbSubscriptionUtils.fromProto(proto), callback);
     }
 
@@ -232,6 +217,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     }
 
     private void onTimeSeriesUpdate(UUID entityId, List<TsKvEntry> data, TbCallback callback) {
+        entityUpdates.get(entityId).timeSeriesUpdateTs = System.currentTimeMillis();
         processSubscriptionData(entityId,
                 sub -> TbSubscriptionType.TIMESERIES.equals(sub.getType()),
                 s -> {
@@ -268,6 +254,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     }
 
     private void onAttributesUpdate(UUID entityId, List<TsKvEntry> data, TbCallback callback) {
+        entityUpdates.get(entityId).attributesUpdateTs = System.currentTimeMillis();
         processSubscriptionData(entityId,
                 sub -> TbSubscriptionType.ATTRIBUTES.equals(sub.getType()),
                 s -> {
@@ -376,18 +363,17 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         callback.onSuccess();
     }
 
-    private void modifySubscription(TenantId tenantId, EntityId entityId,
-                                    TbSubscription<?> subscription, BiFunction<TbEntityLocalSubsInfo, TbSubscription<?>,
-            TbEntitySubEvent> modification) {
+    private void modifySubscription(TenantId tenantId, EntityId entityId, TbSubscription<?> subscription, boolean add) {
         TbSubscription<?> missedUpdatesCandidate = null;
         TbEntitySubEvent event;
         subsLock.lock();
         try {
             TbEntityLocalSubsInfo entitySubs = subscriptionsByEntityId.computeIfAbsent(entityId.getId(), id -> new TbEntityLocalSubsInfo(tenantId, entityId));
-            event = modification.apply(entitySubs, subscription);
+            event = add ? entitySubs.add(subscription) : entitySubs.remove(subscription);
             if (entitySubs.isEmpty()) {
                 subscriptionsByEntityId.remove(entityId.getId());
-            } else {
+                entityUpdates.remove(entityId.getId());
+            } else if (add) {
                 missedUpdatesCandidate = entitySubs.registerPendingSubscription(subscription, event);
             }
         } finally {
@@ -432,7 +418,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     private void handleNewAttributeSubscription(TbAttributeSubscription subscription) {
         log.trace("[{}][{}][{}] Processing attribute subscription for entity [{}]",
                 subscription.getTenantId(), subscription.getSessionId(), subscription.getSubscriptionId(), subscription.getEntityId());
-        var entityUpdateInfo = entityUpdates.get(subscription.getEntityId());
+        var entityUpdateInfo = entityUpdates.get(subscription.getEntityId().getId());
         if (entityUpdateInfo != null && entityUpdateInfo.attributesUpdateTs > 0 && entityUpdateInfo.attributesUpdateTs < subscription.getCreatedTime()) {
             log.trace("[{}][{}][{}] No need to check for missed updates [{}]",
                     subscription.getTenantId(), subscription.getSessionId(), subscription.getSubscriptionId(), subscription.getEntityId());
@@ -456,10 +442,10 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     private void handleNewTelemetrySubscription(TbTimeseriesSubscription subscription) {
         log.trace("[{}][{}][{}] Processing telemetry subscription for entity [{}]",
                 subscription.getTenantId(), subscription.getSessionId(), subscription.getSubscriptionId(), subscription.getEntityId());
-        var entityUpdateInfo = entityUpdates.get(subscription.getEntityId());
-        if (entityUpdateInfo != null && entityUpdateInfo.timeSeriesUpdateTs > 0 && entityUpdateInfo.timeSeriesUpdateTs < subscription.getCreatedTime()) {
-            log.trace("[{}][{}][{}] No need to check for missed updates [{}]",
-                    subscription.getTenantId(), subscription.getSessionId(), subscription.getSubscriptionId(), subscription.getEntityId());
+        var entityUpdateInfo = entityUpdates.get(subscription.getEntityId().getId());
+        if (entityUpdateInfo != null && entityUpdateInfo.timeSeriesUpdateTs > 0 && subscription.getCreatedTime() > entityUpdateInfo.timeSeriesUpdateTs) {
+            log.trace("[{}][{}][{}] No need to check for missed updates. time diff: {}ms",
+                    subscription.getTenantId(), subscription.getSessionId(), subscription.getSubscriptionId(), subscription.getCreatedTime() - entityUpdateInfo.timeSeriesUpdateTs);
             return;
         }
 

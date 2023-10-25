@@ -90,6 +90,22 @@ public class TbSubscriptionUtils {
         return ToCoreMsg.newBuilder().setToSubscriptionMgrMsg(msgBuilder).build();
     }
 
+    public static ToCoreNotificationMsg toProto(UUID id, int seqNumber, TbEntityUpdatesInfo update) {
+        TransportProtos.TbEntitySubEventCallbackProto.Builder updateProto = TransportProtos.TbEntitySubEventCallbackProto.newBuilder()
+                .setEntityIdMSB(id.getMostSignificantBits())
+                .setEntityIdLSB(id.getLeastSignificantBits())
+                .setSeqNumber(seqNumber)
+                .setAttributesUpdateTs(update.attributesUpdateTs)
+                .setTimeSeriesUpdateTs(update.timeSeriesUpdateTs);
+        return ToCoreNotificationMsg.newBuilder()
+                .setToLocalSubscriptionServiceMsg(
+                        TransportProtos.LocalSubscriptionServiceMsgProto.newBuilder()
+                                .setSubEventCallback(updateProto)
+                                .build())
+                .build();
+    }
+
+
     public static TbEntitySubEvent fromProto(TbEntitySubEventProto proto) {
         ComponentLifecycleEvent event = ComponentLifecycleEvent.valueOf(proto.getType());
         var builder = TbEntitySubEvent.builder()

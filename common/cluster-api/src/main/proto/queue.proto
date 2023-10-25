@@ -548,6 +548,14 @@ message TbEntitySubEventProto {
   repeated string attrKeys = 14;
 }
 
+message TbEntitySubEventCallbackProto {
+  int64 entityIdMSB = 1;
+  int64 entityIdLSB = 2;
+  int32 seqNumber = 3;
+  int64 attributesUpdateTs = 4;
+  int64 timeSeriesUpdateTs = 5;
+}
+
 message TsValueProto {
   int64 ts = 1;
   KeyValueType type = 2;
@@ -789,10 +797,11 @@ message LocalSubscriptionServiceMsgProto {
   TbSubscriptionUpdateProto subUpdate = 1; // DEPRECATED. FOR REMOVAL
   TbAlarmSubscriptionUpdateProto alarmSubUpdate = 2; // DEPRECATED. FOR REMOVAL
   NotificationsSubscriptionUpdateProto notificationsSubUpdate = 3; // DEPRECATED. FOR REMOVAL
-  TbSubUpdateProto tsUpdate = 4;
-  TbSubUpdateProto attrUpdate = 5;
-  TbAlarmSubUpdateProto alarmUpdate = 6;
-  NotificationsSubUpdateProto notificationsUpdate = 7;
+  TbEntitySubEventCallbackProto subEventCallback = 4;
+  TbSubUpdateProto tsUpdate = 5;
+  TbSubUpdateProto attrUpdate = 6;
+  TbAlarmSubUpdateProto alarmUpdate = 7;
+  NotificationsSubUpdateProto notificationsUpdate = 8;
 }
 
 message FromDeviceRPCResponseProto {

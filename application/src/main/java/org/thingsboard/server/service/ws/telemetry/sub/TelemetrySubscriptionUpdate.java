@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 
 public class TelemetrySubscriptionUpdate {
 
-    private int subscriptionId;
+    private final int subscriptionId;
     private int errorCode;
     private String errorMsg;
     private Map<String, List<Object>> data;
@@ -94,7 +94,7 @@ public class TelemetrySubscriptionUpdate {
 
     @Override
     public String toString() {
-        return "TsSubscriptionUpdate [subscriptionId=" + subscriptionId + ", errorCode=" + errorCode + ", errorMsg=" + errorMsg + ", data="
+        return "TelemetrySubscriptionUpdate [subscriptionId=" + subscriptionId + ", errorCode=" + errorCode + ", errorMsg=" + errorMsg + ", data="
                 + data + "]";
     }
 }

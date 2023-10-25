@@ -493,7 +493,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     }
 
     private void forwardToLocalSubMgrService(LocalSubscriptionServiceMsgProto msg, TbCallback callback) {
-        if (msg.hasTsUpdate()) {
+        if (msg.hasSubEventCallback()) {
+            localSubscriptionService.onSubEventCallback(msg.getSubEventCallback(), callback);
+        } else if (msg.hasTsUpdate()) {
             localSubscriptionService.onTimeSeriesUpdate(msg.getTsUpdate(), callback);
         } else if (msg.hasAttrUpdate()) {
             localSubscriptionService.onAttributesUpdate(msg.getAttrUpdate(), callback);
@@ -501,7 +503,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             localSubscriptionService.onAlarmUpdate(msg.getAlarmUpdate(), callback);
         } else if (msg.hasNotificationsUpdate()) {
             localSubscriptionService.onNotificationUpdate(msg.getNotificationsUpdate(), callback);
-        } else if (msg.hasSubUpdate() || msg.hasAlarmSubUpdate() || msg.hasNotificationsSubUpdate()){
+        } else if (msg.hasSubUpdate() || msg.hasAlarmSubUpdate() || msg.hasNotificationsSubUpdate()) {
             //OLD CODE -> Do NOTHING.
             callback.onSuccess();
         } else {

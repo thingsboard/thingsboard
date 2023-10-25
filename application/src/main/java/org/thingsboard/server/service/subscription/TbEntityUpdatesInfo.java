@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.service.subscription;
 
+import lombok.AllArgsConstructor;
+
+@AllArgsConstructor
 public class TbEntityUpdatesInfo {
 
     volatile long attributesUpdateTs;
