@@ -1,5 +1,5 @@
 <svg preserveAspectRatio="xMidYMid meet" viewBox="0 0 233 201" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect class="tb-shape-stroke" x="58.5" y="199.5" width="178" height="116" rx="58" transform="rotate(-90 58.5 199.5)" fill="#6216FF" fill-opacity="0.02" stroke="#242770" stroke-width="2"/>
+  <rect class="tb-shape-stroke" x="58.5" y="199.5" width="178" height="116" rx="58" transform="rotate(-90 58.5 199.5)" fill="#6216FF" fill-opacity="0" stroke="#242770" stroke-width="2"/>
   <mask id="mask0_3572_6660" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="61" y="24" width="111" height="173">
     <rect class="tb-shape-stroke" x="62.5" y="195.5" width="170" height="108" rx="54" transform="rotate(-90 62.5 195.5)" fill="#F1F1F9" stroke="#242770" stroke-width="2"/>
   </mask>

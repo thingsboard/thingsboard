@@ -126,11 +126,13 @@
     <div class="tb-form-panel-title" translate>widgets.liquid-level-card.units</div>
     <div class="tb-form-row space-between">
       <div class="fixed-title-width tb-required" translate>widgets.liquid-level-card.datasource-units</div>
-      <tb-unit-input style="max-width: 30%;" class="flex"
-                     [tagFilter]="unitsType.capacity"
-                     [required]="isRequired('datasourceUnits')"
-                     formControlName="datasourceUnits">
-      </tb-unit-input>
+      <div fxFlex fxLayout="row" fxLayoutAlign="end center">
+        <tb-unit-input style="max-width: 25%;" class="flex"
+                       [tagFilter]="unitsType.capacity"
+                       [required]="isRequired('datasourceUnits')"
+                       formControlName="datasourceUnits">
+        </tb-unit-input>
+      </div>
     </div>
     <div class="tb-form-row space-between" [fxShow]="widgetUnitsInput">
       <div class="fixed-title-width tb-required" translate>widgets.liquid-level-card.widget-units</div>
