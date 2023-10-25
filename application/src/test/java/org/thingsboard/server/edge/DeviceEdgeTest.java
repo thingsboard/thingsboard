@@ -274,9 +274,7 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         tenantProfile.getProfileData().setConfiguration(profileConfiguration);
         doPost("/api/tenantProfile/", tenantProfile, TenantProfile.class);
 
-        edgeImitator.expectMessageAmount(2);
         loginTenantAdmin();
-        Assert.assertTrue(edgeImitator.waitForMessages());
 
         UUID uuid = Uuids.timeBased();
 

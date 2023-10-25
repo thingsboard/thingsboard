@@ -19,7 +19,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.protobuf.AbstractMessage;
 import org.junit.Assert;
 import org.junit.Test;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
@@ -101,20 +100,6 @@ public class AlarmEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(device.getName(), alarmUpdateMsg.getOriginatorName());
         Assert.assertEquals(savedAlarm.getStatus().name(), alarmUpdateMsg.getStatus());
         Assert.assertEquals(savedAlarm.getSeverity().name(), alarmUpdateMsg.getSeverity());
-
-        // update alarm
-        String updatedDetails = "{\"testKey\":\"testValue\"}";
-        savedAlarm.setDetails(JacksonUtil.OBJECT_MAPPER.readTree(updatedDetails));
-        edgeImitator.expectMessageAmount(1);
-        savedAlarm = doPost("/api/alarm", savedAlarm, Alarm.class);
-        Assert.assertTrue(edgeImitator.waitForMessages());
-        latestMessage = edgeImitator.getLatestMessage();
-        Assert.assertTrue(latestMessage instanceof AlarmUpdateMsg);
-        alarmUpdateMsg = (AlarmUpdateMsg) latestMessage;
-        Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, alarmUpdateMsg.getMsgType());
-        Assert.assertEquals(savedAlarm.getUuidId().getMostSignificantBits(), alarmUpdateMsg.getIdMSB());
-        Assert.assertEquals(savedAlarm.getUuidId().getLeastSignificantBits(), alarmUpdateMsg.getIdLSB());
-        Assert.assertEquals(updatedDetails, alarmUpdateMsg.getDetails());
 
         // ack alarm
         edgeImitator.expectMessageAmount(1);

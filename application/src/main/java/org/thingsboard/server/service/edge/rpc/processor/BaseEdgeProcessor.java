@@ -24,6 +24,7 @@ import org.springframework.context.annotation.Lazy;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EdgeUtils;
@@ -46,6 +47,7 @@ import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -110,11 +112,13 @@ import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
+import org.thingsboard.server.service.state.DefaultDeviceStateService;
 import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -305,6 +309,61 @@ public abstract class BaseEdgeProcessor {
                                                    EdgeEventActionType action,
                                                    EntityId entityId,
                                                    JsonNode body) {
+        ListenableFuture<Optional<AttributeKvEntry>> future =
+                attributesService.find(tenantId, edgeId, DataConstants.SERVER_SCOPE, DefaultDeviceStateService.ACTIVITY_STATE);
+        return Futures.transformAsync(future, activeOpt -> {
+            if (activeOpt.isEmpty()) {
+                log.trace("Edge is not activated. Skipping event. tenantId [{}], edgeId [{}], type[{}], " +
+                                "action [{}], entityId [{}], body [{}]",
+                        tenantId, edgeId, type, action, entityId, body);
+                return Futures.immediateFuture(null);
+            }
+            if (activeOpt.get().getBooleanValue().isPresent() && activeOpt.get().getBooleanValue().get()) {
+                return doSaveEdgeEvent(tenantId, edgeId, type, action, entityId, body);
+            } else {
+                if (doSaveIfEdgeIsOffline(type, action)) {
+                    return doSaveEdgeEvent(tenantId, edgeId, type, action, entityId, body);
+                } else {
+                    log.trace("Edge is not active at the moment. Skipping event. tenantId [{}], edgeId [{}], type[{}], " +
+                                    "action [{}], entityId [{}], body [{}]",
+                            tenantId, edgeId, type, action, entityId, body);
+                    return Futures.immediateFuture(null);
+                }
+            }
+        }, dbCallbackExecutorService);
+    }
+
+    private boolean doSaveIfEdgeIsOffline(EdgeEventType type,
+                                          EdgeEventActionType action) {
+        switch (action) {
+            case TIMESERIES_UPDATED:
+            case ALARM_ACK:
+            case ALARM_CLEAR:
+            case ALARM_ASSIGNED:
+            case ALARM_UNASSIGNED:
+            case CREDENTIALS_REQUEST:
+                return true;
+        }
+        switch (type) {
+            case ALARM:
+            case RULE_CHAIN:
+            case RULE_CHAIN_METADATA:
+            case USER:
+            case CUSTOMER:
+            case TENANT:
+            case TENANT_PROFILE:
+            case WIDGETS_BUNDLE:
+            case WIDGET_TYPE:
+            case ADMIN_SETTINGS:
+            case OTA_PACKAGE:
+            case QUEUE:
+            case RELATION:
+                return true;
+        }
+        return false;
+    }
+
+    private ListenableFuture<Void> doSaveEdgeEvent(TenantId tenantId, EdgeId edgeId, EdgeEventType type, EdgeEventActionType action, EntityId entityId, JsonNode body) {
         log.debug("Pushing event to edge queue. tenantId [{}], edgeId [{}], type[{}], " +
                         "action [{}], entityId [{}], body [{}]",
                 tenantId, edgeId, type, action, entityId, body);

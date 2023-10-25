@@ -13,31 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue;
+package org.thingsboard.server.service.queue.ruleengine;
 
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import java.io.Serializable;
 
-import java.util.List;
-import java.util.Set;
+public enum QueueEvent implements Serializable {
 
-public interface TbQueueConsumer<T extends TbQueueMsg> {
-
-    String getTopic();
-
-    void subscribe();
-
-    void subscribe(Set<TopicPartitionInfo> partitions);
-
-    void stop();
-
-    void unsubscribe();
-
-    List<T> poll(long durationInMillis);
-
-    void commit();
-
-    boolean isStopped();
-
-    List<String> getFullTopicNames();
+    PARTITION_CHANGE, CONFIG_UPDATE, DELETE
 
 }

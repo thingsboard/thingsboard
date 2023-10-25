@@ -82,7 +82,6 @@ public interface TbRuleEngineQueueFactory extends TbUsageStatsClientQueueFactory
      * @return
      * @param configuration
      */
-    //TODO 2.5 ybondarenko: make sure you use queueName to distinct consumers where necessary
     TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> createToRuleEngineMsgConsumer(Queue configuration);
 
     /**

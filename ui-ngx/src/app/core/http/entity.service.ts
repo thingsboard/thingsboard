@@ -92,6 +92,7 @@ import { NotificationService } from '@core/http/notification.service';
 import { TenantProfileService } from '@core/http/tenant-profile.service';
 import { NotificationType } from '@shared/models/notification.models';
 import { UserId } from '@shared/models/id/user-id';
+import { AlarmService } from '@core/http/alarm.service';
 
 @Injectable({
   providedIn: 'root'
@@ -119,7 +120,8 @@ export class EntityService {
     private assetProfileService: AssetProfileService,
     private utils: UtilsService,
     private queueService: QueueService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private alarmService: AlarmService
   ) { }
 
   private getEntityObservable(entityType: EntityType, entityId: string,
@@ -155,7 +157,7 @@ export class EntityService {
         observable = this.ruleChainService.getRuleChain(entityId, config);
         break;
       case EntityType.ALARM:
-        console.error('Get Alarm Entity is not implemented!');
+        observable = this.alarmService.getAlarm(entityId, config);
         break;
       case EntityType.OTA_PACKAGE:
         observable = this.otaPackageService.getOtaPackageInfo(entityId, config);
