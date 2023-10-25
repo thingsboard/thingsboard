@@ -302,7 +302,7 @@ import {
 } from '@home/components/widget/lib/settings/cards/progress-bar-widget-settings.component';
 import {
   LiquidLevelCardWidgetSettingsComponent
-} from '@home/components/widget/lib/settings/cards/liquid-level-card-widget-settings.component';
+} from '@home/components/widget/lib/settings/indicator/liquid-level-card-widget-settings.component';
 
 @NgModule({
   declarations: [

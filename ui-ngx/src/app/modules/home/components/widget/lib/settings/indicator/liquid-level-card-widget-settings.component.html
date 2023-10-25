@@ -158,12 +158,12 @@
       <div class="tb-form-panel-title" translate>widgets.liquid-level-card.color-and-font</div>
       <div class="tb-form-row space-between">
         <div class="fixed-title-width" translate>widgets.liquid-level-card.tank-color</div>
-        <tb-color-settings formControlName="tankColor">
+        <tb-color-settings formControlName="tankColor" settingsKey="{{'widgets.liquid-level-card.tank-color' | translate }}">
         </tb-color-settings>
       </div>
       <div class="tb-form-row space-between">
         <div class="fixed-title-width" translate>widgets.liquid-level-card.liquid-color</div>
-        <tb-color-settings formControlName="liquidColor">
+        <tb-color-settings formControlName="liquidColor" settingsKey="{{'widgets.liquid-level-card.liquid-color' | translate }}">
         </tb-color-settings>
       </div>
       <div class="tb-form-row space-between"
@@ -173,7 +173,7 @@
           <tb-font-settings formControlName="valueFont"
                             [previewText]="valuePreviewFn">
           </tb-font-settings>
-          <tb-color-settings formControlName="valueColor">
+          <tb-color-settings formControlName="valueColor" settingsKey="{{'widgets.liquid-level-card.value' | translate }}">
           </tb-color-settings>
         </div>
       </div>
@@ -183,7 +183,7 @@
           <tb-font-settings formControlName="volumeFont"
                             [previewText]="totalVolumeValuePreviewFn">
           </tb-font-settings>
-          <tb-color-settings formControlName="volumeColor">
+          <tb-color-settings formControlName="volumeColor" settingsKey="{{'widgets.liquid-level-card.total-volume' | translate }}">
           </tb-color-settings>
         </div>
       </div>
@@ -191,7 +191,7 @@
         <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showBackgroundOverlay">
           {{ 'widgets.liquid-level-card.background-overlay' | translate }}
         </mat-slide-toggle>
-        <tb-color-settings formControlName="backgroundOverlayColor">
+        <tb-color-settings formControlName="backgroundOverlayColor" settingsKey="{{'widgets.liquid-level-card.background-overlay' | translate }}">
         </tb-color-settings>
       </div>
     </div>
@@ -225,7 +225,7 @@
               <tb-font-settings formControlName="tooltipLevelFont"
                                 [previewText]="tooltipValuePreviewFn">
               </tb-font-settings>
-              <tb-color-settings formControlName="tooltipLevelColor">
+              <tb-color-settings formControlName="tooltipLevelColor" settingsKey="{{'widgets.liquid-level-card.level' | translate }}">
               </tb-color-settings>
             </div>
           </div>
@@ -238,13 +238,13 @@
               <tb-font-settings formControlName="tooltipDateFont"
                                 [previewText]="datePreviewFn">
               </tb-font-settings>
-              <tb-color-settings formControlName="tooltipDateColor">
+              <tb-color-settings formControlName="tooltipDateColor" settingsKey="{{'widgets.value-card.date' | translate }}">
               </tb-color-settings>
             </div>
           </div>
           <div class="tb-form-row space-between">
             <div class="fixed-title-width" translate>widgets.liquid-level-card.tooltip-background</div>
-            <tb-color-settings formControlName="tooltipBackgroundColor">
+            <tb-color-settings formControlName="tooltipBackgroundColor" settingsKey="{{'widgets.liquid-level-card.tooltip-background' | translate }}">
             </tb-color-settings>
           </div>
           <div class="tb-form-row space-between">

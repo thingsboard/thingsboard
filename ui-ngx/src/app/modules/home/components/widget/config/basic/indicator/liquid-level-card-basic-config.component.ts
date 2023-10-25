@@ -60,7 +60,6 @@ import { ImageCardsSelectComponent } from '@home/components/widget/lib/settings/
 import { map, share, tap } from 'rxjs/operators';
 import { Observable, of, ReplaySubject } from 'rxjs';
 import { ResourcesService } from '@core/services/resources.service';
-import { UnitInputComponent } from '@shared/components/unit-input.component';
 import { UtilsService } from '@core/services/utils.service';
 
 @Component({
@@ -74,8 +73,6 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
 
   @ViewChild('shapesImageCardsSelect', { static: false }) shapesImageCardsSelect: ImageCardsSelectComponent;
 
-  @ViewChild('widgetUnits', { static: false }) widgetUnits: UnitInputComponent;
-
   public get datasource(): Datasource {
     if (this.widgetConfig.config.datasources && this.widgetConfig.config.datasources) {
       return this.widgetConfig.config.datasources[0];
@@ -88,18 +85,18 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
     const datasourceUnits = this.levelCardWidgetConfigForm.get('datasourceUnits').value;
     const layout: LevelCardLayout = this.levelCardWidgetConfigForm.get('layout').value;
     const units = this.levelCardWidgetConfigForm.get('units').value;
-    return !(datasourceUnits === CapacityUnits.percent && layout !== LevelCardLayout.absolute
-      || (datasourceUnits === CapacityUnits.percent && units === CapacityUnits.percent));
+
+    if (layout === LevelCardLayout.absolute) {
+      return true;
+    }
+
+    return !(datasourceUnits === CapacityUnits.percent && units === CapacityUnits.percent);
   }
 
   public get widgetUnitsInput(): boolean {
     const layout: LevelCardLayout = this.levelCardWidgetConfigForm.get('layout').value;
 
-    if (layout === LevelCardLayout.absolute) {
-      const datasourceUnits = this.levelCardWidgetConfigForm.get('datasourceUnits').value;
-      return !(datasourceUnits === CapacityUnits.percent);
-    }
-    return false;
+    return layout === LevelCardLayout.absolute;
   }
 
   public get displayTimewindowConfig(): boolean {
@@ -343,8 +340,10 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
     }
 
     if (trigger === 'datasourceUnits' || trigger === 'layout' || trigger === 'units') {
-      if (datasourceUnits === CapacityUnits.percent && (layout !== LevelCardLayout.absolute)
-        || (datasourceUnits === CapacityUnits.percent && units?.value === CapacityUnits.percent)
+      if (
+        datasourceUnits === CapacityUnits.percent &&
+        layout !== LevelCardLayout.absolute &&
+        (!units?.value || units?.value === CapacityUnits.percent)
       ) {
         volumeSource.disable({emitEvent: false});
         this.levelCardWidgetConfigForm.get('volumeConstant').disable({emitEvent: false});

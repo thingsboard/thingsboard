@@ -369,13 +369,14 @@ export const valueContainerStyleDefaults = cssTextFromInlineStyle({
   'align-items': 'center',
   'align-content': 'center',
   'justify-content': 'center',
+  'font-family': 'Roboto, Helvetica Neue, sans-serif'
 });
 
-export const valueTextStyleDefaults = 'letterSpacing: normal; font-style: normal; font-weight: 500; line-height: 100%;' +
-  '  font-size: 24px; font-family: Roboto; color: #000000DE';
+export const valueTextStyleDefaults = 'letter-spacing: normal; font-style: normal; font-weight: 500; line-height: 100%;' +
+  '  font-size: 24px; font-family: Roboto, Helvetica Neue, sans-serif; color: #000000DE';
 
-export const volumeTextStyleDefaults = 'letterSpacing: normal; font-style: normal; font-weight: 500;' +
-  ' line-height: 100%; font-size: 14px; font-family: Roboto; color: rgba(0, 0, 0, 0.18)';
+export const volumeTextStyleDefaults = 'letter-spacing: normal; font-style: normal; font-weight: 500;' +
+  ' line-height: 100%; font-size: 14px; font-family: Roboto, Helvetica Neue, sans-serif; color: rgba(0, 0, 0, 0.18)';
 
 export const createAbsoluteLayout = (values?: {inputValue: number | string; volume: number | string},
                                      styles?: {valueStyle: string; volumeStyle: string},

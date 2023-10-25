@@ -72,7 +72,7 @@ import {
 } from '@home/components/widget/config/basic/cards/progress-bar-basic-config.component';
 import {
   LiquidLevelCardBasicConfigComponent
-} from '@home/components/widget/config/basic/cards/liquid-level-card-basic-config.component';
+} from '@home/components/widget/config/basic/indicator/liquid-level-card-basic-config.component';
 
 @NgModule({
   declarations: [

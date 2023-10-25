@@ -67,18 +67,18 @@ export class LiquidLevelCardWidgetSettingsComponent extends WidgetSettingsCompon
     const datasourceUnits = this.levelCardWidgetSettingsForm.get('datasourceUnits').value;
     const layout: LevelCardLayout = this.levelCardWidgetSettingsForm.get('layout').value;
     const widgetUnits = this.levelCardWidgetSettingsForm.get('units').value;
-    return !(datasourceUnits === CapacityUnits.percent && layout !== LevelCardLayout.absolute
-      || (datasourceUnits === CapacityUnits.percent && widgetUnits === CapacityUnits.percent));
+
+    if (layout === LevelCardLayout.absolute) {
+      return true;
+    }
+
+    return !(datasourceUnits === CapacityUnits.percent && widgetUnits === CapacityUnits.percent);
   }
 
   public get widgetUnitsInput(): boolean {
     const layout: LevelCardLayout = this.levelCardWidgetSettingsForm.get('layout').value;
 
-    if (layout === LevelCardLayout.absolute) {
-      const datasourceUnits = this.levelCardWidgetSettingsForm.get('datasourceUnits').value;
-      return !(datasourceUnits === CapacityUnits.percent);
-    }
-    return false;
+    return layout === LevelCardLayout.absolute;
   }
 
   public get datasource(): Datasource {
@@ -239,8 +239,10 @@ export class LiquidLevelCardWidgetSettingsComponent extends WidgetSettingsCompon
     }
 
     if (trigger === 'datasourceUnits' || trigger === 'layout' || trigger === 'units') {
-      if (datasourceUnits === CapacityUnits.percent && (layout !== LevelCardLayout.absolute)
-        || (datasourceUnits === CapacityUnits.percent && widgetUnits?.value === CapacityUnits.percent)
+      if (
+        datasourceUnits === CapacityUnits.percent &&
+        layout !== LevelCardLayout.absolute &&
+        (!widgetUnits?.value || widgetUnits?.value === CapacityUnits.percent)
       ) {
         volumeSource.disable({emitEvent: false});
         this.levelCardWidgetSettingsForm.get('volumeConstant').disable({emitEvent: false});

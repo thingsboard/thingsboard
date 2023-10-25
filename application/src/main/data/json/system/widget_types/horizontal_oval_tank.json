@@ -11,7 +11,7 @@
     "resources": [],
     "templateHtml": "<tb-liquid-level-widget \n    [ctx]=\"ctx\">\n</tb-liquid-level-widget>",
     "templateCss": "",
-    "controllerScript": "self.onInit = function() {\n    if (self.ctx.$scope.liquidLevelWidget) {\n        self.ctx.$scope.liquidLevelWidget.onInit();\n    }\n}\n\nself.onDataUpdated = function() {\n    if (self.ctx.$scope.liquidLevelWidget) {\n        self.ctx.$scope.liquidLevelWidget.update();\n    }\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true\n    };\n};\n\nself.onDestroy = function() {\n}\n\nself.actionSources = function() {    \n    return {        \n        'cardClick': {\n            name: 'widget-action.card-click',\n            multiple: false        \n        }    \n    };\n}\n",
+    "controllerScript": "self.onInit = function() {\n}\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.liquidLevelWidget.update();\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true\n    };\n};\n\nself.onDestroy = function() {\n}\n\nself.actionSources = function() {    \n    return {        \n        'cardClick': {\n            name: 'widget-action.card-click',\n            multiple: false        \n        }    \n    };\n}\n",
     "settingsSchema": "{}",
     "dataKeySettingsSchema": "{}\n",
     "settingsDirective": "tb-liquid-level-card-widget-settings",
