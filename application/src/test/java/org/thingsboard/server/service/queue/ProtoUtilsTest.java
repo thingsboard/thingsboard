@@ -17,10 +17,10 @@ package org.thingsboard.server.service.queue;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.thingsboard.server.common.msg.ruleengine.DeviceAttributesEventNotificationMsg;
-import org.thingsboard.server.common.msg.ruleengine.DeviceCredentialsUpdateNotificationMsg;
-import org.thingsboard.server.common.msg.ruleengine.DeviceEdgeUpdateMsg;
-import org.thingsboard.server.common.msg.ruleengine.DeviceNameOrTypeUpdateMsg;
+import org.thingsboard.server.common.msg.rule.engine.DeviceAttributesEventNotificationMsg;
+import org.thingsboard.server.common.msg.rule.engine.DeviceCredentialsUpdateNotificationMsg;
+import org.thingsboard.server.common.msg.rule.engine.DeviceEdgeUpdateMsg;
+import org.thingsboard.server.common.msg.rule.engine.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;

@@ -279,6 +279,19 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                         }
                                     }
                                     callback.onSuccess();
+                                } else if (!toCoreMsg.getToDeviceActorNotificationMsg().isEmpty()) {
+                                    // will be removed in 3.6.1 in favour of hasToDeviceActorNotification()
+                                    Optional<TbActorMsg> actorMsg = encodingService.decode(toCoreMsg.getToDeviceActorNotificationMsg().toByteArray());
+                                    if (actorMsg.isPresent()) {
+                                        TbActorMsg tbActorMsg = actorMsg.get();
+                                        if (tbActorMsg.getMsgType().equals(MsgType.DEVICE_RPC_REQUEST_TO_DEVICE_ACTOR_MSG)) {
+                                            tbCoreDeviceRpcService.forwardRpcRequestToDeviceActor((ToDeviceRpcRequestActorMsg) tbActorMsg);
+                                        } else {
+                                            log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg.get());
+                                            actorContext.tell(actorMsg.get());
+                                        }
+                                    }
+                                    callback.onSuccess();
                                 } else if (toCoreMsg.hasNotificationSchedulerServiceMsg()) {
                                     TransportProtos.NotificationSchedulerServiceMsg notificationSchedulerServiceMsg = toCoreMsg.getNotificationSchedulerServiceMsg();
                                     log.trace("[{}] Forwarding message to notification scheduler service {}", id, toCoreMsg.getNotificationSchedulerServiceMsg());
@@ -359,12 +372,21 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         } else if (toCoreNotification.hasEdgeEventUpdate()) {
             forwardToAppActor(id, ProtoUtils.fromProto(toCoreNotification.getEdgeEventUpdate()));
             callback.onSuccess();
+        } else if (!toCoreNotification.getEdgeEventUpdateMsg().isEmpty()) {
+            //will be removed in 3.6.1 in favour of hasEdgeEventUpdate()
+            forwardToAppActor(id, encodingService.decode(toCoreNotification.getEdgeEventUpdateMsg().toByteArray()), callback);
         } else if (toCoreNotification.hasToEdgeSyncRequest()) {
             forwardToAppActor(id, ProtoUtils.fromProto(toCoreNotification.getToEdgeSyncRequest()));
             callback.onSuccess();
+        } else if (!toCoreNotification.getToEdgeSyncRequestMsg().isEmpty()) {
+            //will be removed in 3.6.1 in favour of hasToEdgeSyncRequest()
+            forwardToAppActor(id, encodingService.decode(toCoreNotification.getToEdgeSyncRequestMsg().toByteArray()), callback);
         } else if (toCoreNotification.hasFromEdgeSyncResponse()) {
             forwardToAppActor(id, ProtoUtils.fromProto(toCoreNotification.getFromEdgeSyncResponse()));
             callback.onSuccess();
+        } else if (!toCoreNotification.getFromEdgeSyncResponseMsg().isEmpty()) {
+            //will be removed in 3.6.1 in favour of hasFromEdgeSyncResponse()
+            forwardToAppActor(id, encodingService.decode(toCoreNotification.getFromEdgeSyncResponseMsg().toByteArray()), callback);
         } else if (toCoreNotification.hasQueueUpdateMsg()) {
             TransportProtos.QueueUpdateMsg queue = toCoreNotification.getQueueUpdateMsg();
             partitionService.updateQueue(queue);
@@ -639,6 +661,11 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             stats.log(toDeviceActorMsg);
         }
         actorContext.tell(new TransportToDeviceActorMsgWrapper(toDeviceActorMsg, callback));
+    }
+
+    private void forwardToAppActor(UUID id, Optional<TbActorMsg> actorMsg, TbCallback callback) {
+        actorMsg.ifPresent(tbActorMsg -> forwardToAppActor(id, tbActorMsg));
+        callback.onSuccess();
     }
 
     private void forwardToAppActor(UUID id, TbActorMsg actorMsg) {

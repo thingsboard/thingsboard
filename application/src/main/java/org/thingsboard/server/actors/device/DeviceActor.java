@@ -16,9 +16,9 @@
 package org.thingsboard.server.actors.device;
 
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.msg.ruleengine.DeviceAttributesEventNotificationMsg;
-import org.thingsboard.server.common.msg.ruleengine.DeviceEdgeUpdateMsg;
-import org.thingsboard.server.common.msg.ruleengine.DeviceNameOrTypeUpdateMsg;
+import org.thingsboard.server.common.msg.rule.engine.DeviceAttributesEventNotificationMsg;
+import org.thingsboard.server.common.msg.rule.engine.DeviceEdgeUpdateMsg;
+import org.thingsboard.server.common.msg.rule.engine.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.TbActorException;
