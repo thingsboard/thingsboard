@@ -1,0 +1,22 @@
+{
+  "widgetsBundle": {
+    "alias": "indoor_environment",
+    "title": "Indoor Environment",
+    "image": null,
+    "description": null,
+    "externalId": null,
+    "name": "Indoor Environment"
+  },
+  "widgetTypeFqns": [
+    "indoor_temperature_card",
+    "indoor_temperature_card_with_background",
+    "indoor_horizontal_temperature_card",
+    "indoor_horizontal_temperature_card_with_background",
+    "indoor_temperature_chart_card",
+    "indoor_temperature_chart_card_with_background",
+    "indoor_simple_temperature_chart_card",
+    "indoor_simple_temperature_chart_card_with_background",
+    "indoor_temperature_progress_bar",
+    "indoor_temperature_progress_bar_with_background"
+  ]
+}
