@@ -31,7 +31,7 @@
           </tb-toggle-select>
         </div>
         <tb-image-cards-select #shapesImageCardsSelect
-                               [fxShow]="levelCardWidgetSettingsForm.get('tankSelectionType')?.value === shapeSelectOptions.static"
+                               [fxShow]="levelCardWidgetSettingsForm.get('tankSelectionType').value === shapeSelectOptions.static"
                                rowHeight="{{ '1:1' }}"
                                [cols]="5"
                                [colsLtMd]="2"
@@ -44,7 +44,7 @@
           </tb-image-cards-select-option>
         </tb-image-cards-select>
         <div class="tb-form-row space-between" style="width: 100%;"
-             [fxShow]="levelCardWidgetSettingsForm.get('tankSelectionType')?.value === shapeSelectOptions.attribute">
+             *ngIf="levelCardWidgetSettingsForm.get('tankSelectionType').value === shapeSelectOptions.attribute">
           <div class="fixed-title-width" translate>widgets.liquid-level-card.shape-attribute-name</div>
           <tb-string-autocomplete [fetchOptionsFn]="fetchOptions.bind(this)"
                                   [required]="isRequired('shapeAttributeName')"
@@ -54,7 +54,7 @@
           </tb-string-autocomplete>
         </div>
         <div fxFlex fxLayout="row" fxLayoutAlign="space-between center" style="width: 100%;"
-             [fxShow]="levelCardWidgetSettingsForm.get('tankSelectionType')?.value === shapeSelectOptions.attribute">
+             *ngIf="levelCardWidgetSettingsForm.get('tankSelectionType').value === shapeSelectOptions.attribute">
           <div class="tb-hint" style="padding: 0;" translate>widgets.liquid-level-card.shape-by-attribute</div>
           <div class="see-example"
                [tb-help-popup]="'widget/lib/indicator/shape_attribute_fn'"
@@ -101,13 +101,13 @@
               </mat-option>
             </mat-select>
           </mat-form-field>
-          <tb-unit-input [fxShow]="levelCardWidgetSettingsForm.get('widgetUnitsSource')?.value !== volumeOptions.attribute"
+          <tb-unit-input *ngIf="levelCardWidgetSettingsForm.get('widgetUnitsSource').value !== volumeOptions.attribute"
                          class="flex"
                          [tagFilter]="unitsType.capacity"
                          [required]="isRequired('units')"
                          formControlName="units">
           </tb-unit-input>
-          <tb-string-autocomplete [fxShow]="levelCardWidgetSettingsForm.get('widgetUnitsSource')?.value === volumeOptions.attribute"
+          <tb-string-autocomplete *ngIf="levelCardWidgetSettingsForm.get('widgetUnitsSource').value === volumeOptions.attribute"
                                   [fetchOptionsFn]="fetchOptions.bind(this)"
                                   [required]="isRequired('widgetUnitsAttributeName')"
                                   [errorText]="'widgets.liquid-level-card.attribute-name-required' | translate"
@@ -126,7 +126,7 @@
               </mat-option>
             </mat-select>
           </mat-form-field>
-          <mat-form-field [fxShow]="levelCardWidgetSettingsForm.get('volumeSource')?.value === volumeOptions.static"
+          <mat-form-field *ngIf="levelCardWidgetSettingsForm.get('volumeSource').value === volumeOptions.static"
                           appearance="outline" class="flex number" subscriptSizing="dynamic">
             <input matInput formControlName="volumeConstant" type="number"
                    min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
@@ -139,7 +139,7 @@
               warning
             </mat-icon>
           </mat-form-field>
-          <tb-string-autocomplete [fxShow]="levelCardWidgetSettingsForm.get('volumeSource')?.value === volumeOptions.attribute"
+          <tb-string-autocomplete *ngIf="levelCardWidgetSettingsForm.get('volumeSource').value === volumeOptions.attribute"
                                   [fetchOptionsFn]="fetchOptions.bind(this)"
                                   [required]="isRequired('volumeAttributeName')"
                                   [errorText]="'widgets.liquid-level-card.attribute-name-required' | translate"
@@ -167,7 +167,7 @@
         </tb-color-settings>
       </div>
       <div class="tb-form-row space-between"
-           *ngIf="levelCardWidgetSettingsForm.get('layout')?.value !== this.levelCardLayouts.simple">
+           *ngIf="levelCardWidgetSettingsForm.get('layout').value !== this.levelCardLayouts.simple">
         <div class="fixed-title-width" translate>widgets.liquid-level-card.value</div>
         <div fxFlex fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="8px">
           <tb-font-settings formControlName="valueFont"
@@ -238,14 +238,14 @@
               <tb-font-settings formControlName="tooltipDateFont"
                                 [previewText]="datePreviewFn">
               </tb-font-settings>
-              <tb-color-settings formControlName="tooltipDateColor" settingsKey="{{'widgets.value-card.date' | translate }}">
-              </tb-color-settings>
+              <tb-color-input asBoxInput colorClearButton formControlName="tooltipDateColor">
+              </tb-color-input>
             </div>
           </div>
           <div class="tb-form-row space-between">
             <div class="fixed-title-width" translate>widgets.liquid-level-card.tooltip-background</div>
-            <tb-color-settings formControlName="tooltipBackgroundColor" settingsKey="{{'widgets.liquid-level-card.tooltip-background' | translate }}">
-            </tb-color-settings>
+            <tb-color-input asBoxInput colorClearButton formControlName="tooltipBackgroundColor">
+            </tb-color-input>
           </div>
           <div class="tb-form-row space-between">
             <div class="fixed-title-width" translate>widgets.liquid-level-card.background-blur</div>

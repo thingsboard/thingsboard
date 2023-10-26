@@ -72,8 +72,8 @@ export interface LevelCardWidgetSettings extends WidgetConfig {
   showTooltipDate: boolean;
   tooltipDateFormat: DateFormatSettings;
   tooltipDateFont: Font;
-  tooltipDateColor: ColorSettings;
-  tooltipBackgroundColor: ColorSettings;
+  tooltipDateColor: string;
+  tooltipBackgroundColor: string;
   tooltipBackgroundBlur: number;
 }
 
@@ -296,8 +296,8 @@ export const levelCardDefaultSettings = (): LevelCardWidgetSettings => ({
     weight: '500',
     lineHeight: '100%'
   },
-  tooltipDateColor: constantColor('rgba(0, 0, 0, 0.76)'),
-  tooltipBackgroundColor: constantColor('rgba(255, 255, 255, 0.76)'),
+  tooltipDateColor: 'rgba(0, 0, 0, 0.76)',
+  tooltipBackgroundColor: 'rgba(255, 255, 255, 0.76)',
   tooltipBackgroundBlur: 3
 });
 

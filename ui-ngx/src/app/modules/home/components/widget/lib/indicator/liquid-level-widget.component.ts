@@ -56,41 +56,27 @@ export class LiquidLevelWidgetComponent implements OnInit {
   @Input()
   ctx: WidgetContext;
 
-  svgParams: SvgInfo;
+  private svgParams: SvgInfo;
 
-  svg: JQuery<SVGElement>;
+  private svg: JQuery<SVGElement>;
+  private tooltip: ITooltipsterInstance;
+  private overlayContainer: JQuery<HTMLElement>;
+  private shape: Shapes;
 
-  tooltip: ITooltipsterInstance;
+  private settings: LevelCardWidgetSettings;
 
-  overlayContainer: JQuery<HTMLElement>;
+  private tankColor: ColorProcessor;
+  private volumeColor: ColorProcessor;
+  private valueColor: ColorProcessor;
+  private liquidColor: ColorProcessor;
+  private backgroundOverlayColor: ColorProcessor;
+  private tooltipLevelColor: ColorProcessor;
 
-  shape: Shapes;
+  private tooltipDateFormat:  DateFormatProcessor;
 
-  settings: LevelCardWidgetSettings;
-
-  tankColor: ColorProcessor;
-
-  volumeColor: ColorProcessor;
-
-  valueColor: ColorProcessor;
-
-  liquidColor: ColorProcessor;
-
-  backgroundOverlayColor: ColorProcessor;
-
-  tooltipLevelColor: ColorProcessor;
-
-  tooltipDateFormat:  DateFormatProcessor;
-
-  tooltipDateColor: ColorProcessor;
-
-  tooltipBackgroundColor: ColorProcessor;
-
-  volume: number;
-
-  tooltipContent: string;
-
-  widgetUnits: string;
+  private volume: number;
+  private tooltipContent: string;
+  private widgetUnits: string;
 
   constructor(private elementRef: ElementRef) {
   }
@@ -136,8 +122,6 @@ export class LiquidLevelWidgetComponent implements OnInit {
     this.liquidColor =  ColorProcessor.fromSettings(this.settings.liquidColor);
     this.backgroundOverlayColor = ColorProcessor.fromSettings(this.settings.backgroundOverlayColor);
     this.tooltipLevelColor = ColorProcessor.fromSettings(this.settings.tooltipLevelColor);
-    this.tooltipDateColor = ColorProcessor.fromSettings(this.settings.tooltipDateColor);
-    this.tooltipBackgroundColor = ColorProcessor.fromSettings(this.settings.tooltipBackgroundColor);
 
     this.tooltipDateFormat = DateFormatProcessor.fromSettings(this.ctx.$injector, this.settings.tooltipDateFormat);
   }
@@ -189,11 +173,11 @@ export class LiquidLevelWidgetComponent implements OnInit {
   }
 
   private updateData(ignoreAnimation?: boolean) {
-    const data = this.ctx.data[0]?.data[0]?.map(value => Number(value));
-    if (isDefinedAndNotNull(data) && data.length && typeof Number(data[1]) === 'number') {
-      const percentage = this.convertInputData(Number(data[1]));
+    const data = this.ctx.data[0]?.data[0];
+    if (data && isDefinedAndNotNull(data[1])) {
+      const percentage = isNumber(data[1]) ? this.convertInputData(data[1]) : 0;
       this.updateSvg(percentage, ignoreAnimation);
-      this.updateValueElement(this.convertOutputData(percentage), percentage);
+      this.updateValueElement(data[1], percentage);
 
       if (this.settings.showTooltip) {
         this.updateTooltip(data);
@@ -229,7 +213,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
         },
         functionReady: (instance, helper) => {
           const tooltipsterBoxStyles: JQuery.PlainObject = {
-            backgroundColor: this.getTooltipBackground(),
+            backgroundColor: this.settings.tooltipBackgroundColor,
             backdropFilter: `blur(${this.settings.tooltipBackgroundBlur}px)`,
             width: '100%',
             height: '100%'
@@ -341,7 +325,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
     return limits.min + (percentage / 100) * (limits.max - limits.min);
   }
 
-  private updateTooltip(value: number[]): void {
+  private updateTooltip(value: [number, any]): void {
     this.tooltipContent = this.getTooltipContent(value);
 
     if (this.tooltip) {
@@ -392,15 +376,17 @@ export class LiquidLevelWidgetComponent implements OnInit {
     });
   }
 
-  private updateValueElement(data: number, percentage: number): void {
+  private updateValueElement(data: any, percentage: number): void {
     let content: string;
     let container: JQuery<HTMLElement>;
     const jQueryContainerElement = $(this.elementRef.nativeElement);
+    let value = 'N/A';
 
-    const value = convertLiters(data, this.widgetUnits as CapacityUnits, ConversionType.from)
-      .toFixed(this.settings.decimals || 0);
+    if (isNumber(data)) {
+      value = convertLiters(this.convertOutputData(percentage), this.widgetUnits as CapacityUnits, ConversionType.from)
+          .toFixed(this.settings.decimals || 0);
+    }
     this.valueColor.update(value);
-
     const valueTextStyle = cssTextFromInlineStyle({...inlineTextStyle(this.settings.valueFont),
                                                           color: this.valueColor.color});
     this.backgroundOverlayColor.update(percentage);
@@ -431,29 +417,30 @@ export class LiquidLevelWidgetComponent implements OnInit {
     }
   }
 
-  private getTooltipContent(value?: number[]): string {
-    const contentValue = value || [0, 0];
+  private getTooltipContent(value?: [number, any]): string {
+    const contentValue = value || [0, ''];
+    let tooltipValue: string | number = 'N/A';
 
-    if (contentValue[1]) {
-      contentValue[1] = this.convertTooltipData(contentValue[1]);
+    if (isNumber(contentValue[1])) {
+      tooltipValue = this.convertTooltipData(contentValue[1]);
     }
 
-    this.tooltipLevelColor.update(contentValue[1]);
-    this.tooltipDateColor.update(contentValue[0]);
+    this.tooltipLevelColor.update(tooltipValue);
     this.tooltipDateFormat.update(contentValue[0]);
-    this.tooltipBackgroundColor.update(contentValue);
 
     const levelTextStyle = cssTextFromInlineStyle({...inlineTextStyle(this.settings.tooltipLevelFont),
       color: this.tooltipLevelColor.color});
 
     const dateTextStyle = cssTextFromInlineStyle({...inlineTextStyle(this.settings.tooltipDateFont),
-      color: this.tooltipDateColor.color, overflow: 'hidden', 'text-overflow': 'ellipsis', 'white-space': 'nowrap'});
+      color: this.settings.tooltipDateColor, overflow: 'hidden', 'text-overflow': 'ellipsis', 'white-space': 'nowrap'});
 
     let content = `<div style="display: flex; flex-direction: column;
                                gap: 8px; background-color: transparent">`;
 
     if (this.settings.showTooltipLevel) {
-      const levelValue = contentValue[1]?.toFixed(this.settings.tooltipLevelDecimals) + this.settings.tooltipUnits;
+      const levelValue = typeof tooltipValue == 'number'
+          ? `${tooltipValue.toFixed(this.settings.tooltipLevelDecimals)}${this.settings.tooltipUnits}`
+          : 'N/A';
       content += this.createTooltipContent(
         this.ctx.translate.instant('widgets.liquid-level-card.level'),
         levelValue,
@@ -483,10 +470,6 @@ export class LiquidLevelWidgetComponent implements OnInit {
                   ${contentValue}
                 </label>
             </div>`;
-  }
-
-  private getTooltipBackground(): string {
-    return this.tooltipBackgroundColor.color;
   }
 
   private convertInputData(value: number): number {

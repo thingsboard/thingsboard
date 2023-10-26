@@ -76,7 +76,7 @@
         </tb-toggle-select>
       </div>
       <tb-image-cards-select #shapesImageCardsSelect
-                             [fxShow]="levelCardWidgetConfigForm.get('tankSelectionType')?.value === shapeSelectOptions.static"
+                             [fxShow]="levelCardWidgetConfigForm.get('tankSelectionType').value === shapeSelectOptions.static"
                              rowHeight="{{ '1:1' }}"
                              [cols]="5"
                              [colsLtMd]="2"
@@ -89,7 +89,7 @@
         </tb-image-cards-select-option>
       </tb-image-cards-select>
       <div class="tb-form-row space-between" style="width: 100%;"
-           [fxShow]="levelCardWidgetConfigForm.get('tankSelectionType')?.value === shapeSelectOptions.attribute">
+           *ngIf="levelCardWidgetConfigForm.get('tankSelectionType').value === shapeSelectOptions.attribute">
         <div class="fixed-title-width tb-required" translate>widgets.liquid-level-card.shape-attribute-name</div>
         <tb-string-autocomplete [fetchOptionsFn]="fetchOptions.bind(this)"
                                 [required]="isRequired('shapeAttributeName')"
@@ -99,7 +99,7 @@
         </tb-string-autocomplete>
       </div>
       <div fxFlex fxLayout="row" fxLayoutAlign="space-between center" style="width: 100%;"
-           [fxShow]="levelCardWidgetConfigForm.get('tankSelectionType')?.value === shapeSelectOptions.attribute">
+           *ngIf="levelCardWidgetConfigForm.get('tankSelectionType').value === shapeSelectOptions.attribute">
         <div class="tb-hint" style="padding: 0;" translate>widgets.liquid-level-card.shape-by-attribute</div>
         <div class="see-example"
              [tb-help-popup]="'widget/lib/indicator/shape_attribute_fn'"
@@ -144,13 +144,13 @@
             </mat-option>
           </mat-select>
         </mat-form-field>
-        <tb-unit-input [fxShow]="levelCardWidgetConfigForm.get('widgetUnitsSource')?.value !== levelOptions.attribute"
+        <tb-unit-input [fxShow]="levelCardWidgetConfigForm.get('widgetUnitsSource').value !== levelOptions.attribute"
                        class="flex"
                        [tagFilter]="unitsType.capacity"
                        [required]="isRequired('units')"
                        formControlName="units">
         </tb-unit-input>
-        <tb-string-autocomplete [fxShow]="levelCardWidgetConfigForm.get('widgetUnitsSource')?.value === levelOptions.attribute"
+        <tb-string-autocomplete [fxShow]="levelCardWidgetConfigForm.get('widgetUnitsSource').value === levelOptions.attribute"
                                 [fetchOptionsFn]="fetchOptions.bind(this)"
                                 [required]="isRequired('widgetUnitsAttributeName')"
                                 [errorText]="'widgets.liquid-level-card.attribute-name-required' | translate"
@@ -169,7 +169,7 @@
             </mat-option>
           </mat-select>
         </mat-form-field>
-        <mat-form-field [fxShow]="levelCardWidgetConfigForm.get('volumeSource')?.value === levelOptions.static"
+        <mat-form-field [fxShow]="levelCardWidgetConfigForm.get('volumeSource').value === levelOptions.static"
                         appearance="outline" class="flex number" subscriptSizing="dynamic">
           <input matInput formControlName="volumeConstant" type="number"
                  min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
@@ -182,7 +182,7 @@
             warning
           </mat-icon>
         </mat-form-field>
-        <tb-string-autocomplete [fxShow]="levelCardWidgetConfigForm.get('volumeSource')?.value === levelOptions.attribute"
+        <tb-string-autocomplete [fxShow]="levelCardWidgetConfigForm.get('volumeSource').value === levelOptions.attribute"
                                 [fetchOptionsFn]="fetchOptions.bind(this)"
                                 [errorText]="'widgets.liquid-level-card.attribute-name-required' | translate"
                                 [required]="isRequired('volumeAttributeName')"
@@ -210,7 +210,7 @@
       </tb-color-settings>
     </div>
     <div class="tb-form-row space-between"
-         *ngIf="levelCardWidgetConfigForm.get('layout')?.value !== this.levelCardLayouts.simple">
+         *ngIf="levelCardWidgetConfigForm.get('layout').value !== this.levelCardLayouts.simple">
       <div class="fixed-title-width" translate>widgets.liquid-level-card.value</div>
       <div fxFlex fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="8px">
         <mat-form-field style="max-width: 40%;" appearance="outline" class="flex number" subscriptSizing="dynamic">
@@ -234,13 +234,6 @@
         <tb-color-settings formControlName="volumeColor" settingsKey="{{'widgets.liquid-level-card.total-volume' | translate }}">
         </tb-color-settings>
       </div>
-    </div>
-    <div class="tb-form-row space-between">
-      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showBackgroundOverlay">
-        {{ 'widgets.liquid-level-card.background-overlay' | translate }}
-      </mat-slide-toggle>
-      <tb-color-settings formControlName="backgroundOverlayColor" settingsKey="{{'widgets.liquid-level-card.background-overlay' | translate }}">
-      </tb-color-settings>
     </div>
   </div>
   <div class="tb-form-panel tb-slide-toggle">
@@ -286,14 +279,14 @@
             <tb-font-settings formControlName="tooltipDateFont"
                               [previewText]="datePreviewFn">
             </tb-font-settings>
-            <tb-color-settings formControlName="tooltipDateColor" settingsKey="{{'widgets.value-card.date' | translate }}">
-            </tb-color-settings>
+            <tb-color-input asBoxInput colorClearButton formControlName="tooltipDateColor">
+            </tb-color-input>
           </div>
         </div>
         <div class="tb-form-row space-between">
           <div class="fixed-title-width" translate>widgets.liquid-level-card.tooltip-background</div>
-          <tb-color-settings formControlName="tooltipBackgroundColor" settingsKey="{{'widgets.liquid-level-card.tooltip-background' | translate }}">
-          </tb-color-settings>
+          <tb-color-input asBoxInput colorClearButton formControlName="tooltipBackgroundColor">
+          </tb-color-input>
         </div>
         <div class="tb-form-row space-between">
           <div class="fixed-title-width" translate>widgets.liquid-level-card.background-blur</div>

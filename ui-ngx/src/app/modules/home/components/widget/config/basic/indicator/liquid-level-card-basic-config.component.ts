@@ -215,8 +215,6 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
       liquidColor: [settings.liquidColor, []],
       valueFont: [settings.valueFont, []],
       valueColor: [settings.valueColor, []],
-      showBackgroundOverlay: [settings.showBackgroundOverlay, []],
-      backgroundOverlayColor: [settings.backgroundOverlayColor, []],
 
       showTooltip: [settings.showTooltip, []],
       showTooltipLevel: [settings.showTooltipLevel, []],
@@ -278,8 +276,6 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
     this.widgetConfig.config.settings.liquidColor = config.liquidColor;
     this.widgetConfig.config.settings.valueFont = config.valueFont;
     this.widgetConfig.config.settings.valueColor = config.valueColor;
-    this.widgetConfig.config.settings.showBackgroundOverlay = config.showBackgroundOverlay;
-    this.widgetConfig.config.settings.backgroundOverlayColor = config.backgroundOverlayColor;
 
     this.widgetConfig.config.settings.showTooltip = config.showTooltip;
     this.widgetConfig.config.settings.showTooltipLevel = config.showTooltipLevel;
@@ -304,7 +300,7 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
 
   protected validatorTriggers(): string[] {
     return [
-      'showBackgroundOverlay', 'showTooltip', 'showTooltipLevel',
+      'showTooltip', 'showTooltipLevel',
       'tankSelectionType', 'datasourceUnits',
       'showTitleIcon', 'volumeSource',
       'showTooltipDate', 'units',
@@ -403,16 +399,6 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
         this.levelCardWidgetConfigForm.get('iconSizeUnit').disable({emitEvent: false});
       }
       emitEventFields.push('titleIcon', 'iconColor', 'iconSize', 'iconSizeUnit');
-    }
-
-    if (trigger === 'showBackgroundOverlay') {
-      const showBackgroundOverlay: boolean = this.levelCardWidgetConfigForm.get('showBackgroundOverlay').value;
-      if (showBackgroundOverlay) {
-        this.levelCardWidgetConfigForm.get('backgroundOverlayColor').enable({emitEvent: false});
-      } else {
-        this.levelCardWidgetConfigForm.get('backgroundOverlayColor').disable({emitEvent: false});
-      }
-      emitEventFields.push('backgroundOverlayColor');
     }
 
     if (trigger === 'showTooltip') {
