@@ -27,6 +27,14 @@
     "indoor_simple_humidity_chart_card",
     "indoor_simple_humidity_chart_card_with_background",
     "indoor_humidity_progress_bar",
-    "indoor_humidity_progress_bar_with_background"
+    "indoor_humidity_progress_bar_with_background",
+    "indoor_co2_card",
+    "indoor_co2_card_with_background",
+    "indoor_horizontal_co2_card",
+    "indoor_horizontal_co2_card_with_background",
+    "indoor_co2_chart_card",
+    "indoor_co2_chart_card_with_background",
+    "indoor_simple_co2_chart_card",
+    "indoor_simple_co2_chart_card_with_background"
   ]
 }
