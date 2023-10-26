@@ -41,7 +41,7 @@ import { AttributeScope, DataKeyType } from '@shared/models/telemetry/telemetry.
 import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-utils';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { AliasInfo, StateParams, SubscriptionInfo } from '@core/api/widget-api.models';
-import { DataKey, Datasource, DatasourceType, KeyInfo } from '@app/shared/models/widget.models';
+import { DataKey, Datasource, DatasourceType, DeprecatedFilter, KeyInfo } from '@app/shared/models/widget.models';
 import { UtilsService } from '@core/services/utils.service';
 import {
   AliasFilterType,
@@ -65,7 +65,9 @@ import { Device, DeviceCredentialsType } from '@shared/models/device.models';
 import { AttributeService } from '@core/http/attribute.service';
 import {
   AlarmData,
-  AlarmDataQuery, AlarmFilter, AlarmFilterConfig,
+  AlarmDataQuery,
+  AlarmFilter,
+  AlarmFilterConfig,
   createDefaultEntityDataPageLink,
   EntityData,
   EntityDataQuery,
@@ -417,6 +419,10 @@ export class EntityService {
       case EntityType.WIDGETS_BUNDLE:
         pageLink.sortOrder.property = 'title';
         entitiesObservable = this.widgetService.getWidgetBundles(pageLink, false, config);
+        break;
+      case EntityType.WIDGET_TYPE:
+        pageLink.sortOrder.property = 'name';
+        entitiesObservable = this.widgetService.getWidgetTypes(pageLink, true, false, DeprecatedFilter.ALL, null, config);
         break;
       case EntityType.NOTIFICATION_TARGET:
         pageLink.sortOrder.property = 'name';
