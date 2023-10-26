@@ -141,8 +141,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     protected final TbQueueConsumer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> usageStatsConsumer;
     private final TbQueueConsumer<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> firmwareStatesConsumer;
 
+    protected volatile ExecutorService consumersExecutor;
     protected volatile ExecutorService usageStatsExecutor;
-
     private volatile ExecutorService firmwareStatesExecutor;
 
     public DefaultTbCoreConsumerService(TbCoreQueueFactory tbCoreQueueFactory,
@@ -185,7 +185,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
 
     @PostConstruct
     public void init() {
-        super.init("tb-core-consumer", "tb-core-notifications-consumer");
+        super.init("tb-core-notifications-consumer");
+        this.consumersExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("tb-core-consumer"));
         this.usageStatsExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-core-usage-stats-consumer"));
         this.firmwareStatesExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-core-firmware-notifications-consumer"));
     }
@@ -193,6 +194,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     @PreDestroy
     public void destroy() {
         super.destroy();
+        if (consumersExecutor != null) {
+            consumersExecutor.shutdownNow();
+        }
         if (usageStatsExecutor != null) {
             usageStatsExecutor.shutdownNow();
         }
@@ -348,7 +352,11 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         } else if (toCoreNotification.hasFromDeviceRpcResponse()) {
             log.trace("[{}] Forwarding message to RPC service {}", id, toCoreNotification.getFromDeviceRpcResponse());
             forwardToCoreRpcService(toCoreNotification.getFromDeviceRpcResponse(), callback);
+        } else if (toCoreNotification.hasComponentLifecycle()) {
+            handleComponentLifecycleMsg(id, ProtoUtils.fromProto(toCoreNotification.getComponentLifecycle()));
+            callback.onSuccess();
         } else if (!toCoreNotification.getComponentLifecycleMsg().isEmpty()) {
+            //will be removed in 3.6.1 in favour of hasComponentLifecycle()
             handleComponentLifecycleMsg(id, toCoreNotification.getComponentLifecycleMsg());
             callback.onSuccess();
         } else if (!toCoreNotification.getEdgeEventUpdateMsg().isEmpty()) {
@@ -691,7 +699,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     }
 
     @Override
-    protected void stopMainConsumers() {
+    protected void stopConsumers() {
         if (mainConsumer != null) {
             mainConsumer.unsubscribe();
         }
