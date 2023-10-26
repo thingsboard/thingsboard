@@ -85,9 +85,12 @@ export class WidgetService {
     );
   }
 
-  public getWidgetBundles(pageLink: PageLink, fullSearch = false, config?: RequestConfig): Observable<PageData<WidgetsBundle>> {
-    return this.http.get<PageData<WidgetsBundle>>(`/api/widgetsBundles${pageLink.toQuery()}&fullSearch=${fullSearch}`,
-      defaultHttpOptionsFromConfig(config));
+  public getWidgetBundles(pageLink: PageLink, tenantOnly = false,
+                          fullSearch = false, config?: RequestConfig): Observable<PageData<WidgetsBundle>> {
+    return this.http.get<PageData<WidgetsBundle>>(
+      `/api/widgetsBundles${pageLink.toQuery()}&tenantOnly=${tenantOnly}&fullSearch=${fullSearch}`,
+      defaultHttpOptionsFromConfig(config)
+    );
   }
 
   public getWidgetsBundle(widgetsBundleId: string,
