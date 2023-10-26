@@ -411,7 +411,15 @@ public class TbSubscriptionUtils {
         return result;
     }
 
-    static ToCoreNotificationMsg toProto(boolean timeSeries, EntityId entityId, List<TsKvEntry> updates) {
+    static ToCoreNotificationMsg toProto(EntityId entityId, List<TsKvEntry> updates) {
+        return toProto(true, null, entityId, updates);
+    }
+
+    static ToCoreNotificationMsg toProto(String scope, EntityId entityId, List<TsKvEntry> updates) {
+        return toProto(false, scope, entityId, updates);
+    }
+
+    static ToCoreNotificationMsg toProto(boolean timeSeries, String scope, EntityId entityId, List<TsKvEntry> updates) {
         TransportProtos.TbSubUpdateProto.Builder builder = TransportProtos.TbSubUpdateProto.newBuilder();
 
         builder.setEntityIdMSB(entityId.getId().getMostSignificantBits());
@@ -434,6 +442,7 @@ public class TbSubscriptionUtils {
         if (timeSeries) {
             result.setTsUpdate(builder);
         } else {
+            builder.setScope(scope);
             result.setAttrUpdate(builder);
         }
         return ToCoreNotificationMsg.newBuilder().setToLocalSubscriptionServiceMsg(result).build();

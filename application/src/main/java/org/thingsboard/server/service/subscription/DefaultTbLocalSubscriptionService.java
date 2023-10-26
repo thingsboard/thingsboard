@@ -262,37 +262,39 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
 
     @Override
     public void onAttributesUpdate(TransportProtos.TbSubUpdateProto proto, TbCallback callback) {
-        onAttributesUpdate(new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()), TbSubscriptionUtils.fromProto(proto), callback);
+        onAttributesUpdate(new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()), proto.getScope(), TbSubscriptionUtils.fromProto(proto), callback);
     }
 
     @Override
-    public void onAttributesUpdate(EntityId entityId, List<TsKvEntry> data, TbCallback callback) {
-        onAttributesUpdate(entityId.getId(), data, callback);
+    public void onAttributesUpdate(EntityId entityId, String scope, List<TsKvEntry> data, TbCallback callback) {
+        onAttributesUpdate(entityId.getId(), scope, data, callback);
     }
 
-    private void onAttributesUpdate(UUID entityId, List<TsKvEntry> data, TbCallback callback) {
+    private void onAttributesUpdate(UUID entityId, String scope, List<TsKvEntry> data, TbCallback callback) {
         entityUpdates.get(entityId).attributesUpdateTs = System.currentTimeMillis();
         processSubscriptionData(entityId,
                 sub -> TbSubscriptionType.ATTRIBUTES.equals(sub.getType()),
                 s -> {
                     TbAttributeSubscription sub = (TbAttributeSubscription) s;
-                    List<TsKvEntry> updateData = null;
-                    if (sub.isAllKeys()) {
-                        updateData = data;
-                    } else {
-                        for (TsKvEntry kv : data) {
-                            if (sub.getKeyStates().containsKey((kv.getKey()))) {
-                                if (updateData == null) {
-                                    updateData = new ArrayList<>();
+                    if (sub.getScope() == null || TbAttributeSubscriptionScope.ANY_SCOPE.equals(sub.getScope()) || sub.getScope().name().equals(scope)) {
+                        List<TsKvEntry> updateData = null;
+                        if (sub.isAllKeys()) {
+                            updateData = data;
+                        } else {
+                            for (TsKvEntry kv : data) {
+                                if (sub.getKeyStates().containsKey((kv.getKey()))) {
+                                    if (updateData == null) {
+                                        updateData = new ArrayList<>();
+                                    }
+                                    updateData.add(kv);
                                 }
-                                updateData.add(kv);
                             }
                         }
-                    }
-                    if (updateData != null) {
-                        TelemetrySubscriptionUpdate update = new TelemetrySubscriptionUpdate(sub.getSubscriptionId(), updateData);
-                        update.getLatestValues().forEach((key, value) -> sub.getKeyStates().put(key, value));
-                        subscriptionUpdateExecutor.submit(() -> sub.getUpdateProcessor().accept(sub, update));
+                        if (updateData != null) {
+                            TelemetrySubscriptionUpdate update = new TelemetrySubscriptionUpdate(sub.getSubscriptionId(), updateData);
+                            update.getLatestValues().forEach((key, value) -> sub.getKeyStates().put(key, value));
+                            subscriptionUpdateExecutor.submit(() -> sub.getUpdateProcessor().accept(sub, update));
+                        }
                     }
                 }, callback);
     }
@@ -444,7 +446,13 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
             return;
         }
         final Map<String, Long> keyStates = subscription.getKeyStates();
-        DonAsynchron.withCallback(attrService.find(subscription.getTenantId(), subscription.getEntityId(), DataConstants.CLIENT_SCOPE, keyStates.keySet()), values -> {
+        String scope;
+        if (subscription.getScope() != null && !TbAttributeSubscriptionScope.ANY_SCOPE.equals(subscription.getScope())) {
+            scope = subscription.getScope().name();
+        } else {
+            scope = DataConstants.CLIENT_SCOPE;
+        }
+        DonAsynchron.withCallback(attrService.find(subscription.getTenantId(), subscription.getEntityId(), scope, keyStates.keySet()), values -> {
                     List<TsKvEntry> updates = new ArrayList<>();
                     values.forEach(latestEntry -> {
                         if (latestEntry.getLastUpdateTs() > keyStates.get(latestEntry.getKey())) {
@@ -453,7 +461,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
                     });
                     var missedUpdates = updates.stream().filter(u -> u.getValue() != null).collect(Collectors.toList());
                     if (!missedUpdates.isEmpty()) {
-                        onAttributesUpdate(subscription.getEntityId(), missedUpdates, TbCallback.EMPTY);
+                        onAttributesUpdate(subscription.getEntityId(), scope, missedUpdates, TbCallback.EMPTY);
                     }
                 },
                 e -> log.error("Failed to fetch missed updates.", e), tsCallBackExecutor);

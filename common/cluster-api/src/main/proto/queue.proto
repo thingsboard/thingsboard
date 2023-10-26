@@ -619,6 +619,7 @@ message TbSubUpdateProto {
   int32 errorCode = 3;
   string errorMsg = 4;
   repeated TsValueListProto data = 5;
+  string scope = 6;
 }
 
 message TbAlarmSubUpdateProto {
