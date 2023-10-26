@@ -59,13 +59,19 @@ public interface NotificationRepository extends JpaRepository<NotificationEntity
     Page<NotificationEntity> findByRequestId(UUID requestId, Pageable pageable);
 
     @Transactional
-    int deleteByIdAndRecipientId(UUID id, UUID recipientId);
+    @Modifying
+    @Query("DELETE FROM NotificationEntity n WHERE n.id = :id AND n.recipientId = :recipientId")
+    int deleteByIdAndRecipientId(@Param("id") UUID id, @Param("recipientId") UUID recipientId);
 
     @Transactional
-    void deleteByRequestId(UUID requestId);
+    @Modifying
+    @Query("DELETE FROM NotificationEntity n WHERE n.requestId = :requestId")
+    void deleteByRequestId(@Param("requestId") UUID requestId);
 
     @Transactional
-    void deleteByRecipientId(UUID recipientId);
+    @Modifying
+    @Query("DELETE FROM NotificationEntity n WHERE n.recipientId = :recipientId")
+    void deleteByRecipientId(@Param("recipientId") UUID recipientId);
 
     @Modifying
     @Transactional
