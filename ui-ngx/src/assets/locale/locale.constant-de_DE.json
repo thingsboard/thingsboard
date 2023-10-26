@@ -212,7 +212,7 @@
     "filter-type-single-entity": "Einzelne Entität",
     "filter-type-entity-list": "Entitätsliste",
     "filter-type-entity-name": "Entitätsname",
-	  "filter-type-entity-type": "Entitätstyp",
+    "filter-type-entity-type": "Entitätstyp",
     "filter-type-state-entity": "Entität aus dem Dashboard Status",
     "filter-type-state-entity-description": "Entität aus den Dashboard Status Parametern",
     "filter-type-asset-type": "Objekttyp",
