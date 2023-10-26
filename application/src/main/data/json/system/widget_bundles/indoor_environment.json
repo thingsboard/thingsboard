@@ -17,6 +17,16 @@
     "indoor_simple_temperature_chart_card",
     "indoor_simple_temperature_chart_card_with_background",
     "indoor_temperature_progress_bar",
-    "indoor_temperature_progress_bar_with_background"
+    "indoor_temperature_progress_bar_with_background",
+    "indoor_humidity_card",
+    "indoor_humidity_card_with_background",
+    "indoor_horizontal_humidity_card",
+    "indoor_horizontal_humidity_card_with_background",
+    "indoor_humidity_chart_card",
+    "indoor_humidity_chart_card_with_background",
+    "indoor_simple_humidity_chart_card",
+    "indoor_simple_humidity_chart_card_with_background",
+    "indoor_humidity_progress_bar",
+    "indoor_humidity_progress_bar_with_background"
   ]
 }
