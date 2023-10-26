@@ -58,7 +58,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.TbAlarmDeleteProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAlarmUpdateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAttributeDeleteProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAttributeUpdateProto;
-import org.thingsboard.server.gen.transport.TransportProtos.TbSubscriptionCloseProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbTimeSeriesDeleteProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbTimeSeriesUpdateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
@@ -94,7 +93,6 @@ import org.thingsboard.server.service.sync.vc.GitVersionControlQueueService;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationUpdate;
-import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscriptionUpdate;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -344,10 +342,13 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         if (toCoreNotification.hasToLocalSubscriptionServiceMsg()) {
             log.trace("[{}] Forwarding message to local subscription service {}", id, toCoreNotification.getToLocalSubscriptionServiceMsg());
             forwardToLocalSubMgrService(toCoreNotification.getToLocalSubscriptionServiceMsg(), callback);
+        } else if (toCoreNotification.hasCoreStartupMsg()) {
+            log.trace("[{}] Forwarding message to local subscription service {}", id, toCoreNotification.getCoreStartupMsg());
+            forwardCoreStartupMsg(toCoreNotification.getCoreStartupMsg(), callback);
         } else if (toCoreNotification.hasFromDeviceRpcResponse()) {
             log.trace("[{}] Forwarding message to RPC service {}", id, toCoreNotification.getFromDeviceRpcResponse());
             forwardToCoreRpcService(toCoreNotification.getFromDeviceRpcResponse(), callback);
-        } else if (toCoreNotification.getComponentLifecycleMsg() != null && !toCoreNotification.getComponentLifecycleMsg().isEmpty()) {
+        } else if (!toCoreNotification.getComponentLifecycleMsg().isEmpty()) {
             handleComponentLifecycleMsg(id, toCoreNotification.getComponentLifecycleMsg());
             callback.onSuccess();
         } else if (!toCoreNotification.getEdgeEventUpdateMsg().isEmpty()) {
@@ -509,6 +510,12 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         } else {
             throwNotHandled(msg, callback);
         }
+    }
+
+    private void forwardCoreStartupMsg(TransportProtos.CoreStartupMsg coreStartupMsg, TbCallback callback) {
+        log.info("[{}] Processing core startup with partitions: {}", coreStartupMsg.getServiceId(), coreStartupMsg.getPartitionsList());
+        localSubscriptionService.onCoreStartupMsg(coreStartupMsg);
+        callback.onSuccess();
     }
 
     private void forwardToSubMgrService(SubscriptionMgrMsgProto msg, TbCallback callback) {

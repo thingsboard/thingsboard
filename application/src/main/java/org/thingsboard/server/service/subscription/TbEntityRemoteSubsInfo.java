@@ -65,6 +65,14 @@ public class TbEntityRemoteSubsInfo {
         return false;
     }
 
+    public boolean removeAndCheckIsEmpty(String serviceId) {
+        if (subs.remove(serviceId) != null) {
+            return subs.isEmpty();
+        } else {
+            return false;
+        }
+    }
+
     public boolean isEmpty() {
         return subs.isEmpty();
     }

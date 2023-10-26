@@ -40,8 +40,6 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.queue.TbQueueCallback;
-import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.discovery.event.ClusterTopologyChangeEvent;
@@ -54,6 +52,7 @@ import org.thingsboard.server.service.ws.telemetry.sub.TelemetrySubscriptionUpda
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -62,6 +61,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
@@ -75,7 +75,6 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
 
     private final ConcurrentMap<String, Map<Integer, TbSubscription<?>>> subscriptionsBySessionId = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, TbEntityLocalSubsInfo> subscriptionsByEntityId = new ConcurrentHashMap<>();
-
     private final ConcurrentMap<UUID, TbEntityUpdatesInfo> entityUpdates = new ConcurrentHashMap<>();
 
     private final AttributesService attrService;
@@ -88,7 +87,8 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     private ExecutorService tsCallBackExecutor;
 
     public DefaultTbLocalSubscriptionService(AttributesService attrService, TimeseriesService tsService, TbServiceInfoProvider serviceInfoProvider,
-                                             PartitionService partitionService, TbClusterService clusterService, @Lazy SubscriptionManagerService subscriptionManagerService) {
+                                             PartitionService partitionService, TbClusterService clusterService,
+                                             @Lazy SubscriptionManagerService subscriptionManagerService) {
         this.attrService = attrService;
         this.tsService = tsService;
         this.serviceInfoProvider = serviceInfoProvider;
@@ -133,6 +133,22 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
              */
             subscriptionsByEntityId.values().forEach(sub -> pushSubEventToManagerService(sub.getTenantId(), sub.getEntityId(), sub.toEvent(ComponentLifecycleEvent.UPDATED)));
         }
+    }
+
+    @Override
+    public void onCoreStartupMsg(TransportProtos.CoreStartupMsg coreStartupMsg) {
+        subscriptionUpdateExecutor.submit(() -> {
+            Set<Integer> partitions = new HashSet<>(coreStartupMsg.getPartitionsList());
+            AtomicInteger counter = new AtomicInteger();
+            subscriptionsByEntityId.values().forEach(sub -> {
+                var tpi = partitionService.resolve(ServiceType.TB_CORE, sub.getTenantId(), sub.getEntityId());
+                if (!tpi.isMyPartition() && partitions.contains(tpi.getPartition().orElse(Integer.MAX_VALUE))) {
+                    pushToQueue(sub.getEntityId(), sub.toEvent(ComponentLifecycleEvent.UPDATED), tpi);
+                    counter.incrementAndGet();
+                }
+            });
+            log.info("[{}] Pushed {} subscriptions to [{}]", serviceId, counter.get(), coreStartupMsg.getServiceId());
+        });
     }
 
     @Override
@@ -397,10 +413,12 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
             // Subscription is managed on the same server;
             subscriptionManagerService.onSubEvent(serviceId, event, TbCallback.EMPTY);
         } else {
-            // Push to the queue;
-            TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toSubEventProto(serviceId, event);
-            clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
+            pushToQueue(entityId, event, tpi);
         }
+    }
+
+    private void pushToQueue(EntityId entityId, TbEntitySubEvent event, TopicPartitionInfo tpi) {
+        clusterService.pushMsgToCore(tpi, entityId.getId(), TbSubscriptionUtils.toSubEventProto(serviceId, event), null);
     }
 
     private void checkMissedUpdates(TbSubscription<?> subscription) {
@@ -447,7 +465,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         var entityUpdateInfo = entityUpdates.get(subscription.getEntityId().getId());
         if (entityUpdateInfo != null && entityUpdateInfo.timeSeriesUpdateTs > 0 && subscription.getQueryTs() > entityUpdateInfo.timeSeriesUpdateTs) {
             log.trace("[{}][{}][{}] No need to check for missed updates. time [{}][{}] diff: {}ms",
-                    subscription.getTenantId(), subscription.getSessionId(), subscription.getSubscriptionId(),  subscription.getQueryTs(), entityUpdateInfo.timeSeriesUpdateTs, subscription.getQueryTs() - entityUpdateInfo.timeSeriesUpdateTs);
+                    subscription.getTenantId(), subscription.getSessionId(), subscription.getSubscriptionId(), subscription.getQueryTs(), entityUpdateInfo.timeSeriesUpdateTs, subscription.getQueryTs() - entityUpdateInfo.timeSeriesUpdateTs);
             return;
         }
 

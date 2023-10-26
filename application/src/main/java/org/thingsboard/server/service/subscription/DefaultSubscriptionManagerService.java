@@ -17,6 +17,7 @@ package org.thingsboard.server.service.subscription;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.cluster.TbClusterService;
@@ -44,6 +45,7 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
+import org.thingsboard.server.queue.discovery.event.OtherServiceShutdownEvent;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.state.DefaultDeviceStateService;
@@ -58,6 +60,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -75,6 +78,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
     private final TbLocalSubscriptionService localSubscriptionService;
     private final DeviceStateService deviceStateService;
     private final TbClusterService clusterService;
+    private final SubscriptionSchedulerComponent scheduler;
 
     private final Lock subsLock = new ReentrantLock();
     private final ConcurrentMap<EntityId, TbEntityRemoteSubsInfo> entitySubscriptions = new ConcurrentHashMap<>();
@@ -91,6 +95,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
         serviceId = serviceInfoProvider.getServiceId();
         initTs = System.currentTimeMillis();
         toCoreNotificationsProducer = producerProvider.getTbCoreNotificationsMsgProducer();
+        scheduler.scheduleWithFixedDelay(this::cleanupEntityUpdates, 1, 1, TimeUnit.HOURS);
     }
 
     @Override
@@ -121,6 +126,21 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
         }
     }
 
+    @Override
+    @EventListener(OtherServiceShutdownEvent.class)
+    public void onApplicationEvent(OtherServiceShutdownEvent event) {
+        if (event.getServiceTypes() != null && event.getServiceTypes().contains(ServiceType.TB_CORE)) {
+            subsLock.lock();
+            try {
+                int sizeBeforeCleanup = entitySubscriptions.size();
+                entitySubscriptions.entrySet().removeIf(kv -> kv.getValue().removeAndCheckIsEmpty(event.getServiceId()));
+                log.info("[{}][{}] Removed {} entity subscription records due to server shutdown.", serviceId, event.getServiceId(), entitySubscriptions.size() - sizeBeforeCleanup);
+            } finally {
+                subsLock.unlock();
+            }
+        }
+    }
+
     private void sendSubEventCallback(String targetId, EntityId entityId, int seqNumber) {
         var update = getEntityUpdatesInfo(entityId);
         if (serviceId.equals(targetId)) {
@@ -140,7 +160,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
 
     @Override
     public void onTimeSeriesUpdate(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, TbCallback callback) {
-        processTimeSeriesUpdate(tenantId, entityId, ts);
+        onTimeSeriesUpdate(entityId, ts);
         if (entityId.getEntityType() == EntityType.DEVICE) {
             updateDeviceInactivityTimeout(tenantId, entityId, ts);
         }
@@ -149,7 +169,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
 
     @Override
     public void onTimeSeriesDelete(TenantId tenantId, EntityId entityId, List<String> keys, TbCallback callback) {
-        processTimeSeriesUpdate(tenantId, entityId,
+        onTimeSeriesUpdate(entityId,
                 keys.stream().map(key -> new BasicTsKvEntry(0, new StringDataEntry(key, ""))).collect(Collectors.toList()));
         if (entityId.getEntityType() == EntityType.DEVICE) {
             deleteDeviceInactivityTimeout(tenantId, entityId, keys);
@@ -157,18 +177,18 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
         callback.onSuccess();
     }
 
-    public void processTimeSeriesUpdate(TenantId tenantId, EntityId entityId, List<TsKvEntry> update) {
+    public void onTimeSeriesUpdate(EntityId entityId, List<TsKvEntry> update) {
         getEntityUpdatesInfo(entityId).timeSeriesUpdateTs = System.currentTimeMillis();
         TbEntityRemoteSubsInfo subInfo = entitySubscriptions.get(entityId);
         if (subInfo != null) {
             log.trace("[{}] Handling time-series update: {}", entityId, update);
             subInfo.getSubs().forEach((serviceId, sub) -> {
                 if (sub.tsAllKeys) {
-                    processTimeSeriesUpdate(serviceId, entityId, update);
+                    onTimeSeriesUpdate(serviceId, entityId, update);
                 } else if (sub.tsKeys != null) {
                     List<TsKvEntry> tmp = getSubList(update, sub.tsKeys);
                     if (tmp != null) {
-                        processTimeSeriesUpdate(serviceId, entityId, tmp);
+                        onTimeSeriesUpdate(serviceId, entityId, tmp);
                     }
                 }
             });
@@ -177,7 +197,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
         }
     }
 
-    private void processTimeSeriesUpdate(String targetId, EntityId entityId, List<TsKvEntry> update) {
+    private void onTimeSeriesUpdate(String targetId, EntityId entityId, List<TsKvEntry> update) {
         if (serviceId.equals(targetId)) {
             localSubscriptionService.onTimeSeriesUpdate(entityId, update, TbCallback.EMPTY);
         } else {
@@ -193,7 +213,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
     @Override
     public void onAttributesUpdate(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, boolean notifyDevice, TbCallback callback) {
         getEntityUpdatesInfo(entityId).attributesUpdateTs = System.currentTimeMillis();
-        processAttributesUpdate(tenantId, entityId, attributes);
+        processAttributesUpdate(entityId, attributes);
         if (entityId.getEntityType() == EntityType.DEVICE) {
             if (TbAttributeSubscriptionScope.SERVER_SCOPE.name().equalsIgnoreCase(scope)) {
                 updateDeviceInactivityTimeout(tenantId, entityId, attributes);
@@ -208,7 +228,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
 
     @Override
     public void onAttributesDelete(TenantId tenantId, EntityId entityId, String scope, List<String> keys, boolean notifyDevice, TbCallback callback) {
-        processAttributesUpdate(tenantId, entityId,
+        processAttributesUpdate(entityId,
                 keys.stream().map(key -> new BaseAttributeKvEntry(0, new StringDataEntry(key, ""))).collect(Collectors.toList()));
         if (entityId.getEntityType() == EntityType.DEVICE) {
             if (TbAttributeSubscriptionScope.SERVER_SCOPE.name().equalsIgnoreCase(scope)
@@ -222,7 +242,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
         callback.onSuccess();
     }
 
-    public void processAttributesUpdate(TenantId tenantId, EntityId entityId, List<AttributeKvEntry> update) {
+    public void processAttributesUpdate(EntityId entityId, List<AttributeKvEntry> update) {
         TbEntityRemoteSubsInfo subInfo = entitySubscriptions.get(entityId);
         if (subInfo != null) {
             log.trace("[{}] Handling attributes update: {}", entityId, update);
@@ -373,6 +393,16 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
 
     private TbEntityUpdatesInfo getEntityUpdatesInfo(EntityId entityId) {
         return entityUpdates.computeIfAbsent(entityId, id -> new TbEntityUpdatesInfo(initTs));
+    }
+
+    private void cleanupEntityUpdates() {
+        initTs = System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1);
+        int sizeBeforeCleanup = entityUpdates.size();
+        entityUpdates.entrySet().removeIf(kv -> {
+            var v = kv.getValue();
+            return initTs > v.attributesUpdateTs && initTs > v.timeSeriesUpdateTs;
+        });
+        log.info("Removed {} old entity update records.", entityUpdates.size() - sizeBeforeCleanup);
     }
 
 }

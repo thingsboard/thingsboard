@@ -77,6 +77,7 @@ import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -136,6 +137,18 @@ public class DefaultTbClusterService implements TbClusterService {
         ToCoreMsg toCoreMsg = ToCoreMsg.newBuilder().setToDeviceActorNotificationMsg(ByteString.copyFrom(msgBytes)).build();
         producerProvider.getTbCoreMsgProducer().send(tpi, new TbProtoQueueMsg<>(msg.getDeviceId().getId(), toCoreMsg), callback);
         toCoreMsgs.incrementAndGet();
+    }
+
+    @Override
+    public void broadcastToCore(ToCoreNotificationMsg toCoreMsg) {
+        UUID msgId = UUID.randomUUID();
+        TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> toCoreNfProducer = producerProvider.getTbCoreNotificationsMsgProducer();
+        Set<String> tbCoreServices = partitionService.getAllServiceIds(ServiceType.TB_CORE);
+        for (String serviceId : tbCoreServices) {
+            TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, serviceId);
+            toCoreNfProducer.send(tpi, new TbProtoQueueMsg<>(msgId, toCoreMsg), null);
+            toCoreNfs.incrementAndGet();
+        }
     }
 
     @Override
@@ -203,6 +216,7 @@ public class DefaultTbClusterService implements TbClusterService {
         }
         return null;
     }
+
     private TbMsg transformMsg(TbMsg tbMsg, HasRuleEngineProfile ruleEngineProfile) {
         if (ruleEngineProfile != null) {
             RuleChainId targetRuleChainId = ruleEngineProfile.getDefaultRuleChainId();

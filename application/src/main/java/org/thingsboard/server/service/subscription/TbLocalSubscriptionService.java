@@ -59,6 +59,8 @@ public interface TbLocalSubscriptionService {
 
     void onApplicationEvent(ClusterTopologyChangeEvent event);
 
+    void onCoreStartupMsg(TransportProtos.CoreStartupMsg coreStartupMsg);
+
     void onNotificationRequestUpdate(TenantId tenantId, NotificationRequestUpdate update, TbCallback callback);
 
     void onNotificationUpdate(TransportProtos.NotificationsSubUpdateProto notificationsUpdate, TbCallback callback);
