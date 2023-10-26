@@ -35,6 +35,16 @@
     "indoor_co2_chart_card",
     "indoor_co2_chart_card_with_background",
     "indoor_simple_co2_chart_card",
-    "indoor_simple_co2_chart_card_with_background"
+    "indoor_simple_co2_chart_card_with_background",
+    "indoor_illuminance_card",
+    "indoor_illuminance_card_with_background",
+    "indoor_horizontal_illuminance_card",
+    "indoor_horizontal_illuminance_card_with_background",
+    "indoor_illuminance_chart_card",
+    "indoor_illuminance_chart_card_with_background",
+    "indoor_simple_illuminance_chart_card",
+    "indoor_simple_illuminance_chart_card_with_background",
+    "indoor_illuminance_progress_bar",
+    "indoor_illuminance_progress_bar_with_background"
   ]
 }
