@@ -48,13 +48,13 @@ public class DefaultTbEdgeService extends AbstractTbEntityService implements TbE
         ActionType actionType = edge.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = edge.getTenantId();
         try {
-            if (actionType == ActionType.ADDED && edge.getRootRuleChainId() == null) {
+            if (ActionType.ADDED.equals(actionType) && edge.getRootRuleChainId() == null) {
                 edge.setRootRuleChainId(edgeTemplateRootRuleChain.getId());
             }
             Edge savedEdge = checkNotNull(edgeService.saveEdge(edge));
             EdgeId edgeId = savedEdge.getId();
 
-            if (actionType == ActionType.ADDED) {
+            if (ActionType.ADDED.equals(actionType)) {
                 ruleChainService.assignRuleChainToEdge(tenantId, edgeTemplateRootRuleChain.getId(), edgeId);
                 edgeNotificationService.setEdgeRootRuleChain(tenantId, savedEdge, edgeTemplateRootRuleChain.getId());
                 edgeService.assignDefaultRuleChainsToEdge(tenantId, edgeId);

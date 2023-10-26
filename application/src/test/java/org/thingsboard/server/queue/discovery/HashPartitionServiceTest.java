@@ -398,6 +398,8 @@ public class HashPartitionServiceTest {
         ReflectionTestUtils.setField(partitionService, "corePartitions", 10);
         ReflectionTestUtils.setField(partitionService, "vcTopic", "tb.vc");
         ReflectionTestUtils.setField(partitionService, "vcPartitions", 10);
+        ReflectionTestUtils.setField(partitionService, "edgeTopic", "tb.edge");
+        ReflectionTestUtils.setField(partitionService, "edgePartitions", 3);
         ReflectionTestUtils.setField(partitionService, "hashFunctionName", hashFunctionName);
         partitionService.init();
         partitionService.partitionsInit();

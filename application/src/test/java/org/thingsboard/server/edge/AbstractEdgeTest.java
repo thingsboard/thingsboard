@@ -187,6 +187,11 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
                 + "/device/" + savedDevice.getUuidId(), Device.class);
         doPost("/api/edge/" + edge.getUuidId()
                 + "/asset/" + savedAsset.getUuidId(), Asset.class);
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     protected void extendDeviceProfileData(DeviceProfile deviceProfile) {

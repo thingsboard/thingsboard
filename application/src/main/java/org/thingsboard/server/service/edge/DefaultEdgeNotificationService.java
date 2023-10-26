@@ -18,6 +18,8 @@ package org.thingsboard.server.service.edge;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -232,6 +234,7 @@ public class DefaultEdgeNotificationService extends TbApplicationEventListener<P
             CountDownLatch processingTimeoutLatch = new CountDownLatch(1);
             TbPackProcessingContext<TbProtoQueueMsg<ToEdgeMsg>> ctx = new TbPackProcessingContext<>(
                     processingTimeoutLatch, pendingMap, new ConcurrentHashMap<>());
+            PendingMsgHolder pendingMsgHolder = new PendingMsgHolder();
             Future<?> submitFuture = consumerExecutor.submit(() ->
                     orderedMsgList.forEach((element) -> {
                         UUID id = element.getUuid();
@@ -239,8 +242,8 @@ public class DefaultEdgeNotificationService extends TbApplicationEventListener<P
                         TbCallback callback = new TbPackCallback<>(id, ctx);
                         try {
                             ToEdgeMsg toEdgeMsg = msg.getValue();
+                            pendingMsgHolder.setToEdgeMsg(toEdgeMsg);
                             if (toEdgeMsg.hasEdgeNotificationMsg()) {
-                                log.trace("[{}] Forwarding message to edge service {}", id, toEdgeMsg.getEdgeNotificationMsg());
                                 pushNotificationToEdge(toEdgeMsg.getEdgeNotificationMsg(), callback);
                             }
                             logToEdgeMsg(toEdgeMsg);
@@ -251,8 +254,9 @@ public class DefaultEdgeNotificationService extends TbApplicationEventListener<P
                     }));
             if (!processingTimeoutLatch.await(packProcessingTimeout, TimeUnit.MILLISECONDS)) {
                 if (!submitFuture.isDone()) {
-                    retryCount++;
                     submitFuture.cancel(true);
+                    ToEdgeMsg lastSubmitMsg = pendingMsgHolder.getToEdgeMsg();
+                    log.info("Timeout to process message: {}", lastSubmitMsg);
                 }
                 ctx.getAckMap().forEach((id, msg) -> log.debug("[{}] Timeout to process message: {}", id, msg.getValue()));
                 ctx.getFailedMap().forEach((id, msg) -> log.warn("[{}] Failed to process message: {}", id, msg.getValue()));
@@ -261,6 +265,7 @@ public class DefaultEdgeNotificationService extends TbApplicationEventListener<P
             }
             if (!ctx.getFailedMap().isEmpty() && retryCount != packProcessingRetries) {
                 pendingMap = ctx.getFailedMap();
+                retryCount++;
             } else {
                 break;
             }
@@ -354,5 +359,11 @@ public class DefaultEdgeNotificationService extends TbApplicationEventListener<P
         if (statsEnabled) {
             stats.log(toEdgeMsg);
         }
+    }
+
+    private static class PendingMsgHolder {
+        @Getter
+        @Setter
+        private volatile ToEdgeMsg toEdgeMsg;
     }
 }
