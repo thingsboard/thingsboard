@@ -79,7 +79,7 @@
                              [fxShow]="levelCardWidgetConfigForm.get('tankSelectionType')?.value === shapeSelectOptions.static"
                              rowHeight="{{ '1:1' }}"
                              [cols]="5"
-                             [colsLtMd]="5"
+                             [colsLtMd]="2"
                              style="width: 100%;"
                              label="{{ 'widgets.liquid-level-card.shape-type' | translate }}" formControlName="selectedShape">
         <tb-image-cards-select-option *ngFor="let shape of shapes"
@@ -213,9 +213,10 @@
          *ngIf="levelCardWidgetConfigForm.get('layout')?.value !== this.levelCardLayouts.simple">
       <div class="fixed-title-width" translate>widgets.liquid-level-card.value</div>
       <div fxFlex fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="8px">
-        <mat-form-field style="max-width: 12%;" appearance="outline" class="flex number" subscriptSizing="dynamic">
+        <mat-form-field style="max-width: 40%;" appearance="outline" class="flex number" subscriptSizing="dynamic">
           <input matInput formControlName="decimals" type="number"
                  min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+          <div matSuffix fxHide.lt-md translate>widget-config.decimals-suffix</div>
         </mat-form-field>
         <tb-font-settings formControlName="valueFont"
                           [previewText]="valuePreviewFn">
@@ -259,12 +260,12 @@
           <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTooltipLevel">
             {{ 'widgets.liquid-level-card.level' | translate }}
           </mat-slide-toggle>
-          <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <div fxFlex fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="8px">
             <tb-unit-input [required]="isRequired('tooltipUnits')"
                            [tagFilter]="unitsType.capacity" class="flex"
                            formControlName="tooltipUnits">
             </tb-unit-input>
-            <mat-form-field appearance="outline" class="flex number" subscriptSizing="dynamic">
+            <mat-form-field style="width: 40%;" appearance="outline" class="flex number" subscriptSizing="dynamic">
               <input matInput formControlName="tooltipLevelDecimals" type="number" min="0"
                      max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
               <div matSuffix fxHide.lt-md translate>widget-config.decimals-suffix</div>

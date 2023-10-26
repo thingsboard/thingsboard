@@ -116,8 +116,8 @@ export class LiquidLevelWidgetComponent implements OnInit {
           }
         }
 
-        if (isDefined(volume) && isNumber(volume)) {
-          this.volume = volume;
+        if (isDefined(volume) && !isNaN(Number(volume))) {
+          this.volume = Number(volume);
         }
 
         if (units) {
@@ -214,7 +214,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
         theme: 'tooltipster-shadow',
         side: 'top',
         delay: 10,
-        distance: -33,
+        distance: this.settings.showTitle ? -33 : -63,
         triggerClose: {
           click: true,
           tap: true,
@@ -231,10 +231,12 @@ export class LiquidLevelWidgetComponent implements OnInit {
           const tooltipsterBoxStyles: JQuery.PlainObject = {
             backgroundColor: this.getTooltipBackground(),
             backdropFilter: `blur(${this.settings.tooltipBackgroundBlur}px)`,
-            width: '100%'
+            width: '100%',
+            height: '100%'
           };
 
           $(helper.tooltip).css('max-width', this.svg.width() + 'px');
+          $(helper.tooltip).css('max-height', this.svg.height() + 'px');
           $(helper.tooltip).find('.tooltipster-box').css(tooltipsterBoxStyles);
           $(helper.tooltip).find('.tooltipster-arrow').empty();
 
@@ -397,6 +399,8 @@ export class LiquidLevelWidgetComponent implements OnInit {
 
     const value = convertLiters(data, this.widgetUnits as CapacityUnits, ConversionType.from)
       .toFixed(this.settings.decimals || 0);
+    this.valueColor.update(value);
+
     const valueTextStyle = cssTextFromInlineStyle({...inlineTextStyle(this.settings.valueFont),
                                                           color: this.valueColor.color});
     this.backgroundOverlayColor.update(percentage);
@@ -405,11 +409,11 @@ export class LiquidLevelWidgetComponent implements OnInit {
     }
 
     if (this.settings.layout === LevelCardLayout.absolute) {
-      this.volumeColor.update(percentage);
-
       const volumeInLiters: number = convertLiters(this.volume, this.settings.volumeUnits as CapacityUnits, ConversionType.to);
       const volume = convertLiters(volumeInLiters, this.widgetUnits as CapacityUnits, ConversionType.from)
         .toFixed(this.settings.decimals || 0);
+      this.volumeColor.update(volume);
+
       const volumeTextStyle = cssTextFromInlineStyle({...inlineTextStyle(this.settings.volumeFont),
                                                              color: this.volumeColor.color});
 

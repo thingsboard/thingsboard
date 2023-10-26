@@ -1,6 +1,6 @@
 #### Shape attribute name
 
-A string expression value that allows you dynamically select shape image depending on attribute name.
+A string expression value that allows you dynamically select shape image depending on attribute name (ex. tankShape).
 
 **Attribute values that could be used to add the image:**
 

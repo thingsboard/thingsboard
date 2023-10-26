@@ -34,7 +34,7 @@
                                [fxShow]="levelCardWidgetSettingsForm.get('tankSelectionType')?.value === shapeSelectOptions.static"
                                rowHeight="{{ '1:1' }}"
                                [cols]="5"
-                               [colsLtMd]="5"
+                               [colsLtMd]="2"
                                style="width: 100%;"
                                label="{{ 'widgets.liquid-level-card.shape-type' | translate }}" formControlName="selectedShape">
           <tb-image-cards-select-option *ngFor="let shape of shapes"
