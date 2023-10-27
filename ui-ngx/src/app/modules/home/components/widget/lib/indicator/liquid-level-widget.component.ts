@@ -14,7 +14,16 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, Input, OnInit } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  Input,
+  OnInit,
+  TemplateRef,
+  ViewChild,
+  ViewEncapsulation
+} from '@angular/core';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { isDefined, isDefinedAndNotNull, isNumber, isString } from '@core/utils';
 import {
@@ -37,24 +46,39 @@ import { Observable, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { EntityId } from '@shared/models/id/entity-id';
 import {
+  backgroundStyle,
   ColorProcessor,
+  ComponentStyle,
   cssTextFromInlineStyle,
   DateFormatProcessor,
-  inlineTextStyle
+  inlineTextStyle,
+  overlayStyle
 } from '@shared/models/widget-settings.models';
 import { ResourcesService } from '@core/services/resources.service';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
-
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 
 @Component({
   selector: 'tb-liquid-level-widget',
-  template: ''
+  templateUrl: './liquid-level-widget.component.html',
+  styleUrls: ['./liquid-level-widget.component.scss'],
+  encapsulation: ViewEncapsulation.None
 })
 export class LiquidLevelWidgetComponent implements OnInit {
 
+  @ViewChild('liquidLevelContent', {static: true})
+  liquidLevelContent: ElementRef<HTMLElement>;
+
   @Input()
   ctx: WidgetContext;
+
+  @Input()
+  widgetTitlePanel: TemplateRef<any>;
+
+  backgroundStyle: ComponentStyle = {};
+  overlayStyle: ComponentStyle = {};
+
+  hasCardClickAction = false;
 
   private svgParams: SvgInfo;
 
@@ -77,7 +101,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
   private tooltipContent: string;
   private widgetUnits: string;
 
-  constructor(private elementRef: ElementRef) {
+  constructor(private cd: ChangeDetectorRef) {
   }
 
   ngOnInit(): void {
@@ -85,14 +109,18 @@ export class LiquidLevelWidgetComponent implements OnInit {
     this.settings = {...levelCardDefaultSettings, ...this.ctx.settings};
     this.declareStyles();
 
+    this.backgroundStyle = backgroundStyle(this.settings.background);
+    this.overlayStyle = overlayStyle(this.settings.background.overlay);
+
+    this.hasCardClickAction = this.ctx.actionsApi.getActionDescriptors('cardClick').length > 0;
+
     this.getData().subscribe(data => {
       if (data) {
         const { svg, volume, units } = data;
-        if (svg && isString(svg) && this.elementRef.nativeElement) {
-          const jQueryContainerElement = $(this.elementRef.nativeElement);
+        if (svg && isString(svg) && this.liquidLevelContent.nativeElement) {
+          const jQueryContainerElement = $(this.liquidLevelContent.nativeElement);
           jQueryContainerElement.html(svg);
           this.svg = jQueryContainerElement.find('svg');
-          this.svg.on('click', this.cardClick.bind(this));
           this.createSVG();
           this.createValueElement();
 
@@ -149,6 +177,12 @@ export class LiquidLevelWidgetComponent implements OnInit {
         return of(null);
       })
     );
+  }
+
+  public onInit() {
+    const borderRadius = this.ctx.$widgetElement.css('borderRadius');
+    this.overlayStyle = {...this.overlayStyle, ...{borderRadius}};
+    this.cd.detectChanges();
   }
 
   public update(ignoreAnimation?: boolean) {
@@ -229,7 +263,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
   }
 
   private createValueElement(): void {
-    const jQueryContainerElement = $(this.elementRef.nativeElement);
+    const jQueryContainerElement = $(this.liquidLevelContent.nativeElement);
     const containerOverlay = jQueryContainerElement.find('.container-overlay');
     const percentageOverlay = jQueryContainerElement.find('.percentage-overlay');
     const absoluteOverlay = jQueryContainerElement.find('.absolute-overlay');
@@ -333,7 +367,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
 
   private updateLevel(newY: number, percentage: number, ignoreAnimation = false): void {
     this.liquidColor.update(percentage);
-    const jQueryContainerElement = $(this.elementRef.nativeElement);
+    const jQueryContainerElement = $(this.liquidLevelContent.nativeElement);
     const fill = jQueryContainerElement.find('.tb-liquid-fill');
     const surfaces = jQueryContainerElement.find('.tb-liquid-surface');
     const surfacePositionAttr = this.shape !== Shapes.vCylinder ? 'y' : 'cy';
@@ -360,7 +394,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
   }
 
   private updateShapeColor(value: number): void {
-    const jQueryContainerElement = $(this.elementRef.nativeElement);
+    const jQueryContainerElement = $(this.liquidLevelContent.nativeElement);
     const shapeStrokes = jQueryContainerElement.find('.tb-shape-stroke');
     const shapeFill = jQueryContainerElement.find('.tb-shape-fill');
     this.tankColor.update(value);
@@ -377,7 +411,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
   private updateValueElement(data: any, percentage: number): void {
     let content: string;
     let container: JQuery<HTMLElement>;
-    const jQueryContainerElement = $(this.elementRef.nativeElement);
+    const jQueryContainerElement = $(this.liquidLevelContent.nativeElement);
     let value = 'N/A';
 
     if (isNumber(data)) {
