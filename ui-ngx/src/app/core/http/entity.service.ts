@@ -418,7 +418,7 @@ export class EntityService {
         break;
       case EntityType.WIDGETS_BUNDLE:
         pageLink.sortOrder.property = 'title';
-        entitiesObservable = this.widgetService.getWidgetBundles(pageLink, config);
+        entitiesObservable = this.widgetService.getWidgetBundles(pageLink, false, config);
         break;
       case EntityType.NOTIFICATION_TARGET:
         pageLink.sortOrder.property = 'name';

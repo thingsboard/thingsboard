@@ -231,6 +231,7 @@ export interface DateFormatSettings {
   format?: string;
   lastUpdateAgo?: boolean;
   custom?: boolean;
+  hideLastUpdatePrefix?: boolean;
 }
 
 export const simpleDateFormat = (format: string): DateFormatSettings => ({
@@ -301,7 +302,11 @@ export class SimpleDateFormatProcessor extends DateFormatProcessor {
   }
 
   update(ts: string| number | Date): void {
-    this.formatted = this.datePipe.transform(ts, this.settings.format);
+    if (ts) {
+      this.formatted = this.datePipe.transform(ts, this.settings.format);
+    } else {
+      this.formatted = '&nbsp;';
+    }
   }
 
 }
@@ -319,8 +324,17 @@ export class LastUpdateAgoDateFormatProcessor extends DateFormatProcessor {
   }
 
   update(ts: string| number | Date): void {
-    this.formatted = this.translate.instant('date.last-update-n-ago-text',
-      {agoText: this.dateAgoPipe.transform(ts, {applyAgo: true, short: true, textPart: true})});
+    if (ts) {
+      const agoText = this.dateAgoPipe.transform(ts, {applyAgo: true, short: true, textPart: true});
+      if (this.settings.hideLastUpdatePrefix) {
+        this.formatted = agoText;
+      } else {
+        this.formatted = this.translate.instant('date.last-update-n-ago-text',
+          {agoText});
+      }
+    } else {
+      this.formatted = '&nbsp;';
+    }
   }
 
 }
@@ -416,14 +430,52 @@ export const overlayStyle = (overlay: OverlaySettings): ComponentStyle => (
   }
 );
 
-export const getDataKey = (datasources?: Datasource[]): DataKey => {
+export const getDataKey = (datasources?: Datasource[], index = 0): DataKey => {
   if (datasources && datasources.length) {
     const dataKeys = datasources[0].dataKeys;
-    if (dataKeys && dataKeys.length) {
-      return dataKeys[0];
+    if (dataKeys && dataKeys.length > index) {
+      return dataKeys[index];
     }
   }
   return null;
+};
+
+export const updateDataKeys = (datasources: Datasource[], dataKeys: DataKey[]): void => {
+  if (datasources && datasources.length) {
+    datasources[0].dataKeys = dataKeys;
+  }
+};
+
+
+export const getDataKeyByLabel = (datasources: Datasource[], label: string): DataKey => {
+  if (datasources && datasources.length) {
+    const dataKeys = datasources[0].dataKeys;
+    if (dataKeys && dataKeys.length) {
+      return dataKeys.find(k => k.label === label);
+    }
+  }
+  return null;
+};
+
+export const updateDataKeyByLabel = (datasources: Datasource[], dataKey: DataKey, label: string): void => {
+  if (datasources && datasources.length) {
+    let dataKeys = datasources[0].dataKeys;
+    if (!dataKeys) {
+      dataKeys = [];
+      datasources[0].dataKeys = dataKeys;
+    }
+    const existingIndex = dataKeys.findIndex(k => k.label === label || k === dataKey);
+    if (dataKey) {
+      dataKey.label = label;
+      if (existingIndex > -1) {
+        dataKeys[existingIndex] = dataKey;
+      } else {
+        dataKeys.push(dataKey);
+      }
+    } else if (existingIndex > -1) {
+      dataKeys.splice(existingIndex, 1);
+    }
+  }
 };
 
 export const getAlarmFilterConfig = (datasources?: Datasource[]): AlarmFilterConfig => {
@@ -461,6 +513,16 @@ export const getSingleTsValue = (data: Array<DatasourceData>): [number, any] => 
   if (data.length) {
     const dsData = data[0];
     if (dsData.data.length) {
+      return dsData.data[0];
+    }
+  }
+  return null;
+};
+
+export const getSingleTsValueByDataKey = (data: Array<DatasourceData>, dataKey: DataKey): [number, any] => {
+  if (data.length) {
+    const dsData = data.find(d => d.dataKey === dataKey);
+    if (dsData?.data?.length) {
       return dsData.data[0];
     }
   }

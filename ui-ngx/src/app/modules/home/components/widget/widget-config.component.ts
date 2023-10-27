@@ -435,6 +435,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
         this.basicModeComponentChangeSubscription = this.basicModeComponent.widgetConfigChanged.subscribe((data) => {
           this.modelValue = data;
           this.propagateChange(this.modelValue);
+          this.cd.markForCheck();
         });
         this.cd.markForCheck();
       }, 0);

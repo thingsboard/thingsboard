@@ -50,6 +50,7 @@ export interface DefaultTenantProfileConfiguration {
   maxTransportDataPoints: number;
   maxREExecutions: number;
   maxJSExecutions: number;
+  maxTbelExecutions: number;
   maxDPStorageDays: number;
   maxRuleNodeExecutionsPerMessage: number;
   maxEmails: number;
@@ -104,6 +105,7 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
           maxTransportDataPoints: 0,
           maxREExecutions: 0,
           maxJSExecutions: 0,
+          maxTbelExecutions: 0,
           maxDPStorageDays: 0,
           maxRuleNodeExecutionsPerMessage: 0,
           maxEmails: 0,

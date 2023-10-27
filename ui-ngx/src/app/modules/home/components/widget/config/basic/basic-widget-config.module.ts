@@ -58,6 +58,18 @@ import {
 import {
   BatteryLevelBasicConfigComponent
 } from '@home/components/widget/config/basic/indicator/battery-level-basic-config.component';
+import {
+  WindSpeedDirectionBasicConfigComponent
+} from '@home/components/widget/config/basic/weather/wind-speed-direction-basic-config.component';
+import {
+  SignalStrengthBasicConfigComponent
+} from '@home/components/widget/config/basic/indicator/signal-strength-basic-config.component';
+import {
+  ValueChartCardBasicConfigComponent
+} from '@home/components/widget/config/basic/cards/value-chart-card-basic-config.component';
+import {
+  ProgressBarBasicConfigComponent
+} from '@home/components/widget/config/basic/cards/progress-bar-basic-config.component';
 
 @NgModule({
   declarations: [
@@ -75,7 +87,11 @@ import {
     DataKeysPanelComponent,
     AlarmCountBasicConfigComponent,
     EntityCountBasicConfigComponent,
-    BatteryLevelBasicConfigComponent
+    BatteryLevelBasicConfigComponent,
+    WindSpeedDirectionBasicConfigComponent,
+    SignalStrengthBasicConfigComponent,
+    ValueChartCardBasicConfigComponent,
+    ProgressBarBasicConfigComponent
   ],
   imports: [
     CommonModule,
@@ -97,7 +113,11 @@ import {
     DataKeysPanelComponent,
     AlarmCountBasicConfigComponent,
     EntityCountBasicConfigComponent,
-    BatteryLevelBasicConfigComponent
+    BatteryLevelBasicConfigComponent,
+    WindSpeedDirectionBasicConfigComponent,
+    SignalStrengthBasicConfigComponent,
+    ValueChartCardBasicConfigComponent,
+    ProgressBarBasicConfigComponent
   ]
 })
 export class BasicWidgetConfigModule {
@@ -113,5 +133,9 @@ export const basicWidgetConfigComponentsMap: {[key: string]: Type<IBasicWidgetCo
   'tb-aggregated-value-card-basic-config': AggregatedValueCardBasicConfigComponent,
   'tb-alarm-count-basic-config': AlarmCountBasicConfigComponent,
   'tb-entity-count-basic-config': EntityCountBasicConfigComponent,
-  'tb-battery-level-basic-config': BatteryLevelBasicConfigComponent
+  'tb-battery-level-basic-config': BatteryLevelBasicConfigComponent,
+  'tb-wind-speed-direction-basic-config': WindSpeedDirectionBasicConfigComponent,
+  'tb-signal-strength-basic-config': SignalStrengthBasicConfigComponent,
+  'tb-value-chart-card-basic-config': ValueChartCardBasicConfigComponent,
+  'tb-progress-bar-basic-config': ProgressBarBasicConfigComponent
 };

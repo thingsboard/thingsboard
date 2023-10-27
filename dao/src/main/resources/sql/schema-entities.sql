@@ -489,6 +489,7 @@ CREATE TABLE IF NOT EXISTS widget_type (
     image varchar(1000000),
     deprecated boolean NOT NULL DEFAULT false,
     description varchar(1024),
+    tags text[],
     external_id uuid,
     CONSTRAINT uq_widget_type_fqn UNIQUE (tenant_id, fqn),
     CONSTRAINT widget_type_external_id_unq_key UNIQUE (tenant_id, external_id)
@@ -696,6 +697,7 @@ CREATE TABLE IF NOT EXISTS api_usage_state (
     db_storage varchar(32),
     re_exec varchar(32),
     js_exec varchar(32),
+    tbel_exec varchar(32),
     email_exec varchar(32),
     sms_exec varchar(32),
     alarm_exec varchar(32),
