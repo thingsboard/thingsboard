@@ -298,7 +298,7 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
         } else {
           result = subTypes.filter(subType => searchText ? subType.toUpperCase().startsWith(searchText.toUpperCase()) : true);
         }
-        if (!result.length) {
+        if (!result.length && searchText.length) {
           result = [searchText];
         }
         return result;
