@@ -165,6 +165,14 @@
     "simple_illuminance_chart_card",
     "simple_illuminance_chart_card_with_background",
     "illuminance_progress_bar",
-    "illuminance_progress_bar_with_background"
+    "illuminance_progress_bar_with_background",
+    "pm2_5_card",
+    "pm2_5_card_with_background",
+    "horizontal_pm2_5_card",
+    "horizontal_pm2_5_card_with_background",
+    "pm2_5_chart_card",
+    "pm2_5_chart_card_with_background",
+    "simple_pm2_5_chart_card",
+    "simple_pm2_5_chart_card_with_background"
   ]
 }
