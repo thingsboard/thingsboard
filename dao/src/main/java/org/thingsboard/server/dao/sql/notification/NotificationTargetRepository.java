@@ -33,13 +33,13 @@ import java.util.UUID;
 public interface NotificationTargetRepository extends JpaRepository<NotificationTargetEntity, UUID>, ExportableEntityRepository<NotificationTargetEntity> {
 
     @Query("SELECT t FROM NotificationTargetEntity t WHERE t.tenantId = :tenantId " +
-            "AND (:searchText = '' OR lower(t.name) LIKE lower(concat('%', :searchText, '%')))")
+            "AND (:searchText is NULL OR ilike(t.name, concat('%', :searchText, '%')) = true)")
     Page<NotificationTargetEntity> findByTenantIdAndSearchText(@Param("tenantId") UUID tenantId,
                                                                @Param("searchText") String searchText,
                                                                Pageable pageable);
 
     @Query(value = "SELECT * FROM notification_target t WHERE t.tenant_id = :tenantId " +
-            "AND (:searchText = '' OR lower(t.name) LIKE lower(concat('%', :searchText, '%'))) " +
+            "AND (:searchText IS NULL OR ilike(t.name, concat('%', :searchText, '%')) = true) " +
             "AND (cast(t.configuration as json) ->> 'type' <> 'PLATFORM_USERS' OR " +
             "cast(t.configuration as json) -> 'usersFilter' ->> 'type' IN :usersFilterTypes)", nativeQuery = true)
     Page<NotificationTargetEntity> findByTenantIdAndSearchTextAndUsersFilterTypeIfPresent(@Param("tenantId") UUID tenantId,
