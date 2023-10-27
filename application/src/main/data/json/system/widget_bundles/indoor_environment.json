@@ -77,6 +77,14 @@
     "radon_level_chart_card",
     "radon_level_chart_card_with_background",
     "simple_radon_level_chart_card",
-    "simple_radon_level_chart_card_with_background"
+    "simple_radon_level_chart_card_with_background",
+    "volatile_organic_compounds_card",
+    "volatile_organic_compounds_card_with_background",
+    "horizontal_volatile_organic_compounds_card",
+    "horizontal_volatile_organic_compounds_card_with_background",
+    "volatile_organic_compounds_chart_card",
+    "volatile_organic_compounds_chart_card_with_background",
+    "simple_volatile_organic_compounds_chart_card",
+    "simple_volatile_organic_compounds_chart_card_with_background"
   ]
 }
