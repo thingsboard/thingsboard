@@ -225,6 +225,9 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                         case TENANT_PROFILE:
                             tenantProfileEdgeProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
                             break;
+                        case TB_RESOURCE:
+                            resourceEdgeProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
+                            break;
                         default:
                             log.warn("[{}] Edge event type [{}] is not designed to be pushed to edge", tenantId, type);
                     }
