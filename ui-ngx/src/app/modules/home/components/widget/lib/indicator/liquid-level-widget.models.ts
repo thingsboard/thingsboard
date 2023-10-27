@@ -15,6 +15,8 @@
 ///
 
 import {
+  BackgroundSettings,
+  BackgroundType,
   ColorSettings,
   constantColor,
   cssTextFromInlineStyle,
@@ -32,6 +34,7 @@ import { EntityService } from '@core/http/entity.service';
 import { IAliasController } from '@core/api/widget-api.models';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ResourcesService } from '@core/services/resources.service';
+import { FormGroup } from '@angular/forms';
 
 export interface SvgInfo {
   svg: string;
@@ -44,21 +47,21 @@ export interface SvgLimits {
 }
 
 export interface LevelCardWidgetSettings extends WidgetConfig {
-  tankSelectionType: LevelSelectOptions;
+  tankSelectionType: LiquidWidgetDataSourceType;
   selectedShape: Shapes;
   shapeAttributeName: string;
   tankColor: ColorSettings;
   datasourceUnits: CapacityUnits;
   layout: LevelCardLayout;
-  volumeSource: LevelSelectOptions;
+  volumeSource: LiquidWidgetDataSourceType;
   volumeConstant: number;
   volumeAttributeName: string;
   volumeUnits: CapacityUnits;
   volumeFont: Font;
-  volumeColor: ColorSettings;
+  volumeColor: string;
   liquidColor: ColorSettings;
   valueFont: Font;
-  widgetUnitsSource: LevelSelectOptions;
+  widgetUnitsSource: LiquidWidgetDataSourceType;
   widgetUnitsAttributeName: string;
   valueColor: ColorSettings;
   showBackgroundOverlay: boolean;
@@ -75,6 +78,7 @@ export interface LevelCardWidgetSettings extends WidgetConfig {
   tooltipDateColor: string;
   tooltipBackgroundColor: string;
   tooltipBackgroundBlur: number;
+  background: BackgroundSettings;
 }
 
 export enum Shapes {
@@ -115,9 +119,9 @@ export enum LevelCardLayout {
   absolute = 'absolute'
 }
 
-export enum LevelSelectOptions {
-  attribute = 'Attribute',
-  static = 'Static'
+export enum LiquidWidgetDataSourceType {
+  static = 'static',
+  attribute = 'attribute'
 }
 
 export enum ConversionType {
@@ -208,7 +212,14 @@ export const levelCardLayoutTranslations = new Map<LevelCardLayout, string>(
   ]
 );
 
-export const shapesTranslations = new Map<Shapes, string>(
+export const LiquidWidgetDataSourceTypeTranslations = new Map<LiquidWidgetDataSourceType, string>(
+  [
+    [LiquidWidgetDataSourceType.static, 'widgets.liquid-level-card.static'],
+    [LiquidWidgetDataSourceType.attribute, 'widgets.liquid-level-card.attribute']
+  ]
+);
+
+export const ShapesTranslations = new Map<Shapes, string>(
   [
     [Shapes.vOval, 'widgets.liquid-level-card.v-oval'],
     [Shapes.vCylinder, 'widgets.liquid-level-card.v-cylinder'],
@@ -223,8 +234,8 @@ export const shapesTranslations = new Map<Shapes, string>(
   ]
 );
 
-export const levelCardDefaultSettings = (): LevelCardWidgetSettings => ({
-  tankSelectionType: LevelSelectOptions.static,
+export const levelCardDefaultSettings: LevelCardWidgetSettings = {
+  tankSelectionType: LiquidWidgetDataSourceType.static,
   selectedShape: Shapes.vCylinder,
   shapeAttributeName: 'tankShape',
   tankColor: constantColor('#242770'),
@@ -244,7 +255,7 @@ export const levelCardDefaultSettings = (): LevelCardWidgetSettings => ({
   showTitleIcon: false,
   titleIcon: 'water_drop',
   iconColor: '#5469FF',
-  volumeSource: LevelSelectOptions.static,
+  volumeSource: LiquidWidgetDataSourceType.static,
   volumeConstant: 500,
   volumeUnits: CapacityUnits.liters,
   volumeAttributeName: 'volume',
@@ -256,9 +267,9 @@ export const levelCardDefaultSettings = (): LevelCardWidgetSettings => ({
     weight: '500',
     lineHeight: '100%'
   },
-  volumeColor: constantColor('rgba(0, 0, 0, 0.18)'),
+  volumeColor: 'rgba(0, 0, 0, 0.18)',
   units: CapacityUnits.percent as string,
-  widgetUnitsSource: LevelSelectOptions.static,
+  widgetUnitsSource: LiquidWidgetDataSourceType.static,
   widgetUnitsAttributeName: 'units',
   decimals: 0,
   liquidColor: constantColor('#7A8BFF'),
@@ -298,8 +309,17 @@ export const levelCardDefaultSettings = (): LevelCardWidgetSettings => ({
   },
   tooltipDateColor: 'rgba(0, 0, 0, 0.76)',
   tooltipBackgroundColor: 'rgba(255, 255, 255, 0.76)',
-  tooltipBackgroundBlur: 3
-});
+  tooltipBackgroundBlur: 3,
+  background: {
+    type: BackgroundType.color,
+    color: '#fff',
+    overlay: {
+      enabled: false,
+      color: 'rgba(255,255,255,0.72)',
+      blur: 3
+    }
+  }
+};
 
 export const convertLiters = (value: number, units: CapacityUnits, conversionType: ConversionType): number => {
   let factor: number;
@@ -469,4 +489,144 @@ export const loadSvgShapesMapping = (resourcesService: ResourcesService): Observ
       return shapesImageMap;
     })
   );
+};
+
+export const updatedFormSettingsValidators = (formGroup: FormGroup) => {
+  const datasourceUnits: string = formGroup.get('datasourceUnits').value;
+  const layout: LevelCardLayout = formGroup.get('layout').value;
+  const volumeSource: LiquidWidgetDataSourceType = formGroup.get('volumeSource').value;
+  const widgetUnitsSource: LiquidWidgetDataSourceType = formGroup.get('widgetUnitsSource').value;
+  const showTooltipLevel: boolean = formGroup.get('showTooltipLevel').value;
+  const showTooltipDate: boolean = formGroup.get('showTooltipDate').value;
+  const showTooltip: boolean = formGroup.get('showTooltip').value;
+  const tankSelectionType: LiquidWidgetDataSourceType = formGroup.get('tankSelectionType').value;
+
+  if (tankSelectionType === LiquidWidgetDataSourceType.static) {
+    formGroup.get('selectedShape').enable({emitEvent: false});
+    formGroup.get('shapeAttributeName').disable({emitEvent: false});
+  } else {
+    formGroup.get('selectedShape').disable({emitEvent: false});
+    formGroup.get('shapeAttributeName').enable({emitEvent: false});
+  }
+
+  switch (layout) {
+    case LevelCardLayout.simple:
+    case LevelCardLayout.percentage:
+      formGroup.get('widgetUnitsSource').disable({emitEvent: false});
+      formGroup.get('units').disable({emitEvent: false});
+      formGroup.get('widgetUnitsAttributeName').disable({emitEvent: false});
+
+      if (datasourceUnits !== CapacityUnits.percent) {
+        formGroup.get('volumeSource').enable({emitEvent: false});
+        formGroup.get('volumeUnits').enable({emitEvent: false});
+        if (volumeSource === LiquidWidgetDataSourceType.static) {
+          formGroup.get('volumeConstant').enable({emitEvent: false});
+          formGroup.get('volumeAttributeName').disable({emitEvent: false});
+        } else {
+          formGroup.get('volumeConstant').disable({emitEvent: false});
+          formGroup.get('volumeAttributeName').enable({emitEvent: false});
+        }
+      } else {
+        formGroup.get('volumeSource').disable({emitEvent: false});
+        formGroup.get('volumeConstant').disable({emitEvent: false});
+        formGroup.get('volumeAttributeName').disable({emitEvent: false});
+        formGroup.get('volumeUnits').disable({emitEvent: false});
+      }
+
+      if (layout === LevelCardLayout.simple) {
+        if (formGroup.get('decimals')) {
+          formGroup.get('decimals').disable({emitEvent: false});
+        }
+        formGroup.get('valueFont').disable({emitEvent: false});
+        formGroup.get('valueColor').disable({emitEvent: false});
+      } else {
+        if (formGroup.get('decimals')) {
+          formGroup.get('decimals').enable({emitEvent: false});
+        }
+        formGroup.get('valueFont').enable({emitEvent: false});
+        formGroup.get('valueColor').enable({emitEvent: false});
+      }
+
+      formGroup.get('volumeFont').disable({emitEvent: false});
+      formGroup.get('volumeColor').disable({emitEvent: false});
+
+      break;
+    case LevelCardLayout.absolute:
+      formGroup.get('widgetUnitsSource').enable({emitEvent: false});
+      if (widgetUnitsSource === LiquidWidgetDataSourceType.static) {
+        formGroup.get('units').enable({emitEvent: false});
+        formGroup.get('widgetUnitsAttributeName').disable({emitEvent: false});
+      } else {
+        formGroup.get('units').disable({emitEvent: false});
+        formGroup.get('widgetUnitsAttributeName').enable({emitEvent: false});
+      }
+
+      formGroup.get('volumeSource').enable({emitEvent: false});
+      formGroup.get('volumeUnits').enable({emitEvent: false});
+      if (volumeSource === LiquidWidgetDataSourceType.static) {
+        formGroup.get('volumeConstant').enable({emitEvent: false});
+        formGroup.get('volumeAttributeName').disable({emitEvent: false});
+      } else {
+        formGroup.get('volumeConstant').disable({emitEvent: false});
+        formGroup.get('volumeAttributeName').enable({emitEvent: false});
+      }
+
+      if (formGroup.get('decimals')) {
+        formGroup.get('decimals').enable({emitEvent: false});
+      }
+      formGroup.get('valueFont').enable({emitEvent: false});
+      formGroup.get('valueColor').enable({emitEvent: false});
+
+      formGroup.get('volumeFont').enable({emitEvent: false});
+      formGroup.get('volumeColor').enable({emitEvent: false});
+
+      break;
+  }
+
+  if (showTooltip) {
+    formGroup.get('showTooltipLevel').enable({emitEvent: false});
+    formGroup.get('showTooltipDate').enable({emitEvent: false});
+    formGroup.get('tooltipBackgroundColor').enable({emitEvent: false});
+    formGroup.get('tooltipBackgroundBlur').enable({emitEvent: false});
+
+    if (showTooltipLevel) {
+      formGroup.get('tooltipLevelDecimals').enable({emitEvent: false});
+      formGroup.get('tooltipLevelFont').enable({emitEvent: false});
+      formGroup.get('tooltipLevelColor').enable({emitEvent: false});
+      if (layout === LevelCardLayout.simple) {
+        formGroup.get('tooltipUnits').disable({emitEvent: false});
+      } else {
+        formGroup.get('tooltipUnits').enable({emitEvent: false});
+      }
+    } else {
+      formGroup.get('tooltipUnits').disable({emitEvent: false});
+      formGroup.get('tooltipLevelDecimals').disable({emitEvent: false});
+      formGroup.get('tooltipLevelFont').disable({emitEvent: false});
+      formGroup.get('tooltipLevelColor').disable({emitEvent: false});
+    }
+
+    if (showTooltipDate) {
+      formGroup.get('tooltipDateFormat').enable({emitEvent: false});
+      formGroup.get('tooltipDateFont').enable({emitEvent: false});
+      formGroup.get('tooltipDateColor').enable({emitEvent: false});
+    } else {
+      formGroup.get('tooltipDateFormat').disable({emitEvent: false});
+      formGroup.get('tooltipDateFont').disable({emitEvent: false});
+      formGroup.get('tooltipDateColor').disable({emitEvent: false});
+    }
+  } else {
+    formGroup.get('showTooltipLevel').disable({emitEvent: false});
+    formGroup.get('showTooltipDate').disable({emitEvent: false});
+    formGroup.get('tooltipBackgroundColor').disable({emitEvent: false});
+    formGroup.get('tooltipBackgroundBlur').disable({emitEvent: false});
+
+    formGroup.get('tooltipUnits').disable({emitEvent: false});
+    formGroup.get('tooltipLevelDecimals').disable({emitEvent: false});
+    formGroup.get('tooltipLevelFont').disable({emitEvent: false});
+    formGroup.get('tooltipLevelColor').disable({emitEvent: false});
+
+    formGroup.get('tooltipDateFormat').disable({emitEvent: false});
+    formGroup.get('tooltipDateFont').disable({emitEvent: false});
+    formGroup.get('tooltipDateColor').disable({emitEvent: false});
+  }
 };

@@ -22,7 +22,7 @@ import {
   WidgetSettings,
   WidgetSettingsComponent
 } from '@shared/models/widget.models';
-import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { formatValue, isDefined } from '@core/utils';
@@ -36,11 +36,13 @@ import {
   levelCardDefaultSettings,
   LevelCardLayout,
   levelCardLayoutTranslations,
-  LevelSelectOptions,
+  LiquidWidgetDataSourceType,
+  LiquidWidgetDataSourceTypeTranslations,
   loadSvgShapesMapping,
   optionsFilter,
   Shapes,
-  shapesTranslations
+  ShapesTranslations,
+  updatedFormSettingsValidators
 } from '@home/components/widget/lib/indicator/liquid-level-widget.models';
 import { UnitsType } from '@shared/models/unit.models';
 import { ImageCardsSelectComponent } from '@home/components/widget/lib/settings/common/image-cards-select.component';
@@ -75,13 +77,7 @@ export class LiquidLevelCardWidgetSettingsComponent extends WidgetSettingsCompon
     return !(datasourceUnits === CapacityUnits.percent && widgetUnits === CapacityUnits.percent);
   }
 
-  public get widgetUnitsInput(): boolean {
-    const layout: LevelCardLayout = this.levelCardWidgetSettingsForm.get('layout').value;
-
-    return layout === LevelCardLayout.absolute;
-  }
-
-  public get datasource(): Datasource {
+  private get datasource(): Datasource {
     if (this.widgetConfig.config.datasources && this.widgetConfig.config.datasources) {
       return this.widgetConfig.config.datasources[0];
     } else {
@@ -89,22 +85,21 @@ export class LiquidLevelCardWidgetSettingsComponent extends WidgetSettingsCompon
     }
   }
 
-  shapeSelectOptions = LevelSelectOptions;
+  LevelCardLayout = LevelCardLayout;
+  LevelCardLayouts = Object.values(LevelCardLayout) as LevelCardLayout[];
+  LevelCardLayoutTranslationMap = levelCardLayoutTranslations;
 
-  shapes: Shapes[] = [];
+  DataSourceType = LiquidWidgetDataSourceType;
+  DataSourceTypes = Object.values(LiquidWidgetDataSourceType) as LiquidWidgetDataSourceType[];
+  DataSourceTypeTranslations = LiquidWidgetDataSourceTypeTranslations;
 
-  shapesTranslationMap = shapesTranslations;
+  shapes = Object.values(Shapes) as Shapes[];
+  shapesImageMap: Map<Shapes, string> = new Map();
+  ShapesTranslationMap = ShapesTranslations;
 
   unitsType = UnitsType;
 
-  levelCardLayouts = LevelCardLayout;
-
-  levelCardLayoutTranslationMap = levelCardLayoutTranslations;
-  shapesImageMap: Map<Shapes, string> = new Map();
-
-  volumeOptions = LevelSelectOptions;
-
-  levelCardWidgetSettingsForm: UntypedFormGroup;
+  levelCardWidgetSettingsForm: FormGroup;
 
   valuePreviewFn = this._valuePreviewFn.bind(this);
 
@@ -114,21 +109,17 @@ export class LiquidLevelCardWidgetSettingsComponent extends WidgetSettingsCompon
 
   datePreviewFn = this._datePreviewFn.bind(this);
 
-  keySearchText: string;
+  private keySearchText: string;
+  private latestKeySearchTextResult: Array<string>;
 
-  latestKeySearchTextResult: Array<string>;
+  private functionTypeKeys: Array<DataKey> = [];
 
-  datasources: Array<Datasource>;
-
-  functionTypeKeys: Array<DataKey> = [];
-
-  lastKeysId: string;
-
-  lastFetchedKeys: Array<DataKey>;
+  private lastKeysId: string;
+  private lastFetchedKeys: Array<DataKey>;
 
   constructor(protected store: Store<AppState>,
               private $injector: Injector,
-              private fb: UntypedFormBuilder,
+              private fb: FormBuilder,
               private resourcesService: ResourcesService,
               private sanitizer: DomSanitizer,
               private cd: ChangeDetectorRef,
@@ -137,12 +128,11 @@ export class LiquidLevelCardWidgetSettingsComponent extends WidgetSettingsCompon
     super(store);
   }
 
-  protected settingsForm(): UntypedFormGroup {
+  protected settingsForm(): FormGroup {
     return this.levelCardWidgetSettingsForm;
   }
 
   protected onWidgetConfigSet(widgetConfig: WidgetConfigComponentData) {
-    this.shapes = Object.values(Shapes);
     this.createSvgShapesMapping();
 
     for (const type of this.utils.getPredefinedFunctionsList()) {
@@ -154,7 +144,7 @@ export class LiquidLevelCardWidgetSettingsComponent extends WidgetSettingsCompon
   }
 
   protected defaultSettings(): WidgetSettings {
-    return levelCardDefaultSettings();
+    return levelCardDefaultSettings;
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
@@ -182,6 +172,7 @@ export class LiquidLevelCardWidgetSettingsComponent extends WidgetSettingsCompon
       backgroundOverlayColor: [settings.backgroundOverlayColor, []],
 
       liquidColor: [settings.liquidColor, []],
+      background: [settings.background],
 
       showTooltip: [settings.showTooltip, []],
       showTooltipLevel: [settings.showTooltipLevel, []],
@@ -214,176 +205,12 @@ export class LiquidLevelCardWidgetSettingsComponent extends WidgetSettingsCompon
   }
 
   protected updateValidators(emitEvent: boolean, trigger?: string) {
-    const emitEventFields = [];
+    updatedFormSettingsValidators(this.levelCardWidgetSettingsForm);
 
-    const datasourceUnits: string = this.levelCardWidgetSettingsForm.get('datasourceUnits').value;
-    const layout: LevelCardLayout = this.levelCardWidgetSettingsForm.get('layout').value;
-    const volumeSource: AbstractControl<LevelSelectOptions> = this.levelCardWidgetSettingsForm.get('volumeSource');
-    const widgetUnits: AbstractControl<string> = this.levelCardWidgetSettingsForm.get('units');
-    const tooltipUnits: AbstractControl<string> = this.levelCardWidgetSettingsForm.get('tooltipUnits');
-    const widgetUnitsSource: AbstractControl<LevelSelectOptions> = this.levelCardWidgetSettingsForm.get('widgetUnitsSource');
-    const showTooltipLevel: AbstractControl<boolean> = this.levelCardWidgetSettingsForm.get('showTooltipLevel');
-    const showTooltipDate: AbstractControl<boolean> = this.levelCardWidgetSettingsForm.get('showTooltipDate');
-    const showTooltip: boolean = this.levelCardWidgetSettingsForm.get('showTooltip').value;
-
-    if (trigger === 'tankSelectionType') {
-      const tankSelectionType: LevelSelectOptions = this.levelCardWidgetSettingsForm.get('tankSelectionType').value;
-      if (tankSelectionType === LevelSelectOptions.static) {
-        this.levelCardWidgetSettingsForm.get('selectedShape').enable({emitEvent: false});
-        this.levelCardWidgetSettingsForm.get('shapeAttributeName').disable({emitEvent: false});
-      } else {
-        this.levelCardWidgetSettingsForm.get('selectedShape').disable({emitEvent: false});
-        this.levelCardWidgetSettingsForm.get('shapeAttributeName').enable({emitEvent: false});
-      }
-      emitEventFields.push('selectedShape', 'shapeAttributeName');
-    }
-
-    if (trigger === 'datasourceUnits' || trigger === 'layout' || trigger === 'units') {
-      if (
-        datasourceUnits === CapacityUnits.percent &&
-        layout !== LevelCardLayout.absolute &&
-        (!widgetUnits?.value || widgetUnits?.value === CapacityUnits.percent)
-      ) {
-        volumeSource.disable({emitEvent: false});
-        this.levelCardWidgetSettingsForm.get('volumeConstant').disable({emitEvent: false});
-        this.levelCardWidgetSettingsForm.get('volumeAttributeName').disable({emitEvent: false});
-        this.levelCardWidgetSettingsForm.get('volumeUnits').disable({emitEvent: false});
-        this.levelCardWidgetSettingsForm.get('volumeFont').disable({emitEvent: false});
-        this.levelCardWidgetSettingsForm.get('volumeColor').disable({emitEvent: false});
-      } else {
-        volumeSource.enable({emitEvent: false});
-        this.levelCardWidgetSettingsForm.get('volumeConstant').enable({emitEvent: false});
-        this.levelCardWidgetSettingsForm.get('volumeAttributeName').enable({emitEvent: false});
-        this.levelCardWidgetSettingsForm.get('volumeUnits').enable({emitEvent: false});
-        this.levelCardWidgetSettingsForm.get('volumeFont').enable({emitEvent: false});
-        this.levelCardWidgetSettingsForm.get('volumeColor').enable({emitEvent: false});
-      }
-
-      if (layout === LevelCardLayout.simple && datasourceUnits === CapacityUnits.percent) {
-        this.levelCardWidgetSettingsForm.get('valueFont').disable();
-        this.levelCardWidgetSettingsForm.get('valueColor').disable();
-      } else {
-        this.levelCardWidgetSettingsForm.get('valueFont').enable();
-        this.levelCardWidgetSettingsForm.get('valueColor').enable();
-      }
-      emitEventFields.push('volumeSource', 'volumeConstant', 'volumeAttributeName', 'volumeFont', 'volumeColor', 'volumeUnits');
-    } else if (trigger === 'volumeSource') {
-      if((datasourceUnits !== CapacityUnits.percent) ||
-        (layout === LevelCardLayout.absolute && widgetUnits?.value !== CapacityUnits.percent)) {
-        if (volumeSource.value === LevelSelectOptions.static) {
-          this.levelCardWidgetSettingsForm.get('volumeConstant').enable({emitEvent: false});
-          this.levelCardWidgetSettingsForm.get('volumeAttributeName').disable({emitEvent: false});
-        } else {
-          this.levelCardWidgetSettingsForm.get('volumeConstant').disable({emitEvent: false});
-          this.levelCardWidgetSettingsForm.get('volumeAttributeName').enable({emitEvent: false});
-        }
-        emitEventFields.push('volumeConstant', 'volumeAttributeName');
-      }
-    }
-
-    if (trigger === 'showBackgroundOverlay') {
-      const showBackgroundOverlay: boolean = this.levelCardWidgetSettingsForm.get('showBackgroundOverlay').value;
-      if (showBackgroundOverlay) {
-        this.levelCardWidgetSettingsForm.get('backgroundOverlayColor').enable({emitEvent: false});
-      } else {
-        this.levelCardWidgetSettingsForm.get('backgroundOverlayColor').disable({emitEvent: false});
-      }
-      emitEventFields.push('backgroundOverlayColor');
-    }
-
-    if (trigger === 'showTooltip') {
-      if (showTooltip) {
-        showTooltipLevel.enable({emitEvent: false});
-        showTooltipDate.enable({emitEvent: false});
-        this.levelCardWidgetSettingsForm.get('tooltipBackgroundColor').enable();
-        this.levelCardWidgetSettingsForm.get('tooltipBackgroundBlur').enable();
-      } else {
-        showTooltipLevel.disable({emitEvent: false});
-        showTooltipDate.disable({emitEvent: false});
-        this.levelCardWidgetSettingsForm.get('tooltipBackgroundColor').disable({emitEvent: false});
-        this.levelCardWidgetSettingsForm.get('tooltipBackgroundBlur').disable({emitEvent: false});
-      }
-      emitEventFields.push('showTooltipLevel', 'showTooltipDate', 'tooltipBackgroundColor', 'tooltipBackgroundBlur');
-    }
-
-    if (trigger === 'showTooltipLevel') {
-      if (showTooltipLevel?.value && !showTooltipLevel.disabled) {
-        this.levelCardWidgetSettingsForm.get('tooltipUnits').enable();
-        this.levelCardWidgetSettingsForm.get('tooltipLevelDecimals').enable({emitEvent: false});
-        this.levelCardWidgetSettingsForm.get('tooltipLevelFont').enable({emitEvent: false});
-        this.levelCardWidgetSettingsForm.get('tooltipLevelColor').enable({emitEvent: false});
-      } else {
-        this.levelCardWidgetSettingsForm.get('tooltipUnits').disable();
-        this.levelCardWidgetSettingsForm.get('tooltipLevelDecimals').disable({emitEvent: false});
-        this.levelCardWidgetSettingsForm.get('tooltipLevelFont').disable({emitEvent: false});
-        this.levelCardWidgetSettingsForm.get('tooltipLevelColor').disable({emitEvent: false});
-      }
-      emitEventFields.push('tooltipUnits', 'tooltipLevelDecimals', 'tooltipLevelFont', 'tooltipLevelColor');
-    }
-
-    if (trigger === 'showTooltipDate') {
-      if (showTooltipDate?.value && !showTooltipDate.disabled) {
-        this.levelCardWidgetSettingsForm.get('tooltipDateFormat').enable({emitEvent: false});
-        this.levelCardWidgetSettingsForm.get('tooltipDateFont').enable({emitEvent: false});
-        this.levelCardWidgetSettingsForm.get('tooltipDateColor').enable({emitEvent: false});
-      } else {
-        this.levelCardWidgetSettingsForm.get('tooltipDateFormat').disable({emitEvent: false});
-        this.levelCardWidgetSettingsForm.get('tooltipDateFont').disable({emitEvent: false});
-        this.levelCardWidgetSettingsForm.get('tooltipDateColor').disable({emitEvent: false});
-      }
-      emitEventFields.push('tooltipDateFormat', 'tooltipDateFont', 'tooltipDateColor');
-    }
-
-    if (trigger === 'layout' || trigger === 'datasourceUnits') {
-      if (layout === LevelCardLayout.simple) {
-        widgetUnits.disable({emitEvent: false});
-        tooltipUnits.disable({emitEvent: false});
-        widgetUnitsSource.setValue(LevelSelectOptions.static, {emitEvent: false});
-        widgetUnitsSource.disable({emitEvent: false});
-
-        this.levelCardWidgetSettingsForm.get('valueFont').disable({emitEvent: false});
-        this.levelCardWidgetSettingsForm.get('valueColor').disable({emitEvent: false});
-        this.levelCardWidgetSettingsForm.get('widgetUnitsAttributeName').disable({emitEvent: false});
-      } else if (layout === LevelCardLayout.percentage) {
-        if (widgetUnits.value !== CapacityUnits.percent) {
-          widgetUnits.setValue(CapacityUnits.percent, {emitEvent: false});
-          widgetUnitsSource.setValue(LevelSelectOptions.static, {emitEvent: false});
-        }
-        widgetUnits.disable({emitEvent: false});
-        widgetUnitsSource.disable({emitEvent: false});
-        this.levelCardWidgetSettingsForm.get('widgetUnitsAttributeName').disable({emitEvent: false});
-
-        if (tooltipUnits.value !== CapacityUnits.percent) {
-          tooltipUnits.setValue(CapacityUnits.percent, {emitEvent: false});
-        }
-        tooltipUnits.disable({emitEvent: false});
-      } else {
-        widgetUnits.enable({emitEvent: false});
-        tooltipUnits.enable({emitEvent: false});
-        widgetUnitsSource.enable({emitEvent: false});
-
-        this.levelCardWidgetSettingsForm.get('valueFont').enable({emitEvent: false});
-        this.levelCardWidgetSettingsForm.get('valueColor').enable({emitEvent: false});
-        this.levelCardWidgetSettingsForm.get('widgetUnitsAttributeName').enable({emitEvent: false});
-      }
-      emitEventFields.push('units', 'tooltipUnits', 'valueFont', 'valueColor', 'widgetUnitsSource', 'widgetUnitsAttributeName');
-    } else if (trigger === 'widgetUnitsSource') {
-      if (layout !== LevelCardLayout.percentage) {
-        if (widgetUnitsSource.value === LevelSelectOptions.static) {
-          widgetUnits.enable({emitEvent: false});
-          this.levelCardWidgetSettingsForm.get('widgetUnitsAttributeName').disable({emitEvent: false});
-        } else {
-          widgetUnits.disable({emitEvent: false});
-          this.levelCardWidgetSettingsForm.get('widgetUnitsAttributeName').enable({emitEvent: false});
-        }
-        emitEventFields.push('units', 'widgetUnitsAttributeName');
-      }
-    }
-
-    for (const controlKey in this.levelCardWidgetSettingsForm.controls) {
-      if (emitEventFields.includes(controlKey)) {
-        this.levelCardWidgetSettingsForm.controls[controlKey].updateValueAndValidity({emitEvent});
-      }
+    if (this.levelCardWidgetSettingsForm.get('showBackgroundOverlay').value) {
+      this.levelCardWidgetSettingsForm.get('backgroundOverlayColor').enable({emitEvent: false});
+    } else {
+      this.levelCardWidgetSettingsForm.get('backgroundOverlayColor').disable({emitEvent: false});
     }
   }
 

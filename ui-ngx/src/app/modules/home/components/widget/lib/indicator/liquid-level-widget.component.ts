@@ -27,7 +27,7 @@ import {
   levelCardDefaultSettings,
   LevelCardLayout,
   LevelCardWidgetSettings,
-  LevelSelectOptions,
+  LiquidWidgetDataSourceType,
   Shapes,
   SvgInfo,
   SvgLimits,
@@ -66,7 +66,6 @@ export class LiquidLevelWidgetComponent implements OnInit {
   private settings: LevelCardWidgetSettings;
 
   private tankColor: ColorProcessor;
-  private volumeColor: ColorProcessor;
   private valueColor: ColorProcessor;
   private liquidColor: ColorProcessor;
   private backgroundOverlayColor: ColorProcessor;
@@ -83,7 +82,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
 
   ngOnInit(): void {
     this.ctx.$scope.liquidLevelWidget = this;
-    this.settings = {...levelCardDefaultSettings(), ...this.ctx.widgetConfig, ...this.ctx.settings};
+    this.settings = {...levelCardDefaultSettings, ...this.ctx.settings};
     this.declareStyles();
 
     this.getData().subscribe(data => {
@@ -117,7 +116,6 @@ export class LiquidLevelWidgetComponent implements OnInit {
 
   private declareStyles(): void {
     this.tankColor = ColorProcessor.fromSettings(this.settings.tankColor);
-    this.volumeColor = ColorProcessor.fromSettings(this.settings.volumeColor);
     this.valueColor = ColorProcessor.fromSettings(this.settings.valueColor);
     this.liquidColor =  ColorProcessor.fromSettings(this.settings.liquidColor);
     this.backgroundOverlayColor = ColorProcessor.fromSettings(this.settings.backgroundOverlayColor);
@@ -264,7 +262,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
   }
 
   private getShape(entityId: EntityId): Observable<Shapes> {
-    if (this.settings.tankSelectionType === LevelSelectOptions.attribute && entityId.id !== NULL_UUID) {
+    if (this.settings.tankSelectionType === LiquidWidgetDataSourceType.attribute && entityId.id !== NULL_UUID) {
       return this.ctx.attributeService.getEntityAttributes(entityId, null,
         [this.settings.shapeAttributeName]).pipe(
         map(attributes =>
@@ -296,10 +294,10 @@ export class LiquidLevelWidgetComponent implements OnInit {
 
   private prepareAttributeNames(): string[] {
     const names = [];
-    if (this.settings.volumeSource !== LevelSelectOptions.static) {
+    if (this.settings.volumeSource !== LiquidWidgetDataSourceType.static) {
       names.push(this.settings.volumeAttributeName);
     }
-    if (this.settings.widgetUnitsSource !== LevelSelectOptions.static) {
+    if (this.settings.widgetUnitsSource !== LiquidWidgetDataSourceType.static) {
       names.push(this.settings.widgetUnitsAttributeName);
     }
     return names;
@@ -398,10 +396,9 @@ export class LiquidLevelWidgetComponent implements OnInit {
       const volumeInLiters: number = convertLiters(this.volume, this.settings.volumeUnits as CapacityUnits, ConversionType.to);
       const volume = convertLiters(volumeInLiters, this.widgetUnits as CapacityUnits, ConversionType.from)
         .toFixed(this.settings.decimals || 0);
-      this.volumeColor.update(volume);
 
       const volumeTextStyle = cssTextFromInlineStyle({...inlineTextStyle(this.settings.volumeFont),
-                                                             color: this.volumeColor.color});
+                                                             color: this.settings.volumeColor});
 
       container = jQueryContainerElement.find('.absolute-value-container');
       content = createAbsoluteLayout({inputValue: value, volume},
