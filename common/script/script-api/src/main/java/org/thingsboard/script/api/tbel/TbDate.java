@@ -28,7 +28,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.time.chrono.IsoChronology;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
@@ -94,7 +93,10 @@ public class TbDate implements Serializable, Cloneable {
     }
 
     public ZonedDateTime getZonedDateTime() {
-        return instant.atZone(zoneIdUTC);
+        return getZonedDateTime(zoneIdUTC);
+    }
+    public ZonedDateTime getZonedDateTime(ZoneId zoneId) {
+        return instant.atZone(zoneId);
     }
 
     public LocalDateTime getLocalDateTime() {
@@ -149,12 +151,20 @@ public class TbDate implements Serializable, Cloneable {
     public String toString(String localeStr, String optionsStr) {
         return toLocaleString(localeStr, optionsStr, (locale, options) -> DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL, FormatStyle.FULL).withLocale(locale));
     }
-    public String toISOZonedDateTimeString() {
+    public String toZonedDateTimeString() {
         return getZonedDateTime().toString();
     }
-    public String toISOZonedDateTimeString(DateTimeFormatter formatter) {
+    public String toZonedDateTimeString(DateTimeFormatter formatter) {
         return getZonedDateTime().format(formatter);
     }
+
+    public String toZonedDateTimeString(String zoneIdStr) {
+        return getZonedDateTime(ZoneId.of(zoneIdStr)).toString();
+    }
+    public String toZonedDateTimeString(DateTimeFormatter formatter, String zoneIdStr) {
+        return getZonedDateTime(ZoneId.of(zoneIdStr)).format(formatter);
+    }
+
 
     public String toLocaleDateString() {
         return toLocaleDateString(localeUTC.getLanguage());
