@@ -53,6 +53,14 @@
     "noise_level_chart_card",
     "noise_level_chart_card_with_background",
     "simple_noise_level_chart_card",
-    "simple_noise_level_chart_card_with_background"
+    "simple_noise_level_chart_card_with_background",
+    "indoor_pm2_5_card",
+    "indoor_pm2_5_card_with_background",
+    "indoor_horizontal_pm2_5_card",
+    "indoor_horizontal_pm2_5_card_with_background",
+    "indoor_pm2_5_chart_card",
+    "indoor_pm2_5_chart_card_with_background",
+    "indoor_simple_pm2_5_chart_card",
+    "indoor_simple_pm2_5_chart_card_with_background"
   ]
 }
