@@ -53,6 +53,7 @@ export class AlarmsTableWidgetSettingsComponent extends WidgetSettingsComponent 
       allowAcknowledgment: true,
       allowClear: true,
       allowAssign: true,
+      displayActivity: true,
       displayPagination: true,
       defaultPageSize: 10,
       defaultSortOrder: '-createdTime',

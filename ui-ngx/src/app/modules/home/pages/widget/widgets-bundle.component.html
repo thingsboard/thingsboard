@@ -55,8 +55,8 @@
       </tb-image-input>
       <mat-form-field class="mat-block">
         <mat-label translate>widgets-bundle.description</mat-label>
-        <textarea matInput formControlName="description" rows="2" maxlength="255" #descriptionInput></textarea>
-        <mat-hint align="end">{{descriptionInput.value?.length || 0}}/255</mat-hint>
+        <textarea matInput formControlName="description" rows="2" maxlength="1024" #descriptionInput></textarea>
+        <mat-hint align="end">{{descriptionInput.value?.length || 0}}/1024</mat-hint>
       </mat-form-field>
     </fieldset>
   </form>

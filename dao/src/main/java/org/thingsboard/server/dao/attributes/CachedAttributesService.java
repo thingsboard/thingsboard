@@ -36,6 +36,7 @@ import org.thingsboard.server.common.stats.DefaultCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.cache.CacheExecutorService;
 import org.thingsboard.server.dao.service.Validator;
+import org.thingsboard.server.dao.sql.JpaExecutorService;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
@@ -61,6 +62,7 @@ public class CachedAttributesService implements AttributesService {
     public static final String LOCAL_CACHE_TYPE = "caffeine";
 
     private final AttributesDao attributesDao;
+    private final JpaExecutorService jpaExecutorService;
     private final CacheExecutorService cacheExecutorService;
     private final DefaultCounter hitCounter;
     private final DefaultCounter missCounter;
@@ -73,10 +75,12 @@ public class CachedAttributesService implements AttributesService {
     private boolean valueNoXssValidation;
 
     public CachedAttributesService(AttributesDao attributesDao,
+                                   JpaExecutorService jpaExecutorService,
                                    StatsFactory statsFactory,
                                    CacheExecutorService cacheExecutorService,
                                    TbTransactionalCache<AttributeCacheKey, AttributeKvEntry> cache) {
         this.attributesDao = attributesDao;
+        this.jpaExecutorService = jpaExecutorService;
         this.cacheExecutorService = cacheExecutorService;
         this.cache = cache;
 
@@ -134,12 +138,14 @@ public class CachedAttributesService implements AttributesService {
     }
 
     @Override
-    public ListenableFuture<List<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String scope, Collection<String> attributeKeys) {
+    public ListenableFuture<List<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String scope, final Collection<String> attributeKeysNonUnique) {
         validate(entityId, scope);
-        attributeKeys = new LinkedHashSet<>(attributeKeys); // deduplicate the attributes
+        final var attributeKeys = new LinkedHashSet<>(attributeKeysNonUnique); // deduplicate the attributes
         attributeKeys.forEach(attributeKey -> Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey));
 
-        Map<String, TbCacheValueWrapper<AttributeKvEntry>> wrappedCachedAttributes = findCachedAttributes(entityId, scope, attributeKeys);
+        //CacheExecutor for Redis or DirectExecutor for local Caffeine
+        return Futures.transformAsync(cacheExecutor.submit(() -> findCachedAttributes(entityId, scope, attributeKeys)),
+                wrappedCachedAttributes -> {
 
         List<AttributeKvEntry> cachedAttributes = wrappedCachedAttributes.values().stream()
                 .map(TbCacheValueWrapper::get)
@@ -155,7 +161,8 @@ public class CachedAttributesService implements AttributesService {
 
         List<AttributeCacheKey> notFoundKeys = notFoundAttributeKeys.stream().map(k -> new AttributeCacheKey(scope, entityId, k)).collect(Collectors.toList());
 
-        return cacheExecutor.submit(() -> {
+        // DB call should run in DB executor, not in cache-related executor
+        return jpaExecutorService.submit(() -> {
             var cacheTransaction = cache.newTransactionForKeys(notFoundKeys);
             try {
                 log.trace("[{}][{}] Lookup attributes from db: {}", entityId, scope, notFoundAttributeKeys);
@@ -179,6 +186,8 @@ public class CachedAttributesService implements AttributesService {
                 throw e;
             }
         });
+
+        }, MoreExecutors.directExecutor()); // cacheExecutor analyse and returns results or submit to DB executor
     }
 
     private Map<String, TbCacheValueWrapper<AttributeKvEntry>> findCachedAttributes(EntityId entityId, String scope, Collection<String> attributeKeys) {

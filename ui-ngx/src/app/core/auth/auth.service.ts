@@ -424,8 +424,8 @@ export class AuthService {
                   } else {
                     userLang = null;
                   }
-                  this.notifyUserLang(userLang);
                   loadUserSubject.next(authPayload);
+                  this.notifyUserLang(userLang);
                   loadUserSubject.complete();
                 },
                 (err) => {

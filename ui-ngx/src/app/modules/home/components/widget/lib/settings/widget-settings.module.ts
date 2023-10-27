@@ -42,16 +42,16 @@ import {
 } from '@home/components/widget/lib/settings/cards/dashboard-state-widget-settings.component';
 import {
   EntitiesHierarchyWidgetSettingsComponent
-} from '@home/components/widget/lib/settings/cards/entities-hierarchy-widget-settings.component';
+} from '@home/components/widget/lib/settings/entity/entities-hierarchy-widget-settings.component';
 import {
   HtmlCardWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/cards/html-card-widget-settings.component';
 import {
   EntitiesTableWidgetSettingsComponent
-} from '@home/components/widget/lib/settings/cards/entities-table-widget-settings.component';
+} from '@home/components/widget/lib/settings/entity/entities-table-widget-settings.component';
 import {
   EntitiesTableKeySettingsComponent
-} from '@home/components/widget/lib/settings/cards/entities-table-key-settings.component';
+} from '@home/components/widget/lib/settings/entity/entities-table-key-settings.component';
 import {
   AlarmsTableWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/alarm/alarms-table-widget-settings.component';
@@ -279,6 +279,27 @@ import {
 import {
   AggregatedValueCardWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/cards/aggregated-value-card-widget-settings.component';
+import {
+  AlarmCountWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/alarm/alarm-count-widget-settings.component';
+import {
+  EntityCountWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/entity/entity-count-widget-settings.component';
+import {
+  BatteryLevelWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/indicator/battery-level-widget-settings.component';
+import {
+  WindSpeedDirectionWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/weather/wind-speed-direction-widget-settings.component';
+import {
+  SignalStrengthWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/indicator/signal-strength-widget-settings.component';
+import {
+  ValueChartCardWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/value-chart-card-widget-settings.component';
+import {
+  ProgressBarWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/progress-bar-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -382,7 +403,14 @@ import {
     QuickLinksWidgetSettingsComponent,
     ValueCardWidgetSettingsComponent,
     AggregatedValueCardKeySettingsComponent,
-    AggregatedValueCardWidgetSettingsComponent
+    AggregatedValueCardWidgetSettingsComponent,
+    AlarmCountWidgetSettingsComponent,
+    EntityCountWidgetSettingsComponent,
+    BatteryLevelWidgetSettingsComponent,
+    WindSpeedDirectionWidgetSettingsComponent,
+    SignalStrengthWidgetSettingsComponent,
+    ValueChartCardWidgetSettingsComponent,
+    ProgressBarWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -491,7 +519,14 @@ import {
     QuickLinksWidgetSettingsComponent,
     ValueCardWidgetSettingsComponent,
     AggregatedValueCardKeySettingsComponent,
-    AggregatedValueCardWidgetSettingsComponent
+    AggregatedValueCardWidgetSettingsComponent,
+    AlarmCountWidgetSettingsComponent,
+    EntityCountWidgetSettingsComponent,
+    BatteryLevelWidgetSettingsComponent,
+    WindSpeedDirectionWidgetSettingsComponent,
+    SignalStrengthWidgetSettingsComponent,
+    ValueChartCardWidgetSettingsComponent,
+    ProgressBarWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -565,5 +600,12 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-quick-links-widget-settings': QuickLinksWidgetSettingsComponent,
   'tb-value-card-widget-settings': ValueCardWidgetSettingsComponent,
   'tb-aggregated-value-card-key-settings': AggregatedValueCardKeySettingsComponent,
-  'tb-aggregated-value-card-widget-settings': AggregatedValueCardWidgetSettingsComponent
+  'tb-aggregated-value-card-widget-settings': AggregatedValueCardWidgetSettingsComponent,
+  'tb-alarm-count-widget-settings': AlarmCountWidgetSettingsComponent,
+  'tb-entity-count-widget-settings': EntityCountWidgetSettingsComponent,
+  'tb-battery-level-widget-settings': BatteryLevelWidgetSettingsComponent,
+  'tb-wind-speed-direction-widget-settings': WindSpeedDirectionWidgetSettingsComponent,
+  'tb-signal-strength-widget-settings': SignalStrengthWidgetSettingsComponent,
+  'tb-value-chart-card-widget-settings': ValueChartCardWidgetSettingsComponent,
+  'tb-progress-bar-widget-settings': ProgressBarWidgetSettingsComponent
 };

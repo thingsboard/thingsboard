@@ -26,7 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
@@ -205,21 +204,25 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     @Override
     @Transactional
     public void deleteAsset(TenantId tenantId, AssetId assetId) {
-        log.trace("Executing deleteAsset [{}]", assetId);
         validateId(assetId, INCORRECT_ASSET_ID + assetId);
-        deleteEntityRelations(tenantId, assetId);
-
-        Asset asset = assetDao.findById(tenantId, assetId.getId());
-        List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityId(asset.getTenantId(), assetId);
-        if (entityViews != null && !entityViews.isEmpty()) {
+        if (entityViewService.existsByTenantIdAndEntityId(tenantId, assetId)) {
             throw new DataValidationException("Can't delete asset that has entity views!");
         }
 
+        Asset asset = assetDao.findById(tenantId, assetId.getId());
+        alarmService.deleteEntityAlarmRelations(tenantId, assetId);
+        deleteAsset(tenantId, asset);
+    }
+
+    private void deleteAsset(TenantId tenantId, Asset asset) {
+        log.trace("Executing deleteAsset [{}]", asset.getId());
+        relationService.deleteEntityRelations(tenantId, asset.getAssetProfileId());
+
+        assetDao.removeById(tenantId, asset.getUuidId());
+
         publishEvictEvent(new AssetCacheEvictEvent(asset.getTenantId(), asset.getName(), null));
         countService.publishCountEntityEvictEvent(tenantId, EntityType.ASSET);
-        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(assetId).build());
-
-        assetDao.removeById(tenantId, assetId.getId());
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(asset.getId()).build());
     }
 
     @Override
@@ -438,21 +441,20 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
         return assetDao.findAssetsByTenantIdAndEdgeIdAndType(tenantId.getId(), edgeId.getId(), type, pageLink);
     }
 
-    private PaginatedRemover<TenantId, Asset> tenantAssetsRemover =
-            new PaginatedRemover<TenantId, Asset>() {
+    private final PaginatedRemover<TenantId, Asset> tenantAssetsRemover = new PaginatedRemover<>() {
 
-                @Override
-                protected PageData<Asset> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-                    return assetDao.findAssetsByTenantId(id.getId(), pageLink);
-                }
+        @Override
+        protected PageData<Asset> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+            return assetDao.findAssetsByTenantId(id.getId(), pageLink);
+        }
 
-                @Override
-                protected void removeEntity(TenantId tenantId, Asset entity) {
-                    deleteAsset(tenantId, new AssetId(entity.getId().getId()));
-                }
-            };
+        @Override
+        protected void removeEntity(TenantId tenantId, Asset asset) {
+            deleteAsset(tenantId, asset);
+        }
+    };
 
-    private PaginatedRemover<CustomerId, Asset> customerAssetsUnasigner = new PaginatedRemover<CustomerId, Asset>() {
+    private final PaginatedRemover<CustomerId, Asset> customerAssetsUnasigner = new PaginatedRemover<CustomerId, Asset>() {
 
         @Override
         protected PageData<Asset> findEntities(TenantId tenantId, CustomerId id, PageLink pageLink) {

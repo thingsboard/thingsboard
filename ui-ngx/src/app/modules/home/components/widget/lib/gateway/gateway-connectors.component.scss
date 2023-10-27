@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import '../../../../../../../scss/constants';
+
 :host {
   width: 100%;
   height: 100%;
@@ -21,25 +23,32 @@
   padding: 0;
 
   .connector-container {
+    height: 100%;
     width: 100%;
-
-    & > mat-card, & > div {
-      min-width: calc(50% - 15px);
+    flex-direction: row;
+    @media #{$mat-lt-lg} {
+      flex-direction: column;
     }
 
-    mat-card {
-      margin: 10px;
-      padding: 10px;
-      max-width: 100%;
-    }
-  }
-
-  .tb-entity-table {
-    .tb-entity-table-content {
-      width: 100%;
-      height: 100%;
-      background: #fff;
+    .table-section {
+      min-height: 35vh;
       overflow: hidden;
+
+      .table-container {
+        overflow: auto;
+      }
+    }
+
+    .flex {
+      flex: 1;
+    }
+
+    .input-container {
+      height: auto;
+    }
+
+    .section-container {
+      background-color: #fff;
     }
   }
 
@@ -48,43 +57,24 @@
     color: rgba(0, 0, 0, .87) !important;
   }
 
-  .mat-mdc-form-field {
-    flex-grow: 1;
-  }
-
-  mat-card {
-    padding-left: 10px;
-    background: transparent;
-  }
-
-  .mat-card-selected {
-    background-color: rgba(48, 86, 128, 0.1);
-  }
-
   .mat-mdc-slide-toggle {
-    margin: 15px;
+    margin: 0 8px;
   }
 
-  .status-block {
+  .status {
     text-align: center;
     border-radius: 16px;
     font-weight: 500;
     width: fit-content;
     padding: 5px 15px;
-  }
-
-  .status-sync {
-    background: rgba(25, 128, 56, .06);
-    color: rgb(25, 128, 56);
-  }
-
-  .status-unsync {
-    background: rgba(203, 37, 48, .06);
-    color: rgb(203, 37, 48);
-  }
-
-  .action-btns {
-    margin: 10px 10px 0;
+    &-sync {
+      background: rgba(25, 128, 56, .06);
+      color: rgb(25, 128, 56);
+    }
+    &-unsync {
+      background: rgba(203, 37, 48, .06);
+      color: rgb(203, 37, 48);
+    }
   }
 
   mat-row {

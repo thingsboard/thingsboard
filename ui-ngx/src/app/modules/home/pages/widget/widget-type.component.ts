@@ -51,7 +51,8 @@ export class WidgetTypeComponent extends EntityComponent<WidgetTypeDetails> {
       {
         name: [entity ? entity.name : '', [Validators.required, Validators.maxLength(255)]],
         image: [entity ? entity.image : ''],
-        description: [entity  ? entity.description : '', Validators.maxLength(255)],
+        description: [entity  ? entity.description : '', Validators.maxLength(1024)],
+        tags: [entity ? entity.tags : []],
         deprecated: [entity ? entity.deprecated : false]
       }
     );
@@ -62,6 +63,7 @@ export class WidgetTypeComponent extends EntityComponent<WidgetTypeDetails> {
       name: entity.name,
       image: entity.image,
       description: entity.description,
+      tags: entity.tags,
       deprecated: entity.deprecated
     });
   }

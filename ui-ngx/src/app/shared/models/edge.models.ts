@@ -59,9 +59,12 @@ export enum EdgeEventType {
   CUSTOMER = 'CUSTOMER',
   RELATION = 'RELATION',
   TENANT = 'TENANT',
+  TENANT_PROFILE = 'TENANT_PROFILE',
   WIDGETS_BUNDLE = 'WIDGETS_BUNDLE',
   WIDGET_TYPE = 'WIDGET_TYPE',
-  ADMIN_SETTINGS = 'ADMIN_SETTINGS'
+  ADMIN_SETTINGS = 'ADMIN_SETTINGS',
+  OTA_PACKAGE = 'OTA_PACKAGE',
+  QUEUE = 'QUEUE'
 }
 
 export enum EdgeEventActionType {
@@ -80,6 +83,8 @@ export enum EdgeEventActionType {
   RPC_CALL = 'RPC_CALL',
   ALARM_ACK = 'ALARM_ACK',
   ALARM_CLEAR = 'ALARM_CLEAR',
+  ALARM_ASSIGNED = 'ALARM_ASSIGNED',
+  ALARM_UNASSIGNED = 'ALARM_UNASSIGNED',
   ASSIGNED_TO_EDGE = 'ASSIGNED_TO_EDGE',
   UNASSIGNED_FROM_EDGE = 'UNASSIGNED_FROM_EDGE',
   CREDENTIALS_REQUEST = 'CREDENTIALS_REQUEST',
@@ -107,9 +112,12 @@ export const edgeEventTypeTranslations = new Map<EdgeEventType, string>(
     [EdgeEventType.CUSTOMER, 'edge-event.type-customer'],
     [EdgeEventType.RELATION, 'edge-event.type-relation'],
     [EdgeEventType.TENANT, 'edge-event.type-tenant'],
+    [EdgeEventType.TENANT_PROFILE, 'edge-event.type-tenant-profile'],
     [EdgeEventType.WIDGETS_BUNDLE, 'edge-event.type-widgets-bundle'],
     [EdgeEventType.WIDGET_TYPE, 'edge-event.type-widgets-type'],
-    [EdgeEventType.ADMIN_SETTINGS, 'edge-event.type-admin-settings']
+    [EdgeEventType.ADMIN_SETTINGS, 'edge-event.type-admin-settings'],
+    [EdgeEventType.OTA_PACKAGE, 'edge-event.type-ota-package'],
+    [EdgeEventType.QUEUE, 'edge-event.type-queue']
   ]
 );
 
@@ -130,6 +138,8 @@ export const edgeEventActionTypeTranslations = new Map<EdgeEventActionType, stri
     [EdgeEventActionType.RPC_CALL, 'edge-event.action-type-rpc-call'],
     [EdgeEventActionType.ALARM_ACK, 'edge-event.action-type-alarm-ack'],
     [EdgeEventActionType.ALARM_CLEAR, 'edge-event.action-type-alarm-clear'],
+    [EdgeEventActionType.ALARM_ASSIGNED, 'edge-event.action-type-alarm-assigned'],
+    [EdgeEventActionType.ALARM_UNASSIGNED, 'edge-event.action-type-alarm-unassigned'],
     [EdgeEventActionType.ASSIGNED_TO_EDGE, 'edge-event.action-type-assigned-to-edge'],
     [EdgeEventActionType.UNASSIGNED_FROM_EDGE, 'edge-event.action-type-unassigned-from-edge'],
     [EdgeEventActionType.CREDENTIALS_REQUEST, 'edge-event.action-type-credentials-request'],
@@ -169,5 +179,11 @@ export interface EdgeEvent extends BaseData<EventId> {
 }
 
 export interface EdgeInstallInstructions {
-  dockerInstallInstructions: string;
+  installInstructions: string;
+}
+
+export enum EdgeInstructionsMethod {
+  ubuntu,
+  centos,
+  docker
 }

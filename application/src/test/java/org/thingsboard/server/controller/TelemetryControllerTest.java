@@ -149,6 +149,19 @@ public class TelemetryControllerTest extends AbstractControllerTest {
         doPostAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/smth", invalidRequestBody, String.class, status().isBadRequest());
     }
 
+    @Test
+    public void testEmptyKeyIsProhibited() throws Exception {
+        loginTenantAdmin();
+        Device device = createDevice();
+        String invalidRequestBody = "{\"\": \"value\"}";
+        doPostAsync("/api/plugins/telemetry/" + device.getId() + "/SHARED_SCOPE", invalidRequestBody, String.class, status().isBadRequest());
+        doPostAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/smth", invalidRequestBody, String.class, status().isBadRequest());
+
+        String invalidRequestBody2 = "{\" \": \"value\"}";
+        doPostAsync("/api/plugins/telemetry/" + device.getId() + "/SHARED_SCOPE", invalidRequestBody2, String.class, status().isBadRequest());
+        doPostAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/smth", invalidRequestBody2, String.class, status().isBadRequest());
+    }
+
     private Device createDevice() throws Exception {
         String testToken = "TEST_TOKEN";
 

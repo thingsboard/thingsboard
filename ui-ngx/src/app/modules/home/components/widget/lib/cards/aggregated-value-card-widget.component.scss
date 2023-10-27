@@ -21,7 +21,7 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 8px;
+    gap: 2px;
     padding: 20px 24px 24px;
     > div:not(.tb-value-card-overlay) {
       z-index: 1;
@@ -45,10 +45,17 @@
       min-height: 0;
       overflow: hidden;
     }
+    .tb-aggregated-value-card-values {
+      padding: 8px 0;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
     .tb-aggregated-value-card-values-container {
       width: 100%;
       height: 100%;
-      padding: 8px 0;
+      position: relative;
       display: grid;
       grid-template-columns: minmax(0, 1fr) fit-content(100%) minmax(0, 1fr);
       .tb-aggregated-value-card-values-section {

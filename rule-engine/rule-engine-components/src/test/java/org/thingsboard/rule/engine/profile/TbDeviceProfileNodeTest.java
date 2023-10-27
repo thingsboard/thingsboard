@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.alarm.AlarmModificationRequest;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.device.profile.AlarmCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
@@ -217,6 +218,94 @@ public class TbDeviceProfileNodeTest {
         verify(ctx).tellSuccess(msg2);
         verify(ctx).enqueueForTellNext(theMsg2, "Alarm Updated");
 
+    }
+
+    @Test
+    public void testAlarmSeverityUpdate() throws Exception {
+        init();
+
+        DeviceProfile deviceProfile = new DeviceProfile();
+        DeviceProfileData deviceProfileData = new DeviceProfileData();
+
+        AlarmConditionFilter tempFilter = new AlarmConditionFilter();
+        tempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
+        tempFilter.setValueType(EntityKeyValueType.NUMERIC);
+        NumericFilterPredicate temperaturePredicate = new NumericFilterPredicate();
+        temperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        temperaturePredicate.setValue(new FilterPredicateValue<>(30.0));
+        tempFilter.setPredicate(temperaturePredicate);
+        AlarmCondition alarmTempCondition = new AlarmCondition();
+        alarmTempCondition.setCondition(Collections.singletonList(tempFilter));
+        AlarmRule alarmTempRule = new AlarmRule();
+        alarmTempRule.setCondition(alarmTempCondition);
+
+        AlarmConditionFilter highTempFilter = new AlarmConditionFilter();
+        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
+        highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
+        NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
+        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        highTemperaturePredicate.setValue(new FilterPredicateValue<>(50.0));
+        highTempFilter.setPredicate(highTemperaturePredicate);
+        AlarmCondition alarmHighTempCondition = new AlarmCondition();
+        alarmHighTempCondition.setCondition(Collections.singletonList(highTempFilter));
+        AlarmRule alarmHighTempRule = new AlarmRule();
+        alarmHighTempRule.setCondition(alarmHighTempCondition);
+        DeviceProfileAlarm dpa = new DeviceProfileAlarm();
+        dpa.setId("highTemperatureAlarmID1");
+        dpa.setAlarmType("highTemperatureAlarm1");
+
+        TreeMap<AlarmSeverity, AlarmRule> createRules = new TreeMap<>();
+
+        createRules.put(AlarmSeverity.WARNING, alarmTempRule);
+        createRules.put(AlarmSeverity.CRITICAL, alarmHighTempRule);
+
+        dpa.setCreateRules(createRules);
+
+        deviceProfileData.setAlarms(Collections.singletonList(dpa));
+        deviceProfile.setProfileData(deviceProfileData);
+
+        Mockito.when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
+        Mockito.when(timeseriesService.findLatest(tenantId, deviceId, Collections.singleton("temperature")))
+                .thenReturn(Futures.immediateFuture(Collections.emptyList()));
+        Mockito.when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm1")).thenReturn(null);
+        registerCreateAlarmMock(alarmService.createAlarm(any()), true);
+
+        TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+        when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString())).thenReturn(theMsg);
+
+        ObjectNode data = JacksonUtil.newObjectNode();
+        data.put("temperature", 42);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+        node.onMsg(ctx, msg);
+        verify(ctx).tellSuccess(msg);
+        verify(ctx).enqueueForTellNext(theMsg, "Alarm Created");
+        verify(ctx, Mockito.never()).tellFailure(Mockito.any(), Mockito.any());
+
+        TbMsg theMsg2 = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+        when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString())).thenReturn(theMsg2);
+
+        AlarmInfo alarm = new AlarmInfo(new Alarm(new AlarmId(UUID.randomUUID())));
+        alarm.setSeverity(AlarmSeverity.CRITICAL);
+
+        Alarm oldAlarm = new Alarm(new AlarmId(UUID.randomUUID()));
+        oldAlarm.setSeverity(AlarmSeverity.WARNING);
+        var result = AlarmApiCallResult.builder()
+                .successful(true)
+                .created(false)
+                .modified(true)
+                .alarm(alarm)
+                .old(oldAlarm)
+                .build();
+
+        when(alarmService.updateAlarm(any())).thenReturn(result);
+
+        data.put("temperature", 52);
+        TbMsg msg2 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+        node.onMsg(ctx, msg2);
+        verify(ctx).tellSuccess(msg2);
+        verify(ctx).enqueueForTellNext(theMsg2, "Alarm Severity Updated");
     }
 
     @Test
@@ -1605,9 +1694,9 @@ public class TbDeviceProfileNodeTest {
 
     private void registerCreateAlarmMock(AlarmApiCallResult a, boolean created) {
         when(a).thenAnswer(invocationOnMock -> {
-//            AlarmCreateOrUpdateActiveRequest request = invocationOnMock.getArgument(0);
             AlarmInfo alarm = new AlarmInfo(new Alarm(new AlarmId(UUID.randomUUID())));
-            alarm.setSeverity(AlarmSeverity.CRITICAL);
+            AlarmModificationRequest request = invocationOnMock.getArgument(0);
+            alarm.setSeverity(request.getSeverity());
             return AlarmApiCallResult.builder()
                     .successful(true)
                     .created(created)

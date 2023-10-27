@@ -25,9 +25,11 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.rule.engine.api.NotificationCenter;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -62,6 +64,7 @@ import org.thingsboard.server.common.data.notification.template.NotificationTemp
 import org.thingsboard.server.common.data.notification.template.SlackDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.SmsDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.WebDeliveryMethodNotificationTemplate;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.notification.DefaultNotifications;
 import org.thingsboard.server.dao.notification.NotificationDao;
@@ -74,6 +77,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -277,6 +281,25 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         assertThat(wsClient.getUnreadCount()).isZero();
         loginCustomerUser();
         assertThat(getMyNotifications(false, 10)).size().isZero();
+    }
+
+    @Test
+    public void whenTenantIsDeleted_thenDeleteNotificationRequests() throws Exception {
+        createDifferentTenant();
+        TenantId tenantId = differentTenantId;
+        NotificationTarget target = createNotificationTarget(savedDifferentTenantUser.getId());
+        int notificationsCount = 20;
+        for (int i = 0; i < notificationsCount; i++) {
+            NotificationRequest request = submitNotificationRequest(target.getId(), "Test " + i, NotificationDeliveryMethod.WEB);
+            awaitNotificationRequest(request.getId());
+        }
+        List<NotificationRequest> requests = notificationRequestService.findNotificationRequestsByTenantIdAndOriginatorType(tenantId, EntityType.USER, new PageLink(100)).getData();
+        assertThat(requests).size().isEqualTo(notificationsCount);
+
+        deleteDifferentTenant();
+
+        assertThat(notificationRequestService.findNotificationRequestsByTenantIdAndOriginatorType(tenantId, EntityType.USER, new PageLink(1)).getTotalElements())
+                .isZero();
     }
 
     @Test
@@ -690,6 +713,11 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         SettableFuture<NotificationRequestStats> future = SettableFuture.create();
         notificationCenter.processNotificationRequest(notificationRequest.getTenantId(), notificationRequest, future::set);
         return future.get(30, TimeUnit.SECONDS);
+    }
+
+    private NotificationRequestStats awaitNotificationRequest(NotificationRequestId requestId) {
+        return await().atMost(30, TimeUnit.SECONDS)
+                .until(() -> getStats(requestId), Objects::nonNull);
     }
 
     private void checkFullNotificationsUpdate(UnreadNotificationsUpdate notificationsUpdate, String... expectedNotifications) {

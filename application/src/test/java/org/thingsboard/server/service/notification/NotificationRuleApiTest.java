@@ -230,8 +230,8 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         doPost("/api/plugins/telemetry/" + device.getId() + "/" + DataConstants.SHARED_SCOPE, attr);
 
         await().atMost(10, TimeUnit.SECONDS)
-                .until(() -> alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType).get() != null);
-        Alarm alarm = alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType).get();
+                .until(() -> alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType) != null);
+        Alarm alarm = alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType);
 
         long ts = System.currentTimeMillis();
         await().atMost(15, TimeUnit.SECONDS)
@@ -313,8 +313,8 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         doPost("/api/plugins/telemetry/" + device.getId() + "/" + DataConstants.SHARED_SCOPE, attr);
 
         await().atMost(10, TimeUnit.SECONDS)
-                .until(() -> alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType).get() != null);
-        Alarm alarm = alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType).get();
+                .until(() -> alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType) != null);
+        Alarm alarm = alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType);
         getWsClient().waitForUpdate(true);
 
         Notification notification = getWsClient().getLastDataUpdate().getUpdate();
@@ -420,11 +420,11 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         notificationRulesCache.evict(TenantId.SYS_TENANT_ID);
 
         int n = 10;
-        updateDefaultTenantProfile(profileConfiguration -> {
-            profileConfiguration.getProfileConfiguration().get().setTenantEntityExportRateLimit(n + ":600");
-            profileConfiguration.getProfileConfiguration().get().setCustomerServerRestLimitsConfiguration(n + ":600");
-            profileConfiguration.getProfileConfiguration().get().setTenantNotificationRequestsPerRuleRateLimit(n + ":600");
-            profileConfiguration.getProfileConfiguration().get().setTransportDeviceTelemetryMsgRateLimit(n + ":600");
+        updateDefaultTenantProfileConfig(profileConfiguration -> {
+            profileConfiguration.setTenantEntityExportRateLimit(n + ":600");
+            profileConfiguration.setCustomerServerRestLimitsConfiguration(n + ":600");
+            profileConfiguration.setTenantNotificationRequestsPerRuleRateLimit(n + ":600");
+            profileConfiguration.setTransportDeviceTelemetryMsgRateLimit(n + ":600");
         });
         loginTenantAdmin();
         NotificationRule rule = createNotificationRule(AlarmCommentNotificationRuleTriggerConfig.builder()
@@ -434,11 +434,14 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
             rateLimitService.checkRateLimit(LimitedApi.ENTITY_EXPORT, tenantId);
             rateLimitService.checkRateLimit(LimitedApi.REST_REQUESTS_PER_CUSTOMER, tenantId, customerId);
             rateLimitService.checkRateLimit(LimitedApi.NOTIFICATION_REQUESTS_PER_RULE, tenantId, rule.getId());
+            Thread.sleep(100);
         }
 
         loginTenantAdmin();
-        List<Notification> notifications = await().atMost(30, TimeUnit.SECONDS)
-                .until(() -> getMyNotifications(true, 10), list -> list.size() == 3);
+        List<Notification> notifications = await().atMost(15, TimeUnit.SECONDS)
+                .until(() -> getMyNotifications(true, 10).stream()
+                        .filter(notification -> notification.getType() == NotificationType.RATE_LIMITS)
+                        .collect(Collectors.toList()), list -> list.size() == 3);
         assertThat(notifications).allSatisfy(notification -> {
             assertThat(notification.getSubject()).isEqualTo("Rate limits exceeded");
         });
@@ -455,12 +458,14 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         });
 
         loginSysAdmin();
-        notifications = await().atMost(30, TimeUnit.SECONDS)
-                .until(() -> getMyNotifications(true, 10), list -> list.size() == 1);
-        assertThat(notifications).allSatisfy(notification -> {
+        notifications = await().atMost(15, TimeUnit.SECONDS)
+                .until(() -> getMyNotifications(true, 10).stream()
+                        .filter(notification -> notification.getType() == NotificationType.RATE_LIMITS)
+                        .collect(Collectors.toList()), list -> list.size() == 1);
+        assertThat(notifications).singleElement().satisfies(notification -> {
             assertThat(notification.getSubject()).isEqualTo("Rate limits exceeded for tenant " + TEST_TENANT_NAME);
+            assertThat(notification.getText()).isEqualTo("Rate limits for entity version creation exceeded");
         });
-        assertThat(notifications.get(0).getText()).isEqualTo("Rate limits for entity version creation exceeded");
     }
 
     @Test

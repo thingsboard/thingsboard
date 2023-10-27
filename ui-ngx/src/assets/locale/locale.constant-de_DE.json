@@ -10,6 +10,10 @@
     "permission-denied": "Zugriff verweigert",
     "permission-denied-text": "Sie haben keine Berechtigung, um diesen Vorgang auszuführen!"
   },
+  "account": {
+    "account": "Benutzerkonto",
+    "notification-settings": "Benachrichtigungseinstellungen"
+  },
   "action": {
     "activate": "Aktivieren",
     "suspend": "Unterbrechen",
@@ -1704,11 +1708,7 @@
     "settings-schema": "Einstellungsschema",
     "datakey-settings-schema": "Datenschlüssel-Einstellungsschema",
     "javascript": "Javascript",
-    "remove-widget-type-title": "Möchten Sie den Widget-Typ '{{widgetName}}' wirklich entfernen?",
-    "remove-widget-type-text": "Nach der Bestätigung werden der Widget-Typ und alle zugehörigen Daten nicht wiederhergestellt.",
-    "remove-widget-type": "Widget-Typ entfernen",
     "add-widget-type": "Neuen Widget-Typ hinzufügen",
-    "widget-type-load-failed-error": "Widget-Typ konnte nicht geladen werden!",
     "widget-template-load-failed-error": "Widget-Vorlage konnte nicht geladen werden!",
     "add": "Widget hinzufügen",
     "undo": "Widget-Änderungen widerrufen ",

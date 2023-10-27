@@ -15,25 +15,25 @@
     limitations under the License.
 
 -->
-<form style="height: calc(100% - 7px)" fxLayout="column">
-  <div fxLayout="row" fxLayout.lt-lg="column" fxLayoutGap="15px" fxFlex class="connector-container">
-    <mat-card fxLayout="column" fxFlex.lt-lg style="overflow: auto; min-height: 35vh">
-      <mat-toolbar class="mat-mdc-table-toolbar">
-        <h2>{{ 'gateway.connectors' | translate }}</h2>
-        <span fxFlex></span>
-        <button mat-icon-button
-                [disabled]="isLoading$ | async"
-                (click)="addAttribute()"
-                matTooltip="{{ 'action.add' | translate }}"
-                matTooltipPosition="above">
-          <mat-icon>add</mat-icon>
-        </button>
-      </mat-toolbar>
+<div class="connector-container tb-form-panel no-border">
+  <section class="table-section tb-form-panel no-padding flex section-container">
+    <mat-toolbar class="mat-mdc-table-toolbar">
+      <h2>{{ 'gateway.connectors' | translate }}</h2>
+      <span fxFlex></span>
+      <button mat-icon-button
+              [disabled]="isLoading$ | async"
+              (click)="addAttribute()"
+              matTooltip="{{ 'action.add' | translate }}"
+              matTooltipPosition="above">
+        <mat-icon>add</mat-icon>
+      </button>
+    </mat-toolbar>
+    <div class="table-container">
       <table mat-table [dataSource]="dataSource"
              matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()"
              matSortDisableClear>
         <ng-container matColumnDef="enabled" sticky>
-          <mat-header-cell *matHeaderCellDef style="width: 30px;">
+          <mat-header-cell *matHeaderCellDef style="width: 60px;min-width: 60px;">
             {{ 'gateway.connectors-table-enabled' | translate }}
           </mat-header-cell>
           <mat-cell *matCellDef="let attribute">
@@ -61,12 +61,9 @@
             {{ 'gateway.configuration' | translate }}
           </mat-header-cell>
           <mat-cell *matCellDef="let attribute" style="text-transform: uppercase">
-              <div
-              [ngClass]="{
-              'status-block': true,
-              'status-sync':isConnectorSynced(attribute),
-              'status-unsync':!isConnectorSynced(attribute)
-              }">{{isConnectorSynced(attribute)?'sync' : 'out of sync'}}</div>
+              <div class="status" [class]="isConnectorSynced(attribute) ? 'status-sync' : 'status-unsync'">
+                {{ isConnectorSynced(attribute) ? 'sync' : 'out of sync' }}
+              </div>
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="errors">
@@ -77,10 +74,8 @@
             <span class="dot"
                   matTooltip="{{ 'Errors: '+ getErrorsCount(attribute)}}"
                   matTooltipPosition="above"
-                  [ngClass]="{
-            'hasErrors': +getErrorsCount(attribute) > 0,
-            'noErrors': +getErrorsCount(attribute) == 0 || getErrorsCount(attribute) == ''
-            }"></span>
+                  [class]="{'hasErrors': +getErrorsCount(attribute) > 0,
+                            'noErrors': +getErrorsCount(attribute) === 0 || getErrorsCount(attribute) === ''}"></span>
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="actions" stickyEnd>
@@ -139,60 +134,60 @@
             </div>
           </mat-cell>
         </ng-container>
-        <mat-header-row [ngClass]="{'mat-row-select': true}"
+        <mat-header-row class="mat-row-select"
                         *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
-        <mat-row [ngClass]="{'mat-row-select': true,
-                'tb-current-entity': isSameConnector(attribute)}"
+        <mat-row class="mat-row-select" [class]="{'tb-current-entity': isSameConnector(attribute)}"
                  *matRowDef="let attribute; columns: displayedColumns;" (click)="selectConnector(attribute)"></mat-row>
       </table>
-      <mat-divider></mat-divider>
-    </mat-card>
-    <div [formGroup]="connectorForm" fxLayout="column">
-      <mat-card fxLayout="row" fxLayout.lt-lg="column" fxLayoutGap="15px" fxLayoutGap.lt-lg="5px">
-        <mat-form-field class="mat-block tb-value-type">
+    </div>
+  </section>
+  <section [formGroup]="connectorForm" class="tb-form-panel no-border no-padding flex">
+    <section class="tb-form-panel input-container section-container">
+      <section class="tb-form-row tb-standard-fields no-padding no-border column-lt-md input-container">
+        <mat-form-field class="flex" subscriptSizing="dynamic">
           <mat-label>{{ 'gateway.connectors-table-name' | translate }}</mat-label>
           <input matInput formControlName="name" #nameInput/>
         </mat-form-field>
-        <mat-form-field class="mat-block tb-value-type">
+        <mat-form-field class="flex" subscriptSizing="dynamic" hideRequiredMarker>
           <mat-label>{{ 'gateway.connectors-table-type' | translate }}</mat-label>
           <mat-select formControlName="type">
             <mat-option style="text-transform: uppercase"
-                        *ngFor="let type of gatewayConnectorDefaultTypes | keyvalue" [value]="type.key">{{type.value}}</mat-option>
+                        *ngFor="let type of gatewayConnectorDefaultTypes | keyvalue" [value]="type.key">{{ type.value }}</mat-option>
           </mat-select>
         </mat-form-field>
-        <mat-form-field class="mat-block tb-value-type" *ngIf="connectorForm.get('type').value === 'grpc'">
+        <mat-form-field class="flex" *ngIf="connectorForm.get('type').value === 'grpc'" subscriptSizing="dynamic">
           <mat-label>{{ 'gateway.connectors-table-key' | translate }}</mat-label>
           <input matInput formControlName="key"/>
         </mat-form-field>
-        <mat-form-field class="mat-block tb-value-type" *ngIf="connectorForm.get('type').value === 'custom'">
+        <mat-form-field class="flex" *ngIf="connectorForm.get('type').value === 'custom'" subscriptSizing="dynamic">
           <mat-label>{{ 'gateway.connectors-table-class' | translate }}</mat-label>
           <input matInput formControlName="class"/>
         </mat-form-field>
-        <mat-form-field class="mat-block tb-value-type">
+        <mat-form-field class="flex" subscriptSizing="dynamic" hideRequiredMarker>
           <mat-label translate>gateway.remote-logging-level</mat-label>
           <mat-select formControlName="logLevel">
-            <mat-option *ngFor="let logLevel of gatewayLogLevel" [value]="logLevel">{{logLevel}}</mat-option>
+            <mat-option *ngFor="let logLevel of gatewayLogLevel" [value]="logLevel">{{ logLevel }}</mat-option>
           </mat-select>
         </mat-form-field>
-      </mat-card>
-      <mat-card fxLayout="column" fxFlex>
-        <tb-json-object-edit
-          fxFlex
-          fxLayout="column"
-          required
-          label="{{ 'gateway.configuration' | translate }}"
-          formControlName="configurationJson">
-        </tb-json-object-edit>
-        <div fxLayoutAlign="start center">
-          <button mat-raised-button color="primary"
-                  class="action-btns"
-                  type="button"
-                  [disabled]="!connectorForm.dirty || connectorForm.invalid"
-                  (click)="saveConnector()">
-            {{ 'action.save' | translate }}
-          </button>
-        </div>
-      </mat-card>
-    </div>
-  </div>
-</form>
+      </section>
+    </section>
+    <section class="tb-form-panel flex section-container">
+      <tb-json-object-edit
+        fillHeight="true"
+        class="flex"
+        fxLayout="column"
+        jsonRequired
+        label="{{ 'gateway.configuration' | translate }}"
+        formControlName="configurationJson">
+      </tb-json-object-edit>
+      <div fxLayoutAlign="end center">
+        <button mat-raised-button color="primary"
+                type="button"
+                [disabled]="!connectorForm.dirty || connectorForm.invalid"
+                (click)="saveConnector()">
+          {{ 'action.save' | translate }}
+        </button>
+      </div>
+    </section>
+  </section>
+</div>
