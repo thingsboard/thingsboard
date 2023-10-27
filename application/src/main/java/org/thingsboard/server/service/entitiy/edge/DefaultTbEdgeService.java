@@ -31,7 +31,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.edge.EdgeNotificationService;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
 @AllArgsConstructor
@@ -40,7 +39,6 @@ import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 @Slf4j
 public class DefaultTbEdgeService extends AbstractTbEntityService implements TbEdgeService {
 
-    private final EdgeNotificationService edgeNotificationService;
     private final RuleChainService ruleChainService;
 
     @Override
@@ -56,7 +54,7 @@ public class DefaultTbEdgeService extends AbstractTbEntityService implements TbE
 
             if (ActionType.ADDED.equals(actionType)) {
                 ruleChainService.assignRuleChainToEdge(tenantId, edgeTemplateRootRuleChain.getId(), edgeId);
-                edgeNotificationService.setEdgeRootRuleChain(tenantId, savedEdge, edgeTemplateRootRuleChain.getId());
+                edgeService.setEdgeRootRuleChain(tenantId, savedEdge, edgeTemplateRootRuleChain.getId());
                 edgeService.assignDefaultRuleChainsToEdge(tenantId, edgeId);
             }
 
@@ -141,7 +139,7 @@ public class DefaultTbEdgeService extends AbstractTbEntityService implements TbE
         TenantId tenantId = edge.getTenantId();
         EdgeId edgeId = edge.getId();
         try {
-            Edge updatedEdge = edgeNotificationService.setEdgeRootRuleChain(tenantId, edge, ruleChainId);
+            Edge updatedEdge = edgeService.setEdgeRootRuleChain(tenantId, edge, ruleChainId);
             notificationEntityService.logEntityAction(tenantId, edgeId, edge, null, ActionType.UPDATED, user);
             return updatedEdge;
         } catch (Exception e) {

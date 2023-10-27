@@ -1323,13 +1323,13 @@ queue:
     # Default topic name for Kafka, RabbitMQ, etc.
     topic: "${TB_QUEUE_EDGE_TOPIC:tb_edge}"
     # Amount of partitions used by Edge microservices
-    partitions: "${TB_QUEUE_EDGE_PARTITIONS:3}"
+    partitions: "${TB_QUEUE_EDGE_PARTITIONS:10}"
     # Interval in milliseconds to poll messages by Edge microservices
     poll-interval: "${TB_QUEUE_EDGE_POLL_INTERVAL_MS:25}"
     # Timeout for processing a message pack by Edge microservices
     pack-processing-timeout: "${TB_QUEUE_EDGE_PACK_PROCESSING_TIMEOUT_MS:10000}"
     # Timeout for processing a message pack by Edge microservices
-    pack-processing-retries: "${TB_QUEUE_EDGE_MESSAGE_PROCESSING_RETRIES:5}"
+    pack-processing-retries: "${TB_QUEUE_EDGE_MESSAGE_PROCESSING_RETRIES:10}"
     stats:
       # Enable/disable statistics for Edge
       enabled: "${TB_QUEUE_EDGE_STATS_ENABLED:true}"

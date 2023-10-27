@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge;
+package org.thingsboard.server.service.queue;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
@@ -23,28 +22,20 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
-import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
-import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.stats.StatsFactory;
-import org.thingsboard.server.dao.edge.EdgeService;
-import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.gen.transport.TransportProtos.EdgeNotificationMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -67,8 +58,6 @@ import org.thingsboard.server.service.edge.rpc.processor.user.UserEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.widget.WidgetBundleEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.widget.WidgetTypeEdgeProcessor;
 import org.thingsboard.server.service.edge.stats.EdgeConsumerStats;
-import org.thingsboard.server.service.queue.TbPackCallback;
-import org.thingsboard.server.service.queue.TbPackProcessingContext;
 import org.thingsboard.server.service.queue.processing.IdMsgPair;
 
 import javax.annotation.PostConstruct;
@@ -85,12 +74,11 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @TbCoreComponent
-public class DefaultEdgeNotificationService extends TbApplicationEventListener<PartitionChangeEvent> implements EdgeNotificationService {
+public class DefaultTbEdgeConsumerService implements TbEdgeConsumerService {
 
     public static final String EDGE_IS_ROOT_BODY_KEY = "isRoot";
 
     private final TbCoreQueueFactory queueFactory;
-    private final EdgeService edgeService;
     private final EdgeProcessor edgeProcessor;
     private final AssetEdgeProcessor assetProcessor;
     private final DeviceEdgeProcessor deviceProcessor;
@@ -109,7 +97,6 @@ public class DefaultEdgeNotificationService extends TbApplicationEventListener<P
     private final TenantProfileEdgeProcessor tenantProfileEdgeProcessor;
     private final AlarmEdgeProcessor alarmProcessor;
     private final RelationEdgeProcessor relationProcessor;
-    private final ApplicationEventPublisher eventPublisher;
     private final EdgeConsumerStats stats;
 
     private volatile ListeningExecutorService consumerExecutor;
@@ -120,25 +107,24 @@ public class DefaultEdgeNotificationService extends TbApplicationEventListener<P
     private int edgeDispatcherSize;
     @Value("${queue.edge.pool_interval:25}")
     private int pollDuration;
-    @Value("${queue.edge.pack_processing_timeout:60000}")
+    @Value("${queue.edge.pack_processing_timeout:10000}")
     private int packProcessingTimeout;
     @Value("${queue.edge.pack_processing_retries:10}")
     private int packProcessingRetries;
     @Value("${queue.edge.stats.enabled:false}")
     private boolean statsEnabled;
 
-    public DefaultEdgeNotificationService(TbCoreQueueFactory queueFactory, ApplicationEventPublisher eventPublisher, StatsFactory statsFactory,
-                                          EdgeService edgeService, EdgeProcessor edgeProcessor, QueueEdgeProcessor queueProcessor,
-                                          AssetEdgeProcessor assetProcessor, DeviceEdgeProcessor deviceProcessor,
-                                          EntityViewEdgeProcessor entityViewProcessor, DashboardEdgeProcessor dashboardProcessor,
-                                          RuleChainEdgeProcessor ruleChainProcessor, UserEdgeProcessor userProcessor,
-                                          CustomerEdgeProcessor customerProcessor, OtaPackageEdgeProcessor otaPackageProcessor,
-                                          DeviceProfileEdgeProcessor deviceProfileProcessor, AssetProfileEdgeProcessor assetProfileProcessor,
-                                          WidgetBundleEdgeProcessor widgetBundleProcessor, WidgetTypeEdgeProcessor widgetTypeProcessor,
-                                          TenantEdgeProcessor tenantEdgeProcessor, TenantProfileEdgeProcessor tenantProfileEdgeProcessor,
-                                          AlarmEdgeProcessor alarmProcessor, RelationEdgeProcessor relationProcessor) {
+    public DefaultTbEdgeConsumerService(TbCoreQueueFactory queueFactory, StatsFactory statsFactory,
+                                        EdgeProcessor edgeProcessor, QueueEdgeProcessor queueProcessor,
+                                        AssetEdgeProcessor assetProcessor, DeviceEdgeProcessor deviceProcessor,
+                                        EntityViewEdgeProcessor entityViewProcessor, DashboardEdgeProcessor dashboardProcessor,
+                                        RuleChainEdgeProcessor ruleChainProcessor, UserEdgeProcessor userProcessor,
+                                        CustomerEdgeProcessor customerProcessor, OtaPackageEdgeProcessor otaPackageProcessor,
+                                        DeviceProfileEdgeProcessor deviceProfileProcessor, AssetProfileEdgeProcessor assetProfileProcessor,
+                                        WidgetBundleEdgeProcessor widgetBundleProcessor, WidgetTypeEdgeProcessor widgetTypeProcessor,
+                                        TenantEdgeProcessor tenantEdgeProcessor, TenantProfileEdgeProcessor tenantProfileEdgeProcessor,
+                                        AlarmEdgeProcessor alarmProcessor, RelationEdgeProcessor relationProcessor) {
         this.queueFactory = queueFactory;
-        this.edgeService = edgeService;
         this.edgeProcessor = edgeProcessor;
         this.assetProcessor = assetProcessor;
         this.deviceProcessor = deviceProcessor;
@@ -157,7 +143,6 @@ public class DefaultEdgeNotificationService extends TbApplicationEventListener<P
         this.tenantProfileEdgeProcessor = tenantProfileEdgeProcessor;
         this.alarmProcessor = alarmProcessor;
         this.relationProcessor = relationProcessor;
-        this.eventPublisher = eventPublisher;
         this.stats = new EdgeConsumerStats(statsFactory);
     }
 
@@ -178,29 +163,20 @@ public class DefaultEdgeNotificationService extends TbApplicationEventListener<P
         }
     }
 
+
     @Override
-    protected void onTbApplicationEvent(PartitionChangeEvent event) {
+    public void onApplicationEvent(PartitionChangeEvent event) {
         if (event.getServiceType().equals(ServiceType.TB_EDGE)) {
             log.info("Subscribing to partitions: {}", event.getPartitions());
             consumer.subscribe(event.getPartitions());
         }
     }
 
+
     @EventListener(ApplicationReadyEvent.class)
     @Order(value = 2)
     public void onApplicationEvent(ApplicationReadyEvent event) {
         consumerExecutor.execute(this::launchEdgeConsumer);
-    }
-
-    @Override
-    public Edge setEdgeRootRuleChain(TenantId tenantId, Edge edge, RuleChainId ruleChainId) {
-        edge.setRootRuleChainId(ruleChainId);
-        Edge savedEdge = edgeService.saveEdge(edge);
-        ObjectNode isRootBody = JacksonUtil.newObjectNode();
-        isRootBody.put(EDGE_IS_ROOT_BODY_KEY, Boolean.TRUE);
-        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edge.getId()).entityId(ruleChainId)
-                .body(JacksonUtil.toString(isRootBody)).actionType(ActionType.UPDATED).build());
-        return savedEdge;
     }
 
     protected void launchEdgeConsumer() {

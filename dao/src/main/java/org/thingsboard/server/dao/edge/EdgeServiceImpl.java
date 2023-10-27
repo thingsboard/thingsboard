@@ -33,7 +33,6 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -49,7 +48,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageDataIterableByTenantIdEntityId;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -89,6 +87,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String INCORRECT_CUSTOMER_ID = "Incorrect customerId ";
     public static final String INCORRECT_EDGE_ID = "Incorrect edgeId ";
+    public static final String EDGE_IS_ROOT_BODY_KEY = "isRoot";
 
     private static final int DEFAULT_PAGE_SIZE = 1000;
 
@@ -341,7 +340,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
             return Futures.successfulAsList(futures);
         }, MoreExecutors.directExecutor());
 
-        edges = Futures.transform(edges, new Function<List<Edge>, List<Edge>>() {
+        edges = Futures.transform(edges, new Function<>() {
             @Nullable
             @Override
             public List<Edge> apply(@Nullable List<Edge> edgeList) {
@@ -400,9 +399,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
         return edgeDao.findEdgesByTenantProfileId(tenantProfileId.getId(), pageLink);
     }
 
-    private PaginatedRemover<TenantId, Edge> tenantEdgesRemover =
-            new PaginatedRemover<TenantId, Edge>() {
-
+    private final PaginatedRemover<TenantId, Edge> tenantEdgesRemover = new PaginatedRemover<>() {
                 @Override
                 protected PageData<Edge> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
                     return edgeDao.findEdgesByTenantId(id.getId(), pageLink);
@@ -414,8 +411,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
                 }
             };
 
-    private PaginatedRemover<CustomerId, Edge> customerEdgeUnassigner = new PaginatedRemover<CustomerId, Edge>() {
-
+    private final PaginatedRemover<CustomerId, Edge> customerEdgeUnassigner = new PaginatedRemover<>() {
         @Override
         protected PageData<Edge> findEntities(TenantId tenantId, CustomerId id, PageLink pageLink) {
             return edgeDao.findEdgesByTenantIdAndCustomerId(tenantId.getId(), id.getId(), pageLink);
@@ -528,6 +524,17 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
             }
         }
         return result.toString();
+    }
+
+    @Override
+    public Edge setEdgeRootRuleChain(TenantId tenantId, Edge edge, RuleChainId ruleChainId) {
+        edge.setRootRuleChainId(ruleChainId);
+        Edge savedEdge = saveEdge(edge);
+        ObjectNode isRootBody = JacksonUtil.newObjectNode();
+        isRootBody.put(EDGE_IS_ROOT_BODY_KEY, Boolean.TRUE);
+        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edge.getId()).entityId(ruleChainId)
+                .body(JacksonUtil.toString(isRootBody)).actionType(ActionType.UPDATED).build());
+        return savedEdge;
     }
 
     private List<RuleChain> findEdgeRuleChains(TenantId tenantId, EdgeId edgeId) {
