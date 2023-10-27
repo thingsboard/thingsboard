@@ -118,6 +118,11 @@ public class HashPartitionService implements PartitionService {
         }
     }
 
+    @Override
+    public List<Integer> getMyPartitions(QueueKey queueKey) {
+        return myPartitions.get(queueKey);
+    }
+
     private void doInitRuleEnginePartitions() {
         List<QueueRoutingInfo> queueRoutingInfoList = getQueueRoutingInfos();
         queueRoutingInfoList.forEach(queue -> {
