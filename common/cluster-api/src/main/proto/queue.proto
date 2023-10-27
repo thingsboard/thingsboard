@@ -640,6 +640,7 @@ message NotificationsSubUpdateProto {
 
 // DEPRECATED. FOR REMOVAL
 message TbSubscriptionProto {
+  option deprecated = true;
   string serviceId = 1;
   string sessionId = 2;
   int32 subscriptionId = 3;
@@ -652,6 +653,7 @@ message TbSubscriptionProto {
 
 // DEPRECATED. FOR REMOVAL
 message TbTimeSeriesSubscriptionProto {
+  option deprecated = true;
   TbSubscriptionProto sub = 1;
   bool allKeys = 2;
   repeated TbSubscriptionKetStateProto keyStates = 3;
@@ -662,6 +664,7 @@ message TbTimeSeriesSubscriptionProto {
 
 // DEPRECATED. FOR REMOVAL
 message TbAttributeSubscriptionProto {
+  option deprecated = true;
   TbSubscriptionProto sub = 1;
   bool allKeys = 2;
   repeated TbSubscriptionKetStateProto keyStates = 3;
@@ -670,23 +673,27 @@ message TbAttributeSubscriptionProto {
 
 // DEPRECATED. FOR REMOVAL
 message TbAlarmSubscriptionProto {
+  option deprecated = true;
   TbSubscriptionProto sub = 1;
   int64 ts = 2;
 }
 
 // DEPRECATED. FOR REMOVAL
 message NotificationsSubscriptionProto {
+  option deprecated = true;
   TbSubscriptionProto sub = 1;
   int32 limit = 2;
 }
 
 // DEPRECATED. FOR REMOVAL
 message NotificationsCountSubscriptionProto {
+  option deprecated = true;
   TbSubscriptionProto sub = 1;
 }
 
 // DEPRECATED. FOR REMOVAL
 message TbSubscriptionUpdateProto {
+  option deprecated = true;
   string sessionId = 1;
   int32 subscriptionId = 2;
   int32 errorCode = 3;
@@ -696,6 +703,7 @@ message TbSubscriptionUpdateProto {
 
 // DEPRECATED. FOR REMOVAL
 message TbAlarmSubscriptionUpdateProto {
+  option deprecated = true;
   string sessionId = 1;
   int32 subscriptionId = 2;
   int32 errorCode = 3;
@@ -706,6 +714,7 @@ message TbAlarmSubscriptionUpdateProto {
 
 // DEPRECATED. FOR REMOVAL
 message NotificationsSubscriptionUpdateProto {
+  option deprecated = true;
   string sessionId = 1;
   int32 subscriptionId = 2;
   string notificationUpdate = 3;
@@ -785,6 +794,7 @@ message TbTimeSeriesUpdateProto {
 
 // DEPRECATED. FOR REMOVAL
 message TbSubscriptionCloseProto {
+  option deprecated = true;
   string sessionId = 1;
   int32 subscriptionId = 2;
 }
@@ -819,27 +829,27 @@ message DeviceStateServiceMsgProto {
 }
 
 message SubscriptionMgrMsgProto {
-  TbTimeSeriesSubscriptionProto telemetrySub = 1; // DEPRECATED. FOR REMOVAL
-  TbAttributeSubscriptionProto attributeSub = 2; // DEPRECATED. FOR REMOVAL
-  TbSubscriptionCloseProto subClose = 3; // DEPRECATED. FOR REMOVAL
+  TbTimeSeriesSubscriptionProto telemetrySub = 1 [deprecated = true]; // DEPRECATED. FOR REMOVAL
+  TbAttributeSubscriptionProto attributeSub = 2 [deprecated = true]; // DEPRECATED. FOR REMOVAL
+  TbSubscriptionCloseProto subClose = 3 [deprecated = true]; // DEPRECATED. FOR REMOVAL
   TbTimeSeriesUpdateProto tsUpdate = 4;
   TbAttributeUpdateProto attrUpdate = 5;
   TbAttributeDeleteProto attrDelete = 6;
-  TbAlarmSubscriptionProto alarmSub = 7; // DEPRECATED. FOR REMOVAL
+  TbAlarmSubscriptionProto alarmSub = 7 [deprecated = true]; // DEPRECATED. FOR REMOVAL
   TbAlarmUpdateProto alarmUpdate = 8;
   TbAlarmDeleteProto alarmDelete = 9;
   TbTimeSeriesDeleteProto tsDelete = 10;
-  NotificationsSubscriptionProto notificationsSub = 11; // DEPRECATED. FOR REMOVAL
-  NotificationsCountSubscriptionProto notificationsCountSub = 12; // DEPRECATED. FOR REMOVAL
+  NotificationsSubscriptionProto notificationsSub = 11 [deprecated = true]; // DEPRECATED. FOR REMOVAL
+  NotificationsCountSubscriptionProto notificationsCountSub = 12 [deprecated = true]; // DEPRECATED. FOR REMOVAL
   NotificationUpdateProto notificationUpdate = 13;
   NotificationRequestUpdateProto notificationRequestUpdate = 14;
   TbEntitySubEventProto subEvent = 15;
 }
 
 message LocalSubscriptionServiceMsgProto {
-  TbSubscriptionUpdateProto subUpdate = 1; // DEPRECATED. FOR REMOVAL
-  TbAlarmSubscriptionUpdateProto alarmSubUpdate = 2; // DEPRECATED. FOR REMOVAL
-  NotificationsSubscriptionUpdateProto notificationsSubUpdate = 3; // DEPRECATED. FOR REMOVAL
+  TbSubscriptionUpdateProto subUpdate = 1 [deprecated = true]; // DEPRECATED. FOR REMOVAL
+  TbAlarmSubscriptionUpdateProto alarmSubUpdate = 2 [deprecated = true]; // DEPRECATED. FOR REMOVAL
+  NotificationsSubscriptionUpdateProto notificationsSubUpdate = 3 [deprecated = true]; // DEPRECATED. FOR REMOVAL
   TbEntitySubEventCallbackProto subEventCallback = 4;
   TbSubUpdateProto tsUpdate = 5;
   TbSubUpdateProto attrUpdate = 6;
