@@ -526,10 +526,7 @@ public class HashPartitionService implements PartitionService {
                 servers = responsible;
             }
 
-            int hash = hashFunction.newHasher()
-                    .putLong(tenantId.getId().getMostSignificantBits())
-                    .putLong(tenantId.getId().getLeastSignificantBits())
-                    .hash().asInt();
+            int hash = hash(tenantId.getId());
             return servers.get(Math.abs((hash + partition) % servers.size()));
         } else {
             return servers.get(partition % servers.size());
