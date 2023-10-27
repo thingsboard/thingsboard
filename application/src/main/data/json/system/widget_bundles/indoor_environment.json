@@ -69,6 +69,14 @@
     "indoor_pm10_chart_card",
     "indoor_pm10_chart_card_with_background",
     "indoor_simple_pm10_chart_card",
-    "indoor_simple_pm10_chart_card_with_background"
+    "indoor_simple_pm10_chart_card_with_background",
+    "radon_level_card",
+    "radon_level_card_with_background",
+    "horizontal_radon_level_card",
+    "horizontal_radon_level_card_with_background",
+    "radon_level_chart_card",
+    "radon_level_chart_card_with_background",
+    "simple_radon_level_chart_card",
+    "simple_radon_level_chart_card_with_background"
   ]
 }
