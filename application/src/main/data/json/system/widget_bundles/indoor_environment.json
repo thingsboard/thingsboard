@@ -61,6 +61,14 @@
     "indoor_pm2_5_chart_card",
     "indoor_pm2_5_chart_card_with_background",
     "indoor_simple_pm2_5_chart_card",
-    "indoor_simple_pm2_5_chart_card_with_background"
+    "indoor_simple_pm2_5_chart_card_with_background",
+    "indoor_pm10_card",
+    "indoor_pm10_card_with_background",
+    "indoor_horizontal_pm10_card",
+    "indoor_horizontal_pm10_card_with_background",
+    "indoor_pm10_chart_card",
+    "indoor_pm10_chart_card_with_background",
+    "indoor_simple_pm10_chart_card",
+    "indoor_simple_pm10_chart_card_with_background"
   ]
 }
