@@ -131,7 +131,7 @@ export const svgMapping = new Map<Shapes, SvgInfo>(
       Shapes.vOval,
       {
         svg: 'assets/widget/liquid-level/shapes/vertical-oval.svg',
-        limits: { min: 170, max: 51 }
+        limits: { min: 171, max: 51 }
       }
     ],
     [
@@ -145,14 +145,14 @@ export const svgMapping = new Map<Shapes, SvgInfo>(
       Shapes.vCapsule,
       {
         svg: 'assets/widget/liquid-level/shapes/vertical-capsule.svg',
-        limits: { min: 195, max: 25 }
+        limits: { min: 197, max: 25 }
       }
     ],
     [
       Shapes.rectangle,
       {
         svg: 'assets/widget/liquid-level/shapes/rectangle.svg',
-        limits: { min: 168, max: 52 }
+        limits: { min: 169, max: 52 }
       }
     ],
     [
@@ -173,7 +173,7 @@ export const svgMapping = new Map<Shapes, SvgInfo>(
       Shapes.hDishEnds,
       {
         svg: 'assets/widget/liquid-level/shapes/horizontal-dish-ends.svg',
-        limits: { min: 172, max: 50 }
+        limits: { min: 173, max: 50 }
       }
     ],
     [
@@ -194,7 +194,7 @@ export const svgMapping = new Map<Shapes, SvgInfo>(
       Shapes.hElliptical_2_1,
       {
         svg: 'assets/widget/liquid-level/shapes/horizontal-2_1-elliptical.svg',
-        limits: { min: 172, max: 50 }
+        limits: { min: 173, max: 50 }
       }
     ]
   ]
