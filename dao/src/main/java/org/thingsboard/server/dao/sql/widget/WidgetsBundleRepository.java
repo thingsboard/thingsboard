@@ -33,7 +33,7 @@ public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEnti
     WidgetsBundleEntity findWidgetsBundleByTenantIdAndAlias(UUID tenantId, String alias);
 
     @Query("SELECT wb FROM WidgetsBundleEntity wb WHERE wb.tenantId = :systemTenantId " +
-            "AND LOWER(wb.title) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "AND (:textSearch is NULL OR ilike(wb.title, CONCAT('%', :textSearch, '%')) = true)")
     Page<WidgetsBundleEntity> findSystemWidgetsBundles(@Param("systemTenantId") UUID systemTenantId,
                                                        @Param("textSearch") String textSearch,
                                                        Pageable pageable);
@@ -61,13 +61,13 @@ public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEnti
                                                                  Pageable pageable);
 
     @Query("SELECT wb FROM WidgetsBundleEntity wb WHERE wb.tenantId = :tenantId " +
-            "AND LOWER(wb.title) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "AND (:textSearch IS NULL OR ilike(wb.title, CONCAT('%', :textSearch, '%')) = true)")
     Page<WidgetsBundleEntity> findTenantWidgetsBundlesByTenantId(@Param("tenantId") UUID tenantId,
                                                                  @Param("textSearch") String textSearch,
                                                                  Pageable pageable);
 
     @Query("SELECT wb FROM WidgetsBundleEntity wb WHERE wb.tenantId IN (:tenantId, :nullTenantId) " +
-            "AND LOWER(wb.title) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "AND (:textSearch IS NULL OR ilike(wb.title, CONCAT('%', :textSearch, '%')) = true)")
     Page<WidgetsBundleEntity> findAllTenantWidgetsBundlesByTenantId(@Param("tenantId") UUID tenantId,
                                                                     @Param("nullTenantId") UUID nullTenantId,
                                                                     @Param("textSearch") String textSearch,

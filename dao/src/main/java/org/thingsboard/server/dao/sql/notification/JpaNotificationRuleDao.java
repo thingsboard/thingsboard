@@ -49,13 +49,13 @@ public class JpaNotificationRuleDao extends JpaAbstractDao<NotificationRuleEntit
     @Override
     public PageData<NotificationRule> findByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(notificationRuleRepository.findByTenantIdAndSearchText(tenantId.getId(),
-                Strings.nullToEmpty(pageLink.getTextSearch()), DaoUtil.toPageable(pageLink)));
+                pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
     }
 
     @Override
     public PageData<NotificationRuleInfo> findInfosByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.pageToPageData(notificationRuleRepository.findInfosByTenantIdAndSearchText(tenantId.getId(),
-                        Strings.nullToEmpty(pageLink.getTextSearch()), DaoUtil.toPageable(pageLink, Map.of(
+                        pageLink.getTextSearch(), DaoUtil.toPageable(pageLink, Map.of(
                                 "templateName", "t.name"
                         ))))
                 .mapData(NotificationRuleInfoEntity::toData);
