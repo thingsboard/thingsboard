@@ -1228,7 +1228,7 @@ edges:
     # Number of milliseconds to wait before the next check of edge events in DB
     no_read_records_sleep: "${EDGES_NO_READ_RECORDS_SLEEP:1000}"
     # Number of milliseconds to wait before resending failed batch of edge events to edge
-    sleep_between_batches: "${EDGES_SLEEP_BETWEEN_BATCHES:10000}"
+    sleep_between_batches: "${EDGES_SLEEP_BETWEEN_BATCHES:60000}"
   # Number of threads that are used to check DB for edge events
   scheduler_pool_size: "${EDGES_SCHEDULER_POOL_SIZE:1}"
   # Number of threads that are used to send downlink messages to edge over gRPC
