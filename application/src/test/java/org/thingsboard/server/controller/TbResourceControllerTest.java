@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.http.HttpHeaders;
@@ -35,11 +34,11 @@ import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
-import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
@@ -53,6 +52,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @DaoSqlTest
 public class TbResourceControllerTest extends AbstractControllerTest {
+
+    /*
+    * TODO:
+    *  test maxResourceSize limit in tenant profile
+    * */
 
     private IdComparator<TbResourceInfo> idComparator = new IdComparator<>();
 
@@ -101,7 +105,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         resource.setResourceType(ResourceType.JKS);
         resource.setTitle("My first resource");
         resource.setFileName(DEFAULT_FILE_NAME);
-        resource.setData(TEST_DATA);
+        resource.setBase64Data(TEST_DATA);
 
         TbResource savedResource = save(resource);
 
@@ -116,7 +120,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         Assert.assertEquals(resource.getTitle(), savedResource.getTitle());
         Assert.assertEquals(DEFAULT_FILE_NAME, savedResource.getFileName());
         Assert.assertEquals(DEFAULT_FILE_NAME, savedResource.getResourceKey());
-        Assert.assertEquals(resource.getData(), savedResource.getData());
+        Assert.assertArrayEquals(resource.getData(), download(savedResource.getId()));
 
         savedResource.setTitle("My new resource");
 
@@ -136,7 +140,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         resource.setResourceType(ResourceType.JKS);
         resource.setTitle(StringUtils.randomAlphabetic(300));
         resource.setFileName(DEFAULT_FILE_NAME);
-        resource.setData(TEST_DATA);
+        resource.setBase64Data(TEST_DATA);
 
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -155,7 +159,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         resource.setResourceType(ResourceType.JKS);
         resource.setTitle("My first resource");
         resource.setFileName(DEFAULT_FILE_NAME);
-        resource.setData(TEST_DATA);
+        resource.setBase64Data(TEST_DATA);
 
        TbResource savedResource = save(resource);
 
@@ -184,13 +188,14 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         resource.setResourceType(ResourceType.JKS);
         resource.setTitle("My first resource");
         resource.setFileName(DEFAULT_FILE_NAME);
-        resource.setData(TEST_DATA);
+        resource.setBase64Data(TEST_DATA);
 
         TbResource savedResource = save(resource);
 
-        TbResource foundResource = doGet("/api/resource/" + savedResource.getId().getId().toString(), TbResource.class);
+        TbResource foundResource = doGet("/api/resource/" + savedResource.getUuidId(), TbResource.class);
         Assert.assertNotNull(foundResource);
-        Assert.assertEquals(savedResource, foundResource);
+        Assert.assertEquals(savedResource.getId(), foundResource.getId());
+        Assert.assertEquals(savedResource.getFileName(), foundResource.getFileName());
     }
 
     @Test
@@ -199,7 +204,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         resource.setResourceType(ResourceType.JKS);
         resource.setTitle("My first resource");
         resource.setFileName(DEFAULT_FILE_NAME);
-        resource.setData(TEST_DATA);
+        resource.setBase64Data(TEST_DATA);
 
         TbResource savedResource = save(resource);
 
@@ -213,7 +218,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                                 ActionType.DELETED, resourceIdStr);
 
-        doGet("/api/resource/" + savedResource.getId().getId().toString())
+        doGet("/api/resource/" + savedResource.getUuidId())
                 .andExpect(status().isNotFound())
                 .andExpect(statusReason(containsString(msgErrorNoFound("Resource", resourceIdStr))));
     }
@@ -224,7 +229,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         resource.setResourceType(ResourceType.JKS);
         resource.setTitle("My first resource");
         resource.setFileName(DEFAULT_FILE_NAME);
-        resource.setData(TEST_DATA);
+        resource.setBase64Data(TEST_DATA);
 
         TbResource savedResource = save(resource);
 
@@ -255,7 +260,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
             resource.setTitle("Resource" + i);
             resource.setResourceType(ResourceType.JKS);
             resource.setFileName(i + DEFAULT_FILE_NAME);
-            resource.setData(TEST_DATA);
+            resource.setBase64Data(TEST_DATA);
             resources.add(new TbResourceInfo(save(resource)));
         }
         List<TbResourceInfo> loadedResources = new ArrayList<>();
@@ -292,7 +297,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
             resource.setTitle("JKS Resource" + i);
             resource.setResourceType(ResourceType.JKS);
             resource.setFileName(i + DEFAULT_FILE_NAME);
-            resource.setData(TEST_DATA);
+            resource.setBase64Data(TEST_DATA);
             resources.add(new TbResourceInfo(save(resource)));
         }
 
@@ -302,7 +307,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
             resource.setTitle("LWM2M Resource" + i);
             resource.setResourceType(ResourceType.PKCS_12);
             resource.setFileName(i + DEFAULT_FILE_NAME_2);
-            resource.setData(TEST_DATA);
+            resource.setBase64Data(TEST_DATA);
             save(resource);
         }
 
@@ -339,7 +344,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
             resource.setTitle("Resource" + i);
             resource.setResourceType(ResourceType.JKS);
             resource.setFileName(i + DEFAULT_FILE_NAME);
-            resource.setData(TEST_DATA);
+            resource.setBase64Data(TEST_DATA);
             resources.add(new TbResourceInfo(save(resource)));
         }
         List<TbResourceInfo> loadedResources = new ArrayList<>();
@@ -399,7 +404,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
             resource.setTitle("JKS Resource" + i);
             resource.setResourceType(ResourceType.JKS);
             resource.setFileName(i + DEFAULT_FILE_NAME);
-            resource.setData(TEST_DATA);
+            resource.setBase64Data(TEST_DATA);
             TbResourceInfo saved = new TbResourceInfo(save(resource));
             jksResources.add(saved);
         }
@@ -410,7 +415,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
             resource.setTitle("LWM2M Resource" + i);
             resource.setResourceType(ResourceType.PKCS_12);
             resource.setFileName(i + DEFAULT_FILE_NAME_2);
-            resource.setData(TEST_DATA);
+            resource.setBase64Data(TEST_DATA);
             TbResource saved = save(resource);
             lwm2mesources.add(saved);
         }
@@ -476,7 +481,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
             resource.setTitle("Resource" + i);
             resource.setResourceType(ResourceType.JKS);
             resource.setFileName(i + DEFAULT_FILE_NAME);
-            resource.setData(TEST_DATA);
+            resource.setBase64Data(TEST_DATA);
             expectedResources.add(new TbResourceInfo(save(resource)));
         }
 
@@ -487,7 +492,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
             resource.setTitle("Resource" + i);
             resource.setResourceType(ResourceType.JKS);
             resource.setFileName(i + DEFAULT_FILE_NAME);
-            resource.setData(TEST_DATA);
+            resource.setBase64Data(TEST_DATA);
             TbResourceInfo savedResource = new TbResourceInfo(save(resource));
             systemResources.add(savedResource);
             if (i >= 73) {
@@ -531,7 +536,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         resource.setResourceType(ResourceType.JS_MODULE);
         resource.setTitle("Js resource");
         resource.setFileName(JS_TEST_FILE_NAME);
-        resource.setData(TEST_DATA);
+        resource.setBase64Data(TEST_DATA);
 
         TbResource savedResource = save(resource);
 
@@ -562,7 +567,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         resource.setResourceType(ResourceType.JS_MODULE);
         resource.setTitle("Js resource");
         resource.setFileName(JS_TEST_FILE_NAME);
-        resource.setData(TEST_DATA);
+        resource.setBase64Data(TEST_DATA);
 
         TbResource savedResource = save(resource);
 
@@ -606,7 +611,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         resource.setResourceType(ResourceType.JS_MODULE);
         resource.setTitle("Js resource");
         resource.setFileName(JS_TEST_FILE_NAME);
-        resource.setData(TEST_DATA);
+        resource.setBase64Data(TEST_DATA);
 
         TbResource savedResource = save(resource);
 
@@ -618,5 +623,11 @@ public class TbResourceControllerTest extends AbstractControllerTest {
 
     private TbResource save(TbResource tbResource) throws Exception {
         return doPostWithTypedResponse("/api/resource", tbResource, new TypeReference<>(){});
+    }
+
+    private byte[] download(TbResourceId resourceId) throws Exception {
+        return doGet("/api/resource/" + resourceId + "/download")
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsByteArray();
     }
 }

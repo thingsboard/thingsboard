@@ -84,7 +84,7 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
     this.config.deleteEntitiesContent = () => this.translate.instant('resource.delete-resources-text');
 
     this.config.entitiesFetchFunction = pageLink => this.resourceService.getResources(pageLink, this.config.componentsData.resourceType);
-    this.config.loadEntity = id => this.resourceService.getResource(id.id);
+    this.config.loadEntity = id => this.resourceService.getResourceInfo(id.id);
     this.config.saveEntity = resource => this.saveResource(resource);
     this.config.deleteEntity = id => this.resourceService.deleteResource(id.id);
 

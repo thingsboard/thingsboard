@@ -30,8 +30,8 @@ import javax.persistence.Table;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_DATA_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_FILE_NAME_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_ETAG_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_FILE_NAME_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_KEY_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TABLE_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TENANT_ID_COLUMN;
@@ -64,7 +64,7 @@ public class TbResourceEntity extends BaseSqlEntity<TbResource> implements BaseE
     private String fileName;
 
     @Column(name = RESOURCE_DATA_COLUMN)
-    private String data;
+    private byte[] data;
 
     @Column(name = RESOURCE_ETAG_COLUMN)
     private String etag;

@@ -128,8 +128,7 @@ public abstract class DataValidator<D extends BaseData<?>> {
                                                    EntityType entityType) {
         if (maxSumDataSize > 0) {
             if (dataDao.sumDataSizeByTenantId(tenantId) + currentDataSize > maxSumDataSize) {
-                throw new DataValidationException(String.format("Failed to create the %s, files size limit is exhausted %d bytes!",
-                        entityType.name().toLowerCase().replaceAll("_", " "), maxSumDataSize));
+                throw new DataValidationException(String.format("%ss total size exceeds the maximum of " + maxSumDataSize + " bytes", entityType.getNormalName()));
             }
         }
     }

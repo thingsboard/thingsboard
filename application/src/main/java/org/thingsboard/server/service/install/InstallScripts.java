@@ -47,7 +47,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -309,7 +308,7 @@ public class InstallScripts {
             dirStream.forEach(
                     path -> {
                         try {
-                            String data = Base64.getEncoder().encodeToString(Files.readAllBytes(path));
+                            byte[] data = Files.readAllBytes(path);
                             TbResource tbResource = new TbResource();
                             tbResource.setTenantId(TenantId.SYS_TENANT_ID);
                             tbResource.setData(data);
@@ -330,7 +329,7 @@ public class InstallScripts {
 
     private void doSaveLwm2mResource(TbResource resource) throws ThingsboardException {
         log.trace("Executing saveResource [{}]", resource);
-        if (StringUtils.isEmpty(resource.getData())) {
+        if (resource.getData() == null || resource.getData().length == 0) {
             throw new DataValidationException("Resource data should be specified!");
         }
         toLwm2mResource(resource);

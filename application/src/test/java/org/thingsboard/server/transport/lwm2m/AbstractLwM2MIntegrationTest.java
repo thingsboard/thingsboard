@@ -206,7 +206,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
             lwModel.setFileName(resourceName);
             lwModel.setTenantId(tenantId);
             byte[] bytes = IOUtils.toByteArray(AbstractLwM2MIntegrationTest.class.getClassLoader().getResourceAsStream("lwm2m/" + resourceName));
-            lwModel.setData(Base64.getEncoder().encodeToString(bytes));
+            lwModel.setBase64Data(Base64.getEncoder().encodeToString(bytes));
             lwModel = doPostWithTypedResponse("/api/resource", lwModel, new TypeReference<>() {
             });
             Assert.assertNotNull(lwModel);

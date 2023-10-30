@@ -57,14 +57,15 @@ export interface ResourceInfo extends Omit<BaseData<TbResourceId>, 'name' | 'lab
   resourceKey?: string;
   title?: string;
   resourceType: ResourceType;
+  fileName: string;
 }
 
 export interface Resource extends ResourceInfo {
-  data: string;
-  fileName: string;
+  base64Data: string;
   name?: string;
 }
 
+// @ts-ignore FIXME
 export interface Resources extends ResourceInfo {
   data: Array<string>;
   fileName: Array<string>;

@@ -30,6 +30,7 @@ import javax.persistence.Table;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_ETAG_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_FILE_NAME_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_KEY_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TABLE_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TENANT_ID_COLUMN;
@@ -61,6 +62,9 @@ public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implemen
     @Column(name = RESOURCE_ETAG_COLUMN)
     private String hashCode;
 
+    @Column(name = RESOURCE_FILE_NAME_COLUMN)
+    private String fileName;
+
     public TbResourceInfoEntity() {
     }
 
@@ -75,6 +79,7 @@ public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implemen
         this.resourceKey = resource.getResourceKey();
         this.searchText = resource.getSearchText();
         this.hashCode = resource.getEtag();
+        this.fileName = resource.getFileName();
     }
 
     @Override
@@ -87,6 +92,7 @@ public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implemen
         resource.setResourceKey(resourceKey);
         resource.setSearchText(searchText);
         resource.setEtag(hashCode);
+        resource.setFileName(fileName);
         return resource;
     }
 }

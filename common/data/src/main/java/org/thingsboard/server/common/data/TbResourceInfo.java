@@ -50,6 +50,10 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
     private String searchText;
     @ApiModelProperty(position = 8, value = "Resource etag.", example = "33a64df551425fcc55e4d42a148795d9f25f89d4", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String etag;
+    @NoXss
+    @Length(fieldName = "file name")
+    @ApiModelProperty(position = 9, value = "Resource file name.", example = "19.xml", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    private String fileName;
 
     public TbResourceInfo() {
         super();
@@ -61,12 +65,13 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
 
     public TbResourceInfo(TbResourceInfo resourceInfo) {
         super(resourceInfo);
-        this.tenantId = resourceInfo.getTenantId();
-        this.title = resourceInfo.getTitle();
-        this.resourceType = resourceInfo.getResourceType();
-        this.resourceKey = resourceInfo.getResourceKey();
-        this.searchText = resourceInfo.getSearchText();
-        this.etag = resourceInfo.getEtag();
+        this.tenantId = resourceInfo.tenantId;
+        this.title = resourceInfo.title;
+        this.resourceType = resourceInfo.resourceType;
+        this.resourceKey = resourceInfo.resourceKey;
+        this.searchText = resourceInfo.searchText;
+        this.etag = resourceInfo.etag;
+        this.fileName = resourceInfo.fileName;
     }
 
     @ApiModelProperty(position = 1, value = "JSON object with the Resource Id. " +
@@ -95,24 +100,4 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
         return searchText != null ? searchText : title;
     }
 
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("ResourceInfo [tenantId=");
-        builder.append(tenantId);
-        builder.append(", id=");
-        builder.append(getUuidId());
-        builder.append(", createdTime=");
-        builder.append(createdTime);
-        builder.append(", title=");
-        builder.append(title);
-        builder.append(", resourceType=");
-        builder.append(resourceType);
-        builder.append(", resourceKey=");
-        builder.append(resourceKey);
-        builder.append(", hashCode=");
-        builder.append(etag);
-        builder.append("]");
-        return builder.toString();
-    }
 }

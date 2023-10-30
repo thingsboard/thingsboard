@@ -15,34 +15,26 @@
  */
 package org.thingsboard.server.service.resource;
 
-import com.google.common.hash.HashCode;
-import com.google.common.hash.Hashing;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ResourceType;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.TbResourceInfoFilter;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.widget.BaseWidgetType;
-import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
-import java.util.Base64;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -166,18 +158,11 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
     }
 
     private TbResource doSave(TbResource resource) throws ThingsboardException {
-        log.trace("Executing saveResource [{}]", resource);
-        if (StringUtils.isEmpty(resource.getData())) {
-            throw new DataValidationException("Resource data should be specified!");
-        }
         if (ResourceType.LWM2M_MODEL.equals(resource.getResourceType())) {
             toLwm2mResource(resource);
         } else {
             resource.setResourceKey(resource.getFileName());
         }
-        HashCode hashCode = Hashing.sha256().hashBytes(Base64.getDecoder().decode(resource.getData().getBytes()));
-        resource.setEtag(hashCode.toString());
         return resourceService.saveResource(resource);
     }
 }
-

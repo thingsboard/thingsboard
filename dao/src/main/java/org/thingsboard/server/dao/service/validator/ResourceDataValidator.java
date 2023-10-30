@@ -56,12 +56,28 @@ public class ResourceDataValidator extends DataValidator<TbResource> {
 
     @Override
     protected void validateCreate(TenantId tenantId, TbResource resource) {
-        if (tenantId != null && !TenantId.SYS_TENANT_ID.equals(tenantId)) {
-            DefaultTenantProfileConfiguration profileConfiguration =
-                    (DefaultTenantProfileConfiguration) tenantProfileCache.get(tenantId).getProfileData().getConfiguration();
-            long maxSumResourcesDataInBytes = profileConfiguration.getMaxResourcesInBytes();
-            validateMaxSumDataSizePerTenant(tenantId, resourceDao, maxSumResourcesDataInBytes, resource.getData().length(), TB_RESOURCE);
+        if (resource.getData() == null || resource.getData().length == 0) {
+            throw new DataValidationException("Resource data should be specified");
         }
+        if (tenantId != null && !TenantId.SYS_TENANT_ID.equals(tenantId)) {
+            DefaultTenantProfileConfiguration profileConfiguration = tenantProfileCache.get(tenantId).getDefaultProfileConfiguration();
+            long maxResourceSize = profileConfiguration.getMaxResourceSize();
+            if (maxResourceSize > 0 && resource.getData().length > maxResourceSize) {
+                throw new IllegalArgumentException("Resource exceeds the maximum size of " + maxResourceSize + " bytes");
+            }
+            long maxSumResourcesDataInBytes = profileConfiguration.getMaxResourcesInBytes();
+            validateMaxSumDataSizePerTenant(tenantId, resourceDao, maxSumResourcesDataInBytes, resource.getData().length, TB_RESOURCE);
+        }
+    }
+
+    @Override
+    protected TbResource validateUpdate(TenantId tenantId, TbResource resource) {
+        if (!tenantId.isSysTenantId()) {
+            if (resource.getData() != null) {
+                throw new DataValidationException("Resource data can't be updated");
+            }
+        }
+        return resource;
     }
 
     @Override

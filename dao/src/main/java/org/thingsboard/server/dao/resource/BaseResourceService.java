@@ -15,16 +15,17 @@
  */
 package org.thingsboard.server.dao.resource;
 
+import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
-import org.thingsboard.server.cache.device.DeviceCacheKey;
+import org.thingsboard.server.cache.resourceInfo.ResourceInfoCacheKey;
 import org.thingsboard.server.cache.resourceInfo.ResourceInfoEvictEvent;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.cache.resourceInfo.ResourceInfoCacheKey;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
@@ -43,6 +44,7 @@ import org.thingsboard.server.dao.service.Validator;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.thingsboard.server.dao.device.DeviceServiceImpl.INCORRECT_TENANT_ID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -59,9 +61,26 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
 
     @Override
     public TbResource saveResource(TbResource resource) {
+        log.trace("Executing saveResource [{}]", resource);
+        if (resource.getData() != null) {
+            resource.setEtag(calculateEtag(resource.getData()));
+        }
         resourceValidator.validate(resource, TbResourceInfo::getTenantId);
+
+        boolean newResource = resource.getId() == null;
+        if (newResource) {
+            UUID uuid = Uuids.timeBased();
+            resource.setId(new TbResourceId(uuid));
+            resource.setCreatedTime(Uuids.unixTimestamp(uuid));
+        }
         try {
-            TbResource saved = resourceDao.save(resource.getTenantId(), resource);
+            TbResource saved;
+            if (resource.getData() != null) {
+                saved = resourceDao.save(resource.getTenantId(), resource);
+            } else {
+                TbResourceInfo resourceInfo = saveResourceInfo(resource);
+                saved = new TbResource(resourceInfo);
+            }
             publishEvictEvent(new ResourceInfoEvictEvent(resource.getTenantId(), resource.getId()));
             return saved;
         } catch (Exception t) {
@@ -74,6 +93,10 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
                 throw t;
             }
         }
+    }
+
+    private TbResourceInfo saveResourceInfo(TbResource resource) {
+        return resourceInfoDao.save(resource.getTenantId(), new TbResourceInfo(resource));
     }
 
     @Override
@@ -163,6 +186,10 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     @Override
     public long sumDataSizeByTenantId(TenantId tenantId) {
         return resourceDao.sumDataSizeByTenantId(tenantId);
+    }
+
+    private String calculateEtag(byte[] data) {
+        return Hashing.sha256().hashBytes(data).toString();
     }
 
     private final PaginatedRemover<TenantId, TbResource> tenantResourcesRemover =
