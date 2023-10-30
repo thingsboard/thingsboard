@@ -25,3 +25,9 @@ ALTER TABLE notification DROP CONSTRAINT IF EXISTS fk_notification_recipient_id;
 CREATE INDEX IF NOT EXISTS idx_notification_notification_request_id ON notification(request_id);
 CREATE INDEX IF NOT EXISTS idx_notification_request_tenant_id ON notification_request(tenant_id);
 
+-- DELETE invalid records from M:N widgets_bundle_widget table caused by the bug in previous upgrade script;
+DELETE
+FROM widgets_bundle_widget wbw
+WHERE (SELECT tenant_id FROM widgets_bundle wb WHERE wb.id = wbw.widgets_bundle_id) !=
+      (SELECT tenant_id FROM widget_type wt WHERE wt.id = wbw.widget_type_id);
+

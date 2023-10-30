@@ -115,7 +115,7 @@ export class CountWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.showLabel = this.settings.showLabel;
     this.label = this.settings.label;
-    this.labelStyle = textStyle(this.settings.labelFont, '0.4px');
+    this.labelStyle = textStyle(this.settings.labelFont);
     this.labelColor = ColorProcessor.fromSettings(this.settings.labelColor);
 
     this.showIcon = this.settings.showIcon;
@@ -136,7 +136,7 @@ export class CountWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
     };
     this.iconBackgroundColor = ColorProcessor.fromSettings(this.settings.iconBackgroundColor);
 
-    this.valueStyle = textStyle(this.settings.valueFont, '0.1px');
+    this.valueStyle = textStyle(this.settings.valueFont);
     this.valueColor = ColorProcessor.fromSettings(this.settings.valueColor);
 
     this.showChevron = this.settings.showChevron;

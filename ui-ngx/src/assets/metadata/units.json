@@ -939,6 +939,11 @@
   "tags": ["decibels millivolt","voltage level","signal","dBmV"]
 },
 {
+  "name": "unit.dbm",
+  "symbol": "dBm",
+  "tags": ["decibel milliwatts","output power","signal","dBm"]
+},
+{
   "name": "unit.volt-meter",
   "symbol": "V·m",
   "tags": ["electric flux","volt-meter","V·m"]

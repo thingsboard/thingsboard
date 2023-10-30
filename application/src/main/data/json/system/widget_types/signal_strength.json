@@ -11,7 +11,7 @@
     "resources": [],
     "templateHtml": "<tb-signal-strength-widget\n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-signal-strength-widget>",
     "templateCss": "",
-    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.signalStrengthWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.signalStrengthWidget.onDataUpdated();\n};\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        previewWidth: '200px',\n        previewHeight: '200px',\n        embedTitlePanel: true\n    };\n};\n\nself.actionSources = function() {\n    return {\n        'cardClick': {\n            name: 'widget-action.card-click',\n            multiple: false\n        }\n    };\n}\n\nself.onDestroy = function() {\n};\n",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.signalStrengthWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.signalStrengthWidget.onDataUpdated();\n};\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        previewWidth: '200px',\n        previewHeight: '200px',\n        embedTitlePanel: true,\n        defaultDataKeysFunction: function() {\n            return [{ name: 'rssi', label: 'rssi', type: 'timeseries' }];\n        }\n    };\n};\n\nself.actionSources = function() {\n    return {\n        'cardClick': {\n            name: 'widget-action.card-click',\n            multiple: false\n        }\n    };\n}\n\nself.onDestroy = function() {\n};\n",
     "settingsSchema": "",
     "dataKeySettingsSchema": "",
     "settingsDirective": "tb-signal-strength-widget-settings",
