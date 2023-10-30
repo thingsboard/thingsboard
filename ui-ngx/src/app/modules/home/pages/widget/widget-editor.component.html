@@ -26,7 +26,7 @@
       </mat-form-field>
       <mat-form-field class="tb-appearance-transparent">
         <mat-select [disabled]="isReadOnly" matInput placeholder="{{ 'widget.type' | translate }}"
-                    [(ngModel)]="widget.type" (ngModelChange)="widetTypeChanged()">
+                    [(ngModel)]="widget.type" (ngModelChange)="widgetTypeChanged()">
           <mat-option *ngFor="let type of allWidgetTypes" [value]="type">
             {{ widgetTypesDataMap.get(widgetTypes[type]).name | translate }}
           </mat-option>

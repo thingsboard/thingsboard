@@ -817,3 +817,11 @@ export const getOS = (): string => {
 export const camelCase = (str: string): string => {
   return _.camelCase(str);
 };
+
+export const deleteProperties = (source: { [key: string]: any }, keys: string[]): void => {
+  keys.forEach(key => {
+    if (source[key]) {
+      delete source[key];
+    }
+  });
+};

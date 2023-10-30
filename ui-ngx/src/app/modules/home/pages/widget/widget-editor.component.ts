@@ -31,7 +31,7 @@ import { WidgetService } from '@core/http/widget.service';
 import { detailsToWidgetInfo, WidgetInfo } from '@home/models/widget-component.models';
 import { Widget, WidgetConfig, widgetType, WidgetTypeDetails, widgetTypesData } from '@shared/models/widget.models';
 import { ActivatedRoute, Router } from '@angular/router';
-import { deepClone } from '@core/utils';
+import { deepClone, deleteProperties } from '@core/utils';
 import { HasDirtyFlag } from '@core/guards/confirm-on-exit.guard';
 import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
@@ -59,6 +59,7 @@ import { Observable } from 'rxjs/internal/Observable';
 import { map, tap } from 'rxjs/operators';
 import { beautifyCss, beautifyHtml, beautifyJs } from '@shared/models/beautify.models';
 import Timeout = NodeJS.Timeout;
+import { Timewindow } from '@shared/models/time/time.models';
 
 // @dynamic
 @Component({
@@ -789,57 +790,41 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     this.isDirty = true;
   }
 
-  widetTypeChanged() {
+  widgetTypeChanged() {
     const config: WidgetConfig = JSON.parse(this.widget.defaultConfig);
-    if (this.widget.type !== widgetType.rpc &&
-        this.widget.type !== widgetType.alarm) {
-      if (config.targetDeviceAliases) {
-        delete config.targetDeviceAliases;
+    const origConfig: WidgetConfig = JSON.parse(this.origWidget.defaultConfig);
+    const defaultTimewindow: Timewindow = {
+      realtime: {
+        timewindowMs: this.widget.type === widgetType.alarm ? 24 * 60 * 60 * 1000 : 60000
       }
-      if (config.alarmSource) {
-        delete config.alarmSource;
-      }
-      if (!config.datasources) {
-        config.datasources = [];
-      }
-      if (!config.timewindow) {
-        config.timewindow = {
-          realtime: {
-            timewindowMs: 60000
-          }
-        };
-      }
-    } else if (this.widget.type === widgetType.rpc) {
-      if (config.datasources) {
-        delete config.datasources;
-      }
-      if (config.alarmSource) {
-        delete config.alarmSource;
-      }
-      if (config.timewindow) {
-        delete config.timewindow;
-      }
+    };
+
+    if (this.widget.type === widgetType.rpc) {
+      deleteProperties(config, ['datasources', 'alarmSource', 'timewindow']);
+
       if (!config.targetDeviceAliases) {
-        config.targetDeviceAliases = [];
+        config.alarmSource = origConfig.targetDeviceAliases || [];
       }
-    } else { // alarm
-      if (config.datasources) {
-        delete config.datasources;
-      }
-      if (config.targetDeviceAliases) {
-        delete config.targetDeviceAliases;
-      }
+    } else if (this.widget.type === widgetType.alarm) {
+      deleteProperties(config, ['datasources', 'targetDeviceAliases']);
+
       if (!config.alarmSource) {
-        config.alarmSource = {};
+        config.alarmSource = origConfig.alarmSource || {};
       }
       if (!config.timewindow) {
-        config.timewindow = {
-          realtime: {
-            timewindowMs: 24 * 60 * 60 * 1000
-          }
-        };
+        config.timewindow = origConfig.timewindow || defaultTimewindow;
+      }
+    } else {
+      deleteProperties(config, ['targetDeviceAliases', 'alarmSource']);
+
+      if (!config.datasources) {
+        config.datasources = origConfig.datasources || [];
+      }
+      if (!config.timewindow) {
+        config.timewindow = origConfig.timewindow || defaultTimewindow;
       }
     }
+
     this.widget.defaultConfig = JSON.stringify(config);
     this.isDirty = true;
   }
