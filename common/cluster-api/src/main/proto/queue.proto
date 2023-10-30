@@ -21,6 +21,42 @@ option java_package = "org.thingsboard.server.gen.transport";
 option java_outer_classname = "TransportProtos";
 
 /**
+ * Common data structures
+ */
+enum EntityTypeProto {
+  UNSPECIFIED           = 0;
+  TENANT                = 1;
+  CUSTOMER              = 2;
+  USER                  = 3;
+  DASHBOARD             = 4;
+  ASSET                 = 5;
+  DEVICE                = 6;
+  ALARM                 = 7;
+  // next 3 reserved for PE;
+  RULE_CHAIN            = 11;
+  RULE_NODE             = 12;
+  // next 2 reserved for PE;
+  ENTITY_VIEW           = 15;
+  WIDGETS_BUNDLE        = 16;
+  WIDGET_TYPE           = 17;
+  // next 2 reserved for PE;
+  TENANT_PROFILE        = 20;
+  DEVICE_PROFILE        = 21;
+  ASSET_PROFILE         = 22;
+  API_USAGE_STATE       = 23;
+  TB_RESOURCE           = 24;
+  OTA_PACKAGE           = 25;
+  EDGE                  = 26;
+  RPC                   = 27;
+  QUEUE                 = 28;
+  NOTIFICATION_TARGET   = 29;
+  NOTIFICATION_TEMPLATE = 30;
+  NOTIFICATION_REQUEST  = 31;
+  NOTIFICATION          = 32;
+  NOTIFICATION_RULE     = 33;
+}
+
+/**
  * Service Discovery Data Structures;
  */
 message ServiceInfo {
@@ -244,6 +280,12 @@ message QueueDeleteMsg {
   int64 queueIdMSB = 3;
   int64 queueIdLSB = 4;
   string queueName = 5;
+}
+
+message CoreStartupMsg {
+  string serviceId = 1;
+  repeated int32 partitions = 2;
+  int64 ts = 3;
 }
 
 message LwM2MRegistrationRequestMsg {
@@ -531,7 +573,74 @@ message TransportToRuleEngineMsg {
  * TB Core Data Structures
  */
 
+message TbEntitySubEventProto {
+  string serviceId = 1;
+  int32 seqNumber = 2;
+  int64 tenantIdMSB = 3;
+  int64 tenantIdLSB = 4;
+  string entityType = 5;
+  int64 entityIdMSB = 6;
+  int64 entityIdLSB = 7;
+  string type = 8;
+  bool notifications = 9;
+  bool alarms = 10;
+  bool tsAllKeys = 11;
+  repeated string tsKeys = 12;
+  bool attrAllKeys = 13;
+  repeated string attrKeys = 14;
+}
+
+message TbEntitySubEventCallbackProto {
+  int64 entityIdMSB = 1;
+  int64 entityIdLSB = 2;
+  int32 seqNumber = 3;
+  int64 attributesUpdateTs = 4;
+  int64 timeSeriesUpdateTs = 5;
+}
+
+message TsValueProto {
+  int64 ts = 1;
+  KeyValueType type = 2;
+  bool bool_v = 3;
+  int64 long_v = 4;
+  double double_v = 5;
+  string string_v = 6;
+  string json_v = 7;
+}
+
+message TsValueListProto {
+  string key = 1;
+  repeated TsValueProto tsValue = 2;
+}
+
+message TbSubUpdateProto {
+  int64 entityIdMSB = 1;
+  int64 entityIdLSB = 2;
+  int32 errorCode = 3;
+  string errorMsg = 4;
+  repeated TsValueListProto data = 5;
+  string scope = 6;
+}
+
+message TbAlarmSubUpdateProto {
+  int64 entityIdMSB = 1;
+  int64 entityIdLSB = 2;
+  int32 errorCode = 3;
+  string errorMsg = 4;
+  string alarm = 5;
+  bool deleted = 6;
+}
+
+message NotificationsSubUpdateProto {
+  int64 entityIdMSB = 1;
+  int64 entityIdLSB = 2;
+  string notificationUpdate = 3;
+  string notificationRequestUpdate = 4;
+}
+
+// DEPRECATED. FOR REMOVAL
 message TbSubscriptionProto {
+  option deprecated = true;
   string serviceId = 1;
   string sessionId = 2;
   int32 subscriptionId = 3;
@@ -542,7 +651,9 @@ message TbSubscriptionProto {
   int64 entityIdLSB = 8;
 }
 
+// DEPRECATED. FOR REMOVAL
 message TbTimeSeriesSubscriptionProto {
+  option deprecated = true;
   TbSubscriptionProto sub = 1;
   bool allKeys = 2;
   repeated TbSubscriptionKetStateProto keyStates = 3;
@@ -551,28 +662,38 @@ message TbTimeSeriesSubscriptionProto {
   bool latestValues = 6;
 }
 
+// DEPRECATED. FOR REMOVAL
 message TbAttributeSubscriptionProto {
+  option deprecated = true;
   TbSubscriptionProto sub = 1;
   bool allKeys = 2;
   repeated TbSubscriptionKetStateProto keyStates = 3;
   string scope = 4;
 }
 
+// DEPRECATED. FOR REMOVAL
 message TbAlarmSubscriptionProto {
+  option deprecated = true;
   TbSubscriptionProto sub = 1;
   int64 ts = 2;
 }
 
+// DEPRECATED. FOR REMOVAL
 message NotificationsSubscriptionProto {
+  option deprecated = true;
   TbSubscriptionProto sub = 1;
   int32 limit = 2;
 }
 
+// DEPRECATED. FOR REMOVAL
 message NotificationsCountSubscriptionProto {
+  option deprecated = true;
   TbSubscriptionProto sub = 1;
 }
 
+// DEPRECATED. FOR REMOVAL
 message TbSubscriptionUpdateProto {
+  option deprecated = true;
   string sessionId = 1;
   int32 subscriptionId = 2;
   int32 errorCode = 3;
@@ -580,7 +701,9 @@ message TbSubscriptionUpdateProto {
   repeated TbSubscriptionUpdateValueListProto data = 5;
 }
 
+// DEPRECATED. FOR REMOVAL
 message TbAlarmSubscriptionUpdateProto {
+  option deprecated = true;
   string sessionId = 1;
   int32 subscriptionId = 2;
   int32 errorCode = 3;
@@ -589,7 +712,9 @@ message TbAlarmSubscriptionUpdateProto {
   bool deleted = 6;
 }
 
+// DEPRECATED. FOR REMOVAL
 message NotificationsSubscriptionUpdateProto {
+  option deprecated = true;
   string sessionId = 1;
   int32 subscriptionId = 2;
   string notificationUpdate = 3;
@@ -667,7 +792,9 @@ message TbTimeSeriesUpdateProto {
   repeated TsKvProto data = 6;
 }
 
+// DEPRECATED. FOR REMOVAL
 message TbSubscriptionCloseProto {
+  option deprecated = true;
   string sessionId = 1;
   int32 subscriptionId = 2;
 }
@@ -702,26 +829,32 @@ message DeviceStateServiceMsgProto {
 }
 
 message SubscriptionMgrMsgProto {
-  TbTimeSeriesSubscriptionProto telemetrySub = 1;
-  TbAttributeSubscriptionProto attributeSub = 2;
-  TbSubscriptionCloseProto subClose = 3;
+  TbTimeSeriesSubscriptionProto telemetrySub = 1 [deprecated = true]; // DEPRECATED. FOR REMOVAL
+  TbAttributeSubscriptionProto attributeSub = 2 [deprecated = true]; // DEPRECATED. FOR REMOVAL
+  TbSubscriptionCloseProto subClose = 3 [deprecated = true]; // DEPRECATED. FOR REMOVAL
   TbTimeSeriesUpdateProto tsUpdate = 4;
   TbAttributeUpdateProto attrUpdate = 5;
   TbAttributeDeleteProto attrDelete = 6;
-  TbAlarmSubscriptionProto alarmSub = 7;
+  TbAlarmSubscriptionProto alarmSub = 7 [deprecated = true]; // DEPRECATED. FOR REMOVAL
   TbAlarmUpdateProto alarmUpdate = 8;
   TbAlarmDeleteProto alarmDelete = 9;
   TbTimeSeriesDeleteProto tsDelete = 10;
-  NotificationsSubscriptionProto notificationsSub = 11;
-  NotificationsCountSubscriptionProto notificationsCountSub = 12;
+  NotificationsSubscriptionProto notificationsSub = 11 [deprecated = true]; // DEPRECATED. FOR REMOVAL
+  NotificationsCountSubscriptionProto notificationsCountSub = 12 [deprecated = true]; // DEPRECATED. FOR REMOVAL
   NotificationUpdateProto notificationUpdate = 13;
   NotificationRequestUpdateProto notificationRequestUpdate = 14;
+  TbEntitySubEventProto subEvent = 15;
 }
 
 message LocalSubscriptionServiceMsgProto {
-  TbSubscriptionUpdateProto subUpdate = 1;
-  TbAlarmSubscriptionUpdateProto alarmSubUpdate = 2;
-  NotificationsSubscriptionUpdateProto notificationsSubUpdate = 3;
+  TbSubscriptionUpdateProto subUpdate = 1 [deprecated = true]; // DEPRECATED. FOR REMOVAL
+  TbAlarmSubscriptionUpdateProto alarmSubUpdate = 2 [deprecated = true]; // DEPRECATED. FOR REMOVAL
+  NotificationsSubscriptionUpdateProto notificationsSubUpdate = 3 [deprecated = true]; // DEPRECATED. FOR REMOVAL
+  TbEntitySubEventCallbackProto subEventCallback = 4;
+  TbSubUpdateProto tsUpdate = 5;
+  TbSubUpdateProto attrUpdate = 6;
+  TbAlarmSubUpdateProto alarmUpdate = 7;
+  NotificationsSubUpdateProto notificationsUpdate = 8;
 }
 
 message FromDeviceRPCResponseProto {
@@ -729,6 +862,25 @@ message FromDeviceRPCResponseProto {
   int64 requestIdLSB = 2;
   string response = 3;
   int32 error = 4;
+}
+
+enum ComponentLifecycleEvent {
+    CREATED   = 0;
+    STARTED   = 1;
+    ACTIVATED = 2;
+    SUSPENDED = 3;
+    UPDATED   = 4;
+    STOPPED   = 5;
+    DELETED   = 6;
+}
+
+message ComponentLifecycleMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  EntityTypeProto entityType = 3;
+  int64 entityIdMSB = 4;
+  int64 entityIdLSB = 5;
+  ComponentLifecycleEvent event = 6;
 }
 
 message EdgeNotificationMsgProto {
@@ -980,10 +1132,11 @@ message ToCoreMsg {
 }
 
 /* High priority messages with low latency are handled by ThingsBoard Core Service separately */
+/* Please, adjust the TbCoreConsumerStats when modifying the ToCoreNotificationMsg */
 message ToCoreNotificationMsg {
   LocalSubscriptionServiceMsgProto toLocalSubscriptionServiceMsg = 1;
   FromDeviceRPCResponseProto fromDeviceRpcResponse = 2;
-  bytes componentLifecycleMsg = 3;
+  bytes componentLifecycleMsg = 3; //will be removed in 3.6.1 in favour of ComponentLifecycleMsgProto
   bytes edgeEventUpdateMsg = 4;
   QueueUpdateMsg queueUpdateMsg = 5;
   QueueDeleteMsg queueDeleteMsg = 6;
@@ -992,6 +1145,8 @@ message ToCoreNotificationMsg {
   bytes fromEdgeSyncResponseMsg = 9;
   SubscriptionMgrMsgProto toSubscriptionMgrMsg = 10;
   NotificationRuleProcessorMsg notificationRuleProcessorMsg = 11;
+  ComponentLifecycleMsgProto componentLifecycle = 12;
+  CoreStartupMsg coreStartupMsg = 13;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */
@@ -1004,10 +1159,11 @@ message ToRuleEngineMsg {
 }
 
 message ToRuleEngineNotificationMsg {
-  bytes componentLifecycleMsg = 1;
+  bytes componentLifecycleMsg = 1; // will be removed in 3.6.1 in favour of ComponentLifecycleMsgProto
   FromDeviceRPCResponseProto fromDeviceRpcResponse = 2;
   QueueUpdateMsg queueUpdateMsg = 3;
   QueueDeleteMsg queueDeleteMsg = 4;
+  ComponentLifecycleMsgProto componentLifecycle = 5;
 }
 
 /* Messages that are handled by ThingsBoard Transport Service */

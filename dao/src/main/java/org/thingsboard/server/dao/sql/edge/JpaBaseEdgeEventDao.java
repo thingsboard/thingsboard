@@ -185,7 +185,7 @@ public class JpaBaseEdgeEventDao extends JpaAbstractDao<EdgeEventEntity, EdgeEve
                         .findEdgeEventsByTenantIdAndEdgeId(
                                 tenantId,
                                 edgeId.getId(),
-                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getTextSearch(),
                                 pageLink.getStartTime(),
                                 pageLink.getEndTime(),
                                 seqIdStart,

@@ -38,7 +38,8 @@ import uuid from 'uuid-random';
 export class AwsSqsTemplate implements IQueue {
 
     private logger = _logger(`awsSqsTemplate`);
-    private requestTopic: string = config.get('request_topic');
+    private queuePrefix: string = config.get('queue_prefix');
+    private requestTopic: string = this.queuePrefix ? this.queuePrefix + "." + config.get('request_topic') : config.get('request_topic');
     private accessKeyId: string = config.get('aws_sqs.access_key_id');
     private secretAccessKey: string = config.get('aws_sqs.secret_access_key');
     private region: string = config.get('aws_sqs.region');

@@ -29,6 +29,10 @@ public class EntityIdFactory {
         return getByTypeAndUuid(EntityType.values()[type], UUID.fromString(uuid));
     }
 
+    public static EntityId getByTypeAndUuid(int type, UUID uuid) {
+        return getByTypeAndUuid(EntityType.values()[type], uuid);
+    }
+
     public static EntityId getByTypeAndUuid(String type, String uuid) {
         return getByTypeAndUuid(EntityType.valueOf(type), UUID.fromString(uuid));
     }

@@ -79,6 +79,9 @@ import {
 import {
   CompassGaugeBasicConfigComponent
 } from '@home/components/widget/config/basic/gauge/compass-gauge-basic-config.component';
+import {
+  LiquidLevelCardBasicConfigComponent
+} from '@home/components/widget/config/basic/indicator/liquid-level-card-basic-config.component';
 
 @NgModule({
   declarations: [
@@ -103,7 +106,8 @@ import {
     ProgressBarBasicConfigComponent,
     RadialGaugeBasicConfigComponent,
     ThermometerScaleGaugeBasicConfigComponent,
-    CompassGaugeBasicConfigComponent
+    CompassGaugeBasicConfigComponent,
+    LiquidLevelCardBasicConfigComponent
   ],
   imports: [
     CommonModule,
@@ -132,7 +136,8 @@ import {
     ProgressBarBasicConfigComponent,
     RadialGaugeBasicConfigComponent,
     ThermometerScaleGaugeBasicConfigComponent,
-    CompassGaugeBasicConfigComponent
+    CompassGaugeBasicConfigComponent,
+    LiquidLevelCardBasicConfigComponent
   ]
 })
 export class BasicWidgetConfigModule {
@@ -155,5 +160,6 @@ export const basicWidgetConfigComponentsMap: {[key: string]: Type<IBasicWidgetCo
   'tb-progress-bar-basic-config': ProgressBarBasicConfigComponent,
   'tb-radial-gauge-basic-config': RadialGaugeBasicConfigComponent,
   'tb-thermometer-scale-gauge-basic-config': ThermometerScaleGaugeBasicConfigComponent,
-  'tb-compass-gauge-basic-config': CompassGaugeBasicConfigComponent
+  'tb-compass-gauge-basic-config': CompassGaugeBasicConfigComponent,
+  'tb-liquid-level-card-basic-config': LiquidLevelCardBasicConfigComponent
 };
