@@ -47,7 +47,15 @@ public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEnti
                 "WHERE wtd.id = wbw.widget_type_id " +
                 "AND (:textSearch IS NULL OR wtd.name ILIKE CONCAT('%', :textSearch, '%') " +
                 "OR wtd.description ILIKE CONCAT('%', :textSearch, '%') " +
-                "OR lower(wtd.tags\\:\\:text)\\:\\:text[] && string_to_array(lower(:textSearch), ' '))))",
+                "OR EXISTS (" +
+                    "SELECT 1 " +
+                    "FROM unnest(wtd.tags) AS currentTag " +
+                    "WHERE :textSearch ILIKE '%' || currentTag || '%' " +
+                        "AND (length(:textSearch) = length(currentTag) " +
+                        "OR :textSearch ILIKE currentTag || ' %' " +
+                        "OR :textSearch ILIKE '% ' || currentTag " +
+                        "OR :textSearch ILIKE '% ' || currentTag || ' %')" +
+                "))))",
             countQuery = "SELECT count(*) FROM widgets_bundle wb WHERE wb.tenant_id = :systemTenantId " +
                 "AND (:textSearch IS NULL OR wb.title ILIKE CONCAT('%', :textSearch, '%') " +
                 "OR wb.description ILIKE CONCAT('%', :textSearch, '%') " +
@@ -55,7 +63,15 @@ public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEnti
                 "WHERE wtd.id = wbw.widget_type_id " +
                 "AND (:textSearch IS NULL OR wtd.name ILIKE CONCAT('%', :textSearch, '%') " +
                 "OR wtd.description ILIKE CONCAT('%', :textSearch, '%') " +
-                "OR lower(wtd.tags\\:\\:text)\\:\\:text[] && string_to_array(lower(:textSearch), ' '))))"
+                "OR EXISTS (" +
+                    "SELECT 1 " +
+                    "FROM unnest(wtd.tags) AS currentTag " +
+                    "WHERE :textSearch ILIKE '%' || currentTag || '%' " +
+                        "AND (length(:textSearch) = length(currentTag) " +
+                        "OR :textSearch ILIKE currentTag || ' %' " +
+                        "OR :textSearch ILIKE '% ' || currentTag " +
+                        "OR :textSearch ILIKE '% ' || currentTag || ' %')" +
+                "))))"
     )
     Page<WidgetsBundleEntity> findSystemWidgetsBundlesFullSearch(@Param("systemTenantId") UUID systemTenantId,
                                                                  @Param("textSearch") String textSearch,
@@ -81,7 +97,15 @@ public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEnti
                     "WHERE wtd.id = wbw.widget_type_id " +
                     "AND (:textSearch IS NULL OR wtd.name ILIKE CONCAT('%', :textSearch, '%') " +
                     "OR wtd.description ILIKE CONCAT('%', :textSearch, '%') " +
-                    "OR lower(wtd.tags\\:\\:text)\\:\\:text[] && string_to_array(lower(:textSearch), ' '))))",
+                    "OR EXISTS (" +
+                        "SELECT 1 " +
+                        "FROM unnest(wtd.tags) AS currentTag " +
+                        "WHERE :textSearch ILIKE '%' || currentTag || '%' " +
+                            "AND (length(:textSearch) = length(currentTag) " +
+                            "OR :textSearch ILIKE currentTag || ' %' " +
+                            "OR :textSearch ILIKE '% ' || currentTag " +
+                            "OR :textSearch ILIKE '% ' || currentTag || ' %')" +
+                    "))))",
             countQuery = "SELECT count(*) FROM widgets_bundle wb WHERE wb.tenant_id IN (:tenantIds) " +
                     "AND (:textSearch IS NULL OR wb.title ILIKE CONCAT('%', :textSearch, '%') " +
                     "OR wb.description ILIKE CONCAT('%', :textSearch, '%') " +
@@ -89,7 +113,15 @@ public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEnti
                     "WHERE wtd.id = wbw.widget_type_id " +
                     "AND (:textSearch IS NULL OR wtd.name ILIKE CONCAT('%', :textSearch, '%') " +
                     "OR wtd.description ILIKE CONCAT('%', :textSearch, '%') " +
-                    "OR lower(wtd.tags\\:\\:text)\\:\\:text[] && string_to_array(lower(:textSearch), ' '))))"
+                    "OR EXISTS (" +
+                        "SELECT 1 " +
+                        "FROM unnest(wtd.tags) AS currentTag " +
+                        "WHERE :textSearch ILIKE '%' || currentTag || '%' " +
+                            "AND (length(:textSearch) = length(currentTag) " +
+                            "OR :textSearch ILIKE currentTag || ' %' " +
+                            "OR :textSearch ILIKE '% ' || currentTag " +
+                            "OR :textSearch ILIKE '% ' || currentTag || ' %')" +
+                    "))))"
     )
     Page<WidgetsBundleEntity> findAllTenantWidgetsBundlesByTenantIdsFullSearch(@Param("tenantIds") List<UUID> tenantIds,
                                                                               @Param("textSearch") String textSearch,

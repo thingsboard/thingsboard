@@ -36,15 +36,38 @@ import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
 /**
  * Created by Valerii Sosliuk on 4/23/2017.
  */
 public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
+
+
+    // given search text should find a widget with tags, when searching by tags
+    final Map<String, String[]> SHOULD_FIND_SEARCH_TO_TAGS_MAP = Map.of(
+            "A",             new String[]{"a", "b", "c"},
+            "test A test",   new String[]{"a", "b", "c"},
+            "test x y test", new String[]{"x y", "b", "c"},
+            "x y test",      new String[]{"x y", "b", "c"},
+            "x y",           new String[]{"x y", "b", "c"},
+            "test x y",      new String[]{"x y", "b", "c"}
+    );
+
+    // given search text should not find a widget with tags, when searching by tags
+    final Map<String, String[]> SHOULDNT_FIND_SEARCH_TO_TAGS_MAP = Map.of(
+            "testA test",   new String[]{"a", "b", "c"},
+            "testx y test", new String[]{"x y", "b", "c"},
+            "testx ytest",  new String[]{"x y", "b", "c"},
+            "x ytest",      new String[]{"x y", "b", "c"},
+            "testx y",      new String[]{"x y", "b", "c"},
+            "x",            new String[]{"x y", "b", "c"}
+    );
 
     List<WidgetsBundle> widgetsBundles;
     List<WidgetType> widgetTypeList;
@@ -138,6 +161,51 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
         assertEquals(2, widgetsBundles3.getData().size());
         assertEquals(widgetsBundle1, widgetsBundles3.getData().get(0));
         assertEquals(widgetsBundle3, widgetsBundles3.getData().get(1));
+    }
+
+    @Test
+    public void testTagsSearchInFindBySystemWidgetTypes() {
+        for (var entry : SHOULD_FIND_SEARCH_TO_TAGS_MAP.entrySet()) {
+            String searchText = entry.getKey();
+            String[] tags = entry.getValue();
+
+            WidgetsBundle systemWidgetBundle = createSystemWidgetBundle("Test Widget Bundle Alias", "Test Widget Bundle Title");
+            WidgetType widgetType = createAndSaveWidgetType(TenantId.SYS_TENANT_ID, 0, "Test Widget Type Name", "Test Widget Type Description", tags);
+            widgetTypeDao.saveWidgetsBundleWidget(new WidgetsBundleWidget(systemWidgetBundle.getId(), widgetType.getId(), 0));
+
+            PageData<WidgetsBundle> widgetTypes = widgetsBundleDao.findSystemWidgetsBundles(
+                    TenantId.SYS_TENANT_ID, true, new PageLink(10, 0, searchText)
+            );
+
+            assertThat(widgetTypes.getData()).hasSize(1);
+            assertThat(widgetTypes.getData().get(0).getId()).isEqualTo(systemWidgetBundle.getId());
+
+            widgetTypeDao.removeWidgetTypeFromWidgetsBundle(systemWidgetBundle.getUuidId(), widgetType.getUuidId());
+            widgetTypeDao.removeById(TenantId.SYS_TENANT_ID, widgetType.getUuidId());
+            widgetsBundleDao.removeById(TenantId.SYS_TENANT_ID, systemWidgetBundle.getUuidId());
+        }
+
+        for (var entry : SHOULDNT_FIND_SEARCH_TO_TAGS_MAP.entrySet()) {
+            String searchText = entry.getKey();
+            String[] tags = entry.getValue();
+
+            WidgetsBundle systemWidgetBundle = createSystemWidgetBundle("Test Widget Bundle Alias", "Test Widget Bundle Title");
+            WidgetType widgetType = createAndSaveWidgetType(TenantId.SYS_TENANT_ID, 0, "Test Widget Type Name", "Test Widget Type Description", tags);
+            widgetTypeDao.saveWidgetsBundleWidget(new WidgetsBundleWidget(systemWidgetBundle.getId(), widgetType.getId(), 0));
+
+            PageData<WidgetsBundle> widgetTypes = widgetsBundleDao.findSystemWidgetsBundles(
+                    TenantId.SYS_TENANT_ID, true, new PageLink(10, 0, searchText)
+            );
+
+            assertThat(widgetTypes.getData()).hasSize(0);
+
+            widgetTypeDao.removeWidgetTypeFromWidgetsBundle(systemWidgetBundle.getUuidId(), widgetType.getUuidId());
+            widgetTypeDao.removeById(TenantId.SYS_TENANT_ID, widgetType.getUuidId());
+            widgetsBundleDao.removeById(TenantId.SYS_TENANT_ID, systemWidgetBundle.getUuidId());
+        }
+
+        widgetsBundles = new ArrayList<>();
+        widgetTypeList = new ArrayList<>();
     }
 
     @Test
@@ -246,6 +314,51 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
+    public void testTagsSearchInFindAllWidgetsBundlesByTenantId() {
+        for (var entry : SHOULD_FIND_SEARCH_TO_TAGS_MAP.entrySet()) {
+            String searchText = entry.getKey();
+            String[] tags = entry.getValue();
+
+            WidgetsBundle systemWidgetBundle = createSystemWidgetBundle("Test Widget Bundle Alias", "Test Widget Bundle Title");
+            WidgetType widgetType = createAndSaveWidgetType(TenantId.SYS_TENANT_ID, 0, "Test Widget Type Name", "Test Widget Type Description", tags);
+            widgetTypeDao.saveWidgetsBundleWidget(new WidgetsBundleWidget(systemWidgetBundle.getId(), widgetType.getId(), 0));
+
+            PageData<WidgetsBundle> widgetTypes = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(
+                    TenantId.SYS_TENANT_ID.getId(), true, new PageLink(10, 0, searchText)
+            );
+
+            assertThat(widgetTypes.getData()).hasSize(1);
+            assertThat(widgetTypes.getData().get(0).getId()).isEqualTo(systemWidgetBundle.getId());
+
+            widgetTypeDao.removeWidgetTypeFromWidgetsBundle(systemWidgetBundle.getUuidId(), widgetType.getUuidId());
+            widgetTypeDao.removeById(TenantId.SYS_TENANT_ID, widgetType.getUuidId());
+            widgetsBundleDao.removeById(TenantId.SYS_TENANT_ID, systemWidgetBundle.getUuidId());
+        }
+
+        for (var entry : SHOULDNT_FIND_SEARCH_TO_TAGS_MAP.entrySet()) {
+            String searchText = entry.getKey();
+            String[] tags = entry.getValue();
+
+            WidgetsBundle systemWidgetBundle = createSystemWidgetBundle("Test Widget Bundle Alias", "Test Widget Bundle Title");
+            WidgetType widgetType = createAndSaveWidgetType(TenantId.SYS_TENANT_ID, 0, "Test Widget Type Name", "Test Widget Type Description", tags);
+            widgetTypeDao.saveWidgetsBundleWidget(new WidgetsBundleWidget(systemWidgetBundle.getId(), widgetType.getId(), 0));
+
+            PageData<WidgetsBundle> widgetTypes = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(
+                    TenantId.SYS_TENANT_ID.getId(), true, new PageLink(10, 0, searchText)
+            );
+
+            assertThat(widgetTypes.getData()).hasSize(0);
+
+            widgetTypeDao.removeWidgetTypeFromWidgetsBundle(systemWidgetBundle.getUuidId(), widgetType.getUuidId());
+            widgetTypeDao.removeById(TenantId.SYS_TENANT_ID, widgetType.getUuidId());
+            widgetsBundleDao.removeById(TenantId.SYS_TENANT_ID, systemWidgetBundle.getUuidId());
+        }
+
+        widgetsBundles = new ArrayList<>();
+        widgetTypeList = new ArrayList<>();
+    }
+
+    @Test
     public void testSearchTextNotFound() {
         UUID tenantId = Uuids.timeBased();
         createWidgetBundles(5, tenantId, "ABC_");
@@ -277,6 +390,15 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
             widgetsBundle.setId(new WidgetsBundleId(Uuids.timeBased()));
             widgetsBundleDao.save(TenantId.SYS_TENANT_ID, widgetsBundle);
         }
+    }
+
+    private WidgetsBundle createSystemWidgetBundle(String alias, String title) {
+        WidgetsBundle widgetsBundle = new WidgetsBundle();
+        widgetsBundle.setAlias(alias);
+        widgetsBundle.setTitle(title);
+        widgetsBundle.setTenantId(TenantId.SYS_TENANT_ID);
+        widgetsBundle.setId(new WidgetsBundleId(Uuids.timeBased()));
+        return widgetsBundleDao.save(TenantId.SYS_TENANT_ID, widgetsBundle);
     }
 
     WidgetType createAndSaveWidgetType(TenantId tenantId, int number, String name, String description, String[] tags) {
