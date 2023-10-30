@@ -86,13 +86,11 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
   public get volumeInput(): boolean {
     const datasourceUnits = this.levelCardWidgetConfigForm.get('datasourceUnits').value;
     const layout: LevelCardLayout = this.levelCardWidgetConfigForm.get('layout').value;
-    const units = this.levelCardWidgetConfigForm.get('units').value;
 
     if (layout === LevelCardLayout.absolute) {
       return true;
     }
-
-    return !(datasourceUnits === CapacityUnits.percent && units === CapacityUnits.percent);
+    return datasourceUnits !== CapacityUnits.percent;
   }
 
   public get displayTimewindowConfig(): boolean {
@@ -194,7 +192,7 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
       iconColor: [configData.config.iconColor, []],
 
       volumeSource: [settings.volumeSource, []],
-      volumeConstant: [settings.volumeConstant, [Validators.required]],
+      volumeConstant: [settings.volumeConstant, [Validators.required, Validators.min(0.1)]],
       volumeAttributeName: [settings.volumeAttributeName, [Validators.required]],
       volumeUnits: [settings.volumeUnits, [Validators.required]],
       volumeFont: [settings.volumeFont, []],
@@ -295,12 +293,8 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
 
   protected validatorTriggers(): string[] {
     return [
-      'showTooltip', 'showTooltipLevel',
-      'tankSelectionType', 'datasourceUnits',
-      'showTitleIcon', 'volumeSource',
-      'showTooltipDate', 'units',
-      'layout', 'showTitle',
-      'widgetUnitsSource'
+      'showTooltip', 'showTooltipLevel', 'tankSelectionType', 'datasourceUnits', 'showTitleIcon', 'volumeSource',
+      'showTooltipDate', 'layout', 'showTitle', 'widgetUnitsSource'
     ];
   }
 
@@ -397,10 +391,6 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
 
   createShape(svg: string, layout: LevelCardLayout): SafeUrl {
     return createShapeLayout(svg, layout, this.sanitizer);
-  }
-
-  public isRequired(formControlName: string): boolean {
-    return this.levelCardWidgetConfigForm.get(formControlName)?.hasValidator(Validators.required);
   }
 
   public fetchOptions(searchText: string): Observable<Array<string>> {

@@ -25,7 +25,7 @@ import {
   lastUpdateAgoDateFormat
 } from '@shared/models/widget-settings.models';
 import { DataKey, WidgetConfig } from '@shared/models/widget.models';
-import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { AttributeData, DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { forkJoin, Observable, of } from 'rxjs';
 import { singleEntityFilterFromDeviceId } from '@shared/models/query/query.models';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -375,9 +375,8 @@ export const convertLiters = (value: number, units: CapacityUnits, conversionTyp
   return conversionType === ConversionType.to ? value / factor : value * factor;
 };
 
-export const extractValue = (attributes: any[], attributeName: string, defaultValue: any): any => {
-  const index = attributes.findIndex(attr => attr.key === attributeName);
-  return index !== -1 ? attributes[index].value : defaultValue;
+export const extractValue = <T>(attributes: Array<AttributeData>, attributeName: string): T | undefined => {
+  return attributes.find(attr => attr.key === attributeName)?.value;
 };
 
 export const valueContainerStyleDefaults = cssTextFromInlineStyle({
@@ -413,13 +412,13 @@ export const createAbsoluteLayout = (values?: {inputValue: number | string; volu
               <div style="border-top: 1px solid rgba(0, 0, 0, 0.38); height: 1px; width: 100%; margin: 3px 0"></div>
               <label style="${volumeTextStyle}">${volume}</label>
             </div>
-            <label><b>${displayUnits}</b></label>
+            <label style="${valueTextStyle}">${displayUnits}</label>
           </div>`;
 };
 
 export const createPercentLayout = (value: number | string = 50, valueTextStyle: string = valueTextStyleDefaults): string =>
   `<div xmlns="http://www.w3.org/1999/xhtml" style="${valueContainerStyleDefaults}">
-    <label><span style="${valueTextStyle}">${value}</span> ${CapacityUnits.percent}</label>
+    <label style="${valueTextStyle}">${value} ${CapacityUnits.percent}</label>
   </div>`;
 
 export const optionsFilter = (searchText: string): ((key: DataKey) => boolean) =>
@@ -534,15 +533,11 @@ export const updatedFormSettingsValidators = (formGroup: FormGroup) => {
       }
 
       if (layout === LevelCardLayout.simple) {
-        if (formGroup.get('decimals')) {
-          formGroup.get('decimals').disable({emitEvent: false});
-        }
+        formGroup.get('decimals')?.disable({emitEvent: false});
         formGroup.get('valueFont').disable({emitEvent: false});
         formGroup.get('valueColor').disable({emitEvent: false});
       } else {
-        if (formGroup.get('decimals')) {
-          formGroup.get('decimals').enable({emitEvent: false});
-        }
+        formGroup.get('decimals')?.enable({emitEvent: false});
         formGroup.get('valueFont').enable({emitEvent: false});
         formGroup.get('valueColor').enable({emitEvent: false});
       }

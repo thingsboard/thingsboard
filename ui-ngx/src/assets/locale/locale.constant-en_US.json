@@ -6108,7 +6108,9 @@
             "color-and-font": "Color and font",
             "shape-attribute-name": "Attribute name",
             "total-volume-required": "Total volume is required.",
-            "attribute-name-required": "Attribute name is required."
+            "attribute-name-required": "Attribute name is required.",
+            "attribute-key-not-set": "Attribute '{{attributeName}}' key not set",
+            "attribute-key-invalid": "Attribute '{{attributeName}}' key is invalid"
         },
         "aggregated-value-card": {
             "subtitle": "Subtitle",

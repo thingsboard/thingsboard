@@ -19,4 +19,11 @@
   <div class="tb-liquid-level-overlay" [style]="overlayStyle"></div>
   <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
   <div #liquidLevelContent class="tb-liquid-level-content"></div>
+  <div *ngIf="errorsMsg.length" class="tb-liquid-level-error">
+    <div class="tb-liquid-level-error-container">
+      <div *ngFor="let error of errorsMsg">
+        {{ error }}
+      </div>
+    </div>
+  </div>
 </div>

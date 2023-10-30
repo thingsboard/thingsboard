@@ -45,7 +45,7 @@
         </tb-color-input>
       </div>
     </div>
-    <div class="tb-form-row">
+    <div class="tb-form-row column-xs">
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTitleIcon">
         {{ 'widgets.liquid-level-card.icon' | translate }}
       </mat-slide-toggle>
@@ -89,9 +89,8 @@
         <div class="tb-form-row space-between" style="width: 100%;">
           <div class="fixed-title-width tb-required" translate>widgets.liquid-level-card.shape-attribute-name</div>
           <tb-string-autocomplete [fetchOptionsFn]="fetchOptions.bind(this)"
-                                  [required]="isRequired('shapeAttributeName')"
+                                  required style="flex: 1"
                                   [errorText]="'widgets.liquid-level-card.attribute-name-required' | translate"
-                                  style="flex: 1"
                                   formControlName="shapeAttributeName">
           </tb-string-autocomplete>
         </div>
@@ -124,9 +123,8 @@
     <div class="tb-form-row space-between">
       <div class="fixed-title-width tb-required" translate>widgets.liquid-level-card.datasource-units</div>
       <div fxFlex fxLayout="row" fxLayoutAlign="end center">
-        <tb-unit-input style="max-width: 25%;" class="flex"
+        <tb-unit-input required style="max-width: 25%;" class="flex"
                        [tagFilter]="unitsType.capacity"
-                       [required]="isRequired('datasourceUnits')"
                        formControlName="datasourceUnits">
         </tb-unit-input>
       </div>
@@ -144,14 +142,12 @@
         <tb-unit-input *ngIf="levelCardWidgetConfigForm.get('widgetUnitsSource').value === DataSourceType.static; else selectUnitsAttributes"
                        class="flex" required
                        [tagFilter]="unitsType.capacity"
-                       [required]="isRequired('units')"
                        formControlName="units">
         </tb-unit-input>
         <ng-template #selectUnitsAttributes>
           <tb-string-autocomplete [fetchOptionsFn]="fetchOptions.bind(this)"
-                                  [required]="isRequired('widgetUnitsAttributeName')"
+                                  required style="flex: 1"
                                   [errorText]="'widgets.liquid-level-card.attribute-name-required' | translate"
-                                  style="flex: 1"
                                   formControlName="widgetUnitsAttributeName">
           </tb-string-autocomplete>
         </ng-template>
@@ -170,7 +166,7 @@
         <mat-form-field *ngIf="levelCardWidgetConfigForm.get('volumeSource').value === DataSourceType.static; else volumeAttributes"
                         appearance="outline" class="flex number" subscriptSizing="dynamic">
           <input matInput formControlName="volumeConstant" type="number"
-                 min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+                 min="0.1" step="1" placeholder="{{ 'widget-config.set' | translate }}">
           <mat-icon matSuffix
                     matTooltipPosition="above"
                     matTooltipClass="tb-error-tooltip"
@@ -183,14 +179,12 @@
         <ng-template #volumeAttributes>
           <tb-string-autocomplete [fetchOptionsFn]="fetchOptions.bind(this)"
                                   [errorText]="'widgets.liquid-level-card.attribute-name-required' | translate"
-                                  [required]="isRequired('volumeAttributeName')"
-                                  style="flex: 1"
+                                  required style="flex: 1"
                                   formControlName="volumeAttributeName">
           </tb-string-autocomplete>
         </ng-template>
         <tb-unit-input [tagFilter]="unitsType.capacity"
-                       [required]="isRequired('volumeUnits')"
-                       style="max-width: 25%" class="flex"
+                       required style="max-width: 25%" class="flex"
                        formControlName="volumeUnits">
         </tb-unit-input>
       </div>
@@ -253,8 +247,8 @@
             {{ 'widgets.liquid-level-card.level' | translate }}
           </mat-slide-toggle>
           <div fxFlex fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="8px">
-            <tb-unit-input [required]="isRequired('tooltipUnits')"
-                           [tagFilter]="unitsType.capacity" class="flex"
+            <tb-unit-input required class="flex"
+                           [tagFilter]="unitsType.capacity"
                            formControlName="tooltipUnits">
             </tb-unit-input>
             <mat-form-field style="width: 40%;" appearance="outline" class="flex number" subscriptSizing="dynamic">

@@ -68,13 +68,11 @@ export class LiquidLevelCardWidgetSettingsComponent extends WidgetSettingsCompon
   public get volumeInput(): boolean {
     const datasourceUnits = this.levelCardWidgetSettingsForm.get('datasourceUnits').value;
     const layout: LevelCardLayout = this.levelCardWidgetSettingsForm.get('layout').value;
-    const widgetUnits = this.levelCardWidgetSettingsForm.get('units').value;
 
     if (layout === LevelCardLayout.absolute) {
       return true;
     }
-
-    return !(datasourceUnits === CapacityUnits.percent && widgetUnits === CapacityUnits.percent);
+    return datasourceUnits !== CapacityUnits.percent;
   }
 
   private get datasource(): Datasource {
@@ -158,7 +156,7 @@ export class LiquidLevelCardWidgetSettingsComponent extends WidgetSettingsCompon
       layout: [settings.layout, []],
 
       volumeSource: [settings.volumeSource, []],
-      volumeConstant: [settings.volumeConstant, [Validators.required]],
+      volumeConstant: [settings.volumeConstant, [Validators.required, Validators.min(0.1)]],
       volumeAttributeName: [settings.volumeAttributeName, [Validators.required]],
       volumeUnits: [settings.volumeUnits, [Validators.required]],
       volumeFont: [settings.volumeFont, []],
@@ -196,11 +194,8 @@ export class LiquidLevelCardWidgetSettingsComponent extends WidgetSettingsCompon
 
   protected validatorTriggers(): string[] {
     return [
-      'showBackgroundOverlay', 'showTooltip', 'showTooltipLevel',
-      'tankSelectionType', 'datasourceUnits',
-      'showTooltipDate', 'units',
-      'layout', 'volumeSource',
-      'widgetUnitsSource'
+      'showBackgroundOverlay', 'showTooltip', 'showTooltipLevel', 'tankSelectionType', 'datasourceUnits',
+      'showTooltipDate', 'layout', 'volumeSource', 'widgetUnitsSource'
     ];
   }
 
@@ -226,10 +221,6 @@ export class LiquidLevelCardWidgetSettingsComponent extends WidgetSettingsCompon
 
   createShape(svg: string, layout: LevelCardLayout): SafeUrl {
     return createShapeLayout(svg, layout, this.sanitizer);
-  }
-
-  public isRequired(formControlName: string): boolean {
-    return this.levelCardWidgetSettingsForm.get(formControlName)?.hasValidator(Validators.required);
   }
 
   private _valuePreviewFn(): string {
