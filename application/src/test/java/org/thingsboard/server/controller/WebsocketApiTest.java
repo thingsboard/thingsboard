@@ -454,6 +454,12 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
         getWsClient().registerWaitForUpdate();
 
+        // Pushing update with wrong scope and make sure it will not arrive.
+        AttributeKvEntry invalidDataPoint = new BaseAttributeKvEntry(now - TimeUnit.MINUTES.toMillis(1), new LongDataEntry("serverAttributeKey", 55L));
+        sendAttributes(device, TbAttributeSubscriptionScope.CLIENT_SCOPE, Arrays.asList(invalidDataPoint));
+
+        Assert.assertNull(getWsClient().waitForUpdate(3000));
+
         AttributeKvEntry dataPoint1 = new BaseAttributeKvEntry(now - TimeUnit.MINUTES.toMillis(1), new LongDataEntry("serverAttributeKey", 42L));
         List<AttributeKvEntry> tsData = Arrays.asList(dataPoint1);
         sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, tsData);
