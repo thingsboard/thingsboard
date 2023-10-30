@@ -74,7 +74,7 @@ public class JpaEntityViewDao extends JpaAbstractDao<EntityViewEntity, EntityVie
         return DaoUtil.toPageData(
                 entityViewRepository.findByTenantId(
                         tenantId,
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 
@@ -83,7 +83,7 @@ public class JpaEntityViewDao extends JpaAbstractDao<EntityViewEntity, EntityVie
         return DaoUtil.toPageData(
                 entityViewRepository.findEntityViewInfosByTenantId(
                         tenantId,
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink, EntityViewInfoEntity.entityViewInfoColumnMap)));
     }
 
@@ -93,7 +93,7 @@ public class JpaEntityViewDao extends JpaAbstractDao<EntityViewEntity, EntityVie
                 entityViewRepository.findByTenantIdAndType(
                         tenantId,
                         type,
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 
@@ -103,7 +103,7 @@ public class JpaEntityViewDao extends JpaAbstractDao<EntityViewEntity, EntityVie
                 entityViewRepository.findEntityViewInfosByTenantIdAndType(
                         tenantId,
                         type,
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink, EntityViewInfoEntity.entityViewInfoColumnMap)));
     }
 
@@ -121,7 +121,7 @@ public class JpaEntityViewDao extends JpaAbstractDao<EntityViewEntity, EntityVie
                 entityViewRepository.findByTenantIdAndCustomerId(
                         tenantId,
                         customerId,
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)
                 ));
     }
@@ -132,7 +132,7 @@ public class JpaEntityViewDao extends JpaAbstractDao<EntityViewEntity, EntityVie
                 entityViewRepository.findEntityViewInfosByTenantIdAndCustomerId(
                         tenantId,
                         customerId,
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink, EntityViewInfoEntity.entityViewInfoColumnMap)));
     }
 
@@ -143,7 +143,7 @@ public class JpaEntityViewDao extends JpaAbstractDao<EntityViewEntity, EntityVie
                         tenantId,
                         customerId,
                         type,
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)
                 ));
     }
@@ -155,7 +155,7 @@ public class JpaEntityViewDao extends JpaAbstractDao<EntityViewEntity, EntityVie
                         tenantId,
                         customerId,
                         type,
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink, EntityViewInfoEntity.entityViewInfoColumnMap)));
     }
 
@@ -182,7 +182,7 @@ public class JpaEntityViewDao extends JpaAbstractDao<EntityViewEntity, EntityVie
                 .findByTenantIdAndEdgeId(
                         tenantId,
                         edgeId,
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 
@@ -194,7 +194,7 @@ public class JpaEntityViewDao extends JpaAbstractDao<EntityViewEntity, EntityVie
                         tenantId,
                         edgeId,
                         type,
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 

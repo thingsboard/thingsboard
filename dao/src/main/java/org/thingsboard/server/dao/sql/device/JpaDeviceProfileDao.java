@@ -73,7 +73,7 @@ public class JpaDeviceProfileDao extends JpaAbstractDao<DeviceProfileEntity, Dev
         return DaoUtil.toPageData(
                 deviceProfileRepository.findDeviceProfiles(
                         tenantId.getId(),
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 
@@ -83,14 +83,14 @@ public class JpaDeviceProfileDao extends JpaAbstractDao<DeviceProfileEntity, Dev
             return DaoUtil.pageToPageData(
                     deviceProfileRepository.findDeviceProfileInfos(
                             tenantId.getId(),
-                            Objects.toString(pageLink.getTextSearch(), ""),
+                            pageLink.getTextSearch(),
                             DeviceTransportType.valueOf(transportType),
                             DaoUtil.toPageable(pageLink)));
         } else {
             return DaoUtil.pageToPageData(
                     deviceProfileRepository.findDeviceProfileInfos(
                             tenantId.getId(),
-                            Objects.toString(pageLink.getTextSearch(), ""),
+                            pageLink.getTextSearch(),
                             DaoUtil.toPageable(pageLink)));
         }
     }

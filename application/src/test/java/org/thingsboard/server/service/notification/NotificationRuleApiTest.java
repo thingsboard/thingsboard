@@ -270,6 +270,31 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     }
 
     @Test
+    public void testNotificationRuleProcessing_alarmTrigger_createViaRestApi() throws Exception {
+        Device device = createDevice("Device with alarm", "233");
+        NotificationTarget target = createNotificationTarget(tenantAdminUserId);
+        defaultNotifications.create(tenantId, DefaultNotifications.newAlarm, target.getId());
+        defaultNotifications.create(tenantId, DefaultNotifications.entityAction, target.getId());
+        notificationRulesCache.evict(tenantId);
+
+        Alarm alarm = new Alarm();
+        alarm.setSeverity(AlarmSeverity.CRITICAL);
+        alarm.setType("testAlarm");
+        alarm.setOriginator(device.getId());
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+
+        await().atMost(15, TimeUnit.SECONDS)
+                .pollDelay(2, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    List<Notification> notifications = getMyNotifications(false, 10);
+                    assertThat(notifications).hasSize(1).first().matches(notification -> {
+                        return notification.getType() == NotificationType.ALARM &&
+                                notification.getSubject().equals("New alarm 'testAlarm'");
+                    });
+                });
+    }
+
+    @Test
     public void testNotificationRuleProcessing_alarmTrigger_clearRule() throws Exception {
         String notificationSubject = "${alarmSeverity} alarm '${alarmType}' is ${alarmStatus}";
         String notificationText = "${alarmId}";

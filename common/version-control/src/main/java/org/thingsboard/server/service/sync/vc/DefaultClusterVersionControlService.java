@@ -67,7 +67,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.VersionedEntityInfoP
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.NotificationsTopicService;
+import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
@@ -110,7 +110,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
     private final TbVersionControlQueueFactory queueFactory;
     private final DataDecodingEncodingService encodingService;
     private final GitRepositoryService vcService;
-    private final NotificationsTopicService notificationsTopicService;
+    private final TopicService topicService;
 
     private final ConcurrentMap<TenantId, Lock> tenantRepoLocks = new ConcurrentHashMap<>();
     private final Map<TenantId, PendingCommit> pendingCommitMap = new HashMap<>();
@@ -520,7 +520,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
     }
 
     private void reply(VersionControlRequestCtx ctx, Optional<Exception> e, Function<VersionControlResponseMsg.Builder, VersionControlResponseMsg.Builder> enrichFunction) {
-        TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, ctx.getNodeId());
+        TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_CORE, ctx.getNodeId());
         VersionControlResponseMsg.Builder builder = VersionControlResponseMsg.newBuilder()
                 .setRequestIdMSB(ctx.getRequestId().getMostSignificantBits())
                 .setRequestIdLSB(ctx.getRequestId().getLeastSignificantBits());

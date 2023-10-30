@@ -23,6 +23,7 @@ import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.WidgetsBundleEntity;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -33,26 +34,26 @@ public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEnti
     WidgetsBundleEntity findWidgetsBundleByTenantIdAndAlias(UUID tenantId, String alias);
 
     @Query("SELECT wb FROM WidgetsBundleEntity wb WHERE wb.tenantId = :systemTenantId " +
-            "AND LOWER(wb.title) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "AND (:textSearch is NULL OR ilike(wb.title, CONCAT('%', :textSearch, '%')) = true)")
     Page<WidgetsBundleEntity> findSystemWidgetsBundles(@Param("systemTenantId") UUID systemTenantId,
                                                        @Param("textSearch") String textSearch,
                                                        Pageable pageable);
 
     @Query(nativeQuery = true,
             value = "SELECT * FROM widgets_bundle wb WHERE wb.tenant_id = :systemTenantId " +
-                "AND (wb.title ILIKE CONCAT('%', :textSearch, '%') " +
+                "AND (:textSearch IS NULL OR wb.title ILIKE CONCAT('%', :textSearch, '%') " +
                 "OR wb.description ILIKE CONCAT('%', :textSearch, '%') " +
                 "OR wb.id in (SELECT wbw.widgets_bundle_id FROM widgets_bundle_widget wbw, widget_type wtd " +
                 "WHERE wtd.id = wbw.widget_type_id " +
-                "AND (wtd.name ILIKE CONCAT('%', :textSearch, '%') " +
+                "AND (:textSearch IS NULL OR wtd.name ILIKE CONCAT('%', :textSearch, '%') " +
                 "OR wtd.description ILIKE CONCAT('%', :textSearch, '%') " +
                 "OR lower(wtd.tags\\:\\:text)\\:\\:text[] && string_to_array(lower(:textSearch), ' '))))",
             countQuery = "SELECT count(*) FROM widgets_bundle wb WHERE wb.tenant_id = :systemTenantId " +
-                "AND (wb.title ILIKE CONCAT('%', :textSearch, '%') " +
+                "AND (:textSearch IS NULL OR wb.title ILIKE CONCAT('%', :textSearch, '%') " +
                 "OR wb.description ILIKE CONCAT('%', :textSearch, '%') " +
                 "OR wb.id in (SELECT wbw.widgets_bundle_id FROM widgets_bundle_widget wbw, widget_type wtd " +
                 "WHERE wtd.id = wbw.widget_type_id " +
-                "AND (wtd.name ILIKE CONCAT('%', :textSearch, '%') " +
+                "AND (:textSearch IS NULL OR wtd.name ILIKE CONCAT('%', :textSearch, '%') " +
                 "OR wtd.description ILIKE CONCAT('%', :textSearch, '%') " +
                 "OR lower(wtd.tags\\:\\:text)\\:\\:text[] && string_to_array(lower(:textSearch), ' '))))"
     )
@@ -61,38 +62,36 @@ public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEnti
                                                                  Pageable pageable);
 
     @Query("SELECT wb FROM WidgetsBundleEntity wb WHERE wb.tenantId = :tenantId " +
-            "AND LOWER(wb.title) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "AND (:textSearch IS NULL OR ilike(wb.title, CONCAT('%', :textSearch, '%')) = true)")
     Page<WidgetsBundleEntity> findTenantWidgetsBundlesByTenantId(@Param("tenantId") UUID tenantId,
                                                                  @Param("textSearch") String textSearch,
                                                                  Pageable pageable);
 
-    @Query("SELECT wb FROM WidgetsBundleEntity wb WHERE wb.tenantId IN (:tenantId, :nullTenantId) " +
-            "AND LOWER(wb.title) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
-    Page<WidgetsBundleEntity> findAllTenantWidgetsBundlesByTenantId(@Param("tenantId") UUID tenantId,
-                                                                    @Param("nullTenantId") UUID nullTenantId,
+    @Query("SELECT wb FROM WidgetsBundleEntity wb WHERE wb.tenantId IN (:tenantIds) " +
+            "AND (:textSearch IS NULL OR ilike(wb.title, CONCAT('%', :textSearch, '%')) = true)")
+    Page<WidgetsBundleEntity> findAllTenantWidgetsBundlesByTenantIds(@Param("tenantIds") List<UUID> tenantIds,
                                                                     @Param("textSearch") String textSearch,
                                                                     Pageable pageable);
 
     @Query(nativeQuery = true,
-            value = "SELECT * FROM widgets_bundle wb WHERE wb.tenant_id IN (:tenantId, :nullTenantId) " +
-                    "AND (wb.title ILIKE CONCAT('%', :textSearch, '%') " +
+            value = "SELECT * FROM widgets_bundle wb WHERE wb.tenant_id IN (:tenantIds) " +
+                    "AND (:textSearch IS NULL OR wb.title ILIKE CONCAT('%', :textSearch, '%') " +
                     "OR wb.description ILIKE CONCAT('%', :textSearch, '%') " +
                     "OR wb.id in (SELECT wbw.widgets_bundle_id FROM widgets_bundle_widget wbw, widget_type wtd " +
                     "WHERE wtd.id = wbw.widget_type_id " +
-                    "AND (wtd.name ILIKE CONCAT('%', :textSearch, '%') " +
+                    "AND (:textSearch IS NULL OR wtd.name ILIKE CONCAT('%', :textSearch, '%') " +
                     "OR wtd.description ILIKE CONCAT('%', :textSearch, '%') " +
                     "OR lower(wtd.tags\\:\\:text)\\:\\:text[] && string_to_array(lower(:textSearch), ' '))))",
-            countQuery = "SELECT count(*) FROM widgets_bundle wb WHERE wb.tenant_id IN (:tenantId, :nullTenantId) " +
-                    "AND (wb.title ILIKE CONCAT('%', :textSearch, '%') " +
+            countQuery = "SELECT count(*) FROM widgets_bundle wb WHERE wb.tenant_id IN (:tenantIds) " +
+                    "AND (:textSearch IS NULL OR wb.title ILIKE CONCAT('%', :textSearch, '%') " +
                     "OR wb.description ILIKE CONCAT('%', :textSearch, '%') " +
                     "OR wb.id in (SELECT wbw.widgets_bundle_id FROM widgets_bundle_widget wbw, widget_type wtd " +
                     "WHERE wtd.id = wbw.widget_type_id " +
-                    "AND (wtd.name ILIKE CONCAT('%', :textSearch, '%') " +
+                    "AND (:textSearch IS NULL OR wtd.name ILIKE CONCAT('%', :textSearch, '%') " +
                     "OR wtd.description ILIKE CONCAT('%', :textSearch, '%') " +
                     "OR lower(wtd.tags\\:\\:text)\\:\\:text[] && string_to_array(lower(:textSearch), ' '))))"
     )
-    Page<WidgetsBundleEntity> findAllTenantWidgetsBundlesByTenantIdFullSearch(@Param("tenantId") UUID tenantId,
-                                                                              @Param("nullTenantId") UUID nullTenantId,
+    Page<WidgetsBundleEntity> findAllTenantWidgetsBundlesByTenantIdsFullSearch(@Param("tenantIds") List<UUID> tenantIds,
                                                                               @Param("textSearch") String textSearch,
                                                                               Pageable pageable);
 
