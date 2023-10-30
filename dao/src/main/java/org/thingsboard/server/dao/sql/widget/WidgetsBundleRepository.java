@@ -69,7 +69,7 @@ public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEnti
 
     @Query("SELECT wb FROM WidgetsBundleEntity wb WHERE wb.tenantId IN (:tenantIds) " +
             "AND (:textSearch IS NULL OR ilike(wb.title, CONCAT('%', :textSearch, '%')) = true)")
-    Page<WidgetsBundleEntity> findAllTenantWidgetsBundlesByTenantId(@Param("tenantIds") List<UUID> tenantIds,
+    Page<WidgetsBundleEntity> findAllTenantWidgetsBundlesByTenantIds(@Param("tenantIds") List<UUID> tenantIds,
                                                                     @Param("textSearch") String textSearch,
                                                                     Pageable pageable);
 
@@ -91,7 +91,7 @@ public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEnti
                     "OR wtd.description ILIKE CONCAT('%', :textSearch, '%') " +
                     "OR lower(wtd.tags\\:\\:text)\\:\\:text[] && string_to_array(lower(:textSearch), ' '))))"
     )
-    Page<WidgetsBundleEntity> findAllTenantWidgetsBundlesByTenantIdFullSearch(@Param("tenantIds") List<UUID> tenantIds,
+    Page<WidgetsBundleEntity> findAllTenantWidgetsBundlesByTenantIdsFullSearch(@Param("tenantIds") List<UUID> tenantIds,
                                                                               @Param("textSearch") String textSearch,
                                                                               Pageable pageable);
 

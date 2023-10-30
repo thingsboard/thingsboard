@@ -107,14 +107,14 @@ public class JpaWidgetsBundleDao extends JpaAbstractDao<WidgetsBundleEntity, Wid
         if (fullSearch) {
             return DaoUtil.toPageData(
                     widgetsBundleRepository
-                            .findAllTenantWidgetsBundlesByTenantIdFullSearch(
+                            .findAllTenantWidgetsBundlesByTenantIdsFullSearch(
                                     tenantIds,
                                     pageLink.getTextSearch(),
                                     DaoUtil.toPageable(pageLink)));
         } else {
             return DaoUtil.toPageData(
                     widgetsBundleRepository
-                            .findAllTenantWidgetsBundlesByTenantId(
+                            .findAllTenantWidgetsBundlesByTenantIds(
                                     tenantIds,
                                     pageLink.getTextSearch(),
                                     DaoUtil.toPageable(pageLink)));
