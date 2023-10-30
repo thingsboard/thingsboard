@@ -112,6 +112,25 @@ public class JpaWidgetsBundleDao extends JpaAbstractDao<WidgetsBundleEntity, Wid
     }
 
     @Override
+    public PageData<WidgetsBundle> findTenantWidgetsBundlesByTenantId(UUID tenantId, boolean fullSearch, PageLink pageLink) {
+        if (fullSearch) {
+            return DaoUtil.toPageData(
+                    widgetsBundleRepository
+                            .findTenantWidgetsBundlesByTenantIdFullSearch(
+                                    tenantId,
+                                    Objects.toString(pageLink.getTextSearch(), ""),
+                                    DaoUtil.toPageable(pageLink)));
+        } else {
+            return DaoUtil.toPageData(
+                    widgetsBundleRepository
+                            .findTenantWidgetsBundlesByTenantId(
+                                    tenantId,
+                                    Objects.toString(pageLink.getTextSearch(), ""),
+                                    DaoUtil.toPageable(pageLink)));
+        }
+    }
+
+    @Override
     public WidgetsBundle findByTenantIdAndExternalId(UUID tenantId, UUID externalId) {
         return DaoUtil.getData(widgetsBundleRepository.findByTenantIdAndExternalId(tenantId, externalId));
     }

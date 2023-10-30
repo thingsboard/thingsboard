@@ -96,6 +96,28 @@ public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEnti
                                                                               @Param("textSearch") String textSearch,
                                                                               Pageable pageable);
 
+    @Query(nativeQuery = true,
+            value = "SELECT * FROM widgets_bundle wb WHERE wb.tenant_id IN (:tenantId) " +
+                    "AND (wb.title ILIKE CONCAT('%', :textSearch, '%') " +
+                    "OR wb.description ILIKE CONCAT('%', :textSearch, '%') " +
+                    "OR wb.id in (SELECT wbw.widgets_bundle_id FROM widgets_bundle_widget wbw, widget_type wtd " +
+                    "WHERE wtd.id = wbw.widget_type_id " +
+                    "AND (wtd.name ILIKE CONCAT('%', :textSearch, '%') " +
+                    "OR wtd.description ILIKE CONCAT('%', :textSearch, '%') " +
+                    "OR lower(wtd.tags\\:\\:text)\\:\\:text[] && string_to_array(lower(:textSearch), ' '))))",
+            countQuery = "SELECT count(*) FROM widgets_bundle wb WHERE wb.tenant_id IN (:tenantId, :nullTenantId) " +
+                    "AND (wb.title ILIKE CONCAT('%', :textSearch, '%') " +
+                    "OR wb.description ILIKE CONCAT('%', :textSearch, '%') " +
+                    "OR wb.id in (SELECT wbw.widgets_bundle_id FROM widgets_bundle_widget wbw, widget_type wtd " +
+                    "WHERE wtd.id = wbw.widget_type_id " +
+                    "AND (wtd.name ILIKE CONCAT('%', :textSearch, '%') " +
+                    "OR wtd.description ILIKE CONCAT('%', :textSearch, '%') " +
+                    "OR lower(wtd.tags\\:\\:text)\\:\\:text[] && string_to_array(lower(:textSearch), ' '))))"
+    )
+    Page<WidgetsBundleEntity> findTenantWidgetsBundlesByTenantIdFullSearch(@Param("tenantId") UUID tenantId,
+                                                                              @Param("textSearch") String textSearch,
+                                                                              Pageable pageable);
+
     WidgetsBundleEntity findFirstByTenantIdAndTitle(UUID tenantId, String title);
 
     @Query("SELECT externalId FROM WidgetsBundleEntity WHERE id = :id")

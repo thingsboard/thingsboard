@@ -69,6 +69,7 @@ public class WidgetsBundleController extends BaseController {
 
     private static final String WIDGET_BUNDLE_DESCRIPTION = "Widget Bundle represents a group(bundle) of widgets. Widgets are grouped into bundle by type or use case. ";
     private static final String FULL_SEARCH_PARAM_DESCRIPTION = "Optional boolean parameter indicating extended search of widget bundles by description and by name / description of related widget types";
+    private static final String TENANT_BUNDLES_ONLY_DESCRIPTION = "Optional boolean parameter to include only tenant-level bundles without system";
 
     @ApiOperation(value = "Get Widget Bundle (getWidgetsBundleById)",
             notes = "Get the Widget Bundle based on the provided Widget Bundle Id. " + WIDGET_BUNDLE_DESCRIPTION + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
@@ -185,6 +186,8 @@ public class WidgetsBundleController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder,
+            @ApiParam(value = TENANT_BUNDLES_ONLY_DESCRIPTION)
+            @RequestParam(required = false) Boolean tenantOnly,
             @ApiParam(value = FULL_SEARCH_PARAM_DESCRIPTION)
             @RequestParam(required = false) Boolean fullSearch) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
@@ -192,7 +195,11 @@ public class WidgetsBundleController extends BaseController {
             return checkNotNull(widgetsBundleService.findSystemWidgetsBundlesByPageLink(getTenantId(), fullSearch != null && fullSearch, pageLink));
         } else {
             TenantId tenantId = getCurrentUser().getTenantId();
-            return checkNotNull(widgetsBundleService.findAllTenantWidgetsBundlesByTenantIdAndPageLink(tenantId, fullSearch != null && fullSearch, pageLink));
+            if (tenantOnly != null && tenantOnly) {
+                return checkNotNull(widgetsBundleService.findTenantWidgetsBundlesByTenantIdAndPageLink(tenantId,  fullSearch != null && fullSearch, pageLink));
+            } else {
+                return checkNotNull(widgetsBundleService.findAllTenantWidgetsBundlesByTenantIdAndPageLink(tenantId,  fullSearch != null && fullSearch, pageLink));
+            }
         }
     }
 
