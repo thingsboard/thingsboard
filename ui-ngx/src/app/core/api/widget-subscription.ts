@@ -1560,6 +1560,8 @@ export class WidgetSubscription implements IWidgetSubscription {
       }
       this.notifyDataLoaded();
       this.onDataUpdated(detectChanges);
+    } else {
+      this.notifyDataLoaded();
     }
   }
 
