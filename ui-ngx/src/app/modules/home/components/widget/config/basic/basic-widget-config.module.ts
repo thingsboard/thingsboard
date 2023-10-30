@@ -70,6 +70,9 @@ import {
 import {
   ProgressBarBasicConfigComponent
 } from '@home/components/widget/config/basic/cards/progress-bar-basic-config.component';
+import {
+  LiquidLevelCardBasicConfigComponent
+} from '@home/components/widget/config/basic/indicator/liquid-level-card-basic-config.component';
 
 @NgModule({
   declarations: [
@@ -91,7 +94,8 @@ import {
     WindSpeedDirectionBasicConfigComponent,
     SignalStrengthBasicConfigComponent,
     ValueChartCardBasicConfigComponent,
-    ProgressBarBasicConfigComponent
+    ProgressBarBasicConfigComponent,
+    LiquidLevelCardBasicConfigComponent
   ],
   imports: [
     CommonModule,
@@ -117,7 +121,8 @@ import {
     WindSpeedDirectionBasicConfigComponent,
     SignalStrengthBasicConfigComponent,
     ValueChartCardBasicConfigComponent,
-    ProgressBarBasicConfigComponent
+    ProgressBarBasicConfigComponent,
+    LiquidLevelCardBasicConfigComponent
   ]
 })
 export class BasicWidgetConfigModule {
@@ -137,5 +142,6 @@ export const basicWidgetConfigComponentsMap: {[key: string]: Type<IBasicWidgetCo
   'tb-wind-speed-direction-basic-config': WindSpeedDirectionBasicConfigComponent,
   'tb-signal-strength-basic-config': SignalStrengthBasicConfigComponent,
   'tb-value-chart-card-basic-config': ValueChartCardBasicConfigComponent,
-  'tb-progress-bar-basic-config': ProgressBarBasicConfigComponent
+  'tb-progress-bar-basic-config': ProgressBarBasicConfigComponent,
+  'tb-liquid-level-card-basic-config': LiquidLevelCardBasicConfigComponent
 };

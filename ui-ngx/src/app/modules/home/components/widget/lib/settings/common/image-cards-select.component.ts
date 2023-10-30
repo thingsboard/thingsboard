@@ -32,11 +32,12 @@ import { BehaviorSubject, combineLatest, Observable, Subject } from 'rxjs';
 import { map, share, startWith, takeUntil } from 'rxjs/operators';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
+import { SafeUrl } from '@angular/platform-browser';
 
 export interface ImageCardsSelectOption {
   name: string;
   value: any;
-  image: string;
+  image: string | SafeUrl;
 }
 
 @Directive(
@@ -49,7 +50,7 @@ export class ImageCardsSelectOptionDirective {
 
   @Input() value: any;
 
-  @Input() image: string;
+  @Input() image: string | SafeUrl;
 
   get viewValue(): string {
     return (this._element?.nativeElement.textContent || '').trim();
