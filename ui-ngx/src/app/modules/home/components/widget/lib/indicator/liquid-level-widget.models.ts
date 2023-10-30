@@ -588,11 +588,7 @@ export const updatedFormSettingsValidators = (formGroup: FormGroup) => {
       formGroup.get('tooltipLevelDecimals').enable({emitEvent: false});
       formGroup.get('tooltipLevelFont').enable({emitEvent: false});
       formGroup.get('tooltipLevelColor').enable({emitEvent: false});
-      if (layout === LevelCardLayout.simple) {
-        formGroup.get('tooltipUnits').disable({emitEvent: false});
-      } else {
-        formGroup.get('tooltipUnits').enable({emitEvent: false});
-      }
+      formGroup.get('tooltipUnits').enable({emitEvent: false});
     } else {
       formGroup.get('tooltipUnits').disable({emitEvent: false});
       formGroup.get('tooltipLevelDecimals').disable({emitEvent: false});
