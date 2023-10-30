@@ -40,7 +40,7 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.NotificationsTopicService;
+import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
@@ -71,7 +71,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DefaultSubscriptionManagerService extends TbApplicationEventListener<PartitionChangeEvent> implements SubscriptionManagerService {
 
-    private final NotificationsTopicService notificationsTopicService;
+    private final TopicService topicService;
     private final PartitionService partitionService;
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TbQueueProducerProvider producerProvider;
@@ -325,7 +325,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
 
     private void sendCoreNotification(String targetServiceId, EntityId entityId, ToCoreNotificationMsg msg) {
         log.trace("[{}] Forwarding to remote service [{}]: {}", entityId, targetServiceId, msg);
-        TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, targetServiceId);
+        TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_CORE, targetServiceId);
         TbProtoQueueMsg<ToCoreNotificationMsg> queueMsg = new TbProtoQueueMsg<>(entityId.getId(), msg);
         toCoreNotificationsProducer.send(tpi, queueMsg, null);
     }
