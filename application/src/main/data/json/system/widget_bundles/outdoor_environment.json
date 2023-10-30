@@ -173,6 +173,14 @@
     "pm2_5_chart_card",
     "pm2_5_chart_card_with_background",
     "simple_pm2_5_chart_card",
-    "simple_pm2_5_chart_card_with_background"
+    "simple_pm2_5_chart_card_with_background",
+    "pm10_card",
+    "pm10_card_with_background",
+    "horizontal_pm10_card",
+    "horizontal_pm10_card_with_background",
+    "pm10_chart_card",
+    "pm10_chart_card_with_background",
+    "simple_pm10_chart_card",
+    "simple_pm10_chart_card_with_background"
   ]
 }
