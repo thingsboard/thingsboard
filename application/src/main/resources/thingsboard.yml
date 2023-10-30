@@ -806,7 +806,7 @@ tbel:
 # JS parameters
 js:
   # local (Nashorn Engine, deprecated) OR remote JS-Executors (NodeJS)
-  evaluator: "${JS_EVALUATOR:remote}"
+  evaluator: "${JS_EVALUATOR:local}"
   # Limit the number of arguments that are passed to the function to execute the script
   max_total_args_size: "${JS_MAX_TOTAL_ARGS_SIZE:100000}"
   # Maximum allowed symbols in a result after processing a script
