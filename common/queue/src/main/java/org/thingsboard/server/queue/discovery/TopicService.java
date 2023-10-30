@@ -15,7 +15,9 @@
  */
 package org.thingsboard.server.queue.discovery;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 
@@ -23,7 +25,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-public class NotificationsTopicService {
+public class TopicService {
+
+    @Value("${queue.prefix:}")
+    private String prefix;
 
     private Map<String, TopicPartitionInfo> tbCoreNotificationTopics = new HashMap<>();
     private Map<String, TopicPartitionInfo> tbRuleEngineNotificationTopics = new HashMap<>();
@@ -49,6 +54,14 @@ public class NotificationsTopicService {
     }
 
     private TopicPartitionInfo buildNotificationsTopicPartitionInfo(ServiceType serviceType, String serviceId) {
-        return new TopicPartitionInfo(serviceType.name().toLowerCase() + ".notifications." + serviceId, null, null, false);
+        return buildTopicPartitionInfo(serviceType.name().toLowerCase() + ".notifications." + serviceId, null, null, false);
+    }
+
+    public TopicPartitionInfo buildTopicPartitionInfo(String topic, TenantId tenantId, Integer partition, boolean myPartition) {
+        return new TopicPartitionInfo(buildTopicName(topic), tenantId, partition, myPartition);
+    }
+
+    public String buildTopicName(String topic) {
+        return prefix.isBlank() ? topic : prefix + "." + topic;
     }
 }
