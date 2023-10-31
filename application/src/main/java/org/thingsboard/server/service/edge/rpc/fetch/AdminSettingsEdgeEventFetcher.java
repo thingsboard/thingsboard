@@ -79,19 +79,19 @@ public class AdminSettingsEdgeEventFetcher implements EdgeEventFetcher {
 
         AdminSettings systemMailSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
         result.add(EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.ADMIN_SETTINGS,
-                EdgeEventActionType.UPDATED, null, JacksonUtil.OBJECT_MAPPER.valueToTree(systemMailSettings)));
+                EdgeEventActionType.UPDATED, null, JacksonUtil.valueToTree(systemMailSettings)));
 
         AdminSettings tenantMailSettings = convertToTenantAdminSettings(tenantId, systemMailSettings.getKey(), (ObjectNode) systemMailSettings.getJsonValue());
         result.add(EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.ADMIN_SETTINGS,
-                EdgeEventActionType.UPDATED, null, JacksonUtil.OBJECT_MAPPER.valueToTree(tenantMailSettings)));
+                EdgeEventActionType.UPDATED, null, JacksonUtil.valueToTree(tenantMailSettings)));
 
         AdminSettings systemMailTemplates = loadMailTemplates(tenantId);
         result.add(EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.ADMIN_SETTINGS,
-                EdgeEventActionType.UPDATED, null, JacksonUtil.OBJECT_MAPPER.valueToTree(systemMailTemplates)));
+                EdgeEventActionType.UPDATED, null, JacksonUtil.valueToTree(systemMailTemplates)));
 
         AdminSettings tenantMailTemplates = convertToTenantAdminSettings(tenantId, systemMailTemplates.getKey(), (ObjectNode) systemMailTemplates.getJsonValue());
         result.add(EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.ADMIN_SETTINGS,
-                EdgeEventActionType.UPDATED, null, JacksonUtil.OBJECT_MAPPER.valueToTree(tenantMailTemplates)));
+                EdgeEventActionType.UPDATED, null, JacksonUtil.valueToTree(tenantMailTemplates)));
 
         // return PageData object to be in sync with other fetchers
         return new PageData<>(result, 1, result.size(), false);
@@ -114,7 +114,7 @@ public class AdminSettingsEdgeEventFetcher implements EdgeEventFetcher {
         AdminSettings adminSettings = new AdminSettings();
         adminSettings.setId(new AdminSettingsId(Uuids.timeBased()));
         adminSettings.setKey("mailTemplates");
-        adminSettings.setJsonValue(JacksonUtil.OBJECT_MAPPER.convertValue(mailTemplates, JsonNode.class));
+        adminSettings.setJsonValue(JacksonUtil.convertValue(mailTemplates, JsonNode.class));
         return adminSettings;
     }
 

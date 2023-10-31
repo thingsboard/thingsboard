@@ -49,10 +49,10 @@ import java.util.UUID;
 public class AssetProfileEdgeProcessor extends BaseAssetProfileProcessor {
 
     public ListenableFuture<Void> processAssetProfileMsgFromEdge(TenantId tenantId, Edge edge, AssetProfileUpdateMsg assetProfileUpdateMsg) {
-        log.trace("[{}] executing processAssetProfileMsgFromEdge [{}] from edge [{}]", tenantId, assetProfileUpdateMsg, edge.getName());
+        log.trace("[{}] executing processAssetProfileMsgFromEdge [{}] from edge [{}]", tenantId, assetProfileUpdateMsg, edge.getId());
         AssetProfileId assetProfileId = new AssetProfileId(new UUID(assetProfileUpdateMsg.getIdMSB(), assetProfileUpdateMsg.getIdLSB()));
         try {
-            edgeSynchronizationManager.getSync().set(true);
+            edgeSynchronizationManager.getEdgeId().set(edge.getId());
 
             switch (assetProfileUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
@@ -68,7 +68,7 @@ public class AssetProfileEdgeProcessor extends BaseAssetProfileProcessor {
             log.warn("[{}] Failed to process AssetProfileUpdateMsg from Edge [{}]", tenantId, assetProfileUpdateMsg, e);
             return Futures.immediateFailedFuture(e);
         } finally {
-            edgeSynchronizationManager.getSync().remove();
+            edgeSynchronizationManager.getEdgeId().remove();
         }
     }
 

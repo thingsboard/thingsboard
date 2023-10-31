@@ -680,7 +680,7 @@ public final class EdgeGrpcSession implements Closeable {
             }
             if (uplinkMsg.getDeviceCredentialsUpdateMsgCount() > 0) {
                 for (DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg : uplinkMsg.getDeviceCredentialsUpdateMsgList()) {
-                    result.add(ctx.getDeviceProcessor().processDeviceCredentialsMsg(edge.getTenantId(), deviceCredentialsUpdateMsg));
+                    result.add(ctx.getDeviceProcessor().processDeviceCredentialsMsgFromEdge(edge.getTenantId(), edge.getId(), deviceCredentialsUpdateMsg));
                 }
             }
             if (uplinkMsg.getAssetProfileUpdateMsgCount() > 0) {
@@ -695,7 +695,7 @@ public final class EdgeGrpcSession implements Closeable {
             }
             if (uplinkMsg.getAlarmUpdateMsgCount() > 0) {
                 for (AlarmUpdateMsg alarmUpdateMsg : uplinkMsg.getAlarmUpdateMsgList()) {
-                    result.add(ctx.getAlarmProcessor().processAlarmMsg(edge.getTenantId(), alarmUpdateMsg));
+                    result.add(ctx.getAlarmProcessor().processAlarmMsgFromEdge(edge.getTenantId(), edge.getId(), alarmUpdateMsg));
                 }
             }
             if (uplinkMsg.getEntityViewUpdateMsgCount() > 0) {
@@ -705,7 +705,7 @@ public final class EdgeGrpcSession implements Closeable {
             }
             if (uplinkMsg.getRelationUpdateMsgCount() > 0) {
                 for (RelationUpdateMsg relationUpdateMsg : uplinkMsg.getRelationUpdateMsgList()) {
-                    result.add(ctx.getRelationProcessor().processRelationMsg(edge.getTenantId(), relationUpdateMsg));
+                    result.add(ctx.getRelationProcessor().processRelationMsgFromEdge(edge.getTenantId(), edge, relationUpdateMsg));
                 }
             }
             if (uplinkMsg.getDashboardUpdateMsgCount() > 0) {

@@ -45,8 +45,7 @@ import java.util.UUID;
 @Slf4j
 public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
 
-    public ListenableFuture<Void> processAlarmMsg(TenantId tenantId, AlarmUpdateMsg alarmUpdateMsg) {
-        log.trace("[{}] processAlarmMsg [{}]", tenantId, alarmUpdateMsg);
+    protected ListenableFuture<Void> processAlarmMsg(TenantId tenantId, AlarmUpdateMsg alarmUpdateMsg) {
         EntityId originatorId = getAlarmOriginator(tenantId, alarmUpdateMsg.getOriginatorName(),
                 EntityType.valueOf(alarmUpdateMsg.getOriginatorType()));
         AlarmId alarmId = new AlarmId(new UUID(alarmUpdateMsg.getIdMSB(), alarmUpdateMsg.getIdLSB()));
@@ -55,7 +54,7 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
             return Futures.immediateFuture(null);
         }
         try {
-            edgeSynchronizationManager.getSync().set(true);
+
             switch (alarmUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
                 case ENTITY_UPDATED_RPC_MESSAGE:
@@ -73,7 +72,7 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
                     alarm.setAcknowledged(alarmStatus.isAck());
                     alarm.setAckTs(alarmUpdateMsg.getAckTs());
                     alarm.setEndTs(alarmUpdateMsg.getEndTs());
-                    alarm.setDetails(JacksonUtil.OBJECT_MAPPER.readTree(alarmUpdateMsg.getDetails()));
+                    alarm.setDetails(JacksonUtil.toJsonNode(alarmUpdateMsg.getDetails()));
                     if (UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE.equals(alarmUpdateMsg.getMsgType())) {
                         alarmService.createAlarm(AlarmCreateOrUpdateActiveRequest.fromAlarm(alarm, null, alarmId));
                     } else {
@@ -90,7 +89,7 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
                     Alarm alarmToClear = alarmService.findAlarmById(tenantId, alarmId);
                     if (alarmToClear != null) {
                         alarmService.clearAlarm(tenantId, alarmId, alarmUpdateMsg.getClearTs(),
-                                JacksonUtil.OBJECT_MAPPER.readTree(alarmUpdateMsg.getDetails()));
+                                JacksonUtil.toJsonNode(alarmUpdateMsg.getDetails()));
                     }
                     break;
                 case ENTITY_DELETED_RPC_MESSAGE:
@@ -106,26 +105,11 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
         } catch (Exception e) {
             log.error("[{}] Failed to process alarm update msg [{}]", tenantId, alarmUpdateMsg, e);
             return Futures.immediateFailedFuture(e);
-        } finally {
-            edgeSynchronizationManager.getSync().remove();
         }
         return Futures.immediateFuture(null);
     }
 
-    private EntityId getAlarmOriginator(TenantId tenantId, String entityName, EntityType entityType) {
-        switch (entityType) {
-            case DEVICE:
-                return deviceService.findDeviceByTenantIdAndName(tenantId, entityName).getId();
-            case ASSET:
-                return assetService.findAssetByTenantIdAndName(tenantId, entityName).getId();
-            case ENTITY_VIEW:
-                return entityViewService.findEntityViewByTenantIdAndName(tenantId, entityName).getId();
-            default:
-                return null;
-        }
-    }
-
-    public AlarmUpdateMsg convertAlarmEventToAlarmMsg(TenantId tenantId, UUID entityId, EdgeEventActionType actionType, JsonNode body) {
+    protected AlarmUpdateMsg convertAlarmEventToAlarmMsg(TenantId tenantId, UUID entityId, EdgeEventActionType actionType, JsonNode body) {
         AlarmId alarmId = new AlarmId(entityId);
         UpdateMsgType msgType = getUpdateMsgType(actionType);
         switch (actionType) {
@@ -139,10 +123,23 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
                 }
                 break;
             case DELETED:
-                Alarm deletedAlarm = JacksonUtil.OBJECT_MAPPER.convertValue(body, Alarm.class);
+                Alarm deletedAlarm = JacksonUtil.convertValue(body, Alarm.class);
                 return alarmMsgConstructor.constructAlarmUpdatedMsg(msgType, deletedAlarm, findOriginatorEntityName(tenantId, deletedAlarm));
         }
         return null;
+    }
+
+    private EntityId getAlarmOriginator(TenantId tenantId, String entityName, EntityType entityType) {
+        switch (entityType) {
+            case DEVICE:
+                return deviceService.findDeviceByTenantIdAndName(tenantId, entityName).getId();
+            case ASSET:
+                return assetService.findAssetByTenantIdAndName(tenantId, entityName).getId();
+            case ENTITY_VIEW:
+                return entityViewService.findEntityViewByTenantIdAndName(tenantId, entityName).getId();
+            default:
+                return null;
+        }
     }
 
     private String findOriginatorEntityName(TenantId tenantId, Alarm alarm) {
