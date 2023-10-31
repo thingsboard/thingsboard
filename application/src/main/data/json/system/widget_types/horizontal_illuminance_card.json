@@ -23,6 +23,14 @@
   "tags": [
     "weather",
     "environment",
-    "illuminance"
+    "brightness",
+    "luminance",
+    "luminosity",
+    "light",
+    "light level",
+    "light intensity",
+    "lux",
+    "candela",
+    "foot-candle"
   ]
 }

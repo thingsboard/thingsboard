@@ -22,10 +22,17 @@
   "externalId": null,
   "tags": [
     "environment",
-    "indoor",
     "pm2.5",
+    "particulate",
     "matter",
     "air",
-    "particulate"
+    "fine particulates",
+    "fine particles",
+    "particulate matter 2.5",
+    "airborne particles",
+    "microscopic particles",
+    "respirable particles",
+    "aerosol particles",
+    "dust particles"
   ]
 }

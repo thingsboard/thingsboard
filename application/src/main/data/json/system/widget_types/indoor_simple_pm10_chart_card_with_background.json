@@ -25,10 +25,16 @@
   "externalId": null,
   "tags": [
     "environment",
-    "indoor",
     "particulate",
     "matter",
     "air",
-    "pm10"
+    "pm10",
+    "coarse particulates",
+    "coarse particles",
+    "particulate matter 10",
+    "inhalable particles",
+    "larger particulates",
+    "dust",
+    "airborne coarse particles"
   ]
 }

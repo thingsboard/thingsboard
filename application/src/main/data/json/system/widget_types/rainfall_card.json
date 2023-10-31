@@ -24,6 +24,12 @@
     "weather",
     "environment",
     "rain",
-    "rainfall"
+    "precipitation",
+    "downpour",
+    "rain shower",
+    "drizzle",
+    "raindrop",
+    "cloudburst",
+    "rainwater"
   ]
 }

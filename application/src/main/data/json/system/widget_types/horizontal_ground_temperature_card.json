@@ -21,9 +21,17 @@
   },
   "externalId": null,
   "tags": [
-    "temperature",
     "weather",
     "environment",
-    "ground"
+    "soil temperature",
+    "terrestrial temperature",
+    "subsurface temperature",
+    "earth temperature",
+    "below surface temperature",
+    "surface temp",
+    "soil warmth",
+    "land temperature",
+    "geothermal reading",
+    "ground warmth"
   ]
 }
