@@ -1384,6 +1384,7 @@
         "any-device": "Any device",
         "no-device-types-matching": "No device profiles matching '{{entitySubtype}}' were found.",
         "device-type-list-empty": "No device profiles selected!",
+        "device-profile-type-list-empty": "At least one device profile should be selected.",
         "device-types": "Device types",
         "name": "Name",
         "name-required": "Name is required.",
