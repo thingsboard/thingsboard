@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -74,6 +75,7 @@ import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
@@ -103,6 +105,7 @@ import org.thingsboard.server.service.edge.rpc.constructor.OtaPackageMsgConstruc
 import org.thingsboard.server.service.edge.rpc.constructor.QueueMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.RelationMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.RuleChainMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.ResourceMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.TenantMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.TenantProfileMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.UserMsgConstructor;
@@ -216,6 +219,9 @@ public abstract class BaseEdgeProcessor {
     protected PartitionService partitionService;
 
     @Autowired
+    protected ResourceService resourceService;
+
+    @Autowired
     @Lazy
     protected TbQueueProducerProvider producerProvider;
 
@@ -236,6 +242,9 @@ public abstract class BaseEdgeProcessor {
 
     @Autowired
     protected DataValidator<EntityView> entityViewValidator;
+
+    @Autowired
+    protected DataValidator<TbResource> resourceValidator;
 
     @Autowired
     protected EdgeMsgConstructor edgeMsgConstructor;
@@ -296,6 +305,9 @@ public abstract class BaseEdgeProcessor {
 
     @Autowired
     protected QueueMsgConstructor queueMsgConstructor;
+
+    @Autowired
+    protected ResourceMsgConstructor resourceMsgConstructor;
 
     @Autowired
     protected EdgeSynchronizationManager edgeSynchronizationManager;

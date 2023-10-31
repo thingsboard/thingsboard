@@ -63,6 +63,7 @@ import org.thingsboard.server.gen.edge.v1.RelationRequestMsg;
 import org.thingsboard.server.gen.edge.v1.RelationUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RequestMsg;
 import org.thingsboard.server.gen.edge.v1.RequestMsgType;
+import org.thingsboard.server.gen.edge.v1.ResourceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.ResponseMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataRequestMsg;
 import org.thingsboard.server.gen.edge.v1.SyncCompletedMsg;
@@ -645,6 +646,8 @@ public final class EdgeGrpcSession implements Closeable {
                 return ctx.getAdminSettingsProcessor().convertAdminSettingsEventToDownlink(edgeEvent);
             case OTA_PACKAGE:
                 return ctx.getOtaPackageEdgeProcessor().convertOtaPackageEventToDownlink(edgeEvent);
+            case TB_RESOURCE:
+                return ctx.getResourceEdgeProcessor().convertResourceEventToDownlink(edgeEvent);
             case QUEUE:
                 return ctx.getQueueEdgeProcessor().convertQueueEventToDownlink(edgeEvent);
             case TENANT:
@@ -708,6 +711,11 @@ public final class EdgeGrpcSession implements Closeable {
             if (uplinkMsg.getDashboardUpdateMsgCount() > 0) {
                 for (DashboardUpdateMsg dashboardUpdateMsg : uplinkMsg.getDashboardUpdateMsgList()) {
                     result.add(ctx.getDashboardProcessor().processDashboardMsgFromEdge(edge.getTenantId(), edge, dashboardUpdateMsg));
+                }
+            }
+            if (uplinkMsg.getResourceUpdateMsgCount() > 0) {
+                for (ResourceUpdateMsg resourceUpdateMsg : uplinkMsg.getResourceUpdateMsgList()) {
+                    result.add(ctx.getResourceEdgeProcessor().processResourceMsgFromEdge(edge.getTenantId(), edge, resourceUpdateMsg));
                 }
             }
             if (uplinkMsg.getRuleChainMetadataRequestMsgCount() > 0) {
