@@ -4911,6 +4911,7 @@
         "title-max-length": "Title should be less than 256",
         "description": "Description",
         "image-preview": "Image preview",
+        "order": "Order",
         "add-widgets-bundle-text": "Add new widgets bundle",
         "no-widgets-bundles-text": "No widgets bundles found",
         "empty": "Widgets bundle is empty",
