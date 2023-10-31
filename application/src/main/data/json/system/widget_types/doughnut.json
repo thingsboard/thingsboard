@@ -21,5 +21,10 @@
     "settingsDirective": "tb-doughnut-chart-widget-settings",
     "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"First\",\"color\":\"#26a69a\",\"settings\":{},\"_hash\":0.15479322438769105,\"funcBody\":\"var value = (prevValue-50) + Math.random() * 2 - 1;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 100;\\n}\\nreturn value+50;\"},{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Second\",\"color\":\"#f57c00\",\"settings\":{},\"_hash\":0.545701115289893,\"funcBody\":\"var value = (prevValue-20) + Math.random() * 2 - 1;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 100;\\n}\\nreturn value+20;\"},{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Third\",\"color\":\"#afb42b\",\"settings\":{},\"_hash\":0.2592906835158064,\"funcBody\":\"var value = (prevValue-40) + Math.random() * 2 - 1;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 100;\\n}\\nreturn value+40;\"},{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Fourth\",\"color\":\"#673ab7\",\"settings\":{},\"_hash\":0.12880275585455747,\"funcBody\":\"var value = (prevValue-50) + Math.random() * 2 - 1;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 100;\\n}\\nreturn value+50;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":true,\"backgroundColor\":\"#fff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"8px\",\"settings\":{\"borderWidth\":5,\"borderColor\":\"#fff\",\"legend\":{\"display\":true,\"labelsFontColor\":\"#666666\"}},\"title\":\"Doughnut\",\"dropShadow\":true,\"enableFullscreen\":true,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400}}"
   },
-  "externalId": null
+  "externalId": null,
+  "tags": [
+    "ring",
+    "circle",
+    "pie chart"
+  ]
 }
