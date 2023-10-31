@@ -41,7 +41,6 @@ import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.util.DeviceConnectivityUtil;
 
-import javax.annotation.PostConstruct;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
@@ -85,18 +84,6 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
 
     @Value("${device.connectivity.mqtts.pem_cert_file:}")
     private String mqttsPemCertFile;
-
-    @PostConstruct
-    private void init() {
-        DeviceConnectivityInfo mqtts = getConnectivity(MQTTS);
-        if (mqtts != null && mqtts.isEnabled()) {
-            String certFilePath = mqttsPemCertFile;
-            if (StringUtils.isBlank(certFilePath) || !ResourceUtils.resourceExists(this, certFilePath)) {
-                String error = StringUtils.isBlank(certFilePath) ? "path is empty" : "file is not exists";
-                log.error("MQTTS is enabled but cert {}!", error);
-            }
-        }
-    }
 
     @Override
     public JsonNode findDevicePublishTelemetryCommands(String baseUrl, Device device) throws URISyntaxException {
@@ -189,7 +176,7 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     private DeviceConnectivityInfo getConnectivity(String protocol) {
         AdminSettings connectivitySettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "connectivity");
         JsonNode connectivity;
-        if (connectivitySettings != null &&  (connectivity = connectivitySettings.getJsonValue()) != null) {
+        if (connectivitySettings != null && (connectivity = connectivitySettings.getJsonValue()) != null) {
             return JacksonUtil.convertValue(connectivity.get(protocol), DeviceConnectivityInfo.class);
         }
         return null;
