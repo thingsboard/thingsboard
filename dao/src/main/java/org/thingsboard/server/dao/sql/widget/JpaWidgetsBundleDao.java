@@ -30,6 +30,9 @@ import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -62,13 +65,22 @@ public class JpaWidgetsBundleDao extends JpaAbstractDao<WidgetsBundleEntity, Wid
     }
 
     @Override
-    public PageData<WidgetsBundle> findSystemWidgetsBundles(TenantId tenantId, PageLink pageLink) {
-        return DaoUtil.toPageData(
-                widgetsBundleRepository
-                        .findSystemWidgetsBundles(
-                                NULL_UUID,
-                                Objects.toString(pageLink.getTextSearch(), ""),
-                                DaoUtil.toPageable(pageLink)));
+    public PageData<WidgetsBundle> findSystemWidgetsBundles(TenantId tenantId, boolean fullSearch, PageLink pageLink) {
+        if (fullSearch) {
+            return DaoUtil.toPageData(
+                    widgetsBundleRepository
+                            .findSystemWidgetsBundlesFullSearch(
+                                    NULL_UUID,
+                                    pageLink.getTextSearch(),
+                                    DaoUtil.toPageable(pageLink)));
+        } else {
+            return DaoUtil.toPageData(
+                    widgetsBundleRepository
+                            .findSystemWidgetsBundles(
+                                    NULL_UUID,
+                                    pageLink.getTextSearch(),
+                                    DaoUtil.toPageable(pageLink)));
+        }
     }
 
     @Override
@@ -77,19 +89,36 @@ public class JpaWidgetsBundleDao extends JpaAbstractDao<WidgetsBundleEntity, Wid
                 widgetsBundleRepository
                         .findTenantWidgetsBundlesByTenantId(
                                 tenantId,
-                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getTextSearch(),
                                 DaoUtil.toPageable(pageLink)));
     }
 
     @Override
-    public PageData<WidgetsBundle> findAllTenantWidgetsBundlesByTenantId(UUID tenantId, PageLink pageLink) {
-        return DaoUtil.toPageData(
-                widgetsBundleRepository
-                        .findAllTenantWidgetsBundlesByTenantId(
-                                tenantId,
-                                NULL_UUID,
-                                Objects.toString(pageLink.getTextSearch(), ""),
-                                DaoUtil.toPageable(pageLink)));
+    public PageData<WidgetsBundle> findAllTenantWidgetsBundlesByTenantId(UUID tenantId, boolean fullSearch, PageLink pageLink) {
+        return findTenantWidgetsBundlesByTenantIds(Arrays.asList(tenantId, NULL_UUID), fullSearch, pageLink);
+    }
+
+    @Override
+    public PageData<WidgetsBundle> findTenantWidgetsBundlesByTenantId(UUID tenantId, boolean fullSearch, PageLink pageLink) {
+        return findTenantWidgetsBundlesByTenantIds(Collections.singletonList(tenantId), fullSearch, pageLink);
+    }
+
+    private PageData<WidgetsBundle> findTenantWidgetsBundlesByTenantIds(List<UUID> tenantIds, boolean fullSearch, PageLink pageLink) {
+        if (fullSearch) {
+            return DaoUtil.toPageData(
+                    widgetsBundleRepository
+                            .findAllTenantWidgetsBundlesByTenantIdsFullSearch(
+                                    tenantIds,
+                                    pageLink.getTextSearch(),
+                                    DaoUtil.toPageable(pageLink)));
+        } else {
+            return DaoUtil.toPageData(
+                    widgetsBundleRepository
+                            .findAllTenantWidgetsBundlesByTenantIds(
+                                    tenantIds,
+                                    pageLink.getTextSearch(),
+                                    DaoUtil.toPageable(pageLink)));
+        }
     }
 
     @Override

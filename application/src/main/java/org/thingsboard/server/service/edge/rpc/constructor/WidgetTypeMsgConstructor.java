@@ -24,6 +24,8 @@ import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.WidgetTypeUpdateMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import java.util.Arrays;
+
 @Component
 @TbCoreComponent
 public class WidgetTypeMsgConstructor {
@@ -35,6 +37,13 @@ public class WidgetTypeMsgConstructor {
                 .setIdLSB(widgetTypeDetails.getId().getId().getLeastSignificantBits());
         if (widgetTypeDetails.getFqn() != null) {
             builder.setFqn(widgetTypeDetails.getFqn());
+            if (widgetTypeDetails.getFqn().contains(".")) {
+                String[] aliases = widgetTypeDetails.getFqn().split("\\.", 2);
+                if (aliases.length == 2) {
+                    builder.setBundleAlias(aliases[0]);
+                    builder.setAlias(aliases[1]);
+                }
+            }
         }
         if (widgetTypeDetails.getName() != null) {
             builder.setName(widgetTypeDetails.getName());
@@ -52,6 +61,9 @@ public class WidgetTypeMsgConstructor {
             builder.setDescription(widgetTypeDetails.getDescription());
         }
         builder.setDeprecated(widgetTypeDetails.isDeprecated());
+        if (widgetTypeDetails.getTags() != null) {
+            builder.addAllTags(Arrays.asList(widgetTypeDetails.getTags()));
+        }
         return builder.build();
     }
 

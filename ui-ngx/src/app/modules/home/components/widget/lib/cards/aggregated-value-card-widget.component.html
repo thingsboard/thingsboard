@@ -21,7 +21,9 @@
     <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
     <ng-container *ngTemplateOutlet="subtitleTpl"></ng-container>
   </div>
-  <ng-container *ngTemplateOutlet="valuesTpl"></ng-container>
+  <ng-container *ngIf="showValues">
+    <ng-container *ngTemplateOutlet="valuesTpl"></ng-container>
+  </ng-container>
   <ng-container *ngTemplateOutlet="chartTpl"></ng-container>
   <ng-container *ngTemplateOutlet="dateTpl"></ng-container>
 </div>
@@ -31,8 +33,8 @@
        [style]="subtitleStyle" [style.color]="subtitleColor">{{ subtitle$ | async }}</div>
 </ng-template>
 <ng-template #valuesTpl>
-  <div *ngIf="showValues" class="tb-aggregated-value-card-values">
-    <div class="tb-aggregated-value-card-values-container">
+  <div #valueCardValues class="tb-aggregated-value-card-values">
+    <div #valueCardValueContainer class="tb-aggregated-value-card-values-container">
       <div class="tb-aggregated-value-card-values-section left">
         <ng-container *ngIf="values[aggregatedValueCardKeyPosition.leftTop]">
           <ng-container *ngTemplateOutlet="valueTpl; context:{value: values[aggregatedValueCardKeyPosition.leftTop]}"></ng-container>

@@ -27,7 +27,7 @@ import {
 } from '@home/components/widget/config/basic/common/widget-actions-panel.component';
 import {
   EntitiesTableBasicConfigComponent
-} from '@home/components/widget/config/basic/cards/entities-table-basic-config.component';
+} from '@home/components/widget/config/basic/entity/entities-table-basic-config.component';
 import { DataKeysPanelComponent } from '@home/components/widget/config/basic/common/data-keys-panel.component';
 import { DataKeyRowComponent } from '@home/components/widget/config/basic/common/data-key-row.component';
 import {
@@ -49,6 +49,39 @@ import {
 import {
   AggregatedDataKeysPanelComponent
 } from '@home/components/widget/config/basic/cards/aggregated-data-keys-panel.component';
+import {
+  AlarmCountBasicConfigComponent
+} from '@home/components/widget/config/basic/alarm/alarm-count-basic-config.component';
+import {
+  EntityCountBasicConfigComponent
+} from '@home/components/widget/config/basic/entity/entity-count-basic-config.component';
+import {
+  BatteryLevelBasicConfigComponent
+} from '@home/components/widget/config/basic/indicator/battery-level-basic-config.component';
+import {
+  WindSpeedDirectionBasicConfigComponent
+} from '@home/components/widget/config/basic/weather/wind-speed-direction-basic-config.component';
+import {
+  SignalStrengthBasicConfigComponent
+} from '@home/components/widget/config/basic/indicator/signal-strength-basic-config.component';
+import {
+  ValueChartCardBasicConfigComponent
+} from '@home/components/widget/config/basic/cards/value-chart-card-basic-config.component';
+import {
+  ProgressBarBasicConfigComponent
+} from '@home/components/widget/config/basic/cards/progress-bar-basic-config.component';
+import {
+  RadialGaugeBasicConfigComponent
+} from '@home/components/widget/config/basic/gauge/radial-gauge-basic-config.component';
+import {
+  ThermometerScaleGaugeBasicConfigComponent
+} from '@home/components/widget/config/basic/gauge/thermometer-scale-gauge-basic-config.component';
+import {
+  CompassGaugeBasicConfigComponent
+} from '@home/components/widget/config/basic/gauge/compass-gauge-basic-config.component';
+import {
+  LiquidLevelCardBasicConfigComponent
+} from '@home/components/widget/config/basic/indicator/liquid-level-card-basic-config.component';
 
 @NgModule({
   declarations: [
@@ -63,7 +96,18 @@ import {
     AggregatedDataKeyRowComponent,
     AggregatedDataKeysPanelComponent,
     DataKeyRowComponent,
-    DataKeysPanelComponent
+    DataKeysPanelComponent,
+    AlarmCountBasicConfigComponent,
+    EntityCountBasicConfigComponent,
+    BatteryLevelBasicConfigComponent,
+    WindSpeedDirectionBasicConfigComponent,
+    SignalStrengthBasicConfigComponent,
+    ValueChartCardBasicConfigComponent,
+    ProgressBarBasicConfigComponent,
+    RadialGaugeBasicConfigComponent,
+    ThermometerScaleGaugeBasicConfigComponent,
+    CompassGaugeBasicConfigComponent,
+    LiquidLevelCardBasicConfigComponent
   ],
   imports: [
     CommonModule,
@@ -82,7 +126,18 @@ import {
     AggregatedDataKeyRowComponent,
     AggregatedDataKeysPanelComponent,
     DataKeyRowComponent,
-    DataKeysPanelComponent
+    DataKeysPanelComponent,
+    AlarmCountBasicConfigComponent,
+    EntityCountBasicConfigComponent,
+    BatteryLevelBasicConfigComponent,
+    WindSpeedDirectionBasicConfigComponent,
+    SignalStrengthBasicConfigComponent,
+    ValueChartCardBasicConfigComponent,
+    ProgressBarBasicConfigComponent,
+    RadialGaugeBasicConfigComponent,
+    ThermometerScaleGaugeBasicConfigComponent,
+    CompassGaugeBasicConfigComponent,
+    LiquidLevelCardBasicConfigComponent
   ]
 })
 export class BasicWidgetConfigModule {
@@ -95,5 +150,16 @@ export const basicWidgetConfigComponentsMap: {[key: string]: Type<IBasicWidgetCo
   'tb-flot-basic-config': FlotBasicConfigComponent,
   'tb-alarms-table-basic-config': AlarmsTableBasicConfigComponent,
   'tb-value-card-basic-config': ValueCardBasicConfigComponent,
-  'tb-aggregated-value-card-basic-config': AggregatedValueCardBasicConfigComponent
+  'tb-aggregated-value-card-basic-config': AggregatedValueCardBasicConfigComponent,
+  'tb-alarm-count-basic-config': AlarmCountBasicConfigComponent,
+  'tb-entity-count-basic-config': EntityCountBasicConfigComponent,
+  'tb-battery-level-basic-config': BatteryLevelBasicConfigComponent,
+  'tb-wind-speed-direction-basic-config': WindSpeedDirectionBasicConfigComponent,
+  'tb-signal-strength-basic-config': SignalStrengthBasicConfigComponent,
+  'tb-value-chart-card-basic-config': ValueChartCardBasicConfigComponent,
+  'tb-progress-bar-basic-config': ProgressBarBasicConfigComponent,
+  'tb-radial-gauge-basic-config': RadialGaugeBasicConfigComponent,
+  'tb-thermometer-scale-gauge-basic-config': ThermometerScaleGaugeBasicConfigComponent,
+  'tb-compass-gauge-basic-config': CompassGaugeBasicConfigComponent,
+  'tb-liquid-level-card-basic-config': LiquidLevelCardBasicConfigComponent
 };

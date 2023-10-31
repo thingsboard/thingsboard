@@ -437,7 +437,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
       && this.widgetContext.widgetTitleTooltip.length ? this.widgetContext.widgetTitleTooltip : this.widget.config.titleTooltip;
     this.titleTooltip = this.dashboard.utils.customTranslation(this.titleTooltip, this.titleTooltip);
     this.showTitle = isDefined(this.widget.config.showTitle) ? this.widget.config.showTitle : true;
-    this.titleStyle = {...(this.widget.config.titleStyle || {}), ...textStyle(this.widget.config.titleFont, 'normal')};
+    this.titleStyle = {...(this.widget.config.titleStyle || {}), ...textStyle(this.widget.config.titleFont)};
     if (this.widget.config.titleColor) {
       this.titleStyle.color = this.widget.config.titleColor;
     }
@@ -479,7 +479,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
       backgroundColor: this.backgroundColor,
       padding: this.padding,
       margin: this.margin,
-      borderRadius: this.borderRadius};
+      borderRadius: this.borderRadius || 'unset' };
     if (this.widget.config.widgetStyle) {
       this.style = {...this.style, ...this.widget.config.widgetStyle};
     }

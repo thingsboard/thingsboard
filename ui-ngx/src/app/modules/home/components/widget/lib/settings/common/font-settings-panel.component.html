@@ -19,12 +19,13 @@
   <div class="tb-font-settings-title" translate>widgets.widget-font.font-settings</div>
   <div class="tb-form-row no-border no-padding">
     <div class="fixed-title-width" translate>widgets.widget-font.size</div>
-    <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="12px">
+    <div *ngIf="!autoScale" fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="12px">
       <mat-form-field fxFlex appearance="outline" class="number" subscriptSizing="dynamic">
         <input matInput type="number" min="0" formControlName="size" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
       <tb-css-unit-select fxFlex formControlName="sizeUnit"></tb-css-unit-select>
     </div>
+    <div *ngIf="autoScale" class="tb-font-settings-auto" translate>widgets.widget-font.auto</div>
   </div>
   <div class="tb-form-row no-border no-padding">
     <div class="fixed-title-width" translate>widgets.widget-font.font-family</div>
@@ -72,11 +73,12 @@
       </mat-select>
     </mat-form-field>
   </div>
-  <div class="tb-form-row no-border no-padding">
+  <div class="tb-form-row no-border no-padding" *ngIf="!disabledLineHeight">
     <div class="fixed-title-width" translate>widgets.widget-font.line-height</div>
-    <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+    <mat-form-field *ngIf="!autoScale" fxFlex appearance="outline" subscriptSizing="dynamic">
       <input matInput formControlName="lineHeight" placeholder="{{ 'widget-config.set' | translate }}">
     </mat-form-field>
+    <div *ngIf="autoScale" class="tb-font-settings-auto" translate>widgets.widget-font.auto</div>
   </div>
   <mat-divider></mat-divider>
   <div class="tb-form-row no-border no-padding font-preview">

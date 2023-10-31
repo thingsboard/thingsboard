@@ -52,14 +52,14 @@ public class RuleNodeException extends RuleEngineException {
         }
     }
 
-    public String toJsonString() {
+    public String toJsonString(int maxMessageLength) {
         try {
             return mapper.writeValueAsString(mapper.createObjectNode()
                     .put("ruleNodeId", ruleNodeId.toString())
                     .put("ruleChainId", ruleChainId.toString())
                     .put("ruleNodeName", ruleNodeName)
                     .put("ruleChainName", ruleChainName)
-                    .put("message", getMessage()));
+                    .put("message", truncateIfNecessary(getMessage(), maxMessageLength)));
         } catch (JsonProcessingException e) {
             log.warn("Failed to serialize exception ", e);
             throw new RuntimeException(e);

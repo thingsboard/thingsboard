@@ -50,7 +50,6 @@
               <div fxFlex *ngFor="let deliveryMethods of notificationDeliveryMethods">
                 <div fxFlex fxLayoutAlign="start center">
                   <mat-checkbox color="warn"
-                                [disabled]="!allowNotificationDeliveryMethods?.includes(deliveryMethods) || !getSomeChecked()"
                                 [checked]="getChecked(deliveryMethods)"
                                 (change)="changeInstanceTypeCheckBox($event.checked, deliveryMethods)"
                                 [indeterminate]="getIndeterminate(deliveryMethods)"
@@ -63,8 +62,7 @@
             <mat-divider></mat-divider>
             <div *ngFor="let settingsControl of notificationSettingsFormArray.controls; let i = index; let $last = last;">
               <tb-notification-setting-form [formControl]="settingsControl"
-                                            [deliveryMethods]="notificationDeliveryMethods"
-                                            [allowDeliveryMethods]="allowNotificationDeliveryMethods">
+                                            [deliveryMethods]="notificationDeliveryMethods">
               </tb-notification-setting-form>
               <mat-divider *ngIf="!$last"></mat-divider>
             </div>

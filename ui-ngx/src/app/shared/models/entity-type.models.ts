@@ -271,14 +271,14 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
     [
       EntityType.WIDGET_TYPE,
       {
-        type: 'entity.type-widget-type',
-        typePlural: 'entity.type-widget-types',
-        list: 'entity.list-of-widget-types',
+        type: 'entity.type-widget',
+        typePlural: 'entity.type-widgets',
+        list: 'entity.list-of-widgets',
         details: 'widget.details',
-        add: 'widget.add-widget-type',
-        noEntities: 'widget.no-widget-types-text',
-        search: 'widget.search-widget-types',
-        selectedEntities: 'widget.selected-widget-types'
+        add: 'dashboard.add-widget',
+        noEntities: 'widget.no-widgets-text',
+        search: 'widget.search-widgets',
+        selectedEntities: 'widget.selected-widgets'
       }
     ],
     [

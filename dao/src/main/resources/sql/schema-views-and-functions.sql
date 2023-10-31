@@ -285,3 +285,9 @@ BEGIN
     RETURN json_build_object('success', true, 'modified', modified, 'alarm', row_to_json(result))::text;
 END
 $$;
+
+DROP VIEW IF EXISTS widget_type_info_view CASCADE;
+CREATE OR REPLACE VIEW widget_type_info_view AS
+SELECT t.*
+     , COALESCE((t.descriptor::json->>'type')::text, '') as widget_type
+FROM widget_type t;

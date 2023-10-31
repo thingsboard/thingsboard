@@ -516,6 +516,7 @@ export interface WidgetInfo extends WidgetTypeDescriptor, WidgetControllerDescri
   typeLatestDataKeySettingsSchema?: string | any;
   image?: string;
   description?: string;
+  tags?: string[];
   componentType?: Type<IDynamicWidgetComponent>;
   componentModuleRef?: NgModuleRef<DynamicComponentModule>;
 }
@@ -632,6 +633,7 @@ export const detailsToWidgetInfo = (widgetTypeDetailsEntity: WidgetTypeDetails):
   const widgetInfo = toWidgetInfo(widgetTypeDetailsEntity);
   widgetInfo.image = widgetTypeDetailsEntity.image;
   widgetInfo.description = widgetTypeDetailsEntity.description;
+  widgetInfo.tags = widgetTypeDetailsEntity.tags;
   return widgetInfo;
 };
 
@@ -672,6 +674,7 @@ export const toWidgetTypeDetails = (widgetInfo: WidgetInfo, id: WidgetTypeId, te
   return {
     ...widgetTypeEntity,
     description: widgetInfo.description,
+    tags: widgetInfo.tags,
     image: widgetInfo.image
   };
 };

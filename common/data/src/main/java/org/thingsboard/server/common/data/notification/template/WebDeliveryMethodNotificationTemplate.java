@@ -56,7 +56,6 @@ public class WebDeliveryMethodNotificationTemplate extends DeliveryMethodNotific
         this.additionalConfig = other.additionalConfig != null ? other.additionalConfig.deepCopy() : null;
     }
 
-    @NoXss(fieldName = "web notification message")
     @Length(fieldName = "web notification message", max = 250, message = "cannot be longer than 250 chars")
     @Override
     public String getBody() {

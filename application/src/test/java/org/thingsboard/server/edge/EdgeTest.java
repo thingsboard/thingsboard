@@ -39,7 +39,7 @@ public class EdgeTest extends AbstractEdgeTest {
         Customer customer = new Customer();
         customer.setTitle("Edge Customer");
         Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
-        Assert.assertFalse(edgeImitator.waitForMessages(1));
+        Assert.assertFalse(edgeImitator.waitForMessages(5));
 
         // assign edge to customer
         edgeImitator.expectMessageAmount(2);

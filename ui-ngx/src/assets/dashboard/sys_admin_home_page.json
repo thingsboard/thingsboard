@@ -7,13 +7,7 @@
     "description": "",
     "widgets": {
       "d70cc256-4c7b-ee06-9905-b8c5e546605f": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 5,
         "sizeY": 3.5,
         "config": {
@@ -72,16 +66,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "d70cc256-4c7b-ee06-9905-b8c5e546605f"
+        "id": "d70cc256-4c7b-ee06-9905-b8c5e546605f",
+        "typeFullFqn": "system.cards.markdown_card"
       },
       "8ee72d43-678c-4e25-e9a8-7d4cfd7a5f8e": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "timeseries_bars_flot",
         "type": "timeseries",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 8,
         "sizeY": 5,
         "config": {
@@ -179,7 +168,18 @@
               "showLabels": true
             },
             "customLegendEnabled": false,
-            "dataKeysListForLabels": []
+            "dataKeysListForLabels": [],
+            "showLegend": false,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "sortDataKeys": false,
+              "showMin": false,
+              "showMax": false,
+              "showAvg": true,
+              "showTotal": false,
+              "showLatest": false
+            }
           },
           "title": "Transport messages",
           "dropShadow": false,
@@ -192,37 +192,21 @@
             "padding": "0"
           },
           "useDashboardTimewindow": false,
-          "showLegend": false,
           "actions": {},
           "displayTimewindow": true,
           "showTitleIcon": false,
           "titleTooltip": "",
           "widgetCss": ".tb-widget-container > .tb-widget {\n    border: none !important;\n    border-radius: 0 !important;\n    box-shadow: none !important;\n}\n\n.tb-widget-container > .tb-widget .flot-base {\n    opacity: 0.48;\n}\n",
           "pageSize": 1024,
-          "noDataDisplayMessage": "",
-          "legendConfig": {
-            "direction": "column",
-            "position": "bottom",
-            "sortDataKeys": false,
-            "showMin": false,
-            "showMax": false,
-            "showAvg": true,
-            "showTotal": false,
-            "showLatest": false
-          }
+          "noDataDisplayMessage": ""
         },
         "row": 0,
         "col": 0,
-        "id": "8ee72d43-678c-4e25-e9a8-7d4cfd7a5f8e"
+        "id": "8ee72d43-678c-4e25-e9a8-7d4cfd7a5f8e",
+        "typeFullFqn": "system.charts.timeseries_bars_flot"
       },
       "4b5e47ed-c197-a937-d727-041ba8decec2": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 5,
         "sizeY": 3.5,
         "config": {
@@ -307,16 +291,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "4b5e47ed-c197-a937-d727-041ba8decec2"
+        "id": "4b5e47ed-c197-a937-d727-041ba8decec2",
+        "typeFullFqn": "system.cards.markdown_card"
       },
       "eace9148-b02a-48fe-1a95-acd9928aa8c5": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "basic_timeseries",
         "type": "timeseries",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 8,
         "sizeY": 5,
         "config": {
@@ -501,7 +480,18 @@
               "showLabels": true
             },
             "customLegendEnabled": false,
-            "dataKeysListForLabels": []
+            "dataKeysListForLabels": [],
+            "showLegend": true,
+            "legendConfig": {
+              "direction": "row",
+              "position": "top",
+              "sortDataKeys": false,
+              "showMin": false,
+              "showMax": false,
+              "showAvg": false,
+              "showTotal": false,
+              "showLatest": false
+            }
           },
           "title": "System Info Chart",
           "dropShadow": false,
@@ -518,31 +508,15 @@
           "pageSize": 1024,
           "units": "%",
           "noDataDisplayMessage": "",
-          "showLegend": true,
-          "legendConfig": {
-            "direction": "row",
-            "position": "top",
-            "sortDataKeys": false,
-            "showMin": false,
-            "showMax": false,
-            "showAvg": false,
-            "showTotal": false,
-            "showLatest": false
-          },
           "displayTimewindow": true
         },
         "row": 0,
         "col": 0,
-        "id": "eace9148-b02a-48fe-1a95-acd9928aa8c5"
+        "id": "eace9148-b02a-48fe-1a95-acd9928aa8c5",
+        "typeFullFqn": "system.charts.basic_timeseries"
       },
       "8acbf5df-f9fc-114d-216f-86f081aa4779": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 5,
         "sizeY": 3.5,
         "config": {
@@ -601,16 +575,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "8acbf5df-f9fc-114d-216f-86f081aa4779"
+        "id": "8acbf5df-f9fc-114d-216f-86f081aa4779",
+        "typeFullFqn": "system.cards.markdown_card"
       },
       "d2784f6c-0518-fd95-1d28-b21f70bdcb10": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 5,
         "sizeY": 3.5,
         "config": {
@@ -668,16 +637,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "d2784f6c-0518-fd95-1d28-b21f70bdcb10"
+        "id": "d2784f6c-0518-fd95-1d28-b21f70bdcb10",
+        "typeFullFqn": "system.cards.markdown_card"
       },
       "66dcf1a2-9d83-6873-c693-d6a5d989b3f8": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 5,
         "sizeY": 3.5,
         "config": {
@@ -735,16 +699,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "66dcf1a2-9d83-6873-c693-d6a5d989b3f8"
+        "id": "66dcf1a2-9d83-6873-c693-d6a5d989b3f8",
+        "typeFullFqn": "system.cards.markdown_card"
       },
       "867f82cf-ecf2-2d5c-35cb-08c6f2edc3a4": {
-        "isSystemType": true,
-        "bundleAlias": "home_page_widgets",
-        "typeAlias": "documentation_links",
         "type": "static",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 3,
         "config": {
@@ -772,16 +731,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "867f82cf-ecf2-2d5c-35cb-08c6f2edc3a4"
+        "id": "867f82cf-ecf2-2d5c-35cb-08c6f2edc3a4",
+        "typeFullFqn": "system.home_page_widgets.documentation_links"
       },
       "a23185ad-dc46-806c-0e50-5b21fb080ace": {
-        "isSystemType": true,
-        "bundleAlias": "home_page_widgets",
-        "typeAlias": "getting_started",
         "type": "static",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 7.5,
         "sizeY": 6.5,
         "config": {
@@ -809,16 +763,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "a23185ad-dc46-806c-0e50-5b21fb080ace"
+        "id": "a23185ad-dc46-806c-0e50-5b21fb080ace",
+        "typeFullFqn": "system.home_page_widgets.getting_started"
       },
       "b35fa1b0-7f95-0b23-fade-d066653a40e1": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 5,
         "sizeY": 3.5,
         "config": {
@@ -930,16 +879,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "b35fa1b0-7f95-0b23-fade-d066653a40e1"
+        "id": "b35fa1b0-7f95-0b23-fade-d066653a40e1",
+        "typeFullFqn": "system.cards.markdown_card"
       },
       "5eabde4c-095f-defc-dd09-6c0afb9b9f7b": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 5,
         "sizeY": 3.5,
         "config": {
@@ -1063,16 +1007,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "5eabde4c-095f-defc-dd09-6c0afb9b9f7b"
+        "id": "5eabde4c-095f-defc-dd09-6c0afb9b9f7b",
+        "typeFullFqn": "system.cards.markdown_card"
       },
       "451e2588-80b8-cd08-2199-1263ed4dc12c": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 5,
         "sizeY": 3.5,
         "config": {
@@ -1196,16 +1135,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "451e2588-80b8-cd08-2199-1263ed4dc12c"
+        "id": "451e2588-80b8-cd08-2199-1263ed4dc12c",
+        "typeFullFqn": "system.cards.markdown_card"
       },
       "01b94c17-84eb-4e49-6a92-c3f108ecff8e": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 5,
         "sizeY": 3.5,
         "config": {
@@ -1417,16 +1351,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "01b94c17-84eb-4e49-6a92-c3f108ecff8e"
+        "id": "01b94c17-84eb-4e49-6a92-c3f108ecff8e",
+        "typeFullFqn": "system.cards.markdown_card"
       },
       "f0479b00-ed47-0a30-0c36-bde7847aae00": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 5,
         "sizeY": 3.5,
         "config": {
@@ -1488,16 +1417,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "f0479b00-ed47-0a30-0c36-bde7847aae00"
+        "id": "f0479b00-ed47-0a30-0c36-bde7847aae00",
+        "typeFullFqn": "system.cards.markdown_card"
       },
       "57ed0ad9-8fcf-4454-1fa7-d39e22f84570": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 5,
         "sizeY": 3.5,
         "config": {
@@ -1579,16 +1503,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "57ed0ad9-8fcf-4454-1fa7-d39e22f84570"
+        "id": "57ed0ad9-8fcf-4454-1fa7-d39e22f84570",
+        "typeFullFqn": "system.cards.markdown_card"
       },
       "0464b6bc-7863-ba75-4b84-64b8acae2af9": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 5,
         "sizeY": 3.5,
         "config": {
@@ -1670,16 +1589,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "0464b6bc-7863-ba75-4b84-64b8acae2af9"
+        "id": "0464b6bc-7863-ba75-4b84-64b8acae2af9",
+        "typeFullFqn": "system.cards.markdown_card"
       },
       "4c043bba-6ac1-dd23-0796-fe6ae4c3c0a3": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 5,
         "sizeY": 3.5,
         "config": {
@@ -1761,16 +1675,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "4c043bba-6ac1-dd23-0796-fe6ae4c3c0a3"
+        "id": "4c043bba-6ac1-dd23-0796-fe6ae4c3c0a3",
+        "typeFullFqn": "system.cards.markdown_card"
       },
       "8b8d5d4f-2c5f-c768-d4fb-68d6e0b716f4": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 5,
         "sizeY": 3.5,
         "config": {
@@ -1852,16 +1761,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "8b8d5d4f-2c5f-c768-d4fb-68d6e0b716f4"
+        "id": "8b8d5d4f-2c5f-c768-d4fb-68d6e0b716f4",
+        "typeFullFqn": "system.cards.markdown_card"
       },
       "d58bfdd4-18b0-a70c-5d5f-73d12c2ea468": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 5,
         "sizeY": 3.5,
         "config": {
@@ -1943,16 +1847,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "d58bfdd4-18b0-a70c-5d5f-73d12c2ea468"
+        "id": "d58bfdd4-18b0-a70c-5d5f-73d12c2ea468",
+        "typeFullFqn": "system.cards.markdown_card"
       },
       "a3d83738-a4f2-ea92-17d7-1a3c52aa1770": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 5,
         "sizeY": 3.5,
         "config": {
@@ -2034,16 +1933,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "a3d83738-a4f2-ea92-17d7-1a3c52aa1770"
+        "id": "a3d83738-a4f2-ea92-17d7-1a3c52aa1770",
+        "typeFullFqn": "system.cards.markdown_card"
       },
       "ff4f04a2-f739-2f3e-17dc-9ede9f2df75d": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 5,
         "sizeY": 3.5,
         "config": {
@@ -2235,16 +2129,11 @@
         },
         "row": 0,
         "col": 0,
-        "id": "ff4f04a2-f739-2f3e-17dc-9ede9f2df75d"
+        "id": "ff4f04a2-f739-2f3e-17dc-9ede9f2df75d",
+        "typeFullFqn": "system.cards.markdown_card"
       },
       "163025d8-3ca4-dd1e-c17b-e40d8e03e8a8": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "markdown_card",
         "type": "latest",
-        "title": "New widget",
-        "image": null,
-        "description": null,
         "sizeX": 5,
         "sizeY": 3.5,
         "config": {
@@ -2306,7 +2195,8 @@
         },
         "row": 0,
         "col": 0,
-        "id": "163025d8-3ca4-dd1e-c17b-e40d8e03e8a8"
+        "id": "163025d8-3ca4-dd1e-c17b-e40d8e03e8a8",
+        "typeFullFqn": "system.cards.markdown_card"
       }
     },
     "states": {

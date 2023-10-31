@@ -20,8 +20,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.TbVersionedNode;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNode;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
 import org.thingsboard.rule.engine.flow.TbRuleChainOutputNode;
@@ -402,7 +402,7 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
             var ruleNodeClass = componentDiscoveryService.getRuleNodeInfo(ruleNodeType)
                     .orElseThrow(() -> new RuntimeException("Rule node " + ruleNodeType + " is not supported!"));
             if (ruleNodeClass.isVersioned()) {
-                TbVersionedNode tbVersionedNode = (TbVersionedNode) ruleNodeClass.getClazz().getDeclaredConstructor().newInstance();
+                TbNode tbVersionedNode = (TbNode) ruleNodeClass.getClazz().getDeclaredConstructor().newInstance();
                 int fromVersion = node.getConfigurationVersion();
                 int toVersion = ruleNodeClass.getCurrentVersion();
                 if (fromVersion < toVersion) {

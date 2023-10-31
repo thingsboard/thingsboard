@@ -253,6 +253,11 @@
                                 rows="2" maxlength="255"></textarea>
                       <mat-hint align="end">{{descriptionInput.value?.length || 0}}/255</mat-hint>
                     </mat-form-field>
+                    <tb-string-items-list
+                      label="{{ 'widget.tags' | translate }}"
+                      [(ngModel)]="widget.tags"
+                      (ngModelChange)="isDirty = true">
+                    </tb-string-items-list>
                     <mat-slide-toggle class="mat-block" style="padding-bottom: 16px;"
                                       [(ngModel)]="widget.deprecated"
                                       (ngModelChange)="isDirty = true">

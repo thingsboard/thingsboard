@@ -70,7 +70,8 @@ export class KeyFilterDialogComponent extends
   entityKeyTypes =
     this.data.telemetryKeysOnly ?
       [EntityKeyType.ATTRIBUTE, EntityKeyType.TIME_SERIES, EntityKeyType.CONSTANT] :
-      [EntityKeyType.ENTITY_FIELD, EntityKeyType.ATTRIBUTE, EntityKeyType.TIME_SERIES];
+      [EntityKeyType.ENTITY_FIELD, EntityKeyType.ATTRIBUTE, EntityKeyType.CLIENT_ATTRIBUTE,
+        EntityKeyType.SERVER_ATTRIBUTE, EntityKeyType.SHARED_ATTRIBUTE, EntityKeyType.TIME_SERIES];
 
   entityKeyTypeTranslations = entityKeyTypeTranslationMap;
 

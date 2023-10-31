@@ -26,7 +26,8 @@ export class PubSubTemplate implements IQueue {
     private logger = _logger(`pubSubTemplate`);
     private projectId: string = config.get('pubsub.project_id');
     private credentials = JSON.parse(config.get('pubsub.service_account'));
-    private requestTopic: string = config.get('request_topic');
+    private queuePrefix: string = config.get('queue_prefix');
+    private requestTopic: string = this.queuePrefix ? this.queuePrefix + "." + config.get('request_topic') : config.get('request_topic');
     private queueProperties: string = config.get('pubsub.queue_properties');
 
     private pubSubClient: PubSub;

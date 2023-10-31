@@ -54,7 +54,7 @@ public interface WidgetsBundleDao extends Dao<WidgetsBundle>, ExportableEntityDa
      * @param pageLink the page link
      * @return the list of widgets bundles objects
      */
-    PageData<WidgetsBundle> findSystemWidgetsBundles(TenantId tenantId, PageLink pageLink);
+    PageData<WidgetsBundle> findSystemWidgetsBundles(TenantId tenantId, boolean fullSearch, PageLink pageLink);
 
     /**
      * Find tenant widgets bundles by tenantId and page link.
@@ -72,7 +72,16 @@ public interface WidgetsBundleDao extends Dao<WidgetsBundle>, ExportableEntityDa
      * @param pageLink the page link
      * @return the list of widgets bundles objects
      */
-    PageData<WidgetsBundle> findAllTenantWidgetsBundlesByTenantId(UUID tenantId, PageLink pageLink);
+    PageData<WidgetsBundle> findAllTenantWidgetsBundlesByTenantId(UUID tenantId, boolean fullSearch, PageLink pageLink);
+
+    /**
+     * Find all tenant widgets bundles (does not include system) by tenantId and page link.
+     *
+     * @param tenantId the tenantId
+     * @param pageLink the page link
+     * @return the list of widgets bundles objects
+     */
+    PageData<WidgetsBundle> findTenantWidgetsBundlesByTenantId(UUID tenantId, boolean fullSearch, PageLink pageLink);
 
 }
 

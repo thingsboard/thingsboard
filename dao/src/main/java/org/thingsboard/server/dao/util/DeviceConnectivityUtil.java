@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.util;
 
+import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -30,10 +31,11 @@ public class DeviceConnectivityUtil {
     public static final String MQTTS = "mqtts";
     public static final String COAP = "coap";
     public static final String COAPS = "coaps";
-    public static final String PEM_CERT_FILE_NAME = "tb-server-chain.pem";
+    public static final String CA_ROOT_CERT_PEM = "ca-root.pem";
     public static final String CHECK_DOCUMENTATION = "Check documentation";
     public static final String JSON_EXAMPLE_PAYLOAD = "\"{temperature:25}\"";
     public static final String DOCKER_RUN = "docker run --rm -it ";
+    public static final String GATEWAY_DOCKER_RUN = "docker run -it ";
     public static final String MQTT_IMAGE = "thingsboard/mosquitto-clients ";
     public static final String COAP_IMAGE = "thingsboard/coap-clients ";
 
@@ -45,7 +47,7 @@ public class DeviceConnectivityUtil {
     public static String getMqttPublishCommand(String protocol, String host, String port, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) {
         StringBuilder command = new StringBuilder("mosquitto_pub -d -q 1");
         if (MQTTS.equals(protocol)) {
-            command.append(" --cafile ").append(PEM_CERT_FILE_NAME);
+            command.append(" --cafile ").append(CA_ROOT_CERT_PEM);
         }
         command.append(" -h ").append(host).append(port == null ? "" : " -p " + port);
         command.append(" -t ").append(deviceTelemetryTopic);
@@ -78,6 +80,53 @@ public class DeviceConnectivityUtil {
         return command.toString();
     }
 
+    public static String getGatewayLaunchCommand(String os, String host, String port, DeviceCredentials deviceCredentials) {
+        String gatewayVolumePathPrefix = "~/.tb-gateway";
+        if (WINDOWS.equals(os)) {
+            gatewayVolumePathPrefix = "%HOMEPATH%/tb-gateway";
+        }
+
+        String gatewayContainerName = "tbGateway" + StringUtils.capitalize(host.replace(".", ""));
+
+        StringBuilder command = new StringBuilder(GATEWAY_DOCKER_RUN);
+        command.append("-v {gatewayVolumePathPrefix}/logs:/thingsboard_gateway/logs".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
+        command.append(" -v {gatewayVolumePathPrefix}/extensions:/thingsboard_gateway/extensions".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
+        command.append(" -v {gatewayVolumePathPrefix}/config:/thingsboard_gateway/config".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
+        command.append(" --name ").append(gatewayContainerName);
+        command.append(" -e host=").append(host);
+        command.append(" -e port=").append(port);
+
+        switch(deviceCredentials.getCredentialsType()) {
+            case ACCESS_TOKEN:
+                command.append(" -e accessToken=").append(deviceCredentials.getCredentialsId());
+                break;
+            case MQTT_BASIC:
+                BasicMqttCredentials credentials = JacksonUtil.fromString(deviceCredentials.getCredentialsValue(),
+                        BasicMqttCredentials.class);
+                if (credentials != null) {
+                    if (credentials.getClientId() != null) {
+                        command.append(" -e clientId=").append(credentials.getClientId());
+                    }
+                    if (credentials.getUserName() != null) {
+                        command.append(" -e username=").append(credentials.getUserName());
+                    }
+                    if (credentials.getPassword() != null) {
+                        command.append(" -e password=").append(credentials.getPassword());
+                    }
+                } else {
+                    return null;
+                }
+                break;
+            default:
+                return null;
+        }
+
+        command.append(" --restart always");
+        command.append(" thingsboard/tb-gateway");
+
+        return command.toString();
+    }
+
     public static String getDockerMqttPublishCommand(String protocol, String baseUrl, String host, String port, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) {
         String mqttCommand = getMqttPublishCommand(protocol, host, port, deviceTelemetryTopic, deviceCredentials);
 
@@ -102,7 +151,7 @@ public class DeviceConnectivityUtil {
     }
 
     public static String getCurlPemCertCommand(String baseUrl, String protocol) {
-        return String.format("curl -f -S -o %s %s/api/device-connectivity/%s/certificate/download", PEM_CERT_FILE_NAME, baseUrl, protocol);
+        return String.format("curl -f -S -o %s %s/api/device-connectivity/%s/certificate/download", CA_ROOT_CERT_PEM, baseUrl, protocol);
     }
 
     public static String getCoapPublishCommand(String protocol, String host, String port, DeviceCredentials deviceCredentials) {

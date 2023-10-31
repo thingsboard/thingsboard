@@ -86,7 +86,7 @@ message ConnectResponseMsg {
 }
 
 message SyncRequestMsg {
-  bool syncRequired = 1; // deprecated
+  bool syncRequired = 1 [deprecated = true];
   optional bool fullSync = 2;
 }
 
@@ -114,7 +114,7 @@ enum UpdateMsgType {
   ENTITY_DELETED_RPC_MESSAGE = 2;
   ALARM_ACK_RPC_MESSAGE = 3;
   ALARM_CLEAR_RPC_MESSAGE = 4;
-  ENTITY_MERGE_RPC_MESSAGE = 5; // deprecated
+  ENTITY_MERGE_RPC_MESSAGE = 5 [deprecated = true];
 }
 
 message EntityDataProto {
@@ -163,6 +163,8 @@ message RuleNodeProto {
   bool debugMode = 5;
   string configuration = 6;
   string additionalInfo = 7;
+  bool singletonMode = 8;
+  int32 configurationVersion = 9;
 }
 
 message NodeConnectionInfoProto {
@@ -205,7 +207,7 @@ message DeviceUpdateMsg {
   string type = 9;
   optional string label = 10;
   optional string additionalInfo = 11;
-  optional string conflictName = 12; // deprecated
+  optional string conflictName = 12 [deprecated = true];
   optional int64 firmwareIdMSB = 13;
   optional int64 firmwareIdLSB = 14;
   optional bytes deviceDataBytes = 15;
@@ -359,15 +361,16 @@ message WidgetsBundleUpdateMsg {
   optional bytes image = 6;
   bool isSystem = 7;
   optional string description = 8;
-  optional string widgets = 9;
+  optional int32 order = 9;
+  optional string widgets = 10;
 }
 
 message WidgetTypeUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  optional string bundleAlias = 4; // deprecated
-  optional string alias = 5; // deprecated
+  optional string bundleAlias = 4 [deprecated = true];
+  optional string alias = 5 [deprecated = true];
   optional string name = 6;
   optional string descriptorJson = 7;
   bool isSystem = 8;
@@ -375,6 +378,7 @@ message WidgetTypeUpdateMsg {
   optional string description = 10;
   optional string fqn = 11;
   bool deprecated = 12;
+  repeated string tags = 13;
 }
 
 message AdminSettingsUpdateMsg {
@@ -448,8 +452,8 @@ message DeviceCredentialsRequestMsg {
   int64 deviceIdLSB = 2;
 }
 
-// deprecated
 message DeviceProfileDevicesRequestMsg {
+  option deprecated = true;
   int64 deviceProfileIdMSB = 1;
   int64 deviceProfileIdLSB = 2;
 }
@@ -563,7 +567,7 @@ message UplinkMsg {
   repeated UserCredentialsRequestMsg userCredentialsRequestMsg = 10;
   repeated DeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 11;
   repeated DeviceRpcCallMsg deviceRpcCallMsg = 12;
-  repeated DeviceProfileDevicesRequestMsg deviceProfileDevicesRequestMsg = 13; // deprecated
+  repeated DeviceProfileDevicesRequestMsg deviceProfileDevicesRequestMsg = 13 [deprecated = true];
   repeated WidgetBundleTypesRequestMsg widgetBundleTypesRequestMsg = 14;
   repeated EntityViewsRequestMsg entityViewsRequestMsg = 15;
   repeated AssetUpdateMsg assetUpdateMsg = 16;

@@ -64,11 +64,16 @@ public class WidgetsBundle extends BaseData<WidgetsBundleId> implements HasName,
     private String image;
 
     @NoXss
-    @Length(fieldName = "description")
+    @Length(fieldName = "description", max = 1024)
     @Getter
     @Setter
     @ApiModelProperty(position = 7, value = "Description", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String description;
+
+    @Getter
+    @Setter
+    @ApiModelProperty(position = 8, value = "Order", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    private Integer order;
 
     @Getter
     @Setter
@@ -89,6 +94,7 @@ public class WidgetsBundle extends BaseData<WidgetsBundleId> implements HasName,
         this.title = widgetsBundle.getTitle();
         this.image = widgetsBundle.getImage();
         this.description = widgetsBundle.getDescription();
+        this.order = widgetsBundle.getOrder();
         this.externalId = widgetsBundle.getExternalId();
     }
 

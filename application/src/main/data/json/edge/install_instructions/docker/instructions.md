@@ -1,12 +1,10 @@
-## Install ThingsBoard Edge and connect to cloud instructions
+Here is the list of commands, that can be used to quickly install ThingsBoard Edge using docker compose and connect to the cloud.
 
-Here is the list of commands, that can be used to quickly install and connect ThingsBoard Edge to the cloud using docker compose.
-
-### Prerequisites
+#### Prerequisites
 
 Install <a href="https://docs.docker.com/engine/install/" target="_blank"> Docker CE</a> and <a href="https://docs.docker.com/compose/install/" target="_blank"> Docker Compose</a>.
 
-### Create data and logs folders
+#### Create data and logs folders
 
 Run following commands, before starting docker container(s), to create folders for storing data and logs.
 These commands additionally will change owner of newly created folders to docker container user.
@@ -18,7 +16,7 @@ mkdir -p ~/.mytb-edge-logs && sudo chown -R 799:799 ~/.mytb-edge-logs
 {:copy-code}
 ```
 
-### Running ThingsBoard Edge as docker service
+#### Running ThingsBoard Edge as docker service
 
 ${LOCALHOST_WARNING}
 
@@ -64,12 +62,12 @@ services:
 {:copy-code}
 ```
 
-#### [Optional] Update bind ports 
+##### [Optional] Update bind ports 
 If ThingsBoard Edge is going to be running on the same machine where ThingsBoard server (cloud) is running, you'll need to update docker compose port mapping to avoid port collision between ThingsBoard server and ThingsBoard Edge.
 
 Please update next lines of `docker-compose.yml` file:
 
-```bash
+```text
 ports:
   - "18080:8080"
   - "11883:1883"

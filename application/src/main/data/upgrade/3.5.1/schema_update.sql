@@ -127,6 +127,8 @@ UPDATE resource
 
 ALTER TABLE notification_request ALTER COLUMN info SET DATA TYPE varchar(1000000);
 
+DELETE FROM alarm WHERE tenant_id NOT IN (SELECT id FROM tenant);
+
 CREATE TABLE IF NOT EXISTS alarm_types (
     tenant_id uuid NOT NULL,
     type varchar(255) NOT NULL,
@@ -135,6 +137,9 @@ CREATE TABLE IF NOT EXISTS alarm_types (
 );
 
 INSERT INTO alarm_types (tenant_id, type) SELECT DISTINCT tenant_id, type FROM alarm ON CONFLICT (tenant_id, type) DO NOTHING;
+
+ALTER TABLE widgets_bundle ALTER COLUMN description SET DATA TYPE varchar(1024);
+ALTER TABLE widget_type ALTER COLUMN description SET DATA TYPE varchar(1024);
 
 ALTER TABLE widget_type
     ADD COLUMN IF NOT EXISTS fqn varchar(512);
@@ -184,7 +189,7 @@ DO
 $$
     BEGIN
         IF EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name = 'widget_type' and column_name='bundle_alias') THEN
-            INSERT INTO widgets_bundle_widget SELECT wb.id as widgets_bundle_id, wt.id as widget_type_id from widget_type wt left join widgets_bundle wb ON wt.bundle_alias = wb.alias ON CONFLICT (widgets_bundle_id, widget_type_id) DO NOTHING;
+            INSERT INTO widgets_bundle_widget SELECT wb.id as widgets_bundle_id, wt.id as widget_type_id from widget_type wt left join widgets_bundle wb ON wt.bundle_alias = wb.alias AND wt.tenant_id = wb.tenant_id ON CONFLICT (widgets_bundle_id, widget_type_id) DO NOTHING;
             ALTER TABLE widget_type DROP COLUMN IF EXISTS bundle_alias;
         END IF;
     END;

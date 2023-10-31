@@ -58,6 +58,7 @@ public class WidgetEdgeTest extends AbstractEdgeTest {
         descriptor.put("key", "value");
         widgetType.setDescriptor(descriptor);
         widgetType.setDeprecated(true);
+        widgetType.setFqn("bundle_alias.type_alias");
         WidgetType savedWidgetType = doPost("/api/widgetType", widgetType, WidgetType.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
         latestMessage = edgeImitator.getLatestMessage();
@@ -69,6 +70,8 @@ public class WidgetEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(savedWidgetType.getFqn(), widgetTypeUpdateMsg.getFqn());
         Assert.assertEquals(savedWidgetType.getName(), widgetTypeUpdateMsg.getName());
         Assert.assertTrue(widgetTypeUpdateMsg.getDeprecated());
+        Assert.assertEquals("bundle_alias", widgetTypeUpdateMsg.getBundleAlias());
+        Assert.assertEquals("type_alias", widgetTypeUpdateMsg.getAlias());
         Assert.assertEquals(JacksonUtil.toJsonNode(widgetTypeUpdateMsg.getDescriptorJson()), savedWidgetType.getDescriptor());
 
         // update widget bundle
