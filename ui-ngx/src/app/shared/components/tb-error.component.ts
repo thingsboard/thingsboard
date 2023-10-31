@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Input } from '@angular/core';
+import { ChangeDetectorRef, Component, Input } from '@angular/core';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
@@ -61,12 +61,16 @@ export class TbErrorComponent {
     if (value && !this.message) {
       this.message = value;
       this.state = 'hide';
+
       setTimeout(() => {
         this.state = 'show';
+        this.cd.markForCheck();
       });
     } else {
       this.errorValue = value;
       this.state = value ? 'show' : 'hide';
     }
   }
+
+  constructor(private cd: ChangeDetectorRef) {}
 }
