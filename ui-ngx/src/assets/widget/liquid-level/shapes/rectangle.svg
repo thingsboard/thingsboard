@@ -1,0 +1,49 @@
+<svg preserveAspectRatio="xMidYMid meet" viewBox="0 0 233 201" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path class="tb-shape-stroke" opacity="0.1" d="M10.5 57.5C10.5 53.0817 14.0817 49.5 18.5 49.5H26.5C30.9183 49.5 34.5 53.0817 34.5 57.5V163.5C34.5 167.918 30.9183 171.5 26.5 171.5H18.5C14.0817 171.5 10.5 167.918 10.5 163.5V57.5Z" stroke="#242770" stroke-width="2"/>
+  <mask id="mask0_3572_5095" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="13" y="52" width="206" height="117">
+    <path d="M13.5 58.5001C13.5 55.1864 16.1863 52.5001 19.5 52.5001L212.5 52.5002C215.814 52.5002 218.5 55.1865 218.5 58.5002V162.5C218.5 165.814 215.814 168.5 212.5 168.5L19.5 168.5C16.1863 168.5 13.5 165.814 13.5 162.5V58.5001Z" fill="#7A8BFF"/>
+  </mask>
+  <g mask="url(#mask0_3572_5095)">
+    <rect class="tb-liquid-fill tb-liquid" x="13.5" y="118.5" width="205" height="116" fill="#7A8BFF"/>
+    <rect class="tb-liquid-surface tb-liquid" x="13.5" y="118.5" width="205" height="1" fill="#7A8BFF"/>
+    <rect class="tb-liquid-surface" x="13.5" y="118.5" width="205" height="1" fill="white" fill-opacity="0.1"/>
+  </g>
+  <rect class="tb-shape-stroke" x="10.5" y="49.5" width="211" height="122" rx="8" stroke="#242770" stroke-width="2"/>
+  <path class="tb-shape-stroke" d="M197.5 57.5C197.5 53.0817 201.082 49.5 205.5 49.5H213.5C217.918 49.5 221.5 53.0817 221.5 57.5V163.5C221.5 167.918 217.918 171.5 213.5 171.5H205.5C201.082 171.5 197.5 167.918 197.5 163.5V57.5Z" stroke="#242770" stroke-width="2"/>
+  <mask id="path-7-inside-1_3572_5095" fill="white">
+    <path fill-rule="evenodd" clip-rule="evenodd" d="M127.5 32.5H98.5V50.5C98.5 52.1569 104.992 53.5 113 53.5C121.008 53.5 127.5 52.1569 127.5 50.5V32.5Z"/>
+  </mask>
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M127.5 32.5H98.5V50.5C98.5 52.1569 104.992 53.5 113 53.5C121.008 53.5 127.5 52.1569 127.5 50.5V32.5Z"/>
+  <path class="tb-shape-fill" d="M98.5 32.5V30.5H96.5V32.5H98.5ZM127.5 32.5H129.5V30.5H127.5V32.5ZM98.5 34.5H127.5V30.5H98.5V34.5ZM100.5 50.5V32.5H96.5V50.5H100.5ZM113 51.5C109.09 51.5 105.607 51.1707 103.152 50.6628C101.908 50.4055 101.034 50.1232 100.518 49.8712C100.257 49.7431 100.191 49.6721 100.217 49.6982C100.248 49.7304 100.5 50.0048 100.5 50.5H96.5C96.5 51.4095 96.9544 52.0882 97.3726 52.511C97.7847 52.9277 98.2887 53.2334 98.7607 53.4643C99.7129 53.9301 100.962 54.2943 102.342 54.5798C105.135 55.1577 108.902 55.5 113 55.5V51.5ZM125.5 50.5C125.5 50.0048 125.752 49.7304 125.783 49.6982C125.809 49.6721 125.743 49.7431 125.482 49.8712C124.966 50.1232 124.092 50.4055 122.848 50.6628C120.393 51.1707 116.91 51.5 113 51.5V55.5C117.098 55.5 120.865 55.1577 123.658 54.5798C125.038 54.2943 126.287 53.9301 127.239 53.4643C127.711 53.2334 128.215 52.9277 128.627 52.511C129.046 52.0882 129.5 51.4095 129.5 50.5H125.5ZM125.5 32.5V50.5H129.5V32.5H125.5Z" fill="#242770" mask="url(#path-7-inside-1_3572_5095)"/>
+  <path class="tb-shape-stroke" d="M127.541 33.5C127.541 33.5 127.54 33.5 127.539 33.5C127.54 33.5 127.541 33.5 127.541 33.5ZM126.866 33.2416C127.077 33.338 127.231 33.4258 127.341 33.5C127.231 33.5742 127.077 33.662 126.866 33.7584C126.187 34.0692 125.141 34.3742 123.77 34.6395C121.045 35.167 117.236 35.5 113 35.5C108.764 35.5 104.955 35.167 102.23 34.6395C100.859 34.3742 99.8132 34.0692 99.1342 33.7584C98.9234 33.662 98.7686 33.5742 98.6586 33.5C98.7686 33.4258 98.9234 33.338 99.1342 33.2416C99.8132 32.9308 100.859 32.6258 102.23 32.3605C104.955 31.833 108.764 31.5 113 31.5C117.236 31.5 121.045 31.833 123.77 32.3605C125.141 32.6258 126.187 32.9308 126.866 33.2416ZM98.4595 33.5C98.4595 33.5 98.4602 33.5 98.4613 33.5C98.46 33.5 98.4594 33.5 98.4595 33.5Z" stroke="#242770" stroke-width="2"/>
+  <path class="tb-shape-stroke" d="M127.541 30.5C127.541 30.5 127.54 30.5 127.539 30.5C127.54 30.5 127.541 30.5 127.541 30.5ZM126.866 30.2416C127.077 30.338 127.231 30.4258 127.341 30.5C127.231 30.5742 127.077 30.662 126.866 30.7584C126.187 31.0692 125.141 31.3742 123.77 31.6395C121.045 32.167 117.236 32.5 113 32.5C108.764 32.5 104.955 32.167 102.23 31.6395C100.859 31.3742 99.8132 31.0692 99.1342 30.7584C98.9234 30.662 98.7686 30.5742 98.6586 30.5C98.7686 30.4258 98.9234 30.338 99.1342 30.2416C99.8132 29.9308 100.859 29.6258 102.23 29.3605C104.955 28.833 108.764 28.5 113 28.5C117.236 28.5 121.045 28.833 123.77 29.3605C125.141 29.6258 126.187 29.9308 126.866 30.2416ZM98.4595 30.5C98.4595 30.5 98.4602 30.5 98.4613 30.5C98.46 30.5 98.4594 30.5 98.4595 30.5Z" stroke="#242770" stroke-width="2"/>
+  <g class="container-overlay" clip-path="url(#clip0_3572_5095)">
+    <g filter="url(#filter0_b_3572_5095)">
+      <rect class="absolute-overlay" x="64" y="80" width="81" height="61" rx="4" fill="white" fill-opacity="0.76"/>
+      <foreignObject class="absolute-value-container" x="64" y="80" width="81" height="61">
+      </foreignObject>
+    </g>
+    <g filter="url(#filter1_b_3572_5095)">
+      <rect class="percentage-overlay" x="68.5" y="90.5" width="71" height="40" rx="4" fill="white" fill-opacity="0.76"/>
+      <foreignObject class="percentage-value-container" x="68.5" y="90.5" width="71" height="40">
+      </foreignObject>
+    </g>
+  </g>
+  <defs>
+    <filter id="filter0_b_3572_5095" x="58" y="74" width="93" height="73" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feGaussianBlur in="BackgroundImageFix" stdDeviation="3"/>
+      <feComposite in2="SourceAlpha" operator="in" result="effect1_backgroundBlur_3572_5095"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_backgroundBlur_3572_5095" result="shape"/>
+    </filter>
+    <filter id="filter1_b_3572_5095" x="62.5" y="84.5" width="83" height="52" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feGaussianBlur in="BackgroundImageFix" stdDeviation="3"/>
+      <feComposite in2="SourceAlpha" operator="in" result="effect1_backgroundBlur_3572_5095"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_backgroundBlur_3572_5095" result="shape"/>
+    </filter>
+    <clipPath id="clip0_3572_5095">
+      <rect width="81" height="61" fill="white" transform="translate(64 80)"/>
+    </clipPath>
+  </defs>
+</svg>

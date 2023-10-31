@@ -166,7 +166,7 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
           : this.translate.instant('device.any-device');
         this.secondaryPlaceholder = '+' + this.translate.instant('device.device-type');
         this.noSubtypesMathingText = 'device.no-device-types-matching';
-        this.subtypeListEmptyText = 'device.device-type-list-empty';
+        this.subtypeListEmptyText = 'device.device-profile-type-list-empty';
         this.broadcastSubscription = this.broadcast.on('deviceSaved', () => {
           this.entitySubtypes = null;
         });

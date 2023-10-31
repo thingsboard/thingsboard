@@ -693,6 +693,7 @@ spring.servlet.multipart.max-request-size: "50MB" # Total request size for a mul
 
 spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation: "true" #Fix Postgres JPA Error (Method org.postgresql.jdbc.PgConnection.createClob() is not yet implemented)
 spring.jpa.properties.hibernate.order_by.default_null_ordering: "${SPRING_JPA_PROPERTIES_HIBERNATE_ORDER_BY_DEFAULT_NULL_ORDERING:last}" # Note: as for current Spring JPA version, custom NullHandling for the Sort.Order is ignored and this parameter is used
+spring.jpa.properties.hibernate.dialect: "${SPRING_JPA_DIALECT:org.thingsboard.server.dao.ThingsboardPostgreSQLDialect}" # we use custom dialect that contains ilike(arg1, arg2) function (is interpreted to postgres ILIKE operator)
 
 # SQL DAO Configuration parameters
 spring:
@@ -1227,7 +1228,7 @@ edges:
     # Number of milliseconds to wait before the next check of edge events in DB
     no_read_records_sleep: "${EDGES_NO_READ_RECORDS_SLEEP:1000}"
     # Number of milliseconds to wait before resending failed batch of edge events to edge
-    sleep_between_batches: "${EDGES_SLEEP_BETWEEN_BATCHES:10000}"
+    sleep_between_batches: "${EDGES_SLEEP_BETWEEN_BATCHES:60000}"
   # Number of threads that are used to check DB for edge events
   scheduler_pool_size: "${EDGES_SCHEDULER_POOL_SIZE:1}"
   # Number of threads that are used to send downlink messages to edge over gRPC
@@ -1270,6 +1271,7 @@ swagger:
 # Queue configuration parameters
 queue:
   type: "${TB_QUEUE_TYPE:in-memory}" # in-memory or kafka (Apache Kafka) or aws-sqs (AWS SQS) or pubsub (PubSub) or service-bus (Azure Service Bus) or rabbitmq (RabbitMQ)
+  prefix: "${TB_QUEUE_PREFIX:}" # Global queue prefix. If specified, prefix is added before default topic name: 'prefix.default_topic_name'. Prefix is applied to all topics (and consumer groups for kafka) except of js executor topics (please use REMOTE_JS_EVAL_REQUEST_TOPIC and REMOTE_JS_EVAL_RESPONSE_TOPIC to specify custom topic names)
   in_memory:
     stats:
       # For debug level
@@ -1611,7 +1613,9 @@ queue:
           pause-between-retries: "${TB_QUEUE_RE_SQ_PROCESSING_STRATEGY_RETRY_PAUSE:5}" # Time in seconds to wait in consumer thread before retries;
           max-pause-between-retries: "${TB_QUEUE_RE_SQ_PROCESSING_STRATEGY_MAX_RETRY_PAUSE:5}" # Max allowed time in seconds for pause between retries.
     # After a queue is deleted (or the profile's isolation option was disabled), Rule Engine will continue reading related topics during this period before deleting the actual topics
-    topic-deletion-delay: "${TB_QUEUE_RULE_ENGINE_TOPIC_DELETION_DELAY_SEC:30}"
+    topic-deletion-delay: "${TB_QUEUE_RULE_ENGINE_TOPIC_DELETION_DELAY_SEC:15}"
+    # Size of the thread pool that handles such operations as partition changes, config updates, queue deletion
+    management-thread-pool-size: "${TB_QUEUE_RULE_ENGINE_MGMT_THREAD_POOL_SIZE:12}"
   transport:
     # For high-priority notifications that require minimum latency and processing time
     notifications_topic: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_TOPIC:tb_transport.notifications}"

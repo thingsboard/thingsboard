@@ -168,6 +168,8 @@ public class TbCoreConsumerStats {
             toCoreNfSubscriptionServiceCounter.increment();
         } else if (msg.hasFromDeviceRpcResponse()) {
             toCoreNfDeviceRpcResponseCounter.increment();
+        } else if (msg.hasComponentLifecycle()) {
+            toCoreNfComponentLifecycleCounter.increment();
         } else if (!msg.getComponentLifecycleMsg().isEmpty()) {
             toCoreNfComponentLifecycleCounter.increment();
         } else if (!msg.getEdgeEventUpdateMsg().isEmpty()) {

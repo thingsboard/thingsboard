@@ -72,6 +72,11 @@ public class WidgetsBundle extends BaseData<WidgetsBundleId> implements HasName,
 
     @Getter
     @Setter
+    @ApiModelProperty(position = 8, value = "Order", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    private Integer order;
+
+    @Getter
+    @Setter
     private WidgetsBundleId externalId;
 
     public WidgetsBundle() {
@@ -89,6 +94,7 @@ public class WidgetsBundle extends BaseData<WidgetsBundleId> implements HasName,
         this.title = widgetsBundle.getTitle();
         this.image = widgetsBundle.getImage();
         this.description = widgetsBundle.getDescription();
+        this.order = widgetsBundle.getOrder();
         this.externalId = widgetsBundle.getExternalId();
     }
 

@@ -37,14 +37,14 @@ public interface TenantRepository extends JpaRepository<TenantEntity, UUID> {
             "WHERE t.id = :tenantId")
     TenantInfoEntity findTenantInfoById(@Param("tenantId") UUID tenantId);
 
-    @Query("SELECT t FROM TenantEntity t WHERE LOWER(t.title) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+    @Query("SELECT t FROM TenantEntity t WHERE (:textSearch IS NULL OR ilike(t.title, CONCAT('%', :textSearch, '%')) = true)")
     Page<TenantEntity> findTenantsNextPage(@Param("textSearch") String textSearch,
                                            Pageable pageable);
 
     @Query("SELECT new org.thingsboard.server.dao.model.sql.TenantInfoEntity(t, p.name) " +
             "FROM TenantEntity t " +
             "LEFT JOIN TenantProfileEntity p on p.id = t.tenantProfileId " +
-            "WHERE LOWER(t.title) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "WHERE (:textSearch IS NULL OR ilike(t.title, CONCAT('%', :textSearch, '%')) = true)")
     Page<TenantInfoEntity> findTenantInfosNextPage(@Param("textSearch") String textSearch,
                                                           Pageable pageable);
 

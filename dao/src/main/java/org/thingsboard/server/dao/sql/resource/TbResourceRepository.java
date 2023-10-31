@@ -33,7 +33,7 @@ public interface TbResourceRepository extends JpaRepository<TbResourceEntity, UU
 
     @Query("SELECT tr FROM TbResourceEntity tr " +
             "WHERE tr.resourceType = :resourceType " +
-            "AND LOWER(tr.searchText) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
+            "AND (:searchText IS NULL OR ilike(tr.searchText, CONCAT('%', :searchText, '%')) = true) " +
             "AND (tr.tenantId = :tenantId " +
             "OR (tr.tenantId = :systemAdminId " +
             "AND NOT EXISTS " +
@@ -50,7 +50,7 @@ public interface TbResourceRepository extends JpaRepository<TbResourceEntity, UU
 
     @Query("SELECT tr FROM TbResourceEntity tr " +
             "WHERE tr.resourceType = :resourceType " +
-            "AND LOWER(tr.searchText) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
+            "AND (:searchText IS NULL OR ilike(tr.searchText, CONCAT('%', :searchText, '%')) = true) " +
             "AND (tr.tenantId = :tenantId " +
             "OR (tr.tenantId = :systemAdminId " +
             "AND NOT EXISTS " +
