@@ -41,7 +41,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToVersionControlServ
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueClusterService;
 
-import java.util.List;
 import java.util.UUID;
 
 public interface TbClusterService extends TbQueueClusterService {

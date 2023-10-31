@@ -61,7 +61,8 @@ export class KafkaTemplate implements IQueue {
 
     async init(): Promise<void> {
         const kafkaBootstrapServers: string = config.get('kafka.bootstrap.servers');
-        const requestTopic: string = config.get('request_topic');
+        const queuePrefix: string = config.get('queue_prefix');
+        const requestTopic: string = queuePrefix ? queuePrefix + "." + config.get('request_topic') : config.get('request_topic');
         const useConfluent = config.get('kafka.use_confluent_cloud');
 
         this.logger.info('Kafka Bootstrap Servers: %s', kafkaBootstrapServers);

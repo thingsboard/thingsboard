@@ -62,6 +62,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -77,6 +78,7 @@ public class HashPartitionServiceTest {
     private TenantRoutingInfoService routingInfoService;
     private ApplicationEventPublisher applicationEventPublisher;
     private QueueRoutingInfoService queueRoutingInfoService;
+    private TopicService topicService;
 
     private String hashFunctionName = "murmur3_128";
 
@@ -86,6 +88,8 @@ public class HashPartitionServiceTest {
         applicationEventPublisher = mock(ApplicationEventPublisher.class);
         routingInfoService = mock(TenantRoutingInfoService.class);
         queueRoutingInfoService = mock(QueueRoutingInfoService.class);
+        topicService = mock(TopicService.class);
+        when(topicService.buildTopicName(Mockito.any())).thenAnswer(i -> i.getArguments()[0]);
         clusterRoutingService = createPartitionService();
         ServiceInfo currentServer = ServiceInfo.newBuilder()
                 .setServiceId("tb-core-0")
@@ -393,7 +397,8 @@ public class HashPartitionServiceTest {
         HashPartitionService partitionService = new HashPartitionService(discoveryService,
                 routingInfoService,
                 applicationEventPublisher,
-                queueRoutingInfoService);
+                queueRoutingInfoService,
+                topicService);
         ReflectionTestUtils.setField(partitionService, "coreTopic", "tb.core");
         ReflectionTestUtils.setField(partitionService, "corePartitions", 10);
         ReflectionTestUtils.setField(partitionService, "vcTopic", "tb.vc");

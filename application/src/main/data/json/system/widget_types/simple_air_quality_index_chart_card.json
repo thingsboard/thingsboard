@@ -27,6 +27,9 @@
     "weather",
     "environment",
     "air",
-    "aqi"
+    "aqi",
+    "pollution",
+    "emission",
+    "smog"
   ]
 }

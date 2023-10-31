@@ -1271,6 +1271,7 @@ swagger:
 # Queue configuration parameters
 queue:
   type: "${TB_QUEUE_TYPE:in-memory}" # in-memory or kafka (Apache Kafka) or aws-sqs (AWS SQS) or pubsub (PubSub) or service-bus (Azure Service Bus) or rabbitmq (RabbitMQ)
+  prefix: "${TB_QUEUE_PREFIX:}" # Global queue prefix. If specified, prefix is added before default topic name: 'prefix.default_topic_name'. Prefix is applied to all topics (and consumer groups for kafka) except of js executor topics (please use REMOTE_JS_EVAL_REQUEST_TOPIC and REMOTE_JS_EVAL_RESPONSE_TOPIC to specify custom topic names)
   in_memory:
     stats:
       # For debug level

@@ -16,9 +16,9 @@
 
 import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
-import { ColorRange, ColorSettings, ColorType, colorTypeTranslations } from '@shared/models/widget-settings.models';
+import { ColorSettings, ColorType, colorTypeTranslations } from '@shared/models/widget-settings.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
-import { AbstractControl, FormGroup, UntypedFormArray, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { deepClone } from '@core/utils';
@@ -67,7 +67,7 @@ export class ColorSettingsPanelComponent extends PageComponent implements OnInit
       {
         type: [this.colorSettings?.type, []],
         color: [this.colorSettings?.color, []],
-        rangeList: this.fb.array((this.colorSettings?.rangeList || []).map(r => this.colorRangeControl(r))),
+        rangeList: [this.colorSettings?.rangeList, []],
         colorFunction: [this.colorSettings?.colorFunction, []]
       }
     );
@@ -76,51 +76,15 @@ export class ColorSettingsPanelComponent extends PageComponent implements OnInit
     });
   }
 
-  private colorRangeControl(range: ColorRange): AbstractControl {
-    return this.fb.group({
-      from: [range?.from, []],
-      to: [range?.to, []],
-      color: [range?.color, []]
-    });
-  }
-
-  get rangeListFormArray(): UntypedFormArray {
-    return this.colorSettingsFormGroup.get('rangeList') as UntypedFormArray;
-  }
-
-  get rangeListFormGroups(): FormGroup[] {
-    return this.rangeListFormArray.controls as FormGroup[];
-  }
-
-  trackByRange(index: number, rangeControl: AbstractControl): any {
-    return rangeControl;
-  }
-
-  removeRange(index: number) {
-    this.rangeListFormArray.removeAt(index);
-    this.colorSettingsFormGroup.markAsDirty();
-    setTimeout(() => {this.popover?.updatePosition();}, 0);
-  }
-
-  addRange() {
-    const newRange: ColorRange = {
-      color: 'rgba(0,0,0,0.87)'
-    };
-    this.rangeListFormArray.push(this.colorRangeControl(newRange));
-    this.colorSettingsFormGroup.markAsDirty();
-    setTimeout(() => {this.popover?.updatePosition();}, 0);
-  }
-
   copyColorSettings(comp: ColorSettingsComponent) {
     const sourceSettings = deepClone(comp.modelValue);
     this.colorSettings = sourceSettings;
     this.colorSettingsFormGroup.patchValue({
       type: this.colorSettings.type,
       color: this.colorSettings.color,
-      colorFunction: this.colorSettings.colorFunction
+      colorFunction: this.colorSettings.colorFunction,
+      rangeList: this.colorSettings.rangeList || []
     }, {emitEvent: false});
-    this.colorSettingsFormGroup.setControl('rangeList',
-      this.fb.array((this.colorSettings.rangeList || []).map(r => this.colorRangeControl(r))), {emitEvent: false});
     this.colorSettingsFormGroup.markAsDirty();
   }
 

@@ -249,7 +249,7 @@
 },
 {
   "name": "unit.liter",
-  "symbol": "l",
+  "symbol": "L",
   "tags": ["volume","capacity","extent","liter","liters","l"]
 },
 {
@@ -1113,7 +1113,7 @@
   "symbol": "%",
   "tags": ["power source","state of charge (SoC)","battery","battery level","level","humidity","moisture","percentage",
     "relative humidity","water content","soil moisture","irrigation","water in soil","soil water content","VWC",
-    "Volumetric Water Content","Total Harmonic Distortion","THD","power quality","UV Transmittance","%"]
+    "Volumetric Water Content","Total Harmonic Distortion","THD","power quality","UV Transmittance","%", "capacity"]
 },
 {
   "name": "unit.rssi",
