@@ -132,6 +132,17 @@ message KeyValueProto {
   string json_v = 7;
 }
 
+enum AttributeScopeProto {
+    CLIENT_SCOPE = 0;
+    SERVER_SCOPE = 1;
+    SHARED_SCOPE = 2;
+}
+
+message AttributeKey {
+  AttributeScopeProto scope = 1;
+  string attributeKey = 2;
+}
+
 message AttributeValueProto {
   int64 lastUpdateTs = 1;
   KeyValueType type = 2;
@@ -141,6 +152,7 @@ message AttributeValueProto {
   double double_v = 6;
   string string_v = 7;
   string json_v = 8;
+  optional string key = 9;
 }
 
 message TsKvProto {
@@ -463,7 +475,7 @@ message DeviceCredentialsProto {
   int64 deviceIdLSB = 2;
   CredentialsType credentialsType = 3;
   string credentialsId = 4;
-  string credentialsValue = 5;
+  optional string credentialsValue = 5;
 }
 
 message CredentialsDataProto {
@@ -801,6 +813,106 @@ message EdgeNotificationMsgProto {
   PostAttributeMsg postAttributesMsg = 12;
 }
 
+message EdgeEventUpdateMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 edgeIdMSB = 3;
+  int64 edgeIdLSB = 4;
+}
+
+message ToEdgeSyncRequestMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 requestIdMSB = 3;
+  int64 requestIdLSB = 4;
+  int64 edgeIdMSB = 5;
+  int64 edgeIdLSB = 6;
+}
+
+message FromEdgeSyncResponseMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 responseIdMSB = 3;
+  int64 responseIdLSB = 4;
+  int64 edgeIdMSB = 5;
+  int64 edgeIdLSB = 6;
+  bool success = 7;
+}
+
+message DeviceEdgeUpdateMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  int64 edgeIdMSB = 5;
+  int64 edgeIdLSB = 6;
+}
+
+message DeviceNameOrTypeUpdateMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  string deviceName = 5;
+  string deviceType = 6;
+}
+
+message DeviceAttributesEventMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  repeated AttributeKey deletedKeys = 5;
+  optional AttributeScopeProto scope = 6;
+  repeated AttributeValueProto values = 7;
+  bool deleted = 8;
+}
+
+message DeviceCredentialsUpdateMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  DeviceCredentialsProto deviceCredentials = 5;
+}
+
+message ToDeviceRpcRequestActorMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  string serviceId = 5;
+  ToDeviceRpcRequestMsg toDeviceRpcRequestMsg = 6;
+}
+
+message FromDeviceRpcResponseActorMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  int32 requestId = 5;
+  FromDeviceRPCResponseProto rpcResponse = 6;
+}
+
+message RemoveRpcActorMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 requestIdMSB = 3;
+  int64 requestIdLSB = 4;
+  int64 deviceIdMSB = 5;
+  int64 deviceIdLSB = 6;
+}
+
+message ToDeviceActorNotificationMsgProto {
+  DeviceEdgeUpdateMsgProto deviceEdgeUpdateMsg = 1;
+  DeviceNameOrTypeUpdateMsgProto deviceNameOrTypeMsg = 2;
+  DeviceAttributesEventMsgProto deviceAttributesEventMsg = 3;
+  DeviceCredentialsUpdateMsgProto deviceCredentialsUpdateMsg = 4;
+  ToDeviceRpcRequestActorMsgProto toDeviceRpcRequestMsg = 5;
+  FromDeviceRpcResponseActorMsgProto fromDeviceRpcResponseMsg = 6;
+  RemoveRpcActorMsgProto removeRpcActorMsg = 7;
+}
+
 /**
    TB Core to Version Control Service
  */
@@ -1026,12 +1138,13 @@ message ToCoreMsg {
   TransportToDeviceActorMsg toDeviceActorMsg = 1;
   DeviceStateServiceMsgProto deviceStateServiceMsg = 2;
   SubscriptionMgrMsgProto toSubscriptionMgrMsg = 3;
-  bytes toDeviceActorNotificationMsg = 4;
+  bytes toDeviceActorNotificationMsg = 4 [deprecated = true];
   EdgeNotificationMsgProto edgeNotificationMsg = 5;
   DeviceActivityProto deviceActivityMsg = 6;
   NotificationSchedulerServiceMsg notificationSchedulerServiceMsg = 7;
   LifecycleEventProto lifecycleEventMsg = 8;
   ErrorEventProto errorEventMsg = 9;
+  ToDeviceActorNotificationMsgProto toDeviceActorNotification = 10;
 }
 
 /* High priority messages with low latency are handled by ThingsBoard Core Service separately */
@@ -1039,16 +1152,19 @@ message ToCoreMsg {
 message ToCoreNotificationMsg {
   LocalSubscriptionServiceMsgProto toLocalSubscriptionServiceMsg = 1;
   FromDeviceRPCResponseProto fromDeviceRpcResponse = 2;
-  bytes componentLifecycleMsg = 3; //will be removed in 3.6.1 in favour of ComponentLifecycleMsgProto
-  bytes edgeEventUpdateMsg = 4;
+  bytes componentLifecycleMsg = 3 [deprecated = true];
+  bytes edgeEventUpdateMsg = 4 [deprecated = true];
   QueueUpdateMsg queueUpdateMsg = 5;
   QueueDeleteMsg queueDeleteMsg = 6;
   VersionControlResponseMsg vcResponseMsg = 7;
-  bytes toEdgeSyncRequestMsg = 8;
-  bytes fromEdgeSyncResponseMsg = 9;
+  bytes toEdgeSyncRequestMsg = 8 [deprecated = true];
+  bytes fromEdgeSyncResponseMsg = 9 [deprecated = true];
   SubscriptionMgrMsgProto toSubscriptionMgrMsg = 10;
   NotificationRuleProcessorMsg notificationRuleProcessorMsg = 11;
   ComponentLifecycleMsgProto componentLifecycle = 12;
+  EdgeEventUpdateMsgProto edgeEventUpdate = 13;
+  ToEdgeSyncRequestMsgProto toEdgeSyncRequest = 14;
+  FromEdgeSyncResponseMsgProto fromEdgeSyncResponse = 15;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */
@@ -1061,7 +1177,7 @@ message ToRuleEngineMsg {
 }
 
 message ToRuleEngineNotificationMsg {
-  bytes componentLifecycleMsg = 1; // will be removed in 3.6.1 in favour of ComponentLifecycleMsgProto
+  bytes componentLifecycleMsg = 1 [deprecated = true];
   FromDeviceRPCResponseProto fromDeviceRpcResponse = 2;
   QueueUpdateMsg queueUpdateMsg = 3;
   QueueDeleteMsg queueDeleteMsg = 4;
