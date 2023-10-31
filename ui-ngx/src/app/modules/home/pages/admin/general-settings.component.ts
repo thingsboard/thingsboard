@@ -14,12 +14,11 @@
 /// limitations under the License.
 ///
 
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
-import { Router } from '@angular/router';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
   AdminSettings,
   DeviceConnectivityProtocol,
@@ -28,26 +27,29 @@ import {
 } from '@shared/models/settings.models';
 import { AdminService } from '@core/http/admin.service';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-general-settings',
   templateUrl: './general-settings.component.html',
   styleUrls: ['./general-settings.component.scss', './settings-card.scss']
 })
-export class GeneralSettingsComponent extends PageComponent implements HasConfirmForm {
+export class GeneralSettingsComponent extends PageComponent implements HasConfirmForm, OnDestroy {
 
-  generalSettings: UntypedFormGroup;
-  private adminSettings: AdminSettings<GeneralSettings>;
-
-  deviceConnectivitySettingsForm: UntypedFormGroup;
-  private deviceConnectivitySettings: AdminSettings<DeviceConnectivitySettings>;
+  generalSettings: FormGroup;
+  deviceConnectivitySettingsForm: FormGroup;
 
   protocol: DeviceConnectivityProtocol = 'http';
 
+  private adminSettings: AdminSettings<GeneralSettings>;
+  private deviceConnectivitySettings: AdminSettings<DeviceConnectivitySettings>;
+
+  private readonly destroy$ = new Subject<void>();
+
   constructor(protected store: Store<AppState>,
-              private router: Router,
               private adminService: AdminService,
-              public fb: UntypedFormBuilder) {
+              public fb: FormBuilder) {
     super(store);
     this.buildGeneralServerSettingsForm();
     this.adminService.getAdminSettings<GeneralSettings>('general')
@@ -57,46 +59,48 @@ export class GeneralSettingsComponent extends PageComponent implements HasConfir
       .subscribe(deviceConnectivitySettings => this.processDeviceConnectivitySettings(deviceConnectivitySettings));
   }
 
-  buildGeneralServerSettingsForm() {
+  ngOnDestroy() {
+    super.ngOnDestroy();
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private buildGeneralServerSettingsForm() {
     this.generalSettings = this.fb.group({
       baseUrl: ['', [Validators.required]],
       prohibitDifferentUrl: ['',[]]
     });
   }
 
-  buildDeviceConnectivitySettingsForm() {
+  private buildDeviceConnectivitySettingsForm() {
     this.deviceConnectivitySettingsForm = this.fb.group({
-      http: this.fb.group({
-        enabled: [false, []],
-        host: ['', []],
-        port: [null, [Validators.min(1), Validators.max(65535), Validators.pattern('[0-9]*')]]
-      }),
-      https: this.fb.group({
-        enabled: [false, []],
-        host: ['', []],
-        port: [null, [Validators.min(1), Validators.max(65535), Validators.pattern('[0-9]*')]]
-      }),
-      mqtt: this.fb.group({
-        enabled: [false, []],
-        host: ['', []],
-        port: [null, [Validators.min(1), Validators.max(65535), Validators.pattern('[0-9]*')]]
-      }),
-      mqtts: this.fb.group({
-        enabled: [false, []],
-        host: ['', []],
-        port: [null, [Validators.min(1), Validators.max(65535), Validators.pattern('[0-9]*')]]
-      }),
-      coap: this.fb.group({
-        enabled: [false, []],
-        host: ['', []],
-        port: [null, [Validators.min(1), Validators.max(65535), Validators.pattern('[0-9]*')]]
-      }),
-      coaps: this.fb.group({
-        enabled: [false, []],
-        host: ['', []],
-        port: [null, [Validators.min(1), Validators.max(65535), Validators.pattern('[0-9]*')]]
-      }),
+      http: this.buildDeviceConnectivityInfoForm(),
+      https: this.buildDeviceConnectivityInfoForm(),
+      mqtt: this.buildDeviceConnectivityInfoForm(),
+      mqtts: this.buildDeviceConnectivityInfoForm(),
+      coap: this.buildDeviceConnectivityInfoForm(),
+      coaps: this.buildDeviceConnectivityInfoForm()
     });
+  }
+
+  private buildDeviceConnectivityInfoForm(): FormGroup {
+    const formGroup = this.fb.group({
+      enabled: [false, []],
+      host: [{value: '', disabled: true}],
+      port: [{value: null, disabled: true}, [Validators.min(1), Validators.max(65535), Validators.pattern('[0-9]*')]]
+    });
+    formGroup.get('enabled').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(value => {
+      if (value) {
+        formGroup.get('host').enable({emitEvent: false});
+        formGroup.get('port').enable({emitEvent: false});
+      } else {
+        formGroup.get('host').disable({emitEvent: false});
+        formGroup.get('port').disable({emitEvent: false});
+      }
+    });
+    return formGroup;
   }
 
   save(): void {
@@ -106,7 +110,10 @@ export class GeneralSettingsComponent extends PageComponent implements HasConfir
   }
 
   saveDeviceConnectivitySettings(): void {
-    this.deviceConnectivitySettings.jsonValue = {...this.deviceConnectivitySettings.jsonValue, ...this.deviceConnectivitySettingsForm.value};
+    this.deviceConnectivitySettings.jsonValue = {
+      ...this.deviceConnectivitySettings.jsonValue,
+      ...this.deviceConnectivitySettingsForm.value
+    };
     this.adminService.saveAdminSettings<DeviceConnectivitySettings>(this.deviceConnectivitySettings)
       .subscribe(deviceConnectivitySettings => this.processDeviceConnectivitySettings(deviceConnectivitySettings));
   }
@@ -129,7 +136,7 @@ export class GeneralSettingsComponent extends PageComponent implements HasConfir
     this.deviceConnectivitySettingsForm.reset(this.deviceConnectivitySettings.jsonValue);
   }
 
-  confirmForm(): UntypedFormGroup {
+  confirmForm(): FormGroup {
     return this.generalSettings.dirty ? this.generalSettings : this.deviceConnectivitySettingsForm;
   }
 

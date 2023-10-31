@@ -13,13 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import "../../../../../scss/constants";
+
 :host {
   .settings-card {
     .toggle-group {
-      display: block;
+      max-width: 670px;
+      width: 100%;
+      margin: 0 auto;
+
+      .tb-form-hint {
+        text-align: center;
+      }
     }
-    .margin-bottom {
-      margin-bottom: 12px;
+
+    @media #{$mat-xs} {
+      .tb-form-row {
+        gap: 0;
+      }
     }
   }
 }
