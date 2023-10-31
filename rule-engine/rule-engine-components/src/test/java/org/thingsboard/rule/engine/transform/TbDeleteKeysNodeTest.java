@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.transform;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,6 +26,7 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
@@ -45,8 +45,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 public class TbDeleteKeysNodeTest {
-    final ObjectMapper mapper = new ObjectMapper();
-
     DeviceId deviceId;
     TbDeleteKeysNode node;
     TbDeleteKeysNodeConfiguration config;
@@ -62,7 +60,7 @@ public class TbDeleteKeysNodeTest {
         config = new TbDeleteKeysNodeConfiguration().defaultConfiguration();
         config.setKeys(Set.of("TestKey_1", "TestKey_2", "TestKey_3", "(\\w*)Data(\\w*)"));
         config.setFromMetadata(true);
-        nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node = spy(new TbDeleteKeysNode());
         node.init(ctx, nodeConfiguration);
     }
@@ -81,8 +79,7 @@ public class TbDeleteKeysNodeTest {
 
     @Test
     void givenMsgFromMetadata_whenOnMsg_thenVerifyOutput() throws Exception {
-        String data = "{}";
-        node.onMsg(ctx, getTbMsg(deviceId, data));
+        node.onMsg(ctx, getTbMsg(deviceId, TbMsg.EMPTY_JSON_OBJECT));
 
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());
@@ -99,7 +96,7 @@ public class TbDeleteKeysNodeTest {
     @Test
     void givenMsgFromMsg_whenOnMsg_thenVerifyOutput() throws Exception {
         config.setFromMetadata(false);
-        nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
 
         String data = "{\"Voltage\":22.5,\"TempDataValue\":10.5}";
@@ -120,7 +117,7 @@ public class TbDeleteKeysNodeTest {
     @Test
     void givenEmptyKeys_whenOnMsg_thenVerifyOutput() throws Exception {
         TbDeleteKeysNodeConfiguration defaultConfig = new TbDeleteKeysNodeConfiguration().defaultConfiguration();
-        nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(defaultConfig));
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(defaultConfig));
         node.init(ctx, nodeConfiguration);
 
         String data = "{\"Voltage\":220,\"Humidity\":56}";
@@ -143,7 +140,7 @@ public class TbDeleteKeysNodeTest {
                 "voltageDataValue", "220",
                 "city", "NY"
         );
-        return TbMsg.newMsg("POST_ATTRIBUTES_REQUEST", entityId, new TbMsgMetaData(mdMap), data, callback);
+        return TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, entityId, new TbMsgMetaData(mdMap), data, callback);
     }
 
 }

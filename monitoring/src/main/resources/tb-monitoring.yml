@@ -32,79 +32,62 @@ monitoring:
     # WebSocket request timeout
     request_timeout_ms: '${WS_REQUEST_TIMEOUT_MS:3000}'
 
+  # Checks frequency in milliseconds
+  monitoring_rate_ms: '${MONITORING_RATE_MS:10000}'
   # Maximum time between request to transport and WebSocket update
   check_timeout_ms: '${CHECK_TIMEOUT_MS:5000}'
 
   # Failures threshold for notifying
   failures_threshold: '${FAILURES_THRESHOLD:2}'
-  # Whether to notify about next failures after first notification (will notify after each FAILURES_THRESHOLD failures)
-  send_repeated_failure_notification: '${SEND_REPEATED_FAILURE_NOTIFICATION:true}'
+  # Notify after each REPEATED_FAILURE_NOTIFICATION subsequent failures, 0 to notify only once on first failure
+  repeated_failure_notification: '${REPEATED_FAILURE_NOTIFICATION:4}'
 
   transports:
-    # Transports check frequency in milliseconds
-    monitoring_rate_ms: '${TRANSPORTS_MONITORING_RATE_MS:10000}'
-
     mqtt:
-      # Enable MQTT checks
+      # Enable MQTT transport checks
       enabled: '${MQTT_TRANSPORT_MONITORING_ENABLED:true}'
       # MQTT request timeout in milliseconds
       request_timeout_ms: '${MQTT_REQUEST_TIMEOUT_MS:4000}'
       # MQTT QoS
       qos: '${MQTT_QOS_LEVEL:1}'
       targets:
-          # MQTT base url, tcp://DOMAIN:1883 by default
+        # MQTT transport base url, tcp://DOMAIN:1883 by default
         - base_url: '${MQTT_TRANSPORT_BASE_URL:tcp://${monitoring.domain}:1883}'
-          device:
-            # MQTT device to push telemetry for. If not set - device will be found or created automatically
-            id: '${MQTT_TRANSPORT_TARGET_DEVICE_ID:}'
         # To add more targets, use following environment variables:
-        # monitoring.transports.mqtt.targets[1].base_url, monitoring.transports.mqtt.targets[1].device.id,
-        # monitoring.transports.mqtt.targets[2].base_url, monitoring.transports.mqtt.targets[2].device.id, etc.
+        # monitoring.transports.mqtt.targets[1].base_url, monitoring.transports.mqtt.targets[2].base_url, etc.
 
     coap:
-      # Enable CoAP checks
+      # Enable CoAP transport checks
       enabled: '${COAP_TRANSPORT_MONITORING_ENABLED:true}'
       # CoAP request timeout in milliseconds
       request_timeout_ms: '${COAP_REQUEST_TIMEOUT_MS:4000}'
       targets:
-        # CoAP base url, coap://DOMAIN by default
+        # CoAP transport base url, coap://DOMAIN by default
         - base_url: '${COAP_TRANSPORT_BASE_URL:coap://${monitoring.domain}}'
-          # CoAP device to push telemetry for. If not set - device will be found or created automatically
-          device:
-            id: '${COAP_TRANSPORT_TARGET_DEVICE_ID:}'
         # To add more targets, use following environment variables:
-        # monitoring.transports.coap.targets[1].base_url, monitoring.transports.coap.targets[1].device.id,
-        # monitoring.transports.coap.targets[2].base_url, monitoring.transports.coap.targets[2].device.id, etc.
+        # monitoring.transports.coap.targets[1].base_url, monitoring.transports.coap.targets[2].base_url, etc.
 
     http:
-      # Enable HTTP checks
+      # Enable HTTP transport checks
       enabled: '${HTTP_TRANSPORT_MONITORING_ENABLED:true}'
       # HTTP request timeout in milliseconds
       request_timeout_ms: '${HTTP_REQUEST_TIMEOUT_MS:4000}'
       targets:
-        # HTTP base url, https://DOMAIN by default
-        - base_url: '${HTTP_TRANSPORT_BASE_URL:https://${monitoring.domain}}'
-          device:
-            # HTTP device to push telemetry for. If not set - device will be found or created automatically
-            id: '${HTTP_TRANSPORT_TARGET_DEVICE_ID:}'
+        # HTTP transport base url, http://DOMAIN by default
+        - base_url: '${HTTP_TRANSPORT_BASE_URL:http://${monitoring.domain}}'
         # To add more targets, use following environment variables:
-        # monitoring.transports.http.targets[1].base_url, monitoring.transports.http.targets[1].device.id,
-        # monitoring.transports.http.targets[2].base_url, monitoring.transports.http.targets[2].device.id, etc.
+        # monitoring.transports.http.targets[1].base_url, monitoring.transports.http.targets[2].base_url, etc.
 
     lwm2m:
-      # Enable LwM2M checks
+      # Enable LwM2M transport checks
       enabled: '${LWM2M_TRANSPORT_MONITORING_ENABLED:true}'
       # LwM2M request timeout in milliseconds
       request_timeout_ms: '${LWM2M_REQUEST_TIMEOUT_MS:4000}'
       targets:
-        # LwM2M base url, coap://DOMAIN:5685 by default
+        # LwM2M transport base url, coap://DOMAIN:5685 by default
         - base_url: '${LWM2M_TRANSPORT_BASE_URL:coap://${monitoring.domain}:5685}'
-          # LwM2M device to push telemetry for. If not set - device will be found or created automatically
-          device:
-            id: '${LWM2M_TRANSPORT_TARGET_DEVICE_ID:}'
         # To add more targets, use following environment variables:
-        # monitoring.transports.lwm2m.targets[1].base_url, monitoring.transports.lwm2m.targets[1].device.id,
-        # monitoring.transports.lwm2m.targets[2].base_url, monitoring.transports.lwm2m.targets[2].device.id, etc.
+        # monitoring.transports.lwm2m.targets[1].base_url, monitoring.transports.lwm2m.targets[2].base_url, etc.
 
   notification_channels:
     slack:

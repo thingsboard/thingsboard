@@ -22,11 +22,14 @@
         <div fxFlex fxLayout="row"
              fxLayoutAlign="start center"
              *ngFor="let resource of action.customResources; let i = index" style="padding-top: 10px;">
-          <mat-form-field fxFlex class="mat-block" subscriptSizing="dynamic">
-            <input required matInput [(ngModel)]="resource.url"
-                   (ngModelChange)="notifyActionUpdated()"
-                   placeholder="{{ 'widget.resource-url' | translate }}"/>
-          </mat-form-field>
+          <tb-resource-autocomplete fxFlex class="mat-block"
+                                    subscriptSizing="dynamic"
+                                    hideRequiredMarker required
+                                    [allowAutocomplete]="resource.isModule"
+                                    [(ngModel)]="resource.url"
+                                    (ngModelChange)="notifyActionUpdated()"
+                                    placeholder="{{ 'widget.resource-url' | translate }}">
+          </tb-resource-autocomplete>
           <mat-checkbox [(ngModel)]="resource.isModule"
                         (ngModelChange)="notifyActionUpdated()">
             {{ 'widget.resource-is-module' | translate }}
@@ -40,16 +43,15 @@
             <mat-icon>close</mat-icon>
           </button>
         </div>
-        <div style="margin-top: 18px;">
-          <button mat-button mat-raised-button color="primary"
-                  [disabled]="isLoading$ | async"
-                  type="button"
-                  (click)="addResource()"
-                  matTooltip="{{'widget.add-resource' | translate}}"
-                  matTooltipPosition="above">
-            <span translate>action.add</span>
-          </button>
-        </div>
+        <button mat-button mat-raised-button color="primary"
+                style="margin-top: 18px;"
+                [disabled]="isLoading$ | async"
+                type="button"
+                (click)="addResource()"
+                matTooltip="{{'widget.add-resource' | translate}}"
+                matTooltipPosition="above">
+          <span translate>action.add</span>
+        </button>
       </div>
     </div>
   </mat-tab>

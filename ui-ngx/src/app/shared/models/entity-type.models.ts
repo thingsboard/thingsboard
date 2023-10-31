@@ -269,6 +269,19 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
       }
     ],
     [
+      EntityType.WIDGET_TYPE,
+      {
+        type: 'entity.type-widget',
+        typePlural: 'entity.type-widgets',
+        list: 'entity.list-of-widgets',
+        details: 'widget.details',
+        add: 'dashboard.add-widget',
+        noEntities: 'widget.no-widgets-text',
+        search: 'widget.search-widgets',
+        selectedEntities: 'widget.selected-widgets'
+      }
+    ],
+    [
       EntityType.WIDGETS_BUNDLE,
       {
         type: 'entity.type-widgets-bundle',
@@ -368,6 +381,8 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
       EntityType.NOTIFICATION_RULE,
       {
         type: 'entity.type-notification-rule',
+        typePlural: 'entity.type-notification-rules',
+        list: 'entity.list-of-notification-rules',
         noEntities: 'notification.no-rules-notification',
         search: 'notification.search-rules',
         selectedEntities: 'notification.selected-rules'
@@ -377,6 +392,8 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
       EntityType.NOTIFICATION_TARGET,
       {
         type: 'entity.type-notification-target',
+        typePlural: 'entity.type-notification-targets',
+        list: 'entity.list-of-notification-targets',
         noEntities: 'notification.no-recipients-notification',
         search: 'notification.search-recipients',
         selectedEntities: 'notification.selected-recipients'
@@ -386,6 +403,8 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
       EntityType.NOTIFICATION_TEMPLATE,
       {
         type: 'entity.type-notification-template',
+        typePlural: 'entity.type-notification-templates',
+        list: 'entity.list-of-notification-templates',
         noEntities: 'notification.no-notification-templates',
         search: 'notification.search-templates',
         selectedEntities: 'notification.selected-template'
@@ -466,6 +485,12 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseDa
       EntityType.DASHBOARD,
       {
         helpLinkId: 'dashboards'
+      }
+    ],
+    [
+      EntityType.WIDGET_TYPE,
+      {
+        helpLinkId: 'widgetTypes'
       }
     ],
     [

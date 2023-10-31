@@ -125,6 +125,10 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
       }
       return true;
     };
+
+    this.config.entityAdded = widgetsBundle => {
+      this.openWidgetsBundle(null, widgetsBundle);
+    };
   }
 
   resolve(): EntityTableConfig<WidgetsBundle> {

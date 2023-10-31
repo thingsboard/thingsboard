@@ -16,8 +16,8 @@
 package org.thingsboard.server.actors.stats;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActor;
 import org.thingsboard.server.actors.TbActorId;
@@ -30,8 +30,6 @@ import org.thingsboard.server.common.msg.TbActorMsg;
 
 @Slf4j
 public class StatsActor extends ContextAwareActor {
-
-    private final ObjectMapper mapper = new ObjectMapper();
 
     public StatsActor(ActorSystemContext context) {
         super(context);
@@ -63,7 +61,7 @@ public class StatsActor extends ContextAwareActor {
     }
 
     private JsonNode toBodyJson(String serviceId, long messagesProcessed, long errorsOccurred) {
-        return mapper.createObjectNode().put("server", serviceId).put("messagesProcessed", messagesProcessed).put("errorsOccurred", errorsOccurred);
+        return JacksonUtil.newObjectNode().put("server", serviceId).put("messagesProcessed", messagesProcessed).put("errorsOccurred", errorsOccurred);
     }
 
     public static class ActorCreator extends ContextBasedCreator {

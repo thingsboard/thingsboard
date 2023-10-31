@@ -20,8 +20,9 @@ import { PageLink } from '@shared/models/page/page-link';
 import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-utils';
 import { forkJoin, Observable, of } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
-import { Resource, ResourceInfo } from '@shared/models/resource.models';
+import { Resource, ResourceInfo, ResourceType } from '@shared/models/resource.models';
 import { catchError, map, mergeMap } from 'rxjs/operators';
+import { isNotEmptyStr } from '@core/utils';
 
 @Injectable({
   providedIn: 'root'
@@ -33,13 +34,20 @@ export class ResourceService {
 
   }
 
-  public getResources(pageLink: PageLink, config?: RequestConfig): Observable<PageData<ResourceInfo>> {
-    return this.http.get<PageData<ResourceInfo>>(`/api/resource${pageLink.toQuery()}`,
-      defaultHttpOptionsFromConfig(config));
+  public getResources(pageLink: PageLink, resourceType?: ResourceType, config?: RequestConfig): Observable<PageData<ResourceInfo>> {
+    let url = `/api/resource${pageLink.toQuery()}`;
+    if (isNotEmptyStr(resourceType)) {
+      url += `&resourceType=${resourceType}`;
+    }
+    return this.http.get<PageData<ResourceInfo>>(url, defaultHttpOptionsFromConfig(config));
   }
 
   public getResource(resourceId: string, config?: RequestConfig): Observable<Resource> {
     return this.http.get<Resource>(`/api/resource/${resourceId}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getResourceInfo(resourceId: string, config?: RequestConfig): Observable<ResourceInfo> {
+    return this.http.get<Resource>(`/api/resource/info/${resourceId}`, defaultHttpOptionsFromConfig(config));
   }
 
   public downloadResource(resourceId: string): Observable<any> {

@@ -40,7 +40,7 @@ import java.util.Optional;
 @ApiModel
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implements HasLabel, HasTenantId, HasCustomerId, HasOtaPackage, ExportableEntity<DeviceId> {
+public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasLabel, HasTenantId, HasCustomerId, HasOtaPackage, ExportableEntity<DeviceId> {
 
     private static final long serialVersionUID = 2807343040519543363L;
 
@@ -146,7 +146,7 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         this.name = name;
     }
 
-    @ApiModelProperty(position = 6, required = true, value = "Device Profile Name", example = "Temperature Sensor")
+    @ApiModelProperty(position = 6, value = "Device Profile Name", example = "Temperature Sensor")
     public String getType() {
         return type;
     }
@@ -155,7 +155,7 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         this.type = type;
     }
 
-    @ApiModelProperty(position = 7, required = true, value = "Label that may be used in widgets", example = "Room 234 Sensor")
+    @ApiModelProperty(position = 7, value = "Label that may be used in widgets", example = "Room 234 Sensor")
     public String getLabel() {
         return label;
     }
@@ -199,11 +199,6 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         } catch (JsonProcessingException e) {
             log.warn("Can't serialize device data: ", e);
         }
-    }
-
-    @Override
-    public String getSearchText() {
-        return getName();
     }
 
     @ApiModelProperty(position = 10, value = "JSON object with Ota Package Id.")

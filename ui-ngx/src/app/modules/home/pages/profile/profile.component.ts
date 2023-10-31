@@ -30,6 +30,7 @@ import { ActionSettingsChangeLanguage } from '@core/settings/settings.actions';
 import { ActivatedRoute } from '@angular/router';
 import { isDefinedAndNotNull } from '@core/utils';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { AuthService } from '@core/auth/auth.service';
 
 @Component({
   selector: 'tb-profile',
@@ -47,6 +48,7 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
   constructor(protected store: Store<AppState>,
               private route: ActivatedRoute,
               private userService: UserService,
+              private authService: AuthService,
               private translate: TranslateService,
               public fb: UntypedFormBuilder) {
     super(store);
@@ -94,6 +96,7 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
             lastName: user.lastName,
           } }));
         this.store.dispatch(new ActionSettingsChangeLanguage({ userLang: user.additionalInfo.lang }));
+        this.authService.refreshJwtToken(false);
       }
     );
   }

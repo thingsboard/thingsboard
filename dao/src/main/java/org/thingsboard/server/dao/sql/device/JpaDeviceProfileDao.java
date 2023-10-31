@@ -31,7 +31,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.device.DeviceProfileDao;
 import org.thingsboard.server.dao.model.sql.DeviceProfileEntity;
-import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
+import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Objects;
@@ -40,7 +40,7 @@ import java.util.UUID;
 
 @Component
 @SqlDao
-public class JpaDeviceProfileDao extends JpaAbstractSearchTextDao<DeviceProfileEntity, DeviceProfile> implements DeviceProfileDao {
+public class JpaDeviceProfileDao extends JpaAbstractDao<DeviceProfileEntity, DeviceProfile> implements DeviceProfileDao {
 
     @Autowired
     private DeviceProfileRepository deviceProfileRepository;
@@ -73,7 +73,7 @@ public class JpaDeviceProfileDao extends JpaAbstractSearchTextDao<DeviceProfileE
         return DaoUtil.toPageData(
                 deviceProfileRepository.findDeviceProfiles(
                         tenantId.getId(),
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 
@@ -83,14 +83,14 @@ public class JpaDeviceProfileDao extends JpaAbstractSearchTextDao<DeviceProfileE
             return DaoUtil.pageToPageData(
                     deviceProfileRepository.findDeviceProfileInfos(
                             tenantId.getId(),
-                            Objects.toString(pageLink.getTextSearch(), ""),
+                            pageLink.getTextSearch(),
                             DeviceTransportType.valueOf(transportType),
                             DaoUtil.toPageable(pageLink)));
         } else {
             return DaoUtil.pageToPageData(
                     deviceProfileRepository.findDeviceProfileInfos(
                             tenantId.getId(),
-                            Objects.toString(pageLink.getTextSearch(), ""),
+                            pageLink.getTextSearch(),
                             DaoUtil.toPageable(pageLink)));
         }
     }

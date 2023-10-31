@@ -85,7 +85,8 @@ export class WidgetComponentService {
         this.editingWidgetType = toWidgetType(
           {
             widgetName: this.utils.editWidgetInfo.widgetName,
-            alias: 'customWidget',
+            fullFqn: 'system.customWidget',
+            deprecated: false,
             type: this.utils.editWidgetInfo.type,
             sizeX: this.utils.editWidgetInfo.sizeX,
             sizeY: this.utils.editWidgetInfo.sizeY,
@@ -99,8 +100,10 @@ export class WidgetComponentService {
             settingsDirective: this.utils.editWidgetInfo.settingsDirective,
             dataKeySettingsDirective: this.utils.editWidgetInfo.dataKeySettingsDirective,
             latestDataKeySettingsDirective: this.utils.editWidgetInfo.latestDataKeySettingsDirective,
+            hasBasicMode: this.utils.editWidgetInfo.hasBasicMode,
+            basicModeDirective: this.utils.editWidgetInfo.basicModeDirective,
             defaultConfig: this.utils.editWidgetInfo.defaultConfig
-          }, new WidgetTypeId('1'), new TenantId( NULL_UUID ), 'customWidgetBundle', undefined
+          }, new WidgetTypeId('1'), new TenantId( NULL_UUID ), undefined
         );
       }
       const initSubject = new ReplaySubject<void>();
@@ -162,7 +165,7 @@ export class WidgetComponentService {
           (window as any).TbMapWidgetV2 = mod.TbMapWidgetV2;
         }))
       );
-      widgetModulesTasks.push(from(import('@home/components/widget/trip-animation/trip-animation.component')).pipe(
+      widgetModulesTasks.push(from(import('@home/components/widget/lib/trip-animation/trip-animation.component')).pipe(
         tap((mod) => {
           (window as any).TbTripAnimationWidget = mod.TbTripAnimationWidget;
         }))
@@ -210,7 +213,7 @@ export class WidgetComponentService {
   }
 
   public getInstantWidgetInfo(widget: Widget): WidgetInfo {
-    const widgetInfo = this.widgetService.getWidgetInfoFromCache(widget.bundleAlias, widget.typeAlias, widget.isSystemType);
+    const widgetInfo = this.widgetService.getWidgetInfoFromCache(widget.typeFullFqn);
     if (widgetInfo) {
       return widgetInfo;
     } else {
@@ -218,42 +221,41 @@ export class WidgetComponentService {
     }
   }
 
-  public getWidgetInfo(bundleAlias: string, widgetTypeAlias: string, isSystem: boolean): Observable<WidgetInfo> {
+  public getWidgetInfo(fullFqn: string): Observable<WidgetInfo> {
     return this.init().pipe(
-      mergeMap(() => this.getWidgetInfoInternal(bundleAlias, widgetTypeAlias, isSystem))
+      mergeMap(() => this.getWidgetInfoInternal(fullFqn))
     );
   }
 
-  public clearWidgetInfo(widgetInfo: WidgetInfo, bundleAlias: string, widgetTypeAlias: string, isSystem: boolean): void {
-    this.dynamicComponentFactoryService.destroyDynamicComponentFactory(widgetInfo.componentFactory);
-    this.widgetService.deleteWidgetInfoFromCache(bundleAlias, widgetTypeAlias, isSystem);
+  public clearWidgetInfo(widgetInfo: WidgetInfo): void {
+    this.dynamicComponentFactoryService.destroyDynamicComponent(widgetInfo.componentType);
+    this.widgetService.deleteWidgetInfoFromCache(widgetInfo.fullFqn);
   }
 
-  private getWidgetInfoInternal(bundleAlias: string, widgetTypeAlias: string, isSystem: boolean): Observable<WidgetInfo> {
+  private getWidgetInfoInternal(fullFqn: string): Observable<WidgetInfo> {
     const widgetInfoSubject = new ReplaySubject<WidgetInfo>();
-    const widgetInfo = this.widgetService.getWidgetInfoFromCache(bundleAlias, widgetTypeAlias, isSystem);
+    const widgetInfo = this.widgetService.getWidgetInfoFromCache(fullFqn);
     if (widgetInfo) {
       widgetInfoSubject.next(widgetInfo);
       widgetInfoSubject.complete();
     } else {
       if (this.utils.widgetEditMode) {
-        this.loadWidget(this.editingWidgetType, bundleAlias, isSystem, widgetInfoSubject);
+        this.loadWidget(this.editingWidgetType, widgetInfoSubject);
       } else {
-        const key = this.widgetService.createWidgetInfoCacheKey(bundleAlias, widgetTypeAlias, isSystem);
-        let fetchQueue = this.widgetsInfoFetchQueue.get(key);
+        let fetchQueue = this.widgetsInfoFetchQueue.get(fullFqn);
         if (fetchQueue) {
           fetchQueue.push(widgetInfoSubject);
         } else {
           fetchQueue = new Array<Subject<WidgetInfo>>();
-          this.widgetsInfoFetchQueue.set(key, fetchQueue);
-          this.widgetService.getWidgetType(bundleAlias, widgetTypeAlias, isSystem, {ignoreErrors: true}).subscribe(
+          this.widgetsInfoFetchQueue.set(fullFqn, fetchQueue);
+          this.widgetService.getWidgetType(fullFqn, {ignoreErrors: true}).subscribe(
             (widgetType) => {
-              this.loadWidget(widgetType, bundleAlias, isSystem, widgetInfoSubject);
+              this.loadWidget(widgetType, widgetInfoSubject);
             },
             () => {
               widgetInfoSubject.next(this.missingWidgetType);
               widgetInfoSubject.complete();
-              this.resolveWidgetsInfoFetchQueue(key, this.missingWidgetType);
+              this.resolveWidgetsInfoFetchQueue(fullFqn, this.missingWidgetType);
             }
           );
         }
@@ -262,19 +264,18 @@ export class WidgetComponentService {
     return widgetInfoSubject.asObservable();
   }
 
-  private loadWidget(widgetType: WidgetType, bundleAlias: string, isSystem: boolean, widgetInfoSubject: Subject<WidgetInfo>) {
+  private loadWidget(widgetType: WidgetType, widgetInfoSubject: Subject<WidgetInfo>) {
     const widgetInfo = toWidgetInfo(widgetType);
-    const key = this.widgetService.createWidgetInfoCacheKey(bundleAlias, widgetInfo.alias, isSystem);
     let widgetControllerDescriptor: WidgetControllerDescriptor = null;
     try {
-      widgetControllerDescriptor = this.createWidgetControllerDescriptor(widgetInfo, key);
+      widgetControllerDescriptor = this.createWidgetControllerDescriptor(widgetInfo);
     } catch (e) {
       const details = this.utils.parseException(e);
       const errorMessage = `Failed to compile widget script. \n Error: ${details.message}`;
-      this.processWidgetLoadError([errorMessage], key, widgetInfoSubject);
+      this.processWidgetLoadError([errorMessage], widgetInfo.fullFqn, widgetInfoSubject);
     }
     if (widgetControllerDescriptor) {
-      const widgetNamespace = `widget-type-${(isSystem ? 'sys-' : '')}${bundleAlias}-${widgetInfo.alias}`;
+      const widgetNamespace = `widget-type-${widgetInfo.fullFqn.replace(/\./g, '-')}`;
       this.loadWidgetResources(widgetInfo, widgetNamespace, [SharedModule, WidgetComponentsModule, this.homeComponentsModule]).subscribe(
         () => {
           if (widgetControllerDescriptor.settingsSchema) {
@@ -289,15 +290,15 @@ export class WidgetComponentService {
           widgetInfo.typeParameters = widgetControllerDescriptor.typeParameters;
           widgetInfo.actionSources = widgetControllerDescriptor.actionSources;
           widgetInfo.widgetTypeFunction = widgetControllerDescriptor.widgetTypeFunction;
-          this.widgetService.putWidgetInfoToCache(widgetInfo, bundleAlias, widgetInfo.alias, isSystem);
+          this.widgetService.putWidgetInfoToCache(widgetInfo);
           if (widgetInfoSubject) {
             widgetInfoSubject.next(widgetInfo);
             widgetInfoSubject.complete();
           }
-          this.resolveWidgetsInfoFetchQueue(key, widgetInfo);
+          this.resolveWidgetsInfoFetchQueue(widgetInfo.fullFqn, widgetInfo);
         },
         (errorMessages: string[]) => {
-          this.processWidgetLoadError(errorMessages, key, widgetInfoSubject);
+          this.processWidgetLoadError(errorMessages, widgetInfo.fullFqn, widgetInfoSubject);
         }
       );
     }
@@ -360,13 +361,14 @@ export class WidgetComponentService {
             return of(resolvedModules);
           } else {
             this.registerWidgetSettingsForms(widgetInfo, resolvedModules.factories);
-            return this.dynamicComponentFactoryService.createDynamicComponentFactory(
+            return this.dynamicComponentFactoryService.createDynamicComponent(
               class DynamicWidgetComponentInstance extends DynamicWidgetComponent {},
               widgetInfo.templateHtml,
               resolvedModules.modules
             ).pipe(
-              map((factory) => {
-                widgetInfo.componentFactory = factory;
+              map((componentData) => {
+                widgetInfo.componentType = componentData.componentType;
+                widgetInfo.componentModuleRef = componentData.componentModuleRef;
                 return null;
               }),
               catchError(e => {
@@ -404,6 +406,9 @@ export class WidgetComponentService {
     if (widgetInfo.latestDataKeySettingsDirective && widgetInfo.latestDataKeySettingsDirective.length) {
       directives.push(widgetInfo.latestDataKeySettingsDirective);
     }
+    if (widgetInfo.basicModeDirective && widgetInfo.basicModeDirective.length) {
+      directives.push(widgetInfo.basicModeDirective);
+    }
     if (directives.length) {
       factories.filter((factory) => directives.includes(factory.selector))
         .forEach((foundFactory) => {
@@ -412,8 +417,8 @@ export class WidgetComponentService {
     }
   }
 
-  private createWidgetControllerDescriptor(widgetInfo: WidgetInfo, name: string): WidgetControllerDescriptor {
-    let widgetTypeFunctionBody = `return function _${name} (ctx) {\n` +
+  private createWidgetControllerDescriptor(widgetInfo: WidgetInfo): WidgetControllerDescriptor {
+    let widgetTypeFunctionBody = `return function _${widgetInfo.fullFqn.replace(/\./g, '_')} (ctx) {\n` +
       '    var self = this;\n' +
       '    self.ctx = ctx;\n\n'; /*+
 
@@ -535,6 +540,24 @@ export class WidgetComponentService {
       if (isUndefined(result.typeParameters.processNoDataByWidget)) {
         result.typeParameters.processNoDataByWidget = false;
       }
+      if (isUndefined(result.typeParameters.previewWidth)) {
+        result.typeParameters.previewWidth = '100%';
+      }
+      if (isUndefined(result.typeParameters.previewHeight)) {
+        result.typeParameters.previewHeight = '70%';
+      }
+      if (isUndefined(result.typeParameters.embedTitlePanel)) {
+        result.typeParameters.embedTitlePanel = false;
+      }
+      if (isUndefined(result.typeParameters.hideDataSettings)) {
+        result.typeParameters.hideDataSettings = false;
+      }
+      if (!isFunction(result.typeParameters.defaultDataKeysFunction)) {
+        result.typeParameters.defaultDataKeysFunction = null;
+      }
+      if (!isFunction(result.typeParameters.defaultLatestDataKeysFunction)) {
+        result.typeParameters.defaultLatestDataKeysFunction = null;
+      }
       if (isFunction(widgetTypeInstance.actionSources)) {
         result.actionSources = widgetTypeInstance.actionSources();
       } else {
@@ -551,18 +574,18 @@ export class WidgetComponentService {
     }
   }
 
-  private processWidgetLoadError(errorMessages: string[], cacheKey: string, widgetInfoSubject: Subject<WidgetInfo>) {
+  private processWidgetLoadError(errorMessages: string[], fullFqn: string, widgetInfoSubject: Subject<WidgetInfo>) {
     if (widgetInfoSubject) {
       widgetInfoSubject.error({
         widgetInfo: this.errorWidgetType,
         errorMessages
       });
     }
-    this.resolveWidgetsInfoFetchQueue(cacheKey, this.errorWidgetType, errorMessages);
+    this.resolveWidgetsInfoFetchQueue(fullFqn, this.errorWidgetType, errorMessages);
   }
 
-  private resolveWidgetsInfoFetchQueue(key: string, widgetInfo: WidgetInfo, errorMessages?: string[]) {
-    const fetchQueue = this.widgetsInfoFetchQueue.get(key);
+  private resolveWidgetsInfoFetchQueue(fullFqn: string, widgetInfo: WidgetInfo, errorMessages?: string[]) {
+    const fetchQueue = this.widgetsInfoFetchQueue.get(fullFqn);
     if (fetchQueue) {
       fetchQueue.forEach(subject => {
         if (!errorMessages) {
@@ -575,7 +598,7 @@ export class WidgetComponentService {
           });
         }
       });
-      this.widgetsInfoFetchQueue.delete(key);
+      this.widgetsInfoFetchQueue.delete(fullFqn);
     }
   }
 }

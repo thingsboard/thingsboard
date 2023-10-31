@@ -155,7 +155,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                 future = Futures.immediateFuture(null);
             } else {
                 Map<String, Object> entityData = new HashMap<>();
-                ObjectNode attributes = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+                ObjectNode attributes = JacksonUtil.newObjectNode();
                 for (AttributeKvEntry attr : ssAttributes) {
                     if (DefaultDeviceStateService.PERSISTENT_ATTRIBUTES.contains(attr.getKey())
                             && !DefaultDeviceStateService.INACTIVITY_TIMEOUT.equals(attr.getKey())) {
@@ -167,6 +167,8 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                         attributes.put(attr.getKey(), attr.getDoubleValue().get());
                     } else if (attr.getDataType() == DataType.LONG && attr.getLongValue().isPresent()) {
                         attributes.put(attr.getKey(), attr.getLongValue().get());
+                    } else if (attr.getDataType() == DataType.JSON && attr.getJsonValue().isPresent()) {
+                        attributes.set(attr.getKey(), JacksonUtil.toJsonNode(attr.getJsonValue().get()));
                     } else {
                         attributes.put(attr.getKey(), attr.getValueAsString());
                     }
@@ -175,7 +177,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                     entityData.put("kv", attributes);
                     entityData.put("scope", scope);
                     JsonNode body = JacksonUtil.OBJECT_MAPPER.valueToTree(entityData);
-                    log.debug("Sending attributes data msg, entityId [{}], attributes [{}]", entityId, body);
+                    log.debug("[{}] Sending attributes data msg, entityId [{}], attributes [{}]", tenantId, entityId, body);
                     future = saveEdgeEvent(tenantId, edge.getId(), entityType, EdgeEventActionType.ATTRIBUTES_UPDATED, entityId, body);
                 } else {
                     future = Futures.immediateFuture(null);
@@ -183,7 +185,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
             }
             return Futures.transformAsync(future, v -> processLatestTimeseriesAndAddToEdgeQueue(tenantId, entityId, edge, entityType), dbCallbackExecutorService);
         } catch (Exception e) {
-            String errMsg = String.format("[%s] Failed to save attribute updates to the edge [%s]", edge.getId(), attributesRequestMsg);
+            String errMsg = String.format("[%s][%s] Failed to save attribute updates to the edge [%s]", tenantId, edge.getId(), attributesRequestMsg);
             log.error(errMsg, e);
             return Futures.immediateFailedFuture(new RuntimeException(errMsg, e));
         }
@@ -237,7 +239,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                     if (relationsList != null && !relationsList.isEmpty()) {
                         List<ListenableFuture<Void>> futures = new ArrayList<>();
                         for (List<EntityRelation> entityRelations : relationsList) {
-                            log.trace("[{}] [{}] [{}] relation(s) are going to be pushed to edge.", edge.getId(), entityId, entityRelations.size());
+                            log.trace("[{}][{}][{}][{}] relation(s) are going to be pushed to edge.", tenantId, edge.getId(), entityId, entityRelations.size());
                             for (EntityRelation relation : entityRelations) {
                                 try {
                                     if (!relation.getFrom().getEntityType().equals(EntityType.EDGE) &&
@@ -250,7 +252,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                                                 JacksonUtil.OBJECT_MAPPER.valueToTree(relation)));
                                     }
                                 } catch (Exception e) {
-                                    String errMsg = String.format("[%s] Exception during loading relation [%s] to edge on sync!", edge.getId(), relation);
+                                    String errMsg = String.format("[%s][%s] Exception during loading relation [%s] to edge on sync!", tenantId, edge.getId(), relation);
                                     log.error(errMsg, e);
                                     futureToSet.setException(new RuntimeException(errMsg, e));
                                     return;
@@ -265,7 +267,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
 
                             @Override
                             public void onFailure(Throwable throwable) {
-                                String errMsg = String.format("[%s] Exception during saving edge events [%s]!", edge.getId(), relationRequestMsg);
+                                String errMsg = String.format("[%s][%s] Exception during saving edge events [%s]!", tenantId, edge.getId(), relationRequestMsg);
                                 log.error(errMsg, throwable);
                                 futureToSet.setException(new RuntimeException(errMsg, throwable));
                             }
@@ -274,7 +276,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                         futureToSet.set(null);
                     }
                 } catch (Exception e) {
-                    log.error("Exception during loading relation(s) to edge on sync!", e);
+                    log.error("[{}] Exception during loading relation(s) to edge on sync!", tenantId, e);
                     futureToSet.setException(e);
                 }
             }
@@ -328,7 +330,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
             WidgetsBundle widgetsBundleById = widgetsBundleService.findWidgetsBundleById(tenantId, widgetsBundleId);
             if (widgetsBundleById != null) {
                 List<WidgetType> widgetTypesToPush =
-                        widgetTypeService.findWidgetTypesByTenantIdAndBundleAlias(widgetsBundleById.getTenantId(), widgetsBundleById.getAlias());
+                        widgetTypeService.findWidgetTypesByWidgetsBundleId(widgetsBundleById.getTenantId(), widgetsBundleId);
                 for (WidgetType widgetType : widgetTypesToPush) {
                     futures.add(saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.WIDGET_TYPE, EdgeEventActionType.ADDED, widgetType.getId(), null));
                 }
@@ -372,7 +374,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
 
                     @Override
                     public void onFailure(Throwable t) {
-                        log.error("Exception during loading relation to edge on sync!", t);
+                        log.error("[{}] Exception during loading relation to edge on sync!", tenantId, t);
                         futureToSet.setException(t);
                     }
                 }, dbCallbackExecutorService);

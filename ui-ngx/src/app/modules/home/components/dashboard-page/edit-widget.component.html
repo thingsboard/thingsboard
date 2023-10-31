@@ -18,11 +18,64 @@
 <form [formGroup]="widgetFormGroup">
   <fieldset [disabled]="isLoading$ | async">
     <tb-widget-config
+      #widgetConfigComponent
       [aliasController]="aliasController"
       [functionsOnly]="widgetEditMode"
       [dashboard]="dashboard"
       [widget]="widget"
+      [hideToggleHeader]="previewMode"
       formControlName="widgetConfig">
+      <div class="tb-widget-config-header-prefix">
+        <button mat-button
+                *ngIf="previewMode"
+                (click)="previewMode = false">
+          <mat-icon>chevron_left</mat-icon>
+          {{ 'action.back' | translate }}
+        </button>
+        <button *ngIf="!previewMode"
+                fxHide.gt-sm
+                [disabled]="widgetFormGroup.invalid"
+                mat-button color="primary"
+                (click)="previewMode = true">
+          <mat-icon>visibility</mat-icon>
+          {{ 'widget-config.preview' | translate }}
+        </button>
+      </div>
+      <div fxFlex.lt-md class="tb-widget-config-header-suffix" fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="12px">
+        <button *ngIf="!previewMode"
+                fxHide.lt-md
+                [disabled]="widgetFormGroup.invalid"
+                mat-button color="primary"
+                (click)="previewMode = true">
+          <mat-icon>visibility</mat-icon>
+          {{ 'widget-config.preview' | translate }}
+        </button>
+        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="12px">
+          <button [disabled]="!widgetFormGroup.dirty"
+            mat-stroked-button color="primary"
+            (click)="onRevertWidgetConfig()">
+            <mat-icon>close</mat-icon>
+            {{ 'action.decline' | translate }}
+          </button>
+          <button [disabled]="widgetFormGroup.invalid || !widgetFormGroup.dirty"
+            mat-flat-button color="primary"
+            (click)="onApplyWidgetConfig()">
+            <mat-icon>done</mat-icon>
+            {{ 'action.apply' | translate }}
+          </button>
+        </div>
+      </div>
     </tb-widget-config>
+    <div *ngIf="previewMode" class="widget-preview-background">
+      <tb-widget-preview class="widget-preview-section"
+                         [aliasController]="aliasController"
+                         [stateController]="stateController"
+                         [dashboardTimewindow]="dashboard.configuration.timewindow"
+                         [widget]="widget"
+                         [widgetConfig]="widgetFormGroup.get('widgetConfig').value.config"
+                         [previewWidth]="widgetConfig.typeParameters.previewWidth"
+                         [previewHeight]="widgetConfig.typeParameters.previewHeight">
+      </tb-widget-preview>
+    </div>
   </fieldset>
 </form>

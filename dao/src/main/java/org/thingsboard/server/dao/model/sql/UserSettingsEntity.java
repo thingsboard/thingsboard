@@ -39,7 +39,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Entity
-@Table(name = ModelConstants.USER_SETTINGS_COLUMN_FAMILY_NAME)
+@Table(name = ModelConstants.USER_SETTINGS_TABLE_NAME)
 @IdClass(UserSettingsCompositeKey.class)
 public class UserSettingsEntity implements ToData<UserSettings> {
 

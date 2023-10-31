@@ -34,6 +34,7 @@ public @interface AfterStartUp {
     int QUEUE_INFO_INITIALIZATION = 1;
     int DISCOVERY_SERVICE = 2;
 
+    int STARTUP_SERVICE = 8;
     int ACTOR_SYSTEM = 9;
     int REGULAR_SERVICE = 10;
 

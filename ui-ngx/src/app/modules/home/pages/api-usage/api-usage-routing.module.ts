@@ -14,10 +14,21 @@
 /// limitations under the License.
 ///
 
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { inject, NgModule } from '@angular/core';
+import { ActivatedRouteSnapshot, ResolveFn, RouterModule, RouterStateSnapshot, Routes } from '@angular/router';
 import { Authority } from '@shared/models/authority.enum';
 import { ApiUsageComponent } from '@home/pages/api-usage/api-usage.component';
+import { Dashboard } from '@shared/models/dashboard.models';
+import { ResourcesService } from '@core/services/resources.service';
+import { Observable } from 'rxjs';
+
+const apiUsageDashboardJson = '/assets/dashboard/api_usage.json';
+
+export const apiUsageDashboardResolver: ResolveFn<Dashboard> = (
+  route: ActivatedRouteSnapshot,
+  state: RouterStateSnapshot,
+  resourcesService = inject(ResourcesService)
+): Observable<Dashboard> => resourcesService.loadJsonResource(apiUsageDashboardJson);
 
 const routes: Routes = [
   {
@@ -30,6 +41,9 @@ const routes: Routes = [
         label: 'api-usage.api-usage',
         icon: 'insert_chart'
       }
+    },
+    resolve: {
+      apiUsageDashboard: apiUsageDashboardResolver
     }
   }
 ];

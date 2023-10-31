@@ -114,6 +114,7 @@ BEGIN
              a_details,
              a_propagate, a_propagate_to_owner, a_propagate_to_tenant, a_propagation_types,
              false, 0, false, 0, NULL, 0);
+        INSERT INTO alarm_types (tenant_id, type) VALUES (t_id, a_type) ON CONFLICT (tenant_id, type) DO NOTHING;
         SELECT * INTO result FROM alarm_info a WHERE a.id = a_id AND a.tenant_id = t_id;
         RETURN json_build_object('success', true, 'created', true, 'modified', true, 'alarm', row_to_json(result))::text;
     ELSE
@@ -284,3 +285,9 @@ BEGIN
     RETURN json_build_object('success', true, 'modified', modified, 'alarm', row_to_json(result))::text;
 END
 $$;
+
+DROP VIEW IF EXISTS widget_type_info_view CASCADE;
+CREATE OR REPLACE VIEW widget_type_info_view AS
+SELECT t.*
+     , COALESCE((t.descriptor::json->>'type')::text, '') as widget_type
+FROM widget_type t;

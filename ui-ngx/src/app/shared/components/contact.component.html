@@ -62,7 +62,7 @@
   </tb-phone-input>
   <mat-form-field class="mat-block">
     <mat-label translate>contact.email</mat-label>
-    <input matInput formControlName="email">
+    <input matInput type="email" formControlName="email">
     <mat-error *ngIf="parentForm.get('email').hasError('email')">
       {{ 'user.invalid-email-format' | translate }}
     </mat-error>

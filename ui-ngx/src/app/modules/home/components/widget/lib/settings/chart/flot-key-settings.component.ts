@@ -225,6 +225,7 @@ export class FlotKeySettingsComponent extends PageComponent implements OnInit, C
       this.flotKeySettingsFormGroup.disable({emitEvent: false});
     } else {
       this.flotKeySettingsFormGroup.enable({emitEvent: false});
+      this.updateValidators(false);
     }
   }
 

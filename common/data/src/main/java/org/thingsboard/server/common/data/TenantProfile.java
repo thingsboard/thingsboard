@@ -17,6 +17,7 @@ package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -33,16 +34,16 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Optional;
 
-import static org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo.mapper;
-
 @ApiModel
 @Data
 @ToString(exclude = {"profileDataBytes"})
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class TenantProfile extends SearchTextBased<TenantProfileId> implements HasName {
+public class TenantProfile extends BaseData<TenantProfileId> implements HasName {
 
     private static final long serialVersionUID = 3021989561267192281L;
+
+    public static final ObjectMapper mapper = new ObjectMapper();
 
     @NoXss
     @Length(fieldName = "name")
@@ -91,11 +92,6 @@ public class TenantProfile extends SearchTextBased<TenantProfileId> implements H
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();
-    }
-
-    @Override
-    public String getSearchText() {
-        return getName();
     }
 
     @Override

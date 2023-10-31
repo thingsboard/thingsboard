@@ -224,6 +224,8 @@ div {
   line-height: var(--mdc-typography-caption-line-height, 20px);
   font-weight: var(--mdc-typography-caption-font-weight, 400);
   letter-spacing: var(--mdc-typography-caption-letter-spacing, 0.0333333333em);
+  color: rgba(0, 0, 0, 0.6);
+  white-space: normal;
 }
 
 .mat-caption {
@@ -304,10 +306,7 @@ pre.tb-highlight {
 
 .tb-fullscreen {
   position: fixed !important;
-  top: 0;
-  left: 0;
-  width: 100% !important;
-  height: 100% !important;
+  inset: 0 !important;
 }
 
 .tb-fullscreen-parent {
@@ -343,6 +342,12 @@ mat-label {
   }
 }
 
+mat-icon {
+  &.tb-error {
+    color: rgb(221, 44, 0);
+  }
+}
+
 .tb-error-messages {
   height: 24px; //30px
   margin-top: -6px;
@@ -355,6 +360,13 @@ mat-label {
   font-size: 12px;
   line-height: 14px;
   color: rgb(221, 44, 0);
+}
+
+.mat-mdc-tooltip.tb-error-tooltip {
+  .mdc-tooltip__surface {
+    background-color: rgba(209, 39, 48, 0.12);
+    color: rgba(209, 39, 48, 1);
+  }
 }
 
 .tb-autocomplete {
@@ -622,12 +634,39 @@ mat-label {
 
   .mat-toolbar.mat-primary {
     button.mat-mdc-icon-button {
-      mat-icon {
+      .mat-icon {
         color: white;
       }
     }
-    .mat-mdc-select-value, .mat-mdc-select-arrow {
+    .mat-mdc-select-value, .mat-mdc-select-arrow, .mat-mdc-select-arrow:after {
       color: white;
+    }
+    .mat-mdc-text-field-wrapper {
+      &.mdc-text-field--outlined {
+        &:not(.mdc-text-field--focused):not(.mdc-text-field--disabled):not(.mdc-text-field--invalid) {
+          &:not(:hover) {
+            .mdc-notched-outline {
+              .mdc-notched-outline__leading, .mdc-notched-outline__trailing {
+                border-color: white;
+              }
+            }
+          }
+          &:hover {
+            .mdc-notched-outline {
+              .mdc-notched-outline__leading, .mdc-notched-outline__trailing {
+                border-color: rgba(255, 255, 255, 0.87);
+              }
+            }
+          }
+        }
+        &:not(.mdc-text-field--disabled).mdc-text-field--focused {
+          .mdc-notched-outline {
+            .mdc-notched-outline__leading, .mdc-notched-outline__trailing {
+              border-color: rgba(255, 255, 255, 0.67);
+            }
+          }
+        }
+      }
     }
   }
 
@@ -646,11 +685,11 @@ mat-label {
 
   mat-toolbar.mat-mdc-table-toolbar:not(.mat-primary), .mat-mdc-cell, .mat-expansion-panel-header {
     button.mat-mdc-icon-button {
-      mat-icon {
+      .mat-icon {
         color: rgba(0, 0, 0, .54);
       }
       &[disabled][disabled] {
-        mat-icon {
+        .mat-icon {
           color: rgba(0, 0, 0, .26);
         }
       }
@@ -664,6 +703,25 @@ mat-label {
     table-layout: auto;
     border-collapse: separate;
     margin: 0;
+  }
+
+  .tb-table-widget {
+    .mat-mdc-table {
+      .mat-mdc-row {
+        font-size: 13px;
+      }
+
+      .mat-mdc-cell {
+        background-color: transparent;
+        color: inherit;
+        font-size: inherit;
+        font-family: inherit;
+        font-weight: inherit;
+        line-height: inherit;
+        letter-spacing: inherit;
+        text-transform: inherit;
+      }
+    }
   }
 
   .mat-mdc-footer-row::after, .mat-mdc-header-row::after, .mat-mdc-row::after {
@@ -693,16 +751,21 @@ mat-label {
     }
   }
 
-  .mat-mdc-row {
-    transition: background-color .2s;
-    &:hover:not(.tb-current-entity) {
-      background-color: #f4f4f4;
-    }
-    &.tb-current-entity {
-      background-color: #e9e9e9;
-    }
-    &.tb-pointer {
-      cursor: pointer;
+  .mat-mdc-table {
+    .mat-mdc-row {
+      transition: background-color .2s;
+
+      &:hover:not(.tb-current-entity) {
+        background-color: #f4f4f4;
+      }
+
+      &.tb-current-entity {
+        background-color: #e9e9e9;
+      }
+
+      &.tb-pointer {
+        cursor: pointer;
+      }
     }
   }
 
@@ -789,7 +852,7 @@ mat-label {
     &.mat-number-cell {
       text-align: end;
     }
-    mat-icon {
+    .mat-icon {
       color: rgba(0, 0, 0, .54);
     }
   }
@@ -828,6 +891,9 @@ mat-label {
   .mat-icon {
     svg {
       vertical-align: inherit;
+    }
+    &.tb-mat-12 {
+      @include tb-mat-icon-size(12);
     }
     &.tb-mat-16 {
       @include tb-mat-icon-size(16);
@@ -949,7 +1015,7 @@ mat-label {
         padding: 0 6px;
         min-width: 88px;
       }
-      mat-icon {
+      .mat-icon {
         margin-right: 5px;
       }
     }
@@ -981,10 +1047,7 @@ mat-label {
       min-width: 100%;
       max-width: none !important;
       position: absolute !important;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      right: 0;
+      inset: 0;
       .mat-mdc-dialog-container {
         > *:first-child, form {
           min-width: 100% !important;
@@ -1002,10 +1065,7 @@ mat-label {
       min-width: 100%;
       max-width: none !important;
       position: absolute !important;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      right: 0;
+      inset: 0;
       .mat-mdc-dialog-container {
         > *:first-child, form {
           min-width: 100% !important;
@@ -1020,10 +1080,7 @@ mat-label {
 
   .tb-absolute-fill {
     position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    inset: 0;
   }
 
   .tb-layout-fill {
@@ -1035,10 +1092,7 @@ mat-label {
 
   .tb-progress-cover {
     position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
+    inset: 0;
     z-index: 6;
     background-color: #eee;
     opacity: 1;
@@ -1049,7 +1103,7 @@ mat-label {
     background: #ccc;
     opacity: .85;
 
-    mat-icon {
+    .mat-icon {
       color: #666;
     }
   }
@@ -1086,6 +1140,37 @@ mat-label {
     border: 2px solid #fff;
     border-radius: 50%;
     box-shadow: 0 3px 1px -2px rgba(0, 0, 0, .14), 0 2px 2px 0 rgba(0, 0, 0, .098), 0 1px 5px 0 rgba(0, 0, 0, .084);
+
+    &.box {
+      border: none;
+      box-shadow: none;
+      border-radius: 4px;
+      .tb-color-result {
+        position: relative;
+        &:after {
+          content: '';
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          border-radius: 4px;
+          border: 1px solid rgba(0, 0, 0, 0.12);
+        }
+      }
+      &.disabled {
+        cursor: initial;
+        .tb-color-result {
+          background: rgba(0, 0, 0, 0.38);
+        }
+      }
+    }
+
+    &.small {
+      width: 18px;
+      min-width: 18px;
+      height: 18px;
+    }
 
     @include tb-checkered-bg();
 
@@ -1132,7 +1217,7 @@ mat-label {
 
   .tb-drag-handle {
     cursor: move;
-    mat-icon {
+    .mat-icon {
       pointer-events: none;
     }
   }
@@ -1161,5 +1246,9 @@ mat-label {
 
   .mat-expansion-panel {
     color: inherit;
+  }
+
+  .cursor-pointer {
+    cursor: pointer;
   }
 }

@@ -29,20 +29,32 @@ import {
   GridSettings,
   WidgetLayout
 } from '@shared/models/dashboard.models';
-import { isDefined, isString, isUndefined } from '@core/utils';
+import {
+  deepClone,
+  isDefined,
+  isDefinedAndNotNull,
+  isEmptyStr,
+  isNotEmptyStr,
+  isString,
+  isUndefined
+} from '@core/utils';
 import {
   Datasource,
   datasourcesHasOnlyComparisonAggregation,
   DatasourceType,
+  defaultLegendConfig, isValidWidgetFullFqn,
   Widget,
   WidgetConfig,
-  widgetType
+  WidgetConfigMode,
+  widgetType,
+  WidgetTypeDescriptor
 } from '@app/shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AliasFilterType, EntityAlias, EntityAliasFilter } from '@app/shared/models/alias.models';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import { initModelFromDefaultTimewindow } from '@shared/models/time/time.models';
 import { AlarmSearchStatus } from '@shared/models/alarm.models';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 
 @Injectable({
   providedIn: 'root'
@@ -210,9 +222,57 @@ export class DashboardUtilsService {
 
   public validateAndUpdateWidget(widget: Widget): Widget {
     widget.config = this.validateAndUpdateWidgetConfig(widget.config, widget.type);
+    widget = this.validateAndUpdateWidgetTypeFqn(widget);
+    if (isDefined((widget as any).title)) {
+      delete (widget as any).title;
+    }
+    if (isDefined((widget as any).image)) {
+      delete (widget as any).image;
+    }
+    if (isDefined((widget as any).description)) {
+      delete (widget as any).description;
+    }
     // Temp workaround
-    if (widget.isSystemType  && widget.bundleAlias === 'charts' && widget.typeAlias === 'timeseries') {
-      widget.typeAlias = 'basic_timeseries';
+    if (['system.charts.state_chart',
+         'system.charts.basic_timeseries',
+         'system.charts.timeseries_bars_flot'].includes(widget.typeFullFqn)) {
+      const widgetConfig = widget.config;
+      const widgetSettings = widget.config.settings;
+      if (isDefinedAndNotNull(widgetConfig.showLegend)) {
+        widgetSettings.showLegend = widgetConfig.showLegend;
+        delete widgetConfig.showLegend;
+      } else if (isUndefined(widgetSettings.showLegend)) {
+        widgetSettings.showLegend = true;
+      }
+      if (isDefinedAndNotNull(widgetConfig.legendConfig)) {
+        widgetSettings.legendConfig = widgetConfig.legendConfig;
+        delete widgetConfig.legendConfig;
+      } else if (isUndefined(widgetSettings.legendConfig)) {
+        widgetSettings.legendConfig = defaultLegendConfig(widget.type);
+      }
+    }
+    return widget;
+  }
+
+  private validateAndUpdateWidgetTypeFqn(widget: Widget): Widget {
+    const w = widget as any;
+    if (!isValidWidgetFullFqn(widget.typeFullFqn)) {
+      if (isDefinedAndNotNull(w.isSystemType) && isNotEmptyStr(w.bundleAlias) && isNotEmptyStr(w.typeAlias)) {
+        widget.typeFullFqn = (w.isSystemType ? 'system' : 'tenant') + '.' + w.bundleAlias + '.' + w.typeAlias;
+      }
+    }
+    if (isDefined(w.isSystemType)) {
+      delete w.isSystemType;
+    }
+    if (isDefined(w.bundleAlias)) {
+      delete w.bundleAlias;
+    }
+    if (isDefined(w.typeAlias)) {
+      delete w.typeAlias;
+    }
+    // Temp workaround
+    if (widget.typeFullFqn === 'system.charts.timeseries') {
+      widget.typeFullFqn = 'system.charts.basic_timeseries';
     }
     return widget;
   }
@@ -225,10 +285,8 @@ export class DashboardUtilsService {
       widgetConfig.datasources = [];
     }
     widgetConfig.datasources.forEach((datasource) => {
-      if (datasource.type === 'device') {
-        datasource.type = DatasourceType.entity;
-      }
       if (datasource.deviceAliasId) {
+        datasource.type = DatasourceType.entity;
         datasource.entityAliasId = datasource.deviceAliasId;
         delete datasource.deviceAliasId;
       }
@@ -314,6 +372,47 @@ export class DashboardUtilsService {
       singleEntity: entityId,
       resolveMultiple: false
     };
+  }
+
+  public widgetConfigFromWidgetType(widgetTypeDescriptor: WidgetTypeDescriptor): WidgetConfig {
+    const config: WidgetConfig = JSON.parse(widgetTypeDescriptor.defaultConfig);
+    config.datasources = this.convertDatasourcesFromWidgetType(widgetTypeDescriptor, config, config.datasources);
+    if (isDefinedAndNotNull(config.alarmSource)) {
+      config.alarmSource = this.convertDatasourceFromWidgetType(widgetTypeDescriptor, config, config.alarmSource);
+    }
+    return config;
+  }
+
+  private convertDatasourcesFromWidgetType(widgetTypeDescriptor: WidgetTypeDescriptor,
+                                           config: WidgetConfig, datasources?: Datasource[]): Datasource[] {
+    const newDatasources: Datasource[] = [];
+    if (datasources?.length) {
+      newDatasources.push(this.convertDatasourceFromWidgetType(widgetTypeDescriptor, config, datasources[0]));
+    }
+    return newDatasources;
+  }
+
+  private convertDatasourceFromWidgetType(widgetTypeDescriptor: WidgetTypeDescriptor, config: WidgetConfig,
+                                          datasource: Datasource): Datasource {
+    const newDatasource = deepClone(datasource);
+    if (newDatasource.type === DatasourceType.function) {
+      newDatasource.type = DatasourceType.entity;
+      newDatasource.name = '';
+      if (widgetTypeDescriptor.hasBasicMode && config.configMode === WidgetConfigMode.basic) {
+        newDatasource.type = DatasourceType.device;
+      }
+      const dataKeys = newDatasource.dataKeys;
+      newDatasource.dataKeys = [];
+      if (widgetTypeDescriptor.type === widgetType.alarm) {
+        dataKeys.forEach(dataKey => {
+          const newDataKey = deepClone(dataKey);
+          newDataKey.funcBody = null;
+          newDataKey.type = DataKeyType.alarm;
+          newDatasource.dataKeys.push(newDataKey);
+        });
+      }
+    }
+    return newDatasource;
   }
 
   private validateAndUpdateState(state: DashboardState) {
@@ -424,12 +523,20 @@ export class DashboardUtilsService {
     return widgetsArray;
   }
 
+  public isEmptyDashboard(dashboard: Dashboard): boolean {
+    if (dashboard?.configuration?.widgets) {
+      return Object.keys(dashboard?.configuration?.widgets).length === 0;
+    } else {
+      return true;
+    }
+  }
+
   public addWidgetToLayout(dashboard: Dashboard,
                            targetState: string,
                            targetLayout: DashboardLayoutId,
                            widget: Widget,
                            originalColumns?: number,
-                           originalSize?: {sizeX: number, sizeY: number},
+                           originalSize?: {sizeX: number; sizeY: number},
                            row?: number,
                            column?: number): void {
     const dashboardConfiguration = dashboard.configuration;
@@ -502,7 +609,7 @@ export class DashboardUtilsService {
     this.removeUnusedWidgets(dashboard);
   }
 
-  public isSingleLayoutDashboard(dashboard: Dashboard): {state: string, layout: DashboardLayoutId} {
+  public isSingleLayoutDashboard(dashboard: Dashboard): {state: string; layout: DashboardLayoutId} {
     const dashboardConfiguration = dashboard.configuration;
     const states = dashboardConfiguration.states;
     const stateKeys = Object.keys(states);

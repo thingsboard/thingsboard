@@ -26,14 +26,14 @@
           <tb-json-object-edit
             [editorStyle]="{minHeight: '100px'}"
             fillHeight="true"
-            [required]="settings.attributeRequired"
+            [jsonRequired]="settings.attributeRequired"
             label="{{ settings.showLabel ? labelValue : '' }}"
             formControlName="currentValue"
             (focusin)="isFocused = true;"
             (focusout)="isFocused = false;"
           ></tb-json-object-edit>
         </fieldset>
-        <div class="tb-json-input-form__actions" fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="20px">
+        <div class="tb-json-input__actions" fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="20px">
           <button mat-button color="primary"
                   type="button"
                   [disabled]="!attributeUpdateFormGroup.dirty"
@@ -42,7 +42,7 @@
                   matTooltipPosition="above">
             {{ "action.undo" | translate }}
           </button>
-          <button mat-button mat-raised-button color="primary"
+          <button mat-raised-button color="primary"
                   type="submit"
                   [disabled]="attributeUpdateFormGroup.invalid || !attributeUpdateFormGroup.dirty">
             {{ "action.save" | translate }}

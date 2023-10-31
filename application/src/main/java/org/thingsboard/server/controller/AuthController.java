@@ -38,19 +38,17 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
 import org.thingsboard.server.common.data.security.event.UserSessionInvalidationEvent;
 import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
-import org.thingsboard.server.common.msg.tools.TbRateLimits;
-import org.thingsboard.server.dao.audit.AuditLogService;
+import org.thingsboard.server.dao.util.limits.RateLimitService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
 import org.thingsboard.server.service.security.model.ActivateUserRequest;
@@ -65,8 +63,6 @@ import org.thingsboard.server.service.security.system.SystemSecurityService;
 import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 @RestController
 @TbCoreComponent
@@ -77,12 +73,11 @@ public class AuthController extends BaseController {
 
     @Value("${server.rest.rate_limits.reset_password_per_user:5:3600}")
     private String defaultLimitsConfiguration;
-    private final ConcurrentMap<UserId, TbRateLimits> resetPasswordRateLimits = new ConcurrentHashMap<>();
     private final BCryptPasswordEncoder passwordEncoder;
     private final JwtTokenFactory tokenFactory;
     private final MailService mailService;
     private final SystemSecurityService systemSecurityService;
-    private final AuditLogService auditLogService;
+    private final RateLimitService rateLimitService;
     private final ApplicationEventPublisher eventPublisher;
 
 
@@ -126,8 +121,6 @@ public class AuthController extends BaseController {
         }
         userCredentials.setPassword(passwordEncoder.encode(newPassword));
         userService.replaceUserCredentials(securityUser.getTenantId(), userCredentials);
-
-        sendEntityNotificationMsg(getTenantId(), userCredentials.getUserId(), EdgeEventActionType.CREDENTIALS_UPDATED);
 
         eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(securityUser.getId()));
         ObjectNode response = JacksonUtil.newObjectNode();
@@ -210,8 +203,7 @@ public class AuthController extends BaseController {
         UserCredentials userCredentials = userService.findUserCredentialsByResetToken(TenantId.SYS_TENANT_ID, resetToken);
 
         if (userCredentials != null) {
-            TbRateLimits tbRateLimits = getTbRateLimits(userCredentials.getUserId());
-            if (!tbRateLimits.tryConsume()) {
+            if (!rateLimitService.checkRateLimit(LimitedApi.PASSWORD_RESET, userCredentials.getUserId(), defaultLimitsConfiguration)) {
                 return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
             }
             try {
@@ -264,8 +256,6 @@ public class AuthController extends BaseController {
             }
         }
 
-        sendEntityNotificationMsg(user.getTenantId(), user.getId(), EdgeEventActionType.CREDENTIALS_UPDATED);
-
         return tokenFactory.createTokenPair(securityUser);
     }
 
@@ -314,8 +304,4 @@ public class AuthController extends BaseController {
         eventPublisher.publishEvent(new UserSessionInvalidationEvent(user.getSessionId()));
     }
 
-    private TbRateLimits getTbRateLimits(UserId userId) {
-        return resetPasswordRateLimits.computeIfAbsent(userId,
-                key -> new TbRateLimits(defaultLimitsConfiguration, true));
-    }
 }

@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.StringUtils;
@@ -45,10 +46,12 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
-import static org.thingsboard.server.service.install.DatabaseHelper.objectMapper;
 import static org.thingsboard.server.utils.LwM2mObjectModelUtils.toLwm2mResource;
 
 /**
@@ -69,6 +72,7 @@ public class InstallScripts {
     public static final String DEVICE_PROFILE_DIR = "device_profile";
     public static final String DEMO_DIR = "demo";
     public static final String RULE_CHAINS_DIR = "rule_chains";
+    public static final String WIDGET_TYPES_DIR = "widget_types";
     public static final String WIDGET_BUNDLES_DIR = "widget_bundles";
     public static final String OAUTH2_CONFIG_TEMPLATES_DIR = "oauth2_config_templates";
     public static final String DASHBOARDS_DIR = "dashboards";
@@ -99,15 +103,15 @@ public class InstallScripts {
     @Autowired
     private ResourceService resourceService;
 
-    private Path getTenantRuleChainsDir() {
+    Path getTenantRuleChainsDir() {
         return Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, RULE_CHAINS_DIR);
     }
 
-    private Path getDeviceProfileDefaultRuleChainTemplateFilePath() {
+    Path getDeviceProfileDefaultRuleChainTemplateFilePath() {
         return Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, DEVICE_PROFILE_DIR, "rule_chain_template.json");
     }
 
-    private Path getEdgeRuleChainsDir() {
+    Path getEdgeRuleChainsDir() {
         return Paths.get(getDataDir(), JSON_DIR, EDGE_DIR, RULE_CHAINS_DIR);
     }
 
@@ -143,8 +147,8 @@ public class InstallScripts {
     }
 
     private void loadRuleChainsFromPath(TenantId tenantId, Path ruleChainsPath) throws IOException {
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(ruleChainsPath, path -> path.toString().endsWith(InstallScripts.JSON_EXT))) {
-            dirStream.forEach(
+        findRuleChainsFromPath(ruleChainsPath)
+                .forEach(
                     path -> {
                         try {
                             createRuleChainFromFile(tenantId, path, null);
@@ -152,9 +156,15 @@ public class InstallScripts {
                             log.error("Unable to load rule chain from json: [{}]", path.toString());
                             throw new RuntimeException("Unable to load rule chain from json", e);
                         }
-                    }
-            );
+                    });
+    }
+
+    List<Path> findRuleChainsFromPath(Path ruleChainsPath) throws IOException {
+        List<Path> paths = new ArrayList<>();
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(ruleChainsPath, path -> path.toString().endsWith(InstallScripts.JSON_EXT))) {
+            dirStream.forEach(paths::add);
         }
+        return paths;
     }
 
     public RuleChain createDefaultRuleChain(TenantId tenantId, String ruleChainName) throws IOException {
@@ -162,9 +172,9 @@ public class InstallScripts {
     }
 
     public RuleChain createRuleChainFromFile(TenantId tenantId, Path templateFilePath, String newRuleChainName) throws IOException {
-        JsonNode ruleChainJson = objectMapper.readTree(templateFilePath.toFile());
-        RuleChain ruleChain = objectMapper.treeToValue(ruleChainJson.get("ruleChain"), RuleChain.class);
-        RuleChainMetaData ruleChainMetaData = objectMapper.treeToValue(ruleChainJson.get("metadata"), RuleChainMetaData.class);
+        JsonNode ruleChainJson = JacksonUtil.toJsonNode(templateFilePath.toFile());
+        RuleChain ruleChain = JacksonUtil.treeToValue(ruleChainJson.get("ruleChain"), RuleChain.class);
+        RuleChainMetaData ruleChainMetaData = JacksonUtil.treeToValue(ruleChainJson.get("metadata"), RuleChainMetaData.class);
 
         ruleChain.setTenantId(tenantId);
         if (!StringUtils.isEmpty(newRuleChainName)) {
@@ -173,34 +183,61 @@ public class InstallScripts {
         ruleChain = ruleChainService.saveRuleChain(ruleChain);
 
         ruleChainMetaData.setRuleChainId(ruleChain.getId());
-        ruleChainService.saveRuleChainMetaData(TenantId.SYS_TENANT_ID, ruleChainMetaData);
+        ruleChainService.saveRuleChainMetaData(TenantId.SYS_TENANT_ID, ruleChainMetaData, Function.identity());
 
         return ruleChain;
     }
 
     public void loadSystemWidgets() throws Exception {
+        Path widgetTypesDir = Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, WIDGET_TYPES_DIR);
+        if (Files.exists(widgetTypesDir)) {
+            try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(widgetTypesDir, path -> path.toString().endsWith(JSON_EXT))) {
+                dirStream.forEach(
+                        path -> {
+                            try {
+                                JsonNode widgetTypeJson = JacksonUtil.toJsonNode(path.toFile());
+                                WidgetTypeDetails widgetTypeDetails = JacksonUtil.treeToValue(widgetTypeJson, WidgetTypeDetails.class);
+                                widgetTypeService.saveWidgetType(widgetTypeDetails);
+                            } catch (Exception e) {
+                                log.error("Unable to load widget type from json: [{}]", path.toString());
+                                throw new RuntimeException("Unable to load widget type from json", e);
+                            }
+                        }
+                );
+            }
+        }
         Path widgetBundlesDir = Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, WIDGET_BUNDLES_DIR);
         try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(widgetBundlesDir, path -> path.toString().endsWith(JSON_EXT))) {
             dirStream.forEach(
                     path -> {
                         try {
-                            JsonNode widgetsBundleDescriptorJson = objectMapper.readTree(path.toFile());
+                            JsonNode widgetsBundleDescriptorJson = JacksonUtil.toJsonNode(path.toFile());
                             JsonNode widgetsBundleJson = widgetsBundleDescriptorJson.get("widgetsBundle");
-                            WidgetsBundle widgetsBundle = objectMapper.treeToValue(widgetsBundleJson, WidgetsBundle.class);
+                            WidgetsBundle widgetsBundle = JacksonUtil.treeToValue(widgetsBundleJson, WidgetsBundle.class);
                             WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
-                            JsonNode widgetTypesArrayJson = widgetsBundleDescriptorJson.get("widgetTypes");
-                            widgetTypesArrayJson.forEach(
-                                    widgetTypeJson -> {
-                                        try {
-                                            WidgetTypeDetails widgetTypeDetails = objectMapper.treeToValue(widgetTypeJson, WidgetTypeDetails.class);
-                                            widgetTypeDetails.setBundleAlias(savedWidgetsBundle.getAlias());
-                                            widgetTypeService.saveWidgetType(widgetTypeDetails);
-                                        } catch (Exception e) {
-                                            log.error("Unable to load widget type from json: [{}]", path.toString());
-                                            throw new RuntimeException("Unable to load widget type from json", e);
+                            List<String> widgetTypeFqns = new ArrayList<>();
+                            if (widgetsBundleDescriptorJson.has("widgetTypes")) {
+                                JsonNode widgetTypesArrayJson = widgetsBundleDescriptorJson.get("widgetTypes");
+                                widgetTypesArrayJson.forEach(
+                                        widgetTypeJson -> {
+                                            try {
+                                                WidgetTypeDetails widgetTypeDetails = JacksonUtil.treeToValue(widgetTypeJson, WidgetTypeDetails.class);
+                                                var savedWidgetType = widgetTypeService.saveWidgetType(widgetTypeDetails);
+                                                widgetTypeFqns.add(savedWidgetType.getFqn());
+                                            } catch (Exception e) {
+                                                log.error("Unable to load widget type from json: [{}]", path.toString());
+                                                throw new RuntimeException("Unable to load widget type from json", e);
+                                            }
                                         }
-                                    }
-                            );
+                                );
+                            }
+                            if (widgetsBundleDescriptorJson.has("widgetTypeFqns")) {
+                                JsonNode widgetFqnsArrayJson = widgetsBundleDescriptorJson.get("widgetTypeFqns");
+                                widgetFqnsArrayJson.forEach(fqnJson -> {
+                                    widgetTypeFqns.add(fqnJson.asText());
+                                });
+                            }
+                            widgetTypeService.updateWidgetsBundleWidgetFqns(TenantId.SYS_TENANT_ID, savedWidgetsBundle.getId(), widgetTypeFqns);
                         } catch (Exception e) {
                             log.error("Unable to load widgets bundle from json: [{}]", path.toString());
                             throw new RuntimeException("Unable to load widgets bundle from json", e);
@@ -216,8 +253,8 @@ public class InstallScripts {
             dirStream.forEach(
                     path -> {
                         try {
-                            JsonNode dashboardJson = objectMapper.readTree(path.toFile());
-                            Dashboard dashboard = objectMapper.treeToValue(dashboardJson, Dashboard.class);
+                            JsonNode dashboardJson = JacksonUtil.toJsonNode(path.toFile());
+                            Dashboard dashboard = JacksonUtil.treeToValue(dashboardJson, Dashboard.class);
                             dashboard.setTenantId(tenantId);
                             Dashboard savedDashboard = dashboardService.saveDashboard(dashboard);
                             if (customerId != null && !customerId.isNullUid()) {
@@ -249,8 +286,8 @@ public class InstallScripts {
             dirStream.forEach(
                     path -> {
                         try {
-                            JsonNode oauth2ConfigTemplateJson = objectMapper.readTree(path.toFile());
-                            OAuth2ClientRegistrationTemplate clientRegistrationTemplate = objectMapper.treeToValue(oauth2ConfigTemplateJson, OAuth2ClientRegistrationTemplate.class);
+                            JsonNode oauth2ConfigTemplateJson = JacksonUtil.toJsonNode(path.toFile());
+                            OAuth2ClientRegistrationTemplate clientRegistrationTemplate = JacksonUtil.treeToValue(oauth2ConfigTemplateJson, OAuth2ClientRegistrationTemplate.class);
                             Optional<OAuth2ClientRegistrationTemplate> existingClientRegistrationTemplate =
                                     oAuth2TemplateService.findClientRegistrationTemplateByProviderId(clientRegistrationTemplate.getProviderId());
                             if (existingClientRegistrationTemplate.isPresent()) {
@@ -267,7 +304,7 @@ public class InstallScripts {
     }
 
     public void loadSystemLwm2mResources() {
-        Path resourceLwm2mPath = Paths.get(dataDir, MODELS_LWM2M_DIR);
+        Path resourceLwm2mPath = Paths.get(getDataDir(), MODELS_LWM2M_DIR);
         try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(resourceLwm2mPath, path -> path.toString().endsWith(InstallScripts.XML_EXT))) {
             dirStream.forEach(
                     path -> {

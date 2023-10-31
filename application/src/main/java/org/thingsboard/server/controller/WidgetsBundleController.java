@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -40,7 +41,10 @@ import org.thingsboard.server.service.entitiy.widgets.bundle.TbWidgetsBundleServ
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.thingsboard.server.controller.ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
@@ -64,6 +68,8 @@ public class WidgetsBundleController extends BaseController {
     private final TbWidgetsBundleService tbWidgetsBundleService;
 
     private static final String WIDGET_BUNDLE_DESCRIPTION = "Widget Bundle represents a group(bundle) of widgets. Widgets are grouped into bundle by type or use case. ";
+    private static final String FULL_SEARCH_PARAM_DESCRIPTION = "Optional boolean parameter indicating extended search of widget bundles by description and by name / description of related widget types";
+    private static final String TENANT_BUNDLES_ONLY_DESCRIPTION = "Optional boolean parameter to include only tenant-level bundles without system";
 
     @ApiOperation(value = "Get Widget Bundle (getWidgetsBundleById)",
             notes = "Get the Widget Bundle based on the provided Widget Bundle Id. " + WIDGET_BUNDLE_DESCRIPTION + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
@@ -106,6 +112,49 @@ public class WidgetsBundleController extends BaseController {
         return tbWidgetsBundleService.save(widgetsBundle, currentUser);
     }
 
+    @ApiOperation(value = "Update widgets bundle widgets types list (updateWidgetsBundleWidgetTypes)",
+            notes = "Updates widgets bundle widgets list." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/widgetsBundle/{widgetsBundleId}/widgetTypes", method = RequestMethod.POST)
+    @ResponseStatus(value = HttpStatus.OK)
+    public void updateWidgetsBundleWidgetTypes(
+            @ApiParam(value = WIDGET_BUNDLE_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable("widgetsBundleId") String strWidgetsBundleId,
+            @ApiParam(value = "Ordered list of widget type Ids to be included by widgets bundle")
+            @RequestBody List<String> strWidgetTypeIds) throws Exception {
+        checkParameter("widgetsBundleId", strWidgetsBundleId);
+        WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
+        checkNotNull(strWidgetTypeIds);
+        Set<WidgetTypeId> widgetTypeIds = new LinkedHashSet<>();
+        var currentUser = getCurrentUser();
+        TenantId tenantId = currentUser.getTenantId();
+        for (String strWidgetTypeId : strWidgetTypeIds) {
+            WidgetTypeId widgetTypeId = new WidgetTypeId(toUUID(strWidgetTypeId));
+            if (!widgetTypeIds.contains(widgetTypeId) &&
+                    widgetTypeService.widgetTypeExistsByTenantIdAndWidgetTypeId(tenantId, widgetTypeId)) {
+                widgetTypeIds.add(widgetTypeId);
+            }
+        }
+        tbWidgetsBundleService.updateWidgetsBundleWidgetTypes(widgetsBundleId, new ArrayList<>(widgetTypeIds), currentUser);
+    }
+
+    @ApiOperation(value = "Update widgets bundle widgets list from widget type FQNs list (updateWidgetsBundleWidgetFqns)",
+            notes = "Updates widgets bundle widgets list from widget type FQNs list." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/widgetsBundle/{widgetsBundleId}/widgetTypeFqns", method = RequestMethod.POST)
+    @ResponseStatus(value = HttpStatus.OK)
+    public void updateWidgetsBundleWidgetFqns(
+            @ApiParam(value = WIDGET_BUNDLE_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable("widgetsBundleId") String strWidgetsBundleId,
+            @ApiParam(value = "Ordered list of widget type FQNs to be included by widgets bundle")
+            @RequestBody List<String> widgetTypeFqns) throws Exception {
+        checkParameter("widgetsBundleId", strWidgetsBundleId);
+        WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
+        checkNotNull(widgetTypeFqns);
+        var currentUser = getCurrentUser();
+        tbWidgetsBundleService.updateWidgetsBundleWidgetFqns(widgetsBundleId, widgetTypeFqns, currentUser);
+    }
+
     @ApiOperation(value = "Delete widgets bundle (deleteWidgetsBundle)",
             notes = "Deletes the widget bundle. Referencing non-existing Widget Bundle Id will cause an error." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
@@ -117,7 +166,7 @@ public class WidgetsBundleController extends BaseController {
         checkParameter("widgetsBundleId", strWidgetsBundleId);
         WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
         WidgetsBundle widgetsBundle = checkWidgetsBundleId(widgetsBundleId, Operation.DELETE);
-        tbWidgetsBundleService.delete(widgetsBundle);
+        tbWidgetsBundleService.delete(widgetsBundle, getCurrentUser());
     }
 
     @ApiOperation(value = "Get Widget Bundles (getWidgetsBundles)",
@@ -136,13 +185,21 @@ public class WidgetsBundleController extends BaseController {
             @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = WIDGET_BUNDLE_SORT_PROPERTY_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortProperty,
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
-            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+            @RequestParam(required = false) String sortOrder,
+            @ApiParam(value = TENANT_BUNDLES_ONLY_DESCRIPTION)
+            @RequestParam(required = false) Boolean tenantOnly,
+            @ApiParam(value = FULL_SEARCH_PARAM_DESCRIPTION)
+            @RequestParam(required = false) Boolean fullSearch) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
-            return checkNotNull(widgetsBundleService.findSystemWidgetsBundlesByPageLink(getTenantId(), pageLink));
+            return checkNotNull(widgetsBundleService.findSystemWidgetsBundlesByPageLink(getTenantId(), fullSearch != null && fullSearch, pageLink));
         } else {
             TenantId tenantId = getCurrentUser().getTenantId();
-            return checkNotNull(widgetsBundleService.findAllTenantWidgetsBundlesByTenantIdAndPageLink(tenantId, pageLink));
+            if (tenantOnly != null && tenantOnly) {
+                return checkNotNull(widgetsBundleService.findTenantWidgetsBundlesByTenantIdAndPageLink(tenantId,  fullSearch != null && fullSearch, pageLink));
+            } else {
+                return checkNotNull(widgetsBundleService.findAllTenantWidgetsBundlesByTenantIdAndPageLink(tenantId,  fullSearch != null && fullSearch, pageLink));
+            }
         }
     }
 

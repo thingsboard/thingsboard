@@ -62,4 +62,24 @@
             <package name="org.thingsboard.server.msa.ui.tests.assetProfileSmoke"/>
         </packages>
     </test>
+    <test name="Smoke devices tests">
+        <groups>
+            <run>
+                <exclude name="broken"/>
+            </run>
+        </groups>
+        <packages>
+            <package name="org.thingsboard.server.msa.ui.tests.devicessmoke"/>
+        </packages>
+    </test>
+    <test name="Alarm assignee tests">
+        <groups>
+            <run>
+                <exclude name="broken"/>
+            </run>
+        </groups>
+        <packages>
+            <package name="org.thingsboard.server.msa.ui.tests.alarmassignee.*"/>
+        </packages>
+    </test>
 </suite>

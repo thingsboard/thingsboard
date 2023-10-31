@@ -45,7 +45,7 @@ public class RuleChainsEdgeEventFetcher extends BasePageableEdgeEventFetcher<Rul
 
     @Override
     EdgeEvent constructEdgeEvent(TenantId tenantId, Edge edge, RuleChain ruleChain) {
-        ObjectNode isRootBody = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        ObjectNode isRootBody = JacksonUtil.newObjectNode();
         boolean isRoot = false;
         try {
             isRoot = ruleChain.getId().equals(edge.getRootRuleChainId());

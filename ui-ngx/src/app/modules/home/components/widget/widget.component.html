@@ -15,23 +15,11 @@
     limitations under the License.
 
 -->
-<div class="tb-absolute-fill" [fxLayout]="legendContainerLayoutType" tb-toast
+<div class="tb-absolute-fill" fxLayout="column" tb-toast
      toastTarget="{{ toastTargetId }}">
-  <tb-legend *ngIf="displayLegend && isLegendFirst"
-             [ngStyle]="legendStyle"
-             [legendConfig]="legendConfig"
-             [legendData]="legendData"
-             (legendKeyHiddenChange)="onLegendKeyHiddenChange($event)">
-  </tb-legend>
   <div fxFlex id="widget-container">
     <ng-container #widgetContent></ng-container>
   </div>
-  <tb-legend *ngIf="displayLegend && !isLegendFirst"
-             [ngStyle]="legendStyle"
-             [legendConfig]="legendConfig"
-             [legendData]="legendData"
-             (legendKeyHiddenChange)="onLegendKeyHiddenChange($event)">
-  </tb-legend>
 </div>
 <div class="tb-absolute-fill tb-widget-error" *ngIf="widgetErrorData">
   <span [innerHtml]="('Widget Error:<br/><br/>' + widgetErrorData.message) | safe:'html'"></span>
@@ -42,5 +30,5 @@
         class="tb-absolute-fill">{{ noDataDisplayMessageText }}</span>
 </div>
 <div class="tb-absolute-fill tb-widget-loading" [fxShow]="loadingData" fxLayout="column" fxLayoutAlign="center center">
-  <mat-spinner color="accent" md-mode="indeterminate" diameter="40"></mat-spinner>
+  <mat-spinner color="accent" mode="indeterminate" diameter="40"></mat-spinner>
 </div>

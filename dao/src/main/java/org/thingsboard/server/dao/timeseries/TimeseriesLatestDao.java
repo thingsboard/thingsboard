@@ -40,6 +40,8 @@ public interface TimeseriesLatestDao {
      */
     ListenableFuture<TsKvEntry> findLatest(TenantId tenantId, EntityId entityId, String key);
 
+    TsKvEntry findLatestSync(TenantId tenantId, EntityId entityId, String key);
+
     ListenableFuture<List<TsKvEntry>> findAllLatest(TenantId tenantId, EntityId entityId);
 
     ListenableFuture<Void> saveLatest(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry);

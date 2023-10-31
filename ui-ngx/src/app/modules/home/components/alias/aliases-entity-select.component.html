@@ -15,17 +15,17 @@
     limitations under the License.
 
 -->
-<section class="tb-aliases-entity-select" fxLayout="row" fxLayoutAlign="start center">
+<section class="tb-aliases-entity-select" fxLayout="row" fxLayoutAlign="start center" *ngIf="hasSelectableAliasEntities">
   <button mat-icon-button
           cdkOverlayOrigin #aliasEntitySelectPanelOrigin="cdkOverlayOrigin"
           (click)="openEditMode()"
-          matTooltip="{{ hasSelectableAliasEntities ? ('entity.select-entities' | translate) : '' }}"
+          matTooltip="{{ 'entity.select-entities' | translate }}"
           [matTooltipPosition]="tooltipPosition">
     <mat-icon class="material-icons">devices_other</mat-icon>
   </button>
   <span fxHide.lt-lg
         (click)="openEditMode()"
-        matTooltip="{{ hasSelectableAliasEntities ? ('entity.select-entities' | translate) : '' }}"
+        matTooltip="{{ 'entity.select-entities' | translate }}"
         [matTooltipPosition]="tooltipPosition">
     {{displayValue}}
   </span>
