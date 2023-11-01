@@ -503,17 +503,16 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       $event.stopPropagation();
     }
     const target = $event.target || $event.srcElement || $event.currentTarget;
-    const config = new OverlayConfig();
-    config.backdropClass = 'cdk-overlay-transparent-backdrop';
-    config.hasBackdrop = true;
-    const connectedPosition: ConnectedPosition = {
-      originX: 'end',
-      originY: 'bottom',
-      overlayX: 'end',
-      overlayY: 'top'
-    };
-    config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
-      .withPositions([connectedPosition]);
+    const config = new OverlayConfig({
+      panelClass: 'tb-display-columns',
+      backdropClass: 'cdk-overlay-transparent-backdrop',
+      hasBackdrop: true,
+      height: 'fit-content',
+      maxHeight: '75vh'
+    });
+    config.positionStrategy = this.overlay.position()
+      .flexibleConnectedTo(target as HTMLElement)
+      .withPositions(DEFAULT_OVERLAY_POSITIONS);
 
     const overlayRef = this.overlay.create(config);
     overlayRef.backdropClick().subscribe(() => {
@@ -549,9 +548,18 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
         useValue: overlayRef
       }
     ];
+
     const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
-    overlayRef.attach(new ComponentPortal(DisplayColumnsPanelComponent,
+    const componentRef = overlayRef.attach(new ComponentPortal(DisplayColumnsPanelComponent,
       this.viewContainerRef, injector));
+
+    const resizeWindows$ = fromEvent(window, 'resize').subscribe(() => {
+      overlayRef.updatePosition();
+    });
+    componentRef.onDestroy(() => {
+      resizeWindows$.unsubscribe();
+    });
+
     this.ctx.detectChanges();
   }
 
