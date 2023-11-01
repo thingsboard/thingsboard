@@ -1491,6 +1491,8 @@ queue:
     max_requests_timeout: "${TB_QUEUE_TRANSPORT_MAX_REQUEST_TIMEOUT:10000}"
     # Amount of threads used to invoke callbacks
     max_callback_threads: "${TB_QUEUE_TRANSPORT_MAX_CALLBACK_THREADS:100}"
+    # Amount of threads used for transport API requests
+    max_core_handler_threads: "${TB_QUEUE_TRANSPORT_MAX_CORE_HANDLER_THREADS:16}"
     # Interval in milliseconds to poll api requests from transport microservices
     request_poll_interval: "${TB_QUEUE_TRANSPORT_REQUEST_POLL_INTERVAL_MS:25}"
     # Interval in milliseconds to poll api response from transport microservices
