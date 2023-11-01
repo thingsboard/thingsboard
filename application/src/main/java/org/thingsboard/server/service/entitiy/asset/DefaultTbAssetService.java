@@ -144,7 +144,7 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
         ActionType actionType = ActionType.ASSIGNED_TO_EDGE;
         EdgeId edgeId = edge.getId();
         try {
-            Asset savedAsset = checkNotNull(assetService.assignAssetToEdge(tenantId, assetId, edgeId));
+            Asset savedAsset = checkNotNull(assetService.assignAssetToEdge(tenantId, assetId, edgeId, null));
             notificationEntityService.logEntityAction(tenantId, assetId, savedAsset, savedAsset.getCustomerId(),
                     actionType, user, assetId.toString(), edgeId.toString(), edge.getName());
             return savedAsset;
@@ -161,7 +161,7 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
         AssetId assetId = asset.getId();
         EdgeId edgeId = edge.getId();
         try {
-            Asset savedAsset = checkNotNull(assetService.unassignAssetFromEdge(tenantId, assetId, edgeId));
+            Asset savedAsset = checkNotNull(assetService.unassignAssetFromEdge(tenantId, assetId, edgeId, null));
             notificationEntityService.logEntityAction(tenantId, assetId, asset, asset.getCustomerId(),
                     actionType, user, assetId.toString(), edgeId.toString(), edge.getName());
 

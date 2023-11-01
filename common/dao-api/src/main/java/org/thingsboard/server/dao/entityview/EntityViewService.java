@@ -38,7 +38,7 @@ public interface EntityViewService extends EntityDaoService {
 
     EntityView saveEntityView(EntityView entityView);
 
-    EntityView saveEntityView(EntityView entityView, boolean doValidate);
+    EntityView saveEntityView(EntityView entityView, EdgeId originatorEdgeId);
 
     EntityView assignEntityViewToCustomer(TenantId tenantId, EntityViewId entityViewId, CustomerId customerId);
 
@@ -84,9 +84,9 @@ public interface EntityViewService extends EntityDaoService {
 
     ListenableFuture<List<EntitySubtype>> findEntityViewTypesByTenantId(TenantId tenantId);
 
-    EntityView assignEntityViewToEdge(TenantId tenantId, EntityViewId entityViewId, EdgeId edgeId);
+    EntityView assignEntityViewToEdge(TenantId tenantId, EntityViewId entityViewId, EdgeId edgeId, EdgeId originatorEdgeId);
 
-    EntityView unassignEntityViewFromEdge(TenantId tenantId, EntityViewId entityViewId, EdgeId edgeId);
+    EntityView unassignEntityViewFromEdge(TenantId tenantId, EntityViewId entityViewId, EdgeId edgeId, EdgeId originatorEdgeId);
 
     PageData<EntityView> findEntityViewsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink);
 

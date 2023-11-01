@@ -378,7 +378,7 @@ public class DashboardServiceTest extends AbstractServiceTest {
         Dashboard savedDashboard = dashboardService.saveDashboard(dashboard);
         try {
             Assertions.assertThrows(DataValidationException.class, () -> {
-                dashboardService.assignDashboardToEdge(tenantId, savedDashboard.getId(), new EdgeId(Uuids.timeBased()));
+                dashboardService.assignDashboardToEdge(tenantId, savedDashboard.getId(), new EdgeId(Uuids.timeBased()), null);
             });
         } finally {
             dashboardService.deleteDashboard(tenantId, savedDashboard.getId());
@@ -403,9 +403,8 @@ public class DashboardServiceTest extends AbstractServiceTest {
         edge.setRoutingKey(StringUtils.randomAlphanumeric(20));
         Edge savedEdge = edgeService.saveEdge(edge);
         try {
-            Assertions.assertThrows(DataValidationException.class, () -> {
-                dashboardService.assignDashboardToEdge(tenantId, savedDashboard.getId(), savedEdge.getId());
-            });
+            Assertions.assertThrows(DataValidationException.class, () ->
+                    dashboardService.assignDashboardToEdge(tenantId, savedDashboard.getId(), savedEdge.getId(), null));
         } finally {
             dashboardService.deleteDashboard(tenantId, savedDashboard.getId());
             tenantService.deleteTenant(tenant.getId());

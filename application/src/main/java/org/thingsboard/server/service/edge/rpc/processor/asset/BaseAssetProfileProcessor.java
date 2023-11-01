@@ -20,7 +20,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.util.Pair;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.AssetProfileId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
@@ -30,7 +32,7 @@ import java.nio.charset.StandardCharsets;
 @Slf4j
 public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
 
-    protected Pair<Boolean, Boolean> saveOrUpdateAssetProfile(TenantId tenantId, AssetProfileId assetProfileId, AssetProfileUpdateMsg assetProfileUpdateMsg) {
+    protected Pair<Boolean, Boolean> saveOrUpdateAssetProfile(TenantId tenantId, AssetProfileId assetProfileId, AssetProfileUpdateMsg assetProfileUpdateMsg, EdgeId edgeId) {
         boolean created = false;
         boolean assetProfileNameUpdated = false;
         assetCreationLock.lock();
@@ -65,7 +67,7 @@ public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
             if (created) {
                 assetProfile.setId(assetProfileId);
             }
-            assetProfileService.saveAssetProfile(assetProfile, false);
+            assetProfileService.saveAssetProfile(assetProfile, edgeId);
         } catch (Exception e) {
             log.error("[{}] Failed to process asset profile update msg [{}]", tenantId, assetProfileUpdateMsg, e);
             throw e;

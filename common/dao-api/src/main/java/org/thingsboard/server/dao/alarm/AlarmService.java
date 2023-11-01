@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -56,6 +57,8 @@ public interface AlarmService extends EntityDaoService {
      */
     AlarmApiCallResult createAlarm(AlarmCreateOrUpdateActiveRequest request);
 
+    AlarmApiCallResult createAlarm(AlarmCreateOrUpdateActiveRequest request, EdgeId originatorEdgeId);
+
     /**
      * Designed for atomic operations over active alarms.
      * Only one active alarm may exist for the pair {originatorId, alarmType}
@@ -67,15 +70,23 @@ public interface AlarmService extends EntityDaoService {
      */
     AlarmApiCallResult updateAlarm(AlarmUpdateRequest request);
 
+    AlarmApiCallResult updateAlarm(AlarmUpdateRequest request, EdgeId originatorEdgeId);
+
     AlarmApiCallResult acknowledgeAlarm(TenantId tenantId, AlarmId alarmId, long ackTs);
 
+    AlarmApiCallResult acknowledgeAlarm(TenantId tenantId, AlarmId alarmId, long ackTs, EdgeId originatorEdgeId);
+
     AlarmApiCallResult clearAlarm(TenantId tenantId, AlarmId alarmId, long clearTs, JsonNode details);
+
+    AlarmApiCallResult clearAlarm(TenantId tenantId, AlarmId alarmId, long clearTs, JsonNode details, EdgeId originatorEdgeId);
 
     AlarmApiCallResult assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long ts);
 
     AlarmApiCallResult unassignAlarm(TenantId tenantId, AlarmId alarmId, long ts);
 
     AlarmApiCallResult delAlarm(TenantId tenantId, AlarmId alarmId);
+
+    AlarmApiCallResult delAlarm(TenantId tenantId, AlarmId alarmId, EdgeId originatorEdgeId);
 
     AlarmApiCallResult delAlarm(TenantId tenantId, AlarmId alarmId, boolean checkAndDeleteAlarmType);
 

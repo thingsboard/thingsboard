@@ -43,6 +43,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
+import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponseActorMsg;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsUpdateMsg;
@@ -54,7 +55,6 @@ import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponseActorMsg;
 
 import java.util.UUID;
 
@@ -67,8 +67,6 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
         log.trace("[{}] executing processDeviceMsgFromEdge [{}] from edge [{}]", tenantId, deviceUpdateMsg, edge.getId());
         DeviceId deviceId = new DeviceId(new UUID(deviceUpdateMsg.getIdMSB(), deviceUpdateMsg.getIdLSB()));
         try {
-            edgeSynchronizationManager.getEdgeId().set(edge.getId());
-
             switch (deviceUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
                 case ENTITY_UPDATED_RPC_MESSAGE:
@@ -77,7 +75,7 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
                 case ENTITY_DELETED_RPC_MESSAGE:
                     Device deviceToDelete = deviceService.findDeviceById(tenantId, deviceId);
                     if (deviceToDelete != null) {
-                        deviceService.unassignDeviceFromEdge(tenantId, deviceId, edge.getId());
+                        deviceService.unassignDeviceFromEdge(tenantId, deviceId, edge.getId(), edge.getId());
                     }
                     return Futures.immediateFuture(null);
                 case UNRECOGNIZED:
@@ -91,31 +89,23 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
             } else {
                 return Futures.immediateFailedFuture(e);
             }
-        } finally {
-            edgeSynchronizationManager.getEdgeId().remove();
         }
     }
 
     public ListenableFuture<Void> processDeviceCredentialsMsgFromEdge(TenantId tenantId, EdgeId edgeId, DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg) {
         log.debug("[{}] Executing processDeviceCredentialsMsgFromEdge, deviceCredentialsUpdateMsg [{}]", tenantId, deviceCredentialsUpdateMsg);
-        try {
-            edgeSynchronizationManager.getEdgeId().set(edgeId);
-
-            updateDeviceCredentials(tenantId, deviceCredentialsUpdateMsg);
-        } finally {
-            edgeSynchronizationManager.getEdgeId().remove();
-        }
+        updateDeviceCredentials(tenantId, deviceCredentialsUpdateMsg, edgeId);
         return Futures.immediateFuture(null);
     }
 
     private void saveOrUpdateDevice(TenantId tenantId, DeviceId deviceId, DeviceUpdateMsg deviceUpdateMsg, Edge edge) {
         CustomerId customerId = safeGetCustomerId(deviceUpdateMsg.getCustomerIdMSB(), deviceUpdateMsg.getCustomerIdLSB());
-        Pair<Boolean, Boolean> resultPair = super.saveOrUpdateDevice(tenantId, deviceId, deviceUpdateMsg, customerId);
+        Pair<Boolean, Boolean> resultPair = super.saveOrUpdateDevice(tenantId, deviceId, deviceUpdateMsg, edge.getId(), customerId);
         Boolean created = resultPair.getFirst();
         if (created) {
             createRelationFromEdge(tenantId, edge.getId(), deviceId);
             pushDeviceCreatedEventToRuleEngine(tenantId, edge, deviceId);
-            deviceService.assignDeviceToEdge(tenantId, deviceId, edge.getId());
+            deviceService.assignDeviceToEdge(tenantId, deviceId, edge.getId(), edge.getId());
         }
         Boolean deviceNameUpdated = resultPair.getSecond();
         if (deviceNameUpdated) {

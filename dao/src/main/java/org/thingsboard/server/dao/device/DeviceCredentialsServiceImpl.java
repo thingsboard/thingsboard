@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKClientCred
 import org.thingsboard.server.common.data.device.credentials.lwm2m.X509BootstrapClientCredential;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ClientCredential;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.msg.EncryptionUtil;
@@ -87,15 +88,25 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
 
     @Override
     public DeviceCredentials updateDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials) {
-        return saveOrUpdate(tenantId, deviceCredentials);
+        return saveOrUpdate(tenantId, deviceCredentials, null);
+    }
+
+    @Override
+    public DeviceCredentials updateDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials, EdgeId originatorEdgeId) {
+        return saveOrUpdate(tenantId, deviceCredentials, originatorEdgeId);
     }
 
     @Override
     public DeviceCredentials createDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials) {
-        return saveOrUpdate(tenantId, deviceCredentials);
+        return saveOrUpdate(tenantId, deviceCredentials, null);
     }
 
-    private DeviceCredentials saveOrUpdate(TenantId tenantId, DeviceCredentials deviceCredentials) {
+    @Override
+    public DeviceCredentials createDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials, EdgeId originatorEdgeId) {
+        return saveOrUpdate(tenantId, deviceCredentials, originatorEdgeId);
+    }
+
+    private DeviceCredentials saveOrUpdate(TenantId tenantId, DeviceCredentials deviceCredentials, EdgeId originatorEdgeId) {
         if (deviceCredentials.getCredentialsType() == null) {
             throw new DataValidationException("Device credentials type should be specified");
         }
@@ -110,7 +121,7 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
             var value = deviceCredentialsDao.saveAndFlush(tenantId, deviceCredentials);
             publishEvictEvent(new DeviceCredentialsEvictEvent(value.getCredentialsId(), oldDeviceCredentials != null ? oldDeviceCredentials.getCredentialsId() : null));
             if (oldDeviceCredentials != null) {
-                eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(value.getDeviceId()).actionType(ActionType.CREDENTIALS_UPDATED).build());
+                eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(value.getDeviceId()).actionType(ActionType.CREDENTIALS_UPDATED).originatorEdgeId(originatorEdgeId).build());
             }
             return value;
         } catch (Exception t) {

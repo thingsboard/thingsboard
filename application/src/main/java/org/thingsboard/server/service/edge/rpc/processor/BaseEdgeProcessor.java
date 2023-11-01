@@ -70,7 +70,6 @@ import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
-import org.thingsboard.server.dao.edge.EdgeSynchronizationManager;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
@@ -104,8 +103,8 @@ import org.thingsboard.server.service.edge.rpc.constructor.EntityViewMsgConstruc
 import org.thingsboard.server.service.edge.rpc.constructor.OtaPackageMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.QueueMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.RelationMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.RuleChainMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.ResourceMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.RuleChainMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.TenantMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.TenantProfileMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.UserMsgConstructor;
@@ -308,9 +307,6 @@ public abstract class BaseEdgeProcessor {
 
     @Autowired
     protected ResourceMsgConstructor resourceMsgConstructor;
-
-    @Autowired
-    protected EdgeSynchronizationManager edgeSynchronizationManager;
 
     @Autowired
     protected DbCallbackExecutorService dbCallbackExecutorService;
@@ -653,7 +649,7 @@ public abstract class BaseEdgeProcessor {
         relation.setTo(entityId);
         relation.setTypeGroup(RelationTypeGroup.COMMON);
         relation.setType(EntityRelation.EDGE_TYPE);
-        relationService.saveRelation(tenantId, relation);
+        relationService.saveRelation(tenantId, relation, edgeId);
     }
 
     protected TbMsgMetaData getEdgeActionTbMsgMetaData(Edge edge, CustomerId customerId) {

@@ -195,7 +195,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         ActionType actionType = ActionType.ASSIGNED_TO_EDGE;
         EdgeId edgeId = edge.getId();
         try {
-            EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToEdge(tenantId, entityViewId, edgeId));
+            EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToEdge(tenantId, entityViewId, edgeId, null));
             notificationEntityService.logEntityAction(tenantId, entityViewId, savedEntityView, customerId, actionType,
                     user, savedEntityView.getEntityId().toString(), edgeId.toString(), edge.getName());
             return savedEntityView;
@@ -213,7 +213,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         EntityViewId entityViewId = entityView.getId();
         EdgeId edgeId = edge.getId();
         try {
-            EntityView savedEntityView = checkNotNull(entityViewService.unassignEntityViewFromEdge(tenantId, entityViewId, edgeId));
+            EntityView savedEntityView = checkNotNull(entityViewService.unassignEntityViewFromEdge(tenantId, entityViewId, edgeId, null));
             notificationEntityService.logEntityAction(tenantId, entityViewId, savedEntityView, customerId, actionType,
                     user, entityViewId.toString(), edgeId.toString(), edge.getName());
             return savedEntityView;

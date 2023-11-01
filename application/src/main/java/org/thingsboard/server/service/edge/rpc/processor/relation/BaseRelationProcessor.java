@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -33,7 +34,7 @@ import java.util.UUID;
 @Slf4j
 public abstract class BaseRelationProcessor extends BaseEdgeProcessor {
 
-    protected ListenableFuture<Void> processRelationMsg(TenantId tenantId, RelationUpdateMsg relationUpdateMsg) {
+    protected ListenableFuture<Void> processRelationMsg(TenantId tenantId, RelationUpdateMsg relationUpdateMsg, EdgeId edgeId) {
         try {
             EntityRelation entityRelation = new EntityRelation();
 
@@ -54,14 +55,14 @@ public abstract class BaseRelationProcessor extends BaseEdgeProcessor {
                 case ENTITY_UPDATED_RPC_MESSAGE:
                     if (isEntityExists(tenantId, entityRelation.getTo())
                             && isEntityExists(tenantId, entityRelation.getFrom())) {
-                        relationService.saveRelation(tenantId, entityRelation);
+                        relationService.saveRelation(tenantId, entityRelation, edgeId);
                         break;
                     } else {
                         log.warn("[{}] Skipping relating update msg because from/to entity doesn't exists on edge, {}", tenantId, relationUpdateMsg);
                         break;
                     }
                 case ENTITY_DELETED_RPC_MESSAGE:
-                    relationService.deleteRelation(tenantId, entityRelation);
+                    relationService.deleteRelation(tenantId, entityRelation, edgeId);
                     break;
                 case UNRECOGNIZED:
                 default:

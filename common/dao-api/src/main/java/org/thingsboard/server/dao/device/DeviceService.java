@@ -49,7 +49,7 @@ public interface DeviceService extends EntityDaoService {
 
     Device findDeviceByTenantIdAndName(TenantId tenantId, String name);
 
-    Device saveDevice(Device device, boolean doValidate);
+    Device saveDevice(Device device, EdgeId originatorEdgeId);
 
     Device saveDevice(Device device);
 
@@ -101,9 +101,9 @@ public interface DeviceService extends EntityDaoService {
 
     PageData<UUID> findDevicesIdsByDeviceProfileTransportType(DeviceTransportType transportType, PageLink pageLink);
 
-    Device assignDeviceToEdge(TenantId tenantId, DeviceId deviceId, EdgeId edgeId);
+    Device assignDeviceToEdge(TenantId tenantId, DeviceId deviceId, EdgeId edgeId, EdgeId originatorEdgeId);
 
-    Device unassignDeviceFromEdge(TenantId tenantId, DeviceId deviceId, EdgeId edgeId);
+    Device unassignDeviceFromEdge(TenantId tenantId, DeviceId deviceId, EdgeId edgeId, EdgeId originatorEdgeId);
 
     PageData<Device> findDevicesByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink);
 

@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
@@ -33,7 +34,7 @@ import java.util.UUID;
 @Slf4j
 public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
 
-    protected Pair<Boolean, Boolean> saveOrUpdateAsset(TenantId tenantId, AssetId assetId, AssetUpdateMsg assetUpdateMsg, CustomerId customerId) {
+    protected Pair<Boolean, Boolean> saveOrUpdateAsset(TenantId tenantId, AssetId assetId, AssetUpdateMsg assetUpdateMsg, EdgeId edgeId, CustomerId customerId) {
         boolean created = false;
         boolean assetNameUpdated = false;
         assetCreationLock.lock();
@@ -68,7 +69,7 @@ public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
             if (created) {
                 asset.setId(assetId);
             }
-            assetService.saveAsset(asset, false);
+            assetService.saveAsset(asset, edgeId);
         } catch (Exception e) {
             log.error("[{}] Failed to process asset update msg [{}]", tenantId, assetUpdateMsg, e);
             throw e;

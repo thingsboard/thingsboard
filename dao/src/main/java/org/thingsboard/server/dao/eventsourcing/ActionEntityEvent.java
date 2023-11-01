@@ -30,4 +30,5 @@ public class ActionEntityEvent {
     private final EntityId entityId;
     private final String body;
     private final ActionType actionType;
+    private final EdgeId originatorEdgeId;
 }

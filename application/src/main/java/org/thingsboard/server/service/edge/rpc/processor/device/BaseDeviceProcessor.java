@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -44,7 +45,7 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
     @Autowired
     protected DataDecodingEncodingService dataDecodingEncodingService;
 
-    protected Pair<Boolean, Boolean> saveOrUpdateDevice(TenantId tenantId, DeviceId deviceId, DeviceUpdateMsg deviceUpdateMsg, CustomerId customerId) {
+    protected Pair<Boolean, Boolean> saveOrUpdateDevice(TenantId tenantId, DeviceId deviceId, DeviceUpdateMsg deviceUpdateMsg, EdgeId edgeId, CustomerId customerId) {
         boolean created = false;
         boolean deviceNameUpdated = false;
         deviceCreationLock.lock();
@@ -88,13 +89,13 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
             if (created) {
                 device.setId(deviceId);
             }
-            Device savedDevice = deviceService.saveDevice(device, false);
+            Device savedDevice = deviceService.saveDevice(device, edgeId);
             if (created) {
                 DeviceCredentials deviceCredentials = new DeviceCredentials();
                 deviceCredentials.setDeviceId(new DeviceId(savedDevice.getUuidId()));
                 deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
                 deviceCredentials.setCredentialsId(StringUtils.randomAlphanumeric(20));
-                deviceCredentialsService.createDeviceCredentials(device.getTenantId(), deviceCredentials);
+                deviceCredentialsService.createDeviceCredentials(device.getTenantId(), deviceCredentials, edgeId);
             }
             tbClusterService.onDeviceUpdated(savedDevice, created ? null : device);
         } catch (Exception e) {
@@ -106,7 +107,7 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
         return Pair.of(created, deviceNameUpdated);
     }
 
-    protected void updateDeviceCredentials(TenantId tenantId, DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg) {
+    protected void updateDeviceCredentials(TenantId tenantId, DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg, EdgeId edgeId) {
         DeviceId deviceId = new DeviceId(new UUID(deviceCredentialsUpdateMsg.getDeviceIdMSB(), deviceCredentialsUpdateMsg.getDeviceIdLSB()));
         Device device = deviceService.findDeviceById(tenantId, deviceId);
         if (device != null) {
@@ -118,7 +119,7 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
                 deviceCredentials.setCredentialsId(deviceCredentialsUpdateMsg.getCredentialsId());
                 deviceCredentials.setCredentialsValue(deviceCredentialsUpdateMsg.hasCredentialsValue()
                         ? deviceCredentialsUpdateMsg.getCredentialsValue() : null);
-                deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials);
+                deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials, edgeId);
 
             } catch (Exception e) {
                 log.error("[{}] Can't update device credentials for device [{}], deviceCredentialsUpdateMsg [{}]",

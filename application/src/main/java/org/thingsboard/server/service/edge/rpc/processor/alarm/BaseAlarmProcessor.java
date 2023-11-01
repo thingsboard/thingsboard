@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -45,7 +46,7 @@ import java.util.UUID;
 @Slf4j
 public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
 
-    protected ListenableFuture<Void> processAlarmMsg(TenantId tenantId, AlarmUpdateMsg alarmUpdateMsg) {
+    protected ListenableFuture<Void> processAlarmMsg(TenantId tenantId, AlarmUpdateMsg alarmUpdateMsg, EdgeId edgeId) {
         EntityId originatorId = getAlarmOriginator(tenantId, alarmUpdateMsg.getOriginatorName(),
                 EntityType.valueOf(alarmUpdateMsg.getOriginatorType()));
         AlarmId alarmId = new AlarmId(new UUID(alarmUpdateMsg.getIdMSB(), alarmUpdateMsg.getIdLSB()));
@@ -74,28 +75,28 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
                     alarm.setEndTs(alarmUpdateMsg.getEndTs());
                     alarm.setDetails(JacksonUtil.toJsonNode(alarmUpdateMsg.getDetails()));
                     if (UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE.equals(alarmUpdateMsg.getMsgType())) {
-                        alarmService.createAlarm(AlarmCreateOrUpdateActiveRequest.fromAlarm(alarm, null, alarmId));
+                        alarmService.createAlarm(AlarmCreateOrUpdateActiveRequest.fromAlarm(alarm, null, alarmId), edgeId);
                     } else {
-                        alarmService.updateAlarm(AlarmUpdateRequest.fromAlarm(alarm));
+                        alarmService.updateAlarm(AlarmUpdateRequest.fromAlarm(alarm), edgeId);
                     }
                     break;
                 case ALARM_ACK_RPC_MESSAGE:
                     Alarm alarmToAck = alarmService.findAlarmById(tenantId, alarmId);
                     if (alarmToAck != null) {
-                        alarmService.acknowledgeAlarm(tenantId, alarmId, alarmUpdateMsg.getAckTs());
+                        alarmService.acknowledgeAlarm(tenantId, alarmId, alarmUpdateMsg.getAckTs(), edgeId);
                     }
                     break;
                 case ALARM_CLEAR_RPC_MESSAGE:
                     Alarm alarmToClear = alarmService.findAlarmById(tenantId, alarmId);
                     if (alarmToClear != null) {
                         alarmService.clearAlarm(tenantId, alarmId, alarmUpdateMsg.getClearTs(),
-                                JacksonUtil.toJsonNode(alarmUpdateMsg.getDetails()));
+                                JacksonUtil.toJsonNode(alarmUpdateMsg.getDetails()), edgeId);
                     }
                     break;
                 case ENTITY_DELETED_RPC_MESSAGE:
                     Alarm alarmToDelete = alarmService.findAlarmById(tenantId, alarmId);
                     if (alarmToDelete != null) {
-                        alarmService.delAlarm(tenantId, alarmId);
+                        alarmService.delAlarm(tenantId, alarmId, edgeId);
                     }
                     break;
                 case UNRECOGNIZED:

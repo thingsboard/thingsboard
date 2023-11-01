@@ -41,7 +41,7 @@ public interface AssetService extends EntityDaoService {
 
     Asset findAssetByTenantIdAndName(TenantId tenantId, String name);
 
-    Asset saveAsset(Asset asset, boolean doValidate);
+    Asset saveAsset(Asset asset, EdgeId originatorEdgeId);
 
     Asset saveAsset(Asset asset);
 
@@ -83,9 +83,9 @@ public interface AssetService extends EntityDaoService {
 
     ListenableFuture<List<EntitySubtype>> findAssetTypesByTenantId(TenantId tenantId);
 
-    Asset assignAssetToEdge(TenantId tenantId, AssetId assetId, EdgeId edgeId);
+    Asset assignAssetToEdge(TenantId tenantId, AssetId assetId, EdgeId edgeId, EdgeId originatorEdgeId);
 
-    Asset unassignAssetFromEdge(TenantId tenantId, AssetId assetId, EdgeId edgeId);
+    Asset unassignAssetFromEdge(TenantId tenantId, AssetId assetId, EdgeId edgeId, EdgeId originatorEdgeId);
 
     PageData<Asset> findAssetsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink);
 

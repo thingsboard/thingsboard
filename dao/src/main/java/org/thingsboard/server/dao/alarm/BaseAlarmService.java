@@ -44,6 +44,7 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ApiUsageLimitsExceededException;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -105,11 +106,16 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
 
     @Override
     public AlarmApiCallResult updateAlarm(AlarmUpdateRequest request) {
+        return updateAlarm(request, null);
+    }
+
+    @Override
+    public AlarmApiCallResult updateAlarm(AlarmUpdateRequest request, EdgeId originatorEdgeId) {
         validateAlarmRequest(request);
         AlarmApiCallResult result = withPropagated(alarmDao.updateAlarm(request));
         if (result.getAlarm() != null) {
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(result.getAlarm().getTenantId()).entity(result)
-                    .entityId(result.getAlarm().getId()).build());
+                    .entityId(result.getAlarm().getId()).originatorEdgeId(originatorEdgeId).build());
         }
         return result;
     }
@@ -120,7 +126,16 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
     }
 
     @Override
+    public AlarmApiCallResult createAlarm(AlarmCreateOrUpdateActiveRequest request, EdgeId originatorEdgeId) {
+        return doCreateAlarm(request, true, originatorEdgeId);
+    }
+
+    @Override
     public AlarmApiCallResult createAlarm(AlarmCreateOrUpdateActiveRequest request, boolean alarmCreationEnabled) {
+        return doCreateAlarm(request, alarmCreationEnabled, null);
+    }
+
+    private AlarmApiCallResult doCreateAlarm(AlarmCreateOrUpdateActiveRequest request, boolean alarmCreationEnabled, EdgeId originatorEdgeId) {
         validateAlarmRequest(request);
         CustomerId customerId = entityService.fetchEntityCustomerId(request.getTenantId(), request.getOriginator()).orElse(null);
         if (customerId == null && request.getCustomerId() != null) {
@@ -135,7 +150,7 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
         }
         if (result.getAlarm() != null) {
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(result.getAlarm().getTenantId())
-                    .entityId(result.getAlarm().getId()).added(true).build());
+                    .entityId(result.getAlarm().getId()).added(true).originatorEdgeId(originatorEdgeId).build());
             publishEvictEvent(new AlarmTypesCacheEvictEvent(request.getTenantId()));
         }
         return withPropagated(result);
@@ -143,20 +158,30 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
 
     @Override
     public AlarmApiCallResult acknowledgeAlarm(TenantId tenantId, AlarmId alarmId, long ackTs) {
+        return acknowledgeAlarm(tenantId, alarmId, ackTs, null);
+    }
+
+    @Override
+    public AlarmApiCallResult acknowledgeAlarm(TenantId tenantId, AlarmId alarmId, long ackTs, EdgeId originatorEdgeId) {
         var result = withPropagated(alarmDao.acknowledgeAlarm(tenantId, alarmId, ackTs));
         if (result.getAlarm() != null) {
             eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(result.getAlarm().getId())
-                    .actionType(ActionType.ALARM_ACK).build());
+                    .actionType(ActionType.ALARM_ACK).originatorEdgeId(originatorEdgeId).build());
         }
         return result;
     }
 
     @Override
     public AlarmApiCallResult clearAlarm(TenantId tenantId, AlarmId alarmId, long clearTs, JsonNode details) {
+        return clearAlarm(tenantId, alarmId, clearTs, details, null);
+    }
+
+    @Override
+    public AlarmApiCallResult clearAlarm(TenantId tenantId, AlarmId alarmId, long clearTs, JsonNode details, EdgeId originatorEdgeId) {
         var result = withPropagated(alarmDao.clearAlarm(tenantId, alarmId, clearTs, details));
         if (result.getAlarm() != null) {
             eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(result.getAlarm().getId())
-                    .actionType(ActionType.ALARM_CLEAR).build());
+                    .actionType(ActionType.ALARM_CLEAR).originatorEdgeId(originatorEdgeId).build());
         }
         return result;
     }
@@ -177,12 +202,22 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
     @Override
     @Transactional
     public AlarmApiCallResult delAlarm(TenantId tenantId, AlarmId alarmId) {
-        return delAlarm(tenantId, alarmId, true);
+        return doDeleteAlarm(tenantId, alarmId, true, null);
+    }
+
+    @Override
+    @Transactional
+    public AlarmApiCallResult delAlarm(TenantId tenantId, AlarmId alarmId, EdgeId originatorEdgeId) {
+        return doDeleteAlarm(tenantId, alarmId, true, originatorEdgeId);
     }
 
     @Override
     @Transactional
     public AlarmApiCallResult delAlarm(TenantId tenantId, AlarmId alarmId, boolean checkAndDeleteAlarmType) {
+        return doDeleteAlarm(tenantId, alarmId, checkAndDeleteAlarmType, null);
+    }
+
+    private AlarmApiCallResult doDeleteAlarm(TenantId tenantId, AlarmId alarmId, boolean checkAndDeleteAlarmType, EdgeId originatorEdgeId) {
         log.debug("Deleting Alarm Id: {}", alarmId);
         AlarmInfo alarm = alarmDao.findAlarmInfoById(tenantId, alarmId.getId());
         if (alarm == null) {
@@ -191,7 +226,7 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
             deleteEntityRelations(tenantId, alarm.getId());
             alarmDao.removeById(tenantId, alarm.getUuidId());
             eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId)
-                    .entityId(alarmId).entity(alarm).build());
+                    .entityId(alarmId).entity(alarm).originatorEdgeId(originatorEdgeId).build());
             if (checkAndDeleteAlarmType) {
                 delAlarmTypes(tenantId, Collections.singleton(alarm.getType()));
             }

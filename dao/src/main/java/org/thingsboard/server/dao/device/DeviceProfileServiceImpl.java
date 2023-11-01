@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.device.profile.X509CertificateChainProvisionConfiguration;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -143,16 +144,7 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     }
 
     @Override
-    public DeviceProfile saveDeviceProfile(DeviceProfile deviceProfile, boolean doValidate) {
-        return doSaveDeviceProfile(deviceProfile, doValidate);
-    }
-
-    @Override
-    public DeviceProfile saveDeviceProfile(DeviceProfile deviceProfile) {
-        return doSaveDeviceProfile(deviceProfile, true);
-    }
-
-    private DeviceProfile doSaveDeviceProfile(DeviceProfile deviceProfile, boolean doValidate) {
+    public DeviceProfile saveDeviceProfile(DeviceProfile deviceProfile, EdgeId originatorEdgeId) {
         log.trace("Executing saveDeviceProfile [{}]", deviceProfile);
         if (deviceProfile.getProfileData() != null && deviceProfile.getProfileData().getProvisionConfiguration() instanceof X509CertificateChainProvisionConfiguration) {
             X509CertificateChainProvisionConfiguration x509Configuration = (X509CertificateChainProvisionConfiguration) deviceProfile.getProfileData().getProvisionConfiguration();
@@ -161,7 +153,7 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
             }
         }
         DeviceProfile oldDeviceProfile = null;
-        if (doValidate) {
+        if (originatorEdgeId == null) {
             oldDeviceProfile = deviceProfileValidator.validate(deviceProfile, DeviceProfile::getTenantId);
         } else if (deviceProfile.getId() != null) {
             oldDeviceProfile = findDeviceProfileById(deviceProfile.getTenantId(), deviceProfile.getId());
@@ -173,7 +165,7 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
                     oldDeviceProfile != null ? oldDeviceProfile.getName() : null, savedDeviceProfile.getId(), savedDeviceProfile.isDefault(),
                     oldDeviceProfile != null ? oldDeviceProfile.getProvisionDeviceKey() : null));
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedDeviceProfile.getTenantId())
-                    .entityId(savedDeviceProfile.getId()).added(oldDeviceProfile == null).build());
+                    .entityId(savedDeviceProfile.getId()).added(oldDeviceProfile == null).originatorEdgeId(originatorEdgeId).build());
         } catch (Exception t) {
             handleEvictEvent(new DeviceProfileEvictEvent(deviceProfile.getTenantId(), deviceProfile.getName(),
                     oldDeviceProfile != null ? oldDeviceProfile.getName() : null, null, deviceProfile.isDefault(),
@@ -194,12 +186,17 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
                 pageData = deviceDao.findDevicesByTenantIdAndProfileId(deviceProfile.getTenantId().getId(), deviceProfile.getUuidId(), pageLink);
                 for (Device device : pageData.getData()) {
                     device.setType(deviceProfile.getName());
-                    deviceService.saveDevice(device);
+                    deviceService.saveDevice(device, originatorEdgeId);
                 }
                 pageLink = pageLink.nextPageLink();
             } while (pageData.hasNext());
         }
         return savedDeviceProfile;
+    }
+
+    @Override
+    public DeviceProfile saveDeviceProfile(DeviceProfile deviceProfile) {
+        return saveDeviceProfile(deviceProfile, null);
     }
 
     @Override

@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.relation;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -39,11 +40,15 @@ public interface RelationService {
 
     boolean saveRelation(TenantId tenantId, EntityRelation relation);
 
+    boolean saveRelation(TenantId tenantId, EntityRelation relation, EdgeId originatorEdgeId);
+
     void saveRelations(TenantId tenantId, List<EntityRelation> relations);
 
     ListenableFuture<Boolean> saveRelationAsync(TenantId tenantId, EntityRelation relation);
 
     boolean deleteRelation(TenantId tenantId, EntityRelation relation);
+
+    boolean deleteRelation(TenantId tenantId, EntityRelation relation, EdgeId originatorEdgeId);
 
     ListenableFuture<Boolean> deleteRelationAsync(TenantId tenantId, EntityRelation relation);
 

@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.device;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 
@@ -28,7 +29,11 @@ public interface DeviceCredentialsService {
 
     DeviceCredentials updateDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials);
 
+    DeviceCredentials updateDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials, EdgeId originatorEdgeId);
+
     DeviceCredentials createDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials);
+
+    DeviceCredentials createDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials, EdgeId originatorEdgeId);
 
     void formatCredentials(DeviceCredentials deviceCredentials);
 

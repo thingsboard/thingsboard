@@ -162,23 +162,23 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
 
     @Override
     public Device saveDeviceWithAccessToken(Device device, String accessToken) {
-        return doSaveDevice(device, accessToken, true);
+        return doSaveDevice(device, accessToken, null);
     }
 
     @Override
-    public Device saveDevice(Device device, boolean doValidate) {
-        return doSaveDevice(device, null, doValidate);
+    public Device saveDevice(Device device, EdgeId originatorEdgeId) {
+        return doSaveDevice(device, null, originatorEdgeId);
     }
 
     @Override
     public Device saveDevice(Device device) {
-        return doSaveDevice(device, null, true);
+        return doSaveDevice(device, null, null);
     }
 
     @Transactional
     @Override
     public Device saveDeviceWithCredentials(Device device, DeviceCredentials deviceCredentials) {
-        Device savedDevice = this.saveDeviceWithoutCredentials(device, true);
+        Device savedDevice = this.saveDeviceWithoutCredentials(device, null);
         deviceCredentials.setDeviceId(savedDevice.getId());
         if (device.getId() == null) {
             deviceCredentialsService.createDeviceCredentials(savedDevice.getTenantId(), deviceCredentials);
@@ -194,22 +194,22 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return savedDevice;
     }
 
-    private Device doSaveDevice(Device device, String accessToken, boolean doValidate) {
-        Device savedDevice = this.saveDeviceWithoutCredentials(device, doValidate);
+    private Device doSaveDevice(Device device, String accessToken, EdgeId originatorEdgeId) {
+        Device savedDevice = this.saveDeviceWithoutCredentials(device, originatorEdgeId);
         if (device.getId() == null) {
             DeviceCredentials deviceCredentials = new DeviceCredentials();
             deviceCredentials.setDeviceId(new DeviceId(savedDevice.getUuidId()));
             deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
             deviceCredentials.setCredentialsId(!StringUtils.isEmpty(accessToken) ? accessToken : StringUtils.randomAlphanumeric(20));
-            deviceCredentialsService.createDeviceCredentials(savedDevice.getTenantId(), deviceCredentials);
+            deviceCredentialsService.createDeviceCredentials(savedDevice.getTenantId(), deviceCredentials, originatorEdgeId);
         }
         return savedDevice;
     }
 
-    private Device saveDeviceWithoutCredentials(Device device, boolean doValidate) {
+    private Device saveDeviceWithoutCredentials(Device device, EdgeId originatorEdgeId) {
         log.trace("Executing saveDevice [{}]", device);
         Device oldDevice = null;
-        if (doValidate) {
+        if (originatorEdgeId == null) {
             oldDevice = deviceValidator.validate(device, Device::getTenantId);
         } else if (device.getId() != null) {
             oldDevice = findDeviceById(device.getTenantId(), device.getId());
@@ -241,7 +241,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
                 countService.publishCountEntityEvictEvent(result.getTenantId(), EntityType.DEVICE);
             }
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(result.getTenantId())
-                    .entityId(result.getId()).added(device.getId() == null).build());
+                    .entityId(result.getId()).added(device.getId() == null).originatorEdgeId(originatorEdgeId).build());
             return result;
         } catch (Exception t) {
             handleEvictEvent(deviceCacheEvictEvent);
@@ -513,7 +513,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         device.setTenantId(tenantId);
         device.setCustomerId(null);
         device.setDeviceProfileId(null);
-        Device savedDevice = doSaveDevice(device, null, true);
+        Device savedDevice = doSaveDevice(device, null, null);
 
         DeviceCacheEvictEvent oldTenantEvent = new DeviceCacheEvictEvent(oldTenantId, device.getId(), device.getName(), null);
         DeviceCacheEvictEvent newTenantEvent = new DeviceCacheEvictEvent(savedDevice.getTenantId(), device.getId(), device.getName(), null);
@@ -580,7 +580,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     }
 
     @Override
-    public Device assignDeviceToEdge(TenantId tenantId, DeviceId deviceId, EdgeId edgeId) {
+    public Device assignDeviceToEdge(TenantId tenantId, DeviceId deviceId, EdgeId edgeId, EdgeId originatorEdgeId) {
         Device device = findDeviceById(tenantId, deviceId);
         Edge edge = edgeService.findEdgeById(tenantId, edgeId);
         if (edge == null) {
@@ -592,7 +592,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         try {
             createRelation(tenantId, new EntityRelation(edgeId, deviceId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
             eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(deviceId)
-                    .actionType(ActionType.ASSIGNED_TO_EDGE).build());
+                    .actionType(ActionType.ASSIGNED_TO_EDGE).originatorEdgeId(originatorEdgeId).build());
         } catch (Exception e) {
             log.warn("[{}] Failed to create device relation. Edge Id: [{}]", deviceId, edgeId);
             throw new RuntimeException(e);
@@ -601,7 +601,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     }
 
     @Override
-    public Device unassignDeviceFromEdge(TenantId tenantId, DeviceId deviceId, EdgeId edgeId) {
+    public Device unassignDeviceFromEdge(TenantId tenantId, DeviceId deviceId, EdgeId edgeId, EdgeId originatorEdgeId) {
         Device device = findDeviceById(tenantId, deviceId);
         Edge edge = edgeService.findEdgeById(tenantId, edgeId);
         if (edge == null) {
@@ -613,7 +613,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         try {
             deleteRelation(tenantId, new EntityRelation(edgeId, deviceId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
             eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(deviceId)
-                    .actionType(ActionType.UNASSIGNED_FROM_EDGE).build());
+                    .actionType(ActionType.UNASSIGNED_FROM_EDGE).originatorEdgeId(originatorEdgeId).build());
         } catch (Exception e) {
             log.warn("[{}] Failed to delete device relation. Edge Id: [{}]", deviceId, edgeId);
             throw new RuntimeException(e);

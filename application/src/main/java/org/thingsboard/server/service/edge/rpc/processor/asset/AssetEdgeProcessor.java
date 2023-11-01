@@ -53,8 +53,6 @@ public class AssetEdgeProcessor extends BaseAssetProcessor {
         log.trace("[{}] executing processAssetMsgFromEdge [{}] from edge [{}]", tenantId, assetUpdateMsg, edge.getId());
         AssetId assetId = new AssetId(new UUID(assetUpdateMsg.getIdMSB(), assetUpdateMsg.getIdLSB()));
         try {
-            edgeSynchronizationManager.getEdgeId().set(edge.getId());
-
             switch (assetUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
                 case ENTITY_UPDATED_RPC_MESSAGE:
@@ -63,7 +61,7 @@ public class AssetEdgeProcessor extends BaseAssetProcessor {
                 case ENTITY_DELETED_RPC_MESSAGE:
                     Asset assetToDelete = assetService.findAssetById(tenantId, assetId);
                     if (assetToDelete != null) {
-                        assetService.unassignAssetFromEdge(tenantId, assetId, edge.getId());
+                        assetService.unassignAssetFromEdge(tenantId, assetId, edge.getId(), edge.getId());
                     }
                     return Futures.immediateFuture(null);
                 case UNRECOGNIZED:
@@ -77,19 +75,17 @@ public class AssetEdgeProcessor extends BaseAssetProcessor {
             } else {
                 return Futures.immediateFailedFuture(e);
             }
-        } finally {
-            edgeSynchronizationManager.getEdgeId().remove();
         }
     }
 
     private void saveOrUpdateAsset(TenantId tenantId, AssetId assetId, AssetUpdateMsg assetUpdateMsg, Edge edge) {
         CustomerId customerId = safeGetCustomerId(assetUpdateMsg.getCustomerIdMSB(), assetUpdateMsg.getCustomerIdLSB());
-        Pair<Boolean, Boolean> resultPair = super.saveOrUpdateAsset(tenantId, assetId, assetUpdateMsg, customerId);
+        Pair<Boolean, Boolean> resultPair = super.saveOrUpdateAsset(tenantId, assetId, assetUpdateMsg, edge.getId(), customerId);
         Boolean created = resultPair.getFirst();
         if (created) {
             createRelationFromEdge(tenantId, edge.getId(), assetId);
             pushAssetCreatedEventToRuleEngine(tenantId, edge, assetId);
-            assetService.assignAssetToEdge(tenantId, assetId, edge.getId());
+            assetService.assignAssetToEdge(tenantId, assetId, edge.getId(), edge.getId());
         }
         Boolean assetNameUpdated = resultPair.getSecond();
         if (assetNameUpdated) {

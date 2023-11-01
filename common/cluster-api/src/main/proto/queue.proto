@@ -908,8 +908,8 @@ message EdgeNotificationMsgProto {
   string body = 10;
   PostTelemetryMsg postTelemetryMsg = 11;
   PostAttributeMsg postAttributesMsg = 12;
-  int64 sourceEdgeIdMSB = 13;
-  int64 sourceEdgeIdLSB = 14;
+  int64 originatorEdgeIdMSB = 13;
+  int64 originatorEdgeIdLSB = 14;
 }
 
 message EdgeEventUpdateMsgProto {

@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
@@ -42,7 +43,7 @@ public abstract class BaseDeviceProfileProcessor extends BaseEdgeProcessor {
     @Autowired
     private DataDecodingEncodingService dataDecodingEncodingService;
 
-    protected Pair<Boolean, Boolean> saveOrUpdateDeviceProfile(TenantId tenantId, DeviceProfileId deviceProfileId, DeviceProfileUpdateMsg deviceProfileUpdateMsg) {
+    protected Pair<Boolean, Boolean> saveOrUpdateDeviceProfile(TenantId tenantId, DeviceProfileId deviceProfileId, DeviceProfileUpdateMsg deviceProfileUpdateMsg, EdgeId edgeId) {
         boolean created = false;
         boolean deviceProfileNameUpdated = false;
         deviceCreationLock.lock();
@@ -97,7 +98,7 @@ public abstract class BaseDeviceProfileProcessor extends BaseEdgeProcessor {
             if (created) {
                 deviceProfile.setId(deviceProfileId);
             }
-            deviceProfileService.saveDeviceProfile(deviceProfile, false);
+            deviceProfileService.saveDeviceProfile(deviceProfile, edgeId);
         } catch (Exception e) {
             log.error("[{}] Failed to process device profile update msg [{}]", tenantId, deviceProfileUpdateMsg, e);
             throw e;

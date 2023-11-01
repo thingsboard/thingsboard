@@ -34,7 +34,6 @@ import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.dao.edge.EdgeSynchronizationManager;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.RelationActionEvent;
@@ -65,7 +64,6 @@ import static org.thingsboard.server.service.entitiy.DefaultTbNotificationEntity
 public class EdgeEventSourcingListener {
 
     private final TbClusterService tbClusterService;
-    private final EdgeSynchronizationManager edgeSynchronizationManager;
 
     @PostConstruct
     public void init() {
@@ -81,7 +79,7 @@ public class EdgeEventSourcingListener {
             log.trace("[{}] SaveEntityEvent called: {}", event.getTenantId(), event);
             EdgeEventActionType action = Boolean.TRUE.equals(event.getAdded()) ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED;
             tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, event.getEntityId(),
-                    null, null, action, edgeSynchronizationManager.getEdgeId().get());
+                    null, null, action, event.getOriginatorEdgeId());
         } catch (Exception e) {
             log.error("[{}] failed to process SaveEntityEvent: {}", event.getTenantId(), event, e);
         }
@@ -92,8 +90,7 @@ public class EdgeEventSourcingListener {
         try {
             log.trace("[{}] DeleteEntityEvent called: {}", event.getTenantId(), event);
             tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, event.getEntityId(),
-                    JacksonUtil.toString(event.getEntity()), null, EdgeEventActionType.DELETED,
-                    edgeSynchronizationManager.getEdgeId().get());
+                    JacksonUtil.toString(event.getEntity()), null, EdgeEventActionType.DELETED, event.getOriginatorEdgeId());
         } catch (Exception e) {
             log.error("[{}] failed to process DeleteEntityEvent: {}", event.getTenantId(), event, e);
         }
@@ -102,10 +99,13 @@ public class EdgeEventSourcingListener {
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(ActionEntityEvent event) {
         try {
+            if (event.getOriginatorEdgeId() != null) {
+                return;
+            }
             log.trace("[{}] ActionEntityEvent called: {}", event.getTenantId(), event);
             tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), event.getEdgeId(), event.getEntityId(),
                     event.getBody(), null, edgeTypeByActionType(event.getActionType()),
-                    edgeSynchronizationManager.getEdgeId().get());
+                    event.getOriginatorEdgeId());
         } catch (Exception e) {
             log.error("[{}] failed to process ActionEntityEvent: {}", event.getTenantId(), event, e);
         }
@@ -126,7 +126,7 @@ public class EdgeEventSourcingListener {
             log.trace("[{}] RelationActionEvent called: {}", event.getTenantId(), event);
             tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, null,
                     JacksonUtil.toString(relation), EdgeEventType.RELATION, edgeTypeByActionType(event.getActionType()),
-                    edgeSynchronizationManager.getEdgeId().get());
+                    event.getOriginatorEdgeId());
         } catch (Exception e) {
             log.error("[{}] failed to process RelationActionEvent: {}", event.getTenantId(), event, e);
         }

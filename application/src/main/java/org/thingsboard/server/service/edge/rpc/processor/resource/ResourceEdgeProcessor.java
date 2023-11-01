@@ -41,19 +41,12 @@ public class ResourceEdgeProcessor extends BaseResourceProcessor {
     public ListenableFuture<Void> processResourceMsgFromEdge(TenantId tenantId, Edge edge, ResourceUpdateMsg resourceUpdateMsg) {
         TbResourceId tbResourceId = new TbResourceId(new UUID(resourceUpdateMsg.getIdMSB(), resourceUpdateMsg.getIdLSB()));
         try {
-            edgeSynchronizationManager.getEdgeId().set(edge.getId());
-
             switch (resourceUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
                 case ENTITY_UPDATED_RPC_MESSAGE:
-                    super.saveOrUpdateTbResource(tenantId, tbResourceId, resourceUpdateMsg);
+                    super.saveOrUpdateTbResource(tenantId, tbResourceId, resourceUpdateMsg, edge.getId());
                     break;
                 case ENTITY_DELETED_RPC_MESSAGE:
-                    TbResource tbResourceToDelete = resourceService.findResourceById(tenantId, tbResourceId);
-                    if (tbResourceToDelete != null) {
-                        resourceService.deleteResource(tenantId, tbResourceId);
-                    }
-                    break;
                 case UNRECOGNIZED:
                     return handleUnsupportedMsgType(resourceUpdateMsg.getMsgType());
             }
@@ -64,8 +57,6 @@ public class ResourceEdgeProcessor extends BaseResourceProcessor {
             } else {
                 return Futures.immediateFailedFuture(e);
             }
-        } finally {
-            edgeSynchronizationManager.getEdgeId().remove();
         }
         return Futures.immediateFuture(null);
     }

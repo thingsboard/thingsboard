@@ -138,25 +138,16 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     }
 
     @Override
-    public Dashboard saveDashboard(Dashboard dashboard, boolean doValidate) {
-        return doSaveDashboard(dashboard, doValidate);
-    }
-
-    @Override
-    public Dashboard saveDashboard(Dashboard dashboard) {
-        return doSaveDashboard(dashboard, true);
-    }
-
-    private Dashboard doSaveDashboard(Dashboard dashboard, boolean doValidate) {
+    public Dashboard saveDashboard(Dashboard dashboard, EdgeId originatorEdgeId) {
         log.trace("Executing saveDashboard [{}]", dashboard);
-        if (doValidate) {
+        if (originatorEdgeId == null) {
             dashboardValidator.validate(dashboard, DashboardInfo::getTenantId);
         }
         try {
             var saved = dashboardDao.save(dashboard.getTenantId(), dashboard);
             publishEvictEvent(new DashboardTitleEvictEvent(saved.getId()));
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(saved.getTenantId())
-                    .entityId(saved.getId()).added(dashboard.getId() == null).build());
+                    .entityId(saved.getId()).added(dashboard.getId() == null).originatorEdgeId(originatorEdgeId).build());
             if (dashboard.getId() == null) {
                 countService.publishCountEntityEvictEvent(saved.getTenantId(), EntityType.DASHBOARD);
             }
@@ -168,6 +159,11 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             checkConstraintViolation(e, "dashboard_external_id_unq_key", "Dashboard with such external id already exists!");
             throw e;
         }
+    }
+
+    @Override
+    public Dashboard saveDashboard(Dashboard dashboard) {
+        return saveDashboard(dashboard, null);
     }
 
     @Override
@@ -307,7 +303,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     }
 
     @Override
-    public Dashboard assignDashboardToEdge(TenantId tenantId, DashboardId dashboardId, EdgeId edgeId) {
+    public Dashboard assignDashboardToEdge(TenantId tenantId, DashboardId dashboardId, EdgeId edgeId, EdgeId originatorEdgeId) {
         Dashboard dashboard = findDashboardById(tenantId, dashboardId);
         Edge edge = edgeDao.findById(tenantId, edgeId.getId());
         if (edge == null) {
@@ -328,7 +324,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     }
 
     @Override
-    public Dashboard unassignDashboardFromEdge(TenantId tenantId, DashboardId dashboardId, EdgeId edgeId) {
+    public Dashboard unassignDashboardFromEdge(TenantId tenantId, DashboardId dashboardId, EdgeId edgeId, EdgeId originatorEdgeId) {
         Dashboard dashboard = findDashboardById(tenantId, dashboardId);
         Edge edge = edgeDao.findById(tenantId, edgeId.getId());
         if (edge == null) {
@@ -341,7 +337,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             throw new RuntimeException(e);
         }
         eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(dashboardId)
-                .actionType(ActionType.UNASSIGNED_FROM_EDGE).build());
+                .actionType(ActionType.UNASSIGNED_FROM_EDGE).originatorEdgeId(originatorEdgeId).build());
         return dashboard;
     }
 

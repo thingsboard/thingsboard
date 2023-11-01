@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.edge.v1.ResourceUpdateMsg;
@@ -28,7 +29,7 @@ import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 @Slf4j
 public abstract class BaseResourceProcessor extends BaseEdgeProcessor {
 
-    protected void saveOrUpdateTbResource(TenantId tenantId, TbResourceId tbResourceId, ResourceUpdateMsg resourceUpdateMsg) {
+    protected void saveOrUpdateTbResource(TenantId tenantId, TbResourceId tbResourceId, ResourceUpdateMsg resourceUpdateMsg, EdgeId edgeId) {
         try {
             boolean created = false;
             TbResource resource = resourceService.findResourceById(tenantId, tbResourceId);
@@ -52,7 +53,7 @@ public abstract class BaseResourceProcessor extends BaseEdgeProcessor {
             if (created) {
                 resource.setId(tbResourceId);
             }
-            resourceService.saveResource(resource, false);
+            resourceService.saveResource(resource, edgeId);
         } catch (Exception e) {
             log.error("[{}] Failed to process resource update msg [{}]", tenantId, resourceUpdateMsg, e);
             throw e;

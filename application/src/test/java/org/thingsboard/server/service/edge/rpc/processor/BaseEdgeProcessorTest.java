@@ -43,7 +43,6 @@ import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
-import org.thingsboard.server.dao.edge.EdgeSynchronizationManager;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
@@ -267,9 +266,6 @@ public abstract class BaseEdgeProcessorTest {
 
     @MockBean
     protected ResourceMsgConstructor resourceMsgConstructor;
-
-    @MockBean
-    protected EdgeSynchronizationManager edgeSynchronizationManager;
 
     @MockBean
     protected DbCallbackExecutorService dbCallbackExecutorService;

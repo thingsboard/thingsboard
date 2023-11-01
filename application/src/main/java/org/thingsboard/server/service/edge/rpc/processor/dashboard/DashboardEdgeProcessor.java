@@ -48,8 +48,6 @@ public class DashboardEdgeProcessor extends BaseDashboardProcessor {
         log.trace("[{}] executing processDashboardMsgFromEdge [{}] from edge [{}]", tenantId, dashboardUpdateMsg, edge.getId());
         DashboardId dashboardId = new DashboardId(new UUID(dashboardUpdateMsg.getIdMSB(), dashboardUpdateMsg.getIdLSB()));
         try {
-            edgeSynchronizationManager.getEdgeId().set(edge.getId());
-
             switch (dashboardUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
                 case ENTITY_UPDATED_RPC_MESSAGE:
@@ -58,7 +56,7 @@ public class DashboardEdgeProcessor extends BaseDashboardProcessor {
                 case ENTITY_DELETED_RPC_MESSAGE:
                     Dashboard dashboardToDelete = dashboardService.findDashboardById(tenantId, dashboardId);
                     if (dashboardToDelete != null) {
-                        dashboardService.unassignDashboardFromEdge(tenantId, dashboardId, edge.getId());
+                        dashboardService.unassignDashboardFromEdge(tenantId, dashboardId, edge.getId(), edge.getId());
                     }
                     return Futures.immediateFuture(null);
                 case UNRECOGNIZED:
@@ -72,18 +70,16 @@ public class DashboardEdgeProcessor extends BaseDashboardProcessor {
             } else {
                 return Futures.immediateFailedFuture(e);
             }
-        } finally {
-            edgeSynchronizationManager.getEdgeId().remove();
         }
     }
 
     private void saveOrUpdateDashboard(TenantId tenantId, DashboardId dashboardId, DashboardUpdateMsg dashboardUpdateMsg, Edge edge) {
         CustomerId customerId = safeGetCustomerId(dashboardUpdateMsg.getCustomerIdMSB(), dashboardUpdateMsg.getCustomerIdLSB());
-        boolean created = super.saveOrUpdateDashboard(tenantId, dashboardId, dashboardUpdateMsg, customerId);
+        boolean created = super.saveOrUpdateDashboard(tenantId, dashboardId, dashboardUpdateMsg, edge.getId(), customerId);
         if (created) {
             createRelationFromEdge(tenantId, edge.getId(), dashboardId);
             pushDashboardCreatedEventToRuleEngine(tenantId, edge, dashboardId);
-            dashboardService.assignDashboardToEdge(tenantId, dashboardId, edge.getId());
+            dashboardService.assignDashboardToEdge(tenantId, dashboardId, edge.getId(), edge.getId());
         }
     }
 

@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.asset.AssetProfileInfo;
 import org.thingsboard.server.common.data.id.AssetProfileId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -31,7 +32,7 @@ public interface AssetProfileService extends EntityDaoService {
 
     AssetProfileInfo findAssetProfileInfoById(TenantId tenantId, AssetProfileId assetProfileId);
 
-    AssetProfile saveAssetProfile(AssetProfile assetProfile, boolean doValidate);
+    AssetProfile saveAssetProfile(AssetProfile assetProfile, EdgeId originatorEdgeId);
 
     AssetProfile saveAssetProfile(AssetProfile assetProfile);
 

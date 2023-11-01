@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.asset.AssetProfileInfo;
 import org.thingsboard.server.common.data.id.AssetProfileId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -112,19 +113,10 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
     }
 
     @Override
-    public AssetProfile saveAssetProfile(AssetProfile assetProfile, boolean doValidate) {
-        return doSaveAssetProfile(assetProfile, doValidate);
-    }
-
-    @Override
-    public AssetProfile saveAssetProfile(AssetProfile assetProfile) {
-        return doSaveAssetProfile(assetProfile, true);
-    }
-
-    private AssetProfile doSaveAssetProfile(AssetProfile assetProfile, boolean doValidate) {
+    public AssetProfile saveAssetProfile(AssetProfile assetProfile, EdgeId originatorEdgeId) {
         log.trace("Executing saveAssetProfile [{}]", assetProfile);
         AssetProfile oldAssetProfile = null;
-        if (doValidate) {
+        if (originatorEdgeId == null) {
             oldAssetProfile = assetProfileValidator.validate(assetProfile, AssetProfile::getTenantId);
         } else if (assetProfile.getId() != null) {
             oldAssetProfile = findAssetProfileById(assetProfile.getTenantId(), assetProfile.getId());
@@ -135,7 +127,7 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
             publishEvictEvent(new AssetProfileEvictEvent(savedAssetProfile.getTenantId(), savedAssetProfile.getName(),
                     oldAssetProfile != null ? oldAssetProfile.getName() : null, savedAssetProfile.getId(), savedAssetProfile.isDefault()));
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedAssetProfile.getTenantId()).entityId(savedAssetProfile.getId())
-                    .added(oldAssetProfile == null).build());
+                    .added(oldAssetProfile == null).originatorEdgeId(originatorEdgeId).build());
         } catch (Exception t) {
             handleEvictEvent(new AssetProfileEvictEvent(assetProfile.getTenantId(), assetProfile.getName(),
                     oldAssetProfile != null ? oldAssetProfile.getName() : null, null, assetProfile.isDefault()));
@@ -151,12 +143,17 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
                 pageData = assetDao.findAssetsByTenantIdAndProfileId(assetProfile.getTenantId().getId(), assetProfile.getUuidId(), pageLink);
                 for (Asset asset : pageData.getData()) {
                     asset.setType(assetProfile.getName());
-                    assetService.saveAsset(asset);
+                    assetService.saveAsset(asset, originatorEdgeId);
                 }
                 pageLink = pageLink.nextPageLink();
             } while (pageData.hasNext());
         }
         return savedAssetProfile;
+    }
+
+    @Override
+    public AssetProfile saveAssetProfile(AssetProfile assetProfile) {
+        return saveAssetProfile(assetProfile, null);
     }
 
     @Override

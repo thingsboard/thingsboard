@@ -248,7 +248,7 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
         ActionType actionType = ActionType.ASSIGNED_TO_EDGE;
         EdgeId edgeId = edge.getId();
         try {
-            Device savedDevice = checkNotNull(deviceService.assignDeviceToEdge(tenantId, deviceId, edgeId));
+            Device savedDevice = checkNotNull(deviceService.assignDeviceToEdge(tenantId, deviceId, edgeId, null));
             notificationEntityService.logEntityAction(tenantId, deviceId, savedDevice, savedDevice.getCustomerId(),
                     actionType, user, deviceId.toString(), edgeId.toString(), edge.getName());
 
@@ -267,7 +267,7 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
         DeviceId deviceId = device.getId();
         EdgeId edgeId = edge.getId();
         try {
-            Device savedDevice = checkNotNull(deviceService.unassignDeviceFromEdge(tenantId, deviceId, edgeId));
+            Device savedDevice = checkNotNull(deviceService.unassignDeviceFromEdge(tenantId, deviceId, edgeId, null));
             notificationEntityService.logEntityAction(tenantId, deviceId, savedDevice, savedDevice.getCustomerId(),
                     actionType, user, deviceId.toString(), edgeId.toString(), edge.getName());
 

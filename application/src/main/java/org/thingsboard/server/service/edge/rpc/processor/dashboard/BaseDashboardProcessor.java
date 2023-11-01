@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
@@ -32,7 +33,7 @@ import java.util.Set;
 @Slf4j
 public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
 
-    protected boolean saveOrUpdateDashboard(TenantId tenantId, DashboardId dashboardId, DashboardUpdateMsg dashboardUpdateMsg, CustomerId customerId) {
+    protected boolean saveOrUpdateDashboard(TenantId tenantId, DashboardId dashboardId, DashboardUpdateMsg dashboardUpdateMsg, EdgeId edgeId, CustomerId customerId) {
         boolean created = false;
         Dashboard dashboard = dashboardService.findDashboardById(tenantId, dashboardId);
         if (dashboard == null) {
@@ -59,7 +60,7 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
         if (created) {
             dashboard.setId(dashboardId);
         }
-        Dashboard savedDashboard = dashboardService.saveDashboard(dashboard, false);
+        Dashboard savedDashboard = dashboardService.saveDashboard(dashboard, edgeId);
         if (assignedCustomers != null && !assignedCustomers.isEmpty()) {
             for (ShortCustomerInfo assignedCustomer : assignedCustomers) {
                 if (assignedCustomer.getCustomerId().equals(customerId)) {

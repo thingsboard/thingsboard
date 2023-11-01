@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.eventsourcing;
 
 import lombok.Builder;
 import lombok.Data;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
@@ -28,4 +29,5 @@ public class SaveEntityEvent<T> {
     private final T oldEntity;
     private final EntityId entityId;
     private final Boolean added;
+    private final EdgeId originatorEdgeId;
 }

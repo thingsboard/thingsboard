@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.TbResourceInfoFilter;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TbResourceId;
@@ -60,23 +61,19 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
 
     @Override
     public TbResource saveResource(TbResource resource) {
-        return doSaveResource(resource, true);
+        return saveResource(resource, null);
     }
 
     @Override
-    public TbResource saveResource(TbResource resource, boolean doValidate) {
-        return doSaveResource(resource, doValidate);
-    }
-
-    private TbResource doSaveResource(TbResource resource, boolean doValidate) {
-        if (doValidate) {
+    public TbResource saveResource(TbResource resource, EdgeId originatorEdgeId) {
+        if (originatorEdgeId == null) {
             resourceValidator.validate(resource, TbResourceInfo::getTenantId);
         }
         try {
             TbResource saved = resourceDao.save(resource.getTenantId(), resource);
             publishEvictEvent(new ResourceInfoEvictEvent(resource.getTenantId(), resource.getId()));
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(saved.getTenantId())
-                    .entityId(saved.getId()).added(resource.getId() == null).build());
+                    .entityId(saved.getId()).added(resource.getId() == null).originatorEdgeId(originatorEdgeId).build());
             return saved;
         } catch (Exception t) {
             publishEvictEvent(new ResourceInfoEvictEvent(resource.getTenantId(), resource.getId()));

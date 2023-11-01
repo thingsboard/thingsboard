@@ -47,13 +47,7 @@ public class RelationEdgeProcessor extends BaseRelationProcessor {
 
     public ListenableFuture<Void> processRelationMsgFromEdge(TenantId tenantId, Edge edge, RelationUpdateMsg relationUpdateMsg) {
         log.trace("[{}] executing processRelationMsgFromEdge [{}] from edge [{}]", tenantId, relationUpdateMsg, edge.getId());
-        try {
-            edgeSynchronizationManager.getEdgeId().set(edge.getId());
-
-            return processRelationMsg(tenantId, relationUpdateMsg);
-        } finally {
-            edgeSynchronizationManager.getEdgeId().remove();
-        }
+        return processRelationMsg(tenantId, relationUpdateMsg, edge.getId());
     }
 
     public DownlinkMsg convertRelationEventToDownlink(EdgeEvent edgeEvent) {
@@ -71,10 +65,12 @@ public class RelationEdgeProcessor extends BaseRelationProcessor {
         if (relation == null || (relation.getFrom().getEntityType().equals(EntityType.EDGE) || relation.getTo().getEntityType().equals(EntityType.EDGE))) {
             return Futures.immediateFuture(null);
         }
+        EdgeId sourceEdgeId = safeGetEdgeId(edgeNotificationMsg.getSourceEdgeIdMSB(), edgeNotificationMsg.getSourceEdgeIdLSB());
 
         Set<EdgeId> uniqueEdgeIds = new HashSet<>();
         uniqueEdgeIds.addAll(edgeService.findAllRelatedEdgeIds(tenantId, relation.getTo()));
         uniqueEdgeIds.addAll(edgeService.findAllRelatedEdgeIds(tenantId, relation.getFrom()));
+        uniqueEdgeIds.remove(sourceEdgeId);
         if (uniqueEdgeIds.isEmpty()) {
             return Futures.immediateFuture(null);
         }
