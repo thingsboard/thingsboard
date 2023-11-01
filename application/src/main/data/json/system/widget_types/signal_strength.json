@@ -24,6 +24,16 @@
     "wifi",
     "signal",
     "cellular",
-    "rssi"
+    "rssi",
+    "reception",
+    "connectivity",
+    "network",
+    "connection",
+    "signal-to-noise",
+    "antenna",
+    "dbm",
+    "wireless",
+    "link",
+    "quality"
   ]
 }

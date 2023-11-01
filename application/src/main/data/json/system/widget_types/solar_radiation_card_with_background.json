@@ -24,6 +24,7 @@
     "weather",
     "environment",
     "solar",
-    "radiation"
+    "radiation",
+    "sunlight"
   ]
 }

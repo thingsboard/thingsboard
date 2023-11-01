@@ -21,6 +21,15 @@
   "tags": [
     "pin",
     "pins",
-    "board"
+    "board",
+    "circuit",
+    "digital read",
+    "digital write",
+    "analog read",
+    "analog write",
+    "microcontroller",
+    "i/o",
+    "input/output",
+    "hardware"
   ]
 }

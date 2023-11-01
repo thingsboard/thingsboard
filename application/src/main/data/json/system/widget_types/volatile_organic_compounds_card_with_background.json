@@ -24,6 +24,14 @@
     "environment",
     "indoor",
     "air",
-    "vocs"
+    "vocs",
+    "voc",
+    "organic solvents",
+    "hydrocarbons",
+    "emissions",
+    "fumes",
+    "gaseous organics",
+    "contaminants",
+    "air pollutants"
   ]
 }
