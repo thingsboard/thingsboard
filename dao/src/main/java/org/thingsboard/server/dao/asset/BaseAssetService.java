@@ -387,7 +387,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
             throw new DataValidationException("Can't assign asset to edge from different tenant!");
         }
         try {
-            createRelation(tenantId, new EntityRelation(edgeId, assetId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+            createRelation(tenantId, new EntityRelation(edgeId, assetId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE), originatorEdgeId);
         } catch (Exception e) {
             log.warn("[{}] Failed to create asset relation. Edge Id: [{}]", assetId, edgeId);
             throw new RuntimeException(e);

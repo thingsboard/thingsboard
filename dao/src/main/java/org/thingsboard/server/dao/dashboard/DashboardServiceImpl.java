@@ -178,7 +178,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         }
         if (dashboard.addAssignedCustomer(customer)) {
             try {
-                createRelation(tenantId, new EntityRelation(customerId, dashboardId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DASHBOARD));
+                createRelation(tenantId, new EntityRelation(customerId, dashboardId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DASHBOARD), null);
             } catch (Exception e) {
                 log.warn("[{}] Failed to create dashboard relation. Customer Id: [{}]", dashboardId, customerId);
                 throw new RuntimeException(e);
@@ -313,7 +313,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             throw new DataValidationException("Can't assign dashboard to edge from different tenant!");
         }
         try {
-            createRelation(tenantId, new EntityRelation(edgeId, dashboardId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+            createRelation(tenantId, new EntityRelation(edgeId, dashboardId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE), originatorEdgeId);
         } catch (Exception e) {
             log.warn("[{}] Failed to create dashboard relation. Edge Id: [{}]", dashboardId, edgeId);
             throw new RuntimeException(e);

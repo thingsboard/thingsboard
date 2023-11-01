@@ -366,7 +366,7 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
         }
 
         try {
-            createRelation(tenantId, new EntityRelation(edgeId, entityViewId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+            createRelation(tenantId, new EntityRelation(edgeId, entityViewId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE), originatorEdgeId);
         } catch (Exception e) {
             log.warn("[{}] Failed to create entityView relation. Edge Id: [{}]", entityViewId, edgeId);
             throw new RuntimeException(e);

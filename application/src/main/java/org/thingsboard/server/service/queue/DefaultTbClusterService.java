@@ -520,8 +520,8 @@ public class DefaultTbClusterService implements TbClusterService {
             builder.setBody(body);
         }
         if (originatorEdgeId != null) {
-            builder.setSourceEdgeIdMSB(originatorEdgeId.getId().getMostSignificantBits());
-            builder.setSourceEdgeIdLSB(originatorEdgeId.getId().getLeastSignificantBits());
+            builder.setOriginatorEdgeIdMSB(originatorEdgeId.getId().getMostSignificantBits());
+            builder.setOriginatorEdgeIdLSB(originatorEdgeId.getId().getLeastSignificantBits());
         }
         TransportProtos.EdgeNotificationMsgProto msg = builder.build();
         log.trace("[{}] sending notification to edge service {}", tenantId.getId(), msg);

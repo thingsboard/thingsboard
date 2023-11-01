@@ -590,7 +590,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
             throw new DataValidationException("Can't assign device to edge from different tenant!");
         }
         try {
-            createRelation(tenantId, new EntityRelation(edgeId, deviceId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+            createRelation(tenantId, new EntityRelation(edgeId, deviceId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE), originatorEdgeId);
             eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(deviceId)
                     .actionType(ActionType.ASSIGNED_TO_EDGE).originatorEdgeId(originatorEdgeId).build());
         } catch (Exception e) {

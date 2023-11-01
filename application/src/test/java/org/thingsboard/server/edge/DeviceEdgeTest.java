@@ -541,7 +541,7 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         deviceUpdateMsgBuilder.setIdMSB(uuid.getMostSignificantBits());
         deviceUpdateMsgBuilder.setIdLSB(uuid.getLeastSignificantBits());
         deviceUpdateMsgBuilder.setName("Edge Device 2");
-        deviceUpdateMsgBuilder.setType("test");
+        deviceUpdateMsgBuilder.setType("default");
         deviceUpdateMsgBuilder.setMsgType(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE);
         uplinkMsgBuilder.addDeviceUpdateMsg(deviceUpdateMsgBuilder.build());
 

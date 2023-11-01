@@ -63,9 +63,9 @@ public abstract class AbstractEntityService {
     @Autowired(required = false)
     protected EdgeService edgeService;
 
-    protected void createRelation(TenantId tenantId, EntityRelation relation) {
+    protected void createRelation(TenantId tenantId, EntityRelation relation, EdgeId originatorEdgeId) {
         log.debug("Creating relation: {}", relation);
-        relationService.saveRelation(tenantId, relation);
+        relationService.saveRelation(tenantId, relation, originatorEdgeId);
     }
 
     protected void deleteRelation(TenantId tenantId, EntityRelation relation) {
