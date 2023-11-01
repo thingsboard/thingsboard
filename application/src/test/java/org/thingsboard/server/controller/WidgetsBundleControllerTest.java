@@ -268,6 +268,13 @@ public class WidgetsBundleControllerTest extends AbstractControllerTest {
         Collections.sort(loadedWidgetsBundles2, idComparator);
 
         Assert.assertEquals(tenantWidgetsBundles, loadedWidgetsBundles2);
+
+        // cleanup
+        loginSysAdmin();
+        for (WidgetsBundle sysWidgetsBundle : sysWidgetsBundles) {
+            doDelete("/api/widgetsBundle/" + sysWidgetsBundle.getId().getId().toString())
+                    .andExpect(status().isOk());
+        }
     }
 
     @Test
