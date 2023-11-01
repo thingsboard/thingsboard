@@ -787,6 +787,7 @@ enum ComponentLifecycleEvent {
     UPDATED   = 4;
     STOPPED   = 5;
     DELETED   = 6;
+    DEACTIVATED   = 7;
 }
 
 message ComponentLifecycleMsgProto {

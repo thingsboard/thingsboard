@@ -22,5 +22,5 @@ import java.io.Serializable;
  */
 public enum ComponentLifecycleEvent implements Serializable {
     // In sync with ComponentLifecycleEvent proto
-    CREATED, STARTED, ACTIVATED, SUSPENDED, UPDATED, STOPPED, DELETED
+    CREATED, STARTED, ACTIVATED, SUSPENDED, UPDATED, STOPPED, DELETED, DEACTIVATED
 }
