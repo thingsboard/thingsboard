@@ -154,14 +154,16 @@ public class TbDate implements Serializable, Cloneable {
     public String toZonedDateTimeString() {
         return getZonedDateTime().toString();
     }
-    public String toZonedDateTimeString(DateTimeFormatter formatter) {
+    public String toZonedDateTimeFormatterString(String formatterStr) {
+        DateTimeFormatter formatter = getDateTimeFormatter(formatterStr);
         return getZonedDateTime().format(formatter);
     }
 
     public String toZonedDateTimeString(String zoneIdStr) {
         return getZonedDateTime(ZoneId.of(zoneIdStr)).toString();
     }
-    public String toZonedDateTimeString(DateTimeFormatter formatter, String zoneIdStr) {
+    public String toZonedDateTimeString(String formatterStr, String zoneIdStr) {
+        DateTimeFormatter formatter = getDateTimeFormatter(formatterStr);
         return getZonedDateTime(ZoneId.of(zoneIdStr)).format(formatter);
     }
 
@@ -525,5 +527,43 @@ public class TbDate implements Serializable, Cloneable {
         LocalDateTime localDateTime = LocalDateTime.parse(s, dateTimeFormatter);
         ZonedDateTime zonedDateTime = localDateTime.atZone(zoneId);
         return zonedDateTime.toInstant();
+    }
+
+    private DateTimeFormatter getDateTimeFormatter(String dateTimeFormatterStr) {
+        switch (dateTimeFormatterStr) {
+            case "ISO_LOCAL_DATE":
+                return DateTimeFormatter.ISO_LOCAL_DATE;
+            case "ISO_OFFSET_DATE":
+                return DateTimeFormatter.ISO_OFFSET_DATE;
+            case "ISO_DATE":
+                return DateTimeFormatter.ISO_DATE;
+            case "ISO_LOCAL_TIME":
+                return DateTimeFormatter.ISO_LOCAL_TIME;
+            case "ISO_OFFSET_TIME":
+                return DateTimeFormatter.ISO_OFFSET_TIME;
+            case "ISO_TIME":
+                return DateTimeFormatter.ISO_TIME;
+            case "ISO_LOCAL_DATE_TIME":
+                return DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+            case "ISO_OFFSET_DATE_TIME":
+                return DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+            case "ISO_ZONED_DATE_TIME":
+                return DateTimeFormatter.ISO_ZONED_DATE_TIME;
+            case "ISO_DATE_TIME":
+                return DateTimeFormatter.ISO_DATE_TIME;
+            case "ISO_ORDINAL_DATE":
+                return DateTimeFormatter.ISO_ORDINAL_DATE;
+            case "ISO_WEEK_DATE":
+                return DateTimeFormatter.ISO_WEEK_DATE;
+            case "ISO_INSTANT":
+                return DateTimeFormatter.ISO_INSTANT;
+            case "BASIC_ISO_DATE":
+                return DateTimeFormatter.BASIC_ISO_DATE;
+            case "RFC_1123_DATE_TIME":
+                return DateTimeFormatter.RFC_1123_DATE_TIME;
+            default:
+                final ConversionException exception = new ConversionException("Cannot parse value [" + dateTimeFormatterStr + "] as DateTimeFormatter.clazz");
+                throw exception;
+        }
     }
 }
