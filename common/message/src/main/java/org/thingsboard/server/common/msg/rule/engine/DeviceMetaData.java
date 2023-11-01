@@ -13,18 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.device;
+package org.thingsboard.server.common.msg.rule.engine;
 
 import lombok.Data;
-import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequestActorMsg;
+import org.thingsboard.server.common.data.id.DeviceId;
 
 /**
- * @author Andrew Shvayka
+ * Contains basic device metadata;
+ *
+ * @author ashvayka
  */
 @Data
-public class ToDeviceRpcRequestMetadata {
-    private final ToDeviceRpcRequestActorMsg msg;
-    private final boolean sent;
-    private int retries;
-    private boolean delivered;
+public final class DeviceMetaData {
+
+    final DeviceId deviceId;
+    final String deviceName;
+    final String deviceType;
+    final DeviceAttributes deviceAttributes;
+
 }

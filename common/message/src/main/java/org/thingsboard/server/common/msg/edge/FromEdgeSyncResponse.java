@@ -15,17 +15,17 @@
  */
 package org.thingsboard.server.common.msg.edge;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.MsgType;
 
 import java.util.UUID;
 
-@AllArgsConstructor
-@Getter
+@Data
 public class FromEdgeSyncResponse implements EdgeSessionMsg {
+
+    private static final long serialVersionUID = -6360890886315347486L;
 
     private final UUID id;
     private final TenantId tenantId;
