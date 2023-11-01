@@ -32,6 +32,7 @@ import org.thingsboard.rule.engine.flow.TbRuleChainInputNode;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNode;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNodeConfiguration;
+import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
@@ -70,6 +71,7 @@ import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.alarm.AlarmDao;
 import org.thingsboard.server.dao.audit.AuditLogDao;
+import org.thingsboard.server.dao.device.DeviceConnectivityConfiguration;
 import org.thingsboard.server.dao.edge.EdgeEventDao;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
@@ -78,6 +80,7 @@ import org.thingsboard.server.dao.model.sql.DeviceProfileEntity;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
 import org.thingsboard.server.dao.sql.device.DeviceProfileRepository;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
@@ -161,6 +164,12 @@ public class DefaultDataUpdateService implements DataUpdateService {
     @Autowired
     JpaExecutorService jpaExecutorService;
 
+    @Autowired
+    AdminSettingsService adminSettingsService;
+
+    @Autowired
+    DeviceConnectivityConfiguration connectivityConfiguration;
+
     @Override
     public void updateData(String fromVersion) throws Exception {
         switch (fromVersion) {
@@ -215,6 +224,10 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 log.info("Updating data from version 3.5.1 to 3.6.0 ...");
                 migrateEdgeEvents("Starting edge events migration - adding seq_id column. ");
                 break;
+            case "3.6.0":
+                log.info("Updating data from version 3.6.0 to 3.6.1 ...");
+                migrateDeviceConnectivity();
+                break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
         }
@@ -227,6 +240,16 @@ public class DefaultDataUpdateService implements DataUpdateService {
             edgeEventDao.migrateEdgeEvents();
         } else {
             log.info("Skipping edge events migration");
+        }
+    }
+
+    private void migrateDeviceConnectivity() {
+        if (adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "connectivity") == null) {
+            AdminSettings connectivitySettings = new AdminSettings();
+            connectivitySettings.setTenantId(TenantId.SYS_TENANT_ID);
+            connectivitySettings.setKey("connectivity");
+            connectivitySettings.setJsonValue(JacksonUtil.valueToTree(connectivityConfiguration.getConnectivity()));
+            adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, connectivitySettings);
         }
     }
 

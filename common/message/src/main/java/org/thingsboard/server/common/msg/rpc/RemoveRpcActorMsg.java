@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.rpc;
+package org.thingsboard.server.common.msg.rpc;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.ToString;
+import lombok.Data;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.MsgType;
@@ -25,16 +23,13 @@ import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
 
 import java.util.UUID;
 
-@ToString
-@RequiredArgsConstructor
+@Data
 public class RemoveRpcActorMsg implements ToDeviceActorNotificationMsg {
 
-    @Getter
-    private final TenantId tenantId;
-    @Getter
-    private final DeviceId deviceId;
+    private static final long serialVersionUID = -6112720854949677477L;
 
-    @Getter
+    private final TenantId tenantId;
+    private final DeviceId deviceId;
     private final UUID requestId;
 
     @Override

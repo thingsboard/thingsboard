@@ -21,10 +21,17 @@
   },
   "externalId": null,
   "tags": [
-    "progress",
     "weather",
     "environment",
     "flood",
-    "flooding"
+    "flooding",
+    "water height",
+    "flood depth",
+    "flood stage",
+    "inundation level",
+    "water rise",
+    "overflow level",
+    "flood peak",
+    "high water mark"
   ]
 }

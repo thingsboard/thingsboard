@@ -13,26 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api.msg;
+package org.thingsboard.server.service.edge.rpc.fetch;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EdgeId;
+import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.resource.ResourceService;
 
-@Data
-@AllArgsConstructor
-public class DeviceEdgeUpdateMsg implements ToDeviceActorNotificationMsg {
+@Slf4j
+public class TenantResourcesEdgeEventFetcher extends BaseResourceEdgeEventFetcher {
 
-    private final TenantId tenantId;
-    private final DeviceId deviceId;
-    private final EdgeId edgeId;
+    public TenantResourcesEdgeEventFetcher(ResourceService resourceService) {
+        super(resourceService);
+    }
 
     @Override
-    public MsgType getMsgType() {
-        return MsgType.DEVICE_EDGE_UPDATE_TO_DEVICE_ACTOR_MSG;
+    protected PageData<TbResource> findTenantResources(TenantId tenantId, PageLink pageLink) {
+        return resourceService.findAllTenantResources(tenantId, pageLink);
     }
 }
