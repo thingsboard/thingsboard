@@ -152,19 +152,6 @@ public class TbDate implements Serializable, Cloneable {
     public String toString(String localeStr, String optionsStr) {
         return toLocaleString(localeStr, optionsStr, (locale, options) -> DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL, FormatStyle.FULL).withLocale(locale));
     }
-    public String toZonedDateTimeString() {
-        return getZonedDateTime().toString();
-    }
-    public String toZonedDateTimeString(DateTimeFormatter formatter) {
-        return getZonedDateTime().format(formatter);
-    }
-
-    public String toZonedDateTimeString(String zoneIdStr) {
-        return getZonedDateTime(ZoneId.of(zoneIdStr)).toString();
-    }
-    public String toZonedDateTimeString(DateTimeFormatter formatter, String zoneIdStr) {
-        return getZonedDateTime(ZoneId.of(zoneIdStr)).format(formatter);
-    }
 
     public String toLocaleDateString() {
         return toLocaleDateString(localeUTC.getLanguage());
