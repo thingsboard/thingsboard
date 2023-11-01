@@ -33,6 +33,8 @@ import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_DATA_COLU
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_ETAG_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_FILE_NAME_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_KEY_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_LINK_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_MEDIA_TYPE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TABLE_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TENANT_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TITLE_COLUMN;
@@ -69,6 +71,12 @@ public class TbResourceEntity extends BaseSqlEntity<TbResource> implements BaseE
     @Column(name = RESOURCE_ETAG_COLUMN)
     private String etag;
 
+    @Column(name = RESOURCE_MEDIA_TYPE_COLUMN)
+    private String mediaType;
+
+    @Column(name = RESOURCE_LINK_COLUMN)
+    private String link;
+
     public TbResourceEntity() {
     }
 
@@ -87,6 +95,8 @@ public class TbResourceEntity extends BaseSqlEntity<TbResource> implements BaseE
         this.fileName = resource.getFileName();
         this.data = resource.getData();
         this.etag = resource.getEtag();
+        this.mediaType = resource.getMediaType();
+        this.link = resource.getLink();
     }
 
     @Override
@@ -101,6 +111,8 @@ public class TbResourceEntity extends BaseSqlEntity<TbResource> implements BaseE
         resource.setFileName(fileName);
         resource.setData(data);
         resource.setEtag(etag);
+        resource.setMediaType(mediaType);
+        resource.setLink(link);
         return resource;
     }
 

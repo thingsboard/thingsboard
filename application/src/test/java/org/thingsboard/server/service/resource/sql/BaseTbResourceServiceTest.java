@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.resource.TbResourceService;
 
@@ -115,7 +116,9 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
     private TenantId tenantId;
 
     @Autowired
-    private TbResourceService resourceService;
+    private ResourceService resourceService;
+    @Autowired
+    private TbResourceService tbResourceService;
 
     private Tenant savedTenant;
     private User tenantAdmin;
@@ -207,7 +210,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         resource.setFileName(filename);
         byte[] b = new byte[]{1, 2, 3, 4};
         resource.setBase64Data(Base64.getEncoder().encodeToString(b));
-        return resourceService.save(resource);
+        return tbResourceService.save(resource);
     }
 
     @Test
@@ -219,7 +222,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         resource.setFileName(DEFAULT_FILE_NAME);
         resource.setBase64Data(TEST_BASE64_DATA);
 
-        TbResource savedResource = resourceService.save(resource);
+        TbResource savedResource = tbResourceService.save(resource);
 
         Assert.assertNotNull(savedResource);
         Assert.assertNotNull(savedResource.getId());
@@ -233,12 +236,12 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         savedResource.setBase64Data(null);
         savedResource.setData(null);
 
-        resourceService.save(savedResource);
+        tbResourceService.save(savedResource);
         TbResource foundResource = resourceService.findResourceById(tenantId, savedResource.getId());
         assertEquals(foundResource.getTitle(), savedResource.getTitle());
         assertArrayEquals(foundResource.getData(), TEST_DATA);
 
-        resourceService.delete(savedResource, null);
+        tbResourceService.delete(savedResource, null);
     }
 
     @Test
@@ -249,7 +252,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         resource.setFileName("test_model.xml");
         resource.setBase64Data(Base64.getEncoder().encodeToString(LWM2M_TEST_MODEL.getBytes()));
 
-        TbResource savedResource = resourceService.save(resource);
+        TbResource savedResource = tbResourceService.save(resource);
 
         Assert.assertNotNull(savedResource);
         Assert.assertNotNull(savedResource.getId());
@@ -259,7 +262,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         assertEquals("0_1.0", savedResource.getResourceKey());
         assertArrayEquals(savedResource.getData(), LWM2M_TEST_MODEL.getBytes());
 
-        resourceService.delete(savedResource, null);
+        tbResourceService.delete(savedResource, null);
     }
 
     @Test
@@ -269,11 +272,11 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         resource.setTitle("My resource");
         resource.setFileName(DEFAULT_FILE_NAME);
         resource.setBase64Data(TEST_BASE64_DATA);
-        TbResource savedResource = resourceService.save(resource);
+        TbResource savedResource = tbResourceService.save(resource);
 
         assertEquals(TenantId.SYS_TENANT_ID, savedResource.getTenantId());
 
-        resourceService.delete(savedResource, null);
+        tbResourceService.delete(savedResource, null);
     }
 
     @Test
@@ -285,7 +288,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         resource.setFileName(DEFAULT_FILE_NAME);
         resource.setBase64Data(TEST_BASE64_DATA);
 
-        TbResource savedResource = resourceService.save(resource);
+        TbResource savedResource = tbResourceService.save(resource);
 
         TbResource resource2 = new TbResource();
         resource.setTenantId(tenantId);
@@ -296,10 +299,10 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
 
         try {
             Assertions.assertThrows(DataValidationException.class, () -> {
-                resourceService.save(resource2);
+                tbResourceService.save(resource2);
             });
         } finally {
-            resourceService.delete(savedResource, null);
+            tbResourceService.delete(savedResource, null);
         }
     }
 
@@ -311,7 +314,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         resource.setFileName(DEFAULT_FILE_NAME);
         resource.setBase64Data(TEST_BASE64_DATA);
         Assertions.assertThrows(DataValidationException.class, () -> {
-            resourceService.save(resource);
+            tbResourceService.save(resource);
         });
     }
 
@@ -324,7 +327,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         resource.setFileName(DEFAULT_FILE_NAME);
         resource.setBase64Data(TEST_BASE64_DATA);
         Assertions.assertThrows(DataValidationException.class, () -> {
-            resourceService.save(resource);
+            tbResourceService.save(resource);
         });
     }
 
@@ -337,7 +340,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         resource.setData(LWM2M_TEST_MODEL_WITH_XXE.getBytes());
 
         DataValidationException thrown = assertThrows(DataValidationException.class, () -> {
-            resourceService.save(resource);
+            tbResourceService.save(resource);
         });
         assertEquals("Failed to parse file xxe_test_model.xml", thrown.getMessage());
     }
@@ -350,12 +353,12 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         resource.setTitle("My resource");
         resource.setFileName(DEFAULT_FILE_NAME);
         resource.setBase64Data(TEST_BASE64_DATA);
-        TbResource savedResource = resourceService.save(resource);
+        TbResource savedResource = tbResourceService.save(resource);
 
         TbResource foundResource = resourceService.findResourceById(tenantId, savedResource.getId());
         Assert.assertNotNull(foundResource);
         assertEquals(savedResource, foundResource);
-        resourceService.delete(savedResource, null);
+        tbResourceService.delete(savedResource, null);
     }
 
     @Test
@@ -366,12 +369,12 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         resource.setTitle("My resource");
         resource.setFileName(DEFAULT_FILE_NAME);
         resource.setBase64Data(TEST_BASE64_DATA);
-        TbResource savedResource = resourceService.save(resource);
+        TbResource savedResource = tbResourceService.save(resource);
 
-        TbResource foundResource = resourceService.getResource(tenantId, savedResource.getResourceType(), savedResource.getResourceKey());
+        TbResource foundResource = resourceService.findResourceByTenantIdAndKey(tenantId, savedResource.getResourceType(), savedResource.getResourceKey());
         Assert.assertNotNull(foundResource);
         assertEquals(savedResource, foundResource);
-        resourceService.delete(savedResource, null);
+        tbResourceService.delete(savedResource, null);
     }
 
     @Test
@@ -381,11 +384,11 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         resource.setTitle("My resource");
         resource.setFileName(DEFAULT_FILE_NAME);
         resource.setBase64Data(TEST_BASE64_DATA);
-        TbResource savedResource = resourceService.save(resource);
+        TbResource savedResource = tbResourceService.save(resource);
 
         TbResource foundResource = resourceService.findResourceById(tenantId, savedResource.getId());
         Assert.assertNotNull(foundResource);
-        resourceService.delete(savedResource, null);
+        tbResourceService.delete(savedResource, null);
         foundResource = resourceService.findResourceById(tenantId, savedResource.getId());
         Assert.assertNull(foundResource);
     }
@@ -407,7 +410,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
             resource.setResourceType(ResourceType.JKS);
             resource.setFileName(i + DEFAULT_FILE_NAME);
             resource.setBase64Data(TEST_BASE64_DATA);
-            resources.add(new TbResourceInfo(resourceService.save(resource)));
+            resources.add(new TbResourceInfo(tbResourceService.save(resource)));
         }
 
         List<TbResourceInfo> loadedResources = new ArrayList<>();
@@ -461,7 +464,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
             resource.setResourceType(ResourceType.JKS);
             resource.setFileName(i + DEFAULT_FILE_NAME);
             resource.setBase64Data(TEST_BASE64_DATA);
-            TbResourceInfo tbResourceInfo = new TbResourceInfo(resourceService.save(resource));
+            TbResourceInfo tbResourceInfo = new TbResourceInfo(tbResourceService.save(resource));
             if (i >= 50) {
                 resources.add(tbResourceInfo);
             }
@@ -474,7 +477,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
             resource.setResourceType(ResourceType.JKS);
             resource.setFileName(i + DEFAULT_FILE_NAME);
             resource.setBase64Data(TEST_BASE64_DATA);
-            resources.add(new TbResourceInfo(resourceService.save(resource)));
+            resources.add(new TbResourceInfo(tbResourceService.save(resource)));
         }
 
         List<TbResourceInfo> loadedResources = new ArrayList<>();

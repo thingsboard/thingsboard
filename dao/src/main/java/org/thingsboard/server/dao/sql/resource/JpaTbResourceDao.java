@@ -56,8 +56,7 @@ public class JpaTbResourceDao extends JpaAbstractDao<TbResourceEntity, TbResourc
     }
 
     @Override
-    public TbResource getResource(TenantId tenantId, ResourceType resourceType, String resourceKey) {
-
+    public TbResource findResourceByTenantIdAndKey(TenantId tenantId, ResourceType resourceType, String resourceKey) {
         return DaoUtil.getData(resourceRepository.findByTenantIdAndResourceTypeAndResourceKey(tenantId.getId(), resourceType.name(), resourceKey));
     }
 

@@ -38,9 +38,9 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
+import org.thingsboard.server.dao.service.validator.ResourceDataValidator;
 
 import java.util.List;
 import java.util.Optional;
@@ -57,14 +57,12 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     public static final String INCORRECT_RESOURCE_ID = "Incorrect resourceId ";
     private final TbResourceDao resourceDao;
     private final TbResourceInfoDao resourceInfoDao;
-    private final DataValidator<TbResource> resourceValidator;
+    private final ResourceDataValidator resourceValidator;
 
     @Override
     public TbResource saveResource(TbResource resource) {
         log.trace("Executing saveResource [{}]", resource);
-        if (resource.getData() != null) {
-            resource.setEtag(calculateEtag(resource.getData()));
-        }
+        TenantId tenantId = resource.getTenantId();
         resourceValidator.validate(resource, TbResourceInfo::getTenantId);
 
         boolean newResource = resource.getId() == null;
@@ -73,18 +71,26 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
             resource.setId(new TbResourceId(uuid));
             resource.setCreatedTime(Uuids.unixTimestamp(uuid));
         }
+        if (resource.getData() != null) {
+            resource.setEtag(calculateEtag(resource.getData()));
+        }
+        if (resource.getResourceType() == ResourceType.IMAGE) {
+            resource.setLink(String.format("/api/images/%s/%s",
+                    tenantId.isSysTenantId() ? "system" : tenantId.getId(),
+                    resource.getResourceKey()));
+        }
         try {
             TbResource saved;
             if (resource.getData() != null) {
-                saved = resourceDao.save(resource.getTenantId(), resource);
+                saved = resourceDao.save(tenantId, resource);
             } else {
                 TbResourceInfo resourceInfo = saveResourceInfo(resource);
                 saved = new TbResource(resourceInfo);
             }
-            publishEvictEvent(new ResourceInfoEvictEvent(resource.getTenantId(), resource.getId()));
+            publishEvictEvent(new ResourceInfoEvictEvent(tenantId, resource.getId()));
             return saved;
         } catch (Exception t) {
-            publishEvictEvent(new ResourceInfoEvictEvent(resource.getTenantId(), resource.getId()));
+            publishEvictEvent(new ResourceInfoEvictEvent(tenantId, resource.getId()));
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("resource_unq_key")) {
                 String field = ResourceType.LWM2M_MODEL.equals(resource.getResourceType()) ? "resourceKey" : "fileName";
@@ -100,9 +106,9 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     }
 
     @Override
-    public TbResource getResource(TenantId tenantId, ResourceType resourceType, String resourceKey) {
-        log.trace("Executing getResource [{}] [{}] [{}]", tenantId, resourceType, resourceKey);
-        return resourceDao.getResource(tenantId, resourceType, resourceKey);
+    public TbResource findResourceByTenantIdAndKey(TenantId tenantId, ResourceType resourceType, String resourceKey) {
+        log.trace("Executing findResourceByTenantIdAndKey [{}] [{}] [{}]", tenantId, resourceType, resourceKey);
+        return resourceDao.findResourceByTenantIdAndKey(tenantId, resourceType, resourceKey);
     }
 
     @Override
@@ -119,6 +125,13 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
 
         return cache.getAndPutInTransaction(new ResourceInfoCacheKey(tenantId, resourceId),
                 () -> resourceInfoDao.findById(tenantId, resourceId.getId()), true);
+    }
+
+    @Override
+    public TbResourceInfo findResourceInfoByTenantIdAndKey(TenantId tenantId, ResourceType resourceType, String resourceKey) {
+        log.trace("Executing findResourceInfoByTenantIdAndKey [{}] [{}] [{}]", tenantId, resourceType, resourceKey);
+        // TODO: add caching
+        return resourceInfoDao.findByTenantIdAndKey(tenantId, resourceType, resourceKey);
     }
 
     @Override

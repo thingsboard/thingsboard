@@ -3622,7 +3622,8 @@
             "jks": "JKS",
             "js-module": "JS module",
             "lwm2m-model": "LWM2M model",
-            "pkcs-12": "PKCS #12"
+            "pkcs-12": "PKCS #12",
+            "image": "Image"
         }
     },
     "rulechain": {

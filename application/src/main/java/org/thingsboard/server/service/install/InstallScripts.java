@@ -333,8 +333,7 @@ public class InstallScripts {
             throw new DataValidationException("Resource data should be specified!");
         }
         toLwm2mResource(resource);
-        TbResource foundResource =
-                resourceService.getResource(TenantId.SYS_TENANT_ID, ResourceType.LWM2M_MODEL, resource.getResourceKey());
+        TbResource foundResource = resourceService.findResourceByTenantIdAndKey(TenantId.SYS_TENANT_ID, ResourceType.LWM2M_MODEL, resource.getResourceKey());
         if (foundResource == null) {
             resourceService.saveResource(resource);
         }

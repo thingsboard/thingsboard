@@ -14,6 +14,8 @@
 -- limitations under the License.
 --
 
+-- RESOURCES UPDATE START
+
 DO
 $$
     BEGIN
@@ -25,3 +27,7 @@ $$
         END IF;
     END;
 $$;
+ALTER TABLE resource ADD COLUMN IF NOT EXISTS media_type varchar(255);
+ALTER TABLE resource ADD COLUMN IF NOT EXISTS link varchar(255);
+
+-- RESOURCES UPDATE END

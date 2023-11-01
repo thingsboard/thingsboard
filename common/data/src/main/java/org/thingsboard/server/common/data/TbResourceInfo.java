@@ -54,6 +54,10 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
     @Length(fieldName = "file name")
     @ApiModelProperty(position = 9, value = "Resource file name.", example = "19.xml", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String fileName;
+    @ApiModelProperty(position = 10, value = "Resource media type.", example = "image/png", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    private String mediaType;
+    @ApiModelProperty(position = 11, value = "Resource link (for IMAGE resource type).", example = "/api/images/system/my-image.png", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    private String link;
 
     public TbResourceInfo() {
         super();
@@ -72,6 +76,8 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
         this.searchText = resourceInfo.searchText;
         this.etag = resourceInfo.etag;
         this.fileName = resourceInfo.fileName;
+        this.mediaType = resourceInfo.mediaType;
+        this.link = resourceInfo.link;
     }
 
     @ApiModelProperty(position = 1, value = "JSON object with the Resource Id. " +

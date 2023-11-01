@@ -77,6 +77,7 @@ import org.thingsboard.server.dao.device.provision.ProvisionResponseStatus;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
@@ -139,7 +140,7 @@ public class DefaultTransportApiService implements TransportApiService {
     private final TbClusterService tbClusterService;
     private final DataDecodingEncodingService dataDecodingEncodingService;
     private final DeviceProvisionService deviceProvisionService;
-    private final TbResourceService resourceService;
+    private final ResourceService resourceService;
     private final OtaPackageService otaPackageService;
     private final OtaPackageDataCache otaPackageDataCache;
     private final QueueService queueService;
@@ -489,10 +490,10 @@ public class DefaultTransportApiService implements TransportApiService {
         ResourceType resourceType = ResourceType.valueOf(requestMsg.getResourceType());
         String resourceKey = requestMsg.getResourceKey();
         TransportProtos.GetResourceResponseMsg.Builder builder = TransportProtos.GetResourceResponseMsg.newBuilder();
-        TbResource resource = resourceService.getResource(tenantId, resourceType, resourceKey);
+        TbResource resource = resourceService.findResourceByTenantIdAndKey(tenantId, resourceType, resourceKey);
 
         if (resource == null && !tenantId.equals(TenantId.SYS_TENANT_ID)) {
-            resource = resourceService.getResource(TenantId.SYS_TENANT_ID, resourceType, resourceKey);
+            resource = resourceService.findResourceByTenantIdAndKey(TenantId.SYS_TENANT_ID, resourceType, resourceKey);
         }
 
         if (resource != null) {

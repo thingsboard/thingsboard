@@ -22,7 +22,8 @@ export enum ResourceType {
   LWM2M_MODEL = 'LWM2M_MODEL',
   PKCS_12 = 'PKCS_12',
   JKS = 'JKS',
-  JS_MODULE = 'JS_MODULE'
+  JS_MODULE = 'JS_MODULE',
+  IMAGE = 'IMAGE'
 }
 
 export const ResourceTypeMIMETypes = new Map<ResourceType, string>(
@@ -30,7 +31,8 @@ export const ResourceTypeMIMETypes = new Map<ResourceType, string>(
     [ResourceType.LWM2M_MODEL, 'application/xml,text/xml'],
     [ResourceType.PKCS_12, 'application/x-pkcs12'],
     [ResourceType.JKS, 'application/x-java-keystore'],
-    [ResourceType.JS_MODULE, 'text/javascript,application/javascript']
+    [ResourceType.JS_MODULE, 'text/javascript,application/javascript'],
+    [ResourceType.IMAGE, 'image/*']
   ]
 );
 
@@ -48,7 +50,8 @@ export const ResourceTypeTranslationMap = new Map<ResourceType, string>(
     [ResourceType.LWM2M_MODEL, 'resource.type.lwm2m-model'],
     [ResourceType.PKCS_12, 'resource.type.pkcs-12'],
     [ResourceType.JKS, 'resource.type.jks'],
-    [ResourceType.JS_MODULE, 'resource.type.js-module']
+    [ResourceType.JS_MODULE, 'resource.type.js-module'],
+    [ResourceType.IMAGE, 'resource.type.image']
   ]
 );
 
@@ -58,15 +61,11 @@ export interface ResourceInfo extends Omit<BaseData<TbResourceId>, 'name' | 'lab
   title?: string;
   resourceType: ResourceType;
   fileName: string;
+  mediaType: string;
+  link: string;
 }
 
 export interface Resource extends ResourceInfo {
   base64Data: string;
   name?: string;
-}
-
-// @ts-ignore FIXME
-export interface Resources extends ResourceInfo {
-  data: Array<string>;
-  fileName: Array<string>;
 }

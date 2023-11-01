@@ -51,4 +51,6 @@ public interface TbResourceInfoRepository extends JpaRepository<TbResourceInfoEn
                                                              @Param("searchText") String searchText,
                                                              Pageable pageable);
 
+    TbResourceInfoEntity findByTenantIdAndResourceTypeAndResourceKey(UUID tenantId, String resourceType, String resourceKey);
+
 }
