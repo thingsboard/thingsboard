@@ -21,6 +21,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.assertj.core.api.Assertions;
+import org.assertj.core.data.Offset;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +30,7 @@ import org.mvel2.ConversionException;
 import org.thingsboard.common.util.JacksonUtil;
 
 import java.time.DateTimeException;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
@@ -761,6 +764,11 @@ class TbDateTest {
         Assert.assertEquals("06:15:30 Eastern European Time", d1.toTimeString("UTC", "Europe/Kyiv"));
         Assert.assertEquals("10:15:30 PM Eastern Standard Time", d1.toTimeString("en-US", "America/New_York"));
         Assert.assertEquals("22:15:30 Eastern Standard Time", d1.toTimeString("UTC", "America/New_York"));
+    }
+
+    @Test
+    public void testNow() {
+        Assertions.assertThat(TbDate.now()).isCloseTo(Instant.now().toEpochMilli(), Offset.offset(1000L));
     }
 
     private void testResultChangeDateTime(TbDate d) {
