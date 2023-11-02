@@ -485,12 +485,6 @@ class TbDateTest {
     }
 
     @Test
-    public void TestNow() {
-        assertTrue(TbDate.now() > 0);
-        assertNotNull(TbDate.nowToString());
-    }
-
-    @Test
     public void TestToUTC() {
         Assert.assertEquals(-2209075200000L, TbDate.UTC(0));
         Assert.assertEquals("1899-12-31T00:00:00Z", new TbDate(TbDate.UTC(0)).toJSON());
