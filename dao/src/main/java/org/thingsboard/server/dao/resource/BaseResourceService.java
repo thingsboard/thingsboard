@@ -64,13 +64,13 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     @Override
     public TbResource saveResource(TbResource resource, boolean doValidate) {
         log.trace("Executing saveResource [{}]", resource);
-        TenantId tenantId = resource.getTenantId();
         if (doValidate) {
             resourceValidator.validate(resource, TbResourceInfo::getTenantId);
         }
 
-        boolean newResource = resource.getId() == null;
-        if (newResource) {
+        TenantId tenantId = resource.getTenantId();
+        TbResourceId resourceId = resource.getId();
+        if (resourceId == null) {
             UUID uuid = Uuids.timeBased();
             resource.setId(new TbResourceId(uuid));
             resource.setCreatedTime(Uuids.unixTimestamp(uuid));
@@ -91,12 +91,12 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
                 TbResourceInfo resourceInfo = saveResourceInfo(resource);
                 saved = new TbResource(resourceInfo);
             }
-            publishEvictEvent(new ResourceInfoEvictEvent(tenantId, resource.getId()));
+            publishEvictEvent(new ResourceInfoEvictEvent(tenantId, resourceId));
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(saved.getTenantId())
-                    .entityId(saved.getId()).added(resource.getId() == null).build());
+                    .entityId(saved.getId()).added(resourceId == null).build());
             return saved;
         } catch (Exception t) {
-            publishEvictEvent(new ResourceInfoEvictEvent(tenantId, resource.getId()));
+            publishEvictEvent(new ResourceInfoEvictEvent(tenantId, resourceId));
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("resource_unq_key")) {
                 String field = ResourceType.LWM2M_MODEL.equals(resource.getResourceType()) ? "resourceKey" : "fileName";

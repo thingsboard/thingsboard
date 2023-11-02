@@ -23,6 +23,8 @@ import org.thingsboard.server.gen.edge.v1.ResourceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import java.util.Base64;
+
 @Component
 @TbCoreComponent
 public class ResourceMsgConstructor {
@@ -37,7 +39,7 @@ public class ResourceMsgConstructor {
                 .setResourceType(tbResource.getResourceType().name())
                 .setFileName(tbResource.getFileName());
         if (tbResource.getData() != null) {
-            builder.setData(tbResource.getData());
+            builder.setData(Base64.getEncoder().encodeToString(tbResource.getData()));
         }
         if (tbResource.getEtag() != null) {
             builder.setEtag(tbResource.getEtag());

@@ -685,6 +685,9 @@ public class TbResourceControllerTest extends AbstractControllerTest {
                 .isEqualTo(download(savedResource.getId()))
                 .isEqualTo(Base64.getDecoder().decode(TEST_DATA));
         assertThat(imageResponse.getContentType()).isEqualTo("image/png");
+
+        loginSysAdmin();
+        doDelete("/api/resource/" + savedResource.getId()).andExpect(status().isOk());
     }
 
     @Test

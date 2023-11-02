@@ -46,7 +46,7 @@ public abstract class BaseResourceProcessor extends BaseEdgeProcessor {
             resource.setResourceKey(resourceUpdateMsg.getResourceKey());
             resource.setResourceType(ResourceType.valueOf(resourceUpdateMsg.getResourceType()));
             resource.setFileName(resourceUpdateMsg.getFileName());
-            resource.setData(resourceUpdateMsg.hasData() ? resourceUpdateMsg.getData() : null);
+            resource.setBase64Data(resourceUpdateMsg.hasData() ? resourceUpdateMsg.getData() : null);
             resource.setEtag(resourceUpdateMsg.hasEtag() ? resourceUpdateMsg.getEtag() : null);
             resourceValidator.validate(resource, TbResourceInfo::getTenantId);
             if (created) {

@@ -73,10 +73,18 @@ public class ResourceDataValidator extends DataValidator<TbResource> {
     @Override
     protected void validateDataImpl(TenantId tenantId, TbResource resource) {
         validateString("Resource title", resource.getTitle());
+        if (resource.getTenantId() == null) {
+            resource.setTenantId(TenantId.SYS_TENANT_ID);
+        }
+        if (!resource.getTenantId().isSysTenantId()) {
+            if (!tenantService.tenantExists(resource.getTenantId())) {
+                throw new DataValidationException("Resource is referencing to non-existent tenant!");
+            }
+        }
         if (resource.getResourceType() == null) {
             throw new DataValidationException("Resource type should be specified!");
         }
-        if (tenantId != null && !tenantId.isSysTenantId() && resource.getData() != null) {
+        if (!resource.getTenantId().isSysTenantId() && resource.getData() != null) {
             DefaultTenantProfileConfiguration profileConfiguration = tenantProfileCache.get(tenantId).getDefaultProfileConfiguration();
             long maxResourceSize = profileConfiguration.getMaxResourceSize();
             if (maxResourceSize > 0 && resource.getData().length > maxResourceSize) {
@@ -103,14 +111,6 @@ public class ResourceDataValidator extends DataValidator<TbResource> {
         }
         if (StringUtils.isEmpty(resource.getResourceKey())) {
             throw new DataValidationException("Resource key should be specified!");
-        }
-        if (resource.getTenantId() == null) {
-            resource.setTenantId(TenantId.SYS_TENANT_ID);
-        }
-        if (!resource.getTenantId().isSysTenantId()) {
-            if (!tenantService.tenantExists(resource.getTenantId())) {
-                throw new DataValidationException("Resource is referencing to non-existent tenant!");
-            }
         }
     }
 
