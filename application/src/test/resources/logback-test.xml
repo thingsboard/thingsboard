@@ -38,6 +38,8 @@
     <!-- Device actor message processor debug for the test scope -->
     <!--    <logger name="org.thingsboard.server.actors.device.DeviceActorMessageProcessor" level="DEBUG" />-->
 
+    <logger name="org.thingsboard.server.service.subscription" level="TRACE"/>
+
     <root level="WARN">
         <appender-ref ref="console"/>
     </root>

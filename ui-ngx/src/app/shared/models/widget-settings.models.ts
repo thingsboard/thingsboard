@@ -302,7 +302,11 @@ export class SimpleDateFormatProcessor extends DateFormatProcessor {
   }
 
   update(ts: string| number | Date): void {
-    this.formatted = this.datePipe.transform(ts, this.settings.format);
+    if (ts) {
+      this.formatted = this.datePipe.transform(ts, this.settings.format);
+    } else {
+      this.formatted = '&nbsp;';
+    }
   }
 
 }
@@ -320,12 +324,16 @@ export class LastUpdateAgoDateFormatProcessor extends DateFormatProcessor {
   }
 
   update(ts: string| number | Date): void {
-    const agoText = this.dateAgoPipe.transform(ts, {applyAgo: true, short: true, textPart: true});
-    if (this.settings.hideLastUpdatePrefix) {
-      this.formatted = agoText;
+    if (ts) {
+      const agoText = this.dateAgoPipe.transform(ts, {applyAgo: true, short: true, textPart: true});
+      if (this.settings.hideLastUpdatePrefix) {
+        this.formatted = agoText;
+      } else {
+        this.formatted = this.translate.instant('date.last-update-n-ago-text',
+          {agoText});
+      }
     } else {
-      this.formatted = this.translate.instant('date.last-update-n-ago-text',
-        {agoText});
+      this.formatted = '&nbsp;';
     }
   }
 
@@ -393,6 +401,33 @@ export const textStyle = (font?: Font, letterSpacing = 'normal'): ComponentStyle
   return style;
 };
 
+export const inlineTextStyle = (font?: Font, letterSpacing = 'normal'): ComponentStyle => {
+  const style: ComponentStyle = {
+    letterSpacing
+  };
+  if (font?.style) {
+    style['font-style'] = font.style;
+  }
+  if (font?.weight) {
+    style['font-weight'] = font.weight;
+  }
+  if (font?.lineHeight) {
+    style['line-height'] = font.lineHeight;
+  }
+  if (font?.size) {
+    style['font-size'] = (font.size + (font.sizeUnit || 'px'));
+  }
+  if (font?.family) {
+    style['font-family'] = font.family +
+      (font.family !== 'Roboto' ? ', Roboto' : '');
+  }
+  return style;
+};
+
+export const cssTextFromInlineStyle = (styleObj: { [key: string]: string | number }): string => Object.entries(styleObj)
+  .map(([key, value]) => `${key}: ${value}`)
+  .join('; ');
+
 export const isFontSet = (font: Font): boolean => (!!font && !!font.style && !!font.weight && !!font.size && !!font.family);
 
 export const isFontPartiallySet = (font: Font): boolean => (!!font && (!!font.style || !!font.weight || !!font.size || !!font.family));
@@ -422,15 +457,22 @@ export const overlayStyle = (overlay: OverlaySettings): ComponentStyle => (
   }
 );
 
-export const getDataKey = (datasources?: Datasource[]): DataKey => {
+export const getDataKey = (datasources?: Datasource[], index = 0): DataKey => {
   if (datasources && datasources.length) {
     const dataKeys = datasources[0].dataKeys;
-    if (dataKeys && dataKeys.length) {
-      return dataKeys[0];
+    if (dataKeys && dataKeys.length > index) {
+      return dataKeys[index];
     }
   }
   return null;
 };
+
+export const updateDataKeys = (datasources: Datasource[], dataKeys: DataKey[]): void => {
+  if (datasources && datasources.length) {
+    datasources[0].dataKeys = dataKeys;
+  }
+};
+
 
 export const getDataKeyByLabel = (datasources: Datasource[], label: string): DataKey => {
   if (datasources && datasources.length) {

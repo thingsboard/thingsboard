@@ -368,14 +368,20 @@
       .mat-mdc-text-field-wrapper {
         .mat-mdc-form-field-icon-suffix {
           padding: 0;
-          display: none;
+          display: flex;
+          align-items: center;
+
+          > *:not(.tb-suffix-show-always) {
+            display: none;
+          }
         }
       }
       &:hover {
         .mat-mdc-text-field-wrapper {
           .mat-mdc-form-field-icon-suffix {
-            display: flex;
-            align-items: center;
+            > * {
+              display: block;
+            }
           }
         }
       }

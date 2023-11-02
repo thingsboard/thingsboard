@@ -168,12 +168,20 @@ public class TbCoreConsumerStats {
             toCoreNfSubscriptionServiceCounter.increment();
         } else if (msg.hasFromDeviceRpcResponse()) {
             toCoreNfDeviceRpcResponseCounter.increment();
+        } else if (msg.hasComponentLifecycle()) {
+            toCoreNfComponentLifecycleCounter.increment();
         } else if (!msg.getComponentLifecycleMsg().isEmpty()) {
             toCoreNfComponentLifecycleCounter.increment();
+        } else if (msg.hasEdgeEventUpdate()) {
+            toCoreNfEdgeEventUpdateCounter.increment();
         } else if (!msg.getEdgeEventUpdateMsg().isEmpty()) {
             toCoreNfEdgeEventUpdateCounter.increment();
+        } else if (msg.hasToEdgeSyncRequest()) {
+            toCoreNfEdgeSyncRequestCounter.increment();
         } else if (!msg.getToEdgeSyncRequestMsg().isEmpty()) {
             toCoreNfEdgeSyncRequestCounter.increment();
+        } else if (msg.hasFromEdgeSyncResponse()) {
+            toCoreNfEdgeSyncResponseCounter.increment();
         } else if (!msg.getFromEdgeSyncResponseMsg().isEmpty()) {
             toCoreNfEdgeSyncResponseCounter.increment();
         } else if (msg.hasQueueUpdateMsg()) {

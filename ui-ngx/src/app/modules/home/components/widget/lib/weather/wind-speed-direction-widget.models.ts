@@ -103,6 +103,3 @@ export const windSpeedDirectionDefaultSettings: WindSpeedDirectionWidgetSettings
     }
   }
 };
-
-export const windDirectionLabel = 'windDirection';
-export const centerValueLabel = 'centerValue';

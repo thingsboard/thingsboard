@@ -124,7 +124,7 @@ export class ProgressBarWidgetComponent implements OnInit, OnDestroy, AfterViewI
     this.layout = this.settings.layout;
 
     this.showValue = this.settings.showValue;
-    this.valueStyle = textStyle(this.settings.valueFont,  '0.1px');
+    this.valueStyle = textStyle(this.settings.valueFont);
     this.valueColor = ColorProcessor.fromSettings(this.settings.valueColor);
 
     this.showTitleValueRow = this.showValue ||
@@ -140,7 +140,7 @@ export class ProgressBarWidgetComponent implements OnInit, OnDestroy, AfterViewI
 
     this.showTicks = this.settings.showTicks && this.layout === ProgressBarLayout.default;
     if (this.showTicks) {
-      this.ticksStyle = textStyle(this.settings.ticksFont,  '0.1px');
+      this.ticksStyle = textStyle(this.settings.ticksFont);
       this.ticksStyle.color = this.settings.ticksColor;
     }
 
@@ -174,14 +174,16 @@ export class ProgressBarWidgetComponent implements OnInit, OnDestroy, AfterViewI
     this.value = 0;
     if (tsValue && isDefinedAndNotNull(tsValue[1]) && isNumeric(tsValue[1])) {
       this.value = tsValue[1];
-      this.valueText = formatValue(this.value, this.decimals, this.units, true);
+      this.valueText = formatValue(this.value, this.decimals, this.units, false);
     } else {
       this.valueText = 'N/A';
     }
     this.valueColor.update(this.value);
     this.barColor.update(this.value);
     const range = this.settings.tickMax - this.settings.tickMin;
-    this.barWidth = `${(this.value / range) * 100}%`;
+    let barWidthValue = ((this.value - this.settings.tickMin) / range) * 100;
+    barWidthValue = Math.max(0, Math.min(100, barWidthValue));
+    this.barWidth = `${barWidthValue}%`;
     this.cd.detectChanges();
   }
 

@@ -1,0 +1,41 @@
+{
+  "fqn": "indoor_simple_humidity_chart_card",
+  "name": "Indoor simple humidity chart card",
+  "deprecated": false,
+  "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAAflBMVEUAAADg4ODf39/g4ODg4OD////g4OAhISE/pxrj4+PHx8fx8fE8PDyQkJCsrKwvLy+HyHBYWFhXsjbn9ON0dHSrq6uenp633qnV1dWCgoJmZma6urpKSkrz+vHn9OJ7wmFLrChvvVOf04yf043b79TP6caTzn5juEXD5Lir2JpwKyMUAAAABXRSTlMA7yC/r1EOHTEAAAR2SURBVHja7M9JAcAgDAAwytEP/v0OGdAlDtIAAAAAAAB+p4/I181+HrHX83b0Ngs8zmS0XCVElUiKXEbkNh/79bZiKQxEYfhqsajKiYCGmOz3f87ZOgxK202Ghg6Rzk/Eou4+yIVOyGhNyGhNyGhNyGj9AsjDflO+hMjL4ZK6fecEt6QcZKWYktG5NkQseZU4AlAqbuUi/yBRkSJ61oa8+C59AvEC4837eC/GV0C8wXtYKcaLluD3xf406gPZeKR3CD2EKrTR2ldkhFIQQwwUoXeW0TDBU9CoC0RoUwiF8QI5OiEJlRlb2CHKinpA4CwQ435adYFsXBBzJvMJUdV0gfhdAMf95QnoCUlBuKJRH0ghbc6BrLer9TnEXCEmFBo06gNZGHJeKqk3SFiQPkIMHdwJQWRBsy4Qpa1hy7S4QRIZP0Lg9qX8XRLQTjerDUHh0Yp7Rr5YnlMN6FMbgo2krfhWm93QrBcEEME3c87g/5tfvxMydhMyWhMyWhMyWhMyWhPyIxnvFpfy0yGyBNKStP7RkBTCpgaQ1XIxz4U4Rjnnl3kqRLngbOXyVMgfdu1uR1UYCsPw0Ze1SgulLVB1i4CoM3P/N7gdQRj/cWe2wYTnxMhR3yxao6iUPJ1P8J4hEaX4SSrzniFK4VRK0TuGdAPpGSXfIUT+iQJ5ZyBAQOH4Q4Shb4lAI6MUF4yWowkRWZKEAc7NtA5nIkhIzdqOJXBtJCMJkQsirYiUOMvT7RWhaJFFmSEjcUWixf8McdscgwilQwnIVOkZflJdmQwVEZkUVwltfiNkyxxjb82NGN9WFTN/YQilZ12RQC+kFD0pJG7JKDkJE/JfQmy79t1JSMy7reUc2LrhJ6rQc3QCmmOokFTQ9kZGE5FKgmdD1se1Fxy7b3mT9wF49oC1uG+p0Jn3IxFKSQz2R9FyHkVZokkfXhWp6KmQFduyCal4jU4XsmaHu2aUoiP0UqKxIIFnpIb21Dw4vlf7N2J4iGVvm5CSPXpV6bDjzxXHuC85WXDaHl2BoQxD3NkbwYIoEQND1vyBNoQ5Lmz1lePAs/1gi8o63CUoubhHFsmSdPo7XyWXw0JWJbs2ZMUNeywpijr37B9u9RlOiNQoZUKJXyHlsJCCaxxDClu7Tc28/tFpYzyglniBRyGeLZqQTsUlOjG7TVEVDjcMea77ipDVPsF7X3LlN30bu/6jsl5xWdjS3Tt7H3hFiOfOGrnLz0OsxY432PION4Tj+AvHJj4o2cafiNk2dxP3J5pDxcDtIzikOV6pD7nU7ZHtYZtvynbV7fpjzrG5MZHA0Kies7chiJlLy2zdMWTnAM/FZ8Eel+ScdIbHXh+C2jJz5XCiZuYal0JNocRL9SEPOZfjXH7lGgJFRuBpY/s1XhhSAQYacUimdYjBRhyySCSGG3HIU6aQKeRdTCFjM4WMzRQyNlPI2Ewhf9u5jwIAQBgIgqHlg3+/GEAAZcbBCbg9jSGnySjjCRntsi/r3uzvRJCi9rxdaTUAAAAAAAB+swByyaNbfaMtTAAAAABJRU5ErkJggg==",
+  "description": "Displays historical indoor humidity values as a simplified chart. Optionally may display the corresponding latest indoor humidity value.",
+  "descriptor": {
+    "type": "timeseries",
+    "sizeX": 4.5,
+    "sizeY": 2,
+    "resources": [],
+    "templateHtml": "<tb-value-chart-card-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-value-chart-card-widget>\n",
+    "templateCss": ".legend {\n    font-size: 13px;\n    line-height: 10px;\n}\n\n.legend table { \n    border-spacing: 0px;\n    border-collapse: separate;\n}\n\n.mouse-events .flot-overlay {\n    cursor: crosshair; \n}\n\n",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.valueChartCardWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.valueChartCardWidget.onDataUpdated();\n};\n\nself.onLatestDataUpdated = function() {\n    self.ctx.$scope.valueChartCardWidget.onLatestDataUpdated();\n}\n\nself.onEditModeChanged = function() {\n    self.ctx.$scope.valueChartCardWidget.onEditModeChanged();\n}\n\nself.onDestroy = function() {\n    self.ctx.$scope.valueChartCardWidget.onDestroy();\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        previewWidth: '300px',\n        previewHeight: '150px',\n        embedTitlePanel: true,\n        hasAdditionalLatestDataKeys: true,\n        defaultDataKeysFunction: function() {\n            return [\n                 { name: 'humidity', label: 'Humidity', type: 'timeseries', color: 'rgba(0, 0, 0, 0.87)'}\n            ];\n        },\n        defaultLatestDataKeysFunction: function(configComponent) {\n            return [{ name: 'humidity', label: 'Latest', type: 'timeseries'}];\n        }\n    };\n}\n",
+    "settingsSchema": "{}",
+    "dataKeySettingsSchema": "{}",
+    "latestDataKeySettingsSchema": "{}",
+    "settingsDirective": "tb-value-chart-card-widget-settings",
+    "dataKeySettingsDirective": "",
+    "latestDataKeySettingsDirective": "",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-value-chart-card-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Humidity\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"settings\":{},\"_hash\":0.8587686344902596,\"funcBody\":\"var value = prevValue + Math.random() * 7;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 0;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}],\"alarmFilterConfig\":{\"statusList\":[\"ACTIVE\"]},\"latestDataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Latest\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"settings\":{},\"_hash\":0.8587686344902596,\"funcBody\":\"var value = prevValue + Math.random() * 7;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 0;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}]}],\"showTitle\":true,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":null,\"padding\":\"0\",\"settings\":{\"layout\":\"left\",\"autoScale\":true,\"showValue\":true,\"valueFont\":{\"family\":\"Roboto\",\"size\":28,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\",\"lineHeight\":\"32px\"},\"valueColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"rangeList\":[{\"from\":null,\"to\":30,\"color\":\"#FFA600\"},{\"from\":30,\"to\":60,\"color\":\"#3FA71A\"},{\"from\":60,\"to\":null,\"color\":\"#D81838\"}],\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}}},\"title\":\"Humidity\",\"dropShadow\":true,\"enableFullscreen\":false,\"titleStyle\":null,\"mobileHeight\":null,\"configMode\":\"basic\",\"actions\":{},\"showTitleIcon\":true,\"titleIcon\":\"mdi:water-percent\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"titleFont\":{\"size\":16,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\",\"lineHeight\":\"24px\"},\"iconSize\":\"18px\",\"titleTooltip\":\"\",\"widgetStyle\":{},\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"useDashboardTimewindow\":true,\"decimals\":0,\"titleColor\":\"rgba(0, 0, 0, 0.87)\",\"borderRadius\":null,\"units\":\"%\",\"displayTimewindow\":true,\"timewindow\":{\"hideInterval\":false,\"hideLastInterval\":false,\"hideQuickInterval\":false,\"hideAggregation\":false,\"hideAggInterval\":false,\"hideTimezone\":false,\"selectedTab\":1,\"history\":{\"historyType\":2,\"timewindowMs\":60000,\"interval\":43200000,\"fixedTimewindow\":{\"startTimeMs\":1697382151041,\"endTimeMs\":1697468551041},\"quickInterval\":\"CURRENT_MONTH_SO_FAR\"},\"aggregation\":{\"type\":\"AVG\",\"limit\":25000}},\"timewindowStyle\":{\"showIcon\":false,\"iconSize\":\"24px\",\"icon\":\"query_builder\",\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"400\",\"style\":\"normal\",\"lineHeight\":\"16px\"},\"color\":\"rgba(0, 0, 0, 0.38)\",\"displayTypePrefix\":true}}"
+  },
+  "externalId": null,
+  "tags": [
+    "environment",
+    "humidity",
+    "indoor",
+    "moisture",
+    "dampness",
+    "wetness",
+    "humidness",
+    "moistness",
+    "dew",
+    "water vapor",
+    "condensation",
+    "dew point",
+    "steaminess"
+  ]
+}

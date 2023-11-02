@@ -48,7 +48,7 @@ import {
 import { TbFlot } from '@home/components/widget/lib/flot-widget';
 import { TbFlotKeySettings, TbFlotSettings } from '@home/components/widget/lib/flot-widget.models';
 import { DataKey } from '@shared/models/widget.models';
-import { formatNumberValue, formatValue, isDefined } from '@core/utils';
+import { formatNumberValue, formatValue, isDefined, isDefinedAndNotNull, isNumeric } from '@core/utils';
 import { map } from 'rxjs/operators';
 import { ResizeObserver } from '@juggle/resize-observer';
 
@@ -116,10 +116,10 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
   ngOnInit(): void {
     this.ctx.$scope.aggregatedValueCardWidget = this;
     this.settings = {...aggregatedValueCardDefaultSettings, ...this.ctx.settings};
-    this.showSubtitle = this.settings.showSubtitle;
+    this.showSubtitle = this.settings.showSubtitle && this.ctx.datasources?.length > 0;
     const subtitle = this.settings.subtitle;
     this.subtitle$ = this.ctx.registerLabelPattern(subtitle, this.subtitle$);
-    this.subtitleStyle = textStyle(this.settings.subtitleFont, '0.25px');
+    this.subtitleStyle = textStyle(this.settings.subtitleFont);
     this.subtitleColor =  this.settings.subtitleColor;
 
     const dataKey = getDataKey(this.ctx.defaultSubscription.datasources);
@@ -148,7 +148,7 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
 
     this.showDate = this.settings.showDate;
     this.dateFormat = DateFormatProcessor.fromSettings(this.ctx.$injector, this.settings.dateFormat);
-    this.dateStyle = textStyle(this.settings.dateFont,  '0.25px');
+    this.dateStyle = textStyle(this.settings.dateFont);
     this.dateColor = this.settings.dateColor;
 
     this.backgroundStyle = backgroundStyle(this.settings.background);
@@ -156,7 +156,7 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
   }
 
   ngAfterViewInit(): void {
-    if (this.showChart) {
+    if (this.showChart && this.ctx.datasources?.length) {
       const settings = {
         shadowSize: 0,
         enableSelection: false,
@@ -179,12 +179,10 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
       } as TbFlotSettings;
       this.flot = new TbFlot(this.ctx, 'line', $(this.chartElement.nativeElement), settings);
       this.tickMin$ = this.flot.yMin$.pipe(
-        map((value) => formatValue(value, (this.flotDataKey?.decimals || this.ctx.decimals),
-            (this.flotDataKey?.units || this.ctx.units))
+        map((value) => formatValue(value, (this.flotDataKey?.decimals || this.ctx.decimals))
       ));
       this.tickMax$ = this.flot.yMax$.pipe(
-        map((value) => formatValue(value, (this.flotDataKey?.decimals || this.ctx.decimals),
-          (this.flotDataKey?.units || this.ctx.units))
+        map((value) => formatValue(value, (this.flotDataKey?.decimals || this.ctx.decimals))
         ));
     }
     if (this.settings.autoScale && this.showValues) {
@@ -232,7 +230,7 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
         const tsValue = getTsValueByLatestDataKey(this.ctx.latestData, aggValue.key);
         let ts;
         let value;
-        if (tsValue) {
+        if (tsValue && isDefinedAndNotNull(tsValue[1]) && isNumeric(tsValue[1])) {
           ts = tsValue[0];
           value = tsValue[1];
           aggValue.value = formatValue(value, (aggValue.key.decimals || this.ctx.decimals), null, false);

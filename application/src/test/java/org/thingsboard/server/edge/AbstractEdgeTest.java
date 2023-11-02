@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.edge;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -130,7 +129,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         installation();
 
         edgeImitator = new EdgeImitator("localhost", 7070, edge.getRoutingKey(), edge.getSecret());
-        edgeImitator.expectMessageAmount(26);
+        edgeImitator.expectMessageAmount(21);
         edgeImitator.connect();
 
         requestEdgeRuleChainMetadata();
@@ -163,9 +162,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     @After
     public void teardownEdgeTest() {
         try {
-            edgeImitator.expectMessageAmount(2);
             loginTenantAdmin();
-            Assert.assertTrue(edgeImitator.waitForMessages());
 
             doDelete("/api/edge/" + edge.getId().toString())
                     .andExpect(status().isOk());
@@ -228,33 +225,33 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         // 1 message from queue fetcher
         validateQueues();
 
-        // 2 messages - 1 from rule chain fetcher and 1 from rule chain controller
+        // 1 from rule chain fetcher
         UUID ruleChainUUID = validateRuleChains();
 
         // 1 from request message
         validateRuleChainMetadataUpdates(ruleChainUUID);
 
-        // 4 messages - 4 messages from fetcher - 2 from system level ('mail', 'mailTemplates') and 2 from admin level ('mail', 'mailTemplates')
+        // 4 messages
+        // - 2 from fetcher - system level ('mail', 'mailTemplates')
+        // - 2 from fetcher - admin level ('mail', 'mailTemplates')
         validateAdminSettings();
-
-        // 5 messages
-        // - 1 from default profile fetcher
-        // - 2 from device profile fetcher (default and thermostat)
-        // - 1 from device fetcher
-        // - 1 from device controller (thermostat)
-        validateDeviceProfiles();
 
         // 4 messages
         // - 1 from default profile fetcher
+        // - 2 from device profile fetcher (default and thermostat)
+        // - 1 from device fetcher
+        validateDeviceProfiles();
+
+        // 3 messages
+        // - 1 from default profile fetcher
         // - 1 message from asset profile fetcher
         // - 1 message from asset fetcher
-        // - 1 message from asset controller
         validateAssetProfiles();
 
-        // 2 messages - 1 from device fetcher and 1 from device controller
+        // 1 from device fetcher
         validateDevices();
 
-        // 2 messages - 1 from asset fetcher and 1 from asset controller
+        // 1 from asset fetcher
         validateAssets();
 
         // 1 message from public customer fetcher
@@ -308,8 +305,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         // default msg device profile from fetcher
         // thermostat msg from device profile fetcher
         // thermostat msg from device fetcher
-        // thermostat msg from creation of device
-        Assert.assertEquals(5, deviceProfileUpdateMsgList.size());
+        Assert.assertEquals(4, deviceProfileUpdateMsgList.size());
         Optional<DeviceProfileUpdateMsg> thermostatProfileUpdateMsgOpt =
                 deviceProfileUpdateMsgList.stream().filter(dfum -> THERMOSTAT_DEVICE_PROFILE_NAME.equals(dfum.getName())).findAny();
         Assert.assertTrue(thermostatProfileUpdateMsgOpt.isPresent());
@@ -326,10 +322,9 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     }
 
     private void validateDevices() throws Exception {
-        List<DeviceUpdateMsg> deviceUpdateMsgs = edgeImitator.findAllMessagesByType(DeviceUpdateMsg.class);
-        Assert.assertEquals(2, deviceUpdateMsgs.size());
-        validateDevice(deviceUpdateMsgs.get(0));
-        validateDevice(deviceUpdateMsgs.get(1));
+        Optional<DeviceUpdateMsg> deviceUpdateMsgOpt = edgeImitator.findMessageByType(DeviceUpdateMsg.class);
+        Assert.assertTrue(deviceUpdateMsgOpt.isPresent());
+        validateDevice(deviceUpdateMsgOpt.get());
     }
 
     private void validateDevice(DeviceUpdateMsg deviceUpdateMsg) throws Exception {
@@ -345,10 +340,9 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     }
 
     private void validateAssets() throws Exception {
-        List<AssetUpdateMsg> assetUpdateMsgs = edgeImitator.findAllMessagesByType(AssetUpdateMsg.class);
-        Assert.assertEquals(2, assetUpdateMsgs.size());
-        validateAsset(assetUpdateMsgs.get(0));
-        validateAsset(assetUpdateMsgs.get(1));
+        Optional<AssetUpdateMsg> assetUpdateMsgOpt = edgeImitator.findMessageByType(AssetUpdateMsg.class);
+        Assert.assertTrue(assetUpdateMsgOpt.isPresent());
+        validateAsset(assetUpdateMsgOpt.get());
     }
 
     private void validateAsset(AssetUpdateMsg assetUpdateMsg) throws Exception {
@@ -365,12 +359,10 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     }
 
     private UUID validateRuleChains() throws Exception {
-        List<RuleChainUpdateMsg> ruleChainUpdateMsgs = edgeImitator.findAllMessagesByType(RuleChainUpdateMsg.class);
-        Assert.assertEquals(2, ruleChainUpdateMsgs.size());
-        RuleChainUpdateMsg ruleChainCreateMsg = ruleChainUpdateMsgs.get(0);
-        RuleChainUpdateMsg ruleChainUpdateMsg = ruleChainUpdateMsgs.get(1);
-        validateRuleChain(ruleChainCreateMsg, UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE);
-        validateRuleChain(ruleChainUpdateMsg, UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE);
+        Optional<RuleChainUpdateMsg> ruleChainUpdateMsgOpt = edgeImitator.findMessageByType(RuleChainUpdateMsg.class);
+        Assert.assertTrue(ruleChainUpdateMsgOpt.isPresent());
+        RuleChainUpdateMsg ruleChainUpdateMsg = ruleChainUpdateMsgOpt.get();
+        validateRuleChain(ruleChainUpdateMsg, UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE);
         return new UUID(ruleChainUpdateMsg.getIdMSB(), ruleChainUpdateMsg.getIdLSB());
     }
 
@@ -394,7 +386,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(expectedRuleChainUUID, ruleChainUUID);
     }
 
-    private void validateAdminSettings() throws JsonProcessingException {
+    private void validateAdminSettings() {
         List<AdminSettingsUpdateMsg> adminSettingsUpdateMsgs = edgeImitator.findAllMessagesByType(AdminSettingsUpdateMsg.class);
         Assert.assertEquals(4, adminSettingsUpdateMsgs.size());
 
@@ -429,7 +421,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
 
     private void validateAssetProfiles() throws Exception {
         List<AssetProfileUpdateMsg> assetProfileUpdateMsgs = edgeImitator.findAllMessagesByType(AssetProfileUpdateMsg.class);
-        Assert.assertEquals(4, assetProfileUpdateMsgs.size());
+        Assert.assertEquals(3, assetProfileUpdateMsgs.size());
         AssetProfileUpdateMsg assetProfileUpdateMsg = assetProfileUpdateMsgs.get(0);
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, assetProfileUpdateMsg.getMsgType());
         UUID assetProfileUUID = new UUID(assetProfileUpdateMsg.getIdMSB(), assetProfileUpdateMsg.getIdLSB());

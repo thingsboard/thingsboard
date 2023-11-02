@@ -92,7 +92,7 @@ export const computeAggregatedCardValue =
       key,
       value: '',
       units: key.units,
-      style: textStyle(settings.font, '0.25px'),
+      style: textStyle(settings.font),
       color: ColorProcessor.fromSettings(settings.color),
       center: position === AggregatedValueCardKeyPosition.center,
       showArrow: settings.showArrow,

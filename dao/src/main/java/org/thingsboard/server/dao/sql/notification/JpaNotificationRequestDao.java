@@ -61,7 +61,7 @@ public class JpaNotificationRequestDao extends JpaAbstractDao<NotificationReques
     @Override
     public PageData<NotificationRequestInfo> findInfosByTenantIdAndOriginatorTypeAndPageLink(TenantId tenantId, EntityType originatorType, PageLink pageLink) {
         return DaoUtil.pageToPageData(notificationRequestRepository.findInfosByTenantIdAndOriginatorEntityTypeAndSearchText(tenantId.getId(),
-                        originatorType, Strings.nullToEmpty(pageLink.getTextSearch()), DaoUtil.toPageable(pageLink, Map.of(
+                        originatorType, pageLink.getTextSearch(), DaoUtil.toPageable(pageLink, Map.of(
                                 "templateName", "t.name"
                         ))))
                 .mapData(NotificationRequestInfoEntity::toData);

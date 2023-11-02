@@ -69,7 +69,7 @@ public class JpaAssetProfileDao extends JpaAbstractDao<AssetProfileEntity, Asset
         return DaoUtil.toPageData(
                 assetProfileRepository.findAssetProfiles(
                         tenantId.getId(),
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 
@@ -78,7 +78,7 @@ public class JpaAssetProfileDao extends JpaAbstractDao<AssetProfileEntity, Asset
         return DaoUtil.pageToPageData(
                 assetProfileRepository.findAssetProfileInfos(
                         tenantId.getId(),
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 

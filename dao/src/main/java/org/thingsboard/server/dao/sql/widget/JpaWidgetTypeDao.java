@@ -92,7 +92,7 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
                 widgetTypeInfoRepository
                         .findSystemWidgetTypes(
                                 NULL_UUID,
-                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getTextSearch(),
                                 fullSearch,
                                 deprecatedFilterEnabled,
                                 deprecatedFilterBool,
@@ -111,7 +111,7 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
                         .findAllTenantWidgetTypesByTenantId(
                                 tenantId,
                                 NULL_UUID,
-                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getTextSearch(),
                                 fullSearch,
                                 deprecatedFilterEnabled,
                                 deprecatedFilterBool,
@@ -129,7 +129,7 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
                 widgetTypeInfoRepository
                         .findTenantWidgetTypesByTenantId(
                                 tenantId,
-                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getTextSearch(),
                                 fullSearch,
                                 deprecatedFilterEnabled,
                                 deprecatedFilterBool,
@@ -200,7 +200,7 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
                 widgetTypeRepository
                         .findTenantWidgetTypeDetailsByTenantId(
                                 tenantId,
-                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getTextSearch(),
                                 DaoUtil.toPageable(pageLink)));
     }
 

@@ -236,6 +236,15 @@ export class WidgetService {
     return this.http.get<PageData<WidgetTypeInfo>>(url, defaultHttpOptionsFromConfig(config));
   }
 
+  public addWidgetFqnToWidgetBundle(widgetsBundleId: string, fqn: string, config?: RequestConfig) {
+    return this.getBundleWidgetTypeFqns(widgetsBundleId, config).pipe(
+      mergeMap(widgetsBundleFqn => {
+        widgetsBundleFqn.push(fqn);
+        return this.updateWidgetsBundleWidgetFqns(widgetsBundleId, widgetsBundleFqn, config);
+      })
+    );
+  }
+
   public getWidgetTemplate(widgetTypeParam: widgetType,
                            config?: RequestConfig): Observable<WidgetInfo> {
     const templateWidgetType = widgetTypesData.get(widgetTypeParam);
