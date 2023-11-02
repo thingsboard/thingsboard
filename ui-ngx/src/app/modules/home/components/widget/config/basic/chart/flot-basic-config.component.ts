@@ -82,8 +82,6 @@ export class FlotBasicConfigComponent extends BasicWidgetConfigComponent {
       legendConfig: [configData.config.settings?.legendConfig, []],
       actions: [configData.config.actions || {}, []]
     });
-    this.flotWidgetConfigForm.get('series').valueChanges
-      .subscribe(() => this.flotWidgetConfigForm.get('datasources').updateValueAndValidity());
   }
 
   protected prepareOutputConfig(config: any): WidgetConfigComponentData {
