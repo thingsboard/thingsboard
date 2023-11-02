@@ -218,7 +218,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                     break;
                 case CUSTOMER:
                     CustomerService customerService = ctx.getCustomerService();
-                    Optional<Customer> customerOptional = customerService.findCustomerByTenantIdAndTitle(ctx.getTenantId(), entitykey.getEntityName());
+                    Optional<Customer> customerOptional = Optional.ofNullable(customerService.findCustomerByTenantIdAndTitleUsingCache(ctx.getTenantId(), entitykey.getEntityName()));
                     if (customerOptional.isPresent()) {
                         targetEntity.setEntityId(customerOptional.get().getId());
                     } else if (createIfNotExists) {
