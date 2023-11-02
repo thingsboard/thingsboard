@@ -181,7 +181,7 @@ public class CustomerServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testFindCustomersByTenantIdAndTitle() throws Exception {
+    public void testFindCustomersByTenantIdAndTitleAsTextSearch() throws Exception {
         String title1 = "Customer title 1";
         List<ListenableFuture<Customer>> futures = new ArrayList<>(143);
         for (int i = 0; i < 143; i++) {
@@ -261,4 +261,24 @@ public class CustomerServiceTest extends AbstractServiceTest {
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
     }
+
+    @Test
+    public void testFindCustomerByTitle() {
+        Customer customer = new Customer();
+        customer.setTenantId(tenantId);
+        customer.setTitle("My customer");
+        Customer savedCustomer = customerService.saveCustomer(customer);
+
+        Assert.assertNotNull(savedCustomer);
+        Assert.assertNotNull(savedCustomer.getId());
+        Assert.assertTrue(savedCustomer.getCreatedTime() > 0);
+        Assert.assertEquals(customer.getTenantId(), savedCustomer.getTenantId());
+        Assert.assertEquals(customer.getTitle(), savedCustomer.getTitle());
+
+        Customer foundCustomer = customerService.findCustomerByTenantIdAndTitleUsingCache(tenantId, savedCustomer.getTitle());
+        Assert.assertEquals(foundCustomer.getTitle(), savedCustomer.getTitle());
+
+        customerService.deleteCustomer(tenantId, savedCustomer.getId());
+    }
+
 }
