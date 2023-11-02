@@ -384,7 +384,7 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
             throw new DataValidationException("Can't unassign entityView from non-existent edge!");
         }
         try {
-            deleteRelation(tenantId, new EntityRelation(edgeId, entityViewId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+            deleteRelation(tenantId, new EntityRelation(edgeId, entityViewId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE), originatorEdgeId);
         } catch (Exception e) {
             log.warn("[{}] Failed to delete entityView relation. Edge Id: [{}]", entityViewId, edgeId);
             throw new RuntimeException(e);

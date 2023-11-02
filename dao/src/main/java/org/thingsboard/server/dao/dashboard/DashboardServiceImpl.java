@@ -167,7 +167,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     }
 
     @Override
-    public Dashboard assignDashboardToCustomer(TenantId tenantId, DashboardId dashboardId, CustomerId customerId) {
+    public Dashboard assignDashboardToCustomer(TenantId tenantId, DashboardId dashboardId, CustomerId customerId, EdgeId originatorEdgeId) {
         Dashboard dashboard = findDashboardById(tenantId, dashboardId);
         Customer customer = customerDao.findById(tenantId, customerId.getId());
         if (customer == null) {
@@ -178,7 +178,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         }
         if (dashboard.addAssignedCustomer(customer)) {
             try {
-                createRelation(tenantId, new EntityRelation(customerId, dashboardId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DASHBOARD), null);
+                createRelation(tenantId, new EntityRelation(customerId, dashboardId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DASHBOARD), originatorEdgeId);
             } catch (Exception e) {
                 log.warn("[{}] Failed to create dashboard relation. Customer Id: [{}]", dashboardId, customerId);
                 throw new RuntimeException(e);
@@ -190,7 +190,12 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     }
 
     @Override
-    public Dashboard unassignDashboardFromCustomer(TenantId tenantId, DashboardId dashboardId, CustomerId customerId) {
+    public Dashboard assignDashboardToCustomer(TenantId tenantId, DashboardId dashboardId, CustomerId customerId) {
+        return assignDashboardToCustomer(tenantId, dashboardId, customerId, null);
+    }
+
+    @Override
+    public Dashboard unassignDashboardFromCustomer(TenantId tenantId, DashboardId dashboardId, CustomerId customerId, EdgeId originatorEdgeId) {
         Dashboard dashboard = findDashboardById(tenantId, dashboardId);
         Customer customer = customerDao.findById(tenantId, customerId.getId());
         if (customer == null) {
@@ -198,7 +203,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         }
         if (dashboard.removeAssignedCustomer(customer)) {
             try {
-                deleteRelation(tenantId, new EntityRelation(customerId, dashboardId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DASHBOARD));
+                deleteRelation(tenantId, new EntityRelation(customerId, dashboardId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DASHBOARD), originatorEdgeId);
             } catch (Exception e) {
                 log.warn("[{}] Failed to delete dashboard relation. Customer Id: [{}]", dashboardId, customerId);
                 throw new RuntimeException(e);
@@ -207,6 +212,11 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         } else {
             return dashboard;
         }
+    }
+
+    @Override
+    public Dashboard unassignDashboardFromCustomer(TenantId tenantId, DashboardId dashboardId, CustomerId customerId) {
+        return unassignDashboardFromCustomer(tenantId, dashboardId, customerId, null);
     }
 
     private Dashboard updateAssignedCustomer(TenantId tenantId, DashboardId dashboardId, Customer customer) {
@@ -331,7 +341,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             throw new DataValidationException("Can't unassign dashboard from non-existent edge!");
         }
         try {
-            deleteRelation(tenantId, new EntityRelation(edgeId, dashboardId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+            deleteRelation(tenantId, new EntityRelation(edgeId, dashboardId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE), originatorEdgeId);
         } catch (Exception e) {
             log.warn("[{}] Failed to delete dashboard relation. Edge Id: [{}]", dashboardId, edgeId);
             throw new RuntimeException(e);

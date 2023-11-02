@@ -408,7 +408,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
         checkAssignedEntityViewsToEdge(tenantId, assetId, edgeId);
 
         try {
-            deleteRelation(tenantId, new EntityRelation(edgeId, assetId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+            deleteRelation(tenantId, new EntityRelation(edgeId, assetId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE), originatorEdgeId);
         } catch (Exception e) {
             log.warn("[{}] Failed to delete asset relation. Edge Id: [{}]", assetId, edgeId);
             throw new RuntimeException(e);

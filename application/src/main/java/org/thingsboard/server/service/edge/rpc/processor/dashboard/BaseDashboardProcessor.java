@@ -64,21 +64,21 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
         if (assignedCustomers != null && !assignedCustomers.isEmpty()) {
             for (ShortCustomerInfo assignedCustomer : assignedCustomers) {
                 if (assignedCustomer.getCustomerId().equals(customerId)) {
-                    dashboardService.assignDashboardToCustomer(tenantId, dashboardId, assignedCustomer.getCustomerId());
+                    dashboardService.assignDashboardToCustomer(tenantId, dashboardId, assignedCustomer.getCustomerId(), edgeId);
                 }
             }
         } else {
-            unassignCustomersFromDashboard(tenantId, savedDashboard);
+            unassignCustomersFromDashboard(tenantId, savedDashboard, edgeId);
         }
         return created;
     }
 
     protected abstract Set<ShortCustomerInfo> filterNonExistingCustomers(TenantId tenantId, Set<ShortCustomerInfo> assignedCustomers);
 
-    private void unassignCustomersFromDashboard(TenantId tenantId, Dashboard dashboard) {
+    private void unassignCustomersFromDashboard(TenantId tenantId, Dashboard dashboard, EdgeId edgeId) {
         if (dashboard.getAssignedCustomers() != null && !dashboard.getAssignedCustomers().isEmpty()) {
             for (ShortCustomerInfo assignedCustomer : dashboard.getAssignedCustomers()) {
-                dashboardService.unassignDashboardFromCustomer(tenantId, dashboard.getId(), assignedCustomer.getCustomerId());
+                dashboardService.unassignDashboardFromCustomer(tenantId, dashboard.getId(), assignedCustomer.getCustomerId(), edgeId);
             }
         }
     }

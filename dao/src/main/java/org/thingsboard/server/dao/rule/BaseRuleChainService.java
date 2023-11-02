@@ -593,7 +593,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             throw new DataValidationException("Can't assign non EDGE ruleChain to edge!");
         }
         try {
-            createRelation(tenantId, new EntityRelation(edgeId, ruleChainId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE), null);
+            createRelation(tenantId, new EntityRelation(edgeId, ruleChainId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
         } catch (Exception e) {
             log.warn("[{}] Failed to create ruleChain relation. Edge Id: [{}]", ruleChainId, edgeId);
             throw new RuntimeException(e);
@@ -666,7 +666,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     public boolean setAutoAssignToEdgeRuleChain(TenantId tenantId, RuleChainId ruleChainId) {
         try {
             createRelation(tenantId, new EntityRelation(tenantId, ruleChainId,
-                    EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE_AUTO_ASSIGN_RULE_CHAIN), null);
+                    EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE_AUTO_ASSIGN_RULE_CHAIN));
             return true;
         } catch (Exception e) {
             log.warn("Failed to set auto assign to edge rule chain, ruleChainId: [{}]", ruleChainId, e);

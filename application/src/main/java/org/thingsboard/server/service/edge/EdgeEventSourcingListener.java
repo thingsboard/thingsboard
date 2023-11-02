@@ -76,7 +76,7 @@ public class EdgeEventSourcingListener {
             if (!isValidSaveEntityEventForEdgeProcessing(event.getEntity(), event.getOldEntity())) {
                 return;
             }
-            log.trace("[{}] SaveEntityEvent called of type {}: {}", event.getTenantId(), event.getEntityId().getEntityType(), event);
+            log.trace("[{}] SaveEntityEvent called: {}", event.getTenantId(), event);
             EdgeEventActionType action = Boolean.TRUE.equals(event.getAdded()) ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED;
             tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, event.getEntityId(),
                     null, null, action, event.getOriginatorEdgeId());

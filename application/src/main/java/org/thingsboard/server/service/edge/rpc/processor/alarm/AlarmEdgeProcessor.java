@@ -48,7 +48,7 @@ public class AlarmEdgeProcessor extends BaseAlarmProcessor {
 
     public ListenableFuture<Void> processAlarmMsgFromEdge(TenantId tenantId, EdgeId edgeId, AlarmUpdateMsg alarmUpdateMsg) {
         log.trace("[{}] processAlarmMsgFromEdge [{}]", tenantId, alarmUpdateMsg);
-        return processAlarmMsg(tenantId, alarmUpdateMsg, edgeId);
+        return processAlarmMsg(tenantId, edgeId, alarmUpdateMsg);
     }
 
     public DownlinkMsg convertAlarmEventToDownlink(EdgeEvent edgeEvent) {
