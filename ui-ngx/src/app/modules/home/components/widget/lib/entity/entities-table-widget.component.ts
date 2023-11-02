@@ -83,7 +83,7 @@ import {
   TableWidgetSettings,
   widthStyle
 } from '@home/components/widget/lib/table-widget.models';
-import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
+import { Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
 import {
   DISPLAY_COLUMNS_PANEL_DATA,
@@ -465,7 +465,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     }
     const target = $event.target || $event.srcElement || $event.currentTarget;
     const config = new OverlayConfig({
-      panelClass: 'tb-display-columns',
+      panelClass: 'tb-panel-container',
       backdropClass: 'cdk-overlay-transparent-backdrop',
       hasBackdrop: true,
       height: 'fit-content',

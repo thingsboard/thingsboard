@@ -414,7 +414,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     if (this.sources.length) {
       const target = $event.target || $event.srcElement || $event.currentTarget;
       const config = new OverlayConfig({
-        panelClass: 'tb-display-columns',
+        panelClass: 'tb-panel-container',
         backdropClass: 'cdk-overlay-transparent-backdrop',
         hasBackdrop: true,
         height: 'fit-content',
