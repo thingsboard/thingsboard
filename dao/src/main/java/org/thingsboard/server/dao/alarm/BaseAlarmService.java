@@ -123,7 +123,7 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
     public AlarmApiCallResult createAlarm(AlarmCreateOrUpdateActiveRequest request, boolean alarmCreationEnabled) {
         validateAlarmRequest(request);
         CustomerId customerId = entityService.fetchEntityCustomerId(request.getTenantId(), request.getOriginator()).orElse(null);
-        if (customerId == null && request.getCustomerId() != null) {
+        if ((customerId == null || customerId.isNullUid()) && (request.getCustomerId() != null && !request.getCustomerId().isNullUid())) {
             throw new DataValidationException("Can't assign alarm to customer. Originator is not assigned to customer!");
         } else if (customerId != null && request.getCustomerId() != null && !customerId.equals(request.getCustomerId())) {
             throw new DataValidationException("Can't assign alarm to customer. Originator belongs to different customer!");
