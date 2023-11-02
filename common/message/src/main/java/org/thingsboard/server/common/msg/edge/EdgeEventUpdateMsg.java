@@ -15,23 +15,18 @@
  */
 package org.thingsboard.server.common.msg.edge;
 
-import lombok.Getter;
-import lombok.ToString;
+import lombok.Data;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.MsgType;
 
-@ToString
+@Data
 public class EdgeEventUpdateMsg implements EdgeSessionMsg {
-    @Getter
-    private final TenantId tenantId;
-    @Getter
-    private final EdgeId edgeId;
 
-    public EdgeEventUpdateMsg(TenantId tenantId, EdgeId edgeId) {
-        this.tenantId = tenantId;
-        this.edgeId = edgeId;
-    }
+    private static final long serialVersionUID = -8050114506822836537L;
+
+    private final TenantId tenantId;
+    private final EdgeId edgeId;
 
     @Override
     public MsgType getMsgType() {

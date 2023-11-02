@@ -37,6 +37,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
@@ -60,10 +62,12 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     private final ResourceDataValidator resourceValidator;
 
     @Override
-    public TbResource saveResource(TbResource resource) {
+    public TbResource saveResource(TbResource resource, boolean doValidate) {
         log.trace("Executing saveResource [{}]", resource);
         TenantId tenantId = resource.getTenantId();
-        resourceValidator.validate(resource, TbResourceInfo::getTenantId);
+        if (doValidate) {
+            resourceValidator.validate(resource, TbResourceInfo::getTenantId);
+        }
 
         boolean newResource = resource.getId() == null;
         if (newResource) {
@@ -88,6 +92,8 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
                 saved = new TbResource(resourceInfo);
             }
             publishEvictEvent(new ResourceInfoEvictEvent(tenantId, resource.getId()));
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(saved.getTenantId())
+                    .entityId(saved.getId()).added(resource.getId() == null).build());
             return saved;
         } catch (Exception t) {
             publishEvictEvent(new ResourceInfoEvictEvent(tenantId, resource.getId()));
@@ -99,6 +105,11 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
                 throw t;
             }
         }
+    }
+
+    @Override
+    public TbResource saveResource(TbResource resource) {
+        return saveResource(resource, true);
     }
 
     private TbResourceInfo saveResourceInfo(TbResource resource) {
@@ -147,6 +158,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         Validator.validateId(resourceId, INCORRECT_RESOURCE_ID + resourceId);
         resourceValidator.validateDelete(tenantId, resourceId);
         resourceDao.removeById(tenantId, resourceId.getId());
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(resourceId).build());
     }
 
     @Override
@@ -170,6 +182,13 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         log.trace("Executing findTenantResourcesByResourceTypeAndObjectIds [{}][{}][{}]", tenantId, resourceType, objectIds);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         return resourceDao.findResourcesByTenantIdAndResourceType(tenantId, resourceType, objectIds, null);
+    }
+
+    @Override
+    public PageData<TbResource> findAllTenantResources(TenantId tenantId, PageLink pageLink) {
+        log.trace("Executing findAllTenantResources [{}][{}]", tenantId, pageLink);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        return resourceDao.findAllByTenantId(tenantId, pageLink);
     }
 
     @Override

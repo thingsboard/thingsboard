@@ -16,6 +16,7 @@
 
 queue_type: "kafka"
 request_topic: "js_eval.requests"
+queue_prefix: ""
 http_port: "8888" # /livenessProbe
 
 js:

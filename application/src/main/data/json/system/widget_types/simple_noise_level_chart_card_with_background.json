@@ -26,6 +26,13 @@
   "tags": [
     "weather",
     "environment",
-    "noise"
+    "sound level",
+    "acoustic level",
+    "decibel level",
+    "volume",
+    "loudness",
+    "ambient noise",
+    "sound intensity",
+    "acoustic intensity"
   ]
 }

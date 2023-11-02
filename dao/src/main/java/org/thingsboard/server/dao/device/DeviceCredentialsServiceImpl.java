@@ -82,7 +82,7 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
         validateString(credentialsId, "Incorrect credentialsId " + credentialsId);
         return cache.getAndPutInTransaction(credentialsId,
                 () -> deviceCredentialsDao.findByCredentialsId(TenantId.SYS_TENANT_ID, credentialsId),
-                false);
+                true); // caching null values is essential for permanently invalid requests
     }
 
     @Override

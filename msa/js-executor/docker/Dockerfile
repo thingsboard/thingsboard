@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM thingsboard/node:16.17.0-bullseye-slim
+FROM thingsboard/node:16.20.2-bookworm-slim
 
 ENV NODE_ENV production
 ENV DOCKER_MODE true

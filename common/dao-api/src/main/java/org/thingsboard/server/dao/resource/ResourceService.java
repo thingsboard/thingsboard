@@ -32,6 +32,8 @@ public interface ResourceService extends EntityDaoService {
 
     TbResource saveResource(TbResource resource);
 
+    TbResource saveResource(TbResource resource, boolean doValidate);
+
     TbResource findResourceByTenantIdAndKey(TenantId tenantId, ResourceType resourceType, String resourceId);
 
     TbResource findResourceById(TenantId tenantId, TbResourceId resourceId);
@@ -39,6 +41,8 @@ public interface ResourceService extends EntityDaoService {
     TbResourceInfo findResourceInfoById(TenantId tenantId, TbResourceId resourceId);
 
     TbResourceInfo findResourceInfoByTenantIdAndKey(TenantId tenantId, ResourceType resourceType, String resourceKey);
+
+    PageData<TbResource> findAllTenantResources(TenantId tenantId, PageLink pageLink);
 
     ListenableFuture<TbResourceInfo> findResourceInfoByIdAsync(TenantId tenantId, TbResourceId resourceId);
 
