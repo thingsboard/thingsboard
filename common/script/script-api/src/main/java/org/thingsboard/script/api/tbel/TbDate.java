@@ -218,8 +218,11 @@ public class TbDate implements Serializable, Cloneable {
         return opt;
     }
 
-    public long now() {
+    public static long now() {
         return Instant.now().toEpochMilli();
+    }
+    public static String nowToString() {
+        return Instant.now().toString();
     }
 
     public long parseSecond() {
