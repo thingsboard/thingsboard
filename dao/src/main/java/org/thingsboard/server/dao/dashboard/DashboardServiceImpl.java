@@ -329,7 +329,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             throw new RuntimeException(e);
         }
         eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(dashboardId)
-                .actionType(ActionType.ASSIGNED_TO_EDGE).build());
+                .actionType(ActionType.ASSIGNED_TO_EDGE).originatorEdgeId(originatorEdgeId).build());
         return dashboard;
     }
 
