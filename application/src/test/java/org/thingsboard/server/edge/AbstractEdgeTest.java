@@ -129,7 +129,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         installation();
 
         edgeImitator = new EdgeImitator("localhost", 7070, edge.getRoutingKey(), edge.getSecret());
-        edgeImitator.expectMessageAmount(21);
+        edgeImitator.expectMessageAmount(20);
         edgeImitator.connect();
 
         requestEdgeRuleChainMetadata();
@@ -231,9 +231,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         // 1 from request message
         validateRuleChainMetadataUpdates(ruleChainUUID);
 
-        // 4 messages
-        // - 2 from fetcher - system level ('mail', 'mailTemplates')
-        // - 2 from fetcher - admin level ('mail', 'mailTemplates')
+        // 3 messages from fetcher ('general', 'mail', 'connectivity')
         validateAdminSettings();
 
         // 4 messages
@@ -388,16 +386,24 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
 
     private void validateAdminSettings() {
         List<AdminSettingsUpdateMsg> adminSettingsUpdateMsgs = edgeImitator.findAllMessagesByType(AdminSettingsUpdateMsg.class);
-        Assert.assertEquals(4, adminSettingsUpdateMsgs.size());
+        Assert.assertEquals(3, adminSettingsUpdateMsgs.size());
 
         for (AdminSettingsUpdateMsg adminSettingsUpdateMsg : adminSettingsUpdateMsgs) {
+            if (adminSettingsUpdateMsg.getKey().equals("general")) {
+                validateGeneralAdminSettings(adminSettingsUpdateMsg);
+            }
             if (adminSettingsUpdateMsg.getKey().equals("mail")) {
                 validateMailAdminSettings(adminSettingsUpdateMsg);
             }
-            if (adminSettingsUpdateMsg.getKey().equals("mailTemplates")) {
-                validateMailTemplatesAdminSettings(adminSettingsUpdateMsg);
+            if (adminSettingsUpdateMsg.getKey().equals("connectivity")) {
+                validateConnectivityAdminSettings(adminSettingsUpdateMsg);
             }
         }
+    }
+
+    private void validateGeneralAdminSettings(AdminSettingsUpdateMsg adminSettingsUpdateMsg) {
+        JsonNode jsonNode = JacksonUtil.toJsonNode(adminSettingsUpdateMsg.getJsonValue());
+        Assert.assertNotNull(jsonNode.get("baseUrl"));
     }
 
     private void validateMailAdminSettings(AdminSettingsUpdateMsg adminSettingsUpdateMsg) {
@@ -409,14 +415,14 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         Assert.assertNotNull(jsonNode.get("timeout"));
     }
 
-    private void validateMailTemplatesAdminSettings(AdminSettingsUpdateMsg adminSettingsUpdateMsg) {
+    private void validateConnectivityAdminSettings(AdminSettingsUpdateMsg adminSettingsUpdateMsg) {
         JsonNode jsonNode = JacksonUtil.toJsonNode(adminSettingsUpdateMsg.getJsonValue());
-        Assert.assertNotNull(jsonNode.get("accountActivated"));
-        Assert.assertNotNull(jsonNode.get("accountLockout"));
-        Assert.assertNotNull(jsonNode.get("activation"));
-        Assert.assertNotNull(jsonNode.get("passwordWasReset"));
-        Assert.assertNotNull(jsonNode.get("resetPassword"));
-        Assert.assertNotNull(jsonNode.get("test"));
+        Assert.assertNotNull(jsonNode.get("http"));
+        Assert.assertNotNull(jsonNode.get("https"));
+        Assert.assertNotNull(jsonNode.get("mqtt"));
+        Assert.assertNotNull(jsonNode.get("mqtts"));
+        Assert.assertNotNull(jsonNode.get("coap"));
+        Assert.assertNotNull(jsonNode.get("coaps"));
     }
 
     private void validateAssetProfiles() throws Exception {
