@@ -361,8 +361,8 @@ message WidgetsBundleUpdateMsg {
   optional bytes image = 6;
   bool isSystem = 7;
   optional string description = 8;
-  optional int32 order = 9;
-  optional string widgets = 10;
+  optional string widgets = 9;
+  optional int32 order = 10;
 }
 
 message WidgetTypeUpdateMsg {
