@@ -191,16 +191,17 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
     this.timewindowForm.markAsDirty();
     const timewindowFormValue = this.timewindowForm.getRawValue();
     if (this.timewindow.selectedTab === TimewindowType.REALTIME) {
-      this.timewindowForm.get('realtime').patchValue({
-        realtimeType: Object.keys(RealtimeWindowType).includes(HistoryWindowType[timewindowFormValue.history.historyType]) ?
-          RealtimeWindowType[HistoryWindowType[timewindowFormValue.history.historyType]] :
-          timewindowFormValue.realtime.realtimeType,
-        timewindowMs: timewindowFormValue.history.timewindowMs,
-        quickInterval: Object.values(QuickTimeInterval).filter(interval => interval.startsWith('CURRENT_'))
-          .includes(QuickTimeInterval[timewindowFormValue.history.quickInterval]) ? timewindowFormValue.history.quickInterval :
-          timewindowFormValue.realtime.quickInterval
-      });
-      setTimeout(() => this.timewindowForm.get('realtime.interval').patchValue(timewindowFormValue.history.interval));
+      if (timewindowFormValue.history.historyType !== HistoryWindowType.FIXED) {
+        this.timewindowForm.get('realtime').patchValue({
+          realtimeType: Object.keys(RealtimeWindowType).includes(HistoryWindowType[timewindowFormValue.history.historyType]) ?
+            RealtimeWindowType[HistoryWindowType[timewindowFormValue.history.historyType]] :
+            timewindowFormValue.realtime.realtimeType,
+          timewindowMs: timewindowFormValue.history.timewindowMs,
+          quickInterval: timewindowFormValue.history.quickInterval.startsWith('CURRENT') ?
+            timewindowFormValue.history.quickInterval : timewindowFormValue.realtime.quickInterval
+        });
+        setTimeout(() => this.timewindowForm.get('realtime.interval').patchValue(timewindowFormValue.history.interval));
+      }
     } else {
       this.timewindowForm.get('history').patchValue({
         historyType: HistoryWindowType[RealtimeWindowType[timewindowFormValue.realtime.realtimeType]],
