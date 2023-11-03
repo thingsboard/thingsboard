@@ -21,6 +21,8 @@
   },
   "externalId": null,
   "tags": [
-    "progress"
+    "progress",
+    "loading",
+    "state"
   ]
 }

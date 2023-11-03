@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api.msg;
+package org.thingsboard.server.common.msg.rule.engine;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.ToString;
+import lombok.Data;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKey;
@@ -32,21 +30,16 @@ import java.util.Set;
 /**
  * @author Andrew Shvayka
  */
-@ToString
-@AllArgsConstructor
+@Data
 public class DeviceAttributesEventNotificationMsg implements ToDeviceActorNotificationMsg {
 
-    @Getter
+    private static final long serialVersionUID = 2422071590415277039L;
+
     private final TenantId tenantId;
-    @Getter
     private final DeviceId deviceId;
-    @Getter
     private final Set<AttributeKey> deletedKeys;
-    @Getter
     private final String scope;
-    @Getter
     private final List<AttributeKvEntry> values;
-    @Getter
     private final boolean deleted;
 
     public static DeviceAttributesEventNotificationMsg onUpdate(TenantId tenantId, DeviceId deviceId, String scope, List<AttributeKvEntry> values) {

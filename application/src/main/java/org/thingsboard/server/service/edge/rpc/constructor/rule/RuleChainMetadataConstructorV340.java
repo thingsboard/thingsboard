@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.edge.rpc.constructor.rule;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
@@ -29,7 +28,7 @@ public class RuleChainMetadataConstructorV340 extends AbstractRuleChainMetadataC
     @Override
     protected void constructRuleChainMetadataUpdatedMsg(TenantId tenantId,
                                                         RuleChainMetadataUpdateMsg.Builder builder,
-                                                        RuleChainMetaData ruleChainMetaData) throws JsonProcessingException {
+                                                        RuleChainMetaData ruleChainMetaData) {
         builder.addAllNodes(constructNodes(ruleChainMetaData.getNodes()))
                 .addAllConnections(constructConnections(ruleChainMetaData.getConnections()))
                 .addAllRuleChainConnections(constructRuleChainConnections(ruleChainMetaData.getRuleChainConnections(), new TreeSet<>()));
