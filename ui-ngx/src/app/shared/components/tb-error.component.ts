@@ -21,10 +21,10 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 @Component({
   selector: 'tb-error',
   template: `
-  <div [@animation]="state" [ngStyle]="{marginTop: noMargin ? '0' : '0.5rem', fontSize: '.75rem'}">
-      <mat-error >
-      {{message}}
-    </mat-error>
+    <div [@animation]="state" [ngStyle]="{marginTop: noMargin ? '0' : '0.5rem', fontSize: '.75rem'}">
+      <mat-error>
+        {{message}}
+      </mat-error>
     </div>
   `,
   styles: [`
@@ -36,21 +36,23 @@ import { coerceBoolean } from '@shared/decorators/coercion';
     trigger('animation', [
       state('show', style({
         opacity: 1,
+        transform: 'translateY(0)'
       })),
       state('hide',   style({
         opacity: 0,
         transform: 'translateY(-1rem)'
       })),
-      transition('show => hide', animate('200ms ease-out')),
-      transition('* => show', animate('200ms ease-in'))
-
+      transition('* <=> *', animate('200ms ease-out'))
     ]),
   ]
 })
 export class TbErrorComponent {
-  errorValue: any;
-  state: any;
-  message;
+  errorValue: string;
+  state = 'hide';
+  message: string;
+
+  constructor(private cd: ChangeDetectorRef) {
+  }
 
   @Input()
   @coerceBoolean()
@@ -58,19 +60,13 @@ export class TbErrorComponent {
 
   @Input()
   set error(value) {
-    if (value && !this.message) {
-      this.message = value;
-      this.state = 'hide';
-
-      setTimeout(() => {
-        this.state = 'show';
-        this.cd.markForCheck();
-      });
-    } else {
+    if (this.errorValue !== value) {
       this.errorValue = value;
+      if (value) {
+        this.message = value;
+      }
       this.state = value ? 'show' : 'hide';
+      this.cd.markForCheck();
     }
   }
-
-  constructor(private cd: ChangeDetectorRef) {}
 }
