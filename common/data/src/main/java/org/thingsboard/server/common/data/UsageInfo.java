@@ -33,7 +33,9 @@ public class UsageInfo {
     private long transportMessages;
     private long maxTransportMessages;
     private long jsExecutions;
+    private long tbelExecutions;
     private long maxJsExecutions;
+    private long maxTbelExecutions;
     private long emails;
     private long maxEmails;
     private long sms;

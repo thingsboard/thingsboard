@@ -58,6 +58,30 @@ import {
 import {
   BatteryLevelBasicConfigComponent
 } from '@home/components/widget/config/basic/indicator/battery-level-basic-config.component';
+import {
+  WindSpeedDirectionBasicConfigComponent
+} from '@home/components/widget/config/basic/weather/wind-speed-direction-basic-config.component';
+import {
+  SignalStrengthBasicConfigComponent
+} from '@home/components/widget/config/basic/indicator/signal-strength-basic-config.component';
+import {
+  ValueChartCardBasicConfigComponent
+} from '@home/components/widget/config/basic/cards/value-chart-card-basic-config.component';
+import {
+  ProgressBarBasicConfigComponent
+} from '@home/components/widget/config/basic/cards/progress-bar-basic-config.component';
+import {
+  RadialGaugeBasicConfigComponent
+} from '@home/components/widget/config/basic/gauge/radial-gauge-basic-config.component';
+import {
+  ThermometerScaleGaugeBasicConfigComponent
+} from '@home/components/widget/config/basic/gauge/thermometer-scale-gauge-basic-config.component';
+import {
+  CompassGaugeBasicConfigComponent
+} from '@home/components/widget/config/basic/gauge/compass-gauge-basic-config.component';
+import {
+  LiquidLevelCardBasicConfigComponent
+} from '@home/components/widget/config/basic/indicator/liquid-level-card-basic-config.component';
 
 @NgModule({
   declarations: [
@@ -75,7 +99,15 @@ import {
     DataKeysPanelComponent,
     AlarmCountBasicConfigComponent,
     EntityCountBasicConfigComponent,
-    BatteryLevelBasicConfigComponent
+    BatteryLevelBasicConfigComponent,
+    WindSpeedDirectionBasicConfigComponent,
+    SignalStrengthBasicConfigComponent,
+    ValueChartCardBasicConfigComponent,
+    ProgressBarBasicConfigComponent,
+    RadialGaugeBasicConfigComponent,
+    ThermometerScaleGaugeBasicConfigComponent,
+    CompassGaugeBasicConfigComponent,
+    LiquidLevelCardBasicConfigComponent
   ],
   imports: [
     CommonModule,
@@ -97,7 +129,15 @@ import {
     DataKeysPanelComponent,
     AlarmCountBasicConfigComponent,
     EntityCountBasicConfigComponent,
-    BatteryLevelBasicConfigComponent
+    BatteryLevelBasicConfigComponent,
+    WindSpeedDirectionBasicConfigComponent,
+    SignalStrengthBasicConfigComponent,
+    ValueChartCardBasicConfigComponent,
+    ProgressBarBasicConfigComponent,
+    RadialGaugeBasicConfigComponent,
+    ThermometerScaleGaugeBasicConfigComponent,
+    CompassGaugeBasicConfigComponent,
+    LiquidLevelCardBasicConfigComponent
   ]
 })
 export class BasicWidgetConfigModule {
@@ -113,5 +153,13 @@ export const basicWidgetConfigComponentsMap: {[key: string]: Type<IBasicWidgetCo
   'tb-aggregated-value-card-basic-config': AggregatedValueCardBasicConfigComponent,
   'tb-alarm-count-basic-config': AlarmCountBasicConfigComponent,
   'tb-entity-count-basic-config': EntityCountBasicConfigComponent,
-  'tb-battery-level-basic-config': BatteryLevelBasicConfigComponent
+  'tb-battery-level-basic-config': BatteryLevelBasicConfigComponent,
+  'tb-wind-speed-direction-basic-config': WindSpeedDirectionBasicConfigComponent,
+  'tb-signal-strength-basic-config': SignalStrengthBasicConfigComponent,
+  'tb-value-chart-card-basic-config': ValueChartCardBasicConfigComponent,
+  'tb-progress-bar-basic-config': ProgressBarBasicConfigComponent,
+  'tb-radial-gauge-basic-config': RadialGaugeBasicConfigComponent,
+  'tb-thermometer-scale-gauge-basic-config': ThermometerScaleGaugeBasicConfigComponent,
+  'tb-compass-gauge-basic-config': CompassGaugeBasicConfigComponent,
+  'tb-liquid-level-card-basic-config': LiquidLevelCardBasicConfigComponent
 };

@@ -78,11 +78,14 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
     @Setter
     protected volatile ScheduledFuture<?> refreshTask;
     protected volatile boolean stopped;
+    @Getter
+    protected long createdTime;
 
     public TbAbstractSubCtx(String serviceId, WebSocketService wsService,
                             EntityService entityService, TbLocalSubscriptionService localSubscriptionService,
                             AttributesService attributesService, SubscriptionServiceStatistics stats,
                             WebSocketSessionRef sessionRef, int cmdId) {
+        this.createdTime = System.currentTimeMillis();
         this.serviceId = serviceId;
         this.wsService = wsService;
         this.entityService = entityService;
@@ -142,6 +145,7 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
                         .tenantId(sessionRef.getSecurityCtx().getTenantId())
                         .entityId(entityId)
                         .updateProcessor((subscription, subscriptionUpdate) -> dynamicValueSubUpdate(subscription.getSessionId(), subscriptionUpdate, dynamicValueKeySubMap))
+                        .queryTs(createdTime)
                         .allKeys(false)
                         .keyStates(keyStates)
                         .scope(TbAttributeSubscriptionScope.SERVER_SCOPE)

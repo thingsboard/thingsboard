@@ -417,6 +417,9 @@ public class HomePageApiTest extends AbstractControllerTest {
         Assert.assertEquals(0, usageInfo.getJsExecutions());
         Assert.assertEquals(configuration.getMaxJSExecutions(), usageInfo.getMaxJsExecutions());
 
+        Assert.assertEquals(0, usageInfo.getTbelExecutions());
+        Assert.assertEquals(configuration.getMaxTbelExecutions(), usageInfo.getMaxTbelExecutions());
+
         Assert.assertEquals(0, usageInfo.getEmails());
         Assert.assertEquals(configuration.getMaxEmails(), usageInfo.getMaxEmails());
 

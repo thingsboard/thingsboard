@@ -13,11 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-}
+@import "../../../../../scss/constants";
 
-:host ::ng-deep {
-  .mat-checkbox-layout {
-    white-space: normal;
+:host {
+  .settings-card {
+    .toggle-group {
+      max-width: 670px;
+      width: 100%;
+      margin: 0 auto;
+
+      .tb-form-hint {
+        text-align: center;
+      }
+    }
+
+    @media #{$mat-xs} {
+      .tb-form-row {
+        gap: 0;
+      }
+    }
   }
 }

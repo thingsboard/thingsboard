@@ -58,6 +58,13 @@ import {
 } from '@home/components/widget/lib/cards/aggregated-value-card-widget.component';
 import { CountWidgetComponent } from '@home/components/widget/lib/count/count-widget.component';
 import { BatteryLevelWidgetComponent } from '@home/components/widget/lib/indicator/battery-level-widget.component';
+import {
+  WindSpeedDirectionWidgetComponent
+} from '@home/components/widget/lib/weather/wind-speed-direction-widget.component';
+import { SignalStrengthWidgetComponent } from '@home/components/widget/lib/indicator/signal-strength-widget.component';
+import { ValueChartCardWidgetComponent } from '@home/components/widget/lib/cards/value-chart-card-widget.component';
+import { ProgressBarWidgetComponent } from '@home/components/widget/lib/cards/progress-bar-widget.component';
+import { LiquidLevelWidgetComponent } from '@home/components/widget/lib/indicator/liquid-level-widget.component';
 
 @NgModule({
   declarations:
@@ -92,7 +99,12 @@ import { BatteryLevelWidgetComponent } from '@home/components/widget/lib/indicat
       ValueCardWidgetComponent,
       AggregatedValueCardWidgetComponent,
       CountWidgetComponent,
-      BatteryLevelWidgetComponent
+      BatteryLevelWidgetComponent,
+      WindSpeedDirectionWidgetComponent,
+      SignalStrengthWidgetComponent,
+      ValueChartCardWidgetComponent,
+      ProgressBarWidgetComponent,
+      LiquidLevelWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -131,7 +143,12 @@ import { BatteryLevelWidgetComponent } from '@home/components/widget/lib/indicat
         ValueCardWidgetComponent,
         AggregatedValueCardWidgetComponent,
         CountWidgetComponent,
-        BatteryLevelWidgetComponent
+        BatteryLevelWidgetComponent,
+        WindSpeedDirectionWidgetComponent,
+        SignalStrengthWidgetComponent,
+        ValueChartCardWidgetComponent,
+        ProgressBarWidgetComponent,
+        LiquidLevelWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }

@@ -85,8 +85,8 @@ public class TbKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
         if (log.isTraceEnabled()) {
             try {
                 StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-                int maxlevel = Math.min(stackTrace.length, 10);
-                for (int i = 2; i < maxlevel; i++) { // ignore two levels: getStackTrace and addAnalyticHeaders
+                int maxLevel = Math.min(stackTrace.length, 20);
+                for (int i = 2; i < maxLevel; i++) { // ignore two levels: getStackTrace and addAnalyticHeaders
                     headers.add(new RecordHeader("_stackTrace" + i, stackTrace[i].toString().getBytes(StandardCharsets.UTF_8)));
                 }
             } catch (Throwable t) {

@@ -82,7 +82,7 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
         validateString(credentialsId, "Incorrect credentialsId " + credentialsId);
         return cache.getAndPutInTransaction(credentialsId,
                 () -> deviceCredentialsDao.findByCredentialsId(TenantId.SYS_TENANT_ID, credentialsId),
-                false);
+                true); // caching null values is essential for permanently invalid requests
     }
 
     @Override
@@ -398,6 +398,15 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
         log.trace("Executing deleteDeviceCredentials [{}]", deviceCredentials);
         deviceCredentialsDao.removeById(tenantId, deviceCredentials.getUuidId());
         publishEvictEvent(new DeviceCredentialsEvictEvent(deviceCredentials.getCredentialsId(), null));
+    }
+
+    @Override
+    public void deleteDeviceCredentialsByDeviceId(TenantId tenantId, DeviceId deviceId) {
+        log.trace("Executing deleteDeviceCredentialsByDeviceId [{}]", deviceId);
+        DeviceCredentials credentials = deviceCredentialsDao.removeByDeviceId(tenantId, deviceId);
+        if (credentials != null) {
+            publishEvictEvent(new DeviceCredentialsEvictEvent(credentials.getCredentialsId(), null));
+        }
     }
 
 }

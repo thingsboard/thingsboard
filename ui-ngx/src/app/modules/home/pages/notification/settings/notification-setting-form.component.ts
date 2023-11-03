@@ -16,8 +16,7 @@
 
 import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
-import { UtilsService } from '@core/services/utils.service';
-import { isDefinedAndNotNull } from '@core/utils';
+import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { Subscription } from 'rxjs';
 import {
   NotificationDeliveryMethod,
@@ -45,9 +44,6 @@ export class NotificationSettingFormComponent implements ControlValueAccessor, O
   @Input()
   deliveryMethods: NotificationDeliveryMethod[] = [];
 
-  @Input()
-  allowDeliveryMethods: NotificationDeliveryMethod[] = [];
-
   notificationSettingsFormGroup: UntypedFormGroup;
 
   notificationTemplateTypeTranslateMap = NotificationTemplateTypeTranslateMap;
@@ -56,8 +52,7 @@ export class NotificationSettingFormComponent implements ControlValueAccessor, O
 
   private valueChange$: Subscription = null;
 
-  constructor(private utils: UtilsService,
-              private fb: UntypedFormBuilder) {
+  constructor(private fb: UntypedFormBuilder) {
   }
 
   registerOnChange(fn: any): void {
@@ -101,17 +96,41 @@ export class NotificationSettingFormComponent implements ControlValueAccessor, O
     }
   }
 
-  toggleEnabled() {
-    this.notificationSettingsFormGroup.get('enabled').patchValue(!this.notificationSettingsFormGroup.get('enabled').value);
-  }
-
-  getChecked(deliveryMethod: NotificationDeliveryMethod): boolean {
-    return this.notificationSettingsFormGroup.get('enabledDeliveryMethods').get(deliveryMethod).value;
+  getChecked(deliveryMethod?: NotificationDeliveryMethod): boolean {
+    if (deliveryMethod) {
+      return this.notificationSettingsFormGroup.get('enabledDeliveryMethods').get(deliveryMethod).value;
+    } else {
+      const enabledDeliveryMethod = Object.values(this.notificationSettingsFormGroup.get('enabledDeliveryMethods').value);
+      const checked = enabledDeliveryMethod.some(value => value === true);
+      if (checked !== this.notificationSettingsFormGroup.get('enabled').value) {
+        setTimeout(() => this.notificationSettingsFormGroup.get('enabled').patchValue(checked), 0);
+      }
+      return enabledDeliveryMethod.every(value => value);
+    }
   }
 
   toggleDeliviryMethod(deliveryMethod: NotificationDeliveryMethod) {
     this.notificationSettingsFormGroup.get('enabledDeliveryMethods').get(deliveryMethod)
       .patchValue(!this.notificationSettingsFormGroup.get('enabledDeliveryMethods').get(deliveryMethod).value);
+  }
+
+  changeInstanceTypeCheckBox(value: any) {
+    const enabledDeliveryMethod = deepClone(this.notificationSettingsFormGroup.get('enabledDeliveryMethods').value);
+    Object.keys(enabledDeliveryMethod).forEach(key => {
+      enabledDeliveryMethod[key] = value;
+    });
+    this.notificationSettingsFormGroup.get('enabled').patchValue(value, {emitEvent: false});
+    this.notificationSettingsFormGroup.get('enabledDeliveryMethods').patchValue(enabledDeliveryMethod);
+    this.notificationSettingsFormGroup.markAsDirty();
+  }
+
+  getIndeterminate() {
+    if (!this.notificationSettingsFormGroup.get('enabled').value) {
+      return false;
+    }
+    const enabledDeliveryMethod: Array<boolean> = Object.values(this.notificationSettingsFormGroup.get('enabledDeliveryMethods').value);
+    const checkedResource = enabledDeliveryMethod.filter(value => value);
+    return checkedResource.length !== 0 && checkedResource.length !== enabledDeliveryMethod.length;
   }
 
   writeValue(value: NotificationUserSetting): void {

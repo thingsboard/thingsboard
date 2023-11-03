@@ -14,74 +14,68 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { IAliasController } from '@core/api/widget-api.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { WidgetService } from '@core/http/widget.service';
-import { fullWidgetTypeFqn, WidgetInfo, widgetType, WidgetTypeInfo } from '@shared/models/widget.models';
-import { debounceTime, distinctUntilChanged, map, share, switchMap, tap } from 'rxjs/operators';
-import { BehaviorSubject, combineLatest, Observable, of, ReplaySubject } from 'rxjs';
+import {
+  DeprecatedFilter,
+  fullWidgetTypeFqn,
+  WidgetInfo,
+  widgetType,
+  WidgetTypeInfo
+} from '@shared/models/widget.models';
+import { debounceTime, distinctUntilChanged, map, skip } from 'rxjs/operators';
+import { BehaviorSubject, combineLatest } from 'rxjs';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull, isObject } from '@core/utils';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
-
-type widgetsListMode = 'all' | 'actual' | 'deprecated';
+import { GridEntitiesFetchFunction, ScrollGridColumns } from '@home/models/datasource/scroll-grid-datasource';
 
 type selectWidgetMode = 'bundles' | 'allWidgets';
+
+interface WidgetsFilter {
+  search: string;
+  filter: widgetType[];
+  deprecatedFilter: DeprecatedFilter;
+}
+
+interface BundleWidgetsFilter extends WidgetsFilter {
+  widgetsBundleId: string;
+}
 
 @Component({
   selector: 'tb-dashboard-widget-select',
   templateUrl: './dashboard-widget-select.component.html',
-  styleUrls: ['./dashboard-widget-select.component.scss']
+  styleUrls: ['./dashboard-widget-select.component.scss'],
+  encapsulation: ViewEncapsulation.None
 })
 export class DashboardWidgetSelectComponent implements OnInit {
 
-  private search$ = new BehaviorSubject<string>('');
+  private searchSubject = new BehaviorSubject<string>('');
+  private search$ = this.searchSubject.asObservable().pipe(
+    debounceTime(150));
+
   private filterWidgetTypes$ = new BehaviorSubject<Array<widgetType>>(null);
-  private widgetsListMode$ = new BehaviorSubject<widgetsListMode>('actual');
+  private deprecatedFilter$ = new BehaviorSubject<DeprecatedFilter>(DeprecatedFilter.ACTUAL);
   private selectWidgetMode$ = new BehaviorSubject<selectWidgetMode>('bundles');
-  private widgetsInfo: Observable<Array<WidgetInfo>>;
-  private widgetsBundleValue: WidgetsBundle;
+  private widgetsBundle$ = new BehaviorSubject<WidgetsBundle>(null);
+
   widgetTypes = new Set<widgetType>();
   hasDeprecated = false;
-
-  allWidgets$: Observable<Array<WidgetInfo>>;
-  widgets$: Observable<Array<WidgetInfo>>;
-  loadingWidgetsSubject: BehaviorSubject<boolean> = new BehaviorSubject(false);
-  loadingWidgets$ = this.loadingWidgetsSubject.pipe(
-    share()
-  );
-  widgetsBundles$: Observable<Array<WidgetsBundle>>;
-  loadingWidgetBundlesSubject: BehaviorSubject<boolean> = new BehaviorSubject(true);
-  loadingWidgetBundles$ = this.loadingWidgetBundlesSubject.pipe(
-    share()
-  );
-
-  set widgetsBundle(widgetBundle: WidgetsBundle) {
-    if (this.widgetsBundleValue !== widgetBundle) {
-      this.widgetsBundleValue = widgetBundle;
-      if (widgetBundle === null) {
-        this.widgetTypes.clear();
-        this.hasDeprecated = false;
-      }
-      this.filterWidgetTypes$.next(null);
-      this.widgetsListMode$.next('actual');
-      this.widgetsInfo = null;
-    }
-  }
-
-  get widgetsBundle(): WidgetsBundle {
-    return this.widgetsBundleValue;
-  }
 
   @Input()
   aliasController: IAliasController;
 
   @Input()
-  set searchBundle(search: string) {
-    this.search$.next(search);
+  set search(search: string) {
+    this.searchSubject.next(search);
+  }
+
+  get search(): string {
+    return this.searchSubject.value;
   }
 
   @Input()
@@ -95,7 +89,18 @@ export class DashboardWidgetSelectComponent implements OnInit {
 
   @Input()
   set selectWidgetMode(mode: selectWidgetMode) {
-    this.selectWidgetMode$.next(mode);
+    if (this.selectWidgetMode$.value !== mode) {
+      if (mode === 'bundles' && this.widgetsBundle$.value === null) {
+        this.widgetTypes.clear();
+        this.hasDeprecated = false;
+      } else {
+        this.widgetTypes = new Set<widgetType>(Object.keys(widgetType).map(t => t as widgetType));
+        this.hasDeprecated = true;
+      }
+      this.filterWidgetTypes$.next(null);
+      this.deprecatedFilter$.next(DeprecatedFilter.ACTUAL);
+      this.selectWidgetMode$.next(mode);
+    }
   }
 
   get selectWidgetMode(): selectWidgetMode {
@@ -103,77 +108,122 @@ export class DashboardWidgetSelectComponent implements OnInit {
   }
 
   @Input()
-  set widgetsListMode(mode: widgetsListMode) {
-    this.widgetsListMode$.next(mode);
+  set deprecatedFilter(filter: DeprecatedFilter) {
+    this.deprecatedFilter$.next(filter);
   }
 
-  get widgetsListMode(): widgetsListMode {
-    return this.widgetsListMode$.value;
+  get deprecatedFilter(): DeprecatedFilter {
+    return this.deprecatedFilter$.value;
+  }
+
+  set widgetsBundle(widgetBundle: WidgetsBundle) {
+    if (this.widgetsBundle$.value !== widgetBundle) {
+      if (widgetBundle === null && this.selectWidgetMode$.value !== 'allWidgets') {
+        this.widgetTypes.clear();
+        this.hasDeprecated = false;
+      } else {
+        this.widgetTypes = new Set<widgetType>(Object.keys(widgetType).map(t => t as widgetType));
+        this.hasDeprecated = true;
+      }
+      this.filterWidgetTypes$.next(null);
+      this.deprecatedFilter$.next(DeprecatedFilter.ACTUAL);
+      this.widgetsBundle$.next(widgetBundle);
+    }
+  }
+
+  get widgetsBundle(): WidgetsBundle {
+    return this.widgetsBundle$.value;
   }
 
   @Output()
   widgetSelected: EventEmitter<WidgetInfo> = new EventEmitter<WidgetInfo>();
 
-  @Output()
-  widgetsBundleSelected: EventEmitter<WidgetsBundle> = new EventEmitter<WidgetsBundle>();
+  columns: ScrollGridColumns = {
+    columns: 2,
+    breakpoints: {
+      'screen and (min-width: 2000px)': 5,
+      'screen and (min-width: 1280px)': 4,
+      'screen and (min-width: 600px)': 3
+    }
+  };
+
+  widgetBundlesFetchFunction: GridEntitiesFetchFunction<WidgetsBundle, string>;
+  allWidgetsFetchFunction: GridEntitiesFetchFunction<WidgetTypeInfo, WidgetsFilter>;
+  widgetsFetchFunction: GridEntitiesFetchFunction<WidgetTypeInfo, BundleWidgetsFilter>;
+
+  widgetsBundleFilter = '';
+  allWidgetsFilter: WidgetsFilter = {search: '', filter: null, deprecatedFilter: DeprecatedFilter.ACTUAL};
+  widgetsFilter: BundleWidgetsFilter = {search: '', filter: null, deprecatedFilter: DeprecatedFilter.ACTUAL, widgetsBundleId: null};
 
   constructor(private widgetsService: WidgetService,
-              private sanitizer: DomSanitizer,
-              private cd: ChangeDetectorRef) {
-    this.widgetsBundles$ = combineLatest([this.search$.asObservable(), this.selectWidgetMode$.asObservable()]).pipe(
-      distinctUntilChanged((oldValue, newValue) => JSON.stringify(oldValue) === JSON.stringify(newValue)),
-      switchMap(search => this.fetchWidgetBundle(...search))
+              private cd: ChangeDetectorRef,
+              private sanitizer: DomSanitizer) {
+
+    this.widgetBundlesFetchFunction = (pageSize, page, filter) => {
+      const pageLink = new PageLink(pageSize, page, filter, {
+        property: 'title',
+        direction: Direction.ASC
+      });
+      return this.widgetsService.getWidgetBundles(pageLink, true);
+    };
+
+    this.allWidgetsFetchFunction = (pageSize, page, filter) => {
+      const pageLink = new PageLink(pageSize, page, filter.search, {
+        property: 'name',
+        direction: Direction.ASC
+      });
+      return this.widgetsService.getWidgetTypes(pageLink, false, true, filter.deprecatedFilter, filter.filter);
+    };
+
+    this.widgetsFetchFunction = (pageSize, page, filter) => {
+      const pageLink = new PageLink(pageSize, page, filter.search, {
+        property: 'name',
+        direction: Direction.ASC
+      });
+      return this.widgetsService.getBundleWidgetTypeInfos(pageLink, filter.widgetsBundleId,
+        true, filter.deprecatedFilter, filter.filter);
+    };
+
+    this.search$.pipe(
+      distinctUntilChanged(),
+      skip(1)
+    ).subscribe(
+      (search) => {
+        this.widgetsBundleFilter = search;
+        this.cd.markForCheck();
+      }
     );
-    this.allWidgets$ = combineLatest([this.search$.asObservable().pipe(
-        debounceTime(150)
-    ), this.selectWidgetMode$.asObservable()]).pipe(
-        distinctUntilChanged((oldValue, newValue) => JSON.stringify(oldValue) === JSON.stringify(newValue)),
-        switchMap(search => this.fetchAllWidgets(...search)),
-        share({ connector: () => new ReplaySubject(1), resetOnError: false, resetOnComplete: false, resetOnRefCountZero: false })
-    );
-    this.widgets$ = combineLatest([this.search$.asObservable(), this.filterWidgetTypes$.asObservable(), this.widgetsListMode$]).pipe(
+
+    combineLatest({search: this.search$, filter: this.filterWidgetTypes$.asObservable(),
+      deprecatedFilter: this.deprecatedFilter$.asObservable()}).pipe(
       distinctUntilChanged((oldValue, newValue) => JSON.stringify(oldValue) === JSON.stringify(newValue)),
-      switchMap(search => this.fetchWidgets(...search))
+      skip(1)
+    ).subscribe(
+      (filter) => {
+        this.allWidgetsFilter = filter;
+        this.cd.markForCheck();
+      }
+    );
+
+    combineLatest({search: this.search$, widgetsBundleId: this.widgetsBundle$.pipe(map(wb => wb !== null ? wb.id.id : null)),
+      filter: this.filterWidgetTypes$.asObservable(), deprecatedFilter: this.deprecatedFilter$.asObservable()}).pipe(
+      distinctUntilChanged((oldValue, newValue) => JSON.stringify(oldValue) === JSON.stringify(newValue)),
+      skip(1)
+    ).subscribe(
+      (filter) => {
+        if (filter.widgetsBundleId) {
+          this.widgetsFilter = filter;
+          this.cd.markForCheck();
+        }
+      }
     );
   }
 
   ngOnInit(): void {
   }
 
-  private getWidgets(): Observable<Array<WidgetInfo>> {
-    if (!this.widgetsInfo) {
-      if (this.widgetsBundle !== null) {
-        this.loadingWidgetsSubject.next(true);
-        this.widgetsInfo = this.widgetsService.getBundleWidgetTypeInfos(this.widgetsBundle.id.id).pipe(
-          map(widgets => {
-            const widgetTypes = new Set<widgetType>();
-            const hasDeprecated = widgets.some(w => w.deprecated);
-            const widgetInfos = widgets.map((widgetTypeInfo) => {
-                widgetTypes.add(widgetTypeInfo.widgetType);
-                return this.toWidgetInfo(widgetTypeInfo);
-              }
-            );
-            setTimeout(() => {
-              this.widgetTypes = widgetTypes;
-              this.hasDeprecated = hasDeprecated;
-              this.cd.markForCheck();
-            });
-            return widgetInfos;
-          }),
-          tap(() => {
-            this.loadingWidgetsSubject.next(false);
-          }),
-          share({ connector: () => new ReplaySubject(1), resetOnError: false, resetOnComplete: false, resetOnRefCountZero: false })
-        );
-      } else {
-        this.widgetsInfo = of([]);
-      }
-    }
-    return this.widgetsInfo;
-  }
-
-  onWidgetClicked($event: Event, widget: WidgetInfo): void {
-    this.widgetSelected.emit(widget);
+  onWidgetClicked($event: Event, widget: WidgetTypeInfo): void {
+    this.widgetSelected.emit(this.toWidgetInfo(widget));
   }
 
   isSystem(item: WidgetsBundle): boolean {
@@ -183,8 +233,10 @@ export class DashboardWidgetSelectComponent implements OnInit {
   selectBundle($event: Event, bundle: WidgetsBundle) {
     $event.preventDefault();
     this.widgetsBundle = bundle;
-    this.search$.next('');
-    this.widgetsBundleSelected.emit(bundle);
+    if (bundle.title?.toLowerCase().includes(this.search.toLowerCase()) ||
+      bundle.description?.toLowerCase().includes(this.search.toLowerCase())) {
+      this.searchSubject.next('');
+    }
   }
 
   getPreviewImage(imageUrl: string | null): SafeUrl | string {
@@ -194,62 +246,8 @@ export class DashboardWidgetSelectComponent implements OnInit {
     return '/assets/widget-preview-empty.svg';
   }
 
-  private getWidgetsBundles(): Observable<Array<WidgetsBundle>> {
-    return this.widgetsService.getAllWidgetsBundles().pipe(
-      tap(() => this.loadingWidgetBundlesSubject.next(false)),
-      share({ connector: () => new ReplaySubject(1), resetOnError: false, resetOnComplete: false, resetOnRefCountZero: false })
-    );
-  }
-
-  private fetchWidgetBundle(search: string, mode: selectWidgetMode): Observable<Array<WidgetsBundle>> {
-    if (mode === 'bundles') {
-      return this.getWidgetsBundles().pipe(
-          map(bundles => search ? bundles.filter(
-              bundle => (
-                  bundle.title?.toLowerCase().includes(search.toLowerCase()) ||
-                  bundle.description?.toLowerCase().includes(search.toLowerCase())
-              )) : bundles
-          )
-      );
-    } else {
-      return of([]);
-    }
-  }
-
-  private fetchWidgets(search: string, filter: widgetType[], listMode: widgetsListMode): Observable<Array<WidgetInfo>> {
-    return this.getWidgets().pipe(
-      map(widgets => (listMode && listMode !== 'all') ?
-        widgets.filter((widget) => listMode === 'actual' ? !widget.deprecated : widget.deprecated) : widgets),
-      map(widgets => filter ? widgets.filter((widget) => filter.includes(widget.type)) : widgets),
-      map(widgets => search ? widgets.filter(
-        widget => (
-          widget.title?.toLowerCase().includes(search.toLowerCase()) ||
-          widget.description?.toLowerCase().includes(search.toLowerCase())
-        )) : widgets
-      )
-    );
-  }
-
-  private fetchAllWidgets(search: string, mode: selectWidgetMode): Observable<Array<WidgetInfo>> {
-    if (mode === 'allWidgets') {
-      const pageLink = new PageLink(1024, 0, search, {
-        property: 'name',
-        direction: Direction.ASC
-      });
-      return this.getAllWidgets(pageLink);
-    } else {
-      return of([]);
-    }
-  }
-
-  private getAllWidgets(pageLink: PageLink): Observable<Array<WidgetInfo>> {
-    this.loadingWidgetsSubject.next(true);
-    return this.widgetsService.getWidgetTypes(pageLink, false, true).pipe(
-      map(data => data.data.map(w => this.toWidgetInfo(w))),
-      tap(() => {
-        this.loadingWidgetsSubject.next(false);
-      })
-    );
+  isObject(value: any): boolean {
+    return isObject(value);
   }
 
   private toWidgetInfo(widgetTypeInfo: WidgetTypeInfo): WidgetInfo {

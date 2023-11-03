@@ -406,7 +406,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
                     .map(mapping -> {
                                 String paramName = mapping + "_lowerSearchText";
                                 ctx.addStringParameter(paramName, lowerSearchText);
-                                return String.format("LOWER(cast(%s as varchar)) LIKE concat('%%', :%s, '%%')", mapping, paramName);
+                                return String.format("cast(%s as varchar) ILIKE concat('%%', :%s, '%%')", mapping, paramName);
                             }
                     ).collect(Collectors.toList());
             return String.format("%s", String.join(" or ", searchPredicates));

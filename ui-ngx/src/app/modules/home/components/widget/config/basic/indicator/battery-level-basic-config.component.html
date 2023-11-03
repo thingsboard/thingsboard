@@ -40,6 +40,12 @@
         {{ batteryLevelLayoutTranslationMap.get(layout) | translate }}
       </tb-image-cards-select-option>
     </tb-image-cards-select>
+    <div *ngIf="sectionsCountEnabled" class="tb-form-row space-between">
+      <div>{{ 'widgets.battery-level.sections-count' | translate }}</div>
+      <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+        <input matInput type="number" min="2" max="20" formControlName="sectionsCount" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
     <div class="tb-form-row column-xs">
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTitle">
         {{ 'widget-config.title' | translate }}
@@ -91,18 +97,18 @@
                           [autoScale]="batteryLevelWidgetConfigForm.get('autoScaleValueSize').value"
                           [previewText]="valuePreviewFn">
         </tb-font-settings>
-        <tb-color-settings formControlName="valueColor">
+        <tb-color-settings formControlName="valueColor" settingsKey="{{'widgets.battery-level.value' | translate }}">
         </tb-color-settings>
       </div>
     </div>
     <div class="tb-form-row space-between">
       <div>{{ 'widgets.battery-level.battery-level-color' | translate }}</div>
-      <tb-color-settings formControlName="batteryLevelColor">
+      <tb-color-settings formControlName="batteryLevelColor" settingsKey="{{'widgets.battery-level.battery-level-color' | translate }}">
       </tb-color-settings>
     </div>
     <div class="tb-form-row space-between">
       <div>{{ 'widgets.battery-level.battery-shape-color' | translate }}</div>
-      <tb-color-settings formControlName="batteryShapeColor">
+      <tb-color-settings formControlName="batteryShapeColor" settingsKey="{{'widgets.battery-level.battery-shape-color' | translate }}">
       </tb-color-settings>
     </div>
     <div class="tb-form-row space-between">

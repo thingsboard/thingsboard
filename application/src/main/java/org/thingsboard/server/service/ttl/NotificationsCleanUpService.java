@@ -63,8 +63,8 @@ public class NotificationsCleanUpService extends AbstractCleanUpService {
         if (lastRemovedNotificationTs > 0) {
             long gap = TimeUnit.MINUTES.toMillis(10);
             long requestExpTime = lastRemovedNotificationTs - TimeUnit.SECONDS.toMillis(NotificationRequestConfig.MAX_SENDING_DELAY) - gap;
-            // TODO: double-check this
-            notificationRequestDao.removeAllByCreatedTimeBefore(requestExpTime);
+            int removed = notificationRequestDao.removeAllByCreatedTimeBefore(requestExpTime);
+            log.info("Removed {} outdated notification requests older than {}", removed, requestExpTime);
         }
     }
 

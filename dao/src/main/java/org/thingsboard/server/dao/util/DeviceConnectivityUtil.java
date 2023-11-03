@@ -31,7 +31,7 @@ public class DeviceConnectivityUtil {
     public static final String MQTTS = "mqtts";
     public static final String COAP = "coap";
     public static final String COAPS = "coaps";
-    public static final String PEM_CERT_FILE_NAME = "tb-server-chain.pem";
+    public static final String CA_ROOT_CERT_PEM = "ca-root.pem";
     public static final String CHECK_DOCUMENTATION = "Check documentation";
     public static final String JSON_EXAMPLE_PAYLOAD = "\"{temperature:25}\"";
     public static final String DOCKER_RUN = "docker run --rm -it ";
@@ -47,7 +47,7 @@ public class DeviceConnectivityUtil {
     public static String getMqttPublishCommand(String protocol, String host, String port, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) {
         StringBuilder command = new StringBuilder("mosquitto_pub -d -q 1");
         if (MQTTS.equals(protocol)) {
-            command.append(" --cafile ").append(PEM_CERT_FILE_NAME);
+            command.append(" --cafile ").append(CA_ROOT_CERT_PEM);
         }
         command.append(" -h ").append(host).append(port == null ? "" : " -p " + port);
         command.append(" -t ").append(deviceTelemetryTopic);
@@ -151,7 +151,7 @@ public class DeviceConnectivityUtil {
     }
 
     public static String getCurlPemCertCommand(String baseUrl, String protocol) {
-        return String.format("curl -f -S -o %s %s/api/device-connectivity/%s/certificate/download", PEM_CERT_FILE_NAME, baseUrl, protocol);
+        return String.format("curl -f -S -o %s %s/api/device-connectivity/%s/certificate/download", CA_ROOT_CERT_PEM, baseUrl, protocol);
     }
 
     public static String getCoapPublishCommand(String protocol, String host, String port, DeviceCredentials deviceCredentials) {
