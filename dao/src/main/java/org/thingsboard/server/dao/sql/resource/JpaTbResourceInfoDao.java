@@ -31,6 +31,7 @@ import org.thingsboard.server.dao.resource.TbResourceInfoDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -78,6 +79,11 @@ public class JpaTbResourceInfoDao extends JpaAbstractDao<TbResourceInfoEntity, T
     @Override
     public TbResourceInfo findByTenantIdAndKey(TenantId tenantId, ResourceType resourceType, String resourceKey) {
         return DaoUtil.getData(resourceInfoRepository.findByTenantIdAndResourceTypeAndResourceKey(tenantId.getId(), resourceType.name(), resourceKey));
+    }
+
+    @Override
+    public List<TbResourceInfo> findByTenantIdAndEtagAndKeyStartingWith(TenantId tenantId, String etag, String query) {
+        return DaoUtil.convertDataList(resourceInfoRepository.findByTenantIdAndHashCodeAndResourceKeyStartingWith(tenantId.getId(), etag, query));
     }
 
 }

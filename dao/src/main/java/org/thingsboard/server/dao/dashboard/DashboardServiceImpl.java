@@ -364,6 +364,11 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         return dashboardDao.findByTenantIdAndTitle(tenantId.getId(), title);
     }
 
+    @Override
+    public PageData<DashboardId> findAllDashboardsIds(PageLink pageLink) {
+        return dashboardDao.findAllIds(pageLink);
+    }
+
     private final PaginatedRemover<TenantId, DashboardId> tenantDashboardsRemover = new PaginatedRemover<>() {
 
         @Override

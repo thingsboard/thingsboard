@@ -23,6 +23,8 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 
+import java.util.List;
+
 public interface TbResourceInfoDao extends Dao<TbResourceInfo> {
 
     PageData<TbResourceInfo> findAllTenantResourcesByTenantId(TbResourceInfoFilter filter, PageLink pageLink);
@@ -30,5 +32,7 @@ public interface TbResourceInfoDao extends Dao<TbResourceInfo> {
     PageData<TbResourceInfo> findTenantResourcesByTenantId(TbResourceInfoFilter filter, PageLink pageLink);
 
     TbResourceInfo findByTenantIdAndKey(TenantId tenantId, ResourceType resourceType, String resourceKey);
+
+    List<TbResourceInfo> findByTenantIdAndEtagAndKeyStartingWith(TenantId tenantId, String etag, String query);
 
 }

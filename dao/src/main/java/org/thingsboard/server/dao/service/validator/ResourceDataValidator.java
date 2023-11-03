@@ -64,7 +64,8 @@ public class ResourceDataValidator extends DataValidator<TbResource> {
 
     @Override
     protected TbResource validateUpdate(TenantId tenantId, TbResource resource) {
-        if (resource.getData() != null && !resource.getResourceType().isUpdatable()) {
+        if (resource.getData() != null && !resource.getResourceType().isUpdatable() &&
+                tenantId != null && !tenantId.isSysTenantId()) {
             throw new DataValidationException("This type of resource can't be updated");
         }
         return resource;

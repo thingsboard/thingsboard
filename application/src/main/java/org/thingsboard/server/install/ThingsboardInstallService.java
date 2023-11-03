@@ -280,6 +280,7 @@ public class ThingsboardInstallService {
                     log.info("Updating system data...");
                     dataUpdateService.upgradeRuleNodes();
                     systemDataLoaderService.updateSystemWidgets();
+                    installScripts.updateDashboards(); // fixme: can't work properly if widgets not updated first
                     installScripts.loadSystemLwm2mResources();
                 }
                 log.info("Upgrade finished successfully!");

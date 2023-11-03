@@ -22,6 +22,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.TbResourceInfoEntity;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface TbResourceInfoRepository extends JpaRepository<TbResourceInfoEntity, UUID> {
@@ -52,5 +53,7 @@ public interface TbResourceInfoRepository extends JpaRepository<TbResourceInfoEn
                                                              Pageable pageable);
 
     TbResourceInfoEntity findByTenantIdAndResourceTypeAndResourceKey(UUID tenantId, String resourceType, String resourceKey);
+
+    List<TbResourceInfoEntity> findByTenantIdAndHashCodeAndResourceKeyStartingWith(UUID tenantId, String hashCode, String query);
 
 }

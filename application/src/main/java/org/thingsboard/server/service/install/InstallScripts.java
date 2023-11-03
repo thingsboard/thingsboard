@@ -17,18 +17,20 @@ package org.thingsboard.server.service.install;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.ResourceType;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
+import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
@@ -40,6 +42,7 @@ import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
+import org.thingsboard.server.service.install.update.ImagesUpdater;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -102,6 +105,9 @@ public class InstallScripts {
     @Autowired
     private ResourceService resourceService;
 
+    @Autowired
+    private ImagesUpdater imagesUpdater;
+
     Path getTenantRuleChainsDir() {
         return Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, RULE_CHAINS_DIR);
     }
@@ -146,16 +152,14 @@ public class InstallScripts {
     }
 
     private void loadRuleChainsFromPath(TenantId tenantId, Path ruleChainsPath) throws IOException {
-        findRuleChainsFromPath(ruleChainsPath)
-                .forEach(
-                    path -> {
-                        try {
-                            createRuleChainFromFile(tenantId, path, null);
-                        } catch (Exception e) {
-                            log.error("Unable to load rule chain from json: [{}]", path.toString());
-                            throw new RuntimeException("Unable to load rule chain from json", e);
-                        }
-                    });
+        findRuleChainsFromPath(ruleChainsPath).forEach(path -> {
+            try {
+                createRuleChainFromFile(tenantId, path, null);
+            } catch (Exception e) {
+                log.error("Unable to load rule chain from json: [{}]", path.toString());
+                throw new RuntimeException("Unable to load rule chain from json", e);
+            }
+        });
     }
 
     List<Path> findRuleChainsFromPath(Path ruleChainsPath) throws IOException {
@@ -188,6 +192,7 @@ public class InstallScripts {
     }
 
     public void loadSystemWidgets() throws Exception {
+        log.info("Loading system widgets");
         Path widgetTypesDir = Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, WIDGET_TYPES_DIR);
         if (Files.exists(widgetTypesDir)) {
             try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(widgetTypesDir, path -> path.toString().endsWith(JSON_EXT))) {
@@ -195,8 +200,7 @@ public class InstallScripts {
                         path -> {
                             try {
                                 JsonNode widgetTypeJson = JacksonUtil.toJsonNode(path.toFile());
-                                WidgetTypeDetails widgetTypeDetails = JacksonUtil.treeToValue(widgetTypeJson, WidgetTypeDetails.class);
-                                widgetTypeService.saveWidgetType(widgetTypeDetails);
+                                saveWidgetType(widgetTypeJson);
                             } catch (Exception e) {
                                 log.error("Unable to load widget type from json: [{}]", path.toString());
                                 throw new RuntimeException("Unable to load widget type from json", e);
@@ -213,6 +217,7 @@ public class InstallScripts {
                             JsonNode widgetsBundleDescriptorJson = JacksonUtil.toJsonNode(path.toFile());
                             JsonNode widgetsBundleJson = widgetsBundleDescriptorJson.get("widgetsBundle");
                             WidgetsBundle widgetsBundle = JacksonUtil.treeToValue(widgetsBundleJson, WidgetsBundle.class);
+                            imagesUpdater.updateWidgetsBundleImages(widgetsBundle);
                             WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
                             List<String> widgetTypeFqns = new ArrayList<>();
                             if (widgetsBundleDescriptorJson.has("widgetTypes")) {
@@ -220,8 +225,7 @@ public class InstallScripts {
                                 widgetTypesArrayJson.forEach(
                                         widgetTypeJson -> {
                                             try {
-                                                WidgetTypeDetails widgetTypeDetails = JacksonUtil.treeToValue(widgetTypeJson, WidgetTypeDetails.class);
-                                                var savedWidgetType = widgetTypeService.saveWidgetType(widgetTypeDetails);
+                                                var savedWidgetType = saveWidgetType(widgetTypeJson);
                                                 widgetTypeFqns.add(savedWidgetType.getFqn());
                                             } catch (Exception e) {
                                                 log.error("Unable to load widget type from json: [{}]", path.toString());
@@ -243,6 +247,32 @@ public class InstallScripts {
                         }
                     }
             );
+        }
+    }
+
+    private WidgetTypeDetails saveWidgetType(JsonNode widgetTypeJson) {
+        WidgetTypeDetails widgetTypeDetails = JacksonUtil.treeToValue(widgetTypeJson, WidgetTypeDetails.class);
+        try {
+            imagesUpdater.updateWidgetImages(widgetTypeDetails);
+        } catch (Exception e) {
+            log.warn("Failed to process images for widget type {}", widgetTypeDetails.getName(), e);
+        }
+        return widgetTypeService.saveWidgetType(widgetTypeDetails);
+    }
+
+    public void updateDashboards() {
+        var dashboards = new PageDataIterable<>(dashboardService::findAllDashboardsIds, 1024);
+        for (DashboardId dashboardId : dashboards) {
+            Dashboard dashboard = dashboardService.findDashboardById(TenantId.SYS_TENANT_ID, dashboardId);
+            log.debug("Updating images for dashboard '{}' ({})", dashboard.getTitle(), dashboardId);
+            try {
+                boolean updated = imagesUpdater.updateDashboardImages(dashboard);
+                if (updated) {
+                    dashboardService.saveDashboard(dashboard);
+                }
+            } catch (Exception e) {
+                log.error("Failed to update images for dashboard '{}' ({})", dashboard.getTitle(), dashboardId, e);
+            }
         }
     }
 
@@ -339,4 +369,3 @@ public class InstallScripts {
         }
     }
 }
-

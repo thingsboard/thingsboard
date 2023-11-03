@@ -44,6 +44,7 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.service.validator.ResourceDataValidator;
 
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -218,6 +219,12 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     @Override
     public long sumDataSizeByTenantId(TenantId tenantId) {
         return resourceDao.sumDataSizeByTenantId(tenantId);
+    }
+
+    @Override
+    public List<TbResourceInfo> findByTenantIdAndDataAndKeyStartingWith(TenantId tenantId, String base64Data, String query) {
+        String etag = calculateEtag(Base64.getDecoder().decode(base64Data));
+        return resourceInfoDao.findByTenantIdAndEtagAndKeyStartingWith(tenantId, etag, query);
     }
 
     private String calculateEtag(byte[] data) {
