@@ -124,6 +124,13 @@
           <textarea matInput formControlName="description" rows="2"></textarea>
         </mat-form-field>
       </div>
+      <div fxLayout="column" [fxShow]="isAdd">
+        <span>{{ 'dashboard.assigned-customers' | translate }}</span>
+        <tb-entity-list
+          formControlName="assignedCustomerIds"
+          [entityType]="entityType.CUSTOMER">
+        </tb-entity-list>
+      </div>
       <div class="tb-form-panel stroked">
         <div class="tb-form-panel-title" translate>dashboard.mobile-app-settings</div>
         <mat-slide-toggle formControlName="mobileHide" class="mat-slide fixed-title-width">

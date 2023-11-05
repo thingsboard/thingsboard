@@ -15,14 +15,8 @@
     limitations under the License.
 
 -->
-<div class="tb-form-panel stroked">
-  <label class="tb-form-panel-title" *ngIf="label"
-         [ngClass]="{'tb-error': !disabled && (required && !safeImageUrl), 'tb-required': !disabled && required}">
-    {{label}}
-  </label>
-  <div class="tb-hint" *ngIf="maxSizeByte && !disabled" translate [translateParams]="{ size: maxSizeByte | fileSize}">
-    dashboard.maximum-upload-file-size
-  </div>
+<div class="tb-container">
+  <label class="tb-title" *ngIf="label" [ngClass]="{'tb-error': !disabled && (required && !safeImageUrl), 'tb-required': !disabled && required}">{{label}}</label>
   <ng-container #flow="flow"
                 [flowConfig]="{singleFile: true, allowDuplicateUploads: true}">
     <div class="tb-image-select-container">
@@ -69,4 +63,5 @@
       </button>
   </div>
   </ng-container>
+  <div class="tb-hint" *ngIf="maxSizeByte && !disabled" translate [translateParams]="{ size: maxSizeByte | fileSize}">dashboard.maximum-upload-file-size</div>
 </div>

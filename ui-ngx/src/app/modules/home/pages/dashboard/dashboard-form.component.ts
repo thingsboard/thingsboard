@@ -30,6 +30,7 @@ import {
 import { DashboardService } from '@core/http/dashboard.service';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { isEqual } from '@core/utils';
+import { EntityType } from '@shared/models/entity-type.models';
 
 @Component({
   selector: 'tb-dashboard-form',
@@ -43,6 +44,7 @@ export class DashboardFormComponent extends EntityComponent<Dashboard> {
 
   publicLink: string;
   assignedCustomersText: string;
+  entityType = EntityType;
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
@@ -84,6 +86,7 @@ export class DashboardFormComponent extends EntityComponent<Dashboard> {
         image: [entity ? entity.image : null],
         mobileHide: [entity ? entity.mobileHide : false],
         mobileOrder: [entity ? entity.mobileOrder : null, [Validators.pattern(/^-?[0-9]+$/)]],
+        assignedCustomerIds: [[]],
         configuration: this.fb.group(
           {
             description: [entity && entity.configuration ? entity.configuration.description : ''],
