@@ -20,12 +20,12 @@ $previewSize: 78px !default;
 
 :host {
 
-  .tb-container {
-    margin-top: 0;
-    padding: 0 0 16px;
-    label.tb-title {
-      display: block;
-      padding-bottom: 8px;
+  .tb-form-panel.stroked {
+    gap: 8px;
+
+    .tb-hint {
+      padding: 0;
+      margin: 0;
     }
   }
 
