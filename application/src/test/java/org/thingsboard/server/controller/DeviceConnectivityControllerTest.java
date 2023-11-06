@@ -212,19 +212,19 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
 
         JsonNode mqttCommands = commands.get(MQTT);
         assertThat(mqttCommands.get(MQTT).asText()).isEqualTo(String.format("mosquitto_pub -d -q 1 -h localhost -p 1883 -t v1/devices/me/telemetry " +
-                        "-u %s -m \"{temperature:25}\"",
+                        "-u \"%s\" -m \"{temperature:25}\"",
                 credentials.getCredentialsId()));
         assertThat(mqttCommands.get(MQTTS).get(0).asText()).isEqualTo("curl -f -S -o ca-root.pem http://localhost:80/api/device-connectivity/mqtts/certificate/download");
         assertThat(mqttCommands.get(MQTTS).get(1).asText()).isEqualTo(String.format("mosquitto_pub -d -q 1 --cafile ca-root.pem -h localhost -p 8883 " +
-                "-t v1/devices/me/telemetry -u %s -m \"{temperature:25}\"", credentials.getCredentialsId()));
+                "-t v1/devices/me/telemetry -u \"%s\" -m \"{temperature:25}\"", credentials.getCredentialsId()));
 
         JsonNode dockerMqttCommands = commands.get(MQTT).get(DOCKER);
         assertThat(dockerMqttCommands.get(MQTT).asText()).isEqualTo(String.format("docker run --rm -it thingsboard/mosquitto-clients mosquitto_pub -d -q 1 -h localhost" +
-                        " -p 1883 -t v1/devices/me/telemetry -u %s -m \"{temperature:25}\"",
+                        " -p 1883 -t v1/devices/me/telemetry -u \"%s\" -m \"{temperature:25}\"",
                 credentials.getCredentialsId()));
         assertThat(dockerMqttCommands.get(MQTTS).asText()).isEqualTo(String.format("docker run --rm -it thingsboard/mosquitto-clients " +
                         "/bin/sh -c \"curl -f -S -o ca-root.pem http://localhost:80/api/device-connectivity/mqtts/certificate/download && " +
-                        "mosquitto_pub -d -q 1 --cafile ca-root.pem -h localhost -p 8883 -t v1/devices/me/telemetry -u %s -m \"{temperature:25}\"\"",
+                        "mosquitto_pub -d -q 1 --cafile ca-root.pem -h localhost -p 8883 -t v1/devices/me/telemetry -u \"%s\" -m \"{temperature:25}\"\"",
                 credentials.getCredentialsId()));
 
         JsonNode linuxCoapCommands = commands.get(COAP);
@@ -251,18 +251,18 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
 
         JsonNode mqttCommands = commands.get(MQTT);
         assertThat(mqttCommands.get(MQTT).asText()).isEqualTo(String.format("mosquitto_pub -d -q 1 -h localhost -p 1883 -t %s " +
-                "-u %s -m \"{temperature:25}\"", DEVICE_TELEMETRY_TOPIC, credentials.getCredentialsId()));
+                "-u \"%s\" -m \"{temperature:25}\"", DEVICE_TELEMETRY_TOPIC, credentials.getCredentialsId()));
         assertThat(mqttCommands.get(MQTTS).get(0).asText()).isEqualTo("curl -f -S -o ca-root.pem http://localhost:80/api/device-connectivity/mqtts/certificate/download");
         assertThat(mqttCommands.get(MQTTS).get(1).asText()).isEqualTo(String.format("mosquitto_pub -d -q 1 --cafile ca-root.pem -h localhost -p 8883 " +
-                "-t %s -u %s -m \"{temperature:25}\"", DEVICE_TELEMETRY_TOPIC, credentials.getCredentialsId()));
+                "-t %s -u \"%s\" -m \"{temperature:25}\"", DEVICE_TELEMETRY_TOPIC, credentials.getCredentialsId()));
 
         JsonNode dockerMqttCommands = commands.get(MQTT).get(DOCKER);
         assertThat(dockerMqttCommands.get(MQTT).asText()).isEqualTo(String.format("docker run --rm -it thingsboard/mosquitto-clients mosquitto_pub -d -q 1 -h localhost" +
-                        " -p 1883 -t %s -u %s -m \"{temperature:25}\"",
+                        " -p 1883 -t %s -u \"%s\" -m \"{temperature:25}\"",
                 DEVICE_TELEMETRY_TOPIC, credentials.getCredentialsId()));
         assertThat(dockerMqttCommands.get(MQTTS).asText()).isEqualTo(String.format("docker run --rm -it thingsboard/mosquitto-clients " +
                         "/bin/sh -c \"curl -f -S -o ca-root.pem http://localhost:80/api/device-connectivity/mqtts/certificate/download && " +
-                        "mosquitto_pub -d -q 1 --cafile ca-root.pem -h localhost -p 8883 -t %s -u %s -m \"{temperature:25}\"\"",
+                        "mosquitto_pub -d -q 1 --cafile ca-root.pem -h localhost -p 8883 -t %s -u \"%s\" -m \"{temperature:25}\"\"",
                 DEVICE_TELEMETRY_TOPIC, credentials.getCredentialsId()));
     }
 
@@ -295,18 +295,18 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
 
         JsonNode mqttCommands = commands.get(MQTT);
         assertThat(mqttCommands.get(MQTT).asText()).isEqualTo(String.format("mosquitto_pub -d -q 1 -h localhost -p 1883 -t %s " +
-                "-i %s -u %s -P %s -m \"{temperature:25}\"", DEVICE_TELEMETRY_TOPIC, clientId, userName, password));
+                "-i \"%s\" -u \"%s\" -P \"%s\" -m \"{temperature:25}\"", DEVICE_TELEMETRY_TOPIC, clientId, userName, password));
         assertThat(mqttCommands.get(MQTTS).get(0).asText()).isEqualTo("curl -f -S -o ca-root.pem http://localhost:80/api/device-connectivity/mqtts/certificate/download");
         assertThat(mqttCommands.get(MQTTS).get(1).asText()).isEqualTo(String.format("mosquitto_pub -d -q 1 --cafile ca-root.pem -h localhost -p 8883 " +
-                "-t %s -i %s -u %s -P %s -m \"{temperature:25}\"", DEVICE_TELEMETRY_TOPIC, clientId, userName, password));
+                "-t %s -i \"%s\" -u \"%s\" -P \"%s\" -m \"{temperature:25}\"", DEVICE_TELEMETRY_TOPIC, clientId, userName, password));
 
         JsonNode dockerMqttCommands = commands.get(MQTT).get(DOCKER);
         assertThat(dockerMqttCommands.get(MQTT).asText()).isEqualTo(String.format("docker run --rm -it thingsboard/mosquitto-clients mosquitto_pub -d -q 1 -h localhost" +
-                        " -p 1883 -t %s -i %s -u %s -P %s -m \"{temperature:25}\"",
+                        " -p 1883 -t %s -i \"%s\" -u \"%s\" -P \"%s\" -m \"{temperature:25}\"",
                 DEVICE_TELEMETRY_TOPIC, clientId, userName, password));
         assertThat(dockerMqttCommands.get(MQTTS).asText()).isEqualTo(String.format("docker run --rm -it thingsboard/mosquitto-clients " +
                         "/bin/sh -c \"curl -f -S -o ca-root.pem http://localhost:80/api/device-connectivity/mqtts/certificate/download && " +
-                        "mosquitto_pub -d -q 1 --cafile ca-root.pem -h localhost -p 8883 -t %s -i %s -u %s -P %s -m \"{temperature:25}\"\"",
+                        "mosquitto_pub -d -q 1 --cafile ca-root.pem -h localhost -p 8883 -t %s -i \"%s\" -u \"%s\" -P \"%s\" -m \"{temperature:25}\"\"",
                 DEVICE_TELEMETRY_TOPIC, clientId, userName, password));
     }
 
