@@ -247,7 +247,7 @@ public class TbHttpClient {
     }
 
     protected String parseJsonStringToPlainText(String data, boolean parseToJson) {
-        if (data.startsWith("\"") && data.endsWith("\"") && data.length() >= 2) {
+        if (parseToJson && data.startsWith("\"") && data.endsWith("\"") && data.length() >= 2) {
             final String dataBefore = data;
             try {
                 data = JacksonUtil.fromString(data, String.class);
