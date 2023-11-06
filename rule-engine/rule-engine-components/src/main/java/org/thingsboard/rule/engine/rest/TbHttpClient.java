@@ -242,12 +242,16 @@ public class TbHttpClient {
         return uri;
     }
 
-    private String getData(TbMsg msg) {
-        String data = msg.getData();
+    private String getData(TbMsg tbMsg) {
+        return parseJsonStringToPlainText(tbMsg.getData(), config.isTrimDoubleQuotes());
+    }
 
-        if (config.isTrimDoubleQuotes()) {
+    protected String parseJsonStringToPlainText(String data, boolean parseToJson) {
+        if (data.startsWith("\"") && data.endsWith("\"") && data.length() >= 2) {
             final String dataBefore = data;
-            data = data.replaceAll("^\"|\"$", "");
+            try {
+                data = JacksonUtil.fromString(data, String.class);
+            } catch (Exception ignored) {}
             log.trace("Trimming double quotes. Before trim: [{}], after trim: [{}]", dataBefore, data);
         }
 

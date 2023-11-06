@@ -18,17 +18,20 @@ package org.thingsboard.rule.engine.rest;
 
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockserver.integration.ClientAndServer;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.AsyncRestTemplate;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -40,14 +43,18 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.willCallRealMethod;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -61,13 +68,13 @@ public class TbHttpClientTest {
     EventLoopGroup eventLoop;
     TbHttpClient client;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         client = mock(TbHttpClient.class);
-        willCallRealMethod().given(client).getSharedOrCreateEventLoopGroup(any());
+        when(client.getSharedOrCreateEventLoopGroup(any())).thenCallRealMethod();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         if (eventLoop != null) {
             eventLoop.shutdownGracefully();
@@ -91,7 +98,7 @@ public class TbHttpClientTest {
         Mockito.when(client.buildEncodedUri(any())).thenCallRealMethod();
         String url = "http://localhost:8080/";
         URI uri = client.buildEncodedUri(url);
-        Assert.assertEquals(url, uri.toString());
+        Assertions.assertEquals(url, uri.toString());
     }
 
     @Test
@@ -114,7 +121,7 @@ public class TbHttpClientTest {
         String url = "http://192.168.1.1/data?d={\"a\": 12}";
         String expected = "http://192.168.1.1/data?d=%7B%22a%22:%2012%7D";
         URI uri = client.buildEncodedUri(url);
-        Assert.assertEquals(expected, uri.toString());
+        Assertions.assertEquals(expected, uri.toString());
     }
 
     @Test
@@ -152,7 +159,7 @@ public class TbHttpClientTest {
         );
 
         var ctx = mock(TbContext.class);
-        when(ctx.transformMsg(
+        lenient().when(ctx.transformMsg(
                 eq(msg),
                 eq(msg.getMetaData()),
                 eq(msg.getData())
@@ -160,7 +167,7 @@ public class TbHttpClientTest {
 
         var capturedData = ArgumentCaptor.forClass(String.class);
 
-        when(ctx.transformMsg(
+        lenient().when(ctx.transformMsg(
                 eq(msg),
                 any(),
                 capturedData.capture()
@@ -183,7 +190,7 @@ public class TbHttpClientTest {
 
         verify(ctx, times(1)).tellSuccess(any());
         verify(ctx, times(0)).tellFailure(any(), any());
-        Assert.assertEquals(successResponseBody, capturedData.getValue());
+        Assertions.assertEquals(successResponseBody, capturedData.getValue());
     }
 
     private ClientAndServer setUpDummyServer(String host, String path, String paramKey, String paramVal, String successResponseBody) {
@@ -219,9 +226,41 @@ public class TbHttpClientTest {
 
         Map<String, String> data = metaData.getData();
 
-        Assertions.assertThat(data).hasSize(2);
-        Assertions.assertThat(data.get("Content-Type")).isEqualTo("binary");
-        Assertions.assertThat(data.get("Set-Cookie")).isEqualTo("[\"sap-context=sap-client=075; path=/\",\"sap-token=sap-client=075; path=/\"]");
+        Assertions.assertEquals(2, data.size());
+        Assertions.assertEquals(data.get("Content-Type"), "binary");
+        Assertions.assertEquals(data.get("Set-Cookie"), "[\"sap-context=sap-client=075; path=/\",\"sap-token=sap-client=075; path=/\"]");
     }
 
+    @ParameterizedTest
+    @MethodSource("provideParameters")
+    public void testParseJsonStringToPlainText(String original) {
+        Mockito.when(client.parseJsonStringToPlainText(anyString(), anyBoolean())).thenCallRealMethod();
+
+        String serialized = JacksonUtil.toString(original);
+        Assertions.assertNotNull(serialized);
+        Assertions.assertEquals(original, client.parseJsonStringToPlainText(serialized, true));
+    }
+
+    private static Stream<Arguments> provideParameters() {
+        return Stream.of(Arguments.of("false"),
+                Arguments.of("\""),
+                Arguments.of("\"\""),
+                Arguments.of("\"\"\""),
+                Arguments.of("\"This is a string with double quotes\""),
+                Arguments.of("Path: /home/developer/test.txt"),
+                Arguments.of("First line\nSecond line\n\nFourth line"),
+                Arguments.of("Before\rAfter"),
+                Arguments.of("Tab\tSeparated\tValues"),
+                Arguments.of("Test\bbackspace"),
+                Arguments.of("[]"),
+                Arguments.of("[1, 2, 3]"),
+                Arguments.of("{\"key\": \"value\"}"),
+                Arguments.of("{\n\"temperature\": 25.5,\n\"humidity\": 50.2\n\"}"),
+                Arguments.of("Expression: (a + b) * c"),
+                Arguments.of("世界"),
+                Arguments.of("Україна"),
+                Arguments.of("\u1F1FA\u1F1E6"),
+                Arguments.of("🇺🇦")
+        );
+    }
 }
