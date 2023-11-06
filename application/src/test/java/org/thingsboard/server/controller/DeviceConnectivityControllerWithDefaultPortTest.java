@@ -29,6 +29,7 @@ import org.mockito.Mockito;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.Device;
@@ -66,16 +67,47 @@ public class DeviceConnectivityControllerWithDefaultPortTest extends AbstractCon
 
         loginSysAdmin();
 
-        AdminSettings adminSettings = doGet("/api/admin/settings/connectivity", AdminSettings.class);
-        JsonNode connectivity = adminSettings.getJsonValue();
+        ObjectNode config = JacksonUtil.newObjectNode();
 
-        ((ObjectNode) connectivity.get("http")).put("port", 80);
-        ((ObjectNode) connectivity.get("https")).put("enabled", true);
-        ((ObjectNode) connectivity.get("mqtt")).put("enabled", false);
-        ((ObjectNode) connectivity.get("mqtts")).put("enabled", false);
-        ((ObjectNode) connectivity.get("coaps")).put("enabled", false);
-        ((ObjectNode) connectivity.get("coap")).put("enabled", false);
-        doPost("/api/admin/settings", adminSettings);
+        ObjectNode http = JacksonUtil.newObjectNode();
+        http.put("enabled", true);
+        http.put("host", "");
+        http.put("port", 80);
+        config.set("http", http);
+
+        ObjectNode https = JacksonUtil.newObjectNode();
+        https.put("enabled", true);
+        https.put("host", "");
+        https.put("port", 443);
+        config.set("https", https);
+
+        ObjectNode mqtt = JacksonUtil.newObjectNode();
+        mqtt.put("enabled", false);
+        mqtt.put("host", "");
+        mqtt.put("port", 1883);
+        config.set("mqtt", mqtt);
+
+        ObjectNode mqtts = JacksonUtil.newObjectNode();
+        mqtts.put("enabled", false);
+        mqtts.put("host", "");
+        mqtts.put("port", 8883);
+        config.set("mqtts", mqtts);
+
+        ObjectNode coap = JacksonUtil.newObjectNode();
+        coap.put("enabled", false);
+        coap.put("host", "");
+        coap.put("port", 5683);
+        config.set("coap", coap);
+
+        ObjectNode coaps = JacksonUtil.newObjectNode();
+        coaps.put("enabled", false);
+        coaps.put("host", "");
+        coaps.put("port", 5684);
+        config.set("coaps", coaps);
+
+        AdminSettings adminSettings = doGet("/api/admin/settings/connectivity", AdminSettings.class);
+        adminSettings.setJsonValue(config);
+        doPost("/api/admin/settings", adminSettings).andExpect(status().isOk());
 
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
