@@ -130,7 +130,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     public Device findDeviceById(TenantId tenantId, DeviceId deviceId) {
         log.trace("Executing findDeviceById [{}]", deviceId);
         validateId(deviceId, INCORRECT_DEVICE_ID + deviceId);
-        return cache.getAndPutInTransaction(new DeviceCacheKey(tenantId, deviceId),
+        return cache.getAndPutInTransaction(new DeviceCacheKey(deviceId),
                 () -> {
                     //TODO: possible bug source since sometimes we need to clear cache by tenant id and sometimes by sys tenant id?
                     if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
@@ -258,7 +258,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         List<DeviceCacheKey> keys = new ArrayList<>(3);
         keys.add(new DeviceCacheKey(event.getTenantId(), event.getNewName()));
         if (event.getDeviceId() != null) {
-            keys.add(new DeviceCacheKey(event.getTenantId(), event.getDeviceId()));
+            keys.add(new DeviceCacheKey(event.getDeviceId()));
         }
         if (StringUtils.isNotEmpty(event.getOldName()) && !event.getOldName().equals(event.getNewName())) {
             keys.add(new DeviceCacheKey(event.getTenantId(), event.getOldName()));
