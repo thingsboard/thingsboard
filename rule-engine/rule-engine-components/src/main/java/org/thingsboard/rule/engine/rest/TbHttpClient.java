@@ -243,7 +243,7 @@ public class TbHttpClient {
     }
 
     private String getData(TbMsg tbMsg) {
-        return parseJsonStringToPlainText(tbMsg.getData(), config.isTrimDoubleQuotes());
+        return parseJsonStringToPlainText(tbMsg.getData(), config.isParseToPlainText());
     }
 
     protected String parseJsonStringToPlainText(String data, boolean parseToJson) {
