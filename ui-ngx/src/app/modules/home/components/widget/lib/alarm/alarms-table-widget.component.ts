@@ -321,6 +321,12 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.ctx.detectChanges();
   }
 
+  public onEditModeChanged() {
+    if (this.alarmsDatasource.selection.hasValue()) {
+      this.alarmsDatasource.clearSelection();
+    }
+  }
+
   public pageLinkSortDirection(): SortDirection {
     return entityDataPageLinkSortDirection(this.pageLink);
   }
