@@ -104,8 +104,7 @@ public class EdgeEventSourcingListener {
             }
             log.trace("[{}] ActionEntityEvent called: {}", event.getTenantId(), event);
             tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), event.getEdgeId(), event.getEntityId(),
-                    event.getBody(), null, edgeTypeByActionType(event.getActionType()),
-                    event.getOriginatorEdgeId());
+                    event.getBody(), null, edgeTypeByActionType(event.getActionType()), null);
         } catch (Exception e) {
             log.error("[{}] failed to process ActionEntityEvent: {}", event.getTenantId(), event, e);
         }
