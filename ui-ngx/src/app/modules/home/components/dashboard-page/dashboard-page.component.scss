@@ -139,11 +139,7 @@ div.tb-dashboard-page {
       }
 
       @media #{$mat-gt-md} {
-        width: min(75%, 956px) !important;
-      }
-
-      @media #{$mat-gt-xl} {
-        width: min(60%, 956px) !important;
+        width: min(85%, 956px) !important;
       }
 
       @media screen and (min-width: 2000px) {
