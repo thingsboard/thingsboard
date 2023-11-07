@@ -47,7 +47,7 @@ export class ScrollGridComponent<T, F> implements OnInit, AfterViewInit, OnChang
   viewport: CdkVirtualScrollViewport;
 
   @Input()
-  columns: ScrollGridColumns = {columns: 1};
+  columns: ScrollGridColumns | number = 1;
 
   @Input()
   fetchFunction: GridEntitiesFetchFunction<T, F>;

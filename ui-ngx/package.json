@@ -54,6 +54,7 @@
     "core-js": "^3.29.1",
     "date-fns": "2.0.0-alpha.27",
     "dayjs": "1.11.4",
+    "echarts": "^5.4.3",
     "flot": "https://github.com/thingsboard/flot.git#0.9-work",
     "flot.curvedlines": "https://github.com/MichaelZinsmaier/CurvedLines.git#master",
     "font-awesome": "^4.7.0",
