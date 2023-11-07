@@ -889,8 +889,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     }
     if (this.alarmsDatasource.selection.hasValue()) {
       const unacknowledgedAlarms = this.alarmsDatasource.selection.selected.filter(
-        (alarm) => alarm.id.id !== NULL_UUID && (alarm.status === AlarmStatus.CLEARED_UNACK ||
-          alarm.status === AlarmStatus.ACTIVE_UNACK)
+        alarm => alarm.id.id !== NULL_UUID && !alarm.acknowledged
       );
       let title = '';
       let content = '';
@@ -953,8 +952,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     }
     if (this.alarmsDatasource.selection.hasValue()) {
       const activeAlarms = this.alarmsDatasource.selection.selected.filter(
-        (alarm) => alarm.id.id !== NULL_UUID && (alarm.status === AlarmStatus.ACTIVE_ACK ||
-          alarm.status === AlarmStatus.ACTIVE_UNACK)
+        alarm => alarm.id.id !== NULL_UUID && !alarm.cleared
       );
       let title = '';
       let content = '';
