@@ -38,17 +38,22 @@ public class DeviceCacheKey implements Serializable {
         this(null, deviceId, null);
     }
 
+    public DeviceCacheKey(TenantId tenantId, DeviceId deviceId) {
+        this(tenantId, deviceId, null);
+    }
+
     public DeviceCacheKey(TenantId tenantId, String deviceName) {
         this(tenantId, null, deviceName);
     }
 
     @Override
     public String toString() {
-        if (deviceId != null) {
+        if (deviceId == null) {
+            return tenantId + "_n_" + deviceName;
+        } else if (tenantId == null) {
             return deviceId.toString();
         } else {
-            return tenantId + "_n_" + deviceName;
+            return tenantId + "_" + deviceId;
         }
     }
-
 }

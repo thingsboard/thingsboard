@@ -121,18 +121,47 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
 
         loginSysAdmin();
 
-        AdminSettings adminSettings = doGet("/api/admin/settings/connectivity", AdminSettings.class);
-        JsonNode connectivity = adminSettings.getJsonValue();
+        ObjectNode config = JacksonUtil.newObjectNode();
 
-        ((ObjectNode)connectivity.get("http")).put("port", 8080);
-        ((ObjectNode)connectivity.get("http")).put("enabled", true);
-        ((ObjectNode)connectivity.get("https")).put("enabled", true);
-        ((ObjectNode)connectivity.get("https")).put("port", 444);
-        ((ObjectNode)connectivity.get("mqtt")).put("enabled", true);
-        ((ObjectNode)connectivity.get("mqtts")).put("enabled", true);
-        ((ObjectNode)connectivity.get("coap")).put("enabled", true);
-        ((ObjectNode)connectivity.get("coaps")).put("enabled", true);
-        doPost("/api/admin/settings", adminSettings);
+        ObjectNode http = JacksonUtil.newObjectNode();
+        http.put("enabled", true);
+        http.put("host", "");
+        http.put("port", 8080);
+        config.set("http", http);
+
+        ObjectNode https = JacksonUtil.newObjectNode();
+        https.put("enabled", true);
+        https.put("host", "");
+        https.put("port", 444);
+        config.set("https", https);
+
+        ObjectNode mqtt = JacksonUtil.newObjectNode();
+        mqtt.put("enabled", true);
+        mqtt.put("host", "");
+        mqtt.put("port", 1883);
+        config.set("mqtt", mqtt);
+
+        ObjectNode mqtts = JacksonUtil.newObjectNode();
+        mqtts.put("enabled", true);
+        mqtts.put("host", "");
+        mqtts.put("port", 8883);
+        config.set("mqtts", mqtts);
+
+        ObjectNode coap = JacksonUtil.newObjectNode();
+        coap.put("enabled", true);
+        coap.put("host", "");
+        coap.put("port", 5683);
+        config.set("coap", coap);
+
+        ObjectNode coaps = JacksonUtil.newObjectNode();
+        coaps.put("enabled", true);
+        coaps.put("host", "");
+        coaps.put("port", 5684);
+        config.set("coaps", coaps);
+
+        AdminSettings adminSettings = doGet("/api/admin/settings/connectivity", AdminSettings.class);
+        adminSettings.setJsonValue(config);
+        doPost("/api/admin/settings", adminSettings).andExpect(status().isOk());
 
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
