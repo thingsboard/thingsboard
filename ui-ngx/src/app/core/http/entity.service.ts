@@ -420,11 +420,11 @@ export class EntityService {
         break;
       case EntityType.WIDGETS_BUNDLE:
         pageLink.sortOrder.property = 'title';
-        entitiesObservable = this.widgetService.getWidgetBundles(pageLink, false, subType === 'tenant', config);
+        entitiesObservable = this.widgetService.getWidgetBundles(pageLink, false, true, config);
         break;
       case EntityType.WIDGET_TYPE:
         pageLink.sortOrder.property = 'name';
-        entitiesObservable = this.widgetService.getWidgetTypes(pageLink, subType === 'tenant', false, DeprecatedFilter.ALL, null, config);
+        entitiesObservable = this.widgetService.getWidgetTypes(pageLink, true, false, DeprecatedFilter.ALL, null, config);
         break;
       case EntityType.NOTIFICATION_TARGET:
         pageLink.sortOrder.property = 'name';
