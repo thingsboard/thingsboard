@@ -24,8 +24,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockserver.integration.ClientAndServer;
@@ -43,14 +42,12 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.willCallRealMethod;
@@ -231,35 +228,15 @@ public class TbHttpClientTest {
     }
 
     @ParameterizedTest
-    @MethodSource("provideParameters")
+    @ValueSource(strings = { "false", "\"", "\"\"", "\"This is a string with double quotes\"", "Path: /home/developer/test.txt",
+            "First line\nSecond line\n\nFourth line", "Before\rAfter", "Tab\tSeparated\tValues", "Test\bbackspace", "[]",
+            "[1, 2, 3]", "{\"key\": \"value\"}", "{\n\"temperature\": 25.5,\n\"humidity\": 50.2\n\"}", "Expression: (a + b) * c",
+            "世界", "Україна", "\u1F1FA\u1F1E6", "🇺🇦"})
     public void testParseJsonStringToPlainText(String original) {
-        Mockito.when(client.parseJsonStringToPlainText(anyString(), anyBoolean())).thenCallRealMethod();
+        Mockito.when(client.parseJsonStringToPlainText(anyString())).thenCallRealMethod();
 
         String serialized = JacksonUtil.toString(original);
         Assertions.assertNotNull(serialized);
-        Assertions.assertEquals(original, client.parseJsonStringToPlainText(serialized, true));
-    }
-
-    private static Stream<Arguments> provideParameters() {
-        return Stream.of(Arguments.of("false"),
-                Arguments.of("\""),
-                Arguments.of("\"\""),
-                Arguments.of("\"\"\""),
-                Arguments.of("\"This is a string with double quotes\""),
-                Arguments.of("Path: /home/developer/test.txt"),
-                Arguments.of("First line\nSecond line\n\nFourth line"),
-                Arguments.of("Before\rAfter"),
-                Arguments.of("Tab\tSeparated\tValues"),
-                Arguments.of("Test\bbackspace"),
-                Arguments.of("[]"),
-                Arguments.of("[1, 2, 3]"),
-                Arguments.of("{\"key\": \"value\"}"),
-                Arguments.of("{\n\"temperature\": 25.5,\n\"humidity\": 50.2\n\"}"),
-                Arguments.of("Expression: (a + b) * c"),
-                Arguments.of("世界"),
-                Arguments.of("Україна"),
-                Arguments.of("\u1F1FA\u1F1E6"),
-                Arguments.of("🇺🇦")
-        );
+        Assertions.assertEquals(original, client.parseJsonStringToPlainText(serialized));
     }
 }

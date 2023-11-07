@@ -194,7 +194,7 @@ public class TbHttpClient {
                 config.isIgnoreRequestBody()) {
             entity = new HttpEntity<>(headers);
         } else {
-            entity = new HttpEntity<>(getData(msg), headers);
+            entity = new HttpEntity<>(getData(msg, config.isIgnoreRequestBody(), config.isParseToPlainText()), headers);
         }
 
         URI uri = buildEncodedUri(endpointUrl);
@@ -242,12 +242,15 @@ public class TbHttpClient {
         return uri;
     }
 
-    private String getData(TbMsg tbMsg) {
-        return parseJsonStringToPlainText(tbMsg.getData(), config.isParseToPlainText());
+    private String getData(TbMsg tbMsg, boolean ignoreBody, boolean parseToPlainText) {
+        if (!ignoreBody && parseToPlainText) {
+            return parseJsonStringToPlainText(tbMsg.getData());
+        }
+        return tbMsg.getData();
     }
 
-    protected String parseJsonStringToPlainText(String data, boolean parseToJson) {
-        if (parseToJson && data.startsWith("\"") && data.endsWith("\"") && data.length() >= 2) {
+    protected String parseJsonStringToPlainText(String data) {
+        if (data.startsWith("\"") && data.endsWith("\"") && data.length() >= 2) {
             final String dataBefore = data;
             try {
                 data = JacksonUtil.fromString(data, String.class);
