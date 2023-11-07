@@ -105,6 +105,7 @@ import static org.thingsboard.server.controller.ControllerConstants.USER_ID_PARA
 import static org.thingsboard.server.controller.ControllerConstants.USER_SORT_PROPERTY_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.USER_TEXT_SEARCH_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
+import static org.thingsboard.server.dao.entity.BaseEntityService.NULL_CUSTOMER_ID;
 
 @RequiredArgsConstructor
 @RestController
@@ -439,32 +440,28 @@ public class UserController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
-        try {
-            checkParameter("alarmId", strAlarmId);
-            AlarmId alarmEntityId = new AlarmId(toUUID(strAlarmId));
-            Alarm alarm = checkAlarmId(alarmEntityId, Operation.READ);
-            SecurityUser currentUser = getCurrentUser();
-            TenantId tenantId = currentUser.getTenantId();
-            CustomerId originatorCustomerId = entityService.fetchEntityCustomerId(tenantId, alarm.getOriginator()).get();
-            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-            PageData<User> pageData;
-            if (Authority.TENANT_ADMIN.equals(currentUser.getAuthority())) {
-                if (alarm.getCustomerId() == null) {
-                    pageData = userService.findTenantAdmins(tenantId, pageLink);
-                } else {
-                    ArrayList<CustomerId> customerIds = new ArrayList<>(Collections.singletonList(new CustomerId(CustomerId.NULL_UUID)));
-                    if (!CustomerId.NULL_UUID.equals(originatorCustomerId.getId())) {
-                        customerIds.add(originatorCustomerId);
-                    }
-                    pageData = userService.findUsersByCustomerIds(tenantId, customerIds, pageLink);
-                }
+        checkParameter("alarmId", strAlarmId);
+        AlarmId alarmEntityId = new AlarmId(toUUID(strAlarmId));
+        Alarm alarm = checkAlarmId(alarmEntityId, Operation.READ);
+        SecurityUser currentUser = getCurrentUser();
+        TenantId tenantId = currentUser.getTenantId();
+        CustomerId originatorCustomerId = entityService.fetchEntityCustomerId(tenantId, alarm.getOriginator()).orElse(NULL_CUSTOMER_ID);
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        PageData<User> pageData;
+        if (Authority.TENANT_ADMIN.equals(currentUser.getAuthority())) {
+            if (alarm.getCustomerId() == null) {
+                pageData = userService.findTenantAdmins(tenantId, pageLink);
             } else {
-                pageData = userService.findCustomerUsers(tenantId, alarm.getCustomerId(), pageLink);
+                ArrayList<CustomerId> customerIds = new ArrayList<>(Collections.singletonList(NULL_CUSTOMER_ID));
+                if (!CustomerId.NULL_UUID.equals(originatorCustomerId.getId())) {
+                    customerIds.add(originatorCustomerId);
+                }
+                pageData = userService.findUsersByCustomerIds(tenantId, customerIds, pageLink);
             }
-            return pageData.mapData(user -> new UserEmailInfo(user.getId(), user.getEmail(), user.getFirstName(), user.getLastName()));
-        } catch (Exception e) {
-            throw handleException(e);
+        } else {
+            pageData = userService.findCustomerUsers(tenantId, alarm.getCustomerId(), pageLink);
         }
+        return pageData.mapData(user -> new UserEmailInfo(user.getId(), user.getEmail(), user.getFirstName(), user.getLastName()));
     }
 
     @ApiOperation(value = "Save user settings (saveUserSettings)",
