@@ -25,6 +25,8 @@
         </encoder>
     </appender>
 
+    <logger name="org.thingsboard.server.service.subscription" level="TRACE"/>
+
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
     </root>
