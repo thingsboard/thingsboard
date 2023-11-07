@@ -139,10 +139,11 @@ export class DashboardWidgetSelectComponent implements OnInit {
   widgetSelected: EventEmitter<WidgetInfo> = new EventEmitter<WidgetInfo>();
 
   columns: ScrollGridColumns = {
-    columns: 1,
+    columns: 2,
     breakpoints: {
-      'screen and (min-width: 2000px)': 3,
-      'screen and (min-width: 600px)': 2
+      'screen and (min-width: 2000px)': 5,
+      'screen and (min-width: 1280px)': 4,
+      'screen and (min-width: 600px)': 3
     }
   };
 

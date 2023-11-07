@@ -877,13 +877,15 @@ message FromDeviceRPCResponseProto {
 }
 
 enum ComponentLifecycleEvent {
-    CREATED   = 0;
-    STARTED   = 1;
-    ACTIVATED = 2;
-    SUSPENDED = 3;
-    UPDATED   = 4;
-    STOPPED   = 5;
-    DELETED   = 6;
+    CREATED       = 0;
+    STARTED       = 1;
+    ACTIVATED     = 2;
+    SUSPENDED     = 3;
+    UPDATED       = 4;
+    STOPPED       = 5;
+    DELETED       = 6;
+    FAILED        = 7;
+    DEACTIVATED   = 8;
 }
 
 message ComponentLifecycleMsgProto {

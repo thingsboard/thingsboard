@@ -458,7 +458,7 @@ public class TbRuleEngineQueueConsumerManagerTest {
         verify(consumer2, never()).unsubscribe();
         int msgCount = totalConsumedMsgs.get();
 
-        await().atLeast(4, TimeUnit.SECONDS) // based on topicDeletionDelayInSec
+        await().atLeast(2, TimeUnit.SECONDS) // based on topicDeletionDelayInSec(5) = 5 - ( 3 seconds the code may execute starting consumerManager.delete() call)
                 .atMost(7, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     partitions.stream()
@@ -498,7 +498,7 @@ public class TbRuleEngineQueueConsumerManagerTest {
         verify(consumer, never()).unsubscribe();
         int msgCount = totalConsumedMsgs.get();
 
-        await().atLeast(4, TimeUnit.SECONDS)
+        await().atLeast(2, TimeUnit.SECONDS) // based on topicDeletionDelayInSec(5) = 5 - ( 3 seconds the code may execute starting consumerManager.delete() call)
                 .atMost(7, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     partitions.stream()

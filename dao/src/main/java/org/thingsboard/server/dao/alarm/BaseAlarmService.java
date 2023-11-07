@@ -223,6 +223,7 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
         if (alarm == null) {
             return AlarmApiCallResult.builder().successful(false).build();
         } else {
+            var propagationIds = getPropagationEntityIdsList(alarm);
             deleteEntityRelations(tenantId, alarm.getId());
             alarmDao.removeById(tenantId, alarm.getUuidId());
             eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId)
@@ -230,7 +231,7 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
             if (checkAndDeleteAlarmType) {
                 delAlarmTypes(tenantId, Collections.singleton(alarm.getType()));
             }
-            return AlarmApiCallResult.builder().alarm(alarm).deleted(true).successful(true).build();
+            return AlarmApiCallResult.builder().alarm(alarm).deleted(true).successful(true).propagatedEntitiesList(propagationIds).build();
         }
     }
 

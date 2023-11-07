@@ -223,7 +223,6 @@ public class DefaultDataUpdateService implements DataUpdateService {
             case "3.5.1":
                 log.info("Updating data from version 3.5.1 to 3.6.0 ...");
                 migrateEdgeEvents("Starting edge events migration - adding seq_id column. ");
-                migrateDeviceConnectivity();
                 break;
             case "3.6.0":
                 log.info("Updating data from version 3.6.0 to 3.6.1 ...");
@@ -245,11 +244,13 @@ public class DefaultDataUpdateService implements DataUpdateService {
     }
 
     private void migrateDeviceConnectivity() {
-        AdminSettings connectivitySettings = new AdminSettings();
-        connectivitySettings.setTenantId(TenantId.SYS_TENANT_ID);
-        connectivitySettings.setKey("connectivity");
-        connectivitySettings.setJsonValue(JacksonUtil.valueToTree(connectivityConfiguration.getConnectivity()));
-        adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, connectivitySettings);
+        if (adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "connectivity") == null) {
+            AdminSettings connectivitySettings = new AdminSettings();
+            connectivitySettings.setTenantId(TenantId.SYS_TENANT_ID);
+            connectivitySettings.setKey("connectivity");
+            connectivitySettings.setJsonValue(JacksonUtil.valueToTree(connectivityConfiguration.getConnectivity()));
+            adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, connectivitySettings);
+        }
     }
 
     @Override

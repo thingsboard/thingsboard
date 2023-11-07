@@ -26,6 +26,16 @@
   "tags": [
     "environment",
     "humidity",
-    "indoor"
+    "indoor",
+    "moisture",
+    "dampness",
+    "wetness",
+    "humidness",
+    "moistness",
+    "dew",
+    "water vapor",
+    "condensation",
+    "dew point",
+    "steaminess"
   ]
 }
