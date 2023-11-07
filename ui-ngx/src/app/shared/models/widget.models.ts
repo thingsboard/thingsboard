@@ -825,7 +825,7 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
   ngAfterViewInit(): void {
     setTimeout(() => {
       if (!this.validateSettings()) {
-        this.settingsChangedEmitter.emit(null);
+        this.settingsChangedEmitter.emit(this.prepareOutputSettings(this.settingsForm().getRawValue()));
       }
     }, 0);
   }
@@ -868,11 +868,7 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
 
   protected onSettingsChanged(updated: WidgetSettings) {
     this.settingsValue = removeEmptyWidgetSettings(updated);
-    if (this.validateSettings()) {
-      this.settingsChangedEmitter.emit(this.settingsValue);
-    } else {
-      this.settingsChangedEmitter.emit(null);
-    }
+    this.settingsChangedEmitter.emit(this.settingsValue);
   }
 
   protected doUpdateSettings(settingsForm: UntypedFormGroup, settings: WidgetSettings) {
