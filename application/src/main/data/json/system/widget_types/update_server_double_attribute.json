@@ -2,7 +2,7 @@
   "fqn": "input_widgets.update_server_double_attribute",
   "name": "Update server double attribute",
   "deprecated": true,
-  "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAAAAABslHx1AAAAAmJLR0QA/4ePzL8AAANMSURBVHja7d3fS5NRGAfw/SsrhSCKKIugburCi6KCLrropi4izME0c1kLUxquHybmKNPAi4qMJkm9hOkswhVkpaLMfhmlbjHYu+3Vaf7a3r3fLjad5nZh6NiZ3+diO+fAe/HhOc85Z+/Fjg4R2T0ieLjlMHQRT0iF4KGGPBGdHEIWREjWudVsgKhu3QiyIkYIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQghZS8jbbwDQOT9slJc/5HGJAOmoAaAUjKWERCO9z7RI5kPGC8cBxy3A5/wUBoyy1qNirg+I9jtlAPBcvGkt7xWgRmyvgKpu9JR3NF4HjHLk9DSCBmi2eqnsFwCEK8vGRSj2j9fgM85h0Ito4VgC0m/R4GwEgHZ72xMRIOHiwIv7wJ/HN6oKfAmIdL62tsoCAMps1CvE8vuwvWIIaHgehTEGmULQgPYGv9+vCLWP/Cg1a4ClG18LvDDKKPmJPgNGzwXgdQkF0S5JAPrPXqgzDcAo402R2WYAukorzUMi7uzR6YWqmY0BJzQeUQghhBBC1h9kZllDDIj2cumBaKZaijWk6hmRIFqLybl0RDJJi75EgWitJse/Y20mKf4hDkRrWe4AJJOUPB8ZC0mWj1hOUjgyDjJ9zw1Ae5rcsUKIbK9rmVzovatv+hJvfh5ec4hirfidYl6teGp1bd1/Km9XfDhasOnksZxGAIGmA/rWtU/J2NXL7tT5WEmxz+0sUqHsNsR69lwXcDc3AC13b0U6IFCsZanzsZLld1D/AYApP/5wDYBBfTfwPupPCwSKNbnj/zbE44WLOvYcLwCkCYLpVTyiODb2zDe/P7qypQnphKzioXF0myUxMw9t3+MUFBLcd2LxP1qo1bnDQkKmjhydWjqw4YGIkMiJ/MT5ufggAL9eEhCilWzudLlcLgWvbYBDfyfoPpOnCAiZ1MeiGeYdKtCcp9cfHhB11YoXeewFo2+Cv9kJIYQQQghZf5DbaQ1mhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCEkMyFZc0FwdlzZPC7rwtlxibaqy45rzVX8BUWnY6Q1/jMIAAAAAElFTkSuQmCC",
+  "image": "/api/images/system/input_widgets.update_server_double_attribute.png",
   "description": "Simple form to input new double value for pre-defined server-side attribute key.\nThe widget is deprecated. Use \"Update Multiple Attributes\" widget. Attribute type and double value type can be selected in widgets data key configuration.",
   "descriptor": {
     "type": "latest",

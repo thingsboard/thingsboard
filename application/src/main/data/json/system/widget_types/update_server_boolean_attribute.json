@@ -2,7 +2,7 @@
   "fqn": "input_widgets.update_server_boolean_attribute",
   "name": "Update server boolean attribute",
   "deprecated": true,
-  "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAAAAABslHx1AAAAAmJLR0QA/4ePzL8AAAIQSURBVHja7d3PSxRhHMfx+VcWgmg3ltKD7BJshyBIQusQ3vIYCILCRMyhH6xShlGWMGq1p1gIibxFULRR1F4ixcNqdNhmUXFipWnTYvfZ/TrjJqFQ13ge3p/L8MztBQ/P8/0eZr6WNHyvrHk8vy5WoxIo0TwqqDQsPxADEviWp0yAKM8qixEpAwECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAEC5H9DSiP2noyUNIXsc9j2qKYQ2/732lzI7LyukN4jUV7uLrtndIWcuP4lzKYBELf9rD66/bzZhqw9vFcM37ReTzz5pR3kc8fAWPriDmT58NDl5F0R51j2zOm6PpB+13VfyNNbIm8O/Iwg430iz87Lu/iaNDKz+kB6Hcd5HH60PDedjfkR5FXi2oeWyI3j+Xy+56puW2vh6KXcnTZEFq90pQripAbC5HSDDDoin9qQjxVRkwk1dUrLU2v4bLAxGFuNIEPnanK/s7WSeNDcct7rBvFOxg7djBUjSLX/YDJdEHmbiccv1PQrUb7++T/B9/Xfd8sPikbK+L81VqP7HEu0ukCAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAADEUYsyAYDNGNn/zrboZQ7SVZcZYcyXbTFGWg8aBYQQAAAAASUVORK5CYII=",
+  "image": "/api/images/system/input_widgets.update_server_boolean_attribute.png",
   "description": "Simple form to input new boolean value for pre-defined server-side attribute key.\nThe widget is deprecated. Use \"Update Multiple Attributes\" widget. Attribute type and boolean value type can be selected in widgets data key configuration.",
   "descriptor": {
     "type": "latest",
