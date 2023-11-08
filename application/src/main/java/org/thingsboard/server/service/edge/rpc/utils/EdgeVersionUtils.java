@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 
 @Slf4j
-public class EdgeVersionUtils {
+public final class EdgeVersionUtils {
 
     public static boolean isEdgeProtoDeprecated(EdgeVersion edgeVersion) {
         switch (edgeVersion) {
