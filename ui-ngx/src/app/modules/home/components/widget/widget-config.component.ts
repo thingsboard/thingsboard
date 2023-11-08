@@ -903,7 +903,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
           valid: false
         }
       };
-    } else if (!this.advancedSettings.valid || (this.displayAdvancedAppearance && !this.modelValue.config.settings)) {
+    } else if (!this.advancedSettings.valid) {
       return {
         advancedSettings: {
           valid: false
