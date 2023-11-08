@@ -226,6 +226,11 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
     }
 
     @Override
+    public PageData<WidgetTypeId> findAllWidgetTypesIds(PageLink pageLink) {
+        return DaoUtil.pageToPageData(widgetTypeRepository.findAllIds(DaoUtil.toPageable(pageLink)).map(WidgetTypeId::new));
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.WIDGET_TYPE;
     }

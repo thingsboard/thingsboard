@@ -168,6 +168,11 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
     }
 
     @Override
+    public PageData<WidgetsBundle> findAllWidgetsBundles(PageLink pageLink) {
+        return widgetsBundleDao.findAllWidgetsBundles(pageLink);
+    }
+
+    @Override
     public void deleteWidgetsBundlesByTenantId(TenantId tenantId) {
         log.trace("Executing deleteWidgetsBundlesByTenantId, tenantId [{}]", tenantId);
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);

@@ -280,7 +280,8 @@ public class ThingsboardInstallService {
                     log.info("Updating system data...");
                     dataUpdateService.upgradeRuleNodes();
                     systemDataLoaderService.updateSystemWidgets();
-                    installScripts.updateDashboards(); // fixme: can't work properly if widgets not updated first
+                    installScripts.updateSystemImages();
+//                    installScripts.migrateTenantImages();
                     installScripts.loadSystemLwm2mResources();
                 }
                 log.info("Upgrade finished successfully!");
@@ -323,6 +324,7 @@ public class ThingsboardInstallService {
 
 //                systemDataLoaderService.loadSystemPlugins();
 //                systemDataLoaderService.loadSystemRules();
+                installScripts.updateSystemImages();
                 installScripts.loadSystemLwm2mResources();
 
                 if (loadDemo) {

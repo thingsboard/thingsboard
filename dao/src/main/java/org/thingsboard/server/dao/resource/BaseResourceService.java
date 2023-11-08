@@ -44,7 +44,6 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.service.validator.ResourceDataValidator;
 
-import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -222,8 +221,8 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     }
 
     @Override
-    public List<TbResourceInfo> findByTenantIdAndDataAndKeyStartingWith(TenantId tenantId, String base64Data, String query) {
-        String etag = calculateEtag(Base64.getDecoder().decode(base64Data));
+    public List<TbResourceInfo> findByTenantIdAndDataAndKeyStartingWith(TenantId tenantId, byte[] data, String query) {
+        String etag = calculateEtag(data);
         return resourceInfoDao.findByTenantIdAndEtagAndKeyStartingWith(tenantId, etag, query);
     }
 

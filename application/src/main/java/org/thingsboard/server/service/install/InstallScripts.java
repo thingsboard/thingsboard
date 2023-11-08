@@ -15,7 +15,9 @@
  */
 package org.thingsboard.server.service.install;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +31,7 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -51,6 +54,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -80,6 +84,7 @@ public class InstallScripts {
     public static final String DASHBOARDS_DIR = "dashboards";
     public static final String MODELS_LWM2M_DIR = "lwm2m-registry";
     public static final String CREDENTIALS_DIR = "credentials";
+    public static final String IMAGES_DIR = "images";
 
     public static final String JSON_EXT = ".json";
     public static final String XML_EXT = ".xml";
@@ -200,7 +205,8 @@ public class InstallScripts {
                         path -> {
                             try {
                                 JsonNode widgetTypeJson = JacksonUtil.toJsonNode(path.toFile());
-                                saveWidgetType(widgetTypeJson);
+                                WidgetTypeDetails widgetTypeDetails = JacksonUtil.treeToValue(widgetTypeJson, WidgetTypeDetails.class);
+                                widgetTypeService.saveWidgetType(widgetTypeDetails);
                             } catch (Exception e) {
                                 log.error("Unable to load widget type from json: [{}]", path.toString());
                                 throw new RuntimeException("Unable to load widget type from json", e);
@@ -217,7 +223,6 @@ public class InstallScripts {
                             JsonNode widgetsBundleDescriptorJson = JacksonUtil.toJsonNode(path.toFile());
                             JsonNode widgetsBundleJson = widgetsBundleDescriptorJson.get("widgetsBundle");
                             WidgetsBundle widgetsBundle = JacksonUtil.treeToValue(widgetsBundleJson, WidgetsBundle.class);
-                            imagesUpdater.updateWidgetsBundleImages(widgetsBundle);
                             WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
                             List<String> widgetTypeFqns = new ArrayList<>();
                             if (widgetsBundleDescriptorJson.has("widgetTypes")) {
@@ -225,7 +230,8 @@ public class InstallScripts {
                                 widgetTypesArrayJson.forEach(
                                         widgetTypeJson -> {
                                             try {
-                                                var savedWidgetType = saveWidgetType(widgetTypeJson);
+                                                WidgetTypeDetails widgetTypeDetails = JacksonUtil.treeToValue(widgetTypeJson, WidgetTypeDetails.class);
+                                                var savedWidgetType = widgetTypeService.saveWidgetType(widgetTypeDetails);
                                                 widgetTypeFqns.add(savedWidgetType.getFqn());
                                             } catch (Exception e) {
                                                 log.error("Unable to load widget type from json: [{}]", path.toString());
@@ -250,28 +256,58 @@ public class InstallScripts {
         }
     }
 
-    private WidgetTypeDetails saveWidgetType(JsonNode widgetTypeJson) {
-        WidgetTypeDetails widgetTypeDetails = JacksonUtil.treeToValue(widgetTypeJson, WidgetTypeDetails.class);
-        try {
-            imagesUpdater.updateWidgetImages(widgetTypeDetails);
-        } catch (Exception e) {
-            log.warn("Failed to process images for widget type {}", widgetTypeDetails.getName(), e);
-        }
-        return widgetTypeService.saveWidgetType(widgetTypeDetails);
+    @SneakyThrows
+    public void updateSystemImages() {
+        Path imagesDir = Paths.get(getDataDir(), IMAGES_DIR);
+        Map<String, String> imageNames = JacksonUtil.OBJECT_MAPPER.readValue(imagesDir.resolve("names.json").toFile(), new TypeReference<>() {});
+
+        Files.walk(imagesDir)
+                .filter(path -> path.toFile().isFile())
+                .filter(path -> !path.getFileName().toString().endsWith("json"))
+                .forEach(imageFile -> {
+                    imagesUpdater.updateSystemImage(imageFile, imageNames);
+                });
     }
 
-    public void updateDashboards() {
+    public void migrateTenantImages() {
+        var widgetsBundles = new PageDataIterable<>(widgetsBundleService::findAllWidgetsBundles, 100);
+        for (WidgetsBundle widgetsBundle : widgetsBundles) {
+            try {
+                boolean updated = imagesUpdater.updateWidgetsBundle(widgetsBundle);
+                if (updated) {
+                    widgetsBundleService.saveWidgetsBundle(widgetsBundle);
+                    log.info("[{}][{}][{}] Migrated widgets bundle images", widgetsBundle.getTenantId(), widgetsBundle.getId(), widgetsBundle.getTitle());
+                }
+            } catch (Exception e) {
+                log.error("[{}][{}][{}] Failed to migrate widgets bundle images", widgetsBundle.getTenantId(), widgetsBundle.getId(), widgetsBundle.getTitle(), e);
+            }
+        }
+
+        var widgetTypes = new PageDataIterable<>(widgetTypeService::findAllWidgetTypesIds, 1024);
+        for (WidgetTypeId widgetTypeId : widgetTypes) {
+            WidgetTypeDetails widgetTypeDetails = widgetTypeService.findWidgetTypeDetailsById(TenantId.SYS_TENANT_ID, widgetTypeId);
+            try {
+                boolean updated = imagesUpdater.updateWidget(widgetTypeDetails);
+                if (updated) {
+                    widgetTypeService.saveWidgetType(widgetTypeDetails);
+                    log.info("[{}][{}][{}] Migrated widget type images", widgetTypeDetails.getTenantId(), widgetTypeDetails.getId(), widgetTypeDetails.getName());
+                }
+            } catch (Exception e) {
+                log.error("[{}][{}][{}] Failed to migrate widget type images", widgetTypeDetails.getTenantId(), widgetTypeDetails.getId(), widgetTypeDetails.getName(), e);
+            }
+        }
+
         var dashboards = new PageDataIterable<>(dashboardService::findAllDashboardsIds, 1024);
         for (DashboardId dashboardId : dashboards) {
             Dashboard dashboard = dashboardService.findDashboardById(TenantId.SYS_TENANT_ID, dashboardId);
-            log.debug("Updating images for dashboard '{}' ({})", dashboard.getTitle(), dashboardId);
             try {
-                boolean updated = imagesUpdater.updateDashboardImages(dashboard);
+                boolean updated = imagesUpdater.updateDashboard(dashboard);
                 if (updated) {
                     dashboardService.saveDashboard(dashboard);
+                    log.info("[{}][{}][{}] Migrated dashboard images", dashboard.getTenantId(), dashboardId, dashboard.getTitle());
                 }
             } catch (Exception e) {
-                log.error("Failed to update images for dashboard '{}' ({})", dashboard.getTitle(), dashboardId, e);
+                log.error("[{}][{}][{}] Failed to migrate dashboard images", dashboard.getTenantId(), dashboardId, dashboard.getTitle(), e);
             }
         }
     }

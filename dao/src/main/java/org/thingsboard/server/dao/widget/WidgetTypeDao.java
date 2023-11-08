@@ -108,4 +108,6 @@ public interface WidgetTypeDao extends Dao<WidgetTypeDetails>, ExportableEntityD
 
     void removeWidgetTypeFromWidgetsBundle(UUID widgetsBundleId, UUID widgetTypeId);
 
+    PageData<WidgetTypeId> findAllWidgetTypesIds(PageLink pageLink);
+
 }
