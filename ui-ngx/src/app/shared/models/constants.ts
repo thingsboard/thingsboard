@@ -71,6 +71,13 @@ export const MediaBreakpoints = {
   'md-lg': 'screen and (min-width: 960px) and (max-width: 1819px)'
 };
 
+export const resolveBreakpoint = (breakpoint: string): string => {
+  if (MediaBreakpoints[breakpoint]) {
+    return MediaBreakpoints[breakpoint];
+  }
+  return breakpoint;
+};
+
 export const helpBaseUrl = 'https://thingsboard.io';
 
 export const HelpLinks = {

@@ -5338,6 +5338,27 @@
                 "Ok": "Ok"
             }
         },
+        "doughnut": {
+            "total": "Total",
+            "layout": "Layout",
+            "layout-default": "Default",
+            "layout-with-total": "With total",
+            "auto-scale": "Auto scale",
+            "central-total-value": "Central total value",
+            "legend-position-top": "Top",
+            "legend-position-bottom": "Bottom",
+            "legend-position-left": "Left",
+            "legend-position-right": "Right",
+            "legend-label": "Label",
+            "legend-value": "Value",
+            "tooltip": "Tooltip",
+            "tooltip-value": "Value",
+            "tooltip-value-type-absolute": "Absolute",
+            "tooltip-value-type-percentage": "Percentage",
+            "tooltip-background-color": "Background color",
+            "tooltip-background-blur": "Background blur",
+            "doughnut-card-style": "Doughnut card style"
+        },
         "entities-hierarchy": {
             "hierarchy-data-settings": "Hierarchy data settings",
             "relations-query-function": "Node relations query function",
@@ -6293,6 +6314,7 @@
             "pagination": "Pagination",
             "rows": "Rows",
             "timeseries-column-error": "At least one timeseries column should be specified",
+            "alarm-column-error": "At least one alarm column should be specified",
             "table-tabs": "Table tabs",
             "show-cell-actions-menu-mobile": "Show cell actions dropdown menu in mobile mode"
         },
