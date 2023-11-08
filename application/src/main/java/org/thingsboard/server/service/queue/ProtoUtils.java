@@ -152,21 +152,29 @@ public class ProtoUtils {
     }
 
     private static TransportProtos.DeviceEdgeUpdateMsgProto toProto(DeviceEdgeUpdateMsg msg) {
-        return TransportProtos.DeviceEdgeUpdateMsgProto.newBuilder()
+        TransportProtos.DeviceEdgeUpdateMsgProto.Builder builder = TransportProtos.DeviceEdgeUpdateMsgProto.newBuilder()
                 .setTenantIdMSB(msg.getTenantId().getId().getMostSignificantBits())
                 .setTenantIdLSB(msg.getTenantId().getId().getLeastSignificantBits())
                 .setDeviceIdMSB(msg.getDeviceId().getId().getMostSignificantBits())
-                .setDeviceIdLSB(msg.getDeviceId().getId().getLeastSignificantBits())
-                .setEdgeIdMSB(msg.getEdgeId().getId().getMostSignificantBits())
-                .setEdgeIdLSB(msg.getEdgeId().getId().getLeastSignificantBits())
-                .build();
+                .setDeviceIdLSB(msg.getDeviceId().getId().getLeastSignificantBits());
+
+        if (msg.getEdgeId() != null) {
+            builder.setEdgeIdMSB(msg.getEdgeId().getId().getMostSignificantBits())
+                    .setEdgeIdLSB(msg.getEdgeId().getId().getLeastSignificantBits());
+        }
+
+        return builder.build();
     }
 
     private static DeviceEdgeUpdateMsg fromProto(TransportProtos.DeviceEdgeUpdateMsgProto proto) {
+        EdgeId edgeId = null;
+        if (proto.hasEdgeIdMSB() && proto.hasEdgeIdLSB()) {
+            edgeId = new EdgeId(new UUID(proto.getEdgeIdMSB(), proto.getEdgeIdLSB()));
+        }
         return new DeviceEdgeUpdateMsg(
                 TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
                 new DeviceId(new UUID(proto.getDeviceIdMSB(), proto.getDeviceIdLSB())),
-                new EdgeId(new UUID(proto.getEdgeIdMSB(), proto.getEdgeIdLSB()))
+                edgeId
         );
     }
 
