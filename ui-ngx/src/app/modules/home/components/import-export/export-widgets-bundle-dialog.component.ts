@@ -22,9 +22,11 @@ import { FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
+import { ActionPreferencesPutUserSettings } from '@core/auth/auth.actions';
 
 export interface ExportWidgetsBundleDialogData {
   widgetsBundle: WidgetsBundle;
+  includeBundleWidgetsInExport: boolean;
 }
 
 export interface ExportWidgetsBundleDialogResult {
@@ -44,12 +46,18 @@ export class ExportWidgetsBundleDialogComponent extends DialogComponent<ExportWi
 
   exportWidgetsFormControl = new FormControl(false);
 
+  includeBundleWidgetsInExport: boolean;
+
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: ExportWidgetsBundleDialogData,
               public dialogRef: MatDialogRef<ExportWidgetsBundleDialogComponent, ExportWidgetsBundleDialogResult>) {
     super(store, router, dialogRef);
     this.widgetsBundle = data.widgetsBundle;
+    this.includeBundleWidgetsInExport = data.includeBundleWidgetsInExport;
+    if (this.includeBundleWidgetsInExport) {
+      this.exportWidgetsFormControl.patchValue(this.includeBundleWidgetsInExport, {emitEvent: false});
+    }
   }
 
   ngOnInit(): void {
@@ -60,6 +68,9 @@ export class ExportWidgetsBundleDialogComponent extends DialogComponent<ExportWi
   }
 
   export(): void {
+    if (this.includeBundleWidgetsInExport !== this.exportWidgetsFormControl.value) {
+      this.store.dispatch(new ActionPreferencesPutUserSettings({includeBundleWidgetsInExport: this.exportWidgetsFormControl.value}));
+    }
     this.dialogRef.close({
       exportWidgets: this.exportWidgetsFormControl.value
     });
