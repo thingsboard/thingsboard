@@ -26,6 +26,9 @@
     "compass",
     "degrees",
     "environment",
-    "speed"
+    "speed",
+    "airspeed",
+    "flow",
+    "gust"
   ]
 }

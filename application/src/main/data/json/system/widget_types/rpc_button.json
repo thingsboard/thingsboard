@@ -17,5 +17,18 @@
     "settingsDirective": "tb-send-rpc-widget-settings",
     "defaultConfig": "{\"targetDeviceAliases\":[],\"showTitle\":false,\"backgroundColor\":\"#e6e7e8\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"requestTimeout\":5000,\"oneWayElseTwoWay\":true,\"buttonText\":\"Send RPC\",\"styleButton\":{\"isRaised\":true,\"isPrimary\":false},\"methodName\":\"rpcCommand\",\"methodParams\":\"{}\"},\"title\":\"RPC Button\",\"dropShadow\":true,\"enableFullscreen\":false,\"widgetStyle\":{},\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"useDashboardTimewindow\":true,\"showLegend\":false,\"actions\":{}}"
   },
-  "externalId": null
+  "externalId": null,
+  "tags": [
+    "command",
+    "downlink",
+    "device configuration",
+    "device control",
+    "invocation",
+    "remote method",
+    "remote function",
+    "interface",
+    "subroutine call",
+    "inter-process communication",
+    "server request"
+  ]
 }

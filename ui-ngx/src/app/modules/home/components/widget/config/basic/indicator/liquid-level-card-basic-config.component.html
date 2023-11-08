@@ -74,9 +74,11 @@
       </div>
       <tb-image-cards-select #shapesImageCardsSelect
                              [fxShow]="levelCardWidgetConfigForm.get('tankSelectionType').value === DataSourceType.static"
-                             rowHeight="{{ '1:1' }}"
-                             [cols]="5"
-                             [colsLtMd]="2"
+                             rowHeight="1:1"
+                             [cols]="{columns: 5,
+                                    breakpoints: {
+                                      'lt-md': 2
+                                    }}"
                              style="width: 100%;"
                              label="{{ 'widgets.liquid-level-card.shape-type' | translate }}" formControlName="selectedShape">
         <tb-image-cards-select-option *ngFor="let shape of shapes"
@@ -106,9 +108,8 @@
         </div>
       </ng-container>
     </div>
-    <tb-image-cards-select #layoutsImageCardsSelect rowHeight="{{ '1:1' }}"
-                           [cols]="3"
-                           [colsLtMd]="3"
+    <tb-image-cards-select #layoutsImageCardsSelect rowHeight="1:1"
+                           cols="3"
                            label="{{ 'widgets.liquid-level-card.layout' | translate }}" formControlName="layout">
       <tb-image-cards-select-option
         *ngFor="let layout of LevelCardLayouts"

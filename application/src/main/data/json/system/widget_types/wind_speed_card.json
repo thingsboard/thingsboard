@@ -24,6 +24,9 @@
     "weather",
     "environment",
     "wind",
-    "speed"
+    "speed",
+    "airspeed",
+    "flow",
+    "gust"
   ]
 }

@@ -17,8 +17,10 @@ package org.thingsboard.server.edge;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.protobuf.AbstractMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.MessageLite;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -104,6 +106,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "queue.rule-engine.stats.enabled=false",
         "edges.storage.sleep_between_batches=1000"
 })
+@Slf4j
 abstract public class AbstractEdgeTest extends AbstractControllerTest {
 
     private static final String THERMOSTAT_DEVICE_PROFILE_NAME = "Thermostat";
@@ -223,51 +226,75 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         validateEdgeConfiguration();
 
         // 1 message from queue fetcher
+        validateMsgsCnt(QueueUpdateMsg.class, 1);
         validateQueues();
 
         // 1 from rule chain fetcher
+        validateMsgsCnt(RuleChainUpdateMsg.class, 1);
         UUID ruleChainUUID = validateRuleChains();
 
         // 1 from request message
+        validateMsgsCnt(RuleChainMetadataUpdateMsg.class, 1);
         validateRuleChainMetadataUpdates(ruleChainUUID);
 
         // 4 messages
         // - 2 from fetcher - system level ('mail', 'mailTemplates')
         // - 2 from fetcher - admin level ('mail', 'mailTemplates')
+        validateMsgsCnt(AdminSettingsUpdateMsg.class, 4);
         validateAdminSettings();
 
         // 4 messages
         // - 1 from default profile fetcher
         // - 2 from device profile fetcher (default and thermostat)
         // - 1 from device fetcher
+        validateMsgsCnt(DeviceProfileUpdateMsg.class, 4);
         validateDeviceProfiles();
 
         // 3 messages
         // - 1 from default profile fetcher
         // - 1 message from asset profile fetcher
         // - 1 message from asset fetcher
+        validateMsgsCnt(AssetProfileUpdateMsg.class, 3);
         validateAssetProfiles();
 
         // 1 from device fetcher
+        validateMsgsCnt(DeviceUpdateMsg.class, 1);
         validateDevices();
 
         // 1 from asset fetcher
+        validateMsgsCnt(AssetUpdateMsg.class, 1);
         validateAssets();
 
         // 1 message from public customer fetcher
+        validateMsgsCnt(CustomerUpdateMsg.class, 1);
         validatePublicCustomer();
 
         // 1 message from user fetcher
+        validateMsgsCnt(UserUpdateMsg.class, 1);
         validateUsers();
 
         // 1 from tenant fetcher
+        validateMsgsCnt(TenantUpdateMsg.class, 1);
         validateTenant();
 
         // 1 from tenant profile fetcher
+        validateMsgsCnt(TenantProfileUpdateMsg.class, 1);
         validateTenantProfile();
 
         // 1 message sync completed
+        validateMsgsCnt(SyncCompletedMsg.class, 1);
         validateSyncCompleted();
+    }
+
+    private <T extends AbstractMessage> void validateMsgsCnt(Class<T> clazz, int expectedMsgCnt) {
+        List<T> downlinkMsgsByType = edgeImitator.findAllMessagesByType(clazz);
+        if (downlinkMsgsByType.size() != expectedMsgCnt) {
+            List<AbstractMessage> downlinkMsgs = edgeImitator.getDownlinkMsgs();
+            for (AbstractMessage downlinkMsg : downlinkMsgs) {
+                log.error("{}\n{}", downlinkMsg.getClass(), downlinkMsg);
+            }
+            Assert.fail("Unexpected message count for " + clazz + "! Expected: " + expectedMsgCnt + ", but found: " + downlinkMsgsByType.size());
+        }
     }
 
     private void validateEdgeConfiguration() throws Exception {

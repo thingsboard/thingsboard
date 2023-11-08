@@ -54,20 +54,20 @@ public class DeviceConnectivityUtil {
 
         switch (deviceCredentials.getCredentialsType()) {
             case ACCESS_TOKEN:
-                command.append(" -u ").append(deviceCredentials.getCredentialsId());
+                command.append(" -u \"").append(deviceCredentials.getCredentialsId()).append("\"");
                 break;
             case MQTT_BASIC:
                 BasicMqttCredentials credentials = JacksonUtil.fromString(deviceCredentials.getCredentialsValue(),
                         BasicMqttCredentials.class);
                 if (credentials != null) {
                     if (credentials.getClientId() != null) {
-                        command.append(" -i ").append(credentials.getClientId());
+                        command.append(" -i \"").append(credentials.getClientId()).append("\"");
                     }
                     if (credentials.getUserName() != null) {
-                        command.append(" -u ").append(credentials.getUserName());
+                        command.append(" -u \"").append(credentials.getUserName()).append("\"");
                     }
                     if (credentials.getPassword() != null) {
-                        command.append(" -P ").append(credentials.getPassword());
+                        command.append(" -P \"").append(credentials.getPassword()).append("\"");;
                     }
                 } else {
                     return null;

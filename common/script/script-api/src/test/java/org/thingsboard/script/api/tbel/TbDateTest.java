@@ -21,6 +21,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.assertj.core.api.Assertions;
+import org.assertj.core.data.Offset;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -28,8 +30,8 @@ import org.mvel2.ConversionException;
 import org.thingsboard.common.util.JacksonUtil;
 
 import java.time.DateTimeException;
+import java.time.Instant;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -367,42 +369,6 @@ class TbDateTest {
         });
        assertTrue(actual.getMessage().contains(expectedMessage));
     }
-
-    @Test
-    void TestDateTimeFormatterToString () {
-        TbDate d1 = new TbDate(23, 9, 7, 8, 4, 5, "+04:00");
-        TbDate d2 = new TbDate(23, 9, 7, 8, 4, 5, "-03:00");
-
-        Assert.assertEquals("2023-09-07T04:04:05Z[UTC]", d1.toZonedDateTimeString());
-        Assert.assertEquals("2023-09-07T04:04:05Z", d1.toZonedDateTimeString(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
-        Assert.assertEquals("2023-09-07T04:04:05Z[UTC]", d1.toZonedDateTimeString(DateTimeFormatter.ISO_ZONED_DATE_TIME));
-        Assert.assertEquals("2023-09-07T04:04:05", d1.toZonedDateTimeString(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-        Assert.assertEquals("Thu, 7 Sep 2023 04:04:05 GMT", d1.toZonedDateTimeString(DateTimeFormatter.RFC_1123_DATE_TIME));
-        Assert.assertEquals("2023-09-07T04:04:05Z", d1.toZonedDateTimeString(DateTimeFormatter.ISO_INSTANT));
-
-        Assert.assertEquals("2023-09-07T11:04:05Z[UTC]", d2.toZonedDateTimeString());
-        Assert.assertEquals("2023-09-07T11:04:05Z", d2.toZonedDateTimeString(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
-        Assert.assertEquals("2023-09-07T11:04:05Z[UTC]", d2.toZonedDateTimeString(DateTimeFormatter.ISO_ZONED_DATE_TIME));
-        Assert.assertEquals("2023-09-07T11:04:05", d2.toZonedDateTimeString(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-        Assert.assertEquals("Thu, 7 Sep 2023 11:04:05 GMT", d2.toZonedDateTimeString(DateTimeFormatter.RFC_1123_DATE_TIME));
-        Assert.assertEquals("2023-09-07T11:04:05Z", d2.toZonedDateTimeString(DateTimeFormatter.ISO_INSTANT));
-    }
-
-    @Test
-    void TestZoneDateTimeFormatterToString () {
-        TbDate d1 = new TbDate(23, 9, 7, 8, 4, 5, "-04:00");
-        Assert.assertEquals("2023-09-07T12:04:05Z[UTC]", d1.toZonedDateTimeString());
-        Assert.assertEquals("2023-09-07T12:04:05Z", d1.toZonedDateTimeString(DateTimeFormatter.ISO_INSTANT,"America/New_York"));
-        Assert.assertEquals("2023-09-07T08:04:05-04:00", d1.toZonedDateTimeString(DateTimeFormatter.ISO_OFFSET_DATE_TIME,"America/New_York"));
-        Assert.assertEquals("2023-09-07T08:04:05-04:00[America/New_York]", d1.toZonedDateTimeString("America/New_York"));
-        Assert.assertEquals("Thu, 7 Sep 2023 08:04:05 -0400", d1.toZonedDateTimeString(DateTimeFormatter.RFC_1123_DATE_TIME,"America/New_York"));
-
-        Assert.assertEquals("2023-09-07T14:04:05+02:00[Europe/Berlin]", d1.toZonedDateTimeString("Europe/Berlin"));
-        Assert.assertEquals("2023-09-07T14:04:05+02:00", d1.toZonedDateTimeString(DateTimeFormatter.ISO_OFFSET_DATE_TIME,"Europe/Berlin"));
-        Assert.assertEquals("2023-09-08T02:04:05+14:00[Etc/GMT-14]", d1.toZonedDateTimeString("Etc/GMT-14"));
-        Assert.assertEquals("2023-09-07T00:04:05-12:00[Etc/GMT+12]", d1.toZonedDateTimeString("Etc/GMT+12"));
-    }
-
     @Test
     void TestParse () {
         String stringDateUTC = "2023-09-06T01:04:05.345Z";
@@ -798,6 +764,11 @@ class TbDateTest {
         Assert.assertEquals("06:15:30 Eastern European Time", d1.toTimeString("UTC", "Europe/Kyiv"));
         Assert.assertEquals("10:15:30 PM Eastern Standard Time", d1.toTimeString("en-US", "America/New_York"));
         Assert.assertEquals("22:15:30 Eastern Standard Time", d1.toTimeString("UTC", "America/New_York"));
+    }
+
+    @Test
+    public void testNow() {
+        Assertions.assertThat(TbDate.now()).isCloseTo(Instant.now().toEpochMilli(), Offset.offset(1000L));
     }
 
     private void testResultChangeDateTime(TbDate d) {

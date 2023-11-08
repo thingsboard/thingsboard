@@ -17,5 +17,19 @@
     "settingsDirective": "tb-map-widget-settings",
     "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"First point\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"xPos\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.05427416942713381,\"funcBody\":\"var value = prevValue || 0.2;\\nif (time % 5000 < 500) {\\n    value += Math.random() * 0.05 - 0.025;\\n}\\nreturn value;\"},{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"yPos\",\"color\":\"#4caf50\",\"settings\":{},\"_hash\":0.680594833308841,\"funcBody\":\"var value = prevValue || 0.3;\\nif (time % 5000 < 500) {\\n    value += Math.random() * 0.05 - 0.025;\\n}\\nreturn value;\"}]},{\"type\":\"function\",\"name\":\"Second point\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"xPos\",\"color\":\"#f44336\",\"settings\":{},\"_hash\":0.05012157428742059,\"funcBody\":\"var value = prevValue || 0.6;\\nif (time % 4000 < 500) {\\n    value += Math.random() * 0.05 - 0.025;\\n}\\nreturn value;\"},{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"yPos\",\"color\":\"#ffc107\",\"settings\":{},\"_hash\":0.6742359401617628,\"funcBody\":\"var value = prevValue || 0.7;\\nif (time % 4000 < 500) {\\n    value += Math.random() * 0.05 - 0.025;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":true,\"backgroundColor\":\"#fff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"8px\",\"settings\":{\"showLabel\":true,\"label\":\"${entityName}\",\"tooltipPattern\":\"<b>${entityName}</b><br/><br/><b>X Pos:</b> ${xPos:2}<br/><b>Y Pos:</b> ${yPos:2}<br/><br/><link-act name='delete'>Delete</link-act>\",\"markerImageSize\":34,\"useColorFunction\":false,\"markerImages\":[],\"useMarkerImageFunction\":false,\"color\":\"#fe7569\",\"mapImageUrl\":\"/api/images/system/input_widgets.markers_placement_image_map#map_image.svg\",\"xPosKeyName\":\"xPos\",\"yPosKeyName\":\"yPos\",\"posFunction\":\"return {x: origXPos, y: origYPos};\",\"markerOffsetX\":0.5,\"markerOffsetY\":1,\"showTooltip\":true,\"autocloseTooltip\":true,\"showTooltipAction\":\"click\",\"defaultCenterPosition\":\"0,0\",\"provider\":\"image-map\",\"fitMapBounds\":true,\"latKeyName\":\"latitude\",\"lngKeyName\":\"longitude\",\"polygonKeyName\":\"coordinates\",\"polygonOpacity\":0.5,\"polygonStrokeOpacity\":1,\"polygonStrokeWeight\":1,\"mapProvider\":\"HERE.normalDay\",\"draggableMarker\":true,\"editablePolygon\":true,\"mapPageSize\":16384,\"showPolygon\":false,\"polygonTooltipPattern\":\"<b>${entityName}</b><br/><br/><b>TimeStamp:</b> ${coordinates|ts:7}<br/><br/><link-act name='delete_polygon'>Delete</link-act>\"},\"title\":\"Markers Placement - Image Map\",\"dropShadow\":true,\"enableFullscreen\":true,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"useDashboardTimewindow\":true,\"showLegend\":false,\"widgetStyle\":{},\"actions\":{\"tooltipAction\":[{\"name\":\"delete\",\"icon\":\"more_horiz\",\"type\":\"custom\",\"customFunction\":\"var entityDatasource = widgetContext.map.map.datasources.filter(\\n    function(entity) {\\n        return entity.entityId === entityId.id;\\n    });\\n\\nwidgetContext.map.setMarkerLocation(entityDatasource[0], null, null).subscribe(() => widgetContext.updateAliases());\",\"id\":\"c39f512a-21c6-6b06-3aa1-715262c6553d\"},{\"name\":\"delete_polygon\",\"icon\":\"more_horiz\",\"type\":\"custom\",\"customFunction\":\"var entityDatasource = widgetContext.map.map.datasources.filter(\\n    function(entity) {\\n        return entity.entityId === entityId.id\\n    });\\n\\nwidgetContext.map.savePolygonLocation(entityDatasource[0], null).subscribe(() => widgetContext.updateAliases());\",\"id\":\"94bf5ffd-b526-c6c3-ae3b-ab42191217d9\"}]},\"showTitleIcon\":false,\"titleIcon\":\"more_horiz\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"iconSize\":\"24px\",\"titleTooltip\":\"\",\"displayTimewindow\":true}"
   },
-  "externalId": null
+  "externalId": null,
+  "tags": [
+    "building",
+    "interior",
+    "venue",
+    "inside",
+    "room",
+    "office",
+    "manufacturing",
+    "floor",
+    "plant",
+    "storage",
+    "warehouse",
+    "depot"
+  ]
 }

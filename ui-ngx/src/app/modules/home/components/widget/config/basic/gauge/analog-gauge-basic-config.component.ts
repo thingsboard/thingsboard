@@ -131,7 +131,7 @@ export class GaugeBasicConfigComponent extends BasicWidgetConfigComponent {
 
     this.widgetConfig.config.settings.defaultColor = config.defaultColor;
     this.widgetConfig.config.settings.colorPlate = config.colorPlate;
-    this.widgetConfig.config.settings.highlights = config.highlights.rangeList;
+    this.widgetConfig.config.settings.highlights = config.highlights;
     return this.widgetConfig;
   }
 
