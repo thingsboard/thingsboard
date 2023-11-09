@@ -65,7 +65,7 @@ export class ColorSettingsPanelComponent extends PageComponent implements OnInit
   ngOnInit(): void {
     this.colorSettingsFormGroup = this.fb.group(
       {
-        type: [this.colorSettings?.type, []],
+        type: [this.colorSettings?.type || ColorType.constant, []],
         color: [this.colorSettings?.color, []],
         rangeList: [this.colorSettings?.rangeList, []],
         colorFunction: [this.colorSettings?.colorFunction, []]
