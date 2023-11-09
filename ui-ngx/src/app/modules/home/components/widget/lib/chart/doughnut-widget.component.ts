@@ -209,7 +209,13 @@ export class DoughnutWidgetComponent implements OnInit, OnDestroy, AfterViewInit
         }
       }
     }
-    if (!this.showTotal && this.showLegend) {
+    if (this.settings.sortSeries) {
+      this.dataItems.sort((a, b) => a.dataKey.label.localeCompare(b.dataKey.label));
+      if (this.showLegend) {
+        this.legendItems.sort((a, b) => a.label.localeCompare(b.label));
+      }
+    }
+    if (this.showLegend && !this.showTotal) {
       this.legendItems.push(
         {
           id: null,
@@ -251,17 +257,17 @@ export class DoughnutWidgetComponent implements OnInit, OnDestroy, AfterViewInit
   }
 
   public onDataUpdated() {
-    for (let i=0; i < this.ctx.data.length; i++) {
-      const dsData = this.ctx.data[i];
+    for (const dsData of this.ctx.data) {
       let value = 0;
       const tsValue = dsData.data[0];
+      const dataItem = this.dataItems.find(item => item.dataKey === dsData.dataKey);
       if (tsValue && isDefinedAndNotNull(tsValue[1]) && isNumeric(tsValue[1])) {
         value = tsValue[1];
-        this.dataItems[i].hasValue = true;
-        this.dataItems[i].value = value;
+        dataItem.hasValue = true;
+        dataItem.value = value;
       } else {
-        this.dataItems[i].hasValue = false;
-        this.dataItems[i].value = 0;
+        dataItem.hasValue = false;
+        dataItem.value = 0;
       }
     }
     this.updateSeriesData();
@@ -281,8 +287,7 @@ export class DoughnutWidgetComponent implements OnInit, OnDestroy, AfterViewInit
     let hasValue = false;
     const seriesData: PieDataItemOption[] = [];
     const enabledDataItems = this.dataItems.filter(item => item.enabled && item.hasValue);
-    for (let i=0; i < this.dataItems.length; i++) {
-      const dataItem = this.dataItems[i];
+    for (const dataItem of this.dataItems) {
       if (dataItem.enabled && dataItem.hasValue) {
         hasValue = true;
         this.total += dataItem.value;
@@ -296,12 +301,13 @@ export class DoughnutWidgetComponent implements OnInit, OnDestroy, AfterViewInit
         }
       }
       if (this.showLegend) {
+        const legendItem = this.legendItems.find(item => item.id === dataItem.id);
         if (dataItem.hasValue) {
-          this.legendItems[i].hasValue = true;
-          this.legendItems[i].value = formatValue(dataItem.value, this.decimals, this.units, false);
+          legendItem.hasValue = true;
+          legendItem.value = formatValue(dataItem.value, this.decimals, this.units, false);
         } else {
-          this.legendItems[i].hasValue = false;
-          this.legendItems[i].value = '--';
+          legendItem.hasValue = false;
+          legendItem.value = '--';
         }
       }
     }
@@ -395,7 +401,7 @@ export class DoughnutWidgetComponent implements OnInit, OnDestroy, AfterViewInit
       series: [
         {
           type: 'pie',
-          clockwise: false,
+          clockwise: this.settings.clockwise,
           radius: [innerRadius, outerRadius],
           avoidLabelOverlap: false,
           itemStyle: {

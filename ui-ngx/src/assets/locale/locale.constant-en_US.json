@@ -5344,6 +5344,8 @@
             "layout-default": "Default",
             "layout-with-total": "With total",
             "auto-scale": "Auto scale",
+            "clockwise-layout": "Clockwise layout",
+            "sort-series": "Sort series by label",
             "central-total-value": "Central total value",
             "legend-position-top": "Top",
             "legend-position-bottom": "Bottom",

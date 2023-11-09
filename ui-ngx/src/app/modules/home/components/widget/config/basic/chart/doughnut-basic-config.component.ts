@@ -136,6 +136,8 @@ export class DoughnutBasicConfigComponent extends BasicWidgetConfigComponent {
 
       layout: [settings.layout, []],
       autoScale: [settings.autoScale, []],
+      clockwise: [settings.clockwise, []],
+      sortSeries: [settings.sortSeries, []],
 
       showTitle: [configData.config.showTitle, []],
       title: [configData.config.title, []],
@@ -193,6 +195,8 @@ export class DoughnutBasicConfigComponent extends BasicWidgetConfigComponent {
 
     this.widgetConfig.config.settings.layout = config.layout;
     this.widgetConfig.config.settings.autoScale = config.autoScale;
+    this.widgetConfig.config.settings.clockwise = config.clockwise;
+    this.widgetConfig.config.settings.sortSeries = config.sortSeries;
 
     this.widgetConfig.config.settings.totalValueFont = config.totalValueFont;
     this.widgetConfig.config.settings.totalValueColor = config.totalValueColor;

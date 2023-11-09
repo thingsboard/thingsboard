@@ -58,7 +58,7 @@
     </tb-image-cards-select>
     <div class="tb-form-row">
       <mat-slide-toggle class="mat-slide" formControlName="autoScale">
-        {{ 'widgets.value-card.auto-scale' | translate }}
+        {{ 'widgets.doughnut.auto-scale' | translate }}
       </mat-slide-toggle>
     </div>
     <div class="tb-form-row column-xs">
@@ -95,6 +95,16 @@
                         formControlName="iconColor">
         </tb-color-input>
       </div>
+    </div>
+    <div class="tb-form-row">
+      <mat-slide-toggle class="mat-slide" formControlName="clockwise">
+        {{ 'widgets.doughnut.clockwise-layout' | translate }}
+      </mat-slide-toggle>
+    </div>
+    <div class="tb-form-row">
+      <mat-slide-toggle class="mat-slide" formControlName="sortSeries">
+        {{ 'widgets.doughnut.sort-series' | translate }}
+      </mat-slide-toggle>
     </div>
     <div [fxShow]="totalEnabled" class="tb-form-row space-between">
       <div>{{ 'widgets.doughnut.central-total-value' | translate }}</div>
