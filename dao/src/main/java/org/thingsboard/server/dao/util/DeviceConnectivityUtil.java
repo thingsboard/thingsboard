@@ -135,7 +135,7 @@ public class DeviceConnectivityUtil {
         }
 
         StringBuilder mqttDockerCommand = new StringBuilder();
-        mqttDockerCommand.append(DOCKER_RUN).append(MQTT_IMAGE);
+        mqttDockerCommand.append(DOCKER_RUN).append("localhost".equals(host) ? "--network=host ":"").append(MQTT_IMAGE);
 
         if (MQTTS.equals(protocol)) {
             mqttDockerCommand.append("/bin/sh -c \"")
@@ -167,6 +167,6 @@ public class DeviceConnectivityUtil {
 
     public static String getDockerCoapPublishCommand(String protocol, String host, String port, DeviceCredentials deviceCredentials) {
         String coapCommand = getCoapPublishCommand(protocol, host, port, deviceCredentials);
-        return coapCommand != null ? String.format("%s%s%s", DOCKER_RUN, COAP_IMAGE, coapCommand) : null;
+        return coapCommand != null ? String.format("%s%s%s", DOCKER_RUN + ("localhost".equals(host) ? "--network=host ":""), COAP_IMAGE, coapCommand) : null;
     }
 }
