@@ -41,13 +41,14 @@ import {
   widgetType
 } from '@shared/models/widget.models';
 import {
+  AsyncValidator,
   ControlValueAccessor,
-  NG_VALIDATORS,
+  NG_ASYNC_VALIDATORS,
   NG_VALUE_ACCESSOR,
   UntypedFormBuilder,
   UntypedFormControl,
   UntypedFormGroup,
-  Validator,
+  ValidationErrors,
   Validators
 } from '@angular/forms';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
@@ -59,7 +60,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType } from '@shared/models/entity-type.models';
-import { Observable, of, Subscription } from 'rxjs';
+import { Observable, of, Subject, Subscription } from 'rxjs';
 import {
   IBasicWidgetConfigComponent,
   WidgetConfigCallbacks
@@ -68,7 +69,7 @@ import {
   EntityAliasDialogComponent,
   EntityAliasDialogData
 } from '@home/components/alias/entity-alias-dialog.component';
-import { catchError, mergeMap, tap } from 'rxjs/operators';
+import { catchError, map, mergeMap, tap } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
 import { EntityService } from '@core/http/entity.service';
 import { JsonFormComponentData } from '@shared/components/json-form/json-form-component.models';
@@ -102,13 +103,13 @@ const defaultSettingsForm = [
       multi: true
     },
     {
-      provide: NG_VALIDATORS,
+      provide: NG_ASYNC_VALIDATORS,
       useExisting: forwardRef(() => WidgetConfigComponent),
       multi: true,
     }
   ]
 })
-export class WidgetConfigComponent extends PageComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
+export class WidgetConfigComponent extends PageComponent implements OnInit, OnDestroy, ControlValueAccessor, AsyncValidator {
 
   @ViewChild('basicModeContainer', {read: ViewContainerRef, static: false}) basicModeContainer: ViewContainerRef;
 
@@ -181,6 +182,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   private createBasicModeComponentTimeout: Timeout;
   private basicModeComponentRef: ComponentRef<IBasicWidgetConfigComponent>;
   private basicModeComponent: IBasicWidgetConfigComponent;
+  private basicModeComponent$: Subject<IBasicWidgetConfigComponent> = null;
   private basicModeComponentChangeSubscription: Subscription;
 
   private dataSettingsChangesSubscription: Subscription;
@@ -437,6 +439,11 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
           this.propagateChange(this.modelValue);
           this.cd.markForCheck();
         });
+        if (this.basicModeComponent$) {
+          this.basicModeComponent$.next(this.basicModeComponent);
+          this.basicModeComponent$.complete();
+          this.basicModeComponent$ = null;
+        }
         this.cd.markForCheck();
       }, 0);
     }
@@ -876,40 +883,65 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     return stateId => stateId.toLowerCase().indexOf(lowercaseQuery) === 0;
   }
 
-  public validate(c: UntypedFormControl) {
-    if (this.basicModeComponent) {
-      if (!this.basicModeComponent.validateConfig()) {
+  public validate(c: UntypedFormControl): Observable<ValidationErrors | null> {
+    const basicComponentMode = this.hasBasicModeDirective && this.widgetConfigMode === WidgetConfigMode.basic;
+    let comp$: Observable<IBasicWidgetConfigComponent>;
+    if (basicComponentMode) {
+      if (this.basicModeComponent) {
+        comp$ = of(this.basicModeComponent);
+      } else {
+        if (this.useDefinedBasicModeDirective) {
+          this.basicModeComponent$ = new Subject();
+          comp$ = this.basicModeComponent$;
+        } else {
+          comp$ = of(null);
+        }
+      }
+    } else {
+      comp$ = of(null);
+    }
+    return comp$.pipe(
+      map((comp) => this.doValidate(basicComponentMode, comp))
+    );
+  }
+
+  private doValidate(basicComponentMode: boolean, basicModeComponent?: IBasicWidgetConfigComponent): ValidationErrors | null {
+    if (basicComponentMode) {
+      if (!basicModeComponent || !basicModeComponent.validateConfig()) {
         return {
           basicWidgetConfig: {
             valid: false
           }
         };
       }
-    } else if (!this.dataSettings.valid) {
-      return {
-        dataSettings: {
-          valid: false
-        }
-      };
-    } else if (!this.widgetSettings.valid) {
-      return {
-        widgetSettings: {
-          valid: false
-        }
-      };
-    } else if (!this.layoutSettings.valid) {
-      return {
-        widgetSettings: {
-          valid: false
-        }
-      };
-    } else if (!this.advancedSettings.valid || (this.displayAdvancedAppearance && !this.modelValue.config.settings)) {
-      return {
-        advancedSettings: {
-          valid: false
-        }
-      };
-    } else if (this.modelValue) {
+    } else {
+      if (!this.dataSettings.valid) {
+        return {
+          dataSettings: {
+            valid: false
+          }
+        };
+      } else if (!this.widgetSettings.valid) {
+        return {
+          widgetSettings: {
+            valid: false
+          }
+        };
+      } else if (!this.layoutSettings.valid) {
+        return {
+          widgetSettings: {
+            valid: false
+          }
+        };
+      } else if (!this.advancedSettings.valid) {
+        return {
+          advancedSettings: {
+            valid: false
+          }
+        };
+      }
+    }
+    if (this.modelValue) {
       const config = this.modelValue.config;
       if (this.widgetType === widgetType.rpc && this.modelValue.isDataEnabled) {
         if (!this.widgetEditMode && (!config.targetDeviceAliasIds || !config.targetDeviceAliasIds.length)) {
@@ -923,4 +955,5 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     }
     return null;
   }
+
 }
