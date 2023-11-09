@@ -19,19 +19,24 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.hash.Hashing;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.util.MediaTypeUtils;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class SystemImagesMigrator { // TEMPORARY
@@ -45,6 +50,7 @@ public class SystemImagesMigrator { // TEMPORARY
     private static final Path demoDashboardsDir = dataDir.resolve("json").resolve("demo").resolve("dashboards");
 
     private static final Map<String, String> imageNames = new TreeMap<>();
+    private static final Map<String, String> imageHashes = new HashMap<>();
 
     public static void main(String[] args) throws Exception {
         Files.createDirectories(imagesDir);
@@ -194,6 +200,32 @@ public class SystemImagesMigrator { // TEMPORARY
         imageNames.put(imageKey, imageName);
         log.info("New image {} ('{}')", imageKey, imageName);
         return "/api/images/system/" + imageKey;
+    }
+
+    private static void checkDuplicates() throws IOException {
+        Files.walk(imagesDir)
+                .filter(path -> path.toFile().isFile())
+                .filter(path -> !path.getFileName().toString().endsWith("json"))
+                .forEach(imageFile -> {
+                    try {
+                        byte[] data = Files.readAllBytes(imageFile);
+                        String hash = Hashing.sha256().hashBytes(data).toString();
+                        imageHashes.put(imageFile.getFileName().toString(), hash);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+        imageHashes.values().stream()
+                .distinct()
+                .forEach(hash -> {
+                    List<String> sameImages = imageHashes.entrySet().stream()
+                            .filter(entry -> entry.getValue().equals(hash))
+                            .map(Map.Entry::getKey)
+                            .collect(Collectors.toList());
+                    if (sameImages.size() > 1) {
+                        System.err.println("Duplicated images (hash " + hash + "):\n" + String.join("\n", sameImages) + "\n");
+                    }
+                });
     }
 
     private static String getText(JsonNode jsonNode, String field) {

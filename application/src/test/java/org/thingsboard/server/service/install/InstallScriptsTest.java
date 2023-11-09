@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.install;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,12 +37,19 @@ import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
+import org.thingsboard.server.service.install.update.ImagesUpdater;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -63,6 +71,8 @@ class InstallScriptsTest {
     OAuth2ConfigTemplateService oAuth2TemplateService;
     @MockBean
     ResourceService resourceService;
+    @MockBean
+    ImagesUpdater imagesUpdater;
     @SpyBean
     InstallScripts installScripts;
 
@@ -114,6 +124,51 @@ class InstallScriptsTest {
 
         assertThat(throwables).as("templateFilePath " + templateFilePath)
                 .containsExactlyInAnyOrderElementsOf(Collections.emptyList());
+    }
+
+    @Test
+    public void testSystemImageNames() throws IOException {
+        Path imagesDir = Path.of(installScripts.getDataDir(), InstallScripts.IMAGES_DIR);
+        Path imageNamesFile = imagesDir.resolve("names.json");
+        Map<String, String> imageNames = JacksonUtil.OBJECT_MAPPER.readValue(imageNamesFile.toFile(), new TypeReference<>() {});
+
+        assertThat(imageNames.keySet()).containsAll(getSystemImages());
+    }
+
+    @Test
+    public void testReferencedImages() throws IOException {
+        Path jsonDir = Path.of(installScripts.getDataDir(), InstallScripts.JSON_DIR);
+        List<Path> files = Files.walk(jsonDir)
+                .filter(path -> path.toFile().isFile())
+                .filter(path -> path.getFileName().toString().endsWith(".json"))
+                .collect(Collectors.toList());
+
+        Set<String> referencedImages = new HashSet<>();
+        Pattern imageUrlPattern = Pattern.compile("/api/images/system/(.+?)\\\\?\"");
+        for (Path file : files) {
+            String content = Files.readString(file);
+            imageUrlPattern.matcher(content).results()
+                    .map(matchResult -> matchResult.group(1))
+                    .forEach(referencedImages::add);
+        }
+        assertThat(getSystemImages()).containsAll(referencedImages);
+    }
+
+    private List<String> getSystemImages() throws IOException {
+        String dataDir = installScripts.getDataDir();
+        Path imagesDir = Path.of(dataDir, InstallScripts.IMAGES_DIR);
+
+        return Files.list(imagesDir)
+                .filter(path -> path.toFile().isDirectory())
+                .flatMap(dir -> {
+                    try {
+                        return Files.list(dir);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .map(path -> path.getFileName().toString())
+                .collect(Collectors.toList());
     }
 
 }
