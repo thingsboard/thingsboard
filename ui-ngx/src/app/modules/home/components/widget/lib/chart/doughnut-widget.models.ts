@@ -57,6 +57,8 @@ export enum DoughnutLegendPosition {
   right = 'right'
 }
 
+export const doughnutLegendPositions = Object.keys(DoughnutLegendPosition) as DoughnutLegendPosition[];
+
 export const doughnutLegendPositionTranslations = new Map<DoughnutLegendPosition, string>(
   [
     [DoughnutLegendPosition.top, 'widgets.doughnut.legend-position-top'],
