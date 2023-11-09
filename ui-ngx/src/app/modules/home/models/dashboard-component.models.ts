@@ -488,9 +488,8 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
       padding: this.padding,
       margin: this.margin,
       borderRadius: this.borderRadius };
-    if (this.widget.config.widgetStyle && !isEmpty(this.widget.config.widgetStyle)) {
-      const convertedStyle = convertKeysToCamelCase(this.widget.config.widgetStyle);
-      this.style = {...this.style, ...convertedStyle};
+    if (!isEmpty(this.widget.config.widgetStyle)) {
+      this.style = {...this.style, ...convertKeysToCamelCase(this.widget.config.widgetStyle)};
     }
 
     this.showWidgetTitlePanel = this.widgetContext.hideTitlePanel ? false :
