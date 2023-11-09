@@ -71,6 +71,7 @@ import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
+import org.thingsboard.server.common.data.security.model.JwtSettings;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.edge.imitator.EdgeImitator;
@@ -127,6 +128,13 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
 
     @Before
     public void setupEdgeTest() throws Exception {
+        loginSysAdmin();
+
+        // get jwt settings from yaml config
+        JwtSettings settings = doGet("/api/admin/jwtSettings", JwtSettings.class);
+        // save jwt settings into db
+        doPost("/api/admin/jwtSettings", settings).andExpect(status().isOk());
+
         loginTenantAdmin();
 
         installation();
@@ -237,9 +245,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         validateMsgsCnt(RuleChainMetadataUpdateMsg.class, 1);
         validateRuleChainMetadataUpdates(ruleChainUUID);
 
-        // 4 messages
-        // - 2 from fetcher - system level ('mail', 'mailTemplates')
-        // - 2 from fetcher - admin level ('mail', 'mailTemplates')
+        // 4 messages ('general', 'mail', 'connectivity', 'jwt)
         validateMsgsCnt(AdminSettingsUpdateMsg.class, 4);
         validateAdminSettings();
 
@@ -418,13 +424,21 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(4, adminSettingsUpdateMsgs.size());
 
         for (AdminSettingsUpdateMsg adminSettingsUpdateMsg : adminSettingsUpdateMsgs) {
+            if (adminSettingsUpdateMsg.getKey().equals("general")) {
+                validateGeneralAdminSettings(adminSettingsUpdateMsg);
+            }
             if (adminSettingsUpdateMsg.getKey().equals("mail")) {
                 validateMailAdminSettings(adminSettingsUpdateMsg);
             }
-            if (adminSettingsUpdateMsg.getKey().equals("mailTemplates")) {
-                validateMailTemplatesAdminSettings(adminSettingsUpdateMsg);
+            if (adminSettingsUpdateMsg.getKey().equals("connectivity")) {
+                validateConnectivityAdminSettings(adminSettingsUpdateMsg);
             }
         }
+    }
+
+    private void validateGeneralAdminSettings(AdminSettingsUpdateMsg adminSettingsUpdateMsg) {
+        JsonNode jsonNode = JacksonUtil.toJsonNode(adminSettingsUpdateMsg.getJsonValue());
+        Assert.assertNotNull(jsonNode.get("baseUrl"));
     }
 
     private void validateMailAdminSettings(AdminSettingsUpdateMsg adminSettingsUpdateMsg) {
@@ -436,14 +450,14 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         Assert.assertNotNull(jsonNode.get("timeout"));
     }
 
-    private void validateMailTemplatesAdminSettings(AdminSettingsUpdateMsg adminSettingsUpdateMsg) {
+    private void validateConnectivityAdminSettings(AdminSettingsUpdateMsg adminSettingsUpdateMsg) {
         JsonNode jsonNode = JacksonUtil.toJsonNode(adminSettingsUpdateMsg.getJsonValue());
-        Assert.assertNotNull(jsonNode.get("accountActivated"));
-        Assert.assertNotNull(jsonNode.get("accountLockout"));
-        Assert.assertNotNull(jsonNode.get("activation"));
-        Assert.assertNotNull(jsonNode.get("passwordWasReset"));
-        Assert.assertNotNull(jsonNode.get("resetPassword"));
-        Assert.assertNotNull(jsonNode.get("test"));
+        Assert.assertNotNull(jsonNode.get("http"));
+        Assert.assertNotNull(jsonNode.get("https"));
+        Assert.assertNotNull(jsonNode.get("mqtt"));
+        Assert.assertNotNull(jsonNode.get("mqtts"));
+        Assert.assertNotNull(jsonNode.get("coap"));
+        Assert.assertNotNull(jsonNode.get("coaps"));
     }
 
     private void validateAssetProfiles() throws Exception {
