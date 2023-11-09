@@ -409,7 +409,7 @@ export class GatewayConfigurationComponent implements OnInit {
     const commandsFormArray = this.commandFormArray();
     const commandFormGroup = this.fb.group({
       attributeOnGateway: [command.attributeOnGateway || null, [Validators.required, Validators.pattern(/^[^.\s]+$/)]],
-      command: [command.command || null, [Validators.required, Validators.pattern(/^[^.\s]+$/)]],
+      command: [command.command || null, [Validators.required, Validators.pattern(/^(?=\S).*\S$/)]],
       timeout: [command.timeout || null, [Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.pattern(/^[^.\s]+$/)]],
     });
     commandsFormArray.push(commandFormGroup);

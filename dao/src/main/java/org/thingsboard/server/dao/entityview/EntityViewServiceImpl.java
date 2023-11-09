@@ -317,6 +317,11 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
     }
 
     @Override
+    public boolean existsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId) {
+        return entityViewDao.existsByTenantIdAndEntityId(tenantId.getId(), entityId.getId());
+    }
+
+    @Override
     @Transactional
     public void deleteEntityView(TenantId tenantId, EntityViewId entityViewId) {
         log.trace("Executing deleteEntityView [{}]", entityViewId);

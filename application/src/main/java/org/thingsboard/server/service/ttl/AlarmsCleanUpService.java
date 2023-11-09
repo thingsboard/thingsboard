@@ -92,7 +92,6 @@ public class AlarmsCleanUpService {
         while (true) {
             PageData<AlarmId> toRemove = alarmDao.findAlarmsIdsByEndTsBeforeAndTenantId(expirationTime, tenantId, removalBatchRequest);
             for (AlarmId alarmId : toRemove.getData()) {
-                relationService.deleteEntityRelations(tenantId, alarmId);
                 Alarm alarm = alarmService.delAlarm(tenantId, alarmId, false).getAlarm();
                 if (alarm != null) {
                     entityActionService.pushEntityActionToRuleEngine(alarm.getOriginator(), alarm, tenantId, null, ActionType.ALARM_DELETE, null);

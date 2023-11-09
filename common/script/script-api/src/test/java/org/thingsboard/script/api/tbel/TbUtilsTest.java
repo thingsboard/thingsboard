@@ -350,7 +350,7 @@ public class TbUtilsTest {
     }
 
     @Test
-    public void parseBytesDecodeToJson() throws IOException {
+    public void parseBytesDecodeToJson() throws IOException, IllegalAccessException {
         String expectedStr = "{\"hello\": \"world\"}";
         ExecutionHashMap<String, Object> expectedJson = new ExecutionHashMap<>(1, ctx);
         expectedJson.put("hello", "world");
@@ -365,6 +365,24 @@ public class TbUtilsTest {
         expectedJson.put("hello", "world");
         Object actualJson =  TbUtils.decodeToJson(ctx, expectedStr);
         Assert.assertEquals(expectedJson,actualJson);
+    }
+
+    @Test
+    public void stringToBytesInputObjectTest() throws IOException, IllegalAccessException {
+        String expectedStr = "{\"hello\": \"world\"}";
+        Object inputJson = TbUtils.decodeToJson(ctx, expectedStr);
+        byte[] arrayBytes = {119, 111, 114, 108, 100};
+        List<Byte> expectedBytes = Bytes.asList(arrayBytes);
+        List<Byte> actualBytes = TbUtils.stringToBytes(ctx, ((ExecutionHashMap) inputJson).get("hello"));
+        Assert.assertEquals(expectedBytes, actualBytes);
+        actualBytes = TbUtils.stringToBytes(ctx, ((ExecutionHashMap) inputJson).get("hello"), "UTF-8");
+        Assert.assertEquals(expectedBytes, actualBytes);
+
+        expectedStr = "{\"hello\": 1234}";
+        inputJson = TbUtils.decodeToJson(ctx, expectedStr);
+        Object finalInputJson = inputJson;
+        Assert.assertThrows(IllegalAccessException.class, () -> TbUtils.stringToBytes(ctx, ((ExecutionHashMap) finalInputJson).get("hello")));
+        Assert.assertThrows(IllegalAccessException.class, () -> TbUtils.stringToBytes(ctx, ((ExecutionHashMap) finalInputJson).get("hello"), "UTF-8"));
     }
 
     private static List<Byte> toList(byte[] data) {

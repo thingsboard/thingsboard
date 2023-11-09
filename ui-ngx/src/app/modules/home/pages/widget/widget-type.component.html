@@ -20,19 +20,19 @@
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'edit')"
           [fxShow]="!isEdit">
-    {{'widget.edit-widget-type' | translate }}
+    {{ 'widget.edit' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'export')"
           [fxShow]="!isEdit">
-    {{'widget-type.export' | translate }}
+    {{ 'widget.export' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
           [fxShow]="!hideDelete() && !isEdit">
-    {{'widget.delete-widget-type' | translate }}
+    {{ 'widget.delete-widget' | translate }}
   </button>
 </div>
 <div class="mat-padding" fxLayout="column">
@@ -58,6 +58,10 @@
         <textarea matInput formControlName="description" rows="2" maxlength="1024" #descriptionInput></textarea>
         <mat-hint align="end">{{descriptionInput.value?.length || 0}}/1024</mat-hint>
       </mat-form-field>
+      <tb-string-items-list
+        label="{{ 'widget.tags' | translate }}"
+        formControlName="tags">
+      </tb-string-items-list>
       <mat-slide-toggle formControlName="deprecated">
         {{ 'widget.deprecated' | translate }}
       </mat-slide-toggle>

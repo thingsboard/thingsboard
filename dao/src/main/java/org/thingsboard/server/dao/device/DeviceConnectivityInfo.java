@@ -22,5 +22,4 @@ public class DeviceConnectivityInfo {
     private boolean enabled;
     private String host;
     private String port;
-    private String pemCertFile;
 }

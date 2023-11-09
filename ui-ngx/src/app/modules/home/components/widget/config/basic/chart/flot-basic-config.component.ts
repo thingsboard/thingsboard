@@ -57,9 +57,8 @@ export class FlotBasicConfigComponent extends BasicWidgetConfigComponent {
     return this.flotWidgetConfigForm;
   }
 
-  protected setupDefaults(configData: WidgetConfigComponentData) {
-    this.setupDefaultDatasource(configData,
-      [{ name: 'temperature', label: 'Temperature', type: DataKeyType.timeseries, units: '°C', decimals: 0 }]);
+  protected defaultDataKeys(configData: WidgetConfigComponentData): DataKey[] {
+    return [{ name: 'temperature', label: 'Temperature', type: DataKeyType.timeseries, units: '°C', decimals: 0 }];
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {

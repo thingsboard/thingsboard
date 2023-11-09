@@ -24,7 +24,7 @@
       *ngFor="let entitySubtype of entitySubtypeList"
       [removable]="!disabled"
       (removed)="remove(entitySubtype)">
-      {{entitySubtype}}
+      {{customTranslate(entitySubtype)}}
       <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
     </mat-chip-row>
     <input matInput type="text" placeholder="{{ !disabled ? ((!entitySubtypeList || !entitySubtypeList.length) ? placeholder : secondaryPlaceholder) : '' }}"
@@ -33,6 +33,7 @@
            (focusin)="onFocus()"
            formControlName="entitySubtype"
            matAutocompleteOrigin
+           matChipInputAddOnBlur
            #origin="matAutocompleteOrigin"
            [matAutocompleteConnectedTo]="origin"
            [matAutocomplete]="entitySubtypeAutocomplete"
@@ -46,11 +47,6 @@
                     [displayWith]="displayEntitySubtypeFn">
     <mat-option *ngFor="let entitySubtype of filteredEntitySubtypeList | async" [value]="entitySubtype">
       <span [innerHTML]="entitySubtype | highlight:searchText"></span>
-    </mat-option>
-    <mat-option *ngIf="!(filteredEntitySubtypeList | async)?.length" [value]="null">
-      <span>
-          {{ translate.get(noSubtypesMathingText, {entitySubtype: searchText}) | async }}
-      </span>
     </mat-option>
   </mat-autocomplete>
   <div matSuffix>

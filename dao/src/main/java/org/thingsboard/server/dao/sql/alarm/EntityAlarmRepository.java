@@ -34,4 +34,10 @@ public interface EntityAlarmRepository extends JpaRepository<EntityAlarmEntity, 
     @Modifying
     @Query("DELETE FROM EntityAlarmEntity e where e.entityId = :entityId")
     void deleteByEntityId(@Param("entityId") UUID entityId);
+
+    @Transactional
+    @Modifying
+    @Query("DELETE FROM EntityAlarmEntity a WHERE a.tenantId = :tenantId")
+    void deleteByTenantId(@Param("tenantId") UUID tenantId);
+
 }

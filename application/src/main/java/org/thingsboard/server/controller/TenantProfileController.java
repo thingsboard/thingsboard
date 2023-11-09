@@ -151,6 +151,8 @@ public class TenantProfileController extends BaseController {
                     "      \"defaultStorageTtlDays\": 0,\n" +
                     "      \"alarmsTtlDays\": 0,\n" +
                     "      \"rpcTtlDays\": 0,\n" +
+                    "      \"queueStatsTtlDays\": 0,\n" +
+                    "      \"ruleEngineExceptionsTtlDays\": 0,\n" +
                     "      \"warnThreshold\": 0\n" +
                     "    }\n" +
                     "  },\n" +

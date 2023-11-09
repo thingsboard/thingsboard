@@ -15,12 +15,11 @@
  */
 package org.thingsboard.server.dao.service;
 
-import org.thingsboard.server.common.data.id.IdBased;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 
-public abstract class PaginatedRemover<I, D extends IdBased<?>> {
+public abstract class PaginatedRemover<I, D> {
 
     private static final int DEFAULT_LIMIT = 100;
 

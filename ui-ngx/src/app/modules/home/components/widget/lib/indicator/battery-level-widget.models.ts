@@ -53,6 +53,7 @@ export const batteryLevelLayoutImages = new Map<BatteryLevelLayout, string>(
 
 export interface BatteryLevelWidgetSettings {
   layout: BatteryLevelLayout;
+  sectionsCount: number;
   showValue: boolean;
   autoScaleValueSize: boolean;
   valueFont: Font;
@@ -64,6 +65,7 @@ export interface BatteryLevelWidgetSettings {
 
 export const batteryLevelDefaultSettings: BatteryLevelWidgetSettings = {
   layout: BatteryLevelLayout.vertical_solid,
+  sectionsCount: 4,
   showValue: true,
   autoScaleValueSize: true,
   valueFont: {

@@ -1,0 +1,43 @@
+{
+  "fqn": "indoor_simple_co2_chart_card",
+  "name": "Indoor simple CO2 chart card",
+  "deprecated": false,
+  "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAAkFBMVEUAAAAAAAD19fUAAAD9/f36+vpdXV3k5OTy8vLu7u7U1NSKiori4uL///8/pxohISFXsjbj4+OHyHDx8fF0dHQ8PDzHx8fP6cZYWFjn9ONvvVMvLy+f04yenp6CgoLz+vGsrKyQkJDV1dXb79RjuEW33qlmZmZLrChKSkq6urrn9OKTzn6rq6vD5Lir2Jp7wmGyHTrBAAAADXRSTlMAH8cQ8eMsj7mrczuPx27hgQAABNFJREFUeNrsz8kRgCAQADDk8qT/dh078Ak7SQdJAAAAAAAAv5VteeVr9KeOxdXzLmlrI4DW0zVC2FMeIRxRIllkMiKzedmto9WGYRgKw09wEEKyERgbxxfGgb7/881eOja2QQuDoYJ/aA+BXOQjJGRDvLUh3toQb22ItzbEW89DspZzbb1WDi2MlSl+KRLjH3seYqkoZaAk7WtDOEIQ4NUglRg4EiKdc0kiNTSKwAWRnBnxBFoFYj69QFTr+++zkgBwvC9V8Me1LggHs8SVBN0mt4fuBGJ8co+KzzR8XToAcFCsTKFhTpFUQTeh21Q0H5DBcUHYQsPqG0QoAzKGYGWKse6IwfQkiTRsUPUBKZpF9SZZI65yEuA0yTQ3UlwkxmpBgsUYG2LSjkZ5HogPyD22KriSVKQFm9tbCwEoKTJ/vLWOxJIbJKXb/FMW9QWRWhn3zkBkDPC1TCsF3iGiRIOXDkALRMXJw/5rLNeK4GfCP8/8e/sT5YXbEG9tiLc2xFsb4q0N8daGeGtD/iE5erDCeCLXkJxoqBEdeJxnSCXjOdwp42GOIRwGrnoSPMox5I09s1tSFAbC6BN05wcyARQQAXFFnfd/u22TRmfXZYMFVXLhuUkzmYvvkE475ezEflCa0FwrFjkYGEgSCLFiERHDQC4UBFiviPsyk4nCvbU2EVUcDjtXxRt4kBgIsDKR/WZzNP71mwM8yPl4xlmZiDEKoBBVpGKOPrW33iwSVUaYWD0m7hmIQhA5wCu99V4RZURSxcKov+J+5XkEzNTeel2kTGEpfP+oTcI3RJxHj86wrdrtnpRCIqdGaiCsdPiHq0REvZDLJnZLJSLvZaL/jAGz26uvRBBmB8w0EY2YuezoyXzdkYosYT7+H8SEEoVfYhhHHQWxyZU6G8HXappIiyyyxSx1UC3xu4RTh1tYgJxPAgpR0Nvm7hllf++qShiqJoqUEhsvovEbmAtiTUuPcrgvJZTWlkOdWgs30ntd1na0D5MjMIUgjHplSuRTRXrU2otkj/e/xY4Pq+RnuUVEeXW+Wt/q2h1cn7n60tGiy5ErUjyS/eK3PZGomCpyQpmySEMJs6xNXVjJB5OyCGJzi2xpj+uOtiQtGdWSFqq3o1dkLmERiS2wSIcOmd5F7A+RK0l3mDmR2m31ANL9do+uKRts4AkeVgHmi2xdNG6trq9ripz9U4SXctjLaCER7X/N8jE+wVckwGyREyVlkYGewz6L8AygPf7RNJFIFBBgvgh1Q9u2GcrWAsNhn0U48bDXBkUCf3UsKXLCOxocnOp5arHI6yey38QQYL5IqR0SpW7h6lO3FNYl5mg/RfQfd6QJiLBH6GNjvgjDd4Tn0ImsyLDDb1drGES27tlPrYvz7SeInAMei4twWtl0PtTV1W648hY9I48GxIZqmYZFzuIYQYDlRaCVt4z2UWfOg09EInYXn7fnvZBIJZKFPVgkSF2nP+qSK74jbs/nLW0KYSoRQ5DlRMKwiMOLTKKa9QGyIpE8hxmsSGQ+y4ucrIWB2tbwPlb2vdZH5COyQj4ia+MjsjY+ImvjI/K7nTuoARgEAiB4hQTaEvzbxQJPuMw4WAN7GiGnKfHOFEr0mcIfLccE6Yk6vvu3VL3VPKMwAAAAAACAPQv8h/dr54xixAAAAABJRU5ErkJggg==",
+  "description": "Displays historical indoor CO2 level values as a simplified chart. Optionally may display the corresponding latest indoor CO2 level value.",
+  "descriptor": {
+    "type": "timeseries",
+    "sizeX": 4.5,
+    "sizeY": 2,
+    "resources": [],
+    "templateHtml": "<tb-value-chart-card-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-value-chart-card-widget>\n",
+    "templateCss": ".legend {\n    font-size: 13px;\n    line-height: 10px;\n}\n\n.legend table { \n    border-spacing: 0px;\n    border-collapse: separate;\n}\n\n.mouse-events .flot-overlay {\n    cursor: crosshair; \n}\n\n",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.valueChartCardWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.valueChartCardWidget.onDataUpdated();\n};\n\nself.onLatestDataUpdated = function() {\n    self.ctx.$scope.valueChartCardWidget.onLatestDataUpdated();\n}\n\nself.onEditModeChanged = function() {\n    self.ctx.$scope.valueChartCardWidget.onEditModeChanged();\n}\n\nself.onDestroy = function() {\n    self.ctx.$scope.valueChartCardWidget.onDestroy();\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        previewWidth: '300px',\n        previewHeight: '150px',\n        embedTitlePanel: true,\n        hasAdditionalLatestDataKeys: true,\n        defaultDataKeysFunction: function() {\n            return [\n                 { name: 'co2', label: 'CO2 level', type: 'timeseries', color: 'rgba(0, 0, 0, 0.87)'}\n            ];\n        },\n        defaultLatestDataKeysFunction: function(configComponent) {\n            return [{ name: 'co2', label: 'Latest', type: 'timeseries'}];\n        }\n    };\n}\n",
+    "settingsSchema": "{}",
+    "dataKeySettingsSchema": "{}",
+    "latestDataKeySettingsSchema": "{}",
+    "settingsDirective": "tb-value-chart-card-widget-settings",
+    "dataKeySettingsDirective": "",
+    "latestDataKeySettingsDirective": "",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-value-chart-card-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"CO2 level\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"settings\":{},\"_hash\":0.8587686344902596,\"funcBody\":\"var value = prevValue + Math.random() * 160 - 80;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < 400) {\\n\\tvalue = 400;\\n} else if (value > 1600) {\\n\\tvalue = 1600;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}],\"alarmFilterConfig\":{\"statusList\":[\"ACTIVE\"]},\"latestDataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Latest\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"settings\":{},\"_hash\":0.8587686344902596,\"funcBody\":\"var value = prevValue + Math.random() * 160 - 80;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < 400) {\\n\\tvalue = 400;\\n} else if (value > 1600) {\\n\\tvalue = 1600;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}]}],\"showTitle\":true,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":null,\"padding\":\"0\",\"settings\":{\"layout\":\"left\",\"autoScale\":true,\"showValue\":true,\"valueFont\":{\"family\":\"Roboto\",\"size\":28,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\",\"lineHeight\":\"32px\"},\"valueColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"rangeList\":[{\"from\":null,\"to\":600,\"color\":\"#3FA71A\"},{\"from\":600,\"to\":800,\"color\":\"#F36900\"},{\"from\":800,\"to\":null,\"color\":\"#D81838\"}],\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}}},\"title\":\"CO2 level\",\"dropShadow\":true,\"enableFullscreen\":false,\"titleStyle\":null,\"mobileHeight\":null,\"configMode\":\"basic\",\"actions\":{},\"showTitleIcon\":true,\"titleIcon\":\"co2\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"titleFont\":{\"size\":16,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\",\"lineHeight\":\"24px\"},\"iconSize\":\"18px\",\"titleTooltip\":\"\",\"widgetStyle\":{},\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"useDashboardTimewindow\":true,\"decimals\":0,\"titleColor\":\"rgba(0, 0, 0, 0.87)\",\"borderRadius\":null,\"units\":\"ppm\",\"displayTimewindow\":true,\"timewindow\":{\"hideInterval\":false,\"hideLastInterval\":false,\"hideQuickInterval\":false,\"hideAggregation\":false,\"hideAggInterval\":false,\"hideTimezone\":false,\"selectedTab\":1,\"history\":{\"historyType\":2,\"timewindowMs\":60000,\"interval\":43200000,\"fixedTimewindow\":{\"startTimeMs\":1697382151041,\"endTimeMs\":1697468551041},\"quickInterval\":\"CURRENT_MONTH_SO_FAR\"},\"aggregation\":{\"type\":\"AVG\",\"limit\":25000}},\"timewindowStyle\":{\"showIcon\":false,\"iconSize\":\"24px\",\"icon\":\"query_builder\",\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"400\",\"style\":\"normal\",\"lineHeight\":\"16px\"},\"color\":\"rgba(0, 0, 0, 0.38)\",\"displayTypePrefix\":true}}"
+  },
+  "externalId": null,
+  "tags": [
+    "environment",
+    "co2",
+    "indoor",
+    "carbon dioxide",
+    "carbon emission",
+    "carbon footprint",
+    "carbon output",
+    "carbon pollution",
+    "carbon capture",
+    "carbon offset",
+    "carbon reduction",
+    "carbon neutral",
+    "climate gas",
+    "fossil fuel emission",
+    "carbon cycle"
+  ]
+}

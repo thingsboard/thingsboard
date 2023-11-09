@@ -50,6 +50,11 @@ public interface RuleNodeRepository extends JpaRepository<RuleNodeEntity, UUID> 
                                                                   @Param("searchText") String searchText,
                                                                   Pageable pageable);
 
+    @Query("SELECT r.id FROM RuleNodeEntity r WHERE r.type = :ruleType AND r.configurationVersion < :version")
+    Page<UUID> findAllRuleNodeIdsByTypeAndVersionLessThan(@Param("ruleType") String ruleType,
+                                                          @Param("version") int version,
+                                                          Pageable pageable);
+
     List<RuleNodeEntity> findRuleNodesByRuleChainIdAndExternalIdIn(UUID ruleChainId, List<UUID> externalIds);
 
     @Transactional

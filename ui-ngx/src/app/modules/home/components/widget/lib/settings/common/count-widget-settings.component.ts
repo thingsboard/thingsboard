@@ -78,6 +78,8 @@ export class CountWidgetSettingsComponent extends PageComponent implements OnIni
     this.countCardLayoutImageMap = this.alarmElseEntity ? alarmCountCardLayoutImages : entityCountCardLayoutImages;
     this.countWidgetConfigForm = this.fb.group({
       layout: [null, []],
+      autoScale: [null, []],
+
       showLabel: [null, []],
       label: [null, []],
       labelFont: [null, []],
