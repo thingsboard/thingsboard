@@ -264,7 +264,7 @@ export class DoughnutWidgetComponent implements OnInit, OnDestroy, AfterViewInit
       if (tsValue && isDefinedAndNotNull(tsValue[1]) && isNumeric(tsValue[1])) {
         value = tsValue[1];
         dataItem.hasValue = true;
-        dataItem.value = value;
+        dataItem.value = Number(value);
       } else {
         dataItem.hasValue = false;
         dataItem.value = 0;

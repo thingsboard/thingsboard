@@ -14,20 +14,19 @@
 /// limitations under the License.
 ///
 
-import { Component, Injector } from '@angular/core';
+import { Component } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { formatValue, isDefinedAndNotNull } from '@core/utils';
-import { getDataKey } from '@shared/models/widget-settings.models';
 import {
   doughnutDefaultSettings,
   DoughnutLayout,
   doughnutLayoutImages,
   doughnutLayouts,
   doughnutLayoutTranslations,
-  DoughnutLegendPosition,
+  doughnutLegendPositions,
   doughnutLegendPositionTranslations,
   DoughnutTooltipValueType,
   doughnutTooltipValueTypes,
@@ -56,7 +55,7 @@ export class DoughnutWidgetSettingsComponent extends WidgetSettingsComponent {
 
   doughnutLayoutImageMap: Map<DoughnutLayout, string>;
 
-  doughnutLegendPositions: DoughnutLegendPosition[];
+  doughnutLegendPositions = doughnutLegendPositions;
 
   doughnutLegendPositionTranslationMap = doughnutLegendPositionTranslations;
 
@@ -71,7 +70,6 @@ export class DoughnutWidgetSettingsComponent extends WidgetSettingsComponent {
   tooltipValuePreviewFn = this._tooltipValuePreviewFn.bind(this);
 
   constructor(protected store: Store<AppState>,
-              private $injector: Injector,
               private fb: UntypedFormBuilder) {
     super(store);
   }
@@ -84,8 +82,6 @@ export class DoughnutWidgetSettingsComponent extends WidgetSettingsComponent {
     const params = widgetConfig.typeParameters as any;
     this.horizontal  = isDefinedAndNotNull(params.horizontal) ? params.horizontal : false;
     this.doughnutLayoutImageMap = this.horizontal ? horizontalDoughnutLayoutImages : doughnutLayoutImages;
-    this.doughnutLegendPositions = this.horizontal ? [DoughnutLegendPosition.left, DoughnutLegendPosition.right] :
-      [DoughnutLegendPosition.top, DoughnutLegendPosition.bottom];
   }
 
   protected defaultSettings(): WidgetSettings {
