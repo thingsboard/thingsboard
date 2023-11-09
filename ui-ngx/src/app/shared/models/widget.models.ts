@@ -426,8 +426,8 @@ export const datasourcesHasOnlyComparisonAggregation = (datasources?: Array<Data
   }
   if (datasources) {
     const foundDatasource = datasources.find(datasource => {
-      const found = datasource.dataKeys && datasource.dataKeys.find(key => key.type === DataKeyType.timeseries &&
-        key.aggregationType && key.aggregationType !== AggregationType.NONE && !key.comparisonEnabled);
+      const found = datasource.dataKeys && datasource.dataKeys.find(key => key?.type === DataKeyType.timeseries &&
+        key?.aggregationType && key.aggregationType !== AggregationType.NONE && !key.comparisonEnabled);
       return !!found;
     });
     if (foundDatasource) {

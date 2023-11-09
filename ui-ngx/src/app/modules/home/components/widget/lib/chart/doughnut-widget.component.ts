@@ -424,6 +424,9 @@ export class DoughnutWidgetComponent implements OnInit, OnDestroy, AfterViewInit
     if (this.settings.showTooltip) {
       this.doughnutOptions.series[0].tooltip = {
         formatter: (params) => {
+          if (!params.name) {
+            return null;
+          }
           let value: string;
           if (this.settings.tooltipValueType === DoughnutTooltipValueType.percentage) {
             const percents = params.value / this.total * 100;
