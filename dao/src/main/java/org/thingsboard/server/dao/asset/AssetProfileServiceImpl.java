@@ -126,8 +126,8 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
         AssetProfile oldAssetProfile = null;
         if (doValidate) {
             oldAssetProfile = assetProfileValidator.validate(assetProfile, AssetProfile::getTenantId);
-        } else if (assetProfile.getId() != null) {
-            oldAssetProfile = findAssetProfileById(assetProfile.getTenantId(), assetProfile.getId());
+        } else if (assetProfile.getId() != null && assetProfile.getId().getId() != null) {
+            oldAssetProfile =  assetProfileDao.findById(assetProfile.getTenantId(), assetProfile.getId().getId());
         }
         AssetProfile savedAssetProfile;
         try {
@@ -208,13 +208,14 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
     @Override
     public AssetProfile findOrCreateAssetProfile(TenantId tenantId, String name) {
         log.trace("Executing findOrCreateAssetProfile");
-        AssetProfile assetProfile = findAssetProfileByName(tenantId, name);
+        Validator.validateString(name, INCORRECT_ASSET_PROFILE_NAME + name);
+        AssetProfile assetProfile = assetProfileDao.findByName(tenantId, name);
         if (assetProfile == null) {
             try {
                 assetProfile = this.doCreateDefaultAssetProfile(tenantId, name, name.equals("default"));
             } catch (DataValidationException e) {
                 if (ASSET_PROFILE_WITH_SUCH_NAME_ALREADY_EXISTS.equals(e.getMessage())) {
-                    assetProfile = findAssetProfileByName(tenantId, name);
+                    assetProfile = assetProfileDao.findByName(tenantId, name);
                 } else {
                     throw e;
                 }

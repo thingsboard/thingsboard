@@ -116,8 +116,8 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
         EntityView old = null;
         if (doValidate) {
             old = entityViewValidator.validate(entityView, EntityView::getTenantId);
-        } else if (entityView.getId() != null) {
-            old = findEntityViewById(entityView.getTenantId(), entityView.getId());
+        } else if (entityView.getId() != null && entityView.getId().getId() != null) {
+            old = entityViewDao.findById(entityView.getTenantId(), entityView.getId().getId());
         }
         try {
             EntityView saved = entityViewDao.save(entityView.getTenantId(), entityView);

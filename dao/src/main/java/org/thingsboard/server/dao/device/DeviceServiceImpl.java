@@ -109,7 +109,8 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
 
     @Autowired
     private DeviceProfileService deviceProfileService;
-
+    @Autowired
+    private DeviceProfileDao deviceProfileDao;
     @Autowired
     private EventService eventService;
 
@@ -223,7 +224,8 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
                 }
                 device.setDeviceProfileId(new DeviceProfileId(deviceProfile.getId().getId()));
             } else {
-                deviceProfile = this.deviceProfileService.findDeviceProfileById(device.getTenantId(), device.getDeviceProfileId());
+                validateId(device.getDeviceProfileId(), INCORRECT_DEVICE_PROFILE_ID + device.getDeviceProfileId());
+                deviceProfile = this.deviceProfileDao.findById(device.getTenantId(), device.getDeviceProfileId().getId());
                 if (deviceProfile == null) {
                     throw new DataValidationException("Device is referencing non existing device profile!");
                 }
