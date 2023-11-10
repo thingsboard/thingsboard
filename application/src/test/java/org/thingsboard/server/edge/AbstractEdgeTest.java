@@ -249,7 +249,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         validateMsgsCnt(RuleChainMetadataUpdateMsg.class, 1);
         validateRuleChainMetadataUpdates(ruleChainUUID);
 
-        // 4 messages ('general', 'mail', 'connectivity', 'jwt)
+        // 4 messages ('general', 'mail', 'connectivity', 'jwt')
         validateMsgsCnt(AdminSettingsUpdateMsg.class, 4);
         validateAdminSettings(4);
 
