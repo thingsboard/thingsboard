@@ -333,6 +333,8 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         log.debug("Executing web test teardown");
 
         loginSysAdmin();
+        deleteTenant(tenantId);
+        deleteDifferentTenant();
         verifyNoTenantsLeft();
 
         tenantProfileService.deleteTenantProfiles(TenantId.SYS_TENANT_ID);
@@ -362,7 +364,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
             }
         }
     }
-    @NotNull
+
     private List<Tenant> getAllTenants() throws Exception {
         List<Tenant> loadedTenants = new ArrayList<>();
         PageLink pageLink = new PageLink(10);
