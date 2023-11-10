@@ -108,7 +108,7 @@ public class ThingsboardInstallService {
                     log.info("Migrating ThingsBoard entities data from cassandra to SQL database ...");
                     entitiesMigrateService.migrate();
                     log.info("Updating system data...");
-                    systemDataLoaderService.updateSystemWidgets();
+                    systemDataLoaderService.loadSystemWidgets();
                 } else if ("3.0.1-cassandra".equals(upgradeFromVersion)) {
                     log.info("Migrating ThingsBoard latest timeseries data from cassandra to SQL database ...");
                     latestMigrateService.migrate();
@@ -275,7 +275,7 @@ public class ThingsboardInstallService {
                     entityDatabaseSchemaService.createOrUpdateDeviceInfoView(persistToTelemetry);
                     log.info("Updating system data...");
                     dataUpdateService.upgradeRuleNodes();
-                    systemDataLoaderService.updateSystemWidgets();
+                    systemDataLoaderService.loadSystemWidgets();
                     installScripts.loadSystemLwm2mResources();
                 }
                 log.info("Upgrade finished successfully!");
