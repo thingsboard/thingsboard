@@ -302,6 +302,9 @@ import {
 import {
   LiquidLevelCardWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/indicator/liquid-level-card-widget-settings.component';
+import {
+  DoughnutWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/chart/doughnut-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -412,7 +415,8 @@ import {
     SignalStrengthWidgetSettingsComponent,
     ValueChartCardWidgetSettingsComponent,
     ProgressBarWidgetSettingsComponent,
-    LiquidLevelCardWidgetSettingsComponent
+    LiquidLevelCardWidgetSettingsComponent,
+    DoughnutWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -529,6 +533,7 @@ import {
     ValueChartCardWidgetSettingsComponent,
     ProgressBarWidgetSettingsComponent,
     LiquidLevelCardWidgetSettingsComponent,
+    DoughnutWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -611,4 +616,5 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-value-chart-card-widget-settings': ValueChartCardWidgetSettingsComponent,
   'tb-progress-bar-widget-settings': ProgressBarWidgetSettingsComponent,
   'tb-liquid-level-card-widget-settings': LiquidLevelCardWidgetSettingsComponent,
+  'tb-doughnut-widget-settings': DoughnutWidgetSettingsComponent
 };

@@ -817,3 +817,7 @@ export const getOS = (): string => {
 export const camelCase = (str: string): string => {
   return _.camelCase(str);
 };
+
+export const convertKeysToCamelCase = (obj: Record<string, any>): Record<string, any> => {
+  return _.mapKeys(obj, (value, key) => _.camelCase(key));
+};

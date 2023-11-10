@@ -20,6 +20,7 @@ import { BehaviorSubject, Observable, of, Subscription } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { BreakpointObserver } from '@angular/cdk/layout';
+import { resolveBreakpoint } from '@shared/models/constants';
 
 export type GridEntitiesFetchFunction<T, F> = (pageSize: number, page: number, filter: F) => Observable<PageData<T>>;
 
@@ -48,7 +49,7 @@ export class ScrollGridDatasource<T, F> extends DataSource<(T | GridCellType)[]>
   private _subscription: Subscription;
 
   constructor(private breakpointObserver: BreakpointObserver,
-              private columns: ScrollGridColumns,
+              private columns: ScrollGridColumns | number,
               private fetchFunction: GridEntitiesFetchFunction<T, F>,
               private filter: F) {
     super();
@@ -58,9 +59,9 @@ export class ScrollGridDatasource<T, F> extends DataSource<(T | GridCellType)[]>
     this._viewport = (collectionViewer as any)._viewport;
     this._init();
 
-    if (this.columns.breakpoints) {
+    if (typeof this.columns === 'object' && this.columns.breakpoints) {
       const breakpoints = Object.keys(this.columns.breakpoints);
-      this._subscription.add(this.breakpointObserver.observe(breakpoints).subscribe(
+      this._subscription.add(this.breakpointObserver.observe(breakpoints.map(breakpoint => resolveBreakpoint(breakpoint))).subscribe(
         () => {
           this._columnsChanged(this._detectColumns());
         }
@@ -119,16 +120,21 @@ export class ScrollGridDatasource<T, F> extends DataSource<(T | GridCellType)[]>
   }
 
   private _detectColumns(): number {
-    let columns = this.columns.columns;
-    if (this.columns.breakpoints) {
-      for (const breakpont of Object.keys(this.columns.breakpoints)) {
-        if (this.breakpointObserver.isMatched(breakpont)) {
-          columns = this.columns.breakpoints[breakpont];
-          break;
+    if (typeof this.columns !== 'object') {
+      return this.columns;
+    } else {
+      let columns = this.columns.columns;
+      if (this.columns.breakpoints) {
+        for (const breakpoint of Object.keys(this.columns.breakpoints)) {
+          const breakpointValue = resolveBreakpoint(breakpoint);
+          if (this.breakpointObserver.isMatched(breakpointValue)) {
+            columns = this.columns.breakpoints[breakpoint];
+            break;
+          }
         }
       }
+      return columns;
     }
-    return columns;
   }
 
   private _init() {

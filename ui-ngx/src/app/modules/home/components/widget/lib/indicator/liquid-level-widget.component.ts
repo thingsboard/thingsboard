@@ -541,13 +541,13 @@ export class LiquidLevelWidgetComponent implements OnInit {
             </div>`;
   }
 
-  private convertInputData(value: number): number {
+  private convertInputData(value: any): number {
     if (this.settings.datasourceUnits !== CapacityUnits.percent) {
-      return (convertLiters(value, this.settings.datasourceUnits, ConversionType.to) /
+      return (convertLiters(Number(value), this.settings.datasourceUnits, ConversionType.to) /
         convertLiters(this.volume, this.settings.volumeUnits, ConversionType.to)) * 100;
     }
 
-    return value;
+    return Number(value);
   }
 
   private convertOutputData(value: number): number {

@@ -301,7 +301,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
         if (subInfo != null) {
             log.trace("[{}][{}] Handling alarm update {}: {}", tenantId, entityId, alarm, deleted);
             for (Map.Entry<String, TbSubscriptionsInfo> entry : subInfo.getSubs().entrySet()) {
-                if (entry.getValue().notifications) {
+                if (entry.getValue().alarms) {
                     onAlarmSubUpdate(entry.getKey(), entityId, alarm, deleted);
                 }
             }
