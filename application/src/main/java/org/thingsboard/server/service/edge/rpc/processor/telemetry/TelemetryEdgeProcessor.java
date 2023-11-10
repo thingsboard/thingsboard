@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.EntityDataProto;
@@ -37,11 +38,14 @@ public class TelemetryEdgeProcessor extends BaseTelemetryProcessor {
     }
 
     public DownlinkMsg convertTelemetryEventToDownlink(EdgeEvent edgeEvent) throws JsonProcessingException {
-        if (edgeEvent.getBody() != null && edgeEvent.getBody().toString().length() > 1000) {
-            log.debug("[{}][{}][{}] Conversion to a DownlinkMsg telemetry event failed due to a size limit violation. " +
-                            "Current size is {}, but the limit is 1000. {}", edgeEvent.getTenantId(), edgeEvent.getEdgeId(),
-                    edgeEvent.getEntityId(), edgeEvent.getBody().toString().length(), edgeEvent.getBody().toString().substring(0, 100));
-            return null;
+        if (edgeEvent.getBody() != null) {
+            String bodyStr = edgeEvent.getBody().toString();
+            if (bodyStr.length() > 1000) {
+                log.debug("[{}][{}][{}] Conversion to a DownlinkMsg telemetry event failed due to a size limit violation. " +
+                                "Current size is {}, but the limit is 1000. {}", edgeEvent.getTenantId(), edgeEvent.getEdgeId(),
+                        edgeEvent.getEntityId(), bodyStr.length(), StringUtils.truncate(bodyStr, 100));
+                return null;
+            }
         }
         EntityType entityType = EntityType.valueOf(edgeEvent.getType().name());
         EntityDataProto entityDataProto = convertTelemetryEventToEntityDataProto(
