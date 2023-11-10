@@ -27,7 +27,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNode;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNode;
@@ -67,7 +66,6 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
-import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.alarm.AlarmDao;
 import org.thingsboard.server.dao.audit.AuditLogDao;
@@ -90,6 +88,7 @@ import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.component.RuleNodeClassInfo;
 import org.thingsboard.server.service.install.InstallScripts;
 import org.thingsboard.server.service.install.SystemDataLoaderService;
+import org.thingsboard.server.utils.TbNodeUpgradeUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -291,16 +290,12 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 continue;
             }
             var ruleNodeId = ruleNode.getId();
-            var oldConfiguration = ruleNode.getConfiguration();
             int fromVersion = ruleNode.getConfigurationVersion();
             log.debug("Going to upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
                     ruleNodeId, ruleNodeType, fromVersion, toVersion);
             try {
-                var tbVersionedNode = (TbNode) ruleNodeClassInfo.getClazz().getDeclaredConstructor().newInstance();
-                TbPair<Boolean, JsonNode> upgradeRuleNodeConfigurationResult = tbVersionedNode.upgrade(fromVersion, oldConfiguration);
-                if (upgradeRuleNodeConfigurationResult.getFirst()) {
-                    ruleNode.setConfiguration(upgradeRuleNodeConfigurationResult.getSecond());
-                }
+                ruleNode.setConfiguration(TbNodeUpgradeUtils.upgradeRuleNodeConfiguration(ruleNode, ruleNodeClassInfo.getAnnotation(),
+                        ruleNodeClassInfo.getClazz()));
                 ruleNode.setConfigurationVersion(toVersion);
                 saveFutures.add(jpaExecutorService.submit(() -> {
                     ruleChainService.saveRuleNode(TenantId.SYS_TENANT_ID, ruleNode);
