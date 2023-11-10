@@ -80,6 +80,7 @@ import {
   ExportWidgetsBundleDialogResult
 } from '@home/components/import-export/export-widgets-bundle-dialog.component';
 import { selectUserSettingsProperty } from '@core/auth/auth.selectors';
+import { ActionPreferencesPutUserSettings } from '@core/auth/auth.actions';
 
 // @dynamic
 @Injectable()
@@ -315,17 +316,13 @@ export class ImportExportService {
   }
 
   public exportWidgetsBundle(widgetsBundleId: string) {
-    let includeBundleWidgetsInExport = false;
-    this.store.pipe(select(selectUserSettingsProperty( 'includeBundleWidgetsInExport'))).pipe(
-      take(1)
-    ).subscribe((settings: boolean) => {
-      if(settings) {
-        includeBundleWidgetsInExport = settings;
-      }
-    });
+    const tasks = {
+      includeBundleWidgetsInExport: this.store.pipe(select(selectUserSettingsProperty( 'includeBundleWidgetsInExport'))).pipe(take(1)),
+      widgetsBundle: this.widgetService.getWidgetsBundle(widgetsBundleId)
+    };
 
-    this.widgetService.getWidgetsBundle(widgetsBundleId).subscribe(
-      (widgetsBundle) => {
+    forkJoin(tasks).subscribe({
+      next: ({includeBundleWidgetsInExport, widgetsBundle}) => {
         this.dialog.open<ExportWidgetsBundleDialogComponent, ExportWidgetsBundleDialogData,
           ExportWidgetsBundleDialogResult>(ExportWidgetsBundleDialogComponent, {
           disableClose: true,
@@ -337,6 +334,9 @@ export class ImportExportService {
         }).afterClosed().subscribe(
           (result) => {
             if (result) {
+              if (includeBundleWidgetsInExport !== result.exportWidgets) {
+                this.store.dispatch(new ActionPreferencesPutUserSettings({includeBundleWidgetsInExport: result.exportWidgets}));
+              }
               if (result.exportWidgets) {
                 this.exportWidgetsBundleWithWidgetTypes(widgetsBundle);
               } else {
@@ -346,10 +346,10 @@ export class ImportExportService {
           }
         );
       },
-      (e) => {
+      error: (e) => {
         this.handleExportError(e, 'widgets-bundle.export-failed-error');
       }
-    );
+    });
   }
 
   private exportWidgetsBundleWithWidgetTypes(widgetsBundle: WidgetsBundle) {

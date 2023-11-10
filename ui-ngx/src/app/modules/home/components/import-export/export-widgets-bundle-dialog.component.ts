@@ -46,17 +46,14 @@ export class ExportWidgetsBundleDialogComponent extends DialogComponent<ExportWi
 
   exportWidgetsFormControl = new FormControl(false);
 
-  includeBundleWidgetsInExport: boolean;
-
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: ExportWidgetsBundleDialogData,
               public dialogRef: MatDialogRef<ExportWidgetsBundleDialogComponent, ExportWidgetsBundleDialogResult>) {
     super(store, router, dialogRef);
     this.widgetsBundle = data.widgetsBundle;
-    this.includeBundleWidgetsInExport = data.includeBundleWidgetsInExport;
-    if (this.includeBundleWidgetsInExport) {
-      this.exportWidgetsFormControl.patchValue(this.includeBundleWidgetsInExport, {emitEvent: false});
+    if (data.includeBundleWidgetsInExport) {
+      this.exportWidgetsFormControl.patchValue(data.includeBundleWidgetsInExport, {emitEvent: false});
     }
   }
 
@@ -68,9 +65,6 @@ export class ExportWidgetsBundleDialogComponent extends DialogComponent<ExportWi
   }
 
   export(): void {
-    if (this.includeBundleWidgetsInExport !== this.exportWidgetsFormControl.value) {
-      this.store.dispatch(new ActionPreferencesPutUserSettings({includeBundleWidgetsInExport: this.exportWidgetsFormControl.value}));
-    }
     this.dialogRef.close({
       exportWidgets: this.exportWidgetsFormControl.value
     });
