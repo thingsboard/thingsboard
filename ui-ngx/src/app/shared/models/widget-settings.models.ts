@@ -161,6 +161,8 @@ export abstract class ColorProcessor {
         return new RangeColorProcessor(settings);
       case ColorType.function:
         return new FunctionColorProcessor(settings);
+      default:
+        return new ConstantColorProcessor(settings);
     }
   }
 
