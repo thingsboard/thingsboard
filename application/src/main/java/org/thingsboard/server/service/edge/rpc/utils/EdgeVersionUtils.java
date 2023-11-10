@@ -21,16 +21,7 @@ import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 @Slf4j
 public final class EdgeVersionUtils {
 
-    public static boolean isEdgeProtoDeprecated(EdgeVersion edgeVersion) {
-        switch (edgeVersion) {
-            case V_3_3_0:
-            case V_3_3_3:
-            case V_3_4_0:
-            case V_3_6_0:
-                return true;
-            case V_3_6_1:
-            default:
-                return false;
-        }
+    public static boolean isEdgeVersionOlderThan(EdgeVersion currentVersion, EdgeVersion requiredVersion) {
+        return currentVersion.ordinal() < requiredVersion.ordinal();
     }
 }
