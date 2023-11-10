@@ -90,14 +90,24 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
 
     @Override
     public AssetProfile findAssetProfileById(TenantId tenantId, AssetProfileId assetProfileId) {
+        return findAssetProfileById(tenantId, assetProfileId, true);
+    }
+
+    @Override
+    public AssetProfile findAssetProfileById(TenantId tenantId, AssetProfileId assetProfileId, boolean putInCache) {
         log.trace("Executing findAssetProfileById [{}]", assetProfileId);
         Validator.validateId(assetProfileId, INCORRECT_ASSET_PROFILE_ID + assetProfileId);
-        return cache.getAndPutInTransaction(AssetProfileCacheKey.fromId(assetProfileId),
-                () -> assetProfileDao.findById(tenantId, assetProfileId.getId()), true);
+        return cache.getOrFetchFromDB(AssetProfileCacheKey.fromId(assetProfileId),
+                () -> assetProfileDao.findById(tenantId, assetProfileId.getId()), true, putInCache);
     }
 
     @Override
     public AssetProfile findAssetProfileByName(TenantId tenantId, String profileName) {
+        return findAssetProfileByName(tenantId, profileName, true);
+    }
+
+    @Override
+    public AssetProfile findAssetProfileByName(TenantId tenantId, String profileName, boolean putInCache) {
         log.trace("Executing findAssetProfileByName [{}][{}]", tenantId, profileName);
         Validator.validateString(profileName, INCORRECT_ASSET_PROFILE_NAME + profileName);
         return cache.getAndPutInTransaction(AssetProfileCacheKey.fromName(tenantId, profileName),
@@ -126,8 +136,8 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
         AssetProfile oldAssetProfile = null;
         if (doValidate) {
             oldAssetProfile = assetProfileValidator.validate(assetProfile, AssetProfile::getTenantId);
-        } else if (assetProfile.getId() != null && assetProfile.getId().getId() != null) {
-            oldAssetProfile =  assetProfileDao.findById(assetProfile.getTenantId(), assetProfile.getId().getId());
+        } else if (assetProfile.getId() != null) {
+            oldAssetProfile = findAssetProfileById(assetProfile.getTenantId(), assetProfile.getId(), false);
         }
         AssetProfile savedAssetProfile;
         try {
@@ -208,14 +218,13 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
     @Override
     public AssetProfile findOrCreateAssetProfile(TenantId tenantId, String name) {
         log.trace("Executing findOrCreateAssetProfile");
-        Validator.validateString(name, INCORRECT_ASSET_PROFILE_NAME + name);
-        AssetProfile assetProfile = assetProfileDao.findByName(tenantId, name);
+        AssetProfile assetProfile = findAssetProfileByName(tenantId, name, false);
         if (assetProfile == null) {
             try {
                 assetProfile = this.doCreateDefaultAssetProfile(tenantId, name, name.equals("default"));
             } catch (DataValidationException e) {
                 if (ASSET_PROFILE_WITH_SUCH_NAME_ALREADY_EXISTS.equals(e.getMessage())) {
-                    assetProfile = assetProfileDao.findByName(tenantId, name);
+                    assetProfile = findAssetProfileByName(tenantId, name, false);
                 } else {
                     throw e;
                 }

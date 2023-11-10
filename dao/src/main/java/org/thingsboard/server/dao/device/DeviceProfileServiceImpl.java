@@ -113,18 +113,28 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
 
     @Override
     public DeviceProfile findDeviceProfileById(TenantId tenantId, DeviceProfileId deviceProfileId) {
+        return findDeviceProfileById(tenantId, deviceProfileId, true);
+    }
+
+    @Override
+    public DeviceProfile findDeviceProfileById(TenantId tenantId, DeviceProfileId deviceProfileId, boolean putInCache) {
         log.trace("Executing findDeviceProfileById [{}]", deviceProfileId);
         validateId(deviceProfileId, INCORRECT_DEVICE_PROFILE_ID + deviceProfileId);
-        return cache.getAndPutInTransaction(DeviceProfileCacheKey.fromId(deviceProfileId),
-                () -> deviceProfileDao.findById(tenantId, deviceProfileId.getId()), true);
+        return cache.getOrFetchFromDB(DeviceProfileCacheKey.fromId(deviceProfileId),
+                () -> deviceProfileDao.findById(tenantId, deviceProfileId.getId()), true, putInCache);
     }
 
     @Override
     public DeviceProfile findDeviceProfileByName(TenantId tenantId, String profileName) {
+        return findDeviceProfileByName(tenantId, profileName, true);
+    }
+
+    @Override
+    public DeviceProfile findDeviceProfileByName(TenantId tenantId, String profileName, boolean putInCache) {
         log.trace("Executing findDeviceProfileByName [{}][{}]", tenantId, profileName);
         validateString(profileName, INCORRECT_DEVICE_PROFILE_NAME + profileName);
-        return cache.getAndPutInTransaction(DeviceProfileCacheKey.fromName(tenantId, profileName),
-                () -> deviceProfileDao.findByName(tenantId, profileName), true);
+        return cache.getOrFetchFromDB(DeviceProfileCacheKey.fromName(tenantId, profileName),
+                () -> deviceProfileDao.findByName(tenantId, profileName), true, putInCache);
     }
 
     @Override
@@ -163,8 +173,8 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
         DeviceProfile oldDeviceProfile = null;
         if (doValidate) {
             oldDeviceProfile = deviceProfileValidator.validate(deviceProfile, DeviceProfile::getTenantId);
-        } else if (deviceProfile.getId() != null && deviceProfile.getId().getId() != null) {
-            oldDeviceProfile = deviceProfileDao.findById(deviceProfile.getTenantId(), deviceProfile.getId().getId());
+        } else if (deviceProfile.getId() != null) {
+            oldDeviceProfile = findDeviceProfileById(deviceProfile.getTenantId(), deviceProfile.getId(), false);
         }
         DeviceProfile savedDeviceProfile;
         try {
@@ -252,13 +262,13 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     @Override
     public DeviceProfile findOrCreateDeviceProfile(TenantId tenantId, String name) {
         log.trace("Executing findOrCreateDefaultDeviceProfile");
-        DeviceProfile deviceProfile = deviceProfileDao.findByName(tenantId, name);
+        DeviceProfile deviceProfile = findDeviceProfileByName(tenantId, name, false);
         if (deviceProfile == null) {
             try {
                 deviceProfile = this.doCreateDefaultDeviceProfile(tenantId, name, name.equals("default"));
             } catch (DataValidationException e) {
                 if (DEVICE_PROFILE_WITH_SUCH_NAME_ALREADY_EXISTS.equals(e.getMessage())) {
-                    deviceProfile = deviceProfileDao.findByName(tenantId, name);
+                    deviceProfile = findDeviceProfileByName(tenantId, name, false);
                 } else {
                     throw e;
                 }
