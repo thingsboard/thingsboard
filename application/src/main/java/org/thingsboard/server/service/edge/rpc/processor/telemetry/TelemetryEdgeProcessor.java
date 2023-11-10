@@ -37,6 +37,12 @@ public class TelemetryEdgeProcessor extends BaseTelemetryProcessor {
     }
 
     public DownlinkMsg convertTelemetryEventToDownlink(EdgeEvent edgeEvent) throws JsonProcessingException {
+        if (edgeEvent.getBody() != null && edgeEvent.getBody().toString().length() > 1000) {
+            log.debug("[{}][{}][{}] Conversion to a DownlinkMsg telemetry event failed due to a size limit violation. " +
+                            "Current size is {}, but the limit is 1000. {}", edgeEvent.getTenantId(), edgeEvent.getEdgeId(),
+                    edgeEvent.getEntityId(), edgeEvent.getBody().toString().length(), edgeEvent.getBody().toString().substring(0, 100));
+            return null;
+        }
         EntityType entityType = EntityType.valueOf(edgeEvent.getType().name());
         EntityDataProto entityDataProto = convertTelemetryEventToEntityDataProto(
                 edgeEvent.getTenantId(), entityType, edgeEvent.getEntityId(),
