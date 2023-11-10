@@ -22,7 +22,6 @@ import { FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
-import { ActionPreferencesPutUserSettings } from '@core/auth/auth.actions';
 
 export interface ExportWidgetsBundleDialogData {
   widgetsBundle: WidgetsBundle;

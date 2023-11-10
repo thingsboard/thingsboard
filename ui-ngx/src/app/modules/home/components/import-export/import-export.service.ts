@@ -38,7 +38,7 @@ import { forkJoin, Observable, of, Subject } from 'rxjs';
 import { catchError, map, mergeMap, switchMap, take, tap } from 'rxjs/operators';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityService } from '@core/http/entity.service';
-import { Widget, WidgetSize, WidgetType, WidgetTypeDetails } from '@shared/models/widget.models';
+import { Widget, WidgetSize, WidgetTypeDetails } from '@shared/models/widget.models';
 import {
   EntityAliasesDialogComponent,
   EntityAliasesDialogData
