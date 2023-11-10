@@ -20,20 +20,23 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.util.TbPair;
+import org.thingsboard.server.service.component.RuleNodeClassInfo;
 
 public class TbNodeUpgradeUtils {
 
-    public static JsonNode upgradeRuleNodeConfiguration(RuleNode node,
-                                                        org.thingsboard.rule.engine.api.RuleNode annotation,
-                                                        Class<?> nodeClass) throws Exception {
+    public static void upgradeConfigurationAndVersion(RuleNode node, RuleNodeClassInfo nodeInfo) throws Exception {
         JsonNode oldConfiguration = node.getConfiguration();
         if (oldConfiguration == null || !oldConfiguration.isObject()) {
-            var configClass = annotation.configClazz();
-            return JacksonUtil.valueToTree(configClass.getDeclaredConstructor().newInstance().defaultConfiguration());
+            var configClass = nodeInfo.getAnnotation().configClazz();
+            node.setConfiguration(JacksonUtil.valueToTree(configClass.getDeclaredConstructor().newInstance().defaultConfiguration()));
+        } else {
+            var tbVersionedNode = (TbNode) nodeInfo.getClazz().getDeclaredConstructor().newInstance();
+            TbPair<Boolean, JsonNode> upgradeResult = tbVersionedNode.upgrade(node.getConfigurationVersion(), oldConfiguration);
+            if (upgradeResult.getFirst()) {
+                node.setConfiguration(upgradeResult.getSecond());
+            }
         }
-        var tbVersionedNode = (TbNode) nodeClass.getDeclaredConstructor().newInstance();
-        TbPair<Boolean, JsonNode> upgradeResult = tbVersionedNode.upgrade(node.getConfigurationVersion(), oldConfiguration);
-        return upgradeResult.getFirst() ? upgradeResult.getSecond() : oldConfiguration;
+        node.setConfigurationVersion(nodeInfo.getCurrentVersion());
     }
 
 }

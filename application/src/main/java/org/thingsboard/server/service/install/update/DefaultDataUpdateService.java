@@ -294,9 +294,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
             log.debug("Going to upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
                     ruleNodeId, ruleNodeType, fromVersion, toVersion);
             try {
-                ruleNode.setConfiguration(TbNodeUpgradeUtils.upgradeRuleNodeConfiguration(ruleNode, ruleNodeClassInfo.getAnnotation(),
-                        ruleNodeClassInfo.getClazz()));
-                ruleNode.setConfigurationVersion(toVersion);
+                TbNodeUpgradeUtils.upgradeConfigurationAndVersion(ruleNode, ruleNodeClassInfo);
                 saveFutures.add(jpaExecutorService.submit(() -> {
                     ruleChainService.saveRuleNode(TenantId.SYS_TENANT_ID, ruleNode);
                     log.debug("Successfully upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",

@@ -19,11 +19,10 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNode;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
 import org.thingsboard.server.common.data.rule.RuleNode;
-import org.thingsboard.server.common.data.util.TbPair;
+import org.thingsboard.server.service.component.RuleNodeClassInfo;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -33,53 +32,59 @@ public class TbNodeUpgradeUtilsTest {
     @Test
     public void testUpgradeRuleNodeConfigurationWithNullConfig() throws Exception {
         // GIVEN
-        var node = mock(RuleNode.class);
-        var nodeClass = TbGetAttributesNode.class;
+        var node = new RuleNode();
+        var nodeInfo = mock(RuleNodeClassInfo.class);
         var nodeConfigClazz = TbGetAttributesNodeConfiguration.class;
-
         var annotation = mock(org.thingsboard.rule.engine.api.RuleNode.class);
-
         var defaultConfig = JacksonUtil.valueToTree(nodeConfigClazz.getDeclaredConstructor().newInstance().defaultConfiguration());
 
-        when(node.getConfiguration()).thenReturn(null);
-        when(node.getConfigurationVersion()).thenReturn(0);
+        when(nodeInfo.getClazz()).thenReturn((Class)TbGetAttributesNode.class);
+        when(nodeInfo.getCurrentVersion()).thenReturn(1);
+        when(nodeInfo.getAnnotation()).thenReturn(annotation);
         when(annotation.configClazz()).thenReturn((Class) nodeConfigClazz);
-        // WHEN
-        var upgradedConfig = TbNodeUpgradeUtils.upgradeRuleNodeConfiguration(node, annotation, nodeClass);
 
+        // WHEN
+        TbNodeUpgradeUtils.upgradeConfigurationAndVersion(node, nodeInfo);
         // THEN
-        Assertions.assertThat(upgradedConfig).isEqualTo(defaultConfig);
+        Assertions.assertThat(node.getConfiguration()).isEqualTo(defaultConfig);
+        Assertions.assertThat(node.getConfigurationVersion()).isEqualTo(1);
     }
 
     @Test
     public void testUpgradeRuleNodeConfigurationWithNullNodeConfig() throws Exception {
         // GIVEN
-        var node = mock(RuleNode.class);
-        var nodeClass = TbGetAttributesNode.class;
+        var node = new RuleNode();
+        node.setConfiguration(NullNode.instance);
+        var nodeInfo = mock(RuleNodeClassInfo.class);
         var nodeConfigClazz = TbGetAttributesNodeConfiguration.class;
-
         var annotation = mock(org.thingsboard.rule.engine.api.RuleNode.class);
-
         var defaultConfig = JacksonUtil.valueToTree(nodeConfigClazz.getDeclaredConstructor().newInstance().defaultConfiguration());
 
-        when(node.getConfiguration()).thenReturn(NullNode.instance);
-        when(node.getConfigurationVersion()).thenReturn(0);
+        when(nodeInfo.getClazz()).thenReturn((Class)TbGetAttributesNode.class);
+        when(nodeInfo.getCurrentVersion()).thenReturn(1);
+        when(nodeInfo.getAnnotation()).thenReturn(annotation);
         when(annotation.configClazz()).thenReturn((Class) nodeConfigClazz);
-        // WHEN
-        var upgradedConfig = TbNodeUpgradeUtils.upgradeRuleNodeConfiguration(node, annotation, nodeClass);
 
+        // WHEN
+        TbNodeUpgradeUtils.upgradeConfigurationAndVersion(node, nodeInfo);
         // THEN
-        Assertions.assertThat(upgradedConfig).isEqualTo(defaultConfig);
+        Assertions.assertThat(node.getConfiguration()).isEqualTo(defaultConfig);
+        Assertions.assertThat(node.getConfigurationVersion()).isEqualTo(1);
     }
 
     @Test
     public void testUpgradeRuleNodeConfigurationWithNonNullConfig() throws Exception {
         // GIVEN
-        var node = mock(RuleNode.class);
-        var nodeClass = TbGetAttributesNode.class;
+        var node = new RuleNode();
+        var nodeInfo = mock(RuleNodeClassInfo.class);
         var nodeConfigClazz = TbGetAttributesNodeConfiguration.class;
-
         var annotation = mock(org.thingsboard.rule.engine.api.RuleNode.class);
+        var defaultConfig = JacksonUtil.valueToTree(nodeConfigClazz.getDeclaredConstructor().newInstance().defaultConfiguration());
+
+        when(nodeInfo.getClazz()).thenReturn((Class)TbGetAttributesNode.class);
+        when(nodeInfo.getCurrentVersion()).thenReturn(1);
+        when(nodeInfo.getAnnotation()).thenReturn(annotation);
+        when(annotation.configClazz()).thenReturn((Class) nodeConfigClazz);
 
         String versionZeroDefaultConfigStr = "{\"fetchToData\":false," +
                 "\"clientAttributeNames\":[]," +
@@ -88,24 +93,13 @@ public class TbNodeUpgradeUtilsTest {
                 "\"latestTsKeyNames\":[]," +
                 "\"tellFailureIfAbsent\":true," +
                 "\"getLatestValueWithTs\":false}";
-
-        var existingConfig = JacksonUtil.toJsonNode(versionZeroDefaultConfigStr);
-        int fromVersion = 0;
-        var currentDefaultConfig = JacksonUtil.valueToTree(nodeConfigClazz.getDeclaredConstructor().newInstance().defaultConfiguration());
-
-        when(node.getConfiguration()).thenReturn(existingConfig);
-        when(node.getConfigurationVersion()).thenReturn(fromVersion);
-        when(annotation.configClazz()).thenReturn((Class) nodeConfigClazz);
-
-        TbNode tbVersionedNodeMock = mock(nodeClass);
-
-        when(tbVersionedNodeMock.upgrade(fromVersion, existingConfig)).thenReturn(new TbPair<>(true, currentDefaultConfig));
-
+        node.setConfiguration(JacksonUtil.toJsonNode(versionZeroDefaultConfigStr));
         // WHEN
-        var upgradedConfig = TbNodeUpgradeUtils.upgradeRuleNodeConfiguration(node, annotation, nodeClass);
-
+        TbNodeUpgradeUtils.upgradeConfigurationAndVersion(node, nodeInfo);
         // THEN
-        Assertions.assertThat(upgradedConfig).isEqualTo(currentDefaultConfig);
+        Assertions.assertThat(node.getConfiguration()).isEqualTo(defaultConfig);
+        Assertions.assertThat(node.getConfigurationVersion()).isEqualTo(1);
+
     }
 
 }

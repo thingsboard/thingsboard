@@ -406,9 +406,7 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
                     log.debug("Going to upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
                             ruleNodeId, ruleNodeType, fromVersion, toVersion);
                     try {
-                        node.setConfiguration(TbNodeUpgradeUtils.upgradeRuleNodeConfiguration(node, ruleNodeClass.getAnnotation(),
-                                ruleNodeClass.getClazz()));
-                        node.setConfigurationVersion(toVersion);
+                        TbNodeUpgradeUtils.upgradeConfigurationAndVersion(node, ruleNodeClass);
                         log.debug("Successfully upgrade rule node with id: {} type: {}, rule chain id: {} fromVersion: {} toVersion: {}",
                                 ruleNodeId, ruleNodeType, ruleChainId, fromVersion, toVersion);
                     } catch (TbNodeException e) {
