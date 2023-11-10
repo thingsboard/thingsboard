@@ -162,7 +162,7 @@ public class DeviceConnectivityUtil {
         switch (deviceCredentials.getCredentialsType()) {
             case ACCESS_TOKEN:
                 String client = COAPS.equals(protocol) ? "coap-client-openssl" : "coap-client";
-                return String.format("%s -m POST %s://%s%s/api/v1/%s/telemetry -t json -e %s",
+                return String.format("%s -v 6 -m POST %s://%s%s/api/v1/%s/telemetry -t json -e %s",
                         client, protocol, host, port, deviceCredentials.getCredentialsId(), JSON_EXAMPLE_PAYLOAD);
             default:
                 return null;
