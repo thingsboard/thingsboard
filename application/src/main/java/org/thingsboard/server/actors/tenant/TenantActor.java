@@ -53,10 +53,13 @@ import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.rule.engine.DeviceDeleteMsg;
 import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 public class TenantActor extends RuleChainManagerActor {
@@ -65,8 +68,11 @@ public class TenantActor extends RuleChainManagerActor {
     private boolean isCore;
     private ApiUsageState apiUsageState;
 
+    private Set<DeviceId> deletedDevices;
+
     private TenantActor(ActorSystemContext systemContext, TenantId tenantId) {
         super(systemContext, tenantId);
+        this.deletedDevices = new HashSet<>();
     }
 
     boolean cantFindTenant = false;
@@ -221,6 +227,10 @@ public class TenantActor extends RuleChainManagerActor {
         if (!isCore) {
             log.warn("RECEIVED INVALID MESSAGE: {}", msg);
         }
+        if (deletedDevices.contains(msg.getDeviceId())) {
+            log.warn("RECEIVED MESSAGE FOR DELETED DEVICE: {}", msg);
+            return;
+        }
         TbActorRef deviceActor = getOrCreateDeviceActor(msg.getDeviceId());
         if (priority) {
             deviceActor.tellWithHighPriority(msg);
@@ -249,6 +259,10 @@ public class TenantActor extends RuleChainManagerActor {
                 Edge edge = systemContext.getEdgeService().findEdgeById(tenantId, edgeId);
                 edgeRpcService.updateEdge(tenantId, edge);
             }
+        } else if (msg.getEntityId().getEntityType() == EntityType.DEVICE && ComponentLifecycleEvent.DELETED == msg.getEvent()) {
+            DeviceId deviceId = (DeviceId) msg.getEntityId();
+            onToDeviceActorMsg(new DeviceDeleteMsg(tenantId, deviceId), true);
+            deletedDevices.add(deviceId);
         } else if (isRuleEngine) {
             TbActorRef target = getEntityActorRef(msg.getEntityId());
             if (target != null) {
