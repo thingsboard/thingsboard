@@ -172,6 +172,8 @@ queue:
     max_msg_size: "${TB_QUEUE_PUBSUB_MAX_MSG_SIZE:1048576}" #in bytes
     # Number of messages per consumer
     max_messages: "${TB_QUEUE_PUBSUB_MAX_MESSAGES:1000}"
+    # Number of threads of pubsub executor provider
+    executor_thread_pool_size: "${TB_QUEUE_PUBSUB_EXECUTOR_THREAD_SIZE:50}"
     queue-properties:
       # Pub/Sub properties for Core subscribers, messages which will commit after ackDeadlineInSec period can be consumed again
       core: "${TB_QUEUE_PUBSUB_CORE_QUEUE_PROPERTIES:ackDeadlineInSec:30;messageRetentionInSec:604800}"

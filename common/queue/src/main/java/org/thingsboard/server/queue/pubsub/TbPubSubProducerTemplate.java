@@ -18,6 +18,7 @@ package org.thingsboard.server.queue.pubsub;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
+import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.gson.Gson;
 import com.google.protobuf.ByteString;
@@ -120,7 +121,14 @@ public class TbPubSubProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
             try {
                 admin.createTopicIfNotExists(topic);
                 ProjectTopicName topicName = ProjectTopicName.of(pubSubSettings.getProjectId(), topic);
-                Publisher publisher = Publisher.newBuilder(topicName).setCredentialsProvider(pubSubSettings.getCredentialsProvider()).build();
+                InstantiatingExecutorProvider executorProvider =
+                        InstantiatingExecutorProvider.newBuilder()
+                                .setExecutorThreadCount(pubSubSettings.getExecutorThreadPoolSize())
+                                .build();
+                Publisher publisher = Publisher.newBuilder(topicName)
+                        .setCredentialsProvider(pubSubSettings.getCredentialsProvider())
+                        .setExecutorProvider(executorProvider)
+                        .build();
                 publisherMap.put(topic, publisher);
                 return publisher;
             } catch (IOException e) {
