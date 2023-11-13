@@ -159,25 +159,30 @@
             </mat-select>
           </mat-form-field>
         </fieldset>
-        <fieldset class="fields-group" fxLayout="column" fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center" fxLayoutGap="8px">
+        <fieldset class="fields-group" fxLayout="column" fxLayoutGap="8px">
           <legend class="group-title" translate>dashboard.mobile-layout</legend>
-          <mat-slide-toggle fxFlex formControlName="mobileAutoFillHeight">
-            {{ 'dashboard.autofill-height' | translate }}
+          <mat-slide-toggle *ngIf="isRightLayout" fxFlex formControlName="mobileDisplayLayoutFirst" style="display: block;">
+            {{ 'dashboard.display-first-in-mobile-view' | translate }}
           </mat-slide-toggle>
-          <mat-form-field fxFlex class="mat-block">
-            <mat-label translate>dashboard.mobile-row-height</mat-label>
-            <input matInput formControlName="mobileRowHeight" type="number" step="any" min="5"
-                   max="200" required>
-            <mat-error *ngIf="gridSettingsFormGroup.get('mobileRowHeight').hasError('required')">
-              {{ 'dashboard.mobile-row-height-required' | translate }}
-            </mat-error>
-            <mat-error *ngIf="gridSettingsFormGroup.get('mobileRowHeight').hasError('min')">
-              {{ 'dashboard.min-mobile-row-height-message' | translate }}
-            </mat-error>
-            <mat-error *ngIf="gridSettingsFormGroup.get('mobileRowHeight').hasError('max')">
-              {{ 'dashboard.max-mobile-row-height-message' | translate }}
-            </mat-error>
-          </mat-form-field>
+          <div fxLayout="column" fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center" fxLayoutGap="8px" >
+            <mat-slide-toggle fxFlex formControlName="mobileAutoFillHeight">
+              {{ 'dashboard.autofill-height' | translate }}
+            </mat-slide-toggle>
+            <mat-form-field fxFlex class="mat-block">
+              <mat-label translate>dashboard.mobile-row-height</mat-label>
+              <input matInput formControlName="mobileRowHeight" type="number" step="any" min="5"
+                     max="200" required>
+              <mat-error *ngIf="gridSettingsFormGroup.get('mobileRowHeight').hasError('required')">
+                {{ 'dashboard.mobile-row-height-required' | translate }}
+              </mat-error>
+              <mat-error *ngIf="gridSettingsFormGroup.get('mobileRowHeight').hasError('min')">
+                {{ 'dashboard.min-mobile-row-height-message' | translate }}
+              </mat-error>
+              <mat-error *ngIf="gridSettingsFormGroup.get('mobileRowHeight').hasError('max')">
+                {{ 'dashboard.max-mobile-row-height-message' | translate }}
+              </mat-error>
+            </mat-form-field>
+          </div>
         </fieldset>
       </div>
     </fieldset>
