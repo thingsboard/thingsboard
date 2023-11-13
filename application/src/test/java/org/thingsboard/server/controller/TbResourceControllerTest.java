@@ -676,10 +676,9 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         resource.setBase64Data(TEST_DATA);
 
         TbResource savedResource = save(resource);
-        assertThat(savedResource.getLink()).isEqualTo("/api/images/system/image.png");
 
         loginTenantAdmin();
-        MockHttpServletResponse imageResponse = doGet(savedResource.getLink()).andExpect(status().isOk())
+        MockHttpServletResponse imageResponse = doGet(getImageLink(savedResource)).andExpect(status().isOk())
                 .andReturn().getResponse();
         assertThat(imageResponse.getContentAsByteArray())
                 .isEqualTo(download(savedResource.getId()))
@@ -701,9 +700,9 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         resource.setBase64Data(TEST_DATA);
 
         TbResource savedResource = save(resource);
-        assertThat(savedResource.getLink()).isEqualTo("/api/images/" + tenantId + "/image.jpg");
+        String imageLink = getImageLink(savedResource);
 
-        MockHttpServletResponse imageResponse = doGet(savedResource.getLink()).andExpect(status().isOk())
+        MockHttpServletResponse imageResponse = doGet(imageLink).andExpect(status().isOk())
                 .andReturn().getResponse();
         assertThat(imageResponse.getContentAsByteArray())
                 .isEqualTo(download(savedResource.getId()))
@@ -711,7 +710,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         assertThat(imageResponse.getContentType()).isEqualTo("image/jpeg");
 
         loginDifferentTenant();
-        doGet(savedResource.getLink()).andExpect(status().isForbidden());
+        doGet(imageLink).andExpect(status().isNotFound());
     }
 
     private TbResource save(TbResource tbResource) throws Exception {
@@ -723,5 +722,9 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         return doGet("/api/resource/" + resourceId + "/download")
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsByteArray();
+    }
+
+    private String getImageLink(TbResourceInfo resourceInfo) {
+        return "/api/images/" + (resourceInfo.getTenantId().isSysTenantId() ? "system/" : "") + resourceInfo.getResourceKey();
     }
 }

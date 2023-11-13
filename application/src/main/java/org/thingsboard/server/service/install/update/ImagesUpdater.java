@@ -30,7 +30,7 @@ import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.util.MediaTypeUtils;
+import org.thingsboard.server.common.data.util.ImageUtils;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.resource.ResourceService;
@@ -65,7 +65,7 @@ public class ImagesUpdater {
             throw new IllegalArgumentException("Image name is missing for " + imageKey + ". Please add it to names.json file");
         }
         byte[] imageData = Files.readAllBytes(imageFile);
-        String mediaType = MediaTypeUtils.fileExtensionToMediaType("image", StringUtils.substringAfterLast(imageKey, "."));
+        String mediaType = ImageUtils.fileExtensionToMediaType("image", StringUtils.substringAfterLast(imageKey, "."));
         try {
             saveImage(TenantId.SYS_TENANT_ID, imageName, imageKey, imageData, mediaType, null);
         } catch (Exception e) {
@@ -191,7 +191,7 @@ public class ImagesUpdater {
         }
 
         String imageMediaType = StringUtils.substringBetween(data, "data:", ";base64");
-        String extension = MediaTypeUtils.mediaTypeToFileExtension(imageMediaType);
+        String extension = ImageUtils.mediaTypeToFileExtension(imageMediaType);
         key += "." + extension;
 
         byte[] imageData = Base64.getDecoder().decode(base64Data);
@@ -203,14 +203,16 @@ public class ImagesUpdater {
                              String existingImageQuery) {
         TbResourceInfo resourceInfo = resourceService.findResourceInfoByTenantIdAndKey(tenantId, ResourceType.IMAGE, key);
         if (resourceInfo == null && !tenantId.isSysTenantId() && existingImageQuery != null) {
+            // TODO: need to search among tenant images too (custom widgets)
             List<TbResourceInfo> existingSystemImages = resourceService.findByTenantIdAndDataAndKeyStartingWith(TenantId.SYS_TENANT_ID, imageData, existingImageQuery);
             if (!existingSystemImages.isEmpty()) {
                 resourceInfo = existingSystemImages.get(0);
                 if (existingSystemImages.size() > 1) {
                     log.warn("Found more than one system image resources for key {}", existingImageQuery);
                 }
-                log.info("Using system image {} for {}", resourceInfo.getLink(), key);
-                return resourceInfo.getLink();
+                String link = resourceService.getResourceLink(resourceInfo);
+                log.info("Using system image {} for {}", link, key);
+                return link;
             }
         }
         TbResource resource;
@@ -222,7 +224,7 @@ public class ImagesUpdater {
         } else if (tenantId.isSysTenantId()) {
             resource = new TbResource(resourceInfo);
         } else {
-            return resourceInfo.getLink();
+            return resourceService.getResourceLink(resourceInfo);
         }
         resource.setTitle(name);
         resource.setFileName(key);
@@ -231,7 +233,7 @@ public class ImagesUpdater {
         resource = resourceService.saveResource(resource);
         log.info("[{}] {} image '{}' ({})", tenantId, resourceInfo == null ? "Created" : "Updated",
                 resource.getTitle(), resource.getResourceKey());
-        return resource.getLink();
+        return resourceService.getResourceLink(resourceInfo);
     }
 
     private String getText(JsonNode jsonNode, String field) {

@@ -62,4 +62,6 @@ public interface ResourceService extends EntityDaoService {
 
     List<TbResourceInfo> findByTenantIdAndDataAndKeyStartingWith(TenantId tenantId, byte[] data, String query);
 
+    String getResourceLink(TbResourceInfo resourceInfo);
+
 }

@@ -500,7 +500,6 @@ public class ModelConstants {
     public static final String RESOURCE_DATA_COLUMN = "data";
     public static final String RESOURCE_ETAG_COLUMN = "etag";
     public static final String RESOURCE_MEDIA_TYPE_COLUMN = "media_type";
-    public static final String RESOURCE_LINK_COLUMN = "link";
 
     /**
      * Ota Package constants.

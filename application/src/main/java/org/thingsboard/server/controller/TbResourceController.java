@@ -35,7 +35,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.StringUtils;
@@ -93,7 +92,6 @@ public class TbResourceController extends BaseController {
     @ApiOperation(value = "Download Resource (downloadResource)", notes = "Download Resource based on the provided Resource Id." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/resource/{resourceId}/download")
-    @ResponseBody
     public ResponseEntity<ByteArrayResource> downloadResource(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
                                                               @PathVariable(RESOURCE_ID) String strResourceId) throws ThingsboardException {
         checkParameter(RESOURCE_ID, strResourceId);
@@ -111,17 +109,10 @@ public class TbResourceController extends BaseController {
 
     @ApiOperation(value = "Download Image (downloadImageIfChanged)", notes = DOWNLOAD_RESOURCE_IF_NOT_CHANGED + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @GetMapping(value = "/images/{tenantId}/{resourceKey}", produces = "image/*")
-    @ResponseBody
-    public ResponseEntity<ByteArrayResource> downloadImageIfChanged(@PathVariable("tenantId") String tenantIdStr,
-                                                                    @PathVariable("resourceKey") String resourceKey,
+    @GetMapping(value = "/images/{resourceKey}", produces = "image/*")
+    public ResponseEntity<ByteArrayResource> downloadImageIfChanged(@PathVariable("resourceKey") String resourceKey,
                                                                     @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws ThingsboardException {
-        TenantId tenantId;
-        if (tenantIdStr.equals("system")) {
-            tenantId = TenantId.SYS_TENANT_ID;
-        } else {
-            tenantId = TenantId.fromUUID(toUUID(tenantIdStr));
-        }
+        TenantId tenantId = getTenantId();
         return downloadResourceIfChanged(ResourceType.IMAGE, etag,
                 () -> resourceService.findResourceInfoByTenantIdAndKey(tenantId, ResourceType.IMAGE, resourceKey),
                 () -> resourceService.findResourceByTenantIdAndKey(tenantId, ResourceType.IMAGE, resourceKey));
@@ -130,7 +121,6 @@ public class TbResourceController extends BaseController {
     @ApiOperation(value = "Download LWM2M Resource (downloadLwm2mResourceIfChanged)", notes = DOWNLOAD_RESOURCE_IF_NOT_CHANGED + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/resource/lwm2m/{resourceId}/download", produces = "application/xml")
-    @ResponseBody
     public ResponseEntity<ByteArrayResource> downloadLwm2mResourceIfChanged(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
                                                                             @PathVariable(RESOURCE_ID) String strResourceId,
                                                                             @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws ThingsboardException {
@@ -140,7 +130,6 @@ public class TbResourceController extends BaseController {
     @ApiOperation(value = "Download PKCS_12 Resource (downloadPkcs12ResourceIfChanged)", notes = DOWNLOAD_RESOURCE_IF_NOT_CHANGED + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/resource/pkcs12/{resourceId}/download", method = RequestMethod.GET, produces = "application/x-pkcs12")
-    @ResponseBody
     public ResponseEntity<ByteArrayResource> downloadPkcs12ResourceIfChanged(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
                                                                              @PathVariable(RESOURCE_ID) String strResourceId,
                                                                              @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws ThingsboardException {
@@ -151,7 +140,6 @@ public class TbResourceController extends BaseController {
             notes = DOWNLOAD_RESOURCE_IF_NOT_CHANGED + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/resource/jks/{resourceId}/download", produces = "application/x-java-keystore")
-    @ResponseBody
     public ResponseEntity<ByteArrayResource> downloadJksResourceIfChanged(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
                                                                           @PathVariable(RESOURCE_ID) String strResourceId,
                                                                           @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws ThingsboardException {
@@ -161,7 +149,6 @@ public class TbResourceController extends BaseController {
     @ApiOperation(value = "Download JS Resource (downloadJsResourceIfChanged)", notes = DOWNLOAD_RESOURCE_IF_NOT_CHANGED + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/resource/js/{resourceId}/download", produces = "application/javascript")
-    @ResponseBody
     public ResponseEntity<ByteArrayResource> downloadJsResourceIfChanged(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
                                                                          @PathVariable(RESOURCE_ID) String strResourceId,
                                                                          @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws ThingsboardException {
@@ -174,7 +161,6 @@ public class TbResourceController extends BaseController {
             produces = "application/json")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/resource/info/{resourceId}")
-    @ResponseBody
     public TbResourceInfo getResourceInfoById(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
                                               @PathVariable(RESOURCE_ID) String strResourceId) throws ThingsboardException {
         checkParameter(RESOURCE_ID, strResourceId);
@@ -189,7 +175,6 @@ public class TbResourceController extends BaseController {
     @Deprecated  // resource's data should be fetched with a download request
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/resource/{resourceId}")
-    @ResponseBody
     public TbResource getResourceById(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
                                       @PathVariable(RESOURCE_ID) String strResourceId) throws ThingsboardException {
         checkParameter(RESOURCE_ID, strResourceId);
@@ -211,7 +196,6 @@ public class TbResourceController extends BaseController {
             consumes = "application/json")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @PostMapping(value = "/resource")
-    @ResponseBody
     public TbResourceInfo saveResource(@ApiParam(value = "A JSON value representing the Resource.")
                                        @RequestBody TbResource resource) throws Exception {
         resource.setTenantId(getTenantId());
@@ -225,7 +209,6 @@ public class TbResourceController extends BaseController {
             produces = "application/json")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/resource")
-    @ResponseBody
     public PageData<TbResourceInfo> getResources(@ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
                                                  @RequestParam int pageSize,
                                                  @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
@@ -257,7 +240,6 @@ public class TbResourceController extends BaseController {
             produces = "application/json")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @GetMapping(value = "/resource/lwm2m/page")
-    @ResponseBody
     public List<LwM2mObject> getLwm2mListObjectsPage(@ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
                                                      @RequestParam int pageSize,
                                                      @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
@@ -278,7 +260,6 @@ public class TbResourceController extends BaseController {
             produces = "application/json")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @GetMapping(value = "/resource/lwm2m")
-    @ResponseBody
     public List<LwM2mObject> getLwm2mListObjects(@ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES, required = true)
                                                  @RequestParam String sortOrder,
                                                  @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = LWM2M_OBJECT_SORT_PROPERTY_ALLOWABLE_VALUES, required = true)
@@ -292,7 +273,6 @@ public class TbResourceController extends BaseController {
             notes = "Deletes the Resource. Referencing non-existing Resource Id will cause an error." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @DeleteMapping(value = "/resource/{resourceId}")
-    @ResponseBody
     public void deleteResource(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
                                @PathVariable("resourceId") String strResourceId) throws ThingsboardException {
         checkParameter(RESOURCE_ID, strResourceId);
@@ -323,6 +303,7 @@ public class TbResourceController extends BaseController {
             }
         }
 
+        // TODO: rate limits
         TbResource tbResource = resourceSupplier.get();
         checkEntity(getCurrentUser(), tbResource, Operation.READ);
 
@@ -336,4 +317,5 @@ public class TbResourceController extends BaseController {
                 .eTag(tbResource.getEtag())
                 .body(resource);
     }
+
 }

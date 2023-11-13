@@ -77,11 +77,10 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         }
         if (resource.getData() != null) {
             resource.setEtag(calculateEtag(resource.getData()));
-        }
-        if (resource.getResourceType() == ResourceType.IMAGE) {
-            resource.setLink(String.format("/api/images/%s/%s",
-                    tenantId.isSysTenantId() ? "system" : tenantId.getId(),
-                    resource.getResourceKey()));
+            if (resource.getResourceType() == ResourceType.IMAGE) {
+                // FIXME: skip SVG (?)
+
+            }
         }
         try {
             TbResource saved;
@@ -224,6 +223,16 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     public List<TbResourceInfo> findByTenantIdAndDataAndKeyStartingWith(TenantId tenantId, byte[] data, String query) {
         String etag = calculateEtag(data);
         return resourceInfoDao.findByTenantIdAndEtagAndKeyStartingWith(tenantId, etag, query);
+    }
+
+    @Override
+    public String getResourceLink(TbResourceInfo resourceInfo) {
+        String link = "/api/images/";
+        if (resourceInfo.getTenantId().isSysTenantId()) {
+            link += "system/";
+        }
+        link += resourceInfo.getResourceKey();
+        return link;
     }
 
     private String calculateEtag(byte[] data) {

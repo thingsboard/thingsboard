@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -56,8 +57,7 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
     private String fileName;
     @ApiModelProperty(position = 10, value = "Resource media type.", example = "image/png", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String mediaType;
-    @ApiModelProperty(position = 11, value = "Resource link (for IMAGE resource type).", example = "/api/images/system/my-image.png", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
-    private String link;
+    private ObjectNode descriptor;
 
     public TbResourceInfo() {
         super();
@@ -77,7 +77,7 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
         this.etag = resourceInfo.etag;
         this.fileName = resourceInfo.fileName;
         this.mediaType = resourceInfo.mediaType;
-        this.link = resourceInfo.link;
+        this.descriptor = resourceInfo.descriptor;
     }
 
     @ApiModelProperty(position = 1, value = "JSON object with the Resource Id. " +

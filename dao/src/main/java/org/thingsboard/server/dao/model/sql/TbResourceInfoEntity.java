@@ -32,7 +32,6 @@ import java.util.UUID;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_ETAG_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_FILE_NAME_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_KEY_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_LINK_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_MEDIA_TYPE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TABLE_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TENANT_ID_COLUMN;
@@ -70,9 +69,6 @@ public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implemen
     @Column(name = RESOURCE_MEDIA_TYPE_COLUMN)
     private String mediaType;
 
-    @Column(name = RESOURCE_LINK_COLUMN)
-    private String link;
-
     public TbResourceInfoEntity() {
     }
 
@@ -89,7 +85,6 @@ public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implemen
         this.hashCode = resource.getEtag();
         this.fileName = resource.getFileName();
         this.mediaType = resource.getMediaType();
-        this.link = resource.getLink();
     }
 
     @Override
@@ -104,7 +99,6 @@ public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implemen
         resource.setEtag(hashCode);
         resource.setFileName(fileName);
         resource.setMediaType(mediaType);
-        resource.setLink(link);
         return resource;
     }
 }
