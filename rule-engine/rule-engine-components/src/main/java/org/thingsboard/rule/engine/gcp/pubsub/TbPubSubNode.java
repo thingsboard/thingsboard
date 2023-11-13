@@ -20,6 +20,7 @@ import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.pubsub.v1.Publisher;
@@ -135,6 +136,11 @@ public class TbPubSubNode extends TbAbstractExternalNode {
                         new ByteArrayInputStream(config.getServiceAccountKey().getBytes()));
         CredentialsProvider credProvider = FixedCredentialsProvider.create(credentials);
 
+        InstantiatingExecutorProvider executorProvider =
+                InstantiatingExecutorProvider.newBuilder()
+                        .setExecutorThreadCount(1)
+                        .build();
+
         var retrySettings = RetrySettings.newBuilder()
                 .setTotalTimeout(Duration.ofSeconds(10))
                 .setInitialRetryDelay(Duration.ofMillis(50))
@@ -148,6 +154,7 @@ public class TbPubSubNode extends TbAbstractExternalNode {
         return Publisher.newBuilder(topicName)
                 .setCredentialsProvider(credProvider)
                 .setRetrySettings(retrySettings)
+                .setExecutorProvider(executorProvider)
                 .build();
     }
 }
