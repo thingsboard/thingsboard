@@ -17,7 +17,7 @@
 import { SubscriptionTimewindow } from '@shared/models/time/time.models';
 import { Datasource, DatasourceType } from '@shared/models/widget.models';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
-import { AlarmData, AlarmDataPageLink, EntityData, KeyFilter } from '@shared/models/query/query.models';
+import { AlarmData, AlarmDataPageLink, KeyFilter } from '@shared/models/query/query.models';
 import { Injectable } from '@angular/core';
 import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
 import {
