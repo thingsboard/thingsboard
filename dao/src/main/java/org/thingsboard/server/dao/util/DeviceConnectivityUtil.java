@@ -20,6 +20,9 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class DeviceConnectivityUtil {
 
     public static final String HTTP = "http";
@@ -38,6 +41,7 @@ public class DeviceConnectivityUtil {
     public static final String GATEWAY_DOCKER_RUN = "docker run -it ";
     public static final String MQTT_IMAGE = "thingsboard/mosquitto-clients ";
     public static final String COAP_IMAGE = "thingsboard/coap-clients ";
+    public static final List<String> LOCAL_HOSTS = Arrays.asList("localhost", "127.0.0.1");
 
     public static String getHttpPublishCommand(String protocol, String host, String port, DeviceCredentials deviceCredentials) {
         return String.format("curl -v -X POST %s://%s%s/api/v1/%s/telemetry --header Content-Type:application/json --data " + JSON_EXAMPLE_PAYLOAD,
@@ -135,7 +139,7 @@ public class DeviceConnectivityUtil {
         }
 
         StringBuilder mqttDockerCommand = new StringBuilder();
-        mqttDockerCommand.append(DOCKER_RUN).append(MQTT_IMAGE);
+        mqttDockerCommand.append(DOCKER_RUN).append(LOCAL_HOSTS.contains(host) ? "--network=host ":"").append(MQTT_IMAGE);
 
         if (MQTTS.equals(protocol)) {
             mqttDockerCommand.append("/bin/sh -c \"")
@@ -158,7 +162,7 @@ public class DeviceConnectivityUtil {
         switch (deviceCredentials.getCredentialsType()) {
             case ACCESS_TOKEN:
                 String client = COAPS.equals(protocol) ? "coap-client-openssl" : "coap-client";
-                return String.format("%s -m POST %s://%s%s/api/v1/%s/telemetry -t json -e %s",
+                return String.format("%s -v 6 -m POST %s://%s%s/api/v1/%s/telemetry -t json -e %s",
                         client, protocol, host, port, deviceCredentials.getCredentialsId(), JSON_EXAMPLE_PAYLOAD);
             default:
                 return null;
@@ -167,6 +171,6 @@ public class DeviceConnectivityUtil {
 
     public static String getDockerCoapPublishCommand(String protocol, String host, String port, DeviceCredentials deviceCredentials) {
         String coapCommand = getCoapPublishCommand(protocol, host, port, deviceCredentials);
-        return coapCommand != null ? String.format("%s%s%s", DOCKER_RUN, COAP_IMAGE, coapCommand) : null;
+        return coapCommand != null ? String.format("%s%s%s", DOCKER_RUN + (LOCAL_HOSTS.contains(host) ? "--network=host ":""), COAP_IMAGE, coapCommand) : null;
     }
 }

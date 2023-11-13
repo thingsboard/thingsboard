@@ -13,30 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.install;
+package org.thingsboard.server.service.edge.rpc.utils;
 
-public interface SystemDataLoaderService {
+import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 
-    void createSysAdmin() throws Exception;
+@Slf4j
+public final class EdgeVersionUtils {
 
-    void createDefaultTenantProfiles() throws Exception;
-
-    void createAdminSettings() throws Exception;
-
-    void createRandomJwtSettings() throws Exception;
-
-    void saveLegacyYmlSettings() throws Exception;
-
-    void createOAuth2Templates() throws Exception;
-
-    void loadSystemWidgets() throws Exception;
-
-    void loadDemoData() throws Exception;
-
-    void createQueues();
-
-    void createDefaultNotificationConfigs();
-
-    void updateDefaultNotificationConfigs();
-
+    public static boolean isEdgeVersionOlderThan(EdgeVersion currentVersion, EdgeVersion requiredVersion) {
+        return currentVersion.ordinal() < requiredVersion.ordinal();
+    }
 }
