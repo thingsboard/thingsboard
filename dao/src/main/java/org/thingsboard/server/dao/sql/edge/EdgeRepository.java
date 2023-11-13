@@ -91,10 +91,10 @@ public interface EdgeRepository extends JpaRepository<EdgeEntity, UUID> {
             "LEFT JOIN CustomerEntity c on c.id = a.customerId " +
             "WHERE a.tenantId = :tenantId " +
             "AND a.customerId = :customerId " +
-            "AND (:searchText IS NULL OR ilike(a.name, CONCAT('%', :textSearch, '%')) = true)")
+            "AND (:textSearch IS NULL OR ilike(a.name, CONCAT('%', :textSearch, '%')) = true)")
     Page<EdgeInfoEntity> findEdgeInfosByTenantIdAndCustomerId(@Param("tenantId") UUID tenantId,
                                                                 @Param("customerId") UUID customerId,
-                                                                @Param("searchText") String searchText,
+                                                                @Param("textSearch") String textSearch,
                                                                 Pageable pageable);
 
     @Query("SELECT new org.thingsboard.server.dao.model.sql.EdgeInfoEntity(a, c.title, c.additionalInfo) " +
@@ -113,11 +113,11 @@ public interface EdgeRepository extends JpaRepository<EdgeEntity, UUID> {
     @Query("SELECT ee FROM EdgeEntity ee, RelationEntity re WHERE ee.tenantId = :tenantId " +
             "AND ee.id = re.fromId AND re.fromType = 'EDGE' AND re.relationTypeGroup = 'EDGE' " +
             "AND re.relationType = 'Contains' AND re.toId = :entityId AND re.toType = :entityType " +
-            "AND (:searchText IS NULL OR ilike(ee.name, CONCAT('%', :searchText, '%')) = true)")
+            "AND (:textSearch IS NULL OR ilike(ee.name, CONCAT('%', :textSearch, '%')) = true)")
     Page<EdgeEntity> findByTenantIdAndEntityId(@Param("tenantId") UUID tenantId,
                                                @Param("entityId") UUID entityId,
                                                @Param("entityType") String entityType,
-                                               @Param("searchText") String searchText,
+                                               @Param("textSearch") String textSearch,
                                                Pageable pageable);
 
     @Query("SELECT ee FROM EdgeEntity ee, TenantEntity te WHERE ee.tenantId = te.id AND te.tenantProfileId = :tenantProfileId ")

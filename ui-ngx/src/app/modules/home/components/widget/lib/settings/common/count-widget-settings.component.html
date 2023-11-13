@@ -16,9 +16,11 @@
 
 -->
 <ng-container [formGroup]="countWidgetConfigForm">
-  <tb-image-cards-select rowHeight="{{ '3:1' }}"
-                         [cols]="2"
-                         [colsLtMd]="1"
+  <tb-image-cards-select rowHeight="3:1"
+                         [cols]="{columns: 2,
+                                    breakpoints: {
+                                      'lt-md': 1
+                                    }}"
                          label="{{ 'widgets.count.layout' | translate }}" formControlName="layout">
     <tb-image-cards-select-option *ngFor="let layout of countCardLayouts"
                                   [value]="layout"

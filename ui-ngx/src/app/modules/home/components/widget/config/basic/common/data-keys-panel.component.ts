@@ -38,7 +38,7 @@ import {
 import { MatDialog } from '@angular/material/dialog';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKey, DatasourceType, JsonSettingsSchema, widgetType } from '@shared/models/widget.models';
-import { dataKeyRowValidator } from '@home/components/widget/config/basic/common/data-key-row.component';
+import { dataKeyRowValidator, dataKeyValid } from '@home/components/widget/config/basic/common/data-key-row.component';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
@@ -109,6 +109,14 @@ export class DataKeysPanelComponent implements ControlValueAccessor, OnInit, OnC
 
   @Input()
   @coerceBoolean()
+  hideDataKeyUnits = false;
+
+  @Input()
+  @coerceBoolean()
+  hideDataKeyDecimals = false;
+
+  @Input()
+  @coerceBoolean()
   hideSourceSelection = false;
 
   dataKeyType: DataKeyType;
@@ -160,7 +168,13 @@ export class DataKeysPanelComponent implements ControlValueAccessor, OnInit, OnC
       keys: [this.fb.array([]), []]
     });
     this.keysListFormGroup.valueChanges.subscribe(
-      (val) => this.propagateChange(this.keysListFormGroup.get('keys').value)
+      () => {
+        let keys: DataKey[] = this.keysListFormGroup.get('keys').value;
+        if (keys) {
+          keys = keys.filter(k => dataKeyValid(k));
+        }
+        this.propagateChange(keys);
+      }
     );
     this.updateParams();
   }

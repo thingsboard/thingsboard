@@ -59,7 +59,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -129,12 +128,15 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
                     if (msgs.isEmpty()) {
                         continue;
                     }
-                    ConcurrentMap<UUID, TbProtoQueueMsg<N>> pendingMap = msgs.stream().collect(
-                            Collectors.toConcurrentMap(s -> UUID.randomUUID(), Function.identity()));
+                    List<IdMsgPair<N>> orderedMsgList = msgs.stream().map(msg -> new IdMsgPair<>(UUID.randomUUID(), msg)).collect(Collectors.toList());
+                    ConcurrentMap<UUID, TbProtoQueueMsg<N>> pendingMap = orderedMsgList.stream().collect(
+                            Collectors.toConcurrentMap(IdMsgPair::getUuid, IdMsgPair::getMsg));
                     CountDownLatch processingTimeoutLatch = new CountDownLatch(1);
                     TbPackProcessingContext<TbProtoQueueMsg<N>> ctx = new TbPackProcessingContext<>(
                             processingTimeoutLatch, pendingMap, new ConcurrentHashMap<>());
-                    pendingMap.forEach((id, msg) -> {
+                    orderedMsgList.forEach(element -> {
+                        UUID id = element.getUuid();
+                        TbProtoQueueMsg<N> msg = element.getMsg();
                         log.trace("[{}] Creating notification callback for message: {}", id, msg.getValue());
                         TbCallback callback = new TbPackCallback<>(id, ctx);
                         try {

@@ -31,8 +31,10 @@
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widget-config.appearance</div>
     <tb-image-cards-select rowHeight="{{ horizontal ? '3:1' : '7:5' }}"
-                           [cols]="horizontal ? 2 : 4"
-                           [colsLtMd]="horizontal ? 1 : 2"
+                           [cols]="{columns: horizontal ? 2 : 4,
+                                    breakpoints: {
+                                      'lt-md': horizontal ? 1 : 2
+                                    }}"
                            label="{{ 'widgets.value-card.layout' | translate }}" formControlName="layout">
       <tb-image-cards-select-option *ngFor="let layout of valueCardLayouts"
                             [value]="layout"

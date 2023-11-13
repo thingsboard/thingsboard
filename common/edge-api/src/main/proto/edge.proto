@@ -35,6 +35,7 @@ enum EdgeVersion {
   V_3_3_3 = 1;
   V_3_4_0 = 2;
   V_3_6_0 = 3;
+  V_3_6_1 = 4;
 }
 
 /**
@@ -361,8 +362,8 @@ message WidgetsBundleUpdateMsg {
   optional bytes image = 6;
   bool isSystem = 7;
   optional string description = 8;
-  optional int32 order = 9;
-  optional string widgets = 10;
+  optional string widgets = 9;
+  optional int32 order = 10;
 }
 
 message WidgetTypeUpdateMsg {

@@ -486,7 +486,7 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     @Override
-    public void sendNotificationMsgToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, EdgeEventActionType action, EdgeId sourceEdgeId) {
+    public void sendNotificationMsgToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, EdgeEventActionType action, EdgeId originatorEdgeId) {
         if (!edgesEnabled) {
             return;
         }
@@ -519,9 +519,9 @@ public class DefaultTbClusterService implements TbClusterService {
         if (body != null) {
             builder.setBody(body);
         }
-        if (sourceEdgeId != null) {
-            builder.setSourceEdgeIdMSB(sourceEdgeId.getId().getMostSignificantBits());
-            builder.setSourceEdgeIdLSB(sourceEdgeId.getId().getLeastSignificantBits());
+        if (originatorEdgeId != null) {
+            builder.setOriginatorEdgeIdMSB(originatorEdgeId.getId().getMostSignificantBits());
+            builder.setOriginatorEdgeIdLSB(originatorEdgeId.getId().getLeastSignificantBits());
         }
         TransportProtos.EdgeNotificationMsgProto msg = builder.build();
         log.trace("[{}] sending notification to edge service {}", tenantId.getId(), msg);

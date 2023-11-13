@@ -142,8 +142,10 @@ export class DashboardWidgetSelectComponent implements OnInit {
     columns: 2,
     breakpoints: {
       'screen and (min-width: 2000px)': 5,
-      'screen and (min-width: 1280px)': 4,
-      'screen and (min-width: 600px)': 3
+      'screen and (min-width: 1097px)': 4,
+      'gt-sm': 3,
+      'screen and (min-width: 721px)': 4,
+      'screen and (min-width: 485px)': 3
     }
   };
 

@@ -69,11 +69,11 @@ export abstract class BasicWidgetConfigComponent extends PageComponent implement
   ngOnInit() {}
 
   ngAfterViewInit(): void {
-    setTimeout(() => {
-      if (!this.validateConfig()) {
-        this.onConfigChanged(this.prepareOutputConfig(this.configForm().getRawValue()));
-      }
-    }, 0);
+    if (!this.validateConfig()) {
+      setTimeout(() => {
+          this.onConfigChanged(this.prepareOutputConfig(this.configForm().getRawValue()));
+      }, 0);
+    }
   }
 
   protected setupConfig(widgetConfig: WidgetConfigComponentData) {
