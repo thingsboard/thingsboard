@@ -72,7 +72,6 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
 import org.thingsboard.server.service.state.DeviceStateService;
 
@@ -85,7 +84,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;

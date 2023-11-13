@@ -232,8 +232,6 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
             Tenant tenant = tenantService.findTenantById(tenantId);
             Device assignedDevice = deviceService.assignDeviceToTenant(newTenantId, device);
 
-
-
             notificationEntityService.notifyAssignDeviceToTenant(tenantId, newTenantId, deviceId,
                     assignedDevice.getCustomerId(), assignedDevice, tenant, user, newTenantId.toString(), newTenant.getName());
 
