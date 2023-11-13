@@ -470,14 +470,20 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
 
     private void validateConnectivityAdminSettings(AdminSettings adminSettings) {
         JsonNode jsonNode = adminSettings.getJsonValue();
+        Assert.assertNotNull(jsonNode.get("http"));
+        Assert.assertNotNull(jsonNode.get("https"));
+        Assert.assertNotNull(jsonNode.get("mqtt"));
+        Assert.assertNotNull(jsonNode.get("mqtts"));
+        Assert.assertNotNull(jsonNode.get("coap"));
+        Assert.assertNotNull(jsonNode.get("coaps"));
+    }
+
+    private void validateJwtAdminSettings(AdminSettings adminSettings) {
+        JsonNode jsonNode = adminSettings.getJsonValue();
         Assert.assertNotNull(jsonNode.get("tokenExpirationTime"));
         Assert.assertNotNull(jsonNode.get("refreshTokenExpTime"));
         Assert.assertNotNull(jsonNode.get("tokenIssuer"));
         Assert.assertNotNull(jsonNode.get("tokenSigningKey"));
-    }
-
-    private void validateJwtAdminSettings(AdminSettings adminSettings) {
-        Assert.assertNotNull(adminSettings.getJsonValue().get("baseUrl"));
     }
 
     private void validateAssetProfiles(int expectedMsgCnt) throws Exception {

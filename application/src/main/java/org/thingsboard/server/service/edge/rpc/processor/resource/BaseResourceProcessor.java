@@ -17,6 +17,7 @@ package org.thingsboard.server.service.edge.rpc.processor.resource;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
@@ -30,39 +31,37 @@ import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 @Slf4j
 public abstract class BaseResourceProcessor extends BaseEdgeProcessor {
 
-    protected boolean saveOrUpdateTbResource(TenantId tenantId, TbResourceId tbResourceId, ResourceUpdateMsg resourceUpdateMsg) {
+    protected boolean saveOrUpdateTbResource(TenantId tenantId, TbResourceId tbResourceId, ResourceUpdateMsg resourceUpdateMsg, boolean isEdgeDeprecated) {
         boolean resourceKeyUpdated = false;
         try {
-            boolean created = false;
-            TbResource resource = resourceService.findResourceById(tenantId, tbResourceId);
+            TbResource resource = isEdgeDeprecated
+                    ? createTbResource(tenantId, resourceUpdateMsg)
+                    : JacksonUtil.fromStringIgnoreUnknownProperties(resourceUpdateMsg.getEntity(), TbResource.class);
             if (resource == null) {
-                resource = new TbResource();
-                if (resourceUpdateMsg.getIsSystem()) {
-                    resource.setTenantId(TenantId.SYS_TENANT_ID);
-                } else {
-                    resource.setTenantId(tenantId);
-                }
+                throw new RuntimeException("[{" + tenantId + "}] resourceUpdateMsg {" + resourceUpdateMsg + " } cannot be converted to resource");
+            }
+            boolean created = false;
+            TbResource resourceById = resourceService.findResourceById(tenantId, tbResourceId);
+            if (resourceById == null) {
                 resource.setCreatedTime(Uuids.unixTimestamp(tbResourceId.getId()));
                 created = true;
+                resource.setId(null);
+            } else {
+                resource.setId(tbResourceId);
             }
-            String resourceKey = resourceUpdateMsg.getResourceKey();
-            ResourceType resourceType = ResourceType.valueOf(resourceUpdateMsg.getResourceType());
+            String resourceKey = resource.getResourceKey();
+            ResourceType resourceType = resource.getResourceType();
             PageDataIterable<TbResource> resourcesIterable = new PageDataIterable<>(
                     link -> resourceService.findTenantResourcesByResourceTypeAndPageLink(tenantId, resourceType, link), 1024);
             for (TbResource tbResource : resourcesIterable) {
-                if (tbResource.getResourceKey().equals(resourceUpdateMsg.getResourceKey()) && !tbResourceId.equals(tbResource.getId())) {
+                if (tbResource.getResourceKey().equals(resourceKey) && !tbResourceId.equals(tbResource.getId())) {
                     resourceKey = StringUtils.randomAlphabetic(15) + "_" + resourceKey;
                     log.warn("[{}] Resource with resource type {} and key {} already exists. Renaming resource key to {}",
-                            tenantId, resourceType, resourceUpdateMsg.getResourceKey(), resourceKey);
+                            tenantId, resourceType, resource.getResourceKey(), resourceKey);
                     resourceKeyUpdated = true;
                 }
             }
-            resource.setTitle(resourceUpdateMsg.getTitle());
             resource.setResourceKey(resourceKey);
-            resource.setResourceType(resourceType);
-            resource.setFileName(resourceUpdateMsg.getFileName());
-            resource.setData(resourceUpdateMsg.hasData() ? resourceUpdateMsg.getData() : null);
-            resource.setEtag(resourceUpdateMsg.hasEtag() ? resourceUpdateMsg.getEtag() : null);
             resourceValidator.validate(resource, TbResourceInfo::getTenantId);
             if (created) {
                 resource.setId(tbResourceId);
@@ -73,5 +72,21 @@ public abstract class BaseResourceProcessor extends BaseEdgeProcessor {
             throw e;
         }
         return resourceKeyUpdated;
+    }
+
+    private TbResource createTbResource(TenantId tenantId, ResourceUpdateMsg resourceUpdateMsg) {
+        TbResource resource = new TbResource();
+        if (resourceUpdateMsg.getIsSystem()) {
+            resource.setTenantId(TenantId.SYS_TENANT_ID);
+        } else {
+            resource.setTenantId(tenantId);
+        }
+        resource.setTitle(resourceUpdateMsg.getTitle());
+        resource.setResourceKey(resourceUpdateMsg.getResourceKey());
+        resource.setResourceType(ResourceType.valueOf(resourceUpdateMsg.getResourceType()));
+        resource.setFileName(resourceUpdateMsg.getFileName());
+        resource.setData(resourceUpdateMsg.hasData() ? resourceUpdateMsg.getData() : null);
+        resource.setEtag(resourceUpdateMsg.hasEtag() ? resourceUpdateMsg.getEtag() : null);
+        return resource;
     }
 }
