@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.ResourceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -70,7 +71,7 @@ public class ResourceEdgeProcessor extends BaseResourceProcessor {
         return Futures.immediateFuture(null);
     }
 
-    public DownlinkMsg convertResourceEventToDownlink(EdgeEvent edgeEvent) {
+    public DownlinkMsg convertResourceEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         TbResourceId tbResourceId = new TbResourceId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
@@ -80,7 +81,7 @@ public class ResourceEdgeProcessor extends BaseResourceProcessor {
                 if (tbResource != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     ResourceUpdateMsg resourceUpdateMsg =
-                            resourceMsgConstructor.constructResourceUpdatedMsg(msgType, tbResource);
+                            resourceMsgConstructor.constructResourceUpdatedMsg(msgType, tbResource, edgeVersion);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addResourceUpdateMsg(resourceUpdateMsg)

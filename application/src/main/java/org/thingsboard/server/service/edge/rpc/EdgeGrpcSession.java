@@ -647,7 +647,7 @@ public final class EdgeGrpcSession implements Closeable {
             case OTA_PACKAGE:
                 return ctx.getOtaPackageEdgeProcessor().convertOtaPackageEventToDownlink(edgeEvent, this.edgeVersion);
             case TB_RESOURCE:
-                return ctx.getResourceEdgeProcessor().convertResourceEventToDownlink(edgeEvent);
+                return ctx.getResourceEdgeProcessor().convertResourceEventToDownlink(edgeEvent, this.edgeVersion);
             case QUEUE:
                 return ctx.getQueueEdgeProcessor().convertQueueEventToDownlink(edgeEvent, this.edgeVersion);
             case TENANT:

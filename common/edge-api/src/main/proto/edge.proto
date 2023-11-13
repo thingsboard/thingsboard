@@ -452,13 +452,14 @@ message ResourceUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  string title = 4;
-  string resourceType = 5;
-  string resourceKey = 6;
-  string fileName = 7;
-  optional string data = 8;
-  optional string etag = 9;
-  bool isSystem = 10;
+  string title = 4 [deprecated = true];
+  string resourceType = 5 [deprecated = true];
+  string resourceKey = 6 [deprecated = true];
+  string fileName = 7 [deprecated = true];
+  optional string data = 8 [deprecated = true];
+  optional string etag = 9 [deprecated = true];
+  bool isSystem = 10 [deprecated = true];
+  string entity = 11;
 }
 
 message RuleChainMetadataRequestMsg {

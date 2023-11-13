@@ -16,18 +16,30 @@
 package org.thingsboard.server.service.edge.rpc.constructor;
 
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.ResourceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 @Component
 @TbCoreComponent
 public class ResourceMsgConstructor {
 
-    public ResourceUpdateMsg constructResourceUpdatedMsg(UpdateMsgType msgType, TbResource tbResource) {
+    public ResourceUpdateMsg constructResourceUpdatedMsg(UpdateMsgType msgType, TbResource tbResource, EdgeVersion edgeVersion) {
+        if (EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)) {
+            return constructDeprecatedResourceUpdateMsg(msgType, tbResource);
+        }
+        return ResourceUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(tbResource))
+                .setIdMSB(tbResource.getId().getId().getMostSignificantBits())
+                .setIdLSB(tbResource.getId().getId().getLeastSignificantBits()).build();
+    }
+
+    private ResourceUpdateMsg constructDeprecatedResourceUpdateMsg(UpdateMsgType msgType, TbResource tbResource) {
         ResourceUpdateMsg.Builder builder = ResourceUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(tbResource.getId().getId().getMostSignificantBits())

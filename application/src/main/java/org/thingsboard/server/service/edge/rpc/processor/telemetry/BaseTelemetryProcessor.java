@@ -314,7 +314,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
                                                                   EntityType entityType,
                                                                   UUID entityUUID,
                                                                   EdgeEventActionType actionType,
-                                                                  JsonNode body) throws JsonProcessingException {
+                                                                  JsonNode body) {
         EntityId entityId;
         switch (entityType) {
             case DEVICE:

@@ -70,16 +70,6 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
                 case ENTITY_UPDATED_RPC_MESSAGE:
                     alarm.setId(alarmId);
                     alarm.setOriginator(originatorId);
-                    alarm.setSeverity(AlarmSeverity.valueOf(alarmUpdateMsg.getSeverity()));
-                    alarm.setStartTs(alarmUpdateMsg.getStartTs());
-                    var alarmStatus = AlarmStatus.valueOf(alarmUpdateMsg.getStatus());
-                    alarm.setClearTs(alarmUpdateMsg.getClearTs());
-                    alarm.setPropagate(alarmUpdateMsg.getPropagate());
-                    alarm.setCleared(alarmStatus.isCleared());
-                    alarm.setAcknowledged(alarmStatus.isAck());
-                    alarm.setAckTs(alarmUpdateMsg.getAckTs());
-                    alarm.setEndTs(alarmUpdateMsg.getEndTs());
-                    alarm.setDetails(JacksonUtil.toJsonNode(alarmUpdateMsg.getDetails()));
                     if (UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE.equals(alarmUpdateMsg.getMsgType())) {
                         alarmService.createAlarm(AlarmCreateOrUpdateActiveRequest.fromAlarm(alarm, null, alarmId));
                     } else {
