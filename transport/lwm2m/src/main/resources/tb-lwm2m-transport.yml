@@ -375,7 +375,7 @@ queue:
     # Number of messages per consumer
     max_messages: "${TB_QUEUE_PUBSUB_MAX_MESSAGES:1000}"
     # Number of threads of pubsub executor provider
-    executor_thread_pool_size: "${TB_QUEUE_PUBSUB_EXECUTOR_THREAD_SIZE:50}"
+    executor_thread_pool_size: "${TB_QUEUE_PUBSUB_EXECUTOR_THREAD_POOL_SIZE:50}"
     queue-properties:
       # Pub/Sub properties for Rule Engine subscribers, messages which will commit after ackDeadlineInSec period can be consumed again
       rule-engine: "${TB_QUEUE_PUBSUB_RE_QUEUE_PROPERTIES:ackDeadlineInSec:30;messageRetentionInSec:604800}"
