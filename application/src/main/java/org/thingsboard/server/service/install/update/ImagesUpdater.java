@@ -33,7 +33,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.util.ImageUtils;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
-import org.thingsboard.server.dao.resource.ResourceService;
+import org.thingsboard.server.dao.resource.ImageService;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -47,7 +47,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ImagesUpdater {
 
-    private final ResourceService resourceService;
+    private final ImageService imageService;
 
     private static final String IMAGE_NAME_SUFFIX = " - image";
     private static final String BACKGROUND_IMAGE_NAME_SUFFIX = " - background image";
@@ -201,19 +201,19 @@ public class ImagesUpdater {
 
     private String saveImage(TenantId tenantId, String name, String key, byte[] imageData, String mediaType,
                              String existingImageQuery) {
-        TbResourceInfo resourceInfo = resourceService.findResourceInfoByTenantIdAndKey(tenantId, ResourceType.IMAGE, key);
+        TbResourceInfo resourceInfo = imageService.getImageInfoByTenantIdAndKey(tenantId, key);
         if (resourceInfo == null && !tenantId.isSysTenantId() && existingImageQuery != null) {
             // TODO: need to search among tenant images too (custom widgets)
-            List<TbResourceInfo> existingSystemImages = resourceService.findByTenantIdAndDataAndKeyStartingWith(TenantId.SYS_TENANT_ID, imageData, existingImageQuery);
-            if (!existingSystemImages.isEmpty()) {
-                resourceInfo = existingSystemImages.get(0);
-                if (existingSystemImages.size() > 1) {
-                    log.warn("Found more than one system image resources for key {}", existingImageQuery);
-                }
-                String link = resourceService.getResourceLink(resourceInfo);
-                log.info("Using system image {} for {}", link, key);
-                return link;
-            }
+//            List<TbResourceInfo> existingSystemImages = imageService.findByTenantIdAndDataAndKeyStartingWith(TenantId.SYS_TENANT_ID, imageData, existingImageQuery);
+//            if (!existingSystemImages.isEmpty()) {
+//                resourceInfo = existingSystemImages.get(0);
+//                if (existingSystemImages.size() > 1) {
+//                    log.warn("Found more than one system image resources for key {}", existingImageQuery);
+//                }
+//                String link = imageService.getImageLink(resourceInfo);
+//                log.info("Using system image {} for {}", link, key);
+//                return link;
+//            }
         }
         TbResource resource;
         if (resourceInfo == null) {
@@ -224,16 +224,16 @@ public class ImagesUpdater {
         } else if (tenantId.isSysTenantId()) {
             resource = new TbResource(resourceInfo);
         } else {
-            return resourceService.getResourceLink(resourceInfo);
+            return imageService.getImageLink(resourceInfo);
         }
         resource.setTitle(name);
         resource.setFileName(key);
         resource.setMediaType(mediaType);
         resource.setData(imageData);
-        resource = resourceService.saveResource(resource);
+        resource = imageService.saveImage(resource);
         log.info("[{}] {} image '{}' ({})", tenantId, resourceInfo == null ? "Created" : "Updated",
                 resource.getTitle(), resource.getResourceKey());
-        return resourceService.getResourceLink(resourceInfo);
+        return imageService.getImageLink(resourceInfo);
     }
 
     private String getText(JsonNode jsonNode, String field) {
