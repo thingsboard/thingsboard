@@ -18,12 +18,14 @@ package org.thingsboard.server.queue.pubsub;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
+import com.google.api.gax.core.FixedExecutorProvider;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.gson.Gson;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueCallback;
@@ -36,6 +38,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -50,11 +53,16 @@ public class TbPubSubProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
     private final Map<String, Publisher> publisherMap = new ConcurrentHashMap<>();
 
     private final ExecutorService pubExecutor = Executors.newCachedThreadPool();
+    private static final int THREADS_PER_CPU = 5;
+    private final FixedExecutorProvider fixedExecutorProvider;
 
     public TbPubSubProducerTemplate(TbQueueAdmin admin, TbPubSubSettings pubSubSettings, String defaultTopic) {
         this.defaultTopic = defaultTopic;
         this.admin = admin;
         this.pubSubSettings = pubSubSettings;
+
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(THREADS_PER_CPU * Runtime.getRuntime().availableProcessors(), ThingsBoardThreadFactory.forName("tb-pubsub-producer-scheduler"));;
+        fixedExecutorProvider = FixedExecutorProvider.create(scheduler);
     }
 
     @Override
@@ -120,7 +128,10 @@ public class TbPubSubProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
             try {
                 admin.createTopicIfNotExists(topic);
                 ProjectTopicName topicName = ProjectTopicName.of(pubSubSettings.getProjectId(), topic);
-                Publisher publisher = Publisher.newBuilder(topicName).setCredentialsProvider(pubSubSettings.getCredentialsProvider()).build();
+                Publisher publisher = Publisher.newBuilder(topicName)
+                        .setCredentialsProvider(pubSubSettings.getCredentialsProvider())
+                        .setExecutorProvider(fixedExecutorProvider)
+                        .build();
                 publisherMap.put(topic, publisher);
                 return publisher;
             } catch (IOException e) {

@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.Arrays;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.server.service.executors.PubSubExecutorService;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
@@ -536,6 +537,11 @@ class DefaultTbContext implements TbContext {
     @Override
     public ListeningExecutor getNotificationExecutor() {
         return mainCtx.getNotificationExecutor();
+    }
+
+    @Override
+    public PubSubExecutorService getPubsubExecutor() {
+        return mainCtx.getPubSubExecutorService();
     }
 
     @Override
