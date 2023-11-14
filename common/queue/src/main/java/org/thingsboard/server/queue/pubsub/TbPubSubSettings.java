@@ -46,9 +46,6 @@ public class TbPubSubSettings {
     @Value("${queue.pubsub.max_messages}")
     private int maxMessages;
 
-    @Value("${queue.pubsub.executor_thread_pool_size}")
-    private int executorThreadPoolSize;
-
     private CredentialsProvider credentialsProvider;
 
     @PostConstruct
