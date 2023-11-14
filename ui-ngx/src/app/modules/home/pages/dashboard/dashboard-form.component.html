@@ -125,7 +125,7 @@
         </mat-form-field>
       </div>
       <tb-entity-list
-        [fxShow]="isAdd"
+        *ngIf="isAdd"
         formControlName="assignedCustomerIds"
         labelText="{{ 'dashboard.assigned-customers' | translate }}"
         [entityType]="entityType.CUSTOMER">
