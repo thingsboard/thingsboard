@@ -57,9 +57,9 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 public class BaseResourceService extends AbstractCachedEntityService<ResourceInfoCacheKey, TbResourceInfo, ResourceInfoEvictEvent> implements ResourceService {
 
     public static final String INCORRECT_RESOURCE_ID = "Incorrect resourceId ";
-    private final TbResourceDao resourceDao;
-    private final TbResourceInfoDao resourceInfoDao;
-    private final ResourceDataValidator resourceValidator;
+    protected final TbResourceDao resourceDao;
+    protected final TbResourceInfoDao resourceInfoDao;
+    protected final ResourceDataValidator resourceValidator;
 
     @Override
     public TbResource saveResource(TbResource resource, boolean doValidate) {
@@ -67,20 +67,10 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         if (doValidate) {
             resourceValidator.validate(resource, TbResourceInfo::getTenantId);
         }
-
         TenantId tenantId = resource.getTenantId();
         TbResourceId resourceId = resource.getId();
-        if (resourceId == null) {
-            UUID uuid = Uuids.timeBased();
-            resource.setId(new TbResourceId(uuid));
-            resource.setCreatedTime(Uuids.unixTimestamp(uuid));
-        }
         if (resource.getData() != null) {
             resource.setEtag(calculateEtag(resource.getData()));
-            if (resource.getResourceType() == ResourceType.IMAGE) {
-                // FIXME: skip SVG (?)
-
-            }
         }
         try {
             TbResource saved;
@@ -225,17 +215,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         return resourceInfoDao.findByTenantIdAndEtagAndKeyStartingWith(tenantId, etag, query);
     }
 
-    @Override
-    public String getResourceLink(TbResourceInfo resourceInfo) {
-        String link = "/api/images/";
-        if (resourceInfo.getTenantId().isSysTenantId()) {
-            link += "system/";
-        }
-        link += resourceInfo.getResourceKey();
-        return link;
-    }
-
-    private String calculateEtag(byte[] data) {
+    protected String calculateEtag(byte[] data) {
         return Hashing.sha256().hashBytes(data).toString();
     }
 

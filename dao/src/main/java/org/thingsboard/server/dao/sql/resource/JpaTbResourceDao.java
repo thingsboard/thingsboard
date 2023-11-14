@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -31,7 +32,6 @@ import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 @Slf4j
@@ -92,6 +92,11 @@ public class JpaTbResourceDao extends JpaAbstractDao<TbResourceEntity, TbResourc
                         tenantId.getId(),
                         TenantId.SYS_TENANT_ID.getId(),
                         resourceType.name(), objectIds));
+    }
+
+    @Override
+    public byte[] getResourceData(TenantId tenantId, TbResourceId resourceId) {
+        return resourceRepository.getDataById(resourceId.getId());
     }
 
     @Override

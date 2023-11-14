@@ -80,4 +80,8 @@ public interface TbResourceRepository extends JpaRepository<TbResourceEntity, UU
 
     @Query(value = "SELECT COALESCE(SUM(LENGTH(r.data)), 0) FROM resource r WHERE r.tenant_id = :tenantId", nativeQuery = true)
     Long sumDataSizeByTenantId(@Param("tenantId") UUID tenantId);
+
+    @Query("SELECT r.data FROM TbResourceEntity r WHERE r.id = :id")
+    byte[] getDataById(@Param("id") UUID id);
+
 }

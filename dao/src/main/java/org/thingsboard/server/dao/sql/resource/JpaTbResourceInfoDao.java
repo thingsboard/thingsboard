@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.TbResourceInfoFilter;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.TbResourceInfoEntity;
 import org.thingsboard.server.dao.resource.TbResourceInfoDao;
@@ -34,6 +35,7 @@ import org.thingsboard.server.dao.util.SqlDao;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -55,23 +57,22 @@ public class JpaTbResourceInfoDao extends JpaAbstractDao<TbResourceInfoEntity, T
 
     @Override
     public PageData<TbResourceInfo> findAllTenantResourcesByTenantId(TbResourceInfoFilter filter, PageLink pageLink) {
-        ResourceType resourceType = filter.getResourceType();
         return DaoUtil.toPageData(resourceInfoRepository
                 .findAllTenantResourcesByTenantId(
-                        filter.getTenantId().getId(),
-                        TenantId.NULL_UUID,
-                        resourceType == null ? null : resourceType.name(),
+                        filter.getTenantId().getId(), TenantId.NULL_UUID,
+                        CollectionsUtil.isNotEmpty(filter.getResourceTypes()) ? filter.getResourceTypes()
+                                .stream().map(Enum::name).collect(Collectors.toList()) : null,
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink)));
     }
 
     @Override
     public PageData<TbResourceInfo> findTenantResourcesByTenantId(TbResourceInfoFilter filter, PageLink pageLink) {
-        ResourceType resourceType = filter.getResourceType();
         return DaoUtil.toPageData(resourceInfoRepository
                 .findTenantResourcesByTenantId(
                         filter.getTenantId().getId(),
-                        resourceType == null ? null : resourceType.name(),
+                        CollectionsUtil.isNotEmpty(filter.getResourceTypes()) ? filter.getResourceTypes()
+                                .stream().map(Enum::name).collect(Collectors.toList()) : null,
                         pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }

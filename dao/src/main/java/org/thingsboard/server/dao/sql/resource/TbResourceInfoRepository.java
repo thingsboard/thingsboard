@@ -22,6 +22,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.TbResourceInfoEntity;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,19 +37,19 @@ public interface TbResourceInfoRepository extends JpaRepository<TbResourceInfoEn
             "WHERE sr.tenantId = :tenantId " +
             "AND tr.resourceType = sr.resourceType " +
             "AND tr.resourceKey = sr.resourceKey)))" +
-            "AND (:resourceType IS NULL OR tr.resourceType = :resourceType)")
+            "AND (:resourceTypes IS NULL OR tr.resourceType IN :resourceTypes)")
     Page<TbResourceInfoEntity> findAllTenantResourcesByTenantId(@Param("tenantId") UUID tenantId,
                                                                 @Param("systemAdminId") UUID sysadminId,
-                                                                @Param("resourceType") String resourceType,
+                                                                @Param("resourceTypes") Collection<String> resourceTypes,
                                                                 @Param("searchText") String searchText,
                                                                 Pageable pageable);
 
     @Query("SELECT ri FROM TbResourceInfoEntity ri WHERE " +
             "ri.tenantId = :tenantId " +
-            "AND (:resourceType IS NULL OR ri.resourceType = :resourceType)" +
+            "AND (:resourceTypes IS NULL OR ri.resourceType IN :resourceTypes)" +
             "AND (:searchText IS NULL OR ilike(ri.title, CONCAT('%', :searchText, '%')) = true)")
     Page<TbResourceInfoEntity> findTenantResourcesByTenantId(@Param("tenantId") UUID tenantId,
-                                                             @Param("resourceType") String resourceType,
+                                                             @Param("resourceTypes") Collection<String> resourceTypes,
                                                              @Param("searchText") String searchText,
                                                              Pageable pageable);
 

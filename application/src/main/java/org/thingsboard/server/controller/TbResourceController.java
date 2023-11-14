@@ -54,7 +54,10 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.Base64;
+ import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import static org.thingsboard.server.controller.ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER;
@@ -224,9 +227,14 @@ public class TbResourceController extends BaseController {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         TbResourceInfoFilter.TbResourceInfoFilterBuilder filter = TbResourceInfoFilter.builder();
         filter.tenantId(getTenantId());
+        Set<ResourceType> resourceTypes = new HashSet<>();
         if (StringUtils.isNotEmpty(resourceType)) {
-            filter.resourceType(ResourceType.valueOf(resourceType));
+            resourceTypes.add(ResourceType.valueOf(resourceType));
+        } else {
+            Collections.addAll(resourceTypes, ResourceType.values());
+            resourceTypes.remove(ResourceType.IMAGE);
         }
+        filter.resourceTypes(resourceTypes);
         if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
             return checkNotNull(resourceService.findTenantResourcesByTenantId(filter.build(), pageLink));
         } else {
