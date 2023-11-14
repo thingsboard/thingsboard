@@ -95,7 +95,9 @@ public class TbCopyKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
                         String keyData = entry.getKey();
                         if (matches(keyData)) {
                             msgChanged = true;
-                            metaDataCopy.putValue(keyData, JacksonUtil.toString(entry.getValue()));
+                            String value = entry.getValue().isTextual() ?
+                                    entry.getValue().asText() : JacksonUtil.toString(entry.getValue());
+                            metaDataCopy.putValue(keyData, value);
                         }
                     }
                     break;
