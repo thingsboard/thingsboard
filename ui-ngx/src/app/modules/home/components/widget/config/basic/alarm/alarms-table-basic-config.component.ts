@@ -69,6 +69,13 @@ export class AlarmsTableBasicConfigComponent extends BasicWidgetConfigComponent 
       showTitleIcon: [configData.config.showTitleIcon, []],
       titleIcon: [configData.config.titleIcon, []],
       iconColor: [configData.config.iconColor, []],
+
+      displayActivity: [configData.config.settings?.displayActivity, []],
+      displayDetails: [configData.config.settings?.displayDetails, []],
+      allowAssign: [configData.config.settings?.allowAssign, []],
+      allowAcknowledgment: [configData.config.settings?.allowAcknowledgment, []],
+      allowClear: [configData.config.settings?.allowClear, []],
+
       cardButtons: [this.getCardButtons(configData.config), []],
       color: [configData.config.color, []],
       backgroundColor: [configData.config.backgroundColor, []],
@@ -84,7 +91,14 @@ export class AlarmsTableBasicConfigComponent extends BasicWidgetConfigComponent 
     this.widgetConfig.config.actions = config.actions;
     this.widgetConfig.config.showTitle = config.showTitle;
     this.widgetConfig.config.settings = this.widgetConfig.config.settings || {};
+
     this.widgetConfig.config.settings.alarmsTitle = config.title;
+    this.widgetConfig.config.settings.displayActivity = config.displayActivity;
+    this.widgetConfig.config.settings.displayDetails = config.displayDetails;
+    this.widgetConfig.config.settings.allowAssign = config.allowAssign;
+    this.widgetConfig.config.settings.allowAcknowledgment = config.allowAcknowledgment;
+    this.widgetConfig.config.settings.allowClear = config.allowClear;
+
     this.widgetConfig.config.titleFont = config.titleFont;
     this.widgetConfig.config.titleColor = config.titleColor;
     this.widgetConfig.config.showTitleIcon = config.showTitleIcon;

@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
 import org.thingsboard.server.common.data.alarm.AlarmCommentType;
+import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -60,11 +61,12 @@ public class AlarmCommentServiceTest extends AbstractServiceTest {
 
     @Before
     public void before() {
-        alarm = Alarm.builder().tenantId(tenantId).originator(new AssetId(Uuids.timeBased()))
+        alarm = alarmService.createAlarm(AlarmCreateOrUpdateActiveRequest.builder()
+                .tenantId(tenantId)
+                .originator(new AssetId(Uuids.timeBased()))
                 .type(TEST_ALARM)
                 .severity(AlarmSeverity.CRITICAL)
-                .startTs(System.currentTimeMillis()).build();
-        alarm = alarmService.createOrUpdateAlarm(alarm).getAlarm();
+                .startTs(System.currentTimeMillis()).build()).getAlarm();
 
         user = new User();
         user.setAuthority(Authority.TENANT_ADMIN);
@@ -77,9 +79,8 @@ public class AlarmCommentServiceTest extends AbstractServiceTest {
 
     @After
     public void after() {
-        alarmService.deleteAlarm(tenantId, alarm.getId());
+        alarmService.delAlarm(tenantId, alarm.getId());
     }
-
 
     @Test
     public void testCreateAndFetchAlarmComment() throws ExecutionException, InterruptedException {

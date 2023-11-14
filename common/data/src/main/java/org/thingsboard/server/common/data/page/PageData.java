@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -27,6 +28,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @ApiModel
+@EqualsAndHashCode
 public class PageData<T> implements Serializable {
 
     public static final PageData EMPTY_PAGE_DATA = new PageData<>();

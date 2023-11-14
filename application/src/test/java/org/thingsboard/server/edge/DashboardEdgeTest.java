@@ -99,7 +99,7 @@ public class DashboardEdgeTest extends AbstractEdgeTest {
         edgeImitator.expectMessageAmount(1);
         doDelete("/api/dashboard/" + savedDashboard.getUuidId())
                 .andExpect(status().isOk());
-        Assert.assertTrue(edgeImitator.waitForMessages(1));
+        Assert.assertTrue(edgeImitator.waitForMessages(5));
 
         // create dashboard #2 and assign to edge
         edgeImitator.expectMessageAmount(1);

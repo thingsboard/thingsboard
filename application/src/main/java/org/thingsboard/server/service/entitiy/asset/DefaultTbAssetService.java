@@ -15,9 +15,9 @@
  */
 package org.thingsboard.server.service.entitiy.asset;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
@@ -72,15 +72,16 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public ListenableFuture<Void> delete(Asset asset, User user) {
+    @Transactional
+    public void delete(Asset asset, User user) {
         ActionType actionType = ActionType.DELETED;
         TenantId tenantId = asset.getTenantId();
         AssetId assetId = asset.getId();
         try {
+            removeAlarmsByEntityId(tenantId, assetId);
             assetService.deleteAsset(tenantId, assetId);
             notificationEntityService.logEntityAction(tenantId, assetId, asset, asset.getCustomerId(), actionType, user, assetId.toString());
             tbClusterService.broadcastEntityStateChangeEvent(tenantId, assetId, ComponentLifecycleEvent.DELETED);
-            return removeAlarmsByEntityId(tenantId, assetId);
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ASSET), actionType, user, e,
                     assetId.toString());

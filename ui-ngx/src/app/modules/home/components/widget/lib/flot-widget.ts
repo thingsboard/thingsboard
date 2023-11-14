@@ -415,7 +415,6 @@ export class TbFlot {
 
     for (let i = 0; i < this.subscription.data.length; i++) {
       const series = this.subscription.data[i] as TbFlotSeries;
-      colors.push(series.dataKey.color);
       const keySettings = series.dataKey.settings;
       series.dataKey.tooltipValueFormatFunction = tooltipValueFormatFunction;
       if (keySettings.tooltipValueFormatter && keySettings.tooltipValueFormatter.length) {
@@ -466,8 +465,8 @@ export class TbFlot {
           apply: true
         };
       }
-
       const lineColor = tinycolor(series.dataKey.color);
+      colors.push(lineColor.toRgbString());
       lineColor.setAlpha(.75);
 
       series.highlightColor = lineColor.toRgbString();

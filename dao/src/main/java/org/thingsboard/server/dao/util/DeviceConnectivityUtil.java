@@ -20,6 +20,9 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class DeviceConnectivityUtil {
 
     public static final String HTTP = "http";
@@ -31,13 +34,14 @@ public class DeviceConnectivityUtil {
     public static final String MQTTS = "mqtts";
     public static final String COAP = "coap";
     public static final String COAPS = "coaps";
-    public static final String PEM_CERT_FILE_NAME = "tb-server-chain.pem";
+    public static final String CA_ROOT_CERT_PEM = "ca-root.pem";
     public static final String CHECK_DOCUMENTATION = "Check documentation";
     public static final String JSON_EXAMPLE_PAYLOAD = "\"{temperature:25}\"";
     public static final String DOCKER_RUN = "docker run --rm -it ";
     public static final String GATEWAY_DOCKER_RUN = "docker run -it ";
     public static final String MQTT_IMAGE = "thingsboard/mosquitto-clients ";
     public static final String COAP_IMAGE = "thingsboard/coap-clients ";
+    public static final List<String> LOCAL_HOSTS = Arrays.asList("localhost", "127.0.0.1");
 
     public static String getHttpPublishCommand(String protocol, String host, String port, DeviceCredentials deviceCredentials) {
         return String.format("curl -v -X POST %s://%s%s/api/v1/%s/telemetry --header Content-Type:application/json --data " + JSON_EXAMPLE_PAYLOAD,
@@ -47,27 +51,27 @@ public class DeviceConnectivityUtil {
     public static String getMqttPublishCommand(String protocol, String host, String port, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) {
         StringBuilder command = new StringBuilder("mosquitto_pub -d -q 1");
         if (MQTTS.equals(protocol)) {
-            command.append(" --cafile ").append(PEM_CERT_FILE_NAME);
+            command.append(" --cafile ").append(CA_ROOT_CERT_PEM);
         }
         command.append(" -h ").append(host).append(port == null ? "" : " -p " + port);
         command.append(" -t ").append(deviceTelemetryTopic);
 
         switch (deviceCredentials.getCredentialsType()) {
             case ACCESS_TOKEN:
-                command.append(" -u ").append(deviceCredentials.getCredentialsId());
+                command.append(" -u \"").append(deviceCredentials.getCredentialsId()).append("\"");
                 break;
             case MQTT_BASIC:
                 BasicMqttCredentials credentials = JacksonUtil.fromString(deviceCredentials.getCredentialsValue(),
                         BasicMqttCredentials.class);
                 if (credentials != null) {
                     if (credentials.getClientId() != null) {
-                        command.append(" -i ").append(credentials.getClientId());
+                        command.append(" -i \"").append(credentials.getClientId()).append("\"");
                     }
                     if (credentials.getUserName() != null) {
-                        command.append(" -u ").append(credentials.getUserName());
+                        command.append(" -u \"").append(credentials.getUserName()).append("\"");
                     }
                     if (credentials.getPassword() != null) {
-                        command.append(" -P ").append(credentials.getPassword());
+                        command.append(" -P \"").append(credentials.getPassword()).append("\"");;
                     }
                 } else {
                     return null;
@@ -135,7 +139,7 @@ public class DeviceConnectivityUtil {
         }
 
         StringBuilder mqttDockerCommand = new StringBuilder();
-        mqttDockerCommand.append(DOCKER_RUN).append(MQTT_IMAGE);
+        mqttDockerCommand.append(DOCKER_RUN).append(LOCAL_HOSTS.contains(host) ? "--network=host ":"").append(MQTT_IMAGE);
 
         if (MQTTS.equals(protocol)) {
             mqttDockerCommand.append("/bin/sh -c \"")
@@ -151,14 +155,14 @@ public class DeviceConnectivityUtil {
     }
 
     public static String getCurlPemCertCommand(String baseUrl, String protocol) {
-        return String.format("curl -f -S -o %s %s/api/device-connectivity/%s/certificate/download", PEM_CERT_FILE_NAME, baseUrl, protocol);
+        return String.format("curl -f -S -o %s %s/api/device-connectivity/%s/certificate/download", CA_ROOT_CERT_PEM, baseUrl, protocol);
     }
 
     public static String getCoapPublishCommand(String protocol, String host, String port, DeviceCredentials deviceCredentials) {
         switch (deviceCredentials.getCredentialsType()) {
             case ACCESS_TOKEN:
                 String client = COAPS.equals(protocol) ? "coap-client-openssl" : "coap-client";
-                return String.format("%s -m POST %s://%s%s/api/v1/%s/telemetry -t json -e %s",
+                return String.format("%s -v 6 -m POST %s://%s%s/api/v1/%s/telemetry -t json -e %s",
                         client, protocol, host, port, deviceCredentials.getCredentialsId(), JSON_EXAMPLE_PAYLOAD);
             default:
                 return null;
@@ -167,6 +171,6 @@ public class DeviceConnectivityUtil {
 
     public static String getDockerCoapPublishCommand(String protocol, String host, String port, DeviceCredentials deviceCredentials) {
         String coapCommand = getCoapPublishCommand(protocol, host, port, deviceCredentials);
-        return coapCommand != null ? String.format("%s%s%s", DOCKER_RUN, COAP_IMAGE, coapCommand) : null;
+        return coapCommand != null ? String.format("%s%s%s", DOCKER_RUN + (LOCAL_HOSTS.contains(host) ? "--network=host ":""), COAP_IMAGE, coapCommand) : null;
     }
 }

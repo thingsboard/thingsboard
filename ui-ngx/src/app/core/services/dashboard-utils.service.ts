@@ -397,6 +397,7 @@ export class DashboardUtilsService {
     const newDatasource = deepClone(datasource);
     if (newDatasource.type === DatasourceType.function) {
       newDatasource.type = DatasourceType.entity;
+      newDatasource.name = '';
       if (widgetTypeDescriptor.hasBasicMode && config.configMode === WidgetConfigMode.basic) {
         newDatasource.type = DatasourceType.device;
       }

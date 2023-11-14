@@ -17,10 +17,10 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.http.HttpHeaders;
@@ -35,11 +35,11 @@ import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
-import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
@@ -105,9 +105,9 @@ public class TbResourceControllerTest extends AbstractControllerTest {
 
         TbResource savedResource = save(resource);
 
-        testNotifyEntityOneTimeMsgToEdgeServiceNever(savedResource, savedResource.getId(), savedResource.getId(),
+        testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(savedResource, savedResource.getId(), savedResource.getId(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ADDED);
+                ActionType.ADDED, ActionType.ADDED);
 
         Assert.assertNotNull(savedResource);
         Assert.assertNotNull(savedResource.getId());
@@ -125,9 +125,9 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         TbResource foundResource = doGet("/api/resource/" + savedResource.getId().getId().toString(), TbResource.class);
         Assert.assertEquals(foundResource.getTitle(), savedResource.getTitle());
 
-        testNotifyEntityOneTimeMsgToEdgeServiceNever(foundResource, foundResource.getId(), foundResource.getId(),
+        testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(foundResource, foundResource.getId(), foundResource.getId(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.UPDATED);
+                ActionType.UPDATED, ActionType.UPDATED);
     }
 
     @Test
@@ -157,7 +157,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         resource.setFileName(DEFAULT_FILE_NAME);
         resource.setData(TEST_DATA);
 
-       TbResource savedResource = save(resource);
+        TbResource savedResource = save(resource);
 
         loginDifferentTenant();
 
@@ -209,9 +209,9 @@ public class TbResourceControllerTest extends AbstractControllerTest {
                 .andExpect(status().isOk());
 
 
-        testNotifyEntityOneTimeMsgToEdgeServiceNever(savedResource, savedResource.getId(), savedResource.getId(),
+        testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(savedResource, savedResource.getId(), savedResource.getId(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                                ActionType.DELETED, resourceIdStr);
+                ActionType.DELETED, ActionType.DELETED, resourceIdStr);
 
         doGet("/api/resource/" + savedResource.getId().getId().toString())
                 .andExpect(status().isNotFound())
@@ -240,7 +240,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         doDelete("/api/resource/" + resourceIdStr)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("Following widget types uses current resource: ["
-                        + widgetType .getName()+ "]")));
+                        + widgetType.getName() + "]")));
     }
 
     @Test
@@ -271,9 +271,9 @@ public class TbResourceControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        testNotifyManyEntityManyTimeMsgToEdgeServiceNever(new TbResource(), new TbResource(),
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new TbResource(), new TbResource(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ADDED, cntEntity);
+                ActionType.ADDED, cntEntity, cntEntity, cntEntity);
 
         Collections.sort(resources, idComparator);
         Collections.sort(loadedResources, idComparator);
@@ -319,9 +319,9 @@ public class TbResourceControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        testNotifyManyEntityManyTimeMsgToEdgeServiceNever(new TbResource(), new TbResource(),
-                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ADDED, jksCntEntity + lwm2mCntEntity);
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new TbResource(), new TbResource(),
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED,
+                jksCntEntity + lwm2mCntEntity, jksCntEntity + lwm2mCntEntity, jksCntEntity + lwm2mCntEntity);
 
         Collections.sort(resources, idComparator);
         Collections.sort(loadedResources, idComparator);
@@ -368,9 +368,9 @@ public class TbResourceControllerTest extends AbstractControllerTest {
                     .andExpect(status().isOk());
         }
 
-        testNotifyManyEntityManyTimeMsgToEdgeServiceNeverAdditionalInfoAny(new TbResource(), new TbResource(),
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAnyAdditionalInfoAny(new TbResource(), new TbResource(),
                 resources.get(0).getTenantId(), null, null, SYS_ADMIN_EMAIL,
-                ActionType.DELETED, cntEntity, 1);
+                ActionType.DELETED, ActionType.DELETED, cntEntity, cntEntity, 1);
 
         pageLink = new PageLink(27);
         loadedResources.clear();
@@ -441,9 +441,9 @@ public class TbResourceControllerTest extends AbstractControllerTest {
                     .andExpect(status().isOk());
         }
 
-        testNotifyManyEntityManyTimeMsgToEdgeServiceNeverAdditionalInfoAny(new TbResource(), new TbResource(),
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAnyAdditionalInfoAny(new TbResource(), new TbResource(),
                 jksResources.get(0).getTenantId(), null, null, SYS_ADMIN_EMAIL,
-                ActionType.DELETED, cntEntity, 1);
+                ActionType.DELETED, ActionType.DELETED, cntEntity, cntEntity, 1);
 
         pageLink = new PageLink(27);
         loadedResources.clear();
@@ -535,9 +535,9 @@ public class TbResourceControllerTest extends AbstractControllerTest {
 
         TbResource savedResource = save(resource);
 
-        testNotifyEntityOneTimeMsgToEdgeServiceNever(savedResource, savedResource.getId(), savedResource.getId(),
+        testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(savedResource, savedResource.getId(), savedResource.getId(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ADDED);
+                ActionType.ADDED, ActionType.ADDED);
 
         ResultActions resultActions = doGet("/api/resource/js/" + savedResource.getId().getId().toString() + "/download")
                 .andExpect(status().isOk());
@@ -616,7 +616,62 @@ public class TbResourceControllerTest extends AbstractControllerTest {
                 .andExpect(status().isForbidden());
     }
 
+    @Test
+    public void testGetLwm2mListObjectsPage() throws Exception {
+        loginTenantAdmin();
+
+        List<TbResource> resources = loadLwm2mResources();
+
+        List<LwM2mObject> objects =
+                doGetTyped("/api/resource/lwm2m/page?pageSize=100&page=0", new TypeReference<>(){});
+        Assert.assertNotNull(objects);
+        Assert.assertEquals(resources.size(), objects.size());
+
+        removeLoadResources(resources);
+    }
+
+    @Test
+    public void testGetLwm2mListObjects() throws Exception {
+        loginTenantAdmin();
+
+        List<TbResource> resources = loadLwm2mResources();
+
+        List<LwM2mObject> objects =
+                doGetTyped("/api/resource/lwm2m?sortProperty=id&sortOrder=ASC&objectIds=3_1.0,5_1.0,19_1.1", new TypeReference<>(){});
+        Assert.assertNotNull(objects);
+        Assert.assertEquals(3, objects.size());
+
+        removeLoadResources(resources);
+    }
+
+    private List<TbResource> loadLwm2mResources() throws Exception {
+        var models = List.of("1", "2", "3", "5", "6", "9", "19", "3303");
+
+        List<TbResource> resources = new ArrayList<>(models.size());
+
+        for (String model : models) {
+            String fileName = model + ".xml";
+            byte[] bytes = IOUtils.toByteArray(getClass().getClassLoader().getResourceAsStream("lwm2m/" + fileName));
+
+            TbResource resource = new TbResource();
+            resource.setResourceType(ResourceType.LWM2M_MODEL);
+            resource.setFileName(fileName);
+            resource.setData(Base64.getEncoder().encodeToString(bytes));
+
+            resources.add(save(resource));
+        }
+        return resources;
+    }
+
+    private void removeLoadResources(List<TbResource> resources) throws Exception {
+        for (TbResourceInfo resource : resources) {
+            doDelete("/api/resource/" + resource.getId().getId().toString())
+                    .andExpect(status().isOk());
+        }
+    }
+
     private TbResource save(TbResource tbResource) throws Exception {
-        return doPostWithTypedResponse("/api/resource", tbResource, new TypeReference<>(){});
+        return doPostWithTypedResponse("/api/resource", tbResource, new TypeReference<>() {
+        });
     }
 }

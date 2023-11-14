@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.edge.rpc.constructor.rule;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +49,7 @@ public abstract class AbstractRuleChainMetadataConstructor implements RuleChainM
             constructRuleChainMetadataUpdatedMsg(tenantId, builder, ruleChainMetaData);
             builder.setMsgType(msgType);
             return builder.build();
-        } catch (JsonProcessingException ex) {
+        } catch (Exception ex) {
             log.error("[{}] Can't construct RuleChainMetadataUpdateMsg", tenantId, ex);
         }
         return null;
@@ -58,7 +57,7 @@ public abstract class AbstractRuleChainMetadataConstructor implements RuleChainM
 
     protected abstract void constructRuleChainMetadataUpdatedMsg(TenantId tenantId,
                                                                  RuleChainMetadataUpdateMsg.Builder builder,
-                                                                 RuleChainMetaData ruleChainMetaData) throws JsonProcessingException;
+                                                                 RuleChainMetaData ruleChainMetaData);
 
     protected List<NodeConnectionInfoProto> constructConnections(List<NodeConnectionInfo> connections) {
         List<NodeConnectionInfoProto> result = new ArrayList<>();
@@ -78,7 +77,7 @@ public abstract class AbstractRuleChainMetadataConstructor implements RuleChainM
                 .build();
     }
 
-    protected List<RuleNodeProto> constructNodes(List<RuleNode> nodes) throws JsonProcessingException {
+    protected List<RuleNodeProto> constructNodes(List<RuleNode> nodes) {
         List<RuleNodeProto> result = new ArrayList<>();
         if (nodes != null && !nodes.isEmpty()) {
             for (RuleNode node : nodes) {
@@ -88,20 +87,22 @@ public abstract class AbstractRuleChainMetadataConstructor implements RuleChainM
         return result;
     }
 
-    private RuleNodeProto constructNode(RuleNode node) throws JsonProcessingException {
+    private RuleNodeProto constructNode(RuleNode node) {
         return RuleNodeProto.newBuilder()
                 .setIdMSB(node.getId().getId().getMostSignificantBits())
                 .setIdLSB(node.getId().getId().getLeastSignificantBits())
                 .setType(node.getType())
                 .setName(node.getName())
                 .setDebugMode(node.isDebugMode())
-                .setConfiguration(JacksonUtil.OBJECT_MAPPER.writeValueAsString(node.getConfiguration()))
-                .setAdditionalInfo(JacksonUtil.OBJECT_MAPPER.writeValueAsString(node.getAdditionalInfo()))
+                .setConfiguration(JacksonUtil.toString(node.getConfiguration()))
+                .setAdditionalInfo(JacksonUtil.toString(node.getAdditionalInfo()))
+                .setSingletonMode(node.isSingletonMode())
+                .setConfigurationVersion(node.getConfigurationVersion())
                 .build();
     }
 
     protected List<RuleChainConnectionInfoProto> constructRuleChainConnections(List<RuleChainConnectionInfo> ruleChainConnections,
-                                                                               NavigableSet<Integer> removedNodeIndexes) throws JsonProcessingException {
+                                                                               NavigableSet<Integer> removedNodeIndexes) {
         List<RuleChainConnectionInfoProto> result = new ArrayList<>();
         if (ruleChainConnections != null && !ruleChainConnections.isEmpty()) {
             for (RuleChainConnectionInfo ruleChainConnectionInfo : ruleChainConnections) {
@@ -125,13 +126,13 @@ public abstract class AbstractRuleChainMetadataConstructor implements RuleChainM
         return result;
     }
 
-    private RuleChainConnectionInfoProto constructRuleChainConnection(RuleChainConnectionInfo ruleChainConnectionInfo) throws JsonProcessingException {
+    private RuleChainConnectionInfoProto constructRuleChainConnection(RuleChainConnectionInfo ruleChainConnectionInfo) {
         return RuleChainConnectionInfoProto.newBuilder()
                 .setFromIndex(ruleChainConnectionInfo.getFromIndex())
                 .setTargetRuleChainIdMSB(ruleChainConnectionInfo.getTargetRuleChainId().getId().getMostSignificantBits())
                 .setTargetRuleChainIdLSB(ruleChainConnectionInfo.getTargetRuleChainId().getId().getLeastSignificantBits())
                 .setType(ruleChainConnectionInfo.getType())
-                .setAdditionalInfo(JacksonUtil.OBJECT_MAPPER.writeValueAsString(ruleChainConnectionInfo.getAdditionalInfo()))
+                .setAdditionalInfo(JacksonUtil.toString(ruleChainConnectionInfo.getAdditionalInfo()))
                 .build();
     }
 }

@@ -229,7 +229,7 @@ public class DeviceController extends BaseController {
         checkParameter(DEVICE_ID, strDeviceId);
         DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
         Device device = checkDeviceId(deviceId, Operation.DELETE);
-        tbDeviceService.delete(device, getCurrentUser()).get();
+        tbDeviceService.delete(device, getCurrentUser());
     }
 
     @ApiOperation(value = "Assign device to customer (assignDeviceToCustomer)",

@@ -76,6 +76,8 @@ public interface EntityViewService extends EntityDaoService {
 
     List<EntityView> findEntityViewsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId);
 
+    boolean existsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId);
+
     void deleteEntityView(TenantId tenantId, EntityViewId entityViewId);
 
     void deleteEntityViewsByTenantId(TenantId tenantId);

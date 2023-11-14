@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>3.6.0-SNAPSHOT</version>
+        <version>3.6.2-SNAPSHOT</version>
         <artifactId>thingsboard</artifactId>
     </parent>
     <artifactId>dao</artifactId>
@@ -229,6 +229,10 @@
         <dependency>
             <groupId>org.thingsboard.rule-engine</groupId>
             <artifactId>rule-engine-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.hypersistence</groupId>
+            <artifactId>hypersistence-utils-hibernate-55</artifactId>
         </dependency>
     </dependencies>
     <build>

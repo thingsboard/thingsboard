@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -34,8 +35,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.StringUtils;
@@ -51,6 +54,7 @@ import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.security.model.JwtSettings;
 import org.thingsboard.server.dao.edge.EdgeDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -840,6 +844,13 @@ public class EdgeControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSyncEdge() throws Exception {
+        loginSysAdmin();
+        // get jwt settings from yaml config
+        JwtSettings settings = doGet("/api/admin/jwtSettings", JwtSettings.class);
+        // save jwt settings into db
+        doPost("/api/admin/jwtSettings", settings).andExpect(status().isOk());
+        loginTenantAdmin();
+
         Asset asset = new Asset();
         asset.setName("Test Sync Edge Asset 1");
         asset.setType("test");
@@ -852,6 +863,11 @@ public class EdgeControllerTest extends AbstractControllerTest {
 
         Edge edge = doPost("/api/edge", constructEdge("Test Sync Edge", "test"), Edge.class);
 
+        // simulate edge activation
+        ObjectNode attributes = JacksonUtil.newObjectNode();
+        attributes.put("active", true);
+        doPost("/api/plugins/telemetry/EDGE/" + edge.getId() + "/attributes/" + DataConstants.SERVER_SCOPE, attributes);
+
         doPost("/api/edge/" + edge.getId().getId().toString()
                 + "/device/" + savedDevice.getId().getId().toString(), Device.class);
         doPost("/api/edge/" + edge.getId().getId().toString()
@@ -860,13 +876,12 @@ public class EdgeControllerTest extends AbstractControllerTest {
         EdgeImitator edgeImitator = new EdgeImitator(EDGE_HOST, EDGE_PORT, edge.getRoutingKey(), edge.getSecret());
         edgeImitator.ignoreType(UserCredentialsUpdateMsg.class);
 
-        edgeImitator.expectMessageAmount(25);
+        edgeImitator.expectMessageAmount(24);
         edgeImitator.connect();
         assertThat(edgeImitator.waitForMessages()).as("await for messages on first connect").isTrue();
 
         verifyFetchersMsgs(edgeImitator);
         // verify queue msgs
-        Assert.assertTrue(popRuleChainMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, "Edge Root Rule Chain"));
         Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popDeviceMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Device 1"));
         Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test"));
@@ -897,10 +912,10 @@ public class EdgeControllerTest extends AbstractControllerTest {
     private void verifyFetchersMsgs(EdgeImitator edgeImitator) {
         Assert.assertTrue(popQueueMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Main"));
         Assert.assertTrue(popRuleChainMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Edge Root Rule Chain"));
-        Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgs(), "mail", true));
-        Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgs(), "mail", false));
-        Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgs(), "mailTemplates", true));
-        Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgs(), "mailTemplates", false));
+        Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgs(), "general"));
+        Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgs(), "mail"));
+        Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgs(), "connectivity"));
+        Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgs(), "jwt"));
         Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
@@ -946,12 +961,11 @@ public class EdgeControllerTest extends AbstractControllerTest {
         return false;
     }
 
-    private boolean popAdminSettingsMsg(List<AbstractMessage> messages, String key, boolean isSystem) {
+    private boolean popAdminSettingsMsg(List<AbstractMessage> messages, String key) {
         for (AbstractMessage message : messages) {
             if (message instanceof AdminSettingsUpdateMsg) {
                 AdminSettingsUpdateMsg adminSettingsUpdateMsg = (AdminSettingsUpdateMsg) message;
-                if (key.equals(adminSettingsUpdateMsg.getKey())
-                        && isSystem == adminSettingsUpdateMsg.getIsSystem()) {
+                if (key.equals(adminSettingsUpdateMsg.getKey())) {
                     messages.remove(message);
                     return true;
                 }
@@ -1107,7 +1121,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
     public void testGetEdgeInstallInstructions() throws Exception {
         Edge edge = constructEdge(tenantId, "Edge for Test Docker Install Instructions", "default", "7390c3a6-69b0-9910-d155-b90aca4b772e", "l7q4zsjplzwhk16geqxy");
         Edge savedEdge = doPost("/api/edge", edge, Edge.class);
-        String installInstructions = doGet("/api/edge/instructions/" + savedEdge.getId().getId().toString(), String.class);
+        String installInstructions = doGet("/api/edge/instructions/" + savedEdge.getId().getId().toString() + "/docker", String.class);
         Assert.assertTrue(installInstructions.contains("l7q4zsjplzwhk16geqxy"));
         Assert.assertTrue(installInstructions.contains("7390c3a6-69b0-9910-d155-b90aca4b772e"));
     }

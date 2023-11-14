@@ -45,6 +45,7 @@ import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.OtaPackageUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.QueueUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RelationUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.ResourceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.TenantProfileUpdateMsg;
@@ -173,6 +174,7 @@ public class EdgeImitator {
     }
 
     private ListenableFuture<List<Void>> processDownlinkMsg(DownlinkMsg downlinkMsg) {
+        log.trace("processDownlinkMsg: {}", downlinkMsg);
         List<ListenableFuture<Void>> result = new ArrayList<>();
         if (downlinkMsg.getAdminSettingsUpdateMsgCount() > 0) {
             for (AdminSettingsUpdateMsg adminSettingsUpdateMsg : downlinkMsg.getAdminSettingsUpdateMsgList()) {
@@ -300,6 +302,11 @@ public class EdgeImitator {
         if (downlinkMsg.getTenantProfileUpdateMsgCount() > 0) {
             for (TenantProfileUpdateMsg tenantProfileUpdateMsg : downlinkMsg.getTenantProfileUpdateMsgList()) {
                 result.add(saveDownlinkMsg(tenantProfileUpdateMsg));
+            }
+        }
+        if (downlinkMsg.getResourceUpdateMsgCount() > 0) {
+            for (ResourceUpdateMsg resourceUpdateMsg : downlinkMsg.getResourceUpdateMsgList()) {
+                result.add(saveDownlinkMsg(resourceUpdateMsg));
             }
         }
         if (downlinkMsg.hasEdgeConfiguration()) {

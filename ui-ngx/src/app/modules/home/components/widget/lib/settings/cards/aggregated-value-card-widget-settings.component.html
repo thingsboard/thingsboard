@@ -18,6 +18,11 @@
 <ng-container [formGroup]="aggregatedValueCardWidgetSettingsForm">
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.aggregated-value-card.aggregated-value-card-style</div>
+    <div class="tb-form-row">
+      <mat-slide-toggle class="mat-slide" formControlName="autoScale">
+        {{ 'widgets.aggregated-value-card.auto-scale' | translate }}
+      </mat-slide-toggle>
+    </div>
     <div class="tb-form-row column-xs">
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showSubtitle">
         {{ 'widgets.aggregated-value-card.subtitle' | translate }}
