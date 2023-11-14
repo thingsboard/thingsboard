@@ -29,7 +29,6 @@ import org.apache.http.HttpStatus;
 import org.awaitility.Awaitility;
 import org.hamcrest.Matcher;
 import org.hibernate.exception.ConstraintViolationException;
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -359,6 +358,10 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
             try {
                 status = doDelete("/api/tenant/" + tenantId.getId().toString())
                         .andReturn().getResponse().getStatus();
+                if (status != HttpStatus.SC_OK) {
+                    log.warn("Tenant deletion failed, tenantId: {}", tenantId.getId().toString());
+                    Thread.sleep(1000L);
+                }
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
