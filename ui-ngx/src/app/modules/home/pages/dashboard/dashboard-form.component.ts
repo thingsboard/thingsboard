@@ -80,13 +80,12 @@ export class DashboardFormComponent extends EntityComponent<Dashboard> {
 
   buildForm(entity: Dashboard): UntypedFormGroup {
     this.updateFields(entity);
-    return this.fb.group(
+    const form = this.fb.group(
       {
         title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
         image: [entity ? entity.image : null],
         mobileHide: [entity ? entity.mobileHide : false],
         mobileOrder: [entity ? entity.mobileOrder : null, [Validators.pattern(/^-?[0-9]+$/)]],
-        assignedCustomerIds: [[]],
         configuration: this.fb.group(
           {
             description: [entity && entity.configuration ? entity.configuration.description : ''],
@@ -94,6 +93,11 @@ export class DashboardFormComponent extends EntityComponent<Dashboard> {
         )
       }
     );
+    if (this.isAdd) {
+      form.addControl('assignedCustomerIds', this.fb.control([]));
+    }
+
+    return form;
   }
 
   updateForm(entity: Dashboard) {

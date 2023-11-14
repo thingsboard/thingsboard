@@ -47,6 +47,7 @@ import {
 import {
   Dashboard,
   DashboardInfo,
+  DashboardSetup,
   getDashboardAssignedCustomersText,
   isCurrentPublicDashboardCustomer,
   isPublicDashboard
@@ -103,7 +104,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
     this.config.deleteEntitiesContent = () => this.translate.instant('dashboard.delete-dashboards-text');
 
     this.config.loadEntity = id => this.dashboardService.getDashboard(id.id);
-    this.config.saveEntity = dashboard => this.saveAndAssignDashboard(dashboard as Dashboard);
+    this.config.saveEntity = dashboard => this.saveAndAssignDashboard(dashboard as DashboardSetup);
     this.config.onEntityAction = action => this.onDashboardAction(action);
     this.config.detailsReadonly = () => (this.config.componentsData.dashboardScope === 'customer_user' ||
       this.config.componentsData.dashboardScope === 'edge_customer_user');
@@ -645,7 +646,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
     );
   }
 
-  saveAndAssignDashboard(dashboard: Dashboard): Observable<Dashboard> {
+  saveAndAssignDashboard(dashboard: DashboardSetup): Observable<Dashboard> {
     const {assignedCustomerIds, ...dashboardToCreate} = dashboard;
 
     return this.dashboardService.saveDashboard(dashboardToCreate as Dashboard).pipe(
