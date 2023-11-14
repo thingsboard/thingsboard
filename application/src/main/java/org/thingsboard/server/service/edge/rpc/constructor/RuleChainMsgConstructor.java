@@ -37,22 +37,24 @@ import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 public class RuleChainMsgConstructor {
 
     public RuleChainUpdateMsg constructRuleChainUpdatedMsg(UpdateMsgType msgType, RuleChain ruleChain, boolean isRoot, EdgeVersion edgeVersion) {
-        ruleChain.setRoot(isRoot);
         if (EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)) {
-            return constructDeprecatedRuleChainUpdatedMsg(msgType, ruleChain);
+            return constructDeprecatedRuleChainUpdatedMsg(msgType, ruleChain, isRoot);
         }
-        return RuleChainUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(ruleChain))
+        ruleChain.setRoot(isRoot);
+        RuleChainUpdateMsg result = RuleChainUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(ruleChain))
                 .setIdMSB(ruleChain.getId().getId().getMostSignificantBits())
                 .setIdLSB(ruleChain.getId().getId().getLeastSignificantBits()).build();
+        ruleChain.setRoot(false);
+        return result;
     }
 
-    private RuleChainUpdateMsg constructDeprecatedRuleChainUpdatedMsg(UpdateMsgType msgType, RuleChain ruleChain) {
+    private RuleChainUpdateMsg constructDeprecatedRuleChainUpdatedMsg(UpdateMsgType msgType, RuleChain ruleChain, boolean isRoot) {
         RuleChainUpdateMsg.Builder builder = RuleChainUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(ruleChain.getId().getId().getMostSignificantBits())
                 .setIdLSB(ruleChain.getId().getId().getLeastSignificantBits())
                 .setName(ruleChain.getName())
-                .setRoot(ruleChain.isRoot())
+                .setRoot(isRoot)
                 .setDebugMode(ruleChain.isDebugMode())
                 .setConfiguration(JacksonUtil.toString(ruleChain.getConfiguration()));
         if (ruleChain.getFirstRuleNodeId() != null) {
