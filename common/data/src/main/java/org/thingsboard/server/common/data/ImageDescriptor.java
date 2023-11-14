@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.resource;
+package org.thingsboard.server.common.data;
 
-import org.thingsboard.server.common.data.TbResource;
-import org.thingsboard.server.common.data.TbResourceInfo;
-import org.thingsboard.server.common.data.User;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Data;
 
-public interface TbImageService {
-
-    TbResourceInfo save(TbResource image, User user) throws Exception;
-
-    TbResourceInfo save(TbResourceInfo imageInfo, User user);
-
-    void delete(TbResourceInfo imageInfo, User user);
-
+@Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class ImageDescriptor {
+    private String mediaType;
+    private int width;
+    private int height;
+    private long size;
+    private ImageDescriptor previewDescriptor;
 }

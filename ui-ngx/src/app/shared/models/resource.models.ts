@@ -61,8 +61,6 @@ export interface ResourceInfo extends Omit<BaseData<TbResourceId>, 'name' | 'lab
   title?: string;
   resourceType: ResourceType;
   fileName: string;
-  mediaType: string;
-  link: string;
 }
 
 export interface Resource extends ResourceInfo {

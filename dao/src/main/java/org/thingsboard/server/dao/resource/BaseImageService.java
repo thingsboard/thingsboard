@@ -15,7 +15,11 @@
  */
 package org.thingsboard.server.dao.resource;
 
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.ImageDescriptor;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
@@ -25,10 +29,13 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.service.validator.ResourceDataValidator;
+import org.thingsboard.server.dao.util.ImageUtils;
+import org.thingsboard.server.dao.util.ImageUtils.ProcessedImage;
 
 import java.util.Set;
 
 @Service
+@Slf4j
 public class BaseImageService extends BaseResourceService implements ImageService {
 
     public BaseImageService(TbResourceDao resourceDao, TbResourceInfoDao resourceInfoDao, ResourceDataValidator resourceValidator) {
@@ -36,18 +43,39 @@ public class BaseImageService extends BaseResourceService implements ImageServic
     }
 
     @Override
-    public TbResource saveImage(TbResource image) {
+    public TbResourceInfo saveImage(TbResource image) throws Exception {
         resourceValidator.validate(image, TbResourceInfo::getTenantId);
-        if (image.getData() != null) {
 
-        }
-        // generate preview, etc.
-        return saveResource(image, false);
+        ImageDescriptor descriptor = image.getDescriptor(ImageDescriptor.class);
+        Pair<ImageDescriptor, byte[]> result = processImage(image.getData(), descriptor);
+        image.setDescriptor(JacksonUtil.valueToTree(result.getLeft()));
+        image.setPreview(result.getRight());
+
+        image = saveResource(image, false);
+        return new TbResourceInfo(image);
+    }
+
+    private Pair<ImageDescriptor, byte[]> processImage(byte[] data, ImageDescriptor descriptor) throws Exception {
+        ProcessedImage image = ImageUtils.processImage(data, descriptor.getMediaType(), 250);
+        ProcessedImage preview = image.getPreview();
+
+        descriptor.setWidth(image.getWidth());
+        descriptor.setHeight(image.getHeight());
+        descriptor.setSize(image.getSize());
+
+        ImageDescriptor previewDescriptor = new ImageDescriptor();
+        previewDescriptor.setWidth(preview.getWidth());
+        previewDescriptor.setHeight(preview.getHeight());
+        previewDescriptor.setMediaType(preview.getMediaType());
+        previewDescriptor.setSize(preview.getSize());
+        descriptor.setPreviewDescriptor(previewDescriptor);
+
+        return Pair.of(descriptor, preview.getData());
     }
 
     @Override
     public TbResourceInfo saveImageInfo(TbResourceInfo imageInfo) {
-        return null;
+        return saveResource(new TbResource(imageInfo));
     }
 
     @Override
@@ -80,7 +108,12 @@ public class BaseImageService extends BaseResourceService implements ImageServic
 
     @Override
     public byte[] getImagePreview(TenantId tenantId, TbResourceId imageId) {
-        return new byte[0];
+        return resourceDao.getResourcePreview(tenantId, imageId);
+    }
+
+    @Override
+    public void deleteImage(TenantId tenantId, TbResourceId imageId) {
+        deleteResource(tenantId, imageId);
     }
 
     @Override

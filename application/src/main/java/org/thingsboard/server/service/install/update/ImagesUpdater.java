@@ -30,7 +30,7 @@ import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.util.ImageUtils;
+import org.thingsboard.server.dao.util.ImageUtils;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.resource.ImageService;
@@ -38,7 +38,6 @@ import org.thingsboard.server.dao.resource.ImageService;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -199,41 +198,44 @@ public class ImagesUpdater {
         return new ImageSaveResult(imageLink, !imageLink.equals(data));
     }
 
+    @SneakyThrows
     private String saveImage(TenantId tenantId, String name, String key, byte[] imageData, String mediaType,
                              String existingImageQuery) {
-        TbResourceInfo resourceInfo = imageService.getImageInfoByTenantIdAndKey(tenantId, key);
-        if (resourceInfo == null && !tenantId.isSysTenantId() && existingImageQuery != null) {
+        TbResourceInfo imageInfo = imageService.getImageInfoByTenantIdAndKey(tenantId, key);
+        if (imageInfo == null && !tenantId.isSysTenantId() && existingImageQuery != null) {
             // TODO: need to search among tenant images too (custom widgets)
 //            List<TbResourceInfo> existingSystemImages = imageService.findByTenantIdAndDataAndKeyStartingWith(TenantId.SYS_TENANT_ID, imageData, existingImageQuery);
 //            if (!existingSystemImages.isEmpty()) {
-//                resourceInfo = existingSystemImages.get(0);
+//                imageInfo = existingSystemImages.get(0);
 //                if (existingSystemImages.size() > 1) {
 //                    log.warn("Found more than one system image resources for key {}", existingImageQuery);
 //                }
-//                String link = imageService.getImageLink(resourceInfo);
+//                String link = imageService.getImageLink(imageInfo);
 //                log.info("Using system image {} for {}", link, key);
 //                return link;
 //            }
         }
-        TbResource resource;
-        if (resourceInfo == null) {
-            resource = new TbResource();
-            resource.setTenantId(tenantId);
-            resource.setResourceType(ResourceType.IMAGE);
-            resource.setResourceKey(key);
+        TbResource image;
+        if (imageInfo == null) {
+            image = new TbResource();
+            image.setTenantId(tenantId);
+            image.setResourceType(ResourceType.IMAGE);
+            image.setResourceKey(key);
         } else if (tenantId.isSysTenantId()) {
-            resource = new TbResource(resourceInfo);
+            image = new TbResource(imageInfo);
         } else {
-            return imageService.getImageLink(resourceInfo);
+            return imageService.getImageLink(imageInfo);
         }
-        resource.setTitle(name);
-        resource.setFileName(key);
-        resource.setMediaType(mediaType);
-        resource.setData(imageData);
-        resource = imageService.saveImage(resource);
-        log.info("[{}] {} image '{}' ({})", tenantId, resourceInfo == null ? "Created" : "Updated",
-                resource.getTitle(), resource.getResourceKey());
-        return imageService.getImageLink(resourceInfo);
+        image.setTitle(name);
+        image.setFileName(key);
+        image.setDescriptor(JacksonUtil.newObjectNode()
+                .put("mediaType", mediaType));
+        image.setData(imageData);
+
+        TbResourceInfo savedImage = imageService.saveImage(image);
+        log.info("[{}] {} image '{}' ({})", tenantId, imageInfo == null ? "Created" : "Updated",
+                image.getTitle(), image.getResourceKey());
+        return imageService.getImageLink(savedImage);
     }
 
     private String getText(JsonNode jsonNode, String field) {

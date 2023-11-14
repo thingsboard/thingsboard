@@ -24,7 +24,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.util.MediaTypeUtils;
+import org.thingsboard.server.dao.util.ImageUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

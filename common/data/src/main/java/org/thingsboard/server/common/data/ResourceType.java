@@ -27,7 +27,7 @@ public enum ResourceType {
     IMAGE(null, true, false);
 
     @Getter
-    private final String defaultMediaType;
+    private final String mediaType;
     @Getter
     private final boolean customerAccess;
     @Getter

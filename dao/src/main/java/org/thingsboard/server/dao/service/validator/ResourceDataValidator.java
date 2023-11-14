@@ -17,8 +17,6 @@ package org.thingsboard.server.dao.service.validator;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.InvalidMediaTypeException;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
@@ -93,19 +91,6 @@ public class ResourceDataValidator extends DataValidator<TbResource> {
             }
             long maxSumResourcesDataInBytes = profileConfiguration.getMaxResourcesInBytes();
             validateMaxSumDataSizePerTenant(tenantId, resourceDao, maxSumResourcesDataInBytes, resource.getData().length, TB_RESOURCE);
-        }
-        if (resource.getResourceType().getDefaultMediaType() != null) {
-            resource.setMediaType(resource.getResourceType().getDefaultMediaType());
-        } else {
-            if (resource.getMediaType() == null) {
-                throw new DataValidationException("Media type is required");
-            } else {
-                try {
-                    MediaType.parseMediaType(resource.getMediaType());
-                } catch (InvalidMediaTypeException e) {
-                    throw new DataValidationException("Invalid media type", e);
-                }
-            }
         }
         if (StringUtils.isEmpty(resource.getFileName())) {
             throw new DataValidationException("Resource file name should be specified!");

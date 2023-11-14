@@ -620,10 +620,9 @@ public class TbResourceControllerTest extends AbstractControllerTest {
     @Test
     public void testUpdateResourceData_nonUpdatableResourceType() throws Exception {
         TbResource resource = new TbResource();
-        resource.setResourceType(ResourceType.IMAGE);
+        resource.setResourceType(ResourceType.PKCS_12);
         resource.setTitle("My resource");
-        resource.setFileName("image.png");
-        resource.setMediaType("image/png");
+        resource.setFileName("3.pks");
         resource.setBase64Data(TEST_DATA);
         TbResource savedResource = save(resource);
         resource.setEtag(savedResource.getEtag());
@@ -638,7 +637,6 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         savedResource = doPost("/api/resource", savedResource, TbResource.class);
         assertThat(savedResource.getTitle()).isEqualTo("Updated resource");
         assertThat(savedResource.getFileName()).isEqualTo(resource.getFileName());
-        assertThat(savedResource.getMediaType()).isEqualTo(resource.getMediaType());
         assertThat(savedResource.getEtag()).isEqualTo(resource.getEtag());
         assertThat(download(savedResource.getId())).asBase64Encoded().isEqualTo(TEST_DATA);
     }
@@ -663,54 +661,6 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         assertThat(savedResource.getFileName()).isEqualTo("new-module.js");
         assertThat(savedResource.getEtag()).isNotEqualTo(resource.getEtag());
         assertThat(download(savedResource.getId())).asBase64Encoded().isEqualTo(newData);
-    }
-
-    @Test
-    public void testSaveImage_systemLevel() throws Exception {
-        loginSysAdmin();
-        TbResource resource = new TbResource();
-        resource.setResourceType(ResourceType.IMAGE);
-        resource.setTitle("System image");
-        resource.setFileName("image.png");
-        resource.setMediaType("image/png");
-        resource.setBase64Data(TEST_DATA);
-
-        TbResource savedResource = save(resource);
-
-        loginTenantAdmin();
-        MockHttpServletResponse imageResponse = doGet(getImageLink(savedResource)).andExpect(status().isOk())
-                .andReturn().getResponse();
-        assertThat(imageResponse.getContentAsByteArray())
-                .isEqualTo(download(savedResource.getId()))
-                .isEqualTo(Base64.getDecoder().decode(TEST_DATA));
-        assertThat(imageResponse.getContentType()).isEqualTo("image/png");
-
-        loginSysAdmin();
-        doDelete("/api/resource/" + savedResource.getId()).andExpect(status().isOk());
-    }
-
-    @Test
-    public void testSaveImage_tenantLevel() throws Exception {
-        loginTenantAdmin();
-        TbResource resource = new TbResource();
-        resource.setResourceType(ResourceType.IMAGE);
-        resource.setTitle("My image");
-        resource.setFileName("image.jpg");
-        resource.setMediaType("image/jpeg");
-        resource.setBase64Data(TEST_DATA);
-
-        TbResource savedResource = save(resource);
-        String imageLink = getImageLink(savedResource);
-
-        MockHttpServletResponse imageResponse = doGet(imageLink).andExpect(status().isOk())
-                .andReturn().getResponse();
-        assertThat(imageResponse.getContentAsByteArray())
-                .isEqualTo(download(savedResource.getId()))
-                .isEqualTo(Base64.getDecoder().decode(TEST_DATA));
-        assertThat(imageResponse.getContentType()).isEqualTo("image/jpeg");
-
-        loginDifferentTenant();
-        doGet(imageLink).andExpect(status().isNotFound());
     }
 
     private TbResource save(TbResource tbResource) throws Exception {

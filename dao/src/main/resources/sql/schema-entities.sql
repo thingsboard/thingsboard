@@ -716,7 +716,8 @@ CREATE TABLE IF NOT EXISTS resource (
     file_name varchar(255) NOT NULL,
     data bytea,
     etag varchar,
-    media_type varchar(255),
+    descriptor varchar,
+    preview bytea,
     CONSTRAINT resource_unq_key UNIQUE (tenant_id, resource_type, resource_key)
 );
 

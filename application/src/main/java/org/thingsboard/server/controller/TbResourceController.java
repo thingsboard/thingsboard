@@ -54,11 +54,10 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.Base64;
- import java.util.Collections;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Supplier;
 
 import static org.thingsboard.server.controller.ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER;
 import static org.thingsboard.server.controller.ControllerConstants.LWM2M_OBJECT_DESCRIPTION;
@@ -108,17 +107,6 @@ public class TbResourceController extends BaseController {
                 .contentLength(resource.contentLength())
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(resource);
-    }
-
-    @ApiOperation(value = "Download Image (downloadImageIfChanged)", notes = DOWNLOAD_RESOURCE_IF_NOT_CHANGED + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @GetMapping(value = "/images/{resourceKey}", produces = "image/*")
-    public ResponseEntity<ByteArrayResource> downloadImageIfChanged(@PathVariable("resourceKey") String resourceKey,
-                                                                    @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws ThingsboardException {
-        TenantId tenantId = getTenantId();
-        return downloadResourceIfChanged(ResourceType.IMAGE, etag,
-                () -> resourceService.findResourceInfoByTenantIdAndKey(tenantId, ResourceType.IMAGE, resourceKey),
-                () -> resourceService.findResourceByTenantIdAndKey(tenantId, ResourceType.IMAGE, resourceKey));
     }
 
     @ApiOperation(value = "Download LWM2M Resource (downloadLwm2mResourceIfChanged)", notes = DOWNLOAD_RESOURCE_IF_NOT_CHANGED + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
@@ -291,19 +279,9 @@ public class TbResourceController extends BaseController {
 
     private ResponseEntity<ByteArrayResource> downloadResourceIfChanged(ResourceType resourceType, String strResourceId, String etag) throws ThingsboardException {
         checkParameter(RESOURCE_ID, strResourceId);
-        TenantId tenantId = getTenantId();
         TbResourceId resourceId = new TbResourceId(toUUID(strResourceId));
-        return downloadResourceIfChanged(resourceType, etag,
-                () -> resourceService.findResourceInfoById(tenantId, resourceId),
-                () -> resourceService.findResourceById(tenantId, resourceId));
-    }
-
-    private ResponseEntity<ByteArrayResource> downloadResourceIfChanged(ResourceType resourceType, String etag,
-                                                                        Supplier<TbResourceInfo> resourceInfoSupplier,
-                                                                        Supplier<TbResource> resourceSupplier) throws ThingsboardException {
         if (etag != null) {
-            TbResourceInfo tbResourceInfo = resourceInfoSupplier.get();
-            checkEntity(getCurrentUser(), tbResourceInfo, Operation.READ);
+            TbResourceInfo tbResourceInfo = checkResourceInfoId(resourceId, Operation.READ);
             if (etag.equals(tbResourceInfo.getEtag())) {
                 return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
                         .eTag(tbResourceInfo.getEtag())
@@ -311,16 +289,14 @@ public class TbResourceController extends BaseController {
             }
         }
 
-        // TODO: rate limits
-        TbResource tbResource = resourceSupplier.get();
-        checkEntity(getCurrentUser(), tbResource, Operation.READ);
+        TbResource tbResource = checkResourceId(resourceId, Operation.READ);
 
         ByteArrayResource resource = new ByteArrayResource(tbResource.getData());
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + tbResource.getFileName())
                 .header("x-filename", tbResource.getFileName())
                 .contentLength(resource.contentLength())
-                .header("Content-Type", tbResource.getMediaType() != null ? tbResource.getMediaType() : resourceType.getDefaultMediaType())
+                .header("Content-Type", resourceType.getMediaType())
                 .cacheControl(CacheControl.noCache())
                 .eTag(tbResource.getEtag())
                 .body(resource);

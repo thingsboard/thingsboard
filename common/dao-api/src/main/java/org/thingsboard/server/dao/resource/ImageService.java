@@ -24,7 +24,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 
 public interface ImageService {
 
-    TbResource saveImage(TbResource image);
+    TbResourceInfo saveImage(TbResource image) throws Exception;
 
     TbResourceInfo saveImageInfo(TbResourceInfo imageInfo);
 
@@ -37,6 +37,8 @@ public interface ImageService {
     byte[] getImageData(TenantId tenantId, TbResourceId imageId);
 
     byte[] getImagePreview(TenantId tenantId, TbResourceId imageId);
+
+    void deleteImage(TenantId tenantId, TbResourceId imageId);
 
     String getImageLink(TbResourceInfo imageInfo);
 

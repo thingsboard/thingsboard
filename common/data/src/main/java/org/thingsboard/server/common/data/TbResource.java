@@ -37,6 +37,9 @@ public class TbResource extends TbResourceInfo {
     @JsonIgnore
     private byte[] data;
 
+    @JsonIgnore
+    private byte[] preview;
+
     public TbResource() {
         super();
     }
@@ -53,6 +56,7 @@ public class TbResource extends TbResourceInfo {
         super(resource);
         this.base64Data = resource.base64Data;
         this.data = resource.data;
+        this.preview = resource.preview;
     }
 
     @JsonIgnore

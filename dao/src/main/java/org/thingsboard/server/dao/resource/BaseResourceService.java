@@ -15,12 +15,12 @@
  */
 package org.thingsboard.server.dao.resource;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.cache.resourceInfo.ResourceInfoCacheKey;
@@ -46,7 +46,6 @@ import org.thingsboard.server.dao.service.validator.ResourceDataValidator;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.thingsboard.server.dao.device.DeviceServiceImpl.INCORRECT_TENANT_ID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -54,6 +53,7 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 @Service("TbResourceDaoService")
 @Slf4j
 @AllArgsConstructor
+@Primary
 public class BaseResourceService extends AbstractCachedEntityService<ResourceInfoCacheKey, TbResourceInfo, ResourceInfoEvictEvent> implements ResourceService {
 
     public static final String INCORRECT_RESOURCE_ID = "Incorrect resourceId ";

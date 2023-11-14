@@ -16,6 +16,9 @@
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -55,9 +58,8 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
     @Length(fieldName = "file name")
     @ApiModelProperty(position = 9, value = "Resource file name.", example = "19.xml", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String fileName;
-    @ApiModelProperty(position = 10, value = "Resource media type.", example = "image/png", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
-    private String mediaType;
-    private ObjectNode descriptor;
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private JsonNode descriptor;
 
     public TbResourceInfo() {
         super();
@@ -76,7 +78,6 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
         this.searchText = resourceInfo.searchText;
         this.etag = resourceInfo.etag;
         this.fileName = resourceInfo.fileName;
-        this.mediaType = resourceInfo.mediaType;
         this.descriptor = resourceInfo.descriptor;
     }
 
@@ -104,6 +105,11 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
     @JsonIgnore
     public String getSearchText() {
         return searchText != null ? searchText : title;
+    }
+
+    @JsonIgnore
+    public <T> T getDescriptor(Class<T> type) throws JsonProcessingException {
+        return descriptor != null ? mapper.treeToValue(descriptor, type) : null;
     }
 
 }

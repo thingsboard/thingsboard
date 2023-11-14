@@ -17,29 +17,65 @@ package org.thingsboard.server.service.resource;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.id.TbResourceId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
 @Service
 @TbCoreComponent
 @RequiredArgsConstructor
-public class DefaultTbImageService implements TbImageService {
+public class DefaultTbImageService extends AbstractTbEntityService implements TbImageService {
 
     private final ImageService imageService;
 
     @Override
-    public TbResource save(TbResourceInfo imageInfo, MultipartFile imageFile, User user) {
-        return null;
+    public TbResourceInfo save(TbResource image, User user) throws Exception {
+        ActionType actionType = image.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
+        TenantId tenantId = image.getTenantId();
+        image.setResourceKey(image.getFileName()); // TODO: generate unique resource key file_name+idx
+        try {
+            TbResourceInfo savedImage = imageService.saveImage(image);
+            notificationEntityService.logEntityAction(tenantId, savedImage.getId(), savedImage, actionType, user);
+            return savedImage;
+        } catch (Exception e) {
+            image.setData(null);
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE), image, actionType, user, e);
+            throw e;
+        }
+    }
+
+    @Override
+    public TbResourceInfo save(TbResourceInfo imageInfo, User user) {
+        TenantId tenantId = imageInfo.getTenantId();
+        TbResourceId imageId = imageInfo.getId();
+        try {
+            imageInfo = imageService.saveImageInfo(imageInfo);
+            notificationEntityService.logEntityAction(tenantId, imageId, imageInfo, ActionType.UPDATED, user);
+            return imageInfo;
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, imageId, imageInfo, ActionType.UPDATED, user, e);
+            throw e;
+        }
     }
 
     @Override
     public void delete(TbResourceInfo imageInfo, User user) {
-
+        TenantId tenantId = imageInfo.getTenantId();
+        TbResourceId imageId = imageInfo.getId();
+        try {
+            imageService.deleteImage(tenantId, imageId);
+            notificationEntityService.logEntityAction(tenantId, imageId, imageInfo, ActionType.DELETED, user, imageId.toString());
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, imageId, ActionType.DELETED, user, e, imageId.toString());
+            throw e;
+        }
     }
 
 }

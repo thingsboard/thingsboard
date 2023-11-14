@@ -32,8 +32,13 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.ImageDescriptor;
+import org.thingsboard.server.common.data.ResourceType;
+import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -43,7 +48,9 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.resource.TbImageService;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.function.Supplier;
 
@@ -68,52 +75,75 @@ public class ImageController extends BaseController {
     private static final String SYSTEM_IMAGE = "system";
     private static final String TENANT_IMAGE = "tenant";
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @PostMapping("/api/image")
-    public TbResourceInfo uploadImage(MultipartFile file) {
-//        imageService.saveImage()
-        return null;
+    public TbResourceInfo uploadImage(@RequestPart MultipartFile file) throws Exception {
+        SecurityUser user = getCurrentUser();
+        TbResource image = new TbResource();
+        image.setTenantId(user.getTenantId());
+        accessControlService.checkPermission(user, Resource.TB_RESOURCE, Operation.CREATE, null, image);
+
+        image.setFileName(file.getOriginalFilename());
+        image.setTitle(file.getOriginalFilename());
+        image.setResourceType(ResourceType.IMAGE);
+        ImageDescriptor descriptor = new ImageDescriptor();
+        descriptor.setMediaType(file.getContentType());
+        image.setDescriptor(JacksonUtil.valueToTree(descriptor));
+        image.setData(file.getBytes());
+        return tbImageService.save(image, user);
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @PutMapping(IMAGE_URL)
-    public TbResourceInfo updateImage(MultipartFile file) {
-        return null;
+    public TbResourceInfo updateImage(@PathVariable String type,
+                                      @PathVariable String key,
+                                      @RequestPart MultipartFile file) throws Exception {
+        TbResourceInfo imageInfo = checkImageInfo(type, key, Operation.WRITE);
+        ImageDescriptor descriptor = imageInfo.getDescriptor(ImageDescriptor.class);
+
+        TbResource image = new TbResource(imageInfo);
+        image.setData(file.getBytes());
+        descriptor.setMediaType(file.getContentType());
+        return tbImageService.save(image, getCurrentUser());
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @PutMapping(IMAGE_URL + "/info")
-    public TbResourceInfo updateImageInfo(@RequestBody TbResourceInfo imageInfo) {
-        return null;
+    public TbResourceInfo updateImageInfo(@PathVariable String type,
+                                          @PathVariable String key,
+                                          @RequestBody TbResourceInfo newImageInfo) throws ThingsboardException {
+        TbResourceInfo imageInfo = checkImageInfo(type, key, Operation.WRITE);
+        imageInfo.setTitle(newImageInfo.getTitle());
+        return tbImageService.save(imageInfo, getCurrentUser());
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = IMAGE_URL, produces = "image/*")
     public ResponseEntity<ByteArrayResource> downloadImage(@PathVariable String type,
                                                            @PathVariable String key,
-                                                           @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws ThingsboardException {
-        TenantId tenantId = getTenantId(type);
-        TbResourceInfo imageInfo = imageService.getImageInfoByTenantIdAndKey(tenantId, key);
-        return downloadIfChanged(etag, imageInfo, () -> imageService.getImageData(tenantId, imageInfo.getId()), imageInfo.getMediaType());
+                                                           @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws Exception {
+        TenantId tenantId = getTenantId();
+        TbResourceInfo imageInfo = checkImageInfo(type, key, Operation.READ);
+        ImageDescriptor descriptor = imageInfo.getDescriptor(ImageDescriptor.class);
+        return downloadIfChanged(etag, imageInfo, descriptor, () -> imageService.getImageData(tenantId, imageInfo.getId()));
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = IMAGE_URL + "/preview", produces = "image/png")
     public ResponseEntity<ByteArrayResource> downloadImagePreview(@PathVariable String type,
                                                                   @PathVariable String key,
-                                                                  @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws ThingsboardException {
-        TenantId tenantId = getTenantId(type);
-        TbResourceInfo imageInfo = imageService.getImageInfoByTenantIdAndKey(tenantId, key);
-        return downloadIfChanged(etag, imageInfo, () -> imageService.getImagePreview(tenantId, imageInfo.getId()), imageInfo.getMediaType());
+                                                                  @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws Exception {
+        TenantId tenantId = getTenantId();
+        TbResourceInfo imageInfo = checkImageInfo(type, key, Operation.READ);
+        ImageDescriptor descriptor = imageInfo.getDescriptor(ImageDescriptor.class);
+        return downloadIfChanged(etag, imageInfo, descriptor.getPreviewDescriptor(), () -> imageService.getImagePreview(tenantId, imageInfo.getId()));
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(IMAGE_URL + "/info")
     public TbResourceInfo getImageInfo(@PathVariable String type,
                                        @PathVariable String key) throws ThingsboardException {
-        TenantId tenantId = getTenantId(type);
-        TbResourceInfo imageInfo = imageService.getImageInfoByTenantIdAndKey(tenantId, key);
-        return checkEntity(getCurrentUser(), imageInfo, Operation.READ);
+        return checkImageInfo(type, key, Operation.READ);
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
@@ -128,6 +158,7 @@ public class ImageController extends BaseController {
                                               @RequestParam(required = false) String sortProperty,
                                               @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
                                               @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        // PE: generic permission
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         TenantId tenantId = getTenantId();
         if (getCurrentUser().getAuthority() == Authority.SYS_ADMIN) {
@@ -141,17 +172,14 @@ public class ImageController extends BaseController {
     @DeleteMapping(IMAGE_URL)
     public void deleteImage(@PathVariable String type,
                             @PathVariable String key) throws ThingsboardException {
-        TenantId tenantId = getTenantId(type);
-        TbResourceInfo imageInfo = imageService.getImageInfoByTenantIdAndKey(tenantId, key);
-        checkEntity(getCurrentUser(), imageInfo, Operation.DELETE);
+        TbResourceInfo imageInfo = checkImageInfo(type, key, Operation.DELETE);
         tbImageService.delete(imageInfo, getCurrentUser());
     }
 
-    private ResponseEntity<ByteArrayResource> downloadIfChanged(String etag, TbResourceInfo resourceInfo,
-                                                                Supplier<byte[]> dataSupplier, String mediaType) throws ThingsboardException {
-        checkEntity(getCurrentUser(), resourceInfo, Operation.READ);
+    private ResponseEntity<ByteArrayResource> downloadIfChanged(String etag, TbResourceInfo imageInfo, ImageDescriptor imageDescriptor,
+                                                                Supplier<byte[]> dataSupplier)  {
         if (etag != null) {
-            if (etag.equals(resourceInfo.getEtag())) {
+            if (etag.equals(imageInfo.getEtag())) {
                 return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
                         .eTag(etag)
                         .build();
@@ -160,13 +188,20 @@ public class ImageController extends BaseController {
 
         byte[] data = dataSupplier.get();
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + resourceInfo.getFileName())
-                .header("x-filename", resourceInfo.getFileName())
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + imageInfo.getFileName())
+                .header("x-filename", imageInfo.getFileName())
                 .contentLength(data.length)
-                .header("Content-Type", mediaType)
+                .header("Content-Type", imageDescriptor.getMediaType())
                 .cacheControl(CacheControl.noCache())
-                .eTag(resourceInfo.getEtag())
+                .eTag(imageInfo.getEtag())
                 .body(new ByteArrayResource(data));
+    }
+
+    private TbResourceInfo checkImageInfo(String imageType, String key, Operation operation) throws ThingsboardException {
+        TenantId tenantId = getTenantId(imageType);
+        TbResourceInfo imageInfo = imageService.getImageInfoByTenantIdAndKey(tenantId, key);
+        checkEntity(getCurrentUser(), checkNotNull(imageInfo), operation);
+        return imageInfo;
     }
 
     private TenantId getTenantId(String imageType) throws ThingsboardException {

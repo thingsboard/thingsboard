@@ -43,4 +43,6 @@ public interface TbResourceDao extends Dao<TbResource>, TenantEntityWithDataDao 
 
     byte[] getResourceData(TenantId tenantId, TbResourceId resourceId);
 
+    byte[] getResourcePreview(TenantId tenantId, TbResourceId resourceId);
+
 }
