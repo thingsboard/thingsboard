@@ -294,6 +294,9 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
     this.searchText = searchText;
     return this.getEntitySubtypes(searchText).pipe(
       map(subTypes => {
+        if (!subTypes.length) {
+          return subTypes;
+        }
         let result;
         if (this.hasPageDataEntitySubTypes.has(this.entityType)) {
           result = subTypes;
@@ -368,10 +371,6 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
   clear(value: string = '') {
     this.entitySubtypeInput.nativeElement.value = value;
     this.entitySubtypeListFormGroup.get('entitySubtype').patchValue(value, {emitEvent: true});
-    setTimeout(() => {
-      this.entitySubtypeInput.nativeElement.blur();
-      this.entitySubtypeInput.nativeElement.focus();
-    }, 0);
   }
 
   customTranslate(entity: string) {
