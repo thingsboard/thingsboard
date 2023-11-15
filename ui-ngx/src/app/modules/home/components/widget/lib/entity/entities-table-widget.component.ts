@@ -90,9 +90,9 @@ import {
   DisplayColumnsPanelComponent,
   DisplayColumnsPanelData
 } from '@home/components/widget/lib/display-columns-panel.component';
+import { Direction } from '@shared/models/page/sort-order';
 import {
   dataKeyToEntityKey,
-  Direction,
   EntityDataPageLink,
   entityDataPageLinkSortDirection,
   EntityKeyType,
