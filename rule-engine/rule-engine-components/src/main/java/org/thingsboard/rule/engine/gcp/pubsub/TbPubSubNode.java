@@ -69,7 +69,7 @@ public class TbPubSubNode extends TbAbstractExternalNode {
         super.init(ctx);
         this.config = TbNodeUtils.convert(configuration, TbPubSubNodeConfiguration.class);
         try {
-            this.pubSubClient = initPubSubClient(ctx.getPubsubExecutor().getExecutorProvider());
+            this.pubSubClient = initPubSubClient(FixedExecutorProvider.create(ctx.getPubSubRuleNodeExecutorProvider().getExecutor()));
         } catch (Exception e) {
             throw new TbNodeException(e);
         }

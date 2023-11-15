@@ -25,6 +25,7 @@ import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.ExecutorProvider;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.TbQueueAdmin;
@@ -53,16 +54,14 @@ public class TbPubSubProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
     private final Map<String, Publisher> publisherMap = new ConcurrentHashMap<>();
 
     private final ExecutorService pubExecutor = Executors.newCachedThreadPool();
-    private static final int THREADS_PER_CPU = 5;
     private final FixedExecutorProvider fixedExecutorProvider;
 
-    public TbPubSubProducerTemplate(TbQueueAdmin admin, TbPubSubSettings pubSubSettings, String defaultTopic) {
+    public TbPubSubProducerTemplate(TbQueueAdmin admin, TbPubSubSettings pubSubSettings, String defaultTopic, ExecutorProvider executorProvider) {
         this.defaultTopic = defaultTopic;
         this.admin = admin;
         this.pubSubSettings = pubSubSettings;
 
-        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(THREADS_PER_CPU * Runtime.getRuntime().availableProcessors(), ThingsBoardThreadFactory.forName("tb-pubsub-producer-scheduler"));;
-        fixedExecutorProvider = FixedExecutorProvider.create(scheduler);
+        fixedExecutorProvider = FixedExecutorProvider.create(executorProvider.getExecutor());
     }
 
     @Override

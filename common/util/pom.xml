@@ -54,10 +54,6 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.google.cloud</groupId>
-            <artifactId>google-cloud-pubsub</artifactId>
-        </dependency>
-        <dependency>
             <groupId>javax.annotation</groupId>
             <artifactId>javax.annotation-api</artifactId>
         </dependency>

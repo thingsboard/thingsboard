@@ -17,6 +17,7 @@ package org.thingsboard.server.queue.pubsub;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
+import com.google.api.gax.core.FixedExecutorProvider;
 import com.google.cloud.pubsub.v1.stub.GrpcSubscriberStub;
 import com.google.cloud.pubsub.v1.stub.SubscriberStub;
 import com.google.cloud.pubsub.v1.stub.SubscriberStubSettings;
@@ -62,7 +63,7 @@ public class TbPubSubConsumerTemplate<T extends TbQueueMsg> extends AbstractPara
     private final SubscriberStub subscriber;
     private volatile int messagesPerTopic;
 
-    public TbPubSubConsumerTemplate(TbQueueAdmin admin, TbPubSubSettings pubSubSettings, String topic, TbQueueMsgDecoder<T> decoder) {
+    public TbPubSubConsumerTemplate(TbQueueAdmin admin, TbPubSubSettings pubSubSettings, String topic, TbQueueMsgDecoder<T> decoder, TbPubSubQueueExecutorProvider tbPubSubQueueExecutorProvider) {
         super(topic);
         this.admin = admin;
         this.pubSubSettings = pubSubSettings;
@@ -76,6 +77,7 @@ public class TbPubSubConsumerTemplate<T extends TbQueueMsg> extends AbstractPara
                                     SubscriberStubSettings.defaultGrpcTransportProviderBuilder()
                                             .setMaxInboundMessageSize(pubSubSettings.getMaxMsgSize())
                                             .build())
+                            .setExecutorProvider(FixedExecutorProvider.create(tbPubSubQueueExecutorProvider.getExecutor()))
                             .build();
             this.subscriber = GrpcSubscriberStub.create(subscriberStubSettings);
         } catch (IOException e) {

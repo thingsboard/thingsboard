@@ -42,6 +42,7 @@ import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.pubsub.TbPubSubAdmin;
 import org.thingsboard.server.queue.pubsub.TbPubSubConsumerTemplate;
+import org.thingsboard.server.queue.pubsub.TbPubSubQueueExecutorProvider;
 import org.thingsboard.server.queue.pubsub.TbPubSubProducerTemplate;
 import org.thingsboard.server.queue.pubsub.TbPubSubSettings;
 import org.thingsboard.server.queue.pubsub.TbPubSubSubscriptionSettings;
@@ -72,6 +73,7 @@ public class PubSubTbCoreQueueFactory implements TbCoreQueueFactory {
     private final TbQueueAdmin transportApiAdmin;
     private final TbQueueAdmin notificationAdmin;
     private final TbQueueAdmin ruleEngineAdmin;
+    private final TbPubSubQueueExecutorProvider tbPubSubQueueExecutorProvider;
 
     public PubSubTbCoreQueueFactory(TbPubSubSettings pubSubSettings,
                                     TbQueueCoreSettings coreSettings,
@@ -81,7 +83,8 @@ public class PubSubTbCoreQueueFactory implements TbCoreQueueFactory {
                                     TbQueueRemoteJsInvokeSettings jsInvokeSettings,
                                     TbQueueTransportNotificationSettings transportNotificationSettings,
                                     TbQueueRuleEngineSettings ruleEngineSettings,
-                                    TbPubSubSubscriptionSettings pubSubSubscriptionSettings) {
+                                    TbPubSubSubscriptionSettings pubSubSubscriptionSettings,
+                                    TbPubSubQueueExecutorProvider tbPubSubQueueExecutorProvider) {
         this.pubSubSettings = pubSubSettings;
         this.coreSettings = coreSettings;
         this.transportApiSettings = transportApiSettings;
@@ -90,6 +93,7 @@ public class PubSubTbCoreQueueFactory implements TbCoreQueueFactory {
         this.jsInvokeSettings = jsInvokeSettings;
         this.transportNotificationSettings = transportNotificationSettings;
         this.ruleEngineSettings = ruleEngineSettings;
+        this.tbPubSubQueueExecutorProvider = tbPubSubQueueExecutorProvider;
 
         this.coreAdmin = new TbPubSubAdmin(pubSubSettings, pubSubSubscriptionSettings.getCoreSettings());
         this.jsExecutorAdmin = new TbPubSubAdmin(pubSubSettings, pubSubSubscriptionSettings.getJsExecutorSettings());
@@ -100,64 +104,64 @@ public class PubSubTbCoreQueueFactory implements TbCoreQueueFactory {
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> createTransportNotificationsMsgProducer() {
-        return new TbPubSubProducerTemplate<>(notificationAdmin, pubSubSettings, transportNotificationSettings.getNotificationsTopic());
+        return new TbPubSubProducerTemplate<>(notificationAdmin, pubSubSettings, transportNotificationSettings.getNotificationsTopic(), tbPubSubQueueExecutorProvider);
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> createRuleEngineMsgProducer() {
-        return new TbPubSubProducerTemplate<>(coreAdmin, pubSubSettings, coreSettings.getTopic());
+        return new TbPubSubProducerTemplate<>(coreAdmin, pubSubSettings, coreSettings.getTopic(), tbPubSubQueueExecutorProvider);
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> createRuleEngineNotificationsMsgProducer() {
-        return new TbPubSubProducerTemplate<>(notificationAdmin, pubSubSettings, ruleEngineSettings.getTopic());
+        return new TbPubSubProducerTemplate<>(notificationAdmin, pubSubSettings, ruleEngineSettings.getTopic(), tbPubSubQueueExecutorProvider);
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> createTbCoreMsgProducer() {
-        return new TbPubSubProducerTemplate<>(coreAdmin, pubSubSettings, coreSettings.getTopic());
+        return new TbPubSubProducerTemplate<>(coreAdmin, pubSubSettings, coreSettings.getTopic(), tbPubSubQueueExecutorProvider);
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> createTbCoreNotificationsMsgProducer() {
-        return new TbPubSubProducerTemplate<>(notificationAdmin, pubSubSettings, coreSettings.getTopic());
+        return new TbPubSubProducerTemplate<>(notificationAdmin, pubSubSettings, coreSettings.getTopic(), tbPubSubQueueExecutorProvider);
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToCoreMsg>> createToCoreMsgConsumer() {
         return new TbPubSubConsumerTemplate<>(coreAdmin, pubSubSettings, coreSettings.getTopic(),
-                msg -> new TbProtoQueueMsg<>(msg.getKey(), ToCoreMsg.parseFrom(msg.getData()), msg.getHeaders()));
+                msg -> new TbProtoQueueMsg<>(msg.getKey(), ToCoreMsg.parseFrom(msg.getData()), msg.getHeaders()), tbPubSubQueueExecutorProvider);
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToCoreNotificationMsg>> createToCoreNotificationsMsgConsumer() {
         return new TbPubSubConsumerTemplate<>(notificationAdmin, pubSubSettings,
                 topicService.getNotificationsTopic(ServiceType.TB_CORE, serviceInfoProvider.getServiceId()).getFullTopicName(),
-                msg -> new TbProtoQueueMsg<>(msg.getKey(), ToCoreNotificationMsg.parseFrom(msg.getData()), msg.getHeaders()));
+                msg -> new TbProtoQueueMsg<>(msg.getKey(), ToCoreNotificationMsg.parseFrom(msg.getData()), msg.getHeaders()), tbPubSubQueueExecutorProvider);
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<TransportApiRequestMsg>> createTransportApiRequestConsumer() {
         return new TbPubSubConsumerTemplate<>(transportApiAdmin, pubSubSettings, transportApiSettings.getRequestsTopic(),
-                msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportApiRequestMsg.parseFrom(msg.getData()), msg.getHeaders()));
+                msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportApiRequestMsg.parseFrom(msg.getData()), msg.getHeaders()), tbPubSubQueueExecutorProvider);
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportApiResponseMsg>> createTransportApiResponseProducer() {
-        return new TbPubSubProducerTemplate<>(transportApiAdmin, pubSubSettings, transportApiSettings.getResponsesTopic());
+        return new TbPubSubProducerTemplate<>(transportApiAdmin, pubSubSettings, transportApiSettings.getResponsesTopic(), tbPubSubQueueExecutorProvider);
     }
 
     @Override
     @Bean
     public TbQueueRequestTemplate<TbProtoJsQueueMsg<JsInvokeProtos.RemoteJsRequest>, TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> createRemoteJsRequestTemplate() {
-        TbQueueProducer<TbProtoJsQueueMsg<JsInvokeProtos.RemoteJsRequest>> producer = new TbPubSubProducerTemplate<>(jsExecutorAdmin, pubSubSettings, jsInvokeSettings.getRequestTopic());
+        TbQueueProducer<TbProtoJsQueueMsg<JsInvokeProtos.RemoteJsRequest>> producer = new TbPubSubProducerTemplate<>(jsExecutorAdmin, pubSubSettings, jsInvokeSettings.getRequestTopic(), tbPubSubQueueExecutorProvider);
         TbQueueConsumer<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> consumer = new TbPubSubConsumerTemplate<>(jsExecutorAdmin, pubSubSettings,
                 jsInvokeSettings.getResponseTopic() + "." + serviceInfoProvider.getServiceId(),
                 msg -> {
                     JsInvokeProtos.RemoteJsResponse.Builder builder = JsInvokeProtos.RemoteJsResponse.newBuilder();
                     JsonFormat.parser().ignoringUnknownFields().merge(new String(msg.getData(), StandardCharsets.UTF_8), builder);
                     return new TbProtoQueueMsg<>(msg.getKey(), builder.build(), msg.getHeaders());
-                });
+                }, tbPubSubQueueExecutorProvider);
 
         DefaultTbQueueRequestTemplate.DefaultTbQueueRequestTemplateBuilder
                 <TbProtoJsQueueMsg<JsInvokeProtos.RemoteJsRequest>, TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> builder = DefaultTbQueueRequestTemplate.builder();
@@ -173,23 +177,25 @@ public class PubSubTbCoreQueueFactory implements TbCoreQueueFactory {
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> createToUsageStatsServiceMsgConsumer() {
         return new TbPubSubConsumerTemplate<>(coreAdmin, pubSubSettings, coreSettings.getUsageStatsTopic(),
-                msg -> new TbProtoQueueMsg<>(msg.getKey(), ToUsageStatsServiceMsg.parseFrom(msg.getData()), msg.getHeaders()));
+                msg -> new TbProtoQueueMsg<>(msg.getKey(), ToUsageStatsServiceMsg.parseFrom(msg.getData()), msg.getHeaders()),
+                tbPubSubQueueExecutorProvider);
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> createToOtaPackageStateServiceMsgConsumer() {
         return new TbPubSubConsumerTemplate<>(coreAdmin, pubSubSettings, coreSettings.getOtaPackageTopic(),
-                msg -> new TbProtoQueueMsg<>(msg.getKey(), ToOtaPackageStateServiceMsg.parseFrom(msg.getData()), msg.getHeaders()));
+                msg -> new TbProtoQueueMsg<>(msg.getKey(), ToOtaPackageStateServiceMsg.parseFrom(msg.getData()), msg.getHeaders()),
+                tbPubSubQueueExecutorProvider);
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> createToOtaPackageStateServiceMsgProducer() {
-        return new TbPubSubProducerTemplate<>(coreAdmin, pubSubSettings, coreSettings.getOtaPackageTopic());
+        return new TbPubSubProducerTemplate<>(coreAdmin, pubSubSettings, coreSettings.getOtaPackageTopic(), tbPubSubQueueExecutorProvider);
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> createToUsageStatsServiceMsgProducer() {
-        return new TbPubSubProducerTemplate<>(coreAdmin, pubSubSettings, coreSettings.getUsageStatsTopic());
+        return new TbPubSubProducerTemplate<>(coreAdmin, pubSubSettings, coreSettings.getUsageStatsTopic(), tbPubSubQueueExecutorProvider);
     }
 
     @Override

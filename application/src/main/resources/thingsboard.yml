@@ -1270,7 +1270,7 @@ swagger:
 
 # Queue configuration parameters
 queue:
-  type: "${TB_QUEUE_TYPE:in-memory}" # in-memory or kafka (Apache Kafka) or aws-sqs (AWS SQS) or pubsub (PubSub) or service-bus (Azure Service Bus) or rabbitmq (RabbitMQ)
+  type: "${TB_QUEUE_TYPE:pubsub}" # in-memory or kafka (Apache Kafka) or aws-sqs (AWS SQS) or pubsub (PubSub) or service-bus (Azure Service Bus) or rabbitmq (RabbitMQ)
   prefix: "${TB_QUEUE_PREFIX:}" # Global queue prefix. If specified, prefix is added before default topic name: 'prefix.default_topic_name'. Prefix is applied to all topics (and consumer groups for kafka) except of js executor topics (please use REMOTE_JS_EVAL_REQUEST_TOPIC and REMOTE_JS_EVAL_RESPONSE_TOPIC to specify custom topic names)
   in_memory:
     stats:
@@ -1404,13 +1404,15 @@ queue:
       version-control: "${TB_QUEUE_AWS_SQS_VC_QUEUE_PROPERTIES:VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800}"
   pubsub:
     # Project ID from Google Cloud
-    project_id: "${TB_QUEUE_PUBSUB_PROJECT_ID:YOUR_PROJECT_ID}"
+    project_id: "${TB_QUEUE_PUBSUB_PROJECT_ID:pubsub-389210}"
     # API Credentials in JSON format
-    service_account: "${TB_QUEUE_PUBSUB_SERVICE_ACCOUNT:YOUR_SERVICE_ACCOUNT}"
+    service_account: "${TB_QUEUE_PUBSUB_SERVICE_ACCOUNT:{\n  \"type\": \"service_account\",\n  \"project_id\": \"pubsub-389210\",\n  \"private_key_id\": \"e83e233f60bb75f52e6ee9d34046c1e7b5e3f2e6\",\n  \"private_key\": \"-----BEGIN PRIVATE KEY-----\\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCmram5Oa60kyFM\\nFwo7d4yYA2U4vLUa2HV7h5G5ZxhXTPk+V4eYneBPSX0bJ/V5L4z7N/xNNwDR80i3\\n+tCFIf9P+jS3sE0ThZDc8Rdgo1Ln8nm4qf/9uBrOdSjn5VKKwvnNXphwTniwzssS\\nWn3AMuL8flgKoOiRaBOMXykIWN4/epKmv1tmnnq57XLW2cRTsE+pCcbqn8W2LEgA\\nNP+NJvvhQ6wsU341F2oTMAsuwsmiOZ1aiKKCafjGb/STPYy/WXsLjrfwK08U2SJh\\n+hHyvzdH1AU40khelnLjQhrltUGk1VAaKtucDKGSAoL5JIkH0Q5qczz1Ys6l3VvK\\nlhDNP8NHAgMBAAECggEAFUVJSRGC6ZlzIN452I/vmcCpLL3sUMI57+tDngj5kr6I\\neju6WrAfHY8vz4TgbzgxwieJY6M20BQ/ffccoDjP97li++QcWfbsHz4HMTZ2kJIh\\nlX7gY9UYWquZ7koWKA4sydgeFQr2nP2u7actsBbuX7GR871IILJK+Fl2h5Grvybk\\nz70RzLY+M26ZVBf+ejKlyaoMVLQ6w272llc5/SJ4jmsbn1urLM2+ChgAjOeqo7Qp\\nBBjUJmjC9b5Tev0jg+FXdw+ba41bXmYM5x265buwbY4vYyIJ+XF6dEl36cdVa1xI\\n+XISQZ66SuvEkHRc+x1hEEMymOtt8d++SeFn4/BkDQKBgQDkGtYA/8751C8xDB4+\\nlpxXf3wN/QjWPpXAV1fyj9sgwz05M1E0KzYpX6H2rWVqFhPkuqZUCeZ5Iqjvybp7\\n8upLJ+lRpHag1dkS4ElICNNcHhIQB9xgmFtdH4euTzuAFTd5nZ43oRt6gGEo0I/S\\nmKmupS2IwpM2/Qm6dP7l2ruS5QKBgQC7D8eTIIu8x2plJ6rebEAneX6aAUzQ9chk\\nRB53wjDx0UCXC/J2l1PX0vGGY8JOQdmDS6MPdFaVZxnqtrrGNBDuSArDNH7bV0ab\\nBKnLStPOwkehQEhg6ShHX7r4EPs6GBTWDQnnCgR8KGq+7rdo/lz7C/TK8+xqRaWq\\nYCUMY4g+uwKBgHtPFokLwHPFhI1bI65p9LJINGPLec93nbSQgvaZVbfsU1hsqWUu\\nRuUu0XtsWPp0XOS1Ed00TOcHGZQm1SzUMFvYg4SjB44CjIprvLG4M6oEh3crCLMf\\nKaS5urs8Eco3rfmMf09LRHOAmwVZWaZa6L+Eg4z+wl5jg7LMNE9FY0kRAoGACU+J\\nwXr3OZg7ZXmJ+bQtpUlY0dWKu0Pgi40QbymNQhwGOP5xPRHfLHjlaKkCfN6uMujK\\n3vQNczZEhfg+Z6sjxJh1YK32OninnQOoZ+P7kuj8o7wNXjV8ucC8D6jYuFWGg/j2\\nKzfGbV+doI9FNcajXiOENa3acJey3T4X2fwCRg0CgYEA0m3iO8HvnWhAs+clP2Ph\\nI8mXNbNbtCa7bOPmhdidSwJpbXNNwKNU7xAXHHueFGlEnNFsQrqy7bPfol4ABOhl\\nV3Zdsuc5v1OXM7IrLZ16cC7fogydSQz8QK86TcC50u/aSmkaevujsJfabC/YF7sR\\nBl8tPN7I4H72JKOuUTn/Sfo=\\n-----END PRIVATE KEY-----\\n\",\n  \"client_email\": \"pubsubaccountname@pubsub-389210.iam.gserviceaccount.com\",\n  \"client_id\": \"103395736410565244836\",\n  \"auth_uri\": \"https://accounts.google.com/o/oauth2/auth\",\n  \"token_uri\": \"https://oauth2.googleapis.com/token\",\n  \"auth_provider_x509_cert_url\": \"https://www.googleapis.com/oauth2/v1/certs\",\n  \"client_x509_cert_url\": \"https://www.googleapis.com/robot/v1/metadata/x509/pubsubaccountname%40pubsub-389210.iam.gserviceaccount.com\",\n  \"universe_domain\": \"googleapis.com\"\n}}"
     # Message size for PubSub queue.Value in bytes
     max_msg_size: "${TB_QUEUE_PUBSUB_MAX_MSG_SIZE:1048576}"
     # Number of messages per consumer
     max_messages: "${TB_QUEUE_PUBSUB_MAX_MESSAGES:1000}"
+    # Number of threads of pubsub executor provider
+    executor_thread_pool_size: "${TB_QUEUE_PUBSUB_EXECUTOR_THREAD_SIZE:}"
     queue-properties:
       # Pub/Sub properties for Rule Engine subscribers, messages which will commit after ackDeadlineInSec period can be consumed again
       rule-engine: "${TB_QUEUE_PUBSUB_RE_QUEUE_PROPERTIES:ackDeadlineInSec:30;messageRetentionInSec:604800}"

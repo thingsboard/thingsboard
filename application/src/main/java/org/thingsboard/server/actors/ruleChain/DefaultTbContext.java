@@ -22,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.Arrays;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
-import org.thingsboard.server.service.executors.PubSubExecutorService;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
@@ -105,6 +104,7 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
+import org.thingsboard.server.service.executors.PubSubRuleNodeExecutorProvider;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import org.thingsboard.server.service.script.RuleNodeTbelScriptEngine;
 
@@ -540,8 +540,8 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public PubSubExecutorService getPubsubExecutor() {
-        return mainCtx.getPubSubExecutorService();
+    public PubSubRuleNodeExecutorProvider getPubSubRuleNodeExecutorProvider() {
+        return mainCtx.getPubSubRuleNodeExecutorProvider();
     }
 
     @Override

@@ -16,8 +16,8 @@
 package org.thingsboard.rule.engine.api;
 
 import io.netty.channel.EventLoopGroup;
+import org.thingsboard.common.util.ExecutorProvider;
 import org.thingsboard.common.util.ListeningExecutor;
-import org.thingsboard.common.util.PubSubExecutor;
 import org.thingsboard.rule.engine.api.slack.SlackService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.server.cluster.TbClusterService;
@@ -319,7 +319,7 @@ public interface TbContext {
 
     ListeningExecutor getNotificationExecutor();
 
-    PubSubExecutor getPubsubExecutor();
+    ExecutorProvider getPubSubRuleNodeExecutorProvider();
 
     MailService getMailService(boolean isSystem);
 

@@ -40,6 +40,7 @@ import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.pubsub.TbPubSubAdmin;
 import org.thingsboard.server.queue.pubsub.TbPubSubConsumerTemplate;
+import org.thingsboard.server.queue.pubsub.TbPubSubQueueExecutorProvider;
 import org.thingsboard.server.queue.pubsub.TbPubSubProducerTemplate;
 import org.thingsboard.server.queue.pubsub.TbPubSubSettings;
 import org.thingsboard.server.queue.pubsub.TbPubSubSubscriptionSettings;
@@ -62,6 +63,7 @@ public class PubSubTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory 
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TbQueueRemoteJsInvokeSettings jsInvokeSettings;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
+    private final TbPubSubQueueExecutorProvider tbPubSubQueueExecutorProvider;
 
     private final TbQueueAdmin coreAdmin;
     private final TbQueueAdmin ruleEngineAdmin;
@@ -75,7 +77,8 @@ public class PubSubTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory 
                                           TbServiceInfoProvider serviceInfoProvider,
                                           TbQueueRemoteJsInvokeSettings jsInvokeSettings,
                                           TbQueueTransportNotificationSettings transportNotificationSettings,
-                                          TbPubSubSubscriptionSettings pubSubSubscriptionSettings) {
+                                          TbPubSubSubscriptionSettings pubSubSubscriptionSettings,
+                                          TbPubSubQueueExecutorProvider tbPubSubQueueExecutorProvider) {
         this.pubSubSettings = pubSubSettings;
         this.coreSettings = coreSettings;
         this.ruleEngineSettings = ruleEngineSettings;
@@ -83,6 +86,7 @@ public class PubSubTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory 
         this.serviceInfoProvider = serviceInfoProvider;
         this.jsInvokeSettings = jsInvokeSettings;
         this.transportNotificationSettings = transportNotificationSettings;
+        this.tbPubSubQueueExecutorProvider = tbPubSubQueueExecutorProvider;
 
         this.coreAdmin = new TbPubSubAdmin(pubSubSettings, pubSubSubscriptionSettings.getCoreSettings());
         this.ruleEngineAdmin = new TbPubSubAdmin(pubSubSettings, pubSubSubscriptionSettings.getRuleEngineSettings());
@@ -92,53 +96,53 @@ public class PubSubTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory 
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> createTransportNotificationsMsgProducer() {
-        return new TbPubSubProducerTemplate<>(notificationAdmin, pubSubSettings, topicService.buildTopicName(transportNotificationSettings.getNotificationsTopic()));
+        return new TbPubSubProducerTemplate<>(notificationAdmin, pubSubSettings, topicService.buildTopicName(transportNotificationSettings.getNotificationsTopic()), tbPubSubQueueExecutorProvider);
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> createRuleEngineMsgProducer() {
-        return new TbPubSubProducerTemplate<>(ruleEngineAdmin, pubSubSettings, topicService.buildTopicName(ruleEngineSettings.getTopic()));
+        return new TbPubSubProducerTemplate<>(ruleEngineAdmin, pubSubSettings, topicService.buildTopicName(ruleEngineSettings.getTopic()), tbPubSubQueueExecutorProvider);
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> createRuleEngineNotificationsMsgProducer() {
-        return new TbPubSubProducerTemplate<>(notificationAdmin, pubSubSettings, topicService.buildTopicName(ruleEngineSettings.getTopic()));
+        return new TbPubSubProducerTemplate<>(notificationAdmin, pubSubSettings, topicService.buildTopicName(ruleEngineSettings.getTopic()), tbPubSubQueueExecutorProvider);
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> createTbCoreMsgProducer() {
-        return new TbPubSubProducerTemplate<>(coreAdmin, pubSubSettings, topicService.buildTopicName(coreSettings.getTopic()));
+        return new TbPubSubProducerTemplate<>(coreAdmin, pubSubSettings, topicService.buildTopicName(coreSettings.getTopic()), tbPubSubQueueExecutorProvider);
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> createTbCoreNotificationsMsgProducer() {
-        return new TbPubSubProducerTemplate<>(notificationAdmin, pubSubSettings, topicService.buildTopicName(coreSettings.getTopic()));
+        return new TbPubSubProducerTemplate<>(notificationAdmin, pubSubSettings, topicService.buildTopicName(coreSettings.getTopic()), tbPubSubQueueExecutorProvider);
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> createToRuleEngineMsgConsumer(Queue configuration) {
         return new TbPubSubConsumerTemplate<>(ruleEngineAdmin, pubSubSettings, topicService.buildTopicName(configuration.getTopic()),
-                msg -> new TbProtoQueueMsg<>(msg.getKey(), ToRuleEngineMsg.parseFrom(msg.getData()), msg.getHeaders()));
+                msg -> new TbProtoQueueMsg<>(msg.getKey(), ToRuleEngineMsg.parseFrom(msg.getData()), msg.getHeaders()), tbPubSubQueueExecutorProvider);
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> createToRuleEngineNotificationsMsgConsumer() {
         return new TbPubSubConsumerTemplate<>(notificationAdmin, pubSubSettings,
                 topicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, serviceInfoProvider.getServiceId()).getFullTopicName(),
-                msg -> new TbProtoQueueMsg<>(msg.getKey(), ToRuleEngineNotificationMsg.parseFrom(msg.getData()), msg.getHeaders()));
+                msg -> new TbProtoQueueMsg<>(msg.getKey(), ToRuleEngineNotificationMsg.parseFrom(msg.getData()), msg.getHeaders()), tbPubSubQueueExecutorProvider);
     }
 
     @Override
     @Bean
     public TbQueueRequestTemplate<TbProtoJsQueueMsg<JsInvokeProtos.RemoteJsRequest>, TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> createRemoteJsRequestTemplate() {
-        TbQueueProducer<TbProtoJsQueueMsg<JsInvokeProtos.RemoteJsRequest>> producer = new TbPubSubProducerTemplate<>(jsExecutorAdmin, pubSubSettings, jsInvokeSettings.getRequestTopic());
+        TbQueueProducer<TbProtoJsQueueMsg<JsInvokeProtos.RemoteJsRequest>> producer = new TbPubSubProducerTemplate<>(jsExecutorAdmin, pubSubSettings, jsInvokeSettings.getRequestTopic(), tbPubSubQueueExecutorProvider);
         TbQueueConsumer<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> consumer = new TbPubSubConsumerTemplate<>(jsExecutorAdmin, pubSubSettings,
                 jsInvokeSettings.getResponseTopic() + "." + serviceInfoProvider.getServiceId(),
                 msg -> {
                     JsInvokeProtos.RemoteJsResponse.Builder builder = JsInvokeProtos.RemoteJsResponse.newBuilder();
                     JsonFormat.parser().ignoringUnknownFields().merge(new String(msg.getData(), StandardCharsets.UTF_8), builder);
                     return new TbProtoQueueMsg<>(msg.getKey(), builder.build(), msg.getHeaders());
-                });
+                }, tbPubSubQueueExecutorProvider);
 
         DefaultTbQueueRequestTemplate.DefaultTbQueueRequestTemplateBuilder
                 <TbProtoJsQueueMsg<JsInvokeProtos.RemoteJsRequest>, TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> builder = DefaultTbQueueRequestTemplate.builder();
@@ -153,12 +157,12 @@ public class PubSubTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory 
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> createToUsageStatsServiceMsgProducer() {
-        return new TbPubSubProducerTemplate<>(coreAdmin, pubSubSettings, topicService.buildTopicName(coreSettings.getUsageStatsTopic()));
+        return new TbPubSubProducerTemplate<>(coreAdmin, pubSubSettings, topicService.buildTopicName(coreSettings.getUsageStatsTopic()), tbPubSubQueueExecutorProvider);
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToOtaPackageStateServiceMsg>> createToOtaPackageStateServiceMsgProducer() {
-        return new TbPubSubProducerTemplate<>(coreAdmin, pubSubSettings, topicService.buildTopicName(coreSettings.getOtaPackageTopic()));
+        return new TbPubSubProducerTemplate<>(coreAdmin, pubSubSettings, topicService.buildTopicName(coreSettings.getOtaPackageTopic()), tbPubSubQueueExecutorProvider);
     }
 
     @PreDestroy
