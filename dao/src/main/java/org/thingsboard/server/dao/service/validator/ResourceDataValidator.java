@@ -15,10 +15,10 @@
  */
 package org.thingsboard.server.dao.service.validator;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -94,6 +94,9 @@ public class ResourceDataValidator extends DataValidator<TbResource> {
         }
         if (StringUtils.isEmpty(resource.getFileName())) {
             throw new DataValidationException("Resource file name should be specified!");
+        }
+        if (StringUtils.containsAny(resource.getFileName(), "/", "\\")) {
+            throw new DataValidationException("File name contains forbidden symbols");
         }
         if (StringUtils.isEmpty(resource.getResourceKey())) {
             throw new DataValidationException("Resource key should be specified!");

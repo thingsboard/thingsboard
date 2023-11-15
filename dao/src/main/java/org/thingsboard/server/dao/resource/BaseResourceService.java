@@ -67,11 +67,19 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         if (doValidate) {
             resourceValidator.validate(resource, TbResourceInfo::getTenantId);
         }
-        TenantId tenantId = resource.getTenantId();
-        TbResourceId resourceId = resource.getId();
         if (resource.getData() != null) {
             resource.setEtag(calculateEtag(resource.getData()));
         }
+        return doSaveResource(resource);
+    }
+
+    @Override
+    public TbResource saveResource(TbResource resource) {
+        return saveResource(resource, true);
+    }
+
+    protected TbResource doSaveResource(TbResource resource) {
+        TenantId tenantId = resource.getTenantId();
         try {
             TbResource saved;
             if (resource.getData() != null) {
@@ -80,12 +88,12 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
                 TbResourceInfo resourceInfo = saveResourceInfo(resource);
                 saved = new TbResource(resourceInfo);
             }
-            publishEvictEvent(new ResourceInfoEvictEvent(tenantId, resourceId));
+            publishEvictEvent(new ResourceInfoEvictEvent(tenantId, resource.getId()));
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(saved.getTenantId())
-                    .entityId(saved.getId()).added(resourceId == null).build());
+                    .entityId(saved.getId()).added(resource.getId() == null).build());
             return saved;
         } catch (Exception t) {
-            publishEvictEvent(new ResourceInfoEvictEvent(tenantId, resourceId));
+            publishEvictEvent(new ResourceInfoEvictEvent(tenantId, resource.getId()));
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("resource_unq_key")) {
                 String field = ResourceType.LWM2M_MODEL.equals(resource.getResourceType()) ? "resourceKey" : "fileName";
@@ -94,11 +102,6 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
                 throw t;
             }
         }
-    }
-
-    @Override
-    public TbResource saveResource(TbResource resource) {
-        return saveResource(resource, true);
     }
 
     private TbResourceInfo saveResourceInfo(TbResource resource) {

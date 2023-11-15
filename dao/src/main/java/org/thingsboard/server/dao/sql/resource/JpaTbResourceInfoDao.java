@@ -83,6 +83,16 @@ public class JpaTbResourceInfoDao extends JpaAbstractDao<TbResourceInfoEntity, T
     }
 
     @Override
+    public boolean existsByTenantIdAndResourceTypeAndResourceKey(TenantId tenantId, ResourceType resourceType, String resourceKey) {
+        return resourceInfoRepository.existsByTenantIdAndResourceTypeAndResourceKey(tenantId.getId(), resourceType.name(), resourceKey);
+    }
+
+    @Override
+    public List<String> findKeysByTenantIdAndResourceTypeAndResourceKeyStartingWith(TenantId tenantId, ResourceType resourceType, String resourceKeyQuery) {
+        return resourceInfoRepository.findKeysByTenantIdAndResourceTypeAndResourceKeyStartingWith(tenantId.getId(), resourceType.name(), resourceKeyQuery);
+    }
+
+    @Override
     public List<TbResourceInfo> findByTenantIdAndEtagAndKeyStartingWith(TenantId tenantId, String etag, String query) {
         return DaoUtil.convertDataList(resourceInfoRepository.findByTenantIdAndHashCodeAndResourceKeyStartingWith(tenantId.getId(), etag, query));
     }

@@ -25,5 +25,6 @@ public class ImageDescriptor {
     private int width;
     private int height;
     private long size;
+    private String etag;
     private ImageDescriptor previewDescriptor;
 }

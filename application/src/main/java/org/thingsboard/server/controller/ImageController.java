@@ -125,7 +125,8 @@ public class ImageController extends BaseController {
         TenantId tenantId = getTenantId();
         TbResourceInfo imageInfo = checkImageInfo(type, key, Operation.READ);
         ImageDescriptor descriptor = imageInfo.getDescriptor(ImageDescriptor.class);
-        return downloadIfChanged(etag, imageInfo, descriptor, () -> imageService.getImageData(tenantId, imageInfo.getId()));
+        return downloadIfChanged(etag, descriptor, imageInfo.getFileName(),
+                () -> imageService.getImageData(tenantId, imageInfo.getId()));
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -136,7 +137,8 @@ public class ImageController extends BaseController {
         TenantId tenantId = getTenantId();
         TbResourceInfo imageInfo = checkImageInfo(type, key, Operation.READ);
         ImageDescriptor descriptor = imageInfo.getDescriptor(ImageDescriptor.class);
-        return downloadIfChanged(etag, imageInfo, descriptor.getPreviewDescriptor(), () -> imageService.getImagePreview(tenantId, imageInfo.getId()));
+        return downloadIfChanged(etag, descriptor.getPreviewDescriptor(), imageInfo.getFileName(),
+                () -> imageService.getImagePreview(tenantId, imageInfo.getId()));
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
@@ -176,24 +178,22 @@ public class ImageController extends BaseController {
         tbImageService.delete(imageInfo, getCurrentUser());
     }
 
-    private ResponseEntity<ByteArrayResource> downloadIfChanged(String etag, TbResourceInfo imageInfo, ImageDescriptor imageDescriptor,
-                                                                Supplier<byte[]> dataSupplier)  {
-        if (etag != null) {
-            if (etag.equals(imageInfo.getEtag())) {
-                return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
-                        .eTag(etag)
-                        .build();
-            }
+    private ResponseEntity<ByteArrayResource> downloadIfChanged(String actualEtag, ImageDescriptor imageDescriptor,
+                                                                String fileName, Supplier<byte[]> dataSupplier) {
+        if (imageDescriptor.getEtag().equals(actualEtag)) {
+            return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
+                    .eTag(actualEtag)
+                    .build();
         }
 
         byte[] data = dataSupplier.get();
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + imageInfo.getFileName())
-                .header("x-filename", imageInfo.getFileName())
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + fileName)
+                .header("x-filename", fileName)
                 .contentLength(data.length)
                 .header("Content-Type", imageDescriptor.getMediaType())
                 .cacheControl(CacheControl.noCache())
-                .eTag(imageInfo.getEtag())
+                .eTag(imageDescriptor.getEtag())
                 .body(new ByteArrayResource(data));
     }
 

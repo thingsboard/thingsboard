@@ -39,7 +39,6 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
     public TbResourceInfo save(TbResource image, User user) throws Exception {
         ActionType actionType = image.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = image.getTenantId();
-        image.setResourceKey(image.getFileName()); // TODO: generate unique resource key file_name+idx
         try {
             TbResourceInfo savedImage = imageService.saveImage(image);
             notificationEntityService.logEntityAction(tenantId, savedImage.getId(), savedImage, actionType, user);
