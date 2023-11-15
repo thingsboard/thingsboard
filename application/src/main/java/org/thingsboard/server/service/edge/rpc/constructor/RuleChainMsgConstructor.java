@@ -37,6 +37,7 @@ import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 public class RuleChainMsgConstructor {
 
     public RuleChainUpdateMsg constructRuleChainUpdatedMsg(UpdateMsgType msgType, RuleChain ruleChain, boolean isRoot, EdgeVersion edgeVersion) {
+        boolean isTemplateRoot = ruleChain.isRoot();
         if (EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)) {
             return constructDeprecatedRuleChainUpdatedMsg(msgType, ruleChain, isRoot);
         }
@@ -44,7 +45,7 @@ public class RuleChainMsgConstructor {
         RuleChainUpdateMsg result = RuleChainUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(ruleChain))
                 .setIdMSB(ruleChain.getId().getId().getMostSignificantBits())
                 .setIdLSB(ruleChain.getId().getId().getLeastSignificantBits()).build();
-        ruleChain.setRoot(false);
+        ruleChain.setRoot(isTemplateRoot);
         return result;
     }
 
