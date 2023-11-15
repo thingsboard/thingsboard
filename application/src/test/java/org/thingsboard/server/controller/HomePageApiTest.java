@@ -408,7 +408,7 @@ public class HomePageApiTest extends AbstractControllerTest {
         Assert.assertEquals(2, usageInfo.getUsers());
         Assert.assertEquals(configuration.getMaxUsers(), usageInfo.getMaxUsers());
 
-        Assert.assertEquals(0, usageInfo.getDashboards());
+        Assert.assertEquals(1, usageInfo.getDashboards());
         Assert.assertEquals(configuration.getMaxDashboards(), usageInfo.getMaxDashboards());
 
         Assert.assertEquals(0, usageInfo.getTransportMessages());
