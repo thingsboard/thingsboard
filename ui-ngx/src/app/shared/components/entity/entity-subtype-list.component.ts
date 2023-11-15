@@ -265,8 +265,8 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
     const value = (event.value || '').trim();
     if (value) {
       this.add(value);
+      this.clear('');
     }
-    this.clear('');
   }
   remove(entitySubtype: string) {
     const index = this.entitySubtypeList.indexOf(entitySubtype);
@@ -294,9 +294,6 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
     this.searchText = searchText;
     return this.getEntitySubtypes(searchText).pipe(
       map(subTypes => {
-        if (!subTypes.length) {
-          return subTypes;
-        }
         let result;
         if (this.hasPageDataEntitySubTypes.has(this.entityType)) {
           result = subTypes;
@@ -371,6 +368,10 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
   clear(value: string = '') {
     this.entitySubtypeInput.nativeElement.value = value;
     this.entitySubtypeListFormGroup.get('entitySubtype').patchValue(value, {emitEvent: true});
+    setTimeout(() => {
+      this.entitySubtypeInput.nativeElement.blur();
+      this.entitySubtypeInput.nativeElement.focus();
+    }, 0);
   }
 
   customTranslate(entity: string) {
