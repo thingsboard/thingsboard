@@ -51,9 +51,9 @@
         "configurationVersion": 1,
         "configuration": {
           "scope": "CLIENT_SCOPE",
-          "notifyDevice": "false",
-          "sendAttributesUpdatedNotification": "false",
-          "updateAttributesOnlyOnValueChange": "true"
+          "notifyDevice": false,
+          "sendAttributesUpdatedNotification": false,
+          "updateAttributesOnlyOnValueChange": true
         },
         "externalId": null
       },
