@@ -39,7 +39,7 @@ public interface NotificationTargetRepository extends JpaRepository<Notification
                                                                Pageable pageable);
 
     @Query(value = "SELECT * FROM notification_target t WHERE t.tenant_id = :tenantId " +
-            "AND (:searchText IS NULL OR ilike(t.name, concat('%', :searchText, '%')) = true) " +
+            "AND (:searchText IS NULL OR t.name ILIKE concat('%', :searchText, '%')) " +
             "AND (cast(t.configuration as json) ->> 'type' <> 'PLATFORM_USERS' OR " +
             "cast(t.configuration as json) -> 'usersFilter' ->> 'type' IN :usersFilterTypes)", nativeQuery = true)
     Page<NotificationTargetEntity> findByTenantIdAndSearchTextAndUsersFilterTypeIfPresent(@Param("tenantId") UUID tenantId,

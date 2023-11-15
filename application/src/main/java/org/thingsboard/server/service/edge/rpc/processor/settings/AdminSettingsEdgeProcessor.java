@@ -32,7 +32,10 @@ import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 public class AdminSettingsEdgeProcessor extends BaseEdgeProcessor {
 
     public DownlinkMsg convertAdminSettingsEventToDownlink(EdgeEvent edgeEvent) {
-        AdminSettings adminSettings = JacksonUtil.OBJECT_MAPPER.convertValue(edgeEvent.getBody(), AdminSettings.class);
+        AdminSettings adminSettings = JacksonUtil.convertValue(edgeEvent.getBody(), AdminSettings.class);
+        if (adminSettings == null) {
+            return null;
+        }
         AdminSettingsUpdateMsg adminSettingsUpdateMsg = adminSettingsMsgConstructor.constructAdminSettingsUpdateMsg(adminSettings);
         return DownlinkMsg.newBuilder()
                 .setDownlinkMsgId(EdgeUtils.nextPositiveInt())

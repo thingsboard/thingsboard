@@ -3,7 +3,7 @@
   "name": "Horizontal UV Index card",
   "deprecated": false,
   "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAArlBMVEUAAADg4ODf39/g4ODg4ODg4ODf39/g4ODg4ODf39/////39/eAwyzg4ODCwsKQkJD6+vrn5+fz8/O2trbt7e3b29vV1dXOzs50dHSQy0bx8fHP6K88PDzv9+XHx8e7u7v3+/Lj4+PU1NTH5aPA4Zatra1YWFjY7L2enp7IyMiqqqqCgoKYzlMhISHf8Mqv2Xun1m5mZmZKSkqIxzmo1m6g0mDn9Ne43YgvLy/H5aK3Tah+AAAACnRSTlMAvxDv36eQgG8gyT+wCQAAAqtJREFUeNrt2OtuokAAhmFqtYevODDAgFIExPOhtrXHvf8b20HcqNntYv9QNN9jgs44MXkRBTWIiIiIiIiIiIiIiIiIiIiIiIiIiIiI6Nsa162LU3fTMIzbpufcnTqv2TBaIc6Ad2Vc2jgHl0YbZ6HNkJphSN0wpG7OPiRdDnBSvgrpmY84EIZAP+xDb4vRVhyjFo4O6VjoP4QPIeIoH42wZVmo3uppUh7S6w4BpB+T/PFycBCC8RSLzibEt6xFiGlHzyc6a+r3F6jG6uPFNO/LQ9LublXXHB6GJGNE8SYkjpLONIn8Z8uP/HESrztTVGJimseFoPc2QToZDnrA0y8choSfcYQiZAxLyzfROLLQ+UQ17t8GaWnI7vAytSH2LBbwI30XWXsh0+diE6K/XseoTHnIriM3wE5f7/c5ED/090LC/M0In8dRv2PFa5SoPmRoFl5S7AnxD2GxKVF9SLrsdld4M7fe8dTt1vDMeGzIq7m1OtmQvw6tejo2JN1+2IeoqW98/da648iQ3usE0CfEd+B116Js/OEdvEB7f0rmo8xDiUpCegeXKANsCQeQgWNnypl6gIR02vkwUE4mnblnZx7gBAJ2JuRmKbJMzyoUqg9Jl0Noj5NN1H6I7WezQPnO3AZcuFK0hfJnKpOurW9eYgOOgJ6VgK/0c0Eg5EyiRMWX8TrEcX3hBa49RxESwBWOUjN/roejIChCEjuQsPXSQMoggVIoUXVIIjxXCF/ona8ANxhJVyiZJGqWzO2k7QuBTYgvRnnITMi5G+jlDkr88E9dGzLAfzlqplDu5/98sL2y15b4Wo1C6oUhdcOQumFI3bSNS5wD+9K48nAGvJbRaHp3p87xmreG0bi5OHWt64ZBRERERERERERERERERERERERERERERN/1G1Juby0y7njrAAAAAElFTkSuQmCC",
-  "description": "Displays a latest UV index telemetry in a horizontal layout.",
+  "description": "Displays the latest UV index telemetry in a scalable horizontal layout.",
   "descriptor": {
     "type": "latest",
     "sizeX": 5,
@@ -23,6 +23,8 @@
   "tags": [
     "weather",
     "environment",
-    "uv"
+    "uv",
+    "ultraviolet",
+    "sunburn"
   ]
 }

@@ -13,29 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.rpc;
+package org.thingsboard.server.common.msg.rpc;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.ToString;
+import lombok.Data;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 
-@ToString
-@RequiredArgsConstructor
+@Data
 public class FromDeviceRpcResponseActorMsg implements ToDeviceActorNotificationMsg {
 
-    @Getter
-    private final Integer requestId;
-    @Getter
-    private final TenantId tenantId;
-    @Getter
-    private final DeviceId deviceId;
+    private static final long serialVersionUID = -6648120137236354987L;
 
-    @Getter
+    private final Integer requestId;
+    private final TenantId tenantId;
+    private final DeviceId deviceId;
     private final FromDeviceRpcResponse msg;
 
     @Override

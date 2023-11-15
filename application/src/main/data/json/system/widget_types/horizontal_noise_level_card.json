@@ -3,7 +3,7 @@
   "name": "Horizontal noise level card",
   "deprecated": false,
   "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAAnFBMVEUAAADf39/f39/g4ODg4ODf39/////k5OSAwyzg4ODP6a/f8MqQy0bIyMhYWFig0mDOzs67u7v09PTx8fHv9+X5+fn3+/LV1dXb29vi4uLCwsK2trav2Xt0dHTn5+e43Yi/4ZWIxznQ6a+rq6tmZmaYzlNKSkrH5aPn9NiCgoKQkJDt7e3X7L2enp7Y7L2w2Xuo1m48PDytra0hISE2LSZJAAAABnRSTlMAIEDfv1C6kOEmAAADL0lEQVR42u3ai1LaQBiGYar294fshs05hCQEEo6e2/u/t+4unVSoVaiMRuZ71GXdOGNeFobMQA8AAAAAAAAAAAAAAAAAAAAAAAAAAADgI3378mzGxeX1Vze6/K47riP68vzri96VT2cguur16Sz0EdIxCOkahHQNQroGIV1zUEidUOKRcTeiVrKm59YjOspnhLgu1QWRPlMZ0CggCvQPSVcvmWlgD7knC3GW1X3czmjHkB0KZ9r96pCQSe7shtzVxWjRLIJCboon6ekFG7IoFmYcucUiOFnIA2vCnGdlZ+F+yIAtEb4dIniwE+ItNoW3pnVtQrygWd896RC9XLuJ/pL61jtVyICFs6pYEIVmNuHh3yHz2Ww5Z3F8iJQ/i3pNhVfIRDZ1s5HShugDwcatE71JJ9uRXNzqccohTXhCFE85pq343tmG2LaYOXwtJHacF0KoKYKnxqVC3jWul7jNxoQErn60BT9HtG5cE3JC5vSHbJLmvCJrMGUW8zaEmFevhQyY25A9QTvaYff2hOIwNJth7/3taITMk1nONmQemj95pINCPo/DzEPaD1lyrsftjljz+KAQ+xj7HGE1EVzthzzycufJnrOIDwnRE0GfJp5yuBcy5EEbMvy90OmQ21lMZJ/oOQ+ePdnz/ZCcq2NDfHqBf7O/4NMpzO0OCD0u+dG+mJC1tKcv2pBQ8O2xIWMbo79vUrKiiKK+Mgt9ioiorEuK0nR7QC+8J2nJ04dqaP55LPihEly1jzazbkOmef44feMF0clze4miJ5NnIUmiUimVnmWUpZkXjTOVJFJ5N8qLiFTpe15KvrIHlPTo/w0E6zON9Sw0s/YsVvq34Z9LFDGJj71otCFq7EtVqm1ImaR6rtfKVGXShvTTVIfIcSl9nZv59A5hGLcvKfHO+juvfn+oNFPjRGa+2RHlpdnYH0ul1268UioyIZHZkdL7YQ4kWUYfzIYcLS3p3xKZ0gE6ERJFrx306RCdCOkihHQNQroGIV2DkK7p967O4G12Iv9Kf2DgDN5oj/QHBnrfL0fXX93lxTl9qAYAAAAAAAAAAAAAAAAAAAAAAAAAAADgg/wCTYn9BVfiGNYAAAAASUVORK5CYII=",
-  "description": "Displays a latest noise level telemetry in a horizontal layout.",
+  "description": "Displays the latest noise level telemetry in a scalable horizontal layout.",
   "descriptor": {
     "type": "latest",
     "sizeX": 5,
@@ -23,6 +23,13 @@
   "tags": [
     "weather",
     "environment",
-    "noise"
+    "sound level",
+    "acoustic level",
+    "decibel level",
+    "volume",
+    "loudness",
+    "ambient noise",
+    "sound intensity",
+    "acoustic intensity"
   ]
 }

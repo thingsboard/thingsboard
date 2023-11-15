@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.edge;
 
-import freemarker.template.Configuration;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -33,6 +32,7 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
+import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
@@ -55,6 +55,7 @@ import org.thingsboard.server.service.edge.rpc.processor.entityview.EntityViewEd
 import org.thingsboard.server.service.edge.rpc.processor.ota.OtaPackageEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.queue.QueueEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.relation.RelationEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.resource.ResourceEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.rule.RuleChainEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.settings.AdminSettingsEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.telemetry.TelemetryEdgeProcessor;
@@ -84,9 +85,6 @@ public class EdgeContextComponent {
 
     @Autowired
     private AdminSettingsService adminSettingsService;
-
-    @Autowired
-    private Configuration freemarkerConfig;
 
     @Autowired
     private DeviceService deviceService;
@@ -138,6 +136,9 @@ public class EdgeContextComponent {
 
     @Autowired
     private QueueService queueService;
+
+    @Autowired
+    private ResourceService resourceService;
 
     @Autowired
     private AlarmEdgeProcessor alarmProcessor;
@@ -198,6 +199,9 @@ public class EdgeContextComponent {
 
     @Autowired
     private TenantProfileEdgeProcessor tenantProfileEdgeProcessor;
+
+    @Autowired
+    private ResourceEdgeProcessor resourceEdgeProcessor;
 
     @Autowired
     private EdgeMsgConstructor edgeMsgConstructor;

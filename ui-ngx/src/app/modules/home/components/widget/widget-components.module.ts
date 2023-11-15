@@ -65,6 +65,7 @@ import { SignalStrengthWidgetComponent } from '@home/components/widget/lib/indic
 import { ValueChartCardWidgetComponent } from '@home/components/widget/lib/cards/value-chart-card-widget.component';
 import { ProgressBarWidgetComponent } from '@home/components/widget/lib/cards/progress-bar-widget.component';
 import { LiquidLevelWidgetComponent } from '@home/components/widget/lib/indicator/liquid-level-widget.component';
+import { DoughnutWidgetComponent } from '@home/components/widget/lib/chart/doughnut-widget.component';
 
 @NgModule({
   declarations:
@@ -104,7 +105,8 @@ import { LiquidLevelWidgetComponent } from '@home/components/widget/lib/indicato
       SignalStrengthWidgetComponent,
       ValueChartCardWidgetComponent,
       ProgressBarWidgetComponent,
-      LiquidLevelWidgetComponent
+      LiquidLevelWidgetComponent,
+      DoughnutWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -148,7 +150,8 @@ import { LiquidLevelWidgetComponent } from '@home/components/widget/lib/indicato
         SignalStrengthWidgetComponent,
         ValueChartCardWidgetComponent,
         ProgressBarWidgetComponent,
-        LiquidLevelWidgetComponent
+        LiquidLevelWidgetComponent,
+        DoughnutWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }

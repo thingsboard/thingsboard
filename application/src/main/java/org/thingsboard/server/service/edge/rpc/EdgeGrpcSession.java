@@ -63,6 +63,7 @@ import org.thingsboard.server.gen.edge.v1.RelationRequestMsg;
 import org.thingsboard.server.gen.edge.v1.RelationUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RequestMsg;
 import org.thingsboard.server.gen.edge.v1.RequestMsgType;
+import org.thingsboard.server.gen.edge.v1.ResourceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.ResponseMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataRequestMsg;
 import org.thingsboard.server.gen.edge.v1.SyncCompletedMsg;
@@ -640,17 +641,19 @@ public final class EdgeGrpcSession implements Closeable {
             case WIDGETS_BUNDLE:
                 return ctx.getWidgetBundleProcessor().convertWidgetsBundleEventToDownlink(edgeEvent);
             case WIDGET_TYPE:
-                return ctx.getWidgetTypeProcessor().convertWidgetTypeEventToDownlink(edgeEvent);
+                return ctx.getWidgetTypeProcessor().convertWidgetTypeEventToDownlink(edgeEvent, this.edgeVersion);
             case ADMIN_SETTINGS:
                 return ctx.getAdminSettingsProcessor().convertAdminSettingsEventToDownlink(edgeEvent);
             case OTA_PACKAGE:
                 return ctx.getOtaPackageEdgeProcessor().convertOtaPackageEventToDownlink(edgeEvent);
+            case TB_RESOURCE:
+                return ctx.getResourceEdgeProcessor().convertResourceEventToDownlink(edgeEvent);
             case QUEUE:
                 return ctx.getQueueEdgeProcessor().convertQueueEventToDownlink(edgeEvent);
             case TENANT:
-                return ctx.getTenantEdgeProcessor().convertTenantEventToDownlink(edgeEvent);
+                return ctx.getTenantEdgeProcessor().convertTenantEventToDownlink(edgeEvent, this.getEdgeVersion());
             case TENANT_PROFILE:
-                return ctx.getTenantProfileEdgeProcessor().convertTenantProfileEventToDownlink(edgeEvent);
+                return ctx.getTenantProfileEdgeProcessor().convertTenantProfileEventToDownlink(edgeEvent, this.getEdgeVersion());
             default:
                 log.warn("[{}] Unsupported edge event type [{}]", this.tenantId, edgeEvent);
                 return null;
@@ -677,7 +680,7 @@ public final class EdgeGrpcSession implements Closeable {
             }
             if (uplinkMsg.getDeviceCredentialsUpdateMsgCount() > 0) {
                 for (DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg : uplinkMsg.getDeviceCredentialsUpdateMsgList()) {
-                    result.add(ctx.getDeviceProcessor().processDeviceCredentialsMsg(edge.getTenantId(), deviceCredentialsUpdateMsg));
+                    result.add(ctx.getDeviceProcessor().processDeviceCredentialsMsgFromEdge(edge.getTenantId(), edge.getId(), deviceCredentialsUpdateMsg));
                 }
             }
             if (uplinkMsg.getAssetProfileUpdateMsgCount() > 0) {
@@ -692,7 +695,7 @@ public final class EdgeGrpcSession implements Closeable {
             }
             if (uplinkMsg.getAlarmUpdateMsgCount() > 0) {
                 for (AlarmUpdateMsg alarmUpdateMsg : uplinkMsg.getAlarmUpdateMsgList()) {
-                    result.add(ctx.getAlarmProcessor().processAlarmMsg(edge.getTenantId(), alarmUpdateMsg));
+                    result.add(ctx.getAlarmProcessor().processAlarmMsgFromEdge(edge.getTenantId(), edge.getId(), alarmUpdateMsg));
                 }
             }
             if (uplinkMsg.getEntityViewUpdateMsgCount() > 0) {
@@ -702,12 +705,17 @@ public final class EdgeGrpcSession implements Closeable {
             }
             if (uplinkMsg.getRelationUpdateMsgCount() > 0) {
                 for (RelationUpdateMsg relationUpdateMsg : uplinkMsg.getRelationUpdateMsgList()) {
-                    result.add(ctx.getRelationProcessor().processRelationMsg(edge.getTenantId(), relationUpdateMsg));
+                    result.add(ctx.getRelationProcessor().processRelationMsgFromEdge(edge.getTenantId(), edge, relationUpdateMsg));
                 }
             }
             if (uplinkMsg.getDashboardUpdateMsgCount() > 0) {
                 for (DashboardUpdateMsg dashboardUpdateMsg : uplinkMsg.getDashboardUpdateMsgList()) {
                     result.add(ctx.getDashboardProcessor().processDashboardMsgFromEdge(edge.getTenantId(), edge, dashboardUpdateMsg));
+                }
+            }
+            if (uplinkMsg.getResourceUpdateMsgCount() > 0) {
+                for (ResourceUpdateMsg resourceUpdateMsg : uplinkMsg.getResourceUpdateMsgList()) {
+                    result.add(ctx.getResourceEdgeProcessor().processResourceMsgFromEdge(edge.getTenantId(), edge, resourceUpdateMsg));
                 }
             }
             if (uplinkMsg.getRuleChainMetadataRequestMsgCount() > 0) {
