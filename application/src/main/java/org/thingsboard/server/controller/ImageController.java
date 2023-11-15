@@ -139,7 +139,7 @@ public class ImageController extends BaseController {
         return downloadIfChanged(etag, imageInfo, descriptor.getPreviewDescriptor(), () -> imageService.getImagePreview(tenantId, imageInfo.getId()));
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(IMAGE_URL + "/info")
     public TbResourceInfo getImageInfo(@PathVariable String type,
                                        @PathVariable String key) throws ThingsboardException {
@@ -147,7 +147,7 @@ public class ImageController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @GetMapping("/images")
+    @GetMapping("/api/images")
     public PageData<TbResourceInfo> getImages(@ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
                                               @RequestParam int pageSize,
                                               @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)

@@ -189,7 +189,7 @@ public class SystemImagesMigrator { // TEMPORARY
             return data;
         }
         String imageMediaType = StringUtils.substringBetween(data, "data:", ";base64");
-        String extension = MediaTypeUtils.mediaTypeToFileExtension(imageMediaType);
+        String extension = ImageUtils.mediaTypeToFileExtension(imageMediaType);
         imageKey += "." + extension;
 
         byte[] image = Base64.getDecoder().decode(base64Data);
