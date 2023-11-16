@@ -64,6 +64,6 @@ export interface ResourceInfo extends Omit<BaseData<TbResourceId>, 'name' | 'lab
 }
 
 export interface Resource extends ResourceInfo {
-  base64Data: string;
+  data: string;
   name?: string;
 }

@@ -101,7 +101,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         resource.setResourceType(ResourceType.JKS);
         resource.setTitle("My first resource");
         resource.setFileName(DEFAULT_FILE_NAME);
-        resource.setBase64Data(TEST_DATA);
+        resource.setEncodedData(TEST_DATA);
 
         TbResource savedResource = save(resource);
 
@@ -119,6 +119,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         Assert.assertArrayEquals(resource.getData(), download(savedResource.getId()));
 
         savedResource.setTitle("My new resource");
+        savedResource.setData(null);
 
         save(savedResource);
 
@@ -136,7 +137,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         resource.setResourceType(ResourceType.JKS);
         resource.setTitle(StringUtils.randomAlphabetic(300));
         resource.setFileName(DEFAULT_FILE_NAME);
-        resource.setBase64Data(TEST_DATA);
+        resource.setEncodedData(TEST_DATA);
 
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -155,7 +156,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         resource.setResourceType(ResourceType.JKS);
         resource.setTitle("My first resource");
         resource.setFileName(DEFAULT_FILE_NAME);
-        resource.setBase64Data(TEST_DATA);
+        resource.setEncodedData(TEST_DATA);
 
         TbResource savedResource = save(resource);
 
@@ -184,7 +185,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         resource.setResourceType(ResourceType.JKS);
         resource.setTitle("My first resource");
         resource.setFileName(DEFAULT_FILE_NAME);
-        resource.setBase64Data(TEST_DATA);
+        resource.setEncodedData(TEST_DATA);
 
         TbResource savedResource = save(resource);
 
@@ -200,7 +201,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         resource.setResourceType(ResourceType.JKS);
         resource.setTitle("My first resource");
         resource.setFileName(DEFAULT_FILE_NAME);
-        resource.setBase64Data(TEST_DATA);
+        resource.setEncodedData(TEST_DATA);
 
         TbResource savedResource = save(resource);
 
@@ -225,7 +226,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         resource.setResourceType(ResourceType.JKS);
         resource.setTitle("My first resource");
         resource.setFileName(DEFAULT_FILE_NAME);
-        resource.setBase64Data(TEST_DATA);
+        resource.setEncodedData(TEST_DATA);
 
         TbResource savedResource = save(resource);
 
@@ -256,7 +257,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
             resource.setTitle("Resource" + i);
             resource.setResourceType(ResourceType.JKS);
             resource.setFileName(i + DEFAULT_FILE_NAME);
-            resource.setBase64Data(TEST_DATA);
+            resource.setEncodedData(TEST_DATA);
             resources.add(new TbResourceInfo(save(resource)));
         }
         List<TbResourceInfo> loadedResources = new ArrayList<>();
@@ -293,7 +294,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
             resource.setTitle("JKS Resource" + i);
             resource.setResourceType(ResourceType.JKS);
             resource.setFileName(i + DEFAULT_FILE_NAME);
-            resource.setBase64Data(TEST_DATA);
+            resource.setEncodedData(TEST_DATA);
             resources.add(new TbResourceInfo(save(resource)));
         }
 
@@ -303,7 +304,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
             resource.setTitle("LWM2M Resource" + i);
             resource.setResourceType(ResourceType.PKCS_12);
             resource.setFileName(i + DEFAULT_FILE_NAME_2);
-            resource.setBase64Data(TEST_DATA);
+            resource.setEncodedData(TEST_DATA);
             save(resource);
         }
 
@@ -340,7 +341,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
             resource.setTitle("Resource" + i);
             resource.setResourceType(ResourceType.JKS);
             resource.setFileName(i + DEFAULT_FILE_NAME);
-            resource.setBase64Data(TEST_DATA);
+            resource.setEncodedData(TEST_DATA);
             resources.add(new TbResourceInfo(save(resource)));
         }
         List<TbResourceInfo> loadedResources = new ArrayList<>();
@@ -400,7 +401,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
             resource.setTitle("JKS Resource" + i);
             resource.setResourceType(ResourceType.JKS);
             resource.setFileName(i + DEFAULT_FILE_NAME);
-            resource.setBase64Data(TEST_DATA);
+            resource.setEncodedData(TEST_DATA);
             TbResourceInfo saved = new TbResourceInfo(save(resource));
             jksResources.add(saved);
         }
@@ -411,7 +412,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
             resource.setTitle("LWM2M Resource" + i);
             resource.setResourceType(ResourceType.PKCS_12);
             resource.setFileName(i + DEFAULT_FILE_NAME_2);
-            resource.setBase64Data(TEST_DATA);
+            resource.setEncodedData(TEST_DATA);
             TbResource saved = save(resource);
             lwm2mesources.add(saved);
         }
@@ -477,7 +478,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
             resource.setTitle("Resource" + i);
             resource.setResourceType(ResourceType.JKS);
             resource.setFileName(i + DEFAULT_FILE_NAME);
-            resource.setBase64Data(TEST_DATA);
+            resource.setEncodedData(TEST_DATA);
             expectedResources.add(new TbResourceInfo(save(resource)));
         }
 
@@ -488,7 +489,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
             resource.setTitle("Resource" + i);
             resource.setResourceType(ResourceType.JKS);
             resource.setFileName(i + DEFAULT_FILE_NAME);
-            resource.setBase64Data(TEST_DATA);
+            resource.setEncodedData(TEST_DATA);
             TbResourceInfo savedResource = new TbResourceInfo(save(resource));
             systemResources.add(savedResource);
             if (i >= 73) {
@@ -532,7 +533,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         resource.setResourceType(ResourceType.JS_MODULE);
         resource.setTitle("Js resource");
         resource.setFileName(JS_TEST_FILE_NAME);
-        resource.setBase64Data(TEST_DATA);
+        resource.setEncodedData(TEST_DATA);
 
         TbResource savedResource = save(resource);
 
@@ -563,7 +564,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         resource.setResourceType(ResourceType.JS_MODULE);
         resource.setTitle("Js resource");
         resource.setFileName(JS_TEST_FILE_NAME);
-        resource.setBase64Data(TEST_DATA);
+        resource.setEncodedData(TEST_DATA);
 
         TbResource savedResource = save(resource);
 
@@ -607,7 +608,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         resource.setResourceType(ResourceType.JS_MODULE);
         resource.setTitle("Js resource");
         resource.setFileName(JS_TEST_FILE_NAME);
-        resource.setBase64Data(TEST_DATA);
+        resource.setEncodedData(TEST_DATA);
 
         TbResource savedResource = save(resource);
 
@@ -623,16 +624,16 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         resource.setResourceType(ResourceType.PKCS_12);
         resource.setTitle("My resource");
         resource.setFileName("3.pks");
-        resource.setBase64Data(TEST_DATA);
+        resource.setEncodedData(TEST_DATA);
         TbResource savedResource = save(resource);
         resource.setEtag(savedResource.getEtag());
 
-        savedResource.setBase64Data(TEST_DATA);
+        savedResource.setEncodedData(TEST_DATA);
         doPost("/api/resource", savedResource)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("can't be updated")));
 
-        savedResource.setBase64Data(null);
+        savedResource.setData(null);
         savedResource.setTitle("Updated resource");
         savedResource = doPost("/api/resource", savedResource, TbResource.class);
         assertThat(savedResource.getTitle()).isEqualTo("Updated resource");
@@ -647,12 +648,12 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         resource.setResourceType(ResourceType.JS_MODULE);
         resource.setTitle("My resource");
         resource.setFileName("module.js");
-        resource.setBase64Data(TEST_DATA);
+        resource.setEncodedData(TEST_DATA);
         TbResource savedResource = save(resource);
         resource.setEtag(savedResource.getEtag());
 
         String newData = Base64.getEncoder().encodeToString(new byte[]{1, 2, 3});
-        savedResource.setBase64Data(newData);
+        savedResource.setEncodedData(newData);
         savedResource.setFileName("new-module.js");
         savedResource.setTitle("Updated title");
         savedResource = save(savedResource);

@@ -24,7 +24,7 @@ public enum ResourceType {
     JKS("application/x-java-keystore", false, false),
     PKCS_12("application/x-pkcs12", false, false),
     JS_MODULE("application/javascript", true, true),
-    IMAGE(null, true, false);
+    IMAGE(null, true, true);
 
     @Getter
     private final String mediaType;

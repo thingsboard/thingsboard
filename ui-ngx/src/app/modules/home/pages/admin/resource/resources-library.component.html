@@ -67,7 +67,7 @@
         </mat-error>
       </mat-form-field>
       <tb-file-input *ngIf="isAdd || (isEdit && entityForm.get('resourceType').value === resourceType.JS_MODULE)"
-        formControlName="base64Data"
+        formControlName="data"
         required
         [readAsBinary]="true"
         [allowedExtensions]="getAllowedExtensions()"

@@ -43,7 +43,6 @@ import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.TbResourceInfoFilter;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TbResourceId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -53,7 +52,6 @@ import org.thingsboard.server.service.resource.TbResourceService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
-import java.util.Base64;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -170,9 +168,7 @@ public class TbResourceController extends BaseController {
                                       @PathVariable(RESOURCE_ID) String strResourceId) throws ThingsboardException {
         checkParameter(RESOURCE_ID, strResourceId);
         TbResourceId resourceId = new TbResourceId(toUUID(strResourceId));
-        TbResource resource = checkResourceId(resourceId, Operation.READ);
-        resource.setBase64Data(Base64.getEncoder().encodeToString(resource.getData()));
-        return resource;
+        return checkResourceId(resourceId, Operation.READ);
     }
 
     @ApiOperation(value = "Create Or Update Resource (saveResource)",
@@ -191,7 +187,7 @@ public class TbResourceController extends BaseController {
                                        @RequestBody TbResource resource) throws Exception {
         resource.setTenantId(getTenantId());
         checkEntity(resource.getId(), resource, Resource.TB_RESOURCE);
-        return tbResourceService.save(resource, getCurrentUser());
+        return new TbResourceInfo(tbResourceService.save(resource, getCurrentUser()));
     }
 
     @ApiOperation(value = "Get Resource Infos (getResources)",

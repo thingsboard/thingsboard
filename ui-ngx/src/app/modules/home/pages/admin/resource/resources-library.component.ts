@@ -68,7 +68,7 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
         this.entityForm.get('title').enable({emitEvent: false});
       }
       this.entityForm.patchValue({
-        base64Data: null,
+        data: null,
         fileName: null
       }, {emitEvent: false});
     });
@@ -93,7 +93,7 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
       title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
       resourceType: [entity?.resourceType ? entity.resourceType : ResourceType.JS_MODULE, Validators.required],
       fileName: [entity ? entity.fileName : null, Validators.required],
-      base64Data: [entity ? entity.base64Data : null, Validators.required]
+      data: [entity ? entity.data : null, Validators.required]
     });
   }
 
@@ -102,20 +102,20 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
       this.entityForm.get('resourceType').disable({emitEvent: false});
       if (entity.resourceType !== ResourceType.JS_MODULE) {
         this.entityForm.get('fileName').disable({emitEvent: false});
-        this.entityForm.get('base64Data').disable({emitEvent: false});
+        this.entityForm.get('data').disable({emitEvent: false});
       }
     }
     this.entityForm.patchValue({
       resourceType: entity.resourceType,
       fileName: entity.fileName,
       title: entity.title,
-      base64Data: entity.base64Data
+      data: entity.data
     });
   }
 
   prepareFormValue(formValue: Resource): Resource {
-    if (this.isEdit && !isDefinedAndNotNull(formValue.base64Data)) {
-      delete formValue.base64Data;
+    if (this.isEdit && !isDefinedAndNotNull(formValue.data)) {
+      delete formValue.data;
     }
     return super.prepareFormValue(formValue);
   }
