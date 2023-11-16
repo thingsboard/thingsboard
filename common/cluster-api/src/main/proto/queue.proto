@@ -255,6 +255,12 @@ message GetOrCreateDeviceFromGatewayRequestMsg {
 message GetOrCreateDeviceFromGatewayResponseMsg {
   DeviceInfoProto deviceInfo = 1;
   bytes profileBody = 2;
+  TransportApiRequestErrorCode error = 3;
+}
+
+enum TransportApiRequestErrorCode {
+  UNKNOWN_TRANSPORT_API_ERROR  = 0;
+  ENTITY_LIMIT = 1;
 }
 
 message GetEntityProfileRequestMsg {

@@ -87,15 +87,18 @@ public class RuleChainDataValidator extends DataValidator<RuleChain> {
     }
 
     public static List<Throwable> validateMetaData(RuleChainMetaData ruleChainMetaData) {
-        ConstraintValidator.validateFields(ruleChainMetaData);
-        List<Throwable> throwables = ruleChainMetaData.getNodes().stream()
+        validateMetaDataFieldsAndConnections(ruleChainMetaData);
+        return ruleChainMetaData.getNodes().stream()
                 .map(RuleChainDataValidator::validateRuleNode)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
+    }
+
+    public static void validateMetaDataFieldsAndConnections(RuleChainMetaData ruleChainMetaData) {
+        ConstraintValidator.validateFields(ruleChainMetaData);
         if (CollectionUtils.isNotEmpty(ruleChainMetaData.getConnections())) {
             validateCircles(ruleChainMetaData.getConnections());
         }
-        return throwables;
     }
 
     public static Throwable validateRuleNode(RuleNode ruleNode) {
