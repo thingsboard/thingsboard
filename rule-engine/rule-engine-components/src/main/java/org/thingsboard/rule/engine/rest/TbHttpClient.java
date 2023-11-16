@@ -17,6 +17,9 @@ package org.thingsboard.rule.engine.rest;
 
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
@@ -25,6 +28,7 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.conn.ssl.DefaultHostnameVerifier;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
@@ -35,6 +39,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsAsyncClientHttpRequestFactory;
 import org.springframework.http.client.Netty4ClientHttpRequestFactory;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 import org.springframework.web.client.AsyncRestTemplate;
@@ -53,9 +58,11 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
+import javax.net.ssl.HttpsURLConnection;
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
 import java.net.URI;
+import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.Deque;
@@ -65,6 +72,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.io.IOException;
 
 @Data
 @Slf4j
@@ -118,9 +126,14 @@ public class TbHttpClient {
                     }
                 } else {
                     HttpAsyncClientBuilder httpAsyncClientBuilder = HttpAsyncClientBuilder.create()
-                            .setSSLHostnameVerifier(new DefaultHostnameVerifier())
-                            .setSSLContext(SSLContext.getDefault())
                             .setProxy(new HttpHost(config.getProxyHost(), config.getProxyPort(), config.getProxyScheme()));
+
+                    if (config.isSkipVerification()) {
+                        httpAsyncClientBuilder.setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
+                    } else {
+                        httpAsyncClientBuilder.setSSLHostnameVerifier(new DefaultHostnameVerifier())
+                            .setSSLContext(SSLContext.getDefault());
+                    }
 
                     proxyUser = config.getProxyUser();
                     proxyPassword = config.getProxyPassword();
@@ -143,10 +156,31 @@ public class TbHttpClient {
                 if (CredentialsType.CERT_PEM == config.getCredentials().getType()) {
                     throw new TbNodeException("Simple HTTP Factory does not support CERT PEM credentials!");
                 }
-                httpClient = new AsyncRestTemplate();
+                SimpleClientHttpRequestFactory simpleFactory;
+
+
+                if (config.isSkipVerification()) {
+                    simpleFactory = new SimpleClientHttpRequestFactory() {
+                        @Override
+                        protected void prepareConnection(HttpURLConnection connection, String httpMethod) throws IOException {
+                            if (connection instanceof HttpsURLConnection) {
+                                ((HttpsURLConnection) connection).setHostnameVerifier(new NoopHostnameVerifier());
+                            }
+                            super.prepareConnection(connection, httpMethod);
+                        }
+                    };
+                } else {
+                    simpleFactory = new SimpleClientHttpRequestFactory();
+                }
+
+                httpClient = new AsyncRestTemplate(simpleFactory);
             } else {
                 Netty4ClientHttpRequestFactory nettyFactory = new Netty4ClientHttpRequestFactory(getSharedOrCreateEventLoopGroup(eventLoopGroupShared));
-                nettyFactory.setSslContext(config.getCredentials().initSslContext());
+                if (config.isSkipVerification()) {
+                    nettyFactory.setSslContext(SslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE).build());
+                } else {
+                    nettyFactory.setSslContext(config.getCredentials().initSslContext());
+                }
                 nettyFactory.setReadTimeout(config.getReadTimeoutMs());
                 httpClient = new AsyncRestTemplate(nettyFactory);
             }
