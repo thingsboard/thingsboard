@@ -51,8 +51,8 @@ public abstract class BaseDeviceProfileProcessor extends BaseEdgeProcessor {
         deviceCreationLock.lock();
         try {
             DeviceProfile deviceProfile = isEdgeVersionOlderThan_3_6_2
-            ? createDeviceProfile(tenantId, deviceProfileId, deviceProfileUpdateMsg)
-            : JacksonUtil.fromStringIgnoreUnknownProperties(deviceProfileUpdateMsg.getEntity(), DeviceProfile.class);
+                    ? createDeviceProfile(tenantId, deviceProfileId, deviceProfileUpdateMsg)
+                    : JacksonUtil.fromStringIgnoreUnknownProperties(deviceProfileUpdateMsg.getEntity(), DeviceProfile.class);
             if (deviceProfile == null) {
                 throw new RuntimeException("[{" + tenantId + "}] deviceProfileUpdateMsg {" + deviceProfileUpdateMsg + "} cannot be converted to device profile");
             }
@@ -86,7 +86,7 @@ public abstract class BaseDeviceProfileProcessor extends BaseEdgeProcessor {
         } catch (Exception e) {
             log.error("[{}] Failed to process device profile update msg [{}]", tenantId, deviceProfileUpdateMsg, e);
             throw e;
-        }  finally {
+        } finally {
             deviceCreationLock.unlock();
         }
         return Pair.of(created, deviceProfileNameUpdated);

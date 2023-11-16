@@ -102,7 +102,7 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor {
         try {
             edgeSynchronizationManager.getEdgeId().set(edgeId);
 
-            updateDeviceCredentials(tenantId, deviceCredentialsUpdateMsg, edgeVersion);
+            updateDeviceCredentials(tenantId, deviceCredentialsUpdateMsg, EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion));
         } finally {
             edgeSynchronizationManager.getEdgeId().remove();
         }
