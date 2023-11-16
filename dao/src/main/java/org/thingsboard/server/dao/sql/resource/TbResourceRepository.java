@@ -20,12 +20,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.TbResourceEntity;
 
 import java.util.List;
 import java.util.UUID;
 
-public interface TbResourceRepository extends JpaRepository<TbResourceEntity, UUID> {
+public interface TbResourceRepository extends JpaRepository<TbResourceEntity, UUID> , ExportableEntityRepository<TbResourceEntity> {
 
     TbResourceEntity findByTenantIdAndResourceTypeAndResourceKey(UUID tenantId, String resourceType, String resourceKey);
 
@@ -86,5 +87,11 @@ public interface TbResourceRepository extends JpaRepository<TbResourceEntity, UU
 
     @Query(value = "SELECT COALESCE(preview, data) FROM resource WHERE id = :id", nativeQuery = true)
     byte[] getPreviewById(@Param("id") UUID id);
+
+    @Query("SELECT externalId FROM TbResourceInfoEntity WHERE id = :id")
+    UUID getExternalIdByInternal(@Param("id") UUID internalId);
+
+    @Query("SELECT id FROM TbResourceInfoEntity WHERE tenantId = :tenantId")
+    Page<UUID> findIdsByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
 
 }

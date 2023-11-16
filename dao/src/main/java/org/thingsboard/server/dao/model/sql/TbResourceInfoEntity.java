@@ -33,6 +33,7 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 import java.util.UUID;
 
+import static org.thingsboard.server.dao.model.ModelConstants.EXTERNAL_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_DESCRIPTOR_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_ETAG_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_FILE_NAME_COLUMN;
@@ -75,6 +76,9 @@ public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implemen
     @Column(name = RESOURCE_DESCRIPTOR_COLUMN)
     private JsonNode descriptor;
 
+    @Column(name = EXTERNAL_ID_PROPERTY)
+    private UUID externalId;
+
     public TbResourceInfoEntity() {
     }
 
@@ -91,6 +95,7 @@ public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implemen
         this.hashCode = resource.getEtag();
         this.fileName = resource.getFileName();
         this.descriptor = resource.getDescriptor();
+        this.externalId = getUuid(resource.getExternalId());
     }
 
     @Override
@@ -105,6 +110,7 @@ public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implemen
         resource.setEtag(hashCode);
         resource.setFileName(fileName);
         resource.setDescriptor(descriptor);
+        resource.setExternalId(getEntityId(externalId, TbResourceId::new));
         return resource;
     }
 }

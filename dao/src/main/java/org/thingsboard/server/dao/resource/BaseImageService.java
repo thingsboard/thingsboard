@@ -59,7 +59,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         Pair<ImageDescriptor, byte[]> result = processImage(image.getData(), descriptor);
         descriptor = result.getLeft();
         image.setEtag(descriptor.getEtag());
-        image.setDescriptor(JacksonUtil.valueToTree(descriptor));
+        image.setDescriptorValue(descriptor);
         image.setPreview(result.getRight());
 
         return new TbResourceInfo(doSaveResource(image));

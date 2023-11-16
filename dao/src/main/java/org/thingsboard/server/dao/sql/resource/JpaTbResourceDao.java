@@ -110,6 +110,27 @@ public class JpaTbResourceDao extends JpaAbstractDao<TbResourceEntity, TbResourc
     }
 
     @Override
+    public TbResource findByTenantIdAndExternalId(UUID tenantId, UUID externalId) {
+        return DaoUtil.getData(resourceRepository.findByTenantIdAndExternalId(tenantId, externalId));
+    }
+
+    @Override
+    public PageData<TbResource> findByTenantId(UUID tenantId, PageLink pageLink) {
+        return findAllByTenantId(TenantId.fromUUID(tenantId), pageLink);
+    }
+
+    @Override
+    public PageData<TbResourceId> findIdsByTenantId(UUID tenantId, PageLink pageLink) {
+        return DaoUtil.pageToPageData(resourceRepository.findIdsByTenantId(tenantId, DaoUtil.toPageable(pageLink))
+                .map(TbResourceId::new));
+    }
+
+    @Override
+    public TbResourceId getExternalIdByInternal(TbResourceId internalId) {
+        return DaoUtil.toEntityId(resourceRepository.getExternalIdByInternal(internalId.getId()), TbResourceId::new);
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.TB_RESOURCE;
     }

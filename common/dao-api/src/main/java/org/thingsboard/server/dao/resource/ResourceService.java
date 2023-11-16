@@ -34,7 +34,7 @@ public interface ResourceService extends EntityDaoService {
 
     TbResource saveResource(TbResource resource, boolean doValidate);
 
-    TbResource findResourceByTenantIdAndKey(TenantId tenantId, ResourceType resourceType, String resourceId);
+    TbResource findResourceByTenantIdAndKey(TenantId tenantId, ResourceType resourceType, String resourceKey);
 
     TbResource findResourceById(TenantId tenantId, TbResourceId resourceId);
 

@@ -718,6 +718,7 @@ CREATE TABLE IF NOT EXISTS resource (
     etag varchar,
     descriptor varchar,
     preview bytea,
+    external_id uuid,
     CONSTRAINT resource_unq_key UNIQUE (tenant_id, resource_type, resource_key)
 );
 

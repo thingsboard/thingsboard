@@ -32,6 +32,7 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 import java.util.UUID;
 
+import static org.thingsboard.server.dao.model.ModelConstants.EXTERNAL_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_DATA_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_DESCRIPTOR_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_ETAG_COLUMN;
@@ -82,6 +83,9 @@ public class TbResourceEntity extends BaseSqlEntity<TbResource> {
     @Column(name = RESOURCE_PREVIEW_COLUMN)
     private byte[] preview;
 
+    @Column(name = EXTERNAL_ID_PROPERTY)
+    private UUID externalId;
+
     public TbResourceEntity() {
     }
 
@@ -102,6 +106,7 @@ public class TbResourceEntity extends BaseSqlEntity<TbResource> {
         this.etag = resource.getEtag();
         this.descriptor = resource.getDescriptor();
         this.preview = resource.getPreview();
+        this.externalId = getUuid(resource.getExternalId());
     }
 
     @Override
@@ -118,6 +123,7 @@ public class TbResourceEntity extends BaseSqlEntity<TbResource> {
         resource.setEtag(etag);
         resource.setDescriptor(descriptor);
         resource.setPreview(preview);
+        resource.setExternalId(getEntityId(externalId, TbResourceId::new));
         return resource;
     }
 

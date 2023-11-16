@@ -16,7 +16,6 @@
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -34,10 +33,8 @@ public class TbResource extends TbResourceInfo {
 
     private static final long serialVersionUID = 7379609705527272306L;
 
-    @JsonIgnore
     private byte[] data;
 
-    @JsonIgnore
     private byte[] preview;
 
     public TbResource() {

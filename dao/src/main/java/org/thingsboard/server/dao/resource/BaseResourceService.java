@@ -96,8 +96,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
             publishEvictEvent(new ResourceInfoEvictEvent(tenantId, resource.getId()));
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("resource_unq_key")) {
-                String field = ResourceType.LWM2M_MODEL.equals(resource.getResourceType()) ? "resourceKey" : "fileName";
-                throw new DataValidationException("Resource with such " + field + " already exists!");
+                throw new DataValidationException("Resource with such key already exists!");
             } else {
                 throw t;
             }
@@ -200,6 +199,11 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findResourceInfoById(tenantId, new TbResourceId(entityId.getId())));
+    }
+
+    @Override
+    public void deleteEntity(TenantId tenantId, EntityId id) {
+        deleteResource(tenantId, (TbResourceId) id);
     }
 
     @Override

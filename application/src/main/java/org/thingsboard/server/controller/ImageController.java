@@ -35,7 +35,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.ImageDescriptor;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
@@ -88,7 +87,7 @@ public class ImageController extends BaseController {
         image.setResourceType(ResourceType.IMAGE);
         ImageDescriptor descriptor = new ImageDescriptor();
         descriptor.setMediaType(file.getContentType());
-        image.setDescriptor(JacksonUtil.valueToTree(descriptor));
+        image.setDescriptorValue(descriptor);
         image.setData(file.getBytes());
         return tbImageService.save(image, user);
     }
@@ -99,11 +98,12 @@ public class ImageController extends BaseController {
                                       @PathVariable String key,
                                       @RequestPart MultipartFile file) throws Exception {
         TbResourceInfo imageInfo = checkImageInfo(type, key, Operation.WRITE);
-        ImageDescriptor descriptor = imageInfo.getDescriptor(ImageDescriptor.class);
-
         TbResource image = new TbResource(imageInfo);
         image.setData(file.getBytes());
-        descriptor.setMediaType(file.getContentType());
+        image.updateDescriptor(ImageDescriptor.class, descriptor -> {
+            descriptor.setMediaType(file.getContentType());
+            return descriptor;
+        });
         return tbImageService.save(image, getCurrentUser());
     }
 

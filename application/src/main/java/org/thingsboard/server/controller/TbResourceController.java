@@ -53,6 +53,7 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -224,6 +225,30 @@ public class TbResourceController extends BaseController {
         } else {
             return checkNotNull(resourceService.findAllTenantResourcesByTenantId(filter.build(), pageLink));
         }
+    }
+
+    @ApiOperation(value = "Get All Resource Infos (getAllResources)",
+            notes = "Returns a page of Resource Info objects owned by tenant. " +
+                    PAGE_DATA_PARAMETERS + RESOURCE_INFO_DESCRIPTION + TENANT_AUTHORITY_PARAGRAPH,
+            produces = "application/json")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/resource/tenant")
+    public PageData<TbResourceInfo> getTenantResources(@ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+                                                       @RequestParam int pageSize,
+                                                       @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+                                                       @RequestParam int page,
+                                                       @ApiParam(value = RESOURCE_TEXT_SEARCH_DESCRIPTION)
+                                                       @RequestParam(required = false) String textSearch,
+                                                       @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = RESOURCE_SORT_PROPERTY_ALLOWABLE_VALUES)
+                                                       @RequestParam(required = false) String sortProperty,
+                                                       @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
+                                                       @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        TbResourceInfoFilter filter = TbResourceInfoFilter.builder()
+                .tenantId(getTenantId())
+                .resourceTypes(EnumSet.allOf(ResourceType.class))
+                .build();
+        return checkNotNull(resourceService.findTenantResourcesByTenantId(filter, pageLink));
     }
 
     @ApiOperation(value = "Get LwM2M Objects (getLwm2mListObjectsPage)",
