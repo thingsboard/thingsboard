@@ -583,6 +583,9 @@ cache:
   rateLimits:
     timeToLiveInMinutes: "${CACHE_SPECS_RATE_LIMITS_TTL:120}" # Rate limits cache TTL
     maxSize: "${CACHE_SPECS_RATE_LIMITS_MAX_SIZE:200000}" # 0 means the cache is disabled
+  entityLimits:
+    timeToLiveInMinutes: "${CACHE_SPECS_ENTITY_LIMITS_TTL:5}" # Entity limits cache TTL
+    maxSize: "${CACHE_SPECS_ENTITY_LIMITS_MAX_SIZE:100000}" # 0 means the cache is disabled
 
 # Spring data parameters
 spring.data.redis.repositories.enabled: false # Disable this because it is not required.
@@ -875,7 +878,7 @@ transport:
     ip_limits_enabled: "${TB_TRANSPORT_IP_RATE_LIMITS_ENABLED:false}"
     # Maximum number of connect attempts with invalid credentials
     max_wrong_credentials_per_ip: "${TB_TRANSPORT_MAX_WRONG_CREDENTIALS_PER_IP:10}"
-    # Timeout to expire block IP addresses
+    # Timeout (in milliseconds) to expire block IP addresses
     ip_block_timeout: "${TB_TRANSPORT_IP_BLOCK_TIMEOUT:60000}"
   # Local HTTP transport parameters
   http:
