@@ -19,8 +19,20 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
@@ -28,21 +40,37 @@ import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.util.TbPair;
+import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.willCallRealMethod;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.thingsboard.server.common.data.DataConstants.NOTIFY_DEVICE_METADATA_KEY;
 
 @Slf4j
+@ExtendWith(MockitoExtension.class)
 class TbMsgAttributesNodeTest {
+
+    private static final DeviceId ORIGINATOR_ID = new DeviceId(UUID.randomUUID());
+    private static final TenantId TENANT_ID = new TenantId(UUID.randomUUID());
 
     final String updateAttributesOnlyOnValueChangeKey = "updateAttributesOnlyOnValueChange";
 
@@ -101,6 +129,55 @@ class TbMsgAttributesNodeTest {
 
         List<AttributeKvEntry> filtered = node.filterChangedAttr(currentAttributes, newAttributes);
         assertThat(filtered).containsExactlyInAnyOrderElementsOf(expected);
+    }
+
+    // Notify device backward-compatibility test arguments
+    private static Stream<Arguments> provideNotifyDeviceMdValue() {
+        return Stream.of(
+                Arguments.of(null, true),
+                Arguments.of(true, true),
+                Arguments.of(false, false)
+        );
+    }
+
+    // Notify device backward-compatibility test
+    @ParameterizedTest
+    @MethodSource("provideNotifyDeviceMdValue")
+    void testNotifyDeviceArgumentForSaveAndNotify(Boolean mdValue, boolean expectedArgumentValue) throws TbNodeException {
+        var ctxMock = mock(TbContext.class);
+        var telemetryServiceMock = mock(RuleEngineTelemetryService.class);
+        TbMsgAttributesNode node = spy(TbMsgAttributesNode.class);
+        ObjectNode defaultConfig = (ObjectNode) JacksonUtil.valueToTree(new TbMsgAttributesNodeConfiguration().defaultConfiguration());
+        defaultConfig.put("notifyDevice", false);
+        var tbNodeConfiguration = new TbNodeConfiguration(defaultConfig);
+
+        assertThat(defaultConfig.has("notifyDevice")).as("pre condition has notifyDevice").isTrue();
+
+        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
+        when(ctxMock.getTelemetryService()).thenReturn(telemetryServiceMock);
+        willCallRealMethod().given(node).init(any(TbContext.class), any(TbNodeConfiguration.class));
+        willCallRealMethod().given(node).saveAttr(any(), eq(ctxMock), any(TbMsg.class), anyString(), anyBoolean());
+
+        node.init(ctxMock, tbNodeConfiguration);
+
+        TbMsgMetaData md = new TbMsgMetaData();
+        if (mdValue != null) {
+            md.putValue(NOTIFY_DEVICE_METADATA_KEY, mdValue.toString());
+        }
+        // dummy list with one ts kv to pass the empty list check.
+        var testTbMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, ORIGINATOR_ID, md, TbMsg.EMPTY_STRING);
+        List<AttributeKvEntry> testAttrList = List.of(new BaseAttributeKvEntry(0L, new StringDataEntry("testKey", "testValue")));
+
+        node.saveAttr(testAttrList, ctxMock, testTbMsg, DataConstants.SHARED_SCOPE, false);
+
+        ArgumentCaptor<Boolean> notifyDeviceCaptor = ArgumentCaptor.forClass(Boolean.class);
+
+        verify(telemetryServiceMock, times(1)).saveAndNotify(
+                eq(TENANT_ID), eq(ORIGINATOR_ID), eq(DataConstants.SHARED_SCOPE),
+                eq(testAttrList), notifyDeviceCaptor.capture(), any()
+        );
+        boolean notifyDevice = notifyDeviceCaptor.getValue();
+        assertThat(notifyDevice).isEqualTo(expectedArgumentValue);
     }
 
     @Test
