@@ -326,6 +326,8 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
       EntityType.TB_RESOURCE,
       {
         type: 'entity.type-tb-resource',
+        typePlural: 'entity.type-tb-resources',
+        list: 'entity.list-of-tb-resources',
         details: 'resource.resource-library-details',
         add: 'resource.add',
         noEntities: 'resource.no-resource-text',

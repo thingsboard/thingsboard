@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { BaseData } from '@shared/models/base-data';
+import { BaseData, ExportableEntity } from '@shared/models/base-data';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { TbResourceId } from '@shared/models/id/tb-resource-id';
 
@@ -55,7 +55,7 @@ export const ResourceTypeTranslationMap = new Map<ResourceType, string>(
   ]
 );
 
-export interface ResourceInfo extends Omit<BaseData<TbResourceId>, 'name' | 'label'> {
+export interface ResourceInfo extends Omit<BaseData<TbResourceId>, 'name' | 'label'>, ExportableEntity<TbResourceId> {
   tenantId?: TenantId;
   resourceKey?: string;
   title?: string;

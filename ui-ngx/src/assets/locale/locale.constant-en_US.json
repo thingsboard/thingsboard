@@ -2198,6 +2198,8 @@
         "list-of-edges": "{ count, plural, =1 {One edge} other {List of # edges} }",
         "edge-name-starts-with": "Edges whose names start with '{{prefix}}'",
         "type-tb-resource": "Resource",
+        "type-tb-resources": "Resources",
+        "list-of-tb-resources": "{ count, plural, =1 {One resource} other {List of # resources} }",
         "type-ota-package": "OTA package",
         "type-rpc": "RPC",
         "type-queue": "Queue",
