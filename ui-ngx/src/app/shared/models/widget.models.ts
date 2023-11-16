@@ -269,6 +269,8 @@ export enum LegendPosition {
   right = 'right'
 }
 
+export const legendPositions = Object.keys(LegendPosition) as LegendPosition[];
+
 export const legendPositionTranslationMap = new Map<LegendPosition, string>(
   [
     [ LegendPosition.top, 'position.top' ],
