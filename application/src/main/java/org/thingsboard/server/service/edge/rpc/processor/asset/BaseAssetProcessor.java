@@ -94,6 +94,5 @@ public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
         return asset;
     }
 
-    protected abstract void setCustomerId(TenantId tenantId, CustomerId customerId, Asset asset, AssetUpdateMsg assetUpdateMsg, boolean isEdgeVersionDeprecated);
-
+    protected abstract void setCustomerId(TenantId tenantId, CustomerId customerId, Asset asset, AssetUpdateMsg assetUpdateMsg, boolean isEdgeVersionOlderThan_3_6_2);
 }

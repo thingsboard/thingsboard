@@ -38,8 +38,9 @@ public class WidgetsBundleMsgConstructor {
         if (EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)) {
             return constructDeprecatedWidgetsBundleUpdateMsg(msgType, widgetsBundle, widgets);
         }
-        return WidgetsBundleUpdateMsg.newBuilder().setWidgets(JacksonUtil.toString(widgets)).setEntity(JacksonUtil.toString(widgetsBundle))
-                .setMsgType(msgType).setIdMSB(widgetsBundle.getId().getId().getMostSignificantBits())
+        return WidgetsBundleUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(widgetsBundle))
+                .setWidgets(JacksonUtil.toString(widgets))
+                .setIdMSB(widgetsBundle.getId().getId().getMostSignificantBits())
                 .setIdLSB(widgetsBundle.getId().getId().getLeastSignificantBits()).build();
     }
 

@@ -45,12 +45,12 @@ public abstract class BaseDeviceProfileProcessor extends BaseEdgeProcessor {
     @Autowired
     private DataDecodingEncodingService dataDecodingEncodingService;
 
-    protected Pair<Boolean, Boolean> saveOrUpdateDeviceProfile(TenantId tenantId, DeviceProfileId deviceProfileId, DeviceProfileUpdateMsg deviceProfileUpdateMsg, boolean isEdgeVersionProtoDeprecated) {
+    protected Pair<Boolean, Boolean> saveOrUpdateDeviceProfile(TenantId tenantId, DeviceProfileId deviceProfileId, DeviceProfileUpdateMsg deviceProfileUpdateMsg, boolean isEdgeVersionOlderThan_3_6_2) {
         boolean created = false;
         boolean deviceProfileNameUpdated = false;
         deviceCreationLock.lock();
         try {
-            DeviceProfile deviceProfile = isEdgeVersionProtoDeprecated
+            DeviceProfile deviceProfile = isEdgeVersionOlderThan_3_6_2
             ? createDeviceProfile(tenantId, deviceProfileId, deviceProfileUpdateMsg)
             : JacksonUtil.fromStringIgnoreUnknownProperties(deviceProfileUpdateMsg.getEntity(), DeviceProfile.class);
             if (deviceProfile == null) {
@@ -75,8 +75,8 @@ public abstract class BaseDeviceProfileProcessor extends BaseEdgeProcessor {
 
             RuleChainId ruleChainId = deviceProfile.getDefaultRuleChainId();
             setDefaultRuleChainId(tenantId, deviceProfile, created ? null : deviceProfileById.getDefaultRuleChainId());
-            setDefaultEdgeRuleChainId(deviceProfile, ruleChainId, deviceProfileUpdateMsg, isEdgeVersionProtoDeprecated);
-            setDefaultDashboardId(tenantId, created ? null : deviceProfileById.getDefaultDashboardId(), deviceProfile, deviceProfileUpdateMsg, isEdgeVersionProtoDeprecated);
+            setDefaultEdgeRuleChainId(deviceProfile, ruleChainId, deviceProfileUpdateMsg, isEdgeVersionOlderThan_3_6_2);
+            setDefaultDashboardId(tenantId, created ? null : deviceProfileById.getDefaultDashboardId(), deviceProfile, deviceProfileUpdateMsg, isEdgeVersionOlderThan_3_6_2);
 
             deviceProfileValidator.validate(deviceProfile, DeviceProfile::getTenantId);
             if (created) {
@@ -127,7 +127,7 @@ public abstract class BaseDeviceProfileProcessor extends BaseEdgeProcessor {
 
     protected abstract void setDefaultRuleChainId(TenantId tenantId, DeviceProfile deviceProfile, RuleChainId ruleChainId);
 
-    protected abstract void setDefaultEdgeRuleChainId(DeviceProfile deviceProfile, RuleChainId ruleChainId, DeviceProfileUpdateMsg deviceProfileUpdateMsg, boolean isEdgeVersionDeprecated);
+    protected abstract void setDefaultEdgeRuleChainId(DeviceProfile deviceProfile, RuleChainId ruleChainId, DeviceProfileUpdateMsg deviceProfileUpdateMsg, boolean isEdgeVersionOlderThan_3_6_2);
 
-    protected abstract void setDefaultDashboardId(TenantId tenantId, DashboardId dashboardId, DeviceProfile deviceProfile, DeviceProfileUpdateMsg deviceProfileUpdateMsg, boolean isEdgeVersionDeprecated);
+    protected abstract void setDefaultDashboardId(TenantId tenantId, DashboardId dashboardId, DeviceProfile deviceProfile, DeviceProfileUpdateMsg deviceProfileUpdateMsg, boolean isEdgeVersionOlderThan_3_6_2);
 }

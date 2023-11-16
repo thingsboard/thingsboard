@@ -61,5 +61,4 @@ public class QueueEdgeProcessor extends BaseEdgeProcessor {
         }
         return downlinkMsg;
     }
-
 }

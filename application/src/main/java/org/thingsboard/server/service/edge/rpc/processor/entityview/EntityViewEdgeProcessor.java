@@ -140,8 +140,8 @@ public class EntityViewEdgeProcessor extends BaseEntityViewProcessor {
     }
 
     @Override
-    protected void setCustomerId(TenantId tenantId, CustomerId customerId, EntityView entityView, EntityViewUpdateMsg entityViewUpdateMsg, boolean isEdgeVersionDeprecated) {
-        CustomerId customerUUID = isEdgeVersionDeprecated
+    protected void setCustomerId(TenantId tenantId, CustomerId customerId, EntityView entityView, EntityViewUpdateMsg entityViewUpdateMsg, boolean isEdgeVersionOlderThan_3_6_2) {
+        CustomerId customerUUID = isEdgeVersionOlderThan_3_6_2
                 ? safeGetCustomerId(entityViewUpdateMsg.getCustomerIdMSB(), entityViewUpdateMsg.getCustomerIdLSB())
                 : entityView.getCustomerId() != null ? entityView.getCustomerId() : customerId;
         entityView.setCustomerId(customerUUID);

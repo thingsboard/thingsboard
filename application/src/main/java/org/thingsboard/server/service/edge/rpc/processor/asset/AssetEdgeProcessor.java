@@ -148,8 +148,8 @@ public class AssetEdgeProcessor extends BaseAssetProcessor {
     }
 
     @Override
-    protected void setCustomerId(TenantId tenantId, CustomerId customerId, Asset asset, AssetUpdateMsg assetUpdateMsg, boolean isEdgeVersionDeprecated) {
-        CustomerId customerUUID = isEdgeVersionDeprecated
+    protected void setCustomerId(TenantId tenantId, CustomerId customerId, Asset asset, AssetUpdateMsg assetUpdateMsg, boolean isEdgeVersionOlderThan_3_6_2) {
+        CustomerId customerUUID = isEdgeVersionOlderThan_3_6_2
                 ? safeGetCustomerId(assetUpdateMsg.getCustomerIdMSB(), assetUpdateMsg.getCustomerIdLSB())
                 : asset.getCustomerId() != null ? asset.getCustomerId() : customerId;
         asset.setCustomerId(customerUUID);

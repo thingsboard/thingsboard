@@ -25,20 +25,18 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
-import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.RelationUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 import java.util.UUID;
 
 @Slf4j
 public abstract class BaseRelationProcessor extends BaseEdgeProcessor {
 
-    protected ListenableFuture<Void> processRelationMsg(TenantId tenantId, RelationUpdateMsg relationUpdateMsg, EdgeVersion edgeVersion) {
+    protected ListenableFuture<Void> processRelationMsg(TenantId tenantId, RelationUpdateMsg relationUpdateMsg, boolean isEdgeVersionOlderThan_3_6_2) {
         log.trace("[{}] processRelationMsg [{}]", tenantId, relationUpdateMsg);
         try {
-            EntityRelation entityRelation = EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)
+            EntityRelation entityRelation = isEdgeVersionOlderThan_3_6_2
                     ? createEntityRelation(relationUpdateMsg)
                     : JacksonUtil.fromStringIgnoreUnknownProperties(relationUpdateMsg.getEntity(), EntityRelation.class);
             if (entityRelation == null) {

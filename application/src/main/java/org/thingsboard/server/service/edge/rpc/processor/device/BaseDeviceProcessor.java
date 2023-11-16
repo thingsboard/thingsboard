@@ -159,5 +159,5 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
         return deviceCredentials;
     }
 
-    protected abstract void setCustomerId(TenantId tenantId, CustomerId customerId, Device device, DeviceUpdateMsg deviceUpdateMsg, boolean isEdgeVersionDeprecated);
+    protected abstract void setCustomerId(TenantId tenantId, CustomerId customerId, Device device, DeviceUpdateMsg deviceUpdateMsg, boolean isEdgeVersionOlderThan_3_6_2);
 }

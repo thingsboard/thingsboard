@@ -92,5 +92,5 @@ public abstract class BaseEntityViewProcessor extends BaseEdgeProcessor {
         return entityView;
     }
 
-    protected abstract void setCustomerId(TenantId tenantId, CustomerId customerId, EntityView entityView, EntityViewUpdateMsg entityViewUpdateMsg, boolean isEdgeVersionDeprecated);
+    protected abstract void setCustomerId(TenantId tenantId, CustomerId customerId, EntityView entityView, EntityViewUpdateMsg entityViewUpdateMsg, boolean isEdgeVersionOlderThan_3_6_2);
 }

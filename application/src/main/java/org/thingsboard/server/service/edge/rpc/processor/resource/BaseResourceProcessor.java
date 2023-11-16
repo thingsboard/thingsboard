@@ -31,10 +31,10 @@ import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 @Slf4j
 public abstract class BaseResourceProcessor extends BaseEdgeProcessor {
 
-    protected boolean saveOrUpdateTbResource(TenantId tenantId, TbResourceId tbResourceId, ResourceUpdateMsg resourceUpdateMsg, boolean isEdgeDeprecated) {
+    protected boolean saveOrUpdateTbResource(TenantId tenantId, TbResourceId tbResourceId, ResourceUpdateMsg resourceUpdateMsg, boolean isEdgeVersionOlderThan_3_6_2) {
         boolean resourceKeyUpdated = false;
         try {
-            TbResource resource = isEdgeDeprecated
+            TbResource resource = isEdgeVersionOlderThan_3_6_2
                     ? createTbResource(tenantId, resourceUpdateMsg)
                     : JacksonUtil.fromStringIgnoreUnknownProperties(resourceUpdateMsg.getEntity(), TbResource.class);
             if (resource == null) {

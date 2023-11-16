@@ -35,6 +35,7 @@ import org.thingsboard.server.gen.edge.v1.RelationUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -50,8 +51,7 @@ public class RelationEdgeProcessor extends BaseRelationProcessor {
         log.trace("[{}] executing processRelationMsgFromEdge [{}] from edge [{}]", tenantId, relationUpdateMsg, edge.getId());
         try {
             edgeSynchronizationManager.getEdgeId().set(edge.getId());
-
-            return processRelationMsg(tenantId, relationUpdateMsg, edgeVersion);
+            return processRelationMsg(tenantId, relationUpdateMsg, EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion));
         } finally {
             edgeSynchronizationManager.getEdgeId().remove();
         }

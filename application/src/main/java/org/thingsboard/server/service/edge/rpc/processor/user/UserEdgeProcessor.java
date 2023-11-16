@@ -69,5 +69,4 @@ public class UserEdgeProcessor extends BaseEdgeProcessor {
         }
         return downlinkMsg;
     }
-
 }
