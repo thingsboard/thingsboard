@@ -40,7 +40,7 @@ import {
   doughnutLayoutImages,
   doughnutLayouts,
   doughnutLayoutTranslations,
-  DoughnutLegendPosition,
+  doughnutLegendPositions,
   doughnutLegendPositionTranslations,
   DoughnutTooltipValueType,
   doughnutTooltipValueTypes,
@@ -83,7 +83,7 @@ export class DoughnutBasicConfigComponent extends BasicWidgetConfigComponent {
 
   doughnutLayoutImageMap: Map<DoughnutLayout, string>;
 
-  doughnutLegendPositions: DoughnutLegendPosition[];
+  doughnutLegendPositions = doughnutLegendPositions;
 
   doughnutLegendPositionTranslationMap = doughnutLegendPositionTranslations;
 
@@ -116,8 +116,6 @@ export class DoughnutBasicConfigComponent extends BasicWidgetConfigComponent {
     const params = widgetConfig.typeParameters as any;
     this.horizontal = isDefinedAndNotNull(params.horizontal) ? params.horizontal : false;
     this.doughnutLayoutImageMap = this.horizontal ? horizontalDoughnutLayoutImages : doughnutLayoutImages;
-    this.doughnutLegendPositions = this.horizontal ? [DoughnutLegendPosition.left, DoughnutLegendPosition.right] :
-      [DoughnutLegendPosition.top, DoughnutLegendPosition.bottom];
     super.setupConfig(widgetConfig);
   }
 
@@ -136,6 +134,8 @@ export class DoughnutBasicConfigComponent extends BasicWidgetConfigComponent {
 
       layout: [settings.layout, []],
       autoScale: [settings.autoScale, []],
+      clockwise: [settings.clockwise, []],
+      sortSeries: [settings.sortSeries, []],
 
       showTitle: [configData.config.showTitle, []],
       title: [configData.config.title, []],
@@ -193,6 +193,8 @@ export class DoughnutBasicConfigComponent extends BasicWidgetConfigComponent {
 
     this.widgetConfig.config.settings.layout = config.layout;
     this.widgetConfig.config.settings.autoScale = config.autoScale;
+    this.widgetConfig.config.settings.clockwise = config.clockwise;
+    this.widgetConfig.config.settings.sortSeries = config.sortSeries;
 
     this.widgetConfig.config.settings.totalValueFont = config.totalValueFont;
     this.widgetConfig.config.settings.totalValueColor = config.totalValueColor;

@@ -57,6 +57,8 @@ export enum DoughnutLegendPosition {
   right = 'right'
 }
 
+export const doughnutLegendPositions = Object.keys(DoughnutLegendPosition) as DoughnutLegendPosition[];
+
 export const doughnutLegendPositionTranslations = new Map<DoughnutLegendPosition, string>(
   [
     [DoughnutLegendPosition.top, 'widgets.doughnut.legend-position-top'],
@@ -83,6 +85,8 @@ export const doughnutTooltipValueTypeTranslations = new Map<DoughnutTooltipValue
 export interface DoughnutWidgetSettings {
   layout: DoughnutLayout;
   autoScale: boolean;
+  clockwise: boolean;
+  sortSeries: boolean;
   totalValueFont: Font;
   totalValueColor: ColorSettings;
   showLegend: boolean;
@@ -104,6 +108,8 @@ export interface DoughnutWidgetSettings {
 export const doughnutDefaultSettings = (horizontal: boolean): DoughnutWidgetSettings => ({
   layout: DoughnutLayout.default,
   autoScale: true,
+  clockwise: false,
+  sortSeries: false,
   totalValueFont: {
     family: 'Roboto',
     size: 24,

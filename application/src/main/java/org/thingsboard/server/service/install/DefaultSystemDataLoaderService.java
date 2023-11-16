@@ -63,7 +63,6 @@ import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
-import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
@@ -84,9 +83,6 @@ import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
-import org.thingsboard.server.common.data.widget.DeprecatedFilter;
-import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
-import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
@@ -537,54 +533,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     }
 
     @Override
-    public void deleteSystemWidgetBundle(String bundleAlias) throws Exception {
-        WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(TenantId.SYS_TENANT_ID, bundleAlias);
-        if (widgetsBundle != null) {
-            PageData<WidgetTypeInfo> widgetTypes;
-            var pageLink = new PageLink(1024);
-            do {
-                widgetTypes = widgetTypeService.findWidgetTypesInfosByWidgetsBundleId(TenantId.SYS_TENANT_ID, widgetsBundle.getId(), false, DeprecatedFilter.ALL, null, pageLink);
-                for (var widgetType : widgetTypes.getData()) {
-                    widgetTypeService.deleteWidgetType(TenantId.SYS_TENANT_ID, widgetType.getId());
-                }
-                pageLink.nextPageLink();
-            } while (widgetTypes.hasNext());
-            widgetsBundleService.deleteWidgetsBundle(TenantId.SYS_TENANT_ID, widgetsBundle.getId());
-        }
-    }
-
-    @Override
     public void loadSystemWidgets() throws Exception {
-        installScripts.loadSystemWidgets();
-    }
-
-    @Override
-    public void updateSystemWidgets() throws Exception {
-        this.deleteSystemWidgetBundle("charts");
-        this.deleteSystemWidgetBundle("cards");
-        this.deleteSystemWidgetBundle("maps");
-        this.deleteSystemWidgetBundle("analogue_gauges");
-        this.deleteSystemWidgetBundle("digital_gauges");
-        this.deleteSystemWidgetBundle("gpio_widgets");
-        this.deleteSystemWidgetBundle("alarm_widgets");
-        this.deleteSystemWidgetBundle("control_widgets");
-        this.deleteSystemWidgetBundle("maps_v2");
-        this.deleteSystemWidgetBundle("gateway_widgets");
-        this.deleteSystemWidgetBundle("input_widgets");
-        this.deleteSystemWidgetBundle("date");
-        this.deleteSystemWidgetBundle("entity_admin_widgets");
-        this.deleteSystemWidgetBundle("navigation_widgets");
-        this.deleteSystemWidgetBundle("edge_widgets");
-        this.deleteSystemWidgetBundle("home_page_widgets");
-        this.deleteSystemWidgetBundle("entity_widgets");
-        this.deleteSystemWidgetBundle("html_widgets");
-        this.deleteSystemWidgetBundle("tables");
-        this.deleteSystemWidgetBundle("count_widgets");
-        this.deleteSystemWidgetBundle("status_indicators");
-        this.deleteSystemWidgetBundle("outdoor_environment");
-        this.deleteSystemWidgetBundle("indoor_environment");
-        this.deleteSystemWidgetBundle("air_quality");
-        this.deleteSystemWidgetBundle("liquid_level_tanks");
         installScripts.loadSystemWidgets();
     }
 

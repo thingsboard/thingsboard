@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -35,6 +36,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.TbResourceId;
+import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
@@ -664,6 +666,34 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         assertThat(download(savedResource.getId())).asBase64Encoded().isEqualTo(newData);
     }
 
+    @Test
+    public void testGetLwm2mListObjectsPage() throws Exception {
+        loginTenantAdmin();
+
+        List<TbResource> resources = loadLwm2mResources();
+
+        List<LwM2mObject> objects =
+                doGetTyped("/api/resource/lwm2m/page?pageSize=100&page=0", new TypeReference<>() {});
+        Assert.assertNotNull(objects);
+        Assert.assertEquals(resources.size(), objects.size());
+
+        removeLoadResources(resources);
+    }
+
+    @Test
+    public void testGetLwm2mListObjects() throws Exception {
+        loginTenantAdmin();
+
+        List<TbResource> resources = loadLwm2mResources();
+
+        List<LwM2mObject> objects =
+                doGetTyped("/api/resource/lwm2m?sortProperty=id&sortOrder=ASC&objectIds=3_1.0,5_1.0,19_1.1", new TypeReference<>() {});
+        Assert.assertNotNull(objects);
+        Assert.assertEquals(3, objects.size());
+
+        removeLoadResources(resources);
+    }
+
     private TbResource save(TbResource tbResource) throws Exception {
         return doPostWithTypedResponse("/api/resource", tbResource, new TypeReference<>() {
         });
@@ -678,4 +708,32 @@ public class TbResourceControllerTest extends AbstractControllerTest {
     private String getImageLink(TbResourceInfo resourceInfo) {
         return "/api/images/" + (resourceInfo.getTenantId().isSysTenantId() ? "system/" : "") + resourceInfo.getResourceKey();
     }
+
+
+    private List<TbResource> loadLwm2mResources() throws Exception {
+        var models = List.of("1", "2", "3", "5", "6", "9", "19", "3303");
+
+        List<TbResource> resources = new ArrayList<>(models.size());
+
+        for (String model : models) {
+            String fileName = model + ".xml";
+            byte[] bytes = IOUtils.toByteArray(getClass().getClassLoader().getResourceAsStream("lwm2m/" + fileName));
+
+            TbResource resource = new TbResource();
+            resource.setResourceType(ResourceType.LWM2M_MODEL);
+            resource.setFileName(fileName);
+            resource.setData(bytes);
+
+            resources.add(save(resource));
+        }
+        return resources;
+    }
+
+    private void removeLoadResources(List<TbResource> resources) throws Exception {
+        for (TbResourceInfo resource : resources) {
+            doDelete("/api/resource/" + resource.getId().getId().toString())
+                    .andExpect(status().isOk());
+        }
+    }
+
 }

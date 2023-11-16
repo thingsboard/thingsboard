@@ -160,26 +160,30 @@ export class LiquidLevelWidgetComponent implements OnInit {
   }
 
   private getData(): Observable<{ svg: string; volume: number; units: string }> {
-    const entityId: EntityId = {
-      entityType: this.ctx.datasources[0].entityType,
-      id: this.ctx.datasources[0].entityId
-    };
+    if (this.ctx.datasources?.length) {
+      const entityId: EntityId = {
+        entityType: this.ctx.datasources[0].entityType,
+        id: this.ctx.datasources[0].entityId
+      };
 
-    return this.getShape(entityId).pipe(
-      switchMap(shape => {
-        this.shape = shape;
-        this.svgParams = svgMapping.get(shape);
-        if (this.svgParams) {
-          return forkJoin([
-            this.resourcesService.loadJsonResource<string>(this.svgParams.svg),
-            this.getTankersParams(entityId)
-          ]).pipe(
-            map(params => ({svg: params[0], ...params[1]}))
-          );
-        }
-        return of(null);
-      })
-    );
+      return this.getShape(entityId).pipe(
+        switchMap(shape => {
+          this.shape = shape;
+          this.svgParams = svgMapping.get(shape);
+          if (this.svgParams) {
+            return forkJoin([
+              this.resourcesService.loadJsonResource<string>(this.svgParams.svg),
+              this.getTankersParams(entityId)
+            ]).pipe(
+              map(params => ({svg: params[0], ...params[1]}))
+            );
+          }
+          return of(null);
+        })
+      );
+    }
+
+    return of(null);
   }
 
   public onInit() {
@@ -541,13 +545,13 @@ export class LiquidLevelWidgetComponent implements OnInit {
             </div>`;
   }
 
-  private convertInputData(value: number): number {
+  private convertInputData(value: any): number {
     if (this.settings.datasourceUnits !== CapacityUnits.percent) {
-      return (convertLiters(value, this.settings.datasourceUnits, ConversionType.to) /
+      return (convertLiters(Number(value), this.settings.datasourceUnits, ConversionType.to) /
         convertLiters(this.volume, this.settings.volumeUnits, ConversionType.to)) * 100;
     }
 
-    return value;
+    return Number(value);
   }
 
   private convertOutputData(value: number): number {

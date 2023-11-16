@@ -23,6 +23,8 @@ import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -46,14 +48,12 @@ public class ResourceEdgeProcessor extends BaseResourceProcessor {
             switch (resourceUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
                 case ENTITY_UPDATED_RPC_MESSAGE:
-                    super.saveOrUpdateTbResource(tenantId, tbResourceId, resourceUpdateMsg);
-                    break;
-                case ENTITY_DELETED_RPC_MESSAGE:
-                    TbResource tbResourceToDelete = resourceService.findResourceById(tenantId, tbResourceId);
-                    if (tbResourceToDelete != null) {
-                        resourceService.deleteResource(tenantId, tbResourceId);
+                    boolean resourceKeyUpdated = super.saveOrUpdateTbResource(tenantId, tbResourceId, resourceUpdateMsg);
+                    if (resourceKeyUpdated) {
+                        saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.TB_RESOURCE, EdgeEventActionType.UPDATED, tbResourceId, null);
                     }
                     break;
+                case ENTITY_DELETED_RPC_MESSAGE:
                 case UNRECOGNIZED:
                     return handleUnsupportedMsgType(resourceUpdateMsg.getMsgType());
             }
