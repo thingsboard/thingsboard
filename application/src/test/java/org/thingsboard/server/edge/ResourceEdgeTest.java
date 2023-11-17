@@ -129,7 +129,7 @@ public class ResourceEdgeTest extends AbstractEdgeTest {
         resource.setResourceType(ResourceType.JKS);
         resource.setTitle("Edge Test Resource");
         resource.setFileName(FILE_NAME);
-        resource.setData(TEST_DATA);
+        resource.setEncodedData(TEST_DATA);
 
         edgeImitator.expectMessageAmount(1);
         TbResource savedResource = doPost("/api/resource", resource, TbResource.class);
