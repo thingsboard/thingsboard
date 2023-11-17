@@ -436,6 +436,8 @@ message ResourceUpdateMsg {
   optional string data = 8;
   optional string etag = 9;
   bool isSystem = 10;
+  optional string descriptorJson = 11;
+  optional bytes preview = 12;
 }
 
 message RuleChainMetadataRequestMsg {
