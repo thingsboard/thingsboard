@@ -60,6 +60,4 @@ public interface ResourceService extends EntityDaoService {
 
     long sumDataSizeByTenantId(TenantId tenantId);
 
-    List<TbResourceInfo> findByTenantIdAndDataAndKeyStartingWith(TenantId tenantId, byte[] data, String query);
-
 }

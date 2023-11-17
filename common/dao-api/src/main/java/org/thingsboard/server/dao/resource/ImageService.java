@@ -22,6 +22,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 
+import java.util.List;
+
 public interface ImageService {
 
     TbResourceInfo saveImage(TbResource image) throws Exception;
@@ -40,6 +42,6 @@ public interface ImageService {
 
     void deleteImage(TenantId tenantId, TbResourceId imageId);
 
-    String getImageLink(TbResourceInfo imageInfo);
+    List<TbResourceInfo> findSimilarImagesByTenantIdAndKeyStartingWith(TenantId tenantId, byte[] data, String imageKeyStartingWith);
 
 }

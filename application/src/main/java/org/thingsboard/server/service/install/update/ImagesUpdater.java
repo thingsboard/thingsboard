@@ -30,14 +30,15 @@ import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.util.ImageUtils;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.resource.ImageService;
+import org.thingsboard.server.dao.util.ImageUtils;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -58,10 +59,10 @@ public class ImagesUpdater {
 
     @SneakyThrows
     public void updateSystemImage(Path imageFile, Map<String, String> imageNames) {
-        String imageKey = imageFile.getFileName().toString();
+        String imageKey = imageFile.getParent().getFileName() + "." + imageFile.getFileName().toString(); // TODO: add subdir to image key
         String imageName = imageNames.get(imageKey);
         if (imageName == null) {
-            throw new IllegalArgumentException("Image name is missing for " + imageKey + ". Please add it to names.json file");
+            imageName = imageKey;
         }
         byte[] imageData = Files.readAllBytes(imageFile);
         String mediaType = ImageUtils.fileExtensionToMediaType("image", StringUtils.substringAfterLast(imageKey, "."));
@@ -203,17 +204,19 @@ public class ImagesUpdater {
                              String existingImageQuery) {
         TbResourceInfo imageInfo = imageService.getImageInfoByTenantIdAndKey(tenantId, key);
         if (imageInfo == null && !tenantId.isSysTenantId() && existingImageQuery != null) {
-            // TODO: need to search among tenant images too (custom widgets)
-//            List<TbResourceInfo> existingSystemImages = imageService.findByTenantIdAndDataAndKeyStartingWith(TenantId.SYS_TENANT_ID, imageData, existingImageQuery);
-//            if (!existingSystemImages.isEmpty()) {
-//                imageInfo = existingSystemImages.get(0);
-//                if (existingSystemImages.size() > 1) {
-//                    log.warn("Found more than one system image resources for key {}", existingImageQuery);
-//                }
-//                String link = imageService.getImageLink(imageInfo);
-//                log.info("Using system image {} for {}", link, key);
-//                return link;
-//            }
+            List<TbResourceInfo> similarImages = imageService.findSimilarImagesByTenantIdAndKeyStartingWith(TenantId.SYS_TENANT_ID, imageData, existingImageQuery);
+            if (similarImages.isEmpty()) {
+                similarImages = imageService.findSimilarImagesByTenantIdAndKeyStartingWith(tenantId, imageData, existingImageQuery);
+            }
+            if (!similarImages.isEmpty()) {
+                imageInfo = similarImages.get(0);
+                if (similarImages.size() > 1) {
+                    log.debug("Found more than one image resources for key {}: {}", existingImageQuery, similarImages);
+                }
+                String link = imageInfo.getLink();
+                log.info("[{}] Using image {} for {}", tenantId, link, key);
+                return link;
+            }
         }
         TbResource image;
         if (imageInfo == null) {
@@ -224,7 +227,7 @@ public class ImagesUpdater {
         } else if (tenantId.isSysTenantId()) {
             image = new TbResource(imageInfo);
         } else {
-            return imageService.getImageLink(imageInfo);
+            return imageInfo.getLink();
         }
         image.setTitle(name);
         image.setFileName(key);
@@ -235,7 +238,7 @@ public class ImagesUpdater {
         TbResourceInfo savedImage = imageService.saveImage(image);
         log.info("[{}] {} image '{}' ({})", tenantId, imageInfo == null ? "Created" : "Updated",
                 image.getTitle(), image.getResourceKey());
-        return imageService.getImageLink(savedImage);
+        return savedImage.getLink();
     }
 
     private String getText(JsonNode jsonNode, String field) {

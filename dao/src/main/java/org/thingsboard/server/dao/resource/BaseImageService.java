@@ -20,7 +20,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.RegexUtils;
 import org.thingsboard.server.common.data.ImageDescriptor;
 import org.thingsboard.server.common.data.ResourceType;
@@ -35,6 +34,7 @@ import org.thingsboard.server.dao.service.validator.ResourceDataValidator;
 import org.thingsboard.server.dao.util.ImageUtils;
 import org.thingsboard.server.dao.util.ImageUtils.ProcessedImage;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -152,15 +152,9 @@ public class BaseImageService extends BaseResourceService implements ImageServic
     }
 
     @Override
-    public String getImageLink(TbResourceInfo imageInfo) {
-        String link = "/api/images/";
-        if (imageInfo.getTenantId().isSysTenantId()) {
-            link += "system/";
-        } else {
-            link += "tenant/";
-        }
-        link += imageInfo.getResourceKey();
-        return link;
+    public List<TbResourceInfo> findSimilarImagesByTenantIdAndKeyStartingWith(TenantId tenantId, byte[] data, String imageKeyStartingWith) {
+        String etag = calculateEtag(data);
+        return resourceInfoDao.findByTenantIdAndEtagAndKeyStartingWith(tenantId, etag, imageKeyStartingWith);
     }
 
 }

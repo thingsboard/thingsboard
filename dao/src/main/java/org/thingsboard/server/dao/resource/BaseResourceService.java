@@ -216,12 +216,6 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         return resourceDao.sumDataSizeByTenantId(tenantId);
     }
 
-    @Override
-    public List<TbResourceInfo> findByTenantIdAndDataAndKeyStartingWith(TenantId tenantId, byte[] data, String query) {
-        String etag = calculateEtag(data);
-        return resourceInfoDao.findByTenantIdAndEtagAndKeyStartingWith(tenantId, etag, query);
-    }
-
     protected String calculateEtag(byte[] data) {
         return Hashing.sha256().hashBytes(data).toString();
     }

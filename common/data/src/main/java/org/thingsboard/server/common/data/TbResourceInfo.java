@@ -106,6 +106,14 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
         return title;
     }
 
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    public String getLink() {
+        if (resourceType == ResourceType.IMAGE) {
+            return "/api/images/" + (tenantId.isSysTenantId() ? "system" : "tenant") + "/" + resourceKey;
+        }
+        return null;
+    }
+
     @JsonIgnore
     public String getSearchText() {
         return searchText != null ? searchText : title;
