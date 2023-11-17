@@ -106,7 +106,7 @@ public class DeviceConnectivityController extends BaseController {
     @RequestMapping(value = "/device-connectivity/gateway-launch/{deviceId}", method = RequestMethod.GET)
     @ResponseBody
     public JsonNode getGatewayLaunchCommands(@ApiParam(value = DEVICE_ID_PARAM_DESCRIPTION)
-                                                      @PathVariable(DEVICE_ID) String strDeviceId, HttpServletRequest request) throws ThingsboardException, URISyntaxException {
+                                             @PathVariable(DEVICE_ID) String strDeviceId, HttpServletRequest request) throws ThingsboardException, URISyntaxException {
         checkParameter(DEVICE_ID, strDeviceId);
         DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
         Device device = checkDeviceId(deviceId, Operation.READ_CREDENTIALS);
