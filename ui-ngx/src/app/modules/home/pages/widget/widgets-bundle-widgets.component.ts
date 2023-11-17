@@ -28,8 +28,6 @@ import { widgetType as WidgetDataType, WidgetTypeInfo } from '@shared/models/wid
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
 import { WidgetService } from '@core/http/widget.service';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { isDefinedAndNotNull } from '@core/utils';
 import { FormControl, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { SelectWidgetTypeDialogComponent } from '@home/pages/widget/select-widget-type-dialog.component';
@@ -61,7 +59,6 @@ export class WidgetsBundleWidgetsComponent extends PageComponent implements OnIn
               private route: ActivatedRoute,
               private widgetsService: WidgetService,
               private importExport: ImportExportService,
-              private sanitizer: DomSanitizer,
               private cd: ChangeDetectorRef,
               private dialog: MatDialog) {
     super(store);
@@ -84,13 +81,6 @@ export class WidgetsBundleWidgetsComponent extends PageComponent implements OnIn
   }
 
   ngOnInit(): void {
-  }
-
-  getPreviewImage(imageUrl: string | null): SafeUrl | string {
-    if (isDefinedAndNotNull(imageUrl)) {
-      return this.sanitizer.bypassSecurityTrustUrl(imageUrl);
-    }
-    return '/assets/widget-preview-empty.svg';
   }
 
   trackByWidget(index: number, widget: WidgetTypeBundle): any {

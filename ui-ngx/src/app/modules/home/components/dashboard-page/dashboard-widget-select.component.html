@@ -51,7 +51,7 @@
         </div>
         <div class="preview-container">
           <div class="preview-spacer"></div>
-          <img class="preview" [src]="getPreviewImage(item.image)" alt="{{ item.title }}">
+          <img class="preview" [src]="item.image | image: {emptyUrl: '/assets/widget-preview-empty.svg'} | async" alt="{{ item.title }}">
         </div>
       </mat-card>
     </ng-template>
@@ -95,7 +95,7 @@
         </div>
         <div class="preview-container">
           <div class="preview-spacer"></div>
-          <img class="preview" [src]=getPreviewImage(item.image) alt="{{ item.title }}">
+          <img class="preview" [src]="item.image | image: {emptyUrl: '/assets/widget-preview-empty.svg'} | async" alt="{{ item.title }}">
         </div>
       </mat-card>
     </ng-template>

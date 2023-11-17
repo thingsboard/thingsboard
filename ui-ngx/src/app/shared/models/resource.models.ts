@@ -17,6 +17,8 @@
 import { BaseData, ExportableEntity } from '@shared/models/base-data';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { TbResourceId } from '@shared/models/id/tb-resource-id';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
+import { BaseWidgetType } from '@shared/models/widget.models';
 
 export enum ResourceType {
   LWM2M_MODEL = 'LWM2M_MODEL',
@@ -55,15 +57,40 @@ export const ResourceTypeTranslationMap = new Map<ResourceType, string>(
   ]
 );
 
-export interface ResourceInfo extends Omit<BaseData<TbResourceId>, 'name' | 'label'>, ExportableEntity<TbResourceId> {
+export interface TbResourceInfo<D> extends Omit<BaseData<TbResourceId>, 'name' | 'label'>, ExportableEntity<TbResourceId> {
   tenantId?: TenantId;
   resourceKey?: string;
   title?: string;
   resourceType: ResourceType;
   fileName: string;
+  descriptor?: D;
 }
+
+export type ResourceInfo = TbResourceInfo<any>;
 
 export interface Resource extends ResourceInfo {
   data: string;
   name?: string;
 }
+
+export interface ImageDescriptor {
+  mediaType: string;
+  width: number;
+  height: number;
+  size: number;
+  etag: string;
+  previewDescriptor: ImageDescriptor;
+}
+
+export type ImageResourceInfo = TbResourceInfo<ImageDescriptor>;
+
+export type ImageResourceType = 'tenant' | 'system';
+
+export const imageResourceType = (imageInfo: ImageResourceInfo): ImageResourceType =>
+  (!imageInfo.tenantId || imageInfo.tenantId?.id === NULL_UUID) ? 'system' : 'tenant';
+
+export const IMAGES_URL_PREFIX = '/api/images';
+
+export const isImageResourceUrl = (url: string): boolean => url && url.startsWith(IMAGES_URL_PREFIX);
+
+export const NO_IMAGE_DATA_URI = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';

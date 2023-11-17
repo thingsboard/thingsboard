@@ -28,8 +28,7 @@ import {
 } from '@shared/models/widget.models';
 import { debounceTime, distinctUntilChanged, map, skip } from 'rxjs/operators';
 import { BehaviorSubject, combineLatest } from 'rxjs';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { isDefinedAndNotNull, isObject } from '@core/utils';
+import { isObject } from '@core/utils';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 import { GridEntitiesFetchFunction, ScrollGridColumns } from '@home/models/datasource/scroll-grid-datasource';
@@ -158,8 +157,7 @@ export class DashboardWidgetSelectComponent implements OnInit {
   widgetsFilter: BundleWidgetsFilter = {search: '', filter: null, deprecatedFilter: DeprecatedFilter.ACTUAL, widgetsBundleId: null};
 
   constructor(private widgetsService: WidgetService,
-              private cd: ChangeDetectorRef,
-              private sanitizer: DomSanitizer) {
+              private cd: ChangeDetectorRef) {
 
     this.widgetBundlesFetchFunction = (pageSize, page, filter) => {
       const pageLink = new PageLink(pageSize, page, filter, {
@@ -239,13 +237,6 @@ export class DashboardWidgetSelectComponent implements OnInit {
       bundle.description?.toLowerCase().includes(this.search.toLowerCase())) {
       this.searchSubject.next('');
     }
-  }
-
-  getPreviewImage(imageUrl: string | null): SafeUrl | string {
-    if (isDefinedAndNotNull(imageUrl)) {
-      return this.sanitizer.bypassSecurityTrustUrl(imageUrl);
-    }
-    return '/assets/widget-preview-empty.svg';
   }
 
   isObject(value: any): boolean {
