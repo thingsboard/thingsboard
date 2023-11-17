@@ -59,7 +59,7 @@ public class ImagesUpdater {
 
     @SneakyThrows
     public void updateSystemImage(Path imageFile, Map<String, String> imageNames) {
-        String imageKey = imageFile.getParent().getFileName() + "." + imageFile.getFileName().toString(); // TODO: add subdir to image key
+        String imageKey = imageFile.getFileName().toString(); // TODO: add subdir to image key
         String imageName = imageNames.get(imageKey);
         if (imageName == null) {
             imageName = imageKey;
