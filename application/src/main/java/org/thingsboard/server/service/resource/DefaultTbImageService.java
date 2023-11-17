@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,7 +15,10 @@
  */
 package org.thingsboard.server.service.resource;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.TbResource;
@@ -28,12 +31,34 @@ import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
+import java.util.concurrent.TimeUnit;
+
 @Service
 @TbCoreComponent
-@RequiredArgsConstructor
 public class DefaultTbImageService extends AbstractTbEntityService implements TbImageService {
 
     private final ImageService imageService;
+    private final Cache<ImageCacheKey, String> cache;
+
+    public DefaultTbImageService(ImageService imageService,
+                                 @Value("${cache.imageETags.timeToLiveInMinutes:120}") int cacheTtl,
+                                 @Value("${cache.imageETags.maxSize:200000}") int cacheMaxSize) {
+        this.imageService = imageService;
+        this.cache = Caffeine.newBuilder()
+                .expireAfterAccess(cacheTtl, TimeUnit.MINUTES)
+                .maximumSize(cacheMaxSize)
+                .build();
+    }
+
+    @Override
+    public String getETag(ImageCacheKey imageCacheKey) {
+        return cache.getIfPresent(imageCacheKey);
+    }
+
+    @Override
+    public void putETag(ImageCacheKey imageCacheKey, String etag) {
+        cache.put(imageCacheKey, etag);
+    }
 
     @Override
     public TbResourceInfo save(TbResource image, User user) throws Exception {

@@ -27,4 +27,7 @@ public interface TbImageService {
 
     void delete(TbResourceInfo imageInfo, User user);
 
+    String getETag(ImageCacheKey imageCacheKey);
+
+    void putETag(ImageCacheKey imageCacheKey, String etag);
 }

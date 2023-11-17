@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.thingsboard.server.common.data.ImageDescriptor;
 import org.thingsboard.server.common.data.ResourceType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -46,11 +48,13 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.resource.ImageCacheKey;
 import org.thingsboard.server.service.resource.TbImageService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.time.Duration;
 import java.util.function.Supplier;
 
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
@@ -122,11 +126,7 @@ public class ImageController extends BaseController {
     public ResponseEntity<ByteArrayResource> downloadImage(@PathVariable String type,
                                                            @PathVariable String key,
                                                            @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws Exception {
-        TenantId tenantId = getTenantId();
-        TbResourceInfo imageInfo = checkImageInfo(type, key, Operation.READ);
-        ImageDescriptor descriptor = imageInfo.getDescriptor(ImageDescriptor.class);
-        return downloadIfChanged(etag, descriptor, imageInfo.getFileName(),
-                () -> imageService.getImageData(tenantId, imageInfo.getId()));
+        return downloadIfChanged(type, key, etag, false);
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -134,11 +134,7 @@ public class ImageController extends BaseController {
     public ResponseEntity<ByteArrayResource> downloadImagePreview(@PathVariable String type,
                                                                   @PathVariable String key,
                                                                   @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws Exception {
-        TenantId tenantId = getTenantId();
-        TbResourceInfo imageInfo = checkImageInfo(type, key, Operation.READ);
-        ImageDescriptor descriptor = imageInfo.getDescriptor(ImageDescriptor.class);
-        return downloadIfChanged(etag, descriptor.getPreviewDescriptor(), imageInfo.getFileName(),
-                () -> imageService.getImagePreview(tenantId, imageInfo.getId()));
+        return downloadIfChanged(type, key, etag, true);
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
@@ -178,22 +174,33 @@ public class ImageController extends BaseController {
         tbImageService.delete(imageInfo, getCurrentUser());
     }
 
-    private ResponseEntity<ByteArrayResource> downloadIfChanged(String actualEtag, ImageDescriptor imageDescriptor,
-                                                                String fileName, Supplier<byte[]> dataSupplier) {
-        if (imageDescriptor.getEtag().equals(actualEtag)) {
-            return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
-                    .eTag(actualEtag)
-                    .build();
+    private ResponseEntity<ByteArrayResource> downloadIfChanged(String type, String key, String etag, boolean preview) throws ThingsboardException, JsonProcessingException {
+        ImageCacheKey cacheKey = new ImageCacheKey(getTenantId(type), key, preview);
+        if (StringUtils.isNotEmpty(etag)) {
+            etag = etag.replaceAll("\"", ""); // TODO: investigate why Spring provides extra quotes.
+            if (etag.equals(tbImageService.getETag(cacheKey))) {
+                return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
+            }
         }
-
-        byte[] data = dataSupplier.get();
+        TenantId tenantId = getTenantId();
+        TbResourceInfo imageInfo = checkImageInfo(type, key, Operation.READ);
+        String fileName = imageInfo.getFileName();
+        ImageDescriptor descriptor = imageInfo.getDescriptor(ImageDescriptor.class);
+        byte[] data;
+        if (preview) {
+            descriptor = descriptor.getPreviewDescriptor();
+            data = imageService.getImagePreview(tenantId, imageInfo.getId());
+        } else {
+            data = imageService.getImageData(tenantId, imageInfo.getId());
+        }
+        tbImageService.putETag(cacheKey, descriptor.getEtag());
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + fileName)
                 .header("x-filename", fileName)
                 .contentLength(data.length)
-                .header("Content-Type", imageDescriptor.getMediaType())
+                .header("Content-Type", descriptor.getMediaType())
                 .cacheControl(CacheControl.noCache())
-                .eTag(imageDescriptor.getEtag())
+                .eTag(descriptor.getEtag())
                 .body(new ByteArrayResource(data));
     }
 
