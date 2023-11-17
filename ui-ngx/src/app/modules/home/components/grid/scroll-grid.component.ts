@@ -100,4 +100,12 @@ export class ScrollGridComponent<T, F> implements OnInit, AfterViewInit, OnChang
   isObject(value: any): boolean {
     return isObject(value);
   }
+
+  trackByItemsRow(index: number, itemsRow: T[]): number {
+    return index;
+  }
+
+  trackByItem(index: number, item: T): T {
+    return item;
+  }
 }

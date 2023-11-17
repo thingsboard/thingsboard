@@ -16,9 +16,9 @@
 
 -->
 <cdk-virtual-scroll-viewport #viewport class="tb-scroll-grid-viewport" [itemSize]="itemSize" appendOnly>
-  <ng-container *cdkVirtualFor="let itemsRow of dataSource">
+  <ng-container *cdkVirtualFor="let itemsRow of dataSource; trackBy: trackByItemsRow">
     <div *ngIf="itemsRow" class="tb-scroll-grid-items-row" [style]="{gap: gap+'px'}">
-      <div *ngFor="let item of itemsRow" class="tb-scroll-grid-item-container">
+      <div *ngFor="let item of itemsRow; trackBy: trackByItem" class="tb-scroll-grid-item-container">
         <ng-container *ngIf="item === 'loadingCell'">
           <ng-container *ngTemplateOutlet="loadingCell ? loadingCell : defaultLoadingCell"></ng-container>
         </ng-container>

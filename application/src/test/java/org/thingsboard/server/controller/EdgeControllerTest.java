@@ -23,6 +23,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.AbstractMessage;
+import lombok.extern.slf4j.Slf4j;
+import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -78,10 +80,11 @@ import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
@@ -92,6 +95,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 })
 @ContextConfiguration(classes = {EdgeControllerTest.Config.class})
 @DaoSqlTest
+@Slf4j
 public class EdgeControllerTest extends AbstractControllerTest {
 
     public static final String EDGE_HOST = "localhost";
@@ -863,10 +867,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
 
         Edge edge = doPost("/api/edge", constructEdge("Test Sync Edge", "test"), Edge.class);
 
-        // simulate edge activation
-        ObjectNode attributes = JacksonUtil.newObjectNode();
-        attributes.put("active", true);
-        doPost("/api/plugins/telemetry/EDGE/" + edge.getId() + "/attributes/" + DataConstants.SERVER_SCOPE, attributes);
+        simulateEdgeActivation(edge);
 
         doPost("/api/edge/" + edge.getId().getId().toString()
                 + "/device/" + savedDevice.getId().getId().toString(), Device.class);
@@ -878,7 +879,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
 
         edgeImitator.expectMessageAmount(24);
         edgeImitator.connect();
-        assertThat(edgeImitator.waitForMessages()).as("await for messages on first connect").isTrue();
+        waitForMessages(edgeImitator);
 
         verifyFetchersMsgs(edgeImitator);
         // verify queue msgs
@@ -890,7 +891,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
 
         edgeImitator.expectMessageAmount(20);
         doPost("/api/edge/sync/" + edge.getId());
-        assertThat(edgeImitator.waitForMessages()).as("await for messages after edge sync rest api call").isTrue();
+        waitForMessages(edgeImitator);
 
         verifyFetchersMsgs(edgeImitator);
         Assert.assertTrue(edgeImitator.getDownlinkMsgs().isEmpty());
@@ -907,6 +908,35 @@ public class EdgeControllerTest extends AbstractControllerTest {
                 .andExpect(status().isOk());
         doDelete("/api/edge/" + edge.getId().getId().toString())
                 .andExpect(status().isOk());
+    }
+
+    private void simulateEdgeActivation(Edge edge) throws Exception {
+        ObjectNode attributes = JacksonUtil.newObjectNode();
+        attributes.put("active", true);
+        doPost("/api/plugins/telemetry/EDGE/" + edge.getId() + "/attributes/" + DataConstants.SERVER_SCOPE, attributes);
+        Awaitility.await()
+                .atMost(30, TimeUnit.SECONDS)
+                .until(() -> {
+                    List<Map<String, Object>> values = doGetAsyncTyped("/api/plugins/telemetry/EDGE/" + edge.getId() +
+                            "/values/attributes/SERVER_SCOPE", new TypeReference<>() {});
+                    Optional<Map<String, Object>> activeAttrOpt = values.stream().filter(att -> att.get("key").equals("active")).findFirst();
+                    if (activeAttrOpt.isEmpty()) {
+                        return false;
+                    }
+                    Map<String, Object> activeAttr = activeAttrOpt.get();
+                    return "true".equals(activeAttr.get("value").toString());
+                });
+    }
+
+    private void waitForMessages(EdgeImitator edgeImitator) throws Exception {
+        boolean success = edgeImitator.waitForMessages();
+        if (!success) {
+            List<AbstractMessage> downlinkMsgs = edgeImitator.getDownlinkMsgs();
+            for (AbstractMessage downlinkMsg : downlinkMsgs) {
+                log.error("{}\n{}", downlinkMsg.getClass(), downlinkMsg);
+            }
+            Assert.fail("Await for messages was not successful!");
+        }
     }
 
     private void verifyFetchersMsgs(EdgeImitator edgeImitator) {
