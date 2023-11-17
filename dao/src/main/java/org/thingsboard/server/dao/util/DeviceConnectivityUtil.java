@@ -183,17 +183,20 @@ public class DeviceConnectivityUtil {
 
     public static String getHost(String baseUrl, DeviceConnectivityInfo properties, String protocol) throws URISyntaxException {
         String host = properties.getHost().isEmpty() ? baseUrl : properties.getHost();
+        InetAddress inetAddress;
         if (VALID_URL_PATTERN.matcher(host).matches()) {
             host = new URI(host).getHost();
-        } else {
-            try {
-                InetAddress inetAddress = InetAddress.getByName(host);
-                host = inetAddress.getCanonicalHostName().replaceAll("[\\[\\]]", "");
-                if (inetAddress instanceof Inet6Address && !inetAddress.isLoopbackAddress() && !protocol.startsWith(MQTT)) {
-                    host = "[" + host + "]";
-                }
-            } catch (UnknownHostException e) {
-                return host;
+        }
+        try {
+            inetAddress = InetAddress.getByName(host);
+            host = inetAddress.getHostName();
+        } catch (UnknownHostException e) {
+            return host;
+        }
+        if (inetAddress instanceof Inet6Address) {
+            host = host.replaceAll("[\\[\\]]", "");
+            if (!inetAddress.isLoopbackAddress() && !protocol.startsWith(MQTT)) {
+                host = "[" + host + "]";
             }
         }
         return host;

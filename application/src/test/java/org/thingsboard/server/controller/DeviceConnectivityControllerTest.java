@@ -581,7 +581,47 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
     public void testFetchPublishTelemetryCommandsForDefaultDeviceIfPortsSetToDefault() throws Exception {
         loginSysAdmin();
 
-        setConnectivityHost("");
+        ObjectNode config = JacksonUtil.newObjectNode();
+
+        ObjectNode http = JacksonUtil.newObjectNode();
+        http.put("enabled", true);
+        http.put("host", "");
+        http.put("port", 80);
+        config.set("http", http);
+
+        ObjectNode https = JacksonUtil.newObjectNode();
+        https.put("enabled", true);
+        https.put("host", "");
+        https.put("port", 443);
+        config.set("https", https);
+
+        ObjectNode mqtt = JacksonUtil.newObjectNode();
+        mqtt.put("enabled", false);
+        mqtt.put("host", "");
+        mqtt.put("port", 1883);
+        config.set("mqtt", mqtt);
+
+        ObjectNode mqtts = JacksonUtil.newObjectNode();
+        mqtts.put("enabled", false);
+        mqtts.put("host", "");
+        mqtts.put("port", 8883);
+        config.set("mqtts", mqtts);
+
+        ObjectNode coap = JacksonUtil.newObjectNode();
+        coap.put("enabled", false);
+        coap.put("host", "");
+        coap.put("port", 5683);
+        config.set("coap", coap);
+
+        ObjectNode coaps = JacksonUtil.newObjectNode();
+        coaps.put("enabled", false);
+        coaps.put("host", "");
+        coaps.put("port", 5684);
+        config.set("coaps", coaps);
+
+        AdminSettings adminSettings = doGet("/api/admin/settings/connectivity", AdminSettings.class);
+        adminSettings.setJsonValue(config);
+        doPost("/api/admin/settings", adminSettings).andExpect(status().isOk());
 
         login("tenant2@thingsboard.org", "testPassword1");
 
