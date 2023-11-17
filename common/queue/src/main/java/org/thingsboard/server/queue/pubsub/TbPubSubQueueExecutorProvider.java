@@ -54,7 +54,7 @@ public class TbPubSubQueueExecutorProvider implements ExecutorProvider {
     @PreDestroy
     private void destroy() {
         if (executor != null) {
-            executor.shutdown();
+            executor.shutdownNow();
         }
     }
 }

@@ -323,6 +323,7 @@ public class ActorSystemContext {
     @Getter
     private NotificationExecutorService notificationExecutor;
 
+    @Lazy
     @Autowired
     @Getter
     private PubSubRuleNodeExecutorProvider pubSubRuleNodeExecutorProvider;

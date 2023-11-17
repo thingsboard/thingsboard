@@ -16,15 +16,19 @@
 package org.thingsboard.server.service.executors;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.ExecutorProvider;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
+@Lazy
+@TbRuleEngineComponent
 @Component
 public class PubSubRuleNodeExecutorProvider implements ExecutorProvider {
 
@@ -53,7 +57,7 @@ public class PubSubRuleNodeExecutorProvider implements ExecutorProvider {
     @PreDestroy
     private void destroy() {
         if (executor != null) {
-            executor.shutdown();
+            executor.shutdownNow();
         }
     }
 }
