@@ -15,19 +15,14 @@
  */
 package org.thingsboard.server.service.resource;
 
-import org.thingsboard.server.common.data.TbResource;
-import org.thingsboard.server.common.data.TbResourceInfo;
-import org.thingsboard.server.common.data.User;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.TenantId;
 
-public interface TbImageService {
+@Data
+public class ImageCacheKey {
 
-    TbResourceInfo save(TbResource image, User user) throws Exception;
+    private final TenantId tenantId;
+    private final String key;
+    private final boolean preview;
 
-    TbResourceInfo save(TbResourceInfo imageInfo, User user);
-
-    void delete(TbResourceInfo imageInfo, User user);
-
-    String getETag(ImageCacheKey imageCacheKey);
-
-    void putETag(ImageCacheKey imageCacheKey, String etag);
 }
