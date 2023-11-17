@@ -147,7 +147,9 @@ export class ColorRangeSettingsComponent implements OnInit, ControlValueAccessor
         const rangeColors = this.modelValue.slice(0, Math.min(3, this.modelValue.length)).map(r => r.color);
         colors = colors.concat(rangeColors);
       }
-      if (colors.length === 1) {
+      if (!colors.length) {
+        this.colorStyle = {};
+      } else if (colors.length === 1) {
         this.colorStyle = {backgroundColor: colors[0]};
       } else {
         const gradientValues: string[] = [];

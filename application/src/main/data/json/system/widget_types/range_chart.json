@@ -1,0 +1,31 @@
+{
+  "fqn": "range_chart",
+  "name": "Range chart",
+  "deprecated": false,
+  "image": "/api/images/system/range_chart.png",
+  "description": "Displays changes to time-series data over time visualized with color ranges — for example, temperature or humidity readings.",
+  "descriptor": {
+    "type": "timeseries",
+    "sizeX": 8,
+    "sizeY": 5,
+    "resources": [],
+    "templateHtml": "<tb-range-chart-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-range-chart-widget>",
+    "templateCss": ".legend {\n    font-size: 13px;\n    line-height: 10px;\n}\n\n.legend table { \n    border-spacing: 0px;\n    border-collapse: separate;\n}\n\n.mouse-events .flot-overlay {\n    cursor: crosshair; \n}\n\n",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.rangeChartWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.rangeChartWidget.onDataUpdated();\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        previewWidth: '80%',\n        embedTitlePanel: true,\n        hasAdditionalLatestDataKeys: false,\n        defaultDataKeysFunction: function() {\n            return [{ name: 'temperature', label: 'Temperature', type: 'timeseries' }];\n        }\n    };\n}\n",
+    "settingsSchema": "{}",
+    "dataKeySettingsSchema": "{}",
+    "latestDataKeySettingsSchema": "{}",
+    "settingsDirective": "tb-range-chart-widget-settings",
+    "dataKeySettingsDirective": "",
+    "latestDataKeySettingsDirective": "",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-range-chart-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Temperature\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.8587686344902596,\"funcBody\":\"var value = prevValue + Math.random() * 40 - 20;\\nif (value < -60) {\\n\\tvalue = -60;\\n} else if (value > 60) {\\n\\tvalue = 60;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}]}],\"timewindow\":{\"hideInterval\":false,\"hideLastInterval\":false,\"hideQuickInterval\":false,\"hideAggregation\":false,\"hideAggInterval\":false,\"hideTimezone\":false,\"selectedTab\":0,\"realtime\":{\"realtimeType\":0,\"timewindowMs\":60000,\"quickInterval\":\"CURRENT_DAY\",\"interval\":1000},\"aggregation\":{\"type\":\"AVG\",\"limit\":25000},\"timezone\":null},\"showTitle\":true,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"dataZoom\":true,\"rangeColors\":[{\"to\":-20,\"color\":\"#234CC7\"},{\"from\":-20,\"to\":0,\"color\":\"#305AD7\"},{\"from\":0,\"to\":10,\"color\":\"#7191EF\"},{\"from\":10,\"to\":20,\"color\":\"#FFA600\"},{\"from\":20,\"to\":30,\"color\":\"#F36900\"},{\"from\":30,\"to\":40,\"color\":\"#F04022\"},{\"from\":40,\"color\":\"#D81838\"}],\"outOfRangeColor\":\"#ccc\",\"fillArea\":true,\"showLegend\":true,\"legendPosition\":\"top\",\"legendLabelFont\":{\"family\":\"Roboto\",\"size\":12,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"400\",\"lineHeight\":\"16px\"},\"legendLabelColor\":\"rgba(0, 0, 0, 0.76)\",\"showTooltip\":true,\"tooltipValueFont\":{\"family\":\"Roboto\",\"size\":12,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\",\"lineHeight\":\"16px\"},\"tooltipValueColor\":\"rgba(0, 0, 0, 0.76)\",\"tooltipShowDate\":true,\"tooltipDateFormat\":{\"format\":\"dd MMM yyyy HH:mm\",\"lastUpdateAgo\":false,\"custom\":false},\"tooltipDateFont\":{\"family\":\"Roboto\",\"size\":11,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"400\",\"lineHeight\":\"16px\"},\"tooltipDateColor\":\"rgba(0, 0, 0, 0.76)\",\"tooltipBackgroundColor\":\"rgba(255, 255, 255, 0.76)\",\"tooltipBackgroundBlur\":4,\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}}},\"title\":\"Range chart\",\"dropShadow\":true,\"enableFullscreen\":true,\"titleStyle\":null,\"mobileHeight\":null,\"configMode\":\"basic\",\"actions\":{},\"showTitleIcon\":false,\"titleIcon\":\"thermostat\",\"iconColor\":\"#1F6BDD\",\"useDashboardTimewindow\":false,\"displayTimewindow\":true,\"titleFont\":{\"size\":16,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\",\"lineHeight\":\"24px\"},\"titleColor\":\"rgba(0, 0, 0, 0.87)\",\"titleTooltip\":\"\",\"widgetStyle\":{},\"widgetCss\":\"\",\"pageSize\":1024,\"units\":\"°C\",\"decimals\":0,\"noDataDisplayMessage\":\"\",\"timewindowStyle\":{\"showIcon\":false,\"iconSize\":\"24px\",\"icon\":null,\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"400\",\"style\":\"normal\",\"lineHeight\":\"16px\"},\"color\":\"rgba(0, 0, 0, 0.38)\",\"displayTypePrefix\":true},\"margin\":\"0px\",\"borderRadius\":\"0px\",\"iconSize\":\"0px\"}"
+  },
+  "externalId": null,
+  "tags": [
+    "range",
+    "color range",
+    "line chart"
+  ]
+}

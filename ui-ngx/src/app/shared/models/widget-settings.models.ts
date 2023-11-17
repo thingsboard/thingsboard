@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { isDefinedAndNotNull, isNumber, isNumeric, parseFunction } from '@core/utils';
+import { isDefinedAndNotNull, isNumber, isNumeric, isUndefinedOrNull, parseFunction } from '@core/utils';
 import { DataKey, Datasource, DatasourceData } from '@shared/models/widget.models';
 import { Injector } from '@angular/core';
 import { DatePipe } from '@angular/common';
@@ -84,6 +84,79 @@ export interface ColorRange {
   to?: number;
   color: string;
 }
+
+export const colorRangeIncludes = (range: ColorRange, toCheck: ColorRange): boolean => {
+  if (isNumber(range.from) && isNumber(range.to)) {
+    if (isNumber(toCheck.from) && isNumber(toCheck.to)) {
+      return toCheck.from >= range.from && toCheck.to < range.to;
+    } else {
+      return false;
+    }
+  } else if (isNumber(range.from)) {
+    if (isNumber(toCheck.from)) {
+      return toCheck.from >= range.from;
+    } else {
+      return false;
+    }
+  } else if (isNumber(range.to)) {
+    if (isNumber(toCheck.to)) {
+      return toCheck.to < range.to;
+    } else {
+      return false;
+    }
+  } else {
+    return false;
+  }
+};
+
+export const filterIncludingColorRanges = (ranges: Array<ColorRange>): Array<ColorRange> => {
+  const result = [...ranges];
+  let includes = true;
+  while (includes) {
+    let index = -1;
+    for (let i = 0; i < result.length; i++) {
+      const range = result[i];
+      if (result.some((value, i1) => i1 !== i && colorRangeIncludes(value, range))) {
+        index = i;
+        break;
+      }
+    }
+    if (index > -1) {
+      result.splice(index, 1);
+    } else {
+      includes = false;
+    }
+  }
+  return result;
+};
+
+export const sortedColorRange = (ranges: Array<ColorRange>): Array<ColorRange> => ranges ? [...ranges].sort(
+    (a, b) => {
+      if (isNumber(a.from) && isNumber(a.to) && isNumber(b.from) && isNumber(b.to)) {
+        if (b.from >= a.from && b.to < a.to) {
+          return 1;
+        } else if (a.from >= b.from && a.to < b.to) {
+          return -1;
+        } else {
+          return a.from - b.from;
+        }
+      } else if (isNumber(a.from) && isNumber(b.from)) {
+        return a.from - b.from;
+      } else if (isNumber(a.to) && isNumber(b.to)) {
+        return a.to - b.to;
+      } else if (isNumber(a.from) && isUndefinedOrNull(b.from)) {
+        return 1;
+      } else if (isUndefinedOrNull(a.from) && isNumber(b.from)) {
+        return -1;
+      } else if (isNumber(a.to) && isUndefinedOrNull(b.to)) {
+        return 1;
+      } else if (isUndefinedOrNull(a.to) && isNumber(b.to)) {
+        return -1;
+      } else {
+        return 0;
+      }
+    }
+  ) : [];
 
 export interface ColorSettings {
   type: ColorType;
@@ -208,7 +281,7 @@ class RangeColorProcessor extends ColorProcessor {
     return this.settings.color;
   }
 
-  private static constantRange(range: ColorRange): boolean {
+  public static constantRange(range: ColorRange): boolean {
     return isNumber(range.from) && isNumber(range.to) && range.from === range.to;
   }
 }

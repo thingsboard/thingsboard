@@ -5840,6 +5840,20 @@
             "no-columns-found": "No columns found",
             "no-columns-matching": "'{{column}}' not found."
         },
+        "range-chart": {
+            "chart": "Chart",
+            "data-zoom": "Data zoom",
+            "range-colors": "Range colors",
+            "out-of-range-color": "Out of range color",
+            "fill-area": "Fill area",
+            "legend-label": "Label",
+            "tooltip": "Tooltip",
+            "tooltip-value": "Value",
+            "tooltip-date": "Date",
+            "tooltip-background-color": "Background color",
+            "tooltip-background-blur": "Background blur",
+            "range-chart-card-style": "Range chart card style"
+        },
         "rpc": {
             "value-settings": "Value settings",
             "initial-value": "Initial value",
