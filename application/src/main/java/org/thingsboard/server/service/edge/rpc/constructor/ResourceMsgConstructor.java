@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.edge.rpc.constructor;
 
+import com.google.protobuf.ByteString;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.id.TbResourceId;
@@ -41,6 +42,12 @@ public class ResourceMsgConstructor {
         }
         if (tbResource.getEtag() != null) {
             builder.setEtag(tbResource.getEtag());
+        }
+        if (tbResource.getDescriptor() != null) {
+            builder.setDescriptorJson(tbResource.getDescriptor().toString());
+        }
+        if (tbResource.getPreview() != null) {
+            builder.setPreview(ByteString.copyFrom(tbResource.getPreview()));
         }
         if (tbResource.getTenantId().equals(TenantId.SYS_TENANT_ID)) {
             builder.setIsSystem(true);
