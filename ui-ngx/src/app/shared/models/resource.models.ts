@@ -82,7 +82,9 @@ export interface ImageDescriptor {
   previewDescriptor: ImageDescriptor;
 }
 
-export type ImageResourceInfo = TbResourceInfo<ImageDescriptor>;
+export interface ImageResourceInfo extends TbResourceInfo<ImageDescriptor> {
+  link?: string;
+}
 
 export type ImageResourceType = 'tenant' | 'system';
 
