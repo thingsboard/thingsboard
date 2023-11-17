@@ -46,6 +46,8 @@ public class TbPubSubSettings {
     @Value("${queue.pubsub.max_messages}")
     private int maxMessages;
 
+    private final TbPubSubQueueExecutorProvider tbPubSubQueueExecutorProvider;
+
     private CredentialsProvider credentialsProvider;
 
     @PostConstruct

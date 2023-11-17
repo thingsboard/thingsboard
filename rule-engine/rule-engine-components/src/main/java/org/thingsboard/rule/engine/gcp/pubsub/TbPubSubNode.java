@@ -69,7 +69,7 @@ public class TbPubSubNode extends TbAbstractExternalNode {
         super.init(ctx);
         this.config = TbNodeUtils.convert(configuration, TbPubSubNodeConfiguration.class);
         try {
-            this.pubSubClient = initPubSubClient(FixedExecutorProvider.create(ctx.getPubSubRuleNodeExecutorProvider().getExecutor()));
+            this.pubSubClient = initPubSubClient(ctx);
         } catch (Exception e) {
             throw new TbNodeException(e);
         }
@@ -129,7 +129,7 @@ public class TbPubSubNode extends TbAbstractExternalNode {
         return TbMsg.transformMsgMetadata(origMsg, metaData);
     }
 
-    private Publisher initPubSubClient(FixedExecutorProvider fixedExecutorProvider) throws IOException {
+    private Publisher initPubSubClient(TbContext ctx) throws IOException {
         ProjectTopicName topicName = ProjectTopicName.of(config.getProjectId(), config.getTopicName());
         ServiceAccountCredentials credentials =
                 ServiceAccountCredentials.fromStream(
@@ -149,7 +149,7 @@ public class TbPubSubNode extends TbAbstractExternalNode {
         return Publisher.newBuilder(topicName)
                 .setCredentialsProvider(credProvider)
                 .setRetrySettings(retrySettings)
-                .setExecutorProvider(fixedExecutorProvider)
+                .setExecutorProvider(FixedExecutorProvider.create(ctx.getPubSubRuleNodeExecutorProvider().getExecutor()))
                 .build();
     }
 }

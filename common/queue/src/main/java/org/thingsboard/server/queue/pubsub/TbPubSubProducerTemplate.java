@@ -25,8 +25,6 @@ import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.common.util.ExecutorProvider;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueCallback;
@@ -39,7 +37,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -54,14 +51,11 @@ public class TbPubSubProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
     private final Map<String, Publisher> publisherMap = new ConcurrentHashMap<>();
 
     private final ExecutorService pubExecutor = Executors.newCachedThreadPool();
-    private final FixedExecutorProvider fixedExecutorProvider;
 
-    public TbPubSubProducerTemplate(TbQueueAdmin admin, TbPubSubSettings pubSubSettings, String defaultTopic, ExecutorProvider executorProvider) {
+    public TbPubSubProducerTemplate(TbQueueAdmin admin, TbPubSubSettings pubSubSettings, String defaultTopic) {
         this.defaultTopic = defaultTopic;
         this.admin = admin;
         this.pubSubSettings = pubSubSettings;
-
-        fixedExecutorProvider = FixedExecutorProvider.create(executorProvider.getExecutor());
     }
 
     @Override
@@ -129,7 +123,7 @@ public class TbPubSubProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
                 ProjectTopicName topicName = ProjectTopicName.of(pubSubSettings.getProjectId(), topic);
                 Publisher publisher = Publisher.newBuilder(topicName)
                         .setCredentialsProvider(pubSubSettings.getCredentialsProvider())
-                        .setExecutorProvider(fixedExecutorProvider)
+                        .setExecutorProvider(FixedExecutorProvider.create(pubSubSettings.getTbPubSubQueueExecutorProvider().getExecutor()))
                         .build();
                 publisherMap.put(topic, publisher);
                 return publisher;

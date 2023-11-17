@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.executors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.ExecutorProvider;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -27,6 +28,9 @@ import java.util.concurrent.ScheduledExecutorService;
 @Component
 public class PubSubRuleNodeExecutorProvider implements ExecutorProvider {
 
+    @Value("${service.rule_engine.pubsub.executor_thread_pool_size}")
+    private Integer threadPoolSize;
+
     /**
     * Refers to com.google.cloud.pubsub.v1.Publisher default executor configuration
     */
@@ -35,7 +39,10 @@ public class PubSubRuleNodeExecutorProvider implements ExecutorProvider {
 
     @PostConstruct
     public void init() {
-        executor = Executors.newScheduledThreadPool(THREADS_PER_CPU * Runtime.getRuntime().availableProcessors(), ThingsBoardThreadFactory.forName("pubsub-rule-nodes"));;
+        if (threadPoolSize == null) {
+            threadPoolSize = THREADS_PER_CPU * Runtime.getRuntime().availableProcessors();
+        }
+        executor = Executors.newScheduledThreadPool(threadPoolSize, ThingsBoardThreadFactory.forName("pubsub-rule-nodes"));
     }
 
     @Override

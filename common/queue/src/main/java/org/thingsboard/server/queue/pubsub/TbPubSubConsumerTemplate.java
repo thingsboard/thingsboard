@@ -63,7 +63,7 @@ public class TbPubSubConsumerTemplate<T extends TbQueueMsg> extends AbstractPara
     private final SubscriberStub subscriber;
     private volatile int messagesPerTopic;
 
-    public TbPubSubConsumerTemplate(TbQueueAdmin admin, TbPubSubSettings pubSubSettings, String topic, TbQueueMsgDecoder<T> decoder, TbPubSubQueueExecutorProvider tbPubSubQueueExecutorProvider) {
+    public TbPubSubConsumerTemplate(TbQueueAdmin admin, TbPubSubSettings pubSubSettings, String topic, TbQueueMsgDecoder<T> decoder) {
         super(topic);
         this.admin = admin;
         this.pubSubSettings = pubSubSettings;
@@ -77,7 +77,7 @@ public class TbPubSubConsumerTemplate<T extends TbQueueMsg> extends AbstractPara
                                     SubscriberStubSettings.defaultGrpcTransportProviderBuilder()
                                             .setMaxInboundMessageSize(pubSubSettings.getMaxMsgSize())
                                             .build())
-                            .setExecutorProvider(FixedExecutorProvider.create(tbPubSubQueueExecutorProvider.getExecutor()))
+                            .setExecutorProvider(FixedExecutorProvider.create(pubSubSettings.getTbPubSubQueueExecutorProvider().getExecutor()))
                             .build();
             this.subscriber = GrpcSubscriberStub.create(subscriberStubSettings);
         } catch (IOException e) {

@@ -43,7 +43,7 @@ public class TbPubSubQueueExecutorProvider implements ExecutorProvider {
         if (threadPoolSize == null) {
             threadPoolSize = THREADS_PER_CPU * Runtime.getRuntime().availableProcessors();
         }
-        executor = Executors.newScheduledThreadPool(threadPoolSize, ThingsBoardThreadFactory.forName("pubsub-queue-executor"));;
+        executor = Executors.newScheduledThreadPool(threadPoolSize, ThingsBoardThreadFactory.forName("pubsub-queue-executor"));
     }
 
     @Override

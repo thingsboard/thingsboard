@@ -26,7 +26,6 @@ import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.pubsub.TbPubSubAdmin;
 import org.thingsboard.server.queue.pubsub.TbPubSubConsumerTemplate;
 import org.thingsboard.server.queue.pubsub.TbPubSubProducerTemplate;
-import org.thingsboard.server.queue.pubsub.TbPubSubQueueExecutorProvider;
 import org.thingsboard.server.queue.pubsub.TbPubSubSettings;
 import org.thingsboard.server.queue.pubsub.TbPubSubSubscriptionSettings;
 import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
@@ -42,7 +41,6 @@ public class PubSubTbVersionControlQueueFactory implements TbVersionControlQueue
     private final TbQueueCoreSettings coreSettings;
     private final TbQueueVersionControlSettings vcSettings;
     private final TopicService topicService;
-    private final TbPubSubQueueExecutorProvider tbPubSubQueueExecutorProvider;
 
     private final TbQueueAdmin coreAdmin;
     private final TbQueueAdmin notificationAdmin;
@@ -52,14 +50,12 @@ public class PubSubTbVersionControlQueueFactory implements TbVersionControlQueue
                                               TbQueueCoreSettings coreSettings,
                                               TbQueueVersionControlSettings vcSettings,
                                               TbPubSubSubscriptionSettings pubSubSubscriptionSettings,
-                                              TopicService topicService,
-                                              TbPubSubQueueExecutorProvider tbPubSubQueueExecutorProvider
+                                              TopicService topicService
     ) {
         this.pubSubSettings = pubSubSettings;
         this.coreSettings = coreSettings;
         this.vcSettings = vcSettings;
         this.topicService = topicService;
-        this.tbPubSubQueueExecutorProvider = tbPubSubQueueExecutorProvider;
 
         this.coreAdmin = new TbPubSubAdmin(pubSubSettings, pubSubSubscriptionSettings.getCoreSettings());
         this.notificationAdmin = new TbPubSubAdmin(pubSubSettings, pubSubSubscriptionSettings.getNotificationsSettings());
@@ -68,19 +64,18 @@ public class PubSubTbVersionControlQueueFactory implements TbVersionControlQueue
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToUsageStatsServiceMsg>> createToUsageStatsServiceMsgProducer() {
-        return new TbPubSubProducerTemplate<>(coreAdmin, pubSubSettings, topicService.buildTopicName(coreSettings.getUsageStatsTopic()), tbPubSubQueueExecutorProvider);
+        return new TbPubSubProducerTemplate<>(coreAdmin, pubSubSettings, topicService.buildTopicName(coreSettings.getUsageStatsTopic()));
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg>> createTbCoreNotificationsMsgProducer() {
-        return new TbPubSubProducerTemplate<>(notificationAdmin, pubSubSettings, topicService.buildTopicName(coreSettings.getTopic()), tbPubSubQueueExecutorProvider);
+        return new TbPubSubProducerTemplate<>(notificationAdmin, pubSubSettings, topicService.buildTopicName(coreSettings.getTopic()));
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToVersionControlServiceMsg>> createToVersionControlMsgConsumer() {
         return new TbPubSubConsumerTemplate<>(vcAdmin, pubSubSettings, topicService.buildTopicName(vcSettings.getTopic()),
-                msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportProtos.ToVersionControlServiceMsg.parseFrom(msg.getData()), msg.getHeaders()),
-                tbPubSubQueueExecutorProvider
+                msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportProtos.ToVersionControlServiceMsg.parseFrom(msg.getData()), msg.getHeaders())
         );
     }
 
