@@ -21,6 +21,8 @@ import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNode;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
+import org.thingsboard.rule.engine.metadata.TbGetCustomerAttributeNode;
+import org.thingsboard.rule.engine.metadata.TbGetEntityDataNodeConfiguration;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.service.component.RuleNodeClassInfo;
 
@@ -94,6 +96,32 @@ public class TbNodeUpgradeUtilsTest {
                 "\"tellFailureIfAbsent\":true," +
                 "\"getLatestValueWithTs\":false}";
         node.setConfiguration(JacksonUtil.toJsonNode(versionZeroDefaultConfigStr));
+        // WHEN
+        TbNodeUpgradeUtils.upgradeConfigurationAndVersion(node, nodeInfo);
+        // THEN
+        Assertions.assertThat(node.getConfiguration()).isEqualTo(defaultConfig);
+        Assertions.assertThat(node.getConfigurationVersion()).isEqualTo(1);
+
+    }
+
+    @Test
+    public void testUpgradeRuleNodeConfigurationWithNewConfigAndOldConfigVersion() throws Exception {
+        // GIVEN
+        var node = new RuleNode();
+        var nodeInfo = mock(RuleNodeClassInfo.class);
+        var nodeConfigClazz = TbGetEntityDataNodeConfiguration.class;
+        var annotation = mock(org.thingsboard.rule.engine.api.RuleNode.class);
+        var defaultConfig = JacksonUtil.valueToTree(nodeConfigClazz.getDeclaredConstructor().newInstance().defaultConfiguration());
+
+        when(nodeInfo.getClazz()).thenReturn((Class) TbGetCustomerAttributeNode.class);
+        when(nodeInfo.getCurrentVersion()).thenReturn(1);
+        when(nodeInfo.getAnnotation()).thenReturn(annotation);
+        when(annotation.configClazz()).thenReturn((Class) nodeConfigClazz);
+
+        String versionOneDefaultConfig = "{\"fetchTo\":\"METADATA\"," +
+                "\"dataMapping\":{\"alarmThreshold\":\"threshold\"}," +
+                "\"dataToFetch\":\"ATTRIBUTES\"}";
+        node.setConfiguration(JacksonUtil.toJsonNode(versionOneDefaultConfig));
         // WHEN
         TbNodeUpgradeUtils.upgradeConfigurationAndVersion(node, nodeInfo);
         // THEN
