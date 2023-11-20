@@ -121,8 +121,8 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
         return device;
     }
 
-    protected void updateDeviceCredentials(TenantId tenantId, DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg, boolean isEdgeVersionOlderThan_3_6_2) {
-        DeviceCredentials deviceCredentials = isEdgeVersionOlderThan_3_6_2
+    protected void updateDeviceCredentials(TenantId tenantId, DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg, EdgeVersion edgeVersion) {
+        DeviceCredentials deviceCredentials = EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)
                 ? createDeviceCredentials(deviceCredentialsUpdateMsg)
                 : JacksonUtil.fromStringIgnoreUnknownProperties(deviceCredentialsUpdateMsg.getEntity(), DeviceCredentials.class);
         if (deviceCredentials == null) {
