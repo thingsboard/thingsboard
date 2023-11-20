@@ -17,7 +17,9 @@ package org.thingsboard.server.utils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNode;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.service.component.RuleNodeClassInfo;
@@ -26,17 +28,33 @@ public class TbNodeUpgradeUtils {
 
     public static void upgradeConfigurationAndVersion(RuleNode node, RuleNodeClassInfo nodeInfo) throws Exception {
         JsonNode oldConfiguration = node.getConfiguration();
+        var configClass = nodeInfo.getAnnotation().configClazz();
+
         if (oldConfiguration == null || !oldConfiguration.isObject()) {
-            var configClass = nodeInfo.getAnnotation().configClazz();
             node.setConfiguration(JacksonUtil.valueToTree(configClass.getDeclaredConstructor().newInstance().defaultConfiguration()));
         } else {
             var tbVersionedNode = (TbNode) nodeInfo.getClazz().getDeclaredConstructor().newInstance();
-            TbPair<Boolean, JsonNode> upgradeResult = tbVersionedNode.upgrade(node.getConfigurationVersion(), oldConfiguration);
-            if (upgradeResult.getFirst()) {
-                node.setConfiguration(upgradeResult.getSecond());
+            try {
+                TbPair<Boolean, JsonNode> upgradeResult = tbVersionedNode.upgrade(node.getConfigurationVersion(), oldConfiguration);
+                if (upgradeResult.getFirst()) {
+                    node.setConfiguration(upgradeResult.getSecond());
+                }
+            } catch (TbNodeException e) {
+                if (!isValidConfig(oldConfiguration, configClass)) {
+                    throw e;
+                }
             }
         }
         node.setConfigurationVersion(nodeInfo.getCurrentVersion());
+    }
+
+    private static boolean isValidConfig(JsonNode oldConfiguration, Class<? extends NodeConfiguration> configClass) {
+        try {
+            JacksonUtil.treeToValue(oldConfiguration, configClass);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
 }
