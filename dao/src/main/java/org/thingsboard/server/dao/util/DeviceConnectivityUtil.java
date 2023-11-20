@@ -194,13 +194,12 @@ public class DeviceConnectivityUtil {
         try {
             host = host.replaceAll("^https?://", "");
             inetAddress = InetAddress.getByName(host);
-            host = inetAddress.getHostName();
         } catch (UnknownHostException e) {
             return host;
         }
         if (inetAddress instanceof Inet6Address) {
             host = host.replaceAll("[\\[\\]]", "");
-            if (!inetAddress.isLoopbackAddress() && !protocol.startsWith(MQTT)) {
+            if (!protocol.startsWith(MQTT)) {
                 host = "[" + host + "]";
             }
         }
