@@ -173,11 +173,11 @@ public class TbMsgAttributesNode implements TbNode {
                 }
             case 1:
                 // update notifyDevice. set true if null or property doesn't exist for backward-compatibility.
-                hasChanges = fixEscapedBooleanConfigParameters(oldConfiguration, NOTIFY_DEVICE_KEY, hasChanges, true);
+                hasChanges = fixEscapedBooleanConfigParameter(oldConfiguration, NOTIFY_DEVICE_KEY, hasChanges, true);
                 // update sendAttributesUpdatedNotification.
-                hasChanges = fixEscapedBooleanConfigParameters(oldConfiguration, SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY, hasChanges, false);
+                hasChanges = fixEscapedBooleanConfigParameter(oldConfiguration, SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY, hasChanges, false);
                 // update updateAttributesOnlyOnValueChange.
-                hasChanges = fixEscapedBooleanConfigParameters(oldConfiguration, UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY, hasChanges, false);
+                hasChanges = fixEscapedBooleanConfigParameter(oldConfiguration, UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY, hasChanges, true);
                 break;
             default:
                 break;
@@ -185,18 +185,18 @@ public class TbMsgAttributesNode implements TbNode {
         return new TbPair<>(hasChanges, oldConfiguration);
     }
 
-    private static boolean fixEscapedBooleanConfigParameters(JsonNode oldConfiguration, String boolKey, boolean hasChanges, boolean defaultValue) {
+    private boolean fixEscapedBooleanConfigParameter(JsonNode oldConfiguration, String boolKey, boolean hasChanges, boolean valueIfNull) {
         if (oldConfiguration.hasNonNull(boolKey)) {
             var value = oldConfiguration.get(boolKey);
             if (value.isTextual()) {
                 hasChanges = true;
                 ((ObjectNode) oldConfiguration)
-                        .put(boolKey, value.asBoolean(defaultValue));
+                        .put(boolKey, value.asBoolean(valueIfNull));
             }
         } else {
             hasChanges = true;
             ((ObjectNode) oldConfiguration)
-                    .put(boolKey, defaultValue);
+                    .put(boolKey, valueIfNull);
         }
         return hasChanges;
     }

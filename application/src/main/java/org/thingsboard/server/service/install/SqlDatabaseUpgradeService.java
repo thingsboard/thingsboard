@@ -801,11 +801,12 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                                     "configuration = (configuration::jsonb || jsonb_build_object(" +
                                         "'notifyDevice', CASE WHEN configuration::jsonb ->> 'notifyDevice' = 'false' THEN false ELSE true END, " +
                                         "'sendAttributesUpdatedNotification', CASE WHEN configuration::jsonb ->> 'sendAttributesUpdatedNotification' = 'true' THEN true ELSE false END, " +
-                                        "'updateAttributesOnlyOnValueChange', CASE WHEN configuration::jsonb ->> 'updateAttributesOnlyOnValueChange' = 'true' THEN true ELSE false END" +
+                                        "'updateAttributesOnlyOnValueChange', CASE WHEN configuration::jsonb ->> 'updateAttributesOnlyOnValueChange' = 'false' THEN false ELSE true END" +
                                     ")::jsonb)::varchar, " +
                                     "configuration_version = 2 " +
                                     "WHERE type = 'org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode' AND configuration_version = 1;");
                         } catch (Exception e) {
+                            log.warn("Failed to execute update script for save attributes rule nodes due to: ", e);
                         }
                         conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3006002;");
                         log.info("Schema updated to version 3.6.2.");

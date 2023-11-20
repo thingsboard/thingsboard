@@ -137,15 +137,16 @@ class TbMsgAttributesNodeTest {
     private static Stream<Arguments> provideNotifyDeviceMdValue() {
         return Stream.of(
                 Arguments.of(null, true),
-                Arguments.of(true, true),
-                Arguments.of(false, false)
+                Arguments.of("null", false),
+                Arguments.of("true", true),
+                Arguments.of("false", false)
         );
     }
 
     // Notify device backward-compatibility test
     @ParameterizedTest
     @MethodSource("provideNotifyDeviceMdValue")
-    void testNotifyDeviceArgumentForSaveAndNotify(Boolean mdValue, boolean expectedArgumentValue) throws TbNodeException {
+    void givenNotifyDeviceMdValue_whenSaveAndNotify_thenVerifyExpectedArgumentForNotifyDeviceInSaveAndNotifyMethod(String mdValue, boolean expectedArgumentValue) throws TbNodeException {
         var ctxMock = mock(TbContext.class);
         var telemetryServiceMock = mock(RuleEngineTelemetryService.class);
         TbMsgAttributesNode node = spy(TbMsgAttributesNode.class);
@@ -164,7 +165,7 @@ class TbMsgAttributesNodeTest {
 
         TbMsgMetaData md = new TbMsgMetaData();
         if (mdValue != null) {
-            md.putValue(NOTIFY_DEVICE_METADATA_KEY, mdValue.toString());
+            md.putValue(NOTIFY_DEVICE_METADATA_KEY, mdValue);
         }
         // dummy list with one ts kv to pass the empty list check.
         var testTbMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, ORIGINATOR_ID, md, TbMsg.EMPTY_STRING);
@@ -264,7 +265,7 @@ class TbMsgAttributesNodeTest {
         ObjectNode upgradedConfig = (ObjectNode) upgradeResult.getSecond();
         assertThat(upgradedConfig.get(NOTIFY_DEVICE_KEY).asBoolean()).as("pre condition has [false] for key " + NOTIFY_DEVICE_KEY).isTrue();
         assertThat(upgradedConfig.get(SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY).asBoolean()).as("pre condition has [true] for key " + SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY).isFalse();
-        assertThat(upgradedConfig.get(UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY).asBoolean()).as("pre condition has [true] for key " + UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY).isFalse();
+        assertThat(upgradedConfig.get(UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY).asBoolean()).as("pre condition has [false] for key " + UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY).isTrue();
     }
 
     @Test
