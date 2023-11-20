@@ -49,6 +49,10 @@ zk:
 cache:
   # caffeine or redis
   type: "${CACHE_TYPE:redis}"
+  # Deliberately placed outside the 'specs' group above
+  entityLimits:
+    timeToLiveInMinutes: "${CACHE_SPECS_ENTITY_LIMITS_TTL:5}" # Entity limits cache TTL
+    maxSize: "${CACHE_SPECS_ENTITY_LIMITS_MAX_SIZE:100000}" # 0 means the cache is disabled
 
 # Redis configuration parameters
 redis:
