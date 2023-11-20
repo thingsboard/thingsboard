@@ -182,12 +182,17 @@ public class DeviceConnectivityUtil {
     }
 
     public static String getHost(String baseUrl, DeviceConnectivityInfo properties, String protocol) throws URISyntaxException {
-        String host = properties.getHost().isEmpty() ? baseUrl : properties.getHost();
+        String initialHost = properties.getHost().isEmpty() ? baseUrl : properties.getHost();
         InetAddress inetAddress;
-        if (VALID_URL_PATTERN.matcher(host).matches()) {
-            host = new URI(host).getHost();
+        String host = null;
+        if (VALID_URL_PATTERN.matcher(initialHost).matches()) {
+            host = new URI(initialHost).getHost();
+        }
+        if (host == null) {
+            host = initialHost;
         }
         try {
+            host = host.replaceAll("^https?://", "");
             inetAddress = InetAddress.getByName(host);
             host = inetAddress.getHostName();
         } catch (UnknownHostException e) {
