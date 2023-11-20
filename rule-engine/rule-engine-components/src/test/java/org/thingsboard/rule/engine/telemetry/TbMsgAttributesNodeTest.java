@@ -16,16 +16,14 @@
 package org.thingsboard.rule.engine.telemetry;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -64,21 +62,24 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode.NOTIFY_DEVICE_KEY;
-import static org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode.SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY;
-import static org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode.UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY;
 import static org.thingsboard.server.common.data.DataConstants.NOTIFY_DEVICE_METADATA_KEY;
 
 @Slf4j
-@ExtendWith(MockitoExtension.class)
 class TbMsgAttributesNodeTest {
 
     private static final DeviceId ORIGINATOR_ID = new DeviceId(UUID.randomUUID());
     private static final TenantId TENANT_ID = new TenantId(UUID.randomUUID());
 
+    TbMsgAttributesNode node;
+
+    @BeforeEach
+    void setUp() {
+        node = spy(TbMsgAttributesNode.class);
+    }
+
     @Test
     void testFilterChangedAttr_whenCurrentAttributesEmpty_thenReturnNewAttributes() {
-        TbMsgAttributesNode node = spy(TbMsgAttributesNode.class);
+        node = spy(TbMsgAttributesNode.class);
         List<AttributeKvEntry> newAttributes = new ArrayList<>();
 
         List<AttributeKvEntry> filtered = node.filterChangedAttr(Collections.emptyList(), newAttributes);
@@ -87,7 +88,7 @@ class TbMsgAttributesNodeTest {
 
     @Test
     void testFilterChangedAttr_whenCurrentAttributesContainsInAnyOrderNewAttributes_thenReturnEmptyList() {
-        TbMsgAttributesNode node = spy(TbMsgAttributesNode.class);
+        node = spy(TbMsgAttributesNode.class);
         List<AttributeKvEntry> currentAttributes = List.of(
                 new BaseAttributeKvEntry(1694000000L, new StringDataEntry("address", "Peremohy ave 1")),
                 new BaseAttributeKvEntry(1694000000L, new BooleanDataEntry("valid", true)),
@@ -108,7 +109,7 @@ class TbMsgAttributesNodeTest {
 
     @Test
     void testFilterChangedAttr_whenCurrentAttributesContainsInAnyOrderNewAttributes_thenReturnExpectedList() {
-        TbMsgAttributesNode node = spy(TbMsgAttributesNode.class);
+        node = spy(TbMsgAttributesNode.class);
         List<AttributeKvEntry> currentAttributes = List.of(
                 new BaseAttributeKvEntry(1694000000L, new StringDataEntry("address", "Peremohy ave 1")),
                 new BaseAttributeKvEntry(1694000000L, new BooleanDataEntry("valid", true)),
@@ -147,9 +148,9 @@ class TbMsgAttributesNodeTest {
     @ParameterizedTest
     @MethodSource("provideNotifyDeviceMdValue")
     void givenNotifyDeviceMdValue_whenSaveAndNotify_thenVerifyExpectedArgumentForNotifyDeviceInSaveAndNotifyMethod(String mdValue, boolean expectedArgumentValue) throws TbNodeException {
+        node = spy(TbMsgAttributesNode.class);
         var ctxMock = mock(TbContext.class);
         var telemetryServiceMock = mock(RuleEngineTelemetryService.class);
-        TbMsgAttributesNode node = spy(TbMsgAttributesNode.class);
         ObjectNode defaultConfig = (ObjectNode) JacksonUtil.valueToTree(new TbMsgAttributesNodeConfiguration().defaultConfiguration());
         defaultConfig.put("notifyDevice", false);
         var tbNodeConfiguration = new TbNodeConfiguration(defaultConfig);
@@ -229,7 +230,7 @@ class TbMsgAttributesNodeTest {
     @MethodSource("givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig")
     void givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig(int givenVersion, String givenConfigStr, boolean hasChanges, String expectedConfigStr) throws TbNodeException {
         // GIVEN
-        TbMsgAttributesNode node = mock(TbMsgAttributesNode.class);
+        node = spy(TbMsgAttributesNode.class);
         willCallRealMethod().given(node).upgrade(anyInt(), any());
         JsonNode givenConfig = JacksonUtil.toJsonNode(givenConfigStr);
         JsonNode expectedConfig = JacksonUtil.toJsonNode(expectedConfigStr);
