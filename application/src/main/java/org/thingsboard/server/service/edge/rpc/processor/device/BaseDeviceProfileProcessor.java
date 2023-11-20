@@ -32,8 +32,10 @@ import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
@@ -45,12 +47,12 @@ public abstract class BaseDeviceProfileProcessor extends BaseEdgeProcessor {
     @Autowired
     private DataDecodingEncodingService dataDecodingEncodingService;
 
-    protected Pair<Boolean, Boolean> saveOrUpdateDeviceProfile(TenantId tenantId, DeviceProfileId deviceProfileId, DeviceProfileUpdateMsg deviceProfileUpdateMsg, boolean isEdgeVersionOlderThan_3_6_2) {
+    protected Pair<Boolean, Boolean> saveOrUpdateDeviceProfile(TenantId tenantId, DeviceProfileId deviceProfileId, DeviceProfileUpdateMsg deviceProfileUpdateMsg, EdgeVersion edgeVersion) {
         boolean created = false;
         boolean deviceProfileNameUpdated = false;
         deviceCreationLock.lock();
         try {
-            DeviceProfile deviceProfile = isEdgeVersionOlderThan_3_6_2
+            DeviceProfile deviceProfile = EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)
                     ? createDeviceProfile(tenantId, deviceProfileId, deviceProfileUpdateMsg)
                     : JacksonUtil.fromStringIgnoreUnknownProperties(deviceProfileUpdateMsg.getEntity(), DeviceProfile.class);
             if (deviceProfile == null) {
@@ -75,8 +77,8 @@ public abstract class BaseDeviceProfileProcessor extends BaseEdgeProcessor {
 
             RuleChainId ruleChainId = deviceProfile.getDefaultRuleChainId();
             setDefaultRuleChainId(tenantId, deviceProfile, created ? null : deviceProfileById.getDefaultRuleChainId());
-            setDefaultEdgeRuleChainId(deviceProfile, ruleChainId, deviceProfileUpdateMsg, isEdgeVersionOlderThan_3_6_2);
-            setDefaultDashboardId(tenantId, created ? null : deviceProfileById.getDefaultDashboardId(), deviceProfile, deviceProfileUpdateMsg, isEdgeVersionOlderThan_3_6_2);
+            setDefaultEdgeRuleChainId(deviceProfile, ruleChainId, deviceProfileUpdateMsg, edgeVersion);
+            setDefaultDashboardId(tenantId, created ? null : deviceProfileById.getDefaultDashboardId(), deviceProfile, deviceProfileUpdateMsg, edgeVersion);
 
             deviceProfileValidator.validate(deviceProfile, DeviceProfile::getTenantId);
             if (created) {
@@ -127,7 +129,7 @@ public abstract class BaseDeviceProfileProcessor extends BaseEdgeProcessor {
 
     protected abstract void setDefaultRuleChainId(TenantId tenantId, DeviceProfile deviceProfile, RuleChainId ruleChainId);
 
-    protected abstract void setDefaultEdgeRuleChainId(DeviceProfile deviceProfile, RuleChainId ruleChainId, DeviceProfileUpdateMsg deviceProfileUpdateMsg, boolean isEdgeVersionOlderThan_3_6_2);
+    protected abstract void setDefaultEdgeRuleChainId(DeviceProfile deviceProfile, RuleChainId ruleChainId, DeviceProfileUpdateMsg deviceProfileUpdateMsg, EdgeVersion edgeVersion);
 
-    protected abstract void setDefaultDashboardId(TenantId tenantId, DashboardId dashboardId, DeviceProfile deviceProfile, DeviceProfileUpdateMsg deviceProfileUpdateMsg, boolean isEdgeVersionOlderThan_3_6_2);
+    protected abstract void setDefaultDashboardId(TenantId tenantId, DashboardId dashboardId, DeviceProfile deviceProfile, DeviceProfileUpdateMsg deviceProfileUpdateMsg, EdgeVersion edgeVersion);
 }

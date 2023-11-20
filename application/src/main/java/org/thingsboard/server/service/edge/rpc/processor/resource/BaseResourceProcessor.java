@@ -25,16 +25,18 @@ import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.ResourceUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 @Slf4j
 public abstract class BaseResourceProcessor extends BaseEdgeProcessor {
 
-    protected boolean saveOrUpdateTbResource(TenantId tenantId, TbResourceId tbResourceId, ResourceUpdateMsg resourceUpdateMsg, boolean isEdgeVersionOlderThan_3_6_2) {
+    protected boolean saveOrUpdateTbResource(TenantId tenantId, TbResourceId tbResourceId, ResourceUpdateMsg resourceUpdateMsg, EdgeVersion edgeVersion) {
         boolean resourceKeyUpdated = false;
         try {
-            TbResource resource = isEdgeVersionOlderThan_3_6_2
+            TbResource resource = EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)
                     ? createTbResource(tenantId, resourceUpdateMsg)
                     : JacksonUtil.fromStringIgnoreUnknownProperties(resourceUpdateMsg.getEntity(), TbResource.class);
             if (resource == null) {

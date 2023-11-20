@@ -84,8 +84,7 @@ public class AssetEdgeProcessor extends BaseAssetProcessor {
     }
 
     private void saveOrUpdateAsset(TenantId tenantId, AssetId assetId, AssetUpdateMsg assetUpdateMsg, Edge edge, EdgeVersion edgeVersion) {
-        Pair<Boolean, Boolean> resultPair = super.saveOrUpdateAsset(tenantId, assetId, assetUpdateMsg,
-                EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion));
+        Pair<Boolean, Boolean> resultPair = super.saveOrUpdateAsset(tenantId, assetId, assetUpdateMsg, edgeVersion);
         Boolean created = resultPair.getFirst();
         if (created) {
             createRelationFromEdge(tenantId, edge.getId(), assetId);
@@ -148,8 +147,8 @@ public class AssetEdgeProcessor extends BaseAssetProcessor {
     }
 
     @Override
-    protected void setCustomerId(TenantId tenantId, CustomerId customerId, Asset asset, AssetUpdateMsg assetUpdateMsg, boolean isEdgeVersionOlderThan_3_6_2) {
-        CustomerId customerUUID = isEdgeVersionOlderThan_3_6_2
+    protected void setCustomerId(TenantId tenantId, CustomerId customerId, Asset asset, AssetUpdateMsg assetUpdateMsg, EdgeVersion edgeVersion) {
+        CustomerId customerUUID = EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)
                 ? safeGetCustomerId(assetUpdateMsg.getCustomerIdMSB(), assetUpdateMsg.getCustomerIdLSB())
                 : asset.getCustomerId() != null ? asset.getCustomerId() : customerId;
         asset.setCustomerId(customerUUID);

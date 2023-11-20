@@ -37,7 +37,6 @@ import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +51,7 @@ public class AlarmEdgeProcessor extends BaseAlarmProcessor {
         log.trace("[{}] processAlarmMsgFromEdge [{}]", tenantId, alarmUpdateMsg);
         try {
             edgeSynchronizationManager.getEdgeId().set(edgeId);
-            return processAlarmMsg(tenantId, alarmUpdateMsg, EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion));
+            return processAlarmMsg(tenantId, alarmUpdateMsg, edgeVersion);
         } finally {
             edgeSynchronizationManager.getEdgeId().remove();
         }

@@ -27,18 +27,20 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.edge.v1.EdgeEntityType;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 import java.util.UUID;
 
 @Slf4j
 public abstract class BaseEntityViewProcessor extends BaseEdgeProcessor {
 
-    protected Pair<Boolean, Boolean> saveOrUpdateEntityView(TenantId tenantId, EntityViewId entityViewId, EntityViewUpdateMsg entityViewUpdateMsg, boolean isEdgeVersionOlderThan_3_6_2) {
+    protected Pair<Boolean, Boolean> saveOrUpdateEntityView(TenantId tenantId, EntityViewId entityViewId, EntityViewUpdateMsg entityViewUpdateMsg, EdgeVersion edgeVersion) {
         boolean created = false;
         boolean entityViewNameUpdated = false;
-        EntityView entityView = isEdgeVersionOlderThan_3_6_2
+        EntityView entityView = EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)
                 ? createEntityView(tenantId, entityViewId, entityViewUpdateMsg)
                 : JacksonUtil.fromStringIgnoreUnknownProperties(entityViewUpdateMsg.getEntity(), EntityView.class);
         if (entityView == null) {
@@ -60,7 +62,7 @@ public abstract class BaseEntityViewProcessor extends BaseEdgeProcessor {
             entityViewNameUpdated = true;
         }
         entityView.setName(entityViewName);
-        setCustomerId(tenantId, created ? null : entityViewById.getCustomerId(), entityView, entityViewUpdateMsg, isEdgeVersionOlderThan_3_6_2);
+        setCustomerId(tenantId, created ? null : entityViewById.getCustomerId(), entityView, entityViewUpdateMsg, edgeVersion);
 
         entityViewValidator.validate(entityView, EntityView::getTenantId);
         if (created) {
@@ -92,5 +94,5 @@ public abstract class BaseEntityViewProcessor extends BaseEdgeProcessor {
         return entityView;
     }
 
-    protected abstract void setCustomerId(TenantId tenantId, CustomerId customerId, EntityView entityView, EntityViewUpdateMsg entityViewUpdateMsg, boolean isEdgeVersionOlderThan_3_6_2);
+    protected abstract void setCustomerId(TenantId tenantId, CustomerId customerId, EntityView entityView, EntityViewUpdateMsg entityViewUpdateMsg, EdgeVersion edgeVersion);
 }

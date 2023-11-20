@@ -26,19 +26,21 @@ import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 import java.nio.charset.StandardCharsets;
 
 @Slf4j
 public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
 
-    protected Pair<Boolean, Boolean> saveOrUpdateAssetProfile(TenantId tenantId, AssetProfileId assetProfileId, AssetProfileUpdateMsg assetProfileUpdateMsg, boolean isEdgeVersionOlderThan_3_6_2) {
+    protected Pair<Boolean, Boolean> saveOrUpdateAssetProfile(TenantId tenantId, AssetProfileId assetProfileId, AssetProfileUpdateMsg assetProfileUpdateMsg, EdgeVersion edgeVersion) {
         boolean created = false;
         boolean assetProfileNameUpdated = false;
         assetCreationLock.lock();
         try {
-            AssetProfile assetProfile = isEdgeVersionOlderThan_3_6_2
+            AssetProfile assetProfile = EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)
                     ? createAssetProfile(tenantId, assetProfileId, assetProfileUpdateMsg)
                     : JacksonUtil.fromStringIgnoreUnknownProperties(assetProfileUpdateMsg.getEntity(), AssetProfile.class);
             if (assetProfile == null) {
@@ -63,8 +65,8 @@ public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
 
             RuleChainId ruleChainId = assetProfile.getDefaultRuleChainId();
             setDefaultRuleChainId(tenantId, assetProfile, created ? null : assetProfileById.getDefaultRuleChainId());
-            setDefaultEdgeRuleChainId(assetProfile, ruleChainId, assetProfileUpdateMsg, isEdgeVersionOlderThan_3_6_2);
-            setDefaultDashboardId(tenantId, created ? null : assetProfileById.getDefaultDashboardId(), assetProfile, assetProfileUpdateMsg, isEdgeVersionOlderThan_3_6_2);
+            setDefaultEdgeRuleChainId(assetProfile, ruleChainId, assetProfileUpdateMsg, edgeVersion);
+            setDefaultDashboardId(tenantId, created ? null : assetProfileById.getDefaultDashboardId(), assetProfile, assetProfileUpdateMsg, edgeVersion);
 
             assetProfileValidator.validate(assetProfile, AssetProfile::getTenantId);
             if (created) {
@@ -95,7 +97,7 @@ public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
 
     protected abstract void setDefaultRuleChainId(TenantId tenantId, AssetProfile assetProfile, RuleChainId ruleChainId);
 
-    protected abstract void setDefaultEdgeRuleChainId(AssetProfile assetProfile, RuleChainId ruleChainId, AssetProfileUpdateMsg assetProfileUpdateMsg, boolean isEdgeVersionOlderThan_3_6_2);
+    protected abstract void setDefaultEdgeRuleChainId(AssetProfile assetProfile, RuleChainId ruleChainId, AssetProfileUpdateMsg assetProfileUpdateMsg, EdgeVersion edgeVersion);
 
-    protected abstract void setDefaultDashboardId(TenantId tenantId, DashboardId dashboardId, AssetProfile assetProfile, AssetProfileUpdateMsg assetProfileUpdateMsg, boolean isEdgeVersionOlderThan_3_6_2);
+    protected abstract void setDefaultDashboardId(TenantId tenantId, DashboardId dashboardId, AssetProfile assetProfile, AssetProfileUpdateMsg assetProfileUpdateMsg, EdgeVersion edgeVersion);
 }

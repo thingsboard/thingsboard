@@ -74,8 +74,7 @@ public class DeviceProfileEdgeProcessor extends BaseDeviceProfileProcessor {
     }
 
     private void saveOrUpdateDeviceProfile(TenantId tenantId, DeviceProfileId deviceProfileId, DeviceProfileUpdateMsg deviceProfileUpdateMsg, Edge edge, EdgeVersion edgeVersion) {
-        Pair<Boolean, Boolean> resultPair = super.saveOrUpdateDeviceProfile(tenantId, deviceProfileId, deviceProfileUpdateMsg,
-                EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion));
+        Pair<Boolean, Boolean> resultPair = super.saveOrUpdateDeviceProfile(tenantId, deviceProfileId, deviceProfileUpdateMsg, edgeVersion);
         Boolean created = resultPair.getFirst();
         if (created) {
             createRelationFromEdge(tenantId, edge.getId(), deviceProfileId);
@@ -134,16 +133,16 @@ public class DeviceProfileEdgeProcessor extends BaseDeviceProfileProcessor {
     }
 
     @Override
-    protected void setDefaultEdgeRuleChainId(DeviceProfile deviceProfile, RuleChainId ruleChainId, DeviceProfileUpdateMsg deviceProfileUpdateMsg, boolean isEdgeVersionOlderThan_3_6_2) {
-        UUID defaultEdgeRuleChainUUID = isEdgeVersionOlderThan_3_6_2
+    protected void setDefaultEdgeRuleChainId(DeviceProfile deviceProfile, RuleChainId ruleChainId, DeviceProfileUpdateMsg deviceProfileUpdateMsg, EdgeVersion edgeVersion) {
+        UUID defaultEdgeRuleChainUUID = EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)
                 ? safeGetUUID(deviceProfileUpdateMsg.getDefaultRuleChainIdMSB(), deviceProfileUpdateMsg.getDefaultRuleChainIdLSB())
                 : ruleChainId != null ? ruleChainId.getId() : null;
         deviceProfile.setDefaultEdgeRuleChainId(defaultEdgeRuleChainUUID != null ? new RuleChainId(defaultEdgeRuleChainUUID) : null);
     }
 
     @Override
-    protected void setDefaultDashboardId(TenantId tenantId, DashboardId dashboardId, DeviceProfile deviceProfile, DeviceProfileUpdateMsg deviceProfileUpdateMsg, boolean isEdgeVersionOlderThan_3_6_2) {
-        UUID defaultDashboardUUID = isEdgeVersionOlderThan_3_6_2
+    protected void setDefaultDashboardId(TenantId tenantId, DashboardId dashboardId, DeviceProfile deviceProfile, DeviceProfileUpdateMsg deviceProfileUpdateMsg, EdgeVersion edgeVersion) {
+        UUID defaultDashboardUUID = EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)
                 ? safeGetUUID(deviceProfileUpdateMsg.getDefaultDashboardIdMSB(), deviceProfileUpdateMsg.getDefaultDashboardIdLSB())
                 : deviceProfile.getDefaultDashboardId() != null ? deviceProfile.getDefaultDashboardId().getId() : (dashboardId != null ? dashboardId.getId() : null);
         deviceProfile.setDefaultDashboardId(defaultDashboardUUID != null ? new DashboardId(defaultDashboardUUID) : null);

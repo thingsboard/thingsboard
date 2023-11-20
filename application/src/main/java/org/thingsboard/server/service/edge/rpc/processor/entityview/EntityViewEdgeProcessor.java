@@ -81,8 +81,7 @@ public class EntityViewEdgeProcessor extends BaseEntityViewProcessor {
     }
 
     private void saveOrUpdateEntityView(TenantId tenantId, EntityViewId entityViewId, EntityViewUpdateMsg entityViewUpdateMsg, Edge edge, EdgeVersion edgeVersion) {
-        Pair<Boolean, Boolean> resultPair = super.saveOrUpdateEntityView(tenantId, entityViewId, entityViewUpdateMsg,
-                EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion));
+        Pair<Boolean, Boolean> resultPair = super.saveOrUpdateEntityView(tenantId, entityViewId, entityViewUpdateMsg, edgeVersion);
         Boolean created = resultPair.getFirst();
         if (created) {
             createRelationFromEdge(tenantId, edge.getId(), entityViewId);
@@ -140,8 +139,8 @@ public class EntityViewEdgeProcessor extends BaseEntityViewProcessor {
     }
 
     @Override
-    protected void setCustomerId(TenantId tenantId, CustomerId customerId, EntityView entityView, EntityViewUpdateMsg entityViewUpdateMsg, boolean isEdgeVersionOlderThan_3_6_2) {
-        CustomerId customerUUID = isEdgeVersionOlderThan_3_6_2
+    protected void setCustomerId(TenantId tenantId, CustomerId customerId, EntityView entityView, EntityViewUpdateMsg entityViewUpdateMsg, EdgeVersion edgeVersion) {
+        CustomerId customerUUID = EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)
                 ? safeGetCustomerId(entityViewUpdateMsg.getCustomerIdMSB(), entityViewUpdateMsg.getCustomerIdLSB())
                 : entityView.getCustomerId() != null ? entityView.getCustomerId() : customerId;
         entityView.setCustomerId(customerUUID);
