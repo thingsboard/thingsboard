@@ -22,6 +22,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
@@ -32,6 +35,8 @@ import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
@@ -72,6 +77,8 @@ public class DeviceServiceTest extends AbstractServiceTest {
     OtaPackageService otaPackageService;
     @Autowired
     TenantProfileService tenantProfileService;
+    @Autowired
+    private PlatformTransactionManager platformTransactionManager;
 
     private IdComparator<Device> idComparator = new IdComparator<>();
     private TenantId anotherTenantId;
@@ -284,6 +291,17 @@ public class DeviceServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    public void testSaveDeviceWithNameContains0x00_thenDataValidationException() {
+        Device device = new Device();
+        device.setType("default");
+        device.setTenantId(tenantId);
+        device.setName("F0929906\000\000\000\000\000\000\000\000\000");
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            deviceService.saveDevice(device);
+        });
+    }
+
+    @Test
     public void testSaveDeviceWithInvalidTenant() {
         Device device = new Device();
         device.setName("My device");
@@ -292,6 +310,28 @@ public class DeviceServiceTest extends AbstractServiceTest {
         Assertions.assertThrows(DataValidationException.class, () -> {
             deviceService.saveDevice(device);
         });
+    }
+
+    @Test
+    public void testShouldNotPutInCacheRolledbackDeviceProfile() {
+        DeviceProfile deviceProfile = createDeviceProfile(tenantId, "New device Profile" + StringUtils.randomAlphabetic(5));
+
+
+        Device device = new Device();
+        device.setType(deviceProfile.getName());
+        device.setTenantId(tenantId);
+        device.setName("My device"+ StringUtils.randomAlphabetic(5));
+
+        DefaultTransactionDefinition def = new DefaultTransactionDefinition();
+        TransactionStatus status = platformTransactionManager.getTransaction(def);
+        try {
+            deviceProfileService.saveDeviceProfile(deviceProfile);
+            deviceService.saveDevice(device);
+        } finally {
+            platformTransactionManager.rollback(status);
+        }
+        DeviceProfile deviceProfileByName = deviceProfileService.findDeviceProfileByName(tenantId, deviceProfile.getName());
+        Assert.assertNull(deviceProfileByName);
     }
 
     @Test

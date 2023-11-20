@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thingsboard</groupId>
     <artifactId>thingsboard</artifactId>
-    <version>3.5.2-SNAPSHOT</version>
+    <version>3.6.2-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Thingsboard</name>
@@ -78,7 +78,7 @@
         <zookeeper.version>3.8.1</zookeeper.version>
         <protobuf.version>3.21.9</protobuf.version>
         <grpc.version>1.42.1</grpc.version>
-        <tbel.version>1.0.9</tbel.version>
+        <tbel.version>1.1.4</tbel.version>
         <lombok.version>1.18.18</lombok.version>
         <paho.client.version>1.2.4</paho.client.version>
         <paho.mqttv5.client.version>1.2.5</paho.mqttv5.client.version>
@@ -121,6 +121,7 @@
         <wire-schema.version>3.4.0</wire-schema.version>
         <twilio.version>8.17.0</twilio.version>
         <hibernate-validator.version>6.0.20.Final</hibernate-validator.version>
+        <hypersistence-utils.version>3.5.2</hypersistence-utils.version>
         <javax.el.version>3.0.0</javax.el.version>
         <javax.validation-api.version>2.0.1.Final</javax.validation-api.version>
         <antisamy.version>1.7.2</antisamy.version>
@@ -1922,6 +1923,11 @@
                 <groupId>org.hibernate.validator</groupId>
                 <artifactId>hibernate-validator</artifactId>
                 <version>${hibernate-validator.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.hypersistence</groupId>
+                <artifactId>hypersistence-utils-hibernate-55</artifactId>
+                <version>${hypersistence-utils.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.glassfish</groupId>

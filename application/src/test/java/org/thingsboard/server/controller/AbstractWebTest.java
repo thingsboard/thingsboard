@@ -25,6 +25,7 @@ import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpStatus;
 import org.awaitility.Awaitility;
 import org.hamcrest.Matcher;
 import org.hibernate.exception.ConstraintViolationException;
@@ -65,6 +66,7 @@ import org.thingsboard.server.actors.TbEntityActorId;
 import org.thingsboard.server.actors.device.DeviceActor;
 import org.thingsboard.server.actors.device.DeviceActorMessageProcessor;
 import org.thingsboard.server.actors.device.SessionInfo;
+import org.thingsboard.server.actors.device.ToDeviceRpcRequestMetadata;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
@@ -176,6 +178,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
      * and {@link org.springframework.mock.web.MockAsyncContext#getTimeout()}
      */
     private static final long DEFAULT_TIMEOUT = -1L;
+    private static final int CLEANUP_TENANT_RETRIES_COUNT = 3;
 
     protected MediaType contentType = MediaType.APPLICATION_JSON;
 
@@ -329,10 +332,8 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         log.debug("Executing web test teardown");
 
         loginSysAdmin();
-        doDelete("/api/tenant/" + tenantId.getId().toString())
-                .andExpect(status().isOk());
+        deleteTenant(tenantId);
         deleteDifferentTenant();
-
         verifyNoTenantsLeft();
 
         tenantProfileService.deleteTenantProfiles(TenantId.SYS_TENANT_ID);
@@ -340,7 +341,34 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         log.info("Executed web test teardown");
     }
 
-    void verifyNoTenantsLeft() throws Exception {
+    private void verifyNoTenantsLeft() throws Exception {
+        List<Tenant> loadedTenants = getAllTenants();
+        if (!loadedTenants.isEmpty()) {
+            loadedTenants.forEach(tenant -> deleteTenant(tenant.getId()));
+            loadedTenants = getAllTenants();
+        }
+        assertThat(loadedTenants).as("All tenants expected to be deleted, but some tenants left in the database").isEmpty();
+    }
+
+    private void deleteTenant(TenantId tenantId) {
+        int status = 0;
+        int retries = 0;
+        while (status != HttpStatus.SC_OK && retries < CLEANUP_TENANT_RETRIES_COUNT) {
+            retries++;
+            try {
+                status = doDelete("/api/tenant/" + tenantId.getId().toString())
+                        .andReturn().getResponse().getStatus();
+                if (status != HttpStatus.SC_OK) {
+                    log.warn("Tenant deletion failed, tenantId: {}", tenantId.getId().toString());
+                    Thread.sleep(1000L);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    private List<Tenant> getAllTenants() throws Exception {
         List<Tenant> loadedTenants = new ArrayList<>();
         PageLink pageLink = new PageLink(10);
         PageData<Tenant> pageData;
@@ -352,8 +380,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
                 pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
-
-        assertThat(loadedTenants).as("All tenants expected to be deleted, but some tenants left in the database").isEmpty();
+        return loadedTenants;
     }
 
     protected void loginSysAdmin() throws Exception {
@@ -464,8 +491,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected void deleteDifferentTenant() throws Exception {
         if (savedDifferentTenant != null) {
             loginSysAdmin();
-            doDelete("/api/tenant/" + savedDifferentTenant.getId().getId().toString())
-                    .andExpect(status().isOk());
+            deleteTenant(savedDifferentTenant.getId());
             savedDifferentTenant = null;
         }
     }
@@ -1005,6 +1031,15 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         Awaitility.await("Device actor received subscription command from the transport").atMost(5, TimeUnit.SECONDS).until(() -> {
             log.warn("device {}, subscriptions.size() == {}", deviceId, subscriptions.size());
             return subscriptions.size() == subscriptionCount;
+        });
+    }
+
+    protected void awaitForDeviceActorToProcessAllRpcResponses(DeviceId deviceId) {
+        DeviceActorMessageProcessor processor = getDeviceActorProcessor(deviceId);
+        Map<Integer, ToDeviceRpcRequestMetadata> toDeviceRpcPendingMap = (Map<Integer, ToDeviceRpcRequestMetadata>) ReflectionTestUtils.getField(processor, "toDeviceRpcPendingMap");
+        Awaitility.await("Device actor pending map is empty").atMost(5, TimeUnit.SECONDS).until(() -> {
+            log.warn("device {}, toDeviceRpcPendingMap.size() == {}", deviceId, toDeviceRpcPendingMap.size());
+            return toDeviceRpcPendingMap.isEmpty();
         });
     }
 

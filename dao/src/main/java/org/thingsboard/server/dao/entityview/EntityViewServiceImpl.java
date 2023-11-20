@@ -163,11 +163,16 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
 
     @Override
     public EntityView findEntityViewById(TenantId tenantId, EntityViewId entityViewId) {
+        return findEntityViewById(tenantId, entityViewId, true);
+    }
+
+    @Override
+    public EntityView findEntityViewById(TenantId tenantId, EntityViewId entityViewId, boolean putInCache) {
         log.trace("Executing findEntityViewById [{}]", entityViewId);
         validateId(entityViewId, INCORRECT_ENTITY_VIEW_ID + entityViewId);
-        return cache.getAndPutInTransaction(EntityViewCacheKey.byId(entityViewId),
+        return cache.getOrFetchFromDB(EntityViewCacheKey.byId(entityViewId),
                 () -> entityViewDao.findById(tenantId, entityViewId.getId())
-                , EntityViewCacheValue::getEntityView, v -> new EntityViewCacheValue(v, null), true);
+                , EntityViewCacheValue::getEntityView, v -> new EntityViewCacheValue(v, null), true, putInCache);
     }
 
     @Override
@@ -314,6 +319,11 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
         return cache.getAndPutInTransaction(EntityViewCacheKey.byEntityId(tenantId, entityId),
                 () -> entityViewDao.findEntityViewsByTenantIdAndEntityId(tenantId.getId(), entityId.getId()),
                 EntityViewCacheValue::getEntityViews, v -> new EntityViewCacheValue(null, v), true);
+    }
+
+    @Override
+    public boolean existsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId) {
+        return entityViewDao.existsByTenantIdAndEntityId(tenantId.getId(), entityId.getId());
     }
 
     @Override

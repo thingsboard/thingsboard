@@ -184,13 +184,13 @@ public interface TbContext {
 
     void ack(TbMsg tbMsg);
 
-    @Deprecated(since = "3.5.2", forRemoval = true)
+    @Deprecated(since = "3.6.0", forRemoval = true)
     TbMsg newMsg(String queueName, String type, EntityId originator, TbMsgMetaData metaData, String data);
 
     /**
      * Creates a new TbMsg instance with the specified parameters.
      *
-     * <p><strong>Deprecated:</strong> This method is deprecated since version 3.5.2 and should only be used when you need to
+     * <p><strong>Deprecated:</strong> This method is deprecated since version 3.6.0 and should only be used when you need to
      * specify a custom message type that doesn't exist in the {@link TbMsgType} enum. For standard message types,
      * it is recommended to use the {@link #newMsg(String, TbMsgType, EntityId, CustomerId, TbMsgMetaData, String)}
      * method instead.</p>
@@ -203,10 +203,10 @@ public interface TbContext {
      * @param data        the data of the message
      * @return new TbMsg instance
      */
-    @Deprecated(since = "3.5.2")
+    @Deprecated(since = "3.6.0")
     TbMsg newMsg(String queueName, String type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, String data);
 
-    @Deprecated(since = "3.5.2", forRemoval = true)
+    @Deprecated(since = "3.6.0", forRemoval = true)
     TbMsg transformMsg(TbMsg origMsg, String type, EntityId originator, TbMsgMetaData metaData, String data);
 
     TbMsg newMsg(String queueName, TbMsgType type, EntityId originator, TbMsgMetaData metaData, String data);
@@ -225,7 +225,7 @@ public interface TbContext {
 
     TbMsg assetCreatedMsg(Asset asset, RuleNodeId ruleNodeId);
 
-    @Deprecated(since = "3.5.2", forRemoval = true)
+    @Deprecated(since = "3.6.0", forRemoval = true)
     TbMsg alarmActionMsg(Alarm alarm, RuleNodeId ruleNodeId, String action);
 
     TbMsg alarmActionMsg(Alarm alarm, RuleNodeId ruleNodeId, TbMsgType actionMsgType);

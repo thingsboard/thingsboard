@@ -269,6 +269,19 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
       }
     ],
     [
+      EntityType.WIDGET_TYPE,
+      {
+        type: 'entity.type-widget',
+        typePlural: 'entity.type-widgets',
+        list: 'entity.list-of-widgets',
+        details: 'widget.details',
+        add: 'dashboard.add-widget',
+        noEntities: 'widget.no-widgets-text',
+        search: 'widget.search-widgets',
+        selectedEntities: 'widget.selected-widgets'
+      }
+    ],
+    [
       EntityType.WIDGETS_BUNDLE,
       {
         type: 'entity.type-widgets-bundle',
@@ -472,6 +485,12 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseDa
       EntityType.DASHBOARD,
       {
         helpLinkId: 'dashboards'
+      }
+    ],
+    [
+      EntityType.WIDGET_TYPE,
+      {
+        helpLinkId: 'widgetTypes'
       }
     ],
     [

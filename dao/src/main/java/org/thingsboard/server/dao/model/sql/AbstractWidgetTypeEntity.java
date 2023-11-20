@@ -31,13 +31,10 @@ import java.util.UUID;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @MappedSuperclass
-public abstract class AbstractWidgetTypeEntity<T extends BaseWidgetType> extends BaseSqlEntity<T> implements BaseEntity<T> {
+public abstract class AbstractWidgetTypeEntity<T extends BaseWidgetType> extends BaseSqlEntity<T> {
 
     @Column(name = ModelConstants.WIDGET_TYPE_TENANT_ID_PROPERTY)
     private UUID tenantId;
-
-    @Column(name = ModelConstants.WIDGET_TYPE_BUNDLE_ALIAS_PROPERTY)
-    private String bundleAlias;
 
     @Column(name = ModelConstants.WIDGET_TYPE_FQN_PROPERTY)
     private String fqn;
@@ -60,7 +57,6 @@ public abstract class AbstractWidgetTypeEntity<T extends BaseWidgetType> extends
         if (widgetType.getTenantId() != null) {
             this.tenantId = widgetType.getTenantId().getId();
         }
-        this.bundleAlias = widgetType.getBundleAlias();
         this.fqn = widgetType.getFqn();
         this.name = widgetType.getName();
         this.deprecated = widgetType.isDeprecated();
@@ -70,7 +66,6 @@ public abstract class AbstractWidgetTypeEntity<T extends BaseWidgetType> extends
         this.setId(widgetTypeEntity.getId());
         this.setCreatedTime(widgetTypeEntity.getCreatedTime());
         this.tenantId = widgetTypeEntity.getTenantId();
-        this.bundleAlias = widgetTypeEntity.getBundleAlias();
         this.fqn = widgetTypeEntity.getFqn();
         this.name = widgetTypeEntity.getName();
         this.deprecated = widgetTypeEntity.isDeprecated();
@@ -82,7 +77,6 @@ public abstract class AbstractWidgetTypeEntity<T extends BaseWidgetType> extends
         if (tenantId != null) {
             widgetType.setTenantId(TenantId.fromUUID(tenantId));
         }
-        widgetType.setBundleAlias(bundleAlias);
         widgetType.setFqn(fqn);
         widgetType.setName(name);
         widgetType.setDeprecated(deprecated);

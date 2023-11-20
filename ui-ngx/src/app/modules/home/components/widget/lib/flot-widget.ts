@@ -415,7 +415,6 @@ export class TbFlot {
 
     for (let i = 0; i < this.subscription.data.length; i++) {
       const series = this.subscription.data[i] as TbFlotSeries;
-      colors.push(series.dataKey.color);
       const keySettings = series.dataKey.settings;
       series.dataKey.tooltipValueFormatFunction = tooltipValueFormatFunction;
       if (keySettings.tooltipValueFormatter && keySettings.tooltipValueFormatter.length) {
@@ -466,8 +465,8 @@ export class TbFlot {
           apply: true
         };
       }
-
       const lineColor = tinycolor(series.dataKey.color);
+      colors.push(lineColor.toRgbString());
       lineColor.setAlpha(.75);
 
       series.highlightColor = lineColor.toRgbString();
@@ -1621,10 +1620,10 @@ export class TbFlot {
     const descriptors = this.ctx.actionsApi.getActionDescriptors('sliceClick');
     if ($event && descriptors.length) {
       $event.stopPropagation();
-      const entityInfo = this.ctx.actionsApi.getActiveEntityInfo();
-      const entityId = entityInfo ? entityInfo.entityId : null;
-      const entityName = entityInfo ? entityInfo.entityName : null;
-      const entityLabel = entityInfo ? entityInfo.entityLabel : null;
+      const datasource = item.series.datasource;
+      const entityId = datasource ? datasource.entity?.id : null;
+      const entityName = datasource ? datasource.entityName : null;
+      const entityLabel = datasource ? datasource.entityLabel : null;
       this.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, item, entityLabel);
     }
   }

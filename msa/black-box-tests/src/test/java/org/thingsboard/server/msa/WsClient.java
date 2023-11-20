@@ -33,8 +33,8 @@ public class WsClient extends WebSocketClient {
     private WsTelemetryResponse message;
 
     private volatile boolean firstReplyReceived;
-    private CountDownLatch firstReply = new CountDownLatch(1);
-    private CountDownLatch latch = new CountDownLatch(1);
+    private final CountDownLatch firstReply = new CountDownLatch(1);
+    private final CountDownLatch latch = new CountDownLatch(1);
 
     private final long timeoutMultiplier;
 
@@ -48,7 +48,8 @@ public class WsClient extends WebSocketClient {
     }
 
     @Override
-    public void onMessage(String message) {
+    public synchronized void onMessage(String message) {
+        log.error("WS onMessage: {}", message);
         if (!firstReplyReceived) {
             firstReplyReceived = true;
             firstReply.countDown();
@@ -66,12 +67,13 @@ public class WsClient extends WebSocketClient {
     }
 
     @Override
-    public void onClose(int code, String reason, boolean remote) {
-        log.info("ws is closed, due to [{}]", reason);
+    public synchronized void onClose(int code, String reason, boolean remote) {
+        log.error("WS onClose: [{}]", reason);
     }
 
     @Override
-    public void onError(Exception ex) {
+    public synchronized void onError(Exception ex) {
+        log.error("WS onError: ", ex);
         ex.printStackTrace();
     }
 

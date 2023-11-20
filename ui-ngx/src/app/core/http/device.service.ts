@@ -28,6 +28,7 @@ import {
   DeviceInfo,
   DeviceInfoQuery,
   DeviceSearchQuery,
+  PublishLaunchCommand,
   PublishTelemetryCommand
 } from '@app/shared/models/device.models';
 import { EntitySubtype } from '@app/shared/models/entity-type.models';
@@ -212,6 +213,10 @@ export class DeviceService {
 
   public getDevicePublishTelemetryCommands(deviceId: string, config?: RequestConfig): Observable<PublishTelemetryCommand> {
     return this.http.get<PublishTelemetryCommand>(`/api/device-connectivity/${deviceId}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getDevicePublishLaunchCommands(deviceId: string, config?: RequestConfig): Observable<PublishLaunchCommand> {
+    return this.http.get<PublishLaunchCommand>(`/api/device-connectivity/gateway-launch/${deviceId}`, defaultHttpOptionsFromConfig(config));
   }
 
 }

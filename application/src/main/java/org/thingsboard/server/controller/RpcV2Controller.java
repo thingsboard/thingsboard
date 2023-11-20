@@ -47,7 +47,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.exception.ToErrorResponseEntity;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.rpc.RemoveRpcActorMsg;
+import org.thingsboard.server.common.msg.rpc.RemoveRpcActorMsg;
 import org.thingsboard.server.service.security.permission.Operation;
 
 import javax.annotation.Nullable;
@@ -230,7 +230,7 @@ public class RpcV2Controller extends AbstractRpcController {
         Rpc rpc = checkRpcId(rpcId, Operation.DELETE);
 
         if (rpc != null) {
-            if (rpc.getStatus().equals(RpcStatus.QUEUED)) {
+            if (rpc.getStatus().isPushDeleteNotificationToCore()) {
                 RemoveRpcActorMsg removeMsg = new RemoveRpcActorMsg(getTenantId(), rpc.getDeviceId(), rpc.getUuidId());
                 log.trace("[{}] Forwarding msg {} to queue actor!", rpc.getDeviceId(), rpc);
                 tbClusterService.pushMsgToCore(removeMsg, null);

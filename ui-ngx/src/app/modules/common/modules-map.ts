@@ -83,15 +83,18 @@ import * as TbCore from '@core/public-api';
 import * as TbShared from '@shared/public-api';
 import * as TbHomeComponents from '@home/components/public-api';
 
-import * as MillisecondsToTimeStringPipe from '@shared/pipe/milliseconds-to-time-string.pipe';
+import * as DateAgoPipe from '@shared/pipe/date-ago.pipe';
 import * as EnumToArrayPipe from '@shared/pipe/enum-to-array.pipe';
-import * as HighlightPipe from '@shared/pipe/highlight.pipe';
-import * as TruncatePipe from '@shared/pipe/truncate.pipe';
-import * as TbJsonPipe from '@shared/pipe/tbJson.pipe';
 import * as FileSizePipe from '@shared/pipe/file-size.pipe';
-import * as NospacePipe from '@shared/pipe/nospace.pipe';
-import * as SelectableColumnsPipe from '@shared/pipe/selectable-columns.pipe';
+import * as HighlightPipe from '@shared/pipe/highlight.pipe';
 import * as KeyboardShortcutPipe from '@shared/pipe/keyboard-shortcut.pipe';
+import * as MillisecondsToTimeStringPipe from '@shared/pipe/milliseconds-to-time-string.pipe';
+import * as NospacePipe from '@shared/pipe/nospace.pipe';
+import * as SafePipe from '@shared/pipe/safe.pipe';
+import * as SelectableColumnsPipe from '@shared/pipe/selectable-columns.pipe';
+import * as ShortNumberPipe from '@shared/pipe/short-number.pipe';
+import * as TbJsonPipe from '@shared/pipe/tbJson.pipe';
+import * as TruncatePipe from '@shared/pipe/truncate.pipe';
 import * as CustomTranslatePipe from '@shared/pipe/custom-translate.pipe';
 
 import * as coercion from '@shared/decorators/coercion';
@@ -387,15 +390,18 @@ class ModulesMap implements IModulesMap {
     '@shared/public-api': TbShared,
     '@home/components/public-api': TbHomeComponents,
 
-    '@shared/pipe/milliseconds-to-time-string.pipe': MillisecondsToTimeStringPipe,
+    '@shared/pipe/date-ago.pipe': DateAgoPipe,
     '@shared/pipe/enum-to-array.pipe': EnumToArrayPipe,
-    '@shared/pipe/highlight.pipe': HighlightPipe,
-    '@shared/pipe/truncate.pipe': TruncatePipe,
-    '@shared/pipe/tbJson.pipe': TbJsonPipe,
     '@shared/pipe/file-size.pipe': FileSizePipe,
-    '@shared/pipe/nospace.pipe': NospacePipe,
-    '@shared/pipe/selectable-columns.pipe': SelectableColumnsPipe,
+    '@shared/pipe/highlight.pipe': HighlightPipe,
     '@shared/pipe/keyboard-shortcut.pipe': KeyboardShortcutPipe,
+    '@shared/pipe/milliseconds-to-time-string.pipe': MillisecondsToTimeStringPipe,
+    '@shared/pipe/nospace.pipe': NospacePipe,
+    '@shared/pipe/safe.pipe': SafePipe,
+    '@shared/pipe/selectable-columns.pipe': SelectableColumnsPipe,
+    '@shared/pipe/short-number.pipe': ShortNumberPipe,
+    '@shared/pipe/tbJson.pipe': TbJsonPipe,
+    '@shared/pipe/truncate.pipe': TruncatePipe,
     '@shared/pipe/custom-translate.pipe': CustomTranslatePipe,
 
     '@shared/decorators/coercion': coercion,

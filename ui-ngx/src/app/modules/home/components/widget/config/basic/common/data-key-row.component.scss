@@ -88,4 +88,29 @@
       display: block;
     }
   }
+
+  .tb-settings-button {
+    width: 40px;
+    min-width: 40px;
+  }
+
+  &.tb-single-row {
+    padding: 0;
+    .tb-units-field, .tb-decimals-field {
+      min-width: 0;
+      width: auto;
+    }
+    .tb-units-field {
+      tb-unit-input {
+        width: auto;
+        max-width: 140px;
+      }
+    }
+    .tb-decimals-field {
+      .mat-mdc-form-field {
+        width: auto;
+        max-width: 140px;
+      }
+    }
+  }
 }

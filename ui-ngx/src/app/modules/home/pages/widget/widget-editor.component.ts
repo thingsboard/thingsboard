@@ -25,7 +25,6 @@ import {
   ViewChild,
   ViewEncapsulation
 } from '@angular/core';
-import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { WidgetService } from '@core/http/widget.service';
@@ -53,17 +52,12 @@ import {
   SaveWidgetTypeAsDialogComponent,
   SaveWidgetTypeAsDialogResult
 } from '@home/pages/widget/save-widget-type-as-dialog.component';
-import { forkJoin, Subscription } from 'rxjs';
+import { forkJoin, mergeMap, of, Subscription } from 'rxjs';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { widgetEditorCompleter } from '@home/pages/widget/widget-editor.models';
 import { Observable } from 'rxjs/internal/Observable';
 import { map, tap } from 'rxjs/operators';
 import { beautifyCss, beautifyHtml, beautifyJs } from '@shared/models/beautify.models';
-import {
-  MoveWidgetTypeDialogComponent,
-  MoveWidgetTypeDialogData,
-  MoveWidgetTypeDialogResult
-} from '@home/pages/widget/move-widget-type-dialog.component';
 import Timeout = NodeJS.Timeout;
 
 // @dynamic
@@ -124,12 +118,23 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
 
   isReadOnly: boolean;
 
-  widgetsBundle: WidgetsBundle;
   widgetTypeDetails: WidgetTypeDetails;
   widget: WidgetInfo;
   origWidget: WidgetInfo;
 
-  isDirty = false;
+  private isEditModeWidget = false;
+  private _isDirty = false;
+
+  get isDirty(): boolean {
+    return this._isDirty || this.isEditModeWidget;
+  }
+
+  set isDirty(value: boolean) {
+    if (!value) {
+      this.isEditModeWidget = false;
+    }
+    this._isDirty = value;
+  }
 
   fullscreen = false;
   htmlFullscreen = false;
@@ -155,7 +160,6 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   iframeWidgetEditModeInited = false;
   saveWidgetPending = false;
   saveWidgetAsPending = false;
-  moveWidgetPending = false;
 
   gotError = false;
   errorMarkers: number[] = [];
@@ -191,14 +195,13 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   }
 
   private init(data: any) {
-    this.widgetsBundle = data.widgetsBundle;
+    this.widgetTypeDetails = data.widgetEditorData.widgetTypeDetails;
+    this.widget = data.widgetEditorData.widget;
     if (this.authUser.authority === Authority.TENANT_ADMIN) {
-      this.isReadOnly = !this.widgetsBundle || this.widgetsBundle.tenantId.id === NULL_UUID;
+      this.isReadOnly = this.widgetTypeDetails && this.widgetTypeDetails.tenantId.id === NULL_UUID;
     } else {
       this.isReadOnly = this.authUser.authority !== Authority.SYS_ADMIN;
     }
-    this.widgetTypeDetails = data.widgetEditorData.widgetTypeDetails;
-    this.widget = data.widgetEditorData.widget;
     if (this.widgetTypeDetails) {
       const config = JSON.parse(this.widget.defaultConfig);
       this.widget.defaultConfig = JSON.stringify(config);
@@ -258,16 +261,6 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
           return false;
         }, ['INPUT', 'SELECT', 'TEXTAREA'],
         this.translate.instant('widget.saveAs'))
-    );
-    this.hotKeys.push(
-      new Hotkey('shift+ctrl+m', (event: KeyboardEvent) => {
-          if (!getCurrentIsLoading(this.store) && !this.moveDisabled()) {
-            event.preventDefault();
-            this.moveWidget();
-          }
-          return false;
-        }, ['INPUT', 'SELECT', 'TEXTAREA'],
-        this.translate.instant('widget.move'))
     );
     this.hotKeys.push(
       new Hotkey('shift+ctrl+f', (event: KeyboardEvent) => {
@@ -469,6 +462,10 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
           break;
         case 'widgetEditUpdated':
           this.onWidgetEditUpdated(message.data);
+          this.onWidgetEditModeToggled(false);
+          break;
+        case 'widgetEditModeToggle':
+          this.onWidgetEditModeToggled(message.data);
           break;
       }
     }
@@ -503,6 +500,10 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     this.widget.defaultConfig = JSON.stringify(widget.config);
     this.iframe.attr('data-widget', JSON.stringify(this.widget));
     this.isDirty = true;
+  }
+
+  private onWidgetEditModeToggled(mode: boolean) {
+    this.isEditModeWidget = mode;
   }
 
   private onWidgetException(details: ExceptionData) {
@@ -562,7 +563,17 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   private commitSaveWidget() {
     const id = (this.widgetTypeDetails && this.widgetTypeDetails.id) ? this.widgetTypeDetails.id : undefined;
     const createdTime = (this.widgetTypeDetails && this.widgetTypeDetails.createdTime) ? this.widgetTypeDetails.createdTime : undefined;
-    this.widgetService.saveWidgetTypeDetails(this.widget, id, this.widgetsBundle.alias, createdTime).subscribe({
+    this.widgetService.saveWidgetTypeDetails(this.widget, id, createdTime).pipe(
+      mergeMap((widgetTypeDetails) => {
+        const widgetsBundleId = this.route.snapshot.params.widgetsBundleId as string;
+        if (widgetsBundleId && !id) {
+          return this.widgetService.addWidgetFqnToWidgetBundle(widgetsBundleId, widgetTypeDetails.fqn).pipe(
+            map(() => widgetTypeDetails)
+          );
+        }
+        return of(widgetTypeDetails);
+      })
+    ).subscribe({
       next: (widgetTypeDetails) => {
         this.saveWidgetPending = false;
         if (!this.widgetTypeDetails?.id) {
@@ -594,11 +605,25 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
           config.title = this.widget.widgetName;
           this.widget.defaultConfig = JSON.stringify(config);
           this.isDirty = false;
-          this.widgetService.saveWidgetTypeDetails(this.widget, undefined, saveWidgetAsData.bundleAlias, undefined).subscribe(
+          this.widgetService.saveWidgetTypeDetails(this.widget, undefined, undefined).pipe(
+            mergeMap((widget) => {
+              if (saveWidgetAsData.widgetBundleId) {
+                return this.widgetService.addWidgetFqnToWidgetBundle(saveWidgetAsData.widgetBundleId, widget.fqn).pipe(
+                  map(() => widget)
+                );
+              }
+              return of(widget);
+            })
+          ).subscribe(
             {
               next: (widgetTypeDetails) => {
                 this.saveWidgetAsPending = false;
-                this.router.navigateByUrl(`/widgets-bundles/${saveWidgetAsData.bundleId}/widgetTypes/${widgetTypeDetails.id.id}`);
+                if (saveWidgetAsData.widgetBundleId) {
+                  this.router.navigate(['resources', 'widgets-library', 'widgets-bundles',
+                    saveWidgetAsData.widgetBundleId, widgetTypeDetails.id.id]);
+                } else {
+                  this.router.navigate(['resources', 'widgets-library', 'widget-types', widgetTypeDetails.id.id]);
+                }
               },
               error: () => {
                 this.saveWidgetAsPending = false;
@@ -626,7 +651,9 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     this.gotError = false;
     this.iframeWidgetEditModeInited = false;
     const config: WidgetConfig = JSON.parse(this.widget.defaultConfig);
-    config.title = this.widget.widgetName;
+    if (!config.title) {
+      config.title = this.widget.widgetName;
+    }
     this.widget.defaultConfig = JSON.stringify(config);
     this.iframe.attr('data-widget', JSON.stringify(this.widget));
     // @ts-ignore
@@ -655,36 +682,8 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     this.applyWidgetScript();
   }
 
-  moveWidget() {
-    this.moveWidgetPending = true;
-    this.dialog.open<MoveWidgetTypeDialogComponent, MoveWidgetTypeDialogData,
-      MoveWidgetTypeDialogResult>(MoveWidgetTypeDialogComponent, {
-      disableClose: true,
-      data: {
-        currentBundleId: this.widgetsBundle.id.id
-      },
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog']
-    }).afterClosed().subscribe(
-      (moveWidgetTypeData) => {
-        if (moveWidgetTypeData) {
-          this.widgetService.moveWidgetType(this.widgetTypeDetails.id.id, moveWidgetTypeData.bundleAlias).subscribe({
-            next: (widgetTypeDetails) => {
-              this.moveWidgetPending = false;
-              this.router.navigateByUrl(`/widgets-bundles/${moveWidgetTypeData.bundleId}/widgetTypes/${widgetTypeDetails.id.id}`);
-            },
-            error: () => {
-              this.moveWidgetPending = false;
-            }
-          });
-        } else {
-          this.moveWidgetPending = false;
-        }
-      }
-    );
-  }
-
   undoDisabled(): boolean {
-    return !this.isDirty
+    return !this._isDirty
     || !this.iframeWidgetEditModeInited
     || this.saveWidgetPending
     || this.saveWidgetAsPending;
@@ -692,7 +691,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
 
   saveDisabled(): boolean {
     return this.isReadOnly
-      || !this.isDirty
+      || !this._isDirty
       || !this.iframeWidgetEditModeInited
       || this.saveWidgetPending
       || this.saveWidgetAsPending;
@@ -702,15 +701,6 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     return !this.iframeWidgetEditModeInited
       || this.saveWidgetPending
       || this.saveWidgetAsPending;
-  }
-
-  moveDisabled(): boolean {
-    return this.isReadOnly
-      || !this.widgetTypeDetails?.id
-      || !this.iframeWidgetEditModeInited
-      || this.saveWidgetPending
-      || this.saveWidgetAsPending
-      || this.moveWidgetPending;
   }
 
   beautifyCss(): void {
@@ -852,5 +842,12 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     }
     this.widget.defaultConfig = JSON.stringify(config);
     this.isDirty = true;
+  }
+
+  get confirmOnExitMessage(): string {
+    if (this.isEditModeWidget && !this._isDirty) {
+      return this.translate.instant('widget.confirm-to-exit-editor-html');
+    }
+    return '';
   }
 }

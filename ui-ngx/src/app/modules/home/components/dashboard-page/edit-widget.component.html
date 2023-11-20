@@ -34,7 +34,7 @@
         </button>
         <button *ngIf="!previewMode"
                 fxHide.gt-sm
-                [disabled]="widgetFormGroup.invalid"
+                [disabled]="!widgetFormGroup.valid"
                 mat-button color="primary"
                 (click)="previewMode = true">
           <mat-icon>visibility</mat-icon>
@@ -44,7 +44,7 @@
       <div fxFlex.lt-md class="tb-widget-config-header-suffix" fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="12px">
         <button *ngIf="!previewMode"
                 fxHide.lt-md
-                [disabled]="widgetFormGroup.invalid"
+                [disabled]="!widgetFormGroup.valid"
                 mat-button color="primary"
                 (click)="previewMode = true">
           <mat-icon>visibility</mat-icon>
@@ -57,7 +57,7 @@
             <mat-icon>close</mat-icon>
             {{ 'action.decline' | translate }}
           </button>
-          <button [disabled]="widgetFormGroup.invalid || !widgetFormGroup.dirty"
+          <button [disabled]="!widgetFormGroup.valid || !widgetFormGroup.dirty"
             mat-flat-button color="primary"
             (click)="onApplyWidgetConfig()">
             <mat-icon>done</mat-icon>

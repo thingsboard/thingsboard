@@ -202,6 +202,13 @@ export function base64toObj(b64Encoded: string): any {
   return JSON.parse(json);
 }
 
+export function stringToBase64(value: string): string {
+  return btoa(encodeURIComponent(value).replace(/%([0-9A-F]{2})/g,
+    function toSolidBytes(match, p1) {
+      return String.fromCharCode(Number('0x' + p1));
+    }));
+}
+
 const scrollRegex = /(auto|scroll)/;
 
 function parentNodes(node: Node, nodes: Node[]): Node[] {
@@ -761,7 +768,7 @@ export function genNextLabel(name: string, datasources: Datasource[]): string {
         if (datasource) {
           if (datasource.dataKeys) {
             datasource.dataKeys.forEach((dataKey) => {
-              if (dataKey.label === label) {
+              if (dataKey?.label === label) {
                 i++;
                 label = name + ' ' + i;
                 matches = true;
@@ -770,7 +777,7 @@ export function genNextLabel(name: string, datasources: Datasource[]): string {
           }
           if (datasource.latestDataKeys) {
             datasource.latestDataKeys.forEach((dataKey) => {
-              if (dataKey.label === label) {
+              if (dataKey?.label === label) {
                 i++;
                 label = name + ' ' + i;
                 matches = true;
@@ -804,4 +811,13 @@ export const getOS = (): string => {
   }
 
   return os;
+};
+
+
+export const camelCase = (str: string): string => {
+  return _.camelCase(str);
+};
+
+export const convertKeysToCamelCase = (obj: Record<string, any>): Record<string, any> => {
+  return _.mapKeys(obj, (value, key) => _.camelCase(key));
 };

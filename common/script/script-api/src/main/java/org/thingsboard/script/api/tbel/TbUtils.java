@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,9 +61,10 @@ public class TbUtils {
         parserConfig.addImport("decodeToJson", new MethodStub(TbUtils.class.getMethod("decodeToJson",
                 ExecutionContext.class, String.class)));
         parserConfig.addImport("stringToBytes", new MethodStub(TbUtils.class.getMethod("stringToBytes",
-                ExecutionContext.class, String.class)));
+                ExecutionContext.class, Object.class)));
         parserConfig.addImport("stringToBytes", new MethodStub(TbUtils.class.getMethod("stringToBytes",
-                ExecutionContext.class, String.class, String.class)));
+                ExecutionContext.class, Object.class, String.class)));
+        parserConfig.registerNonConvertableMethods(TbUtils.class, Collections.singleton("stringToBytes"));
         parserConfig.addImport("parseInt", new MethodStub(TbUtils.class.getMethod("parseInt",
                 String.class)));
         parserConfig.addImport("parseInt", new MethodStub(TbUtils.class.getMethod("parseInt",
@@ -190,14 +192,22 @@ public class TbUtils {
         return new String(bytes, charsetName);
     }
 
-    public static List<Byte> stringToBytes(ExecutionContext ctx, String str) {
-        byte[] bytes = str.getBytes();
-        return bytesToList(ctx, bytes);
+    public static List<Byte> stringToBytes(ExecutionContext ctx, Object str) throws IllegalAccessException {
+        if (str instanceof String) {
+            byte[] bytes = str.toString().getBytes();
+            return bytesToList(ctx, bytes);
+        } else {
+            throw new IllegalAccessException("Invalid type parameter [" + str.getClass().getSimpleName() + "]. Expected 'String'");
+        }
     }
 
-    public static List<Byte> stringToBytes(ExecutionContext ctx, String str, String charsetName) throws UnsupportedEncodingException {
-        byte[] bytes = str.getBytes(charsetName);
-        return bytesToList(ctx, bytes);
+    public static List<Byte> stringToBytes(ExecutionContext ctx, Object str, String charsetName) throws UnsupportedEncodingException, IllegalAccessException {
+        if (str instanceof String) {
+            byte[] bytes = str.toString().getBytes(charsetName);
+            return bytesToList(ctx, bytes);
+        } else {
+            throw new IllegalAccessException("Invalid type parameter [" + str.getClass().getSimpleName() + "]. Expected 'String'");
+        }
     }
 
     private static byte[] bytesFromList(List<Byte> bytesList) {

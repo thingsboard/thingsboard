@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
@@ -39,11 +40,12 @@ import org.thingsboard.server.common.data.notification.NotificationRequestStatus
 import org.thingsboard.server.common.data.notification.NotificationStatus;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
-import org.thingsboard.server.common.data.notification.targets.MicrosoftTeamsNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.settings.UserNotificationSettings;
+import org.thingsboard.server.common.data.notification.targets.MicrosoftTeamsNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.targets.platform.UsersFilter;
 import org.thingsboard.server.common.data.notification.targets.slack.SlackNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
@@ -62,7 +64,7 @@ import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.util.limits.RateLimitService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.NotificationsTopicService;
+import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.service.executors.NotificationExecutorService;
 import org.thingsboard.server.service.notification.channels.NotificationChannel;
@@ -92,7 +94,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     private final NotificationTemplateService notificationTemplateService;
     private final NotificationSettingsService notificationSettingsService;
     private final NotificationExecutorService notificationExecutor;
-    private final NotificationsTopicService notificationsTopicService;
+    private final TopicService topicService;
     private final TbQueueProducerProvider producerProvider;
     private final RateLimitService rateLimitService;
 
@@ -165,16 +167,54 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                 .settings(settings)
                 .build();
 
-        notificationExecutor.submit(() -> {
-            for (NotificationTarget target : targets) {
-                processForTarget(target, ctx);
-            }
+        processNotificationRequestAsync(ctx, targets, callback);
+        return request;
+    }
 
+    @Override
+    public void sendGeneralWebNotification(TenantId tenantId, UsersFilter recipients, NotificationTemplate template) {
+        NotificationTarget target = new NotificationTarget();
+        target.setTenantId(tenantId);
+        PlatformUsersNotificationTargetConfig targetConfig = new PlatformUsersNotificationTargetConfig();
+        targetConfig.setUsersFilter(recipients);
+        target.setConfiguration(targetConfig);
+
+        NotificationRequest notificationRequest = NotificationRequest.builder()
+                .tenantId(tenantId)
+                .template(template)
+                .targets(List.of(EntityId.NULL_UUID)) // this is temporary and will be removed when 'create from scratch' functionality is implemented for recipients
+                .status(NotificationRequestStatus.PROCESSING)
+                .build();
+        try {
+            notificationRequest = notificationRequestService.saveNotificationRequest(tenantId, notificationRequest);
+            NotificationProcessingContext ctx = NotificationProcessingContext.builder()
+                    .tenantId(tenantId)
+                    .request(notificationRequest)
+                    .deliveryMethods(Set.of(NotificationDeliveryMethod.WEB))
+                    .template(template)
+                    .build();
+
+            processNotificationRequestAsync(ctx, List.of(target), null);
+        } catch (Exception e) {
+            log.error("Failed to process notification request for recipients {} for template '{}'", recipients, template.getName(), e);
+        }
+    }
+
+    private void processNotificationRequestAsync(NotificationProcessingContext ctx, List<NotificationTarget> targets, Consumer<NotificationRequestStats> callback) {
+        notificationExecutor.submit(() -> {
             NotificationRequestId requestId = ctx.getRequest().getId();
+            for (NotificationTarget target : targets) {
+                try {
+                    processForTarget(target, ctx);
+                } catch (Exception e) {
+                    log.error("[{}] Failed to process notification request for target {}", requestId, target.getId(), e);
+                }
+            }
             log.debug("[{}] Notification request processing is finished", requestId);
+
             NotificationRequestStats stats = ctx.getStats();
             try {
-                notificationRequestService.updateNotificationRequest(tenantId, requestId, NotificationRequestStatus.SENT, stats);
+                notificationRequestService.updateNotificationRequest(ctx.getTenantId(), requestId, NotificationRequestStatus.SENT, stats);
             } catch (Exception e) {
                 log.error("[{}] Failed to update stats for notification request", requestId, e);
             }
@@ -187,8 +227,6 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                 }
             }
         });
-
-        return request;
     }
 
     private void processForTarget(NotificationTarget target, NotificationProcessingContext ctx) {
@@ -393,7 +431,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
             TransportProtos.ToCoreNotificationMsg notificationRequestUpdateProto = TbSubscriptionUtils.notificationRequestUpdateToProto(tenantId, update);
             Set<String> coreServices = new HashSet<>(partitionService.getAllServiceIds(ServiceType.TB_CORE));
             for (String serviceId : coreServices) {
-                TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, serviceId);
+                TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_CORE, serviceId);
                 producerProvider.getTbCoreNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), notificationRequestUpdateProto), null);
             }
         });

@@ -20,6 +20,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.function.Function;
 
 import static org.apache.commons.lang3.StringUtils.repeat;
 
@@ -163,6 +164,15 @@ public class StringUtils {
         return false;
     }
 
+    public static boolean equalsAnyIgnoreCase(String string, String... otherStrings) {
+        for (String otherString : otherStrings) {
+            if (equalsIgnoreCase(string, otherString)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static String substringAfterLast(String str, String sep) {
         return org.apache.commons.lang3.StringUtils.substringAfterLast(str, sep);
     }
@@ -179,6 +189,13 @@ public class StringUtils {
 
     public static boolean contains(final CharSequence seq, final CharSequence searchSeq) {
         return org.apache.commons.lang3.StringUtils.contains(seq, searchSeq);
+    }
+
+    /**
+     * Use this to prevent org.postgresql.util.PSQLException: ERROR: invalid byte sequence for encoding "UTF8": 0x00
+     **/
+    public static boolean contains0x00(final String s) {
+        return s != null && s.contains("\u0000");
     }
 
     public static String randomNumeric(int length) {
@@ -210,6 +227,18 @@ public class StringUtils {
 
     public static String generateSafeToken() {
         return generateSafeToken(DEFAULT_TOKEN_LENGTH);
+    }
+
+    public static String truncate(String string, int maxLength) {
+        return truncate(string, maxLength, n -> "...[truncated " + n + " symbols]");
+    }
+
+    public static String truncate(String string, int maxLength, Function<Integer, String> truncationMarkerFunc) {
+        if (string == null || maxLength <= 0 || string.length() <= maxLength) {
+            return string;
+        }
+        int truncatedSymbols = string.length() - maxLength;
+        return string.substring(0, maxLength) + truncationMarkerFunc.apply(truncatedSymbols);
     }
 
 }

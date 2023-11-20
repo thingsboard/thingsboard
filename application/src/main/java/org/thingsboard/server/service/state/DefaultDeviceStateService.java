@@ -223,7 +223,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         }
         log.trace("on Device Connect [{}]", deviceId.getId());
         DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
-        long ts = System.currentTimeMillis();
+        long ts = getCurrentTimeMillis();
         stateData.getState().setLastConnectTime(ts);
         save(deviceId, LAST_CONNECT_TIME, ts);
         pushRuleEngineMessage(stateData, TbMsgType.CONNECT_EVENT);
@@ -250,6 +250,10 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             state.setLastActivityTime(lastReportedActivity);
             if (!state.isActive()) {
                 state.setActive(true);
+                if (lastReportedActivity <= state.getLastInactivityAlarmTime()) {
+                    state.setLastInactivityAlarmTime(0);
+                    save(deviceId, INACTIVITY_ALARM_TIME, 0);
+                }
                 onDeviceActivityStatusChange(deviceId, true, stateData);
             }
         } else {
@@ -264,7 +268,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             return;
         }
         DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
-        long ts = System.currentTimeMillis();
+        long ts = getCurrentTimeMillis();
         stateData.getState().setLastDisconnectTime(ts);
         save(deviceId, LAST_DISCONNECT_TIME, ts);
         pushRuleEngineMessage(stateData, TbMsgType.DISCONNECT_EVENT);
@@ -398,10 +402,10 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     void checkAndUpdateState(@Nonnull DeviceId deviceId, @Nonnull DeviceStateData state) {
         var deviceState = state.getState();
         if (deviceState.isActive()) {
-            updateInactivityStateIfExpired(System.currentTimeMillis(), deviceId, state);
+            updateInactivityStateIfExpired(getCurrentTimeMillis(), deviceId, state);
         } else {
             //trying to fix activity state
-            if (isActive(System.currentTimeMillis(), deviceState)) {
+            if (isActive(getCurrentTimeMillis(), deviceState)) {
                 updateActivityState(deviceId, state, deviceState.getLastActivityTime());
                 if (deviceState.getLastInactivityAlarmTime() != 0L && deviceState.getLastInactivityAlarmTime() >= deviceState.getLastActivityTime()) {
                     deviceState.setLastInactivityAlarmTime(0L);
@@ -425,7 +429,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
 
     void checkStates() {
         try {
-            final long ts = System.currentTimeMillis();
+            final long ts = getCurrentTimeMillis();
             partitionedEntities.forEach((tpi, deviceIds) -> {
                 log.debug("Calculating state updates. tpi {} for {} devices", tpi.getFullTopicName(), deviceIds.size());
                 Set<DeviceId> idsFromRemovedTenant = new HashSet<>();
@@ -455,7 +459,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     }
 
     void reportActivityStats() {
-        try{
+        try {
             Map<TenantId, Pair<AtomicInteger, AtomicInteger>> stats = new HashMap<>();
             for (DeviceStateData stateData : deviceStates.values()) {
                 Pair<AtomicInteger, AtomicInteger> tenantDevicesActivity = stats.computeIfAbsent(stateData.getTenantId(),
@@ -486,8 +490,8 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         if (stateData != null) {
             DeviceState state = stateData.getState();
             if (!isActive(ts, state)
-                    && (state.getLastInactivityAlarmTime() == 0L || state.getLastInactivityAlarmTime() < state.getLastActivityTime())
-                    && stateData.getDeviceCreationTime() + state.getInactivityTimeout() < ts) {
+                    && (state.getLastInactivityAlarmTime() == 0L || state.getLastInactivityAlarmTime() <= state.getLastActivityTime())
+                    && stateData.getDeviceCreationTime() + state.getInactivityTimeout() <= ts) {
                 if (partitionService.resolve(ServiceType.TB_CORE, stateData.getTenantId(), deviceId).isMyPartition()) {
                     state.setActive(false);
                     state.setLastInactivityAlarmTime(ts);
@@ -798,7 +802,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         if (persistToTelemetry) {
             tsSubService.saveAndNotifyInternal(
                     TenantId.SYS_TENANT_ID, deviceId,
-                    Collections.singletonList(new BasicTsKvEntry(System.currentTimeMillis(), new LongDataEntry(key, value))),
+                    Collections.singletonList(new BasicTsKvEntry(getCurrentTimeMillis(), new LongDataEntry(key, value))),
                     new TelemetrySaveCallback<>(deviceId, key, value));
         } else {
             tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, SERVER_SCOPE, key, value, new TelemetrySaveCallback<>(deviceId, key, value));
@@ -809,11 +813,15 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         if (persistToTelemetry) {
             tsSubService.saveAndNotifyInternal(
                     TenantId.SYS_TENANT_ID, deviceId,
-                    Collections.singletonList(new BasicTsKvEntry(System.currentTimeMillis(), new BooleanDataEntry(key, value))),
+                    Collections.singletonList(new BasicTsKvEntry(getCurrentTimeMillis(), new BooleanDataEntry(key, value))),
                     new TelemetrySaveCallback<>(deviceId, key, value));
         } else {
             tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, SERVER_SCOPE, key, value, new TelemetrySaveCallback<>(deviceId, key, value));
         }
+    }
+
+    long getCurrentTimeMillis() {
+        return System.currentTimeMillis();
     }
 
     private static class TelemetrySaveCallback<T> implements FutureCallback<T> {

@@ -230,7 +230,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   forceDashboardMobileMode = false;
   isAddingWidget = false;
   isAddingWidgetClosed = true;
-  searchBundle = '';
   filterWidgetTypes: widgetType[] = null;
 
   isToolbarOpened = false;
@@ -351,7 +350,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
               private viewContainerRef: ViewContainerRef,
               private cd: ChangeDetectorRef,
               private sanitizer: DomSanitizer,
-              public elRef: ElementRef) {
+              public elRef: ElementRef,
+              private injector: Injector) {
     super(store);
     if (isDefinedAndNotNull(embeddedValue)) {
       this.embedded = embeddedValue;
@@ -956,6 +956,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   public toggleDashboardEditMode() {
     this.setEditMode(!this.isEdit, true);
+    this.notifyDashboardToggleEditMode();
   }
 
   public saveDashboard() {
@@ -1063,6 +1064,16 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.dashboardCtx.aliasController.updateFilters(this.dashboard.configuration.filters);
   }
 
+  private notifyDashboardToggleEditMode() {
+    if (this.widgetEditMode) {
+      const message: WindowMessage = {
+        type: 'widgetEditModeToggle',
+        data: this.isEdit
+      };
+      this.window.parent.postMessage(JSON.stringify(message), '*');
+    }
+  }
+
   private notifyDashboardUpdated() {
     if (this.widgetEditMode) {
       const widget = this.layouts.main.layoutCtx.widgets.widgetByIndex(0);
@@ -1152,7 +1163,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   addWidgetFromType(widget: WidgetInfo) {
     this.onAddWidgetClosed();
-    this.searchBundle = '';
     this.widgetComponentService.getWidgetInfo(widget.typeFullFqn).subscribe(
       (widgetTypeInfo) => {
         const config: WidgetConfig = this.dashboardUtils.widgetConfigFromWidgetType(widgetTypeInfo);
@@ -1162,9 +1172,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         let newWidget: Widget = {
           typeFullFqn: widgetTypeInfo.fullFqn,
           type: widgetTypeInfo.type,
-          title: 'New widget',
-          image: null,
-          description: null,
           sizeX: widgetTypeInfo.sizeX,
           sizeY: widgetTypeInfo.sizeY,
           config,
@@ -1180,6 +1187,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
             disableClose: true,
             panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
             maxWidth: '95vw',
+            injector: this.injector,
             data: {
               dashboard: this.dashboard,
               aliasController: this.dashboardCtx.aliasController,
@@ -1427,13 +1435,10 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     return widgetContextActions;
   }
 
-  widgetBundleSelected(){
-    this.searchBundle = '';
-  }
-
   clearSelectedWidgetBundle() {
-    this.searchBundle = '';
+    this.dashboardWidgetSelectComponent.search = '';
     this.dashboardWidgetSelectComponent.widgetsBundle = null;
+    this.dashboardWidgetSelectComponent.selectWidgetMode = 'bundles';
   }
 
   editWidgetsTypesToDisplay($event: Event) {
@@ -1481,10 +1486,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
     overlayRef.attach(new ComponentPortal(DisplayWidgetTypesPanelComponent, this.viewContainerRef, injector));
     this.cd.markForCheck();
-  }
-
-  onCloseSearchBundle() {
-    this.searchBundle = '';
   }
 
   public updateDashboardImage($event: Event) {

@@ -50,6 +50,8 @@ public interface EntityViewService extends EntityDaoService {
 
     EntityView findEntityViewById(TenantId tenantId, EntityViewId entityViewId);
 
+    EntityView findEntityViewById(TenantId tenantId, EntityViewId entityViewId, boolean putInCache);
+
     EntityView findEntityViewByTenantIdAndName(TenantId tenantId, String name);
 
     PageData<EntityView> findEntityViewByTenantId(TenantId tenantId, PageLink pageLink);
@@ -75,6 +77,8 @@ public interface EntityViewService extends EntityDaoService {
     ListenableFuture<List<EntityView>> findEntityViewsByTenantIdAndEntityIdAsync(TenantId tenantId, EntityId entityId);
 
     List<EntityView> findEntityViewsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId);
+
+    boolean existsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId);
 
     void deleteEntityView(TenantId tenantId, EntityViewId entityViewId);
 

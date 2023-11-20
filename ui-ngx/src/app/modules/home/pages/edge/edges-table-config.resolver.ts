@@ -29,10 +29,10 @@ import {
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
-import { EntityAction } from '@home/models/entity/entity-component.models';
+import { AddEntityDialogData, EntityAction } from '@home/models/entity/entity-component.models';
 import { forkJoin, Observable, of } from 'rxjs';
 import { select, Store } from '@ngrx/store';
-import { selectAuthUser } from '@core/auth/auth.selectors';
+import { selectAuthUser, selectUserSettingsProperty } from '@core/auth/auth.selectors';
 import { map, mergeMap, take, tap } from 'rxjs/operators';
 import { AppState } from '@core/core.state';
 import { Authority } from '@app/shared/models/authority.enum';
@@ -51,7 +51,7 @@ import {
   AddEntitiesToCustomerDialogData
 } from '../../dialogs/add-entities-to-customer-dialog.component';
 import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
-import { Edge, EdgeInfo, EdgeInstallInstructions } from '@shared/models/edge.models';
+import { Edge, EdgeInfo } from '@shared/models/edge.models';
 import { EdgeService } from '@core/http/edge.service';
 import { EdgeComponent } from '@home/pages/edge/edge.component';
 import { EdgeTableHeaderComponent } from '@home/pages/edge/edge-table-header.component';
@@ -59,9 +59,10 @@ import { EdgeId } from '@shared/models/id/edge-id';
 import { EdgeTabsComponent } from '@home/pages/edge/edge-tabs.component';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import {
-  EdgeInstructionsData,
-  EdgeInstructionsDialogComponent
-} from "@home/pages/edge/edge-instructions-dialog.component";
+  EdgeInstructionsDialogComponent,
+  EdgeInstructionsDialogData
+} from '@home/pages/edge/edge-instructions-dialog.component';
+import { AddEntityDialogComponent } from '@home/components/entity/add-entity-dialog.component';
 
 @Injectable()
 export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeInfo>> {
@@ -140,6 +141,7 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
         this.config.addEnabled = this.config.componentsData.edgeScope !== 'customer_user';
         this.config.entitiesDeleteEnabled = this.config.componentsData.edgeScope === 'tenant';
         this.config.deleteEnabled = () => this.config.componentsData.edgeScope === 'tenant';
+        this.config.addEntity = () => { this.addEdge(); return of(null); };
         return this.config;
       })
     );
@@ -530,21 +532,50 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
     );
   }
 
-  openInstructions($event, edge) {
+  addEdge() {
+    this.dialog.open<AddEntityDialogComponent, AddEntityDialogData<EdgeInfo>,
+      EdgeInfo>(AddEntityDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        entitiesTableConfig: this.config
+      }
+    }).afterClosed().subscribe(
+      (entity) => {
+        if (entity) {
+          this.store.pipe(select(selectUserSettingsProperty('notDisplayInstructionsAfterAddEdge'))).pipe(
+            take(1)
+          ).subscribe((settings: boolean) => {
+            if (!settings) {
+              this.openInstructions(null, entity, true);
+            } else {
+              this.config.updateData();
+              this.config.entityAdded(entity);
+            }
+          });
+        }
+      }
+    );
+  }
+
+  openInstructions($event, edge: EdgeInfo, afterAdd = false) {
     if ($event) {
       $event.stopPropagation();
     }
-    this.edgeService.getEdgeDockerInstallInstructions(edge.id.id).subscribe(
-      (edgeInstructionsTemplate: EdgeInstallInstructions) => {
-        this.dialog.open<EdgeInstructionsDialogComponent, EdgeInstructionsData>(EdgeInstructionsDialogComponent, {
-          disableClose: false,
-          panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-          data: {
-            instructions: edgeInstructionsTemplate.dockerInstallInstructions
-          }
-        });
+    this.dialog.open<EdgeInstructionsDialogComponent, EdgeInstructionsDialogData>
+    (EdgeInstructionsDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        edge,
+        afterAdd
       }
-    )
+    }).afterClosed().subscribe(() => {
+        if (afterAdd) {
+          this.config.updateData();
+        }
+      }
+    );
   }
 
   onEdgeAction(action: EntityAction<EdgeInfo>, config: EntityTableConfig<EdgeInfo>): boolean {

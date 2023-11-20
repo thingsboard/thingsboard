@@ -66,6 +66,14 @@ export class FontSettingsPanelComponent extends PageComponent implements OnInit 
   clearButton = false;
 
   @Input()
+  @coerceBoolean()
+  autoScale = false;
+
+  @Input()
+  @coerceBoolean()
+  disabledLineHeight = false;
+
+  @Input()
   popover: TbPopoverComponent<FontSettingsPanelComponent>;
 
   @Output()
@@ -97,12 +105,12 @@ export class FontSettingsPanelComponent extends PageComponent implements OnInit 
   ngOnInit(): void {
     this.fontFormGroup = this.fb.group(
       {
-        size: [this.font?.size, [Validators.min(0)]],
-        sizeUnit: [(this.font?.sizeUnit || 'px'), []],
+        size: [{value: this.font?.size, disabled: this.autoScale}, [Validators.min(0)]],
+        sizeUnit: [{ value: (this.font?.sizeUnit || 'px'), disabled: this.autoScale}, []],
         family: [this.font?.family, []],
         weight: [this.font?.weight, []],
         style: [this.font?.style, []],
-        lineHeight: [this.font?.lineHeight, []]
+        lineHeight: [{ value: this.font?.lineHeight, disabled: this.autoScale || this.disabledLineHeight }, []]
       }
     );
     this.updatePreviewStyle(this.font);

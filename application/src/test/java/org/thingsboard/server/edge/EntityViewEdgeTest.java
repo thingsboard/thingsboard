@@ -105,7 +105,7 @@ public class EntityViewEdgeTest extends AbstractEdgeTest {
         edgeImitator.expectMessageAmount(1);
         doDelete("/api/entityView/" + savedEntityView.getUuidId())
                 .andExpect(status().isOk());
-        Assert.assertTrue(edgeImitator.waitForMessages(1));
+        Assert.assertTrue(edgeImitator.waitForMessages(5));
 
         // create entity view #2 and assign to edge
         edgeImitator.expectMessageAmount(1);

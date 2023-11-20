@@ -18,17 +18,15 @@ import { Component, OnInit } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
-import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 
 export interface SaveWidgetTypeAsDialogResult {
   widgetName: string;
-  bundleId: string;
-  bundleAlias: string;
+  widgetBundleId?: string;
 }
 
 @Component({
@@ -39,14 +37,13 @@ export interface SaveWidgetTypeAsDialogResult {
 export class SaveWidgetTypeAsDialogComponent extends
   DialogComponent<SaveWidgetTypeAsDialogComponent, SaveWidgetTypeAsDialogResult> implements OnInit {
 
-  saveWidgetTypeAsFormGroup: UntypedFormGroup;
-
+  saveWidgetTypeAsFormGroup: FormGroup;
   bundlesScope: string;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
               public dialogRef: MatDialogRef<SaveWidgetTypeAsDialogComponent, SaveWidgetTypeAsDialogResult>,
-              public fb: UntypedFormBuilder) {
+              public fb: FormBuilder) {
     super(store, router, dialogRef);
 
     const authUser = getCurrentAuthUser(store);
@@ -60,7 +57,7 @@ export class SaveWidgetTypeAsDialogComponent extends
   ngOnInit(): void {
     this.saveWidgetTypeAsFormGroup = this.fb.group({
       title: [null, [Validators.required]],
-      widgetsBundle: [null, [Validators.required]]
+      widgetsBundle: [null]
     });
   }
 
@@ -70,11 +67,10 @@ export class SaveWidgetTypeAsDialogComponent extends
 
   saveAs(): void {
     const widgetName: string = this.saveWidgetTypeAsFormGroup.get('title').value;
-    const widgetsBundle: WidgetsBundle = this.saveWidgetTypeAsFormGroup.get('widgetsBundle').value;
+    const widgetBundleId: string = this.saveWidgetTypeAsFormGroup.get('widgetsBundle').value?.id?.id;
     const result: SaveWidgetTypeAsDialogResult = {
       widgetName,
-      bundleId: widgetsBundle.id.id,
-      bundleAlias: widgetsBundle.alias
+      widgetBundleId
     };
     this.dialogRef.close(result);
   }
