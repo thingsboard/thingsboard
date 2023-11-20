@@ -40,7 +40,7 @@ public class TbNodeUpgradeUtilsTest {
         var annotation = mock(org.thingsboard.rule.engine.api.RuleNode.class);
         var defaultConfig = JacksonUtil.valueToTree(nodeConfigClazz.getDeclaredConstructor().newInstance().defaultConfiguration());
 
-        when(nodeInfo.getClazz()).thenReturn((Class)TbGetAttributesNode.class);
+        when(nodeInfo.getClazz()).thenReturn((Class) TbGetAttributesNode.class);
         when(nodeInfo.getCurrentVersion()).thenReturn(1);
         when(nodeInfo.getAnnotation()).thenReturn(annotation);
         when(annotation.configClazz()).thenReturn((Class) nodeConfigClazz);
@@ -62,7 +62,7 @@ public class TbNodeUpgradeUtilsTest {
         var annotation = mock(org.thingsboard.rule.engine.api.RuleNode.class);
         var defaultConfig = JacksonUtil.valueToTree(nodeConfigClazz.getDeclaredConstructor().newInstance().defaultConfiguration());
 
-        when(nodeInfo.getClazz()).thenReturn((Class)TbGetAttributesNode.class);
+        when(nodeInfo.getClazz()).thenReturn((Class) TbGetAttributesNode.class);
         when(nodeInfo.getCurrentVersion()).thenReturn(1);
         when(nodeInfo.getAnnotation()).thenReturn(annotation);
         when(annotation.configClazz()).thenReturn((Class) nodeConfigClazz);
@@ -83,7 +83,7 @@ public class TbNodeUpgradeUtilsTest {
         var annotation = mock(org.thingsboard.rule.engine.api.RuleNode.class);
         var defaultConfig = JacksonUtil.valueToTree(nodeConfigClazz.getDeclaredConstructor().newInstance().defaultConfiguration());
 
-        when(nodeInfo.getClazz()).thenReturn((Class)TbGetAttributesNode.class);
+        when(nodeInfo.getClazz()).thenReturn((Class) TbGetAttributesNode.class);
         when(nodeInfo.getCurrentVersion()).thenReturn(1);
         when(nodeInfo.getAnnotation()).thenReturn(annotation);
         when(annotation.configClazz()).thenReturn((Class) nodeConfigClazz);
@@ -122,6 +122,31 @@ public class TbNodeUpgradeUtilsTest {
                 "\"dataMapping\":{\"alarmThreshold\":\"threshold\"}," +
                 "\"dataToFetch\":\"ATTRIBUTES\"}";
         node.setConfiguration(JacksonUtil.toJsonNode(versionOneDefaultConfig));
+        // WHEN
+        TbNodeUpgradeUtils.upgradeConfigurationAndVersion(node, nodeInfo);
+        // THEN
+        Assertions.assertThat(node.getConfiguration()).isEqualTo(defaultConfig);
+        Assertions.assertThat(node.getConfigurationVersion()).isEqualTo(1);
+
+    }
+
+    @Test
+    public void testUpgradeRuleNodeConfigurationWithInvalidConfigAndOldConfigVersion() throws Exception {
+        // GIVEN
+        var node = new RuleNode();
+        var nodeInfo = mock(RuleNodeClassInfo.class);
+        var nodeConfigClazz = TbGetEntityDataNodeConfiguration.class;
+        var annotation = mock(org.thingsboard.rule.engine.api.RuleNode.class);
+        var defaultConfig = JacksonUtil.valueToTree(nodeConfigClazz.getDeclaredConstructor().newInstance().defaultConfiguration());
+
+        when(nodeInfo.getClazz()).thenReturn((Class) TbGetCustomerAttributeNode.class);
+        when(nodeInfo.getCurrentVersion()).thenReturn(1);
+        when(nodeInfo.getAnnotation()).thenReturn(annotation);
+        when(annotation.configClazz()).thenReturn((Class) nodeConfigClazz);
+
+        // missing telemetry field
+        String oldConfig = "{\"attrMapping\":{\"alarmThreshold\":\"threshold\"}}";;
+        node.setConfiguration(JacksonUtil.toJsonNode(oldConfig));
         // WHEN
         TbNodeUpgradeUtils.upgradeConfigurationAndVersion(node, nodeInfo);
         // THEN

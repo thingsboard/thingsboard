@@ -16,6 +16,8 @@
 package org.thingsboard.server.utils;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -24,37 +26,51 @@ import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.service.component.RuleNodeClassInfo;
 
+@Slf4j
 public class TbNodeUpgradeUtils {
 
-    public static void upgradeConfigurationAndVersion(RuleNode node, RuleNodeClassInfo nodeInfo) throws Exception {
+    public static void upgradeConfigurationAndVersion(RuleNode node, RuleNodeClassInfo nodeInfo) {
         JsonNode oldConfiguration = node.getConfiguration();
+        int configurationVersion = node.getConfigurationVersion();
+
+        int currentVersion = nodeInfo.getCurrentVersion();
         var configClass = nodeInfo.getAnnotation().configClazz();
 
         if (oldConfiguration == null || !oldConfiguration.isObject()) {
-            node.setConfiguration(JacksonUtil.valueToTree(configClass.getDeclaredConstructor().newInstance().defaultConfiguration()));
+            log.warn("Failed to upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}. " +
+                            "Current configuration is null or not a json object. " +
+                            "Going to set default configuration ... ",
+                    node.getId(), node.getType(), configurationVersion, currentVersion);
+            node.setConfiguration(getDefaultConfig(configClass));
         } else {
-            var tbVersionedNode = (TbNode) nodeInfo.getClazz().getDeclaredConstructor().newInstance();
+            var tbVersionedNode = getTbVersionedNode(nodeInfo);
             try {
-                TbPair<Boolean, JsonNode> upgradeResult = tbVersionedNode.upgrade(node.getConfigurationVersion(), oldConfiguration);
+                TbPair<Boolean, JsonNode> upgradeResult = tbVersionedNode.upgrade(configurationVersion, oldConfiguration);
                 if (upgradeResult.getFirst()) {
                     node.setConfiguration(upgradeResult.getSecond());
                 }
             } catch (TbNodeException e) {
-                if (!isValidConfig(oldConfiguration, configClass)) {
-                    throw e;
+                try {
+                    JacksonUtil.treeToValue(oldConfiguration, configClass);
+                } catch (Exception ex) {
+                    log.warn("Failed to upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}. " +
+                                    "Going to set default configuration ... ",
+                            node.getId(), node.getType(), configurationVersion, currentVersion, e);
+                    node.setConfiguration(getDefaultConfig(configClass));
                 }
             }
         }
-        node.setConfigurationVersion(nodeInfo.getCurrentVersion());
+        node.setConfigurationVersion(currentVersion);
     }
 
-    private static boolean isValidConfig(JsonNode oldConfiguration, Class<? extends NodeConfiguration> configClass) {
-        try {
-            JacksonUtil.treeToValue(oldConfiguration, configClass);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
+    @SneakyThrows
+    private static TbNode getTbVersionedNode(RuleNodeClassInfo nodeInfo) {
+        return (TbNode) nodeInfo.getClazz().getDeclaredConstructor().newInstance();
+    }
+
+    @SneakyThrows
+    private static JsonNode getDefaultConfig(Class<? extends NodeConfiguration> configClass) {
+        return JacksonUtil.valueToTree(configClass.getDeclaredConstructor().newInstance().defaultConfiguration());
     }
 
 }
