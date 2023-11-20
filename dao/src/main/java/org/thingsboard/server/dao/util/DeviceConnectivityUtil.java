@@ -44,6 +44,8 @@ public class DeviceConnectivityUtil {
     public static final String JSON_EXAMPLE_PAYLOAD = "\"{temperature:25}\"";
     public static final String DOCKER_RUN = "docker run --rm -it ";
     public static final String GATEWAY_DOCKER_RUN = "docker run -it ";
+
+    public static final String NETWORK_HOST_PARAM = "--network=host ";
     public static final String MQTT_IMAGE = "thingsboard/mosquitto-clients ";
     public static final String COAP_IMAGE = "thingsboard/coap-clients ";
     private final static Pattern VALID_URL_PATTERN = Pattern.compile("^(https?)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]");
@@ -98,14 +100,14 @@ public class DeviceConnectivityUtil {
         String gatewayContainerName = "tbGateway" + StringUtils.capitalize(host.replaceAll("[^A-Za-z0-9]", ""));
 
         StringBuilder command = new StringBuilder(GATEWAY_DOCKER_RUN);
-        command.append("-v {gatewayVolumePathPrefix}/logs:/thingsboard_gateway/logs".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
-        command.append(" -v {gatewayVolumePathPrefix}/extensions:/thingsboard_gateway/extensions".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
-        command.append(" -v {gatewayVolumePathPrefix}/config:/thingsboard_gateway/config".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
-        command.append(isLocalhost(host) ? " --network=host" : "");
-        command.append(" -p 5000:5000");
-        command.append(" --name ").append(gatewayContainerName);
-        command.append(" -e host=").append(host);
-        command.append(" -e port=").append(port);
+        command.append("-v {gatewayVolumePathPrefix}/logs:/thingsboard_gateway/logs ".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
+        command.append("-v {gatewayVolumePathPrefix}/extensions:/thingsboard_gateway/extensions ".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
+        command.append("-v {gatewayVolumePathPrefix}/config:/thingsboard_gateway/config ".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
+        command.append(isLocalhost(host) ? NETWORK_HOST_PARAM : "");
+        command.append("-p 5000:5000 ");
+        command.append("--name ").append(gatewayContainerName).append(" ");
+        command.append("-e host=").append(host).append(" ");
+        command.append("-e port=").append(port);
 
         switch (deviceCredentials.getCredentialsType()) {
             case ACCESS_TOKEN:
@@ -146,7 +148,7 @@ public class DeviceConnectivityUtil {
         }
 
         StringBuilder mqttDockerCommand = new StringBuilder();
-        mqttDockerCommand.append(DOCKER_RUN).append(isLocalhost(host) ? "--network=host " : "").append(MQTT_IMAGE);
+        mqttDockerCommand.append(DOCKER_RUN).append(isLocalhost(host) ? NETWORK_HOST_PARAM : "").append(MQTT_IMAGE);
 
         if (MQTTS.equals(protocol)) {
             mqttDockerCommand.append("/bin/sh -c \"")
@@ -178,7 +180,7 @@ public class DeviceConnectivityUtil {
 
     public static String getDockerCoapPublishCommand(String protocol, String host, String port, DeviceCredentials deviceCredentials) {
         String coapCommand = getCoapPublishCommand(protocol, host, port, deviceCredentials);
-        return coapCommand != null ? String.format("%s%s%s", DOCKER_RUN + (isLocalhost(host) ? "--network=host " : ""), COAP_IMAGE, coapCommand) : null;
+        return coapCommand != null ? String.format("%s%s%s", DOCKER_RUN + (isLocalhost(host) ? NETWORK_HOST_PARAM : ""), COAP_IMAGE, coapCommand) : null;
     }
 
     public static String getHost(String baseUrl, DeviceConnectivityInfo properties, String protocol) throws URISyntaxException {
@@ -199,7 +201,7 @@ public class DeviceConnectivityUtil {
         }
         if (inetAddress instanceof Inet6Address) {
             host = host.replaceAll("[\\[\\]]", "");
-            if (!protocol.startsWith(MQTT)) {
+            if (!MQTT.equals(protocol) && !MQTTS.equals(protocol)) {
                 host = "[" + host + "]";
             }
         }
