@@ -183,141 +183,64 @@ class TbMsgAttributesNodeTest {
         assertThat(notifyDevice).isEqualTo(expectedArgumentValue);
     }
 
-    @Test
-    void testUpgrade_fromVersion0() throws TbNodeException {
 
-        TbMsgAttributesNode node = mock(TbMsgAttributesNode.class);
-        willCallRealMethod().given(node).upgrade(anyInt(), any());
-
-        ObjectNode jsonNode = (ObjectNode) JacksonUtil.valueToTree(new TbMsgAttributesNodeConfiguration().defaultConfiguration());
-        jsonNode.remove(UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY);
-        assertThat(jsonNode.has(UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY)).as("pre condition has no " + UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY).isFalse();
-
-        TbPair<Boolean, JsonNode> upgradeResult = node.upgrade(0, jsonNode);
-
-        assertThat(upgradeResult.getFirst()).as("upgrade result has changes").isTrue();
-
-        ObjectNode upgradedConfig = (ObjectNode) upgradeResult.getSecond();
-        assertThat(upgradedConfig.has(UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY)).as("upgrade result has key " + UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY).isTrue();
-        assertThat(upgradedConfig.get(UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY).asBoolean()).as("upgrade result value [false] for key " + UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY).isFalse();
+    // Rule nodes upgrade
+    private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
+        return Stream.of(
+                // default config for version 0
+                Arguments.of(0,
+                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":\"false\",\"sendAttributesUpdatedNotification\":\"false\"}",
+                        true,
+                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":false,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":false}"),
+                // default config for version 1 with upgrade from version 0
+                Arguments.of(0,
+                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":false,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}",
+                        false,
+                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":false,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}"),
+                // all flags are booleans
+                Arguments.of(1,
+                        "{\"scope\":\"SHARED_SCOPE\",\"notifyDevice\":true,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}",
+                        false,
+                        "{\"scope\":\"SHARED_SCOPE\",\"notifyDevice\":true,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}"),
+                // no boolean flags set
+                Arguments.of(1,
+                        "{\"scope\":\"CLIENT_SCOPE\"}",
+                        true,
+                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":true,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}"),
+                // all flags are boolean strings
+                Arguments.of(1,
+                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":\"false\",\"sendAttributesUpdatedNotification\":\"false\",\"updateAttributesOnlyOnValueChange\":\"true\"}",
+                        true,
+                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":false,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}"),
+                // at least one flag is boolean string
+                Arguments.of(1,
+                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":\"false\",\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}",
+                        true,
+                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":false,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}"),
+                // notify device flag is null
+                Arguments.of(1,
+                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":\"null\",\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}",
+                        true,
+                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":true,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}")
+        );
     }
 
-    @Test
-    void testUpgrade_fromVersion0_alreadyHasUpdateAttributesOnlyOnValueChange() throws TbNodeException {
+    @ParameterizedTest
+    @MethodSource("givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig")
+    void givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig(int givenVersion, String givenConfigStr, boolean hasChanges, String expectedConfigStr) throws TbNodeException {
+        // GIVEN
         TbMsgAttributesNode node = mock(TbMsgAttributesNode.class);
         willCallRealMethod().given(node).upgrade(anyInt(), any());
+        JsonNode givenConfig = JacksonUtil.toJsonNode(givenConfigStr);
+        JsonNode expectedConfig = JacksonUtil.toJsonNode(expectedConfigStr);
 
-        ObjectNode jsonNode = (ObjectNode) JacksonUtil.valueToTree(new TbMsgAttributesNodeConfiguration().defaultConfiguration());
-        jsonNode.remove(UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY);
-        jsonNode.put(UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY, true);
-        assertThat(jsonNode.has(UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY)).as("pre condition has no " + UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY).isTrue();
-        assertThat(jsonNode.get(UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY).asBoolean()).as("pre condition has [true] for key " + UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY).isTrue();
+        // WHEN
+        TbPair<Boolean, JsonNode> upgradeResult = node.upgrade(givenVersion, givenConfig);
 
-        TbPair<Boolean, JsonNode> upgradeResult = node.upgrade(0, jsonNode);
-
-        assertThat(upgradeResult.getFirst()).as("upgrade result has changes").isFalse();
-
+        // THEN
+        assertThat(upgradeResult.getFirst()).isEqualTo(hasChanges);
         ObjectNode upgradedConfig = (ObjectNode) upgradeResult.getSecond();
-        assertThat(upgradedConfig.has(UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY)).as("upgrade result has key " + UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY).isTrue();
-        assertThat(upgradedConfig.get(UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY).asBoolean()).as("upgrade result value [true] for key " + UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY).isTrue();
-    }
-
-    @Test
-    void testUpgrade_fromVersion1_AllFlagsAreBooleans() throws TbNodeException {
-        TbMsgAttributesNode node = mock(TbMsgAttributesNode.class);
-        willCallRealMethod().given(node).upgrade(anyInt(), any());
-
-        ObjectNode defaultConfig = (ObjectNode) JacksonUtil.valueToTree(new TbMsgAttributesNodeConfiguration().defaultConfiguration());
-
-        assertThat(defaultConfig.has(NOTIFY_DEVICE_KEY)).as("pre condition has no" + NOTIFY_DEVICE_KEY).isTrue();
-        assertThat(defaultConfig.has(SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY)).as("pre condition has no" + SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY).isTrue();
-        assertThat(defaultConfig.has(UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY)).as("pre condition has no" + UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY).isTrue();
-
-        assertThat(defaultConfig.get(NOTIFY_DEVICE_KEY).asBoolean()).as("pre condition has [true] for key " + NOTIFY_DEVICE_KEY).isFalse();
-        assertThat(defaultConfig.get(SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY).asBoolean()).as("pre condition has [true] for key " + SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY).isFalse();
-        assertThat(defaultConfig.get(UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY).asBoolean()).as("pre condition has [false] for key " + UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY).isTrue();
-
-        TbPair<Boolean, JsonNode> upgradeResult = node.upgrade(1, defaultConfig);
-
-        assertThat(upgradeResult.getFirst()).as("upgrade result has changes").isFalse();
-        ObjectNode upgradedConfig = (ObjectNode) upgradeResult.getSecond();
-        assertThat(upgradedConfig).as("upgraded config has changes").isEqualTo(defaultConfig);
-    }
-
-    @Test
-    void testUpgrade_fromVersion1_NoFlagsSet() throws TbNodeException {
-        TbMsgAttributesNode node = mock(TbMsgAttributesNode.class);
-        willCallRealMethod().given(node).upgrade(anyInt(), any());
-
-        ObjectNode defaultConfig = (ObjectNode) JacksonUtil.valueToTree(new TbMsgAttributesNodeConfiguration().defaultConfiguration());
-        defaultConfig.remove(NOTIFY_DEVICE_KEY);
-        defaultConfig.remove(SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY);
-        defaultConfig.remove(UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY);
-
-        assertThat(defaultConfig.has(NOTIFY_DEVICE_KEY)).as("pre condition has " + NOTIFY_DEVICE_KEY).isFalse();
-        assertThat(defaultConfig.has(SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY)).as("pre condition has " + SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY).isFalse();
-        assertThat(defaultConfig.has(UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY)).as("pre condition has " + UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY).isFalse();
-
-        TbPair<Boolean, JsonNode> upgradeResult = node.upgrade(1, defaultConfig);
-
-        assertThat(upgradeResult.getFirst()).as("upgrade result has no changes").isTrue();
-
-        ObjectNode upgradedConfig = (ObjectNode) upgradeResult.getSecond();
-        assertThat(upgradedConfig.get(NOTIFY_DEVICE_KEY).asBoolean()).as("pre condition has [false] for key " + NOTIFY_DEVICE_KEY).isTrue();
-        assertThat(upgradedConfig.get(SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY).asBoolean()).as("pre condition has [true] for key " + SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY).isFalse();
-        assertThat(upgradedConfig.get(UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY).asBoolean()).as("pre condition has [false] for key " + UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY).isTrue();
-    }
-
-    @Test
-    void testUpgrade_fromVersion1_AllFlagsAreBooleanStrings() throws TbNodeException {
-        TbMsgAttributesNode node = mock(TbMsgAttributesNode.class);
-        willCallRealMethod().given(node).upgrade(anyInt(), any());
-
-        ObjectNode defaultConfig = (ObjectNode) JacksonUtil.valueToTree(new TbMsgAttributesNodeConfiguration().defaultConfiguration());
-        defaultConfig.put(NOTIFY_DEVICE_KEY, defaultConfig.get(NOTIFY_DEVICE_KEY).asText());
-        defaultConfig.put(SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY, defaultConfig.get(SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY).asText());
-        defaultConfig.put(UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY, defaultConfig.get(UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY).asText());
-
-        assertThat(defaultConfig.has(NOTIFY_DEVICE_KEY)).as("pre condition has no " + NOTIFY_DEVICE_KEY).isTrue();
-        assertThat(defaultConfig.has(SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY)).as("pre condition has no " + SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY).isTrue();
-        assertThat(defaultConfig.has(UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY)).as("pre condition has no " + UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY).isTrue();
-
-        assertThat(defaultConfig.get(NOTIFY_DEVICE_KEY).isTextual()).as("pre condition " + NOTIFY_DEVICE_KEY + " is not textual").isTrue();
-        assertThat(defaultConfig.get(SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY).isTextual()).as("pre condition " + SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY + " is not textual").isTrue();
-        assertThat(defaultConfig.get(UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY).isTextual()).as("pre condition " + UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY + " is not textual").isTrue();
-
-
-        TbPair<Boolean, JsonNode> upgradeResult = node.upgrade(1, defaultConfig);
-
-        assertThat(upgradeResult.getFirst()).as("upgrade result has no changes").isTrue();
-
-        ObjectNode upgradedConfig = (ObjectNode) upgradeResult.getSecond();
-
-        assertThat(upgradedConfig.get(NOTIFY_DEVICE_KEY).isBoolean()).as("pre condition " + NOTIFY_DEVICE_KEY + " is not boolean").isTrue();
-        assertThat(upgradedConfig.get(SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY).isBoolean()).as("pre condition " + SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY + " is not boolean").isTrue();
-        assertThat(upgradedConfig.get(UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY).isBoolean()).as("pre condition " + UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY + " is not boolean").isTrue();
-
-        assertThat(upgradedConfig.get(NOTIFY_DEVICE_KEY).asBoolean()).as("pre condition has [true] for key " + NOTIFY_DEVICE_KEY).isFalse();
-        assertThat(upgradedConfig.get(SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY).asBoolean()).as("pre condition has [true] for key " + SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY).isFalse();
-        assertThat(upgradedConfig.get(UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY).asBoolean()).as("pre condition has [false] for key " + UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY).isTrue();
-    }
-
-    @Test
-    void testUpgrade_fromVersion1_NotifyDeviceFlagIsNull() throws TbNodeException {
-        TbMsgAttributesNode node = mock(TbMsgAttributesNode.class);
-        willCallRealMethod().given(node).upgrade(anyInt(), any());
-
-        ObjectNode defaultConfig = (ObjectNode) JacksonUtil.valueToTree(new TbMsgAttributesNodeConfiguration().defaultConfiguration());
-        defaultConfig.set(NOTIFY_DEVICE_KEY, NullNode.instance);
-
-        assertThat(defaultConfig.has(NOTIFY_DEVICE_KEY)).as("pre condition has no " + NOTIFY_DEVICE_KEY).isTrue();
-
-        TbPair<Boolean, JsonNode> upgradeResult = node.upgrade(1, defaultConfig);
-
-        assertThat(upgradeResult.getFirst()).as("upgrade result has no changes").isTrue();
-
-        ObjectNode upgradedConfig = (ObjectNode) upgradeResult.getSecond();
-        assertThat(upgradedConfig.get(NOTIFY_DEVICE_KEY).asBoolean()).as("pre condition has [false] or [null] for key " + NOTIFY_DEVICE_KEY).isTrue();
+        assertThat(upgradedConfig).isEqualTo(expectedConfig);
     }
 
 }
