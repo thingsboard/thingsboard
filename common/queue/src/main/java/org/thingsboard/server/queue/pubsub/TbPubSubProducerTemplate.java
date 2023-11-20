@@ -123,7 +123,7 @@ public class TbPubSubProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
                 ProjectTopicName topicName = ProjectTopicName.of(pubSubSettings.getProjectId(), topic);
                 Publisher publisher = Publisher.newBuilder(topicName)
                         .setCredentialsProvider(pubSubSettings.getCredentialsProvider())
-                        .setExecutorProvider(FixedExecutorProvider.create(pubSubSettings.getTbPubSubQueueExecutorProvider().getExecutor()))
+                        .setExecutorProvider(pubSubSettings.getExecutorProvider())
                         .build();
                 publisherMap.put(topic, publisher);
                 return publisher;

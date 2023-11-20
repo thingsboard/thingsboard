@@ -77,7 +77,7 @@ public class TbPubSubConsumerTemplate<T extends TbQueueMsg> extends AbstractPara
                                     SubscriberStubSettings.defaultGrpcTransportProviderBuilder()
                                             .setMaxInboundMessageSize(pubSubSettings.getMaxMsgSize())
                                             .build())
-                            .setExecutorProvider(FixedExecutorProvider.create(pubSubSettings.getTbPubSubQueueExecutorProvider().getExecutor()))
+                            .setExecutorProvider(pubSubSettings.getExecutorProvider())
                             .build();
             this.subscriber = GrpcSubscriberStub.create(subscriberStubSettings);
         } catch (IOException e) {
