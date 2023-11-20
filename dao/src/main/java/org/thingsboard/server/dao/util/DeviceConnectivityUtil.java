@@ -46,7 +46,7 @@ public class DeviceConnectivityUtil {
     public static final String GATEWAY_DOCKER_RUN = "docker run -it ";
     public static final String MQTT_IMAGE = "thingsboard/mosquitto-clients ";
     public static final String COAP_IMAGE = "thingsboard/coap-clients ";
-    private final static Pattern VALID_URL_PATTERN = Pattern.compile("^(http|https|ftp)://.*$");
+    private final static Pattern VALID_URL_PATTERN = Pattern.compile("^(https?)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]");
 
     public static String getHttpPublishCommand(String protocol, String host, String port, DeviceCredentials deviceCredentials) {
         return String.format("curl -v -X POST %s://%s%s/api/v1/%s/telemetry --header Content-Type:application/json --data " + JSON_EXAMPLE_PAYLOAD,
