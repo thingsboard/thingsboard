@@ -21,7 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.edge.EdgeInstallInstructions;
+import org.thingsboard.server.common.data.edge.EdgeInstructions;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.install.InstallScripts;
@@ -40,8 +40,8 @@ import java.nio.file.Paths;
 public class DefaultEdgeInstallService implements EdgeInstallService {
 
     private static final String EDGE_DIR = "edge";
-
-    private static final String EDGE_INSTALL_INSTRUCTIONS_DIR = "install_instructions";
+    private static final String INSTRUCTIONS_DIR = "instructions";
+    private static final String INSTALL_DIR = "install";
 
     private final InstallScripts installScripts;
 
@@ -55,7 +55,7 @@ public class DefaultEdgeInstallService implements EdgeInstallService {
     private String appVersion;
 
     @Override
-    public EdgeInstallInstructions getInstallInstructions(TenantId tenantId, Edge edge, String installationMethod, HttpServletRequest request) {
+    public EdgeInstructions getInstallInstructions(TenantId tenantId, Edge edge, String installationMethod, HttpServletRequest request) {
         switch (installationMethod.toLowerCase()) {
             case "docker":
                 return getDockerInstallInstructions(edge, request);
@@ -68,7 +68,7 @@ public class DefaultEdgeInstallService implements EdgeInstallService {
         }
     }
 
-    private EdgeInstallInstructions getDockerInstallInstructions(Edge edge, HttpServletRequest request) {
+    private EdgeInstructions getDockerInstallInstructions(Edge edge, HttpServletRequest request) {
         String dockerInstallInstructions = readFile(resolveFile("docker", "instructions.md"));
         String baseUrl = request.getServerName();
         if (baseUrl.contains("localhost") || baseUrl.contains("127.0.0.1")) {
@@ -83,26 +83,26 @@ public class DefaultEdgeInstallService implements EdgeInstallService {
         edgeVersion = edgeVersion.replace("-SNAPSHOT", "");
         dockerInstallInstructions = dockerInstallInstructions.replace("${TB_EDGE_VERSION}", edgeVersion);
         dockerInstallInstructions = replacePlaceholders(dockerInstallInstructions, edge);
-        return new EdgeInstallInstructions(dockerInstallInstructions);
+        return new EdgeInstructions(dockerInstallInstructions);
     }
 
-    private EdgeInstallInstructions getUbuntuInstallInstructions(Edge edge, HttpServletRequest request) {
+    private EdgeInstructions getUbuntuInstallInstructions(Edge edge, HttpServletRequest request) {
         String ubuntuInstallInstructions = readFile(resolveFile("ubuntu", "instructions.md"));
         ubuntuInstallInstructions = replacePlaceholders(ubuntuInstallInstructions, edge);
         ubuntuInstallInstructions = ubuntuInstallInstructions.replace("${BASE_URL}", request.getServerName());
         String edgeVersion = appVersion.replace("-SNAPSHOT", "");
         ubuntuInstallInstructions = ubuntuInstallInstructions.replace("${TB_EDGE_VERSION}", edgeVersion);
-        return new EdgeInstallInstructions(ubuntuInstallInstructions);
+        return new EdgeInstructions(ubuntuInstallInstructions);
     }
 
 
-    private EdgeInstallInstructions getCentosInstallInstructions(Edge edge, HttpServletRequest request) {
+    private EdgeInstructions getCentosInstallInstructions(Edge edge, HttpServletRequest request) {
         String centosInstallInstructions = readFile(resolveFile("centos", "instructions.md"));
         centosInstallInstructions = replacePlaceholders(centosInstallInstructions, edge);
         centosInstallInstructions = centosInstallInstructions.replace("${BASE_URL}", request.getServerName());
         String edgeVersion = appVersion.replace("-SNAPSHOT", "");
         centosInstallInstructions = centosInstallInstructions.replace("${TB_EDGE_VERSION}", edgeVersion);
-        return new EdgeInstallInstructions(centosInstallInstructions);
+        return new EdgeInstructions(centosInstallInstructions);
     }
 
     private String replacePlaceholders(String instructions, Edge edge) {
@@ -127,6 +127,6 @@ public class DefaultEdgeInstallService implements EdgeInstallService {
     }
 
     private Path getEdgeInstallInstructionsDir() {
-        return Paths.get(installScripts.getDataDir(), InstallScripts.JSON_DIR, EDGE_DIR, EDGE_INSTALL_INSTRUCTIONS_DIR);
+        return Paths.get(installScripts.getDataDir(), InstallScripts.JSON_DIR, EDGE_DIR, INSTRUCTIONS_DIR, INSTALL_DIR);
     }
 }

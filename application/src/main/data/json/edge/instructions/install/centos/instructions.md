@@ -1,11 +1,18 @@
-Here is the list of commands, that can be used to quickly install ThingsBoard Edge on Ubuntu Server and connect to the cloud.
+Here is the list of commands, that can be used to quickly install ThingsBoard Edge on RHEL/CentOS 7/8 and connect to the server.
+
+#### Prerequisites
+Before continue to installation execute the following commands in order to install necessary tools:
+
+```bash
+sudo yum install -y nano wget
+sudo yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+```
 
 #### Install Java 11 (OpenJDK)
 ThingsBoard service is running on Java 11. Follow these instructions to install OpenJDK 11:
 
 ```bash
-sudo apt update
-sudo apt install openjdk-11-jdk
+sudo yum install java-11-openjdk
 {:copy-code}
 ```
 
@@ -37,20 +44,43 @@ ThingsBoard Edge uses PostgreSQL database as a local storage.
 Instructions listed below will help you to install PostgreSQL.
 
 ```bash
-# install **wget** if not already installed:
-sudo apt install -y wget
+# Update your system
+sudo yum update
+{:copy-code}
+```
 
-# import the repository signing key:
-wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+**For CentOS 7:**
 
-# add repository contents to your system:
-RELEASE=$(lsb_release -cs)
-echo "deb http://apt.postgresql.org/pub/repos/apt/ ${RELEASE}"-pgdg main | sudo tee  /etc/apt/sources.list.d/pgdg.list
+```bash
+# Install the repository RPM (for CentOS 7):
+sudo yum -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+# Install packages
+sudo yum -y install epel-release yum-utils
+sudo yum-config-manager --enable pgdg12
+sudo yum install postgresql12-server postgresql12
+# Initialize your PostgreSQL DB
+sudo /usr/pgsql-12/bin/postgresql-12-setup initdb
+sudo systemctl start postgresql-12
+# Optional: Configure PostgreSQL to start on boot
+sudo systemctl enable --now postgresql-12
 
-# install and launch the postgresql service:
-sudo apt update
-sudo apt -y install postgresql-12
-sudo service postgresql start
+{:copy-code}
+```
+
+**For CentOS 8:**
+
+```bash
+# Install the repository RPM (for CentOS 8):
+sudo yum -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+# Install packages
+sudo dnf -qy module disable postgresql
+sudo dnf -y install postgresql12 postgresql12-server
+# Initialize your PostgreSQL DB
+sudo /usr/pgsql-12/bin/postgresql-12-setup initdb
+sudo systemctl start postgresql-12
+# Optional: Configure PostgreSQL to start on boot
+sudo systemctl enable --now postgresql-12
+
 {:copy-code}
 ```
 
@@ -64,26 +94,64 @@ psql
 \q
 ```
 
-Then, press “Ctrl+D” to return to main user console and connect to the database to create ThingsBoard Edge DB:
+Then, press "Ctrl+D" to return to main user console.
 
-```text
-psql -U postgres -d postgres -h 127.0.0.1 -W
-CREATE DATABASE tb_edge;
-\q
+After configuring the password, edit the pg_hba.conf to use MD5 authentication with the postgres user.
+
+Edit pg_hba.conf file:
+
+```bash
+sudo nano /var/lib/pgsql/12/data/pg_hba.conf
+{:copy-code}
 ```
 
-#### Thingsboard Edge service installation
+Locate the following lines:
+
+```text
+# IPv4 local connections:
+host    all             all             127.0.0.1/32            ident
+```
+
+Replace `ident` with `md5`:
+
+```text
+host    all             all             127.0.0.1/32            md5
+```
+
+Finally, you should restart the PostgreSQL service to initialize the new configuration:
+
+```bash
+sudo systemctl restart postgresql-12.service
+{:copy-code}
+```
+
+Connect to the database to create ThingsBoard Edge DB:
+
+```bash
+psql -U postgres -d postgres -h 127.0.0.1 -W
+{:copy-code}
+```
+
+Execute create database statement:
+
+```bash
+CREATE DATABASE tb_edge;
+\q
+{:copy-code}
+```
+
+#### ThingsBoard Edge service installation
 Download installation package:
 
 ```bash
-wget https://github.com/thingsboard/thingsboard-edge/releases/download/v${TB_EDGE_VERSION}/tb-edge-${TB_EDGE_VERSION}.deb
+wget https://github.com/thingsboard/thingsboard-edge/releases/download/v${TB_EDGE_VERSION}/tb-edge-${TB_EDGE_VERSION}.rpm
 {:copy-code}
 ```
 
 Go to the download repository and install ThingsBoard Edge service:
 
 ```bash
-sudo dpkg -i tb-edge-${TB_EDGE_VERSION}.deb
+sudo rpm -Uvh tb-edge-${TB_EDGE_VERSION}.rpm
 {:copy-code}
 ```
 
@@ -139,7 +207,6 @@ EOL'
 Make sure that ports above (18080, 11883, 15683) are not used by any other application.
 
 #### Run installation script
-
 Once ThingsBoard Edge is installed and configured please execute the following install script:
 
 ```bash

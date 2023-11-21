@@ -1,4 +1,4 @@
-Here is the list of commands, that can be used to quickly install ThingsBoard Edge using docker compose and connect to the cloud.
+Here is the list of commands, that can be used to quickly install ThingsBoard Edge using docker compose and connect to the server.
 
 #### Prerequisites
 

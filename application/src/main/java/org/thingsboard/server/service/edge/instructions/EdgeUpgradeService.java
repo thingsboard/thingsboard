@@ -13,20 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.edge;
+package org.thingsboard.server.service.edge.instructions;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeInstructions;
+import org.thingsboard.server.common.data.id.TenantId;
 
-@ApiModel
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class EdgeInstallInstructions {
+public interface EdgeUpgradeService {
 
-    @ApiModelProperty(position = 1, value = "Markdown with install instructions")
-    private String installInstructions;
+    EdgeInstructions getUpgradeInstructions(TenantId tenantId, Edge edge, String edgeVersion, String upgradeMethod) throws Exception;
 }
