@@ -369,6 +369,7 @@ public class WidgetTypeController extends AutoCommitController {
         String typeFqn = fqn.substring(scopeQualifier.length() + 1);
         WidgetType widgetType = widgetTypeService.findWidgetTypeByTenantIdAndFqn(tenantId, typeFqn);
         checkNotNull(widgetType);
+
         accessControlService.checkPermission(getCurrentUser(), Resource.WIDGET_TYPE, Operation.READ, widgetType.getId(), widgetType);
         return widgetType;
     }

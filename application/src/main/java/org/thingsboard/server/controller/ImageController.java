@@ -50,14 +50,13 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.resource.ImageCacheKey;
+import org.thingsboard.server.common.data.TbImageDeleteResult;
 import org.thingsboard.server.service.resource.TbImageService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
-import java.time.Duration;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
@@ -174,10 +173,12 @@ public class ImageController extends BaseController {
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @DeleteMapping(IMAGE_URL)
-    public void deleteImage(@PathVariable String type,
-                            @PathVariable String key) throws ThingsboardException {
+    public ResponseEntity<TbImageDeleteResult> deleteImage(@PathVariable String type,
+                                                           @PathVariable String key,
+                                                           @RequestParam(name = "force", required = false) boolean force) throws ThingsboardException {
         TbResourceInfo imageInfo = checkImageInfo(type, key, Operation.DELETE);
-        tbImageService.delete(imageInfo, getCurrentUser());
+        TbImageDeleteResult result = tbImageService.delete(imageInfo, getCurrentUser(), force);
+        return (result.isSuccess() ? ResponseEntity.ok() : ResponseEntity.badRequest()).body(result);
     }
 
     private ResponseEntity<ByteArrayResource> downloadIfChanged(String type, String key, String etag, boolean preview) throws ThingsboardException, JsonProcessingException {

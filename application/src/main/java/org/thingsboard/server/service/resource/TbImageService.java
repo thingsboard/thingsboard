@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.resource;
 
+import org.thingsboard.server.common.data.TbImageDeleteResult;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.User;
@@ -25,7 +26,7 @@ public interface TbImageService {
 
     TbResourceInfo save(TbResourceInfo imageInfo, User user);
 
-    void delete(TbResourceInfo imageInfo, User user);
+    TbImageDeleteResult delete(TbResourceInfo imageInfo, User user, boolean force);
 
     String getETag(ImageCacheKey imageCacheKey);
 

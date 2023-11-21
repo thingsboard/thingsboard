@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.DashboardInfo;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
@@ -31,7 +32,6 @@ import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -122,5 +122,15 @@ public class JpaDashboardInfoDao extends JpaAbstractDao<DashboardInfoEntity, Das
     @Override
     public String findTitleById(UUID tenantId, UUID dashboardId) {
         return dashboardInfoRepository.findTitleByTenantIdAndId(tenantId, dashboardId);
+    }
+
+    @Override
+    public List<DashboardInfo> findByTenantAndImageLink(TenantId tenantId, String imageLink, int limit) {
+        return DaoUtil.convertDataList(dashboardInfoRepository.findByTenantAndImageLink(tenantId.getId(), imageLink, limit));
+    }
+
+    @Override
+    public List<DashboardInfo> findByImageLink(String imageLink, int limit) {
+        return DaoUtil.convertDataList(dashboardInfoRepository.findByImageLink(imageLink, limit));
     }
 }

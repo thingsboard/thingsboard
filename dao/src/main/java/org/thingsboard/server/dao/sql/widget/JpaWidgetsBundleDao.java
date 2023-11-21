@@ -147,6 +147,16 @@ public class JpaWidgetsBundleDao extends JpaAbstractDao<WidgetsBundleEntity, Wid
     }
 
     @Override
+    public List<WidgetsBundle> findByTenantAndImageLink(TenantId tenantId, String imageUrl, int limit) {
+        return DaoUtil.convertDataList(widgetsBundleRepository.findByTenantAndImageUrl(tenantId.getId(), imageUrl, limit));
+    }
+
+    @Override
+    public List<WidgetsBundle> findByImageLink(String imageUrl, int limit) {
+         return DaoUtil.convertDataList(widgetsBundleRepository.findByImageUrl(imageUrl, limit));
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.WIDGETS_BUNDLE;
     }

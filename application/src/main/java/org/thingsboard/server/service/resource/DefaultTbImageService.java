@@ -17,10 +17,10 @@ package org.thingsboard.server.service.resource;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.TbImageDeleteResult;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.User;
@@ -90,12 +90,15 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public void delete(TbResourceInfo imageInfo, User user) {
+    public TbImageDeleteResult delete(TbResourceInfo imageInfo, User user, boolean force) {
         TenantId tenantId = imageInfo.getTenantId();
         TbResourceId imageId = imageInfo.getId();
         try {
-            imageService.deleteImage(tenantId, imageId);
-            notificationEntityService.logEntityAction(tenantId, imageId, imageInfo, ActionType.DELETED, user, imageId.toString());
+            TbImageDeleteResult result = imageService.deleteImage(imageInfo, force);
+            if (result.isSuccess()) {
+                notificationEntityService.logEntityAction(tenantId, imageId, imageInfo, ActionType.DELETED, user, imageId.toString());
+            }
+            return result;
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, imageId, ActionType.DELETED, user, e, imageId.toString());
             throw e;
