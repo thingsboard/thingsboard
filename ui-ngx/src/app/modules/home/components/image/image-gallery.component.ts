@@ -21,7 +21,7 @@ import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { ImageService } from '@core/http/image.service';
 import { TranslateService } from '@ngx-translate/core';
 import { PageLink, PageQueryParam } from '@shared/models/page/page-link';
-import { catchError, debounceTime, distinctUntilChanged, map, skip, takeUntil, tap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, skip, take, takeUntil, tap } from 'rxjs/operators';
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -38,7 +38,6 @@ import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, SortDirection } from '@angular/material/sort';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { UtilsService } from '@core/services/utils.service';
 import { DialogService } from '@core/services/dialog.service';
 import { FormBuilder } from '@angular/forms';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
@@ -52,19 +51,14 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { GridEntitiesFetchFunction, ScrollGridColumns } from '@home/models/datasource/scroll-grid-datasource';
-import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { ScrollGridComponent } from '@home/components/grid/scroll-grid.component';
-import {
-  AddWidgetDialogComponent,
-  AddWidgetDialogData
-} from '@home/components/dashboard-page/add-widget-dialog.component';
-import { Widget } from '@shared/models/widget.models';
 import { MatDialog } from '@angular/material/dialog';
 import {
   UploadImageDialogComponent,
   UploadImageDialogData
 } from '@home/components/image/upload-image-dialog.component';
 import { ImageDialogComponent, ImageDialogData } from '@home/components/image/image-dialog.component';
+import { EntityBooleanFunction } from '@home/models/entity/entities-table-config.models';
 
 @Component({
   selector: 'tb-image-gallery',
@@ -178,7 +172,7 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
       }
     }
     if (this.mode === 'list') {
-      this.dataSource = new ImagesDatasource(this.imageService);
+      this.dataSource = new ImagesDatasource(this.imageService, entity => !this.readonly(entity));
     }
   }
 
@@ -234,7 +228,7 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
       }
       this.mode = targetMode;
       if (this.mode === 'list') {
-        this.dataSource = new ImagesDatasource(this.imageService);
+        this.dataSource = new ImagesDatasource(this.imageService, entity => !this.readonly(entity));
       }
       setTimeout(() => {
         this.updateMode();
@@ -341,6 +335,22 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
     }
   }
 
+  private imageUpdated(image: ImageResourceInfo, index = -1) {
+    if (this.mode === 'list') {
+      this.updateData();
+    } else {
+      this.gridComponent.updateItem(index, image);
+    }
+  }
+
+  private imageDeleted(index = -1) {
+    if (this.mode === 'list') {
+      this.updateData();
+    } else {
+      this.gridComponent.deleteItem(index);
+    }
+  }
+
   enterFilterMode() {
     this.textSearchMode = true;
     setTimeout(() => {
@@ -366,7 +376,7 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
     return this.authUser.authority !== Authority.SYS_ADMIN && this.isSystem(image);
   }
 
-  deleteImage($event: Event, image: ImageResourceInfo) {
+  deleteImage($event: Event, image: ImageResourceInfo, itemIndex = -1) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -378,7 +388,7 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
       if (result) {
         this.imageService.deleteImage(imageResourceType(image), image.resourceKey).subscribe(
           () => {
-            this.updateData();
+            this.imageDeleted(itemIndex);
           }
         );
       }
@@ -440,12 +450,12 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
     });
   }
 
-  editImage($event: Event, image: ImageResourceInfo) {
+  editImage($event: Event, image: ImageResourceInfo, itemIndex = -1) {
     if ($event) {
       $event.stopPropagation();
     }
     this.dialog.open<ImageDialogComponent, ImageDialogData,
-      boolean>(ImageDialogComponent, {
+      ImageResourceInfo>(ImageDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
@@ -454,7 +464,7 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
       }
     }).afterClosed().subscribe((result) => {
       if (result) {
-        this.updateData();
+        this.imageUpdated(result, itemIndex);
       }
     });
   }
@@ -486,7 +496,8 @@ class ImagesDatasource implements DataSource<ImageResourceInfo> {
 
   public dataLoading = true;
 
-  constructor(private imageService: ImageService) {
+  constructor(private imageService: ImageService,
+              protected selectionEnabledFunction: EntityBooleanFunction<ImageResourceInfo>) {
   }
 
   connect(collectionViewer: CollectionViewer):
@@ -548,15 +559,24 @@ class ImagesDatasource implements DataSource<ImageResourceInfo> {
   }
 
   masterToggle() {
-    const entities = this.entitiesSubject.getValue();
-    const numSelected = this.selection.selected.length;
-    if (numSelected === entities.length) {
-      this.selection.clear();
-    } else {
-      entities.forEach(row => {
-        this.selection.select(row);
-      });
-    }
+    this.entitiesSubject.pipe(
+      tap((entities) => {
+        const numSelected = this.selection.selected.length;
+        if (numSelected === this.selectableEntitiesCount(entities)) {
+          this.selection.clear();
+        } else {
+          entities.forEach(row => {
+            if (this.selectionEnabledFunction(row)) {
+              this.selection.select(row);
+            }
+          });
+        }
+      }),
+      take(1)
+    ).subscribe();
   }
 
+  private selectableEntitiesCount(entities: Array<ImageResourceInfo>): number {
+    return entities.filter((entity) => this.selectionEnabledFunction(entity)).length;
+  }
 }

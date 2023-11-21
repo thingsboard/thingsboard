@@ -112,4 +112,12 @@ export class ScrollGridComponent<T, F> implements OnInit, AfterViewInit, OnChang
   public update() {
     this.dataSource.update();
   }
+
+  public updateItem(index: number, item: T) {
+    this.dataSource.updateItem(index, item);
+  }
+
+  public deleteItem(index: number) {
+    this.dataSource.deleteItem(index);
+  }
 }

@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<form [formGroup]="imageFormGroup" (ngSubmit)="save()" style="width: 560px;">
+<form class="tb-image-dialog" [formGroup]="imageFormGroup">
   <mat-toolbar color="primary">
     <h2>{{ (readonly ? 'image.image-details' : 'image.edit-image') | translate }}</h2>
     <span fxFlex></span>
@@ -30,65 +30,73 @@
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async">
-      <mat-form-field class="mat-block">
-        <mat-label translate>image.name</mat-label>
-        <input matInput formControlName="title" required>
-        <mat-error *ngIf="imageFormGroup.get('title').hasError('required')">
-          {{ 'image.name-required' | translate }}
-        </mat-error>
-      </mat-form-field>
+      <div fxLayout="row" fxLayoutGap="8px">
+        <mat-form-field fxFlex>
+          <mat-label translate>image.name</mat-label>
+          <input matInput formControlName="title" required>
+          <mat-error *ngIf="imageFormGroup.get('title').hasError('required')">
+            {{ 'image.name-required' | translate }}
+          </mat-error>
+          <button *ngIf="!readonly && imageFormGroup.dirty"
+                  matIconSuffix
+                  type="button"
+                  mat-icon-button [disabled]="isLoading$ | async"
+                  matTooltip="{{ 'action.undo' | translate }}"
+                  matTooltipPosition="above"
+                  (click)="revertInfo()">
+            <mat-icon>close</mat-icon>
+          </button>
+          <button *ngIf="!readonly && !imageFormGroup.invalid && imageFormGroup.dirty"
+                  matIconSuffix
+                  type="button"
+                  color="primary"
+                  mat-icon-button [disabled]="isLoading$ | async"
+                  matTooltip="{{ 'action.save' | translate }}"
+                  matTooltipPosition="above"
+                  (click)="saveInfo()">
+            <mat-icon>check</mat-icon>
+          </button>
+        </mat-form-field>
+      </div>
       <div class="tb-image-container tb-primary-fill">
         <div class="tb-image-content">
-          <div class="tb-image-preview-title" translate>image.image-preview</div>
-          <div class="tb-image-preview-container">
-            <div class="tb-image-preview-spacer"></div>
-            <img class="tb-image-preview" [src]="imagePreviewData | image: {preview: true} | async">
-          </div>
-          <div class="tb-image-preview-details">
-            <div>{{ image.descriptor.width }}x{{ image.descriptor.height }}</div>
-            <mat-divider vertical></mat-divider>
-            <div>{{ image.descriptor.size | fileSize }}</div>
-          </div>
           <div class="tb-image-actions">
-            <button type="button"
-                    mat-icon-button [disabled]="isLoading$ | async"
-                    matTooltip="{{ 'image.download-image' | translate }}"
-                    matTooltipPosition="above"
-                    (click)="downloadImage($event)">
-              <mat-icon>file_download</mat-icon>
-            </button>
-            <button type="button"
-                    mat-icon-button [disabled]="isLoading$ | async"
-                    matTooltip="{{ 'image.export-image' | translate }}"
-                    matTooltipPosition="above"
-                    (click)="exportImage($event)">
-              <tb-icon>mdi:file-export</tb-icon>
-            </button>
+            <div class="tb-image-actions">
+              <button type="button"
+                      mat-icon-button [disabled]="isLoading$ | async"
+                      matTooltip="{{ 'image.download-image' | translate }}"
+                      matTooltipPosition="above"
+                      (click)="downloadImage($event)">
+                <mat-icon>file_download</mat-icon>
+              </button>
+              <button type="button"
+                      mat-icon-button [disabled]="isLoading$ | async"
+                      matTooltip="{{ 'image.export-image' | translate }}"
+                      matTooltipPosition="above"
+                      (click)="exportImage($event)">
+                <tb-icon>mdi:file-export</tb-icon>
+              </button>
+            </div>
             <button *ngIf="!readonly"
                     type="button"
-                    mat-stroked-button
+                    mat-flat-button
                     color="primary"
                     [disabled]="isLoading$ | async"
                     (click)="updateImage($event)">
               {{ 'image.update-image' | translate }}
             </button>
           </div>
+          <div class="tb-image-preview-container">
+            <div class="tb-image-preview-spacer"></div>
+            <img class="tb-image-preview" [src]="imagePreviewData | image | async">
+          </div>
+          <div class="tb-image-preview-details">
+            <div>{{ image.descriptor.width }}x{{ image.descriptor.height }}</div>
+            <mat-divider vertical></mat-divider>
+            <div>{{ image.descriptor.size | fileSize }}</div>
+          </div>
         </div>
       </div>
     </fieldset>
-  </div>
-  <div mat-dialog-actions fxLayout="row" fxLayoutAlign="end center">
-    <button mat-button color="primary"
-            type="button"
-            [disabled]="(isLoading$ | async)"
-            (click)="cancel()" cdkFocusInitial>
-      {{ (readonly ? 'action.close' : 'action.cancel') | translate }}
-    </button>
-    <button *ngIf="!readonly" mat-raised-button color="primary"
-            type="submit"
-            [disabled]="(isLoading$ | async) || imageFormGroup.invalid
-            || !imageFormGroup.dirty">
-      {{ 'action.save' | translate }}
-    </button>
   </div>
 </form>

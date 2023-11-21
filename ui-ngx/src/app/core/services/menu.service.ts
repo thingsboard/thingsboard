@@ -535,6 +535,13 @@ export class MenuService {
             ]
           },
           {
+            id: 'images',
+            name: 'image.gallery',
+            type: 'link',
+            path: '/resources/images',
+            icon: 'filter'
+          },
+          {
             id: 'resources_library',
             name: 'resource.resources-library',
             type: 'link',

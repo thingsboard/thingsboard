@@ -88,6 +88,10 @@ export class ScrollGridDatasource<T, F> extends DataSource<(T | GridCellType)[]>
     return !!this._subscription && !this._subscription.closed;
   }
 
+  get currentColumns(): number {
+    return this._columns;
+  }
+
   public updateFilter(filter: F) {
     this.filter = filter;
     this.update();
@@ -119,6 +123,24 @@ export class ScrollGridDatasource<T, F> extends DataSource<(T | GridCellType)[]>
 
       if (!dataLengthChanged) {
         this._fetchDataFromRange(range);
+      }
+    }
+  }
+
+  public updateItem(index: number, item: T) {
+    this._data[index] = item;
+    this._dataUpdated();
+  }
+
+  public deleteItem(index: number) {
+    if (index < this._data.length) {
+      this._data.splice(index, 1);
+      this._totalElements--;
+      const rowsLength = this._totalElements ? Math.ceil(this._totalElements / this._columns) : 100000;
+      this._rows = Array.from<T[]>({length: rowsLength});
+      this._dataUpdated();
+      if (this._hasNext) {
+        this._fetchDataFromRange(this._viewport.getRenderedRange());
       }
     }
   }

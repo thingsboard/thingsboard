@@ -14,19 +14,12 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Inject, OnInit, SkipSelf } from '@angular/core';
+import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import {
-  FormGroupDirective,
-  NgForm,
-  UntypedFormBuilder,
-  UntypedFormControl,
-  UntypedFormGroup,
-  Validators
-} from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 import { ImageService } from '@core/http/image.service';
@@ -45,19 +38,16 @@ export interface ImageDialogData {
 @Component({
   selector: 'tb-image-dialog',
   templateUrl: './image-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: ImageDialogComponent}],
   styleUrls: ['./image-dialog.component.scss']
 })
 export class ImageDialogComponent extends
-  DialogComponent<ImageDialogComponent, boolean> implements OnInit, ErrorStateMatcher {
+  DialogComponent<ImageDialogComponent, ImageResourceInfo> implements OnInit {
 
   image: ImageResourceInfo;
 
   readonly: boolean;
 
   imageFormGroup: UntypedFormGroup;
-
-  submitted = false;
 
   imageChanged = false;
 
@@ -68,8 +58,7 @@ export class ImageDialogComponent extends
               private imageService: ImageService,
               private dialog: MatDialog,
               @Inject(MAT_DIALOG_DATA) private data: ImageDialogData,
-              @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
-              public dialogRef: MatDialogRef<ImageDialogComponent, boolean>,
+              public dialogRef: MatDialogRef<ImageDialogComponent, ImageResourceInfo>,
               public fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
     this.image = data.image;
@@ -88,14 +77,25 @@ export class ImageDialogComponent extends
     }
   }
 
-  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
-    const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
-    const customErrorState = !!(control && control.invalid && this.submitted);
-    return originalErrorState || customErrorState;
+  cancel(): void {
+    this.dialogRef.close(this.imageChanged ? this.image : null);
   }
 
-  cancel(): void {
-    this.dialogRef.close(this.imageChanged);
+  revertInfo(): void {
+    this.imageFormGroup.get('title').setValue(this.image.title);
+    this.imageFormGroup.markAsPristine();
+  }
+
+  saveInfo(): void {
+    const title: string = this.imageFormGroup.get('title').value;
+    const image = {...this.image, ...{title}};
+    this.imageService.updateImageInfo(image).subscribe(
+      (saved) => {
+        this.image = saved;
+        this.imageChanged = true;
+        this.imageFormGroup.markAsPristine();
+      }
+    );
   }
 
   downloadImage($event) {
@@ -134,14 +134,4 @@ export class ImageDialogComponent extends
     });
   }
 
-  save(): void {
-    this.submitted = true;
-    const title: string = this.imageFormGroup.get('title').value;
-    const image = {...this.image, ...{title}};
-    this.imageService.updateImageInfo(image).subscribe(
-      () => {
-        this.dialogRef.close(true);
-      }
-    );
-  }
 }

@@ -77,17 +77,70 @@ $tb-button-selected-color: rgb(255, 110, 64) !default;
     }
 
     .tb-image-card {
+      position: relative;
       height: 100%;
-      border-radius: 8px;
+      border-radius: 4px;
+      box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.24);
       padding: 8px;
       display: flex;
       gap: 8px;
       flex-direction: column;
       cursor: pointer;
-      transition: box-shadow 0.2s;
+
+      .tb-image-card-overlay {
+        position: absolute;
+        pointer-events: none;
+        inset: 0;
+        border-radius: 4px;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        .tb-image-card-overlay-buttons {
+          width: 100%;
+          display: flex;
+          justify-content: flex-end;
+          align-items: center;
+          color: rgba(0,0,0,0.78);
+          opacity: 0;
+          transition: opacity 0.5s;
+        }
+      }
+
+      &:hover {
+        .tb-image-card-overlay {
+          .tb-image-card-overlay-buttons {
+            opacity: 1;
+          }
+        }
+        .tb-image-preview-container {
+          .tb-image-preview-overlay {
+            background: rgba(245,245,245,0.6);
+            backdrop-filter: blur(4px);
+            .mdc-button {
+              opacity: 1;
+            }
+          }
+        }
+      }
 
       .tb-image-preview-container {
         position: relative;
+        .tb-image-preview-overlay {
+          position: absolute;
+          inset: 0;
+          z-index: 1;
+          background: rgba(245,245,245,0);
+          backdrop-filter: none;
+          transition: all 0.5s;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          .mdc-button {
+            opacity: 0;
+            transition: opacity 0.5s;
+          }
+        }
         .tb-image-preview-spacer {
           margin-top: 100%;
         }
@@ -151,10 +204,6 @@ $tb-button-selected-color: rgb(255, 110, 64) !default;
             height: 16px;
           }
         }
-      }
-
-      &:hover {
-        box-shadow: 0 0 28px 0 rgba(0, 0, 0, 0.24);
       }
     }
 
