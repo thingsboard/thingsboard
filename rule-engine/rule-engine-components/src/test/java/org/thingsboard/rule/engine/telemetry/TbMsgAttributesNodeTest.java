@@ -135,7 +135,7 @@ class TbMsgAttributesNodeTest {
     }
 
     // Notify device backward-compatibility test arguments
-    private static Stream<Arguments> provideNotifyDeviceMdValue() {
+    private static Stream<Arguments> givenNotifyDeviceMdValue_whenSaveAndNotify_thenVerifyExpectedArgumentForNotifyDeviceInSaveAndNotifyMethod() {
         return Stream.of(
                 Arguments.of(null, true),
                 Arguments.of("null", false),
@@ -146,7 +146,7 @@ class TbMsgAttributesNodeTest {
 
     // Notify device backward-compatibility test
     @ParameterizedTest
-    @MethodSource("provideNotifyDeviceMdValue")
+    @MethodSource
     void givenNotifyDeviceMdValue_whenSaveAndNotify_thenVerifyExpectedArgumentForNotifyDeviceInSaveAndNotifyMethod(String mdValue, boolean expectedArgumentValue) throws TbNodeException {
         node = spy(TbMsgAttributesNode.class);
         var ctxMock = mock(TbContext.class);
@@ -227,7 +227,7 @@ class TbMsgAttributesNodeTest {
     }
 
     @ParameterizedTest
-    @MethodSource("givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig")
+    @MethodSource
     void givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig(int givenVersion, String givenConfigStr, boolean hasChanges, String expectedConfigStr) throws TbNodeException {
         // GIVEN
         node = spy(TbMsgAttributesNode.class);
