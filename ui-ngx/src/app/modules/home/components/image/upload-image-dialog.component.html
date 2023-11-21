@@ -17,7 +17,7 @@
 -->
 <form [formGroup]="uploadImageFormGroup" (ngSubmit)="upload()" style="width: 560px;">
   <mat-toolbar color="primary">
-    <h2>{{ 'image.upload-image' | translate }}</h2>
+    <h2>{{ ( uploadImage ? 'image.upload-image' : 'image.update-image' ) | translate }}</h2>
     <span fxFlex></span>
     <button mat-icon-button
             (click)="cancel()"
@@ -31,11 +31,14 @@
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async">
       <tb-image-input resultAsFile
+                      processImageApiLink
                       label="{{'image.image-preview' | translate}}"
                       formControlName="file"
+                      showFileName
+                      [fileName]="data?.image?.fileName"
                       (fileNameChanged)="imageFileNameChanged($event)">
       </tb-image-input>
-      <mat-form-field *ngIf="uploadImageFormGroup.get('file').value" class="mat-block">
+      <mat-form-field *ngIf="uploadImage && uploadImageFormGroup.get('file').value" class="mat-block">
         <mat-label translate>image.name</mat-label>
         <input matInput formControlName="title" required>
         <mat-error *ngIf="uploadImageFormGroup.get('title').hasError('required')">
@@ -55,7 +58,7 @@
             type="submit"
             [disabled]="(isLoading$ | async) || uploadImageFormGroup.invalid
             || !uploadImageFormGroup.dirty">
-      {{ 'action.upload' | translate }}
+      {{ (uploadImage ? 'action.upload' : 'action.update') | translate }}
     </button>
   </div>
 </form>

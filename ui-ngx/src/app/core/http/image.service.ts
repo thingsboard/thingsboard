@@ -58,7 +58,7 @@ export class ImageService {
     }
     const formData = new FormData();
     formData.append('file', file);
-    return this.http.post<ImageResourceInfo>(`${IMAGES_URL_PREFIX}/${type}/${encodeURIComponent(key)}`, formData,
+    return this.http.put<ImageResourceInfo>(`${IMAGES_URL_PREFIX}/${type}/${encodeURIComponent(key)}`, formData,
       defaultHttpUploadOptions(config.ignoreLoading, config.ignoreErrors, config.resendRequest));
   }
 

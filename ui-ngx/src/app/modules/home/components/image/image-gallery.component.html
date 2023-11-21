@@ -110,7 +110,7 @@
     </mat-toolbar>
     <div fxFlex *ngIf="mode === 'list'" fxLayout="column">
       <div fxFlex class="table-container">
-        <table mat-table [dataSource]="dataSource" [trackBy]="trackByEntityId"
+        <table mat-table [dataSource]="dataSource" [trackBy]="trackByEntity"
                matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
           <ng-container matColumnDef="select" sticky>
             <mat-header-cell *matHeaderCellDef style="width: 30px;">
@@ -185,7 +185,7 @@
                         (click)="editImage($event, image)">
                   <mat-icon>edit</mat-icon>
                 </button>
-                <button mat-icon-button [disabled]="(isLoading$ | async) || !deleteEnabled(image)"
+                <button mat-icon-button [disabled]="(isLoading$ | async) || readonly(image)"
                         matTooltip="{{ 'image.delete-image' | translate }}"
                         matTooltipPosition="above"
                         (click)="deleteImage($event, image)">

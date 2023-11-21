@@ -60,7 +60,11 @@ import {
 } from '@home/components/dashboard-page/add-widget-dialog.component';
 import { Widget } from '@shared/models/widget.models';
 import { MatDialog } from '@angular/material/dialog';
-import { UploadImageDialogComponent } from '@home/components/image/upload-image-dialog.component';
+import {
+  UploadImageDialogComponent,
+  UploadImageDialogData
+} from '@home/components/image/upload-image-dialog.component';
+import { ImageDialogComponent, ImageDialogData } from '@home/components/image/image-dialog.component';
 
 @Component({
   selector: 'tb-image-gallery',
@@ -350,16 +354,16 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
     this.textSearch.reset();
   }
 
-  trackByEntityId(index: number, entity: BaseData<HasId>) {
-    return entity.id.id;
+  trackByEntity(index: number, entity: BaseData<HasId>) {
+    return entity;
   }
 
   isSystem(image?: ImageResourceInfo): boolean {
     return image?.tenantId?.id === NULL_UUID;
   }
 
-  deleteEnabled(image?: ImageResourceInfo): boolean {
-    return this.authUser.authority === Authority.SYS_ADMIN || !this.isSystem(image);
+  readonly(image?: ImageResourceInfo): boolean {
+    return this.authUser.authority !== Authority.SYS_ADMIN && this.isSystem(image);
   }
 
   deleteImage($event: Event, image: ImageResourceInfo) {
@@ -424,10 +428,11 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
   }
 
   uploadImage(): void {
-    this.dialog.open<UploadImageDialogComponent, any,
-      boolean>(UploadImageDialogComponent, {
+    this.dialog.open<UploadImageDialogComponent, UploadImageDialogData,
+      ImageResourceInfo>(UploadImageDialogComponent, {
       disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog']
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {}
     }).afterClosed().subscribe((result) => {
       if (result) {
         this.updateData();
@@ -435,11 +440,23 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
     });
   }
 
-  editImage($event, image: ImageResourceInfo) {
+  editImage($event: Event, image: ImageResourceInfo) {
     if ($event) {
       $event.stopPropagation();
     }
-    // TODO:
+    this.dialog.open<ImageDialogComponent, ImageDialogData,
+      boolean>(ImageDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        image,
+        readonly: this.readonly(image)
+      }
+    }).afterClosed().subscribe((result) => {
+      if (result) {
+        this.updateData();
+      }
+    });
   }
 
   protected updatedRouterParamsAndData(queryParams: object, queryParamsHandling: QueryParamsHandling = 'merge') {

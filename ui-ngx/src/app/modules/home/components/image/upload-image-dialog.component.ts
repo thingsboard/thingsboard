@@ -14,9 +14,9 @@
 /// limitations under the License.
 ///
 
-import { Component, OnInit, SkipSelf } from '@angular/core';
+import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
-import { MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
@@ -30,6 +30,11 @@ import {
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 import { ImageService } from '@core/http/image.service';
+import { ImageResourceInfo, imageResourceType } from '@shared/models/resource.models';
+
+export interface UploadImageDialogData {
+  image?: ImageResourceInfo;
+}
 
 @Component({
   selector: 'tb-upload-image-dialog',
@@ -38,32 +43,40 @@ import { ImageService } from '@core/http/image.service';
   styleUrls: []
 })
 export class UploadImageDialogComponent extends
-  DialogComponent<UploadImageDialogComponent, boolean> implements OnInit, ErrorStateMatcher {
+  DialogComponent<UploadImageDialogComponent, ImageResourceInfo> implements OnInit, ErrorStateMatcher {
 
   uploadImageFormGroup: UntypedFormGroup;
+
+  uploadImage = true;
 
   submitted = false;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
               private imageService: ImageService,
+              @Inject(MAT_DIALOG_DATA) public data: UploadImageDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
-              public dialogRef: MatDialogRef<UploadImageDialogComponent, boolean>,
+              public dialogRef: MatDialogRef<UploadImageDialogComponent, ImageResourceInfo>,
               public fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
   }
 
   ngOnInit(): void {
+    this.uploadImage = !this.data?.image;
     this.uploadImageFormGroup = this.fb.group({
-      file: [null, [Validators.required]],
-      title: [null, [Validators.required]]
+      file: [this.data?.image?.link, [Validators.required]]
     });
+    if (this.uploadImage) {
+      this.uploadImageFormGroup.addControl('title', this.fb.control(null, [Validators.required]));
+    }
   }
 
   imageFileNameChanged(fileName: string) {
-    const titleControl = this.uploadImageFormGroup.get('title');
-    if (!titleControl.value || !titleControl.touched) {
-      titleControl.setValue(fileName);
+    if (this.uploadImage) {
+      const titleControl = this.uploadImageFormGroup.get('title');
+      if (!titleControl.value || !titleControl.touched) {
+        titleControl.setValue(fileName);
+      }
     }
   }
 
@@ -74,17 +87,26 @@ export class UploadImageDialogComponent extends
   }
 
   cancel(): void {
-    this.dialogRef.close(false);
+    this.dialogRef.close(null);
   }
 
   upload(): void {
     this.submitted = true;
     const file: File = this.uploadImageFormGroup.get('file').value;
-    const title: string = this.uploadImageFormGroup.get('title').value;
-    this.imageService.uploadImage(file, title).subscribe(
-      () => {
-        this.dialogRef.close(true);
-      }
-    );
+    if (this.uploadImage) {
+      const title: string = this.uploadImageFormGroup.get('title').value;
+      this.imageService.uploadImage(file, title).subscribe(
+        (res) => {
+          this.dialogRef.close(res);
+        }
+      );
+    } else {
+      const image = this.data.image;
+      this.imageService.updateImage(imageResourceType(image), image.resourceKey, file).subscribe(
+        (res) => {
+          this.dialogRef.close(res);
+        }
+      );
+    }
   }
 }

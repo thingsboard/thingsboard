@@ -63,5 +63,8 @@
       </button>
   </div>
   </ng-container>
-  <div class="tb-hint" *ngIf="maxSizeByte && !disabled" translate [translateParams]="{ size: maxSizeByte | fileSize}">dashboard.maximum-upload-file-size</div>
+  <div *ngIf="(showFileName && fileName) || (maxSizeByte && !disabled)" class="tb-image-info-container">
+    <div *ngIf="showFileName && fileName" class="tb-image-file-name">{{ fileName }}</div>
+    <div *ngIf="maxSizeByte && !disabled" class="tb-image-file-hint" translate [translateParams]="{ size: maxSizeByte | fileSize}">dashboard.maximum-upload-file-size</div>
+  </div>
 </div>

@@ -37,6 +37,7 @@ import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FileSizePipe } from '@shared/pipe/file-size.pipe';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { ImagePipe } from '@shared/pipe/image.pipe';
 
 @Component({
   selector: 'tb-image-input',
@@ -86,14 +87,25 @@ export class ImageInputComponent extends PageComponent implements AfterViewInit,
 
   @Input()
   @coerceBoolean()
+  processImageApiLink = false;
+
+  @Input()
+  @coerceBoolean()
   resultAsFile = false;
+
+  @Input()
+  @coerceBoolean()
+  showFileName = false;
+
+  @Input()
+  fileName: string;
 
   @Output()
   fileNameChanged = new EventEmitter<string>();
 
   imageUrl: string;
   file: File;
-  fileName: string;
+
   safeImageUrl: SafeUrl;
 
   @ViewChild('flow', {static: true})
@@ -106,6 +118,7 @@ export class ImageInputComponent extends PageComponent implements AfterViewInit,
   constructor(protected store: Store<AppState>,
               private utils: UtilsService,
               private sanitizer: DomSanitizer,
+              private imagePipe: ImagePipe,
               private dialog: DialogService,
               private translate: TranslateService,
               private fileSize: FileSizePipe,
@@ -161,7 +174,15 @@ export class ImageInputComponent extends PageComponent implements AfterViewInit,
   writeValue(value: string): void {
     this.imageUrl = value;
     if (this.imageUrl) {
-      this.safeImageUrl = this.sanitizer.bypassSecurityTrustUrl(this.imageUrl);
+      if (this.processImageApiLink) {
+        this.imagePipe.transform(this.imageUrl, {preview: true, ignoreLoadingImage: true}).subscribe(
+          (res) => {
+            this.safeImageUrl = res;
+          }
+        );
+      } else {
+        this.safeImageUrl = this.sanitizer.bypassSecurityTrustUrl(this.imageUrl);
+      }
     } else {
       this.safeImageUrl = null;
     }

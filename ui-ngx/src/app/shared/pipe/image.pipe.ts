@@ -25,6 +25,10 @@ const LOADING_IMAGE_DATA_URI = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS
                                       'LTgiPz4KPHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZlcnNpb249IjEuMSIgdmlld0JveD0iMCAw' +
                                       'IDIwIDIwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPgo=';
 
+export interface UrlHolder {
+  url?: string;
+}
+
 @Pipe({
   name: 'image'
 })
@@ -33,10 +37,11 @@ export class ImagePipe implements PipeTransform {
   constructor(private imageService: ImageService,
               private sanitizer: DomSanitizer) { }
 
-  transform(url: string, args?: any): Observable<SafeUrl | string> {
+  transform(urlData: string | UrlHolder, args?: any): Observable<SafeUrl | string> {
     const ignoreLoadingImage = !!args?.ignoreLoadingImage;
     const asString = !!args?.asString;
     const image$ = ignoreLoadingImage ? new Subject<SafeUrl | string>() : new BehaviorSubject<SafeUrl | string>(LOADING_IMAGE_DATA_URI);
+    const url = (typeof urlData === 'string') ? urlData : urlData?.url;
     if (isDefinedAndNotNull(url)) {
       const preview = !!args?.preview;
       this.imageService.resolveImageUrl(url, preview, asString).subscribe((imageUrl) => {

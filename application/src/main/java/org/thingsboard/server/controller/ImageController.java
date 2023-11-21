@@ -113,6 +113,7 @@ public class ImageController extends BaseController {
         TbResourceInfo imageInfo = checkImageInfo(type, key, Operation.WRITE);
         TbResource image = new TbResource(imageInfo);
         image.setData(file.getBytes());
+        image.setFileName(file.getOriginalFilename());
         image.updateDescriptor(ImageDescriptor.class, descriptor -> {
             descriptor.setMediaType(file.getContentType());
             return descriptor;

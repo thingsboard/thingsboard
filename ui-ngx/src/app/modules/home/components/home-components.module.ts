@@ -184,6 +184,7 @@ import {
 import { ScrollGridComponent } from '@home/components/grid/scroll-grid.component';
 import { ImageGalleryComponent } from '@home/components/image/image-gallery.component';
 import { UploadImageDialogComponent } from '@home/components/image/upload-image-dialog.component';
+import { ImageDialogComponent } from '@home/components/image/image-dialog.component';
 
 @NgModule({
   declarations:
@@ -331,7 +332,8 @@ import { UploadImageDialogComponent } from '@home/components/image/upload-image-
       SendNotificationButtonComponent,
       ScrollGridComponent,
       ImageGalleryComponent,
-      UploadImageDialogComponent
+      UploadImageDialogComponent,
+      ImageDialogComponent
     ],
   imports: [
     CommonModule,
@@ -472,7 +474,8 @@ import { UploadImageDialogComponent } from '@home/components/image/upload-image-
     SendNotificationButtonComponent,
     ScrollGridComponent,
     ImageGalleryComponent,
-    UploadImageDialogComponent
+    UploadImageDialogComponent,
+    ImageDialogComponent
   ],
   providers: [
     WidgetComponentService,
