@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.resource;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -22,7 +23,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.RegexUtils;
-import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ImageDescriptor;
 import org.thingsboard.server.common.data.ResourceType;
@@ -35,7 +35,6 @@ import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.dao.ImageContainerDao;
 import org.thingsboard.server.dao.asset.AssetProfileDao;
 import org.thingsboard.server.dao.dashboard.DashboardInfoDao;
@@ -48,7 +47,6 @@ import org.thingsboard.server.dao.widget.WidgetTypeDao;
 import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 
 import javax.annotation.PostConstruct;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,21 +59,23 @@ import java.util.regex.Pattern;
 public class BaseImageService extends BaseResourceService implements ImageService {
 
     private static final int MAX_ENTITIES_TO_FIND = 10;
-    @Autowired
-    private AssetProfileDao assetProfileDao;
-    @Autowired
-    private DeviceProfileDao deviceProfileDao;
-    @Autowired
-    private WidgetsBundleDao widgetsBundleDao;
-    @Autowired
-    private WidgetTypeDao widgetTypeDao;
-    @Autowired
-    private DashboardInfoDao dashboardInfoDao;
+    private final AssetProfileDao assetProfileDao;
+    private final DeviceProfileDao deviceProfileDao;
+    private final WidgetsBundleDao widgetsBundleDao;
+    private final WidgetTypeDao widgetTypeDao;
+    private final DashboardInfoDao dashboardInfoDao;
 
     private final Map<EntityType, ImageContainerDao<?>> imageContainerDaoMap = new HashMap<>();
 
-    public BaseImageService(TbResourceDao resourceDao, TbResourceInfoDao resourceInfoDao, ResourceDataValidator resourceValidator) {
+    public BaseImageService(TbResourceDao resourceDao, TbResourceInfoDao resourceInfoDao, ResourceDataValidator resourceValidator,
+                            AssetProfileDao assetProfileDao, DeviceProfileDao deviceProfileDao, WidgetsBundleDao widgetsBundleDao,
+                            WidgetTypeDao widgetTypeDao, DashboardInfoDao dashboardInfoDao) {
         super(resourceDao, resourceInfoDao, resourceValidator);
+        this.assetProfileDao = assetProfileDao;
+        this.deviceProfileDao = deviceProfileDao;
+        this.widgetsBundleDao = widgetsBundleDao;
+        this.widgetTypeDao = widgetTypeDao;
+        this.dashboardInfoDao = dashboardInfoDao;
     }
 
     @PostConstruct
@@ -207,7 +207,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
             });
             if (!affectedEntities.isEmpty()) {
                 success = false;
-                result.affectedEntities(affectedEntities);
+                result.references(affectedEntities);
             }
         }
         if (success) {

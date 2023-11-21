@@ -27,6 +27,6 @@ import java.util.Map;
 public class TbImageDeleteResult {
 
     private boolean success;
-    private Map<String, List<? extends HasId<?>>> affectedEntities;
+    private Map<String, List<? extends HasId<?>>> references;
 
 }
