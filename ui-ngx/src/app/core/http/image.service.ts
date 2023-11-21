@@ -41,12 +41,13 @@ export class ImageService {
   ) {
   }
 
-  public uploadImage(file: File, config?: RequestConfig): Observable<ImageResourceInfo> {
+  public uploadImage(file: File, title: string, config?: RequestConfig): Observable<ImageResourceInfo> {
     if (!config) {
       config = {};
     }
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('title', title);
     return this.http.post<ImageResourceInfo>('/api/image', formData,
       defaultHttpUploadOptions(config.ignoreLoading, config.ignoreErrors, config.resendRequest));
   }
@@ -133,7 +134,7 @@ export class ImageService {
   }
 
   public deleteImage(type: ImageResourceType, key: string, config?: RequestConfig) {
-    return this.http.delete(`${IMAGES_URL_PREFIX}${type}/${encodeURIComponent}`, defaultHttpOptionsFromConfig(config));
+    return this.http.delete(`${IMAGES_URL_PREFIX}/${type}/${encodeURIComponent(key)}`, defaultHttpOptionsFromConfig(config));
   }
 
 }

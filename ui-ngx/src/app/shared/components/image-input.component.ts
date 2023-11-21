@@ -14,7 +14,16 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, ChangeDetectorRef, Component, forwardRef, Input, OnDestroy, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component, EventEmitter,
+  forwardRef,
+  Input,
+  OnDestroy,
+  Output,
+  ViewChild
+} from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -27,6 +36,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FileSizePipe } from '@shared/pipe/file-size.pipe';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-image-input',
@@ -74,7 +84,16 @@ export class ImageInputComponent extends PageComponent implements AfterViewInit,
   @Input()
   inputId = this.utils.guid();
 
+  @Input()
+  @coerceBoolean()
+  resultAsFile = false;
+
+  @Output()
+  fileNameChanged = new EventEmitter<string>();
+
   imageUrl: string;
+  file: File;
+  fileName: string;
   safeImageUrl: SafeUrl;
 
   @ViewChild('flow', {static: true})
@@ -97,7 +116,9 @@ export class ImageInputComponent extends PageComponent implements AfterViewInit,
   ngAfterViewInit() {
     this.autoUploadSubscription = this.flow.events$.subscribe(event => {
       if (event.type === 'fileAdded') {
-        const file = (event.event[0] as flowjs.FlowFile).file;
+        const flowFile = event.event[0] as flowjs.FlowFile;
+        const file = flowFile.file;
+        const fileName = flowFile.name;
         if (this.maxSizeByte && this.maxSizeByte < file.size) {
           this.dialog.alert(
             this.translate.instant('dashboard.cannot-upload-file'),
@@ -108,10 +129,12 @@ export class ImageInputComponent extends PageComponent implements AfterViewInit,
           return false;
         }
         const reader = new FileReader();
-        reader.onload = (loadEvent) => {
+        reader.onload = (_loadEvent) => {
           if (typeof reader.result === 'string' && reader.result.startsWith('data:image/')) {
             this.imageUrl = reader.result;
             this.safeImageUrl = this.sanitizer.bypassSecurityTrustUrl(this.imageUrl);
+            this.file = file;
+            this.fileName = fileName;
             this.updateModel();
           }
         };
@@ -146,12 +169,19 @@ export class ImageInputComponent extends PageComponent implements AfterViewInit,
 
   private updateModel() {
     this.cd.markForCheck();
-    this.propagateChange(this.imageUrl);
+    if (this.resultAsFile) {
+      this.propagateChange(this.file);
+    } else {
+      this.propagateChange(this.imageUrl);
+    }
+    this.fileNameChanged.emit(this.fileName);
   }
 
   clearImage() {
     this.imageUrl = null;
     this.safeImageUrl = null;
+    this.file = null;
+    this.fileName = null;
     this.updateModel();
   }
 }

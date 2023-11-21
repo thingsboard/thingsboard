@@ -90,6 +90,10 @@ export class ScrollGridDatasource<T, F> extends DataSource<(T | GridCellType)[]>
 
   public updateFilter(filter: F) {
     this.filter = filter;
+    this.update();
+  }
+
+  public update() {
     if (this.active) {
       const prevLength = this._rows.length;
       this._reset();

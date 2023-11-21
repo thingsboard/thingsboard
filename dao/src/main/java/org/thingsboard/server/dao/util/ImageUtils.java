@@ -18,11 +18,21 @@ package org.thingsboard.server.dao.util;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
+import org.apache.batik.bridge.BridgeContext;
+import org.apache.batik.bridge.DocumentLoader;
+import org.apache.batik.bridge.GVTBuilder;
+import org.apache.batik.bridge.UserAgent;
+import org.apache.batik.bridge.UserAgentAdapter;
+import org.apache.batik.gvt.GraphicsNode;
 import org.apache.batik.transcoder.TranscoderInput;
 import org.apache.batik.transcoder.TranscoderOutput;
 import org.apache.batik.transcoder.image.PNGTranscoder;
+import org.apache.batik.util.XMLResourceDescriptor;
 import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
+import org.thingsboard.server.common.data.StringUtils;
+import org.w3c.dom.Document;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -52,7 +62,7 @@ public class ImageUtils {
 
     public static ProcessedImage processImage(byte[] data, String mediaType, int thumbnailMaxDimension) throws Exception {
         if (mediaTypeToFileExtension(mediaType).equals("svg")) {
-            return processSvgImage(data, thumbnailMaxDimension);
+            return processSvgImage(data, mediaType, thumbnailMaxDimension);
         }
 
         BufferedImage bufferedImage = ImageIO.read(new ByteArrayInputStream(data));
@@ -90,10 +100,45 @@ public class ImageUtils {
         return image;
     }
 
-    public static ProcessedImage processSvgImage(byte[] data, int thumbnailMaxDimension) throws Exception {
+    public static ProcessedImage processSvgImage(byte[] data, String mediaType, int thumbnailMaxDimension) throws Exception {
+        SAXSVGDocumentFactory factory = new SAXSVGDocumentFactory(
+                XMLResourceDescriptor.getXMLParserClassName());
+        Document document = factory.createDocument(
+                null, new ByteArrayInputStream(data));
+        Integer width = null;
+        Integer height = null;
+        String strWidth = document.getDocumentElement().getAttribute("width");
+        String strHeight = document.getDocumentElement().getAttribute("height");
+        if (StringUtils.isNotEmpty(strWidth) && StringUtils.isNotEmpty(strHeight)) {
+            width = Integer.parseInt(strWidth);
+            height = Integer.parseInt(strHeight);
+        } else {
+            String viewBox = document.getDocumentElement().getAttribute("viewBox");
+            if (StringUtils.isNotEmpty(viewBox)) {
+                String[] viewBoxValues = viewBox.split(" ");
+                if (viewBoxValues.length > 3) {
+                    width = Integer.parseInt(viewBoxValues[2]);
+                    height = Integer.parseInt(viewBoxValues[3]);
+                }
+            }
+        }
+        if (width == null) {
+            UserAgent agent = new UserAgentAdapter();
+            DocumentLoader loader= new DocumentLoader(agent);
+            BridgeContext context = new BridgeContext(agent, loader);
+            context.setDynamic(true);
+            GVTBuilder builder= new GVTBuilder();
+            GraphicsNode root = builder.build(context, document);
+            var bounds = root.getPrimitiveBounds();
+            if (bounds != null) {
+                width = (int) bounds.getWidth();
+                height = (int) bounds.getHeight();
+            }
+        }
         ProcessedImage image = new ProcessedImage();
-        image.setWidth(0);
-        image.setHeight(0);
+        image.setMediaType(mediaType);
+        image.setWidth(width == null ? 0 : width);
+        image.setHeight(height == null ? 0 : height);
         image.setData(data);
         image.setSize(data.length);
 

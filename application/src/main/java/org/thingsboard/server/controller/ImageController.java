@@ -85,14 +85,19 @@ public class ImageController extends BaseController {
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @PostMapping("/api/image")
-    public TbResourceInfo uploadImage(@RequestPart MultipartFile file) throws Exception {
+    public TbResourceInfo uploadImage(@RequestPart MultipartFile file,
+                                      @RequestPart(required = false) String title) throws Exception {
         SecurityUser user = getCurrentUser();
         TbResource image = new TbResource();
         image.setTenantId(user.getTenantId());
         accessControlService.checkPermission(user, Resource.TB_RESOURCE, Operation.CREATE, null, image);
 
         image.setFileName(file.getOriginalFilename());
-        image.setTitle(file.getOriginalFilename());
+        if (StringUtils.isNotEmpty(title)) {
+            image.setTitle(title);
+        } else {
+            image.setTitle(file.getOriginalFilename());
+        }
         image.setResourceType(ResourceType.IMAGE);
         ImageDescriptor descriptor = new ImageDescriptor();
         descriptor.setMediaType(file.getContentType());
