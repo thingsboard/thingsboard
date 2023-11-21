@@ -96,10 +96,12 @@ public class TbCopyKeysNodeTest {
     @Test
     void givenMsgFromMsg_whenOnMsg_thenVerifyOutput() throws Exception {
         config.setFromMetadata(false);
+        config.setKeys(Set.of(".*Key$"));
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
 
-        String data = "{\"DigitData\":22.5,\"TempDataValue\":10.5}";
+        String data = "{\"nullKey\":null,\"stringKey\":\"value1\",\"booleanKey\":true,\"doubleKey\":42.0,\"longKey\":73," +
+                "\"jsonKey\":{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}}";
         node.onMsg(ctx, getTbMsg(deviceId, data));
 
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
@@ -110,8 +112,13 @@ public class TbCopyKeysNodeTest {
         assertThat(newMsg).isNotNull();
 
         Map<String, String> metaDataMap = newMsg.getMetaData().getData();
-        assertThat(metaDataMap.containsKey("DigitData")).isEqualTo(true);
-        assertThat(metaDataMap.containsKey("TempDataValue")).isEqualTo(true);
+        assertThat(metaDataMap.get("nullKey")).isEqualTo("null");
+        assertThat(metaDataMap.get("stringKey")).isEqualTo("value1");
+        assertThat(metaDataMap.get("booleanKey")).isEqualTo("true");
+        assertThat(metaDataMap.get("doubleKey")).isEqualTo("42.0");
+        assertThat(metaDataMap.get("longKey")).isEqualTo("73");
+        assertThat(metaDataMap.get("jsonKey"))
+                .isEqualTo("{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}");
     }
 
     @Test
