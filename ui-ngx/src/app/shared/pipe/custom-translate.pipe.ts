@@ -20,28 +20,30 @@ import { TranslateService } from '@ngx-translate/core';
 import { isString } from '@core/utils';
 
 @Pipe({
-  name: 'customTranslate'
+  name: 'tbTranslate'
 })
 export class CustomTranslatePipe implements PipeTransform {
 
   constructor(private translate: TranslateService) {}
-  public transform(text: string, def?: any): string {
+  public transform(text: string, interpolateParams?: object, defaultValue?: string): string {
     if (text && isString(text)) {
       if (text.includes(`{${i18nPrefix}`)) {
         const matches = text.match(i18nRegExp);
-        let result = text;
-        for (const match of matches) {
-          const translationId = match.substring(6, match.length - 1);
-          result = result.replace(match, this.doTranslate(translationId, def || match));
+        if (matches && matches.length) {
+          let result = text;
+          for (const match of matches) {
+            const translationId = match.substring(6, match.length - 1);
+            result = result.replace(match, this.doTranslate(translationId, interpolateParams, defaultValue || match));
+          }
+          return result;
         }
-        return result;
       }
     }
-    return text;
+    return defaultValue && defaultValue.length ? defaultValue : text;
   }
 
-  private doTranslate(translationValue: string, defaultValue: string): string {
-    const translation = this.translate.instant(translationValue);
+  private doTranslate(translationValue: string, interpolateParams?: object, defaultValue?: string): string {
+    const translation = this.translate.instant(translationValue, interpolateParams);
     return translation !== translationValue ? translation : defaultValue;
   }
 
