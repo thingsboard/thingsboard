@@ -56,6 +56,8 @@ public interface ResourceService extends EntityDaoService {
 
     void deleteResource(TenantId tenantId, TbResourceId resourceId);
 
+    void deleteResource(TenantId tenantId, TbResourceId resourceId, boolean force);
+
     void deleteResourcesByTenantId(TenantId tenantId);
 
     long sumDataSizeByTenantId(TenantId tenantId);

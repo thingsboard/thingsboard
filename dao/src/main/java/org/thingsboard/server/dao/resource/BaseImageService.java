@@ -15,26 +15,41 @@
  */
 package org.thingsboard.server.dao.resource;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.RegexUtils;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ImageDescriptor;
 import org.thingsboard.server.common.data.ResourceType;
+import org.thingsboard.server.common.data.TbImageDeleteResult;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.TbResourceInfoFilter;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.ImageContainerDao;
+import org.thingsboard.server.dao.asset.AssetProfileDao;
+import org.thingsboard.server.dao.dashboard.DashboardInfoDao;
+import org.thingsboard.server.dao.device.DeviceProfileDao;
+import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.service.validator.ResourceDataValidator;
 import org.thingsboard.server.dao.util.ImageUtils;
 import org.thingsboard.server.dao.util.ImageUtils.ProcessedImage;
+import org.thingsboard.server.dao.widget.WidgetTypeDao;
+import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 
+import javax.annotation.PostConstruct;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -43,9 +58,35 @@ import java.util.regex.Pattern;
 @Slf4j
 public class BaseImageService extends BaseResourceService implements ImageService {
 
-    public BaseImageService(TbResourceDao resourceDao, TbResourceInfoDao resourceInfoDao, ResourceDataValidator resourceValidator) {
+    private static final int MAX_ENTITIES_TO_FIND = 10;
+    private final AssetProfileDao assetProfileDao;
+    private final DeviceProfileDao deviceProfileDao;
+    private final WidgetsBundleDao widgetsBundleDao;
+    private final WidgetTypeDao widgetTypeDao;
+    private final DashboardInfoDao dashboardInfoDao;
+
+    private final Map<EntityType, ImageContainerDao<?>> imageContainerDaoMap = new HashMap<>();
+
+    public BaseImageService(TbResourceDao resourceDao, TbResourceInfoDao resourceInfoDao, ResourceDataValidator resourceValidator,
+                            AssetProfileDao assetProfileDao, DeviceProfileDao deviceProfileDao, WidgetsBundleDao widgetsBundleDao,
+                            WidgetTypeDao widgetTypeDao, DashboardInfoDao dashboardInfoDao) {
         super(resourceDao, resourceInfoDao, resourceValidator);
+        this.assetProfileDao = assetProfileDao;
+        this.deviceProfileDao = deviceProfileDao;
+        this.widgetsBundleDao = widgetsBundleDao;
+        this.widgetTypeDao = widgetTypeDao;
+        this.dashboardInfoDao = dashboardInfoDao;
     }
+
+    @PostConstruct
+    public void init() {
+        imageContainerDaoMap.put(EntityType.WIDGET_TYPE, widgetTypeDao);
+        imageContainerDaoMap.put(EntityType.WIDGETS_BUNDLE, widgetsBundleDao);
+        imageContainerDaoMap.put(EntityType.DEVICE_PROFILE, deviceProfileDao);
+        imageContainerDaoMap.put(EntityType.ASSET_PROFILE, assetProfileDao);
+        imageContainerDaoMap.put(EntityType.DASHBOARD, dashboardInfoDao);
+    }
+
 
     @Transactional
     @Override
@@ -147,8 +188,32 @@ public class BaseImageService extends BaseResourceService implements ImageServic
     }
 
     @Override
-    public void deleteImage(TenantId tenantId, TbResourceId imageId) {
-        deleteResource(tenantId, imageId);
+    public TbImageDeleteResult deleteImage(TbResourceInfo imageInfo, boolean force) {
+        var tenantId = imageInfo.getTenantId();
+        var imageId = imageInfo.getId();
+        log.trace("Executing deleteImage [{}] [{}]", tenantId, imageId);
+        Validator.validateId(imageId, INCORRECT_RESOURCE_ID + imageId);
+        TbImageDeleteResult.TbImageDeleteResultBuilder result = TbImageDeleteResult.builder();
+        boolean success = true;
+        if (!force) {
+            var link = imageInfo.getLink();
+            Map<String, List<? extends HasId<?>>> affectedEntities = new HashMap<>();
+            imageContainerDaoMap.forEach((entityType, imageContainerDao) -> {
+                var entities = tenantId.isSysTenantId() ? imageContainerDao.findByImageLink(link, MAX_ENTITIES_TO_FIND) :
+                        imageContainerDao.findByTenantAndImageLink(tenantId, link, MAX_ENTITIES_TO_FIND);
+                if (!entities.isEmpty()) {
+                    affectedEntities.put(entityType.name(), entities);
+                }
+            });
+            if (!affectedEntities.isEmpty()) {
+                success = false;
+                result.references(affectedEntities);
+            }
+        }
+        if (success) {
+            deleteResource(tenantId, imageId, force);
+        }
+        return result.success(success).build();
     }
 
     @Override

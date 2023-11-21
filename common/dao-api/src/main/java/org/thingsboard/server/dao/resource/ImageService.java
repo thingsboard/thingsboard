@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.resource;
 
+import org.thingsboard.server.common.data.TbImageDeleteResult;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.id.TbResourceId;
@@ -40,7 +41,7 @@ public interface ImageService {
 
     byte[] getImagePreview(TenantId tenantId, TbResourceId imageId);
 
-    void deleteImage(TenantId tenantId, TbResourceId imageId);
+    TbImageDeleteResult deleteImage(TbResourceInfo imageInfo, boolean force);
 
     List<TbResourceInfo> findSimilarImagesByTenantIdAndKeyStartingWith(TenantId tenantId, byte[] data, String imageKeyStartingWith);
 
