@@ -41,8 +41,8 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
     private final Cache<ImageCacheKey, String> cache;
 
     public DefaultTbImageService(ImageService imageService,
-                                 @Value("${cache.imageETags.timeToLiveInMinutes:120}") int cacheTtl,
-                                 @Value("${cache.imageETags.maxSize:200000}") int cacheMaxSize) {
+                                 @Value("${cache.image.etag.timeToLiveInMinutes:120}") int cacheTtl,
+                                 @Value("${cache.image.etag.maxSize:200000}") int cacheMaxSize) {
         this.imageService = imageService;
         this.cache = Caffeine.newBuilder()
                 .expireAfterAccess(cacheTtl, TimeUnit.MINUTES)

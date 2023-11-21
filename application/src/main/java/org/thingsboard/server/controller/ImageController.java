@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
@@ -54,6 +55,8 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.concurrent.TimeUnit;
+
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_SORT_PROPERTY_ALLOWABLE_VALUES;
@@ -70,6 +73,10 @@ public class ImageController extends BaseController {
 
     private final ImageService imageService;
     private final TbImageService tbImageService;
+    @Value("${cache.image.systemImagesBrowserTtlInMinutes:0}")
+    private int systemImagesBrowserTtlInMinutes;
+    @Value("${cache.image.tenantImagesBrowserTtlInMinutes:0}")
+    private int tenantImagesBrowserTtlInMinutes;
 
     private static final String IMAGE_URL = "/api/images/{type}/{key}";
     private static final String SYSTEM_IMAGE = "system";
@@ -196,14 +203,20 @@ public class ImageController extends BaseController {
             data = imageService.getImageData(tenantId, imageInfo.getId());
         }
         tbImageService.putETag(cacheKey, descriptor.getEtag());
-        return ResponseEntity.ok()
+        var result = ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + fileName)
                 .header("x-filename", fileName)
-                .contentLength(data.length)
                 .header("Content-Type", descriptor.getMediaType())
-                .cacheControl(CacheControl.noCache())
-                .eTag(descriptor.getEtag())
-                .body(new ByteArrayResource(data));
+                .contentLength(data.length)
+                .eTag(descriptor.getEtag());
+        if (systemImagesBrowserTtlInMinutes > 0 && imageInfo.getTenantId().isSysTenantId()) {
+            result.cacheControl(CacheControl.maxAge(systemImagesBrowserTtlInMinutes, TimeUnit.MINUTES));
+        } else if (tenantImagesBrowserTtlInMinutes > 0 && !imageInfo.getTenantId().isSysTenantId()) {
+            result.cacheControl(CacheControl.maxAge(tenantImagesBrowserTtlInMinutes, TimeUnit.MINUTES));
+        } else {
+            result.cacheControl(CacheControl.noCache());
+        }
+        return result.body(new ByteArrayResource(data));
     }
 
     private TbResourceInfo checkImageInfo(String imageType, String key, Operation operation) throws ThingsboardException {
