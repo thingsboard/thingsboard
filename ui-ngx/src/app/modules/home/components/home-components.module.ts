@@ -182,6 +182,8 @@ import {
   ExportWidgetsBundleDialogComponent
 } from '@home/components/import-export/export-widgets-bundle-dialog.component';
 import { ScrollGridComponent } from '@home/components/grid/scroll-grid.component';
+import { ImageGalleryComponent } from '@home/components/image/image-gallery.component';
+import { UploadImageDialogComponent } from '@home/components/image/upload-image-dialog.component';
 
 @NgModule({
   declarations:
@@ -327,7 +329,9 @@ import { ScrollGridComponent } from '@home/components/grid/scroll-grid.component
       RateLimitsTextComponent,
       RateLimitsDetailsDialogComponent,
       SendNotificationButtonComponent,
-      ScrollGridComponent
+      ScrollGridComponent,
+      ImageGalleryComponent,
+      UploadImageDialogComponent
     ],
   imports: [
     CommonModule,
@@ -466,7 +470,9 @@ import { ScrollGridComponent } from '@home/components/grid/scroll-grid.component
     RateLimitsTextComponent,
     RateLimitsDetailsDialogComponent,
     SendNotificationButtonComponent,
-    ScrollGridComponent
+    ScrollGridComponent,
+    ImageGalleryComponent,
+    UploadImageDialogComponent
   ],
   providers: [
     WidgetComponentService,

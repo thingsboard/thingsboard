@@ -108,4 +108,8 @@ export class ScrollGridComponent<T, F> implements OnInit, AfterViewInit, OnChang
   trackByItem(index: number, item: T): T {
     return item;
   }
+
+  public update() {
+    this.dataSource.update();
+  }
 }
