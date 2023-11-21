@@ -15,11 +15,16 @@
  */
 package org.thingsboard.server.service.resource;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ImageDescriptor;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbImageDeleteResult;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
@@ -28,21 +33,25 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.resource.ImageService;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Service
 @TbCoreComponent
 public class DefaultTbImageService extends AbstractTbEntityService implements TbImageService {
 
+    private final TbClusterService clusterService;
     private final ImageService imageService;
     private final Cache<ImageCacheKey, String> cache;
 
-    public DefaultTbImageService(ImageService imageService,
-                                 @Value("${cache.image.etag.timeToLiveInMinutes:120}") int cacheTtl,
-                                 @Value("${cache.image.etag.maxSize:200000}") int cacheMaxSize) {
+    public DefaultTbImageService(TbClusterService clusterService, ImageService imageService,
+                                 @Value("${cache.image.etag.timeToLiveInMinutes:44640}") int cacheTtl,
+                                 @Value("${cache.image.etag.maxSize:10000}") int cacheMaxSize) {
+        this.clusterService = clusterService;
         this.imageService = imageService;
         this.cache = Caffeine.newBuilder()
                 .expireAfterAccess(cacheTtl, TimeUnit.MINUTES)
@@ -61,18 +70,49 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
     }
 
     @Override
+    public void evictETag(ImageCacheKey imageCacheKey) {
+        cache.invalidate(imageCacheKey);
+    }
+
+    @Override
     public TbResourceInfo save(TbResource image, User user) throws Exception {
         ActionType actionType = image.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = image.getTenantId();
         try {
+            var oldEtag = getEtag(image);
             TbResourceInfo savedImage = imageService.saveImage(image);
             notificationEntityService.logEntityAction(tenantId, savedImage.getId(), savedImage, actionType, user);
+            if (oldEtag.isPresent()) {
+                var newEtag = getEtag(savedImage);
+                if (newEtag.isPresent() && !oldEtag.get().equals(newEtag.get())) {
+                    evictETag(new ImageCacheKey(image.getTenantId(), image.getResourceKey(), false));
+                    evictETag(new ImageCacheKey(image.getTenantId(), image.getResourceKey(), true));
+                    clusterService.broadcastToCore(TransportProtos.ToCoreNotificationMsg.newBuilder()
+                            .setResourceCacheInvalidateMsg(TransportProtos.ResourceCacheInvalidateMsg.newBuilder()
+                                    .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                                    .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                                    .setResourceKey(image.getResourceKey())
+                                    .build())
+                            .build());
+                }
+            }
             return savedImage;
         } catch (Exception e) {
             image.setData(null);
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE), image, actionType, user, e);
             throw e;
         }
+    }
+
+    private Optional<String> getEtag(TbResourceInfo image) throws JsonProcessingException {
+        var descriptor = image.getDescriptor(ImageDescriptor.class);
+        return Optional.ofNullable(descriptor != null ? descriptor.getEtag() : null);
+    }
+
+    private Optional<String> getPreviewEtag(TbResourceInfo image) throws JsonProcessingException {
+        var descriptor = image.getDescriptor(ImageDescriptor.class);
+        descriptor = descriptor != null ? descriptor.getPreviewDescriptor() : null;
+        return Optional.ofNullable(descriptor != null ? descriptor.getEtag() : null);
     }
 
     @Override

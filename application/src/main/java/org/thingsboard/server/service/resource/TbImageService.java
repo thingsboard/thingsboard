@@ -19,6 +19,7 @@ import org.thingsboard.server.common.data.TbImageDeleteResult;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.id.TenantId;
 
 public interface TbImageService {
 
@@ -31,4 +32,6 @@ public interface TbImageService {
     String getETag(ImageCacheKey imageCacheKey);
 
     void putETag(ImageCacheKey imageCacheKey, String etag);
+
+    void evictETag(ImageCacheKey imageCacheKey);
 }

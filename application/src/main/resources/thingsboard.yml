@@ -589,7 +589,7 @@ cache:
   image:
     etag:
       timeToLiveInMinutes: "${CACHE_SPECS_IMAGE_ETAGS_TTL:44640}" # Image ETags cache TTL
-      maxSize: "${CACHE_SPECS_IMAGE_ETAGS_MAX_SIZE:1000000}" # 0 means the cache is disabled
+      maxSize: "${CACHE_SPECS_IMAGE_ETAGS_MAX_SIZE:10000}" # 0 means the cache is disabled
     systemImagesBrowserTtlInMinutes: "${CACHE_SPECS_IMAGE_SYSTEM_BROWSER_TTL:0}" # Browser cache TTL for system images in minutes. 0 means the cache is disabled
     tenantImagesBrowserTtlInMinutes: "${CACHE_SPECS_IMAGE_TENANT_BROWSER_TTL:0}" # Browser cache TTL for tenant images in minutes. 0 means the cache is disabled
 

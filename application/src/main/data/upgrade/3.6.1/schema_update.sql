@@ -27,9 +27,9 @@ $$
         END IF;
     END;
 $$;
-ALTER TABLE resource
-    ADD COLUMN IF NOT EXISTS descriptor varchar,
-    ADD COLUMN IF NOT EXISTS preview bytea;
+
+ALTER TABLE resource ADD COLUMN IF NOT EXISTS descriptor varchar;
+ALTER TABLE resource ADD COLUMN IF NOT EXISTS preview bytea;
 ALTER TABLE resource ADD COLUMN IF NOT EXISTS external_id uuid
 
 -- RESOURCES UPDATE END
