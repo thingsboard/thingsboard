@@ -13,17 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.stats;
+package org.thingsboard.server.common.data;
 
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.FSTUtils;
+public interface FstStatsService {
 
-@Service
-public class FstStats {
+    void incrementEncode(Class<?> clazz);
 
-    @Scheduled(initialDelayString = "${fst.stats.printInterval}", fixedDelayString = "${fst.stats.printInterval}")
-    public void printStats() {
-        FSTUtils.printStats();
-    }
+    void incrementDecode(Class<?> clazz);
+
 }
