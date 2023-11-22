@@ -16,14 +16,13 @@
 package org.thingsboard.server.service.edge.instructions;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.edge.EdgeInstructions;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.install.InstallScripts;
 
@@ -59,21 +58,21 @@ public class DefaultEdgeUpgradeService implements EdgeUpgradeService {
     private String appVersion;
 
     @Override
-    public EdgeInstructions getUpgradeInstructions(TenantId tenantId, String edgeVersion, String upgradeMethod) {
+    public EdgeInstructions getUpgradeInstructions(String edgeVersion, String upgradeMethod) {
         String tbVersion = appVersion.replace("-SNAPSHOT", "");
         String currentEdgeVersion = convertEdgeVersionToDocsFormat(edgeVersion);
         switch (upgradeMethod.toLowerCase()) {
             case "docker":
-                return getDockerUpgradeInstructions(tenantId, tbVersion, currentEdgeVersion);
+                return getDockerUpgradeInstructions(tbVersion, currentEdgeVersion);
             case "ubuntu":
             case "centos":
-                return getLinuxUpgradeInstructions(tenantId, tbVersion, currentEdgeVersion, upgradeMethod.toLowerCase());
+                return getLinuxUpgradeInstructions(tbVersion, currentEdgeVersion, upgradeMethod.toLowerCase());
             default:
                 throw new IllegalArgumentException("Unsupported upgrade method for Edge: " + upgradeMethod);
         }
     }
 
-    private EdgeInstructions getDockerUpgradeInstructions(TenantId tenantId, String tbVersion, String currentEdgeVersion) {
+    private EdgeInstructions getDockerUpgradeInstructions(String tbVersion, String currentEdgeVersion) {
         UpgradeInfo upgradeInfo = upgradeVersionHashMap.get(currentEdgeVersion);
         if (upgradeInfo.getNextVersion() == null || tbVersion.equals(currentEdgeVersion)) {
             return null;
@@ -105,7 +104,7 @@ public class DefaultEdgeUpgradeService implements EdgeUpgradeService {
         return new EdgeInstructions(result.toString());
     }
 
-    private EdgeInstructions getLinuxUpgradeInstructions(TenantId tenantId, String tbVersion, String currentEdgeVersion, String os) {
+    private EdgeInstructions getLinuxUpgradeInstructions(String tbVersion, String currentEdgeVersion, String os) {
         UpgradeInfo upgradeInfo = upgradeVersionHashMap.get(currentEdgeVersion);
         if (upgradeInfo.getNextVersion() == null || tbVersion.equals(currentEdgeVersion)) {
             return null;
@@ -148,10 +147,6 @@ public class DefaultEdgeUpgradeService implements EdgeUpgradeService {
         return edgeVersion.replace("_", ".").substring(2);
     }
 
-    private String convertDocsFormatToEdgeVersion(String edgeVersion) {
-        return "V_" + edgeVersion.replace(".", "_");
-    }
-
     private String readFile(Path file) {
         try {
             return Files.readString(file);
@@ -170,7 +165,7 @@ public class DefaultEdgeUpgradeService implements EdgeUpgradeService {
     }
 
     @AllArgsConstructor
-    @Data
+    @Getter
     public static class UpgradeInfo {
         private boolean upgradeDb;
         private String nextVersion;

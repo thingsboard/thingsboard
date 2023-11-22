@@ -571,7 +571,7 @@ public class EdgeController extends BaseController {
             EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
             edgeId = checkNotNull(edgeId);
             Edge edge = checkEdgeId(edgeId, Operation.READ);
-            return checkNotNull(edgeInstallServiceOpt.get().getInstallInstructions(getTenantId(), edge, installationMethod, request));
+            return checkNotNull(edgeInstallServiceOpt.get().getInstallInstructions(edge, installationMethod, request));
         } else {
             throw new ThingsboardException("Edges support disabled", ThingsboardErrorCode.GENERAL);
         }
@@ -589,7 +589,7 @@ public class EdgeController extends BaseController {
             @ApiParam(value = "Installation method ('docker', 'ubuntu' or 'centos')", allowableValues = "docker,ubuntu,centos")
             @PathVariable("method") String method) throws Exception {
         if (isEdgesEnabled() && edgeUpgradeServiceOpt.isPresent()) {
-            return checkNotNull(edgeUpgradeServiceOpt.get().getUpgradeInstructions(getTenantId(), edgeVersion, method));
+            return checkNotNull(edgeUpgradeServiceOpt.get().getUpgradeInstructions(edgeVersion, method));
         } else {
             throw new ThingsboardException("Edges support disabled", ThingsboardErrorCode.GENERAL);
         }
