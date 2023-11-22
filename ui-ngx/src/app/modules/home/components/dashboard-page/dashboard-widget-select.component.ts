@@ -32,6 +32,7 @@ import { isObject } from '@core/utils';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 import { GridEntitiesFetchFunction, ScrollGridColumns } from '@home/models/datasource/scroll-grid-datasource';
+import { ItemSizeStrategy } from '@home/components/grid/scroll-grid.component';
 
 type selectWidgetMode = 'bundles' | 'allWidgets';
 
@@ -146,6 +147,11 @@ export class DashboardWidgetSelectComponent implements OnInit {
       'screen and (min-width: 721px)': 4,
       'screen and (min-width: 485px)': 3
     }
+  };
+
+  gridWidgetsItemSizeStrategy: ItemSizeStrategy = {
+    defaultItemSize: 160,
+    itemSizeFunction: itemWidth => (itemWidth - 24) * 0.8 + 76
   };
 
   widgetBundlesFetchFunction: GridEntitiesFetchFunction<WidgetsBundle, string>;

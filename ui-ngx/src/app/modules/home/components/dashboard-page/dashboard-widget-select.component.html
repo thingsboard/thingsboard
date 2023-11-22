@@ -27,7 +27,7 @@
   <ng-template #widgets let-fetchFunction="fetchFunction" let-filter="filter">
     <tb-scroll-grid
       [columns]="columns"
-      [itemSize]="160"
+      [itemSize]="gridWidgetsItemSizeStrategy"
       [fetchFunction]="fetchFunction"
       [filter]="filter"
       [itemCard]="widgetCard"
@@ -74,7 +74,7 @@
   <ng-template #bundles>
     <tb-scroll-grid
       [columns]="columns"
-      [itemSize]="160"
+      [itemSize]="gridWidgetsItemSizeStrategy"
       [fetchFunction]="widgetBundlesFetchFunction"
       [filter]="widgetsBundleFilter"
       [itemCard]="widgetsBundleCard"

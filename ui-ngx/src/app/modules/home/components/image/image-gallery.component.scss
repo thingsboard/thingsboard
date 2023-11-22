@@ -153,6 +153,7 @@ $tb-button-selected-color: rgb(255, 110, 64) !default;
       }
 
       .tb-image-details {
+        min-height: 52px;
         flex: 1;
         display: flex;
         flex-direction: column;
@@ -205,6 +206,14 @@ $tb-button-selected-color: rgb(255, 110, 64) !default;
           }
         }
       }
+      &.loading-cell {
+        .tb-image-preview-container, .tb-image-details {
+          background: linear-gradient(110deg, #ececec 8%, #f5f5f5 18%, #ececec 33%);
+          border-radius: 5px;
+          background-size: 200% 100%;
+          animation: 1s shine linear infinite;
+        }
+      }
     }
 
     .table-container {
@@ -227,5 +236,11 @@ $tb-button-selected-color: rgb(255, 110, 64) !default;
       object-fit: contain;
       border-radius: 4px;
     }
+  }
+}
+
+@keyframes shine {
+  to {
+    background-position-x: -200%;
   }
 }

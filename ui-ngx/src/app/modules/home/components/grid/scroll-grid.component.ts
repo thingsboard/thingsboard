@@ -15,10 +15,10 @@
 ///
 
 import {
-  AfterViewInit,
+  AfterViewInit, ChangeDetectorRef,
   Component,
   Input,
-  OnChanges,
+  OnChanges, OnDestroy,
   OnInit,
   Renderer2,
   SimpleChanges,
@@ -34,6 +34,14 @@ import {
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { isObject } from '@app/core/utils';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
+import { ResizeObserver } from '@juggle/resize-observer';
+
+export type ItemSizeFunction = (itemWidth: number) => number;
+
+export interface ItemSizeStrategy {
+  defaultItemSize: number;
+  itemSizeFunction: ItemSizeFunction;
+}
 
 @Component({
   selector: 'tb-scroll-grid',
@@ -41,7 +49,7 @@ import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
   styleUrls: ['./scroll-grid.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
-export class ScrollGridComponent<T, F> implements OnInit, AfterViewInit, OnChanges {
+export class ScrollGridComponent<T, F> implements OnInit, AfterViewInit, OnChanges, OnDestroy {
 
   @ViewChild('viewport')
   viewport: CdkVirtualScrollViewport;
@@ -56,7 +64,7 @@ export class ScrollGridComponent<T, F> implements OnInit, AfterViewInit, OnChang
   filter: F;
 
   @Input()
-  itemSize = 200;
+  itemSize: number | ItemSizeStrategy = 200;
 
   @Input()
   gap = 12;
@@ -75,17 +83,37 @@ export class ScrollGridComponent<T, F> implements OnInit, AfterViewInit, OnChang
 
   dataSource: ScrollGridDatasource<T, F>;
 
+  calculatedItemSize: number;
+  minBuffer: number;
+  maxBuffer: number;
+
+  private contentResize$: ResizeObserver;
+
   constructor(private breakpointObserver: BreakpointObserver,
+              private cd: ChangeDetectorRef,
               private renderer: Renderer2) {
   }
 
   ngOnInit(): void {
+    if (typeof this.itemSize === 'number') {
+      this.calculatedItemSize = this.itemSize;
+    } else {
+      this.calculatedItemSize = this.itemSize.defaultItemSize;
+    }
+    this.minBuffer = this.calculatedItemSize;
+    this.maxBuffer = this.calculatedItemSize * 2;
     this.dataSource = new ScrollGridDatasource<T, F>(this.breakpointObserver, this.columns, this.fetchFunction, this.filter);
   }
 
   ngAfterViewInit() {
     this.renderer.setStyle(this.viewport._contentWrapper.nativeElement, 'gap', this.gap + 'px');
     this.renderer.setStyle(this.viewport._contentWrapper.nativeElement, 'padding', this.gap + 'px');
+    if (!(typeof this.itemSize === 'number')) {
+      this.contentResize$ = new ResizeObserver(() => {
+        this.onContentResize();
+      });
+      this.contentResize$.observe(this.viewport._contentWrapper.nativeElement);
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -94,6 +122,12 @@ export class ScrollGridComponent<T, F> implements OnInit, AfterViewInit, OnChang
       if (!change.firstChange && change.currentValue !== change.previousValue && propName === 'filter') {
         this.dataSource.updateFilter(this.filter);
       }
+    }
+  }
+
+  ngOnDestroy() {
+    if (this.contentResize$) {
+      this.contentResize$.disconnect();
     }
   }
 
@@ -119,5 +153,15 @@ export class ScrollGridComponent<T, F> implements OnInit, AfterViewInit, OnChang
 
   public deleteItem(index: number) {
     this.dataSource.deleteItem(index);
+  }
+
+  private onContentResize() {
+    const contentWidth = this.viewport._contentWrapper.nativeElement.getBoundingClientRect().width;
+    const columns = this.dataSource.currentColumns;
+    const itemWidth = (contentWidth - this.gap * (columns + 1)) / columns;
+    this.calculatedItemSize = (this.itemSize as ItemSizeStrategy).itemSizeFunction(itemWidth);
+    this.minBuffer = this.calculatedItemSize;
+    this.maxBuffer = this.calculatedItemSize * 2;
+    this.cd.markForCheck();
   }
 }

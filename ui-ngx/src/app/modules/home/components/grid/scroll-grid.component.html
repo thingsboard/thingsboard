@@ -15,7 +15,8 @@
     limitations under the License.
 
 -->
-<cdk-virtual-scroll-viewport #viewport class="tb-scroll-grid-viewport" [itemSize]="itemSize" appendOnly>
+<cdk-virtual-scroll-viewport #viewport class="tb-scroll-grid-viewport" [itemSize]="calculatedItemSize"
+                             [minBufferPx]="minBuffer" [maxBufferPx]="maxBuffer" appendOnly>
   <ng-container *cdkVirtualFor="let itemsRow of dataSource; let row = index; trackBy: trackByItemsRow">
     <div *ngIf="itemsRow" class="tb-scroll-grid-items-row" [style]="{gap: gap+'px'}">
       <div *ngFor="let item of itemsRow; let col = index; trackBy: trackByItem" class="tb-scroll-grid-item-container">

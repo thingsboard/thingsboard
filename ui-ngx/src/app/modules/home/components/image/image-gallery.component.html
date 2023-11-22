@@ -260,7 +260,7 @@
     <div fxFlex class="mat-padding" *ngIf="mode === 'grid'" fxLayout="column">
       <tb-scroll-grid fxFlex
         [columns]="gridColumns"
-        [itemSize]="150"
+        [itemSize]="gridImagesItemSizeStrategy"
         [fetchFunction]="gridImagesFetchFunction"
         [filter]="gridImagesFilter"
         [itemCard]="imageCard"
@@ -339,5 +339,11 @@
   </div>
 </ng-template>
 <ng-template #imageLoadingCard>
-  <div> TODO </div>
+  <div class="tb-image-card tb-primary-fill loading-cell">
+    <div class="tb-image-preview-container">
+      <div class="tb-image-preview-spacer"></div>
+      <div class="tb-image-preview"></div>
+    </div>
+    <div class="tb-image-details"></div>
+  </div>
 </ng-template>

@@ -51,7 +51,7 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { GridEntitiesFetchFunction, ScrollGridColumns } from '@home/models/datasource/scroll-grid-datasource';
-import { ScrollGridComponent } from '@home/components/grid/scroll-grid.component';
+import { ItemSizeStrategy, ScrollGridComponent } from '@home/components/grid/scroll-grid.component';
 import { MatDialog } from '@angular/material/dialog';
 import {
   UploadImageDialogComponent,
@@ -111,6 +111,11 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
 
   gridImagesFetchFunction: GridEntitiesFetchFunction<ImageResourceInfo, string>;
   gridImagesFilter = '';
+
+  gridImagesItemSizeStrategy: ItemSizeStrategy = {
+    defaultItemSize: 200,
+    itemSizeFunction: itemWidth => itemWidth + 72
+  };
 
   authUser = getCurrentAuthUser(this.store);
 
