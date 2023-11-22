@@ -558,7 +558,7 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
     );
   }
 
-  openInstructions($event, edge: EdgeInfo, afterAdd = false) {
+  openInstructions($event, edge: EdgeInfo, afterAdd = false, upgradeAvailable = false) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -568,7 +568,8 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         edge,
-        afterAdd
+        afterAdd,
+        upgradeAvailable
       }
     }).afterClosed().subscribe(() => {
         if (afterAdd) {
@@ -610,8 +611,11 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
       case 'syncEdge':
         this.syncEdge(action.event, action.entity);
         return true;
-      case 'openInstructions':
+      case 'openInstallInstructions':
         this.openInstructions(action.event, action.entity);
+        return true;
+      case 'openUpgradeInstructions':
+        this.openInstructions(action.event, action.entity,false, true);
         return true;
     }
   }

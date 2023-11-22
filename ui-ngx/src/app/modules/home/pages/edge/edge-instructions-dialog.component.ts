@@ -21,12 +21,21 @@ import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { ActionPreferencesPutUserSettings } from '@core/auth/auth.actions';
-import { EdgeInfo, EdgeInstructionsMethod } from '@shared/models/edge.models';
+import {
+  EdgeInfo,
+  EdgeInstructions,
+  EdgeInstructionsMethod,
+  edgeVersionAttributeKey
+} from '@shared/models/edge.models';
 import { EdgeService } from '@core/http/edge.service';
+import { AttributeService } from '@core/http/attribute.service';
+import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
+import { mergeMap, Observable } from 'rxjs';
 
 export interface EdgeInstructionsDialogData {
   edge: EdgeInfo;
   afterAdd: boolean;
+  upgradeAvailable: boolean;
 }
 
 @Component({
@@ -49,6 +58,7 @@ export class EdgeInstructionsDialogComponent extends DialogComponent<EdgeInstruc
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) private data: EdgeInstructionsDialogData,
               public dialogRef: MatDialogRef<EdgeInstructionsDialogComponent>,
+              private attributeService: AttributeService,
               private edgeService: EdgeService) {
     super(store, router, dialogRef);
 
@@ -85,12 +95,22 @@ export class EdgeInstructionsDialogComponent extends DialogComponent<EdgeInstruc
   getInstructions(method: string) {
     if (!this.contentData[method]) {
       this.loadedInstructions = false;
-      this.edgeService.getEdgeInstallInstructions(this.data.edge.id.id, method).subscribe(
-        res => {
-          this.contentData[method] = res.installInstructions;
-          this.loadedInstructions = true;
-        }
-      );
+      let edgeInstructions$: Observable<EdgeInstructions>;
+      if (this.data.upgradeAvailable) {
+        edgeInstructions$ = this.attributeService.getEntityAttributes(this.data.edge.id, AttributeScope.SERVER_SCOPE, [edgeVersionAttributeKey])
+          .pipe(mergeMap(attributes => {
+            if (attributes.length) {
+              const edgeVersion = attributes[0].value;
+              return this.edgeService.getEdgeUpgradeInstructions(edgeVersion, method);
+            }
+          }));
+      } else {
+        edgeInstructions$ = this.edgeService.getEdgeInstallInstructions(this.data.edge.id.id, method);
+      }
+      edgeInstructions$.subscribe(res => {
+        this.contentData[method] = res.instructions;
+        this.loadedInstructions = true;
+      });
     }
   }
 }
