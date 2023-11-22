@@ -1,0 +1,235 @@
+/**
+ * Copyright © 2016-2023 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/* Login page */
+tb-login {
+  background-image: url(login_bg.jpg) !important;
+  background-repeat: no-repeat !important;
+  background-size: cover !important;
+  background-position: center !important;
+}
+.tb-login-content {
+  background-color: transparent !important;
+  justify-content: flex-end !important;
+  margin: 0 !important;
+}
+.tb-login-content .mat-mdc-card {
+  background-color: #000e4aaa !important;
+  width: 40vw !important;
+  max-width: 500px !important;
+  max-height: none !important;
+  height: 100% !important;
+  border-radius: 0 !important;
+}
+.tb-login-content .mat-mdc-card-content {
+  margin: 0 auto !important;
+  padding: 56px 36px 10px 36px !important;
+  width: 100% !important;
+  max-width: 600px !important;
+}
+.tb-login-form {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: auto !important;
+}
+.tb-login-form .layout-padding > span {
+  display: none !important;
+}
+.tb-logo-title {
+  opacity: 0 !important;
+}
+.login-logo {
+  z-index: 10000 !important;
+  background-image: url(logo_title_white.png) !important;
+  background-repeat: no-repeat !important;
+  background-size: contain !important;
+  background-position: center !important;
+  height: 100px !important;
+}
+.tb-login-content .forgot-password {
+  display: none !important;
+}
+.tb-action-button {
+  align-items: flex-end !important;
+}
+.tb-login-content .tb-action-button .mdc-button {
+  background-color: transparent !important;
+  border: 1px white solid !important;
+}
+.tb-login-content .tb-action-button .mdc-button:hover {
+  background-color: white !important;
+  color: #202124 !important;
+}
+
+/* Create password page */
+.tb-create-password-card {
+  background-color: #000e4a !important;
+}
+.tb-create-password-card > .mat-mdc-card-header {
+  justify-content: center !important;
+}
+.tb-request-password-reset-card {
+  background-color: #000e4a !important;
+}
+
+/* License page */
+.license {
+  width: 100vw !important;
+  height: 100vh !important;
+  position: relative !important;
+  display: flex !important;
+  background: white !important;
+}
+.license .message {
+  margin: auto !important;
+  width: min(100% - 50px, 600px) !important;
+  background: #000e4a !important;
+  padding: 40px !important;
+  border-radius: 10px !important;
+  color: white !important;
+}
+.license .message img {
+  width: 100% !important;
+}
+.license .message a {
+  color: white !important;
+}
+.license .message p {
+  justify-content: left !important;
+  font-size: 15px !important;
+}
+
+/* Header */
+.tb-nav-header .tb-nav-header-toolbar div {
+  z-index: 10000 !important;
+  background-image: url(logo_title_white.png) !important;
+  background-repeat: no-repeat !important;
+  background-size: auto 50px !important;
+  background-position: center !important;
+}
+.tb-dashboard-toolbar .mat-fab-toolbar {
+  box-shadow: rgba(0, 0, 0, 0.2) 0px 3px 3px -2px,
+    rgba(0, 0, 0, 0.14) 0px 3px 4px 0px, rgba(0, 0, 0, 0.12) 0px 1px 8px 0px !important;
+}
+.tb-default .tb-primary-toolbar {
+  background-color: #000e4a !important;
+  color: #fff !important;
+}
+.mat-toolbar.tb-nav-header-toolbar {
+  background-color: #000e4a !important;
+  border-bottom: none !important;
+}
+
+/* Side menu */
+.mat-toolbar.tb-side-menu-toolbar {
+  background-color: white !important;
+}
+tb-side-menu {
+  background-color: white !important;
+  color: #505050 !important;
+}
+
+.mat-toolbar.details-toolbar {
+  background-color: #000e4a !important;
+  color: white !important;
+}
+
+.mat-toolbar.details-toolbar .mat-toolbar-tools {
+  background-color: #000e4a !important;
+}
+
+.mat-mdc-dialog-container .mat-toolbar.mat-primary.mat-toolbar-single-row {
+  background-color: #000e4a !important;
+}
+
+.tb-default .mat-mdc-raised-button.mat-primary {
+  --mdc-protected-button-container-color: #000e4a !important;
+  --mdc-protected-button-label-text-color: #fff !important;
+}
+
+.tb-default .mat-mdc-unelevated-button.mat-primary {
+  --mdc-filled-button-container-color: #000e4a !important;
+  --mdc-filled-button-label-text-color: #fff !important;
+}
+
+/* Dashboard header */
+.tb-dashboard-page .tb-dashboard-toolbar .mat-toolbar-tools {
+  background-color: #000e4a !important;
+}
+.tb-dashboard-page .tb-dashboard-toolbar .mat-toolbar-tools * {
+  color: white !important;
+}
+.mat-drawer-content
+  .tb-dashboard-page
+  .tb-dashboard-toolbar
+  .mat-toolbar-tools {
+  background-color: white !important;
+}
+.mat-drawer-content
+  .tb-dashboard-page
+  .tb-dashboard-toolbar
+  .mat-toolbar-tools
+  * {
+  color: black !important;
+}
+
+/* Dashboard footer */
+.tb-powered-by-footer {
+  background-color: rgba(255, 255, 255, 0.6) !important;
+  padding: 0 6px !important;
+  border-radius: 16px !important;
+}
+
+/* Widget */
+gridster.fit {
+  background-color: #f6f6f6 !important;
+}
+.tb-widget-container > .tb-widget,
+.tb-entity-table .tb-outlined-border {
+  box-shadow: rgba(0, 0, 0, 0.2) 0px 3px 3px -2px,
+    rgba(0, 0, 0, 0.14) 0px 3px 4px 0px, rgba(0, 0, 0, 0.12) 0px 1px 8px 0px !important;
+}
+.tb-widget-container > .tb-widget {
+  border-radius: 6px !important;
+}
+
+/* Help button */
+.mat-mdc-card-header .mat-mdc-icon-button,
+.mat-toolbar-tools > .details-buttons,
+.mat-toolbar-tools > .tb-help {
+  display: none !important;
+}
+
+/* Loading effect */
+.tb-loading-spinner {
+  background-image: url(logo-rotation.gif) !important;
+  background-position: center !important;
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+  width: 80px !important;
+  height: 80px !important;
+}
+.tb-loading-spinner > div {
+  display: none !important;
+}
+
+.tb-rulechain-library .mat-toolbar-tools {
+  background-color: #000e4a !important;
+}
+
+.version-control-button {
+  background-color: #000e4a !important;
+}
+/*# sourceMappingURL=app.css.map */
