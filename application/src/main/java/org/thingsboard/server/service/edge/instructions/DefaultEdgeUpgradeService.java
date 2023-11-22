@@ -22,15 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInstructions;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
-import org.thingsboard.server.common.data.kv.StringDataEntry;
-import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.install.InstallScripts;
 
@@ -61,27 +54,26 @@ public class DefaultEdgeUpgradeService implements EdgeUpgradeService {
     private static final String UPGRADE_DIR = "upgrade";
 
     private final InstallScripts installScripts;
-    private final AttributesService attributesService;
 
     @Value("${app.version:unknown}")
     private String appVersion;
 
     @Override
-    public EdgeInstructions getUpgradeInstructions(TenantId tenantId, Edge edge, String edgeVersion, String upgradeMethod) {
+    public EdgeInstructions getUpgradeInstructions(TenantId tenantId, String edgeVersion, String upgradeMethod) {
         String tbVersion = appVersion.replace("-SNAPSHOT", "");
         String currentEdgeVersion = convertEdgeVersionToDocsFormat(edgeVersion);
         switch (upgradeMethod.toLowerCase()) {
             case "docker":
-                return getDockerUpgradeInstructions(tenantId, edge.getId(), tbVersion, currentEdgeVersion);
+                return getDockerUpgradeInstructions(tenantId, tbVersion, currentEdgeVersion);
             case "ubuntu":
             case "centos":
-                return getLinuxUpgradeInstructions(tenantId, edge.getId(), tbVersion, currentEdgeVersion, upgradeMethod.toLowerCase());
+                return getLinuxUpgradeInstructions(tenantId, tbVersion, currentEdgeVersion, upgradeMethod.toLowerCase());
             default:
                 throw new IllegalArgumentException("Unsupported upgrade method for Edge: " + upgradeMethod);
         }
     }
 
-    private EdgeInstructions getDockerUpgradeInstructions(TenantId tenantId, EdgeId edgeId, String tbVersion, String currentEdgeVersion) {
+    private EdgeInstructions getDockerUpgradeInstructions(TenantId tenantId, String tbVersion, String currentEdgeVersion) {
         UpgradeInfo upgradeInfo = upgradeVersionHashMap.get(currentEdgeVersion);
         if (upgradeInfo.getNextVersion() == null || tbVersion.equals(currentEdgeVersion)) {
             return null;
@@ -110,12 +102,10 @@ public class DefaultEdgeUpgradeService implements EdgeUpgradeService {
         }
         String startService = readFile(resolveFile("docker", "start_service.md"));
         result.append(startService);
-        AttributeKvEntry attributeKvEntry = new BaseAttributeKvEntry(new StringDataEntry("edgeVersion", currentEdgeVersion), System.currentTimeMillis());
-        attributesService.save(tenantId, edgeId, DataConstants.SERVER_SCOPE,  attributeKvEntry);
         return new EdgeInstructions(result.toString());
     }
 
-    private EdgeInstructions getLinuxUpgradeInstructions(TenantId tenantId, EdgeId edgeId, String tbVersion, String currentEdgeVersion, String os) {
+    private EdgeInstructions getLinuxUpgradeInstructions(TenantId tenantId, String tbVersion, String currentEdgeVersion, String os) {
         UpgradeInfo upgradeInfo = upgradeVersionHashMap.get(currentEdgeVersion);
         if (upgradeInfo.getNextVersion() == null || tbVersion.equals(currentEdgeVersion)) {
             return null;
@@ -147,8 +137,6 @@ public class DefaultEdgeUpgradeService implements EdgeUpgradeService {
         }
         String startService = readFile(resolveFile("start_service.md"));
         result.append(startService);
-        AttributeKvEntry attributeKvEntry = new BaseAttributeKvEntry(new StringDataEntry("edgeVersion", convertDocsFormatToEdgeVersion(currentEdgeVersion)), System.currentTimeMillis());
-        attributesService.save(tenantId, edgeId, DataConstants.SERVER_SCOPE,  attributeKvEntry);
         return new EdgeInstructions(result.toString());
     }
 

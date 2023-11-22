@@ -15,11 +15,10 @@
  */
 package org.thingsboard.server.service.edge.instructions;
 
-import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInstructions;
 import org.thingsboard.server.common.data.id.TenantId;
 
 public interface EdgeUpgradeService {
 
-    EdgeInstructions getUpgradeInstructions(TenantId tenantId, Edge edge, String edgeVersion, String upgradeMethod) throws Exception;
+    EdgeInstructions getUpgradeInstructions(TenantId tenantId, String edgeVersion, String upgradeMethod) throws Exception;
 }

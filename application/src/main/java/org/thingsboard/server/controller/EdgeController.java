@@ -581,20 +581,15 @@ public class EdgeController extends BaseController {
             notes = "Get a docker install instructions for provided edge id." + TENANT_AUTHORITY_PARAGRAPH,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/edge/instructions/upgrade/{edgeId}/{edgeVersion}/{method}", method = RequestMethod.GET)
+    @RequestMapping(value = "/edge/instructions/upgrade/{edgeVersion}/{method}", method = RequestMethod.GET)
     @ResponseBody
     public EdgeInstructions getEdgeUpgradeInstructions(
-            @ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
-            @PathVariable("edgeId") String strEdgeId,
             @ApiParam(value = "Edge version", required = true)
             @PathVariable("edgeVersion") String edgeVersion,
             @ApiParam(value = "Installation method ('docker', 'ubuntu' or 'centos')", allowableValues = "docker,ubuntu,centos")
             @PathVariable("method") String method) throws Exception {
         if (isEdgesEnabled() && edgeUpgradeServiceOpt.isPresent()) {
-            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-            edgeId = checkNotNull(edgeId);
-            Edge edge = checkEdgeId(edgeId, Operation.READ);
-            return checkNotNull(edgeUpgradeServiceOpt.get().getUpgradeInstructions(getTenantId(), edge, edgeVersion, method));
+            return checkNotNull(edgeUpgradeServiceOpt.get().getUpgradeInstructions(getTenantId(), edgeVersion, method));
         } else {
             throw new ThingsboardException("Edges support disabled", ThingsboardErrorCode.GENERAL);
         }
