@@ -15,11 +15,9 @@
  */
 package org.thingsboard.server.dao.resource;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.RegexUtils;
@@ -91,7 +89,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
     @Transactional
     @Override
     public TbResourceInfo saveImage(TbResource image) throws Exception {
-        if (image.getId() == null) {
+        if (image.getId() == null && StringUtils.isEmpty(image.getResourceKey())) {
             image.setResourceKey(getUniqueKey(image.getTenantId(), image.getFileName()));
         }
         resourceValidator.validate(image, TbResourceInfo::getTenantId);

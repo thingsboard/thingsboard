@@ -26,6 +26,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.Base64Utils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -38,6 +39,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.thingsboard.server.common.data.ImageDescriptor;
+import org.thingsboard.server.common.data.ImageExportData;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
@@ -60,6 +62,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_INCLUDE_SYSTEM_IMAGES_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_SORT_PROPERTY_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_TEXT_SEARCH_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_ALLOWABLE_VALUES;
@@ -140,6 +143,39 @@ public class ImageController extends BaseController {
         return downloadIfChanged(type, key, etag, false);
     }
 
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @GetMapping(value = IMAGE_URL + "/export")
+    public ImageExportData exportImage(@PathVariable String type, @PathVariable String key) throws Exception {
+        TbResourceInfo imageInfo = checkImageInfo(type, key, Operation.READ);
+        ImageDescriptor descriptor = imageInfo.getDescriptor(ImageDescriptor.class);
+        byte[] data = imageService.getImageData(imageInfo.getTenantId(), imageInfo.getId());
+        return new ImageExportData(descriptor.getMediaType(), imageInfo.getFileName(), imageInfo.getTitle(), imageInfo.getResourceKey(), Base64Utils.encodeToString(data));
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PutMapping("/api/image/import")
+    public TbResourceInfo importImage(@RequestBody ImageExportData imageData) throws Exception {
+        SecurityUser user = getCurrentUser();
+        TbResource image = new TbResource();
+        image.setTenantId(user.getTenantId());
+        accessControlService.checkPermission(user, Resource.TB_RESOURCE, Operation.CREATE, null, image);
+
+        image.setFileName(imageData.getFileName());
+        if (StringUtils.isNotEmpty(imageData.getTitle())) {
+            image.setTitle(imageData.getTitle());
+        } else {
+            image.setTitle(imageData.getFileName());
+        }
+        image.setResourceKey(imageData.getResourceKey());
+        image.setResourceType(ResourceType.IMAGE);
+        ImageDescriptor descriptor = new ImageDescriptor();
+        descriptor.setMediaType(imageData.getMediaType());
+        image.setDescriptorValue(descriptor);
+        image.setData(Base64Utils.decodeFromString(imageData.getData()));
+        return tbImageService.save(image, user);
+
+    }
+
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = IMAGE_URL + "/preview", produces = "image/png")
     public ResponseEntity<ByteArrayResource> downloadImagePreview(@PathVariable String type,
@@ -161,6 +197,8 @@ public class ImageController extends BaseController {
                                               @RequestParam int pageSize,
                                               @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
                                               @RequestParam int page,
+                                              @ApiParam(value = RESOURCE_INCLUDE_SYSTEM_IMAGES_DESCRIPTION)
+                                              @RequestParam(required = false) boolean includeSystemImages,
                                               @ApiParam(value = RESOURCE_TEXT_SEARCH_DESCRIPTION)
                                               @RequestParam(required = false) String textSearch,
                                               @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = RESOURCE_SORT_PROPERTY_ALLOWABLE_VALUES)
@@ -170,7 +208,7 @@ public class ImageController extends BaseController {
         // PE: generic permission
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         TenantId tenantId = getTenantId();
-        if (getCurrentUser().getAuthority() == Authority.SYS_ADMIN) {
+        if (getCurrentUser().getAuthority() == Authority.SYS_ADMIN || includeSystemImages) {
             return checkNotNull(imageService.getImagesByTenantId(tenantId, pageLink));
         } else {
             return checkNotNull(imageService.getAllImagesByTenantId(tenantId, pageLink));

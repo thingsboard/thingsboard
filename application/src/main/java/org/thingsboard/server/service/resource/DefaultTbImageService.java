@@ -80,6 +80,12 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
         TenantId tenantId = image.getTenantId();
         try {
             var oldEtag = getEtag(image);
+            if (image.getId() == null && StringUtils.isNotEmpty(image.getResourceKey())) {
+                var existingImage = imageService.getImageInfoByTenantIdAndKey(tenantId, image.getResourceKey());
+                if (existingImage != null) {
+                    image.setId(existingImage.getId());
+                }
+            }
             TbResourceInfo savedImage = imageService.saveImage(image);
             notificationEntityService.logEntityAction(tenantId, savedImage.getId(), savedImage, actionType, user);
             if (oldEtag.isPresent()) {
