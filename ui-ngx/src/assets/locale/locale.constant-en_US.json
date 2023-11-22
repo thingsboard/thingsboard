@@ -2682,7 +2682,7 @@
         "connectors-table-key": "Key",
         "connectors-table-class": "Class",
         "rpc-command-send": "Send",
-        "rpc-command-result": "Result",
+        "rpc-command-result": "Response",
         "rpc-command-edit-params": "Edit parameters",
         "gateway-configuration": "General Configuration",
         "docker-label": "In order to run ThingsBoard IoT gateway in docker with credentials for this device you can use the following commands.",
