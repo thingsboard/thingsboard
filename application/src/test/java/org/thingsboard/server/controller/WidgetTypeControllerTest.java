@@ -190,6 +190,20 @@ public class WidgetTypeControllerTest extends AbstractControllerTest {
         Collections.sort(loadedWidgetTypes, idComparator);
 
         Assert.assertEquals(widgetTypes, loadedWidgetTypes);
+
+        loginCustomerUser();
+
+        List<WidgetType> loadedWidgetTypes2 = doGetTyped("/api/widgetTypes?widgetsBundleId={widgetsBundleId}",
+                new TypeReference<>(){}, widgetsBundle.getId().getId().toString());
+        Collections.sort(loadedWidgetTypes2, idComparator);
+        Assert.assertEquals(widgetTypes, loadedWidgetTypes2);
+
+        List<WidgetTypeDetails> loadedWidgetTypes3 = doGetTyped("/api/widgetTypesDetails?widgetsBundleId={widgetsBundleId}",
+                new TypeReference<>(){}, widgetsBundle.getId().getId().toString());
+        List<WidgetType> widgetTypes3 = loadedWidgetTypes3.stream().map(WidgetType::new).collect(Collectors.toList());
+        Collections.sort(widgetTypes3, idComparator);
+        Assert.assertEquals(widgetTypes3, loadedWidgetTypes);
+
     }
 
     @Test
