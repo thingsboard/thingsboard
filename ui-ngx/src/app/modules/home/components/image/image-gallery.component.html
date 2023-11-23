@@ -129,7 +129,7 @@
             </mat-header-cell>
             <mat-cell *matCellDef="let image">
               <mat-checkbox (click)="$event.stopPropagation()"
-                            [fxShow]="!readonly(image)"
+                            [fxShow]="deleteEnabled(image)"
                             (change)="$event ? dataSource.selection.toggle(image) : null"
                             [checked]="dataSource.selection.isSelected(image)">
               </mat-checkbox>
@@ -194,7 +194,7 @@
                         (click)="editImage($event, image)">
                   <mat-icon>edit</mat-icon>
                 </button>
-                <button mat-icon-button [disabled]="(isLoading$ | async) || readonly(image)"
+                <button mat-icon-button [disabled]="(isLoading$ | async) || !deleteEnabled(image)"
                         matTooltip="{{ 'image.delete-image' | translate }}"
                         matTooltipPosition="above"
                         (click)="deleteImage($event, image)">
@@ -228,7 +228,7 @@
                   </button>
                   <button mat-menu-item
                           [disabled]="isLoading$ | async"
-                          [fxShow]="!readonly(image)"
+                          [fxShow]="deleteEnabled(image)"
                           (click)="deleteImage($event, image)">
                     <mat-icon>delete</mat-icon>
                     <span translate>image.delete-image</span>
@@ -302,7 +302,7 @@
                 (click)="exportImage($event, item)">
           <tb-icon>mdi:file-export</tb-icon>
         </button>
-        <button *ngIf="!readonly(item)"
+        <button *ngIf="deleteEnabled(item)"
                 mat-icon-button [disabled]="(isLoading$ | async)"
                 matTooltip="{{ 'image.delete-image' | translate }}"
                 matTooltipPosition="above"

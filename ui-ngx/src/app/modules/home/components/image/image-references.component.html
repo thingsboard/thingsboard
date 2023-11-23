@@ -1,0 +1,49 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container *ngIf="simpleList; else complexEntityReferences">
+  <ng-container *ngTemplateOutlet="referencesList; context:{entriesList: referencedEntitiesList, showDetailsLink: true}"></ng-container>
+</ng-container>
+<ng-template #complexEntityReferences>
+  <ng-container *ngIf="contentReady; else loading">
+    <ul>
+      <ng-container *ngFor="let entry of referencedEntitiesEntries">
+        <li *ngIf="isSystem(entry[0]); else tenantEntities">
+          {{ 'image.system-entities' | translate }}
+          <ng-container *ngTemplateOutlet="referencesList; context:{entriesList: entry[1].entities, showDetailsLink: true}"></ng-container>
+        </li>
+        <ng-template #tenantEntities>
+          <li>
+            {{ 'tenant.tenant' | translate }} <a [routerLink]="entry[1].tenantDetailsUrl">{{ '"' + entry[1].tenantName + '"' }}</a> {{ 'image.entities' | translate }}
+            <ng-container *ngTemplateOutlet="referencesList; context:{entriesList: entry[1].entities, showDetailsLink: false}"></ng-container>
+          </li>
+        </ng-template>
+      </ng-container>
+    </ul>
+  </ng-container>
+</ng-template>
+<ng-template #referencesList let-entriesList="entriesList" let-showDetailsLink="showDetailsLink">
+  <ul>
+    <li *ngFor="let referencedEntity of entriesList">
+      {{ referencedEntity.typeName }} <a *ngIf="showDetailsLink" [routerLink]="referencedEntity.detailsUrl">{{ '"' + referencedEntity.entity.name + '"' }}</a>
+                                      <b *ngIf="!showDetailsLink">{{ '"' + referencedEntity.entity.name + '"' }}</b>
+    </li>
+  </ul>
+</ng-template>
+<ng-template #loading>
+  <mat-spinner [diameter]="32" strokeWidth="2"></mat-spinner>
+</ng-template>

@@ -14,11 +14,11 @@
 /// limitations under the License.
 ///
 
-import { BaseData, ExportableEntity } from '@shared/models/base-data';
+import { BaseData, ExportableEntity, HasId } from '@shared/models/base-data';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { TbResourceId } from '@shared/models/id/tb-resource-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
-import { BaseWidgetType } from '@shared/models/widget.models';
+import { HasTenantId } from '@shared/models/entity.models';
 
 export enum ResourceType {
   LWM2M_MODEL = 'LWM2M_MODEL',
@@ -57,7 +57,7 @@ export const ResourceTypeTranslationMap = new Map<ResourceType, string>(
   ]
 );
 
-export interface TbResourceInfo<D> extends Omit<BaseData<TbResourceId>, 'name' | 'label'>, ExportableEntity<TbResourceId> {
+export interface TbResourceInfo<D> extends Omit<BaseData<TbResourceId>, 'name' | 'label'>, HasTenantId, ExportableEntity<TbResourceId> {
   tenantId?: TenantId;
   resourceKey?: string;
   title?: string;
@@ -86,7 +86,43 @@ export interface ImageResourceInfo extends TbResourceInfo<ImageDescriptor> {
   link?: string;
 }
 
+export interface ImageExportData {
+  mediaType: string;
+  fileName: string;
+  title: string;
+  resourceKey: string;
+  data: string;
+}
+
 export type ImageResourceType = 'tenant' | 'system';
+
+export type ImageReferences = {[entityType: string]: Array<BaseData<HasId> & HasTenantId>};
+
+export interface ImageResourceInfoWithReferences extends ImageResourceInfo {
+  references: ImageReferences;
+}
+
+export interface ImageDeleteResult {
+  image: ImageResourceInfo;
+  success: boolean;
+  imageIsReferencedError?: boolean;
+  error?: any;
+  references?: ImageReferences;
+}
+
+export const toImageDeleteResult = (image: ImageResourceInfo, e?: any): ImageDeleteResult => {
+  if (!e) {
+    return {image, success: true};
+  } else {
+    const result: ImageDeleteResult = {image, success: false, error: e};
+    if (e?.status === 400 && e?.error?.success === false && e?.error?.references) {
+      const references: ImageReferences = e?.error?.references;
+      result.imageIsReferencedError = true;
+      result.references = references;
+    }
+    return result;
+  }
+};
 
 export const imageResourceType = (imageInfo: ImageResourceInfo): ImageResourceType =>
   (!imageInfo.tenantId || imageInfo.tenantId?.id === NULL_UUID) ? 'system' : 'tenant';

@@ -78,7 +78,9 @@
         "dont-show-again": "Do not show again",
         "see-documentation": "See documentation",
         "clear": "Clear",
-        "upload": "Upload"
+        "upload": "Upload",
+        "delete-anyway": "Delete anyway",
+        "delete-selected": "Delete selected"
     },
     "aggregation": {
         "aggregation": "Aggregation",
@@ -2968,7 +2970,18 @@
         "list-mode": "List view",
         "grid-mode": "Grid view",
         "image-preview": "Image preview",
-        "update-image": "Update image"
+        "update-image": "Update image",
+        "export-failed-error": "Unable to export image: {{error}}",
+        "image-json-file": "Image JSON file",
+        "invalid-image-json-file-error": "Unable to import image from JSON: Invalid image JSON data structure.",
+        "image-is-in-use": "Image is used by other entities",
+        "images-are-in-use": "Images are used by other entities",
+        "image-is-in-use-text": "The image was not deleted because it is used by the following entities:",
+        "images-are-in-use-text": "Not all images have been deleted because they are used by other entities.</br>You can view referenced entities by clicking the <b>References</b> button in the corresponding image row.</br>If you still want to delete these images, select them in the table below and click the <b>Delete selected</b> button.",
+        "delete-image-in-use-text": "If you still want to delete the image, click the <b>Delete anyway</b> button.",
+        "system-entities": "System entities:",
+        "entities": "entities:",
+        "references": "References"
     },
     "image-input": {
         "drop-images-or": "Drag and drop an images or",

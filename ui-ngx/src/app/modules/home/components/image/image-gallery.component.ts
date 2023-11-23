@@ -14,14 +14,17 @@
 /// limitations under the License.
 ///
 
-import { CollectionViewer, DataSource, SelectionModel } from '@angular/cdk/collections';
-import { ImageResourceInfo, imageResourceType } from '@shared/models/resource.models';
-import { BehaviorSubject, forkJoin, merge, Observable, of, ReplaySubject, Subject, Subscription } from 'rxjs';
-import { emptyPageData, PageData } from '@shared/models/page/page-data';
+import {
+  ImageResourceInfo,
+  ImageResourceInfoWithReferences,
+  imageResourceType,
+  toImageDeleteResult
+} from '@shared/models/resource.models';
+import { forkJoin, merge, Observable, of, Subject, Subscription } from 'rxjs';
 import { ImageService } from '@core/http/image.service';
 import { TranslateService } from '@ngx-translate/core';
 import { PageLink, PageQueryParam } from '@shared/models/page/page-link';
-import { catchError, debounceTime, distinctUntilChanged, map, skip, take, takeUntil, tap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, skip, takeUntil } from 'rxjs/operators';
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -45,7 +48,7 @@ import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { ActivatedRoute, QueryParamsHandling, Router } from '@angular/router';
-import { isEqual, isNotEmptyStr } from '@core/utils';
+import { isEqual, isNotEmptyStr, parseHttpErrorMessage } from '@core/utils';
 import { BaseData, HasId } from '@shared/models/base-data';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
@@ -58,7 +61,13 @@ import {
   UploadImageDialogData
 } from '@home/components/image/upload-image-dialog.component';
 import { ImageDialogComponent, ImageDialogData } from '@home/components/image/image-dialog.component';
-import { EntityBooleanFunction } from '@home/models/entity/entities-table-config.models';
+import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { ActionNotificationShow } from '@core/notification/notification.actions';
+import {
+  ImagesInUseDialogComponent,
+  ImagesInUseDialogData
+} from '@home/components/image/images-in-use-dialog.component';
+import { ImagesDatasource } from '@home/components/image/images-datasource';
 
 @Component({
   selector: 'tb-image-gallery',
@@ -132,6 +141,7 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
               public translate: TranslateService,
               private imageService: ImageService,
               private dialogService: DialogService,
+              private importExportService: ImportExportService,
               private elementRef: ElementRef,
               private cd: ChangeDetectorRef,
               private fb: FormBuilder) {
@@ -177,7 +187,8 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
       }
     }
     if (this.mode === 'list') {
-      this.dataSource = new ImagesDatasource(this.imageService, entity => !this.readonly(entity));
+      this.dataSource = new ImagesDatasource(this.imageService, null,
+          entity => this.deleteEnabled(entity));
     }
   }
 
@@ -233,7 +244,8 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
       }
       this.mode = targetMode;
       if (this.mode === 'list') {
-        this.dataSource = new ImagesDatasource(this.imageService, entity => !this.readonly(entity));
+        this.dataSource = new ImagesDatasource(this.imageService, null,
+          entity => this.deleteEnabled(entity));
       }
       setTimeout(() => {
         this.updateMode();
@@ -381,6 +393,10 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
     return this.authUser.authority !== Authority.SYS_ADMIN && this.isSystem(image);
   }
 
+  deleteEnabled(image?: ImageResourceInfo): boolean {
+    return this.authUser.authority === Authority.SYS_ADMIN || !this.isSystem(image);
+  }
+
   deleteImage($event: Event, image: ImageResourceInfo, itemIndex = -1) {
     if ($event) {
       $event.stopPropagation();
@@ -391,11 +407,38 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
       this.translate.instant('action.no'),
       this.translate.instant('action.yes')).subscribe((result) => {
       if (result) {
-        this.imageService.deleteImage(imageResourceType(image), image.resourceKey).subscribe(
-          () => {
-            this.imageDeleted(itemIndex);
-          }
-        );
+        this.imageService.deleteImage(imageResourceType(image), image.resourceKey, false, {ignoreErrors: true}).pipe(
+          map(() => toImageDeleteResult(image)),
+          catchError((err) => of(toImageDeleteResult(image, err)))
+        ).subscribe(
+          (deleteResult) => {
+            if (deleteResult.success) {
+              this.imageDeleted(itemIndex);
+            } else if (deleteResult.imageIsReferencedError) {
+              this.dialog.open<ImagesInUseDialogComponent, ImagesInUseDialogData,
+                ImageResourceInfo[]>(ImagesInUseDialogComponent, {
+                disableClose: true,
+                panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+                data: {
+                  multiple: false,
+                  images: [{...image, ...{references: deleteResult.references}}]
+                }
+              }).afterClosed().subscribe((images) => {
+                if (images) {
+                  this.imageService.deleteImage(imageResourceType(image), image.resourceKey, true).subscribe(
+                    () => {
+                      this.imageDeleted(itemIndex);
+                    }
+                  );
+                }
+              });
+            } else {
+              const errorMessageWithTimeout = parseHttpErrorMessage(deleteResult.error, this.translate);
+              setTimeout(() => {
+                this.store.dispatch(new ActionNotificationShow({message: errorMessageWithTimeout.message, type: 'error'}));
+              }, errorMessageWithTimeout.timeout);
+            }
+        });
       }
     });
   }
@@ -413,10 +456,48 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
         this.translate.instant('action.yes')).subscribe((result) => {
         if (result) {
           const tasks = selectedImages.map((image) =>
-            this.imageService.deleteImage(imageResourceType(image), image.resourceKey));
+            this.imageService.deleteImage(imageResourceType(image), image.resourceKey, false, {ignoreErrors: true}).pipe(
+              map(() => toImageDeleteResult(image)),
+              catchError((err) => of(toImageDeleteResult(image, err)))
+            )
+          );
           forkJoin(tasks).subscribe(
-            () => {
-              this.updateData();
+            (deleteResults) => {
+              const anySuccess = deleteResults.some(res => res.success);
+              const referenceErrors = deleteResults.filter(res => res.imageIsReferencedError);
+              const otherError = deleteResults.find(res => !res.success);
+              if (anySuccess) {
+                this.updateData();
+              }
+              if (referenceErrors?.length) {
+                const imagesWithReferences: ImageResourceInfoWithReferences[] =
+                  referenceErrors.map(ref => ({...ref.image, ...{references: ref.references}}));
+                this.dialog.open<ImagesInUseDialogComponent, ImagesInUseDialogData,
+                  ImageResourceInfo[]>(ImagesInUseDialogComponent, {
+                  disableClose: true,
+                  panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+                  data: {
+                    multiple: true,
+                    images: imagesWithReferences
+                  }
+                }).afterClosed().subscribe((forceDeleteImages) => {
+                  if (forceDeleteImages && forceDeleteImages.length) {
+                    const forceDeleteTasks = forceDeleteImages.map((image) =>
+                      this.imageService.deleteImage(imageResourceType(image), image.resourceKey, true)
+                    );
+                    forkJoin(forceDeleteTasks).subscribe(
+                      () => {
+                        this.updateData();
+                      }
+                    );
+                  }
+                });
+              } else if (otherError) {
+                const errorMessageWithTimeout = parseHttpErrorMessage(otherError.error, this.translate);
+                setTimeout(() => {
+                  this.store.dispatch(new ActionNotificationShow({message: errorMessageWithTimeout.message, type: 'error'}));
+                }, errorMessageWithTimeout.timeout);
+              }
             }
           );
         }
@@ -435,11 +516,15 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
     if ($event) {
       $event.stopPropagation();
     }
-    // TODO:
+    this.importExportService.exportImage(imageResourceType(image), image.resourceKey);
   }
 
   importImage(): void {
-    // TODO:
+    this.importExportService.importImage().subscribe((image) => {
+      if (image) {
+        this.updateData();
+      }
+    });
   }
 
   uploadImage(): void {
@@ -489,99 +574,4 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
     }
   }
 
-}
-
-class ImagesDatasource implements DataSource<ImageResourceInfo> {
-  private entitiesSubject = new BehaviorSubject<ImageResourceInfo[]>([]);
-  private pageDataSubject = new BehaviorSubject<PageData<ImageResourceInfo>>(emptyPageData<ImageResourceInfo>());
-
-  public pageData$ = this.pageDataSubject.asObservable();
-
-  public selection = new SelectionModel<ImageResourceInfo>(true, []);
-
-  public dataLoading = true;
-
-  constructor(private imageService: ImageService,
-              protected selectionEnabledFunction: EntityBooleanFunction<ImageResourceInfo>) {
-  }
-
-  connect(collectionViewer: CollectionViewer):
-    Observable<ImageResourceInfo[] | ReadonlyArray<ImageResourceInfo>> {
-    return this.entitiesSubject.asObservable();
-  }
-
-  disconnect(collectionViewer: CollectionViewer): void {
-    this.entitiesSubject.complete();
-    this.pageDataSubject.complete();
-  }
-
-  reset() {
-    const pageData = emptyPageData<ImageResourceInfo>();
-    this.entitiesSubject.next(pageData.data);
-    this.pageDataSubject.next(pageData);
-  }
-
-  loadEntities(pageLink: PageLink): Observable<PageData<ImageResourceInfo>> {
-    this.dataLoading = true;
-    const result = new ReplaySubject<PageData<ImageResourceInfo>>();
-    this.fetchEntities(pageLink).pipe(
-      tap(() => {
-        this.selection.clear();
-      }),
-      catchError(() => of(emptyPageData<ImageResourceInfo>())),
-    ).subscribe(
-      (pageData) => {
-        this.entitiesSubject.next(pageData.data);
-        this.pageDataSubject.next(pageData);
-        result.next(pageData);
-        this.dataLoading = false;
-      }
-    );
-    return result;
-  }
-
-  fetchEntities(pageLink: PageLink): Observable<PageData<ImageResourceInfo>> {
-    return this.imageService.getImages(pageLink);
-  }
-
-  isAllSelected(): Observable<boolean> {
-    const numSelected = this.selection.selected.length;
-    return this.entitiesSubject.pipe(
-      map((entities) => numSelected === entities.length)
-    );
-  }
-
-  isEmpty(): Observable<boolean> {
-    return this.entitiesSubject.pipe(
-      map((entities) => !entities.length)
-    );
-  }
-
-  total(): Observable<number> {
-    return this.pageDataSubject.pipe(
-      map((pageData) => pageData.totalElements)
-    );
-  }
-
-  masterToggle() {
-    this.entitiesSubject.pipe(
-      tap((entities) => {
-        const numSelected = this.selection.selected.length;
-        if (numSelected === this.selectableEntitiesCount(entities)) {
-          this.selection.clear();
-        } else {
-          entities.forEach(row => {
-            if (this.selectionEnabledFunction(row)) {
-              this.selection.select(row);
-            }
-          });
-        }
-      }),
-      take(1)
-    ).subscribe();
-  }
-
-  private selectableEntitiesCount(entities: Array<ImageResourceInfo>): number {
-    return entities.filter((entity) => this.selectionEnabledFunction(entity)).length;
-  }
 }

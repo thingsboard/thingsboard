@@ -21,7 +21,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { Dashboard, DashboardLayoutId } from '@shared/models/dashboard.models';
-import { deepClone, guid, isDefined, isObject, isString, isUndefined } from '@core/utils';
+import { deepClone, guid, isDefined, isNotEmptyStr, isObject, isString, isUndefined } from '@core/utils';
 import { WINDOW } from '@core/services/window.service';
 import { DOCUMENT } from '@angular/common';
 import {
@@ -79,6 +79,8 @@ import {
   ExportWidgetsBundleDialogData,
   ExportWidgetsBundleDialogResult
 } from '@home/components/import-export/export-widgets-bundle-dialog.component';
+import { ImageService } from '@core/http/image.service';
+import { ImageExportData, ImageResourceInfo, ImageResourceType } from '@shared/models/resource.models';
 
 // @dynamic
 @Injectable()
@@ -99,10 +101,42 @@ export class ImportExportService {
               private deviceService: DeviceService,
               private assetService: AssetService,
               private edgeService: EdgeService,
+              private imageService: ImageService,
               private utils: UtilsService,
               private itembuffer: ItemBufferService,
               private dialog: MatDialog) {
 
+  }
+
+  public exportImage(type: ImageResourceType, key: string) {
+    this.imageService.exportImage(type, key).subscribe(
+      {
+        next: (imageData) => {
+          let name = imageData.title;
+          name = name.toLowerCase().replace(/\W/g, '_');
+          this.exportToPc(imageData, name);
+        },
+        error: (e) => {
+          this.handleExportError(e, 'image.export-failed-error');
+        }
+      }
+    );
+  }
+
+  public importImage(): Observable<ImageResourceInfo> {
+    return this.openImportDialog('image.import-image', 'image.image-json-file').pipe(
+      mergeMap((imageData: ImageExportData) => {
+        if (!this.validateImportedImage(imageData)) {
+          this.store.dispatch(new ActionNotificationShow(
+            {message: this.translate.instant('image.invalid-image-json-file-error'),
+              type: 'error'}));
+          throw new Error('Invalid image JSON file');
+        } else {
+          return this.imageService.importImage(imageData);
+        }
+      }),
+      catchError(() => of(null))
+    );
   }
 
   public exportDashboard(dashboardId: string) {
@@ -816,6 +850,14 @@ export class ImportExportService {
     this.store.dispatch(new ActionNotificationShow(
       {message: this.translate.instant(errorDetailsMessageId, {error: message}),
         type: 'error'}));
+  }
+
+  private validateImportedImage(image: ImageExportData): boolean {
+    return !(!isNotEmptyStr(image.data)
+      || !isNotEmptyStr(image.title)
+      || !isNotEmptyStr(image.fileName)
+      || !isNotEmptyStr(image.mediaType)
+      || !isNotEmptyStr(image.resourceKey));
   }
 
   private validateImportedDashboard(dashboard: Dashboard): boolean {

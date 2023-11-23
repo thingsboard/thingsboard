@@ -25,7 +25,7 @@ import {
   ImageResourceInfo,
   imageResourceType,
   ImageResourceType,
-  IMAGES_URL_PREFIX, isImageResourceUrl
+  IMAGES_URL_PREFIX, isImageResourceUrl, ImageExportData
 } from '@shared/models/resource.models';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
@@ -133,8 +133,18 @@ export class ImageService {
     );
   }
 
-  public deleteImage(type: ImageResourceType, key: string, config?: RequestConfig) {
-    return this.http.delete(`${IMAGES_URL_PREFIX}/${type}/${encodeURIComponent(key)}`, defaultHttpOptionsFromConfig(config));
+  public deleteImage(type: ImageResourceType, key: string, force = false, config?: RequestConfig) {
+    return this.http.delete(`${IMAGES_URL_PREFIX}/${type}/${encodeURIComponent(key)}?force=${force}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public exportImage(type: ImageResourceType, key: string, config?: RequestConfig): Observable<ImageExportData> {
+    return this.http.get<ImageExportData>(`${IMAGES_URL_PREFIX}/${type}/${encodeURIComponent(key)}/export`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public importImage(imageData: ImageExportData, config?: RequestConfig): Observable<ImageResourceInfo> {
+    return this.http.put<ImageResourceInfo>('/api/image/import',
+      imageData, defaultHttpOptionsFromConfig(config));
   }
 
 }
