@@ -36,6 +36,19 @@
     <mat-slide-toggle class="mat-slide"  formControlName="showMilliseconds">
       {{ 'widgets.table.display-milliseconds' | translate }}
     </mat-slide-toggle>
+    <div class="tb-form-row space-between column-xs">
+      <div translate>widgets.table.time-format</div>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="timeFormat">
+          <mat-option [value]="'12h'">
+            {{ 'widgets.table.time-format-12h' | translate }}
+          </mat-option>
+          <mat-option [value]="'24h'">
+            {{ 'widgets.table.time-format-24h' | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
     <mat-slide-toggle class="mat-slide"  formControlName="enableStickyAction">
       {{ 'widgets.table.enable-sticky-action' | translate }}
     </mat-slide-toggle>

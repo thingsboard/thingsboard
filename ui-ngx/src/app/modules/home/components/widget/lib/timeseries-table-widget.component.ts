@@ -99,6 +99,7 @@ export interface TimeseriesTableWidgetSettings extends TableWidgetSettings {
   showTimestamp: boolean;
   showMilliseconds: boolean;
   hideEmptyLines: boolean;
+  timeFormat: '12h' | '24h';
 }
 
 interface TimeseriesWidgetLatestDataKeySettings extends TableWidgetDataKeySettings {
@@ -320,7 +321,8 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     this.hideEmptyLines = isDefined(this.settings.hideEmptyLines) ? this.settings.hideEmptyLines : false;
     this.useEntityLabel = isDefined(this.widgetConfig.settings.useEntityLabel) ? this.widgetConfig.settings.useEntityLabel : false;
     this.showTimestamp = this.settings.showTimestamp !== false;
-    this.dateFormatFilter = (this.settings.showMilliseconds !== true) ? 'yyyy-MM-dd HH:mm:ss' :  'yyyy-MM-dd HH:mm:ss.SSS';
+    const timeFormat: '12h' | '24h' = isDefined(this.settings.timeFormat) ? this.settings.timeFormat : '24h';
+    this.dateFormatFilter = `yyyy-MM-dd ${timeFormat === '24h' ? 'HH' : 'hh'}:mm:ss${this.settings.showMilliseconds ? '.SSS' : ''}`;
 
     this.rowStylesInfo = getRowStyleInfo(this.settings, 'rowData, ctx');
 
