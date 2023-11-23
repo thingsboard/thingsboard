@@ -67,19 +67,19 @@ import static org.thingsboard.server.common.data.DataConstants.NOTIFY_DEVICE_MET
 @Slf4j
 class TbMsgAttributesNodeTest {
 
-    private static final DeviceId ORIGINATOR_ID = new DeviceId(UUID.randomUUID());
-    private static final TenantId TENANT_ID = new TenantId(UUID.randomUUID());
-
-    TbMsgAttributesNode node;
+    private TenantId tenantId;
+    private DeviceId deviceId;
+    private TbMsgAttributesNode node;
 
     @BeforeEach
     void setUp() {
+        tenantId = new TenantId(UUID.fromString("6c18691e-4470-4766-9739-aface71d761f"));
+        deviceId = new DeviceId(UUID.fromString("b66159d7-c77e-45e8-bb41-a8f557f434c1"));
         node = spy(TbMsgAttributesNode.class);
     }
 
     @Test
     void testFilterChangedAttr_whenCurrentAttributesEmpty_thenReturnNewAttributes() {
-        node = spy(TbMsgAttributesNode.class);
         List<AttributeKvEntry> newAttributes = new ArrayList<>();
 
         List<AttributeKvEntry> filtered = node.filterChangedAttr(Collections.emptyList(), newAttributes);
@@ -88,7 +88,6 @@ class TbMsgAttributesNodeTest {
 
     @Test
     void testFilterChangedAttr_whenCurrentAttributesContainsInAnyOrderNewAttributes_thenReturnEmptyList() {
-        node = spy(TbMsgAttributesNode.class);
         List<AttributeKvEntry> currentAttributes = List.of(
                 new BaseAttributeKvEntry(1694000000L, new StringDataEntry("address", "Peremohy ave 1")),
                 new BaseAttributeKvEntry(1694000000L, new BooleanDataEntry("valid", true)),
@@ -109,7 +108,6 @@ class TbMsgAttributesNodeTest {
 
     @Test
     void testFilterChangedAttr_whenCurrentAttributesContainsInAnyOrderNewAttributes_thenReturnExpectedList() {
-        node = spy(TbMsgAttributesNode.class);
         List<AttributeKvEntry> currentAttributes = List.of(
                 new BaseAttributeKvEntry(1694000000L, new StringDataEntry("address", "Peremohy ave 1")),
                 new BaseAttributeKvEntry(1694000000L, new BooleanDataEntry("valid", true)),
@@ -148,7 +146,6 @@ class TbMsgAttributesNodeTest {
     @ParameterizedTest
     @MethodSource
     void givenNotifyDeviceMdValue_whenSaveAndNotify_thenVerifyExpectedArgumentForNotifyDeviceInSaveAndNotifyMethod(String mdValue, boolean expectedArgumentValue) throws TbNodeException {
-        node = spy(TbMsgAttributesNode.class);
         var ctxMock = mock(TbContext.class);
         var telemetryServiceMock = mock(RuleEngineTelemetryService.class);
         ObjectNode defaultConfig = (ObjectNode) JacksonUtil.valueToTree(new TbMsgAttributesNodeConfiguration().defaultConfiguration());
@@ -157,7 +154,7 @@ class TbMsgAttributesNodeTest {
 
         assertThat(defaultConfig.has("notifyDevice")).as("pre condition has notifyDevice").isTrue();
 
-        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
+        when(ctxMock.getTenantId()).thenReturn(tenantId);
         when(ctxMock.getTelemetryService()).thenReturn(telemetryServiceMock);
         willCallRealMethod().given(node).init(any(TbContext.class), any(TbNodeConfiguration.class));
         willCallRealMethod().given(node).saveAttr(any(), eq(ctxMock), any(TbMsg.class), anyString(), anyBoolean());
@@ -169,7 +166,7 @@ class TbMsgAttributesNodeTest {
             md.putValue(NOTIFY_DEVICE_METADATA_KEY, mdValue);
         }
         // dummy list with one ts kv to pass the empty list check.
-        var testTbMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, ORIGINATOR_ID, md, TbMsg.EMPTY_STRING);
+        var testTbMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, md, TbMsg.EMPTY_STRING);
         List<AttributeKvEntry> testAttrList = List.of(new BaseAttributeKvEntry(0L, new StringDataEntry("testKey", "testValue")));
 
         node.saveAttr(testAttrList, ctxMock, testTbMsg, DataConstants.SHARED_SCOPE, false);
@@ -177,7 +174,7 @@ class TbMsgAttributesNodeTest {
         ArgumentCaptor<Boolean> notifyDeviceCaptor = ArgumentCaptor.forClass(Boolean.class);
 
         verify(telemetryServiceMock, times(1)).saveAndNotify(
-                eq(TENANT_ID), eq(ORIGINATOR_ID), eq(DataConstants.SHARED_SCOPE),
+                eq(tenantId), eq(deviceId), eq(DataConstants.SHARED_SCOPE),
                 eq(testAttrList), notifyDeviceCaptor.capture(), any()
         );
         boolean notifyDevice = notifyDeviceCaptor.getValue();
@@ -230,7 +227,6 @@ class TbMsgAttributesNodeTest {
     @MethodSource
     void givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig(int givenVersion, String givenConfigStr, boolean hasChanges, String expectedConfigStr) throws TbNodeException {
         // GIVEN
-        node = spy(TbMsgAttributesNode.class);
         willCallRealMethod().given(node).upgrade(anyInt(), any());
         JsonNode givenConfig = JacksonUtil.toJsonNode(givenConfigStr);
         JsonNode expectedConfig = JacksonUtil.toJsonNode(expectedConfigStr);

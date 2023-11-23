@@ -797,14 +797,8 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     if (isOldSchema(conn, 3006001)) {
                         log.info("Updating schema ...");
                         try {
-                            conn.createStatement().execute("UPDATE rule_node SET " +
-                                    "configuration = (configuration::jsonb || jsonb_build_object(" +
-                                        "'notifyDevice', CASE WHEN configuration::jsonb ->> 'notifyDevice' = 'false' THEN false ELSE true END, " +
-                                        "'sendAttributesUpdatedNotification', CASE WHEN configuration::jsonb ->> 'sendAttributesUpdatedNotification' = 'true' THEN true ELSE false END, " +
-                                        "'updateAttributesOnlyOnValueChange', CASE WHEN configuration::jsonb ->> 'updateAttributesOnlyOnValueChange' = 'false' THEN false ELSE true END" +
-                                    ")::jsonb)::varchar, " +
-                                    "configuration_version = 2 " +
-                                    "WHERE type = 'org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode' AND configuration_version = 1;");
+                            Path saveAttributesNodeUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.6.1", "save_attributes_node_update.sql");
+                            loadSql(saveAttributesNodeUpdateFile, conn);
                         } catch (Exception e) {
                             log.warn("Failed to execute update script for save attributes rule nodes due to: ", e);
                         }

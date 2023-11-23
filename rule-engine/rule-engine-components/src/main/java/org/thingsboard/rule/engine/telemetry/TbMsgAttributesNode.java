@@ -120,7 +120,7 @@ public class TbMsgAttributesNode implements TbNode {
                 msg.getOriginator(),
                 scope,
                 attributes,
-                config.isNotifyDevice() || checkNotifyDeviceMdValue(msg.getMetaData()),
+                config.isNotifyDevice() || checkNotifyDeviceMdValue(msg.getMetaData().getValue(NOTIFY_DEVICE_METADATA_KEY)),
                 sendAttributesUpdateNotification ?
                         new AttributesUpdateNodeCallback(ctx, msg, scope, attributes) :
                         new TelemetryNodeCallback(ctx, msg)
@@ -149,10 +149,9 @@ public class TbMsgAttributesNode implements TbNode {
         return config.isSendAttributesUpdatedNotification() && !CLIENT_SCOPE.equals(scope);
     }
 
-    private boolean checkNotifyDeviceMdValue(TbMsgMetaData md) {
-        var notifyDeviceMdStr = md.getValue(NOTIFY_DEVICE_METADATA_KEY);
+    private boolean checkNotifyDeviceMdValue(String notifyDeviceMdValue) {
         // Check for empty string for backward-compatibility. A while ago node always notified devices.
-        return StringUtils.isEmpty(notifyDeviceMdStr) || Boolean.parseBoolean(notifyDeviceMdStr);
+        return StringUtils.isEmpty(notifyDeviceMdValue) || Boolean.parseBoolean(notifyDeviceMdValue);
     }
 
     private String getScope(String mdScopeValue) {
