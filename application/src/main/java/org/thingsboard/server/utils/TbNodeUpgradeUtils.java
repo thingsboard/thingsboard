@@ -21,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNode;
-import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.service.component.RuleNodeClassInfo;
@@ -49,7 +48,7 @@ public class TbNodeUpgradeUtils {
                 if (upgradeResult.getFirst()) {
                     node.setConfiguration(upgradeResult.getSecond());
                 }
-            } catch (TbNodeException e) {
+            } catch (Exception e) {
                 try {
                     JacksonUtil.treeToValue(oldConfiguration, configClass);
                 } catch (Exception ex) {
