@@ -27,8 +27,6 @@ tb-login {
 }
 .tb-login-content .mat-mdc-card {
   background-color: #000e4aaa !important;
-  width: 40vw !important;
-  max-width: 500px !important;
   max-height: none !important;
   height: 100% !important;
   border-radius: 0 !important;
@@ -36,8 +34,7 @@ tb-login {
 .tb-login-content .mat-mdc-card-content {
   margin: 0 auto !important;
   padding: 56px 36px 10px 36px !important;
-  width: 100% !important;
-  max-width: 600px !important;
+  max-width: 550px !important;
 }
 .tb-login-form {
   width: 100% !important;
