@@ -10,17 +10,15 @@ docker compose rm mytbedge
 {:copy-code}
 ```
 
-If you still rely on Docker Compose as docker-compose (with a hyphen) here is the list of the above commands:
+**OPTIONAL:** If you still rely on Docker Compose as docker-compose (with a hyphen) here is the list of the above commands:
+```text
 docker-compose stop
 docker-compose rm mytbedge
-
-#### Backup Database
+```
+##### Backup Database
 Make a copy of the database folder before upgrading:
 
 ```bash
 sudo cp -r ~/.mytb-edge-data/db ~/.mytb-edge-db-BACKUP
 {:copy-code}
 ```
-
-```bash
-make <span style="color:red;">docker-compose.yml</span>

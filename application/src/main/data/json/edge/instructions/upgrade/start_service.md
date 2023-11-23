@@ -1,6 +1,6 @@
 Start the service
 
 ```bash
-sudo service tb-edge start
+sudo systemctl tb-edge start
 {:copy-code}
 ```

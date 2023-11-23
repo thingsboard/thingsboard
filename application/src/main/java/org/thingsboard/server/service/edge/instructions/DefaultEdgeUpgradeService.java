@@ -74,10 +74,10 @@ public class DefaultEdgeUpgradeService implements EdgeUpgradeService {
 
     private EdgeInstructions getDockerUpgradeInstructions(String tbVersion, String currentEdgeVersion) {
         UpgradeInfo upgradeInfo = upgradeVersionHashMap.get(currentEdgeVersion);
-        if (upgradeInfo.getNextVersion() == null || tbVersion.equals(currentEdgeVersion)) {
-            return null;
+        if (upgradeInfo == null || upgradeInfo.getNextVersion() == null || tbVersion.equals(currentEdgeVersion)) {
+            return new EdgeInstructions("Edge upgrade instruction for " + currentEdgeVersion + "EDGE is not available.");
         }
-        boolean stoppedService = false;
+        boolean rmUpgradeCompose = false;
         StringBuilder result = new StringBuilder(readFile(resolveFile("docker", "upgrade_preparing.md")));
         while (upgradeInfo.getNextVersion() != null || !tbVersion.equals(currentEdgeVersion)) {
             String edgeVersion = upgradeInfo.getNextVersion();
@@ -85,13 +85,15 @@ public class DefaultEdgeUpgradeService implements EdgeUpgradeService {
             if (upgradeInfo.isUpgradeDb()) {
                 String upgradeDb = readFile(resolveFile("docker", "upgrade_db.md"));
                 ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${UPGRADE_DB}", upgradeDb);
-            }
-            if (!stoppedService) {
-                stoppedService = true;
-                String stopService = readFile(resolveFile("docker", "stop_service.md"));
-                ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${STOP_SERVICE}", stopService);
             } else {
-                ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${STOP_SERVICE}", "");
+                ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${UPGRADE_DB}", "");
+            }
+            if (!rmUpgradeCompose) {
+                rmUpgradeCompose = true;
+                ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${CLEAR_DOCKER_UPGRADE}", "");
+            } else {
+                String rmUpgrade = readFile(resolveFile("docker", "upgrade_rm.md"));
+                ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${CLEAR_DOCKER_UPGRADE}", rmUpgrade);
             }
             ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${TB_EDGE_VERSION}", edgeVersion + "EDGE");
             ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${CURRENT_TB_EDGE_VERSION}", currentEdgeVersion + "EDGE");
@@ -100,36 +102,32 @@ public class DefaultEdgeUpgradeService implements EdgeUpgradeService {
             result.append(ubuntuUpgradeInstructions);
         }
         String startService = readFile(resolveFile("docker", "start_service.md"));
+        startService = startService.replace("${TB_EDGE_VERSION}", currentEdgeVersion + "EDGE");
         result.append(startService);
         return new EdgeInstructions(result.toString());
     }
 
     private EdgeInstructions getLinuxUpgradeInstructions(String tbVersion, String currentEdgeVersion, String os) {
         UpgradeInfo upgradeInfo = upgradeVersionHashMap.get(currentEdgeVersion);
-        if (upgradeInfo.getNextVersion() == null || tbVersion.equals(currentEdgeVersion)) {
-            return null;
+        if (upgradeInfo == null || upgradeInfo.getNextVersion() == null || tbVersion.equals(currentEdgeVersion)) {
+            return new EdgeInstructions("Edge upgrade instruction for " + currentEdgeVersion + "EDGE is not available.");
         }
-        boolean stoppedService = false;
-        StringBuilder result = new StringBuilder(readFile(resolveFile("upgrade_preparing.md")));
+        String upgrade_preparing = readFile(resolveFile("upgrade_preparing.md"));
+        upgrade_preparing = upgrade_preparing.replace("${OS}", os.equals("centos") ? "RHEL/CentOS 7/8" : "Ubuntu");
+        StringBuilder result = new StringBuilder(upgrade_preparing);
         while (upgradeInfo.getNextVersion() != null || !tbVersion.equals(currentEdgeVersion)) {
             String edgeVersion = upgradeInfo.getNextVersion();
             String ubuntuUpgradeInstructions = readFile(resolveFile(os, "instructions.md"));
             if (upgradeInfo.isUpgradeDb()) {
                 String upgradeDb = readFile(resolveFile("upgrade_db.md"));
                 ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${UPGRADE_DB}", upgradeDb);
-            }
-            if (!stoppedService) {
-                stoppedService = true;
-                String stopService = readFile(resolveFile("stop_service.md"));
-                ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${STOP_SERVICE}", stopService);
             } else {
-                ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${STOP_SERVICE}", "");
+                ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${UPGRADE_DB}", "");
             }
             ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${TB_EDGE_TAG}", getTagVersion(edgeVersion));
             ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${CURRENT_TB_EDGE_TAG}", getTagVersion(currentEdgeVersion));
             ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${TB_EDGE_VERSION}", edgeVersion);
             ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${CURRENT_TB_EDGE_VERSION}", currentEdgeVersion);
-            ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${TB_EDGE_VERSION_TITLE}", edgeVersion + "EDGE");
             currentEdgeVersion = edgeVersion;
             upgradeInfo = upgradeVersionHashMap.get(upgradeInfo.getNextVersion());
             result.append(ubuntuUpgradeInstructions);

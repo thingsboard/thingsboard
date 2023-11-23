@@ -1,3 +1,5 @@
+${CLEAR_DOCKER_UPGRADE}
+
 Create docker compose file for ThingsBoard Edge upgrade process:
 
 ```bash

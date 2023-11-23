@@ -1,4 +1,4 @@
-Here is the list of commands, that can be used to quickly upgrade ThingsBoard Edge on RHEL/CentOS 7/8.
+Here is the list of commands, that can be used to quickly upgrade ThingsBoard Edge on ${OS}
 
 #### Prepare for upgrading ThingsBoard Edge
 
@@ -9,9 +9,8 @@ sudo systemctl stop tb-edge
 {:copy-code}
 ```
 
-#### Backup Database
-Make a backup of the database before upgrading.
-**Make sure you have enough space to place a backup of the database.**
+##### Backup Database
+Make a backup of the database before upgrading. **Make sure you have enough space to place a backup of the database.**
 
 Check database size:
 
