@@ -208,7 +208,7 @@ public class ImageController extends BaseController {
         // PE: generic permission
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         TenantId tenantId = getTenantId();
-        if (getCurrentUser().getAuthority() == Authority.SYS_ADMIN || includeSystemImages) {
+        if (getCurrentUser().getAuthority() == Authority.SYS_ADMIN || !includeSystemImages) {
             return checkNotNull(imageService.getImagesByTenantId(tenantId, pageLink));
         } else {
             return checkNotNull(imageService.getAllImagesByTenantId(tenantId, pageLink));

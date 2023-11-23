@@ -28,6 +28,18 @@ $tb-button-selected-color: rgb(255, 110, 64) !default;
       border-radius: 4px;
     }
 
+    .mat-mdc-table-toolbar {
+      &.multi-row {
+        &.mat-toolbar-single-row {
+          height: 112px;
+        }
+        .mat-mdc-slide-toggle {
+          display: flex;
+          min-height: 48px;
+        }
+      }
+    }
+
     .tb-images-title {
       padding-right: 20px;
       white-space: nowrap;

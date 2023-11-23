@@ -2981,7 +2981,8 @@
         "delete-image-in-use-text": "If you still want to delete the image, click the <b>Delete anyway</b> button.",
         "system-entities": "System entities:",
         "entities": "entities:",
-        "references": "References"
+        "references": "References",
+        "include-system-images": "Include system images"
     },
     "image-input": {
         "drop-images-or": "Drag and drop an images or",

@@ -69,8 +69,10 @@ export class ImageService {
       imageInfo, defaultHttpOptionsFromConfig(config));
   }
 
-  public getImages(pageLink: PageLink, config?: RequestConfig): Observable<PageData<ImageResourceInfo>> {
-    return this.http.get<PageData<ImageResourceInfo>>(`${IMAGES_URL_PREFIX}${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
+  public getImages(pageLink: PageLink, includeSystemImages = false, config?: RequestConfig): Observable<PageData<ImageResourceInfo>> {
+    return this.http.get<PageData<ImageResourceInfo>>(
+      `${IMAGES_URL_PREFIX}${pageLink.toQuery()}&includeSystemImages=${includeSystemImages}`,
+      defaultHttpOptionsFromConfig(config));
   }
 
   public getImageInfo(type: ImageResourceType, key: string, config?: RequestConfig): Observable<ImageResourceInfo> {

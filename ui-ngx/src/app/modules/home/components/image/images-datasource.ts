@@ -64,10 +64,10 @@ export class ImagesDatasource implements DataSource<ImageResourceInfo> {
     }
   }
 
-  loadEntities(pageLink: PageLink): Observable<PageData<ImageResourceInfo>> {
+  loadEntities(pageLink: PageLink, includeSystemImages = false): Observable<PageData<ImageResourceInfo>> {
     this.dataLoading = true;
     const result = new ReplaySubject<PageData<ImageResourceInfo>>();
-    this.fetchEntities(pageLink).pipe(
+    this.fetchEntities(pageLink, includeSystemImages).pipe(
       tap(() => {
         this.selection.clear();
       }),
@@ -83,8 +83,8 @@ export class ImagesDatasource implements DataSource<ImageResourceInfo> {
     return result;
   }
 
-  fetchEntities(pageLink: PageLink): Observable<PageData<ImageResourceInfo>> {
-    return this.imageService.getImages(pageLink);
+  fetchEntities(pageLink: PageLink, includeSystemImages = false): Observable<PageData<ImageResourceInfo>> {
+    return this.imageService.getImages(pageLink, includeSystemImages);
   }
 
   isAllSelected(): Observable<boolean> {

@@ -17,70 +17,81 @@
 -->
 <div class="mat-padding tb-images tb-absolute-fill" [ngClass]="{'mat-padding': pageMode}">
   <div fxFlex fxLayout="column" class="tb-images-content" [ngClass]="{'tb-outlined-border': pageMode}">
-    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="!textSearchMode && dataSource.selection.isEmpty()">
-      <div class="mat-toolbar-tools">
-        <span fxHide fxShow.gt-sm class="tb-images-title" translate>image.gallery</span>
-        <div class="tb-images-view-type-toolbar"
-             fxLayout="row"
-             fxLayoutAlign="start center">
-          <div class="tb-toolbar-button" [ngClass]="{'tb-selected' : mode === 'list'}">
-            <button mat-icon-button
-                    (click)="setMode('list')"
-                    matTooltip="{{'image.list-mode' | translate }}"
-                    matTooltipPosition="below">
-              <mat-icon>view_list</mat-icon>
-            </button>
+    <mat-toolbar class="mat-mdc-table-toolbar"
+                 fxLayout.lt-md="column" fxLayoutAlign.lt-md="start stretch"
+                 [fxShow]="!textSearchMode && dataSource.selection.isEmpty()" [ngClass.lt-md]="{'multi-row': !isSysAdmin}">
+      <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+        <div class="mat-toolbar-tools">
+          <span fxHide fxShow.gt-sm class="tb-images-title" translate>image.gallery</span>
+          <div class="tb-images-view-type-toolbar"
+               fxLayout="row"
+               fxLayoutAlign="start center">
+            <div class="tb-toolbar-button" [ngClass]="{'tb-selected' : mode === 'list'}">
+              <button mat-icon-button
+                      (click)="setMode('list')"
+                      matTooltip="{{'image.list-mode' | translate }}"
+                      matTooltipPosition="below">
+                <mat-icon>view_list</mat-icon>
+              </button>
+            </div>
+            <div class="tb-toolbar-button" [ngClass]="{'tb-selected' : mode === 'grid'}">
+              <button mat-icon-button
+                      (click)="setMode('grid');"
+                      matTooltip="{{'image.grid-mode' | translate }}"
+                      matTooltipPosition="below">
+                <tb-icon>mdi:view-grid</tb-icon>
+              </button>
+            </div>
           </div>
-          <div class="tb-toolbar-button" [ngClass]="{'tb-selected' : mode === 'grid'}">
-            <button mat-icon-button
-                    (click)="setMode('grid');"
-                    matTooltip="{{'image.grid-mode' | translate }}"
-                    matTooltipPosition="below">
-              <tb-icon>mdi:view-grid</tb-icon>
-            </button>
-          </div>
+          <mat-slide-toggle *ngIf="!isSysAdmin"
+                            fxHide fxShow.gt-sm
+                            [formControl]="includeSystemImages">{{ 'image.include-system-images' | translate }}</mat-slide-toggle>
         </div>
-      </div>
-      <section fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
-        <span fxFlex></span>
-        <section fxLayout="row" fxLayoutAlign="start center">
-          <button [disabled]="isLoading$ | async"
-                  mat-icon-button
-                  (click)="enterFilterMode()"
-                  matTooltip="{{'action.search' | translate }}"
-                  matTooltipPosition="above">
-            <mat-icon>search</mat-icon>
-          </button>
-          <button [disabled]="isLoading$ | async"
-                  mat-icon-button
-                  (click)="updateData()"
-                  matTooltip="{{'action.refresh' | translate }}"
-                  matTooltipPosition="above">
-            <mat-icon>refresh</mat-icon>
-          </button>
-          <button [disabled]="isLoading$ | async"
-                  mat-icon-button
-                  (click)="importImage()"
-                  matTooltip="{{'image.import-image' | translate }}"
-                  matTooltipPosition="above">
-            <tb-icon>mdi:file-import</tb-icon>
-          </button>
-          <button fxHide fxShow.lt-sm [disabled]="isLoading$ | async"
-                  mat-icon-button
+        <section fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
+          <span fxFlex></span>
+          <section fxLayout="row" fxLayoutAlign="start center">
+            <button [disabled]="isLoading$ | async"
+                    mat-icon-button
+                    (click)="enterFilterMode()"
+                    matTooltip="{{'action.search' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>search</mat-icon>
+            </button>
+            <button [disabled]="isLoading$ | async"
+                    mat-icon-button
+                    (click)="updateData()"
+                    matTooltip="{{'action.refresh' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>refresh</mat-icon>
+            </button>
+            <button [disabled]="isLoading$ | async"
+                    mat-icon-button
+                    (click)="importImage()"
+                    matTooltip="{{'image.import-image' | translate }}"
+                    matTooltipPosition="above">
+              <tb-icon>mdi:file-import</tb-icon>
+            </button>
+            <button fxHide fxShow.lt-lg
+                    [disabled]="isLoading$ | async"
+                    mat-icon-button
+                    color="primary"
+                    (click)="uploadImage()"
+                    matTooltip="{{'image.upload-image' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>upload</mat-icon>
+            </button>
+          </section>
+          <button fxHide fxShow.gt-md
+                  [disabled]="isLoading$ | async"
+                  mat-flat-button
                   color="primary"
-                  (click)="uploadImage()"
-                  matTooltip="{{'image.upload-image' | translate }}"
-                  matTooltipPosition="above">
-            <mat-icon>upload</mat-icon>
+                  (click)="uploadImage()">
+            {{ 'image.upload-image' | translate }}
           </button>
         </section>
-        <button fxHide fxShow.gt-xs [disabled]="isLoading$ | async"
-                mat-flat-button
-                color="primary"
-                (click)="uploadImage()">
-          {{ 'image.upload-image' | translate }}
-        </button>
-      </section>
+      </div>
+      <mat-slide-toggle *ngIf="!isSysAdmin" fxHide fxShow.lt-md
+                        [formControl]="includeSystemImages">{{ 'image.include-system-images' | translate }}</mat-slide-toggle>
     </mat-toolbar>
     <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="textSearchMode && dataSource.selection.isEmpty()">
       <div class="mat-toolbar-tools">

@@ -69,6 +69,11 @@ import {
 } from '@home/components/image/images-in-use-dialog.component';
 import { ImagesDatasource } from '@home/components/image/images-datasource';
 
+interface GridImagesFilter {
+  search: string;
+  includeSystemImages: boolean;
+}
+
 @Component({
   selector: 'tb-image-gallery',
   templateUrl: './image-gallery.component.html',
@@ -104,6 +109,7 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
   dataSource: ImagesDatasource;
 
   textSearch = this.fb.control('', {nonNullable: true});
+  includeSystemImages = this.fb.control(false);
 
   gridColumns: ScrollGridColumns = {
     columns: 2,
@@ -118,8 +124,11 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
     }
   };
 
-  gridImagesFetchFunction: GridEntitiesFetchFunction<ImageResourceInfo, string>;
-  gridImagesFilter = '';
+  gridImagesFetchFunction: GridEntitiesFetchFunction<ImageResourceInfo, GridImagesFilter>;
+  gridImagesFilter: GridImagesFilter = {
+    search: '',
+    includeSystemImages: false
+  };
 
   gridImagesItemSizeStrategy: ItemSizeStrategy = {
     defaultItemSize: 200,
@@ -148,16 +157,16 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
     super(store);
 
     this.gridImagesFetchFunction = (pageSize, page, filter) => {
-      const pageLink = new PageLink(pageSize, page, filter, {
+      const pageLink = new PageLink(pageSize, page, filter.search, {
         property: 'createdTime',
         direction: Direction.DESC
       });
-      return this.imageService.getImages(pageLink);
+      return this.imageService.getImages(pageLink, filter.includeSystemImages);
     };
   }
 
   ngOnInit(): void {
-    this.displayedColumns = ['select', 'preview', 'title', 'createdTime', 'resolution', 'size', 'system', 'actions'];
+    this.displayedColumns = this.computeDisplayedColumns();
     let sortOrder: SortOrder = this.defaultSortOrder;
     this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize * 2, this.defaultPageSize * 3];
     const routerQueryParams: PageQueryParam = this.route.snapshot.queryParams;
@@ -208,7 +217,7 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
     this.textSearch.valueChanges.pipe(
       debounceTime(150),
       distinctUntilChanged((prev, current) =>
-        ((this.mode === 'list' ? this.pageLink.textSearch : this.gridImagesFilter) ?? '') === current.trim()),
+        ((this.mode === 'list' ? this.pageLink.textSearch : this.gridImagesFilter.search) ?? '') === current.trim()),
       takeUntil(this.destroy$)
     ).subscribe(value => {
       if (this.mode === 'list') {
@@ -224,7 +233,25 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
           this.updateData();
         }
       } else {
-        this.gridImagesFilter = isNotEmptyStr(value) ? value.trim() : null;
+        this.gridImagesFilter = {
+          search: isNotEmptyStr(value) ? encodeURI(value) : null,
+          includeSystemImages: this.includeSystemImages.value
+        };
+        this.cd.markForCheck();
+      }
+    });
+    this.includeSystemImages.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(value => {
+      this.displayedColumns = this.computeDisplayedColumns();
+      this.gridImagesFilter = {
+        search: this.gridImagesFilter.search,
+        includeSystemImages: value
+      };
+      if (this.mode === 'list') {
+        this.paginator.pageIndex = 0;
+        this.updateData();
+      } else {
         this.cd.markForCheck();
       }
     });
@@ -251,6 +278,19 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
         this.updateMode();
       });
     }
+  }
+
+  public get isSysAdmin(): boolean {
+    return this.authUser.authority === Authority.SYS_ADMIN;
+  }
+
+  private computeDisplayedColumns(): string[] {
+    const columns = ['select', 'preview', 'title', 'createdTime', 'resolution', 'size'];
+    if (!this.isSysAdmin && this.includeSystemImages.value) {
+      columns.push('system');
+    }
+    columns.push('actions');
+    return columns;
   }
 
   private updateMode() {
@@ -346,7 +386,7 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
       } else {
         this.pageLink.sortOrder = null;
       }
-      this.dataSource.loadEntities(this.pageLink);
+      this.dataSource.loadEntities(this.pageLink, this.includeSystemImages.value);
     } else {
       this.gridComponent.update();
     }
@@ -386,7 +426,7 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
   }
 
   isSystem(image?: ImageResourceInfo): boolean {
-    return image?.tenantId?.id === NULL_UUID;
+    return !this.isSysAdmin && image?.tenantId?.id === NULL_UUID;
   }
 
   readonly(image?: ImageResourceInfo): boolean {
