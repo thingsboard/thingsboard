@@ -15,11 +15,11 @@
     limitations under the License.
 
 -->
-<div class="mat-padding tb-images tb-absolute-fill" [ngClass]="{'mat-padding': pageMode}">
+<div class="tb-images tb-absolute-fill" [ngClass]="{'tb-popover-mode': popoverMode, 'mat-padding': !popoverMode}">
   <div fxFlex fxLayout="column" class="tb-images-content" [ngClass]="{'tb-outlined-border': pageMode}">
     <mat-toolbar class="mat-mdc-table-toolbar"
                  fxLayout.lt-md="column" fxLayoutAlign.lt-md="start stretch"
-                 [fxShow]="!textSearchMode && dataSource.selection.isEmpty()" [ngClass.lt-md]="{'multi-row': !isSysAdmin}">
+                 [fxShow]="!textSearchMode && (mode === 'grid' || dataSource?.selection.isEmpty())" [ngClass.lt-md]="{'multi-row': !isSysAdmin}">
       <div fxFlex fxLayout="row" fxLayoutAlign="start center">
         <div class="mat-toolbar-tools">
           <span fxHide fxShow.gt-sm class="tb-images-title" translate>image.gallery</span>
@@ -93,7 +93,7 @@
       <mat-slide-toggle *ngIf="!isSysAdmin" fxHide fxShow.lt-md
                         [formControl]="includeSystemImages">{{ 'image.include-system-images' | translate }}</mat-slide-toggle>
     </mat-toolbar>
-    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="textSearchMode && dataSource.selection.isEmpty()">
+    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="textSearchMode && (mode === 'grid' || dataSource?.selection.isEmpty())">
       <div class="mat-toolbar-tools">
         <button mat-icon-button
                 matTooltip="{{ 'image.search' | translate }}"
@@ -113,10 +113,10 @@
         </button>
       </div>
     </mat-toolbar>
-    <mat-toolbar class="mat-mdc-table-toolbar" color="primary" [fxShow]="!dataSource.selection.isEmpty()">
+    <mat-toolbar class="mat-mdc-table-toolbar" color="primary" [fxShow]="mode === 'list' && !dataSource?.selection.isEmpty()">
       <div class="mat-toolbar-tools">
         <span>
-          {{ translate.get('image.selected-images', {count: dataSource.selection.selected.length}) | async }}
+          {{ translate.get('image.selected-images', {count: dataSource?.selection.selected.length}) | async }}
         </span>
         <span fxFlex></span>
         <button mat-icon-button [disabled]="isLoading$ | async"
@@ -248,6 +248,14 @@
               </div>
             </mat-cell>
           </ng-container>
+          <ng-container matColumnDef="imageSelect" stickyEnd>
+            <mat-header-cell *matHeaderCellDef></mat-header-cell>
+            <mat-cell *matCellDef="let image">
+              <button mat-stroked-button
+                      color="primary"
+                      (click)="selectImage($event, image)">{{ 'action.select' | translate }}</button>
+            </mat-cell>
+          </ng-container>
           <mat-header-row [ngClass]="{'mat-row-select': true}" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
           <mat-row [ngClass]="{'mat-row-select': true,
                                'mat-selected': dataSource.selection.isSelected(image)}"
@@ -323,12 +331,19 @@
       </div>
     </div>
     <div class="tb-image-preview-container">
-      <div class="tb-image-preview-overlay">
+      <div class="tb-image-preview-overlay" (click)="selectionMode && selectImage($event, item)">
         <button
+          *ngIf="!selectionMode"
           mat-flat-button
           color="primary"
           (click)="editImage($event, item, itemIndex)">
           {{ (readonly(item) ? 'image.image-details' : 'image.edit-image') | translate }}
+        </button>
+        <button
+          *ngIf="selectionMode"
+          mat-flat-button
+          color="primary"
+          (click)="selectImage($event, item)">{{ 'action.select' | translate }}
         </button>
       </div>
       <div class="tb-image-preview-spacer"></div>

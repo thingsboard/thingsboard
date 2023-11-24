@@ -127,8 +127,18 @@ export const toImageDeleteResult = (image: ImageResourceInfo, e?: any): ImageDel
 export const imageResourceType = (imageInfo: ImageResourceInfo): ImageResourceType =>
   (!imageInfo.tenantId || imageInfo.tenantId?.id === NULL_UUID) ? 'system' : 'tenant';
 
+export const IMAGES_URL_REGEXP = /\/api\/images\/(tenant|system)\/(.*)/;
 export const IMAGES_URL_PREFIX = '/api/images';
 
-export const isImageResourceUrl = (url: string): boolean => url && url.startsWith(IMAGES_URL_PREFIX);
+export const IMAGE_BASE64_URL_PREFIX = 'data:image/';
+
+export const isImageResourceUrl = (url: string): boolean => url && IMAGES_URL_REGEXP.test(url);
+
+export const extractParamsFromImageResourceUrl = (url: string): {type: ImageResourceType; key: string} => {
+  const res = url.match(IMAGES_URL_REGEXP);
+  return {type: res[1] as ImageResourceType, key: res[2]};
+};
+
+export const isBase64DataImageUrl = (url: string): boolean => url && url.startsWith(IMAGE_BASE64_URL_PREFIX);
 
 export const NO_IMAGE_DATA_URI = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';

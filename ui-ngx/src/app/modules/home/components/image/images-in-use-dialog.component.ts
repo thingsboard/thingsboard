@@ -60,12 +60,12 @@ export class ImagesInUseDialogComponent extends
 
   ngOnInit(): void {
     if (this.data.multiple) {
-      this.title = 'image.images-are-in-use';
-      this.message = 'image.images-are-in-use-text';
+      this.title = this.translate.instant('image.images-are-in-use');
+      this.message = this.translate.instant('image.images-are-in-use-text');
       this.dataSource = new ImagesDatasource(null, this.data.images, entity => true);
     } else {
-      this.title = 'image.image-is-in-use';
-      this.message = 'image.image-is-in-use-text';
+      this.title = this.translate.instant('image.image-is-in-use');
+      this.message = this.translate.instant('image.image-is-in-use-text', {title: this.data.images[0].title});
       this.references = this.data.images[0].references;
     }
   }
@@ -97,8 +97,10 @@ export class ImagesInUseDialogComponent extends
         }, {}, {}, {},
         false,
         visible => {
-          const addClasses = visible ? 'mdc-button--unelevated mat-mdc-unelevated-button' : 'mdc-button--outlined mat-mdc-outlined-button';
-          const removeClasses = visible ? 'mdc-button--outlined mat-mdc-outlined-button' : 'mdc-button--unelevated mat-mdc-unelevated-button';
+          const addClasses =
+            visible ? 'mdc-button--unelevated mat-mdc-unelevated-button' : 'mdc-button--outlined mat-mdc-outlined-button';
+          const removeClasses =
+            visible ? 'mdc-button--outlined mat-mdc-outlined-button' : 'mdc-button--unelevated mat-mdc-unelevated-button';
           addClasses.split(' ').forEach(clazz => {
             this.renderer.addClass(trigger, clazz);
           });

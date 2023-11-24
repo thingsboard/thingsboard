@@ -80,7 +80,7 @@ export class ImageService {
       defaultHttpOptionsFromConfig(config));
   }
 
-  public getImageDataUrl(imageUrl: string, preview = false, asString = false): Observable<SafeUrl | string> {
+  public getImageDataUrl(imageUrl: string, preview = false, asString = false, emptyUrl = NO_IMAGE_DATA_URI): Observable<SafeUrl | string> {
     const parts = imageUrl.split('/');
     const key = parts[parts.length - 1];
     parts[parts.length - 1] = encodeURIComponent(key);
@@ -92,13 +92,13 @@ export class ImageService {
       switchMap(val => blobToBase64(val).pipe(
           map((dataUrl) => asString ? dataUrl : this.sanitizer.bypassSecurityTrustUrl(dataUrl))
         )),
-      catchError(() => of(asString ? NO_IMAGE_DATA_URI : this.sanitizer.bypassSecurityTrustUrl(NO_IMAGE_DATA_URI)))
+      catchError(() => of(asString ? emptyUrl : this.sanitizer.bypassSecurityTrustUrl(emptyUrl)))
     );
   }
 
-  public resolveImageUrl(imageUrl: string, preview = false, asString = false): Observable<SafeUrl | string> {
+  public resolveImageUrl(imageUrl: string, preview = false, asString = false, emptyUrl = NO_IMAGE_DATA_URI): Observable<SafeUrl | string> {
     if (isImageResourceUrl(imageUrl)) {
-      return this.getImageDataUrl(imageUrl, preview, asString);
+      return this.getImageDataUrl(imageUrl, preview, asString, emptyUrl);
     } else {
       return of(asString ? imageUrl : this.sanitizer.bypassSecurityTrustUrl(imageUrl));
     }

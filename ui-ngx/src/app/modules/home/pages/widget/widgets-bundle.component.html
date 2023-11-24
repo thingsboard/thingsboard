@@ -54,11 +54,15 @@
           {{ 'widgets-bundle.title-max-length' | translate }}
         </mat-error>
       </mat-form-field>
-      <tb-image-input fxFlex
+      <tb-gallery-image-input fxFlex
+                              label="{{'widgets-bundle.image-preview' | translate}}"
+                              formControlName="image">
+      </tb-gallery-image-input>
+      <!--tb-image-input fxFlex
                       label="{{'widgets-bundle.image-preview' | translate}}"
                       maxSizeByte="524288"
                       formControlName="image">
-      </tb-image-input>
+      </tb-image-input-->
       <mat-form-field class="mat-block">
         <mat-label translate>widgets-bundle.description</mat-label>
         <textarea matInput formControlName="description" rows="2" maxlength="1024" #descriptionInput></textarea>

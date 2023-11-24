@@ -40,18 +40,22 @@ export class ImagePipe implements PipeTransform {
   transform(urlData: string | UrlHolder, args?: any): Observable<SafeUrl | string> {
     const ignoreLoadingImage = !!args?.ignoreLoadingImage;
     const asString = !!args?.asString;
+    const emptyUrl = args?.emptyUrl || NO_IMAGE_DATA_URI;
     const image$ = ignoreLoadingImage ? new Subject<SafeUrl | string>() : new BehaviorSubject<SafeUrl | string>(LOADING_IMAGE_DATA_URI);
     const url = (typeof urlData === 'string') ? urlData : urlData?.url;
     if (isDefinedAndNotNull(url)) {
       const preview = !!args?.preview;
-      this.imageService.resolveImageUrl(url, preview, asString).subscribe((imageUrl) => {
-        image$.next(imageUrl);
-        image$.complete();
+      this.imageService.resolveImageUrl(url, preview, asString, emptyUrl).subscribe((imageUrl) => {
+        Promise.resolve().then(() => {
+          image$.next(imageUrl);
+          image$.complete();
+        });
       });
     } else {
-      const emptyUrl = args?.emptyUrl || NO_IMAGE_DATA_URI;
-      image$.next(asString ? emptyUrl : this.sanitizer.bypassSecurityTrustUrl(emptyUrl));
-      image$.complete();
+      Promise.resolve().then(() => {
+        image$.next(asString ? emptyUrl : this.sanitizer.bypassSecurityTrustUrl(emptyUrl));
+        image$.complete();
+      });
     }
     return image$.asObservable();
   }

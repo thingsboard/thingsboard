@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<h2 mat-dialog-title>{{title | translate}}</h2>
+<h2 mat-dialog-title>{{title}}</h2>
 <div mat-dialog-content class="tb-images-in-use-content" [class]="{multiple: data.multiple}">
-  <div [innerHTML]="message | translate | safe: 'html'"></div>
+  <div [innerHTML]="message | safe: 'html'"></div>
   <ng-container *ngIf="data.multiple; else singleImageReferences">
     <div class="table-container">
       <table mat-table [dataSource]="dataSource">

@@ -29,10 +29,10 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
-  ElementRef,
+  ElementRef, EventEmitter,
   Input,
   OnDestroy,
-  OnInit,
+  OnInit, Output,
   ViewChild,
   ViewEncapsulation
 } from '@angular/core';
@@ -74,6 +74,28 @@ interface GridImagesFilter {
   includeSystemImages: boolean;
 }
 
+const pageGridColumns: ScrollGridColumns = {
+  columns: 2,
+  breakpoints: {
+    'screen and (min-width: 2320px)': 10,
+    'screen and (min-width: 2000px)': 8,
+    'gt-lg': 7,
+    'screen and (min-width: 1600px)': 6,
+    'gt-md': 5,
+    'screen and (min-width: 1120px)': 4,
+    'gt-xs': 3
+  }
+};
+
+const popoverGridColumns: ScrollGridColumns = {
+  columns: 2,
+  breakpoints: {
+    'gt-lg': 5,
+    'screen and (min-width: 1600px)': 4,
+    'gt-md': 3
+  }
+};
+
 @Component({
   selector: 'tb-image-gallery',
   templateUrl: './image-gallery.component.html',
@@ -87,7 +109,17 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
   pageMode = true;
 
   @Input()
+  @coerceBoolean()
+  popoverMode = false;
+
+  @Input()
   mode: 'list' | 'grid' = 'list';
+
+  @Input()
+  selectionMode = false;
+
+  @Output()
+  imageSelected = new EventEmitter<ImageResourceInfo>();
 
   @ViewChild('searchInput') searchInputField: ElementRef;
 
@@ -111,18 +143,7 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
   textSearch = this.fb.control('', {nonNullable: true});
   includeSystemImages = this.fb.control(false);
 
-  gridColumns: ScrollGridColumns = {
-    columns: 2,
-    breakpoints: {
-      'screen and (min-width: 2320px)': 10,
-      'screen and (min-width: 2000px)': 8,
-      'gt-lg': 7,
-      'screen and (min-width: 1600px)': 6,
-      'gt-md': 5,
-      'screen and (min-width: 1120px)': 4,
-      'gt-xs': 3
-    }
-  };
+  gridColumns: ScrollGridColumns;
 
   gridImagesFetchFunction: GridEntitiesFetchFunction<ImageResourceInfo, GridImagesFilter>;
   gridImagesFilter: GridImagesFilter = {
@@ -166,6 +187,7 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
   }
 
   ngOnInit(): void {
+    this.gridColumns = this.popoverMode ? popoverGridColumns : pageGridColumns;
     this.displayedColumns = this.computeDisplayedColumns();
     let sortOrder: SortOrder = this.defaultSortOrder;
     this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize * 2, this.defaultPageSize * 3];
@@ -285,6 +307,9 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
   }
 
   private computeDisplayedColumns(): string[] {
+    if (this.selectionMode) {
+      return ['preview', 'title', 'imageSelect'];
+    }
     const columns = ['select', 'preview', 'title', 'createdTime', 'resolution', 'size'];
     if (!this.isSysAdmin && this.includeSystemImages.value) {
       columns.push('system');
@@ -565,6 +590,13 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
         this.updateData();
       }
     });
+  }
+
+  selectImage($event, image: ImageResourceInfo) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.imageSelected.next(image);
   }
 
   uploadImage(): void {

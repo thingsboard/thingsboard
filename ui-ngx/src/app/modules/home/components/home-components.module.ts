@@ -187,6 +187,7 @@ import { UploadImageDialogComponent } from '@home/components/image/upload-image-
 import { ImageDialogComponent } from '@home/components/image/image-dialog.component';
 import { ImagesInUseDialogComponent } from '@home/components/image/images-in-use-dialog.component';
 import { ImageReferencesComponent } from '@home/components/image/image-references.component';
+import { GalleryImageInputComponent } from '@home/components/image/gallery-image-input.component';
 
 @NgModule({
   declarations:
@@ -337,7 +338,8 @@ import { ImageReferencesComponent } from '@home/components/image/image-reference
       UploadImageDialogComponent,
       ImageDialogComponent,
       ImageReferencesComponent,
-      ImagesInUseDialogComponent
+      ImagesInUseDialogComponent,
+      GalleryImageInputComponent
     ],
   imports: [
     CommonModule,
@@ -481,7 +483,8 @@ import { ImageReferencesComponent } from '@home/components/image/image-reference
     UploadImageDialogComponent,
     ImageDialogComponent,
     ImageReferencesComponent,
-    ImagesInUseDialogComponent
+    ImagesInUseDialogComponent,
+    GalleryImageInputComponent
   ],
   providers: [
     WidgetComponentService,
