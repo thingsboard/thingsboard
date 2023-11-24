@@ -30,7 +30,7 @@ public class QueueMsgConstructorFactory {
     @Autowired
     protected QueueMsgConstructorV2 queueMsgConstructorV2;
 
-    public QueueMsgConstructor getQueueMsgConstructor(EdgeVersion edgeVersion) {
+    public QueueMsgConstructor getMsgConstructorByEdgeVersion(EdgeVersion edgeVersion) {
         switch (edgeVersion) {
             case V_3_3_0:
             case V_3_3_3:

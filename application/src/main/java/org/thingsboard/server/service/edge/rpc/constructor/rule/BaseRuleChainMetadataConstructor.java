@@ -37,7 +37,7 @@ import java.util.NavigableSet;
 
 @Slf4j
 @AllArgsConstructor
-public abstract class AbstractRuleChainMetadataConstructor implements RuleChainMetadataConstructor {
+public abstract class BaseRuleChainMetadataConstructor implements RuleChainMetadataConstructor {
 
     @Override
     public RuleChainMetadataUpdateMsg constructRuleChainMetadataUpdatedMsg(TenantId tenantId,

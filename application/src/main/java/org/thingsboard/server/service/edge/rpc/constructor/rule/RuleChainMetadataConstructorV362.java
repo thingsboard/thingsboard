@@ -20,7 +20,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
 
-public class RuleChainMetadataConstructorV362 extends AbstractRuleChainMetadataConstructor {
+public class RuleChainMetadataConstructorV362 extends BaseRuleChainMetadataConstructor {
 
     @Override
     protected void constructRuleChainMetadataUpdatedMsg(TenantId tenantId, RuleChainMetadataUpdateMsg.Builder builder, RuleChainMetaData ruleChainMetaData) {

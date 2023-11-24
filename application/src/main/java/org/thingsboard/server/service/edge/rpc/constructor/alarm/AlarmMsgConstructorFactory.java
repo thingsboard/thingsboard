@@ -30,7 +30,7 @@ public class AlarmMsgConstructorFactory {
     @Autowired
     protected AlarmMsgConstructorV2 alarmMsgConstructorV2;
 
-    public AlarmMsgConstructor getAlarmMsgConstructor(EdgeVersion edgeVersion) {
+    public AlarmMsgConstructor getMsgConstructorByEdgeVersion(EdgeVersion edgeVersion) {
         switch (edgeVersion) {
             case V_3_3_0:
             case V_3_3_3:

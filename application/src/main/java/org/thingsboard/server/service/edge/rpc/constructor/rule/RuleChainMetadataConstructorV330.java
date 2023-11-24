@@ -36,7 +36,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class RuleChainMetadataConstructorV330 extends AbstractRuleChainMetadataConstructor {
+public class RuleChainMetadataConstructorV330 extends BaseRuleChainMetadataConstructor {
 
     private static final String RULE_CHAIN_INPUT_NODE = TbRuleChainInputNode.class.getName();
     private static final String TB_RULE_CHAIN_OUTPUT_NODE = TbRuleChainOutputNode.class.getName();

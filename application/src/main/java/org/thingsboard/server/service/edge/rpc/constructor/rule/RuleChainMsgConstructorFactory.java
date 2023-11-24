@@ -30,7 +30,7 @@ public class RuleChainMsgConstructorFactory {
     @Autowired
     protected RuleChainMsgConstructorV2 ruleChainMsgConstructorV2;
 
-    public RuleChainMsgConstructor getRuleChainMsgConstructor(EdgeVersion edgeVersion) {
+    public RuleChainMsgConstructor getMsgConstructorByEdgeVersion(EdgeVersion edgeVersion) {
         switch (edgeVersion) {
             case V_3_3_0:
             case V_3_3_3:

@@ -30,7 +30,7 @@ public class RelationMsgConstructorFactory {
     @Autowired
     protected RelationMsgConstructorV2 relationMsgConstructorV2;
 
-    public RelationMsgConstructor getRelationMsgConstructor(EdgeVersion edgeVersion) {
+    public RelationMsgConstructor getMsgConstructorByEdgeVersion(EdgeVersion edgeVersion) {
         switch (edgeVersion) {
             case V_3_3_0:
             case V_3_3_3:

@@ -30,7 +30,7 @@ public class OtaPackageMsgConstructorFactory {
     @Autowired
     protected OtaPackageMsgConstructorV2 otaPackageMsgConstructorV2;
 
-    public OtaPackageMsgConstructor getOtaPackageMsgConstructor(EdgeVersion edgeVersion) {
+    public OtaPackageMsgConstructor getMsgConstructorByEdgeVersion(EdgeVersion edgeVersion) {
         switch (edgeVersion) {
             case V_3_3_0:
             case V_3_3_3:

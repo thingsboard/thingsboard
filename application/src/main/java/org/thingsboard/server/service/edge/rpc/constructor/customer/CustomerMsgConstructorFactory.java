@@ -30,7 +30,7 @@ public class CustomerMsgConstructorFactory {
     @Autowired
     protected CustomerMsgConstructorV2 customerMsgConstructorV2;
 
-    public CustomerMsgConstructor getCustomerMsgConstructor(EdgeVersion edgeVersion) {
+    public CustomerMsgConstructor getMsgConstructorByEdgeVersion(EdgeVersion edgeVersion) {
         switch (edgeVersion) {
             case V_3_3_0:
             case V_3_3_3:

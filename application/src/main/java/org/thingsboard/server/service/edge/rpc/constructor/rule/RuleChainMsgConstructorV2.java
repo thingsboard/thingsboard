@@ -24,7 +24,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 
 @Component
 @TbCoreComponent
-public class RuleChainMsgConstructorV2 extends AbstractRuleChainMsgConstructor {
+public class RuleChainMsgConstructorV2 extends BaseRuleChainMsgConstructor {
 
     @Override
     public RuleChainUpdateMsg constructRuleChainUpdatedMsg(UpdateMsgType msgType, RuleChain ruleChain, boolean isRoot) {

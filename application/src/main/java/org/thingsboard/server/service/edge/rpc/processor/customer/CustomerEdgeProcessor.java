@@ -58,7 +58,7 @@ public class CustomerEdgeProcessor extends BaseEdgeProcessor {
                 if (customer != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     CustomerUpdateMsg customerUpdateMsg =
-                            customerMsgConstructorFactory.getCustomerMsgConstructor(edgeVersion).constructCustomerUpdatedMsg(msgType, customer);
+                            customerMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructCustomerUpdatedMsg(msgType, customer);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addCustomerUpdateMsg(customerUpdateMsg)
@@ -67,7 +67,7 @@ public class CustomerEdgeProcessor extends BaseEdgeProcessor {
                 break;
             case DELETED:
                 CustomerUpdateMsg customerUpdateMsg =
-                        customerMsgConstructorFactory.getCustomerMsgConstructor(edgeVersion).constructCustomerDeleteMsg(customerId);
+                        customerMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructCustomerDeleteMsg(customerId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addCustomerUpdateMsg(customerUpdateMsg)

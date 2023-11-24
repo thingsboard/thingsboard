@@ -30,7 +30,7 @@ public class TenantMsgConstructorFactory {
     @Autowired
     protected TenantMsgConstructorV2 tenantMsgConstructorV2;
 
-    public TenantMsgConstructor getTenantMsgConstructor(EdgeVersion edgeVersion) {
+    public TenantMsgConstructor getMsgConstructorByEdgeVersion(EdgeVersion edgeVersion) {
         switch (edgeVersion) {
             case V_3_3_0:
             case V_3_3_3:

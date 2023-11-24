@@ -59,7 +59,7 @@ public class RelationEdgeProcessor extends BaseRelationProcessor {
     public DownlinkMsg convertRelationEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         EntityRelation entityRelation = JacksonUtil.convertValue(edgeEvent.getBody(), EntityRelation.class);
         UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-        RelationUpdateMsg relationUpdateMsg = relationMsgConstructorFactory.getRelationMsgConstructor(edgeVersion).constructRelationUpdatedMsg(msgType, entityRelation);
+        RelationUpdateMsg relationUpdateMsg = relationMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructRelationUpdatedMsg(msgType, entityRelation);
         return DownlinkMsg.newBuilder()
                 .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                 .addRelationUpdateMsg(relationUpdateMsg)

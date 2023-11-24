@@ -30,7 +30,7 @@ public class AdminSettingsMsgConstructorFactory {
     @Autowired
     protected AdminSettingsMsgConstructorV2 adminSettingsMsgConstructorV2;
 
-    public AdminSettingsMsgConstructor getAdminSettingsMsgConstructor(EdgeVersion edgeVersion) {
+    public AdminSettingsMsgConstructor getMsgConstructorByEdgeVersion(EdgeVersion edgeVersion) {
         switch (edgeVersion) {
             case V_3_3_0:
             case V_3_3_3:

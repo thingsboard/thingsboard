@@ -43,7 +43,7 @@ public class OtaPackageEdgeProcessor extends BaseEdgeProcessor {
                 if (otaPackage != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     OtaPackageUpdateMsg otaPackageUpdateMsg =
-                            otaPackageMsgConstructorFactory.getOtaPackageMsgConstructor(edgeVersion).constructOtaPackageUpdatedMsg(msgType, otaPackage);
+                            otaPackageMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructOtaPackageUpdatedMsg(msgType, otaPackage);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addOtaPackageUpdateMsg(otaPackageUpdateMsg)
@@ -52,7 +52,7 @@ public class OtaPackageEdgeProcessor extends BaseEdgeProcessor {
                 break;
             case DELETED:
                 OtaPackageUpdateMsg otaPackageUpdateMsg =
-                        otaPackageMsgConstructorFactory.getOtaPackageMsgConstructor(edgeVersion).constructOtaPackageDeleteMsg(otaPackageId);
+                        otaPackageMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructOtaPackageDeleteMsg(otaPackageId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addOtaPackageUpdateMsg(otaPackageUpdateMsg)

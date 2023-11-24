@@ -30,7 +30,7 @@ public class DeviceMsgConstructorFactory {
     @Autowired
     protected DeviceMsgConstructorV2 deviceMsgConstructorV2;
 
-    public DeviceMsgConstructor getDeviceMsgConstructor(EdgeVersion edgeVersion) {
+    public DeviceMsgConstructor getMsgConstructorByEdgeVersion(EdgeVersion edgeVersion) {
         switch (edgeVersion) {
             case V_3_3_0:
             case V_3_3_3:

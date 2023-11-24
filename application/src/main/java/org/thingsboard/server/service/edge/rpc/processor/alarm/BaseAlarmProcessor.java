@@ -132,13 +132,13 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
             case ALARM_CLEAR:
                 Alarm alarm = alarmService.findAlarmById(tenantId, alarmId);
                 if (alarm != null) {
-                    return alarmMsgConstructorFactory.getAlarmMsgConstructor(edgeVersion).constructAlarmUpdatedMsg(msgType, alarm, findOriginatorEntityName(tenantId, alarm));
+                    return alarmMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructAlarmUpdatedMsg(msgType, alarm, findOriginatorEntityName(tenantId, alarm));
                 }
                 break;
             case DELETED:
                 Alarm deletedAlarm = JacksonUtil.convertValue(body, Alarm.class);
                 if (deletedAlarm != null) {
-                    return alarmMsgConstructorFactory.getAlarmMsgConstructor(edgeVersion).constructAlarmUpdatedMsg(msgType, deletedAlarm, findOriginatorEntityName(tenantId, deletedAlarm));
+                    return alarmMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructAlarmUpdatedMsg(msgType, deletedAlarm, findOriginatorEntityName(tenantId, deletedAlarm));
                 }
         }
         return null;

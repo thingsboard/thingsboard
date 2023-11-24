@@ -23,7 +23,7 @@ import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 
-public abstract class AbstractRuleChainMsgConstructor implements RuleChainMsgConstructor {
+public abstract class BaseRuleChainMsgConstructor implements RuleChainMsgConstructor {
 
     @Override
     public RuleChainUpdateMsg constructRuleChainDeleteMsg(RuleChainId ruleChainId) {

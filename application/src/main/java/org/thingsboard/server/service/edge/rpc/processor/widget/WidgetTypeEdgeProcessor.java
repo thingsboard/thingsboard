@@ -43,7 +43,7 @@ public class WidgetTypeEdgeProcessor extends BaseEdgeProcessor {
                 if (widgetTypeDetails != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     WidgetTypeUpdateMsg widgetTypeUpdateMsg =
-                            widgetMsgConstructorFactory.getWidgetMsgConstructor(edgeVersion).constructWidgetTypeUpdateMsg(msgType, widgetTypeDetails, edgeVersion);
+                            widgetMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructWidgetTypeUpdateMsg(msgType, widgetTypeDetails, edgeVersion);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addWidgetTypeUpdateMsg(widgetTypeUpdateMsg)
@@ -52,7 +52,7 @@ public class WidgetTypeEdgeProcessor extends BaseEdgeProcessor {
                 break;
             case DELETED:
                 WidgetTypeUpdateMsg widgetTypeUpdateMsg =
-                        widgetMsgConstructorFactory.getWidgetMsgConstructor(edgeVersion).constructWidgetTypeDeleteMsg(widgetTypeId);
+                        widgetMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructWidgetTypeDeleteMsg(widgetTypeId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addWidgetTypeUpdateMsg(widgetTypeUpdateMsg)

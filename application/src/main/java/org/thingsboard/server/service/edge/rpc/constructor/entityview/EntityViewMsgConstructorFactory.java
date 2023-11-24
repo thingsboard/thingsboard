@@ -30,7 +30,7 @@ public class EntityViewMsgConstructorFactory {
     @Autowired
     protected EntityViewMsgConstructorV2 entityViewMsgConstructorV2;
 
-    public EntityViewMsgConstructor getEntityViewMsgConstructor(EdgeVersion edgeVersion) {
+    public EntityViewMsgConstructor getMsgConstructorByEdgeVersion(EdgeVersion edgeVersion) {
         switch (edgeVersion) {
             case V_3_3_0:
             case V_3_3_3:

@@ -45,21 +45,21 @@ public class UserEdgeProcessor extends BaseEdgeProcessor {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                            .addUserUpdateMsg(userMsgConstructorFactory.getUserMsgConstructor(edgeVersion).constructUserUpdatedMsg(msgType, user))
+                            .addUserUpdateMsg(userMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructUserUpdatedMsg(msgType, user))
                             .build();
                 }
                 break;
             case DELETED:
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                        .addUserUpdateMsg(userMsgConstructorFactory.getUserMsgConstructor(edgeVersion).constructUserDeleteMsg(userId))
+                        .addUserUpdateMsg(userMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructUserDeleteMsg(userId))
                         .build();
                 break;
             case CREDENTIALS_UPDATED:
                 UserCredentials userCredentialsByUserId = userService.findUserCredentialsByUserId(edgeEvent.getTenantId(), userId);
                 if (userCredentialsByUserId != null && userCredentialsByUserId.isEnabled()) {
                     UserCredentialsUpdateMsg userCredentialsUpdateMsg =
-                            userMsgConstructorFactory.getUserMsgConstructor(edgeVersion).constructUserCredentialsUpdatedMsg(userCredentialsByUserId);
+                            userMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructUserCredentialsUpdatedMsg(userCredentialsByUserId);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addUserCredentialsUpdateMsg(userCredentialsUpdateMsg)

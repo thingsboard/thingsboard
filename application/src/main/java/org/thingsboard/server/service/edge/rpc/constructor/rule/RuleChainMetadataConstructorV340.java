@@ -23,7 +23,7 @@ import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
 import java.util.TreeSet;
 
 @Slf4j
-public class RuleChainMetadataConstructorV340 extends AbstractRuleChainMetadataConstructor {
+public class RuleChainMetadataConstructorV340 extends BaseRuleChainMetadataConstructor {
 
     @Override
     protected void constructRuleChainMetadataUpdatedMsg(TenantId tenantId,

@@ -30,7 +30,7 @@ public class WidgetMsgConstructorFactory {
     @Autowired
     protected WidgetMsgConstructorV2 widgetMsgConstructorV2;
 
-    public WidgetMsgConstructor getWidgetMsgConstructor(EdgeVersion edgeVersion) {
+    public WidgetMsgConstructor getMsgConstructorByEdgeVersion(EdgeVersion edgeVersion) {
         switch (edgeVersion) {
             case V_3_3_0:
             case V_3_3_3:

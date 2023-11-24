@@ -30,7 +30,7 @@ public class ResourceMsgConstructorFactory {
     @Autowired
     protected ResourceMsgConstructorV2 resourceMsgConstructorV2;
 
-    public ResourceMsgConstructor getResourceMsgConstructor(EdgeVersion edgeVersion) {
+    public ResourceMsgConstructor getMsgConstructorByEdgeVersion(EdgeVersion edgeVersion) {
         switch (edgeVersion) {
             case V_3_3_0:
             case V_3_3_3:
