@@ -558,7 +558,7 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
     );
   }
 
-  openInstructions($event, edge: EdgeInfo, afterAdd = false, upgradeAvailable = false) {
+  openInstructions($event: Event, edge: EdgeInfo, afterAdd = false, upgradeAvailable = false) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -615,7 +615,7 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
         this.openInstructions(action.event, action.entity);
         return true;
       case 'openUpgradeInstructions':
-        this.openInstructions(action.event, action.entity,false, true);
+        this.openInstructions(action.event, action.entity, false, true);
         return true;
     }
   }
