@@ -1151,7 +1151,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
     public void testGetEdgeInstallInstructions() throws Exception {
         Edge edge = constructEdge(tenantId, "Edge for Test Docker Install Instructions", "default", "7390c3a6-69b0-9910-d155-b90aca4b772e", "l7q4zsjplzwhk16geqxy");
         Edge savedEdge = doPost("/api/edge", edge, Edge.class);
-        String installInstructions = doGet("/api/edge/instructions/" + savedEdge.getId().getId().toString() + "/docker", String.class);
+        String installInstructions = doGet("/api/edge/instructions/install/" + savedEdge.getId().getId().toString() + "/docker", String.class);
         Assert.assertTrue(installInstructions.contains("l7q4zsjplzwhk16geqxy"));
         Assert.assertTrue(installInstructions.contains("7390c3a6-69b0-9910-d155-b90aca4b772e"));
     }
