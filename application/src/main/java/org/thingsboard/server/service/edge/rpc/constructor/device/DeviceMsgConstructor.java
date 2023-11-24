@@ -26,10 +26,11 @@ import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceRpcCallMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
+import org.thingsboard.server.service.edge.rpc.constructor.MsgConstructor;
 
 import java.util.UUID;
 
-public interface DeviceMsgConstructor {
+public interface DeviceMsgConstructor extends MsgConstructor {
 
     DeviceUpdateMsg constructDeviceUpdatedMsg(UpdateMsgType msgType, Device device);
 

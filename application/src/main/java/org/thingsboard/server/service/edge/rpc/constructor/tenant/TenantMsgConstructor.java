@@ -21,8 +21,9 @@ import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.TenantProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.TenantUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
+import org.thingsboard.server.service.edge.rpc.constructor.MsgConstructor;
 
-public interface TenantMsgConstructor {
+public interface TenantMsgConstructor extends MsgConstructor {
 
     TenantUpdateMsg constructTenantUpdateMsg(UpdateMsgType msgType, Tenant tenant);
 

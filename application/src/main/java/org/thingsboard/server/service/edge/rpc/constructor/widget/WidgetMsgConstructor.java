@@ -23,10 +23,11 @@ import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.WidgetTypeUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetsBundleUpdateMsg;
+import org.thingsboard.server.service.edge.rpc.constructor.MsgConstructor;
 
 import java.util.List;
 
-public interface WidgetMsgConstructor {
+public interface WidgetMsgConstructor extends MsgConstructor {
 
     WidgetsBundleUpdateMsg constructWidgetsBundleUpdateMsg(UpdateMsgType msgType, WidgetsBundle widgetsBundle, List<String> widgets);
 

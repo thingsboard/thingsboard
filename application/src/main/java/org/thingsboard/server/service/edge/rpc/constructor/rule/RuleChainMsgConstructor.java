@@ -23,8 +23,9 @@ import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
+import org.thingsboard.server.service.edge.rpc.constructor.MsgConstructor;
 
-public interface RuleChainMsgConstructor {
+public interface RuleChainMsgConstructor extends MsgConstructor {
 
     RuleChainUpdateMsg constructRuleChainUpdatedMsg(UpdateMsgType msgType, RuleChain ruleChain, boolean isRoot);
 

@@ -26,6 +26,7 @@ import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.QueueUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.constructor.queue.QueueMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 @Slf4j
@@ -42,8 +43,8 @@ public class QueueEdgeProcessor extends BaseEdgeProcessor {
                 Queue queue = queueService.findQueueById(edgeEvent.getTenantId(), queueId);
                 if (queue != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    QueueUpdateMsg queueUpdateMsg =
-                            queueMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructQueueUpdatedMsg(msgType, queue);
+                    QueueUpdateMsg queueUpdateMsg = ((QueueMsgConstructor)
+                            queueMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructQueueUpdatedMsg(msgType, queue);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addQueueUpdateMsg(queueUpdateMsg)
@@ -51,8 +52,8 @@ public class QueueEdgeProcessor extends BaseEdgeProcessor {
                 }
                 break;
             case DELETED:
-                QueueUpdateMsg queueDeleteMsg =
-                        queueMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructQueueDeleteMsg(queueId);
+                QueueUpdateMsg queueDeleteMsg = ((QueueMsgConstructor)
+                        queueMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructQueueDeleteMsg(queueId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addQueueUpdateMsg(queueDeleteMsg)

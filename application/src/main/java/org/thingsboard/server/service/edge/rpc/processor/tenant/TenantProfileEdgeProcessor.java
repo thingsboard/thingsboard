@@ -27,6 +27,7 @@ import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.TenantProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.constructor.tenant.TenantMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 @Component
@@ -41,8 +42,9 @@ public class TenantProfileEdgeProcessor extends BaseEdgeProcessor {
             TenantProfile tenantProfile = tenantProfileService.findTenantProfileById(edgeEvent.getTenantId(), tenantProfileId);
             if (tenantProfile != null) {
                 UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                TenantProfileUpdateMsg tenantProfileUpdateMsg =
-                        tenantMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructTenantProfileUpdateMsg(msgType, tenantProfile, edgeVersion);
+                TenantProfileUpdateMsg tenantProfileUpdateMsg = ((TenantMsgConstructor)
+                        tenantMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion))
+                        .constructTenantProfileUpdateMsg(msgType, tenantProfile, edgeVersion);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addTenantProfileUpdateMsg(tenantProfileUpdateMsg)

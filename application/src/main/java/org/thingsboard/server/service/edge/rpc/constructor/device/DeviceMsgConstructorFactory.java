@@ -19,27 +19,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.constructor.MsgConstructorFactory;
 
 @Component
 @TbCoreComponent
-public class DeviceMsgConstructorFactory {
+public class DeviceMsgConstructorFactory extends MsgConstructorFactory<DeviceMsgConstructorV1, DeviceMsgConstructorV2> {
 
-    @Autowired
-    protected DeviceMsgConstructorV1 deviceMsgConstructorV1;
-
-    @Autowired
-    protected DeviceMsgConstructorV2 deviceMsgConstructorV2;
-
-    public DeviceMsgConstructor getMsgConstructorByEdgeVersion(EdgeVersion edgeVersion) {
-        switch (edgeVersion) {
-            case V_3_3_0:
-            case V_3_3_3:
-            case V_3_4_0:
-            case V_3_6_0:
-            case V_3_6_1:
-                return deviceMsgConstructorV1;
-            default:
-                return deviceMsgConstructorV2;
-        }
-    }
 }

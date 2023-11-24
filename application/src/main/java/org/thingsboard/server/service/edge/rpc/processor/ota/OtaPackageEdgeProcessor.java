@@ -26,6 +26,7 @@ import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.OtaPackageUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.constructor.ota.OtaPackageMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 @Component
@@ -42,8 +43,8 @@ public class OtaPackageEdgeProcessor extends BaseEdgeProcessor {
                 OtaPackage otaPackage = otaPackageService.findOtaPackageById(edgeEvent.getTenantId(), otaPackageId);
                 if (otaPackage != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    OtaPackageUpdateMsg otaPackageUpdateMsg =
-                            otaPackageMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructOtaPackageUpdatedMsg(msgType, otaPackage);
+                    OtaPackageUpdateMsg otaPackageUpdateMsg = ((OtaPackageMsgConstructor)
+                            otaPackageMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructOtaPackageUpdatedMsg(msgType, otaPackage);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addOtaPackageUpdateMsg(otaPackageUpdateMsg)
@@ -51,8 +52,8 @@ public class OtaPackageEdgeProcessor extends BaseEdgeProcessor {
                 }
                 break;
             case DELETED:
-                OtaPackageUpdateMsg otaPackageUpdateMsg =
-                        otaPackageMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructOtaPackageDeleteMsg(otaPackageId);
+                OtaPackageUpdateMsg otaPackageUpdateMsg = ((OtaPackageMsgConstructor)
+                        otaPackageMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructOtaPackageDeleteMsg(otaPackageId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addOtaPackageUpdateMsg(otaPackageUpdateMsg)

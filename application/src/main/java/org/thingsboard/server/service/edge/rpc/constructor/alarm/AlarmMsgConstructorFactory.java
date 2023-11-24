@@ -15,31 +15,12 @@
  */
 package org.thingsboard.server.service.edge.rpc.constructor.alarm;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.constructor.MsgConstructorFactory;
 
 @Component
 @TbCoreComponent
-public class AlarmMsgConstructorFactory {
+public class AlarmMsgConstructorFactory extends MsgConstructorFactory<AlarmMsgConstructorV1, AlarmMsgConstructorV2> {
 
-    @Autowired
-    protected AlarmMsgConstructorV1 alarmMsgConstructorV1;
-
-    @Autowired
-    protected AlarmMsgConstructorV2 alarmMsgConstructorV2;
-
-    public AlarmMsgConstructor getMsgConstructorByEdgeVersion(EdgeVersion edgeVersion) {
-        switch (edgeVersion) {
-            case V_3_3_0:
-            case V_3_3_3:
-            case V_3_4_0:
-            case V_3_6_0:
-            case V_3_6_1:
-                return alarmMsgConstructorV1;
-            default:
-                return alarmMsgConstructorV2;
-        }
-    }
 }

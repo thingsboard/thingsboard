@@ -37,6 +37,7 @@ import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.constructor.customer.CustomerMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 import java.util.ArrayList;
@@ -57,8 +58,8 @@ public class CustomerEdgeProcessor extends BaseEdgeProcessor {
                 Customer customer = customerService.findCustomerById(edgeEvent.getTenantId(), customerId);
                 if (customer != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    CustomerUpdateMsg customerUpdateMsg =
-                            customerMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructCustomerUpdatedMsg(msgType, customer);
+                    CustomerUpdateMsg customerUpdateMsg = ((CustomerMsgConstructor)
+                            customerMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructCustomerUpdatedMsg(msgType, customer);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addCustomerUpdateMsg(customerUpdateMsg)
@@ -66,8 +67,8 @@ public class CustomerEdgeProcessor extends BaseEdgeProcessor {
                 }
                 break;
             case DELETED:
-                CustomerUpdateMsg customerUpdateMsg =
-                        customerMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructCustomerDeleteMsg(customerId);
+                CustomerUpdateMsg customerUpdateMsg = ((CustomerMsgConstructor)
+                        customerMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructCustomerDeleteMsg(customerId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addCustomerUpdateMsg(customerUpdateMsg)

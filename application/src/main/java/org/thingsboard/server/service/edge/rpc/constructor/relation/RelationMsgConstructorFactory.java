@@ -19,27 +19,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.constructor.MsgConstructorFactory;
+import org.thingsboard.server.service.edge.rpc.constructor.customer.CustomerMsgConstructorV1;
+import org.thingsboard.server.service.edge.rpc.constructor.customer.CustomerMsgConstructorV2;
 
 @Component
 @TbCoreComponent
-public class RelationMsgConstructorFactory {
+public class RelationMsgConstructorFactory extends MsgConstructorFactory<RelationMsgConstructorV1, RelationMsgConstructorV2> {
 
-    @Autowired
-    protected RelationMsgConstructorV1 relationMsgConstructorV1;
-
-    @Autowired
-    protected RelationMsgConstructorV2 relationMsgConstructorV2;
-
-    public RelationMsgConstructor getMsgConstructorByEdgeVersion(EdgeVersion edgeVersion) {
-        switch (edgeVersion) {
-            case V_3_3_0:
-            case V_3_3_3:
-            case V_3_4_0:
-            case V_3_6_0:
-            case V_3_6_1:
-                return relationMsgConstructorV1;
-            default:
-                return relationMsgConstructorV2;
-        }
-    }
 }

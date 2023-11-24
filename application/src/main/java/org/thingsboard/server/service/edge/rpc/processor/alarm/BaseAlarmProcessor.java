@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
+import org.thingsboard.server.service.edge.rpc.constructor.alarm.AlarmMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
@@ -132,13 +133,15 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
             case ALARM_CLEAR:
                 Alarm alarm = alarmService.findAlarmById(tenantId, alarmId);
                 if (alarm != null) {
-                    return alarmMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructAlarmUpdatedMsg(msgType, alarm, findOriginatorEntityName(tenantId, alarm));
+                    return ((AlarmMsgConstructor) alarmMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion))
+                            .constructAlarmUpdatedMsg(msgType, alarm, findOriginatorEntityName(tenantId, alarm));
                 }
                 break;
             case DELETED:
                 Alarm deletedAlarm = JacksonUtil.convertValue(body, Alarm.class);
                 if (deletedAlarm != null) {
-                    return alarmMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructAlarmUpdatedMsg(msgType, deletedAlarm, findOriginatorEntityName(tenantId, deletedAlarm));
+                    return ((AlarmMsgConstructor) alarmMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion))
+                            .constructAlarmUpdatedMsg(msgType, deletedAlarm, findOriginatorEntityName(tenantId, deletedAlarm));
                 }
         }
         return null;

@@ -26,6 +26,7 @@ import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.WidgetsBundleUpdateMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.constructor.widget.WidgetMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 import java.util.List;
@@ -46,7 +47,7 @@ public class WidgetBundleEdgeProcessor extends BaseEdgeProcessor {
                     List<String> widgets = widgetTypeService.findWidgetFqnsByWidgetsBundleId(edgeEvent.getTenantId(), widgetsBundleId);
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     WidgetsBundleUpdateMsg widgetsBundleUpdateMsg =
-                            widgetMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructWidgetsBundleUpdateMsg(msgType, widgetsBundle, widgets);
+                            ((WidgetMsgConstructor) widgetMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructWidgetsBundleUpdateMsg(msgType, widgetsBundle, widgets);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addWidgetsBundleUpdateMsg(widgetsBundleUpdateMsg)
@@ -55,7 +56,7 @@ public class WidgetBundleEdgeProcessor extends BaseEdgeProcessor {
                 break;
             case DELETED:
                 WidgetsBundleUpdateMsg widgetsBundleUpdateMsg =
-                        widgetMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructWidgetsBundleDeleteMsg(widgetsBundleId);
+                        ((WidgetMsgConstructor) widgetMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructWidgetsBundleDeleteMsg(widgetsBundleId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addWidgetsBundleUpdateMsg(widgetsBundleUpdateMsg)

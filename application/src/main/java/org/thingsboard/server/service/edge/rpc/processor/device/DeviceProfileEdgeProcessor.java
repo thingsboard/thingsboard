@@ -40,6 +40,7 @@ import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.constructor.device.DeviceMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 import java.util.UUID;
@@ -107,8 +108,8 @@ public class DeviceProfileEdgeProcessor extends BaseDeviceProfileProcessor {
                 if (deviceProfile != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     deviceProfile = checkIfDeviceProfileDefaultFieldsAssignedToEdge(edgeEvent.getTenantId(), edgeId, deviceProfile, edgeVersion);
-                    DeviceProfileUpdateMsg deviceProfileUpdateMsg =
-                            deviceMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructDeviceProfileUpdatedMsg(msgType, deviceProfile);
+                    DeviceProfileUpdateMsg deviceProfileUpdateMsg = ((DeviceMsgConstructor)
+                            deviceMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructDeviceProfileUpdatedMsg(msgType, deviceProfile);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addDeviceProfileUpdateMsg(deviceProfileUpdateMsg)
@@ -116,8 +117,8 @@ public class DeviceProfileEdgeProcessor extends BaseDeviceProfileProcessor {
                 }
                 break;
             case DELETED:
-                DeviceProfileUpdateMsg deviceProfileUpdateMsg =
-                        deviceMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructDeviceProfileDeleteMsg(deviceProfileId);
+                DeviceProfileUpdateMsg deviceProfileUpdateMsg = ((DeviceMsgConstructor)
+                        deviceMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructDeviceProfileDeleteMsg(deviceProfileId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addDeviceProfileUpdateMsg(deviceProfileUpdateMsg)

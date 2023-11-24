@@ -19,27 +19,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.constructor.MsgConstructorFactory;
+import org.thingsboard.server.service.edge.rpc.constructor.customer.CustomerMsgConstructorV1;
+import org.thingsboard.server.service.edge.rpc.constructor.customer.CustomerMsgConstructorV2;
 
 @Component
 @TbCoreComponent
-public class OtaPackageMsgConstructorFactory {
+public class OtaPackageMsgConstructorFactory extends MsgConstructorFactory<OtaPackageMsgConstructorV1, OtaPackageMsgConstructorV2> {
 
-    @Autowired
-    protected OtaPackageMsgConstructorV1 otaPackageMsgConstructorV1;
-
-    @Autowired
-    protected OtaPackageMsgConstructorV2 otaPackageMsgConstructorV2;
-
-    public OtaPackageMsgConstructor getMsgConstructorByEdgeVersion(EdgeVersion edgeVersion) {
-        switch (edgeVersion) {
-            case V_3_3_0:
-            case V_3_3_3:
-            case V_3_4_0:
-            case V_3_6_0:
-            case V_3_6_1:
-                return otaPackageMsgConstructorV1;
-            default:
-                return otaPackageMsgConstructorV2;
-        }
-    }
 }
