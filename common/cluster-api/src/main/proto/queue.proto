@@ -108,10 +108,10 @@ enum SessionType {
 }
 
 enum KeyValueType {
-  BOOLEAN_V = 0;
+  STRING_V = 0;
   LONG_V = 1;
-  DOUBLE_V = 2;
-  STRING_V = 3;
+  BOOLEAN_V = 2;
+  DOUBLE_V = 3;
   JSON_V = 4;
 }
 
