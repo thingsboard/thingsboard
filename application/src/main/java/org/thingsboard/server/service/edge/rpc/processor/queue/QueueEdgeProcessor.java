@@ -28,8 +28,8 @@ import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
-@Component
 @Slf4j
+@Component
 @TbCoreComponent
 public class QueueEdgeProcessor extends BaseEdgeProcessor {
 
@@ -43,7 +43,7 @@ public class QueueEdgeProcessor extends BaseEdgeProcessor {
                 if (queue != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     QueueUpdateMsg queueUpdateMsg =
-                            queueMsgConstructor.constructQueueUpdatedMsg(msgType, queue, edgeVersion);
+                            queueMsgConstructorFactory.getQueueMsgConstructor(edgeVersion).constructQueueUpdatedMsg(msgType, queue);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addQueueUpdateMsg(queueUpdateMsg)
@@ -52,7 +52,7 @@ public class QueueEdgeProcessor extends BaseEdgeProcessor {
                 break;
             case DELETED:
                 QueueUpdateMsg queueDeleteMsg =
-                        queueMsgConstructor.constructQueueDeleteMsg(queueId);
+                        queueMsgConstructorFactory.getQueueMsgConstructor(edgeVersion).constructQueueDeleteMsg(queueId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addQueueUpdateMsg(queueDeleteMsg)

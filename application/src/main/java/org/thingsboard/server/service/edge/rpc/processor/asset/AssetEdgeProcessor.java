@@ -121,14 +121,14 @@ public class AssetEdgeProcessor extends BaseAssetProcessor {
                 if (asset != null && !BaseAssetService.TB_SERVICE_QUEUE.equals(asset.getType())) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     AssetUpdateMsg assetUpdateMsg =
-                            assetMsgConstructor.constructAssetUpdatedMsg(msgType, asset, edgeVersion);
+                            assetMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructAssetUpdatedMsg(msgType, asset);
                     DownlinkMsg.Builder builder = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addAssetUpdateMsg(assetUpdateMsg);
                     if (UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE.equals(msgType)) {
                         AssetProfile assetProfile = assetProfileService.findAssetProfileById(edgeEvent.getTenantId(), asset.getAssetProfileId());
                         assetProfile = checkIfAssetProfileDefaultFieldsAssignedToEdge(edgeEvent.getTenantId(), edgeId, assetProfile, edgeVersion);
-                        builder.addAssetProfileUpdateMsg(assetProfileMsgConstructor.constructAssetProfileUpdatedMsg(msgType, assetProfile, edgeVersion));
+                        builder.addAssetProfileUpdateMsg(assetMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructAssetProfileUpdatedMsg(msgType, assetProfile));
                     }
                     downlinkMsg = builder.build();
                 }
@@ -136,7 +136,7 @@ public class AssetEdgeProcessor extends BaseAssetProcessor {
             case DELETED:
             case UNASSIGNED_FROM_EDGE:
                 AssetUpdateMsg assetUpdateMsg =
-                        assetMsgConstructor.constructAssetDeleteMsg(assetId);
+                        assetMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructAssetDeleteMsg(assetId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addAssetUpdateMsg(assetUpdateMsg)

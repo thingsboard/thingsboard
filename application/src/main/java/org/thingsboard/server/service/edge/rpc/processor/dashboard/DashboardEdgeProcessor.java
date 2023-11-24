@@ -111,7 +111,7 @@ public class DashboardEdgeProcessor extends BaseDashboardProcessor {
                 if (dashboard != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     DashboardUpdateMsg dashboardUpdateMsg =
-                            dashboardMsgConstructor.constructDashboardUpdatedMsg(msgType, dashboard, edgeVersion);
+                            dashboardMsgConstructorFactory.getDashboardMsgConstructor(edgeVersion).constructDashboardUpdatedMsg(msgType, dashboard);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addDashboardUpdateMsg(dashboardUpdateMsg)
@@ -121,7 +121,7 @@ public class DashboardEdgeProcessor extends BaseDashboardProcessor {
             case DELETED:
             case UNASSIGNED_FROM_EDGE:
                 DashboardUpdateMsg dashboardUpdateMsg =
-                        dashboardMsgConstructor.constructDashboardDeleteMsg(dashboardId);
+                        dashboardMsgConstructorFactory.getDashboardMsgConstructor(edgeVersion).constructDashboardDeleteMsg(dashboardId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addDashboardUpdateMsg(dashboardUpdateMsg)

@@ -42,7 +42,7 @@ public class TenantProfileEdgeProcessor extends BaseEdgeProcessor {
             if (tenantProfile != null) {
                 UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                 TenantProfileUpdateMsg tenantProfileUpdateMsg =
-                        tenantProfileMsgConstructor.constructTenantProfileUpdateMsg(msgType, tenantProfile, edgeVersion);
+                        tenantMsgConstructorFactory.getTenantMsgConstructor(edgeVersion).constructTenantProfileUpdateMsg(msgType, tenantProfile, edgeVersion);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addTenantProfileUpdateMsg(tenantProfileUpdateMsg)

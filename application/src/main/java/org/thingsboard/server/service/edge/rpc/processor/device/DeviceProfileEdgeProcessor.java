@@ -108,7 +108,7 @@ public class DeviceProfileEdgeProcessor extends BaseDeviceProfileProcessor {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     deviceProfile = checkIfDeviceProfileDefaultFieldsAssignedToEdge(edgeEvent.getTenantId(), edgeId, deviceProfile, edgeVersion);
                     DeviceProfileUpdateMsg deviceProfileUpdateMsg =
-                            deviceProfileMsgConstructor.constructDeviceProfileUpdatedMsg(msgType, deviceProfile, edgeVersion);
+                            deviceMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructDeviceProfileUpdatedMsg(msgType, deviceProfile);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addDeviceProfileUpdateMsg(deviceProfileUpdateMsg)
@@ -117,7 +117,7 @@ public class DeviceProfileEdgeProcessor extends BaseDeviceProfileProcessor {
                 break;
             case DELETED:
                 DeviceProfileUpdateMsg deviceProfileUpdateMsg =
-                        deviceProfileMsgConstructor.constructDeviceProfileDeleteMsg(deviceProfileId);
+                        deviceMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion).constructDeviceProfileDeleteMsg(deviceProfileId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addDeviceProfileUpdateMsg(deviceProfileUpdateMsg)

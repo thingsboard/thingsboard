@@ -54,7 +54,7 @@ public class RuleChainEdgeProcessor extends BaseEdgeProcessor {
                     }
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     RuleChainUpdateMsg ruleChainUpdateMsg =
-                            ruleChainMsgConstructor.constructRuleChainUpdatedMsg(msgType, ruleChain, isRoot, edgeVersion);
+                            ruleChainMsgConstructorFactory.getRuleChainMsgConstructor(edgeVersion).constructRuleChainUpdatedMsg(msgType, ruleChain, isRoot);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addRuleChainUpdateMsg(ruleChainUpdateMsg)
@@ -65,7 +65,7 @@ public class RuleChainEdgeProcessor extends BaseEdgeProcessor {
             case UNASSIGNED_FROM_EDGE:
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                        .addRuleChainUpdateMsg(ruleChainMsgConstructor.constructRuleChainDeleteMsg(ruleChainId))
+                        .addRuleChainUpdateMsg(ruleChainMsgConstructorFactory.getRuleChainMsgConstructor(edgeVersion).constructRuleChainDeleteMsg(ruleChainId))
                         .build();
                 break;
         }
@@ -80,7 +80,7 @@ public class RuleChainEdgeProcessor extends BaseEdgeProcessor {
             RuleChainMetaData ruleChainMetaData = ruleChainService.loadRuleChainMetaData(edgeEvent.getTenantId(), ruleChainId);
             UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
             RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg =
-                    ruleChainMsgConstructor.constructRuleChainMetadataUpdatedMsg(edgeEvent.getTenantId(), msgType, ruleChainMetaData, edgeVersion);
+                    ruleChainMsgConstructorFactory.getRuleChainMsgConstructor(edgeVersion).constructRuleChainMetadataUpdatedMsg(edgeEvent.getTenantId(), msgType, ruleChainMetaData, edgeVersion);
             if (ruleChainMetadataUpdateMsg != null) {
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())

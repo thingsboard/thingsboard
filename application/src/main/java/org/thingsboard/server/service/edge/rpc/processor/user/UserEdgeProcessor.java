@@ -45,21 +45,21 @@ public class UserEdgeProcessor extends BaseEdgeProcessor {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                            .addUserUpdateMsg(userMsgConstructor.constructUserUpdatedMsg(msgType, user, edgeVersion))
+                            .addUserUpdateMsg(userMsgConstructorFactory.getUserMsgConstructor(edgeVersion).constructUserUpdatedMsg(msgType, user))
                             .build();
                 }
                 break;
             case DELETED:
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                        .addUserUpdateMsg(userMsgConstructor.constructUserDeleteMsg(userId))
+                        .addUserUpdateMsg(userMsgConstructorFactory.getUserMsgConstructor(edgeVersion).constructUserDeleteMsg(userId))
                         .build();
                 break;
             case CREDENTIALS_UPDATED:
                 UserCredentials userCredentialsByUserId = userService.findUserCredentialsByUserId(edgeEvent.getTenantId(), userId);
                 if (userCredentialsByUserId != null && userCredentialsByUserId.isEnabled()) {
                     UserCredentialsUpdateMsg userCredentialsUpdateMsg =
-                            userMsgConstructor.constructUserCredentialsUpdatedMsg(userCredentialsByUserId, edgeVersion);
+                            userMsgConstructorFactory.getUserMsgConstructor(edgeVersion).constructUserCredentialsUpdatedMsg(userCredentialsByUserId);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addUserCredentialsUpdateMsg(userCredentialsUpdateMsg)

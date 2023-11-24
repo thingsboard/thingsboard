@@ -45,6 +45,8 @@ public class RuleChainMetadataConstructorV330 extends AbstractRuleChainMetadataC
     protected void constructRuleChainMetadataUpdatedMsg(TenantId tenantId,
                                                         RuleChainMetadataUpdateMsg.Builder builder,
                                                         RuleChainMetaData ruleChainMetaData) {
+        builder.setRuleChainIdMSB(ruleChainMetaData.getRuleChainId().getId().getMostSignificantBits())
+                .setRuleChainIdLSB(ruleChainMetaData.getRuleChainId().getId().getLeastSignificantBits());
         List<RuleNode> supportedNodes = filterNodes(ruleChainMetaData.getNodes());
 
         NavigableSet<Integer> removedNodeIndexes = getRemovedNodeIndexes(ruleChainMetaData.getNodes(), ruleChainMetaData.getConnections());

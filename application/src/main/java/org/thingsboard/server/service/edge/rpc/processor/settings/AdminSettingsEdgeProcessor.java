@@ -37,7 +37,8 @@ public class AdminSettingsEdgeProcessor extends BaseEdgeProcessor {
         if (adminSettings == null) {
             return null;
         }
-        AdminSettingsUpdateMsg adminSettingsUpdateMsg = adminSettingsMsgConstructor.constructAdminSettingsUpdateMsg(adminSettings, edgeVersion);
+        AdminSettingsUpdateMsg adminSettingsUpdateMsg =
+                adminSettingsMsgConstructorFactory.getAdminSettingsMsgConstructor(edgeVersion).constructAdminSettingsUpdateMsg(adminSettings);
         return DownlinkMsg.newBuilder()
                 .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                 .addAdminSettingsUpdateMsg(adminSettingsUpdateMsg)

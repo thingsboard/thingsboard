@@ -29,6 +29,8 @@ public class RuleChainMetadataConstructorV340 extends AbstractRuleChainMetadataC
     protected void constructRuleChainMetadataUpdatedMsg(TenantId tenantId,
                                                         RuleChainMetadataUpdateMsg.Builder builder,
                                                         RuleChainMetaData ruleChainMetaData) {
+        builder.setRuleChainIdMSB(ruleChainMetaData.getRuleChainId().getId().getMostSignificantBits())
+                .setRuleChainIdLSB(ruleChainMetaData.getRuleChainId().getId().getLeastSignificantBits());
         builder.addAllNodes(constructNodes(ruleChainMetaData.getNodes()))
                 .addAllConnections(constructConnections(ruleChainMetaData.getConnections()))
                 .addAllRuleChainConnections(constructRuleChainConnections(ruleChainMetaData.getRuleChainConnections(), new TreeSet<>()));
