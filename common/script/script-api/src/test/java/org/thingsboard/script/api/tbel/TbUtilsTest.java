@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Random;
@@ -384,6 +385,62 @@ public class TbUtilsTest {
         Assert.assertThrows(IllegalAccessException.class, () -> TbUtils.stringToBytes(ctx, ((ExecutionHashMap) finalInputJson).get("hello")));
         Assert.assertThrows(IllegalAccessException.class, () -> TbUtils.stringToBytes(ctx, ((ExecutionHashMap) finalInputJson).get("hello"), "UTF-8"));
     }
+
+    @Test
+    public void bytesFromList() {
+        byte[] arrayBytes =      {(byte)0x00, (byte)0x08, (byte)0x10, (byte)0x1C, (byte)0xFF, (byte)0xFC, (byte)0xAD, (byte)0x88, (byte)0x75, (byte)0x74, (byte)0x8A, (byte)0x82};
+        Object[] arrayMix      = {     "0x00",         8,       "16",     "0x1C",         255,        252,        173,       136,        117,        116,       -118,     "-126"};
+
+        String expected = new String(arrayBytes);
+        ArrayList<Byte> listBytes = new ArrayList<>(arrayBytes.length);
+        for (Byte element : arrayBytes) {
+            listBytes.add(element);
+        }
+        Assert.assertEquals(expected, TbUtils.bytesToString(listBytes));
+
+        ArrayList<Object> listMix = new ArrayList<>(arrayMix.length);
+        for (Object element : arrayMix) {
+            listMix.add(element);
+        }
+        Assert.assertEquals(expected, TbUtils.bytesToString(listMix));
+    }
+
+    @Test
+    public void bytesFromList_Error() {
+        List<String> listHex = new ArrayList<>();
+        listHex.add("0xFG");
+        try {
+            TbUtils.bytesToString(listHex);
+            Assert.fail("Should throw NumberFormatException");
+        } catch (NumberFormatException e) {
+            Assert.assertTrue(e.getMessage().contains("Failed radix: [16] for value: \"FG\"!"));
+        }
+        listHex.add(0, "1F");
+        try {
+            TbUtils.bytesToString(listHex);
+            Assert.fail("Should throw NumberFormatException");
+        } catch (NumberFormatException e) {
+            Assert.assertTrue(e.getMessage().contains("Failed radix: [10] for value: \"1F\"!"));
+        }
+
+        ArrayList<Integer> listIntBytes = new ArrayList<>();
+        listIntBytes.add(-129);
+        try {
+            TbUtils.bytesToString(listIntBytes);
+            Assert.fail("Should throw NumberFormatException");
+        } catch (NumberFormatException e) {
+            Assert.assertTrue(e.getMessage().contains("The value -129 could not be converted to a byte. Integer to byte needs only 8-bits (min/max = -128/127 or 0/255"));
+        }
+
+        listIntBytes.add(0, 256);
+        try {
+            TbUtils.bytesToString(listIntBytes);
+            Assert.fail("Should throw NumberFormatException");
+        } catch (NumberFormatException e) {
+            Assert.assertTrue(e.getMessage().contains("The value 256 could not be converted to a byte. Integer to byte needs only 8-bits (min/max = -128/127 or 0/255"));
+        }
+    }
+
 
     private static List<Byte> toList(byte[] data) {
         List<Byte> result = new ArrayList<>(data.length);

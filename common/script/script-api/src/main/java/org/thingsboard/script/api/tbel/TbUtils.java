@@ -182,7 +182,7 @@ public class TbUtils {
         return TbJson.parse(ctx, jsonStr);
     }
 
-    public static String bytesToString(List<Byte> bytesList) {
+    public static String bytesToString(List<?> bytesList) {
         byte[] bytes = bytesFromList(bytesList);
         return new String(bytes);
     }
@@ -210,10 +210,22 @@ public class TbUtils {
         }
     }
 
-    private static byte[] bytesFromList(List<Byte> bytesList) {
+    private static byte[] bytesFromList(List<?> bytesList) {
         byte[] bytes = new byte[bytesList.size()];
         for (int i = 0; i < bytesList.size(); i++) {
-            bytes[i] = bytesList.get(i);
+            if (bytesList.get(i) instanceof Integer) {
+                byte val = ((Integer) bytesList.get(i)).byteValue();
+                if (((Integer) bytesList.get(i)).intValue() > 255 || ((Integer) bytesList.get(i)).intValue() < -128){
+                    throw new NumberFormatException("The value " + bytesList.get(i) + " could not be converted to a byte. Integer to byte needs only 8-bits (min/max = -128/127 or 0/255) !");
+                } else {
+                    bytes[i] = val;                }
+            } else if (bytesList.get(i) instanceof String) {
+                bytes[i] = parseInt((String) bytesList.get(i)).byteValue();
+            } else if (bytesList.get(i) instanceof Byte) {
+                bytes[i] = (byte) bytesList.get(i);
+            } else {
+                throw new NumberFormatException("Value \"" + bytesList.get(i) + " could not be converted to a byte. Must be format HexDecimal/String/Integer !");
+            }
         }
         return bytes;
     }
