@@ -32,10 +32,7 @@ import com.google.common.collect.Lists;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.KvEntry;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
+import java.io.*;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -158,6 +155,15 @@ public class JacksonUtil {
             return mapper.readTree(value);
         } catch (IOException e) {
             throw new IllegalArgumentException(e);
+        }
+    }
+
+    public static JsonNode toJsonNode(InputStream value) {
+        try {
+            return value != null ? OBJECT_MAPPER.readTree(value) : null;
+        } catch (IOException e) {
+            throw new IllegalArgumentException("The given File object value: "
+                    + value + " cannot be transformed to a JsonNode", e);
         }
     }
 
