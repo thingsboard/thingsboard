@@ -389,7 +389,7 @@ public class TbUtilsTest {
     @Test
     public void bytesFromList() {
         byte[] arrayBytes =      {(byte)0x00, (byte)0x08, (byte)0x10, (byte)0x1C, (byte)0xFF, (byte)0xFC, (byte)0xAD, (byte)0x88, (byte)0x75, (byte)0x74, (byte)0x8A, (byte)0x82};
-        Object[] arrayMix      = {     "0x00",         8,       "16",     "0x1C",         255,        252,        173,       136,        117,        116,       -118,     "-126"};
+        Object[] arrayMix      = {    "0x00",         8,        "16",     "0x1C",        255, (byte)0xFC,        173,        136,        117,        116,       -118,     "-126"};
 
         String expected = new String(arrayBytes);
         ArrayList<Byte> listBytes = new ArrayList<>(arrayBytes.length);
