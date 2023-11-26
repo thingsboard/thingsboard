@@ -187,7 +187,7 @@ public class TbUtils {
         return new String(bytes);
     }
 
-    public static String bytesToString(List<Byte> bytesList, String charsetName) throws UnsupportedEncodingException {
+    public static String bytesToString(List<?> bytesList, String charsetName) throws UnsupportedEncodingException {
         byte[] bytes = bytesFromList(bytesList);
         return new String(bytes, charsetName);
     }
