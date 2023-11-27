@@ -15,9 +15,12 @@
  */
 package org.thingsboard.server.service.edge.instructions;
 
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInstructions;
 
-public interface EdgeUpgradeService {
+import javax.servlet.http.HttpServletRequest;
 
-    EdgeInstructions getUpgradeInstructions(String edgeVersion, String upgradeMethod);
+public interface EdgeInstallInstructionsService {
+
+    EdgeInstructions getInstallInstructions(Edge edge, String installationMethod, HttpServletRequest request);
 }

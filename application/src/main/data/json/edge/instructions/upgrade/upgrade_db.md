@@ -3,6 +3,6 @@
 Execute regular upgrade script:
 
 ```bash
-sudo /usr/share/tb-edge/bin/install/upgrade.sh --fromVersion=${CURRENT_TB_EDGE_VERSION}
+sudo /usr/share/tb-edge/bin/install/upgrade.sh --fromVersion=${FROM_TB_EDGE_VERSION}
 {:copy-code}
 ```

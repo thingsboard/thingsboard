@@ -68,6 +68,7 @@ import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.CustomerUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.QueueUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.SyncCompletedMsg;
@@ -125,7 +126,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
     }
 
     @After
-    public void teardownEdgeTest() throws Exception {
+    public void teardownEdgeTest() {
         executor.shutdownNow();
     }
 
@@ -1154,5 +1155,16 @@ public class EdgeControllerTest extends AbstractControllerTest {
         String installInstructions = doGet("/api/edge/instructions/install/" + savedEdge.getId().getId().toString() + "/docker", String.class);
         Assert.assertTrue(installInstructions.contains("l7q4zsjplzwhk16geqxy"));
         Assert.assertTrue(installInstructions.contains("7390c3a6-69b0-9910-d155-b90aca4b772e"));
+    }
+
+    @Test
+    public void testGetEdgeUpgradeInstructions() throws Exception {
+        Edge edge = constructEdge("Edge for Test Docker Upgrade Instructions", "default");
+        Edge savedEdge = doPost("/api/edge", edge, Edge.class);
+        String body = "{\"edgeVersion\": \"V_3_6_0\"}";
+        doPostAsync("/api/plugins/telemetry/EDGE/" + savedEdge.getId().getId() + "/attributes/SERVER_SCOPE", body, String.class, status().isOk());
+        String upgradeInstructions = doGet("/api/edge/instructions/upgrade/" + EdgeVersion.V_3_6_0.name() + "/docker", String.class);
+        Assert.assertTrue(upgradeInstructions.contains("Upgrading to 3.6.1EDGE"));
+        Assert.assertTrue(upgradeInstructions.contains("Upgrading to 3.6.2EDGE"));
     }
 }

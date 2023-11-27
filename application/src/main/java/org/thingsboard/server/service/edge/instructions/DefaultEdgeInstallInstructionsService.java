@@ -36,7 +36,7 @@ import java.nio.file.Paths;
 @RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "edges", value = "enabled", havingValue = "true")
 @TbCoreComponent
-public class DefaultEdgeInstallService implements EdgeInstallService {
+public class DefaultEdgeInstallInstructionsService implements EdgeInstallInstructionsService {
 
     private static final String EDGE_DIR = "edge";
     private static final String INSTRUCTIONS_DIR = "instructions";

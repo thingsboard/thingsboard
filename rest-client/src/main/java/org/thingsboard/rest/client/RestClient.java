@@ -3241,10 +3241,16 @@ public class RestClient implements Closeable {
                 }).getBody();
     }
 
-    public Optional<EdgeInstructions> getEdgeDockerInstallInstructions(EdgeId edgeId, String method) {
+    public Optional<EdgeInstructions> getEdgeInstallInstructions(EdgeId edgeId, String method) {
         ResponseEntity<EdgeInstructions> edgeInstallInstructionsResult =
                 restTemplate.getForEntity(baseURL + "/api/edge/instructions/install/{edgeId}/{method}", EdgeInstructions.class, edgeId.getId(), method);
         return Optional.ofNullable(edgeInstallInstructionsResult.getBody());
+    }
+
+    public Optional<EdgeInstructions> getEdgeUpgradeInstructions(String edgeVersion, String method) {
+        ResponseEntity<EdgeInstructions> edgeUpgradeInstructionsResult =
+                restTemplate.getForEntity(baseURL + "/api/edge/instructions/upgrade/{edgeVersion}/{method}", EdgeInstructions.class, edgeVersion, method);
+        return Optional.ofNullable(edgeUpgradeInstructionsResult.getBody());
     }
 
     public UUID saveEntitiesVersion(VersionCreateRequest request) {

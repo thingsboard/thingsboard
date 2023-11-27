@@ -37,7 +37,7 @@ import java.util.HashMap;
 @RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "edges", value = "enabled", havingValue = "true")
 @TbCoreComponent
-public class DefaultEdgeUpgradeService implements EdgeUpgradeService {
+public class DefaultEdgeUpgradeService implements EdgeUpgradeInstructionsService {
 
     private static final HashMap<String, UpgradeInfo> upgradeVersionHashMap;
 
@@ -96,7 +96,7 @@ public class DefaultEdgeUpgradeService implements EdgeUpgradeService {
                 ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${CLEAR_DOCKER_UPGRADE}", rmUpgrade);
             }
             ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${TB_EDGE_VERSION}", edgeVersion + "EDGE");
-            ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${CURRENT_TB_EDGE_VERSION}", currentEdgeVersion + "EDGE");
+            ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${FROM_TB_EDGE_VERSION}", currentEdgeVersion + "EDGE");
             currentEdgeVersion = edgeVersion;
             upgradeInfo = upgradeVersionHashMap.get(upgradeInfo.getNextVersion());
             result.append(ubuntuUpgradeInstructions);
@@ -125,9 +125,9 @@ public class DefaultEdgeUpgradeService implements EdgeUpgradeService {
                 ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${UPGRADE_DB}", "");
             }
             ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${TB_EDGE_TAG}", getTagVersion(edgeVersion));
-            ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${CURRENT_TB_EDGE_TAG}", getTagVersion(currentEdgeVersion));
+            ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${FROM_TB_EDGE_TAG}", getTagVersion(currentEdgeVersion));
             ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${TB_EDGE_VERSION}", edgeVersion);
-            ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${CURRENT_TB_EDGE_VERSION}", currentEdgeVersion);
+            ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${FROM_TB_EDGE_VERSION}", currentEdgeVersion);
             currentEdgeVersion = edgeVersion;
             upgradeInfo = upgradeVersionHashMap.get(upgradeInfo.getNextVersion());
             result.append(ubuntuUpgradeInstructions);

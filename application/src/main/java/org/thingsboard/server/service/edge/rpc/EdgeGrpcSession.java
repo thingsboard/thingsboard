@@ -775,7 +775,8 @@ public final class EdgeGrpcSession implements Closeable {
             try {
                 if (edge.getSecret().equals(request.getEdgeSecret())) {
                     sessionOpenListener.accept(edge.getId(), this);
-                    this.edgeVersion = processGetAndSaveEdgeVersion(request.getEdgeVersion());
+                    this.edgeVersion = request.getEdgeVersion();
+                    processSaveEdgeVersionAsAttribute(request.getEdgeVersion().name());
                     return ConnectResponseMsg.newBuilder()
                             .setResponseCode(ConnectResponseCode.ACCEPTED)
                             .setErrorMsg("")
@@ -801,10 +802,9 @@ public final class EdgeGrpcSession implements Closeable {
                 .setConfiguration(EdgeConfiguration.getDefaultInstance()).build();
     }
 
-    private EdgeVersion processGetAndSaveEdgeVersion(EdgeVersion edgeVersion) {
-        AttributeKvEntry attributeKvEntry = new BaseAttributeKvEntry(new StringDataEntry("edgeVersion", edgeVersion.name()), System.currentTimeMillis());
+    private void processSaveEdgeVersionAsAttribute(String edgeVersion) {
+        AttributeKvEntry attributeKvEntry = new BaseAttributeKvEntry(new StringDataEntry("edgeVersion", edgeVersion), System.currentTimeMillis());
         ctx.getAttributesService().save(this.tenantId, this.edge.getId(), DataConstants.SERVER_SCOPE, attributeKvEntry);
-        return edgeVersion;
     }
 
     @Override
