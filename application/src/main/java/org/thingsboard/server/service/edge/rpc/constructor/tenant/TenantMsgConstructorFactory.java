@@ -15,31 +15,12 @@
  */
 package org.thingsboard.server.service.edge.rpc.constructor.tenant;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.constructor.MsgConstructorFactory;
 
 @Component
 @TbCoreComponent
-public class TenantMsgConstructorFactory {
+public class TenantMsgConstructorFactory extends MsgConstructorFactory<TenantMsgConstructorV1, TenantMsgConstructorV2> {
 
-    @Autowired
-    protected TenantMsgConstructorV1 tenantMsgConstructorV1;
-
-    @Autowired
-    protected TenantMsgConstructorV2 tenantMsgConstructorV2;
-
-    public TenantMsgConstructor getMsgConstructorByEdgeVersion(EdgeVersion edgeVersion) {
-        switch (edgeVersion) {
-            case V_3_3_0:
-            case V_3_3_3:
-            case V_3_4_0:
-            case V_3_6_0:
-            case V_3_6_1:
-                return tenantMsgConstructorV1;
-            default:
-                return tenantMsgConstructorV2;
-        }
-    }
 }
