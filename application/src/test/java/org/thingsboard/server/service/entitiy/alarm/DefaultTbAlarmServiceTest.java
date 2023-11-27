@@ -78,6 +78,8 @@ public class DefaultTbAlarmServiceTest {
     @MockBean
     protected TbAlarmCommentService tbAlarmCommentService;
     @MockBean
+    protected AlarmCommentService alarmCommentService;
+    @MockBean
     protected AlarmSubscriptionService alarmSubscriptionService;
     @MockBean
     protected CustomerService customerService;
