@@ -15,6 +15,7 @@
  */
 package org.thingsboard.monitoring.service;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,13 +31,17 @@ import org.thingsboard.monitoring.util.TbStopWatch;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @RequiredArgsConstructor
 @Slf4j
 public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends MonitoringTarget> {
 
+    @Getter
     protected final C config;
+    @Getter
     protected final T target;
 
     private Object info;
@@ -47,6 +52,9 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
     private TbStopWatch stopWatch;
     @Value("${monitoring.check_timeout_ms}")
     private int resultCheckTimeoutMs;
+
+    @Getter
+    private final Map<String, BaseHealthChecker<C, T>> associates = new HashMap<>();
 
     public static final String TEST_TELEMETRY_KEY = "testData";
 
@@ -84,6 +92,10 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
         } catch (Exception e) {
             reporter.serviceFailure(MonitoredServiceKey.GENERAL, e);
         }
+
+        associates.values().forEach(healthChecker -> {
+            healthChecker.check(wsClient);
+        });
     }
 
     private void checkWsUpdate(WsClient wsClient, String testValue) {
@@ -98,7 +110,6 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
         }
         reporter.reportLatency(Latencies.wsUpdate(getKey()), stopWatch.getTime());
     }
-
 
     protected abstract void initClient() throws Exception;
 
