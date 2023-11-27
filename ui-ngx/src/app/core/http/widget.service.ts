@@ -204,6 +204,12 @@ export class WidgetService {
       defaultHttpOptionsFromConfig(config));
   }
 
+  public exportWidgetType(widgetTypeId: string,
+                          config?: RequestConfig): Observable<WidgetTypeDetails> {
+    return this.http.get<WidgetTypeDetails>(`/api/widgetType/${widgetTypeId}?inlineImages=true`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
   public getWidgetTypeInfoById(widgetTypeId: string,
                                config?: RequestConfig): Observable<WidgetTypeInfo> {
     return this.http.get<WidgetTypeInfo>(`/api/widgetTypeInfo/${widgetTypeId}`,

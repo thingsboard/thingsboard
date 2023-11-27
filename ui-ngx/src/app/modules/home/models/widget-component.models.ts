@@ -91,7 +91,7 @@ import * as RxJSOperators from 'rxjs/operators';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AlarmQuery, AlarmSearchStatus, AlarmStatus } from '@app/shared/models/alarm.models';
-import { MillisecondsToTimeStringPipe, TelemetrySubscriber } from '@app/shared/public-api';
+import { ImagePipe, MillisecondsToTimeStringPipe, TelemetrySubscriber } from '@app/shared/public-api';
 import { UserId } from '@shared/models/id/user-id';
 import { UserSettingsService } from '@core/http/user-settings.service';
 import { DynamicComponentModule } from '@core/services/dynamic-component-factory.service';
@@ -189,6 +189,7 @@ export class WidgetContext {
   telemetryWsService: TelemetryWebsocketService;
   telemetrySubscribers?: TelemetrySubscriber[];
   date: DatePipe;
+  imagePipe: ImagePipe;
   milliSecondsToTimeString: MillisecondsToTimeStringPipe;
   translate: TranslateService;
   http: HttpClient;

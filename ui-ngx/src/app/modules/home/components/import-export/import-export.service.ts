@@ -298,7 +298,7 @@ export class ImportExportService {
   }
 
   public exportWidgetType(widgetTypeId: string) {
-    this.widgetService.getWidgetTypeById(widgetTypeId).subscribe(
+    this.widgetService.exportWidgetType(widgetTypeId).subscribe(
       (widgetTypeDetails) => {
         let name = widgetTypeDetails.name;
         name = name.toLowerCase().replace(/\W/g, '_');
@@ -313,7 +313,7 @@ export class ImportExportService {
   public exportWidgetTypes(widgetTypeIds: string[]): Observable<void> {
     const widgetTypesObservables: Array<Observable<WidgetTypeDetails>> = [];
     for (const id of widgetTypeIds) {
-      widgetTypesObservables.push(this.widgetService.getWidgetTypeById(id));
+      widgetTypesObservables.push(this.widgetService.exportWidgetType(id));
     }
     return forkJoin(widgetTypesObservables).pipe(
       map((widgetTypes) =>
