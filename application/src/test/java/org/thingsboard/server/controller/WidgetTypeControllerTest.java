@@ -193,17 +193,29 @@ public class WidgetTypeControllerTest extends AbstractControllerTest {
 
         loginCustomerUser();
 
-        List<WidgetType> loadedWidgetTypes2 = doGetTyped("/api/widgetTypes?widgetsBundleId={widgetsBundleId}",
+        List<WidgetType> loadedWidgetTypesCustomer = doGetTyped("/api/widgetTypes?widgetsBundleId={widgetsBundleId}",
                 new TypeReference<>(){}, widgetsBundle.getId().getId().toString());
-        Collections.sort(loadedWidgetTypes2, idComparator);
-        Assert.assertEquals(widgetTypes, loadedWidgetTypes2);
+        Collections.sort(loadedWidgetTypesCustomer, idComparator);
+        Assert.assertEquals(widgetTypes, loadedWidgetTypesCustomer);
 
-        List<WidgetTypeDetails> loadedWidgetTypes3 = doGetTyped("/api/widgetTypesDetails?widgetsBundleId={widgetsBundleId}",
+        List<WidgetTypeDetails> customerLoadedWidgetTypesDetails = doGetTyped("/api/widgetTypesDetails?widgetsBundleId={widgetsBundleId}",
                 new TypeReference<>(){}, widgetsBundle.getId().getId().toString());
-        List<WidgetType> widgetTypes3 = loadedWidgetTypes3.stream().map(WidgetType::new).collect(Collectors.toList());
-        Collections.sort(widgetTypes3, idComparator);
-        Assert.assertEquals(widgetTypes3, loadedWidgetTypes);
+        List<WidgetType> widgetTypesFromDetailsListCustomer = customerLoadedWidgetTypesDetails.stream().map(WidgetType::new).collect(Collectors.toList());
+        Collections.sort(widgetTypesFromDetailsListCustomer, idComparator);
+        Assert.assertEquals(widgetTypesFromDetailsListCustomer, loadedWidgetTypes);
 
+        loginSysAdmin();
+
+        List<WidgetType> sysAdminLoadedWidgetTypes = doGetTyped("/api/widgetTypes?widgetsBundleId={widgetsBundleId}",
+                new TypeReference<>(){}, widgetsBundle.getId().getId().toString());
+        Collections.sort(sysAdminLoadedWidgetTypes, idComparator);
+        Assert.assertEquals(widgetTypes, sysAdminLoadedWidgetTypes);
+
+        List<WidgetTypeDetails> sysAdminLoadedWidgetTypesDetails = doGetTyped("/api/widgetTypesDetails?widgetsBundleId={widgetsBundleId}",
+                new TypeReference<>(){}, widgetsBundle.getId().getId().toString());
+        List<WidgetType> widgetTypesFromDetailsListSysAdmin = sysAdminLoadedWidgetTypesDetails.stream().map(WidgetType::new).collect(Collectors.toList());
+        Collections.sort(widgetTypesFromDetailsListSysAdmin, idComparator);
+        Assert.assertEquals(widgetTypesFromDetailsListSysAdmin, loadedWidgetTypes);
     }
 
     @Test
