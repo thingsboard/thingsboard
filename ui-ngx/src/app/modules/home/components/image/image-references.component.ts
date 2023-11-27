@@ -49,7 +49,7 @@ type ReferencedEntitiesEntry = [string, TenantReferencedEntities];
 @Component({
   selector: 'tb-image-references',
   templateUrl: './image-references.component.html',
-  styleUrls: []
+  styleUrls: ['./image-references.component.scss']
 })
 export class ImageReferencesComponent implements OnInit {
 

@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+@import "../../../../../scss/constants";
+
 $containerHeight: 96px !default;
 
 :host {
@@ -94,6 +97,11 @@ $containerHeight: 96px !default;
       gap: 4px;
       .tb-resource-image-name {
         color: rgba(0, 0, 0, 0.54);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        -webkit-line-clamp: 2;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
         font-size: 12px;
         font-style: normal;
         font-weight: 500;
@@ -166,9 +174,12 @@ $containerHeight: 96px !default;
       justify-content: center;
       align-items: center;
       gap: 4px;
-      padding: 16px;
+      padding: 8px;
       line-height: normal;
       font-size: 12px;
+      @media #{$mat-gt-xs} {
+        padding: 16px;
+      }
       .mat-icon {
         width: 24px;
         height: 24px;

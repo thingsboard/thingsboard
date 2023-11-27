@@ -17,6 +17,7 @@
   .tb-images-in-use-content {
     display: flex;
     flex-direction: column;
+    gap: 24px;
     &.multiple {
       gap: 16px;
     }

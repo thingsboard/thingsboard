@@ -28,23 +28,27 @@ $tb-button-selected-color: rgb(255, 110, 64) !default;
     max-width: calc(100vw - 50px);
     max-height: calc(100vh - 100px);
     @media #{$mat-gt-xs} {
-      width: 400px;
-      height: 600px;
-    }
-    @media #{$mat-gt-sm} {
       width: 500px;
       height: 600px;
     }
-    @media #{$mat-gt-md} {
+    @media #{$mat-gt-sm} {
       width: 700px;
+      height: 600px;
+    }
+    @media #{$mat-gt-md} {
+      width: 1000px;
       height: 700px;
     }
     @media #{$mat-gt-xmd} {
-      width: 900px;
+      width: 1300px;
       height: 700px;
     }
     @media #{$mat-gt-xl} {
-      width: 1200px;
+      width: 1600px;
+      height: 800px;
+    }
+    @media screen and (min-width: 2320px) {
+      width: 2000px;
       height: 800px;
     }
   }

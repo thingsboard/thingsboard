@@ -20,15 +20,17 @@
 </ng-container>
 <ng-template #complexEntityReferences>
   <ng-container *ngIf="contentReady; else loading">
-    <ul>
+    <ul class="tb-references">
       <ng-container *ngFor="let entry of referencedEntitiesEntries">
-        <li *ngIf="isSystem(entry[0]); else tenantEntities">
-          {{ 'image.system-entities' | translate }}
+        <li class="tb-entities-container tb-primary-fill" *ngIf="isSystem(entry[0]); else tenantEntities">
+          <div class="tb-entities-title">{{ 'image.system-entities' | translate }}</div>
           <ng-container *ngTemplateOutlet="referencesList; context:{entriesList: entry[1].entities, showDetailsLink: true}"></ng-container>
         </li>
         <ng-template #tenantEntities>
-          <li>
-            {{ 'tenant.tenant' | translate }} <a [routerLink]="entry[1].tenantDetailsUrl">{{ '"' + entry[1].tenantName + '"' }}</a> {{ 'image.entities' | translate }}
+          <li class="tb-entities-container tb-primary-fill">
+            <div class="tb-entities-title">
+              {{ 'tenant.tenant' | translate }} <a class="tb-reference" [routerLink]="entry[1].tenantDetailsUrl">{{ entry[1].tenantName }}</a> {{ 'image.entities' | translate }}
+            </div>
             <ng-container *ngTemplateOutlet="referencesList; context:{entriesList: entry[1].entities, showDetailsLink: false}"></ng-container>
           </li>
         </ng-template>
@@ -37,12 +39,15 @@
   </ng-container>
 </ng-template>
 <ng-template #referencesList let-entriesList="entriesList" let-showDetailsLink="showDetailsLink">
-  <ul>
-    <li *ngFor="let referencedEntity of entriesList">
-      {{ referencedEntity.typeName }} <a *ngIf="showDetailsLink" [routerLink]="referencedEntity.detailsUrl">{{ '"' + referencedEntity.entity.name + '"' }}</a>
-                                      <b *ngIf="!showDetailsLink">{{ '"' + referencedEntity.entity.name + '"' }}</b>
-    </li>
-  </ul>
+  <table class="tb-entities-list-table">
+    <tr *ngFor="let referencedEntity of entriesList">
+      <td class="tb-entity-type">{{ referencedEntity.typeName }}</td>
+      <td class="tb-entity-name">
+        <a *ngIf="showDetailsLink" class="tb-reference" [routerLink]="referencedEntity.detailsUrl">{{ referencedEntity.entity.name }}</a>
+        <span *ngIf="!showDetailsLink">{{ referencedEntity.entity.name }}</span>
+      </td>
+    </tr>
+  </table>
 </ng-template>
 <ng-template #loading>
   <mat-spinner [diameter]="32" strokeWidth="2"></mat-spinner>

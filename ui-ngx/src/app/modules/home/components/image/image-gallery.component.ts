@@ -88,11 +88,14 @@ const pageGridColumns: ScrollGridColumns = {
 };
 
 const popoverGridColumns: ScrollGridColumns = {
-  columns: 2,
+  columns: 1,
   breakpoints: {
-    'gt-lg': 5,
-    'screen and (min-width: 1600px)': 4,
-    'gt-md': 3
+    'screen and (min-width: 2320px)': 8,
+    'gt-lg': 6,
+    'screen and (min-width: 1600px)': 5,
+    'gt-md': 4,
+    'gt-sm': 3,
+    'gt-xs': 2
   }
 };
 
@@ -141,7 +144,7 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
   dataSource: ImagesDatasource;
 
   textSearch = this.fb.control('', {nonNullable: true});
-  includeSystemImages = this.fb.control(false);
+  includeSystemImages = false;
 
   gridColumns: ScrollGridColumns;
 
@@ -257,27 +260,27 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
       } else {
         this.gridImagesFilter = {
           search: isNotEmptyStr(value) ? encodeURI(value) : null,
-          includeSystemImages: this.includeSystemImages.value
+          includeSystemImages: this.includeSystemImages
         };
         this.cd.markForCheck();
       }
     });
-    this.includeSystemImages.valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe(value => {
-      this.displayedColumns = this.computeDisplayedColumns();
-      this.gridImagesFilter = {
-        search: this.gridImagesFilter.search,
-        includeSystemImages: value
-      };
-      if (this.mode === 'list') {
-        this.paginator.pageIndex = 0;
-        this.updateData();
-      } else {
-        this.cd.markForCheck();
-      }
-    });
     this.updateMode();
+  }
+
+  public includeSystemImagesChanged(value: boolean) {
+    this.includeSystemImages = value;
+    this.displayedColumns = this.computeDisplayedColumns();
+    this.gridImagesFilter = {
+      search: this.gridImagesFilter.search,
+      includeSystemImages: this.includeSystemImages
+    };
+    if (this.mode === 'list') {
+      this.paginator.pageIndex = 0;
+      this.updateData();
+    } else {
+      this.cd.markForCheck();
+    }
   }
 
   public setMode(targetMode: 'list' | 'grid') {
@@ -307,14 +310,20 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
   }
 
   private computeDisplayedColumns(): string[] {
+    let columns: string[];
     if (this.selectionMode) {
-      return ['preview', 'title', 'imageSelect'];
+      columns = ['preview', 'title'];
+      if (!this.isSysAdmin && this.includeSystemImages) {
+        columns.push('system');
+      }
+      columns.push('imageSelect');
+    } else {
+      columns = ['select', 'preview', 'title', 'createdTime', 'resolution', 'size'];
+      if (!this.isSysAdmin && this.includeSystemImages) {
+        columns.push('system');
+      }
+      columns.push('actions');
     }
-    const columns = ['select', 'preview', 'title', 'createdTime', 'resolution', 'size'];
-    if (!this.isSysAdmin && this.includeSystemImages.value) {
-      columns.push('system');
-    }
-    columns.push('actions');
     return columns;
   }
 
@@ -411,7 +420,7 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
       } else {
         this.pageLink.sortOrder = null;
       }
-      this.dataSource.loadEntities(this.pageLink, this.includeSystemImages.value);
+      this.dataSource.loadEntities(this.pageLink, this.includeSystemImages);
     } else {
       this.gridComponent.update();
     }
@@ -597,6 +606,14 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
       $event.stopPropagation();
     }
     this.imageSelected.next(image);
+  }
+
+  rowClick($event, image: ImageResourceInfo) {
+    if (this.selectionMode) {
+      this.selectImage($event, image);
+    } else {
+      this.dataSource.selection.toggle(image);
+    }
   }
 
   uploadImage(): void {

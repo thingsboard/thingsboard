@@ -45,7 +45,8 @@
           </div>
           <mat-slide-toggle *ngIf="!isSysAdmin"
                             fxHide fxShow.gt-sm
-                            [formControl]="includeSystemImages">{{ 'image.include-system-images' | translate }}</mat-slide-toggle>
+                            [ngModel]="includeSystemImages"
+                            (ngModelChange)="includeSystemImagesChanged($event)">{{ 'image.include-system-images' | translate }}</mat-slide-toggle>
         </div>
         <section fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
           <span fxFlex></span>
@@ -91,7 +92,8 @@
         </section>
       </div>
       <mat-slide-toggle *ngIf="!isSysAdmin" fxHide fxShow.lt-md
-                        [formControl]="includeSystemImages">{{ 'image.include-system-images' | translate }}</mat-slide-toggle>
+                        [ngModel]="includeSystemImages"
+                        (ngModelChange)="includeSystemImagesChanged($event)">{{ 'image.include-system-images' | translate }}</mat-slide-toggle>
     </mat-toolbar>
     <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="textSearchMode && (mode === 'grid' || dataSource?.selection.isEmpty())">
       <div class="mat-toolbar-tools">
@@ -259,7 +261,7 @@
           <mat-header-row [ngClass]="{'mat-row-select': true}" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
           <mat-row [ngClass]="{'mat-row-select': true,
                                'mat-selected': dataSource.selection.isSelected(image)}"
-                   *matRowDef="let image; columns: displayedColumns;" (click)="dataSource.selection.toggle(image)"></mat-row>
+                   *matRowDef="let image; columns: displayedColumns;" (click)="rowClick($event, image)"></mat-row>
         </table>
         <ng-container *ngIf="(dataSource.isEmpty() | async) && !dataSource.dataLoading">
           <ng-container *ngTemplateOutlet="noImages"></ng-container>

@@ -97,8 +97,7 @@ export class GalleryImageInputComponent extends PageComponent implements OnInit,
   ngOnInit() {
     this.externalLinkControl.valueChanges.subscribe((value) => {
       if (this.linkType === ImageLinkType.external) {
-        this.imageUrl = value;
-        this.updateModel();
+        this.updateModel(value);
       }
     });
   }
@@ -168,21 +167,23 @@ export class GalleryImageInputComponent extends PageComponent implements OnInit,
     }
   }
 
-  private updateModel() {
+  private updateModel(value: string) {
     this.cd.markForCheck();
-    this.propagateChange(this.imageUrl);
+    if (this.imageUrl !== value) {
+      this.imageUrl = value;
+      this.propagateChange(this.imageUrl);
+    }
   }
 
   private reset() {
     this.linkType = ImageLinkType.none;
-    this.imageUrl = null;
     this.imageResource = null;
     this.externalLinkControl.setValue(null, {emitEvent: false});
   }
 
   clearImage() {
     this.reset();
-    this.updateModel();
+    this.updateModel(null);
   }
 
   setLink($event: Event) {
@@ -214,9 +215,8 @@ export class GalleryImageInputComponent extends PageComponent implements OnInit,
       imageGalleryPopover.tbComponentRef.instance.imageSelected.subscribe((image) => {
         imageGalleryPopover.hide();
         this.linkType = ImageLinkType.resource;
-        this.imageUrl = image.link;
         this.imageResource = image;
-        this.updateModel();
+        this.updateModel(image.link);
       });
     }
   }
