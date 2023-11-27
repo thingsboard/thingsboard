@@ -213,18 +213,16 @@ public class TbUtils {
     private static byte[] bytesFromList(List<?> bytesList) {
         byte[] bytes = new byte[bytesList.size()];
         for (int i = 0; i < bytesList.size(); i++) {
-            if (bytesList.get(i) instanceof Integer) {
-                byte val = ((Integer) bytesList.get(i)).byteValue();
-                if (((Integer) bytesList.get(i)).intValue() > 255 || ((Integer) bytesList.get(i)).intValue() < -128){
-                    throw new NumberFormatException("The value " + bytesList.get(i) + " could not be converted to a byte. Integer to byte needs only 8-bits (min/max = -128/127 or 0/255) !");
-                } else {
-                    bytes[i] = val;                }
-            } else if (bytesList.get(i) instanceof String) {
-                bytes[i] = parseInt((String) bytesList.get(i)).byteValue();
-            } else if (bytesList.get(i) instanceof Byte) {
-                bytes[i] = (byte) bytesList.get(i);
+            Object objectVal = bytesList.get(i);
+            if (objectVal instanceof Integer) {
+                bytes[i] = isValidIntegerToByte((Integer) objectVal);
+            } else if (objectVal instanceof String) {
+                bytes[i] = isValidIntegerToByte(parseInt((String) objectVal));
+            } else if (objectVal instanceof Byte) {
+                bytes[i] = (byte) objectVal;
             } else {
-                throw new NumberFormatException("Value \"" + bytesList.get(i) + " could not be converted to a byte. Must be format HexDecimal/String/Integer !");
+                throw new NumberFormatException("The value '" + objectVal + "' could not be correctly converted to a byte. " +
+                        "Must be a HexDecimal/String/Integer/Byte format !");
             }
         }
         return bytes;
@@ -655,7 +653,7 @@ public class TbUtils {
         }
     }
 
-    public static boolean isValidRadix(String value, int radix) {
+    private static boolean isValidRadix(String value, int radix) {
         for (int i = 0; i < value.length(); i++) {
             if (i == 0 && value.charAt(i) == '-') {
                 if (value.length() == 1)
@@ -669,4 +667,12 @@ public class TbUtils {
         return true;
     }
 
+    private static byte isValidIntegerToByte (Integer val) {
+        if (val > 255 || val.intValue() < -128) {
+            throw new NumberFormatException("The value '" + val + "' could not be correctly converted to a byte. " +
+                    "Integer to byte conversion requires the use of only 8 bits (with a range of min/max = -128/255)!");
+        } else {
+            return val.byteValue();
+        }
+    }
 }
