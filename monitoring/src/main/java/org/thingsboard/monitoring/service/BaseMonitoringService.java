@@ -15,6 +15,7 @@
  */
 package org.thingsboard.monitoring.service;
 
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -29,9 +30,14 @@ import org.thingsboard.monitoring.service.transport.TransportHealthChecker;
 import org.thingsboard.monitoring.util.TbStopWatch;
 
 import javax.annotation.PostConstruct;
+import java.net.InetAddress;
+import java.net.URI;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T extends MonitoringTarget> {
@@ -60,13 +66,34 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
         tbClient.logIn();
         configs.forEach(config -> {
             config.getTargets().forEach(target -> {
-                BaseHealthChecker<C, T> healthChecker = (BaseHealthChecker<C, T>) createHealthChecker(config, target);
-                log.info("Initializing {}", healthChecker.getClass().getSimpleName());
-                healthChecker.initialize(tbClient);
-                devices.add(target.getDeviceId());
-                healthCheckers.add(healthChecker);
+                initHealthChecker(target, config);
+                if (target.isCheckDomainIps()) {
+                    initIpsHealthCheckers(target, config);
+                }
             });
         });
+    }
+
+    private void initHealthChecker(T target, C config) {
+        BaseHealthChecker<C, T> healthChecker = (BaseHealthChecker<C, T>) createHealthChecker(config, target);
+        log.info("Initializing {} for {}", healthChecker.getClass().getSimpleName(), target.getBaseUrl());
+        healthChecker.initialize(tbClient);
+        devices.add(target.getDeviceId());
+        healthCheckers.add(healthChecker);
+    }
+
+    @SneakyThrows
+    private void initIpsHealthCheckers(T target, C config) {
+        URI baseUrl = new URI(target.getBaseUrl());
+        String domain = baseUrl.getHost();
+
+        Set<String> ips = Arrays.stream(InetAddress.getAllByName(domain))
+                .map(InetAddress::getHostAddress)
+                .collect(Collectors.toSet());
+        for (String ip : ips) {
+            String url = new URI(baseUrl.getScheme(), null, ip, baseUrl.getPort(), "", null, null).toString();
+            initHealthChecker(createTarget(url), config);
+        }
     }
 
     public final void runChecks() {
@@ -98,6 +125,8 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
     }
 
     protected abstract BaseHealthChecker<?, ?> createHealthChecker(C config, T target);
+
+    protected abstract T createTarget(String baseUrl);
 
     protected abstract String getName();
 
