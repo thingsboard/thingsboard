@@ -423,13 +423,33 @@ public class TbUtilsTest {
             Assert.assertTrue(e.getMessage().contains("Failed radix: [10] for value: \"1F\"!"));
         }
 
+        List<String> listIntString = new ArrayList<>();
+        listIntString.add("-129");
+        try {
+            TbUtils.bytesToString(listIntString);
+            Assert.fail("Should throw NumberFormatException");
+        } catch (NumberFormatException e) {
+            Assert.assertTrue(e.getMessage().contains("The value '-129' could not be correctly converted to a byte. " +
+                    "Integer to byte conversion requires the use of only 8 bits (with a range of min/max = -128/255)!"));
+        }
+
+        listIntString.add(0, "256");
+        try {
+            TbUtils.bytesToString(listIntString);
+            Assert.fail("Should throw NumberFormatException");
+        } catch (NumberFormatException e) {
+            Assert.assertTrue(e.getMessage().contains("The value '256' could not be correctly converted to a byte. " +
+                    "Integer to byte conversion requires the use of only 8 bits (with a range of min/max = -128/255)!"));
+        }
+
         ArrayList<Integer> listIntBytes = new ArrayList<>();
         listIntBytes.add(-129);
         try {
             TbUtils.bytesToString(listIntBytes);
             Assert.fail("Should throw NumberFormatException");
         } catch (NumberFormatException e) {
-            Assert.assertTrue(e.getMessage().contains("The value -129 could not be converted to a byte. Integer to byte needs only 8-bits (min/max = -128/127 or 0/255"));
+            Assert.assertTrue(e.getMessage().contains("The value '-129' could not be correctly converted to a byte. " +
+                    "Integer to byte conversion requires the use of only 8 bits (with a range of min/max = -128/255)!"));
         }
 
         listIntBytes.add(0, 256);
@@ -437,7 +457,20 @@ public class TbUtilsTest {
             TbUtils.bytesToString(listIntBytes);
             Assert.fail("Should throw NumberFormatException");
         } catch (NumberFormatException e) {
-            Assert.assertTrue(e.getMessage().contains("The value 256 could not be converted to a byte. Integer to byte needs only 8-bits (min/max = -128/127 or 0/255"));
+            Assert.assertTrue(e.getMessage().contains("The value '256' could not be correctly converted to a byte. " +
+                    "Integer to byte conversion requires the use of only 8 bits (with a range of min/max = -128/255)!"));
+        }
+
+        ArrayList<Object> listObjects = new ArrayList<>();
+        ArrayList<String> listStringObjects = new ArrayList<>();
+        listStringObjects.add("0xFD");
+        listObjects.add(listStringObjects);
+        try {
+            TbUtils.bytesToString(listObjects);
+            Assert.fail("Should throw NumberFormatException");
+        } catch (NumberFormatException e) {
+            Assert.assertTrue(e.getMessage().contains("The value '[0xFD]' could not be correctly converted to a byte. " +
+                    "Must be a HexDecimal/String/Integer/Byte format !"));
         }
     }
 
