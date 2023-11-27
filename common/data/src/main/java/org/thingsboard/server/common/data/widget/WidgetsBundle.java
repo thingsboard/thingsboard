@@ -60,12 +60,13 @@ public class WidgetsBundle extends BaseData<WidgetsBundleId> implements HasName,
     @Length(fieldName = "image", max = 1000000)
     @Getter
     @Setter
-    @ApiModelProperty(position = 6, value = "Base64 encoded thumbnail", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @ApiModelProperty(position = 6, value = "Relative or external image URL. Replaced with image data URL (Base64) in case of relative URL and 'inlineImages' option enabled.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String image;
 
     @NoXss
     @Length(fieldName = "description", max = 1024)
     @Getter
+
     @Setter
     @ApiModelProperty(position = 7, value = "Description", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String description;

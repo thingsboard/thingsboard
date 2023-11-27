@@ -32,6 +32,9 @@ public class ControllerConstants {
     protected static final String PAGE_DATA_PARAMETERS = "You can specify parameters to filter the results. " +
             "The result is wrapped with PageData object that allows you to iterate over result set using pagination. " +
             "See the 'Model' tab of the Response Class for more details. ";
+
+    protected static final String INLINE_IMAGES = "inlineImages";
+    protected static final String INLINE_IMAGES_DESCRIPTION = "Inline images as a data URL (Base64)";
     protected static final String DASHBOARD_ID_PARAM_DESCRIPTION = "A string value representing the dashboard id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     protected static final String RPC_ID_PARAM_DESCRIPTION = "A string value representing the rpc id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     protected static final String DEVICE_ID_PARAM_DESCRIPTION = "A string value representing the device id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";

@@ -15,11 +15,16 @@
  */
 package org.thingsboard.server.service.resource;
 
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.TbImageDeleteResult;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
+import org.thingsboard.server.common.data.widget.WidgetsBundle;
 
 public interface TbImageService {
 
@@ -34,4 +39,14 @@ public interface TbImageService {
     void putETag(ImageCacheKey imageCacheKey, String etag);
 
     void evictETag(ImageCacheKey imageCacheKey);
+
+    void inlineImages(Dashboard entity);
+
+    void inlineImages(WidgetTypeDetails entity);
+
+    void inlineImages(WidgetsBundle entity);
+
+    void inlineImages(AssetProfile entity);
+
+    void inlineImages(DeviceProfile entity);
 }

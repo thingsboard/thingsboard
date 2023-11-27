@@ -53,6 +53,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.dashboard.TbDashboardService;
+import org.thingsboard.server.service.resource.TbImageService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
@@ -74,6 +75,8 @@ import static org.thingsboard.server.controller.ControllerConstants.EDGE_ID;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_UNASSIGN_ASYNC_FIRST_STEP_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.INLINE_IMAGES;
+import static org.thingsboard.server.controller.ControllerConstants.INLINE_IMAGES_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
@@ -94,6 +97,7 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 public class DashboardController extends BaseController {
 
     private final TbDashboardService tbDashboardService;
+    private final TbImageService tbImageService;
     public static final String DASHBOARD_ID = "dashboardId";
 
     private static final String HOME_DASHBOARD_ID = "homeDashboardId";
@@ -153,10 +157,16 @@ public class DashboardController extends BaseController {
     @ResponseBody
     public Dashboard getDashboardById(
             @ApiParam(value = DASHBOARD_ID_PARAM_DESCRIPTION)
-            @PathVariable(DASHBOARD_ID) String strDashboardId) throws ThingsboardException {
+            @PathVariable(DASHBOARD_ID) String strDashboardId,
+            @ApiParam(value = INLINE_IMAGES_DESCRIPTION)
+            @RequestParam(value = INLINE_IMAGES, required = false) boolean inlineImages) throws ThingsboardException {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
-        return checkDashboardId(dashboardId, Operation.READ);
+        var result = checkDashboardId(dashboardId, Operation.READ);
+        if (inlineImages) {
+            tbImageService.inlineImages(result);
+        }
+        return result;
     }
 
     @ApiOperation(value = "Create Or Update Dashboard (saveDashboard)",

@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.asset.profile.TbAssetProfileService;
+import org.thingsboard.server.service.resource.TbImageService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
@@ -45,6 +46,8 @@ import static org.thingsboard.server.controller.ControllerConstants.ASSET_PROFIL
 import static org.thingsboard.server.controller.ControllerConstants.ASSET_PROFILE_INFO_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ASSET_PROFILE_SORT_PROPERTY_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.ASSET_PROFILE_TEXT_SEARCH_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.INLINE_IMAGES;
+import static org.thingsboard.server.controller.ControllerConstants.INLINE_IMAGES_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
@@ -64,6 +67,7 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 public class AssetProfileController extends BaseController {
 
     private final TbAssetProfileService tbAssetProfileService;
+    private final TbImageService tbImageService;
 
     @ApiOperation(value = "Get Asset Profile (getAssetProfileById)",
             notes = "Fetch the Asset Profile object based on the provided Asset Profile Id. " +
@@ -74,10 +78,16 @@ public class AssetProfileController extends BaseController {
     @ResponseBody
     public AssetProfile getAssetProfileById(
             @ApiParam(value = ASSET_PROFILE_ID_PARAM_DESCRIPTION)
-            @PathVariable(ASSET_PROFILE_ID) String strAssetProfileId) throws ThingsboardException {
+            @PathVariable(ASSET_PROFILE_ID) String strAssetProfileId,
+            @ApiParam(value = INLINE_IMAGES_DESCRIPTION)
+            @RequestParam(value = INLINE_IMAGES, required = false) boolean inlineImages) throws ThingsboardException {
         checkParameter(ASSET_PROFILE_ID, strAssetProfileId);
         AssetProfileId assetProfileId = new AssetProfileId(toUUID(strAssetProfileId));
-        return checkAssetProfileId(assetProfileId, Operation.READ);
+        var result = checkAssetProfileId(assetProfileId, Operation.READ);
+        if (inlineImages) {
+            tbImageService.inlineImages(result);
+        }
+        return result;
     }
 
     @ApiOperation(value = "Get Asset Profile Info (getAssetProfileInfoById)",

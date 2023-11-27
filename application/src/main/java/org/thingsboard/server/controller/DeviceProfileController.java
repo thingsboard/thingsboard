@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.device.profile.TbDeviceProfileService;
+import org.thingsboard.server.service.resource.TbImageService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
@@ -52,6 +53,8 @@ import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFI
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFILE_INFO_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFILE_SORT_PROPERTY_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFILE_TEXT_SEARCH_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.INLINE_IMAGES;
+import static org.thingsboard.server.controller.ControllerConstants.INLINE_IMAGES_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
@@ -72,6 +75,7 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 public class DeviceProfileController extends BaseController {
 
     private final TbDeviceProfileService tbDeviceProfileService;
+    private final TbImageService tbImageService;
 
     @Autowired
     private TimeseriesService timeseriesService;
@@ -85,10 +89,16 @@ public class DeviceProfileController extends BaseController {
     @ResponseBody
     public DeviceProfile getDeviceProfileById(
             @ApiParam(value = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
-            @PathVariable(DEVICE_PROFILE_ID) String strDeviceProfileId) throws ThingsboardException {
+            @PathVariable(DEVICE_PROFILE_ID) String strDeviceProfileId,
+            @ApiParam(value = INLINE_IMAGES_DESCRIPTION)
+            @RequestParam(value = INLINE_IMAGES, required = false) boolean inlineImages) throws ThingsboardException {
         checkParameter(DEVICE_PROFILE_ID, strDeviceProfileId);
         DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
-        return checkDeviceProfileId(deviceProfileId, Operation.READ);
+        var result = checkDeviceProfileId(deviceProfileId, Operation.READ);
+        if (inlineImages) {
+            tbImageService.inlineImages(result);
+        }
+        return result;
     }
 
     @ApiOperation(value = "Get Device Profile Info (getDeviceProfileInfoById)",
