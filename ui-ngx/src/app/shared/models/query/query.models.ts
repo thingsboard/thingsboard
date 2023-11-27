@@ -54,7 +54,10 @@ export const entityKeyTypeTranslationMap = new Map<EntityKeyType, string>(
     [EntityKeyType.ATTRIBUTE, 'filter.key-type.attribute'],
     [EntityKeyType.TIME_SERIES, 'filter.key-type.timeseries'],
     [EntityKeyType.ENTITY_FIELD, 'filter.key-type.entity-field'],
-    [EntityKeyType.CONSTANT, 'filter.key-type.constant']
+    [EntityKeyType.CONSTANT, 'filter.key-type.constant'],
+    [EntityKeyType.CLIENT_ATTRIBUTE, 'filter.key-type.client-attribute'],
+    [EntityKeyType.SERVER_ATTRIBUTE, 'filter.key-type.server-attribute'],
+    [EntityKeyType.SHARED_ATTRIBUTE, 'filter.key-type.shared-attribute']
   ]
 );
 

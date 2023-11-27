@@ -54,6 +54,7 @@ public class DefaultTbTenantService extends AbstractTbEntityService implements T
         if (created) {
             installScripts.createDefaultRuleChains(savedTenant.getId());
             installScripts.createDefaultEdgeRuleChains(savedTenant.getId());
+            installScripts.createDefaultTenantDashboards(savedTenant.getId(), null);
         }
         tenantProfileCache.evict(savedTenant.getId());
         notificationEntityService.notifyCreateOrUpdateTenant(savedTenant, created ?

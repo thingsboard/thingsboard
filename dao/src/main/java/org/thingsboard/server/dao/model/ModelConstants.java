@@ -302,6 +302,7 @@ public class ModelConstants {
     public static final String WIDGETS_BUNDLE_TITLE_PROPERTY = TITLE_PROPERTY;
     public static final String WIDGETS_BUNDLE_IMAGE_PROPERTY = "image";
     public static final String WIDGETS_BUNDLE_DESCRIPTION = "description";
+    public static final String WIDGETS_BUNDLE_ORDER = "widgets_bundle_order";
 
     /**
      * Widget_type constants.

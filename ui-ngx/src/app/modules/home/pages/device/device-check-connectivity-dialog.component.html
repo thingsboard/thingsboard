@@ -228,31 +228,6 @@
           <mat-tab-group [(selectedIndex)]="coapTabIndex">
             <mat-tab>
               <ng-template mat-tab-label>
-                <mat-icon class="tabs-icon" svgIcon="macos"></mat-icon>
-                MacOS
-              </ng-template>
-              <ng-template matTabContent>
-                <div class="tb-form-panel no-padding no-border tb-tab-body">
-                  <div class="tb-form-panel stroked" *ngIf="commands.coap.coaps !== 'Check documentation'">
-                    <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
-                    <div class="tb-install-instruction-text">
-                      <ng-container *ngTemplateOutlet="seeDocumentation; context:
-                        {doc: {text: 'device.connectivity.install-coap-client',
-                        href: 'https://thingsboard.io/docs/user-guide/ssl/coap-access-token/'}}">
-                      </ng-container>
-                    </div>
-                  </div>
-                  <ng-container
-                    *ngTemplateOutlet="executeCommand; context: {cmd: {
-                              noSecLabel: 'CoAP', noSec: commands.coap.coap,
-                              secLabel: 'CoAPs', sec: commands.coap.coaps,
-                              doc: {text: 'device.connectivity.coaps-x509-command', href: 'https://thingsboard.io/docs/user-guide/ssl/coap-x509-certificates/'}}}">
-                  </ng-container>
-                </div>
-              </ng-template>
-            </mat-tab>
-            <mat-tab>
-              <ng-template mat-tab-label>
                 <mat-icon class="tabs-icon" svgIcon="linux"></mat-icon>
                 Linux
               </ng-template>

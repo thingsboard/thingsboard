@@ -34,6 +34,9 @@ import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -289,6 +292,39 @@ public class AssetControllerTest extends AbstractControllerTest {
         doGet("/api/asset/" + assetIdStr)
                 .andExpect(status().isNotFound())
                 .andExpect(statusReason(containsString(msgErrorNoFound("Asset", assetIdStr))));
+    }
+
+    @Test
+    public void testDeleteAssetWithAlarmsAndAlarmTypes() throws Exception {
+        Asset asset = new Asset();
+        asset.setName("My asset");
+        asset.setType("default");
+        Asset savedAsset = doPost("/api/asset", asset, Asset.class);
+
+        Alarm alarm = Alarm.builder()
+                .tenantId(tenantId)
+                .originator(savedAsset.getId())
+                .severity(AlarmSeverity.CRITICAL)
+                .type("test_type")
+                .build();
+
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+        Assert.assertNotNull(alarm);
+
+        AlarmInfo foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
+        Assert.assertNotNull(foundAlarm);
+
+        doDelete("/api/asset/" + savedAsset.getId().getId().toString())
+                .andExpect(status().isOk());
+
+        String assetIdStr = savedAsset.getId().getId().toString();
+        doGet("/api/asset/" + assetIdStr)
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(containsString(msgErrorNoFound("Asset", assetIdStr))));
+
+        doGet("/api/alarm/info/" + alarm.getId())
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(containsString(msgErrorNoFound("Alarm", alarm.getId().getId().toString()))));
     }
 
     @Test

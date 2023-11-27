@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.common.data.widget.WidgetsBundleWidget;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.WidgetTypeDetailsEntity;
+import org.thingsboard.server.dao.model.sql.WidgetTypeInfoEntity;
 import org.thingsboard.server.dao.model.sql.WidgetsBundleWidgetCompositeKey;
 import org.thingsboard.server.dao.model.sql.WidgetsBundleWidgetEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
@@ -91,13 +92,13 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
                 widgetTypeInfoRepository
                         .findSystemWidgetTypes(
                                 NULL_UUID,
-                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getTextSearch(),
                                 fullSearch,
                                 deprecatedFilterEnabled,
                                 deprecatedFilterBool,
                                 widgetTypesEmpty,
                                 widgetTypes == null ? Collections.emptyList() : widgetTypes,
-                                DaoUtil.toPageable(pageLink)));
+                                DaoUtil.toPageable(pageLink, WidgetTypeInfoEntity.SEARCH_COLUMNS_MAP)));
     }
 
     @Override
@@ -110,13 +111,13 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
                         .findAllTenantWidgetTypesByTenantId(
                                 tenantId,
                                 NULL_UUID,
-                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getTextSearch(),
                                 fullSearch,
                                 deprecatedFilterEnabled,
                                 deprecatedFilterBool,
                                 widgetTypesEmpty,
                                 widgetTypes == null ? Collections.emptyList() : widgetTypes,
-                                DaoUtil.toPageable(pageLink)));
+                                DaoUtil.toPageable(pageLink, WidgetTypeInfoEntity.SEARCH_COLUMNS_MAP)));
     }
 
     @Override
@@ -128,13 +129,13 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
                 widgetTypeInfoRepository
                         .findTenantWidgetTypesByTenantId(
                                 tenantId,
-                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getTextSearch(),
                                 fullSearch,
                                 deprecatedFilterEnabled,
                                 deprecatedFilterBool,
                                 widgetTypesEmpty,
                                 widgetTypes == null ? Collections.emptyList() : widgetTypes,
-                                DaoUtil.toPageable(pageLink)));
+                                DaoUtil.toPageable(pageLink, WidgetTypeInfoEntity.SEARCH_COLUMNS_MAP)));
     }
 
     @Override
@@ -162,7 +163,7 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
                                 deprecatedFilterBool,
                                 widgetTypesEmpty,
                                 widgetTypes == null ? Collections.emptyList() : widgetTypes,
-                                DaoUtil.toPageable(pageLink)));
+                                DaoUtil.toPageable(pageLink, WidgetTypeInfoEntity.SEARCH_COLUMNS_MAP)));
     }
 
     @Override
@@ -199,7 +200,7 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
                 widgetTypeRepository
                         .findTenantWidgetTypeDetailsByTenantId(
                                 tenantId,
-                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getTextSearch(),
                                 DaoUtil.toPageable(pageLink)));
     }
 

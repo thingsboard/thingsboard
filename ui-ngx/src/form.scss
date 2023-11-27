@@ -225,6 +225,13 @@
         margin-left: 12px;
       }
     }
+    .tb-small-label {
+      height: 40px;
+      font-size: 14px;
+      line-height: 40px;
+      letter-spacing: 0.2px;
+      color: rgba(0, 0, 0, 0.38);
+    }
   }
 
   .tb-form-row:not(.tb-standard-fields) .mat-mdc-form-field:not(.tb-not-inline-field), .mat-mdc-form-field.tb-inline-field {
@@ -361,14 +368,20 @@
       .mat-mdc-text-field-wrapper {
         .mat-mdc-form-field-icon-suffix {
           padding: 0;
-          display: none;
+          display: flex;
+          align-items: center;
+
+          > *:not(.tb-suffix-show-always) {
+            display: none;
+          }
         }
       }
       &:hover {
         .mat-mdc-text-field-wrapper {
           .mat-mdc-form-field-icon-suffix {
-            display: flex;
-            align-items: center;
+            > * {
+              display: block;
+            }
           }
         }
       }

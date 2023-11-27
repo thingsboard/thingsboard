@@ -45,6 +45,9 @@ public class WidgetsBundleMsgConstructor {
         if (widgetsBundle.getDescription() != null) {
             builder.setDescription(widgetsBundle.getDescription());
         }
+        if (widgetsBundle.getOrder() != null) {
+            builder.setOrder(widgetsBundle.getOrder());
+        }
         if (widgetsBundle.getTenantId().equals(TenantId.SYS_TENANT_ID)) {
             builder.setIsSystem(true);
         }

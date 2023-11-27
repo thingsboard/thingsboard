@@ -29,6 +29,10 @@ public class EntityIdFactory {
         return getByTypeAndUuid(EntityType.values()[type], UUID.fromString(uuid));
     }
 
+    public static EntityId getByTypeAndUuid(int type, UUID uuid) {
+        return getByTypeAndUuid(EntityType.values()[type], uuid);
+    }
+
     public static EntityId getByTypeAndUuid(String type, String uuid) {
         return getByTypeAndUuid(EntityType.valueOf(type), UUID.fromString(uuid));
     }
@@ -139,6 +143,8 @@ public class EntityIdFactory {
                 return new EdgeId(uuid);
             case QUEUE:
                 return new QueueId(uuid);
+            case TB_RESOURCE:
+                return new TbResourceId(uuid);
         }
         throw new IllegalArgumentException("EdgeEventType " + edgeEventType + " is not supported!");
     }

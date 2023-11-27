@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.edge.rpc.constructor.rule;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNode;
@@ -45,7 +44,7 @@ public class RuleChainMetadataConstructorV330 extends AbstractRuleChainMetadataC
     @Override
     protected void constructRuleChainMetadataUpdatedMsg(TenantId tenantId,
                                                         RuleChainMetadataUpdateMsg.Builder builder,
-                                                        RuleChainMetaData ruleChainMetaData) throws JsonProcessingException {
+                                                        RuleChainMetaData ruleChainMetaData) {
         List<RuleNode> supportedNodes = filterNodes(ruleChainMetaData.getNodes());
 
         NavigableSet<Integer> removedNodeIndexes = getRemovedNodeIndexes(ruleChainMetaData.getNodes(), ruleChainMetaData.getConnections());
