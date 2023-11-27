@@ -155,6 +155,11 @@ export class Marker {
         if (this.settings.icon) {
           onMarkerIconReady(this.settings.icon);
           return;
+        } else if (this.settings.icon$) {
+          this.settings.icon$.subscribe((res) => {
+            onMarkerIconReady(res);
+          });
+          return;
         }
         const currentImage: MarkerImageInfo = this.settings.useMarkerImageFunction ?
             safeExecute(this.settings.parsedMarkerImageFunction,

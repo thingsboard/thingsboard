@@ -68,6 +68,7 @@
     <div *ngIf="linkType === ImageLinkType.none && !disabled" class="tb-image-select-buttons-container">
       <button #browseGalleryButton
               mat-stroked-button
+              type="button"
               color="primary"
               class="tb-image-select-button"
               (click)="toggleGallery($event, browseGalleryButton)">
@@ -75,6 +76,7 @@
         <span translate>image.browse-from-gallery</span>
       </button>
       <button mat-stroked-button
+              type="button"
               color="primary"
               class="tb-image-select-button"
               (click)="setLink($event)">

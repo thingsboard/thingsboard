@@ -22,6 +22,14 @@ import { SHARED_HOME_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
 import { AlarmCommentComponent } from '@home/components/alarm/alarm-comment.component';
 import { AlarmCommentDialogComponent } from '@home/components/alarm/alarm-comment-dialog.component';
 import { AlarmAssigneeComponent } from '@home/components/alarm/alarm-assignee.component';
+import { ScrollGridComponent } from '@home/components/grid/scroll-grid.component';
+import { ImageGalleryComponent } from '@home/components/image/image-gallery.component';
+import { UploadImageDialogComponent } from '@home/components/image/upload-image-dialog.component';
+import { ImageDialogComponent } from '@home/components/image/image-dialog.component';
+import { ImageReferencesComponent } from '@home/components/image/image-references.component';
+import { ImagesInUseDialogComponent } from '@home/components/image/images-in-use-dialog.component';
+import { GalleryImageInputComponent } from '@home/components/image/gallery-image-input.component';
+import { MultipleGalleryImageInputComponent } from '@home/components/image/multiple-gallery-image-input.component';
 
 @NgModule({
   providers: [
@@ -32,7 +40,15 @@ import { AlarmAssigneeComponent } from '@home/components/alarm/alarm-assignee.co
       AlarmDetailsDialogComponent,
       AlarmCommentComponent,
       AlarmCommentDialogComponent,
-      AlarmAssigneeComponent
+      AlarmAssigneeComponent,
+      ScrollGridComponent,
+      ImageGalleryComponent,
+      UploadImageDialogComponent,
+      ImageDialogComponent,
+      ImageReferencesComponent,
+      ImagesInUseDialogComponent,
+      GalleryImageInputComponent,
+      MultipleGalleryImageInputComponent
     ],
   imports: [
     CommonModule,
@@ -42,7 +58,15 @@ import { AlarmAssigneeComponent } from '@home/components/alarm/alarm-assignee.co
     AlarmDetailsDialogComponent,
     AlarmCommentComponent,
     AlarmCommentDialogComponent,
-    AlarmAssigneeComponent
+    AlarmAssigneeComponent,
+    ScrollGridComponent,
+    ImageGalleryComponent,
+    UploadImageDialogComponent,
+    ImageDialogComponent,
+    ImageReferencesComponent,
+    ImagesInUseDialogComponent,
+    GalleryImageInputComponent,
+    MultipleGalleryImageInputComponent
   ]
 })
 export class SharedHomeComponentsModule { }

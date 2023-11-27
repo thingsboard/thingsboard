@@ -17,6 +17,7 @@
 import { Datasource, FormattedData } from '@app/shared/models/widget.models';
 import tinycolor from 'tinycolor2';
 import { BaseIconOptions, Icon } from 'leaflet';
+import { Observable } from 'rxjs';
 
 export const DEFAULT_MAP_PAGE_SIZE = 16384;
 export const DEFAULT_ZOOM_LEVEL = 8;
@@ -337,6 +338,7 @@ export interface WidgetMarkersSettings extends MarkersSettings, WidgetToolipSett
   currentImage: MarkerImageInfo;
   tinyColor: tinycolor.Instance;
   icon: MarkerIconInfo;
+  icon$?: Observable<MarkerIconInfo>;
 }
 
 export const defaultMarkersSettings: MarkersSettings = {
