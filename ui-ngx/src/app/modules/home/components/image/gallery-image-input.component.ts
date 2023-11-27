@@ -40,7 +40,7 @@ import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { ImageGalleryComponent } from '@home/components/image/image-gallery.component';
 
-enum ImageLinkType {
+export enum ImageLinkType {
   none = 'none',
   base64 = 'base64',
   external = 'external',

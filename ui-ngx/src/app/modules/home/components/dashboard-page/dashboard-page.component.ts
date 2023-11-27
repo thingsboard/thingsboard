@@ -668,12 +668,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     }
   }
 
-  public get dashboardLogo(): SafeUrl {
-    if (!this.dashboardLogoCache) {
-      const logo = this.dashboard.configuration.settings.dashboardLogoUrl || this.defaultDashboardLogo;
-      this.dashboardLogoCache = this.sanitizer.bypassSecurityTrustUrl(logo);
-    }
-    return this.dashboardLogoCache;
+  public get dashboardLogo(): string {
+    return this.dashboard.configuration.settings.dashboardLogoUrl || this.defaultDashboardLogo;
   }
 
   public showRightLayoutSwitch(): boolean {

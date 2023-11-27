@@ -181,13 +181,6 @@ import { DeleteTimeseriesPanelComponent } from '@home/components/attribute/delet
 import {
   ExportWidgetsBundleDialogComponent
 } from '@home/components/import-export/export-widgets-bundle-dialog.component';
-import { ScrollGridComponent } from '@home/components/grid/scroll-grid.component';
-import { ImageGalleryComponent } from '@home/components/image/image-gallery.component';
-import { UploadImageDialogComponent } from '@home/components/image/upload-image-dialog.component';
-import { ImageDialogComponent } from '@home/components/image/image-dialog.component';
-import { ImagesInUseDialogComponent } from '@home/components/image/images-in-use-dialog.component';
-import { ImageReferencesComponent } from '@home/components/image/image-references.component';
-import { GalleryImageInputComponent } from '@home/components/image/gallery-image-input.component';
 
 @NgModule({
   declarations:
@@ -332,14 +325,7 @@ import { GalleryImageInputComponent } from '@home/components/image/gallery-image
       RateLimitsComponent,
       RateLimitsTextComponent,
       RateLimitsDetailsDialogComponent,
-      SendNotificationButtonComponent,
-      ScrollGridComponent,
-      ImageGalleryComponent,
-      UploadImageDialogComponent,
-      ImageDialogComponent,
-      ImageReferencesComponent,
-      ImagesInUseDialogComponent,
-      GalleryImageInputComponent
+      SendNotificationButtonComponent
     ],
   imports: [
     CommonModule,
@@ -477,14 +463,7 @@ import { GalleryImageInputComponent } from '@home/components/image/gallery-image
     RateLimitsComponent,
     RateLimitsTextComponent,
     RateLimitsDetailsDialogComponent,
-    SendNotificationButtonComponent,
-    ScrollGridComponent,
-    ImageGalleryComponent,
-    UploadImageDialogComponent,
-    ImageDialogComponent,
-    ImageReferencesComponent,
-    ImagesInUseDialogComponent,
-    GalleryImageInputComponent
+    SendNotificationButtonComponent
   ],
   providers: [
     WidgetComponentService,
