@@ -37,6 +37,11 @@ public class TbAlarmResult {
     }
 
     public static TbAlarmResult fromAlarmResult(AlarmApiCallResult result) {
-        return new TbAlarmResult(result.isCreated(), result.isModified(), result.isSeverityChanged(), result.isCleared(), result.getAlarm());
+        return new TbAlarmResult(
+                result.isCreated(),
+                result.isModified() && !result.isSeverityChanged(),
+                result.isSeverityChanged(),
+                result.isCleared(),
+                result.getAlarm());
     }
 }

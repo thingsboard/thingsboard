@@ -14,12 +14,11 @@
 # limitations under the License.
 #
 
-FROM thingsboard/openjdk17:bullseye-slim
+FROM thingsboard/openjdk17:bookworm-slim
 
 COPY start-tb-node.sh ${pkg.name}.deb /tmp/
 
-RUN echo 'networkaddress.cache.ttl=60' >> /etc/java-17-openjdk/security/java.security \
-    && chmod a+x /tmp/*.sh \
+RUN chmod a+x /tmp/*.sh \
     && mv /tmp/start-tb-node.sh /usr/bin && \
     (yes | dpkg -i /tmp/${pkg.name}.deb) && \
     rm /tmp/${pkg.name}.deb && \

@@ -44,6 +44,8 @@ import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestInfo;
 import org.thingsboard.server.common.data.notification.NotificationRequestPreview;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
+import org.thingsboard.server.common.data.notification.settings.UserNotificationSettings;
+import org.thingsboard.server.common.data.notification.targets.MicrosoftTeamsNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.NotificationTargetType;
@@ -294,15 +296,27 @@ public class NotificationController extends BaseController {
             int recipientsCount;
             List<NotificationRecipient> recipientsPart;
             NotificationTargetType targetType = target.getConfiguration().getType();
-            if (targetType == NotificationTargetType.PLATFORM_USERS) {
-                PageData<User> recipients = notificationTargetService.findRecipientsForNotificationTargetConfig(user.getTenantId(),
-                        (PlatformUsersNotificationTargetConfig) target.getConfiguration(), new PageLink(recipientsPreviewSize, 0, null,
-                                new SortOrder("createdTime", SortOrder.Direction.DESC)));
-                recipientsCount = (int) recipients.getTotalElements();
-                recipientsPart = recipients.getData().stream().map(r -> (NotificationRecipient) r).collect(Collectors.toList());
-            } else {
-                recipientsCount = 1;
-                recipientsPart = List.of(((SlackNotificationTargetConfig) target.getConfiguration()).getConversation());
+            switch (targetType) {
+                case PLATFORM_USERS: {
+                    PageData<User> recipients = notificationTargetService.findRecipientsForNotificationTargetConfig(user.getTenantId(),
+                            (PlatformUsersNotificationTargetConfig) target.getConfiguration(), new PageLink(recipientsPreviewSize, 0, null,
+                                    SortOrder.BY_CREATED_TIME_DESC));
+                    recipientsCount = (int) recipients.getTotalElements();
+                    recipientsPart = recipients.getData().stream().map(r -> (NotificationRecipient) r).collect(Collectors.toList());
+                    break;
+                }
+                case SLACK: {
+                    recipientsCount = 1;
+                    recipientsPart = List.of(((SlackNotificationTargetConfig) target.getConfiguration()).getConversation());
+                    break;
+                }
+                case MICROSOFT_TEAMS: {
+                    recipientsCount = 1;
+                    recipientsPart = List.of(((MicrosoftTeamsNotificationTargetConfig) target.getConfiguration()));
+                    break;
+                }
+                default:
+                    throw new IllegalArgumentException("Target type " + targetType + " not supported");
             }
             firstRecipient.putIfAbsent(targetType, !recipientsPart.isEmpty() ? recipientsPart.get(0) : null);
             for (NotificationRecipient recipient : recipientsPart) {
@@ -431,10 +445,23 @@ public class NotificationController extends BaseController {
             notes = "Returns the list of delivery methods that are properly configured and are allowed to be used for sending notifications." +
                     SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @GetMapping("/notification/deliveryMethods")
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public Set<NotificationDeliveryMethod> getAvailableDeliveryMethods(@AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
-        accessControlService.checkPermission(user, Resource.ADMIN_SETTINGS, Operation.READ);
         return notificationCenter.getAvailableDeliveryMethods(user.getTenantId());
+    }
+
+
+    @PostMapping("/notification/settings/user")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    public UserNotificationSettings saveUserNotificationSettings(@RequestBody @Valid UserNotificationSettings settings,
+                                                                 @AuthenticationPrincipal SecurityUser user) {
+        return notificationSettingsService.saveUserNotificationSettings(user.getTenantId(), user.getId(), settings);
+    }
+
+    @GetMapping("/notification/settings/user")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    public UserNotificationSettings getUserNotificationSettings(@AuthenticationPrincipal SecurityUser user) {
+        return notificationSettingsService.getUserNotificationSettings(user.getTenantId(), user.getId(), true);
     }
 
 }

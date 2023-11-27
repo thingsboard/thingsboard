@@ -69,6 +69,9 @@
           <mat-option [value]="'JSON'">
             {{ 'widgets.input-widgets.datakey-value-type-json' | translate }}
           </mat-option>
+          <mat-option [value]="'color'">
+            {{ 'widgets.input-widgets.datakey-value-type-color' | translate }}
+          </mat-option>
         </mat-select>
       </mat-form-field>
     </section>
@@ -90,9 +93,34 @@
           </mat-option>
         </mat-select>
       </mat-form-field>
-      <mat-form-field [fxShow]="updateMultipleAttributesKeySettingsForm.get('isEditable').value !== 'disabled'" fxFlex="50" class="mat-block">
+      <mat-form-field [fxShow]="updateMultipleAttributesKeySettingsForm.get('isEditable').value === 'editable'" fxFlex="50" class="mat-block">
         <mat-label translate>widgets.input-widgets.disable-on-datakey-name</mat-label>
         <input matInput formControlName="disabledOnDataKey">
+      </mat-form-field>
+    </section>
+    <section *ngIf="!['booleanSwitch', 'booleanCheckbox'].includes(updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value)"
+             fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
+      <mat-form-field fxFlex="50" class="mat-block">
+        <mat-label translate>widgets.input-widgets.field-appearance</mat-label>
+        <mat-select formControlName="appearance">
+          <mat-option [value]="'fill'">
+            {{ 'widgets.input-widgets.appearance-fill' | translate }}
+          </mat-option>
+          <mat-option [value]="'outline'">
+            {{ 'widgets.input-widgets.appearance-outline' | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field fxFlex="50" class="mat-block">
+        <mat-label translate>widgets.input-widgets.subscript-sizing</mat-label>
+        <mat-select formControlName="subscriptSizing">
+          <mat-option [value]="'fixed'">
+            {{ 'widgets.input-widgets.subscript-sizing-fixed' | translate }}
+          </mat-option>
+          <mat-option [value]="'dynamic'">
+            {{ 'widgets.input-widgets.subscript-sizing-dynamic' | translate }}
+          </mat-option>
+        </mat-select>
       </mat-form-field>
     </section>
   </fieldset>
@@ -205,7 +233,9 @@
       </mat-form-field>
     </section>
   </fieldset>
-  <fieldset [fxShow]="!updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value" class="fields-group">
+  <fieldset [fxShow]="!updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value &&
+                      !['date', 'dateTime', 'time'].includes(updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value)"
+            class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.icon-settings</legend>
     <mat-slide-toggle formControlName="useCustomIcon" class="slide-block">
       {{ 'widgets.input-widgets.use-custom-icon' | translate }}

@@ -16,14 +16,22 @@
 package org.thingsboard.server.service.security.auth;
 
 import io.jsonwebtoken.Claims;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.NotificationCenter;
+import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.notification.targets.platform.SystemAdministratorsFilter;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.model.JwtSettings;
 import org.thingsboard.server.common.data.security.model.JwtToken;
+import org.thingsboard.server.dao.settings.AdminSettingsService;
+import org.thingsboard.server.service.security.auth.jwt.settings.DefaultJwtSettingsService;
+import org.thingsboard.server.service.security.auth.jwt.settings.DefaultJwtSettingsValidator;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
@@ -33,28 +41,40 @@ import org.thingsboard.server.service.security.model.token.RawAccessJwtToken;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.BDDMockito.willReturn;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class JwtTokenFactoryTest {
 
-    private static JwtTokenFactory tokenFactory;
-    private static JwtSettings jwtSettings;
+    private JwtTokenFactory tokenFactory;
+    private AdminSettingsService adminSettingsService;
+    private NotificationCenter notificationCenter;
+    private JwtSettingsService jwtSettingsService;
 
-    @BeforeClass
-    public static void beforeAll() {
+    private JwtSettings jwtSettings;
+
+    @Before
+    public void beforeEach() {
         jwtSettings = new JwtSettings();
         jwtSettings.setTokenIssuer("tb");
         jwtSettings.setTokenSigningKey("abewafaf");
         jwtSettings.setTokenExpirationTime((int) TimeUnit.HOURS.toSeconds(2));
         jwtSettings.setRefreshTokenExpTime((int) TimeUnit.DAYS.toSeconds(7));
 
-        JwtSettingsService jwtSettingsService = mock(JwtSettingsService.class);
-        willReturn(jwtSettings).given(jwtSettingsService).getJwtSettings();
+        adminSettingsService = mock(AdminSettingsService.class);
+        notificationCenter = mock(NotificationCenter.class);
+        jwtSettingsService = mockJwtSettingsService();
+        mockJwtSettings(jwtSettings);
 
         tokenFactory = new JwtTokenFactory(jwtSettingsService);
     }
@@ -148,6 +168,33 @@ public class JwtTokenFactoryTest {
             return userPrincipal.getType() == UserPrincipal.Type.USER_NAME
                     && userPrincipal.getValue().equals(securityUser.getUserPrincipal().getValue());
         });
+    }
+
+    @Test
+    public void testJwtSigningKeyIssueNotification() {
+        JwtSettings badJwtSettings = jwtSettings;
+        badJwtSettings.setTokenSigningKey(JwtSettingsService.TOKEN_SIGNING_KEY_DEFAULT);
+        mockJwtSettings(badJwtSettings);
+        jwtSettingsService = mockJwtSettingsService();
+
+        for (int i = 0; i < 5; i++) { // to check if notification is not sent twice
+            jwtSettingsService.getJwtSettings();
+        }
+        verify(notificationCenter, times(1)).sendGeneralWebNotification(eq(TenantId.SYS_TENANT_ID),
+                isA(SystemAdministratorsFilter.class), argThat(template -> template.getConfiguration().getDeliveryMethodsTemplates().get(NotificationDeliveryMethod.WEB)
+                        .getBody().contains("The platform is configured to use default JWT Signing Key")));
+    }
+
+    private void mockJwtSettings(JwtSettings settings) {
+        AdminSettings adminJwtSettings = new AdminSettings();
+        adminJwtSettings.setJsonValue(JacksonUtil.valueToTree(settings));
+        when(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, JwtSettingsService.ADMIN_SETTINGS_JWT_KEY))
+                .thenReturn(adminJwtSettings);
+    }
+
+    private DefaultJwtSettingsService mockJwtSettingsService() {
+        return new DefaultJwtSettingsService(adminSettingsService, Optional.empty(),
+                Optional.of(notificationCenter), new DefaultJwtSettingsValidator());
     }
 
     private void checkExpirationTime(JwtToken jwtToken, int tokenLifetime) {

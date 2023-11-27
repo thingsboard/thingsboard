@@ -37,7 +37,6 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.dao.sql.query.EntityKeyMapping;
 import org.thingsboard.server.service.alarm.rule.state.PersistedAlarmState;
@@ -55,6 +54,18 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.common.data.msg.TbMsgType.ACTIVITY_EVENT;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM_ACK;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM_CLEAR;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM_DELETE;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_DELETED;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_UPDATED;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ENTITY_ASSIGNED;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ENTITY_UNASSIGNED;
+import static org.thingsboard.server.common.data.msg.TbMsgType.INACTIVITY_EVENT;
+import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
+import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 
 @Slf4j
 class EntityState {
@@ -192,21 +203,21 @@ class EntityState {
                 latestValues = fetchLatestValues(ctx, entityId);
             }
             boolean stateChanged = false;
-            if (msg.getType().equals(SessionMsgType.POST_TELEMETRY_REQUEST.name())) {
+            if (msg.isTypeOf(POST_TELEMETRY_REQUEST)) {
                 stateChanged = processTelemetry(requestCtx, msg);
-            } else if (msg.getType().equals(SessionMsgType.POST_ATTRIBUTES_REQUEST.name())) {
+            } else if (msg.isTypeOf(POST_ATTRIBUTES_REQUEST)) {
                 stateChanged = processAttributesUpdateRequest(requestCtx, msg);
-            } else if (msg.getType().equals(DataConstants.ACTIVITY_EVENT) || msg.getType().equals(DataConstants.INACTIVITY_EVENT)) {
+            } else if (msg.isTypeOneOf(ACTIVITY_EVENT, INACTIVITY_EVENT)) {
                 stateChanged = processDeviceActivityEvent(requestCtx, msg);
-            } else if (msg.getType().equals(DataConstants.ATTRIBUTES_UPDATED)) {
+            } else if (msg.isTypeOf(ATTRIBUTES_UPDATED)) {
                 stateChanged = processAttributesUpdateNotification(requestCtx, msg);
-            } else if (msg.getType().equals(DataConstants.ATTRIBUTES_DELETED)) {
+            } else if (msg.isTypeOf(ATTRIBUTES_DELETED)) {
                 stateChanged = processAttributesDeleteNotification(requestCtx, msg);
-            } else if (msg.getType().equals(DataConstants.ALARM_CLEAR)) {
+            } else if (msg.isTypeOf(ALARM_CLEAR)) {
                 stateChanged = processAlarmClearNotification(msg);
-            } else if (msg.getType().equals(DataConstants.ALARM_ACK)) {
+            } else if (msg.isTypeOf(ALARM_ACK)) {
                 processAlarmAckNotification(msg);
-            } else if (msg.getType().equals(DataConstants.ALARM_DELETE)) {
+            } else if (msg.isTypeOf(ALARM_DELETE)) {
                 processAlarmDeleteNotification(msg);
             } else {
                 if (msg.getType().equals(DataConstants.ENTITY_ASSIGNED) || msg.getType().equals(DataConstants.ENTITY_UNASSIGNED)) {
@@ -274,7 +285,7 @@ class EntityState {
 
     private boolean processAttributesDeleteNotification(TbAlarmRuleRequestCtx requestCtx, TbMsg msg) throws ExecutionException, InterruptedException {
         List<String> keys = new ArrayList<>();
-        new JsonParser().parse(msg.getData()).getAsJsonObject().get("attributes").getAsJsonArray().forEach(e -> keys.add(e.getAsString()));
+        JsonParser.parseString(msg.getData()).getAsJsonObject().get("attributes").getAsJsonArray().forEach(e -> keys.add(e.getAsString()));
         String scope = msg.getMetaData().getValue(DataConstants.SCOPE);
         if (StringUtils.isEmpty(scope)) {
             scope = DataConstants.CLIENT_SCOPE;
@@ -303,8 +314,7 @@ class EntityState {
 
     private boolean processAttributes(TbAlarmRuleRequestCtx requestCtx, TbMsg msg, String scope) throws ExecutionException, InterruptedException {
         boolean stateChanged = false;
-
-        Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(new JsonParser().parse(msg.getData()));
+        Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(JsonParser.parseString(msg.getData()));
         if (!attributes.isEmpty()) {
             SnapshotUpdate update = merge(latestValues, attributes, scope);
             for (AlarmRule alarm : entityRulesState.getAlarmRules().values()) {
@@ -318,7 +328,7 @@ class EntityState {
 
     private boolean processTelemetry(TbAlarmRuleRequestCtx requestCtx, TbMsg msg) throws ExecutionException, InterruptedException {
         boolean stateChanged = false;
-        Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToSortedTelemetry(new JsonParser().parse(msg.getData()), msg.getMetaDataTs());
+        Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToSortedTelemetry(JsonParser.parseString(msg.getData()), msg.getMetaDataTs());
         // iterate over data by ts (ASC order).
         for (Map.Entry<Long, List<KvEntry>> entry : tsKvMap.entrySet()) {
             Long ts = entry.getKey();

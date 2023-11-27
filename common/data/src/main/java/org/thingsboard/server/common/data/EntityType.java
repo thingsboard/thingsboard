@@ -18,6 +18,10 @@ package org.thingsboard.server.common.data;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.EnumSet;
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * @author Andrew Shvayka
  */
@@ -31,7 +35,13 @@ public enum EntityType {
     ALARM,
     RULE_CHAIN,
     RULE_NODE,
-    ENTITY_VIEW,
+    ENTITY_VIEW {
+        // backward compatibility for TbOriginatorTypeSwitchNode to return correct rule node connection.
+        @Override
+        public String getNormalName() {
+            return "Entity View";
+        }
+    },
     WIDGETS_BUNDLE,
     WIDGET_TYPE,
     TENANT_PROFILE,
@@ -49,6 +59,9 @@ public enum EntityType {
     NOTIFICATION,
     NOTIFICATION_RULE,
     ALARM_RULE;
+
+    public static final List<String> NORMAL_NAMES = EnumSet.allOf(EntityType.class).stream()
+            .map(EntityType::getNormalName).collect(Collectors.toUnmodifiableList());
 
     @Getter
     private final String normalName = StringUtils.capitalize(StringUtils.removeStart(name(), "TB_")

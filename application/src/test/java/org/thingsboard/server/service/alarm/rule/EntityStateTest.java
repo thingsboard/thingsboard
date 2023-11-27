@@ -24,6 +24,8 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
@@ -43,12 +45,12 @@ import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AlarmRuleId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceService;
 
@@ -100,7 +102,6 @@ public class EntityStateTest {
         when(ctx.getAlarmService()).thenReturn(alarmService);
 
         tenantId = new TenantId(UUID.randomUUID());
-
     }
 
     @Test
@@ -109,8 +110,8 @@ public class EntityStateTest {
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
         EntityState deviceState = createEntityState(deviceId, alarmRule);
 
-        TbMsg attributeUpdateMsg = TbMsg.newMsg(SessionMsgType.POST_ATTRIBUTES_REQUEST.name(),
-                deviceId, new TbMsgMetaData(), "{ \"enabled\": false }");
+        TbMsg attributeUpdateMsg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST,
+                deviceId, TbMsgMetaData.EMPTY, "{ \"enabled\": false }");
 
         deviceState.process(null, attributeUpdateMsg);
 
@@ -118,11 +119,11 @@ public class EntityStateTest {
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), resultMsgCaptor.capture(), eq(Collections.singleton("Alarm Created")), any());
         Alarm alarm = JacksonUtil.fromString(resultMsgCaptor.getValue().getData(), Alarm.class);
 
-        deviceState.process(null, TbMsg.newMsg(DataConstants.ALARM_CLEAR, deviceId, new TbMsgMetaData(), JacksonUtil.toString(alarm)));
+        deviceState.process(null, TbMsg.newMsg(TbMsgType.ALARM_CLEAR, deviceId, TbMsgMetaData.EMPTY, JacksonUtil.toString(alarm)));
         reset(clusterService);
 
         String deletedAttributes = "{ \"attributes\": [ \"other\" ] }";
-        deviceState.process(null, TbMsg.newMsg(DataConstants.ATTRIBUTES_DELETED, deviceId, new TbMsgMetaData(), deletedAttributes));
+        deviceState.process(null, TbMsg.newMsg(TbMsgType.ATTRIBUTES_DELETED, deviceId, TbMsgMetaData.EMPTY, deletedAttributes));
         verify(clusterService, never()).pushMsgToRuleEngine(any(), any(), any(), any(), any());
     }
 
@@ -132,17 +133,17 @@ public class EntityStateTest {
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
         EntityState deviceState = createEntityState(deviceId, alarmRule);
 
-        TbMsg attributeUpdateMsg = TbMsg.newMsg(SessionMsgType.POST_ATTRIBUTES_REQUEST.name(),
-                deviceId, new TbMsgMetaData(), "{ \"enabled\": false }");
+        TbMsg attributeUpdateMsg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST,
+                deviceId, TbMsgMetaData.EMPTY, "{ \"enabled\": false }");
 
         deviceState.process(null, attributeUpdateMsg);
         ArgumentCaptor<TbMsg> resultMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), resultMsgCaptor.capture(), eq(Collections.singleton("Alarm Created")), any());
         Alarm alarm = JacksonUtil.fromString(resultMsgCaptor.getValue().getData(), Alarm.class);
 
-        deviceState.process(null, TbMsg.newMsg(DataConstants.ALARM_CLEAR, deviceId, new TbMsgMetaData(), JacksonUtil.toString(alarm)));
+        deviceState.process(null, TbMsg.newMsg(TbMsgType.ALARM_CLEAR, deviceId, TbMsgMetaData.EMPTY, JacksonUtil.toString(alarm)));
 
-        TbMsg alarmDeleteNotification = TbMsg.newMsg(DataConstants.ALARM_DELETE, deviceId, new TbMsgMetaData(), JacksonUtil.toString(alarm));
+        TbMsg alarmDeleteNotification = TbMsg.newMsg(TbMsgType.ALARM_DELETE, deviceId, TbMsgMetaData.EMPTY, JacksonUtil.toString(alarm));
         assertDoesNotThrow(() -> {
             deviceState.process(null, alarmDeleteNotification);
         });

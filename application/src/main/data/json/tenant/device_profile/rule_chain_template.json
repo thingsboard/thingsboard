@@ -32,8 +32,12 @@
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
         "name": "Save Client Attributes",
         "debugMode": false,
+        "configurationVersion": 1,
         "configuration": {
-          "scope": "CLIENT_SCOPE"
+          "scope": "CLIENT_SCOPE",
+          "notifyDevice": "false",
+          "sendAttributesUpdatedNotification": "false",
+          "updateAttributesOnlyOnValueChange": "true"
         }
       },
       {

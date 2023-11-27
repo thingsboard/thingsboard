@@ -133,7 +133,7 @@ public class Asset extends BaseDataWithAdditionalInfo<AssetId> implements HasLab
         this.name = name;
     }
 
-    @Schema(required = true, description = "Asset type", example = "Building")
+    @Schema(description = "Asset type", example = "Building")
     public String getType() {
         return type;
     }
@@ -142,7 +142,7 @@ public class Asset extends BaseDataWithAdditionalInfo<AssetId> implements HasLab
         this.type = type;
     }
 
-    @Schema(required = true, description = "Label that may be used in widgets", example = "NY Building")
+    @Schema(description = "Label that may be used in widgets", example = "NY Building")
     public String getLabel() {
         return label;
     }
@@ -151,7 +151,7 @@ public class Asset extends BaseDataWithAdditionalInfo<AssetId> implements HasLab
         this.label = label;
     }
 
-    @Schema(required = true, description = "JSON object with Asset Profile Id.")
+    @Schema(description = "JSON object with Asset Profile Id.")
     public AssetProfileId getAssetProfileId() {
         return assetProfileId;
     }

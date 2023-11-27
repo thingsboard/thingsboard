@@ -38,6 +38,8 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
+import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
@@ -214,6 +216,31 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         doGet("/api/resource/" + savedResource.getId().getId().toString())
                 .andExpect(status().isNotFound())
                 .andExpect(statusReason(containsString(msgErrorNoFound("Resource", resourceIdStr))));
+    }
+
+    @Test
+    public void testShoudNotDeleteTbResourceIfAssignedToWidgetType() throws Exception {
+        TbResource resource = new TbResource();
+        resource.setResourceType(ResourceType.JKS);
+        resource.setTitle("My first resource");
+        resource.setFileName(DEFAULT_FILE_NAME);
+        resource.setData(TEST_DATA);
+
+        TbResource savedResource = save(resource);
+
+        Mockito.reset(tbClusterService, auditLogService);
+        String resourceIdStr = savedResource.getId().getId().toString();
+
+        //create widget type
+        WidgetTypeDetails widgetType = new WidgetTypeDetails();
+        widgetType.setName("Widget Type");
+        widgetType.setDescriptor(JacksonUtil.fromString(String.format("{ \"resources\": [{\"url\":{\"entityType\":\"TB_RESOURCE\",\"id\":\"%s\"},\"isModule\":true}]}", savedResource.getId()), JsonNode.class));
+        doPost("/api/widgetType", widgetType, WidgetTypeDetails.class);
+
+        doDelete("/api/resource/" + resourceIdStr)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Following widget types uses current resource: ["
+                        + widgetType .getName()+ "]")));
     }
 
     @Test

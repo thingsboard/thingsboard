@@ -15,22 +15,15 @@
     limitations under the License.
 
 -->
-<form [formGroup]="colorPickerFormGroup" (ngSubmit)="select()" style="width: 320px">
-  <div mat-dialog-content style="padding: 16px; display: flex">
-    <tb-color-picker formControlName="color"></tb-color-picker>
-  </div>
-  <div mat-dialog-actions fxLayout="row">
-    <span fxFlex></span>
-    <button mat-button
-            type="button"
-            [disabled]="(isLoading$ | async)"
-            (click)="cancel()">
-      {{ 'action.cancel' | translate }}
-    </button>
-    <button mat-button
-            type="submit"
-            [disabled]="(isLoading$ | async) || colorPickerFormGroup.invalid || !colorPickerFormGroup.dirty">
-      {{ 'action.select' | translate }}
-    </button>
-  </div>
-</form>
+<div mat-dialog-content>
+  <button class="tb-close-button"
+          mat-icon-button
+          (click)="cancel()"
+          type="button">
+    <mat-icon>close</mat-icon>
+  </button>
+  <tb-color-picker-panel [color]="color"
+                         [colorClearButton]="colorClearButton"
+                         (colorSelected)="selectColor($event)">
+  </tb-color-picker-panel>
+</div>

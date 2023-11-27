@@ -1,0 +1,111 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-font-settings-panel" [formGroup]="fontFormGroup">
+  <div class="tb-font-settings-title" translate>widgets.widget-font.font-settings</div>
+  <div class="tb-form-row no-border no-padding">
+    <div class="fixed-title-width" translate>widgets.widget-font.size</div>
+    <div *ngIf="!autoScale" fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="12px">
+      <mat-form-field fxFlex appearance="outline" class="number" subscriptSizing="dynamic">
+        <input matInput type="number" min="0" formControlName="size" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+      <tb-css-unit-select fxFlex formControlName="sizeUnit"></tb-css-unit-select>
+    </div>
+    <div *ngIf="autoScale" class="tb-font-settings-auto" translate>widgets.widget-font.auto</div>
+  </div>
+  <div class="tb-form-row no-border no-padding">
+    <div class="fixed-title-width" translate>widgets.widget-font.font-family</div>
+    <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+      <input matInput #familyInput
+             formControlName="family" placeholder="{{ 'widget-config.set' | translate }}"
+             [matAutocomplete]="familyAutocomplete">
+      <button *ngIf="fontFormGroup.get('family').value"
+              type="button"
+              matSuffix mat-icon-button aria-label="Clear"
+              (click)="clearFamily()">
+        <mat-icon class="material-icons">close</mat-icon>
+      </button>
+      <mat-autocomplete
+        #familyAutocomplete="matAutocomplete"
+        class="tb-autocomplete"
+        panelWidth="fit-content">
+        <mat-option *ngFor="let family of filteredFontFamilies | async" [value]="family">
+          <span [innerHTML]="family | highlight:familySearchText:true:'ig'"></span>
+        </mat-option>
+      </mat-autocomplete>
+    </mat-form-field>
+  </div>
+  <div class="tb-form-row no-border no-padding">
+    <div class="fixed-title-width" translate>widgets.widget-font.font-weight</div>
+    <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+      <mat-select formControlName="weight" placeholder="{{ 'widget-config.set' | translate }}">
+        <mat-option [value]="null">
+        </mat-option>
+        <mat-option *ngFor="let weight of fontWeightsList" [value]="weight">
+          {{ fontWeightTranslationsMap.has(weight) ? (fontWeightTranslationsMap.get(weight) | translate) : weight }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+  <div class="tb-form-row no-border no-padding">
+    <div class="fixed-title-width" translate>widgets.widget-font.font-style</div>
+    <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+      <mat-select formControlName="style" placeholder="{{ 'widget-config.set' | translate }}">
+        <mat-option [value]="null">
+        </mat-option>
+        <mat-option *ngFor="let style of fontStylesList" [value]="style">
+          {{ fontStyleTranslationsMap.get(style) | translate }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+  <div class="tb-form-row no-border no-padding">
+    <div class="fixed-title-width" translate>widgets.widget-font.line-height</div>
+    <mat-form-field *ngIf="!autoScale" fxFlex appearance="outline" subscriptSizing="dynamic">
+      <input matInput formControlName="lineHeight" placeholder="{{ 'widget-config.set' | translate }}">
+    </mat-form-field>
+    <div *ngIf="autoScale" class="tb-font-settings-auto" translate>widgets.widget-font.auto</div>
+  </div>
+  <mat-divider></mat-divider>
+  <div class="tb-form-row no-border no-padding font-preview">
+    <div class="fixed-title-width" translate>widgets.widget-font.preview</div>
+    <div class="preview-text" fxFlex [style]="previewStyle">{{ previewText }}</div>
+  </div>
+  <div class="tb-font-settings-panel-buttons">
+    <button *ngIf="clearButton"
+            mat-button
+            type="button"
+            (click)="clearFont()"
+            [disabled]="clearDisabled()">
+      {{ 'action.clear' | translate }}
+    </button>
+    <span *ngIf="clearButton" fxFlex></span>
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button
+            color="primary"
+            type="button"
+            (click)="applyFont()"
+            [disabled]="fontFormGroup.invalid || !fontFormGroup.dirty">
+      {{ 'action.apply' | translate }}
+    </button>
+  </div>
+</div>

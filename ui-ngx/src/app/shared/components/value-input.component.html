@@ -67,7 +67,7 @@
         <button matSuffix mat-icon-button (click)="openEditJSONDialog($event)">
           <mat-icon>open_in_new</mat-icon>
         </button>
-        <mat-error *ngIf="value.hasError('required')">
+        <mat-error *ngIf="value.hasError('required') && !value.hasError('invalidJSON')">
           {{ (requiredText ? requiredText : 'value.json-value-required') | translate }}
         </mat-error>
         <mat-error *ngIf="value.hasError('invalidJSON')">

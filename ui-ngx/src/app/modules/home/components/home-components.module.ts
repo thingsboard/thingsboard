@@ -177,6 +177,11 @@ import {
 } from '@home/components/widget/action/manage-widget-actions-dialog.component';
 import { WidgetConfigComponentsModule } from '@home/components/widget/config/widget-config-components.module';
 import { BasicWidgetConfigModule } from '@home/components/widget/config/basic/basic-widget-config.module';
+import { DeleteTimeseriesPanelComponent } from '@home/components/attribute/delete-timeseries-panel.component';
+import {
+  ExportWidgetsBundleDialogComponent
+} from '@home/components/import-export/export-widgets-bundle-dialog.component';
+import { ScrollGridComponent } from '@home/components/grid/scroll-grid.component';
 
 @NgModule({
   declarations:
@@ -205,6 +210,7 @@ import { BasicWidgetConfigModule } from '@home/components/widget/config/basic/ba
       AttributeTableComponent,
       AddAttributeDialogComponent,
       EditAttributeValuePanelComponent,
+      DeleteTimeseriesPanelComponent,
       AliasesEntitySelectPanelComponent,
       AliasesEntitySelectComponent,
       AliasesEntityAutocompleteComponent,
@@ -226,6 +232,7 @@ import { BasicWidgetConfigModule } from '@home/components/widget/config/basic/ba
       CustomDialogContainerComponent,
       ImportDialogComponent,
       ImportDialogCsvComponent,
+      ExportWidgetsBundleDialogComponent,
       SelectTargetLayoutDialogComponent,
       SelectTargetStateDialogComponent,
       AddWidgetToDashboardDialogComponent,
@@ -319,7 +326,8 @@ import { BasicWidgetConfigModule } from '@home/components/widget/config/basic/ba
       RateLimitsComponent,
       RateLimitsTextComponent,
       RateLimitsDetailsDialogComponent,
-      SendNotificationButtonComponent
+      SendNotificationButtonComponent,
+      ScrollGridComponent
     ],
   imports: [
     CommonModule,
@@ -370,6 +378,7 @@ import { BasicWidgetConfigModule } from '@home/components/widget/config/basic/ba
     CustomDialogContainerComponent,
     ImportDialogComponent,
     ImportDialogCsvComponent,
+    ExportWidgetsBundleDialogComponent,
     TableColumnsAssignmentComponent,
     SelectTargetLayoutDialogComponent,
     SelectTargetStateDialogComponent,
@@ -456,7 +465,8 @@ import { BasicWidgetConfigModule } from '@home/components/widget/config/basic/ba
     RateLimitsComponent,
     RateLimitsTextComponent,
     RateLimitsDetailsDialogComponent,
-    SendNotificationButtonComponent
+    SendNotificationButtonComponent,
+    ScrollGridComponent
   ],
   providers: [
     WidgetComponentService,

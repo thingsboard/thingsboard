@@ -26,7 +26,7 @@
   </mat-form-field>
   <section fxLayout="column" [ngSwitch]="datasourceFormGroup.get('type').value">
     <ng-template [ngSwitchCase]="datasourceType.function">
-      <mat-form-field fxFlex>
+      <mat-form-field *ngIf="!hideDatasourceLabel" fxFlex>
         <mat-label translate>datasource.label</mat-label>
         <input matInput
                formControlName="name">
@@ -38,6 +38,7 @@
                                  datasourceFormGroup.get('type').value === datasourceType.alarmCount ? datasourceFormGroup.get('type').value : ''">
       <tb-alarm-filter-config *ngIf="datasourceFormGroup.get('type').value === datasourceType.alarmCount"
                               propagatedFilter="false"
+                              [initialAlarmFilterConfig]="{ statusList: [alarmSearchStatus.ACTIVE] }"
                               style="height: 56px; margin-bottom: 22px;"
                               formControlName="alarmFilterConfig"></tb-alarm-filter-config>
       <tb-entity-autocomplete *ngIf="datasourceFormGroup.get('type').value === datasourceType.device"
@@ -53,7 +54,7 @@
         formControlName="entityAliasId"
         [callbacks]="entityAliasSelectCallbacks">
       </tb-entity-alias-select>
-      <mat-form-field *ngIf="[datasourceType.entityCount, datasourceType.alarmCount].includes(datasourceFormGroup.get('type').value)"
+      <mat-form-field *ngIf="!hideDatasourceLabel && [datasourceType.entityCount, datasourceType.alarmCount].includes(datasourceFormGroup.get('type').value)"
                       fxFlex>
         <input matInput
                placeholder="{{ 'datasource.label' | translate }}"
@@ -94,7 +95,7 @@
     </tb-data-keys>
   </section>
   <tb-filter-select
-    *ngIf="!basicMode && ![datasourceType.function, datasourceType.alarmCount].includes(datasourceFormGroup.get('type').value)"
+    *ngIf="(!basicMode || displayDatasourceFilterForBasicMode) && ![datasourceType.function, datasourceType.alarmCount].includes(datasourceFormGroup.get('type').value)"
     [showLabel]="true"
     [aliasController]="aliasController"
     formControlName="filterId"

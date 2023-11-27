@@ -63,9 +63,7 @@ public class CustomerDataValidator extends DataValidator<Customer> {
 
     @Override
     protected void validateDataImpl(TenantId tenantId, Customer customer) {
-        if (StringUtils.isEmpty(customer.getTitle())) {
-            throw new DataValidationException("Customer title should be specified!");
-        }
+        validateString("Customer title", customer.getTitle());
         if (customer.getTitle().equals(CustomerServiceImpl.PUBLIC_CUSTOMER_TITLE)) {
             throw new DataValidationException("'Public' title for customer is system reserved!");
         }

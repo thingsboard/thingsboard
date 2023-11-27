@@ -174,7 +174,7 @@ public class WidgetsBundleServiceTest extends AbstractServiceTest {
         PageLink pageLink = new PageLink(19);
         PageData<WidgetsBundle> pageData = null;
         do {
-            pageData = widgetsBundleService.findSystemWidgetsBundlesByPageLink(tenantId, pageLink);
+            pageData = widgetsBundleService.findSystemWidgetsBundlesByPageLink(tenantId, false, pageLink);
             loadedWidgetsBundles.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -297,7 +297,7 @@ public class WidgetsBundleServiceTest extends AbstractServiceTest {
         PageLink pageLink = new PageLink(17);
         PageData<WidgetsBundle> pageData = null;
         do {
-            pageData = widgetsBundleService.findAllTenantWidgetsBundlesByTenantIdAndPageLink(tenantId, pageLink);
+            pageData = widgetsBundleService.findAllTenantWidgetsBundlesByTenantIdAndPageLink(tenantId, false, pageLink);
             loadedWidgetsBundles.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -314,7 +314,7 @@ public class WidgetsBundleServiceTest extends AbstractServiceTest {
         loadedWidgetsBundles.clear();
         pageLink = new PageLink(14);
         do {
-            pageData = widgetsBundleService.findAllTenantWidgetsBundlesByTenantIdAndPageLink(tenantId, pageLink);
+            pageData = widgetsBundleService.findAllTenantWidgetsBundlesByTenantIdAndPageLink(tenantId, false, pageLink);
             loadedWidgetsBundles.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -336,7 +336,7 @@ public class WidgetsBundleServiceTest extends AbstractServiceTest {
         loadedWidgetsBundles.clear();
         pageLink = new PageLink(18);
         do {
-            pageData = widgetsBundleService.findAllTenantWidgetsBundlesByTenantIdAndPageLink(tenantId, pageLink);
+            pageData = widgetsBundleService.findAllTenantWidgetsBundlesByTenantIdAndPageLink(tenantId, false, pageLink);
             loadedWidgetsBundles.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();

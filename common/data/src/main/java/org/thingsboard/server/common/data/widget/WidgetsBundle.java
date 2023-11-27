@@ -63,7 +63,7 @@ public class WidgetsBundle extends BaseData<WidgetsBundleId> implements HasName,
     private String image;
 
     @NoXss
-    @Length(fieldName = "description")
+    @Length(fieldName = "description", max = 1024)
     @Getter
     @Setter
     @Schema(description = "Description", accessMode = Schema.AccessMode.READ_ONLY)

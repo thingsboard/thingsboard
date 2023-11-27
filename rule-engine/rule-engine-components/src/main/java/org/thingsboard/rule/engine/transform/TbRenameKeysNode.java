@@ -74,7 +74,7 @@ public class TbRenameKeysNode implements TbNode {
             }
             metaData = new TbMsgMetaData(metaDataMap);
         } else {
-            JsonNode dataNode = JacksonUtil.toJsonNode(msg.getData());
+            JsonNode dataNode = JacksonUtil.toJsonNode(data);
             if (dataNode.isObject()) {
                 ObjectNode msgData = (ObjectNode) dataNode;
                 for (Map.Entry<String, String> entry : renameKeysMapping.entrySet()) {
@@ -89,7 +89,7 @@ public class TbRenameKeysNode implements TbNode {
             }
         }
         if (msgChanged) {
-            ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), metaData, data));
+            ctx.tellSuccess(TbMsg.transformMsg(msg, metaData, data));
         } else {
             ctx.tellSuccess(msg);
         }

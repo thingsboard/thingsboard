@@ -32,6 +32,7 @@ import {
   Optional,
   Renderer2,
   SimpleChanges,
+  TemplateRef,
   Type,
   ViewChild,
   ViewContainerRef,
@@ -124,6 +125,9 @@ import { IModulesMap } from '@modules/common/modules-map.models';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WidgetComponent extends PageComponent implements OnInit, AfterViewInit, OnChanges, OnDestroy {
+
+  @Input()
+  widgetTitlePanel: TemplateRef<any>;
 
   @Input()
   isEdit: boolean;
@@ -249,6 +253,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       getActionDescriptors: this.getActionDescriptors.bind(this),
       handleWidgetAction: this.handleWidgetAction.bind(this),
       elementClick: this.elementClick.bind(this),
+      cardClick: this.cardClick.bind(this),
       getActiveEntityInfo: this.getActiveEntityInfo.bind(this),
       openDashboardStateInSeparateDialog: this.openDashboardStateInSeparateDialog.bind(this),
       openDashboardStateInPopover: this.openDashboardStateInPopover.bind(this)
@@ -297,7 +302,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.subscriptionContext.widgetUtils = this.widgetContext.utils;
     this.subscriptionContext.getServerTimeDiff = this.dashboardService.getServerTimeDiff.bind(this.dashboardService);
 
-    this.widgetComponentService.getWidgetInfo(this.widget.bundleAlias, this.widget.typeAlias, this.widget.isSystemType).subscribe(
+    this.widgetComponentService.getWidgetInfo(this.widget.typeFullFqn).subscribe(
       (widgetInfo) => {
         this.widgetInfo = widgetInfo;
         this.loadFromWidgetInfo();
@@ -308,9 +313,6 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         this.loadFromWidgetInfo();
       }
     );
-    setTimeout(() => {
-      this.dashboardWidget.updateWidgetParams();
-    }, 0);
 
     const noDataDisplayMessage = this.widget.config.noDataDisplayMessage;
     if (isNotEmptyStr(noDataDisplayMessage)) {
@@ -387,7 +389,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           this.handleWidgetException(e);
         }
       }
-      this.widgetContext.destroyed = true;
+      this.widgetContext.destroy();
       this.destroyDynamicWidgetComponent();
     }
   }
@@ -403,12 +405,13 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
 
   private loadFromWidgetInfo() {
     this.widgetContext.widgetNamespace =
-      `widget-type-${(this.widget.isSystemType ? 'sys-' : '')}${this.widget.bundleAlias}-${this.widget.typeAlias}`;
+      `widget-type-${this.widget.typeFullFqn.replace(/\./g, '-')}`;
     const elem = this.elementRef.nativeElement;
     elem.classList.add('tb-widget');
     elem.classList.add(this.widgetContext.widgetNamespace);
     this.widgetType = this.widgetInfo.widgetTypeFunction;
     this.typeParameters = this.widgetInfo.typeParameters;
+    this.widgetContext.embedTitlePanel = this.typeParameters.embedTitlePanel;
 
     if (!this.widgetType) {
       this.widgetTypeInstance = {};
@@ -479,6 +482,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     }
     if (!this.widgetContext.inited && this.isReady()) {
       this.widgetContext.inited = true;
+      this.dashboardWidget.updateWidgetParams();
       this.widgetContext.detectContainerChanges();
       if (this.cafs.init) {
         this.cafs.init();
@@ -492,7 +496,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
             if (this.dataUpdatePending) {
               this.widgetTypeInstance.onDataUpdated();
               setTimeout(() => {
-                this.dashboardWidget.updateCustomHeaderActions(true);
+                this.dashboardWidget.updateParamsFromData(true);
               }, 0);
               this.dataUpdatePending = false;
             }
@@ -734,6 +738,10 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
             {
               provide: 'errorMessages',
               useValue: this.errorMessages
+            },
+            {
+              provide: 'widgetTitlePanel',
+              useValue: this.widgetTitlePanel
             }
           ],
           parent: this.injector
@@ -744,7 +752,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       this.widgetContext.$containerParent = $(containerElement);
 
       try {
-        this.dynamicWidgetComponentRef = this.widgetContentContainer.createComponent(this.widgetInfo.componentFactory, 0, injector);
+        this.dynamicWidgetComponentRef = this.widgetContentContainer.createComponent(this.widgetInfo.componentType,
+          {index: 0, injector, ngModuleRef: this.widgetInfo.componentModuleRef});
         this.cd.detectChanges();
       } catch (e) {
         if (this.dynamicWidgetComponentRef) {
@@ -753,8 +762,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         }
         this.widgetContentContainer.clear();
         this.handleWidgetException(e);
-        this.widgetComponentService.clearWidgetInfo(this.widgetInfo, this.widget.bundleAlias, this.widget.typeAlias,
-          this.widget.isSystemType);
+        this.widgetComponentService.clearWidgetInfo(this.widgetInfo);
         throw e;
       }
 
@@ -844,7 +852,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
             if (this.widgetInstanceInited) {
               this.widgetTypeInstance.onDataUpdated();
               setTimeout(() => {
-                this.dashboardWidget.updateCustomHeaderActions(true);
+                this.dashboardWidget.updateParamsFromData(true);
               }, 0);
             } else {
               this.dataUpdatePending = true;
@@ -1408,6 +1416,19 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         const entityLabel = entityInfo && entityInfo.entityLabel ? entityInfo.entityLabel : null;
         this.handleWidgetAction($event, descriptor, entityId, entityName, null, entityLabel);
       }
+    }
+  }
+
+  private cardClick($event: Event) {
+    const descriptors = this.getActionDescriptors('cardClick');
+    if (descriptors.length) {
+      $event.stopPropagation();
+      const descriptor = descriptors[0];
+      const entityInfo = this.getActiveEntityInfo();
+      const entityId = entityInfo ? entityInfo.entityId : null;
+      const entityName = entityInfo ? entityInfo.entityName : null;
+      const entityLabel = entityInfo && entityInfo.entityLabel ? entityInfo.entityLabel : null;
+      this.handleWidgetAction($event, descriptor, entityId, entityName, null, entityLabel);
     }
   }
 

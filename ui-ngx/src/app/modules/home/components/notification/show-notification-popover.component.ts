@@ -22,7 +22,7 @@ import { AppState } from '@core/core.state';
 import { Notification, NotificationRequest } from '@shared/models/notification.models';
 import { NotificationWebsocketService } from '@core/ws/notification-websocket.service';
 import { BehaviorSubject, Observable, ReplaySubject, Subscription } from 'rxjs';
-import { share, tap } from 'rxjs/operators';
+import { map, share, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { NotificationSubscriber } from '@shared/models/websocket/notification-ws.models';
 
@@ -46,6 +46,7 @@ export class ShowNotificationPopoverComponent extends PageComponent implements O
   private notificationCountSubscriber: Subscription;
 
   notifications$: Observable<Notification[]>;
+  loadNotification = false;
 
   constructor(protected store: Store<AppState>,
               private notificationWsService: NotificationWebsocketService,
@@ -58,6 +59,13 @@ export class ShowNotificationPopoverComponent extends PageComponent implements O
   ngOnInit() {
     this.notificationSubscriber = NotificationSubscriber.createNotificationsSubscription(this.notificationWsService, this.zone, 6);
     this.notifications$ = this.notificationSubscriber.notifications$.pipe(
+      map(value => {
+        if (Array.isArray(value)) {
+          this.loadNotification = true;
+          return value;
+        }
+        return [];
+      }),
       share({
         connector: () => new ReplaySubject(1)
       }),

@@ -13,79 +13,89 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../../../../scss/constants';
 
-:host{
-  min-width: 100%;
-  min-height: 100%;
-  position: absolute;
+.tb-dashboard-widget-select {
   background-color: #cfd8dc;
+  position: absolute;
+  inset: 0;
 
-  .widget-select {
-    padding: 12px 0 12px 12px;
-    background-color: #cfd8dc;
-    .mat-card-container {
-      flex: 0 0 100%;
+  .mat-mdc-card.tb-widget-preview-card {
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+    padding: 16px;
+
+    &:hover {
+      box-shadow: 0 2px 6px 6px rgb(0 0 0 / 20%), 0 1px 4px 2px rgb(0 0 0 / 14%), 0 1px 6px 0 rgb(0 0 0 / 12%)
+    }
+
+    &.loading-cell {
+      height: 100%;
+      min-height: 200px;
+
+      .mat-mdc-card-title {
+        height: 32px;
+        margin-bottom: 16px;
+      }
+
+      .preview-container {
+        height: 80%;
+        margin: auto 0;
+      }
+
+      .mat-mdc-card-content {
+        height: 100%;
+        margin: 0;
+      }
+
+      .preview-container, .mat-mdc-card-title, .mat-mdc-card-content {
+        background: linear-gradient(110deg, #ececec 8%, #f5f5f5 18%, #ececec 33%);
+        border-radius: 5px;
+        background-size: 200% 100%;
+        animation: 1s shine linear infinite;
+      }
+    }
+
+    .preview-container {
+      text-align: center;
+      margin: auto 0;
+    }
+
+    .preview {
       max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
 
-      &:hover {
-        .mat-mdc-card {
-          box-shadow: 0 2px 6px 6px rgb(0 0 0 / 20%), 0 1px 4px 2px rgb(0 0 0 / 14%), 0 1px 6px 0 rgb(0 0 0 / 12%)
-        }
-      }
+    .mat-mdc-card-title {
+      font-size: 20px;
+      line-height: normal;
+      margin-bottom: 8px;
 
-      .mat-mdc-card {
-        cursor: pointer;
-        transition: box-shadow 0.2s;
-        padding: 16px;
-
-        .preview-container {
-          text-align: center;
-          margin: auto 0;
-        }
-
-        .preview {
-          max-width: 100%;
-          max-height: 100%;
-          object-fit: contain;
-        }
-
-        .mat-mdc-card-title {
-          font-size: 20px;
-          line-height: normal;
-          margin-bottom: 8px;
-        }
-
-        .mat-mdc-card-subtitle {
-          margin-bottom: 16px;
-          margin-top: -4px;
-          line-height: normal;
-          font-weight: normal;
-        }
-
-        .mat-mdc-card-content {
-          font-size: 14px;
-          line-height: 18px;
-          color: #666;
-          margin-bottom: 16px;
-          padding: 0;
-        }
+      .tb-deprecated {
+        font-size: 14px;
+        color: rgba(209, 39, 48, 0.87);
       }
     }
 
-    @media #{$mat-gt-xs} {
-      .mat-card-container {
-        flex: 0 0 50%;
-        max-width: 50%;
-      }
+    .mat-mdc-card-subtitle {
+      margin-bottom: 16px;
+      margin-top: -4px;
+      line-height: normal;
+      font-weight: normal;
     }
 
-    @media screen and (min-width: 2000px) {
-      .mat-card-container {
-        flex: 0 0 33.333333%;
-        max-width: 33.333333%;
-      }
+    .mat-mdc-card-content {
+      font-size: 14px;
+      line-height: 18px;
+      color: #666;
+      margin-bottom: 16px;
+      padding: 0;
     }
   }
 }
 
+@keyframes shine {
+  to {
+    background-position-x: -200%;
+  }
+}

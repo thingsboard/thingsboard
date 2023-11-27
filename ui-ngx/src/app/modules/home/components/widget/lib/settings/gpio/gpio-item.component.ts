@@ -56,7 +56,7 @@ export const gpioItemValidator = (hasColor: boolean): ValidatorFn => (control: A
 @Component({
   selector: 'tb-gpio-item',
   templateUrl: './gpio-item.component.html',
-  styleUrls: ['./gpio-item.component.scss', './../widget-settings.scss'],
+  styleUrls: ['./gpio-item.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

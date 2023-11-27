@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
@@ -49,34 +50,30 @@ import static org.mockito.Mockito.when;
 
 class TbDeviceTypeSwitchNodeTest {
 
-    TenantId tenantId;
-    DeviceId deviceId;
-    DeviceId deviceIdDeleted;
-    DeviceProfile deviceProfile;
-    TbContext ctx;
-    TbDeviceTypeSwitchNode node;
-    EmptyNodeConfiguration config;
-    TbMsgCallback callback;
-    RuleEngineDeviceProfileCache deviceProfileCache;
+    private DeviceId deviceId;
+    private DeviceId deviceIdDeleted;
+    private TbContext ctx;
+    private TbDeviceTypeSwitchNode node;
+    private TbMsgCallback callback;
 
     @BeforeEach
     void setUp() throws TbNodeException {
-        tenantId = new TenantId(UUID.randomUUID());
+        TenantId tenantId = new TenantId(UUID.randomUUID());
         deviceId = new DeviceId(UUID.randomUUID());
         deviceIdDeleted = new DeviceId(UUID.randomUUID());
 
-        deviceProfile = new DeviceProfile();
+        DeviceProfile deviceProfile = new DeviceProfile();
         deviceProfile.setTenantId(tenantId);
         deviceProfile.setName("TestDeviceProfile");
 
         //node
-        config = new EmptyNodeConfiguration();
+        EmptyNodeConfiguration config = new EmptyNodeConfiguration();
         node = new TbDeviceTypeSwitchNode();
         node.init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
         //init mock
         ctx = mock(TbContext.class);
-        deviceProfileCache = mock(RuleEngineDeviceProfileCache.class);
+        RuleEngineDeviceProfileCache deviceProfileCache = mock(RuleEngineDeviceProfileCache.class);
         callback = mock(TbMsgCallback.class);
 
         when(ctx.getTenantId()).thenReturn(tenantId);
@@ -121,6 +118,6 @@ class TbDeviceTypeSwitchNodeTest {
     }
 
     private TbMsg getTbMsg(EntityId entityId) {
-        return TbMsg.newMsg("POST_ATTRIBUTES_REQUEST", entityId, new TbMsgMetaData(), "{}", callback);
+        return TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, entityId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT, callback);
     }
 }

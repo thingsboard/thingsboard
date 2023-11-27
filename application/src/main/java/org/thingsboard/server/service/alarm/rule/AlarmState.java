@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.queue.TbQueueCallback;
@@ -210,7 +211,7 @@ class AlarmState {
         }
         setAlarmConditionMetadata(ruleState, metaData);
 
-        TbMsg newMsg = TbMsg.newMsg(lastMsgQueueName, "ALARM", originator, msg != null ? msg.getCustomerId() : null, metaData, data, lastRuleChainId, lastRuleNodeId);
+        TbMsg newMsg = TbMsg.newMsg(lastMsgQueueName, TbMsgType.ALARM, originator, msg != null ? msg.getCustomerId() : null, metaData, data, lastRuleChainId, lastRuleNodeId);
 
         if (isLastRuleNodeDebugMode) {
             ctx.getActorSystemContext().persistDebugOutput(tenantId, lastRuleNodeId, newMsg, relationType);

@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
@@ -39,9 +40,12 @@ import org.thingsboard.server.common.data.notification.NotificationRequestStatus
 import org.thingsboard.server.common.data.notification.NotificationStatus;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
+import org.thingsboard.server.common.data.notification.settings.UserNotificationSettings;
+import org.thingsboard.server.common.data.notification.targets.MicrosoftTeamsNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.targets.platform.UsersFilter;
 import org.thingsboard.server.common.data.notification.targets.slack.SlackNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
@@ -163,16 +167,54 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                 .settings(settings)
                 .build();
 
-        notificationExecutor.submit(() -> {
-            for (NotificationTarget target : targets) {
-                processForTarget(target, ctx);
-            }
+        processNotificationRequestAsync(ctx, targets, callback);
+        return request;
+    }
 
+    @Override
+    public void sendGeneralWebNotification(TenantId tenantId, UsersFilter recipients, NotificationTemplate template) {
+        NotificationTarget target = new NotificationTarget();
+        target.setTenantId(tenantId);
+        PlatformUsersNotificationTargetConfig targetConfig = new PlatformUsersNotificationTargetConfig();
+        targetConfig.setUsersFilter(recipients);
+        target.setConfiguration(targetConfig);
+
+        NotificationRequest notificationRequest = NotificationRequest.builder()
+                .tenantId(tenantId)
+                .template(template)
+                .targets(List.of(EntityId.NULL_UUID)) // this is temporary and will be removed when 'create from scratch' functionality is implemented for recipients
+                .status(NotificationRequestStatus.PROCESSING)
+                .build();
+        try {
+            notificationRequest = notificationRequestService.saveNotificationRequest(tenantId, notificationRequest);
+            NotificationProcessingContext ctx = NotificationProcessingContext.builder()
+                    .tenantId(tenantId)
+                    .request(notificationRequest)
+                    .deliveryMethods(Set.of(NotificationDeliveryMethod.WEB))
+                    .template(template)
+                    .build();
+
+            processNotificationRequestAsync(ctx, List.of(target), null);
+        } catch (Exception e) {
+            log.error("Failed to process notification request for recipients {} for template '{}'", recipients, template.getName(), e);
+        }
+    }
+
+    private void processNotificationRequestAsync(NotificationProcessingContext ctx, List<NotificationTarget> targets, Consumer<NotificationRequestStats> callback) {
+        notificationExecutor.submit(() -> {
             NotificationRequestId requestId = ctx.getRequest().getId();
+            for (NotificationTarget target : targets) {
+                try {
+                    processForTarget(target, ctx);
+                } catch (Exception e) {
+                    log.error("[{}] Failed to process notification request for target {}", requestId, target.getId(), e);
+                }
+            }
             log.debug("[{}] Notification request processing is finished", requestId);
+
             NotificationRequestStats stats = ctx.getStats();
             try {
-                notificationRequestService.updateNotificationRequest(tenantId, requestId, NotificationRequestStatus.SENT, stats);
+                notificationRequestService.updateNotificationRequest(ctx.getTenantId(), requestId, NotificationRequestStatus.SENT, stats);
             } catch (Exception e) {
                 log.error("[{}] Failed to update stats for notification request", requestId, e);
             }
@@ -185,8 +227,6 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                 }
             }
         });
-
-        return request;
     }
 
     private void processForTarget(NotificationTarget target, NotificationProcessingContext ctx) {
@@ -208,6 +248,11 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
             case SLACK: {
                 SlackNotificationTargetConfig targetConfig = (SlackNotificationTargetConfig) target.getConfiguration();
                 recipients = List.of(targetConfig.getConversation());
+                break;
+            }
+            case MICROSOFT_TEAMS: {
+                MicrosoftTeamsNotificationTargetConfig targetConfig = (MicrosoftTeamsNotificationTargetConfig) target.getConfiguration();
+                recipients = List.of(targetConfig);
                 break;
             }
             default: {
@@ -237,7 +282,17 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     private void processForRecipient(NotificationDeliveryMethod deliveryMethod, NotificationRecipient recipient, NotificationProcessingContext ctx) throws Exception {
         if (ctx.getStats().contains(deliveryMethod, recipient.getId())) {
             throw new AlreadySentException();
+        } else {
+            ctx.getStats().reportProcessed(deliveryMethod, recipient.getId());
         }
+
+        if (recipient instanceof User) {
+            UserNotificationSettings settings = notificationSettingsService.getUserNotificationSettings(ctx.getTenantId(), ((User) recipient).getId(), false);
+            if (!settings.isEnabled(ctx.getNotificationType(), deliveryMethod)) {
+                throw new RuntimeException("User disabled " + deliveryMethod.getName() + " notifications of this type");
+            }
+        }
+
         NotificationChannel notificationChannel = channels.get(deliveryMethod);
         DeliveryMethodNotificationTemplate processedTemplate = ctx.getProcessedTemplate(deliveryMethod, recipient);
 
@@ -251,7 +306,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         Notification notification = Notification.builder()
                 .requestId(request.getId())
                 .recipientId(recipient.getId())
-                .type(ctx.getNotificationTemplate().getNotificationType())
+                .type(ctx.getNotificationType())
                 .subject(processedTemplate.getSubject())
                 .text(processedTemplate.getBody())
                 .additionalConfig(processedTemplate.getAdditionalConfig())

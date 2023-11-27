@@ -499,6 +499,15 @@ public class RestClient implements Closeable {
         return restTemplate.postForEntity(baseURL + "/api/alarm", alarm, Alarm.class).getBody();
     }
 
+    public List<EntitySubtype> getAlarmTypes(PageLink pageLink) {
+        return restTemplate.exchange(
+                baseURL + "/api/alarm/types?" + getUrlParams(pageLink),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<EntitySubtype>>() {
+        }).getBody();
+    }
+
     public AlarmComment saveAlarmComment(AlarmId alarmId, AlarmComment alarmComment) {
         return restTemplate.postForEntity(baseURL + "/api/alarm/{alarmId}/comment", alarmComment, AlarmComment.class, alarmId.getId()).getBody();
     }
@@ -2364,7 +2373,8 @@ public class RestClient implements Closeable {
                                           boolean deleteAllDataForKeys,
                                           Long startTs,
                                           Long endTs,
-                                          boolean rewriteLatestIfDeleted) {
+                                          boolean rewriteLatestIfDeleted,
+                                          boolean deleteLatest) {
         Map<String, String> params = new HashMap<>();
         params.put("entityType", entityId.getEntityType().name());
         params.put("entityId", entityId.getId().toString());
@@ -2373,17 +2383,34 @@ public class RestClient implements Closeable {
         params.put("startTs", startTs.toString());
         params.put("endTs", endTs.toString());
         params.put("rewriteLatestIfDeleted", String.valueOf(rewriteLatestIfDeleted));
+        params.put("deleteLatest", String.valueOf(deleteLatest));
 
         return restTemplate
                 .exchange(
-                        baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/timeseries/delete?keys={keys}&deleteAllDataForKeys={deleteAllDataForKeys}&startTs={startTs}&endTs={endTs}&rewriteLatestIfDeleted={rewriteLatestIfDeleted}",
+                        baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/timeseries/delete?keys={keys}&deleteAllDataForKeys={deleteAllDataForKeys}&startTs={startTs}&endTs={endTs}&rewriteLatestIfDeleted={rewriteLatestIfDeleted}&deleteLatest={deleteLatest}",
                         HttpMethod.DELETE,
                         HttpEntity.EMPTY,
                         Object.class,
                         params)
                 .getStatusCode()
                 .is2xxSuccessful();
+    }
 
+    public boolean deleteEntityLatestTimeseries(EntityId entityId, List<String> keys) {
+        Map<String, String> params = new HashMap<>();
+        params.put("entityType", entityId.getEntityType().name());
+        params.put("entityId", entityId.getId().toString());
+        params.put("keys", listToString(keys));
+
+        return restTemplate
+                .exchange(
+                        baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/timeseries/latest/delete?keys={keys}",
+                        HttpMethod.DELETE,
+                        HttpEntity.EMPTY,
+                        Object.class,
+                        params)
+                .getStatusCode()
+                .is2xxSuccessful();
     }
 
     public boolean deleteEntityAttributes(DeviceId deviceId, String scope, List<String> keys) {
