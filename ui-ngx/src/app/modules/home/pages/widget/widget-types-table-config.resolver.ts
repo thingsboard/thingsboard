@@ -33,7 +33,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { getCurrentAuthUser } from '@app/core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
-import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { ImportExportService } from '@shared/import-export/import-export.service';
 import { Direction } from '@shared/models/page/sort-order';
 import {
   BaseWidgetType,

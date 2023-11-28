@@ -23,7 +23,7 @@ import {
   CsvColumnParam,
   ImportEntityColumnType,
   importEntityColumnTypeTranslations
-} from '@home/components/import-export/import-export.models';
+} from '@shared/import-export/import-export.models';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 

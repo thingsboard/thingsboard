@@ -21,10 +21,10 @@ import { AppState } from '@core/core.state';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 import { ImageReferences, ImageResourceInfo, ImageResourceInfoWithReferences } from '@shared/models/resource.models';
-import { ImagesDatasource } from '@home/components/image/images-datasource';
+import { ImagesDatasource } from '@shared/components/image/images-datasource';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
-import { ImageReferencesComponent } from '@home/components/image/image-references.component';
+import { ImageReferencesComponent } from '@shared/components/image/image-references.component';
 import { TranslateService } from '@ngx-translate/core';
 
 export interface ImagesInUseDialogData {

@@ -26,7 +26,7 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { widgetType as WidgetDataType, WidgetTypeInfo } from '@shared/models/widget.models';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
-import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { ImportExportService } from '@shared/import-export/import-export.service';
 import { WidgetService } from '@core/http/widget.service';
 import { FormControl, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';

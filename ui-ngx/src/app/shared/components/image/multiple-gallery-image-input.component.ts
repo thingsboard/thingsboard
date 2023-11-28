@@ -23,10 +23,10 @@ import { moveItemInArray } from '@angular/cdk/drag-drop';
 import { DndDropEvent } from 'ngx-drag-drop';
 import { isUndefined } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import { ImageLinkType } from '@home/components/image/gallery-image-input.component';
+import { ImageLinkType } from '@shared/components/image/gallery-image-input.component';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { MatButton } from '@angular/material/button';
-import { ImageGalleryComponent } from '@home/components/image/image-gallery.component';
+import { ImageGalleryComponent } from '@shared/components/image/image-gallery.component';
 
 @Component({
   selector: 'tb-multiple-gallery-image-input',

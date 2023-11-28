@@ -27,6 +27,8 @@ import { TbPopoverComponent } from '@shared/components/popover.component';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
+import { Observable } from 'rxjs';
+import { ImagePipe } from '@shared/pipe/image.pipe';
 
 @Component({
   selector: 'tb-background-settings-panel',
@@ -54,10 +56,11 @@ export class BackgroundSettingsPanelComponent extends PageComponent implements O
 
   backgroundSettingsFormGroup: UntypedFormGroup;
 
-  backgroundStyle: ComponentStyle = {};
+  backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
 
   constructor(private fb: UntypedFormBuilder,
+              private imagePipe: ImagePipe,
               protected store: Store<AppState>) {
     super(store);
   }
@@ -66,7 +69,6 @@ export class BackgroundSettingsPanelComponent extends PageComponent implements O
     this.backgroundSettingsFormGroup = this.fb.group(
       {
         type: [this.backgroundSettings?.type, []],
-        imageBase64: [this.backgroundSettings?.imageBase64, []],
         imageUrl: [this.backgroundSettings?.imageUrl, []],
         color: [this.backgroundSettings?.color, []],
         overlay: this.fb.group({
@@ -113,7 +115,7 @@ export class BackgroundSettingsPanelComponent extends PageComponent implements O
 
   private updateBackgroundStyle() {
     const background: BackgroundSettings = this.backgroundSettingsFormGroup.value;
-    this.backgroundStyle = backgroundStyle(background);
+    this.backgroundStyle$ = backgroundStyle(background, this.imagePipe);
     this.overlayStyle = overlayStyle(background.overlay);
   }
 

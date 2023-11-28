@@ -53,21 +53,21 @@ import { BaseData, HasId } from '@shared/models/base-data';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
-import { GridEntitiesFetchFunction, ScrollGridColumns } from '@home/models/datasource/scroll-grid-datasource';
-import { ItemSizeStrategy, ScrollGridComponent } from '@home/components/grid/scroll-grid.component';
+import { GridEntitiesFetchFunction, ScrollGridColumns } from '@shared/components/grid/scroll-grid-datasource';
+import { ItemSizeStrategy, ScrollGridComponent } from '@shared/components/grid/scroll-grid.component';
 import { MatDialog } from '@angular/material/dialog';
 import {
   UploadImageDialogComponent,
   UploadImageDialogData
-} from '@home/components/image/upload-image-dialog.component';
-import { ImageDialogComponent, ImageDialogData } from '@home/components/image/image-dialog.component';
-import { ImportExportService } from '@home/components/import-export/import-export.service';
+} from '@shared/components/image/upload-image-dialog.component';
+import { ImageDialogComponent, ImageDialogData } from '@shared/components/image/image-dialog.component';
+import { ImportExportService } from '@shared/import-export/import-export.service';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import {
   ImagesInUseDialogComponent,
   ImagesInUseDialogData
-} from '@home/components/image/images-in-use-dialog.component';
-import { ImagesDatasource } from '@home/components/image/images-datasource';
+} from '@shared/components/image/images-in-use-dialog.component';
+import { ImagesDatasource } from '@shared/components/image/images-datasource';
 
 interface GridImagesFilter {
   search: string;

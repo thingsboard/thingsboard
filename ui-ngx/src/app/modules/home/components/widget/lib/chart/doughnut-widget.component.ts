@@ -53,6 +53,8 @@ import { DataKey } from '@shared/models/widget.models';
 import { TooltipComponent, TooltipComponentOption } from 'echarts/components';
 import { PieChart, PieSeriesOption } from 'echarts/charts';
 import { SVGRenderer } from 'echarts/renderers';
+import { Observable } from 'rxjs';
+import { ImagePipe } from '@shared/pipe/image.pipe';
 
 echarts.use([
   TooltipComponent,
@@ -117,7 +119,7 @@ export class DoughnutWidgetComponent implements OnInit, OnDestroy, AfterViewInit
 
   totalValueColor: ColorProcessor;
 
-  backgroundStyle: ComponentStyle = {};
+  backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
 
   legendItems: DoughnutLegendItem[];
@@ -145,7 +147,8 @@ export class DoughnutWidgetComponent implements OnInit, OnDestroy, AfterViewInit
   private svgShape: Svg;
   private totalTextNode: Text;
 
-  constructor(private widgetComponent: WidgetComponent,
+  constructor(private imagePipe: ImagePipe,
+              private widgetComponent: WidgetComponent,
               private renderer: Renderer2,
               private translate: TranslateService,
               private cd: ChangeDetectorRef) {
@@ -167,7 +170,7 @@ export class DoughnutWidgetComponent implements OnInit, OnDestroy, AfterViewInit
       this.totalValueColor = ColorProcessor.fromSettings(this.settings.totalValueColor);
     }
 
-    this.backgroundStyle = backgroundStyle(this.settings.background);
+    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
 
     if (this.showLegend) {

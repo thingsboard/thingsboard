@@ -38,7 +38,7 @@ import {
 import { ImageService } from '@core/http/image.service';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
-import { ImageGalleryComponent } from '@home/components/image/image-gallery.component';
+import { ImageGalleryComponent } from '@shared/components/image/image-gallery.component';
 
 export enum ImageLinkType {
   none = 'none',

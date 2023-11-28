@@ -39,7 +39,7 @@ import { TwoFactorAuthSettingsComponent } from '@home/pages/admin/two-factor-aut
 import { widgetsLibraryRoutes } from '@home/pages/widget/widget-library-routing.module';
 import { RouterTabsComponent } from '@home/components/router-tabs.component';
 import { auditLogsRoutes } from '@home/pages/audit-log/audit-log-routing.module';
-import { ImageGalleryComponent } from '@home/components/image/image-gallery.component';
+import { ImageGalleryComponent } from '@shared/components/image/image-gallery.component';
 
 @Injectable()
 export class OAuth2LoginProcessingUrlResolver implements Resolve<string> {

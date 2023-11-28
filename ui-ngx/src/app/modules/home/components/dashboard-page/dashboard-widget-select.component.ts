@@ -31,8 +31,8 @@ import { BehaviorSubject, combineLatest } from 'rxjs';
 import { isObject } from '@core/utils';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
-import { GridEntitiesFetchFunction, ScrollGridColumns } from '@home/models/datasource/scroll-grid-datasource';
-import { ItemSizeStrategy } from '@home/components/grid/scroll-grid.component';
+import { GridEntitiesFetchFunction, ScrollGridColumns } from '@shared/components/grid/scroll-grid-datasource';
+import { ItemSizeStrategy } from '@shared/components/grid/scroll-grid.component';
 
 type selectWidgetMode = 'bundles' | 'allWidgets';
 

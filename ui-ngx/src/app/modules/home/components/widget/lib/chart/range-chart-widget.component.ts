@@ -57,6 +57,8 @@ import { LineChart, LineSeriesOption, } from 'echarts/charts';
 import { CanvasRenderer } from 'echarts/renderers';
 import { rangeChartDefaultSettings, RangeChartWidgetSettings } from './range-chart-widget.models';
 import { DataSet } from '@shared/models/widget.models';
+import { Observable } from 'rxjs';
+import { ImagePipe } from '@shared/pipe/image.pipe';
 
 echarts.use([
   TooltipComponent,
@@ -225,7 +227,7 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
   showLegend: boolean;
   legendClass: string;
 
-  backgroundStyle: ComponentStyle = {};
+  backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
 
   legendLabelStyle: ComponentStyle;
@@ -246,7 +248,8 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
 
   private tooltipDateFormat: DateFormatProcessor;
 
-  constructor(private renderer: Renderer2,
+  constructor(private imagePipe: ImagePipe,
+              private renderer: Renderer2,
               private cd: ChangeDetectorRef) {
   }
 
@@ -265,7 +268,7 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
 
-    this.backgroundStyle = backgroundStyle(this.settings.background);
+    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
 
     this.rangeItems = toRangeItems(this.settings.rangeColors);

@@ -33,7 +33,6 @@ import { QueueComponent } from '@home/pages/admin/queue/queue.component';
 import { RepositoryAdminSettingsComponent } from '@home/pages/admin/repository-admin-settings.component';
 import { AutoCommitAdminSettingsComponent } from '@home/pages/admin/auto-commit-admin-settings.component';
 import { TwoFactorAuthSettingsComponent } from '@home/pages/admin/two-factor-auth-settings.component';
-import { SharedHomeComponentsModule } from '@home/components/shared-home-components.module';
 
 @NgModule({
   declarations:
@@ -55,7 +54,6 @@ import { SharedHomeComponentsModule } from '@home/components/shared-home-compone
   imports: [
     CommonModule,
     SharedModule,
-    SharedHomeComponentsModule,
     HomeComponentsModule,
     AdminRoutingModule
   ]

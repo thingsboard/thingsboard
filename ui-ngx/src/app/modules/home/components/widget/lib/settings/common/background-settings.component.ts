@@ -21,13 +21,15 @@ import {
   backgroundStyle,
   BackgroundType,
   ComponentStyle,
-  overlayStyle
+  overlayStyle, validateAndUpdateBackgroundSettings
 } from '@shared/models/widget-settings.models';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import {
   BackgroundSettingsPanelComponent
 } from '@home/components/widget/lib/settings/common/background-settings-panel.component';
+import { Observable, of } from 'rxjs';
+import { ImagePipe } from '@shared/pipe/image.pipe';
 
 @Component({
   selector: 'tb-background-settings',
@@ -51,13 +53,14 @@ export class BackgroundSettingsComponent implements OnInit, ControlValueAccessor
 
   modelValue: BackgroundSettings;
 
-  backgroundStyle: ComponentStyle = {};
+  backgroundStyle$: Observable<ComponentStyle>;
 
   overlayStyle: ComponentStyle = {};
 
   private propagateChange = null;
 
-  constructor(private popoverService: TbPopoverService,
+  constructor(private imagePipe: ImagePipe,
+              private popoverService: TbPopoverService,
               private renderer: Renderer2,
               private viewContainerRef: ViewContainerRef) {}
 
@@ -77,7 +80,7 @@ export class BackgroundSettingsComponent implements OnInit, ControlValueAccessor
   }
 
   writeValue(value: BackgroundSettings): void {
-    this.modelValue = value;
+    this.modelValue = validateAndUpdateBackgroundSettings(value);
     this.updateBackgroundStyle();
   }
 
@@ -109,10 +112,10 @@ export class BackgroundSettingsComponent implements OnInit, ControlValueAccessor
 
   private updateBackgroundStyle() {
     if (!this.disabled) {
-      this.backgroundStyle = backgroundStyle(this.modelValue);
+      this.backgroundStyle$ = backgroundStyle(this.modelValue, this.imagePipe);
       this.overlayStyle = overlayStyle(this.modelValue.overlay);
     } else {
-      this.backgroundStyle = {};
+      this.backgroundStyle$ = of({});
       this.overlayStyle = {};
     }
   }

@@ -28,13 +28,11 @@ import { WidgetTypeComponent } from '@home/pages/widget/widget-type.component';
 import { WidgetTypeTabsComponent } from '@home/pages/widget/widget-type-tabs.component';
 import { WidgetsBundleWidgetsComponent } from '@home/pages/widget/widgets-bundle-widgets.component';
 import { WidgetTypeAutocompleteComponent } from '@home/pages/widget/widget-type-autocomplete.component';
-import { SharedHomeComponentsModule } from '@home/components/shared-home-components.module';
 
 @NgModule({
   declarations: [
     WidgetTypeComponent,
     WidgetsBundleComponent,
-    // WidgetLibraryComponent,
     WidgetTypeAutocompleteComponent,
     WidgetsBundleWidgetsComponent,
     WidgetEditorComponent,
@@ -46,7 +44,6 @@ import { SharedHomeComponentsModule } from '@home/components/shared-home-compone
   imports: [
     CommonModule,
     SharedModule,
-    SharedHomeComponentsModule,
     HomeComponentsModule,
     WidgetLibraryRoutingModule
   ]

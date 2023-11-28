@@ -30,7 +30,7 @@ import {
   GridEntitiesFetchFunction,
   ScrollGridColumns,
   ScrollGridDatasource
-} from '@home/models/datasource/scroll-grid-datasource';
+} from '@shared/components/grid/scroll-grid-datasource';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { isObject } from '@app/core/utils';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';

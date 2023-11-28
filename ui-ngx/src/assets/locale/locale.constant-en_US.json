@@ -5122,9 +5122,8 @@
         "background": {
             "background": "Background",
             "background-settings": "Background settings",
-            "background-type-image": "Upload image",
-            "background-type-image-url": "Image URL",
-            "background-type-color": "Solid color",
+            "background-type-image": "Image",
+            "background-type-color": "Color",
             "image-url": "Image URL",
             "overlay": "Overlay",
             "enable-overlay": "Enable overlay",

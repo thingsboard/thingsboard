@@ -51,6 +51,7 @@ import { DataKey } from '@shared/models/widget.models';
 import { formatNumberValue, formatValue, isDefined, isDefinedAndNotNull, isNumeric } from '@core/utils';
 import { map } from 'rxjs/operators';
 import { ResizeObserver } from '@juggle/resize-observer';
+import { ImagePipe } from '@shared/pipe/image.pipe';
 
 const valuesLayoutHeight = 66;
 const valuesLayoutVerticalPadding = 16;
@@ -96,7 +97,7 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
   dateStyle: ComponentStyle = {};
   dateColor: string;
 
-  backgroundStyle: ComponentStyle = {};
+  backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
 
   private flot: TbFlot;
@@ -109,7 +110,8 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
 
   private panelResize$: ResizeObserver;
 
-  constructor(private renderer: Renderer2,
+  constructor(private imagePipe: ImagePipe,
+              private renderer: Renderer2,
               private cd: ChangeDetectorRef) {
   }
 
@@ -151,7 +153,7 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
     this.dateStyle = textStyle(this.settings.dateFont);
     this.dateColor = this.settings.dateColor;
 
-    this.backgroundStyle = backgroundStyle(this.settings.background);
+    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
   }
 

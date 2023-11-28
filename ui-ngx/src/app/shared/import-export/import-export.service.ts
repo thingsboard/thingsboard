@@ -33,16 +33,12 @@ import {
   EntityAliasInfo
 } from '@shared/models/alias.models';
 import { MatDialog } from '@angular/material/dialog';
-import { ImportDialogComponent, ImportDialogData } from '@home/components/import-export/import-dialog.component';
+import { ImportDialogComponent, ImportDialogData } from '@shared/import-export/import-dialog.component';
 import { forkJoin, Observable, of, Subject } from 'rxjs';
 import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityService } from '@core/http/entity.service';
 import { Widget, WidgetSize, WidgetType, WidgetTypeDetails } from '@shared/models/widget.models';
-import {
-  EntityAliasesDialogComponent,
-  EntityAliasesDialogData
-} from '@home/components/alias/entity-aliases-dialog.component';
 import { ItemBufferService, WidgetItem } from '@core/services/item-buffer.service';
 import {
   BulkImportRequest,
@@ -78,9 +74,12 @@ import {
   ExportWidgetsBundleDialogComponent,
   ExportWidgetsBundleDialogData,
   ExportWidgetsBundleDialogResult
-} from '@home/components/import-export/export-widgets-bundle-dialog.component';
+} from '@shared/import-export/export-widgets-bundle-dialog.component';
 import { ImageService } from '@core/http/image.service';
 import { ImageExportData, ImageResourceInfo, ImageResourceType } from '@shared/models/resource.models';
+
+export type editMissingAliasesFunction = (widgets: Array<Widget>, isSingleWidget: boolean,
+                                          customTitle: string, missingEntityAliases: EntityAliases) => Observable<EntityAliases>;
 
 // @dynamic
 @Injectable()
@@ -152,7 +151,7 @@ export class ImportExportService {
     );
   }
 
-  public importDashboard(): Observable<Dashboard> {
+  public importDashboard(onEditMissingAliases: editMissingAliasesFunction): Observable<Dashboard> {
     return this.openImportDialog('dashboard.import', 'dashboard.dashboard-file').pipe(
       mergeMap((dashboard: Dashboard) => {
         if (!this.validateImportedDashboard(dashboard)) {
@@ -171,7 +170,7 @@ export class ImportExportService {
             return this.processEntityAliases(entityAliases, aliasIds).pipe(
               mergeMap((missingEntityAliases) => {
                 if (Object.keys(missingEntityAliases).length > 0) {
-                  return this.editMissingAliases(this.dashboardUtils.getWidgetsArray(dashboard),
+                  return onEditMissingAliases(this.dashboardUtils.getWidgetsArray(dashboard),
                     false, 'dashboard.dashboard-import-missing-aliases-title',
                     missingEntityAliases).pipe(
                     mergeMap((updatedEntityAliases) => {
@@ -205,6 +204,7 @@ export class ImportExportService {
   }
 
   public importWidget(dashboard: Dashboard, targetState: string,
+                      onEditMissingAliases: editMissingAliasesFunction,
                       targetLayoutFunction: () => Observable<DashboardLayoutId>,
                       onAliasesUpdateFunction: () => void,
                       onFiltersUpdateFunction: () => void): Observable<ImportWidgetResult> {
@@ -255,7 +255,7 @@ export class ImportExportService {
               return this.processEntityAliases(entityAliases, aliasIds).pipe(
                 mergeMap((missingEntityAliases) => {
                     if (Object.keys(missingEntityAliases).length > 0) {
-                      return this.editMissingAliases([widget],
+                      onEditMissingAliases([widget],
                         false, 'dashboard.widget-import-missing-aliases-title',
                         missingEntityAliases).pipe(
                         mergeMap((updatedEntityAliases) => {
@@ -969,30 +969,6 @@ export class ImportExportService {
         }
       )
     );
-  }
-
-  private editMissingAliases(widgets: Array<Widget>, isSingleWidget: boolean,
-                             customTitle: string, missingEntityAliases: EntityAliases): Observable<EntityAliases> {
-    return this.dialog.open<EntityAliasesDialogComponent, EntityAliasesDialogData,
-      EntityAliases>(EntityAliasesDialogComponent, {
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        entityAliases: missingEntityAliases,
-        widgets,
-        customTitle,
-        isSingleWidget,
-        disableAdd: true
-      }
-    }).afterClosed().pipe(
-      map((updatedEntityAliases) => {
-        if (updatedEntityAliases) {
-          return updatedEntityAliases;
-        } else {
-          throw new Error('Unable to resolve missing entity aliases!');
-        }
-      }
-    ));
   }
 
   private prepareAliasesInfo(aliasesInfo: AliasesInfo): AliasesInfo {

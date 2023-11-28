@@ -36,11 +36,9 @@ import { AppState } from '@core/core.state';
 import { getCurrentAuthState, getCurrentAuthUser } from '@app/core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { DialogService } from '@core/services/dialog.service';
-import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { ImportExportService } from '@shared/import-export/import-export.service';
 import { Direction } from '@shared/models/page/sort-order';
-import { map } from 'rxjs/operators';
 import { WidgetsBundleTabsComponent } from '@home/pages/widget/widgets-bundle-tabs.component';
-import { TenantInfo } from '@shared/models/tenant.model';
 
 @Injectable()
 export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableConfig<WidgetsBundle>> {

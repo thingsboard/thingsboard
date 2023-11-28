@@ -27,7 +27,7 @@ import { ImageResourceInfo, imageResourceType } from '@shared/models/resource.mo
 import {
   UploadImageDialogComponent,
   UploadImageDialogData
-} from '@home/components/image/upload-image-dialog.component';
+} from '@shared/components/image/upload-image-dialog.component';
 import { UrlHolder } from '@shared/pipe/image.pipe';
 
 export interface ImageDialogData {

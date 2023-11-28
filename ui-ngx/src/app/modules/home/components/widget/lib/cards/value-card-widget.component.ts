@@ -44,6 +44,7 @@ import { valueCardDefaultSettings, ValueCardLayout, ValueCardWidgetSettings } fr
 import { WidgetComponent } from '@home/components/widget/widget.component';
 import { Observable } from 'rxjs';
 import { ResizeObserver } from '@juggle/resize-observer';
+import { ImagePipe } from '@shared/pipe/image.pipe';
 
 const squareLayoutSize = 160;
 const squareLayoutPadding = 48;
@@ -92,7 +93,7 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
   dateStyle: ComponentStyle = {};
   dateColor: ColorProcessor;
 
-  backgroundStyle: ComponentStyle = {};
+  backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
 
   private panelResize$: ResizeObserver;
@@ -101,7 +102,8 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
   private decimals = 0;
   private units = '';
 
-  constructor(private renderer: Renderer2,
+  constructor(private imagePipe: ImagePipe,
+              private renderer: Renderer2,
               private widgetComponent: WidgetComponent,
               private cd: ChangeDetectorRef) {
   }
@@ -142,7 +144,7 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
     this.dateStyle = textStyle(this.settings.dateFont);
     this.dateColor = ColorProcessor.fromSettings(this.settings.dateColor);
 
-    this.backgroundStyle = backgroundStyle(this.settings.background);
+    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
   }
 

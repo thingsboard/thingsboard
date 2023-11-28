@@ -24,7 +24,6 @@ import { DashboardRoutingModule } from './dashboard-routing.module';
 import { MakeDashboardPublicDialogComponent } from '@modules/home/pages/dashboard/make-dashboard-public-dialog.component';
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';
 import { DashboardTabsComponent } from '@home/pages/dashboard/dashboard-tabs.component';
-import { SharedHomeComponentsModule } from '@home/components/shared-home-components.module';
 
 @NgModule({
   declarations: [
@@ -36,7 +35,6 @@ import { SharedHomeComponentsModule } from '@home/components/shared-home-compone
   imports: [
     CommonModule,
     SharedModule,
-    SharedHomeComponentsModule,
     HomeComponentsModule,
     HomeDialogsModule,
     DashboardRoutingModule
