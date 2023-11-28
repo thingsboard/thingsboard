@@ -15,9 +15,7 @@
  */
 package org.thingsboard.server.service.install;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,7 +87,6 @@ public class InstallScripts {
     public static final String DASHBOARDS_DIR = "dashboards";
     public static final String MODELS_LWM2M_DIR = "lwm2m-registry";
     public static final String CREDENTIALS_DIR = "credentials";
-    public static final String IMAGES_DIR = "images";
 
     public static final String JSON_EXT = ".json";
     public static final String XML_EXT = ".xml";
@@ -303,19 +300,6 @@ public class InstallScripts {
             } while (widgetTypes.hasNext());
             widgetsBundleService.deleteWidgetsBundle(TenantId.SYS_TENANT_ID, widgetsBundle.getId());
         }
-    }
-
-    @SneakyThrows
-    public void updateSystemImages() {
-        Path imagesDir = Paths.get(getDataDir(), IMAGES_DIR);
-        Map<String, String> imageNames = JacksonUtil.OBJECT_MAPPER.readValue(imagesDir.resolve("names.json").toFile(), new TypeReference<>() {});
-
-        Files.walk(imagesDir)
-                .filter(path -> path.toFile().isFile())
-                .filter(path -> !path.getFileName().toString().endsWith("json"))
-                .forEach(imageFile -> {
-                    imagesUpdater.updateSystemImage(imageFile, imageNames);
-                });
     }
 
     public void migrateTenantImages() {

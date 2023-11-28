@@ -53,11 +53,11 @@ public class ImageUtils {
         return mediaTypeMappings.getOrDefault(subtype, subtype);
     }
 
-    public static String fileExtensionToMediaType(String type, String extension) {
+    public static String fileExtensionToMediaType(String extension) {
         String subtype = mediaTypeMappings.entrySet().stream()
                 .filter(mapping -> mapping.getValue().equals(extension))
                 .map(Map.Entry::getKey).findFirst().orElse(extension);
-        return new MimeType(type, subtype).toString();
+        return new MimeType("image", subtype).toString();
     }
 
     public static ProcessedImage processImage(byte[] data, String mediaType, int thumbnailMaxDimension) throws Exception {

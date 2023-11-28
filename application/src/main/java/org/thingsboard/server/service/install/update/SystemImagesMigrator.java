@@ -15,31 +15,23 @@
  */
 package org.thingsboard.server.service.install.update;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.hash.Hashing;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.util.Base64Utils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.dao.util.ImageUtils;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
 
 @Slf4j
-public class SystemImagesMigrator { // TEMPORARY
+public class SystemImagesMigrator {
 
     private static final Path dataDir = Path.of(
             "/home/*/thingsboard-ce/application/src/main/data"
@@ -49,17 +41,7 @@ public class SystemImagesMigrator { // TEMPORARY
     private static final Path widgetTypesDir = dataDir.resolve("json").resolve("system").resolve("widget_types");
     private static final Path demoDashboardsDir = dataDir.resolve("json").resolve("demo").resolve("dashboards");
 
-    private static final Map<String, String> imageNames = new TreeMap<>();
-    private static final Map<String, String> imageHashes = new HashMap<>();
-
     public static void main(String[] args) throws Exception {
-        Files.createDirectories(imagesDir);
-        Path imageNamesFile = imagesDir.resolve("names.json");
-        if (imageNamesFile.toFile().exists()) {
-            Map<String, String> existingImageNames = JacksonUtil.OBJECT_MAPPER.readValue(imageNamesFile.toFile(), new TypeReference<>() {});
-            imageNames.putAll(existingImageNames);
-        }
-
         Files.list(widgetTypesDir).forEach(file -> {
             ObjectNode widgetTypeJson = (ObjectNode) JacksonUtil.toJsonNode(file.toFile());
             updateWidget(widgetTypeJson);
@@ -78,154 +60,75 @@ public class SystemImagesMigrator { // TEMPORARY
             updateDashboard(dashboardJson);
             saveJson(file, dashboardJson);
         });
-
-        saveJson(imageNamesFile, JacksonUtil.valueToTree(imageNames));
     }
 
     public static void updateWidgetsBundle(ObjectNode widgetsBundleJson) {
-        String widgetsBundleName = widgetsBundleJson.get("title").asText();
-        String widgetsBundleAlias = widgetsBundleJson.get("alias").asText();
-
-        String image = getText(widgetsBundleJson, "image");
-        String imageLink = saveImage(widgetsBundleName + " - image", widgetsBundleAlias, image, "widget_bundles");
-        widgetsBundleJson.put("image", imageLink);
+        String imageLink = getText(widgetsBundleJson, "image");
+        widgetsBundleJson.put("image", inlineImage(imageLink, "widget_bundles"));
     }
 
     public static void updateWidget(ObjectNode widgetJson) {
-        String widgetName = widgetJson.get("name").asText();
-        String widgetFqn = widgetJson.get("fqn").asText();
-
-        String previewImage = widgetJson.get("image").asText();
-        String previewImageLink = saveImage(widgetName + " - image", widgetFqn, previewImage, "widgets");
-        widgetJson.put("image", previewImageLink);
+        String previewImageLink = widgetJson.get("image").asText();
+        widgetJson.put("image", inlineImage(previewImageLink, "widgets"));
 
         ObjectNode descriptor = (ObjectNode) widgetJson.get("descriptor");
         JsonNode defaultConfig = JacksonUtil.toJsonNode(descriptor.get("defaultConfig").asText());
-        updateWidgetConfig(defaultConfig, widgetName, widgetFqn, "widgets");
+        updateWidgetConfig(defaultConfig, "widgets");
         descriptor.put("defaultConfig", defaultConfig.toString());
     }
 
     public static void updateDashboard(ObjectNode dashboardJson) {
-        String title = dashboardJson.get("title").asText();
-        String imageNamePrefix = title + " dashboard";
-        String imageKeyPrefix = title.replace(" ", "_").toLowerCase();
-
         String image = getText(dashboardJson, "image");
-        String imageLink = saveImage(imageNamePrefix + " - image", imageKeyPrefix + ".image", image, "dashboards");
-        dashboardJson.put("image", imageLink);
+        dashboardJson.put("image", inlineImage(image, "dashboards"));
 
         dashboardJson.get("configuration").get("widgets").elements().forEachRemaining(widgetConfig -> {
-            String fqn;
-            if (widgetConfig.has("typeFullFqn")) {
-                fqn = StringUtils.substringAfter(widgetConfig.get("typeFullFqn").asText(), "."); // removing prefix ('system' or 'tenant')
-            } else {
-                fqn = widgetConfig.get("bundleAlias").asText() + "." + widgetConfig.get("typeAlias").asText();
-            }
-            String widgetName = widgetConfig.get("config").get("title").asText();
-            updateWidgetConfig(widgetConfig.get("config"),
-                    imageNamePrefix + " - " + widgetName + " widget",
-                    imageKeyPrefix + "." + fqn + "###" + widgetConfig.get("id").asText(),
-                    "dashboards");
+            updateWidgetConfig(widgetConfig.get("config"), "dashboards");
         });
     }
 
-    private static void updateWidgetConfig(JsonNode widgetConfigJson,
-                                           String imageNamePrefix, String imageKeyPrefix,
-                                           String directory) {
+    private static void updateWidgetConfig(JsonNode widgetConfigJson, String directory) {
         ObjectNode widgetSettings = (ObjectNode) widgetConfigJson.get("settings");
         ArrayNode markerImages = (ArrayNode) widgetSettings.get("markerImages");
         if (markerImages != null && !markerImages.isEmpty()) {
             for (int i = 0; i < markerImages.size(); i++) {
-                String imageName = imageNamePrefix + " - marker image " + (i + 1);
-                String imageKey = imageKeyPrefix + "#marker_image_" + (i + 1);
-                String imageLink = saveImage(imageName, imageKey, markerImages.get(i).asText(), directory);
-                markerImages.set(i, imageLink);
+                markerImages.set(i, inlineImage(markerImages.get(i).asText(), directory));
             }
         }
 
         String mapImage = getText(widgetSettings, "mapImageUrl");
         if (mapImage != null) {
-            String imageName = imageNamePrefix + " - map image";
-            String imageKeySuffix = "#map_image";
-            String imageKey = imageKeyPrefix + imageKeySuffix;
-            String imageLink = saveImage(imageName, imageKey, mapImage, directory);
-            widgetSettings.put("mapImageUrl", imageLink);
+            widgetSettings.put("mapImageUrl", inlineImage(mapImage, directory));
         }
 
         String backgroundImage = getText(widgetSettings, "backgroundImageUrl");
         if (backgroundImage != null) {
-            String imageName = imageNamePrefix + " - background image";
-            String imageKeySuffix = "#background_image";
-            String imageKey = imageKeyPrefix + imageKeySuffix;
-            String imageLink = saveImage(imageName, imageKey, backgroundImage, directory);
-            widgetSettings.put("backgroundImageUrl", imageLink);
+            widgetSettings.put("backgroundImageUrl", inlineImage(backgroundImage, directory));
         }
 
         JsonNode backgroundConfigNode = widgetSettings.get("background");
         if (backgroundConfigNode != null && backgroundConfigNode.isObject()) {
             ObjectNode backgroundConfig = (ObjectNode) backgroundConfigNode;
-            if ("image".equals(getText(backgroundConfig, "type"))) {
-                String imageBase64 = getText(backgroundConfig, "imageBase64");
-                if (imageBase64 != null) {
-                    String imageName = imageNamePrefix + " - background image";
-                    String imageKeySuffix = "#background_image";
-                    String imageKey = imageKeyPrefix + imageKeySuffix;
-                    String imageLink = saveImage(imageName, imageKey, imageBase64, directory);
-                    backgroundConfig.set("imageBase64", null);
-                    backgroundConfig.put("imageUrl", imageLink);
-                    backgroundConfig.put("type", "imageUrl");
+            if ("imageUrl".equals(getText(backgroundConfig, "type"))) {
+                String imageLink = getText(backgroundConfig, "imageUrl");
+                if (imageLink != null && imageLink.startsWith("/api/images")) {
+                    backgroundConfig.put("imageBase64", inlineImage(imageLink, directory));
+                    backgroundConfig.set("imageUrl", null);
+                    backgroundConfig.put("type", "image");
                 }
             }
         }
     }
 
     @SneakyThrows
-    private static String saveImage(String imageName, String imageKey, String data, String subDirectory) {
-        if (data == null) {
-            return null;
+    private static String inlineImage(String url, String subDir) {
+        if (url != null && url.startsWith("/api/images")) {
+            String imageKey = StringUtils.substringAfterLast(url, "/");
+            Path file = imagesDir.resolve(subDir).resolve(imageKey);
+            String mediaType = ImageUtils.fileExtensionToMediaType(StringUtils.substringAfterLast(imageKey, "."));
+            return "data:" + mediaType + ";base64," + Base64Utils.encodeToString(Files.readAllBytes(file));
+        } else {
+            return url;
         }
-        String base64Data = StringUtils.substringAfter(data, "base64,");
-        if (base64Data.isEmpty()) {
-            return data;
-        }
-        String imageMediaType = StringUtils.substringBetween(data, "data:", ";base64");
-        String extension = ImageUtils.mediaTypeToFileExtension(imageMediaType);
-        imageKey += "." + extension;
-
-        byte[] image = Base64.getDecoder().decode(base64Data);
-        Files.createDirectories(imagesDir.resolve(subDirectory));
-        Path file = imagesDir.resolve(subDirectory).resolve(imageKey);
-        Files.deleteIfExists(file);
-        Files.write(file, image);
-        imageNames.put(imageKey, imageName);
-        log.info("New image {} ('{}')", imageKey, imageName);
-        return "/api/images/system/" + imageKey;
-    }
-
-    private static void checkDuplicates() throws IOException {
-        Files.walk(imagesDir)
-                .filter(path -> path.toFile().isFile())
-                .filter(path -> !path.getFileName().toString().endsWith("json"))
-                .forEach(imageFile -> {
-                    try {
-                        byte[] data = Files.readAllBytes(imageFile);
-                        String hash = Hashing.sha256().hashBytes(data).toString();
-                        imageHashes.put(imageFile.getFileName().toString(), hash);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-        imageHashes.values().stream()
-                .distinct()
-                .forEach(hash -> {
-                    List<String> sameImages = imageHashes.entrySet().stream()
-                            .filter(entry -> entry.getValue().equals(hash))
-                            .map(Map.Entry::getKey)
-                            .collect(Collectors.toList());
-                    if (sameImages.size() > 1) {
-                        System.err.println("Duplicated images (hash " + hash + "):\n" + String.join("\n", sameImages) + "\n");
-                    }
-                });
     }
 
     private static String getText(JsonNode jsonNode, String field) {

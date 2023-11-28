@@ -57,22 +57,6 @@ public class ImagesUpdater {
     private static final String MARKER_IMAGE_NAME_SUFFIX = " - marker image ";
     private static final String MARKER_IMAGE_KEY_SUFFIX = "#marker_image_";
 
-    @SneakyThrows
-    public void updateSystemImage(Path imageFile, Map<String, String> imageNames) {
-        String imageKey = imageFile.getFileName().toString(); // TODO: add subdir to image key
-        String imageName = imageNames.get(imageKey);
-        if (imageName == null) {
-            imageName = imageKey;
-        }
-        byte[] imageData = Files.readAllBytes(imageFile);
-        String mediaType = ImageUtils.fileExtensionToMediaType("image", StringUtils.substringAfterLast(imageKey, "."));
-        try {
-            saveImage(TenantId.SYS_TENANT_ID, imageName, imageKey, imageData, mediaType, null);
-        } catch (Exception e) {
-            log.error("Failed to save system image {}", imageKey, e);
-        }
-    }
-
     public boolean updateDashboard(Dashboard dashboard) {
         String imageKeyPrefix = "dashboard_" + dashboard.getUuidId();
         String image = dashboard.getImage();
