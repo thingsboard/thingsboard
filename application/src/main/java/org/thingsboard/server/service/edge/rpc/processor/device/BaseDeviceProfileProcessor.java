@@ -58,6 +58,7 @@ public abstract class BaseDeviceProfileProcessor extends BaseEdgeProcessor {
             if (deviceProfile == null) {
                 throw new RuntimeException("[{" + tenantId + "}] deviceProfileUpdateMsg {" + deviceProfileUpdateMsg + "} cannot be converted to device profile");
             }
+            boolean isDefault = deviceProfile.isDefault();
             DeviceProfile deviceProfileById = deviceProfileService.findDeviceProfileById(tenantId, deviceProfileId);
             if (deviceProfileById == null) {
                 created = true;
@@ -73,6 +74,7 @@ public abstract class BaseDeviceProfileProcessor extends BaseEdgeProcessor {
                         tenantId, deviceProfile.getName(), deviceProfileName);
                 deviceProfileNameUpdated = true;
             }
+            deviceProfile.setDefault(false);
             deviceProfile.setName(deviceProfileName);
 
             RuleChainId ruleChainId = deviceProfile.getDefaultRuleChainId();
@@ -85,6 +87,9 @@ public abstract class BaseDeviceProfileProcessor extends BaseEdgeProcessor {
                 deviceProfile.setId(deviceProfileId);
             }
             deviceProfileService.saveDeviceProfile(deviceProfile, false);
+            if (isDefault) {
+                deviceProfileService.setDefaultDeviceProfile(tenantId, deviceProfileId);
+            }
         } catch (Exception e) {
             log.error("[{}] Failed to process device profile update msg [{}]", tenantId, deviceProfileUpdateMsg, e);
             throw e;
@@ -99,6 +104,7 @@ public abstract class BaseDeviceProfileProcessor extends BaseEdgeProcessor {
         deviceProfile.setTenantId(tenantId);
         deviceProfile.setCreatedTime(Uuids.unixTimestamp(deviceProfileId.getId()));
         deviceProfile.setName(deviceProfileUpdateMsg.getName());
+        deviceProfile.setDefault(deviceProfileUpdateMsg.getDefault());
         deviceProfile.setDescription(deviceProfileUpdateMsg.hasDescription() ? deviceProfileUpdateMsg.getDescription() : null);
         deviceProfile.setType(DeviceProfileType.valueOf(deviceProfileUpdateMsg.getType()));
         deviceProfile.setTransportType(deviceProfileUpdateMsg.hasTransportType()
