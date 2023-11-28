@@ -21,4 +21,8 @@ public interface MonitoringTarget {
 
     UUID getDeviceId();
 
+    String getBaseUrl();
+
+    boolean isCheckDomainIps();
+
 }

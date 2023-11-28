@@ -34,6 +34,13 @@ public final class TransportsMonitoringService extends BaseMonitoringService<Tra
     }
 
     @Override
+    protected TransportMonitoringTarget createTarget(String baseUrl) {
+        TransportMonitoringTarget target = new TransportMonitoringTarget();
+        target.setBaseUrl(baseUrl);
+        return target;
+    }
+
+    @Override
     protected String getName() {
         return "transports check";
     }
