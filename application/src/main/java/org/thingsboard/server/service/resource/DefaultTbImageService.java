@@ -27,20 +27,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Base64Utils;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Dashboard;
-import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.HasImage;
 import org.thingsboard.server.common.data.ImageDescriptor;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbImageDeleteResult;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
-import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -48,11 +46,9 @@ import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 @Service
 @Slf4j
@@ -167,32 +163,20 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public void inlineImages(Dashboard entity) {
-        var tenantId = entity.getTenantId();
-        entity.setImage(inlineImage(tenantId, "image", entity.getImage()));
-        inlineIntoJson(tenantId, entity.getConfiguration());
-    }
-
-    @Override
-    public void inlineImages(WidgetTypeDetails entity) {
-        var tenantId = entity.getTenantId();
-        entity.setImage(inlineImage(tenantId, "image", entity.getImage()));
-        inlineIntoJson(tenantId, entity.getDescriptor());
-    }
-
-    @Override
-    public void inlineImages(WidgetsBundle entity) {
+    public void inlineImages(HasImage entity) {
         entity.setImage(inlineImage(entity.getTenantId(), "image", entity.getImage()));
     }
 
     @Override
-    public void inlineImages(AssetProfile entity) {
-        entity.setImage(inlineImage(entity.getTenantId(), "image", entity.getImage()));
+    public void inlineImages(Dashboard dashboard) {
+        inlineImages((HasImage) dashboard);
+        inlineIntoJson(dashboard.getTenantId(), dashboard.getConfiguration());
     }
 
     @Override
-    public void inlineImages(DeviceProfile entity) {
-        entity.setImage(inlineImage(entity.getTenantId(), "image", entity.getImage()));
+    public void inlineImages(WidgetTypeDetails widgetTypeDetails) {
+        inlineImages((HasImage) widgetTypeDetails);
+        inlineIntoJson(widgetTypeDetails.getTenantId(), widgetTypeDetails.getDescriptor());
     }
 
     private void inlineIntoJson(TenantId tenantId, JsonNode root) {
