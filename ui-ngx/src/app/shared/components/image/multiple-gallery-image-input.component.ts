@@ -27,6 +27,7 @@ import { ImageLinkType } from '@shared/components/image/gallery-image-input.comp
 import { TbPopoverService } from '@shared/components/popover.service';
 import { MatButton } from '@angular/material/button';
 import { ImageGalleryComponent } from '@shared/components/image/image-gallery.component';
+import { prependTbImagePrefixToUrls, removeTbImagePrefixFromUrls } from '@shared/models/resource.models';
 
 @Component({
   selector: 'tb-multiple-gallery-image-input',
@@ -88,12 +89,12 @@ export class MultipleGalleryImageInputComponent extends PageComponent implements
 
   writeValue(value: string[]): void {
     this.reset();
-    this.imageUrls = value || [];
+    this.imageUrls = removeTbImagePrefixFromUrls(value);
   }
 
   private updateModel() {
     this.cd.markForCheck();
-    this.propagateChange(this.imageUrls);
+    this.propagateChange(prependTbImagePrefixToUrls(this.imageUrls));
   }
 
   private reset() {

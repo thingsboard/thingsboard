@@ -127,10 +127,26 @@ export const toImageDeleteResult = (image: ImageResourceInfo, e?: any): ImageDel
 export const imageResourceType = (imageInfo: ImageResourceInfo): ImageResourceType =>
   (!imageInfo.tenantId || imageInfo.tenantId?.id === NULL_UUID) ? 'system' : 'tenant';
 
+export const TB_IMAGE_PREFIX = 'tb-image;';
+
 export const IMAGES_URL_REGEXP = /\/api\/images\/(tenant|system)\/(.*)/;
 export const IMAGES_URL_PREFIX = '/api/images';
 
 export const IMAGE_BASE64_URL_PREFIX = 'data:image/';
+
+export const removeTbImagePrefix = (url: string): string => url ? url.replace(TB_IMAGE_PREFIX, '') : url;
+
+export const removeTbImagePrefixFromUrls = (urls: string[]): string[] => urls ? urls.map(url => removeTbImagePrefix(url)) : [];
+
+export const prependTbImagePrefix = (url: string): string => {
+  if (url && !url.startsWith(TB_IMAGE_PREFIX)) {
+    url = TB_IMAGE_PREFIX + url;
+  }
+  return url;
+};
+
+export const prependTbImagePrefixToUrls = (urls: string[]): string[] => urls ? urls.map(url => prependTbImagePrefix(url)) : [];
+
 
 export const isImageResourceUrl = (url: string): boolean => url && IMAGES_URL_REGEXP.test(url);
 

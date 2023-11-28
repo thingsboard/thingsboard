@@ -25,7 +25,7 @@ import {
   ImageResourceInfo,
   imageResourceType,
   ImageResourceType,
-  IMAGES_URL_PREFIX, isImageResourceUrl, ImageExportData
+  IMAGES_URL_PREFIX, isImageResourceUrl, ImageExportData, removeTbImagePrefix
 } from '@shared/models/resource.models';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
@@ -97,6 +97,7 @@ export class ImageService {
   }
 
   public resolveImageUrl(imageUrl: string, preview = false, asString = false, emptyUrl = NO_IMAGE_DATA_URI): Observable<SafeUrl | string> {
+    imageUrl = removeTbImagePrefix(imageUrl);
     if (isImageResourceUrl(imageUrl)) {
       return this.getImageDataUrl(imageUrl, preview, asString, emptyUrl);
     } else {

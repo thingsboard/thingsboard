@@ -33,7 +33,7 @@ import {
   extractParamsFromImageResourceUrl,
   ImageResourceInfo,
   isBase64DataImageUrl,
-  isImageResourceUrl
+  isImageResourceUrl, prependTbImagePrefix, removeTbImagePrefix
 } from '@shared/models/resource.models';
 import { ImageService } from '@core/http/image.service';
 import { MatButton } from '@angular/material/button';
@@ -123,12 +123,13 @@ export class GalleryImageInputComponent extends PageComponent implements OnInit,
   }
 
   writeValue(value: string): void {
+    value = removeTbImagePrefix(value);
     if (this.imageUrl !== value) {
       this.reset();
       this.imageUrl = value;
       this.detectLinkType();
       if (this.linkType === ImageLinkType.resource) {
-        const params = extractParamsFromImageResourceUrl(value);
+        const params = extractParamsFromImageResourceUrl(this.imageUrl);
         this.loadingImageResource = true;
         this.imageService.getImageInfo(params.type, params.key, {ignoreLoading: true, ignoreErrors: true}).subscribe(
           {
@@ -171,7 +172,7 @@ export class GalleryImageInputComponent extends PageComponent implements OnInit,
     this.cd.markForCheck();
     if (this.imageUrl !== value) {
       this.imageUrl = value;
-      this.propagateChange(this.imageUrl);
+      this.propagateChange(prependTbImagePrefix(this.imageUrl));
     }
   }
 
