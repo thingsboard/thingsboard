@@ -19,6 +19,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
@@ -37,7 +38,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.ResourceType;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.TbResourceInfoFilter;
@@ -303,6 +303,7 @@ public class TbResourceController extends BaseController {
         TbResourceId resourceId = new TbResourceId(toUUID(strResourceId));
         if (etag != null) {
             TbResourceInfo tbResourceInfo = checkResourceInfoId(resourceId, Operation.READ);
+            etag = StringUtils.remove(etag, '\"'); // etag is wrapped in double quotes due to HTTP specification
             if (etag.equals(tbResourceInfo.getEtag())) {
                 return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
                         .eTag(tbResourceInfo.getEtag())

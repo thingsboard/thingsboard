@@ -116,7 +116,7 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
 
     @JsonIgnore
     public String getSearchText() {
-        return searchText != null ? searchText : title;
+        return title;
     }
 
     public <T> T getDescriptor(Class<T> type) throws JsonProcessingException {
