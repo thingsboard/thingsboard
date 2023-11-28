@@ -50,6 +50,7 @@ import { TbFlotKeySettings, TbFlotSettings } from '@home/components/widget/lib/f
 import { getTsValueByLatestDataKey } from '@home/components/widget/lib/cards/aggregated-value-card.models';
 import { Observable } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
+import { DomSanitizer } from '@angular/platform-browser';
 
 const layoutHeight = 56;
 const valueRelativeMaxWidth = 0.5;
@@ -101,6 +102,7 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
   private valueFontSize: number;
 
   constructor(private imagePipe: ImagePipe,
+              private sanitizer: DomSanitizer,
               private renderer: Renderer2,
               private widgetComponent: WidgetComponent,
               private cd: ChangeDetectorRef) {
@@ -132,7 +134,7 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
     this.valueStyle = textStyle(this.settings.valueFont);
     this.valueColor = ColorProcessor.fromSettings(this.settings.valueColor);
 
-    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe);
+    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
 
     if (this.ctx.defaultSubscription.firstDatasource?.dataKeys?.length) {

@@ -52,6 +52,7 @@ import { formatNumberValue, formatValue, isDefined, isDefinedAndNotNull, isNumer
 import { map } from 'rxjs/operators';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { ImagePipe } from '@shared/pipe/image.pipe';
+import { DomSanitizer } from '@angular/platform-browser';
 
 const valuesLayoutHeight = 66;
 const valuesLayoutVerticalPadding = 16;
@@ -111,6 +112,7 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
   private panelResize$: ResizeObserver;
 
   constructor(private imagePipe: ImagePipe,
+              private sanitizer: DomSanitizer,
               private renderer: Renderer2,
               private cd: ChangeDetectorRef) {
   }
@@ -153,7 +155,7 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
     this.dateStyle = textStyle(this.settings.dateFont);
     this.dateColor = this.settings.dateColor;
 
-    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe);
+    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
   }
 

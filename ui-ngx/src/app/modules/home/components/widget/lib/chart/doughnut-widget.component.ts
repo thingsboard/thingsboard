@@ -55,6 +55,7 @@ import { PieChart, PieSeriesOption } from 'echarts/charts';
 import { SVGRenderer } from 'echarts/renderers';
 import { Observable } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
+import { DomSanitizer } from '@angular/platform-browser';
 
 echarts.use([
   TooltipComponent,
@@ -148,6 +149,7 @@ export class DoughnutWidgetComponent implements OnInit, OnDestroy, AfterViewInit
   private totalTextNode: Text;
 
   constructor(private imagePipe: ImagePipe,
+              private sanitizer: DomSanitizer,
               private widgetComponent: WidgetComponent,
               private renderer: Renderer2,
               private translate: TranslateService,
@@ -170,7 +172,7 @@ export class DoughnutWidgetComponent implements OnInit, OnDestroy, AfterViewInit
       this.totalValueColor = ColorProcessor.fromSettings(this.settings.totalValueColor);
     }
 
-    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe);
+    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
 
     if (this.showLegend) {

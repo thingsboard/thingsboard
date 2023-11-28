@@ -49,6 +49,7 @@ import { Path, Svg, SVG, Text } from '@svgdotjs/svg.js';
 import { DataKey } from '@shared/models/widget.models';
 import { Observable } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
+import { DomSanitizer } from '@angular/platform-browser';
 
 const shapeSize = 180;
 const cx = shapeSize / 2;
@@ -112,6 +113,7 @@ export class WindSpeedDirectionWidgetComponent implements OnInit, OnDestroy, Aft
 
   constructor(private widgetComponent: WidgetComponent,
               private imagePipe: ImagePipe,
+              private sanitizer: DomSanitizer,
               private renderer: Renderer2,
               private cd: ChangeDetectorRef) {
   }
@@ -138,7 +140,7 @@ export class WindSpeedDirectionWidgetComponent implements OnInit, OnDestroy, Aft
 
     this.centerValueColor = ColorProcessor.fromSettings(this.settings.centerValueColor);
 
-    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe);
+    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
 
     this.hasCardClickAction = this.ctx.actionsApi.getActionDescriptors('cardClick').length > 0;
