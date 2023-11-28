@@ -15,7 +15,9 @@
  */
 package org.thingsboard.server.service.ws.telemetry.cmd.v2;
 
-public interface UnsubscribeCmd {
+import org.thingsboard.server.service.ws.notification.cmd.WsCmd;
+
+public interface UnsubscribeCmd extends WsCmd {
 
     int getCmdId();
 

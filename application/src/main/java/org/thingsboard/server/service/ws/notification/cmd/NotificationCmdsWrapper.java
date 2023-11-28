@@ -15,9 +15,15 @@
  */
 package org.thingsboard.server.service.ws.notification.cmd;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import org.thingsboard.server.service.ws.telemetry.cmd.WsCmdsWrapper;
 
+/**
+ * @deprecated Use {@link org.thingsboard.server.service.ws.telemetry.cmd.WsCmdsWrapper}. This class is left for backward compatibility
+ * */
 @Data
+@Deprecated
 public class NotificationCmdsWrapper {
 
     private NotificationsCountSubCmd unreadCountSubCmd;
@@ -29,5 +35,16 @@ public class NotificationCmdsWrapper {
     private MarkAllNotificationsAsReadCmd markAllAsReadCmd;
 
     private NotificationsUnsubCmd unsubCmd;
+
+    @JsonIgnore
+    public WsCmdsWrapper toCommonCmdsWrapper() {
+        WsCmdsWrapper wrapper = new WsCmdsWrapper();
+        wrapper.setUnreadNotificationsCountSubCmd(unreadCountSubCmd);
+        wrapper.setUnreadNotificationsSubCmd(unreadSubCmd);
+        wrapper.setMarkNotificationAsReadCmd(markAsReadCmd);
+        wrapper.setMarkAllNotificationsAsReadCmd(markAllAsReadCmd);
+        wrapper.setNotificationsUnsubCmd(unsubCmd);
+        return wrapper;
+    }
 
 }

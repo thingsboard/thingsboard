@@ -16,6 +16,11 @@
 package org.thingsboard.server.service.ws.telemetry.cmd;
 
 import lombok.Data;
+import org.thingsboard.server.service.ws.notification.cmd.MarkAllNotificationsAsReadCmd;
+import org.thingsboard.server.service.ws.notification.cmd.MarkNotificationsAsReadCmd;
+import org.thingsboard.server.service.ws.notification.cmd.NotificationsCountSubCmd;
+import org.thingsboard.server.service.ws.notification.cmd.NotificationsSubCmd;
+import org.thingsboard.server.service.ws.notification.cmd.NotificationsUnsubCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.AttributesSubscriptionCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.GetHistoryCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.TimeseriesSubscriptionCmd;
@@ -34,7 +39,7 @@ import java.util.List;
  * @author Andrew Shvayka
  */
 @Data
-public class TelemetryPluginCmdsWrapper {
+public class WsCmdsWrapper {
 
     private List<AttributesSubscriptionCmd> attrSubCmds;
 
@@ -57,5 +62,15 @@ public class TelemetryPluginCmdsWrapper {
     private List<AlarmCountCmd> alarmCountCmds;
 
     private List<AlarmCountUnsubscribeCmd> alarmCountUnsubscribeCmds;
+
+    private NotificationsCountSubCmd unreadNotificationsCountSubCmd;
+
+    private NotificationsSubCmd unreadNotificationsSubCmd;
+
+    private MarkNotificationsAsReadCmd markNotificationAsReadCmd;
+
+    private MarkAllNotificationsAsReadCmd markAllNotificationsAsReadCmd;
+
+    private NotificationsUnsubCmd notificationsUnsubCmd;
 
 }

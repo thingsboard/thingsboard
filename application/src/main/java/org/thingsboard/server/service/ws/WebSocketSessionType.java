@@ -24,8 +24,8 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Getter
 public enum WebSocketSessionType {
-    TELEMETRY("telemetry"),
-    NOTIFICATIONS("notifications");
+    GENERAL("telemetry"),
+    NOTIFICATIONS("notifications"); // deprecated
 
     private final String name;
 

@@ -63,7 +63,7 @@ import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.service.ws.telemetry.cmd.TelemetryPluginCmdsWrapper;
+import org.thingsboard.server.service.ws.telemetry.cmd.WsCmdsWrapper;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.LatestValueCmd;
@@ -229,7 +229,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
                 Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
 
         EntityDataCmd cmd = new EntityDataCmd(1, edq, null, latestCmd, null);
-        TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
+        WsCmdsWrapper wrapper = new WsCmdsWrapper();
         wrapper.setEntityDataCmds(Collections.singletonList(cmd));
 
         getWsClient().send(JacksonUtil.toString(wrapper));

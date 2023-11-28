@@ -15,10 +15,12 @@
  */
 package org.thingsboard.server.service.ws.telemetry.cmd.v1;
 
+import org.thingsboard.server.service.ws.notification.cmd.WsCmd;
+
 /**
  * @author Andrew Shvayka
  */
-public interface TelemetryPluginCmd {
+public interface TelemetryPluginCmd extends WsCmd {
 
     int getCmdId();
 
