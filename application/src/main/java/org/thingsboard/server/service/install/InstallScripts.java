@@ -347,6 +347,15 @@ public class InstallScripts {
 
     public void loadDashboards(TenantId tenantId, CustomerId customerId) throws Exception {
         Path dashboardsDir = Paths.get(getDataDir(), JSON_DIR, DEMO_DIR, DASHBOARDS_DIR);
+        loadDashboardsFromDir(tenantId, customerId, dashboardsDir);
+    }
+
+    public void createDefaultTenantDashboards(TenantId tenantId, CustomerId customerId) throws Exception {
+        Path dashboardsDir = Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, DASHBOARDS_DIR);
+        loadDashboardsFromDir(tenantId, customerId, dashboardsDir);
+    }
+
+    private void loadDashboardsFromDir(TenantId tenantId, CustomerId customerId, Path dashboardsDir) throws IOException {
         try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dashboardsDir, path -> path.toString().endsWith(JSON_EXT))) {
             dirStream.forEach(
                     path -> {

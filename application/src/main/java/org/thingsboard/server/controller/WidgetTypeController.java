@@ -226,7 +226,7 @@ public class WidgetTypeController extends AutoCommitController {
 
     @ApiOperation(value = "Get all Widget types for specified Bundle (getBundleWidgetTypes)",
             notes = "Returns an array of Widget Type objects that belong to specified Widget Bundle." + WIDGET_TYPE_DESCRIPTION + " " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/widgetTypes", params = {"widgetsBundleId"}, method = RequestMethod.GET)
     @ResponseBody
     public List<WidgetType> getBundleWidgetTypes(
@@ -258,7 +258,7 @@ public class WidgetTypeController extends AutoCommitController {
 
     @ApiOperation(value = "Get all Widget types details for specified Bundle (getBundleWidgetTypes)",
             notes = "Returns an array of Widget Type Details objects that belong to specified Widget Bundle." + WIDGET_TYPE_DETAILS_DESCRIPTION + " " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/widgetTypesDetails", params = {"widgetsBundleId"}, method = RequestMethod.GET)
     @ResponseBody
     public List<WidgetTypeDetails> getBundleWidgetTypesDetails(
