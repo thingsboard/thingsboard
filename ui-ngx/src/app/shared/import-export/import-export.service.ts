@@ -139,7 +139,7 @@ export class ImportExportService {
   }
 
   public exportDashboard(dashboardId: string) {
-    this.dashboardService.getDashboard(dashboardId).subscribe(
+    this.dashboardService.exportDashboard(dashboardId).subscribe(
       (dashboard) => {
         let name = dashboard.title;
         name = name.toLowerCase().replace(/\W/g, '_');
@@ -348,7 +348,7 @@ export class ImportExportService {
   }
 
   public exportWidgetsBundle(widgetsBundleId: string) {
-    this.widgetService.getWidgetsBundle(widgetsBundleId).subscribe(
+    this.widgetService.exportWidgetsBundle(widgetsBundleId).subscribe(
       (widgetsBundle) => {
         this.dialog.open<ExportWidgetsBundleDialogComponent, ExportWidgetsBundleDialogData,
           ExportWidgetsBundleDialogResult>(ExportWidgetsBundleDialogComponent, {
@@ -376,7 +376,7 @@ export class ImportExportService {
   }
 
   private exportWidgetsBundleWithWidgetTypes(widgetsBundle: WidgetsBundle) {
-    this.widgetService.getBundleWidgetTypesDetails(widgetsBundle.id.id).subscribe(
+    this.widgetService.exportBundleWidgetTypesDetails(widgetsBundle.id.id).subscribe(
       (widgetTypesDetails) => {
         const widgetsBundleItem: WidgetsBundleItem = {
           widgetsBundle: this.prepareExport(widgetsBundle),
@@ -620,7 +620,7 @@ export class ImportExportService {
   }
 
   public exportDeviceProfile(deviceProfileId: string) {
-    this.deviceProfileService.getDeviceProfile(deviceProfileId).subscribe(
+    this.deviceProfileService.exportDeviceProfile(deviceProfileId).subscribe(
       (deviceProfile) => {
           let name = deviceProfile.name;
           name = name.toLowerCase().replace(/\W/g, '_');
@@ -651,7 +651,7 @@ export class ImportExportService {
   }
 
   public exportAssetProfile(assetProfileId: string) {
-    this.assetProfileService.getAssetProfile(assetProfileId).subscribe(
+    this.assetProfileService.exportAssetProfile(assetProfileId).subscribe(
       (assetProfile) => {
         let name = assetProfile.name;
         name = name.toLowerCase().replace(/\W/g, '_');

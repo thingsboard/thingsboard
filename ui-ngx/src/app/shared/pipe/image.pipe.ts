@@ -17,7 +17,7 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { ImageService } from '@core/http/image.service';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { AsyncSubject, BehaviorSubject, Observable } from 'rxjs';
 import { isDefinedAndNotNull } from '@core/utils';
 import { NO_IMAGE_DATA_URI } from '@shared/models/resource.models';
 
@@ -41,7 +41,9 @@ export class ImagePipe implements PipeTransform {
     const ignoreLoadingImage = !!args?.ignoreLoadingImage;
     const asString = !!args?.asString;
     const emptyUrl = args?.emptyUrl || NO_IMAGE_DATA_URI;
-    const image$ = ignoreLoadingImage ? new Subject<SafeUrl | string>() : new BehaviorSubject<SafeUrl | string>(LOADING_IMAGE_DATA_URI);
+    const image$ = ignoreLoadingImage
+      ? new AsyncSubject<SafeUrl | string>()
+      : new BehaviorSubject<SafeUrl | string>(LOADING_IMAGE_DATA_URI);
     const url = (typeof urlData === 'string') ? urlData : urlData?.url;
     if (isDefinedAndNotNull(url)) {
       const preview = !!args?.preview;

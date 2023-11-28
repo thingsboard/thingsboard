@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import {
   backgroundStyle,
@@ -29,6 +29,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Observable } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
+import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
   selector: 'tb-background-settings-panel',
@@ -61,7 +62,9 @@ export class BackgroundSettingsPanelComponent extends PageComponent implements O
 
   constructor(private fb: UntypedFormBuilder,
               private imagePipe: ImagePipe,
-              protected store: Store<AppState>) {
+              private sanitizer: DomSanitizer,
+              protected store: Store<AppState>,
+              private cd: ChangeDetectorRef) {
     super(store);
   }
 
@@ -103,11 +106,11 @@ export class BackgroundSettingsPanelComponent extends PageComponent implements O
   private updateValidators() {
     const overlayEnabled: boolean = this.backgroundSettingsFormGroup.get('overlay').get('enabled').value;
     if (overlayEnabled) {
-      this.backgroundSettingsFormGroup.get('overlay').get('color').enable();
-      this.backgroundSettingsFormGroup.get('overlay').get('blur').enable();
+      this.backgroundSettingsFormGroup.get('overlay').get('color').enable({emitEvent: false});
+      this.backgroundSettingsFormGroup.get('overlay').get('blur').enable({emitEvent: false});
     } else {
-      this.backgroundSettingsFormGroup.get('overlay').get('color').disable();
-      this.backgroundSettingsFormGroup.get('overlay').get('blur').disable();
+      this.backgroundSettingsFormGroup.get('overlay').get('color').disable({emitEvent: false});
+      this.backgroundSettingsFormGroup.get('overlay').get('blur').disable({emitEvent: false});
     }
     this.backgroundSettingsFormGroup.get('overlay').get('color').updateValueAndValidity({emitEvent: false});
     this.backgroundSettingsFormGroup.get('overlay').get('blur').updateValueAndValidity({emitEvent: false});
@@ -115,8 +118,9 @@ export class BackgroundSettingsPanelComponent extends PageComponent implements O
 
   private updateBackgroundStyle() {
     const background: BackgroundSettings = this.backgroundSettingsFormGroup.value;
-    this.backgroundStyle$ = backgroundStyle(background, this.imagePipe);
+    this.backgroundStyle$ = backgroundStyle(background, this.imagePipe, this.sanitizer, true);
     this.overlayStyle = overlayStyle(background.overlay);
+    this.cd.markForCheck();
   }
 
 }

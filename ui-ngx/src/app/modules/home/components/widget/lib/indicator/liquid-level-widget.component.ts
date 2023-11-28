@@ -59,6 +59,7 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { TranslateService } from '@ngx-translate/core';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import { ImagePipe } from '@shared/pipe/image.pipe';
+import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
   selector: 'tb-liquid-level-widget',
@@ -108,6 +109,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
   private capacityUnits = Object.values(CapacityUnits);
 
   constructor(private imagePipe: ImagePipe,
+              private sanitizer: DomSanitizer,
               private cd: ChangeDetectorRef,
               private resourcesService: ResourcesService,
               private translate: TranslateService) {
@@ -118,7 +120,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
     this.settings = {...levelCardDefaultSettings, ...this.ctx.settings};
     this.declareStyles();
 
-    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe);
+    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
 
     this.hasCardClickAction = this.ctx.actionsApi.getActionDescriptors('cardClick').length > 0;

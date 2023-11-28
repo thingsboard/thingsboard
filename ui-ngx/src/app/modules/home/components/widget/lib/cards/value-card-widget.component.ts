@@ -45,6 +45,7 @@ import { WidgetComponent } from '@home/components/widget/widget.component';
 import { Observable } from 'rxjs';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { ImagePipe } from '@shared/pipe/image.pipe';
+import { DomSanitizer } from '@angular/platform-browser';
 
 const squareLayoutSize = 160;
 const squareLayoutPadding = 48;
@@ -103,6 +104,7 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
   private units = '';
 
   constructor(private imagePipe: ImagePipe,
+              private sanitizer: DomSanitizer,
               private renderer: Renderer2,
               private widgetComponent: WidgetComponent,
               private cd: ChangeDetectorRef) {
@@ -144,7 +146,7 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
     this.dateStyle = textStyle(this.settings.dateFont);
     this.dateColor = ColorProcessor.fromSettings(this.settings.dateColor);
 
-    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe);
+    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
   }
 

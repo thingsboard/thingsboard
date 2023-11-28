@@ -25,6 +25,7 @@ import { AlarmSearchStatus } from '@shared/models/alarm.models';
 import { Observable, of } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { map } from 'rxjs/operators';
+import { DomSanitizer } from '@angular/platform-browser';
 
 export type ComponentStyle = {[klass: string]: any};
 
@@ -520,7 +521,8 @@ export const validateAndUpdateBackgroundSettings = (background: BackgroundSettin
   return background;
 };
 
-export const backgroundStyle = (background: BackgroundSettings, imagePipe: ImagePipe): Observable<ComponentStyle> => {
+export const backgroundStyle = (background: BackgroundSettings, imagePipe: ImagePipe,
+                                sanitizer: DomSanitizer, preview = false): Observable<ComponentStyle> => {
   background = validateAndUpdateBackgroundSettings(background);
   if (background.type === BackgroundType.color) {
     return of({
@@ -529,9 +531,9 @@ export const backgroundStyle = (background: BackgroundSettings, imagePipe: Image
   } else {
     const imageUrl = background.imageUrl;
     if (imageUrl) {
-      return imagePipe.transform(imageUrl, {asString: true, ignoreLoadingImage: true}).pipe(
+      return imagePipe.transform(imageUrl, {asString: true, ignoreLoadingImage: true, preview}).pipe(
         map((transformedUrl) => ({
-            background: `url(${transformedUrl}) no-repeat 50% 50% / cover`
+            background: sanitizer.bypassSecurityTrustStyle(`url(${transformedUrl}) no-repeat 50% 50% / cover`)
           }))
       );
     } else {

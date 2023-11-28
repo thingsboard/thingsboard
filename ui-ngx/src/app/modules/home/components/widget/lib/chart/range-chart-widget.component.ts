@@ -59,6 +59,7 @@ import { rangeChartDefaultSettings, RangeChartWidgetSettings } from './range-cha
 import { DataSet } from '@shared/models/widget.models';
 import { Observable } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
+import { DomSanitizer } from '@angular/platform-browser';
 
 echarts.use([
   TooltipComponent,
@@ -249,6 +250,7 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
   private tooltipDateFormat: DateFormatProcessor;
 
   constructor(private imagePipe: ImagePipe,
+              private sanitizer: DomSanitizer,
               private renderer: Renderer2,
               private cd: ChangeDetectorRef) {
   }
@@ -268,7 +270,7 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
 
-    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe);
+    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
 
     this.rangeItems = toRangeItems(this.settings.rangeColors);
