@@ -2988,7 +2988,9 @@
         "no-image-selected": "No image selected",
         "browse-from-gallery": "Browse from gallery",
         "set-link": "Set link",
-        "image-link": "Image link"
+        "image-link": "Image link",
+        "link": "Link",
+        "copy-image-link": "Copy image link"
     },
     "image-input": {
         "drop-images-or": "Drag and drop an images or",

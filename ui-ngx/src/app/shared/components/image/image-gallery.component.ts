@@ -624,7 +624,11 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
       data: {}
     }).afterClosed().subscribe((result) => {
       if (result) {
-        this.updateData();
+        if (this.selectionMode) {
+          this.imageSelected.next(result);
+        } else {
+          this.updateData();
+        }
       }
     });
   }

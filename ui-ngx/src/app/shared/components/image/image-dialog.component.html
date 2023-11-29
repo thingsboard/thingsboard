@@ -30,34 +30,44 @@
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async">
-      <div fxLayout="row" fxLayoutGap="8px">
-        <mat-form-field fxFlex>
-          <mat-label translate>image.name</mat-label>
-          <input matInput formControlName="title" required>
-          <mat-error *ngIf="imageFormGroup.get('title').hasError('required')">
-            {{ 'image.name-required' | translate }}
-          </mat-error>
-          <button *ngIf="!readonly && imageFormGroup.dirty"
-                  matIconSuffix
-                  type="button"
-                  mat-icon-button [disabled]="isLoading$ | async"
-                  matTooltip="{{ 'action.undo' | translate }}"
-                  matTooltipPosition="above"
-                  (click)="revertInfo()">
-            <mat-icon>close</mat-icon>
-          </button>
-          <button *ngIf="!readonly && !imageFormGroup.invalid && imageFormGroup.dirty"
-                  matIconSuffix
-                  type="button"
-                  color="primary"
-                  mat-icon-button [disabled]="isLoading$ | async"
-                  matTooltip="{{ 'action.save' | translate }}"
-                  matTooltipPosition="above"
-                  (click)="saveInfo()">
-            <mat-icon>check</mat-icon>
-          </button>
-        </mat-form-field>
-      </div>
+      <mat-form-field>
+        <mat-label translate>image.name</mat-label>
+        <input matInput formControlName="title" required>
+        <mat-error *ngIf="imageFormGroup.get('title').hasError('required')">
+          {{ 'image.name-required' | translate }}
+        </mat-error>
+        <button *ngIf="!readonly && imageFormGroup.dirty"
+                matIconSuffix
+                type="button"
+                mat-icon-button [disabled]="isLoading$ | async"
+                matTooltip="{{ 'action.undo' | translate }}"
+                matTooltipPosition="above"
+                (click)="revertInfo()">
+          <mat-icon>close</mat-icon>
+        </button>
+        <button *ngIf="!readonly && !imageFormGroup.invalid && imageFormGroup.dirty"
+                matIconSuffix
+                type="button"
+                color="primary"
+                mat-icon-button [disabled]="isLoading$ | async"
+                matTooltip="{{ 'action.save' | translate }}"
+                matTooltipPosition="above"
+                (click)="saveInfo()">
+          <mat-icon>check</mat-icon>
+        </button>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label translate>image.link</mat-label>
+        <input matInput formControlName="link">
+        <tb-copy-button
+          matSuffix
+          miniButton="false"
+          [copyText]="imageFormGroup.get('link').value"
+          tooltipText="{{ 'image.copy-image-link' | translate }}"
+          tooltipPosition="above"
+          icon="content_copy">
+        </tb-copy-button>
+      </mat-form-field>
       <div class="tb-image-container tb-primary-fill">
         <div class="tb-image-content">
           <div class="tb-image-actions">

@@ -29,6 +29,7 @@ import {
   UploadImageDialogData
 } from '@shared/components/image/upload-image-dialog.component';
 import { UrlHolder } from '@shared/pipe/image.pipe';
+import { ImportExportService } from '@shared/import-export/import-export.service';
 
 export interface ImageDialogData {
   readonly: boolean;
@@ -57,6 +58,7 @@ export class ImageDialogComponent extends
               protected router: Router,
               private imageService: ImageService,
               private dialog: MatDialog,
+              private importExportService: ImportExportService,
               @Inject(MAT_DIALOG_DATA) private data: ImageDialogData,
               public dialogRef: MatDialogRef<ImageDialogComponent, ImageResourceInfo>,
               public fb: UntypedFormBuilder) {
@@ -70,10 +72,13 @@ export class ImageDialogComponent extends
 
   ngOnInit(): void {
     this.imageFormGroup = this.fb.group({
-      title: [this.image.title, [Validators.required]]
+      title: [this.image.title, [Validators.required]],
+      link: [this.image.link, []],
     });
     if (this.data.readonly) {
       this.imageFormGroup.disable();
+    } else {
+      this.imageFormGroup.get('link').disable();
     }
   }
 
@@ -109,7 +114,7 @@ export class ImageDialogComponent extends
     if ($event) {
       $event.stopPropagation();
     }
-    // TODO:
+    this.importExportService.exportImage(imageResourceType(this.image), this.image.resourceKey);
   }
 
   updateImage($event): void {
