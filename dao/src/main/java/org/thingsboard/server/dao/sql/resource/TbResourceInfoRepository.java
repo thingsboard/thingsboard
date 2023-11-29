@@ -30,7 +30,7 @@ public interface TbResourceInfoRepository extends JpaRepository<TbResourceInfoEn
     @Query("SELECT tr FROM TbResourceInfoEntity tr WHERE " +
             "(:searchText IS NULL OR ilike(tr.title, CONCAT('%', :searchText, '%')) = true) " +
             "AND (tr.tenantId = :tenantId " +
-            "OR (tr.tenantId = :systemAdminId " +
+            "OR (tr.tenantId = :systemTenantId " +
             "AND NOT EXISTS " +
             "(SELECT sr FROM TbResourceEntity sr " +
             "WHERE sr.tenantId = :tenantId " +
@@ -38,7 +38,7 @@ public interface TbResourceInfoRepository extends JpaRepository<TbResourceInfoEn
             "AND tr.resourceKey = sr.resourceKey)))" +
             "AND tr.resourceType IN :resourceTypes")
     Page<TbResourceInfoEntity> findAllTenantResourcesByTenantId(@Param("tenantId") UUID tenantId,
-                                                                @Param("systemAdminId") UUID sysadminId,
+                                                                @Param("systemTenantId") UUID systemTenantId,
                                                                 @Param("resourceTypes") List<String> resourceTypes,
                                                                 @Param("searchText") String searchText,
                                                                 Pageable pageable);
@@ -62,6 +62,11 @@ public interface TbResourceInfoRepository extends JpaRepository<TbResourceInfoEn
                                                                              @Param("resourceType") String resourceType,
                                                                              @Param("resourceKeyStartsWith") String resourceKeyStartsWith);
 
-    List<TbResourceInfoEntity> findByTenantIdAndHashCodeAndResourceKeyStartingWith(UUID tenantId, String hashCode, String query);
+    List<TbResourceInfoEntity> findByTenantIdAndEtagAndResourceKeyStartingWith(UUID tenantId, String etag, String query);
 
+    @Query(value = "SELECT * FROM resource r WHERE (r.tenant_id = :systemTenantId OR r.tenant_id = :tenantId) AND r.resource_type = :resourceType AND r.etag = :etag LIMIT 1", nativeQuery = true)
+    TbResourceInfoEntity findByTenantIdAndEtag(@Param("systemTenantId") UUID sysTenantId,
+                                               @Param("tenantId") UUID tenantId,
+                                               @Param("resourceType") String resourceType,
+                                               @Param("etag") String etag);
 }

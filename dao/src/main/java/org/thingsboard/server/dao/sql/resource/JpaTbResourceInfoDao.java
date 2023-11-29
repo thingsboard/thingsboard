@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.sql.resource;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.ResourceType;
@@ -102,7 +103,11 @@ public class JpaTbResourceInfoDao extends JpaAbstractDao<TbResourceInfoEntity, T
 
     @Override
     public List<TbResourceInfo> findByTenantIdAndEtagAndKeyStartingWith(TenantId tenantId, String etag, String query) {
-        return DaoUtil.convertDataList(resourceInfoRepository.findByTenantIdAndHashCodeAndResourceKeyStartingWith(tenantId.getId(), etag, query));
+        return DaoUtil.convertDataList(resourceInfoRepository.findByTenantIdAndEtagAndResourceKeyStartingWith(tenantId.getId(), etag, query));
     }
 
+    @Override
+    public TbResourceInfo findByTenantIdAndEtag(TenantId tenantId, ResourceType resourceType, String etag) {
+        return DaoUtil.getData(resourceInfoRepository.findByTenantIdAndEtag(TenantId.SYS_TENANT_ID.getId(), tenantId.getId(), resourceType.name(), etag));
+    }
 }

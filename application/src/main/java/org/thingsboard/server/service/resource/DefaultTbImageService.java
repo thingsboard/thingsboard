@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Base64Utils;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasImage;
 import org.thingsboard.server.common.data.ImageDescriptor;
@@ -40,6 +41,7 @@ import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.dao.resource.ImageService;
+import org.thingsboard.server.dao.util.JsonNodeProcessingTask;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
@@ -162,20 +164,19 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
         }
     }
 
-    @Override
-    public void inlineImages(HasImage entity) {
+    public void inlineImage(HasImage entity) {
         entity.setImage(inlineImage(entity.getTenantId(), "image", entity.getImage()));
     }
 
     @Override
     public void inlineImages(Dashboard dashboard) {
-        inlineImages((HasImage) dashboard);
+        inlineImage(dashboard);
         inlineIntoJson(dashboard.getTenantId(), dashboard.getConfiguration());
     }
 
     @Override
     public void inlineImages(WidgetTypeDetails widgetTypeDetails) {
-        inlineImages((HasImage) widgetTypeDetails);
+        inlineImage(widgetTypeDetails);
         inlineIntoJson(widgetTypeDetails.getTenantId(), widgetTypeDetails.getDescriptor());
     }
 
@@ -184,8 +185,8 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
         tasks.add(new JsonNodeProcessingTask("", root));
         while (!tasks.isEmpty()) {
             JsonNodeProcessingTask task = tasks.poll();
-            JsonNode node = task.node;
-            String currentPath = StringUtils.isBlank(task.path) ? "" : (task.path + ".");
+            JsonNode node = task.getNode();
+            String currentPath = StringUtils.isBlank(task.getPath()) ? "" : (task.getPath() + ".");
             if (node.isObject()) {
                 ObjectNode on = (ObjectNode) node;
                 for (Iterator<String> it = on.fieldNames(); it.hasNext(); ) {
@@ -210,16 +211,6 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
         }
     }
 
-    private static class JsonNodeProcessingTask {
-        private final String path;
-        private final JsonNode node;
-
-        public JsonNodeProcessingTask(String path, JsonNode node) {
-            this.path = path;
-            this.node = node;
-        }
-    }
-
     private String inlineImage(TenantId tenantId, String path, String url) {
         try {
             ImageCacheKey key = getKeyFromUrl(tenantId, url);
@@ -228,7 +219,7 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
                 if (imageInfo != null) {
                     byte[] data = key.isPreview() ? imageService.getImagePreview(tenantId, imageInfo.getId()) : imageService.getImageData(tenantId, imageInfo.getId());
                     ImageDescriptor descriptor = getImageDescriptor(imageInfo, key.isPreview());
-                    return "data:" + descriptor.getMediaType() + ";base64," + Base64Utils.encodeToString(data);
+                    return DataConstants.TB_IMAGE_PREFIX + "data:" + descriptor.getMediaType() + ";base64," + Base64Utils.encodeToString(data);
                 }
             }
         } catch (Exception e) {
@@ -247,9 +238,9 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
             return null;
         }
         TenantId imageTenantId = null;
-        if (url.startsWith("/api/images/tenant/")) {
+        if (url.startsWith(DataConstants.TB_IMAGE_PREFIX + "/api/images/tenant/")) {
             imageTenantId = tenantId;
-        } else if (url.startsWith("/api/images/system/")) {
+        } else if (url.startsWith(DataConstants.TB_IMAGE_PREFIX + "/api/images/system/")) {
             imageTenantId = TenantId.SYS_TENANT_ID;
         }
         if (imageTenantId != null) {

@@ -85,7 +85,7 @@ public class AssetProfileController extends BaseController {
         AssetProfileId assetProfileId = new AssetProfileId(toUUID(strAssetProfileId));
         var result = checkAssetProfileId(assetProfileId, Operation.READ);
         if (inlineImages) {
-            tbImageService.inlineImages(result);
+            tbImageService.inlineImage(result);
         }
         return result;
     }

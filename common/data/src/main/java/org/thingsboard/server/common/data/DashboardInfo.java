@@ -30,7 +30,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @ApiModel
-public class DashboardInfo extends BaseData<DashboardId> implements HasName, HasTenantId, HasTitle {
+public class DashboardInfo extends BaseData<DashboardId> implements HasName, HasTenantId, HasTitle, HasImage {
 
     private TenantId tenantId;
     @NoXss

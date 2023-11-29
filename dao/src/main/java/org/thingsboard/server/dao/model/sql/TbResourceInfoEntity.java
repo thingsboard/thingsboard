@@ -67,7 +67,7 @@ public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implemen
     private String searchText;
 
     @Column(name = RESOURCE_ETAG_COLUMN)
-    private String hashCode;
+    private String etag;
 
     @Column(name = RESOURCE_FILE_NAME_COLUMN)
     private String fileName;
@@ -92,7 +92,7 @@ public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implemen
         this.resourceType = resource.getResourceType().name();
         this.resourceKey = resource.getResourceKey();
         this.searchText = resource.getSearchText();
-        this.hashCode = resource.getEtag();
+        this.etag = resource.getEtag();
         this.fileName = resource.getFileName();
         this.descriptor = resource.getDescriptor();
         this.externalId = getUuid(resource.getExternalId());
@@ -107,7 +107,7 @@ public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implemen
         resource.setResourceType(ResourceType.valueOf(resourceType));
         resource.setResourceKey(resourceKey);
         resource.setSearchText(searchText);
-        resource.setEtag(hashCode);
+        resource.setEtag(etag);
         resource.setFileName(fileName);
         resource.setDescriptor(descriptor);
         resource.setExternalId(getEntityId(externalId, TbResourceId::new));

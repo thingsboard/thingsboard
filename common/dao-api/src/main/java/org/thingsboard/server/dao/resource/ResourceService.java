@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.List;
+import java.util.Set;
 
 public interface ResourceService extends EntityDaoService {
 
@@ -53,6 +54,8 @@ public interface ResourceService extends EntityDaoService {
     List<TbResource> findTenantResourcesByResourceTypeAndObjectIds(TenantId tenantId, ResourceType lwm2mModel, String[] objectIds);
 
     PageData<TbResource> findTenantResourcesByResourceTypeAndPageLink(TenantId tenantId, ResourceType lwm2mModel, PageLink pageLink);
+
+    Set<String> findResourceKeysByTenantIdResourceTypeAndKeyPrefix(TenantId tenantId, ResourceType resourceType, String key);
 
     void deleteResource(TenantId tenantId, TbResourceId resourceId);
 

@@ -110,15 +110,15 @@ public class ImageUtils {
         String strWidth = document.getDocumentElement().getAttribute("width");
         String strHeight = document.getDocumentElement().getAttribute("height");
         if (StringUtils.isNotEmpty(strWidth) && StringUtils.isNotEmpty(strHeight)) {
-            width = Integer.parseInt(strWidth);
-            height = Integer.parseInt(strHeight);
+            width = (int) Double.parseDouble(strWidth);
+            height = (int) Double.parseDouble(strHeight);;
         } else {
             String viewBox = document.getDocumentElement().getAttribute("viewBox");
             if (StringUtils.isNotEmpty(viewBox)) {
                 String[] viewBoxValues = viewBox.split(" ");
                 if (viewBoxValues.length > 3) {
-                    width = Integer.parseInt(viewBoxValues[2]);
-                    height = Integer.parseInt(viewBoxValues[3]);
+                    width = (int) Double.parseDouble(viewBoxValues[2]);
+                    height = (int) Double.parseDouble(viewBoxValues[3]);
                 }
             }
         }

@@ -94,4 +94,8 @@ public interface TbResourceRepository extends JpaRepository<TbResourceEntity, UU
     @Query("SELECT id FROM TbResourceInfoEntity WHERE tenantId = :tenantId")
     Page<UUID> findIdsByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
 
+    @Query("SELECT resourceKey FROM TbResourceInfoEntity WHERE tenantId = :tenantId AND resourceType = :resourceType AND resourceKey LIKE :resourceKeyPrefix ")
+    List<String> findResourceKeys(@Param("tenantId")UUID tenantId,
+                                  @Param("resourceType") String resourceType,
+                                  @Param("resourceKeyPrefix") String resourceKeyPrefix);
 }

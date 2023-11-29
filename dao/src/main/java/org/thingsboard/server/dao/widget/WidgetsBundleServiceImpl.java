@@ -31,6 +31,7 @@ import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
@@ -59,6 +60,9 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
     @Autowired
     protected ApplicationEventPublisher eventPublisher;
 
+    @Autowired
+    private ImageService imageService;
+
     @Override
     public WidgetsBundle findWidgetsBundleById(TenantId tenantId, WidgetsBundleId widgetsBundleId) {
         log.trace("Executing findWidgetsBundleById [{}]", widgetsBundleId);
@@ -71,6 +75,7 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
         log.trace("Executing saveWidgetsBundle [{}]", widgetsBundle);
         widgetsBundleValidator.validate(widgetsBundle, WidgetsBundle::getTenantId);
         try {
+            imageService.replaceBase64WithImageUrl(widgetsBundle, widgetsBundle.getName(), "bundle");
             WidgetsBundle result = widgetsBundleDao.save(widgetsBundle.getTenantId(), widgetsBundle);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(result.getTenantId())
                     .entityId(result.getId()).added(widgetsBundle.getId() == null).build());

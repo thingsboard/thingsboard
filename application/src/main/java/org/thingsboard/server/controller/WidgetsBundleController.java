@@ -89,7 +89,7 @@ public class WidgetsBundleController extends BaseController {
         WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
         var result = checkWidgetsBundleId(widgetsBundleId, Operation.READ);
         if (inlineImages) {
-            tbImageService.inlineImages(result);
+            tbImageService.inlineImage(result);
         }
         return result;
     }

@@ -37,7 +37,7 @@ public interface TbImageService {
 
     void evictETag(ImageCacheKey imageCacheKey);
 
-    void inlineImages(HasImage entity);
+    void inlineImage(HasImage entity);
 
     void inlineImages(Dashboard dashboard);
 

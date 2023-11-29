@@ -36,6 +36,7 @@ import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
@@ -70,6 +71,9 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
 
     @Autowired
     private DataValidator<AssetProfile> assetProfileValidator;
+
+    @Autowired
+    private ImageService imageService;
 
     @TransactionalEventListener(classes = AssetProfileEvictEvent.class)
     @Override
@@ -141,6 +145,7 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
         }
         AssetProfile savedAssetProfile;
         try {
+            imageService.replaceBase64WithImageUrl(assetProfile, assetProfile.getName(), "asset profile");
             savedAssetProfile = assetProfileDao.saveAndFlush(assetProfile.getTenantId(), assetProfile);
             publishEvictEvent(new AssetProfileEvictEvent(savedAssetProfile.getTenantId(), savedAssetProfile.getName(),
                     oldAssetProfile != null ? oldAssetProfile.getName() : null, savedAssetProfile.getId(), savedAssetProfile.isDefault()));

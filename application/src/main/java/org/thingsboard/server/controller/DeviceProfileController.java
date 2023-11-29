@@ -96,7 +96,7 @@ public class DeviceProfileController extends BaseController {
         DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
         var result = checkDeviceProfileId(deviceProfileId, Operation.READ);
         if (inlineImages) {
-            tbImageService.inlineImages(result);
+            tbImageService.inlineImage(result);
         }
         return result;
     }

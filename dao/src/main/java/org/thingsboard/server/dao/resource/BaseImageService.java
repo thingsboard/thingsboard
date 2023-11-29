@@ -15,13 +15,21 @@
  */
 package org.thingsboard.server.dao.resource;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.hash.Hashing;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.RegexUtils;
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.HasImage;
 import org.thingsboard.server.common.data.ImageDescriptor;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbImageDeleteResult;
@@ -33,6 +41,7 @@ import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.dao.ImageContainerDao;
 import org.thingsboard.server.dao.asset.AssetProfileDao;
 import org.thingsboard.server.dao.dashboard.DashboardInfoDao;
@@ -41,14 +50,21 @@ import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.service.validator.ResourceDataValidator;
 import org.thingsboard.server.dao.util.ImageUtils;
 import org.thingsboard.server.dao.util.ImageUtils.ProcessedImage;
+import org.thingsboard.server.dao.util.JsonNodeProcessingTask;
+import org.thingsboard.server.dao.util.JsonPathProcessingTask;
 import org.thingsboard.server.dao.widget.WidgetTypeDao;
 import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 
 import javax.annotation.PostConstruct;
+import java.util.Base64;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Queue;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -57,12 +73,38 @@ import java.util.regex.Pattern;
 public class BaseImageService extends BaseResourceService implements ImageService {
 
     private static final int MAX_ENTITIES_TO_FIND = 10;
+
+    public static Map<String, String> DASHBOARD_BASE64_MAPPING = new HashMap<>();
+    public static Map<String, String> WIDGET_TYPE_BASE64_MAPPING = new HashMap<>();
+
+    static {
+        DASHBOARD_BASE64_MAPPING.put("settings.dashboardLogoUrl", "$prefix logo");
+        DASHBOARD_BASE64_MAPPING.put("states.default.layouts.main.gridSettings.backgroundImageUrl", "$prefix background");
+        DASHBOARD_BASE64_MAPPING.put("states.default.layouts.right.gridSettings.backgroundImageUrl", "$prefix right background");
+        DASHBOARD_BASE64_MAPPING.put("states.$stateId.layouts.main.gridSettings.backgroundImageUrl", "$prefix $stateId background");
+        DASHBOARD_BASE64_MAPPING.put("states.$stateId.layouts.right.gridSettings.backgroundImageUrl", "$prefix $stateId right background");
+        DASHBOARD_BASE64_MAPPING.put("widgets.*.config[$title].settings.backgroundImageUrl", "$prefix widget \"$title\" background");
+        DASHBOARD_BASE64_MAPPING.put("widgets.*.config[$title].settings.mapImageUrl", "$prefix widget \"$title\" map image");
+        DASHBOARD_BASE64_MAPPING.put("widgets.*.config[$title].settings.markerImage", "$prefix widget \"$title\" marker image");
+        DASHBOARD_BASE64_MAPPING.put("widgets.*.config[$title].settings.markerImages", "$prefix widget \"$title\" marker image $index");
+        DASHBOARD_BASE64_MAPPING.put("widgets.*.config[$title].settings.background.imageUrl", "$prefix widget \"$title\" background");
+        DASHBOARD_BASE64_MAPPING.put("widgets.*.config[$title].settings.background.imageBase64", "$prefix widget \"$title\" background");
+        DASHBOARD_BASE64_MAPPING.put("widgets.*.config[$title].datasources.*.dataKeys.*.settings.customIcon", "$prefix widget \"$title\" custom icon");
+
+        WIDGET_TYPE_BASE64_MAPPING.put("settings.backgroundImageUrl", "$prefix background");
+        WIDGET_TYPE_BASE64_MAPPING.put("settings.mapImageUrl", "$prefix map image");
+        WIDGET_TYPE_BASE64_MAPPING.put("settings.markerImage", "Map marker image");
+        WIDGET_TYPE_BASE64_MAPPING.put("settings.markerImages", "Map marker image $index");
+        WIDGET_TYPE_BASE64_MAPPING.put("settings.background.imageUrl", "$prefix background");
+        WIDGET_TYPE_BASE64_MAPPING.put("settings.background.imageBase64", "$prefix background");
+        WIDGET_TYPE_BASE64_MAPPING.put("datasources.*.dataKeys.*.settings.customIcon", "$prefix custom icon");
+    }
+
     private final AssetProfileDao assetProfileDao;
     private final DeviceProfileDao deviceProfileDao;
     private final WidgetsBundleDao widgetsBundleDao;
     private final WidgetTypeDao widgetTypeDao;
     private final DashboardInfoDao dashboardInfoDao;
-
     private final Map<EntityType, ImageContainerDao<?>> imageContainerDaoMap = new HashMap<>();
 
     public BaseImageService(TbResourceDao resourceDao, TbResourceInfoDao resourceInfoDao, ResourceDataValidator resourceValidator,
@@ -86,9 +128,9 @@ public class BaseImageService extends BaseResourceService implements ImageServic
     }
 
 
-    @Transactional
     @Override
-    public TbResourceInfo saveImage(TbResource image) throws Exception {
+    @SneakyThrows
+    public TbResourceInfo saveImage(TbResource image) {
         if (image.getId() == null && StringUtils.isEmpty(image.getResourceKey())) {
             image.setResourceKey(getUniqueKey(image.getTenantId(), image.getFileName()));
         }
@@ -220,4 +262,178 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         return resourceInfoDao.findByTenantIdAndEtagAndKeyStartingWith(tenantId, etag, imageKeyStartingWith);
     }
 
+    @Override
+    public TbResourceInfo findImageByTenantIdAndEtag(TenantId tenantId, String etag) {
+        return resourceInfoDao.findByTenantIdAndEtag(tenantId, ResourceType.IMAGE, etag);
+    }
+
+    @Override
+    public boolean replaceBase64WithImageUrl(HasImage entity, String title, String type) {
+        entity.setImage(base64ToImageUrl(entity.getTenantId(), "\"" + title + "\" " + type + " image", entity.getImage()));
+        return true; //TODO: should return true only if something is changed.
+    }
+
+    @Override
+    public boolean replaceBase64WithImageUrl(WidgetTypeDetails entity) {
+        String prefix = "\"" + entity.getName() + "\" widget"; // TODO: "system widget" if SYS TENANT ID;
+        entity.setImage(base64ToImageUrl(entity.getTenantId(), prefix + " image", entity.getImage()));
+        if (entity.getDescriptor().isObject()) {
+            ObjectNode descriptor = (ObjectNode) entity.getDescriptor();
+            JsonNode defaultConfig = JacksonUtil.toJsonNode(descriptor.get("defaultConfig").asText());
+            base64ToImageUrlUsingMapping(entity.getTenantId(), WIDGET_TYPE_BASE64_MAPPING, Collections.singletonMap("prefix", prefix), defaultConfig);
+            descriptor.put("defaultConfig", defaultConfig.toString());
+        }
+        base64ToImageUrlRecursively(entity.getTenantId(), prefix, entity.getDescriptor());
+        return true; //TODO: should return true only if something is changed.
+    }
+
+    @Override
+    public boolean replaceBase64WithImageUrl(Dashboard entity) {
+        String prefix = "\"" + entity.getTitle() + "\" dashboard";
+        entity.setImage(base64ToImageUrl(entity.getTenantId(), prefix + " image", entity.getImage()));
+        base64ToImageUrlUsingMapping(entity.getTenantId(), DASHBOARD_BASE64_MAPPING, Collections.singletonMap("prefix", prefix), entity.getConfiguration());
+        base64ToImageUrlRecursively(entity.getTenantId(), prefix, entity.getConfiguration());
+        return true; //TODO: should return true only if something is changed.
+    }
+
+    private void base64ToImageUrlUsingMapping(TenantId tenantId, Map<String, String> mapping, Map<String, String> templateParams, JsonNode configuration) {
+        for (var entry : mapping.entrySet()) {
+            String expression = entry.getValue();
+            Queue<JsonPathProcessingTask> tasks = new LinkedList<>();
+            tasks.add(new JsonPathProcessingTask(entry.getKey().split("\\."), templateParams, configuration));
+            while (!tasks.isEmpty()) {
+                JsonPathProcessingTask task = tasks.poll();
+                String token = task.currentToken();
+                JsonNode node = task.getNode();
+                if (token.equals("*") || token.startsWith("$")) {
+                    String variableName = token.startsWith("$") ? token.substring(1) : null;
+                    if (node.isArray()) {
+                        ArrayNode childArray = (ArrayNode) node;
+                        for (JsonNode element : childArray) {
+                            tasks.add(task.next(element));
+                        }
+                    } else if (node.isObject()) {
+                        ObjectNode on = (ObjectNode) node;
+                        for (Iterator<Map.Entry<String, JsonNode>> it = on.fields(); it.hasNext(); ) {
+                            var kv = it.next();
+                            if (variableName != null) {
+                                tasks.add(task.next(kv.getValue(), variableName, kv.getKey()));
+                            } else {
+                                tasks.add(task.next(kv.getValue()));
+                            }
+                        }
+                    }
+                } else {
+                    String variableName = null;
+                    String variableValue = null;
+                    if (token.contains("[$")) {
+                        variableName = org.apache.commons.lang3.StringUtils.substringBetween(token, "[$", "]");
+                        token = org.apache.commons.lang3.StringUtils.substringBefore(token, "[$");
+                    }
+                    if (node.has(token)) {
+                        JsonNode value = node.get(token);
+                        if (variableName != null && value.has(variableName) && value.get(variableName).isTextual()) {
+                            variableValue = value.get(variableName).asText();
+                        }
+                        if (task.isLast()) {
+                            String name = expression;
+                            for (var replacements : task.getVariables().entrySet()) {
+                                name = name.replace("$" + replacements.getKey(), replacements.getValue());
+                            }
+                            if (node.isObject() && value.isTextual()) {
+                                ((ObjectNode) node).put(token, base64ToImageUrl(tenantId, name, value.asText()));
+                            } else if (value.isArray()) {
+                                ArrayNode array = (ArrayNode) value;
+                                for (int i = 0; i < array.size(); i++) {
+                                    String arrayElementName = name.replace("$index", Integer.toString(i));
+                                    array.set(i, base64ToImageUrl(tenantId, arrayElementName, array.get(i).asText()));
+                                }
+                            }
+                        } else {
+                            if (org.thingsboard.server.common.data.StringUtils.isNotEmpty(variableName) && org.thingsboard.server.common.data.StringUtils.isNotEmpty(variableValue)) {
+                                tasks.add(task.next(value, variableName, variableValue));
+                            } else {
+                                tasks.add(task.next(value));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private String base64ToImageUrl(TenantId tenantId, String name, String data) {
+        return base64ToImageUrl(tenantId, name, data, false);
+    }
+
+    private String base64ToImageUrl(TenantId tenantId, String name, String data, boolean strict) {
+        if (org.thingsboard.server.common.data.StringUtils.isNotBlank(data) &&
+                (data.startsWith(DataConstants.TB_IMAGE_PREFIX + "data:image/")
+                        || (!strict && data.startsWith("data:image/")))) {
+            String base64Data = org.apache.commons.lang3.StringUtils.substringAfter(data, "base64,");
+            String mediaType = org.apache.commons.lang3.StringUtils.substringBetween(data, "data:", ";base64");
+            String extension = ImageUtils.mediaTypeToFileExtension(mediaType);
+            byte[] imageData = Base64.getDecoder().decode(base64Data);
+            String etag = Hashing.sha256().hashBytes(imageData).toString();
+            var imageInfo = findImageByTenantIdAndEtag(tenantId, etag);
+            if (imageInfo == null) {
+                TbResource image = new TbResource();
+                image.setTenantId(tenantId);
+                image.setResourceType(ResourceType.IMAGE);
+                String fileName = name.toLowerCase()
+                        //TODO: improve to list all the special characters via regexp or similar
+                        .replace("'", "_")
+                        .replace("\"", "_")
+                        .replace(" ", "_")
+                        .replace("/", "_");
+                String key = fileName + "." + extension;
+                Set<String> existingKeys = findResourceKeysByTenantIdResourceTypeAndKeyPrefix(tenantId, ResourceType.IMAGE, key);
+                int idx = 1;
+                while (existingKeys.contains(key)) {
+                    key = fileName + " (" + idx + ")." + extension;
+                    idx++;
+                }
+                image.setResourceKey(key);
+                image.setTitle(name);
+                image.setFileName(key);
+                image.setDescriptor(JacksonUtil.newObjectNode().put("mediaType", mediaType));
+                image.setData(imageData);
+                imageInfo = saveImage(image);
+            }
+            return imageInfo.getLink();
+        } else {
+            return data;
+        }
+    }
+
+    private void base64ToImageUrlRecursively(TenantId tenantId, String title, JsonNode root) {
+        Queue<JsonNodeProcessingTask> tasks = new LinkedList<>();
+        tasks.add(new JsonNodeProcessingTask(title, root));
+        while (!tasks.isEmpty()) {
+            JsonNodeProcessingTask task = tasks.poll();
+            JsonNode node = task.getNode();
+            String currentPath = org.thingsboard.server.common.data.StringUtils.isBlank(task.getPath()) ? "" : (task.getPath() + " ");
+            if (node.isObject()) {
+                ObjectNode on = (ObjectNode) node;
+                for (Iterator<String> it = on.fieldNames(); it.hasNext(); ) {
+                    String childName = it.next();
+                    JsonNode childValue = on.get(childName);
+                    if (childValue.isTextual()) {
+                        on.put(childName, base64ToImageUrl(tenantId, currentPath + childName, childValue.asText(), true));
+                    } else if (childValue.isObject() || childValue.isArray()) {
+                        tasks.add(new JsonNodeProcessingTask(currentPath + childName, childValue));
+                    }
+                }
+            } else if (node.isArray()) {
+                ArrayNode childArray = (ArrayNode) node;
+                int i = 0;
+                for (JsonNode element : childArray) {
+                    if (element.isObject()) {
+                        tasks.add(new JsonNodeProcessingTask(currentPath + " " + i, element));
+                    }
+                    i++;
+                }
+            }
+        }
+    }
 }

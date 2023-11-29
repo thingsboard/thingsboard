@@ -30,6 +30,8 @@ $$;
 
 ALTER TABLE resource ADD COLUMN IF NOT EXISTS descriptor varchar;
 ALTER TABLE resource ADD COLUMN IF NOT EXISTS preview bytea;
-ALTER TABLE resource ADD COLUMN IF NOT EXISTS external_id uuid
+ALTER TABLE resource ADD COLUMN IF NOT EXISTS external_id uuid;
+
+CREATE INDEX IF NOT EXISTS idx_resource_etag ON resource(tenant_id, etag);
 
 -- RESOURCES UPDATE END
