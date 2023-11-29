@@ -36,8 +36,12 @@ public class ProtoWithFSTService implements DataDecodingEncodingService {
     @Override
     public <T> Optional<T> decode(byte[] byteArray) {
         try {
+            long startTime = System.nanoTime();
             Optional<T> optional = Optional.ofNullable(FSTUtils.decode(byteArray));
-            optional.ifPresent(obj -> fstStatsService.incrementDecode(obj.getClass()));
+            optional.ifPresent(obj -> {
+                fstStatsService.recordDecodeTime(obj.getClass(), startTime);
+                fstStatsService.incrementDecode(obj.getClass());
+            });
             return optional;
         } catch (IllegalArgumentException e) {
             log.error("Error during deserialization message, [{}]", e.getMessage());
@@ -48,7 +52,9 @@ public class ProtoWithFSTService implements DataDecodingEncodingService {
 
     @Override
     public <T> byte[] encode(T msq) {
+        long startTime = System.nanoTime();
         var bytes = FSTUtils.encode(msq);
+        fstStatsService.recordEncodeTime(msq.getClass(), startTime);
         fstStatsService.incrementEncode(msq.getClass());
         return bytes;
     }
