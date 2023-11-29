@@ -783,10 +783,10 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
       }
     }).afterClosed().subscribe(
       (res) => {
-        if (!isEqual(res, formControl.value)) {
+        if (isDefined(res) && !isEqual(res, formControl.value)) {
           formControl.patchValue(res);
           formControl.markAsDirty();
-          if(!this.settings.showActionButtons) {
+          if (!this.settings.showActionButtons) {
             this.inputChanged(source, key);
           }
         }
