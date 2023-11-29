@@ -184,6 +184,88 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
     }
 
     @Test
+    public void testNotificationUpdates_typesFilter_multipleSubs() {
+        int generalSub = wsClient.subscribeForUnreadNotificationsAndWait(10, NotificationType.GENERAL);
+        int alarmSub = wsClient.subscribeForUnreadNotificationsAndWait(10, NotificationType.ALARM, NotificationType.GENERAL);
+        int entityActionSub = wsClient.subscribeForUnreadNotificationsAndWait(10, NotificationType.ENTITY_ACTION, NotificationType.GENERAL);
+        NotificationTarget notificationTarget = createNotificationTarget(customerUserId);
+
+        String generalNotificationText1 = "General notification 1";
+        submitNotificationRequest(NotificationType.GENERAL, notificationTarget.getId(), generalNotificationText1);
+        // expecting all 3 subs to received update
+        await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(wsClient.getLastUpdates()).extractingByKeys(generalSub, alarmSub, entityActionSub)
+                    .allMatch(update -> update.getUpdate().getText().equals(generalNotificationText1)
+                            && update.getTotalUnreadCount() == 1);
+        });
+        Notification generalNotification1 = wsClient.getLastDataUpdate().getUpdate();
+
+        String generalNotificationText2 = "General notification 2";
+        submitNotificationRequest(NotificationType.GENERAL, notificationTarget.getId(), generalNotificationText2);
+        // expecting all 3 subs to received update
+        await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(wsClient.getLastUpdates()).extractingByKeys(generalSub, alarmSub, entityActionSub)
+                    .allMatch(update -> update.getUpdate().getText().equals(generalNotificationText2)
+                            && update.getTotalUnreadCount() == 2);
+        });
+        Notification generalNotification2 = wsClient.getLastDataUpdate().getUpdate();
+
+        // marking as read, expecting all 3 subs to received update
+        wsClient.markNotificationAsRead(generalNotification1.getUuidId());
+        await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(wsClient.getLastUpdates()).extractingByKeys(generalSub, alarmSub, entityActionSub)
+                    .allMatch(update -> update.getTotalUnreadCount() == 1 && update.getNotifications().size() == 1
+                            && update.getNotifications().get(0).getText().equals(generalNotificationText2));
+        });
+        wsClient.getLastUpdates().clear();
+
+        String alarmNotificationText1 = "Alarm notification 1";
+        submitNotificationRequest(NotificationType.ALARM, notificationTarget.getId(), alarmNotificationText1);
+        // expecting only 1 sub to received update
+        await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(wsClient.getLastUpdates()).extractingByKey(alarmSub)
+                    .matches(update -> update.getUpdate().getText().equals(alarmNotificationText1)
+                            && update.getTotalUnreadCount() == 2);
+        });
+        Notification alarmNotification1 = wsClient.getLastDataUpdate().getUpdate();
+
+        String alarmNotificationText2 = "Alarm notification 2";
+        submitNotificationRequest(NotificationType.ALARM, notificationTarget.getId(), alarmNotificationText2);
+        // expecting only 1 sub to received update
+        await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(wsClient.getLastUpdates()).extractingByKey(alarmSub)
+                    .matches(update -> update.getUpdate().getText().equals(alarmNotificationText2)
+                            && update.getTotalUnreadCount() == 3);
+        });
+        await().during(3, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    assertThat(wsClient.getLastUpdates()).extractingByKeys(generalSub, entityActionSub)
+                            .containsOnlyNulls();
+                });
+
+        // marking as read, expecting only 1 sub to receive update
+        wsClient.markNotificationAsRead(alarmNotification1.getUuidId());
+        await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(wsClient.getLastUpdates()).extractingByKey(alarmSub)
+                    .matches(update -> update.getTotalUnreadCount() == 2 && update.getNotifications().size() == 2);
+        });
+        await().during(3, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(wsClient.getLastUpdates()).extractingByKeys(generalSub, entityActionSub)
+                    .containsOnlyNulls();
+        });
+
+        // marking as read, expecting general and entity action subs with 0 unread, and alarm with 1 unread
+        wsClient.markNotificationAsRead(generalNotification2.getUuidId());
+        await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(wsClient.getLastUpdates()).extractingByKeys(generalSub, entityActionSub)
+                    .allMatch(update -> update.getTotalUnreadCount() == 0 && update.getNotifications().isEmpty());
+            assertThat(wsClient.getLastUpdates()).extractingByKey(alarmSub)
+                    .matches(update -> update.getTotalUnreadCount() == 1 && update.getNotifications().size() == 1
+                            && update.getNotifications().get(0).getText().equals(alarmNotificationText2));
+        });
+    }
+
+    @Test
     public void testMarkingAsRead_multipleSessions() throws Exception {
         connectOtherWsClient();
         wsClient.subscribeForUnreadNotifications(10).waitForReply(true);

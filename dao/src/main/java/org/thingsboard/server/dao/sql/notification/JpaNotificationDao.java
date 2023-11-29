@@ -16,8 +16,8 @@
 package org.thingsboard.server.dao.sql.notification;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import com.google.common.base.Strings;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
+import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
@@ -38,6 +39,7 @@ import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -67,6 +69,15 @@ public class JpaNotificationDao extends JpaAbstractDao<NotificationEntity, Notif
     @Override
     public PageData<Notification> findUnreadByRecipientIdAndPageLink(TenantId tenantId, UserId recipientId, PageLink pageLink) {
         return DaoUtil.toPageData(notificationRepository.findByRecipientIdAndStatusNot(recipientId.getId(), NotificationStatus.READ,
+                pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<Notification> findUnreadByRecipientIdAndNotificationTypesAndPageLink(TenantId tenantId, UserId recipientId, Set<NotificationType> types, PageLink pageLink) {
+        if (CollectionUtils.isEmpty(types)) {
+            types = NotificationType.all;
+        }
+        return DaoUtil.toPageData(notificationRepository.findByRecipientIdAndTypeInAndStatusNot(recipientId.getId(), types, NotificationStatus.READ,
                 pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
     }
 

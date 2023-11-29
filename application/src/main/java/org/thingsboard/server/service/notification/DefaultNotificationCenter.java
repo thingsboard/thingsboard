@@ -329,12 +329,17 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
 
     @Override
     public void markNotificationAsRead(TenantId tenantId, UserId recipientId, NotificationId notificationId) {
+        Notification notification = notificationService.findNotificationById(tenantId, notificationId);
+        if (notification == null) {
+            return;
+        }
         boolean updated = notificationService.markNotificationAsRead(tenantId, recipientId, notificationId);
         if (updated) {
             log.trace("Marked notification {} as read (recipient id: {}, tenant id: {})", notificationId, recipientId, tenantId);
             NotificationUpdate update = NotificationUpdate.builder()
                     .updated(true)
                     .notificationId(notificationId.getId())
+                    .notificationType(notification.getType())
                     .newStatus(NotificationStatus.READ)
                     .build();
             onNotificationUpdate(tenantId, recipientId, update);

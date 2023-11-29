@@ -19,8 +19,11 @@ import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
+import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+
+import java.util.Set;
 
 public interface NotificationService {
 
@@ -34,7 +37,7 @@ public interface NotificationService {
 
     PageData<Notification> findNotificationsByRecipientIdAndReadStatus(TenantId tenantId, UserId recipientId, boolean unreadOnly, PageLink pageLink);
 
-    PageData<Notification> findLatestUnreadNotificationsByRecipientId(TenantId tenantId, UserId recipientId, int limit);
+    PageData<Notification> findLatestUnreadNotificationsByRecipientIdAndNotificationTypes(TenantId tenantId, UserId recipientId, Set<NotificationType> types, int limit);
 
     int countUnreadNotificationsByRecipientId(TenantId tenantId, UserId recipientId);
 
