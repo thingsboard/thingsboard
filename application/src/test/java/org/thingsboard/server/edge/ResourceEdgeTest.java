@@ -155,7 +155,9 @@ public class ResourceEdgeTest extends AbstractEdgeTest {
         Optional<ResourceUpdateMsg> resourceUpdateMsgOpt = edgeImitator.findMessageByType(ResourceUpdateMsg.class);
         Assert.assertTrue(resourceUpdateMsgOpt.isPresent());
         ResourceUpdateMsg latestResourceUpdateMsg = resourceUpdateMsgOpt.get();
-        Assert.assertNotEquals(FILE_NAME, latestResourceUpdateMsg.getResourceKey());
+        TbResource resourceMsg = JacksonUtil.fromStringIgnoreUnknownProperties(latestResourceUpdateMsg.getEntity(), TbResource.class);
+        Assert.assertNotNull(resourceMsg);
+        Assert.assertNotEquals(FILE_NAME, resourceMsg.getResourceKey());
 
         Assert.assertNotEquals(savedResource.getUuidId(), uuid);
 

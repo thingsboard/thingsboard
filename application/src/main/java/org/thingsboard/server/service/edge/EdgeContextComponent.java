@@ -44,18 +44,27 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.EdgeEventStorageSettings;
 import org.thingsboard.server.service.edge.rpc.constructor.edge.EdgeMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.processor.alarm.AlarmEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.alarm.AlarmEdgeProcessorFactory;
 import org.thingsboard.server.service.edge.rpc.processor.asset.AssetEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.asset.AssetProfileEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.asset.AssetEdgeProcessorFactory;
+import org.thingsboard.server.service.edge.rpc.processor.asset.profile.AssetProfileEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.asset.profile.AssetProfileEdgeProcessorFactory;
 import org.thingsboard.server.service.edge.rpc.processor.customer.CustomerEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.dashboard.DashboardEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.dashboard.DashboardEdgeProcessorFactory;
 import org.thingsboard.server.service.edge.rpc.processor.device.DeviceEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.device.DeviceProfileEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.device.DeviceEdgeProcessorFactory;
+import org.thingsboard.server.service.edge.rpc.processor.device.profile.DeviceProfileEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.device.profile.DeviceProfileEdgeProcessorFactory;
 import org.thingsboard.server.service.edge.rpc.processor.edge.EdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.entityview.EntityViewEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.entityview.EntityViewProcessorFactory;
 import org.thingsboard.server.service.edge.rpc.processor.ota.OtaPackageEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.queue.QueueEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.relation.RelationEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.relation.RelationEdgeProcessorFactory;
 import org.thingsboard.server.service.edge.rpc.processor.resource.ResourceEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.resource.ResourceEdgeProcessorFactory;
 import org.thingsboard.server.service.edge.rpc.processor.rule.RuleChainEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.settings.AdminSettingsEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.telemetry.TelemetryEdgeProcessor;
@@ -205,6 +214,33 @@ public class EdgeContextComponent {
 
     @Autowired
     private EdgeMsgConstructor edgeMsgConstructor;
+
+    @Autowired
+    private AlarmEdgeProcessorFactory alarmEdgeProcessorFactory;
+
+    @Autowired
+    private AssetEdgeProcessorFactory assetEdgeProcessorFactory;
+
+    @Autowired
+    private AssetProfileEdgeProcessorFactory assetProfileEdgeProcessorFactory;
+
+    @Autowired
+    private DashboardEdgeProcessorFactory dashboardEdgeProcessorFactory;
+
+    @Autowired
+    private DeviceEdgeProcessorFactory deviceEdgeProcessorFactory;
+
+    @Autowired
+    private DeviceProfileEdgeProcessorFactory deviceProfileEdgeProcessorFactory;
+
+    @Autowired
+    private EntityViewProcessorFactory entityViewProcessorFactory;
+
+    @Autowired
+    private RelationEdgeProcessorFactory relationEdgeProcessorFactory;
+
+    @Autowired
+    private ResourceEdgeProcessorFactory resourceEdgeProcessorFactory;
 
     @Autowired
     private EdgeEventStorageSettings edgeEventStorageSettings;

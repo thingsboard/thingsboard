@@ -15,30 +15,20 @@
  */
 package org.thingsboard.server.service.edge.rpc.processor.device;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
-import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
-import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
-
-import java.util.Optional;
-import java.util.UUID;
 
 @Slf4j
 public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
@@ -46,14 +36,12 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
     @Autowired
     protected DataDecodingEncodingService dataDecodingEncodingService;
 
-    protected Pair<Boolean, Boolean> saveOrUpdateDevice(TenantId tenantId, DeviceId deviceId, DeviceUpdateMsg deviceUpdateMsg, EdgeVersion edgeVersion) {
+    protected Pair<Boolean, Boolean> saveOrUpdateDevice(TenantId tenantId, DeviceId deviceId, DeviceUpdateMsg deviceUpdateMsg) {
         boolean created = false;
         boolean deviceNameUpdated = false;
         deviceCreationLock.lock();
         try {
-            Device device = EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)
-                    ? createDevice(tenantId, deviceId, deviceUpdateMsg)
-                    : JacksonUtil.fromStringIgnoreUnknownProperties(deviceUpdateMsg.getEntity(), Device.class);
+            Device device = constructDeviceFromUpdateMsg(tenantId, deviceId, deviceUpdateMsg);
             if (device == null) {
                 throw new RuntimeException("[{" + tenantId + "}] deviceUpdateMsg {" + deviceUpdateMsg + "} cannot be converted to device");
             }
@@ -73,7 +61,7 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
                 deviceNameUpdated = true;
             }
             device.setName(deviceName);
-            setCustomerId(tenantId, created ? null : deviceById.getCustomerId(), device, deviceUpdateMsg, edgeVersion);
+            setCustomerId(tenantId, created ? null : deviceById.getCustomerId(), device, deviceUpdateMsg);
 
             deviceValidator.validate(device, Device::getTenantId);
             if (created) {
@@ -97,34 +85,8 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
         return Pair.of(created, deviceNameUpdated);
     }
 
-    private Device createDevice(TenantId tenantId, DeviceId deviceId, DeviceUpdateMsg deviceUpdateMsg) {
-        Device device = new Device();
-        device.setTenantId(tenantId);
-        device.setCreatedTime(Uuids.unixTimestamp(deviceId.getId()));
-        device.setName(deviceUpdateMsg.getName());
-        device.setType(deviceUpdateMsg.getType());
-        device.setLabel(deviceUpdateMsg.hasLabel() ? deviceUpdateMsg.getLabel() : null);
-        device.setAdditionalInfo(deviceUpdateMsg.hasAdditionalInfo()
-                ? JacksonUtil.toJsonNode(deviceUpdateMsg.getAdditionalInfo()) : null);
-
-        UUID deviceProfileUUID = safeGetUUID(deviceUpdateMsg.getDeviceProfileIdMSB(), deviceUpdateMsg.getDeviceProfileIdLSB());
-        device.setDeviceProfileId(deviceProfileUUID != null ? new DeviceProfileId(deviceProfileUUID) : null);
-
-        Optional<DeviceData> deviceDataOpt = dataDecodingEncodingService.decode(deviceUpdateMsg.getDeviceDataBytes().toByteArray());
-        device.setDeviceData(deviceDataOpt.orElse(null));
-
-        UUID firmwareUUID = safeGetUUID(deviceUpdateMsg.getFirmwareIdMSB(), deviceUpdateMsg.getFirmwareIdLSB());
-        device.setFirmwareId(firmwareUUID != null ? new OtaPackageId(firmwareUUID) : null);
-        UUID softwareUUID = safeGetUUID(deviceUpdateMsg.getSoftwareIdMSB(), deviceUpdateMsg.getSoftwareIdLSB());
-        device.setSoftwareId(softwareUUID != null ? new OtaPackageId(softwareUUID) : null);
-
-        return device;
-    }
-
-    protected void updateDeviceCredentials(TenantId tenantId, DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg, EdgeVersion edgeVersion) {
-        DeviceCredentials deviceCredentials = EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)
-                ? createDeviceCredentials(deviceCredentialsUpdateMsg)
-                : JacksonUtil.fromStringIgnoreUnknownProperties(deviceCredentialsUpdateMsg.getEntity(), DeviceCredentials.class);
+    protected void updateDeviceCredentials(TenantId tenantId, DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg) {
+        DeviceCredentials deviceCredentials = constructDeviceCredentialsFromUpdateMsg(tenantId, deviceCredentialsUpdateMsg);
         if (deviceCredentials == null) {
             throw new RuntimeException("[{" + tenantId + "}] deviceCredentialsUpdateMsg {" + deviceCredentialsUpdateMsg + "} cannot be converted to device credentials");
         }
@@ -149,15 +111,9 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
         }
     }
 
-    private DeviceCredentials createDeviceCredentials(DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg) {
-        DeviceCredentials deviceCredentials = new DeviceCredentials();
-        deviceCredentials.setDeviceId(new DeviceId(new UUID(deviceCredentialsUpdateMsg.getDeviceIdMSB(), deviceCredentialsUpdateMsg.getDeviceIdLSB())));
-        deviceCredentials.setCredentialsType(DeviceCredentialsType.valueOf(deviceCredentialsUpdateMsg.getCredentialsType()));
-        deviceCredentials.setCredentialsId(deviceCredentialsUpdateMsg.getCredentialsId());
-        deviceCredentials.setCredentialsValue(deviceCredentialsUpdateMsg.hasCredentialsValue()
-                ? deviceCredentialsUpdateMsg.getCredentialsValue() : null);
-        return deviceCredentials;
-    }
+    protected abstract Device constructDeviceFromUpdateMsg(TenantId tenantId, DeviceId deviceId, DeviceUpdateMsg deviceUpdateMsg);
 
-    protected abstract void setCustomerId(TenantId tenantId, CustomerId customerId, Device device, DeviceUpdateMsg deviceUpdateMsg, EdgeVersion edgeVersion);
+    protected abstract void setCustomerId(TenantId tenantId, CustomerId customerId, Device device, DeviceUpdateMsg deviceUpdateMsg);
+
+    protected abstract DeviceCredentials constructDeviceCredentialsFromUpdateMsg(TenantId tenantId, DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg);
 }
