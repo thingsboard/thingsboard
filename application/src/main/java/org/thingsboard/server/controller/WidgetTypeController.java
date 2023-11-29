@@ -43,9 +43,9 @@ import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.widgets.type.TbWidgetTypeService;
-import org.thingsboard.server.service.resource.TbImageService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
@@ -75,7 +75,7 @@ import static org.thingsboard.server.controller.ControllerConstants.WIDGET_TYPE_
 public class WidgetTypeController extends AutoCommitController {
 
     private final TbWidgetTypeService tbWidgetTypeService;
-    private final TbImageService tbImageService;
+    private final ImageService imageService;
 
     private static final String WIDGET_TYPE_DESCRIPTION = "Widget Type represents the template for widget creation. Widget Type and Widget are similar to class and object in OOP theory.";
     private static final String WIDGET_TYPE_DETAILS_DESCRIPTION = "Widget Type Details extend Widget Type and add image and description properties. " +
@@ -103,7 +103,7 @@ public class WidgetTypeController extends AutoCommitController {
         WidgetTypeId widgetTypeId = new WidgetTypeId(toUUID(strWidgetTypeId));
         var result = checkWidgetTypeId(widgetTypeId, Operation.READ);
         if (inlineImages) {
-            tbImageService.inlineImages(result);
+            imageService.inlineImages(result);
         }
         return result;
     }
@@ -270,7 +270,7 @@ public class WidgetTypeController extends AutoCommitController {
         WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
         var result = checkNotNull(widgetTypeService.findWidgetTypesDetailsByWidgetsBundleId(getTenantId(), widgetsBundleId));
         if (inlineImages) {
-            result.forEach(tbImageService::inlineImages);
+            result.forEach(imageService::inlineImages);
         }
         return result;
     }

@@ -51,9 +51,9 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.dashboard.TbDashboardService;
-import org.thingsboard.server.service.resource.TbImageService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
@@ -97,7 +97,7 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 public class DashboardController extends BaseController {
 
     private final TbDashboardService tbDashboardService;
-    private final TbImageService tbImageService;
+    private final ImageService imageService;
     public static final String DASHBOARD_ID = "dashboardId";
 
     private static final String HOME_DASHBOARD_ID = "homeDashboardId";
@@ -164,7 +164,7 @@ public class DashboardController extends BaseController {
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
         var result = checkDashboardId(dashboardId, Operation.READ);
         if (inlineImages) {
-            tbImageService.inlineImages(result);
+            imageService.inlineImages(result);
         }
         return result;
     }

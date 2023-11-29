@@ -82,7 +82,7 @@ import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
 import org.thingsboard.server.service.queue.processing.IdMsgPair;
-import org.thingsboard.server.service.resource.ImageCacheKey;
+import org.thingsboard.server.dao.resource.ImageCacheKey;
 import org.thingsboard.server.service.resource.TbImageService;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequestActorMsg;

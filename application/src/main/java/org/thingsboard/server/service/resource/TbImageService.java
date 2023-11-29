@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
+import org.thingsboard.server.dao.resource.ImageCacheKey;
 
 public interface TbImageService {
 
@@ -36,11 +37,5 @@ public interface TbImageService {
     void putETag(ImageCacheKey imageCacheKey, String etag);
 
     void evictETag(ImageCacheKey imageCacheKey);
-
-    void inlineImage(HasImage entity);
-
-    void inlineImages(Dashboard dashboard);
-
-    void inlineImages(WidgetTypeDetails widgetTypeDetails);
 
 }

@@ -109,7 +109,7 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public String getLink() {
         if (resourceType == ResourceType.IMAGE) {
-            return DataConstants.TB_IMAGE_PREFIX + "/api/images/" + ((tenantId == null || !tenantId.isSysTenantId()) ? "tenant" : "system") + "/" + resourceKey; // tenantId is null in case of export to git
+            return "/api/images/" + ((tenantId == null || !tenantId.isSysTenantId()) ? "tenant" : "system") + "/" + resourceKey; // tenantId is null in case of export to git
         }
         return null;
     }

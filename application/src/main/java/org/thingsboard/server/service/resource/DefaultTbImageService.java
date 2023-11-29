@@ -16,20 +16,13 @@
 package org.thingsboard.server.service.resource;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.Base64Utils;
 import org.thingsboard.server.cluster.TbClusterService;
-import org.thingsboard.server.common.data.Dashboard;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.HasImage;
 import org.thingsboard.server.common.data.ImageDescriptor;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbImageDeleteResult;
@@ -39,17 +32,13 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
+import org.thingsboard.server.dao.resource.ImageCacheKey;
 import org.thingsboard.server.dao.resource.ImageService;
-import org.thingsboard.server.dao.util.JsonNodeProcessingTask;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -162,95 +151,5 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
             notificationEntityService.logEntityAction(tenantId, imageId, ActionType.DELETED, user, e, imageId.toString());
             throw e;
         }
-    }
-
-    public void inlineImage(HasImage entity) {
-        entity.setImage(inlineImage(entity.getTenantId(), "image", entity.getImage()));
-    }
-
-    @Override
-    public void inlineImages(Dashboard dashboard) {
-        inlineImage(dashboard);
-        inlineIntoJson(dashboard.getTenantId(), dashboard.getConfiguration());
-    }
-
-    @Override
-    public void inlineImages(WidgetTypeDetails widgetTypeDetails) {
-        inlineImage(widgetTypeDetails);
-        inlineIntoJson(widgetTypeDetails.getTenantId(), widgetTypeDetails.getDescriptor());
-    }
-
-    private void inlineIntoJson(TenantId tenantId, JsonNode root) {
-        Queue<JsonNodeProcessingTask> tasks = new LinkedList<>();
-        tasks.add(new JsonNodeProcessingTask("", root));
-        while (!tasks.isEmpty()) {
-            JsonNodeProcessingTask task = tasks.poll();
-            JsonNode node = task.getNode();
-            String currentPath = StringUtils.isBlank(task.getPath()) ? "" : (task.getPath() + ".");
-            if (node.isObject()) {
-                ObjectNode on = (ObjectNode) node;
-                for (Iterator<String> it = on.fieldNames(); it.hasNext(); ) {
-                    String childName = it.next();
-                    JsonNode childValue = on.get(childName);
-                    if (childValue.isTextual()) {
-                        on.put(childName, inlineImage(tenantId, currentPath + childName, childValue.asText()));
-                    } else if (childValue.isObject() || childValue.isArray()) {
-                        tasks.add(new JsonNodeProcessingTask(currentPath + childName, childValue));
-                    }
-                }
-            } else if (node.isArray()) {
-                ArrayNode childArray = (ArrayNode) node;
-                int i = 0;
-                for (JsonNode element : childArray) {
-                    if (element.isObject()) {
-                        tasks.add(new JsonNodeProcessingTask(currentPath + "." + i, element));
-                    }
-                    i++;
-                }
-            }
-        }
-    }
-
-    private String inlineImage(TenantId tenantId, String path, String url) {
-        try {
-            ImageCacheKey key = getKeyFromUrl(tenantId, url);
-            if (key != null) {
-                var imageInfo = imageService.getImageInfoByTenantIdAndKey(key.getTenantId(), key.getKey());
-                if (imageInfo != null) {
-                    byte[] data = key.isPreview() ? imageService.getImagePreview(tenantId, imageInfo.getId()) : imageService.getImageData(tenantId, imageInfo.getId());
-                    ImageDescriptor descriptor = getImageDescriptor(imageInfo, key.isPreview());
-                    return DataConstants.TB_IMAGE_PREFIX + "data:" + descriptor.getMediaType() + ";base64," + Base64Utils.encodeToString(data);
-                }
-            }
-        } catch (Exception e) {
-            log.warn("[{}][{}][{}] Failed to inline image.", tenantId, path, url, e);
-        }
-        return url;
-    }
-
-    private ImageDescriptor getImageDescriptor(TbResourceInfo imageInfo, boolean preview) throws JsonProcessingException {
-        ImageDescriptor descriptor = imageInfo.getDescriptor(ImageDescriptor.class);
-        return preview ? descriptor.getPreviewDescriptor() : descriptor;
-    }
-
-    private ImageCacheKey getKeyFromUrl(TenantId tenantId, String url) {
-        if (StringUtils.isBlank(url)) {
-            return null;
-        }
-        TenantId imageTenantId = null;
-        if (url.startsWith(DataConstants.TB_IMAGE_PREFIX + "/api/images/tenant/")) {
-            imageTenantId = tenantId;
-        } else if (url.startsWith(DataConstants.TB_IMAGE_PREFIX + "/api/images/system/")) {
-            imageTenantId = TenantId.SYS_TENANT_ID;
-        }
-        if (imageTenantId != null) {
-            var parts = url.split("/");
-            if (parts.length == 5) {
-                return new ImageCacheKey(imageTenantId, parts[4], false);
-            } else if (parts.length == 6 && "preview".equals(parts[5])) {
-                return new ImageCacheKey(imageTenantId, parts[4], true);
-            }
-        }
-        return null;
     }
 }

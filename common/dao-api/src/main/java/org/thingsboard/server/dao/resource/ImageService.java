@@ -55,4 +55,10 @@ public interface ImageService {
     boolean replaceBase64WithImageUrl(HasImage hasImage, String title, String type);
     boolean replaceBase64WithImageUrl(Dashboard dashboard);
     boolean replaceBase64WithImageUrl(WidgetTypeDetails widgetType);
+
+    void inlineImage(HasImage entity);
+
+    void inlineImages(Dashboard dashboard);
+
+    void inlineImages(WidgetTypeDetails widgetTypeDetails);
 }

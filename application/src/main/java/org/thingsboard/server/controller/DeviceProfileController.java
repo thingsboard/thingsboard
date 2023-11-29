@@ -37,10 +37,10 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.device.profile.TbDeviceProfileService;
-import org.thingsboard.server.service.resource.TbImageService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
@@ -75,7 +75,7 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 public class DeviceProfileController extends BaseController {
 
     private final TbDeviceProfileService tbDeviceProfileService;
-    private final TbImageService tbImageService;
+    private final ImageService imageService;
 
     @Autowired
     private TimeseriesService timeseriesService;
@@ -96,7 +96,7 @@ public class DeviceProfileController extends BaseController {
         DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
         var result = checkDeviceProfileId(deviceProfileId, Operation.READ);
         if (inlineImages) {
-            tbImageService.inlineImage(result);
+            imageService.inlineImage(result);
         }
         return result;
     }

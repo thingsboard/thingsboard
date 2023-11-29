@@ -35,9 +35,9 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.asset.profile.TbAssetProfileService;
-import org.thingsboard.server.service.resource.TbImageService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
@@ -67,7 +67,7 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 public class AssetProfileController extends BaseController {
 
     private final TbAssetProfileService tbAssetProfileService;
-    private final TbImageService tbImageService;
+    private final ImageService imageService;
 
     @ApiOperation(value = "Get Asset Profile (getAssetProfileById)",
             notes = "Fetch the Asset Profile object based on the provided Asset Profile Id. " +
@@ -85,7 +85,7 @@ public class AssetProfileController extends BaseController {
         AssetProfileId assetProfileId = new AssetProfileId(toUUID(strAssetProfileId));
         var result = checkAssetProfileId(assetProfileId, Operation.READ);
         if (inlineImages) {
-            tbImageService.inlineImage(result);
+            imageService.inlineImage(result);
         }
         return result;
     }

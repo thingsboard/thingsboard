@@ -15,15 +15,16 @@
  */
 package org.thingsboard.server.dao.resource;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.hash.Hashing;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Base64Utils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.RegexUtils;
 import org.thingsboard.server.common.data.Dashboard;
@@ -32,6 +33,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasImage;
 import org.thingsboard.server.common.data.ImageDescriptor;
 import org.thingsboard.server.common.data.ResourceType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbImageDeleteResult;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
@@ -56,6 +58,7 @@ import org.thingsboard.server.dao.widget.WidgetTypeDao;
 import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 
 import javax.annotation.PostConstruct;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
@@ -236,7 +239,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         TbImageDeleteResult.TbImageDeleteResultBuilder result = TbImageDeleteResult.builder();
         boolean success = true;
         if (!force) {
-            var link = imageInfo.getLink();
+            var link = DataConstants.TB_IMAGE_PREFIX + imageInfo.getLink();
             Map<String, List<? extends HasId<?>>> affectedEntities = new HashMap<>();
             imageContainerDaoMap.forEach((entityType, imageContainerDao) -> {
                 var entities = tenantId.isSysTenantId() ? imageContainerDao.findByImageLink(link, MAX_ENTITIES_TO_FIND) :
@@ -366,44 +369,67 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         return base64ToImageUrl(tenantId, name, data, false);
     }
 
+    private static final Pattern TB_IMAGE_METADATA_PATTERN = Pattern.compile("^tb-image:(.*):(.*);data:(.*);.*");
+
     private String base64ToImageUrl(TenantId tenantId, String name, String data, boolean strict) {
-        if (org.thingsboard.server.common.data.StringUtils.isNotBlank(data) &&
-                (data.startsWith(DataConstants.TB_IMAGE_PREFIX + "data:image/")
-                        || (!strict && data.startsWith("data:image/")))) {
-            String base64Data = org.apache.commons.lang3.StringUtils.substringAfter(data, "base64,");
-            String mediaType = org.apache.commons.lang3.StringUtils.substringBetween(data, "data:", ";base64");
-            String extension = ImageUtils.mediaTypeToFileExtension(mediaType);
-            byte[] imageData = Base64.getDecoder().decode(base64Data);
-            String etag = Hashing.sha256().hashBytes(imageData).toString();
-            var imageInfo = findImageByTenantIdAndEtag(tenantId, etag);
-            if (imageInfo == null) {
-                TbResource image = new TbResource();
-                image.setTenantId(tenantId);
-                image.setResourceType(ResourceType.IMAGE);
-                String fileName = name.toLowerCase()
-                        //TODO: improve to list all the special characters via regexp or similar
-                        .replace("'", "_")
-                        .replace("\"", "_")
-                        .replace(" ", "_")
-                        .replace("/", "_");
-                String key = fileName + "." + extension;
-                Set<String> existingKeys = findResourceKeysByTenantIdResourceTypeAndKeyPrefix(tenantId, ResourceType.IMAGE, key);
-                int idx = 1;
-                while (existingKeys.contains(key)) {
-                    key = fileName + " (" + idx + ")." + extension;
-                    idx++;
-                }
-                image.setResourceKey(key);
-                image.setTitle(name);
-                image.setFileName(key);
-                image.setDescriptor(JacksonUtil.newObjectNode().put("mediaType", mediaType));
-                image.setData(imageData);
-                imageInfo = saveImage(image);
-            }
-            return imageInfo.getLink();
+        if (StringUtils.isBlank(data)) {
+            return data;
+        }
+        var matcher = TB_IMAGE_METADATA_PATTERN.matcher(data);
+        boolean matches = matcher.matches();
+        String mdResourceKey = null;
+        String mdResourceName = null;
+        String mdMediaType;
+        if (matches) {
+            mdResourceKey = new String(Base64Utils.decodeFromString(matcher.group(1)), StandardCharsets.UTF_8);
+            mdResourceName = new String(Base64Utils.decodeFromString(matcher.group(2)), StandardCharsets.UTF_8);
+            mdMediaType = matcher.group(3);
+        } else if (data.startsWith(DataConstants.TB_IMAGE_PREFIX + "data:image/") || (!strict && data.startsWith("data:image/"))) {
+            mdMediaType = org.apache.commons.lang3.StringUtils.substringBetween(data, "data:", ";base64");
         } else {
             return data;
         }
+        String base64Data = org.apache.commons.lang3.StringUtils.substringAfter(data, "base64,");
+        String extension = ImageUtils.mediaTypeToFileExtension(mdMediaType);
+        byte[] imageData = Base64.getDecoder().decode(base64Data);
+        String etag = Hashing.sha256().hashBytes(imageData).toString();
+        var imageInfo = findImageByTenantIdAndEtag(tenantId, etag);
+        if (imageInfo == null) {
+            TbResource image = new TbResource();
+            image.setTenantId(tenantId);
+            image.setResourceType(ResourceType.IMAGE);
+
+            if (StringUtils.isBlank(mdResourceName)) {
+                mdResourceName = name;
+            }
+
+            String fileName;
+            if (StringUtils.isBlank(mdResourceKey)) {
+                fileName = mdResourceName.toLowerCase()
+                        //TODO: improve to list all the special characters via regexp or similar
+                        .replace("'", "")
+                        .replace("\"", "")
+                        .replace(" ", "_")
+                        .replace("/", "_");
+                mdResourceKey = fileName + "." + extension;
+            } else {
+                fileName = mdResourceKey.split("\\.")[0];
+            }
+
+            Set<String> existingKeys = findResourceKeysByTenantIdResourceTypeAndKeyPrefix(tenantId, ResourceType.IMAGE, mdResourceKey);
+            int idx = 1;
+            while (existingKeys.contains(mdResourceKey)) {
+                mdResourceKey = fileName + "_(" + idx + ")." + extension;
+                idx++;
+            }
+            image.setResourceKey(mdResourceKey);
+            image.setTitle(mdResourceName);
+            image.setFileName(mdResourceKey);
+            image.setDescriptor(JacksonUtil.newObjectNode().put("mediaType", mdMediaType));
+            image.setData(imageData);
+            imageInfo = saveImage(image);
+        }
+        return DataConstants.TB_IMAGE_PREFIX + imageInfo.getLink();
     }
 
     private void base64ToImageUrlRecursively(TenantId tenantId, String title, JsonNode root) {
@@ -435,5 +461,98 @@ public class BaseImageService extends BaseResourceService implements ImageServic
                 }
             }
         }
+    }
+
+    @Override
+    public void inlineImage(HasImage entity) {
+        entity.setImage(inlineImage(entity.getTenantId(), "image", entity.getImage()));
+    }
+
+    @Override
+    public void inlineImages(Dashboard dashboard) {
+        inlineImage(dashboard);
+        inlineIntoJson(dashboard.getTenantId(), dashboard.getConfiguration());
+    }
+
+    @Override
+    public void inlineImages(WidgetTypeDetails widgetTypeDetails) {
+        inlineImage(widgetTypeDetails);
+        inlineIntoJson(widgetTypeDetails.getTenantId(), widgetTypeDetails.getDescriptor());
+    }
+
+    private void inlineIntoJson(TenantId tenantId, JsonNode root) {
+        Queue<JsonNodeProcessingTask> tasks = new LinkedList<>();
+        tasks.add(new JsonNodeProcessingTask("", root));
+        while (!tasks.isEmpty()) {
+            JsonNodeProcessingTask task = tasks.poll();
+            JsonNode node = task.getNode();
+            String currentPath = org.thingsboard.server.common.data.StringUtils.isBlank(task.getPath()) ? "" : (task.getPath() + ".");
+            if (node.isObject()) {
+                ObjectNode on = (ObjectNode) node;
+                for (Iterator<String> it = on.fieldNames(); it.hasNext(); ) {
+                    String childName = it.next();
+                    JsonNode childValue = on.get(childName);
+                    if (childValue.isTextual()) {
+                        on.put(childName, inlineImage(tenantId, currentPath + childName, childValue.asText()));
+                    } else if (childValue.isObject() || childValue.isArray()) {
+                        tasks.add(new JsonNodeProcessingTask(currentPath + childName, childValue));
+                    }
+                }
+            } else if (node.isArray()) {
+                ArrayNode childArray = (ArrayNode) node;
+                int i = 0;
+                for (JsonNode element : childArray) {
+                    if (element.isObject()) {
+                        tasks.add(new JsonNodeProcessingTask(currentPath + "." + i, element));
+                    }
+                    i++;
+                }
+            }
+        }
+    }
+
+    private String inlineImage(TenantId tenantId, String path, String url) {
+        try {
+            ImageCacheKey key = getKeyFromUrl(tenantId, url);
+            if (key != null) {
+                var imageInfo = getImageInfoByTenantIdAndKey(key.getTenantId(), key.getKey());
+                if (imageInfo != null) {
+                    byte[] data = key.isPreview() ? getImagePreview(tenantId, imageInfo.getId()) : getImageData(tenantId, imageInfo.getId());
+                    ImageDescriptor descriptor = getImageDescriptor(imageInfo, key.isPreview());
+                    String tbImagePrefix = "tb-image:" + Base64Utils.encodeToString(imageInfo.getResourceKey().getBytes(StandardCharsets.UTF_8)) + ":"
+                            + Base64Utils.encodeToString(imageInfo.getName().getBytes(StandardCharsets.UTF_8)) + ";";
+                    return tbImagePrefix + "data:" + descriptor.getMediaType() + ";base64," + Base64Utils.encodeToString(data);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("[{}][{}][{}] Failed to inline image.", tenantId, path, url, e);
+        }
+        return url;
+    }
+
+    private ImageDescriptor getImageDescriptor(TbResourceInfo imageInfo, boolean preview) throws JsonProcessingException {
+        ImageDescriptor descriptor = imageInfo.getDescriptor(ImageDescriptor.class);
+        return preview ? descriptor.getPreviewDescriptor() : descriptor;
+    }
+
+    private ImageCacheKey getKeyFromUrl(TenantId tenantId, String url) {
+        if (org.thingsboard.server.common.data.StringUtils.isBlank(url)) {
+            return null;
+        }
+        TenantId imageTenantId = null;
+        if (url.startsWith(DataConstants.TB_IMAGE_PREFIX + "/api/images/tenant/")) {
+            imageTenantId = tenantId;
+        } else if (url.startsWith(DataConstants.TB_IMAGE_PREFIX + "/api/images/system/")) {
+            imageTenantId = TenantId.SYS_TENANT_ID;
+        }
+        if (imageTenantId != null) {
+            var parts = url.split("/");
+            if (parts.length == 5) {
+                return new ImageCacheKey(imageTenantId, parts[4], false);
+            } else if (parts.length == 6 && "preview".equals(parts[5])) {
+                return new ImageCacheKey(imageTenantId, parts[4], true);
+            }
+        }
+        return null;
     }
 }

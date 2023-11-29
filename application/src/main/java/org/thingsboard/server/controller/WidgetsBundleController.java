@@ -36,9 +36,9 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.widgets.bundle.TbWidgetsBundleService;
-import org.thingsboard.server.service.resource.TbImageService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
@@ -69,7 +69,7 @@ import static org.thingsboard.server.controller.ControllerConstants.WIDGET_BUNDL
 public class WidgetsBundleController extends BaseController {
 
     private final TbWidgetsBundleService tbWidgetsBundleService;
-    private final TbImageService tbImageService;
+    private final ImageService imageService;
 
     private static final String WIDGET_BUNDLE_DESCRIPTION = "Widget Bundle represents a group(bundle) of widgets. Widgets are grouped into bundle by type or use case. ";
     private static final String FULL_SEARCH_PARAM_DESCRIPTION = "Optional boolean parameter indicating extended search of widget bundles by description and by name / description of related widget types";
@@ -89,7 +89,7 @@ public class WidgetsBundleController extends BaseController {
         WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
         var result = checkWidgetsBundleId(widgetsBundleId, Operation.READ);
         if (inlineImages) {
-            tbImageService.inlineImage(result);
+            imageService.inlineImage(result);
         }
         return result;
     }
