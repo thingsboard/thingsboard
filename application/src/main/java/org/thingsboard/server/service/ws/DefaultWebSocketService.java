@@ -259,6 +259,8 @@ public class DefaultWebSocketService implements WebSocketService {
                         log.error("[sessionId: {}, tenantId: {}, userId: {}] Failed to handle WS cmd: {}", sessionId,
                                 sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), cmd, e);
                     }
+                } else {
+                    return;
                 }
             }
         }
@@ -848,10 +850,6 @@ public class DefaultWebSocketService implements WebSocketService {
             return false;
         }
         return true;
-    }
-
-    private boolean validateSessionMetadata(WebSocketSessionRef sessionRef, SubscriptionCmd cmd, String sessionId) {
-        return validateSessionMetadata(sessionRef, cmd.getCmdId(), sessionId);
     }
 
     private boolean validateSessionMetadata(WebSocketSessionRef sessionRef, int cmdId, String sessionId) {
