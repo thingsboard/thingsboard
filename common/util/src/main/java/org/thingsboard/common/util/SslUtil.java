@@ -73,7 +73,7 @@ public class SslUtil {
 
     @SneakyThrows
     public static PrivateKey readPrivateKey(String fileContent, String passStr) {
-        char[] password = StringUtils.isEmpty(passStr) ? EMPTY_PASS : passStr.toCharArray();
+        char[] password = getPassword(passStr);
 
         PrivateKey privateKey = null;
         JcaPEMKeyConverter keyConverter = new JcaPEMKeyConverter();
@@ -100,6 +100,10 @@ public class SslUtil {
             }
         }
         return privateKey;
+    }
+
+    public static char[] getPassword(String passStr) {
+        return StringUtils.isEmpty(passStr) ? EMPTY_PASS : passStr.toCharArray();
     }
 
 }
