@@ -15,9 +15,14 @@
  */
 package org.thingsboard.server.dao.util;
 
+import com.drew.imaging.ImageMetadataReader;
+import com.drew.metadata.Directory;
+import com.drew.metadata.Metadata;
+import com.drew.metadata.Tag;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
 import org.apache.batik.bridge.BridgeContext;
 import org.apache.batik.bridge.DocumentLoader;
@@ -41,11 +46,13 @@ import java.io.ByteArrayOutputStream;
 import java.util.Map;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+@Slf4j
 public class ImageUtils {
 
     private static final Map<String, String> mediaTypeMappings = Map.of(
             "jpeg", "jpg",
-            "svg+xml", "svg"
+            "svg+xml", "svg",
+            "x-icon", "ico"
     );
 
     public static String mediaTypeToFileExtension(String mimeType) {
@@ -64,14 +71,48 @@ public class ImageUtils {
         if (mediaTypeToFileExtension(mediaType).equals("svg")) {
             return processSvgImage(data, mediaType, thumbnailMaxDimension);
         }
-
-        BufferedImage bufferedImage = ImageIO.read(new ByteArrayInputStream(data));
         ProcessedImage image = new ProcessedImage();
         image.setMediaType(mediaType);
-        image.setWidth(bufferedImage.getWidth());
-        image.setHeight(bufferedImage.getHeight());
         image.setData(data);
         image.setSize(data.length);
+
+        BufferedImage bufferedImage = null;
+        try {
+            bufferedImage = ImageIO.read(new ByteArrayInputStream(data));
+        } catch (Exception ignored) {
+        }
+        if (bufferedImage == null) { // means that media type is not supported by ImageIO; extracting width and height from metadata and leaving preview as original image
+            Metadata metadata = ImageMetadataReader.readMetadata(new ByteArrayInputStream(data));
+            for (Directory dir : metadata.getDirectories()) {
+                Tag widthTag = dir.getTags().stream()
+                        .filter(tag -> tag.getTagName().toLowerCase().contains("width"))
+                        .findFirst().orElse(null);
+                Tag heightTag = dir.getTags().stream()
+                        .filter(tag -> tag.getTagName().toLowerCase().contains("height"))
+                        .findFirst().orElse(null);
+                if (widthTag == null || heightTag == null) {
+                    continue;
+                }
+                int width = Integer.parseInt(dir.getObject(widthTag.getTagType()).toString());
+                int height = Integer.parseInt(dir.getObject(widthTag.getTagType()).toString());
+                image.setWidth(width);
+                image.setHeight(height);
+
+                ProcessedImage preview = new ProcessedImage();
+                preview.setWidth(image.getWidth());
+                preview.setHeight(image.getHeight());
+                preview.setMediaType(mediaType);
+                preview.setData(null);
+                preview.setSize(data.length);
+                image.setPreview(preview);
+                log.debug("Couldn't parse {} ({}) with ImageIO, got width {} and height {} from metadata", mediaType, dir.getName(), width, height);
+                return image;
+            }
+            throw new IllegalArgumentException("Media type " + mediaType + " not supported");
+        }
+
+        image.setWidth(bufferedImage.getWidth());
+        image.setHeight(bufferedImage.getHeight());
 
         ProcessedImage preview = new ProcessedImage();
         int[] thumbnailDimensions = getThumbnailDimensions(image.getWidth(), image.getHeight(), thumbnailMaxDimension);
@@ -101,18 +142,19 @@ public class ImageUtils {
     }
 
     public static ProcessedImage processSvgImage(byte[] data, String mediaType, int thumbnailMaxDimension) throws Exception {
-        SAXSVGDocumentFactory factory = new SAXSVGDocumentFactory(
-                XMLResourceDescriptor.getXMLParserClassName());
-        Document document = factory.createDocument(
-                null, new ByteArrayInputStream(data));
+        SAXSVGDocumentFactory factory = new SAXSVGDocumentFactory(XMLResourceDescriptor.getXMLParserClassName());
+        Document document = factory.createDocument(null, new ByteArrayInputStream(data));
         Integer width = null;
         Integer height = null;
         String strWidth = document.getDocumentElement().getAttribute("width");
         String strHeight = document.getDocumentElement().getAttribute("height");
         if (StringUtils.isNotEmpty(strWidth) && StringUtils.isNotEmpty(strHeight)) {
-            width = (int) Double.parseDouble(strWidth);
-            height = (int) Double.parseDouble(strHeight);;
-        } else {
+            try {
+                width = (int) Double.parseDouble(strWidth);
+                height = (int) Double.parseDouble(strHeight);
+            } catch (NumberFormatException ignored) {} // in case width and height are in %, mm, etc.
+        }
+        if (width == null || height == null) {
             String viewBox = document.getDocumentElement().getAttribute("viewBox");
             if (StringUtils.isNotEmpty(viewBox)) {
                 String[] viewBoxValues = viewBox.split(" ");
@@ -124,10 +166,10 @@ public class ImageUtils {
         }
         if (width == null) {
             UserAgent agent = new UserAgentAdapter();
-            DocumentLoader loader= new DocumentLoader(agent);
+            DocumentLoader loader = new DocumentLoader(agent);
             BridgeContext context = new BridgeContext(agent, loader);
             context.setDynamic(true);
-            GVTBuilder builder= new GVTBuilder();
+            GVTBuilder builder = new GVTBuilder();
             GraphicsNode root = builder.build(context, document);
             var bounds = root.getPrimitiveBounds();
             if (bounds != null) {
