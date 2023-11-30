@@ -19,9 +19,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.dao.device.DeviceConnectivityInfo;
 
-import java.util.Arrays;
-import java.util.List;
+import java.net.Inet6Address;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.UnknownHostException;
+import java.util.regex.Pattern;
 
 public class DeviceConnectivityUtil {
 
@@ -39,9 +44,11 @@ public class DeviceConnectivityUtil {
     public static final String JSON_EXAMPLE_PAYLOAD = "\"{temperature:25}\"";
     public static final String DOCKER_RUN = "docker run --rm -it ";
     public static final String GATEWAY_DOCKER_RUN = "docker run -it ";
+
+    public static final String NETWORK_HOST_PARAM = "--network=host ";
     public static final String MQTT_IMAGE = "thingsboard/mosquitto-clients ";
     public static final String COAP_IMAGE = "thingsboard/coap-clients ";
-    public static final List<String> LOCAL_HOSTS = Arrays.asList("localhost", "127.0.0.1");
+    private final static Pattern VALID_URL_PATTERN = Pattern.compile("^(https?)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]");
 
     public static String getHttpPublishCommand(String protocol, String host, String port, DeviceCredentials deviceCredentials) {
         return String.format("curl -v -X POST %s://%s%s/api/v1/%s/telemetry --header Content-Type:application/json --data " + JSON_EXAMPLE_PAYLOAD,
@@ -71,7 +78,7 @@ public class DeviceConnectivityUtil {
                         command.append(" -u \"").append(credentials.getUserName()).append("\"");
                     }
                     if (credentials.getPassword() != null) {
-                        command.append(" -P \"").append(credentials.getPassword()).append("\"");;
+                        command.append(" -P \"").append(credentials.getPassword()).append("\"");
                     }
                 } else {
                     return null;
@@ -90,17 +97,19 @@ public class DeviceConnectivityUtil {
             gatewayVolumePathPrefix = "%HOMEPATH%/tb-gateway";
         }
 
-        String gatewayContainerName = "tbGateway" + StringUtils.capitalize(host.replace(".", ""));
+        String gatewayContainerName = "tbGateway" + StringUtils.capitalize(host.replaceAll("[^A-Za-z0-9]", ""));
 
         StringBuilder command = new StringBuilder(GATEWAY_DOCKER_RUN);
-        command.append("-v {gatewayVolumePathPrefix}/logs:/thingsboard_gateway/logs".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
-        command.append(" -v {gatewayVolumePathPrefix}/extensions:/thingsboard_gateway/extensions".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
-        command.append(" -v {gatewayVolumePathPrefix}/config:/thingsboard_gateway/config".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
-        command.append(" --name ").append(gatewayContainerName);
-        command.append(" -e host=").append(host);
-        command.append(" -e port=").append(port);
+        command.append("-v {gatewayVolumePathPrefix}/logs:/thingsboard_gateway/logs ".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
+        command.append("-v {gatewayVolumePathPrefix}/extensions:/thingsboard_gateway/extensions ".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
+        command.append("-v {gatewayVolumePathPrefix}/config:/thingsboard_gateway/config ".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
+        command.append(isLocalhost(host) ? NETWORK_HOST_PARAM : "");
+        command.append("-p 5000:5000 ");
+        command.append("--name ").append(gatewayContainerName).append(" ");
+        command.append("-e host=").append(host).append(" ");
+        command.append("-e port=").append(port);
 
-        switch(deviceCredentials.getCredentialsType()) {
+        switch (deviceCredentials.getCredentialsType()) {
             case ACCESS_TOKEN:
                 command.append(" -e accessToken=").append(deviceCredentials.getCredentialsId());
                 break;
@@ -139,7 +148,7 @@ public class DeviceConnectivityUtil {
         }
 
         StringBuilder mqttDockerCommand = new StringBuilder();
-        mqttDockerCommand.append(DOCKER_RUN).append(LOCAL_HOSTS.contains(host) ? "--network=host ":"").append(MQTT_IMAGE);
+        mqttDockerCommand.append(DOCKER_RUN).append(isLocalhost(host) ? NETWORK_HOST_PARAM : "").append(MQTT_IMAGE);
 
         if (MQTTS.equals(protocol)) {
             mqttDockerCommand.append("/bin/sh -c \"")
@@ -171,6 +180,40 @@ public class DeviceConnectivityUtil {
 
     public static String getDockerCoapPublishCommand(String protocol, String host, String port, DeviceCredentials deviceCredentials) {
         String coapCommand = getCoapPublishCommand(protocol, host, port, deviceCredentials);
-        return coapCommand != null ? String.format("%s%s%s", DOCKER_RUN + (LOCAL_HOSTS.contains(host) ? "--network=host ":""), COAP_IMAGE, coapCommand) : null;
+        return coapCommand != null ? String.format("%s%s%s", DOCKER_RUN + (isLocalhost(host) ? NETWORK_HOST_PARAM : ""), COAP_IMAGE, coapCommand) : null;
+    }
+
+    public static String getHost(String baseUrl, DeviceConnectivityInfo properties, String protocol) throws URISyntaxException {
+        String initialHost = properties.getHost().isEmpty() ? baseUrl : properties.getHost();
+        InetAddress inetAddress;
+        String host = null;
+        if (VALID_URL_PATTERN.matcher(initialHost).matches()) {
+            host = new URI(initialHost).getHost();
+        }
+        if (host == null) {
+            host = initialHost;
+        }
+        try {
+            host = host.replaceAll("^https?://", "");
+            inetAddress = InetAddress.getByName(host);
+        } catch (UnknownHostException e) {
+            return host;
+        }
+        if (inetAddress instanceof Inet6Address) {
+            host = host.replaceAll("[\\[\\]]", "");
+            if (!MQTT.equals(protocol) && !MQTTS.equals(protocol)) {
+                host = "[" + host + "]";
+            }
+        }
+        return host;
+    }
+
+    private static boolean isLocalhost(String host) {
+        try {
+            InetAddress inetAddress = InetAddress.getByName(host);
+            return inetAddress.isLoopbackAddress();
+        } catch (UnknownHostException e) {
+            return false;
+        }
     }
 }

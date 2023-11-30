@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.monitoring.config;
+package org.thingsboard.server.common.data;
 
-import java.util.UUID;
+public interface FstStatsService {
 
-public interface MonitoringTarget {
+    void incrementEncode(Class<?> clazz);
 
-    UUID getDeviceId();
+    void incrementDecode(Class<?> clazz);
 
-    String getBaseUrl();
+    void recordEncodeTime(Class<?> clazz, long startTime);
 
-    boolean isCheckDomainIps();
+    void recordDecodeTime(Class<?> clazz, long startTime);
 
 }
