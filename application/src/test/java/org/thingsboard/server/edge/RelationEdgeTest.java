@@ -129,14 +129,24 @@ public class RelationEdgeTest extends AbstractEdgeTest {
         Device device = findDeviceByName("Edge Device 1");
         Asset asset = findAssetByName("Edge Asset 1");
 
-        EntityRelation relation = new EntityRelation();
-        relation.setType("test");
-        relation.setFrom(device.getId());
-        relation.setTo(asset.getId());
-        relation.setTypeGroup(RelationTypeGroup.COMMON);
+        EntityRelation deviceToAssetRelation = new EntityRelation();
+        deviceToAssetRelation.setType("test");
+        deviceToAssetRelation.setFrom(device.getId());
+        deviceToAssetRelation.setTo(asset.getId());
+        deviceToAssetRelation.setTypeGroup(RelationTypeGroup.COMMON);
 
         edgeImitator.expectMessageAmount(1);
-        doPost("/api/relation", relation);
+        doPost("/api/relation", deviceToAssetRelation);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        EntityRelation assetToTenantRelation = new EntityRelation();
+        assetToTenantRelation.setType("test");
+        assetToTenantRelation.setFrom(asset.getId());
+        assetToTenantRelation.setTo(tenantId);
+        assetToTenantRelation.setTypeGroup(RelationTypeGroup.COMMON);
+
+        edgeImitator.expectMessageAmount(1);
+        doPost("/api/relation", assetToTenantRelation);
         Assert.assertTrue(edgeImitator.waitForMessages());
 
         UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
@@ -159,16 +169,16 @@ public class RelationEdgeTest extends AbstractEdgeTest {
         Assert.assertTrue(latestMessage instanceof RelationUpdateMsg);
         RelationUpdateMsg relationUpdateMsg = (RelationUpdateMsg) latestMessage;
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, relationUpdateMsg.getMsgType());
-        Assert.assertEquals(relation.getType(), relationUpdateMsg.getType());
+        Assert.assertEquals(deviceToAssetRelation.getType(), relationUpdateMsg.getType());
 
         UUID fromUUID = new UUID(relationUpdateMsg.getFromIdMSB(), relationUpdateMsg.getFromIdLSB());
         EntityId fromEntityId = EntityIdFactory.getByTypeAndUuid(relationUpdateMsg.getFromEntityType(), fromUUID);
-        Assert.assertEquals(relation.getFrom(), fromEntityId);
+        Assert.assertEquals(deviceToAssetRelation.getFrom(), fromEntityId);
 
         UUID toUUID = new UUID(relationUpdateMsg.getToIdMSB(), relationUpdateMsg.getToIdLSB());
         EntityId toEntityId = EntityIdFactory.getByTypeAndUuid(relationUpdateMsg.getToEntityType(), toUUID);
-        Assert.assertEquals(relation.getTo(), toEntityId);
+        Assert.assertEquals(deviceToAssetRelation.getTo(), toEntityId);
 
-        Assert.assertEquals(relation.getTypeGroup().name(), relationUpdateMsg.getTypeGroup());
+        Assert.assertEquals(deviceToAssetRelation.getTypeGroup().name(), relationUpdateMsg.getTypeGroup());
     }
 }

@@ -13,17 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.monitoring.data;
+package org.thingsboard.server.common.msg.rule.engine;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.MsgType;
+import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
 
-@Data(staticConstructor = "of")
-public class Latency {
-    private final String key;
-    private final double value;
+@Data
+public class DeviceDeleteMsg implements ToDeviceActorNotificationMsg {
 
-    public String getFormattedValue() {
-        return String.format("%,.2f ms", value);
+    private static final long serialVersionUID = 4679029228395462172L;
+
+    private final TenantId tenantId;
+    private final DeviceId deviceId;
+
+    @Override
+    public MsgType getMsgType() {
+        return MsgType.DEVICE_DELETE_TO_DEVICE_ACTOR_MSG;
     }
-
 }
