@@ -55,7 +55,7 @@ import {
 } from '@app/shared/models/dashboard.models';
 import { WINDOW } from '@core/services/window.service';
 import { WindowMessage } from '@shared/models/window-message.model';
-import { deepClone, guid, isDefined, isDefinedAndNotNull, isNotEmptyStr } from '@app/core/utils';
+import { deepClone, guid, isDefined, isDefinedAndNotNull, isEqual, isNotEmptyStr } from '@app/core/utils';
 import {
   DashboardContext,
   DashboardPageInitData,
@@ -872,15 +872,21 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       $event.stopPropagation();
     }
     this.dialog.open<ManageDashboardStatesDialogComponent, ManageDashboardStatesDialogData,
-      {[id: string]: DashboardState }>(ManageDashboardStatesDialogComponent, {
+      {states: {[id: string]: DashboardState}; widgets: {[id: string]: Widget}}>(ManageDashboardStatesDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        states: deepClone(this.dashboard.configuration.states)
+        states: deepClone(this.dashboard.configuration.states),
+        widgets: deepClone(this.dashboard.configuration.widgets) as {[id: string]: Widget}
       }
-    }).afterClosed().subscribe((states) => {
-      if (states) {
-        this.updateStates(states);
+    }).afterClosed().subscribe((result) => {
+      if (result) {
+        if (!isEqual(result.widgets, this.dashboard.configuration.widgets)) {
+          this.dashboard.configuration.widgets = result.widgets;
+        }
+        if (result.states) {
+          this.updateStates(result.states);
+        }
       }
     });
   }
