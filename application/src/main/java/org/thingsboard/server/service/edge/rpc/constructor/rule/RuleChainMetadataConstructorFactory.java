@@ -25,8 +25,12 @@ public final class RuleChainMetadataConstructorFactory {
                 return new RuleChainMetadataConstructorV330();
             case V_3_3_3:
             case V_3_4_0:
-            default:
+            case V_3_6_0:
+            case V_3_6_1:
                 return new RuleChainMetadataConstructorV340();
+            case V_3_6_2:
+            default:
+                return new RuleChainMetadataConstructorV362();
         }
     }
 }
