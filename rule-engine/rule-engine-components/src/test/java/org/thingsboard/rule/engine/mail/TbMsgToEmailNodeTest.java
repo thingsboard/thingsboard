@@ -42,7 +42,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 public class TbMsgToEmailNodeTest {
@@ -115,7 +114,7 @@ public class TbMsgToEmailNodeTest {
         var originatorCaptor = ArgumentCaptor.forClass(EntityId.class);
         var metadataCaptor = ArgumentCaptor.forClass(TbMsgMetaData.class);
         var dataCaptor = ArgumentCaptor.forClass(String.class);
-        verify(ctxMock, times(1)).transformMsg(
+        verify(ctxMock).transformMsg(
                 msgCaptor.capture(),
                 typeCaptor.capture(),
                 originatorCaptor.capture(),

@@ -39,9 +39,9 @@ import java.util.concurrent.ExecutionException;
         name = "rename keys",
         version = 1,
         configClazz = TbRenameKeysNodeConfiguration.class,
-        nodeDescription = "Renames message or message metadata key names.",
-        nodeDetails = "Renames key names in the message or message metadata based on the provided key names mapping. " +
-                "If key to rename doesn't exists in the specified source(message or message metadata) it will be ignored.<br><br>" +
+        nodeDescription = "Renames message or message metadata keys.",
+        nodeDetails = "Renames keys in the message or message metadata according to the provided mapping. " +
+                "If key to rename doesn't exists in the specified source (message or message metadata) it will be ignored.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbTransformationNodeRenameKeysConfig",
@@ -75,11 +75,13 @@ public class TbRenameKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
             case METADATA:
                 Map<String, String> metaDataMap = metaDataCopy.getData();
                 for (Map.Entry<String, String> entry : renameKeysMapping.entrySet()) {
-                    String nameKey = entry.getKey();
-                    if (metaDataMap.containsKey(nameKey)) {
+                    String currentKeyName = entry.getKey();
+                    String newKeyName = entry.getValue();
+                    if (metaDataMap.containsKey(currentKeyName)) {
                         msgChanged = true;
-                        metaDataMap.put(entry.getValue(), metaDataMap.get(nameKey));
-                        metaDataMap.remove(nameKey);
+                        String value = metaDataMap.get(currentKeyName);
+                        metaDataMap.put(newKeyName, value);
+                        metaDataMap.remove(currentKeyName);
                     }
                 }
                 metaDataCopy = new TbMsgMetaData(metaDataMap);
@@ -89,11 +91,13 @@ public class TbRenameKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
                 if (dataNode.isObject()) {
                     ObjectNode msgData = (ObjectNode) dataNode;
                     for (Map.Entry<String, String> entry : renameKeysMapping.entrySet()) {
-                        String nameKey = entry.getKey();
-                        if (msgData.has(nameKey)) {
+                        String currentKeyName = entry.getKey();
+                        String newKeyName = entry.getValue();
+                        if (msgData.has(currentKeyName)) {
                             msgChanged = true;
-                            msgData.set(entry.getValue(), msgData.get(nameKey));
-                            msgData.remove(nameKey);
+                            JsonNode value = msgData.get(currentKeyName);
+                            msgData.set(newKeyName, value);
+                            msgData.remove(currentKeyName);
                         }
                     }
                     data = JacksonUtil.toString(msgData);
@@ -101,7 +105,6 @@ public class TbRenameKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
                 break;
             default:
                 log.debug("Unexpected RenameIn value: {}. Allowed values: {}", renameIn, TbMsgSource.values());
-                break;
         }
         ctx.tellSuccess(msgChanged ? TbMsg.transformMsg(msg, metaDataCopy, data) : msg);
     }

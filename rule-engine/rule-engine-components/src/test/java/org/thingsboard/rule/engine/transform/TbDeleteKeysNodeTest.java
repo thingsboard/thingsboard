@@ -20,6 +20,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -29,7 +32,6 @@ import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
-import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
@@ -38,15 +40,15 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.BDDMockito.willCallRealMethod;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 public class TbDeleteKeysNodeTest {
@@ -83,11 +85,11 @@ public class TbDeleteKeysNodeTest {
     }
 
     @Test
-    void givenMsgFromMetadata_whenOnMsg_thenVerifyOutput() throws Exception {
+    void givenDeleteFromMetadata_whenOnMsg_thenVerifyOutput() throws Exception {
         node.onMsg(ctx, getTbMsg(deviceId, TbMsg.EMPTY_JSON_OBJECT));
 
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());
+        verify(ctx).tellSuccess(newMsgCaptor.capture());
         verify(ctx, never()).tellFailure(any(), any());
 
         TbMsg newMsg = newMsgCaptor.getValue();
@@ -99,7 +101,7 @@ public class TbDeleteKeysNodeTest {
     }
 
     @Test
-    void givenMsgFromMsg_whenOnMsg_thenVerifyOutput() throws Exception {
+    void givenDeleteFromMsgConfig_whenOnMsg_thenVerifyOutput() throws Exception {
         config.setDeleteFrom(TbMsgSource.DATA);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
@@ -108,7 +110,7 @@ public class TbDeleteKeysNodeTest {
         node.onMsg(ctx, getTbMsg(deviceId, data));
 
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());
+        verify(ctx).tellSuccess(newMsgCaptor.capture());
         verify(ctx, never()).tellFailure(any(), any());
 
         TbMsg newMsg = newMsgCaptor.getValue();
@@ -129,7 +131,7 @@ public class TbDeleteKeysNodeTest {
         node.onMsg(ctx, getTbMsg(deviceId, data));
 
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());
+        verify(ctx).tellSuccess(newMsgCaptor.capture());
         verify(ctx, never()).tellFailure(any(), any());
 
         TbMsg newMsg = newMsgCaptor.getValue();
@@ -138,18 +140,28 @@ public class TbDeleteKeysNodeTest {
         assertThat(newMsg.getData()).isEqualTo(data);
     }
 
-    @Test
-    void givenOldConfig_whenUpgrade_thenShouldReturnTrueResultWithNewConfig() throws Exception {
+    private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyUpgradeResultAndConfig() {
+        return Stream.of(
+                Arguments.of(0, "{\"fromMetadata\":false,\"keys\":[\"temperature\"]}", true, "{\"deleteFrom\":\"DATA\",\"keys\":[\"temperature\"]}")
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void givenFromVersionAndConfig_whenUpgrade_thenVerifyUpgradeResultAndConfig(int givenVersion, String givenConfigStr,
+                                                                                boolean hasChanges, String expectedConfigStr) throws Exception {
         // GIVEN
-        var config = new TbDeleteKeysNodeConfiguration().defaultConfiguration();
-        var oldConfigJson = (ObjectNode) JacksonUtil.valueToTree(config);
-        oldConfigJson.remove("deleteFrom");
-        oldConfigJson.put("fromMetadata", "false");
+        willCallRealMethod().given(node).upgrade(anyInt(), any());
+        JsonNode givenConfig = JacksonUtil.toJsonNode(givenConfigStr);
+        JsonNode expectedConfig = JacksonUtil.toJsonNode(expectedConfigStr);
+
         // WHEN
-        TbPair<Boolean, JsonNode> upgrade = node.upgrade(0, oldConfigJson);
+        var upgradeResult = node.upgrade(givenVersion, givenConfig);
+
         // THEN
-        assertTrue(upgrade.getFirst());
-        assertEquals(config, JacksonUtil.treeToValue(upgrade.getSecond(), config.getClass()));
+        assertThat(upgradeResult.getFirst()).isEqualTo(hasChanges);
+        ObjectNode upgradedConfig = (ObjectNode) upgradeResult.getSecond();
+        assertThat(upgradedConfig).isEqualTo(expectedConfig);
     }
 
     private TbMsg getTbMsg(EntityId entityId, String data) {

@@ -22,9 +22,14 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.util.TbPair;
 
+import java.util.List;
+import java.util.regex.Pattern;
+
 public abstract class TbAbstractTransformNodeWithTbMsgSource implements TbNode {
 
     private static final String FROM_METADATA_PROPERTY = "fromMetadata";
+
+    protected List<Pattern> compiledKeyPatterns;
 
     protected abstract String getKeyToUpgradeFromVersionZero();
 

@@ -40,14 +40,7 @@ import java.util.Map;
         name = "to email",
         configClazz = TbMsgToEmailNodeConfiguration.class,
         nodeDescription = "Transforms message to email message",
-        nodeDetails = "Transforms message to email message. All email fields support templatization.<br><br>" +
-                "Additionally, supports adding inline base64 images to the mail body from message metadata " +
-                "by extracting them from <strong><i>images</i></strong> metadata key-value.<br>" +
-                "<strong><i>images</strong></i> key-value should represent a map of entries: <strong><i>cid --> encodedImage</i></strong>.<br>" +
-                "E.g., <strong><i>cid</i></strong> is a <strong><i>tb.example.png</i></strong> and<br>" +
-                "<strong><i>encodedImage</i></strong> is a <strong><i>data:image/png;base64,...</i></strong>, " +
-                "then you can use <i><strong>img</i></strong> HTML tag with src: <i><strong>cid:tb.example.png</i></strong>.<br><br>" +
-                "Set <code>SEND_EMAIL</code> output message type if transformation completed successfully.<br><br>"  +
+        nodeDetails = "Transforms message to email message. If transformation completed successfully output message type will be set to <code>SEND_EMAIL</code>.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbTransformationNodeToEmailConfig",
