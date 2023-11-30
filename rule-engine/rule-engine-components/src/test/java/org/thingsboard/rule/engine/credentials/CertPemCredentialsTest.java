@@ -39,7 +39,6 @@ import static org.thingsboard.rule.engine.credentials.CertPemCredentials.PRIVATE
 public class CertPemCredentialsTest {
 
     private static final String PASS = "test";
-    private static final String EMPTY_PASS = "";
     private static final String RSA = "RSA";
     private static final String EC = "EC";
 
@@ -82,10 +81,10 @@ public class CertPemCredentialsTest {
 
     private static Stream<Arguments> testLoadKeyStore() {
         return Stream.of(
-                Arguments.of("pem/rsa_cert.pem", "pem/rsa_key.pem", EMPTY_PASS, RSA),
+                Arguments.of("pem/rsa_cert.pem", "pem/rsa_key.pem", null, RSA),
                 Arguments.of("pem/rsa_encrypted_cert.pem", "pem/rsa_encrypted_key.pem", PASS, RSA),
                 Arguments.of("pem/rsa_encrypted_traditional_cert.pem", "pem/rsa_encrypted_traditional_key.pem", PASS, RSA),
-                Arguments.of("pem/ec_cert.pem", "pem/ec_key.pem", EMPTY_PASS, EC)
+                Arguments.of("pem/ec_cert.pem", "pem/ec_key.pem", null, EC)
         );
     }
 
@@ -99,7 +98,7 @@ public class CertPemCredentialsTest {
         certPemCredentials.setPassword(password);
         KeyStore keyStore = certPemCredentials.loadKeyStore();
         Assertions.assertNotNull(keyStore);
-        Key key = keyStore.getKey(PRIVATE_KEY_ALIAS, password.toCharArray());
+        Key key = keyStore.getKey(PRIVATE_KEY_ALIAS, SslUtil.getPassword(password));
         Assertions.assertNotNull(key);
         Assertions.assertEquals(algorithm, key.getAlgorithm());
 
