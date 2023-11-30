@@ -308,6 +308,7 @@ public class ProtoUtils {
                 .setRequestIdMSB(msg.getMsg().getId().getMostSignificantBits())
                 .setRequestIdLSB(msg.getMsg().getId().getLeastSignificantBits())
                 .setOneway(msg.getMsg().isOneway())
+                .setPersisted(msg.getMsg().isPersisted())
                 .build();
 
         return TransportProtos.ToDeviceRpcRequestActorMsgProto.newBuilder()

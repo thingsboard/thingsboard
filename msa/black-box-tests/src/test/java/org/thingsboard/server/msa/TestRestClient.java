@@ -44,12 +44,14 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.RpcId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -57,6 +59,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
@@ -300,6 +303,27 @@ public class TestRestClient {
                 .statusCode(HTTP_OK)
                 .extract()
                 .as(JsonNode.class);
+    }
+
+    public Rpc getPersistedRpc(RpcId rpcId) {
+        return given().spec(requestSpec)
+                .get("/api/rpc/persistent/{rpcId}", rpcId.toString())
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(Rpc.class);
+    }
+
+    public PageData<Rpc> getPersistedRpcByDevice(DeviceId deviceId, PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+        return given().spec(requestSpec).queryParams(params)
+                .get("/api/rpc/persistent/device/{deviceId}", deviceId.toString())
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(new TypeRef<>() {
+                });
     }
 
     public PageData<DeviceProfile> getDeviceProfiles(PageLink pageLink) {
