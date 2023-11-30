@@ -36,7 +36,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-// todo: check UI for copy key-value pairs
 @Slf4j
 @RuleNode(
         type = ComponentType.TRANSFORMATION,
