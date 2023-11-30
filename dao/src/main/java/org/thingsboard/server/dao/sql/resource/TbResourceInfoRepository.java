@@ -23,6 +23,7 @@ import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.TbResourceInfoEntity;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public interface TbResourceInfoRepository extends JpaRepository<TbResourceInfoEntity, UUID> {
@@ -57,10 +58,10 @@ public interface TbResourceInfoRepository extends JpaRepository<TbResourceInfoEn
     boolean existsByTenantIdAndResourceTypeAndResourceKey(UUID tenantId, String resourceType, String resourceKey);
 
     @Query(value = "SELECT r.resource_key FROM resource r WHERE r.tenant_id = :tenantId AND r.resource_type = :resourceType " +
-            "AND starts_with(r.resource_key, :resourceKeyStartsWith)", nativeQuery = true)
-    List<String> findKeysByTenantIdAndResourceTypeAndResourceKeyStartingWith(@Param("tenantId") UUID tenantId,
-                                                                             @Param("resourceType") String resourceType,
-                                                                             @Param("resourceKeyStartsWith") String resourceKeyStartsWith);
+            "AND starts_with(r.resource_key, :prefix)", nativeQuery = true)
+    Set<String> findKeysByTenantIdAndResourceTypeAndResourceKeyStartingWith(@Param("tenantId") UUID tenantId,
+                                                                            @Param("resourceType") String resourceType,
+                                                                            @Param("prefix") String prefix);
 
     List<TbResourceInfoEntity> findByTenantIdAndEtagAndResourceKeyStartingWith(UUID tenantId, String etag, String query);
 

@@ -46,8 +46,6 @@ public interface WidgetsBundleService extends EntityDaoService {
 
     List<WidgetsBundle> findAllTenantWidgetsBundlesByTenantId(TenantId tenantId);
 
-    PageData<WidgetsBundle> findAllWidgetsBundles(PageLink pageLink);
-
     void deleteWidgetsBundlesByTenantId(TenantId tenantId);
 
 }

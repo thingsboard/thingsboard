@@ -44,10 +44,8 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.service.validator.ResourceDataValidator;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static org.thingsboard.server.dao.device.DeviceServiceImpl.INCORRECT_TENANT_ID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -197,13 +195,6 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         log.trace("Executing findTenantResourcesByResourceTypeAndPageLink [{}][{}][{}]", tenantId, resourceType, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         return resourceDao.findResourcesByTenantIdAndResourceType(tenantId, resourceType, pageLink);
-    }
-
-    @Override
-    public Set<String> findResourceKeysByTenantIdResourceTypeAndKeyPrefix(TenantId tenantId, ResourceType resourceType, String key) {
-        log.trace("Executing findResourceKeysByTenantIdAndPrefix [{}][{}]", tenantId, key);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        return resourceDao.findResourceKeysByTenantIdResourceTypeAndKeyPrefix(tenantId, resourceType, key);
     }
 
     @Override

@@ -15,226 +15,141 @@
  */
 package org.thingsboard.server.service.install.update;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
-import org.thingsboard.server.common.data.ResourceType;
-import org.thingsboard.server.common.data.TbResource;
-import org.thingsboard.server.common.data.TbResourceInfo;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.WidgetTypeId;
+import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.dao.asset.AssetProfileDao;
+import org.thingsboard.server.dao.dashboard.DashboardDao;
+import org.thingsboard.server.dao.device.DeviceProfileDao;
 import org.thingsboard.server.dao.resource.ImageService;
-import org.thingsboard.server.dao.util.ImageUtils;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import org.thingsboard.server.dao.widget.WidgetTypeDao;
+import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 
 @Component
-@Slf4j
 @RequiredArgsConstructor
+@Slf4j
 public class ImagesUpdater {
-
     private final ImageService imageService;
+    private final WidgetsBundleDao widgetsBundleDao;
+    private final WidgetTypeDao widgetTypeDao;
+    private final DashboardDao dashboardDao;
+    private final DeviceProfileDao deviceProfileDao;
+    private final AssetProfileDao assetProfileDao;
 
-    private static final String IMAGE_NAME_SUFFIX = " - image";
-    private static final String BACKGROUND_IMAGE_NAME_SUFFIX = " - background image";
-    private static final String BACKGROUND_IMAGE_KEY_SUFFIX = "#background_image";
-    private static final String MAP_IMAGE_NAME_SUFFIX = " - map image";
-    private static final String MAP_IMAGE_KEY_SUFFIX = "#map_image";
-    private static final String MARKER_IMAGE_NAME_SUFFIX = " - marker image ";
-    private static final String MARKER_IMAGE_KEY_SUFFIX = "#marker_image_";
-
-    public boolean updateDashboard(Dashboard dashboard) {
-        String imageKeyPrefix = "dashboard_" + dashboard.getUuidId();
-        String image = dashboard.getImage();
-        ImageSaveResult result = saveImage(dashboard.getTenantId(), dashboard.getTitle() + IMAGE_NAME_SUFFIX,
-                imageKeyPrefix + ".image", image, null);
-        dashboard.setImage(result.getLink());
-        boolean updated = result.isUpdated();
-
-        for (ObjectNode widgetConfig : dashboard.getWidgetsConfig()) {
-            String fqn;
-            if (widgetConfig.has("typeFullFqn")) {
-                fqn = StringUtils.substringAfter(widgetConfig.get("typeFullFqn").asText(), "."); // removing prefix ('system' or 'tenant')
-            } else {
-                fqn = widgetConfig.get("bundleAlias").asText() + "." + widgetConfig.get("typeAlias").asText();
-            }
-            String widgetName = widgetConfig.get("config").get("title").asText();
-            updated |= updateWidgetConfig(dashboard.getTenantId(), widgetConfig.get("config"),
-                    dashboard.getTitle() + " - " + widgetName + " widget",
-                    imageKeyPrefix + "." + fqn, fqn);
-        }
-        return updated;
-    }
-
-    public boolean updateWidgetsBundle(WidgetsBundle widgetsBundle) {
-        String bundleName = widgetsBundle.getTitle();
-        String bundleAlias = widgetsBundle.getAlias();
-
-        String image = widgetsBundle.getImage();
-        ImageSaveResult result = saveImage(widgetsBundle.getTenantId(), bundleName + IMAGE_NAME_SUFFIX, bundleAlias, image, bundleAlias);
-        String imageLink = result.getLink();
-        widgetsBundle.setImage(imageLink);
-
-        return result.isUpdated();
-    }
-
-    public boolean updateWidget(WidgetTypeDetails widgetType) {
-        String widgetName = widgetType.getName();
-        String widgetFqn = widgetType.getFqn();
-        boolean updated;
-
-        String previewImage = widgetType.getImage();
-        ImageSaveResult result = saveImage(widgetType.getTenantId(), widgetName + IMAGE_NAME_SUFFIX, widgetFqn, previewImage, widgetFqn);
-        updated = result.isUpdated();
-        widgetType.setImage(result.getLink());
-
-        JsonNode descriptor = widgetType.getDescriptor();
-        if (!descriptor.isObject()) {
-            return updated;
-        }
-        JsonNode defaultConfig = JacksonUtil.toJsonNode(descriptor.get("defaultConfig").asText());
-        updated |= updateWidgetConfig(widgetType.getTenantId(), defaultConfig, widgetName, widgetFqn, widgetFqn);
-        ((ObjectNode) descriptor).put("defaultConfig", defaultConfig.toString());
-        return updated;
-    }
-
-    private boolean updateWidgetConfig(TenantId tenantId, JsonNode widgetConfigJson, String imageNamePrefix, String imageKeyPrefix, String widgetFqn) {
-        boolean updated = false;
-        ObjectNode widgetSettings = (ObjectNode) widgetConfigJson.get("settings");
-        ArrayNode markerImages = (ArrayNode) widgetSettings.get("markerImages");
-        if (markerImages != null && !markerImages.isEmpty()) {
-            for (int i = 0; i < markerImages.size(); i++) {
-                String imageName = imageNamePrefix + MARKER_IMAGE_NAME_SUFFIX + (i + 1);
-                String imageKey = imageKeyPrefix + MARKER_IMAGE_KEY_SUFFIX + (i + 1);
-                ImageSaveResult result = saveImage(tenantId, imageName, imageKey, markerImages.get(i).asText(), widgetFqn);
-                markerImages.set(i, result.getLink());
-                updated |= result.isUpdated();
-            }
-        }
-
-        String mapImage = getText(widgetSettings, "mapImageUrl");
-        if (mapImage != null) {
-            String imageName = imageNamePrefix + MAP_IMAGE_NAME_SUFFIX;
-            String imageKey = imageKeyPrefix + MAP_IMAGE_KEY_SUFFIX;
-            ImageSaveResult result = saveImage(tenantId, imageName, imageKey, mapImage, widgetFqn);
-            widgetSettings.put("mapImageUrl", result.getLink());
-            updated |= result.isUpdated();
-        }
-
-        String backgroundImage = getText(widgetSettings, "backgroundImageUrl");
-        if (backgroundImage != null) {
-            String imageName = imageNamePrefix + BACKGROUND_IMAGE_NAME_SUFFIX;
-            String imageKey = imageKeyPrefix + BACKGROUND_IMAGE_KEY_SUFFIX;
-            ImageSaveResult result = saveImage(tenantId, imageName, imageKey, backgroundImage, widgetFqn);
-            widgetSettings.put("backgroundImageUrl", result.getLink());
-            updated |= result.isUpdated();
-        }
-
-        JsonNode backgroundConfigNode = widgetSettings.get("background");
-        if (backgroundConfigNode != null && backgroundConfigNode.isObject()) {
-            ObjectNode backgroundConfig = (ObjectNode) backgroundConfigNode;
-            if ("image".equals(getText(backgroundConfig, "type"))) {
-                String imageBase64 = getText(backgroundConfig, "imageBase64");
-                if (imageBase64 != null) {
-                    String imageName = imageNamePrefix + BACKGROUND_IMAGE_NAME_SUFFIX;
-                    String imageKey = imageKeyPrefix + BACKGROUND_IMAGE_KEY_SUFFIX;
-                    ImageSaveResult result = saveImage(tenantId, imageName, imageKey, imageBase64, widgetFqn);
-                    backgroundConfig.set("imageBase64", null);
-                    backgroundConfig.put("imageUrl", result.getLink());
-                    backgroundConfig.put("type", "imageUrl");
-                    updated |= result.isUpdated();
+    public void updateWidgetsBundlesImages() {
+        log.info("Updating widgets bundles images...");
+        var widgetsBundles = new PageDataIterable<>(widgetsBundleDao::findAllWidgetsBundles, 128);
+        int updatedCount = 0;
+        int totalCount = 0;
+        for (WidgetsBundle widgetsBundle : widgetsBundles) {
+            totalCount++;
+            try {
+                boolean updated = imageService.replaceBase64WithImageUrl(widgetsBundle, "bundle");
+                if (updated) {
+                    widgetsBundleDao.save(widgetsBundle.getTenantId(), widgetsBundle);
+                    log.debug("[{}][{}][{}] Updated widgets bundle images", widgetsBundle.getTenantId(), widgetsBundle.getId(), widgetsBundle.getTitle());
+                    updatedCount++;
                 }
+            } catch (Exception e) {
+                log.error("[{}][{}][{}] Failed to update widgets bundle images", widgetsBundle.getTenantId(), widgetsBundle.getId(), widgetsBundle.getTitle(), e);
             }
         }
-        return updated;
+        log.info("Updated {} widgets bundles out of {}", updatedCount, totalCount);
     }
 
-
-    private ImageSaveResult saveImage(TenantId tenantId, String name, String key, String data,
-                                      String existingImageQuery) {
-        if (data == null) {
-            return new ImageSaveResult(null, false);
-        }
-        String base64Data = StringUtils.substringAfter(data, "base64,");
-        if (base64Data.isEmpty()) {
-            return new ImageSaveResult(data, false);
-        }
-
-        String imageMediaType = StringUtils.substringBetween(data, "data:", ";base64");
-        String extension = ImageUtils.mediaTypeToFileExtension(imageMediaType);
-        key += "." + extension;
-
-        byte[] imageData = Base64.getDecoder().decode(base64Data);
-        String imageLink = saveImage(tenantId, name, key, imageData, imageMediaType, existingImageQuery);
-        return new ImageSaveResult(imageLink, !imageLink.equals(data));
-    }
-
-    @SneakyThrows
-    private String saveImage(TenantId tenantId, String name, String key, byte[] imageData, String mediaType,
-                             String existingImageQuery) {
-        TbResourceInfo imageInfo = imageService.getImageInfoByTenantIdAndKey(tenantId, key);
-        if (imageInfo == null && !tenantId.isSysTenantId() && existingImageQuery != null) {
-            List<TbResourceInfo> similarImages = imageService.findSimilarImagesByTenantIdAndKeyStartingWith(TenantId.SYS_TENANT_ID, imageData, existingImageQuery);
-            if (similarImages.isEmpty()) {
-                similarImages = imageService.findSimilarImagesByTenantIdAndKeyStartingWith(tenantId, imageData, existingImageQuery);
-            }
-            if (!similarImages.isEmpty()) {
-                imageInfo = similarImages.get(0);
-                if (similarImages.size() > 1) {
-                    log.debug("Found more than one image resources for key {}: {}", existingImageQuery, similarImages);
+    public void updateWidgetTypesImages() {
+        log.info("Updating widget types images...");
+        var widgetTypes = new PageDataIterable<>(widgetTypeDao::findAllWidgetTypesIds, 1024);
+        int updatedCount = 0;
+        int totalCount = 0;
+        for (WidgetTypeId widgetTypeId : widgetTypes) {
+            totalCount++;
+            WidgetTypeDetails widgetTypeDetails = widgetTypeDao.findById(TenantId.SYS_TENANT_ID, widgetTypeId.getId());
+            try {
+                boolean updated = imageService.replaceBase64WithImageUrl(widgetTypeDetails);
+                if (updated) {
+                    widgetTypeDao.save(widgetTypeDetails.getTenantId(), widgetTypeDetails);
+                    log.debug("[{}][{}][{}] Updated widget type images", widgetTypeDetails.getTenantId(), widgetTypeDetails.getId(), widgetTypeDetails.getName());
+                    updatedCount++;
                 }
-                String link = imageInfo.getLink();
-                log.info("[{}] Using image {} for {}", tenantId, link, key);
-                return link;
+            } catch (Exception e) {
+                log.error("[{}][{}][{}] Failed to update widget type images", widgetTypeDetails.getTenantId(), widgetTypeDetails.getId(), widgetTypeDetails.getName(), e);
             }
         }
-        TbResource image;
-        if (imageInfo == null) {
-            image = new TbResource();
-            image.setTenantId(tenantId);
-            image.setResourceType(ResourceType.IMAGE);
-            image.setResourceKey(key);
-        } else if (tenantId.isSysTenantId()) {
-            image = new TbResource(imageInfo);
-        } else {
-            return imageInfo.getLink();
+        log.info("Updated {} widget types out of {}", updatedCount, totalCount);
+    }
+
+    public void updateDashboardsImages() {
+        log.info("Updating dashboards images...");
+        var dashboards = new PageDataIterable<>(dashboardDao::findAllIds, 1024);
+        int updatedCount = 0;
+        int totalCount = 0;
+        for (DashboardId dashboardId : dashboards) {
+            totalCount++;
+            Dashboard dashboard = dashboardDao.findById(TenantId.SYS_TENANT_ID, dashboardId.getId());
+            try {
+                boolean updated = imageService.replaceBase64WithImageUrl(dashboard);
+                if (updated) {
+                    dashboardDao.save(dashboard.getTenantId(), dashboard);
+                    log.info("[{}][{}][{}] Updated dashboard images", dashboard.getTenantId(), dashboardId, dashboard.getTitle());
+                    updatedCount++;
+                }
+            } catch (Exception e) {
+                log.error("[{}][{}][{}] Failed to update dashboard images", dashboard.getTenantId(), dashboardId, dashboard.getTitle(), e);
+            }
         }
-        image.setTitle(name);
-        image.setFileName(key);
-        image.setDescriptor(JacksonUtil.newObjectNode()
-                .put("mediaType", mediaType));
-        image.setData(imageData);
-
-        TbResourceInfo savedImage = imageService.saveImage(image);
-        log.info("[{}] {} image '{}' ({})", tenantId, imageInfo == null ? "Created" : "Updated",
-                image.getTitle(), image.getResourceKey());
-        return savedImage.getLink();
+        log.info("Updated {} dashboards out of {}", updatedCount, totalCount);
     }
 
-    private String getText(JsonNode jsonNode, String field) {
-        return Optional.ofNullable(jsonNode.get(field))
-                .filter(JsonNode::isTextual)
-                .map(JsonNode::asText).orElse(null);
+    public void updateDeviceProfilesImages() {
+        log.info("Updating device profiles images...");
+        var deviceProfiles = new PageDataIterable<>(deviceProfileDao::findAll, 256);
+        int updatedCount = 0;
+        int totalCount = 0;
+        for (DeviceProfile deviceProfile : deviceProfiles) {
+            totalCount++;
+            try {
+                boolean updated = imageService.replaceBase64WithImageUrl(deviceProfile, "device profile");
+                if (updated) {
+                    deviceProfileDao.save(deviceProfile.getTenantId(), deviceProfile);
+                    log.debug("[{}][{}][{}] Updated device profile images", deviceProfile.getTenantId(), deviceProfile.getId(), deviceProfile.getName());
+                    updatedCount++;
+                }
+            } catch (Exception e) {
+                log.error("[{}][{}][{}] Failed to update device profile images", deviceProfile.getTenantId(), deviceProfile.getId(), deviceProfile.getName(), e);
+            }
+        }
+        log.info("Updated {} device profiles out of {}", updatedCount, totalCount);
     }
 
-    @Data
-    public static class ImageSaveResult {
-        private final String link;
-        private final boolean updated;
+    public void updateAssetProfilesImages() {
+        log.info("Updating asset profiles images...");
+        var assetProfiles = new PageDataIterable<>(assetProfileDao::findAll, 256);
+        int updatedCount = 0;
+        int totalCount = 0;
+        for (AssetProfile assetProfile : assetProfiles) {
+            totalCount++;
+            try {
+                boolean updated = imageService.replaceBase64WithImageUrl(assetProfile, "asset profile");
+                if (updated) {
+                    assetProfileDao.save(assetProfile.getTenantId(), assetProfile);
+                    log.debug("[{}][{}][{}] Updated asset profile images", assetProfile.getTenantId(), assetProfile.getId(), assetProfile.getName());
+                    updatedCount++;
+                }
+            } catch (Exception e) {
+                log.error("[{}][{}][{}] Failed to update asset profile images", assetProfile.getTenantId(), assetProfile.getId(), assetProfile.getName(), e);
+            }
+        }
+        log.info("Updated {} asset profiles out of {}", updatedCount, totalCount);
     }
 
 }

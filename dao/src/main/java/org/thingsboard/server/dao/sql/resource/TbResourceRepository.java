@@ -26,7 +26,7 @@ import org.thingsboard.server.dao.model.sql.TbResourceEntity;
 import java.util.List;
 import java.util.UUID;
 
-public interface TbResourceRepository extends JpaRepository<TbResourceEntity, UUID> , ExportableEntityRepository<TbResourceEntity> {
+public interface TbResourceRepository extends JpaRepository<TbResourceEntity, UUID>, ExportableEntityRepository<TbResourceEntity> {
 
     TbResourceEntity findByTenantIdAndResourceTypeAndResourceKey(UUID tenantId, String resourceType, String resourceKey);
 
@@ -94,8 +94,4 @@ public interface TbResourceRepository extends JpaRepository<TbResourceEntity, UU
     @Query("SELECT id FROM TbResourceInfoEntity WHERE tenantId = :tenantId")
     Page<UUID> findIdsByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
 
-    @Query("SELECT resourceKey FROM TbResourceInfoEntity WHERE tenantId = :tenantId AND resourceType = :resourceType AND resourceKey LIKE :resourceKeyPrefix ")
-    List<String> findResourceKeys(@Param("tenantId")UUID tenantId,
-                                  @Param("resourceType") String resourceType,
-                                  @Param("resourceKeyPrefix") String resourceKeyPrefix);
 }

@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.device;
 
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
-import org.thingsboard.server.common.data.asset.AssetProfileInfo;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -47,4 +46,7 @@ public interface DeviceProfileDao extends Dao<DeviceProfile>, ExportableEntityDa
     DeviceProfile findByProvisionDeviceKey(String provisionDeviceKey);
 
     DeviceProfile findByName(TenantId tenantId, String profileName);
+
+    PageData<DeviceProfile> findAll(PageLink pageLink);
+
 }

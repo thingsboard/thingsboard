@@ -112,6 +112,8 @@ public class ThingsboardInstallService {
                 } else if ("3.0.1-cassandra".equals(upgradeFromVersion)) {
                     log.info("Migrating ThingsBoard latest timeseries data from cassandra to SQL database ...");
                     latestMigrateService.migrate();
+                } else if (upgradeFromVersion.equals("3.6.2-images")) {
+                    installScripts.updateImages();
                 } else {
                     switch (upgradeFromVersion) {
                         case "1.2.3": //NOSONAR, Need to execute gradual upgrade starting from upgradeFromVersion
@@ -279,7 +281,6 @@ public class ThingsboardInstallService {
                     log.info("Updating system data...");
                     dataUpdateService.upgradeRuleNodes();
                     systemDataLoaderService.loadSystemWidgets();
-//                    installScripts.migrateTenantImages();
                     installScripts.loadSystemLwm2mResources();
                 }
                 log.info("Upgrade finished successfully!");

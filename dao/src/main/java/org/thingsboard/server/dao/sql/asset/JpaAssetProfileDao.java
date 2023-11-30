@@ -33,7 +33,6 @@ import org.thingsboard.server.dao.model.sql.AssetProfileEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -97,6 +96,11 @@ public class JpaAssetProfileDao extends JpaAbstractDao<AssetProfileEntity, Asset
     @Override
     public AssetProfile findByName(TenantId tenantId, String profileName) {
         return DaoUtil.getData(assetProfileRepository.findByTenantIdAndName(tenantId.getId(), profileName));
+    }
+
+    @Override
+    public PageData<AssetProfile> findAll(PageLink pageLink) {
+        return DaoUtil.toPageData(assetProfileRepository.findAll(DaoUtil.toPageable(pageLink)));
     }
 
     @Override

@@ -31,9 +31,7 @@ import org.thingsboard.server.dao.resource.TbResourceDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -125,11 +123,6 @@ public class JpaTbResourceDao extends JpaAbstractDao<TbResourceEntity, TbResourc
     public PageData<TbResourceId> findIdsByTenantId(UUID tenantId, PageLink pageLink) {
         return DaoUtil.pageToPageData(resourceRepository.findIdsByTenantId(tenantId, DaoUtil.toPageable(pageLink))
                 .map(TbResourceId::new));
-    }
-
-    @Override
-    public Set<String> findResourceKeysByTenantIdResourceTypeAndKeyPrefix(TenantId tenantId, ResourceType resourceType, String keyPrefix) {
-        return new HashSet<>(resourceRepository.findResourceKeys(tenantId.getId(), resourceType.name(), keyPrefix + "%"));
     }
 
     @Override

@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.sql.resource;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.ResourceType;
@@ -97,8 +96,8 @@ public class JpaTbResourceInfoDao extends JpaAbstractDao<TbResourceInfoEntity, T
     }
 
     @Override
-    public List<String> findKeysByTenantIdAndResourceTypeAndResourceKeyStartingWith(TenantId tenantId, ResourceType resourceType, String resourceKeyQuery) {
-        return resourceInfoRepository.findKeysByTenantIdAndResourceTypeAndResourceKeyStartingWith(tenantId.getId(), resourceType.name(), resourceKeyQuery);
+    public Set<String> findKeysByTenantIdAndResourceTypeAndResourceKeyPrefix(TenantId tenantId, ResourceType resourceType, String prefix) {
+        return resourceInfoRepository.findKeysByTenantIdAndResourceTypeAndResourceKeyStartingWith(tenantId.getId(), resourceType.name(), prefix);
     }
 
     @Override

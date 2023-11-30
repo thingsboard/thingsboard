@@ -145,7 +145,7 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
         }
         AssetProfile savedAssetProfile;
         try {
-            imageService.replaceBase64WithImageUrl(assetProfile, assetProfile.getName(), "asset profile");
+            imageService.replaceBase64WithImageUrl(assetProfile, "asset profile");
             savedAssetProfile = assetProfileDao.saveAndFlush(assetProfile.getTenantId(), assetProfile);
             publishEvictEvent(new AssetProfileEvictEvent(savedAssetProfile.getTenantId(), savedAssetProfile.getName(),
                     oldAssetProfile != null ? oldAssetProfile.getName() : null, savedAssetProfile.getId(), savedAssetProfile.isDefault()));

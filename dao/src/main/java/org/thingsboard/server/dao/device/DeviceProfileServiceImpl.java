@@ -182,7 +182,7 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
         }
         DeviceProfile savedDeviceProfile;
         try {
-            imageService.replaceBase64WithImageUrl(deviceProfile, deviceProfile.getName(), "device profile");
+            imageService.replaceBase64WithImageUrl(deviceProfile, "device profile");
             savedDeviceProfile = deviceProfileDao.saveAndFlush(deviceProfile.getTenantId(), deviceProfile);
             publishEvictEvent(new DeviceProfileEvictEvent(savedDeviceProfile.getTenantId(), savedDeviceProfile.getName(),
                     oldDeviceProfile != null ? oldDeviceProfile.getName() : null, savedDeviceProfile.getId(), savedDeviceProfile.isDefault(),
