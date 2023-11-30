@@ -109,9 +109,9 @@
                       </button>
                       <button mat-icon-button [disabled]="isLoading$ | async"
                               type="button"
-                              matTooltip="{{ 'filter.duplicate-filter-action' | translate }}"
+                              matTooltip="{{ 'dashboard.duplicate-state-action' | translate }}"
                               matTooltipPosition="above"
-                              (click)="duplicateFilter($event, state)">
+                              (click)="duplicateState($event, state)">
                         <mat-icon>content_copy</mat-icon>
                       </button>
                       <button [fxShow]="!state.root" mat-icon-button [disabled]="isLoading$ | async"

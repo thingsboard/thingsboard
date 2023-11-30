@@ -1188,7 +1188,8 @@
         "assign-dashboard-to-edge": "Assign Dashboard(s) To Edge",
         "assign-dashboard-to-edge-text": "Please select the dashboards to assign to the edge",
         "non-existent-dashboard-state-error": "Dashboard state with id \"{{ stateId }}\" is not found",
-        "edit-mode": "Edit mode"
+        "edit-mode": "Edit mode",
+        "duplicate-state-action": "Duplicate state"
     },
     "datakey": {
         "settings": "Settings",

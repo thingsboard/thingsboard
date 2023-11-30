@@ -245,15 +245,15 @@ export class ManageDashboardStatesDialogComponent
     this.onStatesUpdated();
   }
 
-  duplicateFilter($event: Event, state: DashboardStateInfo) {
+  duplicateState($event: Event, state: DashboardStateInfo) {
     const originalState = state;
-    const newFilterName = this.getNextDuplicatedName(state.name);
-    if (newFilterName) {
+    const newStateName = this.getNextDuplicatedName(state.name);
+    if (newStateName) {
       const duplicatedStates = deepClone(originalState);
       const duplicatedWidgets = deepClone(this.widgets);
       const widgets = {};
-      duplicatedStates.id = newFilterName.toLowerCase().replace(/\W/g, '_');
-      duplicatedStates.name = newFilterName;
+      duplicatedStates.id = newStateName.toLowerCase().replace(/\W/g, '_');
+      duplicatedStates.name = newStateName;
       duplicatedStates.root = false;
       this.stateNames.add(duplicatedStates.name);
 
