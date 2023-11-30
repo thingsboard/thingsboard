@@ -44,12 +44,9 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.BDDMockito.willCallRealMethod;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 public class TbCopyKeysNodeTest {
@@ -90,7 +87,7 @@ public class TbCopyKeysNodeTest {
         node.onMsg(ctx, getTbMsg(deviceId, TbMsg.EMPTY_JSON_OBJECT));
 
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());
+        verify(ctx).tellSuccess(newMsgCaptor.capture());
         verify(ctx, never()).tellFailure(any(), any());
 
         TbMsg newMsg = newMsgCaptor.getValue();
@@ -113,7 +110,7 @@ public class TbCopyKeysNodeTest {
         node.onMsg(ctx, getTbMsg(deviceId, data));
 
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());
+        verify(ctx).tellSuccess(newMsgCaptor.capture());
         verify(ctx, never()).tellFailure(any(), any());
 
         TbMsg newMsg = newMsgCaptor.getValue();
@@ -140,7 +137,7 @@ public class TbCopyKeysNodeTest {
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());
+        verify(ctx).tellSuccess(newMsgCaptor.capture());
         verify(ctx, never()).tellFailure(any(), any());
 
         TbMsg newMsg = newMsgCaptor.getValue();
@@ -155,7 +152,7 @@ public class TbCopyKeysNodeTest {
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());
+        verify(ctx).tellSuccess(newMsgCaptor.capture());
         verify(ctx, never()).tellFailure(any(), any());
 
         TbMsg newMsg = newMsgCaptor.getValue();
@@ -166,7 +163,8 @@ public class TbCopyKeysNodeTest {
 
     private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyUpgradeResultAndConfig() {
         return Stream.of(
-                Arguments.of(0, "{\"fromMetadata\":false,\"keys\":[\"temperature\"]}", true, "{\"copyFrom\":\"DATA\",\"keys\":[\"temperature\"]}")
+                Arguments.of(0, "{\"fromMetadata\":false,\"keys\":[\"temperature\"]}", true, "{\"copyFrom\":\"DATA\",\"keys\":[\"temperature\"]}"),
+                Arguments.of(0, "{\"fromMetadata\":true,\"keys\":[\"temperature\"]}", true, "{\"copyFrom\":\"METADATA\",\"keys\":[\"temperature\"]}")
         );
     }
 
@@ -175,7 +173,6 @@ public class TbCopyKeysNodeTest {
     void givenFromVersionAndConfig_whenUpgrade_thenVerifyUpgradeResultAndConfig(int givenVersion, String givenConfigStr,
                                                                                 boolean hasChanges, String expectedConfigStr) throws Exception {
         // GIVEN
-        willCallRealMethod().given(node).upgrade(anyInt(), any());
         JsonNode givenConfig = JacksonUtil.toJsonNode(givenConfigStr);
         JsonNode expectedConfig = JacksonUtil.toJsonNode(expectedConfigStr);
 

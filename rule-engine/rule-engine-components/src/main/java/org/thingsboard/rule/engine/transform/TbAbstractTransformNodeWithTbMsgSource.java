@@ -29,8 +29,6 @@ public abstract class TbAbstractTransformNodeWithTbMsgSource implements TbNode {
 
     private static final String FROM_METADATA_PROPERTY = "fromMetadata";
 
-    protected List<Pattern> compiledKeyPatterns;
-
     protected abstract String getKeyToUpgradeFromVersionZero();
 
     @Override

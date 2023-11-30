@@ -31,6 +31,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -42,7 +43,7 @@ import java.util.stream.Collectors;
         version = 1,
         configClazz = TbDeleteKeysNodeConfiguration.class,
         nodeDescription = "Deletes key-value pairs from message or message metadata.",
-        nodeDetails = "Deletes key-value pairs from the message body or metadata according to the configured " +
+        nodeDetails = "Deletes key-value pairs from the message or message metadata according to the configured " +
                 "keys and/or regular expressions.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
@@ -53,6 +54,7 @@ public class TbDeleteKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
 
     private TbDeleteKeysNodeConfiguration config;
     private TbMsgSource deleteFrom;
+    private List<Pattern> compiledKeyPatterns;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {

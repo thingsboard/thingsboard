@@ -30,6 +30,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
@@ -43,7 +44,7 @@ import java.util.stream.Collectors;
         version = 1,
         configClazz = TbCopyKeysNodeConfiguration.class,
         nodeDescription = "Copies key-value pairs from message to message metadata or vice-versa.",
-        nodeDetails = "Copies key-value pairs from the message body to metadata, or vice-versa, according to the configured direction and keys. " +
+        nodeDetails = "Copies key-value pairs from the message to message metadata, or vice-versa, according to the configured direction and keys. " +
                 "Regular expressions can be used to define which keys-value pairs to copy. Any configured key not found in the source will be ignored.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
@@ -54,6 +55,7 @@ public class TbCopyKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
 
     private TbCopyKeysNodeConfiguration config;
     private TbMsgSource copyFrom;
+    private List<Pattern> compiledKeyPatterns;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {

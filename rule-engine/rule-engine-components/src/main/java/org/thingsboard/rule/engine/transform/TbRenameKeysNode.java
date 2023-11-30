@@ -41,7 +41,7 @@ import java.util.concurrent.ExecutionException;
         configClazz = TbRenameKeysNodeConfiguration.class,
         nodeDescription = "Renames message or message metadata keys.",
         nodeDetails = "Renames keys in the message or message metadata according to the provided mapping. " +
-                "If key to rename doesn't exists in the specified source (message or message metadata) it will be ignored.<br><br>" +
+                "If key to rename doesn't exist in the specified source (message or message metadata) it will be ignored.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbTransformationNodeRenameKeysConfig",

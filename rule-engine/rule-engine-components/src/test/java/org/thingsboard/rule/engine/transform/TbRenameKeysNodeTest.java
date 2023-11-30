@@ -42,8 +42,6 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.BDDMockito.willCallRealMethod;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -158,7 +156,8 @@ public class TbRenameKeysNodeTest {
 
     private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyUpgradeResultAndConfig() {
         return Stream.of(
-                Arguments.of(0, "{\"fromMetadata\":false,\"renameKeysMapping\":{\"temp\":\"temperature\"}}", true, "{\"renameIn\":\"DATA\",\"renameKeysMapping\":{\"temp\":\"temperature\"}}")
+                Arguments.of(0, "{\"fromMetadata\":false,\"renameKeysMapping\":{\"temp\":\"temperature\"}}", true, "{\"renameIn\":\"DATA\",\"renameKeysMapping\":{\"temp\":\"temperature\"}}"),
+                Arguments.of(0, "{\"fromMetadata\":true,\"renameKeysMapping\":{\"temp\":\"temperature\"}}", true, "{\"renameIn\":\"METADATA\",\"renameKeysMapping\":{\"temp\":\"temperature\"}}")
         );
     }
 
@@ -167,7 +166,6 @@ public class TbRenameKeysNodeTest {
     void givenFromVersionAndConfig_whenUpgrade_thenVerifyUpgradeResultAndConfig(int givenVersion, String givenConfigStr,
                                                                                 boolean hasChanges, String expectedConfigStr) throws Exception {
         // GIVEN
-        willCallRealMethod().given(node).upgrade(anyInt(), any());
         JsonNode givenConfig = JacksonUtil.toJsonNode(givenConfigStr);
         JsonNode expectedConfig = JacksonUtil.toJsonNode(expectedConfigStr);
 
