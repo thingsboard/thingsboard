@@ -34,6 +34,19 @@
     "fluid_pressure_progress_bar_with_background",
     "fluid_pressure_range_chart",
     "fluid_pressure_range_chart_with_background",
-    "fluid_pressure_gauge"
+    "fluid_pressure_gauge",
+    "fluid_temperature_card",
+    "fluid_temperature_card_with_background",
+    "horizontal_fluid_temperature_card",
+    "horizontal_fluid_temperature_card_with_background",
+    "fluid_temperature_chart_card",
+    "fluid_temperature_chart_card_with_background",
+    "simple_fluid_temperature_chart_card",
+    "simple_fluid_temperature_chart_card_with_background",
+    "fluid_temperature_progress_bar",
+    "fluid_temperature_progress_bar_with_background",
+    "fluid_temperature_range_chart",
+    "fluid_temperature_range_chart_with_background",
+    "fluid_temperature_gauge"
   ]
 }
