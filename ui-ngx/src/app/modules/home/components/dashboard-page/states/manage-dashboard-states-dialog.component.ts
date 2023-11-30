@@ -271,11 +271,11 @@ export class ManageDashboardStatesDialogComponent
     }
   }
 
-  private getNextDuplicatedName(filterName: string): string {
+  private getNextDuplicatedName(stateName: string): string {
     const suffix = ` - ${this.translate.instant('action.copy')} `;
     let counter = 0;
     while (++counter < Number.MAX_SAFE_INTEGER) {
-      const newName = `${filterName}${suffix}${counter}`;
+      const newName = `${stateName}${suffix}${counter}`;
       if (!this.stateNames.has(newName)) {
         return newName;
       }
