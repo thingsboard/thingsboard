@@ -40,9 +40,6 @@ export class CopyButtonComponent {
   disabled = false;
 
   @Input()
-  mdiIcon: string;
-
-  @Input()
   icon: string;
 
   @Input()
