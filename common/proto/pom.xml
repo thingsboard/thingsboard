@@ -24,10 +24,10 @@
         <artifactId>common</artifactId>
     </parent>
     <groupId>org.thingsboard.common</groupId>
-    <artifactId>cluster-api</artifactId>
+    <artifactId>proto</artifactId>
     <packaging>jar</packaging>
 
-    <name>Thingsboard Server Common Cluster API</name>
+    <name>Thingsboard Server Common Protobuf and gRPC structures</name>
     <url>https://thingsboard.io</url>
 
     <properties>
@@ -42,66 +42,34 @@
         </dependency>
         <dependency>
             <groupId>org.thingsboard.common</groupId>
-            <artifactId>proto</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.thingsboard.common</groupId>
             <artifactId>message</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.common</groupId>
-            <artifactId>stats</artifactId>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java-util</artifactId>
         </dependency>
         <dependency>
-            <groupId>javax.annotation</groupId>
-            <artifactId>javax.annotation-api</artifactId>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-netty-shaded</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.github.fge</groupId>
-            <artifactId>json-schema-validator</artifactId>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-protobuf</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-stub</artifactId>
+            <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>log4j-over-slf4j</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-        </dependency>
-		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
-		</dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-autoconfigure</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.datastax.oss</groupId>
-            <artifactId>java-driver-core</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.dropwizard.metrics</groupId>
-            <artifactId>metrics-jmx</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
+            <artifactId>spring-boot-starter-web</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -127,27 +95,15 @@
                 <groupId>org.xolstice.maven.plugins</groupId>
                 <artifactId>protobuf-maven-plugin</artifactId>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <configuration>
-                    <skip>false</skip>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
 
+    <distributionManagement>
+        <repository>
+            <id>thingsboard-repo-deploy</id>
+            <name>ThingsBoard Repo Deployment</name>
+            <url>https://repo.thingsboard.io/artifactory/libs-release-public</url>
+        </repository>
+    </distributionManagement>
 
 </project>

@@ -41,7 +41,7 @@ import org.thingsboard.server.common.data.query.KeyFilterPredicate;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.query.StringFilterPredicate;
 import org.thingsboard.server.common.msg.tools.SchedulerUtils;
-import org.thingsboard.server.common.transport.adaptor.JsonConverter;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 
 import java.time.Instant;
 import java.time.ZoneId;

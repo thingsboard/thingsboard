@@ -81,7 +81,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.thingsboard.server.service.queue.ProtoUtils.toProto;
+import static org.thingsboard.server.common.util.ProtoUtils.toProto;
 
 @Service
 @Slf4j

@@ -1,4 +1,4 @@
-/**
+package org.thingsboard.server.common.adaptor; /**
  * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,6 @@ import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 
 import java.util.ArrayList;
 

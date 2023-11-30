@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport.adaptor;
+package org.thingsboard.server.common.adaptor;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
