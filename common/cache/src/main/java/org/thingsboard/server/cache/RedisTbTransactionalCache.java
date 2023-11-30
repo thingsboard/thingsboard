@@ -84,8 +84,10 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
             } else if (Arrays.equals(rawValue, BINARY_NULL_VALUE)) {
                 return SimpleTbCacheValueWrapper.empty();
             } else {
+                long startTime = System.nanoTime();
                 V value = valueSerializer.deserialize(key, rawValue);
                 if (value != null) {
+                    fstStatsService.recordDecodeTime(value.getClass(), startTime);
                     fstStatsService.incrementDecode(value.getClass());
                 }
                 return SimpleTbCacheValueWrapper.wrap(value);
@@ -198,7 +200,9 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
             return BINARY_NULL_VALUE;
         } else {
             try {
+                long startTime = System.nanoTime();
                 var bytes = valueSerializer.serialize(value);
+                fstStatsService.recordEncodeTime(value.getClass(), startTime);
                 fstStatsService.incrementEncode(value.getClass());
                 return bytes;
             } catch (Exception e) {

@@ -1016,6 +1016,13 @@ message RemoveRpcActorMsgProto {
   int64 deviceIdLSB = 6;
 }
 
+message DeviceDeleteMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+}
+
 message ToDeviceActorNotificationMsgProto {
   DeviceEdgeUpdateMsgProto deviceEdgeUpdateMsg = 1;
   DeviceNameOrTypeUpdateMsgProto deviceNameOrTypeMsg = 2;
@@ -1024,6 +1031,7 @@ message ToDeviceActorNotificationMsgProto {
   ToDeviceRpcRequestActorMsgProto toDeviceRpcRequestMsg = 5;
   FromDeviceRpcResponseActorMsgProto fromDeviceRpcResponseMsg = 6;
   RemoveRpcActorMsgProto removeRpcActorMsg = 7;
+  DeviceDeleteMsgProto deviceDeleteMsg = 8;
 }
 
 /**

@@ -46,6 +46,7 @@ import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceCredentialsUpdateNotificationMsg;
+import org.thingsboard.server.common.msg.rule.engine.DeviceDeleteMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceEdgeUpdateMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -384,6 +385,21 @@ public class ProtoUtils {
         );
     }
 
+    private static TransportProtos.DeviceDeleteMsgProto toProto(DeviceDeleteMsg msg) {
+        return TransportProtos.DeviceDeleteMsgProto.newBuilder()
+                .setTenantIdMSB(msg.getTenantId().getId().getMostSignificantBits())
+                .setTenantIdLSB(msg.getTenantId().getId().getLeastSignificantBits())
+                .setDeviceIdMSB(msg.getDeviceId().getId().getMostSignificantBits())
+                .setDeviceIdLSB(msg.getDeviceId().getId().getLeastSignificantBits())
+                .build();
+    }
+
+    private static DeviceDeleteMsg fromProto(TransportProtos.DeviceDeleteMsgProto proto) {
+        return new DeviceDeleteMsg(
+                TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
+                new DeviceId(new UUID(proto.getDeviceIdMSB(), proto.getDeviceIdLSB())));
+    }
+
     public static TransportProtos.ToDeviceActorNotificationMsgProto toProto(ToDeviceActorNotificationMsg msg) {
         if (msg instanceof DeviceEdgeUpdateMsg) {
             DeviceEdgeUpdateMsg updateMsg = (DeviceEdgeUpdateMsg) msg;
@@ -413,6 +429,10 @@ public class ProtoUtils {
             RemoveRpcActorMsg updateMsg = (RemoveRpcActorMsg) msg;
             TransportProtos.RemoveRpcActorMsgProto proto = toProto(updateMsg);
             return TransportProtos.ToDeviceActorNotificationMsgProto.newBuilder().setRemoveRpcActorMsg(proto).build();
+        } else if (msg instanceof DeviceDeleteMsg) {
+            DeviceDeleteMsg updateMsg = (DeviceDeleteMsg) msg;
+            TransportProtos.DeviceDeleteMsgProto proto = toProto(updateMsg);
+            return TransportProtos.ToDeviceActorNotificationMsgProto.newBuilder().setDeviceDeleteMsg(proto).build();
         }
         return null;
     }
@@ -432,6 +452,8 @@ public class ProtoUtils {
             return fromProto(proto.getFromDeviceRpcResponseMsg());
         } else if (proto.hasRemoveRpcActorMsg()) {
             return fromProto(proto.getRemoveRpcActorMsg());
+        } else if (proto.hasDeviceDeleteMsg()) {
+            return fromProto(proto.getDeviceDeleteMsg());
         }
         return null;
     }
