@@ -65,7 +65,7 @@ public class ResourceEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(ResourceType.JKS, tbResource.getResourceType());
         Assert.assertEquals(FILE_NAME, tbResource.getResourceKey());
         Assert.assertEquals(FILE_NAME, tbResource.getFileName());
-        Assert.assertEquals(TEST_DATA, tbResource.getData());
+        Assert.assertEquals(TEST_DATA, tbResource.getEncodedData());
         Assert.assertTrue(StringUtils.isNotBlank(tbResource.getEtag()));
 
         // update resource
