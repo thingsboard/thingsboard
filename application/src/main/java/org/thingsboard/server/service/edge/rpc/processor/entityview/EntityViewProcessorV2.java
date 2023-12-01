@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.edge.rpc.processor.entityview;
 
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
@@ -33,7 +32,7 @@ public class EntityViewProcessorV2 extends EntityViewEdgeProcessor {
 
     @Override
     protected EntityView constructEntityViewFromUpdateMsg(TenantId tenantId, EntityViewId entityViewId, EntityViewUpdateMsg entityViewUpdateMsg) {
-        return JacksonUtil.fromStringIgnoreUnknownProperties(entityViewUpdateMsg.getEntity(), EntityView.class);
+        return JacksonUtil.fromString(entityViewUpdateMsg.getEntity(), EntityView.class, true);
     }
 
     @Override

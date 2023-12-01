@@ -31,6 +31,6 @@ public class DashboardEdgeProcessorV2 extends DashboardEdgeProcessor {
 
     @Override
     protected Dashboard constructDashboardFromUpdateMsg(TenantId tenantId, DashboardId dashboardId, DashboardUpdateMsg dashboardUpdateMsg) {
-        return JacksonUtil.fromStringIgnoreUnknownProperties(dashboardUpdateMsg.getEntity(), Dashboard.class);
+        return JacksonUtil.fromString(dashboardUpdateMsg.getEntity(), Dashboard.class, true);
     }
 }

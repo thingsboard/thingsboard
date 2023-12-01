@@ -35,7 +35,7 @@ public class AssetProfileEdgeProcessorV2 extends AssetProfileEdgeProcessor {
 
     @Override
     protected AssetProfile constructAssetProfileFromUpdateMsg(TenantId tenantId, AssetProfileId assetProfileId, AssetProfileUpdateMsg assetProfileUpdateMsg) {
-        return JacksonUtil.fromStringIgnoreUnknownProperties(assetProfileUpdateMsg.getEntity(), AssetProfile.class);
+        return JacksonUtil.fromString(assetProfileUpdateMsg.getEntity(), AssetProfile.class, true);
     }
 
     @Override

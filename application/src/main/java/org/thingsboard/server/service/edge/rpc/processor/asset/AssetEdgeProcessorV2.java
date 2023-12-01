@@ -32,7 +32,7 @@ public class AssetEdgeProcessorV2 extends AssetEdgeProcessor {
 
     @Override
     protected Asset constructAssetFromUpdateMsg(TenantId tenantId, AssetId assetId, AssetUpdateMsg assetUpdateMsg) {
-        return JacksonUtil.fromStringIgnoreUnknownProperties(assetUpdateMsg.getEntity(), Asset.class);
+        return JacksonUtil.fromString(assetUpdateMsg.getEntity(), Asset.class, true);
     }
 
     @Override
