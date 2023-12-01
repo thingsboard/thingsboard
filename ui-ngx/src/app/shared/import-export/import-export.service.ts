@@ -111,8 +111,7 @@ export class ImportExportService {
     this.imageService.exportImage(type, key).subscribe(
       {
         next: (imageData) => {
-          let name = imageData.title;
-          name = name.toLowerCase().replace(/\W/g, '_');
+          const name = imageData.fileName.split('.')[0];
           this.exportToPc(imageData, name);
         },
         error: (e) => {
