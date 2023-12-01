@@ -282,6 +282,7 @@ public class ThingsboardInstallService {
                     dataUpdateService.upgradeRuleNodes();
                     systemDataLoaderService.loadSystemWidgets();
                     installScripts.loadSystemLwm2mResources();
+                    installScripts.loadSystemImages();
                 }
                 log.info("Upgrade finished successfully!");
 
@@ -324,7 +325,7 @@ public class ThingsboardInstallService {
 //                systemDataLoaderService.loadSystemPlugins();
 //                systemDataLoaderService.loadSystemRules();
                 installScripts.loadSystemLwm2mResources();
-                installScripts.createSystemImages();
+                installScripts.loadSystemImages();
 
                 if (loadDemo) {
                     log.info("Loading demo data...");
