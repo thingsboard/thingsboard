@@ -18,6 +18,7 @@ package org.thingsboard.server.service.install.update;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.HasImage;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -60,6 +61,14 @@ public class ImagesUpdater {
         log.info("Updating dashboards images...");
         var dashboardsIds = new PageDataIterable<>(dashboardDao::findAllIds, 1024);
         updateImages(dashboardsIds, "dashboard", imageService::replaceBase64WithImageUrl, dashboardDao);
+    }
+
+    public void createSystemImages(Dashboard defaultDashboard) {
+        defaultDashboard.setTenantId(TenantId.SYS_TENANT_ID);
+        boolean created = imageService.replaceBase64WithImageUrl(defaultDashboard);
+        if (created) {
+            log.info("Created system images for default dashboard '{}'", defaultDashboard.getTitle());
+        }
     }
 
     public void updateDeviceProfilesImages() {
