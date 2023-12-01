@@ -13,16 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge.instructions;
+package org.thingsboard.server.common.data;
 
-import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.edge.EdgeInstructions;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
 
-import javax.servlet.http.HttpServletRequest;
+import java.io.Serializable;
+import java.util.Map;
 
-public interface EdgeInstallInstructionsService {
+@Data
+@ApiModel
+public class EdgeUpgradeMessage implements Serializable {
 
-    EdgeInstructions getInstallInstructions(Edge edge, String installationMethod, HttpServletRequest request);
+    private static final long serialVersionUID = 2872965507642822989L;
 
-    void updateApplicationVersion(String version);
+    @ApiModelProperty(position = 1, value = "Mapping for upgrade versions and upgrade strategy (next ver).")
+    private final Map<String, UpgradeInfo> edgeVersions;
 }

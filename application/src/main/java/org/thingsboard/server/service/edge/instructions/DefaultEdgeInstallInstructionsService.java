@@ -67,6 +67,11 @@ public class DefaultEdgeInstallInstructionsService implements EdgeInstallInstruc
         }
     }
 
+    @Override
+    public void updateApplicationVersion(String version) {
+        appVersion = version;
+    }
+
     private EdgeInstructions getDockerInstallInstructions(Edge edge, HttpServletRequest request) {
         String dockerInstallInstructions = readFile(resolveFile("docker", "instructions.md"));
         String baseUrl = request.getServerName();
