@@ -24,6 +24,7 @@ import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -454,7 +455,11 @@ public class BaseImageService extends BaseResourceService implements ImageServic
             try {
                 imageInfo = saveImage(image);
             } catch (Exception e) {
-                log.warn("[{}][{}] Failed to replace Base64 with image url: {}", tenantId, name, StringUtils.abbreviate(data, 50), e);
+                if (log.isDebugEnabled()) { // printing stacktrace
+                    log.warn("[{}][{}] Failed to replace Base64 with image url for {}", tenantId, name, StringUtils.abbreviate(data, 50), e);
+                } else {
+                    log.warn("[{}][{}] Failed to replace Base64 with image url for {}: {}", tenantId, name, StringUtils.abbreviate(data, 50), ExceptionUtils.getMessage(e));
+                }
                 return UpdateResult.of(false, data);
             }
         }

@@ -67,7 +67,7 @@ public class ImagesUpdater {
         defaultDashboard.setTenantId(TenantId.SYS_TENANT_ID);
         boolean created = imageService.replaceBase64WithImageUrl(defaultDashboard);
         if (created) {
-            log.info("Created system images for default dashboard '{}'", defaultDashboard.getTitle());
+            log.debug("Created system images for default dashboard '{}'", defaultDashboard.getTitle());
         }
     }
 
