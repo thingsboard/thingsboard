@@ -105,9 +105,10 @@ public class ImageUtils {
                 preview.setData(null);
                 preview.setSize(data.length);
                 image.setPreview(preview);
-                log.debug("Couldn't parse {} ({}) with ImageIO, got width {} and height {} from metadata", mediaType, dir.getName(), width, height);
+                log.warn("Couldn't process {} ({}) with ImageIO, leaving preview as original image", mediaType, dir.getName());
                 return image;
             }
+            log.warn("Image media type {} not supported", mediaType);
             throw new IllegalArgumentException("Media type " + mediaType + " not supported");
         }
 
