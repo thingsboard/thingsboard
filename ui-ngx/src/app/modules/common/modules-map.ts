@@ -95,6 +95,7 @@ import * as SelectableColumnsPipe from '@shared/pipe/selectable-columns.pipe';
 import * as ShortNumberPipe from '@shared/pipe/short-number.pipe';
 import * as TbJsonPipe from '@shared/pipe/tbJson.pipe';
 import * as TruncatePipe from '@shared/pipe/truncate.pipe';
+import * as CustomTranslatePipe from '@shared/pipe/custom-translate.pipe';
 
 import * as coercion from '@shared/decorators/coercion';
 import * as enumerable from '@shared/decorators/enumerable';
@@ -401,6 +402,7 @@ class ModulesMap implements IModulesMap {
     '@shared/pipe/short-number.pipe': ShortNumberPipe,
     '@shared/pipe/tbJson.pipe': TbJsonPipe,
     '@shared/pipe/truncate.pipe': TruncatePipe,
+    '@shared/pipe/custom-translate.pipe': CustomTranslatePipe,
 
     '@shared/decorators/coercion': coercion,
     '@shared/decorators/enumerable': enumerable,

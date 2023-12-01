@@ -38,7 +38,7 @@ import {
 } from '@core/utils';
 import { WindowMessage } from '@shared/models/window-message.model';
 import { TranslateService } from '@ngx-translate/core';
-import { customTranslationsPrefix, i18nPrefix } from '@app/shared/models/constants';
+import { customTranslationsPrefix, i18nPrefix, i18nRegExp } from '@app/shared/models/constants';
 import { DataKey, Datasource, DatasourceType, KeyInfo } from '@shared/models/widget.models';
 import { DataKeyType } from '@app/shared/models/telemetry/telemetry.models';
 import { alarmFields, alarmSeverityTranslations, alarmStatusTranslations } from '@shared/models/alarm.models';
@@ -57,8 +57,6 @@ import {
 import { EntityId } from '@shared/models/id/entity-id';
 import { DatePipe } from '@angular/common';
 import { entityTypeTranslations } from '@shared/models/entity-type.models';
-
-const i18nRegExp = new RegExp(`{${i18nPrefix}:[^{}]+}`, 'g');
 
 const predefinedFunctions: { [func: string]: string } = {
   Sin: 'return Math.round(1000*Math.sin(time/5000));',

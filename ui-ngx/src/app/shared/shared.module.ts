@@ -199,6 +199,7 @@ import { MaterialIconsComponent } from '@shared/components/material-icons.compon
 import { ColorPickerPanelComponent } from '@shared/components/color-picker/color-picker-panel.component';
 import { TbIconComponent } from '@shared/components/icon.component';
 import { HintTooltipIconComponent } from '@shared/components/hint-tooltip-icon.component';
+import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { StringAutocompleteComponent } from '@shared/components/string-autocomplete.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
@@ -217,6 +218,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     DateAgoPipe,
     SafePipe,
     ShortNumberPipe,
+    CustomTranslatePipe,
     {
       provide: FlowInjectionToken,
       useValue: Flow
@@ -342,6 +344,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     DateAgoPipe,
     SafePipe,
     ShortNumberPipe,
+    CustomTranslatePipe,
     SelectableColumnsPipe,
     KeyboardShortcutPipe,
     TbJsonToStringDirective,
@@ -578,6 +581,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     DateAgoPipe,
     SafePipe,
     ShortNumberPipe,
+    CustomTranslatePipe,
     SelectableColumnsPipe,
     RouterModule,
     TranslateModule,
