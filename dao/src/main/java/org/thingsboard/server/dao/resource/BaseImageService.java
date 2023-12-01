@@ -26,6 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Base64Utils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
@@ -261,6 +263,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         return resourceInfoDao.findByTenantIdAndEtag(tenantId, ResourceType.IMAGE, etag);
     }
 
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)// we don't want transaction to rollback in case of an image processing failure
     @Override
     public boolean replaceBase64WithImageUrl(HasImage entity, String type) {
         String imageName = "\"" + entity.getName() + "\" ";
@@ -274,6 +277,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         return result.isUpdated();
     }
 
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)// we don't want transaction to rollback in case of an image processing failure
     @Override
     public boolean replaceBase64WithImageUrl(WidgetTypeDetails entity) {
         String prefix = "\"" + entity.getName() + "\" ";
@@ -298,6 +302,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         return updated;
     }
 
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)// we don't want transaction to rollback in case of an image processing failure
     @Override
     public boolean replaceBase64WithImageUrl(Dashboard entity) {
         String prefix = "\"" + entity.getTitle() + "\" dashboard";
@@ -437,7 +442,12 @@ public class BaseImageService extends BaseResourceService implements ImageServic
             image.setFileName(fileName);
             image.setDescriptor(JacksonUtil.newObjectNode().put("mediaType", mdMediaType));
             image.setData(imageData);
-            imageInfo = saveImage(image);
+            try {
+                imageInfo = saveImage(image);
+            } catch (Exception e) {
+                log.warn("[{}][{}] Failed to replace Base64 with image url: {}", tenantId, name, StringUtils.abbreviate(data, 50), e);
+                return UpdateResult.of(false, data);
+            }
         }
         return UpdateResult.of(true, DataConstants.TB_IMAGE_PREFIX + imageInfo.getLink());
     }
@@ -468,12 +478,15 @@ public class BaseImageService extends BaseResourceService implements ImageServic
                 }
             } else if (node.isArray()) {
                 ArrayNode childArray = (ArrayNode) node;
-                int i = 0;
-                for (JsonNode element : childArray) {
+                for (int i = 0; i < childArray.size(); i++) {
+                    JsonNode element = childArray.get(i);
                     if (element.isObject()) {
                         tasks.add(new JsonNodeProcessingTask(currentPath + " " + i, element));
+                    } else if (element.isTextual()) {
+                        UpdateResult result = base64ToImageUrl(tenantId, currentPath + "." + i, element.asText(), true);
+                        childArray.set(i, result.getValue());
+                        updated |= result.isUpdated();
                     }
-                    i++;
                 }
             }
         }
@@ -503,6 +516,9 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         while (!tasks.isEmpty()) {
             JsonNodeProcessingTask task = tasks.poll();
             JsonNode node = task.getNode();
+            if (node == null) {
+                continue;
+            }
             String currentPath = StringUtils.isBlank(task.getPath()) ? "" : (task.getPath() + ".");
             if (node.isObject()) {
                 ObjectNode on = (ObjectNode) node;
@@ -517,12 +533,13 @@ public class BaseImageService extends BaseResourceService implements ImageServic
                 }
             } else if (node.isArray()) {
                 ArrayNode childArray = (ArrayNode) node;
-                int i = 0;
-                for (JsonNode element : childArray) {
+                for (int i = 0; i < childArray.size(); i++) {
+                    JsonNode element = childArray.get(i);
                     if (element.isObject()) {
                         tasks.add(new JsonNodeProcessingTask(currentPath + "." + i, element));
+                    } else if (element.isTextual()) {
+                        childArray.set(i, inlineImage(tenantId, currentPath + "." + i, element.asText()));
                     }
-                    i++;
                 }
             }
         }
