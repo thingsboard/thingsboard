@@ -15,13 +15,10 @@
  */
 package org.thingsboard.server.service.resource;
 
-import org.thingsboard.server.common.data.Dashboard;
-import org.thingsboard.server.common.data.HasImage;
 import org.thingsboard.server.common.data.TbImageDeleteResult;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.dao.resource.ImageCacheKey;
 
 public interface TbImageService {

@@ -132,7 +132,6 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     @Override
     public TbResourceInfo findResourceInfoByTenantIdAndKey(TenantId tenantId, ResourceType resourceType, String resourceKey) {
         log.trace("Executing findResourceInfoByTenantIdAndKey [{}] [{}] [{}]", tenantId, resourceType, resourceKey);
-        // TODO: add caching
         return resourceInfoDao.findByTenantIdAndKey(tenantId, resourceType, resourceKey);
     }
 

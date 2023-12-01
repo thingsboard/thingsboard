@@ -66,6 +66,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -285,8 +286,10 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         boolean updated = result.isUpdated();
         if (entity.getDescriptor().isObject()) {
             ObjectNode descriptor = (ObjectNode) entity.getDescriptor();
-            JsonNode defaultConfig = JacksonUtil.toJsonNode(descriptor.get("defaultConfig").asText());
-            if (defaultConfig != null && defaultConfig.isObject()) {
+            JsonNode defaultConfig = Optional.ofNullable(descriptor.get("defaultConfig"))
+                    .filter(JsonNode::isTextual).map(JsonNode::asText)
+                    .map(JacksonUtil::toJsonNode).orElse(null);
+            if (defaultConfig != null) {
                 updated |= base64ToImageUrlUsingMapping(entity.getTenantId(), WIDGET_TYPE_BASE64_MAPPING, Collections.singletonMap("prefix", prefix), defaultConfig);
                 descriptor.put("defaultConfig", defaultConfig.toString());
             }
@@ -446,6 +449,9 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         while (!tasks.isEmpty()) {
             JsonNodeProcessingTask task = tasks.poll();
             JsonNode node = task.getNode();
+            if (node == null) {
+                continue;
+            }
             String currentPath = StringUtils.isBlank(task.getPath()) ? "" : (task.getPath() + " ");
             if (node.isObject()) {
                 ObjectNode on = (ObjectNode) node;
