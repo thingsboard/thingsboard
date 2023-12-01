@@ -311,6 +311,7 @@ public class InstallScripts {
 
     @SneakyThrows
     public void loadSystemImages() {
+        log.info("Loading system images...");
         Stream<Path> dashboardsFiles = Files.list(Paths.get(getDataDir(), JSON_DIR, DEMO_DIR, DASHBOARDS_DIR));
         try (dashboardsFiles) {
             dashboardsFiles.forEach(file -> {
