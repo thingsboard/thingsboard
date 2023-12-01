@@ -187,13 +187,13 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     private boolean isMyNodePartition(RuleNode ruleNode) {
         return ruleNode == null || !ruleNode.isSingletonMode()
                 || systemContext.getDiscoveryService().isMonolith()
-                || defaultCtx.isLocalEntity(ruleNode.getId());
+                || defaultCtx.isLocalEntity(ruleNode.getId(), ruleNode.getQueueName());
     }
 
     //Message will return after processing. See RuleChainActorMessageProcessor.pushToTarget.
     private void putToNodePartition(TbMsg source) {
         TbMsg tbMsg = TbMsg.newMsg(source, source.getQueueName(), source.getRuleChainId(), entityId);
-        TopicPartitionInfo tpi = systemContext.resolve(ServiceType.TB_RULE_ENGINE, tbMsg.getQueueName(), tenantId, ruleNode.getId());
+        TopicPartitionInfo tpi = systemContext.resolve(ServiceType.TB_RULE_ENGINE, ruleNode.getQueueName(), tenantId, ruleNode.getId());
         TransportProtos.ToRuleEngineMsg toQueueMsg = TransportProtos.ToRuleEngineMsg.newBuilder()
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())

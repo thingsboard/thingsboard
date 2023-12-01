@@ -389,6 +389,7 @@ public class ModelConstants {
 
     public static final String DEBUG_MODE = "debug_mode";
     public static final String SINGLETON_MODE = "singleton_mode";
+    public static final String QUEUE_NAME = "queue_name";
 
     /**
      * Rule chain constants.

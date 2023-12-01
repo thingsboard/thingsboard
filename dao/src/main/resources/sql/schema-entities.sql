@@ -187,6 +187,7 @@ CREATE TABLE IF NOT EXISTS rule_node (
     name varchar(255),
     debug_mode boolean,
     singleton_mode boolean,
+    queue_name varchar(255),
     external_id uuid
 );
 

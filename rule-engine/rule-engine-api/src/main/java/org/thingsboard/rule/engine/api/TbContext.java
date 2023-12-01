@@ -248,6 +248,8 @@ public interface TbContext {
 
     boolean isLocalEntity(EntityId entityId);
 
+    boolean isLocalEntity(EntityId entityId, String queueName);
+
     RuleNodeId getSelfId();
 
     RuleNode getSelf();
