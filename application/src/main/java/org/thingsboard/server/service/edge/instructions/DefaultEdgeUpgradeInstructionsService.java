@@ -39,14 +39,7 @@ import java.util.Map;
 @TbCoreComponent
 public class DefaultEdgeUpgradeInstructionsService implements EdgeUpgradeInstructionsService {
 
-    private static final Map<String, UpgradeInfo> upgradeVersionHashMap;
-
-    static {
-        upgradeVersionHashMap = new HashMap<>();
-        upgradeVersionHashMap.put("3.6.0", new UpgradeInfo(true, "3.6.1"));
-        upgradeVersionHashMap.put("3.6.1", new UpgradeInfo(true, "3.6.2"));
-        upgradeVersionHashMap.put("3.6.2", new UpgradeInfo(true, null));
-    }
+    private static final Map<String, UpgradeInfo> upgradeVersionHashMap = new HashMap<>();
 
     private static final String EDGE_DIR = "edge";
     private static final String INSTRUCTIONS_DIR = "instructions";
