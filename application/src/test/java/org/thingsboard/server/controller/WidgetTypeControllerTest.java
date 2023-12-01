@@ -190,6 +190,32 @@ public class WidgetTypeControllerTest extends AbstractControllerTest {
         Collections.sort(loadedWidgetTypes, idComparator);
 
         Assert.assertEquals(widgetTypes, loadedWidgetTypes);
+
+        loginCustomerUser();
+
+        List<WidgetType> loadedWidgetTypesCustomer = doGetTyped("/api/widgetTypes?widgetsBundleId={widgetsBundleId}",
+                new TypeReference<>(){}, widgetsBundle.getId().getId().toString());
+        Collections.sort(loadedWidgetTypesCustomer, idComparator);
+        Assert.assertEquals(widgetTypes, loadedWidgetTypesCustomer);
+
+        List<WidgetTypeDetails> customerLoadedWidgetTypesDetails = doGetTyped("/api/widgetTypesDetails?widgetsBundleId={widgetsBundleId}",
+                new TypeReference<>(){}, widgetsBundle.getId().getId().toString());
+        List<WidgetType> widgetTypesFromDetailsListCustomer = customerLoadedWidgetTypesDetails.stream().map(WidgetType::new).collect(Collectors.toList());
+        Collections.sort(widgetTypesFromDetailsListCustomer, idComparator);
+        Assert.assertEquals(widgetTypesFromDetailsListCustomer, loadedWidgetTypes);
+
+        loginSysAdmin();
+
+        List<WidgetType> sysAdminLoadedWidgetTypes = doGetTyped("/api/widgetTypes?widgetsBundleId={widgetsBundleId}",
+                new TypeReference<>(){}, widgetsBundle.getId().getId().toString());
+        Collections.sort(sysAdminLoadedWidgetTypes, idComparator);
+        Assert.assertEquals(widgetTypes, sysAdminLoadedWidgetTypes);
+
+        List<WidgetTypeDetails> sysAdminLoadedWidgetTypesDetails = doGetTyped("/api/widgetTypesDetails?widgetsBundleId={widgetsBundleId}",
+                new TypeReference<>(){}, widgetsBundle.getId().getId().toString());
+        List<WidgetType> widgetTypesFromDetailsListSysAdmin = sysAdminLoadedWidgetTypesDetails.stream().map(WidgetType::new).collect(Collectors.toList());
+        Collections.sort(widgetTypesFromDetailsListSysAdmin, idComparator);
+        Assert.assertEquals(widgetTypesFromDetailsListSysAdmin, loadedWidgetTypes);
     }
 
     @Test

@@ -112,14 +112,24 @@ public class RelationEdgeTest extends AbstractEdgeTest {
         Device device = findDeviceByName("Edge Device 1");
         Asset asset = findAssetByName("Edge Asset 1");
 
-        EntityRelation relation = new EntityRelation();
-        relation.setType("test");
-        relation.setFrom(device.getId());
-        relation.setTo(asset.getId());
-        relation.setTypeGroup(RelationTypeGroup.COMMON);
+        EntityRelation deviceToAssetRelation = new EntityRelation();
+        deviceToAssetRelation.setType("test");
+        deviceToAssetRelation.setFrom(device.getId());
+        deviceToAssetRelation.setTo(asset.getId());
+        deviceToAssetRelation.setTypeGroup(RelationTypeGroup.COMMON);
 
         edgeImitator.expectMessageAmount(1);
-        doPost("/api/relation", relation);
+        doPost("/api/relation", deviceToAssetRelation);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        EntityRelation assetToTenantRelation = new EntityRelation();
+        assetToTenantRelation.setType("test");
+        assetToTenantRelation.setFrom(asset.getId());
+        assetToTenantRelation.setTo(tenantId);
+        assetToTenantRelation.setTypeGroup(RelationTypeGroup.COMMON);
+
+        edgeImitator.expectMessageAmount(1);
+        doPost("/api/relation", assetToTenantRelation);
         Assert.assertTrue(edgeImitator.waitForMessages());
 
         UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
@@ -143,7 +153,7 @@ public class RelationEdgeTest extends AbstractEdgeTest {
         RelationUpdateMsg relationUpdateMsg = (RelationUpdateMsg) latestMessage;
         EntityRelation entityRelation = JacksonUtil.fromStringIgnoreUnknownProperties(relationUpdateMsg.getEntity(), EntityRelation.class);
         Assert.assertNotNull(entityRelation);
-        Assert.assertEquals(relation, entityRelation);
+        Assert.assertEquals(deviceToAssetRelation, entityRelation);
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, relationUpdateMsg.getMsgType());
     }
 
