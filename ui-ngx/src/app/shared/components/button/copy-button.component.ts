@@ -39,6 +39,10 @@ export class CopyButtonComponent {
   @coerceBoolean()
   disabled = false;
 
+  // @deprecated need to used icon
+  @Input()
+  mdiIcon: string;
+
   @Input()
   icon: string;
 

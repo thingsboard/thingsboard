@@ -74,7 +74,7 @@
                             [disabled]="isLoading$ | async"
                             [fxShow]="actionDescriptor.isEnabled()"
                             (click)="actionDescriptor.onAction($event)">
-                      <tb-icon>{{actionDescriptor.icon}}</tb-icon>
+                      <tb-icon matMenuItemIcon>{{actionDescriptor.icon}}</tb-icon>
                       <span>{{ actionDescriptor.name }}</span>
                     </button>
                   </mat-menu>
@@ -240,7 +240,7 @@
                             [disabled]="isLoading$ | async"
                             [fxShow]="actionDescriptor.isEnabled(entity)"
                             (click)="actionDescriptor.onAction($event, entity)">
-                      <tb-icon [ngStyle]="actionDescriptor.style">
+                      <tb-icon matMenuItemIcon [ngStyle]="actionDescriptor.style">
                         {{actionDescriptor.iconFunction ?  actionDescriptor.iconFunction(entity) : actionDescriptor.icon}}
                       </tb-icon>
                       <span>{{ actionDescriptor.nameFunction ? actionDescriptor.nameFunction(entity) : actionDescriptor.name }}</span>

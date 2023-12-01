@@ -78,7 +78,7 @@
                   <button mat-menu-item *ngIf="actionDescriptor.icon"
                           [disabled]="isLoading$ | async"
                           (click)="onActionButtonClick($event, entity, actionDescriptor)">
-                    <tb-icon>{{actionDescriptor.icon}}</tb-icon>
+                    <tb-icon matMenuItemIcon>{{actionDescriptor.icon}}</tb-icon>
                     <span>{{ actionDescriptor.displayName }}</span>
                   </button>
                 </ng-container>

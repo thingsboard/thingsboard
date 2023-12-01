@@ -24,7 +24,7 @@
         [matTooltipPosition]="matTooltipPosition"
         (click)="copy($event)">
   <tb-icon [ngStyle]="style" *ngIf="!copied; else copiedTemplate">
-    {{ icon }}
+    {{  icon || mdiIcon }}
   </tb-icon>
   <ng-template #copiedTemplate>
     <mat-icon [ngStyle]="style" class="copied">done</mat-icon>
