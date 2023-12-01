@@ -259,8 +259,8 @@ public class BaseImageService extends BaseResourceService implements ImageServic
     }
 
     @Override
-    public TbResourceInfo findImageByTenantIdAndEtag(TenantId tenantId, String etag) {
-        return resourceInfoDao.findByTenantIdAndEtag(tenantId, ResourceType.IMAGE, etag);
+    public TbResourceInfo findSystemOrTenantImageByEtag(TenantId tenantId, String etag) {
+        return resourceInfoDao.findSystemOrTenantImageByEtag(tenantId, ResourceType.IMAGE, etag);
     }
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)// we don't want transaction to rollback in case of an image processing failure
@@ -417,10 +417,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         String extension = ImageUtils.mediaTypeToFileExtension(mdMediaType);
         byte[] imageData = Base64.getDecoder().decode(base64Data);
         String etag = calculateEtag(imageData);
-        var imageInfo = findImageByTenantIdAndEtag(tenantId, etag);
-        if (imageInfo == null && !tenantId.isSysTenantId()) {
-            imageInfo = findImageByTenantIdAndEtag(TenantId.SYS_TENANT_ID, etag);
-        }
+        var imageInfo = findSystemOrTenantImageByEtag(tenantId, etag);
         if (imageInfo == null) {
             TbResource image = new TbResource();
             image.setTenantId(tenantId);
