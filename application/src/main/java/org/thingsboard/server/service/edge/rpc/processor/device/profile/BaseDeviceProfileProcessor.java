@@ -16,30 +16,18 @@
 package org.thingsboard.server.service.edge.rpc.processor.device.profile;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.security.DeviceCredentials;
-import org.thingsboard.server.common.data.security.DeviceCredentialsType;
-import org.thingsboard.server.gen.edge.v1.DeviceCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
-import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 @Slf4j
 public abstract class BaseDeviceProfileProcessor extends BaseEdgeProcessor {
-
-    @Autowired
-    protected DataDecodingEncodingService dataDecodingEncodingService;
 
     protected Pair<Boolean, Boolean> saveOrUpdateDeviceProfile(TenantId tenantId, DeviceProfileId deviceProfileId, DeviceProfileUpdateMsg deviceProfileUpdateMsg) {
         boolean created = false;

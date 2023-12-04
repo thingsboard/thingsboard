@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.edge.rpc.processor.device;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.StringUtils;
@@ -27,14 +26,10 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 @Slf4j
 public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
-
-    @Autowired
-    protected DataDecodingEncodingService dataDecodingEncodingService;
 
     protected Pair<Boolean, Boolean> saveOrUpdateDevice(TenantId tenantId, DeviceId deviceId, DeviceUpdateMsg deviceUpdateMsg) {
         boolean created = false;

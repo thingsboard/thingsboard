@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.edge.rpc.processor.device.profile;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
@@ -29,6 +30,7 @@ import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
+import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.nio.charset.StandardCharsets;
@@ -38,6 +40,9 @@ import java.util.UUID;
 @Component
 @TbCoreComponent
 public class DeviceProfileEdgeProcessorV1 extends DeviceProfileEdgeProcessor {
+
+    @Autowired
+    private DataDecodingEncodingService dataDecodingEncodingService;
 
     @Override
     protected DeviceProfile constructDeviceProfileFromUpdateMsg(TenantId tenantId, DeviceProfileId deviceProfileId, DeviceProfileUpdateMsg deviceProfileUpdateMsg) {

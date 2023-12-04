@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.edge.rpc.processor.alarm;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
@@ -28,7 +27,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
-@Slf4j
 @Component
 @TbCoreComponent
 public class AlarmEdgeProcessorV1 extends AlarmEdgeProcessor {

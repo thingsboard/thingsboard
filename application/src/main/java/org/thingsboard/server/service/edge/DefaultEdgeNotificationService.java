@@ -35,9 +35,11 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.processor.alarm.AlarmEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.asset.AssetEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.asset.profile.AssetProfileEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.customer.CustomerEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.dashboard.DashboardEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.device.DeviceEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.device.profile.DeviceProfileEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.edge.EdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.entityview.EntityViewEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.ota.OtaPackageEdgeProcessor;
@@ -74,7 +76,13 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     private AssetEdgeProcessor assetProcessor;
 
     @Autowired
+    private AssetProfileEdgeProcessor assetProfileEdgeProcessor;
+
+    @Autowired
     private DeviceEdgeProcessor deviceProcessor;
+
+    @Autowired
+    private DeviceProfileEdgeProcessor deviceProfileEdgeProcessor;
 
     @Autowired
     private EntityViewEdgeProcessor entityViewProcessor;
@@ -167,12 +175,16 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                             edgeProcessor.processEdgeNotification(tenantId, edgeNotificationMsg);
                             break;
                         case ASSET:
-                        case ASSET_PROFILE:
                             assetProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
                             break;
+                        case ASSET_PROFILE:
+                            assetProfileEdgeProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
+                            break;
                         case DEVICE:
-                        case DEVICE_PROFILE:
                             deviceProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
+                            break;
+                        case DEVICE_PROFILE:
+                            deviceProfileEdgeProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
                             break;
                         case ENTITY_VIEW:
                             entityViewProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
@@ -233,7 +245,4 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
         log.error("[{}] Can't push to edge updates, edgeNotificationMsg [{}]", tenantId, edgeNotificationMsg, throwable);
         callback.onFailure(throwable);
     }
-
 }
-
-
