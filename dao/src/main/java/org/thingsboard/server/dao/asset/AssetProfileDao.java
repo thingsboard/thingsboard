@@ -45,6 +45,6 @@ public interface AssetProfileDao extends Dao<AssetProfile>, ExportableEntityDao<
 
     AssetProfile findByName(TenantId tenantId, String profileName);
 
-    PageData<AssetProfile> findAll(PageLink pageLink);
+    PageData<AssetProfile> findAllWithImages(PageLink pageLink);
 
 }

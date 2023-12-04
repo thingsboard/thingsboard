@@ -73,13 +73,13 @@ public class ImagesUpdater {
 
     public void updateDeviceProfilesImages() {
         log.info("Updating device profiles images...");
-        var deviceProfiles = new PageDataIterable<>(deviceProfileDao::findAll, 256);
+        var deviceProfiles = new PageDataIterable<>(deviceProfileDao::findAllWithImages, 256);
         updateImages(deviceProfiles, "device profile", imageService::replaceBase64WithImageUrl, deviceProfileDao);
     }
 
     public void updateAssetProfilesImages() {
         log.info("Updating asset profiles images...");
-        var assetProfiles = new PageDataIterable<>(assetProfileDao::findAll, 256);
+        var assetProfiles = new PageDataIterable<>(assetProfileDao::findAllWithImages, 256);
         updateImages(assetProfiles, "asset profile", imageService::replaceBase64WithImageUrl, assetProfileDao);
     }
 

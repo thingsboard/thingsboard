@@ -81,4 +81,6 @@ public interface DeviceProfileRepository extends JpaRepository<DeviceProfileEnti
     @Query("SELECT externalId FROM DeviceProfileEntity WHERE id = :id")
     UUID getExternalIdById(@Param("id") UUID id);
 
+    Page<DeviceProfileEntity> findAllByImageNotNull(Pageable pageable);
+
 }

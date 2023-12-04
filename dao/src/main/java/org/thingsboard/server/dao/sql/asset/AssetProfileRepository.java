@@ -23,7 +23,6 @@ import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.asset.AssetProfileInfo;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.AssetProfileEntity;
-import org.thingsboard.server.dao.model.sql.WidgetsBundleEntity;
 
 import java.util.List;
 import java.util.UUID;
@@ -69,5 +68,7 @@ public interface AssetProfileRepository extends JpaRepository<AssetProfileEntity
     @Query("SELECT new org.thingsboard.server.common.data.asset.AssetProfileInfo(a.id, a.tenantId, a.name, a.image, a.defaultDashboardId) " +
             "FROM AssetProfileEntity a WHERE a.image = :imageLink")
     List<AssetProfileInfo> findByImageLink(@Param("imageLink") String imageLink, Pageable page);
+
+    Page<AssetProfileEntity> findAllByImageNotNull(Pageable pageable);
 
 }
