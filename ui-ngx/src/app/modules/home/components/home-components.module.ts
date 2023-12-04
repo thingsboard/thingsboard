@@ -182,10 +182,13 @@ import {
   ExportWidgetsBundleDialogComponent
 } from '@home/components/import-export/export-widgets-bundle-dialog.component';
 import { ScrollGridComponent } from '@home/components/grid/scroll-grid.component';
+import { WidgetSettingsCommonModule } from '@home/components/widget/lib/settings/common/widget-settings-common.module';
+import { WidgetComponentsModule } from '@home/components/widget/widget-components.module';
 
 @NgModule({
   declarations:
     [
+      ScrollGridComponent,
       RouterTabsComponent,
       EntitiesTableComponent,
       AddEntityDialogComponent,
@@ -326,8 +329,7 @@ import { ScrollGridComponent } from '@home/components/grid/scroll-grid.component
       RateLimitsComponent,
       RateLimitsTextComponent,
       RateLimitsDetailsDialogComponent,
-      SendNotificationButtonComponent,
-      ScrollGridComponent
+      SendNotificationButtonComponent
     ],
   imports: [
     CommonModule,
@@ -339,9 +341,15 @@ import { ScrollGridComponent } from '@home/components/grid/scroll-grid.component
     SnmpDeviceProfileTransportModule,
     StatesControllerModule,
     DeviceCredentialsModule,
-    DeviceProfileCommonModule
+    DeviceProfileCommonModule,
+    WidgetSettingsCommonModule,
+    WidgetComponentsModule
   ],
   exports: [
+    WidgetComponentsModule,
+    SharedHomeComponentsModule,
+    WidgetSettingsCommonModule,
+    WidgetConfigComponentsModule,
     RouterTabsComponent,
     EntitiesTableComponent,
     AddEntityDialogComponent,

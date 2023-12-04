@@ -32,6 +32,9 @@ import { TimewindowConfigPanelComponent } from '@home/components/widget/config/t
 import { WidgetSettingsCommonModule } from '@home/components/widget/lib/settings/common/widget-settings-common.module';
 import { TimewindowStyleComponent } from '@home/components/widget/config/timewindow-style.component';
 import { TimewindowStylePanelComponent } from '@home/components/widget/config/timewindow-style-panel.component';
+import { DataKeysPanelComponent } from '@home/components/widget/config/basic/common/data-keys-panel.component';
+import { DataKeyRowComponent } from '@home/components/widget/config/basic/common/data-key-row.component';
+import { WidgetActionsPanelComponent } from '@home/components/widget/config/basic/common/widget-actions-panel.component';
 
 @NgModule({
   declarations:
@@ -48,7 +51,10 @@ import { TimewindowStylePanelComponent } from '@home/components/widget/config/ti
       TimewindowStyleComponent,
       TimewindowStylePanelComponent,
       TimewindowConfigPanelComponent,
-      WidgetSettingsComponent
+      DataKeysPanelComponent,
+      DataKeyRowComponent,
+      WidgetSettingsComponent,
+      WidgetActionsPanelComponent
     ],
   imports: [
     CommonModule,
@@ -61,6 +67,8 @@ import { TimewindowStylePanelComponent } from '@home/components/widget/config/ti
     AlarmFilterConfigComponent,
     DataKeysComponent,
     DataKeyConfigDialogComponent,
+    DataKeysPanelComponent,
+    DataKeyRowComponent,
     DataKeyConfigComponent,
     DatasourceComponent,
     DatasourcesComponent,
@@ -70,7 +78,8 @@ import { TimewindowStylePanelComponent } from '@home/components/widget/config/ti
     TimewindowStylePanelComponent,
     TimewindowConfigPanelComponent,
     WidgetSettingsComponent,
-    WidgetSettingsCommonModule
+    WidgetSettingsCommonModule,
+    WidgetActionsPanelComponent
   ]
 })
 export class WidgetConfigComponentsModule { }
