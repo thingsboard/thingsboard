@@ -35,7 +35,7 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTimestamp">
         {{ 'widgets.table.display-timestamp' | translate }}
       </mat-slide-toggle>
-      <tb-date-format-select fxFlex [dateFormatList]="dateFormatList" formControlName="dateFormat"></tb-date-format-select>
+      <tb-date-format-select fxFlex excludeLastUpdateAgo formControlName="dateFormat"></tb-date-format-select>
     </div>
 
     <mat-slide-toggle class="mat-slide"  formControlName="enableStickyAction">

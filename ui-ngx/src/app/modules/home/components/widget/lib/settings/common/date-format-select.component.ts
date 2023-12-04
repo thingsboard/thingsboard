@@ -29,6 +29,7 @@ import { deepClone } from '@core/utils';
 import {
   DateFormatSettingsPanelComponent
 } from '@home/components/widget/lib/settings/common/date-format-settings-panel.component';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-date-format-select',
@@ -50,17 +51,11 @@ export class DateFormatSelectComponent implements OnInit, ControlValueAccessor {
   @Input()
   disabled: boolean;
 
-  private dateFormatValue = dateFormats;
-  get dateFormatList(): DateFormatSettings[] {
-    return this.dateFormatValue;
-  }
-
   @Input()
-  set dateFormatList(value) {
-    if (value && value.length) {
-      this.dateFormatValue = value;
-    }
-  }
+  @coerceBoolean()
+  excludeLastUpdateAgo = false;
+
+  dateFormatList: DateFormatSettings[];
 
   dateFormatsCompare = compareDateFormats;
 
@@ -79,6 +74,8 @@ export class DateFormatSelectComponent implements OnInit, ControlValueAccessor {
               private viewContainerRef: ViewContainerRef) {}
 
   ngOnInit(): void {
+    this.dateFormatList = this.excludeLastUpdateAgo ?
+      dateFormats.filter(format => !format.lastUpdateAgo) : dateFormats;
     this.dateFormatFormControl = new UntypedFormControl();
     this.dateFormatFormControl.valueChanges.subscribe((value: DateFormatSettings) => {
       this.updateModel(value);

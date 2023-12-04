@@ -19,7 +19,6 @@ import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.m
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { customDateFormat, simpleDateFormat } from '@shared/models/widget-settings.models';
 
 @Component({
   selector: 'tb-timeseries-table-widget-settings',
@@ -29,10 +28,6 @@ import { customDateFormat, simpleDateFormat } from '@shared/models/widget-settin
 export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsComponent {
 
   timeseriesTableWidgetSettingsForm: UntypedFormGroup;
-
-  dateFormatList = ['yyyy-MM-dd HH:mm:ss', 'yyyy-MM-dd HH:mm:ss.SSS', 'MMM dd yyyy HH:mm', 'dd MMM yyyy HH:mm', 'yyyy MMM dd HH:mm',
-    'MM/dd/yyyy HH:mm', 'dd/MM/yyyy HH:mm', 'yyyy/MM/dd HH:mm:ss']
-    .map(f => simpleDateFormat(f)).concat([customDateFormat('EEE, MMMM dd, yyyy')]);
 
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder) {

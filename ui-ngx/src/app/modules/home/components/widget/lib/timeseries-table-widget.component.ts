@@ -322,7 +322,12 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     this.hideEmptyLines = isDefined(this.settings.hideEmptyLines) ? this.settings.hideEmptyLines : false;
     this.useEntityLabel = isDefined(this.widgetConfig.settings.useEntityLabel) ? this.widgetConfig.settings.useEntityLabel : false;
     this.showTimestamp = this.settings.showTimestamp !== false;
-    this.dateFormatFilter = isDefined(this.settings.dateFormat?.format) ? this.settings.dateFormat?.format : 'yyyy-MM-dd HH:mm:ss';
+    // For backward compatibility
+    if (isDefined(this.settings?.showMilliseconds) && this.settings?.showMilliseconds) {
+      this.dateFormatFilter = 'yyyy-MM-dd HH:mm:ss.SSS';
+    } else {
+      this.dateFormatFilter = isDefined(this.settings.dateFormat?.format) ? this.settings.dateFormat?.format : 'yyyy-MM-dd HH:mm:ss';
+    }
 
     this.rowStylesInfo = getRowStyleInfo(this.settings, 'rowData, ctx');
 
