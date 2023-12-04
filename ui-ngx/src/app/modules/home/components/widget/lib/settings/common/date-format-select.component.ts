@@ -50,7 +50,17 @@ export class DateFormatSelectComponent implements OnInit, ControlValueAccessor {
   @Input()
   disabled: boolean;
 
-  dateFormatList = dateFormats;
+  private dateFormatValue = dateFormats;
+  get dateFormatList(): DateFormatSettings[] {
+    return this.dateFormatValue;
+  }
+
+  @Input()
+  set dateFormatList(value) {
+    if (value && value.length) {
+      this.dateFormatValue = value;
+    }
+  }
 
   dateFormatsCompare = compareDateFormats;
 

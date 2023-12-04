@@ -94,12 +94,13 @@ import {
 import { ComponentPortal } from '@angular/cdk/portal';
 import { FormBuilder } from '@angular/forms';
 import { DEFAULT_OVERLAY_POSITIONS } from '@shared/models/overlay.models';
+import { DateFormatSettings } from '@shared/models/widget-settings.models';
 
 export interface TimeseriesTableWidgetSettings extends TableWidgetSettings {
   showTimestamp: boolean;
   showMilliseconds: boolean;
   hideEmptyLines: boolean;
-  timeFormat: '12h' | '24h';
+  dateFormat: DateFormatSettings;
 }
 
 interface TimeseriesWidgetLatestDataKeySettings extends TableWidgetDataKeySettings {
@@ -321,8 +322,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     this.hideEmptyLines = isDefined(this.settings.hideEmptyLines) ? this.settings.hideEmptyLines : false;
     this.useEntityLabel = isDefined(this.widgetConfig.settings.useEntityLabel) ? this.widgetConfig.settings.useEntityLabel : false;
     this.showTimestamp = this.settings.showTimestamp !== false;
-    const timeFormat: '12h' | '24h' = isDefined(this.settings.timeFormat) ? this.settings.timeFormat : '24h';
-    this.dateFormatFilter = `yyyy-MM-dd ${timeFormat === '24h' ? 'HH' : 'hh'}:mm:ss${this.settings.showMilliseconds ? '.SSS' : ''}`;
+    this.dateFormatFilter = isDefined(this.settings.dateFormat?.format) ? this.settings.dateFormat?.format : 'yyyy-MM-dd HH:mm:ss';
 
     this.rowStylesInfo = getRowStyleInfo(this.settings, 'rowData, ctx');
 

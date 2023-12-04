@@ -6066,7 +6066,6 @@
             "show-empty-space-hidden-action": "Mostrar espacio vacío en lugar de celda oculta",
             "dont-reserve-space-hidden-action": "No reservar espacio para los botones en celda oculta",
             "display-timestamp": "Mostrar columna timestamp",
-            "display-milliseconds": "Mostrar milisegundos",
             "display-pagination": "Mostrar páginas",
             "default-page-size": "Tamaño de página por defecto",
             "use-entity-label-tab-name": "Usar etiqueta de entidad en el nombre de la tabla",

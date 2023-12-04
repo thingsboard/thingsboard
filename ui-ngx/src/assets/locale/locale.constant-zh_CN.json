@@ -5072,7 +5072,6 @@
             "show-empty-space-hidden-action": "显示空白区域而不是隐藏单元格按钮操作",
             "dont-reserve-space-hidden-action": "不为隐藏的操作按钮预留空间",
             "display-timestamp": "显示时间戳列",
-            "display-milliseconds": "显示时间戳毫秒",
             "display-pagination": "显示分页",
             "default-page-size": "默认页面大小",
             "use-entity-label-tab-name": "在选项卡名称中使用实体标签",
