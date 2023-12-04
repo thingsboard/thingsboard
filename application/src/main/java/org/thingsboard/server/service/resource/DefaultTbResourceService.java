@@ -53,6 +53,9 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
 
     @Override
     public TbResource save(TbResource resource, User user) throws ThingsboardException {
+        if (resource.getResourceType() == ResourceType.IMAGE) {
+            throw new IllegalArgumentException("Image resource type is not supported");
+        }
         ActionType actionType = resource.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = resource.getTenantId();
         try {
@@ -74,6 +77,9 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
 
     @Override
     public void delete(TbResource tbResource, User user) {
+        if (tbResource.getResourceType() == ResourceType.IMAGE) {
+            throw new IllegalArgumentException("Image resource type is not supported");
+        }
         TbResourceId resourceId = tbResource.getId();
         TenantId tenantId = tbResource.getTenantId();
         try {

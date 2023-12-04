@@ -88,6 +88,9 @@ public interface TbResourceRepository extends JpaRepository<TbResourceEntity, UU
     @Query(value = "SELECT COALESCE(preview, data) FROM resource WHERE id = :id", nativeQuery = true)
     byte[] getPreviewById(@Param("id") UUID id);
 
+    @Query(value = "SELECT length(r.data) FROM resource r WHERE r.id = :id", nativeQuery = true)
+    long getDataSizeById(@Param("id") UUID id);
+
     @Query("SELECT externalId FROM TbResourceInfoEntity WHERE id = :id")
     UUID getExternalIdByInternal(@Param("id") UUID internalId);
 
