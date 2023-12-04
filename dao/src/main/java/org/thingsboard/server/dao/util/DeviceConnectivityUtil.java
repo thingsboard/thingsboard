@@ -46,6 +46,8 @@ public class DeviceConnectivityUtil {
     public static final String GATEWAY_DOCKER_RUN = "docker run -it ";
 
     public static final String NETWORK_HOST_PARAM = "--network=host ";
+    public static final String HOST_DOCKER_INTERNAL = "host.docker.internal";
+    public static final String ADD_DOCKER_INTERNAL_HOST = "--add-host=" + HOST_DOCKER_INTERNAL + ":host-gateway ";
     public static final String MQTT_IMAGE = "thingsboard/mosquitto-clients ";
     public static final String COAP_IMAGE = "thingsboard/coap-clients ";
     private final static Pattern VALID_URL_PATTERN = Pattern.compile("^(https?)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]");
@@ -103,10 +105,10 @@ public class DeviceConnectivityUtil {
         command.append("-v {gatewayVolumePathPrefix}/logs:/thingsboard_gateway/logs ".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
         command.append("-v {gatewayVolumePathPrefix}/extensions:/thingsboard_gateway/extensions ".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
         command.append("-v {gatewayVolumePathPrefix}/config:/thingsboard_gateway/config ".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
-        command.append(isLocalhost(host) ? NETWORK_HOST_PARAM : "");
-        command.append("-p 5000:5000 ");
+        command.append(isLocalhost(host) ? ADD_DOCKER_INTERNAL_HOST : "");
+        command.append(NETWORK_HOST_PARAM);
         command.append("--name ").append(gatewayContainerName).append(" ");
-        command.append("-e host=").append(host).append(" ");
+        command.append("-e host=").append(isLocalhost(host) ? HOST_DOCKER_INTERNAL : host).append(" ");
         command.append("-e port=").append(port);
 
         switch (deviceCredentials.getCredentialsType()) {
@@ -148,7 +150,11 @@ public class DeviceConnectivityUtil {
         }
 
         StringBuilder mqttDockerCommand = new StringBuilder();
-        mqttDockerCommand.append(DOCKER_RUN).append(isLocalhost(host) ? NETWORK_HOST_PARAM : "").append(MQTT_IMAGE);
+        mqttDockerCommand.append(DOCKER_RUN).append(isLocalhost(host) ? ADD_DOCKER_INTERNAL_HOST : "").append(MQTT_IMAGE);
+
+        if (isLocalhost(host)){
+            mqttCommand = mqttCommand.replace(host, HOST_DOCKER_INTERNAL);
+        }
 
         if (MQTTS.equals(protocol)) {
             mqttDockerCommand.append("/bin/sh -c \"")
@@ -180,7 +186,10 @@ public class DeviceConnectivityUtil {
 
     public static String getDockerCoapPublishCommand(String protocol, String host, String port, DeviceCredentials deviceCredentials) {
         String coapCommand = getCoapPublishCommand(protocol, host, port, deviceCredentials);
-        return coapCommand != null ? String.format("%s%s%s", DOCKER_RUN + (isLocalhost(host) ? NETWORK_HOST_PARAM : ""), COAP_IMAGE, coapCommand) : null;
+        if (coapCommand != null && isLocalhost(host)) {
+            coapCommand = coapCommand.replace(host, HOST_DOCKER_INTERNAL);
+        }
+        return coapCommand != null ? String.format("%s%s%s", DOCKER_RUN + (isLocalhost(host) ? ADD_DOCKER_INTERNAL_HOST : ""), COAP_IMAGE, coapCommand) : null;
     }
 
     public static String getHost(String baseUrl, DeviceConnectivityInfo properties, String protocol) throws URISyntaxException {
