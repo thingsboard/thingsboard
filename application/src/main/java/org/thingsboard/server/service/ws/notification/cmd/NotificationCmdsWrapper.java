@@ -41,12 +41,16 @@ public class NotificationCmdsWrapper {
     @JsonIgnore
     public WsCommandsWrapper toCommonCmdsWrapper() {
         WsCommandsWrapper wrapper = new WsCommandsWrapper();
-        wrapper.setUnreadNotificationsCountSubCmds(List.of(unreadCountSubCmd));
-        wrapper.setUnreadNotificationsSubCmds(List.of(unreadSubCmd));
-        wrapper.setMarkNotificationAsReadCmds(List.of(markAsReadCmd));
-        wrapper.setMarkAllNotificationsAsReadCmds(List.of(markAllAsReadCmd));
-        wrapper.setNotificationsUnsubCmds(List.of(unsubCmd));
+        wrapper.setUnreadNotificationsCountSubCmds(toList(unreadCountSubCmd));
+        wrapper.setUnreadNotificationsSubCmds(toList(unreadSubCmd));
+        wrapper.setMarkNotificationAsReadCmds(toList(markAsReadCmd));
+        wrapper.setMarkAllNotificationsAsReadCmds(toList(markAllAsReadCmd));
+        wrapper.setNotificationsUnsubCmds(toList(unsubCmd));
         return wrapper;
+    }
+
+    private <C> List<C> toList(C cmd) {
+        return cmd != null ? List.of(cmd) : null;
     }
 
 }
