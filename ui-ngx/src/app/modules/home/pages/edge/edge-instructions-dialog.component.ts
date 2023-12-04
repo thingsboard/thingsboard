@@ -65,6 +65,9 @@ export class EdgeInstructionsDialogComponent extends DialogComponent<EdgeInstruc
     if (this.data.afterAdd) {
       this.dialogTitle = 'edge.install-connect-instructions-edge-created';
       this.showDontShowAgain = true;
+    } else if (this.data.upgradeAvailable) {
+      this.dialogTitle = 'edge.upgrade-instructions';
+      this.showDontShowAgain = false;
     } else {
       this.dialogTitle = 'edge.install-connect-instructions';
       this.showDontShowAgain = false;

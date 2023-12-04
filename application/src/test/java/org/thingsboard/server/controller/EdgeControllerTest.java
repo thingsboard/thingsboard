@@ -48,6 +48,7 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.UpgradeInfo;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
@@ -83,9 +84,11 @@ import org.thingsboard.server.gen.edge.v1.TenantUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
+import org.thingsboard.server.service.edge.instructions.EdgeUpgradeInstructionsService;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -115,6 +118,9 @@ public class EdgeControllerTest extends AbstractControllerTest {
 
     @Autowired
     private EdgeDao edgeDao;
+
+    @Autowired
+    private EdgeUpgradeInstructionsService edgeUpgradeInstructionsService;
 
     static class Config {
         @Bean
@@ -1180,6 +1186,12 @@ public class EdgeControllerTest extends AbstractControllerTest {
 
     @Test
     public void testGetEdgeUpgradeInstructions() throws Exception {
+        // UpdateInfo config is updating from Thingsboard Update server
+        HashMap<String, UpgradeInfo> upgradeInfoHashMap = new HashMap<>();
+        upgradeInfoHashMap.put("3.6.0", new UpgradeInfo(true, "3.6.1"));
+        upgradeInfoHashMap.put("3.6.1", new UpgradeInfo(true, "3.6.2"));
+        upgradeInfoHashMap.put("3.6.2", new UpgradeInfo(true, null));
+        edgeUpgradeInstructionsService.updateInstructionMap(upgradeInfoHashMap);
         Edge edge = constructEdge("Edge for Test Docker Upgrade Instructions", "default");
         Edge savedEdge = doPost("/api/edge", edge, Edge.class);
         String body = "{\"edgeVersion\": \"V_3_6_0\"}";
