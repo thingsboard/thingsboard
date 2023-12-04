@@ -294,8 +294,9 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
 
     @Test
     public void testFetchGatewayLaunchCommands() throws Exception {
+        String deviceName = "My device";
         Device device = new Device();
-        device.setName("My device");
+        device.setName(deviceName);
         device.setType("default");
         ObjectNode additionalInfo = JacksonUtil.newObjectNode();
         additionalInfo.put("gateway", true);
@@ -308,13 +309,15 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
                 doGetTyped("/api/device-connectivity/gateway-launch/" + savedDevice.getId().getId(), new TypeReference<>() {
                 });
 
+        String expectedContainerName = deviceName.replaceAll("[^A-Za-z0-9_.-]", "");;
+
         JsonNode dockerMqttCommands = commands.get(MQTT);
-        assertThat(dockerMqttCommands.get(LINUX).asText()).isEqualTo(String.format("docker run -it -v ~/.tb-gateway/logs:/thingsboard_gateway/logs -v ~/.tb-gateway/extensions:/thingsboard_gateway/extensions -v ~/.tb-gateway/config:/thingsboard_gateway/config --add-host=host.docker.internal:host-gateway --network=host --name tbGatewayLocalhost -e host=host.docker.internal -e port=1883 -e accessToken=%s --restart always thingsboard/tb-gateway", credentials.getCredentialsId()));
-        assertThat(dockerMqttCommands.get(WINDOWS).asText()).isEqualTo("docker run -it -v %HOMEPATH%/tb-gateway/logs:/thingsboard_gateway/logs -v %HOMEPATH%/tb-gateway/extensions:/thingsboard_gateway/extensions -v %HOMEPATH%/tb-gateway/config:/thingsboard_gateway/config --add-host=host.docker.internal:host-gateway --network=host --name tbGatewayLocalhost -e host=host.docker.internal -e port=1883 -e accessToken=" + credentials.getCredentialsId() + " --restart always thingsboard/tb-gateway");
+        assertThat(dockerMqttCommands.get(LINUX).asText()).isEqualTo(String.format("docker run -it -v ~/.tb-gateway/logs:/thingsboard_gateway/logs -v ~/.tb-gateway/extensions:/thingsboard_gateway/extensions -v ~/.tb-gateway/config:/thingsboard_gateway/config --name " + expectedContainerName + " --add-host=host.docker.internal:host-gateway -p 60000-61000:60000-61000 -e host=host.docker.internal -e port=1883 -e accessToken=%s --restart always thingsboard/tb-gateway", credentials.getCredentialsId()));
+        assertThat(dockerMqttCommands.get(WINDOWS).asText()).isEqualTo("docker run -it -v %HOMEDRIVE%%HOMEPATH%\\tb-gateway\\logs:/thingsboard_gateway/logs -v %HOMEDRIVE%%HOMEPATH%\\tb-gateway\\extensions:/thingsboard_gateway/extensions -v %HOMEDRIVE%%HOMEPATH%\\tb-gateway\\config:/thingsboard_gateway/config --name " + expectedContainerName + " --add-host=host.docker.internal:host-gateway -p 60000-61000:60000-61000 -e host=host.docker.internal -e port=1883 -e accessToken=" + credentials.getCredentialsId() + " --restart always thingsboard/tb-gateway");
 
         JsonNode dockerMqttsCommands = commands.get(MQTTS);
-        assertThat(dockerMqttsCommands.get(LINUX).asText()).isEqualTo(String.format("docker run -it -v ~/.tb-gateway/logs:/thingsboard_gateway/logs -v ~/.tb-gateway/extensions:/thingsboard_gateway/extensions -v ~/.tb-gateway/config:/thingsboard_gateway/config --add-host=host.docker.internal:host-gateway --network=host --name tbGatewayLocalhost -e host=host.docker.internal -e port=8883 -e accessToken=%s --restart always thingsboard/tb-gateway", credentials.getCredentialsId()));
-        assertThat(dockerMqttsCommands.get(WINDOWS).asText()).isEqualTo("docker run -it -v %HOMEPATH%/tb-gateway/logs:/thingsboard_gateway/logs -v %HOMEPATH%/tb-gateway/extensions:/thingsboard_gateway/extensions -v %HOMEPATH%/tb-gateway/config:/thingsboard_gateway/config --add-host=host.docker.internal:host-gateway --network=host --name tbGatewayLocalhost -e host=host.docker.internal -e port=8883 -e accessToken=" + credentials.getCredentialsId() + " --restart always thingsboard/tb-gateway");
+        assertThat(dockerMqttsCommands.get(LINUX).asText()).isEqualTo(String.format("docker run -it -v ~/.tb-gateway/logs:/thingsboard_gateway/logs -v ~/.tb-gateway/extensions:/thingsboard_gateway/extensions -v ~/.tb-gateway/config:/thingsboard_gateway/config --name " + expectedContainerName + " --add-host=host.docker.internal:host-gateway -p 60000-61000:60000-61000 -e host=host.docker.internal -e port=8883 -e accessToken=%s --restart always thingsboard/tb-gateway", credentials.getCredentialsId()));
+        assertThat(dockerMqttsCommands.get(WINDOWS).asText()).isEqualTo("docker run -it -v %HOMEDRIVE%%HOMEPATH%\\tb-gateway\\logs:/thingsboard_gateway/logs -v %HOMEDRIVE%%HOMEPATH%\\tb-gateway\\extensions:/thingsboard_gateway/extensions -v %HOMEDRIVE%%HOMEPATH%\\tb-gateway\\config:/thingsboard_gateway/config --name " + expectedContainerName + " --add-host=host.docker.internal:host-gateway -p 60000-61000:60000-61000 -e host=host.docker.internal -e port=8883 -e accessToken=" + credentials.getCredentialsId() + " --restart always thingsboard/tb-gateway");
     }
 
     @Test

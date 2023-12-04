@@ -93,21 +93,21 @@ public class DeviceConnectivityUtil {
         return command.toString();
     }
 
-    public static String getGatewayLaunchCommand(String os, String host, String port, DeviceCredentials deviceCredentials) {
-        String gatewayVolumePathPrefix = "~/.tb-gateway";
+    public static String getGatewayLaunchCommand(String os, String deviceName, String host, String port, DeviceCredentials deviceCredentials) {
+        String gatewayVolumePathPrefix = "~/.tb-gateway/";
         if (WINDOWS.equals(os)) {
-            gatewayVolumePathPrefix = "%HOMEPATH%/tb-gateway";
+            gatewayVolumePathPrefix = "%HOMEDRIVE%%HOMEPATH%\\tb-gateway\\";
         }
 
-        String gatewayContainerName = "tbGateway" + StringUtils.capitalize(host.replaceAll("[^A-Za-z0-9]", ""));
+        String gatewayContainerName = deviceName.replaceAll("[^A-Za-z0-9_.-]", "");
 
         StringBuilder command = new StringBuilder(GATEWAY_DOCKER_RUN);
-        command.append("-v {gatewayVolumePathPrefix}/logs:/thingsboard_gateway/logs ".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
-        command.append("-v {gatewayVolumePathPrefix}/extensions:/thingsboard_gateway/extensions ".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
-        command.append("-v {gatewayVolumePathPrefix}/config:/thingsboard_gateway/config ".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
-        command.append(isLocalhost(host) ? ADD_DOCKER_INTERNAL_HOST : "");
-        command.append(NETWORK_HOST_PARAM);
+        command.append("-v {gatewayVolumePathPrefix}logs:/thingsboard_gateway/logs ".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
+        command.append("-v {gatewayVolumePathPrefix}extensions:/thingsboard_gateway/extensions ".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
+        command.append("-v {gatewayVolumePathPrefix}config:/thingsboard_gateway/config ".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
         command.append("--name ").append(gatewayContainerName).append(" ");
+        command.append(isLocalhost(host) ? ADD_DOCKER_INTERNAL_HOST : "");
+        command.append("-p 60000-61000:60000-61000 ");
         command.append("-e host=").append(isLocalhost(host) ? HOST_DOCKER_INTERNAL : host).append(" ");
         command.append("-e port=").append(port);
 
