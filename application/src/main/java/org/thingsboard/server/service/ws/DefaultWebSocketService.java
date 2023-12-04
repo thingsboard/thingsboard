@@ -66,7 +66,7 @@ import org.thingsboard.server.service.subscription.TbTimeSeriesSubscription;
 import org.thingsboard.server.service.ws.notification.NotificationCommandsHandler;
 import org.thingsboard.server.service.ws.notification.cmd.NotificationCmdsWrapper;
 import org.thingsboard.server.service.ws.notification.cmd.WsCmd;
-import org.thingsboard.server.service.ws.telemetry.cmd.WsCmdsWrapper;
+import org.thingsboard.server.service.ws.telemetry.cmd.WsCommandsWrapper;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.AttributesSubscriptionCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.GetHistoryCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.SubscriptionCmd;
@@ -160,22 +160,22 @@ public class DefaultWebSocketService implements WebSocketService {
         pingExecutor.scheduleWithFixedDelay(this::sendPing, pingTimeout / NUMBER_OF_PING_ATTEMPTS, pingTimeout / NUMBER_OF_PING_ATTEMPTS, TimeUnit.MILLISECONDS);
 
         cmdsHandlers = List.of(
-                newCmdsHandler(WsCmdsWrapper::getAttrSubCmds, this::handleWsAttributesSubscriptionCmd),
-                newCmdsHandler(WsCmdsWrapper::getTsSubCmds, this::handleWsTimeseriesSubscriptionCmd),
-                newCmdsHandler(WsCmdsWrapper::getHistoryCmds, this::handleWsHistoryCmd),
-                newCmdsHandler(WsCmdsWrapper::getEntityDataCmds, this::handleWsEntityDataCmd),
-                newCmdsHandler(WsCmdsWrapper::getAlarmDataCmds, this::handleWsAlarmDataCmd),
-                newCmdsHandler(WsCmdsWrapper::getEntityCountCmds, this::handleWsEntityCountCmd),
-                newCmdsHandler(WsCmdsWrapper::getAlarmCountCmds, this::handleWsAlarmCountCmd),
-                newCmdsHandler(WsCmdsWrapper::getEntityDataUnsubscribeCmds, this::handleWsDataUnsubscribeCmd),
-                newCmdsHandler(WsCmdsWrapper::getAlarmDataUnsubscribeCmds, this::handleWsDataUnsubscribeCmd),
-                newCmdsHandler(WsCmdsWrapper::getEntityCountUnsubscribeCmds, this::handleWsDataUnsubscribeCmd),
-                newCmdsHandler(WsCmdsWrapper::getAlarmCountUnsubscribeCmds, this::handleWsDataUnsubscribeCmd),
-                newCmdHandler(WsCmdsWrapper::getUnreadNotificationsSubCmd, notificationCmdsHandler::handleUnreadNotificationsSubCmd),
-                newCmdHandler(WsCmdsWrapper::getUnreadNotificationsCountSubCmd, notificationCmdsHandler::handleUnreadNotificationsCountSubCmd),
-                newCmdHandler(WsCmdsWrapper::getMarkNotificationAsReadCmd, notificationCmdsHandler::handleMarkAsReadCmd),
-                newCmdHandler(WsCmdsWrapper::getMarkAllNotificationsAsReadCmd, notificationCmdsHandler::handleMarkAllAsReadCmd),
-                newCmdHandler(WsCmdsWrapper::getNotificationsUnsubCmd, notificationCmdsHandler::handleUnsubCmd)
+                newCmdsHandler(WsCommandsWrapper::getAttrSubCmds, this::handleWsAttributesSubscriptionCmd),
+                newCmdsHandler(WsCommandsWrapper::getTsSubCmds, this::handleWsTimeseriesSubscriptionCmd),
+                newCmdsHandler(WsCommandsWrapper::getHistoryCmds, this::handleWsHistoryCmd),
+                newCmdsHandler(WsCommandsWrapper::getEntityDataCmds, this::handleWsEntityDataCmd),
+                newCmdsHandler(WsCommandsWrapper::getAlarmDataCmds, this::handleWsAlarmDataCmd),
+                newCmdsHandler(WsCommandsWrapper::getEntityCountCmds, this::handleWsEntityCountCmd),
+                newCmdsHandler(WsCommandsWrapper::getAlarmCountCmds, this::handleWsAlarmCountCmd),
+                newCmdsHandler(WsCommandsWrapper::getEntityDataUnsubscribeCmds, this::handleWsDataUnsubscribeCmd),
+                newCmdsHandler(WsCommandsWrapper::getAlarmDataUnsubscribeCmds, this::handleWsDataUnsubscribeCmd),
+                newCmdsHandler(WsCommandsWrapper::getEntityCountUnsubscribeCmds, this::handleWsDataUnsubscribeCmd),
+                newCmdsHandler(WsCommandsWrapper::getAlarmCountUnsubscribeCmds, this::handleWsDataUnsubscribeCmd),
+                newCmdsHandler(WsCommandsWrapper::getUnreadNotificationsSubCmds, notificationCmdsHandler::handleUnreadNotificationsSubCmd),
+                newCmdsHandler(WsCommandsWrapper::getUnreadNotificationsCountSubCmds, notificationCmdsHandler::handleUnreadNotificationsCountSubCmd),
+                newCmdsHandler(WsCommandsWrapper::getMarkNotificationAsReadCmds, notificationCmdsHandler::handleMarkAsReadCmd),
+                newCmdsHandler(WsCommandsWrapper::getMarkAllNotificationsAsReadCmds, notificationCmdsHandler::handleMarkAllAsReadCmd),
+                newCmdsHandler(WsCommandsWrapper::getNotificationsUnsubCmds, notificationCmdsHandler::handleUnsubCmd)
         );
     }
 
@@ -232,7 +232,7 @@ public class DefaultWebSocketService implements WebSocketService {
     }
 
     private void processCmds(WebSocketSessionRef sessionRef, String msg) throws JsonProcessingException {
-        WsCmdsWrapper cmdsWrapper = JacksonUtil.fromString(msg, WsCmdsWrapper.class);
+        WsCommandsWrapper cmdsWrapper = JacksonUtil.fromString(msg, WsCommandsWrapper.class);
         processCmds(sessionRef, cmdsWrapper);
     }
 
@@ -241,7 +241,7 @@ public class DefaultWebSocketService implements WebSocketService {
         processCmds(sessionRef, cmdsWrapper.toCommonCmdsWrapper());
     }
 
-    private void processCmds(WebSocketSessionRef sessionRef, WsCmdsWrapper cmdsWrapper) {
+    private void processCmds(WebSocketSessionRef sessionRef, WsCommandsWrapper cmdsWrapper) {
         if (cmdsWrapper == null) {
             return;
         }
@@ -1033,22 +1033,17 @@ public class DefaultWebSocketService implements WebSocketService {
     }
 
 
-    public static <C extends WsCmd> WsCmdHandler<C> newCmdHandler(java.util.function.Function<WsCmdsWrapper, C> cmdExtractor,
-                                                                  BiConsumer<WebSocketSessionRef, C> handler) {
-        return new WsCmdHandler<>(cmdExtractor, handler);
-    }
-
-    public static <C extends WsCmd> WsCmdsHandler<C> newCmdsHandler(java.util.function.Function<WsCmdsWrapper, List<C>> cmdsExtractor,
+    public static <C extends WsCmd> WsCmdsHandler<C> newCmdsHandler(java.util.function.Function<WsCommandsWrapper, List<C>> cmdsExtractor,
                                                                     BiConsumer<WebSocketSessionRef, C> handler) {
         return new WsCmdsHandler<>(cmdsExtractor, handler);
     }
 
     @RequiredArgsConstructor
     public static class WsCmdsHandler<C extends WsCmd> {
-        private final java.util.function.Function<WsCmdsWrapper, List<C>> cmdsExtractor;
+        private final java.util.function.Function<WsCommandsWrapper, List<C>> cmdsExtractor;
         protected final BiConsumer<WebSocketSessionRef, C> handler;
 
-        public List<C> extract(WsCmdsWrapper cmdsWrapper) {
+        public List<C> extract(WsCommandsWrapper cmdsWrapper) {
             return cmdsExtractor.apply(cmdsWrapper);
         }
 
@@ -1059,7 +1054,7 @@ public class DefaultWebSocketService implements WebSocketService {
     }
 
     public static class WsCmdHandler<C extends WsCmd> extends WsCmdsHandler<C> {
-        public WsCmdHandler(java.util.function.Function<WsCmdsWrapper, C> cmdExtractor, BiConsumer<WebSocketSessionRef, C> handler) {
+        public WsCmdHandler(java.util.function.Function<WsCommandsWrapper, C> cmdExtractor, BiConsumer<WebSocketSessionRef, C> handler) {
             super(cmdsWrapper -> {
                 C cmd = cmdExtractor.apply(cmdsWrapper);
                 return cmd != null ? List.of(cmd) : null;

@@ -39,7 +39,7 @@ import java.util.List;
  * @author Andrew Shvayka
  */
 @Data
-public class WsCmdsWrapper {
+public class WsCommandsWrapper {
 
     private List<AttributesSubscriptionCmd> attrSubCmds;
 
@@ -63,14 +63,14 @@ public class WsCmdsWrapper {
 
     private List<AlarmCountUnsubscribeCmd> alarmCountUnsubscribeCmds;
 
-    private NotificationsCountSubCmd unreadNotificationsCountSubCmd;
+    private List<NotificationsCountSubCmd> unreadNotificationsCountSubCmds;
 
-    private NotificationsSubCmd unreadNotificationsSubCmd;
+    private List<NotificationsSubCmd> unreadNotificationsSubCmds;
 
-    private MarkNotificationsAsReadCmd markNotificationAsReadCmd;
+    private List<MarkNotificationsAsReadCmd> markNotificationAsReadCmds;
 
-    private MarkAllNotificationsAsReadCmd markAllNotificationsAsReadCmd;
+    private List<MarkAllNotificationsAsReadCmd> markAllNotificationsAsReadCmds;
 
-    private NotificationsUnsubCmd notificationsUnsubCmd;
+    private List<NotificationsUnsubCmd> notificationsUnsubCmds;
 
 }

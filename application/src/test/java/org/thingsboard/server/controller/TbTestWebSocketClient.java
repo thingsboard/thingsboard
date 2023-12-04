@@ -28,7 +28,7 @@ import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityFilter;
 import org.thingsboard.server.common.data.query.EntityKey;
-import org.thingsboard.server.service.ws.telemetry.cmd.WsCmdsWrapper;
+import org.thingsboard.server.service.ws.telemetry.cmd.WsCommandsWrapper;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.AttributesSubscriptionCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountUpdate;
@@ -106,19 +106,19 @@ public class TbTestWebSocketClient extends WebSocketClient {
     }
 
     public void send(EntityDataCmd cmd) throws NotYetConnectedException {
-        WsCmdsWrapper wrapper = new WsCmdsWrapper();
+        WsCommandsWrapper wrapper = new WsCommandsWrapper();
         wrapper.setEntityDataCmds(Collections.singletonList(cmd));
         this.send(JacksonUtil.toString(wrapper));
     }
 
     public void send(EntityCountCmd cmd) throws NotYetConnectedException {
-        WsCmdsWrapper wrapper = new WsCmdsWrapper();
+        WsCommandsWrapper wrapper = new WsCommandsWrapper();
         wrapper.setEntityCountCmds(Collections.singletonList(cmd));
         this.send(JacksonUtil.toString(wrapper));
     }
 
     public void send(AlarmCountCmd cmd) throws NotYetConnectedException {
-        WsCmdsWrapper wrapper = new WsCmdsWrapper();
+        WsCommandsWrapper wrapper = new WsCommandsWrapper();
         wrapper.setAlarmCountCmds(Collections.singletonList(cmd));
         this.send(JacksonUtil.toString(wrapper));
     }
@@ -240,7 +240,7 @@ public class TbTestWebSocketClient extends WebSocketClient {
         cmd.setEntityId(entityId.getId().toString());
         cmd.setScope(scope);
         cmd.setKeys(String.join(",", keys));
-        WsCmdsWrapper cmdsWrapper = new WsCmdsWrapper();
+        WsCommandsWrapper cmdsWrapper = new WsCommandsWrapper();
         cmdsWrapper.setAttrSubCmds(List.of(cmd));
         JsonNode msg = JacksonUtil.valueToTree(cmdsWrapper);
         ((ObjectNode) msg.get("attrSubCmds").get(0)).remove("type");

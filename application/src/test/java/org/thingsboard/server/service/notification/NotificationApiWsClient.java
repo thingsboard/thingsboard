@@ -28,7 +28,7 @@ import org.thingsboard.server.service.ws.notification.cmd.NotificationsCountSubC
 import org.thingsboard.server.service.ws.notification.cmd.NotificationsSubCmd;
 import org.thingsboard.server.service.ws.notification.cmd.UnreadNotificationsCountUpdate;
 import org.thingsboard.server.service.ws.notification.cmd.UnreadNotificationsUpdate;
-import org.thingsboard.server.service.ws.telemetry.cmd.WsCmdsWrapper;
+import org.thingsboard.server.service.ws.telemetry.cmd.WsCommandsWrapper;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.CmdUpdateType;
 
 import java.net.URI;
@@ -54,33 +54,33 @@ public class NotificationApiWsClient extends TbTestWebSocketClient {
     }
 
     public NotificationApiWsClient subscribeForUnreadNotifications(int limit) {
-        WsCmdsWrapper cmdsWrapper = new WsCmdsWrapper();
-        cmdsWrapper.setUnreadNotificationsSubCmd(new NotificationsSubCmd(1, limit));
+        WsCommandsWrapper cmdsWrapper = new WsCommandsWrapper();
+        cmdsWrapper.setUnreadNotificationsSubCmds(List.of(new NotificationsSubCmd(1, limit)));
         sendCmd(cmdsWrapper);
         this.limit = limit;
         return this;
     }
 
     public NotificationApiWsClient subscribeForUnreadNotificationsCount() {
-        WsCmdsWrapper cmdsWrapper = new WsCmdsWrapper();
-        cmdsWrapper.setUnreadNotificationsCountSubCmd(new NotificationsCountSubCmd(2));
+        WsCommandsWrapper cmdsWrapper = new WsCommandsWrapper();
+        cmdsWrapper.setUnreadNotificationsCountSubCmds(List.of(new NotificationsCountSubCmd(2)));
         sendCmd(cmdsWrapper);
         return this;
     }
 
     public void markNotificationAsRead(UUID... notifications) {
-        WsCmdsWrapper cmdsWrapper = new WsCmdsWrapper();
-        cmdsWrapper.setMarkNotificationAsReadCmd(new MarkNotificationsAsReadCmd(newCmdId(), Arrays.asList(notifications)));
+        WsCommandsWrapper cmdsWrapper = new WsCommandsWrapper();
+        cmdsWrapper.setMarkNotificationAsReadCmds(List.of(new MarkNotificationsAsReadCmd(newCmdId(), Arrays.asList(notifications))));
         sendCmd(cmdsWrapper);
     }
 
     public void markAllNotificationsAsRead() {
-        WsCmdsWrapper cmdsWrapper = new WsCmdsWrapper();
-        cmdsWrapper.setMarkAllNotificationsAsReadCmd(new MarkAllNotificationsAsReadCmd(newCmdId()));
+        WsCommandsWrapper cmdsWrapper = new WsCommandsWrapper();
+        cmdsWrapper.setMarkAllNotificationsAsReadCmds(List.of(new MarkAllNotificationsAsReadCmd(newCmdId())));
         sendCmd(cmdsWrapper);
     }
 
-    public void sendCmd(WsCmdsWrapper cmdsWrapper) {
+    public void sendCmd(WsCommandsWrapper cmdsWrapper) {
         String cmd = JacksonUtil.toString(cmdsWrapper);
         send(cmd);
     }

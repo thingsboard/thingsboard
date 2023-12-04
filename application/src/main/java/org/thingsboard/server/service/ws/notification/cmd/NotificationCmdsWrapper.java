@@ -17,10 +17,12 @@ package org.thingsboard.server.service.ws.notification.cmd;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
-import org.thingsboard.server.service.ws.telemetry.cmd.WsCmdsWrapper;
+import org.thingsboard.server.service.ws.telemetry.cmd.WsCommandsWrapper;
+
+import java.util.List;
 
 /**
- * @deprecated Use {@link org.thingsboard.server.service.ws.telemetry.cmd.WsCmdsWrapper}. This class is left for backward compatibility
+ * @deprecated Use {@link WsCommandsWrapper}. This class is left for backward compatibility
  * */
 @Data
 @Deprecated
@@ -37,13 +39,13 @@ public class NotificationCmdsWrapper {
     private NotificationsUnsubCmd unsubCmd;
 
     @JsonIgnore
-    public WsCmdsWrapper toCommonCmdsWrapper() {
-        WsCmdsWrapper wrapper = new WsCmdsWrapper();
-        wrapper.setUnreadNotificationsCountSubCmd(unreadCountSubCmd);
-        wrapper.setUnreadNotificationsSubCmd(unreadSubCmd);
-        wrapper.setMarkNotificationAsReadCmd(markAsReadCmd);
-        wrapper.setMarkAllNotificationsAsReadCmd(markAllAsReadCmd);
-        wrapper.setNotificationsUnsubCmd(unsubCmd);
+    public WsCommandsWrapper toCommonCmdsWrapper() {
+        WsCommandsWrapper wrapper = new WsCommandsWrapper();
+        wrapper.setUnreadNotificationsCountSubCmds(List.of(unreadCountSubCmd));
+        wrapper.setUnreadNotificationsSubCmds(List.of(unreadSubCmd));
+        wrapper.setMarkNotificationAsReadCmds(List.of(markAsReadCmd));
+        wrapper.setMarkAllNotificationsAsReadCmds(List.of(markAllAsReadCmd));
+        wrapper.setNotificationsUnsubCmds(List.of(unsubCmd));
         return wrapper;
     }
 
