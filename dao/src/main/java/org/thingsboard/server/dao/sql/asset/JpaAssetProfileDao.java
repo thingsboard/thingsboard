@@ -99,8 +99,8 @@ public class JpaAssetProfileDao extends JpaAbstractDao<AssetProfileEntity, Asset
     }
 
     @Override
-    public PageData<AssetProfile> findAll(PageLink pageLink) {
-        return DaoUtil.toPageData(assetProfileRepository.findAll(DaoUtil.toPageable(pageLink)));
+    public PageData<AssetProfile> findAllWithImages(PageLink pageLink) {
+        return DaoUtil.toPageData(assetProfileRepository.findAllByImageNotNull(DaoUtil.toPageable(pageLink)));
     }
 
     @Override

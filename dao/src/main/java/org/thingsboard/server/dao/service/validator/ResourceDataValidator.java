@@ -90,7 +90,12 @@ public class ResourceDataValidator extends DataValidator<TbResource> {
                 throw new IllegalArgumentException("Resource exceeds the maximum size of " + maxResourceSize + " bytes");
             }
             long maxSumResourcesDataInBytes = profileConfiguration.getMaxResourcesInBytes();
-            validateMaxSumDataSizePerTenant(tenantId, resourceDao, maxSumResourcesDataInBytes, resource.getData().length, TB_RESOURCE);
+            int dataSize = resource.getData().length;
+            if (resource.getId() != null) {
+                long prevSize = resourceDao.getResourceSize(tenantId, resource.getId());
+                dataSize -= prevSize;
+            }
+            validateMaxSumDataSizePerTenant(tenantId, resourceDao, maxSumResourcesDataInBytes, dataSize, TB_RESOURCE);
         }
         if (StringUtils.isEmpty(resource.getFileName())) {
             throw new DataValidationException("Resource file name should be specified!");

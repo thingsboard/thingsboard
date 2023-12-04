@@ -271,6 +271,12 @@ public class ThingsboardInstallService {
                         case "3.6.1":
                             log.info("Upgrading ThingsBoard from version 3.6.1 to 3.6.2 ...");
                             databaseEntitiesUpgradeService.upgradeDatabase("3.6.1");
+                            installScripts.loadSystemImages();
+                            if (!getEnv("SKIP_IMAGES_MIGRATION", false)) {
+                                installScripts.updateImages();
+                            } else {
+                                log.info("Skipping images migration. Run the upgrade with fromVersion as '3.6.2-images' to migrate");
+                            }
                             //TODO DON'T FORGET to update switch statement in the CacheCleanupService if you need to clear the cache
                             break;
                         default:
@@ -324,6 +330,7 @@ public class ThingsboardInstallService {
 //                systemDataLoaderService.loadSystemPlugins();
 //                systemDataLoaderService.loadSystemRules();
                 installScripts.loadSystemLwm2mResources();
+                installScripts.loadSystemImages();
 
                 if (loadDemo) {
                     log.info("Loading demo data...");

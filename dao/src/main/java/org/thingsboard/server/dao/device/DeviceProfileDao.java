@@ -47,6 +47,6 @@ public interface DeviceProfileDao extends Dao<DeviceProfile>, ExportableEntityDa
 
     DeviceProfile findByName(TenantId tenantId, String profileName);
 
-    PageData<DeviceProfile> findAll(PageLink pageLink);
+    PageData<DeviceProfile> findAllWithImages(PageLink pageLink);
 
 }

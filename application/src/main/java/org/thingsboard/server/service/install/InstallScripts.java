@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.install;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +58,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static org.thingsboard.server.utils.LwM2mObjectModelUtils.toLwm2mResource;
 
@@ -305,6 +307,22 @@ public class InstallScripts {
         imagesUpdater.updateDashboardsImages();
         imagesUpdater.updateDeviceProfilesImages();
         imagesUpdater.updateAssetProfilesImages();
+    }
+
+    @SneakyThrows
+    public void loadSystemImages() {
+        log.info("Loading system images...");
+        Stream<Path> dashboardsFiles = Files.list(Paths.get(getDataDir(), JSON_DIR, DEMO_DIR, DASHBOARDS_DIR));
+        try (dashboardsFiles) {
+            dashboardsFiles.forEach(file -> {
+                try {
+                    Dashboard dashboard = JacksonUtil.OBJECT_MAPPER.readValue(file.toFile(), Dashboard.class);
+                    imagesUpdater.createSystemImages(dashboard);
+                } catch (Exception e) {
+                    log.error("Failed to create system images for default dashboard {}", file.getFileName(), e);
+                }
+            });
+        }
     }
 
     public void loadDashboards(TenantId tenantId, CustomerId customerId) throws Exception {

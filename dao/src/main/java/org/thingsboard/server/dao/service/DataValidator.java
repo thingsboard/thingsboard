@@ -161,7 +161,7 @@ public abstract class DataValidator<D extends BaseData<?>> {
     }
 
     static void validateQueueNameOrTopic(String value, String fieldName) {
-        if (StringUtils.isEmpty(value) || value.trim().length() == 0 ) {
+        if (StringUtils.isEmpty(value) || value.trim().length() == 0) {
             throw new DataValidationException(String.format("Queue %s should be specified!", fieldName));
         }
         if (!QUEUE_PATTERN.matcher(value).matches()) {

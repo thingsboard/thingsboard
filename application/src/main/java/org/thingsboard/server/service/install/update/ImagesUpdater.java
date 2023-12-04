@@ -18,6 +18,7 @@ package org.thingsboard.server.service.install.update;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.HasImage;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -62,15 +63,23 @@ public class ImagesUpdater {
         updateImages(dashboardsIds, "dashboard", imageService::replaceBase64WithImageUrl, dashboardDao);
     }
 
+    public void createSystemImages(Dashboard defaultDashboard) {
+        defaultDashboard.setTenantId(TenantId.SYS_TENANT_ID);
+        boolean created = imageService.replaceBase64WithImageUrl(defaultDashboard);
+        if (created) {
+            log.debug("Created system images for default dashboard '{}'", defaultDashboard.getTitle());
+        }
+    }
+
     public void updateDeviceProfilesImages() {
         log.info("Updating device profiles images...");
-        var deviceProfiles = new PageDataIterable<>(deviceProfileDao::findAll, 256);
+        var deviceProfiles = new PageDataIterable<>(deviceProfileDao::findAllWithImages, 256);
         updateImages(deviceProfiles, "device profile", imageService::replaceBase64WithImageUrl, deviceProfileDao);
     }
 
     public void updateAssetProfilesImages() {
         log.info("Updating asset profiles images...");
-        var assetProfiles = new PageDataIterable<>(assetProfileDao::findAll, 256);
+        var assetProfiles = new PageDataIterable<>(assetProfileDao::findAllWithImages, 256);
         updateImages(assetProfiles, "asset profile", imageService::replaceBase64WithImageUrl, assetProfileDao);
     }
 

@@ -105,6 +105,11 @@ public class JpaTbResourceDao extends JpaAbstractDao<TbResourceEntity, TbResourc
     }
 
     @Override
+    public long getResourceSize(TenantId tenantId, TbResourceId resourceId) {
+        return resourceRepository.getDataSizeById(resourceId.getId());
+    }
+
+    @Override
     public Long sumDataSizeByTenantId(TenantId tenantId) {
         return resourceRepository.sumDataSizeByTenantId(tenantId.getId());
     }
