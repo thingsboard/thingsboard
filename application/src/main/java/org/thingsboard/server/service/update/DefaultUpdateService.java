@@ -69,10 +69,10 @@ public class DefaultUpdateService implements UpdateService {
     @Autowired
     private NotificationRuleProcessor notificationRuleProcessor;
 
-    @Autowired
+    @Autowired(required = false)
     private EdgeInstallInstructionsService edgeInstallInstructionsService;
 
-    @Autowired
+    @Autowired(required = false)
     private EdgeUpgradeInstructionsService edgeUpgradeInstructionsService;
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1, ThingsBoardThreadFactory.forName("tb-update-service"));
