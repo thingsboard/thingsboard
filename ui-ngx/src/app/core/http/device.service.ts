@@ -30,10 +30,10 @@ import {
   DeviceSearchQuery,
   PublishLaunchCommand,
   PublishTelemetryCommand
-} from '@app/shared/models/device.models';
-import { EntitySubtype } from '@app/shared/models/entity-type.models';
+} from '@shared/models/device.models';
+import { EntitySubtype } from '@shared/models/entity-type.models';
 import { AuthService } from '@core/auth/auth.service';
-import { BulkImportRequest, BulkImportResult } from '@home/components/import-export/import-export.models';
+import { BulkImportRequest, BulkImportResult } from '@shared/import-export/import-export.models';
 import { PersistentRpc, RpcStatus } from '@shared/models/rpc.models';
 
 @Injectable({

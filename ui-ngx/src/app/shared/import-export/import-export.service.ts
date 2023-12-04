@@ -21,7 +21,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { Dashboard, DashboardLayoutId } from '@shared/models/dashboard.models';
-import { deepClone, guid, isDefined, isObject, isString, isUndefined } from '@core/utils';
+import { deepClone, guid, isDefined, isNotEmptyStr, isObject, isString, isUndefined } from '@core/utils';
 import { WINDOW } from '@core/services/window.service';
 import { DOCUMENT } from '@angular/common';
 import {
@@ -33,16 +33,12 @@ import {
   EntityAliasInfo
 } from '@shared/models/alias.models';
 import { MatDialog } from '@angular/material/dialog';
-import { ImportDialogComponent, ImportDialogData } from '@home/components/import-export/import-dialog.component';
+import { ImportDialogComponent, ImportDialogData } from '@shared/import-export/import-dialog.component';
 import { forkJoin, Observable, of, Subject } from 'rxjs';
 import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityService } from '@core/http/entity.service';
 import { Widget, WidgetSize, WidgetType, WidgetTypeDetails } from '@shared/models/widget.models';
-import {
-  EntityAliasesDialogComponent,
-  EntityAliasesDialogData
-} from '@home/components/alias/entity-aliases-dialog.component';
 import { ItemBufferService, WidgetItem } from '@core/services/item-buffer.service';
 import {
   BulkImportRequest,
@@ -78,7 +74,12 @@ import {
   ExportWidgetsBundleDialogComponent,
   ExportWidgetsBundleDialogData,
   ExportWidgetsBundleDialogResult
-} from '@home/components/import-export/export-widgets-bundle-dialog.component';
+} from '@shared/import-export/export-widgets-bundle-dialog.component';
+import { ImageService } from '@core/http/image.service';
+import { ImageExportData, ImageResourceInfo, ImageResourceType } from '@shared/models/resource.models';
+
+export type editMissingAliasesFunction = (widgets: Array<Widget>, isSingleWidget: boolean,
+                                          customTitle: string, missingEntityAliases: EntityAliases) => Observable<EntityAliases>;
 
 // @dynamic
 @Injectable()
@@ -99,14 +100,45 @@ export class ImportExportService {
               private deviceService: DeviceService,
               private assetService: AssetService,
               private edgeService: EdgeService,
+              private imageService: ImageService,
               private utils: UtilsService,
               private itembuffer: ItemBufferService,
               private dialog: MatDialog) {
 
   }
 
+  public exportImage(type: ImageResourceType, key: string) {
+    this.imageService.exportImage(type, key).subscribe(
+      {
+        next: (imageData) => {
+          const name = imageData.fileName.split('.')[0];
+          this.exportToPc(imageData, name);
+        },
+        error: (e) => {
+          this.handleExportError(e, 'image.export-failed-error');
+        }
+      }
+    );
+  }
+
+  public importImage(): Observable<ImageResourceInfo> {
+    return this.openImportDialog('image.import-image', 'image.image-json-file').pipe(
+      mergeMap((imageData: ImageExportData) => {
+        if (!this.validateImportedImage(imageData)) {
+          this.store.dispatch(new ActionNotificationShow(
+            {message: this.translate.instant('image.invalid-image-json-file-error'),
+              type: 'error'}));
+          throw new Error('Invalid image JSON file');
+        } else {
+          return this.imageService.importImage(imageData);
+        }
+      }),
+      catchError(() => of(null))
+    );
+  }
+
   public exportDashboard(dashboardId: string) {
-    this.dashboardService.getDashboard(dashboardId).subscribe(
+    this.dashboardService.exportDashboard(dashboardId).subscribe(
       (dashboard) => {
         let name = dashboard.title;
         name = name.toLowerCase().replace(/\W/g, '_');
@@ -118,7 +150,7 @@ export class ImportExportService {
     );
   }
 
-  public importDashboard(): Observable<Dashboard> {
+  public importDashboard(onEditMissingAliases: editMissingAliasesFunction): Observable<Dashboard> {
     return this.openImportDialog('dashboard.import', 'dashboard.dashboard-file').pipe(
       mergeMap((dashboard: Dashboard) => {
         if (!this.validateImportedDashboard(dashboard)) {
@@ -137,7 +169,7 @@ export class ImportExportService {
             return this.processEntityAliases(entityAliases, aliasIds).pipe(
               mergeMap((missingEntityAliases) => {
                 if (Object.keys(missingEntityAliases).length > 0) {
-                  return this.editMissingAliases(this.dashboardUtils.getWidgetsArray(dashboard),
+                  return onEditMissingAliases(this.dashboardUtils.getWidgetsArray(dashboard),
                     false, 'dashboard.dashboard-import-missing-aliases-title',
                     missingEntityAliases).pipe(
                     mergeMap((updatedEntityAliases) => {
@@ -171,6 +203,7 @@ export class ImportExportService {
   }
 
   public importWidget(dashboard: Dashboard, targetState: string,
+                      onEditMissingAliases: editMissingAliasesFunction,
                       targetLayoutFunction: () => Observable<DashboardLayoutId>,
                       onAliasesUpdateFunction: () => void,
                       onFiltersUpdateFunction: () => void): Observable<ImportWidgetResult> {
@@ -221,7 +254,7 @@ export class ImportExportService {
               return this.processEntityAliases(entityAliases, aliasIds).pipe(
                 mergeMap((missingEntityAliases) => {
                     if (Object.keys(missingEntityAliases).length > 0) {
-                      return this.editMissingAliases([widget],
+                      onEditMissingAliases([widget],
                         false, 'dashboard.widget-import-missing-aliases-title',
                         missingEntityAliases).pipe(
                         mergeMap((updatedEntityAliases) => {
@@ -264,7 +297,7 @@ export class ImportExportService {
   }
 
   public exportWidgetType(widgetTypeId: string) {
-    this.widgetService.getWidgetTypeById(widgetTypeId).subscribe(
+    this.widgetService.exportWidgetType(widgetTypeId).subscribe(
       (widgetTypeDetails) => {
         let name = widgetTypeDetails.name;
         name = name.toLowerCase().replace(/\W/g, '_');
@@ -279,7 +312,7 @@ export class ImportExportService {
   public exportWidgetTypes(widgetTypeIds: string[]): Observable<void> {
     const widgetTypesObservables: Array<Observable<WidgetTypeDetails>> = [];
     for (const id of widgetTypeIds) {
-      widgetTypesObservables.push(this.widgetService.getWidgetTypeById(id));
+      widgetTypesObservables.push(this.widgetService.exportWidgetType(id));
     }
     return forkJoin(widgetTypesObservables).pipe(
       map((widgetTypes) =>
@@ -314,7 +347,7 @@ export class ImportExportService {
   }
 
   public exportWidgetsBundle(widgetsBundleId: string) {
-    this.widgetService.getWidgetsBundle(widgetsBundleId).subscribe(
+    this.widgetService.exportWidgetsBundle(widgetsBundleId).subscribe(
       (widgetsBundle) => {
         this.dialog.open<ExportWidgetsBundleDialogComponent, ExportWidgetsBundleDialogData,
           ExportWidgetsBundleDialogResult>(ExportWidgetsBundleDialogComponent, {
@@ -342,7 +375,7 @@ export class ImportExportService {
   }
 
   private exportWidgetsBundleWithWidgetTypes(widgetsBundle: WidgetsBundle) {
-    this.widgetService.getBundleWidgetTypesDetails(widgetsBundle.id.id).subscribe(
+    this.widgetService.exportBundleWidgetTypesDetails(widgetsBundle.id.id).subscribe(
       (widgetTypesDetails) => {
         const widgetsBundleItem: WidgetsBundleItem = {
           widgetsBundle: this.prepareExport(widgetsBundle),
@@ -586,7 +619,7 @@ export class ImportExportService {
   }
 
   public exportDeviceProfile(deviceProfileId: string) {
-    this.deviceProfileService.getDeviceProfile(deviceProfileId).subscribe(
+    this.deviceProfileService.exportDeviceProfile(deviceProfileId).subscribe(
       (deviceProfile) => {
           let name = deviceProfile.name;
           name = name.toLowerCase().replace(/\W/g, '_');
@@ -617,7 +650,7 @@ export class ImportExportService {
   }
 
   public exportAssetProfile(assetProfileId: string) {
-    this.assetProfileService.getAssetProfile(assetProfileId).subscribe(
+    this.assetProfileService.exportAssetProfile(assetProfileId).subscribe(
       (assetProfile) => {
         let name = assetProfile.name;
         name = name.toLowerCase().replace(/\W/g, '_');
@@ -818,6 +851,14 @@ export class ImportExportService {
         type: 'error'}));
   }
 
+  private validateImportedImage(image: ImageExportData): boolean {
+    return !(!isNotEmptyStr(image.data)
+      || !isNotEmptyStr(image.title)
+      || !isNotEmptyStr(image.fileName)
+      || !isNotEmptyStr(image.mediaType)
+      || !isNotEmptyStr(image.resourceKey));
+  }
+
   private validateImportedDashboard(dashboard: Dashboard): boolean {
     if (isUndefined(dashboard.title) || isUndefined(dashboard.configuration)) {
       return false;
@@ -927,30 +968,6 @@ export class ImportExportService {
         }
       )
     );
-  }
-
-  private editMissingAliases(widgets: Array<Widget>, isSingleWidget: boolean,
-                             customTitle: string, missingEntityAliases: EntityAliases): Observable<EntityAliases> {
-    return this.dialog.open<EntityAliasesDialogComponent, EntityAliasesDialogData,
-      EntityAliases>(EntityAliasesDialogComponent, {
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        entityAliases: missingEntityAliases,
-        widgets,
-        customTitle,
-        isSingleWidget,
-        disableAdd: true
-      }
-    }).afterClosed().pipe(
-      map((updatedEntityAliases) => {
-        if (updatedEntityAliases) {
-          return updatedEntityAliases;
-        } else {
-          throw new Error('Unable to resolve missing entity aliases!');
-        }
-      }
-    ));
   }
 
   private prepareAliasesInfo(aliasesInfo: AliasesInfo): AliasesInfo {

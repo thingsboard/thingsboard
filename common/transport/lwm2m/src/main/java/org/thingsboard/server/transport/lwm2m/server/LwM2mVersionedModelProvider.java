@@ -152,8 +152,7 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
 
         private ObjectModel getObjectModel(String key) {
             Optional<TbResource> tbResource = context.getTransportResourceCache().get(this.tenantId, LWM2M_MODEL, key);
-            return tbResource.map(resource -> helper.parseFromXmlToObjectModel(
-                    Base64.getDecoder().decode(resource.getData()),
+            return tbResource.map(resource -> helper.parseFromXmlToObjectModel(resource.getData(),
                     key + ".xml")).orElse(null);
         }
     }

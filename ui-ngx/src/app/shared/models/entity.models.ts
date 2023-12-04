@@ -19,6 +19,7 @@ import { AttributeData } from './telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { DeviceCredentialMQTTBasic } from '@shared/models/device.models';
 import { Lwm2mSecurityConfigModels } from '@shared/models/lwm2m-security-config.models';
+import { TenantId } from '@shared/models/id/tenant-id';
 
 export interface EntityInfo {
   name?: string;
@@ -162,3 +163,7 @@ export const entityFields: {[fieldName: string]: EntityField} = {
     value: 'label'
   }
 };
+
+export interface HasTenantId {
+  tenantId?: TenantId;
+}

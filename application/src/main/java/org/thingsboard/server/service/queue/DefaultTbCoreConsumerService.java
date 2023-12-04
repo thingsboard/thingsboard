@@ -83,6 +83,8 @@ import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
 import org.thingsboard.server.service.queue.processing.IdMsgPair;
+import org.thingsboard.server.dao.resource.ImageCacheKey;
+import org.thingsboard.server.service.resource.TbImageService;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
@@ -141,6 +143,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private final TbCoreConsumerStats stats;
     protected final TbQueueConsumer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> usageStatsConsumer;
     private final TbQueueConsumer<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> firmwareStatesConsumer;
+    private final TbImageService imageService;
 
     protected volatile ExecutorService consumersExecutor;
     protected volatile ExecutorService usageStatsExecutor;
@@ -166,7 +169,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                         ApplicationEventPublisher eventPublisher,
                                         Optional<JwtSettingsService> jwtSettingsService,
                                         NotificationSchedulerService notificationSchedulerService,
-                                        NotificationRuleProcessor notificationRuleProcessor) {
+                                        NotificationRuleProcessor notificationRuleProcessor,
+                                        TbImageService imageService) {
         super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, assetProfileCache, apiUsageStateService, partitionService, eventPublisher, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer(), jwtSettingsService);
         this.mainConsumer = tbCoreQueueFactory.createToCoreMsgConsumer();
         this.usageStatsConsumer = tbCoreQueueFactory.createToUsageStatsServiceMsgConsumer();
@@ -182,6 +186,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         this.vcQueueService = vcQueueService;
         this.notificationSchedulerService = notificationSchedulerService;
         this.notificationRuleProcessor = notificationRuleProcessor;
+        this.imageService = imageService;
     }
 
     @PostConstruct
@@ -408,6 +413,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                     .getNotificationRuleProcessorMsg().getTrigger().toByteArray());
             notificationRuleTrigger.ifPresent(notificationRuleProcessor::process);
             callback.onSuccess();
+        } else if (toCoreNotification.hasResourceCacheInvalidateMsg()) {
+            forwardToResourceService(toCoreNotification.getResourceCacheInvalidateMsg(), callback);
         }
         if (statsEnabled) {
             stats.log(toCoreNotification);
@@ -548,6 +555,13 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private void forwardCoreStartupMsg(TransportProtos.CoreStartupMsg coreStartupMsg, TbCallback callback) {
         log.info("[{}] Processing core startup with partitions: {}", coreStartupMsg.getServiceId(), coreStartupMsg.getPartitionsList());
         localSubscriptionService.onCoreStartupMsg(coreStartupMsg);
+        callback.onSuccess();
+    }
+
+    private void forwardToResourceService(TransportProtos.ResourceCacheInvalidateMsg msg, TbCallback callback) {
+        var tenantId = new TenantId(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
+        imageService.evictETag(new ImageCacheKey(tenantId, msg.getResourceKey(), false));
+        imageService.evictETag(new ImageCacheKey(tenantId, msg.getResourceKey(), true));
         callback.onSuccess();
     }
 

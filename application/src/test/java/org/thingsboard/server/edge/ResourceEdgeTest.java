@@ -47,7 +47,7 @@ public class ResourceEdgeTest extends AbstractEdgeTest {
         resource.setResourceType(ResourceType.JKS);
         resource.setTitle("Edge Test Resource");
         resource.setFileName(FILE_NAME);
-        resource.setData(TEST_DATA);
+        resource.setEncodedData(TEST_DATA);
 
         edgeImitator.expectMessageAmount(1);
         TbResource savedResource = doPost("/api/resource", resource, TbResource.class);
@@ -65,7 +65,7 @@ public class ResourceEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(ResourceType.JKS, tbResource.getResourceType());
         Assert.assertEquals(FILE_NAME, tbResource.getResourceKey());
         Assert.assertEquals(FILE_NAME, tbResource.getFileName());
-        Assert.assertEquals(TEST_DATA, tbResource.getData());
+        Assert.assertEquals(TEST_DATA, tbResource.getEncodedData());
         Assert.assertTrue(StringUtils.isNotBlank(tbResource.getEtag()));
 
         // update resource
@@ -121,6 +121,7 @@ public class ResourceEdgeTest extends AbstractEdgeTest {
         TbResource tb = doGet("/api/resource/" + uuid, TbResource.class);
         Assert.assertNotNull(tb);
         Assert.assertEquals("Edge Test Resource", tb.getName());
+        Assert.assertEquals(TEST_DATA, tb.getEncodedData());
     }
 
     @Test
@@ -171,7 +172,7 @@ public class ResourceEdgeTest extends AbstractEdgeTest {
         tbResource.setResourceType(ResourceType.JKS);
         tbResource.setResourceKey(FILE_NAME);
         tbResource.setFileName(FILE_NAME);
-        tbResource.setData(TEST_DATA);
+        tbResource.setEncodedData(TEST_DATA);
         return tbResource;
     }
 }

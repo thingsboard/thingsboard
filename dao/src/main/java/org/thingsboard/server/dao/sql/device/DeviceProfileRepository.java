@@ -22,9 +22,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.asset.AssetProfileInfo;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.DeviceProfileEntity;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface DeviceProfileRepository extends JpaRepository<DeviceProfileEntity, UUID>, ExportableEntityRepository<DeviceProfileEntity> {
@@ -68,7 +70,17 @@ public interface DeviceProfileRepository extends JpaRepository<DeviceProfileEnti
 
     DeviceProfileEntity findByProvisionDeviceKey(@Param("provisionDeviceKey") String provisionDeviceKey);
 
+    @Query("SELECT new org.thingsboard.server.common.data.DeviceProfileInfo(d.id, d.tenantId, d.name, d.image, d.defaultDashboardId, d.type, d.transportType) " +
+            "FROM DeviceProfileEntity d WHERE d.tenantId = :tenantId AND d.image = :imageLink")
+    List<DeviceProfileInfo> findByTenantAndImageLink(@Param("tenantId") UUID tenantId, @Param("imageLink") String imageLink, Pageable page);
+
+    @Query("SELECT new org.thingsboard.server.common.data.DeviceProfileInfo(d.id, d.tenantId, d.name, d.image, d.defaultDashboardId, d.type, d.transportType) " +
+            "FROM DeviceProfileEntity d WHERE d.image = :imageLink")
+    List<DeviceProfileInfo> findByImageLink(@Param("imageLink") String imageLink, Pageable page);
+
     @Query("SELECT externalId FROM DeviceProfileEntity WHERE id = :id")
     UUID getExternalIdById(@Param("id") UUID id);
+
+    Page<DeviceProfileEntity> findAllByImageNotNull(Pageable pageable);
 
 }

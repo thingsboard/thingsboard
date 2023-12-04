@@ -17,6 +17,7 @@ package org.thingsboard.server.service.edge.rpc.processor.resource;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.Base64Utils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.StringUtils;
@@ -87,7 +88,9 @@ public abstract class BaseResourceProcessor extends BaseEdgeProcessor {
         resource.setResourceKey(resourceUpdateMsg.getResourceKey());
         resource.setResourceType(ResourceType.valueOf(resourceUpdateMsg.getResourceType()));
         resource.setFileName(resourceUpdateMsg.getFileName());
-        resource.setData(resourceUpdateMsg.hasData() ? resourceUpdateMsg.getData() : null);
+        if (resourceUpdateMsg.hasData()) {
+            resource.setEncodedData(resourceUpdateMsg.getData());
+        }
         resource.setEtag(resourceUpdateMsg.hasEtag() ? resourceUpdateMsg.getEtag() : null);
         return resource;
     }

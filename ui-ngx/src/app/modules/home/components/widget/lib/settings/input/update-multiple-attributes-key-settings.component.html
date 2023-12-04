@@ -245,10 +245,10 @@
                              iconClearButton
                              formControlName="icon">
     </tb-material-icon-select>
-    <tb-image-input [fxShow]="updateMultipleAttributesKeySettingsForm.get('useCustomIcon').value"
+    <tb-gallery-image-input [fxShow]="updateMultipleAttributesKeySettingsForm.get('useCustomIcon').value"
                     label="{{ 'widgets.input-widgets.input-cell-icon' | translate }}"
                     formControlName="customIcon">
-    </tb-image-input>
+    </tb-gallery-image-input>
   </fieldset>
   <fieldset [fxShow]="!updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value" class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.value-conversion-settings</legend>
