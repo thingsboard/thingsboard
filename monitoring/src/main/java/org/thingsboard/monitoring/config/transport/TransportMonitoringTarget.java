@@ -25,6 +25,7 @@ public class TransportMonitoringTarget implements MonitoringTarget {
 
     private String baseUrl;
     private DeviceConfig device; // set manually during initialization
+    private boolean checkDomainIps;
 
     @Override
     public UUID getDeviceId() {
