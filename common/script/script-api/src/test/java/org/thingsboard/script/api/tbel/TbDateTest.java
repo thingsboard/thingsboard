@@ -15,6 +15,8 @@
  */
 package org.thingsboard.script.api.tbel;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -781,5 +783,20 @@ class TbDateTest {
         Assert.assertEquals(d.getMinutes(), d.getUTCMinutes());
         Assert.assertEquals(d.getSeconds(), d.getUTCSeconds());
         Assert.assertEquals(d.getMilliseconds(), d.getUTCMilliseconds());
+    }
+
+    @Test
+    public void tbDateSerializedPMapperTest() {
+        String stringDateUTC = "2023-09-06T01:04:05.345Z";
+        TbDate expectedDate = new TbDate(stringDateUTC);
+        String serializedTbDate = JacksonUtil.toString(expectedDate);
+        JsonNode tbDateNode = JacksonUtil.toJsonNode(serializedTbDate);
+        Assert.assertNotNull(tbDateNode);
+        ((ObjectNode) tbDateNode).put("test", (String) null);
+        serializedTbDate = JacksonUtil.toString(tbDateNode);
+        TbDate actualDate = JacksonUtil.fromStringIgnoreUnknownProperties(serializedTbDate, TbDate.class);
+        Assert.assertNotNull(actualDate);
+        Assert.assertEquals(expectedDate.toString(), actualDate.toString());
+        Assert.assertEquals(expectedDate.getInstant(), actualDate.getInstant());
     }
 }
