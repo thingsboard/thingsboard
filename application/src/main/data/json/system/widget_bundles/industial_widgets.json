@@ -57,6 +57,16 @@
     "simple_pump_vibration_chart_card",
     "simple_pump_vibration_chart_card_with_background",
     "pump_vibration_range_chart",
-    "pump_vibration_range_chart_with_background"
+    "pump_vibration_range_chart_with_background",
+    "power_consumption_card",
+    "power_consumption_card_with_background",
+    "horizontal_power_consumption_card",
+    "horizontal_power_consumption_card_with_background",
+    "power_consumption_chart_card",
+    "power_consumption_chart_card_with_background",
+    "simple_power_consumption_chart_card",
+    "simple_power_consumption_chart_card_with_background",
+    "power_consumption_range_chart",
+    "power_consumption_range_chart_with_background"
   ]
 }
