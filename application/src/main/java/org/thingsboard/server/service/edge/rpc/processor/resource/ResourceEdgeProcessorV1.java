@@ -41,7 +41,7 @@ public class ResourceEdgeProcessorV1 extends ResourceEdgeProcessor {
         resource.setResourceKey(resourceUpdateMsg.getResourceKey());
         resource.setResourceType(ResourceType.valueOf(resourceUpdateMsg.getResourceType()));
         resource.setFileName(resourceUpdateMsg.getFileName());
-        resource.setData(resourceUpdateMsg.hasData() ? resourceUpdateMsg.getData() : null);
+        resource.setData(resourceUpdateMsg.hasData() ? resourceUpdateMsg.getData().getBytes() : null);
         resource.setEtag(resourceUpdateMsg.hasEtag() ? resourceUpdateMsg.getEtag() : null);
         return resource;
     }
