@@ -17,9 +17,11 @@ package org.thingsboard.server.service.ws.notification.cmd;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
-import org.thingsboard.server.service.ws.telemetry.cmd.WsCommandsWrapper;
+import org.thingsboard.server.service.ws.WsCommandsWrapper;
 
-import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @deprecated Use {@link WsCommandsWrapper}. This class is left for backward compatibility
@@ -40,17 +42,11 @@ public class NotificationCmdsWrapper {
 
     @JsonIgnore
     public WsCommandsWrapper toCommonCmdsWrapper() {
-        WsCommandsWrapper wrapper = new WsCommandsWrapper();
-        wrapper.setUnreadNotificationsCountSubCmds(toList(unreadCountSubCmd));
-        wrapper.setUnreadNotificationsSubCmds(toList(unreadSubCmd));
-        wrapper.setMarkNotificationAsReadCmds(toList(markAsReadCmd));
-        wrapper.setMarkAllNotificationsAsReadCmds(toList(markAllAsReadCmd));
-        wrapper.setNotificationsUnsubCmds(toList(unsubCmd));
-        return wrapper;
-    }
-
-    private <C> List<C> toList(C cmd) {
-        return cmd != null ? List.of(cmd) : null;
+        return new WsCommandsWrapper(Stream.of(
+                        unreadCountSubCmd, unreadSubCmd, markAsReadCmd, markAllAsReadCmd, unsubCmd
+                )
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList()));
     }
 
 }

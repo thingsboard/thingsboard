@@ -16,6 +16,7 @@
 package org.thingsboard.server.controller.plugin;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.BeanCreationNotAllowedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -52,7 +53,6 @@ import javax.websocket.SendHandler;
 import javax.websocket.SendResult;
 import javax.websocket.Session;
 import java.io.IOException;
-import java.net.URI;
 import java.security.InvalidParameterException;
 import java.util.Optional;
 import java.util.Queue;
@@ -199,17 +199,16 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
         }
     }
 
-    private WebSocketSessionRef toRef(WebSocketSession session) throws IOException {
-        URI sessionUri = session.getUri();
-        String path = sessionUri.getPath();
-        path = path.substring(WebSocketConfiguration.WS_PLUGIN_PREFIX.length());
-        if (path.length() == 0) {
-            throw new IllegalArgumentException("URL should contain plugin token!");
+    private WebSocketSessionRef toRef(WebSocketSession session) {
+        String path = session.getUri().getPath();
+        WebSocketSessionType sessionType;
+        if (path.equals(WebSocketConfiguration.WS_API_ENDPOINT)) {
+            sessionType = WebSocketSessionType.GENERAL;
+        } else {
+            String type = StringUtils.substringAfter(path, WebSocketConfiguration.WS_PLUGINS_ENDPOINT);
+            sessionType = WebSocketSessionType.forName(type)
+                    .orElseThrow(() -> new InvalidParameterException("Unknown session type"));
         }
-        String[] pathElements = path.split("/");
-        String serviceToken = pathElements[0];
-        WebSocketSessionType sessionType = WebSocketSessionType.forName(serviceToken)
-                .orElseThrow(() -> new InvalidParameterException("Can't find plugin with specified token!"));
 
         SecurityUser currentUser = (SecurityUser) ((Authentication) session.getPrincipal()).getPrincipal();
         return WebSocketSessionRef.builder()
@@ -411,10 +410,10 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                 }
             }
             if (!limitAllowed) {
-                    log.info("[{}][{}][{}] Failed to start session. Max tenant sessions limit reached"
-                            , sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), sessionId);
-                    session.close(CloseStatus.POLICY_VIOLATION.withReason("Max tenant sessions limit reached!"));
-                    return false;
+                log.info("[{}][{}][{}] Failed to start session. Max tenant sessions limit reached"
+                        , sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), sessionId);
+                session.close(CloseStatus.POLICY_VIOLATION.withReason("Max tenant sessions limit reached!"));
+                return false;
             }
         }
 
@@ -428,10 +427,10 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                     }
                 }
                 if (!limitAllowed) {
-                        log.info("[{}][{}][{}] Failed to start session. Max customer sessions limit reached"
-                                , sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), sessionId);
-                        session.close(CloseStatus.POLICY_VIOLATION.withReason("Max customer sessions limit reached"));
-                        return false;
+                    log.info("[{}][{}][{}] Failed to start session. Max customer sessions limit reached"
+                            , sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), sessionId);
+                    session.close(CloseStatus.POLICY_VIOLATION.withReason("Max customer sessions limit reached"));
+                    return false;
                 }
             }
             if (tenantProfileConfiguration.getMaxWsSessionsPerRegularUser() > 0
@@ -444,10 +443,10 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                     }
                 }
                 if (!limitAllowed) {
-                        log.info("[{}][{}][{}] Failed to start session. Max regular user sessions limit reached"
-                                , sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), sessionId);
-                        session.close(CloseStatus.POLICY_VIOLATION.withReason("Max regular user sessions limit reached"));
-                        return false;
+                    log.info("[{}][{}][{}] Failed to start session. Max regular user sessions limit reached"
+                            , sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), sessionId);
+                    session.close(CloseStatus.POLICY_VIOLATION.withReason("Max regular user sessions limit reached"));
+                    return false;
                 }
             }
             if (tenantProfileConfiguration.getMaxWsSessionsPerPublicUser() > 0
@@ -460,10 +459,10 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                     }
                 }
                 if (!limitAllowed) {
-                        log.info("[{}][{}][{}] Failed to start session. Max public user sessions limit reached"
-                                , sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), sessionId);
-                        session.close(CloseStatus.POLICY_VIOLATION.withReason("Max public user sessions limit reached"));
-                        return false;
+                    log.info("[{}][{}][{}] Failed to start session. Max public user sessions limit reached"
+                            , sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), sessionId);
+                    session.close(CloseStatus.POLICY_VIOLATION.withReason("Max public user sessions limit reached"));
+                    return false;
                 }
             }
         }
