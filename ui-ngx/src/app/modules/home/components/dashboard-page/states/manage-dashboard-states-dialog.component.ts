@@ -35,7 +35,7 @@ import { fromEvent, merge } from 'rxjs';
 import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from '@core/services/dialog.service';
-import { deepClone } from '@core/utils';
+import { deepClone, isDefined } from '@core/utils';
 import {
   DashboardStateDialogComponent,
   DashboardStateDialogData
@@ -251,7 +251,8 @@ export class ManageDashboardStatesDialogComponent
     if (newStateName) {
       const duplicatedStates = deepClone(originalState);
       const duplicatedWidgets = deepClone(this.widgets);
-      const widgets = {};
+      const mainWidgets = {};
+      const rightWidgets = {};
       duplicatedStates.id = newStateName.toLowerCase().replace(/\W/g, '_');
       duplicatedStates.name = newStateName;
       duplicatedStates.root = false;
@@ -259,12 +260,22 @@ export class ManageDashboardStatesDialogComponent
 
       for (const [key, value] of Object.entries(duplicatedStates.layouts.main.widgets)) {
         const guid = this.utils.guid();
-        widgets[guid] = value;
+        mainWidgets[guid] = value;
         duplicatedWidgets[guid] = this.widgets[key];
         duplicatedWidgets[guid].id = guid;
       }
+      duplicatedStates.layouts.main.widgets = mainWidgets;
 
-      duplicatedStates.layouts.main.widgets = widgets;
+      if (isDefined(duplicatedStates.layouts?.right)) {
+        for (const [key, value] of Object.entries(duplicatedStates.layouts.right.widgets)) {
+          const guid = this.utils.guid();
+          rightWidgets[guid] = value;
+          duplicatedWidgets[guid] = this.widgets[key];
+          duplicatedWidgets[guid].id = guid;
+        }
+        duplicatedStates.layouts.right.widgets = rightWidgets;
+      }
+
       this.states[duplicatedStates.id] = duplicatedStates;
       this.widgets = duplicatedWidgets;
       this.onStatesUpdated();
