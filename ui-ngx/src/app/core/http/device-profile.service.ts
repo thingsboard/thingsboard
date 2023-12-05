@@ -53,6 +53,10 @@ export class DeviceProfileService {
     return this.http.get<DeviceProfile>(`/api/deviceProfile/${deviceProfileId}`, defaultHttpOptionsFromConfig(config));
   }
 
+  public exportDeviceProfile(deviceProfileId: string, config?: RequestConfig): Observable<DeviceProfile> {
+    return this.http.get<DeviceProfile>(`/api/deviceProfile/${deviceProfileId}?inlineImages=true`, defaultHttpOptionsFromConfig(config));
+  }
+
   public getLwm2mObjects(sortOrder: SortOrder, objectIds?: string[], searchText?: string, config?: RequestConfig):
     Observable<Array<ObjectLwM2M>> {
     let url = `/api/resource/lwm2m/?sortProperty=${sortOrder.property}&sortOrder=${sortOrder.direction}`;

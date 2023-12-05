@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thingsboard</groupId>
     <artifactId>thingsboard</artifactId>
-    <version>3.6.1-SNAPSHOT</version>
+    <version>3.6.2-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Thingsboard</name>
@@ -78,7 +78,7 @@
         <zookeeper.version>3.8.1</zookeeper.version>
         <protobuf.version>3.21.9</protobuf.version>
         <grpc.version>1.42.1</grpc.version>
-        <tbel.version>1.1.3</tbel.version>
+        <tbel.version>1.1.4</tbel.version>
         <lombok.version>1.18.18</lombok.version>
         <paho.client.version>1.2.4</paho.client.version>
         <paho.mqttv5.client.version>1.2.5</paho.mqttv5.client.version>
@@ -153,6 +153,8 @@
         <slack-api.version>1.12.1</slack-api.version>
         <oshi.version>6.4.2</oshi.version>
         <google-oauth-client.version>1.34.1</google-oauth-client.version>
+        <apache-xmlgraphics.version>1.17</apache-xmlgraphics.version>
+        <drewnoakes-metadata-extractor.version>2.19.0</drewnoakes-metadata-extractor.version>
     </properties>
 
     <modules>
@@ -891,6 +893,11 @@
             <dependency>
                 <groupId>org.thingsboard.common</groupId>
                 <artifactId>version-control</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.common</groupId>
+                <artifactId>proto</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -2028,6 +2035,21 @@
                 <groupId>com.google.oauth-client</groupId>
                 <artifactId>google-oauth-client</artifactId>
                 <version>${google-oauth-client.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.xmlgraphics</groupId>
+                <artifactId>batik-transcoder</artifactId>
+                <version>${apache-xmlgraphics.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.xmlgraphics</groupId>
+                <artifactId>batik-codec</artifactId>
+                <version>${apache-xmlgraphics.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.drewnoakes</groupId>
+                <artifactId>metadata-extractor</artifactId>
+                <version>${drewnoakes-metadata-extractor.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

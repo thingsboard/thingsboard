@@ -81,7 +81,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.thingsboard.server.service.queue.ProtoUtils.toProto;
+import static org.thingsboard.server.common.util.ProtoUtils.toProto;
 
 @Service
 @Slf4j
@@ -308,10 +308,17 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     @Override
-    public void onDeviceDeleted(Device device, TbQueueCallback callback) {
-        broadcastEntityDeleteToTransport(device.getTenantId(), device.getId(), device.getName(), callback);
-        sendDeviceStateServiceEvent(device.getTenantId(), device.getId(), false, false, true);
-        broadcastEntityStateChangeEvent(device.getTenantId(), device.getId(), ComponentLifecycleEvent.DELETED);
+    public void onDeviceDeleted(TenantId tenantId, Device device, TbQueueCallback callback) {
+        DeviceId deviceId = device.getId();
+        broadcastEntityDeleteToTransport(tenantId, deviceId, device.getName(), callback);
+        sendDeviceStateServiceEvent(tenantId, deviceId, false, false, true);
+        broadcastEntityStateChangeEvent(tenantId, deviceId, ComponentLifecycleEvent.DELETED);
+    }
+
+    @Override
+    public void onDeviceAssignedToTenant(TenantId oldTenantId, Device device) {
+        onDeviceDeleted(oldTenantId, device, null);
+        sendDeviceStateServiceEvent(device.getTenantId(), device.getId(), true, false, false);
     }
 
     @Override
@@ -486,7 +493,7 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     @Override
-    public void sendNotificationMsgToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, EdgeEventActionType action, EdgeId sourceEdgeId) {
+    public void sendNotificationMsgToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, EdgeEventActionType action, EdgeId originatorEdgeId) {
         if (!edgesEnabled) {
             return;
         }
@@ -519,9 +526,9 @@ public class DefaultTbClusterService implements TbClusterService {
         if (body != null) {
             builder.setBody(body);
         }
-        if (sourceEdgeId != null) {
-            builder.setSourceEdgeIdMSB(sourceEdgeId.getId().getMostSignificantBits());
-            builder.setSourceEdgeIdLSB(sourceEdgeId.getId().getLeastSignificantBits());
+        if (originatorEdgeId != null) {
+            builder.setOriginatorEdgeIdMSB(originatorEdgeId.getId().getMostSignificantBits());
+            builder.setOriginatorEdgeIdLSB(originatorEdgeId.getId().getLeastSignificantBits());
         }
         TransportProtos.EdgeNotificationMsgProto msg = builder.build();
         log.trace("[{}] sending notification to edge service {}", tenantId.getId(), msg);

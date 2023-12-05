@@ -42,7 +42,7 @@
         </button>
         <button [disabled]="(isLoading$ | async)"
                 mat-fab
-                matTooltip="{{ 'action.decline-changes' | translate }}"
+                matTooltip="{{ (isEdit ? 'action.decline-changes' : 'details.toggle-edit-mode') | translate }}"
                 matTooltipPosition="above"
                 color="accent" class="tb-btn-header"
                 (click)="onToggleDetailsEditMode()">

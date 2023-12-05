@@ -89,7 +89,9 @@ public class TbCopyKeysNode implements TbNode {
                     String keyData = entry.getKey();
                     if (checkKey(keyData)) {
                         msgChanged = true;
-                        metaData.putValue(keyData, JacksonUtil.toString(entry.getValue()));
+                        String value = entry.getValue().isTextual() ?
+                                entry.getValue().asText() : JacksonUtil.toString(entry.getValue());
+                        metaData.putValue(keyData, value);
                     }
                 }
             }

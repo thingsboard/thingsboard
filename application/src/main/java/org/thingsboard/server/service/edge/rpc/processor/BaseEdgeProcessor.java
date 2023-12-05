@@ -90,27 +90,23 @@ import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
-import org.thingsboard.server.service.edge.rpc.constructor.AdminSettingsMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.AlarmMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.AssetMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.AssetProfileMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.CustomerMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.DashboardMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.DeviceMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.DeviceProfileMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.EdgeMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.EntityDataMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.EntityViewMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.OtaPackageMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.QueueMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.RelationMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.RuleChainMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.ResourceMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.TenantMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.TenantProfileMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.UserMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.WidgetTypeMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.WidgetsBundleMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.alarm.AlarmMsgConstructorFactory;
+import org.thingsboard.server.service.edge.rpc.constructor.asset.AssetMsgConstructorFactory;
+import org.thingsboard.server.service.edge.rpc.constructor.customer.CustomerMsgConstructorFactory;
+import org.thingsboard.server.service.edge.rpc.constructor.dashboard.DashboardMsgConstructorFactory;
+import org.thingsboard.server.service.edge.rpc.constructor.device.DeviceMsgConstructorFactory;
+import org.thingsboard.server.service.edge.rpc.constructor.edge.EdgeMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.entityview.EntityViewMsgConstructorFactory;
+import org.thingsboard.server.service.edge.rpc.constructor.ota.OtaPackageMsgConstructorFactory;
+import org.thingsboard.server.service.edge.rpc.constructor.queue.QueueMsgConstructorFactory;
+import org.thingsboard.server.service.edge.rpc.constructor.relation.RelationMsgConstructorFactory;
+import org.thingsboard.server.service.edge.rpc.constructor.resource.ResourceMsgConstructorFactory;
+import org.thingsboard.server.service.edge.rpc.constructor.rule.RuleChainMsgConstructorFactory;
+import org.thingsboard.server.service.edge.rpc.constructor.settings.AdminSettingsMsgConstructorFactory;
+import org.thingsboard.server.service.edge.rpc.constructor.telemetry.EntityDataMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.tenant.TenantMsgConstructorFactory;
+import org.thingsboard.server.service.edge.rpc.constructor.user.UserMsgConstructorFactory;
+import org.thingsboard.server.service.edge.rpc.constructor.widget.WidgetMsgConstructorFactory;
 import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
@@ -253,61 +249,49 @@ public abstract class BaseEdgeProcessor {
     protected EntityDataMsgConstructor entityDataMsgConstructor;
 
     @Autowired
-    protected RuleChainMsgConstructor ruleChainMsgConstructor;
+    protected RuleChainMsgConstructorFactory ruleChainMsgConstructorFactory;
 
     @Autowired
-    protected AlarmMsgConstructor alarmMsgConstructor;
+    protected AlarmMsgConstructorFactory alarmMsgConstructorFactory;
 
     @Autowired
-    protected DeviceMsgConstructor deviceMsgConstructor;
+    protected DeviceMsgConstructorFactory deviceMsgConstructorFactory;
 
     @Autowired
-    protected AssetMsgConstructor assetMsgConstructor;
+    protected AssetMsgConstructorFactory assetMsgConstructorFactory;
 
     @Autowired
-    protected EntityViewMsgConstructor entityViewMsgConstructor;
+    protected EntityViewMsgConstructorFactory entityViewMsgConstructorFactory;
 
     @Autowired
-    protected DashboardMsgConstructor dashboardMsgConstructor;
+    protected DashboardMsgConstructorFactory dashboardMsgConstructorFactory;
 
     @Autowired
-    protected RelationMsgConstructor relationMsgConstructor;
+    protected RelationMsgConstructorFactory relationMsgConstructorFactory;
 
     @Autowired
-    protected UserMsgConstructor userMsgConstructor;
+    protected UserMsgConstructorFactory userMsgConstructorFactory;
 
     @Autowired
-    protected CustomerMsgConstructor customerMsgConstructor;
+    protected CustomerMsgConstructorFactory customerMsgConstructorFactory;
 
     @Autowired
-    protected DeviceProfileMsgConstructor deviceProfileMsgConstructor;
+    protected TenantMsgConstructorFactory tenantMsgConstructorFactory;
 
     @Autowired
-    protected AssetProfileMsgConstructor assetProfileMsgConstructor;
+    protected WidgetMsgConstructorFactory widgetMsgConstructorFactory;
 
     @Autowired
-    protected TenantMsgConstructor tenantMsgConstructor;
+    protected AdminSettingsMsgConstructorFactory adminSettingsMsgConstructorFactory;
 
     @Autowired
-    protected TenantProfileMsgConstructor tenantProfileMsgConstructor;
+    protected OtaPackageMsgConstructorFactory otaPackageMsgConstructorFactory;
 
     @Autowired
-    protected WidgetsBundleMsgConstructor widgetsBundleMsgConstructor;
+    protected QueueMsgConstructorFactory queueMsgConstructorFactory;
 
     @Autowired
-    protected WidgetTypeMsgConstructor widgetTypeMsgConstructor;
-
-    @Autowired
-    protected AdminSettingsMsgConstructor adminSettingsMsgConstructor;
-
-    @Autowired
-    protected OtaPackageMsgConstructor otaPackageMsgConstructor;
-
-    @Autowired
-    protected QueueMsgConstructor queueMsgConstructor;
-
-    @Autowired
-    protected ResourceMsgConstructor resourceMsgConstructor;
+    protected ResourceMsgConstructorFactory resourceMsgConstructorFactory;
 
     @Autowired
     protected EdgeSynchronizationManager edgeSynchronizationManager;
@@ -467,9 +451,9 @@ public abstract class BaseEdgeProcessor {
         EdgeEventType type = EdgeEventType.valueOf(edgeNotificationMsg.getType());
         EdgeEventActionType actionType = EdgeEventActionType.valueOf(edgeNotificationMsg.getAction());
         EntityId entityId = EntityIdFactory.getByEdgeEventTypeAndUuid(type, new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB()));
-        EdgeId sourceEdgeId = safeGetEdgeId(edgeNotificationMsg.getSourceEdgeIdMSB(), edgeNotificationMsg.getSourceEdgeIdLSB());
+        EdgeId originatorEdgeId = safeGetEdgeId(edgeNotificationMsg.getOriginatorEdgeIdMSB(), edgeNotificationMsg.getOriginatorEdgeIdLSB());
         if (type.isAllEdgesRelated()) {
-            return processEntityNotificationForAllEdges(tenantId, type, actionType, entityId, sourceEdgeId);
+            return processEntityNotificationForAllEdges(tenantId, type, actionType, entityId, originatorEdgeId);
         } else {
             JsonNode body = JacksonUtil.toJsonNode(edgeNotificationMsg.getBody());
             EdgeId edgeId = safeGetEdgeId(edgeNotificationMsg.getEdgeIdMSB(), edgeNotificationMsg.getEdgeIdLSB());
@@ -481,19 +465,19 @@ public abstract class BaseEdgeProcessor {
                     if (edgeId != null) {
                         return saveEdgeEvent(tenantId, edgeId, type, actionType, entityId, body);
                     } else {
-                        return processNotificationToRelatedEdges(tenantId, entityId, type, actionType, sourceEdgeId);
+                        return processNotificationToRelatedEdges(tenantId, entityId, type, actionType, originatorEdgeId);
                     }
                 case DELETED:
                     EdgeEventActionType deleted = EdgeEventActionType.DELETED;
                     if (edgeId != null) {
                         return saveEdgeEvent(tenantId, edgeId, type, deleted, entityId, body);
                     } else {
-                        return Futures.transform(Futures.allAsList(processActionForAllEdgesByTenantId(tenantId, type, deleted, entityId, body, sourceEdgeId)),
+                        return Futures.transform(Futures.allAsList(processActionForAllEdgesByTenantId(tenantId, type, deleted, entityId, body, originatorEdgeId)),
                                 voids -> null, dbCallbackExecutorService);
                     }
                 case ASSIGNED_TO_EDGE:
                 case UNASSIGNED_FROM_EDGE:
-                    if (sourceEdgeId == null) {
+                    if (originatorEdgeId == null) {
                         ListenableFuture<Void> future = saveEdgeEvent(tenantId, edgeId, type, actionType, entityId, body);
                         return Futures.transformAsync(future, unused -> {
                             if (type.equals(EdgeEventType.RULE_CHAIN)) {

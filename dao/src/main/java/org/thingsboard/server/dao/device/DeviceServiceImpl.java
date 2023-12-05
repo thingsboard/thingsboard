@@ -130,15 +130,13 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     public Device findDeviceById(TenantId tenantId, DeviceId deviceId) {
         log.trace("Executing findDeviceById [{}]", deviceId);
         validateId(deviceId, INCORRECT_DEVICE_ID + deviceId);
-        return cache.getAndPutInTransaction(new DeviceCacheKey(tenantId, deviceId),
-                () -> {
-                    //TODO: possible bug source since sometimes we need to clear cache by tenant id and sometimes by sys tenant id?
-                    if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
-                        return deviceDao.findById(tenantId, deviceId.getId());
-                    } else {
-                        return deviceDao.findDeviceByTenantIdAndId(tenantId, deviceId.getId());
-                    }
-                }, true);
+        if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
+            return cache.getAndPutInTransaction(new DeviceCacheKey(deviceId),
+                    () -> deviceDao.findById(tenantId, deviceId.getId()), true);
+        } else {
+            return cache.getAndPutInTransaction(new DeviceCacheKey(tenantId, deviceId),
+                    () -> deviceDao.findDeviceByTenantIdAndId(tenantId, deviceId.getId()), true);
+        }
     }
 
     @Override
@@ -225,7 +223,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
                 }
                 device.setDeviceProfileId(new DeviceProfileId(deviceProfile.getId().getId()));
             } else {
-                deviceProfile = this.deviceProfileService.findDeviceProfileById(device.getTenantId(), device.getDeviceProfileId());
+                deviceProfile = this.deviceProfileService.findDeviceProfileById(device.getTenantId(), device.getDeviceProfileId(), false);
                 if (deviceProfile == null) {
                     throw new DataValidationException("Device is referencing non existing device profile!");
                 }
@@ -258,6 +256,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         List<DeviceCacheKey> keys = new ArrayList<>(3);
         keys.add(new DeviceCacheKey(event.getTenantId(), event.getNewName()));
         if (event.getDeviceId() != null) {
+            keys.add(new DeviceCacheKey(event.getDeviceId()));
             keys.add(new DeviceCacheKey(event.getTenantId(), event.getDeviceId()));
         }
         if (StringUtils.isNotEmpty(event.getOldName()) && !event.getOldName().equals(event.getNewName())) {

@@ -15,12 +15,10 @@
  */
 package org.thingsboard.server.service.rule;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNode;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
@@ -44,13 +42,13 @@ import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleChainUpdateResult;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.rule.RuleNodeUpdateResult;
-import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.install.InstallScripts;
+import org.thingsboard.server.utils.TbNodeUpgradeUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -402,18 +400,13 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
             var ruleNodeClass = componentDiscoveryService.getRuleNodeInfo(ruleNodeType)
                     .orElseThrow(() -> new RuntimeException("Rule node " + ruleNodeType + " is not supported!"));
             if (ruleNodeClass.isVersioned()) {
-                TbNode tbVersionedNode = (TbNode) ruleNodeClass.getClazz().getDeclaredConstructor().newInstance();
                 int fromVersion = node.getConfigurationVersion();
                 int toVersion = ruleNodeClass.getCurrentVersion();
                 if (fromVersion < toVersion) {
                     log.debug("Going to upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
                             ruleNodeId, ruleNodeType, fromVersion, toVersion);
                     try {
-                        TbPair<Boolean, JsonNode> upgradeResult = tbVersionedNode.upgrade(fromVersion, node.getConfiguration());
-                        if (upgradeResult.getFirst()) {
-                            node.setConfiguration(upgradeResult.getSecond());
-                        }
-                        node.setConfigurationVersion(toVersion);
+                        TbNodeUpgradeUtils.upgradeConfigurationAndVersion(node, ruleNodeClass);
                         log.debug("Successfully upgrade rule node with id: {} type: {}, rule chain id: {} fromVersion: {} toVersion: {}",
                                 ruleNodeId, ruleNodeType, ruleChainId, fromVersion, toVersion);
                     } catch (TbNodeException e) {

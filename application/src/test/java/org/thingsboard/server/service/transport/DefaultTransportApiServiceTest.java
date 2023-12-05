@@ -44,13 +44,13 @@ import org.thingsboard.server.dao.device.provision.ProvisionResponseStatus;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-import org.thingsboard.server.service.resource.TbResourceService;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -96,7 +96,7 @@ public class DefaultTransportApiServiceTest {
     @MockBean
     protected DeviceProvisionService deviceProvisionService;
     @MockBean
-    protected TbResourceService resourceService;
+    protected ResourceService resourceService;
     @MockBean
     protected OtaPackageService otaPackageService;
     @MockBean

@@ -49,6 +49,10 @@ zk:
 cache:
   # caffeine or redis
   type: "${CACHE_TYPE:redis}"
+  # Deliberately placed outside the 'specs' group above
+  entityLimits:
+    timeToLiveInMinutes: "${CACHE_SPECS_ENTITY_LIMITS_TTL:5}" # Entity limits cache TTL
+    maxSize: "${CACHE_SPECS_ENTITY_LIMITS_MAX_SIZE:100000}" # 0 means the cache is disabled
 
 # Redis configuration parameters
 redis:
@@ -264,6 +268,8 @@ queue:
     max_msg_size: "${TB_QUEUE_PUBSUB_MAX_MSG_SIZE:1048576}"
     # Number of messages per consumer
     max_messages: "${TB_QUEUE_PUBSUB_MAX_MESSAGES:1000}"
+    # Thread pool size for pubsub queue executor provider. If not set - default pubsub executor provider value will be used (5 * number of available processors)
+    executor_thread_pool_size: "${TB_QUEUE_PUBSUB_EXECUTOR_THREAD_POOL_SIZE:0}"
     queue-properties:
       # Pub/Sub properties for Rule Engine subscribers, messages which will commit after ackDeadlineInSec period can be consumed again
       rule-engine: "${TB_QUEUE_PUBSUB_RE_QUEUE_PROPERTIES:ackDeadlineInSec:30;messageRetentionInSec:604800}"

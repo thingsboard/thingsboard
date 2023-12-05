@@ -51,6 +51,8 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
 
   isReadOnly = false;
 
+  backNavigationCommands?: any[];
+
   set entitiesTableConfig(entitiesTableConfig: EntityTableConfig<BaseData<HasId>>) {
     if (this.entitiesTableConfigValue !== entitiesTableConfig) {
       this.entitiesTableConfigValue = entitiesTableConfig;
@@ -79,6 +81,7 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
               protected store: Store<AppState>) {
     super(store, injector, cd, componentFactoryResolver);
     this.entitiesTableConfig = this.route.snapshot.data.entitiesTableConfig;
+    this.backNavigationCommands = this.route.snapshot.data.backNavigationCommands;
   }
 
   ngOnInit() {
@@ -145,7 +148,8 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
   }
 
   goBack(): void {
-    this.router.navigate(['../'], { relativeTo: this.route });
+    const commands = this.backNavigationCommands || ['../'];
+    this.router.navigate(commands, { relativeTo: this.route });
   }
 
   private onUpdateEntity() {

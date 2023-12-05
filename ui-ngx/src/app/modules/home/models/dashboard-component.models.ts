@@ -27,7 +27,15 @@ import { WidgetLayout, WidgetLayouts } from '@app/shared/models/dashboard.models
 import { IDashboardWidget, WidgetAction, WidgetContext, WidgetHeaderAction } from './widget-component.models';
 import { Timewindow } from '@shared/models/time/time.models';
 import { Observable, of, Subject } from 'rxjs';
-import { formattedDataFormDatasourceData, guid, isDefined, isEqual, isUndefined } from '@app/core/utils';
+import {
+  convertKeysToCamelCase,
+  formattedDataFormDatasourceData,
+  guid,
+  isDefined,
+  isEmpty,
+  isEqual,
+  isUndefined
+} from '@app/core/utils';
 import { IterableDiffer, KeyValueDiffer } from '@angular/core';
 import { IAliasController, IStateController } from '@app/core/api/widget-api.models';
 import { enumerable } from '@shared/decorators/enumerable';
@@ -479,9 +487,9 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
       backgroundColor: this.backgroundColor,
       padding: this.padding,
       margin: this.margin,
-      borderRadius: this.borderRadius || 'unset' };
-    if (this.widget.config.widgetStyle) {
-      this.style = {...this.style, ...this.widget.config.widgetStyle};
+      borderRadius: this.borderRadius };
+    if (!isEmpty(this.widget.config.widgetStyle)) {
+      this.style = {...this.style, ...convertKeysToCamelCase(this.widget.config.widgetStyle)};
     }
 
     this.showWidgetTitlePanel = this.widgetContext.hideTitlePanel ? false :

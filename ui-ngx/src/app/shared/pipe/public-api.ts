@@ -23,3 +23,4 @@ export * from './nospace.pipe';
 export * from './truncate.pipe';
 export * from './file-size.pipe';
 export * from './selectable-columns.pipe';
+export * from './image.pipe';
