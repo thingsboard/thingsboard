@@ -759,7 +759,14 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                 updateSchema("3.6.0", 3006000, "3.6.1", 3006001, null);
                 break;
             case "3.6.1":
-                updateSchema("3.6.1", 3006001, "3.6.2", 3006002, null);
+                updateSchema("3.6.1", 3006001, "3.6.2", 3006002, connection -> {
+                    try {
+                        Path saveAttributesNodeUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.6.1", "save_attributes_node_update.sql");
+                        loadSql(saveAttributesNodeUpdateFile, connection);
+                    } catch (Exception e) {
+                        log.warn("Failed to execute update script for save attributes rule nodes due to: ", e);
+                    }
+                });
                 break;
             default:
                 throw new RuntimeException("Unable to upgrade SQL database, unsupported fromVersion: " + fromVersion);
