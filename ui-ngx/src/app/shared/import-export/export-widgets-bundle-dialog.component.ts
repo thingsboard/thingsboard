@@ -25,6 +25,7 @@ import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 
 export interface ExportWidgetsBundleDialogData {
   widgetsBundle: WidgetsBundle;
+  includeBundleWidgetsInExport: boolean;
 }
 
 export interface ExportWidgetsBundleDialogResult {
@@ -50,6 +51,9 @@ export class ExportWidgetsBundleDialogComponent extends DialogComponent<ExportWi
               public dialogRef: MatDialogRef<ExportWidgetsBundleDialogComponent, ExportWidgetsBundleDialogResult>) {
     super(store, router, dialogRef);
     this.widgetsBundle = data.widgetsBundle;
+    if (data.includeBundleWidgetsInExport) {
+      this.exportWidgetsFormControl.patchValue(data.includeBundleWidgetsInExport, {emitEvent: false});
+    }
   }
 
   ngOnInit(): void {
