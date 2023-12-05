@@ -173,6 +173,10 @@ public class StringUtils {
         return false;
     }
 
+    public static String substringBeforeLast(String str, String separator) {
+        return org.apache.commons.lang3.StringUtils.substringBeforeLast(str, separator);
+    }
+
     public static String substringAfterLast(String str, String sep) {
         return org.apache.commons.lang3.StringUtils.substringAfterLast(str, sep);
     }

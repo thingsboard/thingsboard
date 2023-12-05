@@ -51,6 +51,9 @@ import {
 } from '@home/components/widget/lib/indicator/signal-strength-widget.models';
 import tinycolor from 'tinycolor2';
 import { TranslateService } from '@ngx-translate/core';
+import { Observable } from 'rxjs';
+import { ImagePipe } from '@shared/pipe/image.pipe';
+import { DomSanitizer } from '@angular/platform-browser';
 
 const shapeWidth = 149;
 const shapeHeight = 113;
@@ -104,7 +107,7 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
   };
   tooltipDateStyle: ComponentStyle = {};
 
-  backgroundStyle: ComponentStyle = {};
+  backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
 
   shapeResize$: ResizeObserver;
@@ -128,6 +131,8 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
   private noData = false;
 
   constructor(public widgetComponent: WidgetComponent,
+              private imagePipe: ImagePipe,
+              private sanitizer: DomSanitizer,
               private translate: TranslateService,
               private renderer: Renderer2,
               private cd: ChangeDetectorRef) {
@@ -186,7 +191,7 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
       this.tooltipDateLabelStyle = {...this.tooltipDateStyle, ...this.tooltipDateLabelStyle};
     }
 
-    this.backgroundStyle = backgroundStyle(this.settings.background);
+    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
 
     this.hasCardClickAction = this.ctx.actionsApi.getActionDescriptors('cardClick').length > 0;

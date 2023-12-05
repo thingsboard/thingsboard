@@ -73,6 +73,7 @@ import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -615,7 +616,7 @@ public class TenantServiceTest extends AbstractServiceTest {
         resource.setResourceType(ResourceType.LWM2M_MODEL);
         resource.setFileName("filename.txt");
         resource.setResourceKey("Test resource key");
-        resource.setData("Some super test data");
+        resource.setData("Some super test data".getBytes(StandardCharsets.UTF_8));
         return resourceService.saveResource(resource);
     }
 

@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.TenantEntityWithDataDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.exception.EntitiesLimitException;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 
 import java.util.HashSet;
@@ -117,7 +118,7 @@ public abstract class DataValidator<D extends BaseData<?>> {
     protected void validateNumberOfEntitiesPerTenant(TenantId tenantId,
                                                      EntityType entityType) {
         if (!apiLimitService.checkEntitiesLimit(tenantId, entityType)) {
-            throw new DataValidationException(entityType.getNormalName() + "s limit reached");
+            throw new EntitiesLimitException(tenantId, entityType);
         }
     }
 
@@ -128,8 +129,7 @@ public abstract class DataValidator<D extends BaseData<?>> {
                                                    EntityType entityType) {
         if (maxSumDataSize > 0) {
             if (dataDao.sumDataSizeByTenantId(tenantId) + currentDataSize > maxSumDataSize) {
-                throw new DataValidationException(String.format("Failed to create the %s, files size limit is exhausted %d bytes!",
-                        entityType.name().toLowerCase().replaceAll("_", " "), maxSumDataSize));
+                throw new DataValidationException(String.format("%ss total size exceeds the maximum of " + maxSumDataSize + " bytes", entityType.getNormalName()));
             }
         }
     }
@@ -161,7 +161,7 @@ public abstract class DataValidator<D extends BaseData<?>> {
     }
 
     static void validateQueueNameOrTopic(String value, String fieldName) {
-        if (StringUtils.isEmpty(value) || value.trim().length() == 0 ) {
+        if (StringUtils.isEmpty(value) || value.trim().length() == 0) {
             throw new DataValidationException(String.format("Queue %s should be specified!", fieldName));
         }
         if (!QUEUE_PATTERN.matcher(value).matches()) {

@@ -42,6 +42,10 @@ export class ResourceService {
     return this.http.get<PageData<ResourceInfo>>(url, defaultHttpOptionsFromConfig(config));
   }
 
+  public getTenantResources(pageLink: PageLink, config?: RequestConfig): Observable<PageData<ResourceInfo>> {
+    return this.http.get<PageData<ResourceInfo>>(`/api/resource/tenant${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
+  }
+
   public getResource(resourceId: string, config?: RequestConfig): Observable<Resource> {
     return this.http.get<Resource>(`/api/resource/${resourceId}`, defaultHttpOptionsFromConfig(config));
   }

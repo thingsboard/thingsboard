@@ -16,7 +16,7 @@
 
 FROM thingsboard/openjdk11:bullseye-slim
 
-ENV PG_MAJOR=12
+ENV PG_MAJOR=15
 
 ENV DATA_FOLDER=/data
 

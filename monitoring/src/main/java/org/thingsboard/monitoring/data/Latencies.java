@@ -25,4 +25,8 @@ public class Latencies {
         return String.format("%sRequest", key);
     }
 
+    public static String wsUpdate(String key) {
+        return String.format("%sWsUpdate", key);
+    }
+
 }

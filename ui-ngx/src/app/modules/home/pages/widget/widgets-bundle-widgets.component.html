@@ -62,7 +62,7 @@
       <div cdkDrag class="tb-draggable tb-bundle-widget-row" *ngFor="let widget of widgets; trackBy: trackByWidget;
                let $index = index; last as isLast;">
         <div class="tb-bundle-widget-row-details">
-          <img class="tb-bundle-widget-image-preview" [src]="getPreviewImage(widget.image)" alt="{{ widget.name }}">
+          <img class="tb-bundle-widget-image-preview" [src]="widget.image | image: {preview: true, emptyUrl: '/assets/widget-preview-empty.svg'} | async" alt="{{ widget.name }}">
           <div class="tb-bundle-widget-details">
             <div class="tb-bundle-widget-title">{{ widget.name }}</div>
             <div *ngIf="widget.deprecated" class="tb-bundle-widget-deprecated">{{ 'widget.deprecated' | translate }}</div>
