@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.UpgradeInfo;
+import org.thingsboard.server.common.data.EdgeUpgradeInfo;
 import org.thingsboard.server.common.data.edge.EdgeInstructions;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.install.InstallScripts;
@@ -39,7 +39,7 @@ import java.util.Map;
 @TbCoreComponent
 public class DefaultEdgeUpgradeInstructionsService implements EdgeUpgradeInstructionsService {
 
-    private static final Map<String, UpgradeInfo> upgradeVersionHashMap = new HashMap<>();
+    private static final Map<String, EdgeUpgradeInfo> upgradeVersionHashMap = new HashMap<>();
 
     private static final String EDGE_DIR = "edge";
     private static final String INSTRUCTIONS_DIR = "instructions";
@@ -71,23 +71,23 @@ public class DefaultEdgeUpgradeInstructionsService implements EdgeUpgradeInstruc
     }
 
     @Override
-    public void updateInstructionMap(Map<String, UpgradeInfo> map) {
+    public void updateInstructionMap(Map<String, EdgeUpgradeInfo> map) {
         for (String key : map.keySet()) {
             upgradeVersionHashMap.put(key, map.get(key));
         }
     }
 
     private EdgeInstructions getDockerUpgradeInstructions(String tbVersion, String currentEdgeVersion) {
-        UpgradeInfo upgradeInfo = upgradeVersionHashMap.get(currentEdgeVersion);
-        if (upgradeInfo == null || upgradeInfo.getNextEdgeVersion() == null || tbVersion.equals(currentEdgeVersion)) {
+        EdgeUpgradeInfo edgeUpgradeInfo = upgradeVersionHashMap.get(currentEdgeVersion);
+        if (edgeUpgradeInfo == null || edgeUpgradeInfo.getNextEdgeVersion() == null || tbVersion.equals(currentEdgeVersion)) {
             return new EdgeInstructions("Edge upgrade instruction for " + currentEdgeVersion + "EDGE is not available.");
         }
         boolean rmUpgradeCompose = false;
         StringBuilder result = new StringBuilder(readFile(resolveFile("docker", "upgrade_preparing.md")));
-        while (upgradeInfo.getNextEdgeVersion() != null || !tbVersion.equals(currentEdgeVersion)) {
-            String edgeVersion = upgradeInfo.getNextEdgeVersion();
+        while (edgeUpgradeInfo.getNextEdgeVersion() != null || !tbVersion.equals(currentEdgeVersion)) {
+            String edgeVersion = edgeUpgradeInfo.getNextEdgeVersion();
             String ubuntuUpgradeInstructions = readFile(resolveFile("docker", "instructions.md"));
-            if (upgradeInfo.isRequiresUpdateDb()) {
+            if (edgeUpgradeInfo.isRequiresUpdateDb()) {
                 String upgradeDb = readFile(resolveFile("docker", "upgrade_db.md"));
                 ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${UPGRADE_DB}", upgradeDb);
             } else {
@@ -103,7 +103,7 @@ public class DefaultEdgeUpgradeInstructionsService implements EdgeUpgradeInstruc
             ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${TB_EDGE_VERSION}", edgeVersion + "EDGE");
             ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${FROM_TB_EDGE_VERSION}", currentEdgeVersion + "EDGE");
             currentEdgeVersion = edgeVersion;
-            upgradeInfo = upgradeVersionHashMap.get(upgradeInfo.getNextEdgeVersion());
+            edgeUpgradeInfo = upgradeVersionHashMap.get(edgeUpgradeInfo.getNextEdgeVersion());
             result.append(ubuntuUpgradeInstructions);
         }
         String startService = readFile(resolveFile("docker", "start_service.md"));
@@ -113,17 +113,17 @@ public class DefaultEdgeUpgradeInstructionsService implements EdgeUpgradeInstruc
     }
 
     private EdgeInstructions getLinuxUpgradeInstructions(String tbVersion, String currentEdgeVersion, String os) {
-        UpgradeInfo upgradeInfo = upgradeVersionHashMap.get(currentEdgeVersion);
-        if (upgradeInfo == null || upgradeInfo.getNextEdgeVersion() == null || tbVersion.equals(currentEdgeVersion)) {
+        EdgeUpgradeInfo edgeUpgradeInfo = upgradeVersionHashMap.get(currentEdgeVersion);
+        if (edgeUpgradeInfo == null || edgeUpgradeInfo.getNextEdgeVersion() == null || tbVersion.equals(currentEdgeVersion)) {
             return new EdgeInstructions("Edge upgrade instruction for " + currentEdgeVersion + "EDGE is not available.");
         }
         String upgrade_preparing = readFile(resolveFile("upgrade_preparing.md"));
         upgrade_preparing = upgrade_preparing.replace("${OS}", os.equals("centos") ? "RHEL/CentOS 7/8" : "Ubuntu");
         StringBuilder result = new StringBuilder(upgrade_preparing);
-        while (upgradeInfo.getNextEdgeVersion() != null || !tbVersion.equals(currentEdgeVersion)) {
-            String edgeVersion = upgradeInfo.getNextEdgeVersion();
+        while (edgeUpgradeInfo.getNextEdgeVersion() != null || !tbVersion.equals(currentEdgeVersion)) {
+            String edgeVersion = edgeUpgradeInfo.getNextEdgeVersion();
             String ubuntuUpgradeInstructions = readFile(resolveFile(os, "instructions.md"));
-            if (upgradeInfo.isRequiresUpdateDb()) {
+            if (edgeUpgradeInfo.isRequiresUpdateDb()) {
                 String upgradeDb = readFile(resolveFile("upgrade_db.md"));
                 ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${UPGRADE_DB}", upgradeDb);
             } else {
@@ -134,7 +134,7 @@ public class DefaultEdgeUpgradeInstructionsService implements EdgeUpgradeInstruc
             ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${TB_EDGE_VERSION}", edgeVersion);
             ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${FROM_TB_EDGE_VERSION}", currentEdgeVersion);
             currentEdgeVersion = edgeVersion;
-            upgradeInfo = upgradeVersionHashMap.get(upgradeInfo.getNextEdgeVersion());
+            edgeUpgradeInfo = upgradeVersionHashMap.get(edgeUpgradeInfo.getNextEdgeVersion());
             result.append(ubuntuUpgradeInstructions);
         }
         String startService = readFile(resolveFile("start_service.md"));

@@ -48,7 +48,7 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.UpgradeInfo;
+import org.thingsboard.server.common.data.EdgeUpgradeInfo;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
@@ -1187,10 +1187,10 @@ public class EdgeControllerTest extends AbstractControllerTest {
     @Test
     public void testGetEdgeUpgradeInstructions() throws Exception {
         // UpdateInfo config is updating from Thingsboard Update server
-        HashMap<String, UpgradeInfo> upgradeInfoHashMap = new HashMap<>();
-        upgradeInfoHashMap.put("3.6.0", new UpgradeInfo(true, "3.6.1"));
-        upgradeInfoHashMap.put("3.6.1", new UpgradeInfo(true, "3.6.2"));
-        upgradeInfoHashMap.put("3.6.2", new UpgradeInfo(true, null));
+        HashMap<String, EdgeUpgradeInfo> upgradeInfoHashMap = new HashMap<>();
+        upgradeInfoHashMap.put("3.6.0", new EdgeUpgradeInfo(true, "3.6.1"));
+        upgradeInfoHashMap.put("3.6.1", new EdgeUpgradeInfo(true, "3.6.2"));
+        upgradeInfoHashMap.put("3.6.2", new EdgeUpgradeInfo(true, null));
         edgeUpgradeInstructionsService.updateInstructionMap(upgradeInfoHashMap);
         Edge edge = constructEdge("Edge for Test Docker Upgrade Instructions", "default");
         Edge savedEdge = doPost("/api/edge", edge, Edge.class);
