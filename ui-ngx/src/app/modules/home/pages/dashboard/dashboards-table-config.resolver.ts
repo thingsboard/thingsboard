@@ -63,13 +63,19 @@ import {
   MakeDashboardPublicDialogData
 } from '@modules/home/pages/dashboard/make-dashboard-public-dialog.component';
 import { DashboardTabsComponent } from '@home/pages/dashboard/dashboard-tabs.component';
-import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { ImportExportService } from '@shared/import-export/import-export.service';
 import { EdgeService } from '@core/http/edge.service';
 import {
   AddEntitiesToEdgeDialogComponent,
   AddEntitiesToEdgeDialogData
 } from '@home/dialogs/add-entities-to-edge-dialog.component';
 import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
+import { Widget } from '@shared/models/widget.models';
+import { EntityAliases } from '@shared/models/alias.models';
+import {
+  EntityAliasesDialogComponent,
+  EntityAliasesDialogData
+} from '@home/components/alias/entity-aliases-dialog.component';
 
 @Injectable()
 export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<DashboardInfo | Dashboard>> {
@@ -382,13 +388,37 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
   }
 
   importDashboard(_$event: Event) {
-    this.importExport.importDashboard().subscribe(
+    this.importExport.importDashboard(this.editMissingAliases.bind(this)).subscribe(
       (dashboard) => {
         if (dashboard) {
           this.config.updateData();
         }
       }
     );
+  }
+
+  private editMissingAliases(widgets: Array<Widget>, isSingleWidget: boolean,
+                             customTitle: string, missingEntityAliases: EntityAliases): Observable<EntityAliases> {
+    return this.dialog.open<EntityAliasesDialogComponent, EntityAliasesDialogData,
+      EntityAliases>(EntityAliasesDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        entityAliases: missingEntityAliases,
+        widgets,
+        customTitle,
+        isSingleWidget,
+        disableAdd: true
+      }
+    }).afterClosed().pipe(
+      map((updatedEntityAliases) => {
+          if (updatedEntityAliases) {
+            return updatedEntityAliases;
+          } else {
+            throw new Error('Unable to resolve missing entity aliases!');
+          }
+        }
+      ));
   }
 
   exportDashboard($event: Event, dashboard: DashboardInfo) {

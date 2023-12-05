@@ -47,6 +47,7 @@ import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.queue.QueueService;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
@@ -90,6 +91,9 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     @Lazy
     @Autowired
     private QueueService queueService;
+
+    @Autowired
+    private ImageService imageService;
 
     @TransactionalEventListener(classes = DeviceProfileEvictEvent.class)
     @Override
@@ -178,6 +182,7 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
         }
         DeviceProfile savedDeviceProfile;
         try {
+            imageService.replaceBase64WithImageUrl(deviceProfile, "device profile");
             savedDeviceProfile = deviceProfileDao.saveAndFlush(deviceProfile.getTenantId(), deviceProfile);
             publishEvictEvent(new DeviceProfileEvictEvent(savedDeviceProfile.getTenantId(), savedDeviceProfile.getName(),
                     oldDeviceProfile != null ? oldDeviceProfile.getName() : null, savedDeviceProfile.getId(), savedDeviceProfile.isDefault(),

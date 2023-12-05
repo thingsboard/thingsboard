@@ -57,7 +57,7 @@ import { AttributeService } from '@core/http/attribute.service';
 import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { forkJoin, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { ImportExportService } from '@shared/import-export/import-export.service';
 import { ResizeObserver } from '@juggle/resize-observer';
 
 // @dynamic

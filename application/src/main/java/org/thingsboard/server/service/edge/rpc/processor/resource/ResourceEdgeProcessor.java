@@ -57,7 +57,7 @@ public abstract class ResourceEdgeProcessor extends BaseResourceProcessor implem
                     return handleUnsupportedMsgType(resourceUpdateMsg.getMsgType());
             }
         } catch (DataValidationException e) {
-            if (e.getMessage().contains("files size limit is exhausted")) {
+            if (e.getMessage().contains("exceeds the maximum")) {
                 log.warn("[{}] Resource data size has been exhausted {}", tenantId, resourceUpdateMsg, e);
                 return Futures.immediateFuture(null);
             } else {

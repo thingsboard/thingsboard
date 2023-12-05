@@ -22,6 +22,10 @@ import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { AlarmFilterConfig } from '@shared/models/query/query.models';
 import { AlarmSearchStatus } from '@shared/models/alarm.models';
+import { Observable, of } from 'rxjs';
+import { ImagePipe } from '@shared/pipe/image.pipe';
+import { map } from 'rxjs/operators';
+import { DomSanitizer } from '@angular/platform-browser';
 
 export type ComponentStyle = {[klass: string]: any};
 
@@ -416,14 +420,12 @@ export class LastUpdateAgoDateFormatProcessor extends DateFormatProcessor {
 
 export enum BackgroundType {
   image = 'image',
-  imageUrl = 'imageUrl',
   color = 'color'
 }
 
 export const backgroundTypeTranslations = new Map<BackgroundType, string>(
   [
     [BackgroundType.image, 'widgets.background.background-type-image'],
-    [BackgroundType.imageUrl, 'widgets.background.background-type-image-url'],
     [BackgroundType.color, 'widgets.background.background-type-color']
   ]
 );
@@ -436,7 +438,6 @@ export interface OverlaySettings {
 
 export interface BackgroundSettings {
   type: BackgroundType;
-  imageBase64?: string;
   imageUrl?: string;
   color?: string;
   overlay: OverlaySettings;
@@ -507,19 +508,36 @@ export const isFontSet = (font: Font): boolean => (!!font && !!font.style && !!f
 
 export const isFontPartiallySet = (font: Font): boolean => (!!font && (!!font.style || !!font.weight || !!font.size || !!font.family));
 
-export const backgroundStyle = (background: BackgroundSettings): ComponentStyle => {
+export const validateAndUpdateBackgroundSettings = (background: BackgroundSettings): BackgroundSettings => {
+  if (background) {
+    if (background.type === BackgroundType.image && (background as any).imageBase64) {
+      background.imageUrl = (background as any).imageBase64;
+    }
+    if (background.type === 'imageUrl' as any) {
+      background.type = BackgroundType.image;
+    }
+    delete (background as any).imageBase64;
+  }
+  return background;
+};
+
+export const backgroundStyle = (background: BackgroundSettings, imagePipe: ImagePipe,
+                                sanitizer: DomSanitizer, preview = false): Observable<ComponentStyle> => {
+  background = validateAndUpdateBackgroundSettings(background);
   if (background.type === BackgroundType.color) {
-    return {
+    return of({
       background: background.color
-    };
+    });
   } else {
-    const imageUrl = background.type === BackgroundType.image ? background.imageBase64 : background.imageUrl;
+    const imageUrl = background.imageUrl;
     if (imageUrl) {
-      return {
-        background: `url(${imageUrl}) no-repeat 50% 50% / cover`
-      };
+      return imagePipe.transform(imageUrl, {asString: true, ignoreLoadingImage: true, preview}).pipe(
+        map((transformedUrl) => ({
+            background: sanitizer.bypassSecurityTrustStyle(`url(${transformedUrl}) no-repeat 50% 50% / cover`)
+          }))
+      );
     } else {
-      return {};
+      return of({});
     }
   }
 };
