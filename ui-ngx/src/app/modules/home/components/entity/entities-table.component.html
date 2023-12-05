@@ -165,7 +165,12 @@
                         [matTooltip]="cellTooltip(entity, column, row)"
                         matTooltipPosition="above"
                         [ngStyle]="cellStyle(entity, column, row)">
-                <span [innerHTML]="cellContent(entity, column, row)"></span>
+                <ng-container *ngIf="column.type == 'link'; else defaultContent">
+                  <a [routerLink]="column.entityURL(entity)" [innerHTML]="cellContent(entity, column, row)" (click)="$event.stopPropagation();"></a>
+                </ng-container>
+                <ng-template #defaultContent>
+                  <span [innerHTML]="cellContent(entity, column, row)"></span>
+                </ng-template>
                 <ng-template [ngIf]="column.actionCell">
                   <ng-container [ngSwitch]="column.actionCell.type">
                     <ng-template [ngSwitchCase]="cellActionType.COPY_BUTTON">
