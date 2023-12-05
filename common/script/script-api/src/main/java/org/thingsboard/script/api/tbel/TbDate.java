@@ -490,8 +490,18 @@ public class TbDate implements Serializable, Cloneable {
     private static Instant parseInstant(String s) {
         try{
             if (s.length() > 0 && Character.isDigit(s.charAt(0))) {
-                // assuming UTC instant  "2007-12-03T10:15:30.00Z"
-                return OffsetDateTime.parse(s).toInstant();
+                // assuming  "2007-12-03T10:15:30.00Z"  UTC instant
+                // assuming  "2007-12-03T10:15:30.00"  ZoneId.systemDefault() instant
+                // assuming  "2007-12-03T10:15:30.00-04:00"  TZ instant
+                // assuming  "2007-12-03T10:15:30.00+04:00"  TZ instant
+                Instant inst =  validateDateWithTZ(s);
+                if (inst == null) {
+                    LocalDateTime dt = LocalDateTime.parse(s);
+                    return parseInstant(dt.getYear(), dt.getMonthValue(), dt.getDayOfMonth(), dt.getHour(), dt.getMinute(),
+                            dt.getSecond(),dt.getNano()/1000000, ZoneId.systemDefault());
+                } else {
+                    return inst;
+                }
             }
             else {
                 // assuming RFC-1123 value "Tue, 3 Jun 2008 11:05:30 GMT-02:00"
@@ -513,5 +523,13 @@ public class TbDate implements Serializable, Cloneable {
         LocalDateTime localDateTime = LocalDateTime.parse(s, dateTimeFormatter);
         ZonedDateTime zonedDateTime = localDateTime.atZone(zoneId);
         return zonedDateTime.toInstant();
+    }
+
+    private static Instant validateDateWithTZ(String s) {
+        try {
+            return OffsetDateTime.parse(s).toInstant();
+        } catch (DateTimeParseException e) {
+            return null;
+        }
     }
 }
