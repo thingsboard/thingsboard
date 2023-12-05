@@ -1057,7 +1057,7 @@ public class DeviceProfileControllerTest extends AbstractControllerTest {
         Assert.assertNotNull("Device Profile Infos page data is null!", deviceProfileInfos);
         Assert.assertEquals("Device Profile Infos Page data is empty! Expected to have default profile created!", 1, deviceProfileInfos.getTotalElements());
         List<EntityInfo> expectedDeviceProfileNames = deviceProfileInfos.getData().stream()
-                .map(DeviceProfileControllerTest::toEntityInfo)
+                .map(info -> new EntityInfo(info.getId(), info.getName()))
                 .sorted(Comparator.comparing(EntityInfo::getName))
                 .collect(Collectors.toList());
         var deviceProfileNames = doGetTyped("/api/deviceProfile/names", new TypeReference<List<EntityInfo>>() {
@@ -1082,7 +1082,7 @@ public class DeviceProfileControllerTest extends AbstractControllerTest {
         Assert.assertNotNull("Device Profile Infos page data is null!", deviceProfileInfos);
         Assert.assertEquals("Device Profile Infos Page data is empty! Expected to have default profile created + count value!", 1 + count, deviceProfileInfos.getTotalElements());
         expectedDeviceProfileNames = deviceProfileInfos.getData().stream()
-                .map(DeviceProfileControllerTest::toEntityInfo)
+                .map(info -> new EntityInfo(info.getId(), info.getName()))
                 .sorted(Comparator.comparing(EntityInfo::getName))
                 .collect(Collectors.toList());
 
@@ -1102,10 +1102,6 @@ public class DeviceProfileControllerTest extends AbstractControllerTest {
                 .collect(Collectors.toList());
         Assert.assertEquals(expectedDeviceProfileNamesWithoutDefault, deviceProfileNames);
         Assert.assertEquals(count, deviceProfileNames.size());
-    }
-
-    private static EntityInfo toEntityInfo(DeviceProfileInfo info) {
-        return new EntityInfo(info.getId(), info.getName());
     }
 
     private DeviceProfile savedDeviceProfile(String name) {

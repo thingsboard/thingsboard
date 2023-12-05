@@ -50,6 +50,7 @@ public interface DeviceProfileDao extends Dao<DeviceProfile>, ExportableEntityDa
     DeviceProfile findByName(TenantId tenantId, String profileName);
 
     PageData<DeviceProfile> findAllWithImages(PageLink pageLink);
+
     List<EntityInfo> findTenantDeviceProfileNames(UUID tenantId, boolean activeOnly);
 
 }

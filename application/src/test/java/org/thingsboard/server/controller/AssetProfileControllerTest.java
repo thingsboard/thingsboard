@@ -471,7 +471,7 @@ public class AssetProfileControllerTest extends AbstractControllerTest {
         Assert.assertNotNull("Asset Profile Infos page data is null!", assetProfileInfos);
         Assert.assertEquals("Asset Profile Infos Page data is empty! Expected to have default profile created!", 1, assetProfileInfos.getTotalElements());
         List<EntityInfo> expectedAssetProfileNames = assetProfileInfos.getData().stream()
-                .map(AssetProfileControllerTest::toEntityInfo)
+                .map(info -> new EntityInfo(info.getId(), info.getName()))
                 .sorted(Comparator.comparing(EntityInfo::getName))
                 .collect(Collectors.toList());
         var assetProfileNames = doGetTyped("/api/assetProfile/names", new TypeReference<List<EntityInfo>>() {
@@ -496,7 +496,7 @@ public class AssetProfileControllerTest extends AbstractControllerTest {
         Assert.assertNotNull("Asset Profile Infos page data is null!", assetProfileInfos);
         Assert.assertEquals("Asset Profile Infos Page data is empty! Expected to have default profile created + count value!", 1 + count, assetProfileInfos.getTotalElements());
         expectedAssetProfileNames = assetProfileInfos.getData().stream()
-                .map(AssetProfileControllerTest::toEntityInfo)
+                .map(info -> new EntityInfo(info.getId(), info.getName()))
                 .sorted(Comparator.comparing(EntityInfo::getName))
                 .collect(Collectors.toList());
 
@@ -516,10 +516,6 @@ public class AssetProfileControllerTest extends AbstractControllerTest {
                 .collect(Collectors.toList());
         Assert.assertEquals(expectedAssetProfileNamesWithoutDefault, assetProfileNames);
         Assert.assertEquals(count, assetProfileNames.size());
-    }
-
-    private static EntityInfo toEntityInfo(AssetProfileInfo info) {
-        return new EntityInfo(info.getId(), info.getName());
     }
 
     private AssetProfile savedAssetProfile(String name) {

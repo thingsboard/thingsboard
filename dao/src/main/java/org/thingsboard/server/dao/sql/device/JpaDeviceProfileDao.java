@@ -117,6 +117,7 @@ public class JpaDeviceProfileDao extends JpaAbstractDao<DeviceProfileEntity, Dev
         return DaoUtil.getData(deviceProfileRepository.findByTenantIdAndName(tenantId.getId(), profileName));
     }
 
+    @Override
     public PageData<DeviceProfile> findAllWithImages(PageLink pageLink) {
         return DaoUtil.toPageData(deviceProfileRepository.findAllByImageNotNull(DaoUtil.toPageable(pageLink)));
     }
