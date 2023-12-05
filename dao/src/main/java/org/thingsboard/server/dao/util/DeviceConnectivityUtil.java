@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.util;
 
-import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -35,11 +34,13 @@ public class DeviceConnectivityUtil {
     public static final String MQTT = "mqtt";
     public static final String LINUX = "linux";
     public static final String WINDOWS = "windows";
+    public static final String MACOS = "macos";
     public static final String DOCKER = "docker";
     public static final String MQTTS = "mqtts";
     public static final String COAP = "coap";
     public static final String COAPS = "coaps";
     public static final String CA_ROOT_CERT_PEM = "ca-root.pem";
+    public static final String CA_ROOT_GATEWAY_CERT_PEM_PATH = "{gatewayVolumePathPrefix}config{pathSep}" + CA_ROOT_CERT_PEM;
     public static final String CHECK_DOCUMENTATION = "Check documentation";
     public static final String JSON_EXAMPLE_PAYLOAD = "\"{temperature:25}\"";
     public static final String DOCKER_RUN = "docker run --rm -it ";
@@ -93,23 +94,41 @@ public class DeviceConnectivityUtil {
         return command.toString();
     }
 
-    public static String getGatewayLaunchCommand(String os, String deviceName, String host, String port, DeviceCredentials deviceCredentials) {
+    public static String getGatewayLaunchCommand(String os, String deviceName, DeviceConnectivityInfo properties, DeviceCredentials deviceCredentials, String mqttType, String baseUrl) throws URISyntaxException {
+        String host = getHost(baseUrl, properties, mqttType);
+        String port = properties.getPort().isEmpty() ? null : properties.getPort();
         String gatewayVolumePathPrefix = "~/.tb-gateway/";
+        String pathSep = "/";
         if (WINDOWS.equals(os)) {
             gatewayVolumePathPrefix = "%HOMEDRIVE%%HOMEPATH%\\tb-gateway\\";
+            pathSep = "\\";
         }
 
-        String gatewayContainerName = deviceName.replaceAll("[^A-Za-z0-9_.-]", "");
+        String gatewayContainerName = deviceName.replace(" ", "_").replaceAll("[^A-Za-z0-9_.-]", "");
 
-        StringBuilder command = new StringBuilder(GATEWAY_DOCKER_RUN);
+        StringBuilder command = new StringBuilder();
+        String caRootGatewayCertPemPath = CA_ROOT_GATEWAY_CERT_PEM_PATH
+                .replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix)
+                .replace("{pathSep}", pathSep);
+        if (MQTTS.equals(mqttType)) {
+            command.append(getCurlPemCertCommand(baseUrl, MQTTS, caRootGatewayCertPemPath));
+            command.append(" && ");
+        }
+        command.append(GATEWAY_DOCKER_RUN);
         command.append("-v {gatewayVolumePathPrefix}logs:/thingsboard_gateway/logs ".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
         command.append("-v {gatewayVolumePathPrefix}extensions:/thingsboard_gateway/extensions ".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
         command.append("-v {gatewayVolumePathPrefix}config:/thingsboard_gateway/config ".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
         command.append("--name ").append(gatewayContainerName).append(" ");
-        command.append(isLocalhost(host) ? ADD_DOCKER_INTERNAL_HOST : "");
-        command.append("-p 60000-61000:60000-61000 ");
-        command.append("-e host=").append(isLocalhost(host) ? HOST_DOCKER_INTERNAL : host).append(" ");
-        command.append("-e port=").append(port);
+        if (LINUX.equals(os)) {
+            command.append(NETWORK_HOST_PARAM);
+            command.append(isLocalhost(host) ? ADD_DOCKER_INTERNAL_HOST : "");
+        } else {
+            command.append("-p 6400-6420:6400-6420 ");
+        }
+        command.append("-e host=").append(isLocalhost(host) ? HOST_DOCKER_INTERNAL : host);
+        if (port != null && !"1883".equals(port)) {
+            command.append(" -e port=").append(port);
+        }
 
         switch (deviceCredentials.getCredentialsType()) {
             case ACCESS_TOKEN:
@@ -136,6 +155,10 @@ public class DeviceConnectivityUtil {
                 return null;
         }
 
+        if (MQTTS.equals(mqttType)) {
+            command.append(" -e caCert=/thingsboard_gateway/config/").append(CA_ROOT_CERT_PEM);
+        }
+
         command.append(" --restart always");
         command.append(" thingsboard/tb-gateway");
 
@@ -152,7 +175,7 @@ public class DeviceConnectivityUtil {
         StringBuilder mqttDockerCommand = new StringBuilder();
         mqttDockerCommand.append(DOCKER_RUN).append(isLocalhost(host) ? ADD_DOCKER_INTERNAL_HOST : "").append(MQTT_IMAGE);
 
-        if (isLocalhost(host)){
+        if (isLocalhost(host)) {
             mqttCommand = mqttCommand.replace(host, HOST_DOCKER_INTERNAL);
         }
 
@@ -170,7 +193,11 @@ public class DeviceConnectivityUtil {
     }
 
     public static String getCurlPemCertCommand(String baseUrl, String protocol) {
-        return String.format("curl -f -S -o %s %s/api/device-connectivity/%s/certificate/download", CA_ROOT_CERT_PEM, baseUrl, protocol);
+        return getCurlPemCertCommand(baseUrl, protocol, CA_ROOT_CERT_PEM);
+    }
+
+    public static String getCurlPemCertCommand(String baseUrl, String protocol, String caCertFilePath) {
+        return String.format("curl -f -S -o %s %s/api/device-connectivity/%s/certificate/download", caCertFilePath, baseUrl, protocol);
     }
 
     public static String getCoapPublishCommand(String protocol, String host, String port, DeviceCredentials deviceCredentials) {

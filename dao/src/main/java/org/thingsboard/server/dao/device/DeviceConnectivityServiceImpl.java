@@ -60,6 +60,7 @@ import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.DOCKER;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.HTTP;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.HTTPS;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.LINUX;
+import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.MACOS;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.MQTT;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.MQTTS;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.WINDOWS;
@@ -302,12 +303,12 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     private JsonNode getGatewayDockerCommands(String baseUrl, String deviceName, DeviceCredentials deviceCredentials, String mqttType) throws URISyntaxException {
         ObjectNode dockerLaunchCommands = JacksonUtil.newObjectNode();
         DeviceConnectivityInfo properties = getConnectivity(mqttType);
-        String mqttHost = getHost(baseUrl, properties, mqttType);
-        String mqttPort = properties.getPort().isEmpty() ? null : properties.getPort();
-        Optional.ofNullable(DeviceConnectivityUtil.getGatewayLaunchCommand(LINUX, deviceName, mqttHost, mqttPort, deviceCredentials))
+        Optional.ofNullable(DeviceConnectivityUtil.getGatewayLaunchCommand(LINUX, deviceName, properties, deviceCredentials, mqttType, baseUrl))
                 .ifPresent(v -> dockerLaunchCommands.put(LINUX, v));
-        Optional.ofNullable(DeviceConnectivityUtil.getGatewayLaunchCommand(WINDOWS,  deviceName, mqttHost, mqttPort, deviceCredentials))
+        Optional.ofNullable(DeviceConnectivityUtil.getGatewayLaunchCommand(WINDOWS, deviceName, properties, deviceCredentials, mqttType, baseUrl))
                 .ifPresent(v -> dockerLaunchCommands.put(WINDOWS, v));
+        Optional.ofNullable(DeviceConnectivityUtil.getGatewayLaunchCommand(MACOS, deviceName, properties, deviceCredentials, mqttType, baseUrl))
+                .ifPresent(v -> dockerLaunchCommands.put(MACOS, v));
         return dockerLaunchCommands.isEmpty() ? null : dockerLaunchCommands;
     }
 
