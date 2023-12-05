@@ -124,6 +124,7 @@ import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rpc.RpcService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.ConstraintValidator;
@@ -145,7 +146,6 @@ import org.thingsboard.server.service.entitiy.user.TbUserSettingsService;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-import org.thingsboard.server.service.resource.TbResourceService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -272,7 +272,7 @@ public abstract class BaseController {
     protected PartitionService partitionService;
 
     @Autowired
-    protected TbResourceService resourceService;
+    protected ResourceService resourceService;
 
     @Autowired
     protected OtaPackageService otaPackageService;
@@ -587,7 +587,7 @@ public abstract class BaseController {
                     checkWidgetTypeId(new WidgetTypeId(entityId.getId()), operation);
                     return;
                 case TB_RESOURCE:
-                    checkResourceId(new TbResourceId(entityId.getId()), operation);
+                    checkResourceInfoId(new TbResourceId(entityId.getId()), operation);
                     return;
                 case OTA_PACKAGE:
                     checkOtaPackageId(new OtaPackageId(entityId.getId()), operation);

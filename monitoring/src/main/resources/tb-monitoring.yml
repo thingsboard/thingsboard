@@ -51,8 +51,10 @@ monitoring:
       # MQTT QoS
       qos: '${MQTT_QOS_LEVEL:1}'
       targets:
-        # MQTT transport base url, tcp://DOMAIN:1883 by default
+          # MQTT transport base url, tcp://DOMAIN:1883 by default
         - base_url: '${MQTT_TRANSPORT_BASE_URL:tcp://${monitoring.domain}:1883}'
+          # Whether to monitor IPs associated with the domain from base url
+          check_domain_ips: '${MQTT_TRANSPORT_CHECK_DOMAIN_IPS:false}'
         # To add more targets, use following environment variables:
         # monitoring.transports.mqtt.targets[1].base_url, monitoring.transports.mqtt.targets[2].base_url, etc.
 
@@ -62,8 +64,10 @@ monitoring:
       # CoAP request timeout in milliseconds
       request_timeout_ms: '${COAP_REQUEST_TIMEOUT_MS:4000}'
       targets:
-        # CoAP transport base url, coap://DOMAIN by default
+          # CoAP transport base url, coap://DOMAIN by default
         - base_url: '${COAP_TRANSPORT_BASE_URL:coap://${monitoring.domain}}'
+          # Whether to monitor IPs associated with the domain from base url
+          check_domain_ips: '${COAP_TRANSPORT_CHECK_DOMAIN_IPS:false}'
         # To add more targets, use following environment variables:
         # monitoring.transports.coap.targets[1].base_url, monitoring.transports.coap.targets[2].base_url, etc.
 
@@ -73,8 +77,10 @@ monitoring:
       # HTTP request timeout in milliseconds
       request_timeout_ms: '${HTTP_REQUEST_TIMEOUT_MS:4000}'
       targets:
-        # HTTP transport base url, http://DOMAIN by default
+          # HTTP transport base url, http://DOMAIN by default
         - base_url: '${HTTP_TRANSPORT_BASE_URL:http://${monitoring.domain}}'
+          # Whether to monitor IPs associated with the domain from base url
+          check_domain_ips: '${HTTP_TRANSPORT_CHECK_DOMAIN_IPS:false}'
         # To add more targets, use following environment variables:
         # monitoring.transports.http.targets[1].base_url, monitoring.transports.http.targets[2].base_url, etc.
 
@@ -84,8 +90,10 @@ monitoring:
       # LwM2M request timeout in milliseconds
       request_timeout_ms: '${LWM2M_REQUEST_TIMEOUT_MS:4000}'
       targets:
-        # LwM2M transport base url, coap://DOMAIN:5685 by default
+          # LwM2M transport base url, coap://DOMAIN:5685 by default
         - base_url: '${LWM2M_TRANSPORT_BASE_URL:coap://${monitoring.domain}:5685}'
+          # Whether to monitor IPs associated with the domain from base url
+          check_domain_ips: '${LWM2M_TRANSPORT_CHECK_DOMAIN_IPS:false}'
         # To add more targets, use following environment variables:
         # monitoring.transports.lwm2m.targets[1].base_url, monitoring.transports.lwm2m.targets[2].base_url, etc.
 

@@ -133,6 +133,7 @@ public class TenantProfileController extends BaseController {
                     "      \"maxRuleChains\": 0,\n" +
                     "      \"maxResourcesInBytes\": 0,\n" +
                     "      \"maxOtaPackagesInBytes\": 0,\n" +
+                    "      \"maxResourceSize\": 0,\n" +
                     "      \"transportTenantMsgRateLimit\": \"1000:1,20000:60\",\n" +
                     "      \"transportTenantTelemetryMsgRateLimit\": \"1000:1,20000:60\",\n" +
                     "      \"transportTenantTelemetryDataPointsRateLimit\": \"1000:1,20000:60\",\n" +

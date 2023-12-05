@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div #valueCardPanel class="tb-value-card-panel" [class]="this.layout" [style]="backgroundStyle">
+<div #valueCardPanel class="tb-value-card-panel" [class]="this.layout" [style]="backgroundStyle$ | async">
   <div class="tb-value-card-overlay" [style]="overlayStyle"></div>
   <div class="tb-value-card-title-panel">
     <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>

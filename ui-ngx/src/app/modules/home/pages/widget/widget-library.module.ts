@@ -33,7 +33,6 @@ import { WidgetTypeAutocompleteComponent } from '@home/pages/widget/widget-type-
   declarations: [
     WidgetTypeComponent,
     WidgetsBundleComponent,
-    // WidgetLibraryComponent,
     WidgetTypeAutocompleteComponent,
     WidgetsBundleWidgetsComponent,
     WidgetEditorComponent,
