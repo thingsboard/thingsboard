@@ -25,6 +25,7 @@ import java.util.Map;
 @Configuration
 @ConfigurationProperties(prefix = "device")
 @Data
+@Deprecated(since = "3.6.1")
 public class DeviceConnectivityConfiguration {
     private Map<String, DeviceConnectivityInfo> connectivity = new HashMap<>();
 

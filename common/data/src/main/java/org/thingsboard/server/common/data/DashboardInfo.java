@@ -30,7 +30,9 @@ import java.util.Objects;
 import java.util.Set;
 
 @ApiModel
-public class DashboardInfo extends BaseData<DashboardId> implements HasName, HasTenantId, HasTitle {
+public class DashboardInfo extends BaseData<DashboardId> implements HasName, HasTenantId, HasTitle, HasImage {
+
+    private static final long serialVersionUID = -9080404114760433799L;
 
     private TenantId tenantId;
     @NoXss

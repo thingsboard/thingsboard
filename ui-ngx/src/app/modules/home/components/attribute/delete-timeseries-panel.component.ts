@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, InjectionToken, OnDestroy, OnInit } from '@angular/core';
+import { Component, InjectionToken, OnDestroy, OnInit } from '@angular/core';
 import { OverlayRef } from '@angular/cdk/overlay';
 import {
   TimeseriesDeleteStrategy,
@@ -27,9 +27,6 @@ import { takeUntil } from 'rxjs/operators';
 
 export const DELETE_TIMESERIES_PANEL_DATA = new InjectionToken<any>('DeleteTimeseriesPanelData');
 
-export interface DeleteTimeseriesPanelData {
-  isMultipleDeletion: boolean;
-}
 
 export interface DeleteTimeseriesPanelResult {
   strategy: TimeseriesDeleteStrategy;
@@ -51,23 +48,13 @@ export class DeleteTimeseriesPanelComponent implements OnInit, OnDestroy {
 
   strategiesTranslationsMap = timeseriesDeleteStrategyTranslations;
 
-  private multipleDeletionStrategies = new Set<TimeseriesDeleteStrategy>([
-    TimeseriesDeleteStrategy.DELETE_ALL_DATA,
-    TimeseriesDeleteStrategy.DELETE_ALL_DATA_EXCEPT_LATEST_VALUE
-  ]);
-
   private destroy$ = new Subject<void>();
 
-  constructor(@Inject(DELETE_TIMESERIES_PANEL_DATA) private data: DeleteTimeseriesPanelData,
-              private overlayRef: OverlayRef,
+  constructor(private overlayRef: OverlayRef,
               private fb: FormBuilder) { }
 
   ngOnInit(): void {
     const today = new Date();
-    if (this.data.isMultipleDeletion) {
-      this.strategiesTranslationsMap = new Map(Array.from(this.strategiesTranslationsMap)
-        .filter(([strategy]) => this.multipleDeletionStrategies.has(strategy)))
-    }
     this.deleteTimeseriesFormGroup = this.fb.group({
       strategy: [TimeseriesDeleteStrategy.DELETE_ALL_DATA],
       startDateTime: [

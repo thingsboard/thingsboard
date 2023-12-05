@@ -370,7 +370,8 @@ export class AuthService {
           data: {
             title: translations['login.error'],
             message: loginError,
-            ok: translations['action.close']
+            ok: translations['action.close'],
+            textMode: true
           }
         };
         this.dialog.open(AlertDialogComponent, dialogConfig);
@@ -424,8 +425,8 @@ export class AuthService {
                   } else {
                     userLang = null;
                   }
-                  this.notifyUserLang(userLang);
                   loadUserSubject.next(authPayload);
+                  this.notifyUserLang(userLang);
                   loadUserSubject.complete();
                 },
                 (err) => {

@@ -302,6 +302,7 @@ public class ModelConstants {
     public static final String WIDGETS_BUNDLE_TITLE_PROPERTY = TITLE_PROPERTY;
     public static final String WIDGETS_BUNDLE_IMAGE_PROPERTY = "image";
     public static final String WIDGETS_BUNDLE_DESCRIPTION = "description";
+    public static final String WIDGETS_BUNDLE_ORDER = "widgets_bundle_order";
 
     /**
      * Widget_type constants.
@@ -313,9 +314,14 @@ public class ModelConstants {
     public static final String WIDGET_TYPE_NAME_PROPERTY = "name";
     public static final String WIDGET_TYPE_IMAGE_PROPERTY = "image";
     public static final String WIDGET_TYPE_DESCRIPTION_PROPERTY = "description";
+    public static final String WIDGET_TYPE_TAGS_PROPERTY = "tags";
     public static final String WIDGET_TYPE_DESCRIPTOR_PROPERTY = "descriptor";
 
     public static final String WIDGET_TYPE_DEPRECATED_PROPERTY = "deprecated";
+
+    public static final String WIDGET_TYPE_WIDGET_TYPE_PROPERTY = "widget_type";
+
+    public static final String WIDGET_TYPE_INFO_VIEW_TABLE_NAME = "widget_type_info_view";
 
     /**
      * Widgets bundle widget constants.
@@ -477,6 +483,7 @@ public class ModelConstants {
     public static final String API_USAGE_STATE_DB_STORAGE_COLUMN = "db_storage";
     public static final String API_USAGE_STATE_RE_EXEC_COLUMN = "re_exec";
     public static final String API_USAGE_STATE_JS_EXEC_COLUMN = "js_exec";
+    public static final String API_USAGE_STATE_TBEL_EXEC_COLUMN = "tbel_exec";
     public static final String API_USAGE_STATE_EMAIL_EXEC_COLUMN = "email_exec";
     public static final String API_USAGE_STATE_SMS_EXEC_COLUMN = "sms_exec";
     public static final String API_USAGE_STATE_ALARM_EXEC_COLUMN = "alarm_exec";
@@ -492,6 +499,8 @@ public class ModelConstants {
     public static final String RESOURCE_FILE_NAME_COLUMN = "file_name";
     public static final String RESOURCE_DATA_COLUMN = "data";
     public static final String RESOURCE_ETAG_COLUMN = "etag";
+    public static final String RESOURCE_DESCRIPTOR_COLUMN = "descriptor";
+    public static final String RESOURCE_PREVIEW_COLUMN = "preview";
 
     /**
      * Ota Package constants.

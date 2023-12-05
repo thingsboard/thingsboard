@@ -104,6 +104,8 @@ CREATE INDEX IF NOT EXISTS idx_notification_rule_tenant_id_trigger_type_created_
 CREATE INDEX IF NOT EXISTS idx_notification_request_tenant_id_user_created_time ON notification_request(tenant_id, created_time DESC)
     WHERE originator_entity_type = 'USER';
 
+CREATE INDEX IF NOT EXISTS idx_notification_request_tenant_id ON notification_request(tenant_id);
+
 CREATE INDEX IF NOT EXISTS idx_notification_request_rule_id_originator_entity_id ON notification_request(rule_id, originator_entity_id)
     WHERE originator_entity_type = 'ALARM';
 
@@ -112,6 +114,10 @@ CREATE INDEX IF NOT EXISTS idx_notification_request_status ON notification_reque
 
 CREATE INDEX IF NOT EXISTS idx_notification_id ON notification(id);
 
+CREATE INDEX IF NOT EXISTS idx_notification_notification_request_id ON notification(request_id);
+
 CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_created_time ON notification(recipient_id, created_time DESC);
 
 CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_unread ON notification(recipient_id) WHERE status <> 'READ';
+
+CREATE INDEX IF NOT EXISTS idx_resource_etag ON resource(tenant_id, etag);

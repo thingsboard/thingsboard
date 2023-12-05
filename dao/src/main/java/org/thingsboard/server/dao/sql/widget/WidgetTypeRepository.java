@@ -24,8 +24,6 @@ import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.WidgetTypeDetailsEntity;
 import org.thingsboard.server.dao.model.sql.WidgetTypeEntity;
 import org.thingsboard.server.dao.model.sql.WidgetTypeIdFqnEntity;
-import org.thingsboard.server.dao.model.sql.WidgetTypeInfoEntity;
-import org.thingsboard.server.dao.model.sql.WidgetsBundleEntity;
 
 import java.util.List;
 import java.util.UUID;
@@ -37,33 +35,8 @@ public interface WidgetTypeRepository extends JpaRepository<WidgetTypeDetailsEnt
 
     boolean existsByTenantIdAndId(UUID tenantId, UUID id);
 
-    @Query("SELECT new org.thingsboard.server.dao.model.sql.WidgetTypeInfoEntity(wtd) FROM WidgetTypeDetailsEntity wtd WHERE wtd.tenantId = :systemTenantId " +
-            "AND (LOWER(wtd.name) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-            "OR ((:fullSearch) IS TRUE AND LOWER(wtd.description) LIKE LOWER(CONCAT('%', :searchText, '%'))))")
-    Page<WidgetTypeInfoEntity> findSystemWidgetTypes(@Param("systemTenantId") UUID systemTenantId,
-                                                     @Param("searchText") String searchText,
-                                                     @Param("fullSearch") boolean fullSearch,
-                                                     Pageable pageable);
-
-    @Query("SELECT new org.thingsboard.server.dao.model.sql.WidgetTypeInfoEntity(wtd) FROM WidgetTypeDetailsEntity wtd WHERE wtd.tenantId IN (:tenantId, :nullTenantId) " +
-            "AND (LOWER(wtd.name) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-            "OR ((:fullSearch) IS TRUE AND LOWER(wtd.description) LIKE LOWER(CONCAT('%', :searchText, '%'))))")
-    Page<WidgetTypeInfoEntity> findAllTenantWidgetTypesByTenantId(@Param("tenantId") UUID tenantId,
-                                                                  @Param("nullTenantId") UUID nullTenantId,
-                                                                  @Param("searchText") String searchText,
-                                                                  @Param("fullSearch") boolean fullSearch,
-                                                                  Pageable pageable);
-
-    @Query("SELECT new org.thingsboard.server.dao.model.sql.WidgetTypeInfoEntity(wtd) FROM WidgetTypeDetailsEntity wtd WHERE wtd.tenantId = :tenantId " +
-            "AND (LOWER(wtd.name) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-            "OR ((:fullSearch) IS TRUE AND LOWER(wtd.description) LIKE LOWER(CONCAT('%', :searchText, '%'))))")
-    Page<WidgetTypeInfoEntity> findTenantWidgetTypesByTenantId(@Param("tenantId") UUID tenantId,
-                                                               @Param("searchText") String searchText,
-                                                               @Param("fullSearch") boolean fullSearch,
-                                                               Pageable pageable);
-
     @Query("SELECT wtd FROM WidgetTypeDetailsEntity wtd WHERE wtd.tenantId = :tenantId " +
-            "AND LOWER(wtd.name) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "AND (:textSearch IS NULL OR ilike(wtd.name, CONCAT('%', :textSearch, '%')) = true)")
     Page<WidgetTypeDetailsEntity> findTenantWidgetTypeDetailsByTenantId(@Param("tenantId") UUID tenantId,
                                                                         @Param("textSearch") String textSearch,
                                                                         Pageable pageable);
@@ -78,10 +51,6 @@ public interface WidgetTypeRepository extends JpaRepository<WidgetTypeDetailsEnt
             "AND wbw.widgetTypeId = wtd.id ORDER BY wbw.widgetTypeOrder")
     List<WidgetTypeDetailsEntity> findWidgetTypesDetailsByWidgetsBundleId(@Param("widgetsBundleId") UUID widgetsBundleId);
 
-    @Query("SELECT new org.thingsboard.server.dao.model.sql.WidgetTypeInfoEntity(wtd) FROM WidgetTypeDetailsEntity wtd, WidgetsBundleWidgetEntity wbw " +
-            "WHERE wbw.widgetsBundleId = :widgetsBundleId " +
-            "AND wbw.widgetTypeId = wtd.id ORDER BY wbw.widgetTypeOrder")
-    List<WidgetTypeInfoEntity> findWidgetTypesInfosByWidgetsBundleId(@Param("widgetsBundleId") UUID widgetsBundleId);
 
     @Query("SELECT wtd.fqn FROM WidgetTypeDetailsEntity wtd, WidgetsBundleWidgetEntity wbw " +
             "WHERE wbw.widgetsBundleId = :widgetsBundleId " +
@@ -100,11 +69,17 @@ public interface WidgetTypeRepository extends JpaRepository<WidgetTypeDetailsEnt
 
     @Query(value = "SELECT * FROM widget_type wt " +
             "WHERE wt.tenant_id = :tenantId AND cast(wt.descriptor as json) ->> 'resources' LIKE LOWER(CONCAT('%', :resourceId, '%'))",
-    nativeQuery = true)
+            nativeQuery = true)
     List<WidgetTypeDetailsEntity> findWidgetTypesInfosByTenantIdAndResourceId(@Param("tenantId") UUID tenantId,
-                                                                    @Param("resourceId") UUID resourceId);
+                                                                              @Param("resourceId") UUID resourceId);
 
     @Query("SELECT externalId FROM WidgetTypeDetailsEntity WHERE id = :id")
     UUID getExternalIdById(@Param("id") UUID id);
+
+    @Query("SELECT w.id FROM WidgetTypeDetailsEntity w")
+    Page<UUID> findAllIds(Pageable pageable);
+
+    @Query("SELECT w.id FROM WidgetTypeDetailsEntity w WHERE w.tenantId = :tenantId")
+    Page<UUID> findIdsByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
 
 }

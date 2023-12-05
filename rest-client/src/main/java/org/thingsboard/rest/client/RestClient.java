@@ -703,7 +703,7 @@ public class RestClient implements Closeable {
                 }).getBody();
     }
 
-    @Deprecated(since = "3.6.1")
+    @Deprecated(since = "3.6.2")
     public List<EntitySubtype> getAssetTypes() {
         return restTemplate.exchange(URI.create(
                         baseURL + "/api/asset/types"),
@@ -1404,7 +1404,7 @@ public class RestClient implements Closeable {
                 }).getBody();
     }
 
-    @Deprecated(since = "3.6.1")
+    @Deprecated(since = "3.6.2")
     public List<EntitySubtype> getDeviceTypes() {
         return restTemplate.exchange(
                 baseURL + "/api/device/types",

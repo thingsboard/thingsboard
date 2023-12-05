@@ -49,6 +49,8 @@ public class DataConstants {
     public static final String MQTT_TRANSPORT_NAME = "MQTT";
     public static final String HTTP_TRANSPORT_NAME = "HTTP";
     public static final String SNMP_TRANSPORT_NAME = "SNMP";
+    public static final String MAXIMUM_NUMBER_OF_DEVICES_REACHED = "Maximum number of devices reached!";
+    public static final String TB_IMAGE_PREFIX = "tb-image;";
 
 
     public static final String[] allScopes() {
@@ -110,7 +112,10 @@ public class DataConstants {
     public static final String PROVISION_KEY = "provisionDeviceKey";
     public static final String PROVISION_SECRET = "provisionDeviceSecret";
 
-    public static final String DEFAULT_PROFILE_TYPE = "default";
+    @Deprecated(since = "3.6.2", forRemoval = true)
+    public static final String DEFAULT_DEVICE_TYPE = "default";
+
+    public static final String DEFAULT_PROFILE_NAME = "default";
     public static final String DEVICE_NAME = "deviceName";
     public static final String DEVICE_TYPE = "deviceType";
     public static final String CERT_PUB_KEY = "x509CertPubKey";

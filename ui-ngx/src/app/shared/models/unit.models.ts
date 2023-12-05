@@ -23,6 +23,15 @@ export interface Unit {
   tags: string[];
 }
 
+export enum UnitsType {
+  capacity = 'capacity'
+}
+
+export enum Units {
+  percent = '%',
+  liters = 'L'
+}
+
 export const unitBySymbol = (_units: Array<Unit>, symbol: string): Unit => _units.find(u => u.symbol === symbol);
 
 const searchUnitTags = (unit: Unit, searchText: string): boolean =>

@@ -30,7 +30,11 @@ public interface AssetProfileService extends EntityDaoService {
 
     AssetProfile findAssetProfileById(TenantId tenantId, AssetProfileId assetProfileId);
 
+    AssetProfile findAssetProfileById(TenantId tenantId, AssetProfileId assetProfileId, boolean putInCache);
+
     AssetProfile findAssetProfileByName(TenantId tenantId, String profileName);
+
+    AssetProfile findAssetProfileByName(TenantId tenantId, String profileName, boolean putInCache);
 
     AssetProfileInfo findAssetProfileInfoById(TenantId tenantId, AssetProfileId assetProfileId);
 

@@ -43,7 +43,10 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
   notificationDeliveryMethods: NotificationDeliveryMethod[];
   notificationDeliveryMethodTranslateMap = NotificationDeliveryMethodTranslateMap;
 
-  allowNotificationDeliveryMethods: Array<NotificationDeliveryMethod>;
+  private deliveryMethods = new Set([
+    NotificationDeliveryMethod.SLACK,
+    NotificationDeliveryMethod.MICROSOFT_TEAMS
+  ]);
 
   constructor(protected store: Store<AppState>,
               private route: ActivatedRoute,
@@ -52,25 +55,15 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
               private notificationService: NotificationService,
               private fb: UntypedFormBuilder,) {
     super(store);
+    this.notificationService.getAvailableDeliveryMethods({ignoreLoading: true}).subscribe(
+      allowMethods => {
+        this.notificationDeliveryMethods = allowMethods.filter(value => !this.deliveryMethods.has(value));
+        this.patchNotificationSettings(this.route.snapshot.data.userSettings);
+      });
   }
 
   ngOnInit() {
-    this.notificationDeliveryMethods = this.getNotificationDeliveryMethods();
-
-    this.notificationService.getAvailableDeliveryMethods({ignoreLoading: true}).subscribe(allowMethods => {
-      this.allowNotificationDeliveryMethods = allowMethods;
-    });
-
     this.buildNotificationSettingsForm();
-    this.patchNotificationSettings(this.route.snapshot.data.userSettings);
-  }
-
-  private getNotificationDeliveryMethods(): NotificationDeliveryMethod[] {
-    const deliveryMethods = new Set([
-      NotificationDeliveryMethod.SLACK,
-      NotificationDeliveryMethod.MICROSOFT_TEAMS
-    ]);
-    return Object.values(NotificationDeliveryMethod).filter(type => !deliveryMethods.has(type));
   }
 
   private buildNotificationSettingsForm() {
@@ -158,9 +151,13 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
     if (isDefinedAndNotNull(deliveryMethod)) {
       type.forEach(notificationType => notificationType.enabledDeliveryMethods[deliveryMethod] = value);
     } else {
-      type.forEach(notificationType => notificationType.enabled = value);
+      type.forEach(notificationType => {
+        notificationType.enabled = value;
+        notificationType.enabledDeliveryMethods =
+          Object.keys(notificationType.enabledDeliveryMethods).reduce((a, v) => ({ ...a, [v]: value}), {});
+      });
     }
-    this.notificationSettings.get('prefs').patchValue(type);
+    this.notificationSettings.get('prefs').patchValue(type, {emitEvent: false});
     this.notificationSettings.markAsDirty();
   };
 

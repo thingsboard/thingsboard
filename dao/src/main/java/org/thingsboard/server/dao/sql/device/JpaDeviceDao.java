@@ -101,7 +101,7 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
             return DaoUtil.toPageData(
                     deviceRepository.findByTenantId(
                             tenantId,
-                            Objects.toString(pageLink.getTextSearch(), ""),
+                            pageLink.getTextSearch(),
                             DaoUtil.toPageable(pageLink)));
         }
     }
@@ -117,7 +117,7 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
                         DaoUtil.getStringId(filter.getDeviceProfileId()),
                         filter.getActive() != null,
                         Boolean.TRUE.equals(filter.getActive()),
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 
@@ -142,7 +142,7 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
                 deviceRepository.findByTenantIdAndCustomerId(
                         tenantId,
                         customerId,
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 
@@ -152,7 +152,7 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
                 deviceRepository.findByTenantIdAndProfileId(
                         tenantId,
                         profileId,
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 
@@ -179,7 +179,7 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
                 deviceRepository.findByTenantIdAndType(
                         tenantId,
                         type,
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 
@@ -189,7 +189,7 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
                                                                            OtaPackageType type,
                                                                            PageLink pageLink) {
         Pageable pageable = DaoUtil.toPageable(pageLink);
-        String searchText = Objects.toString(pageLink.getTextSearch(), "");
+        String searchText = pageLink.getTextSearch();
         Page<DeviceEntity> page = OtaPackageUtil.getByOtaPackageType(
                 () -> deviceRepository.findByTenantIdAndTypeAndFirmwareIdIsNull(tenantId, deviceProfileId, searchText, pageable),
                 () -> deviceRepository.findByTenantIdAndTypeAndSoftwareIdIsNull(tenantId, deviceProfileId, searchText, pageable),
@@ -214,7 +214,7 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
                         tenantId,
                         customerId,
                         type,
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 
@@ -250,7 +250,7 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
                 .findByTenantIdAndEdgeId(
                         tenantId,
                         edgeId,
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 
@@ -262,7 +262,7 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
                         tenantId,
                         edgeId,
                         type,
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 

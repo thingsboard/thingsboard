@@ -62,7 +62,7 @@ import org.thingsboard.server.service.subscription.TbAttributeSubscription;
 import org.thingsboard.server.service.subscription.TbAttributeSubscriptionScope;
 import org.thingsboard.server.service.subscription.TbEntityDataSubscriptionService;
 import org.thingsboard.server.service.subscription.TbLocalSubscriptionService;
-import org.thingsboard.server.service.subscription.TbTimeseriesSubscription;
+import org.thingsboard.server.service.subscription.TbTimeSeriesSubscription;
 import org.thingsboard.server.service.ws.notification.NotificationCommandsHandler;
 import org.thingsboard.server.service.ws.notification.cmd.NotificationCmdsWrapper;
 import org.thingsboard.server.service.ws.notification.cmd.WsCmd;
@@ -443,7 +443,7 @@ public class DefaultWebSocketService implements WebSocketService {
                 }
             }
         } catch (IOException e) {
-            log.warn("[{}] Failed to send session close: {}", sessionRef.getSessionId(), e);
+            log.warn("[{}] Failed to send session close:", sessionRef.getSessionId(), e);
             return false;
         }
         return true;
@@ -477,6 +477,7 @@ public class DefaultWebSocketService implements WebSocketService {
     private void handleWsAttributesSubscriptionByKeys(WebSocketSessionRef sessionRef,
                                                       AttributesSubscriptionCmd cmd, String sessionId, EntityId entityId,
                                                       List<String> keys) {
+        long queryTs = System.currentTimeMillis();
         FutureCallback<List<AttributeKvEntry>> callback = new FutureCallback<>() {
             @Override
             public void onSuccess(List<AttributeKvEntry> data) {
@@ -495,6 +496,7 @@ public class DefaultWebSocketService implements WebSocketService {
                         .subscriptionId(cmd.getCmdId())
                         .tenantId(sessionRef.getSecurityCtx().getTenantId())
                         .entityId(entityId)
+                        .queryTs(queryTs)
                         .allKeys(false)
                         .keyStates(subState)
                         .scope(scope)
@@ -591,7 +593,10 @@ public class DefaultWebSocketService implements WebSocketService {
     }
 
     private void handleWsAttributesSubscription(WebSocketSessionRef sessionRef,
-                                                AttributesSubscriptionCmd cmd, String sessionId, EntityId entityId) {
+                                                AttributesSubscriptionCmd cmd,
+                                                String sessionId,
+                                                EntityId entityId) {
+        long queryTs = System.currentTimeMillis();
         FutureCallback<List<AttributeKvEntry>> callback = new FutureCallback<>() {
             @Override
             public void onSuccess(List<AttributeKvEntry> data) {
@@ -609,6 +614,7 @@ public class DefaultWebSocketService implements WebSocketService {
                         .subscriptionId(cmd.getCmdId())
                         .tenantId(sessionRef.getSecurityCtx().getTenantId())
                         .entityId(entityId)
+                        .queryTs(queryTs)
                         .allKeys(true)
                         .keyStates(subState)
                         .updateProcessor((subscription, update) -> {
@@ -664,17 +670,18 @@ public class DefaultWebSocketService implements WebSocketService {
                 Optional<Set<String>> keysOptional = getKeys(cmd);
 
                 if (keysOptional.isPresent()) {
-                    handleWsTimeseriesSubscriptionByKeys(sessionRef, cmd, sessionId, entityId);
+                    handleWsTimeSeriesSubscriptionByKeys(sessionRef, cmd, sessionId, entityId);
                 } else {
-                    handleWsTimeseriesSubscription(sessionRef, cmd, sessionId, entityId);
+                    handleWsTimeSeriesSubscription(sessionRef, cmd, sessionId, entityId);
                 }
             }
         }
     }
 
-    private void handleWsTimeseriesSubscriptionByKeys(WebSocketSessionRef sessionRef,
+    private void handleWsTimeSeriesSubscriptionByKeys(WebSocketSessionRef sessionRef,
                                                       TimeseriesSubscriptionCmd cmd, String sessionId, EntityId entityId) {
         long startTs;
+        long queryTs = System.currentTimeMillis();
         if (cmd.getTimeWindow() > 0) {
             List<String> keys = new ArrayList<>(getKeys(cmd).orElse(Collections.emptySet()));
             log.debug("[{}] fetching timeseries data for last {} ms for keys: ({}) for device : {}", sessionId, cmd.getTimeWindow(), cmd.getKeys(), entityId);
@@ -682,22 +689,22 @@ public class DefaultWebSocketService implements WebSocketService {
             long endTs = cmd.getStartTs() + cmd.getTimeWindow();
             List<ReadTsKvQuery> queries = keys.stream().map(key -> new BaseReadTsKvQuery(key, startTs, endTs, cmd.getInterval(),
                     getLimit(cmd.getLimit()), getAggregation(cmd.getAgg()))).collect(Collectors.toList());
-
-            final FutureCallback<List<TsKvEntry>> callback = getSubscriptionCallback(sessionRef, cmd, sessionId, entityId, startTs, keys);
+            final FutureCallback<List<TsKvEntry>> callback = getSubscriptionCallback(sessionRef, cmd, sessionId, entityId, queryTs, startTs, keys);
             accessValidator.validate(sessionRef.getSecurityCtx(), Operation.READ_TELEMETRY, entityId,
                     on(r -> Futures.addCallback(tsService.findAll(sessionRef.getSecurityCtx().getTenantId(), entityId, queries), callback, executor), callback::onFailure));
         } else {
             List<String> keys = new ArrayList<>(getKeys(cmd).orElse(Collections.emptySet()));
             startTs = System.currentTimeMillis();
             log.debug("[{}] fetching latest timeseries data for keys: ({}) for device : {}", sessionId, cmd.getKeys(), entityId);
-            final FutureCallback<List<TsKvEntry>> callback = getSubscriptionCallback(sessionRef, cmd, sessionId, entityId, startTs, keys);
+            final FutureCallback<List<TsKvEntry>> callback = getSubscriptionCallback(sessionRef, cmd, sessionId, entityId, queryTs, startTs, keys);
             accessValidator.validate(sessionRef.getSecurityCtx(), Operation.READ_TELEMETRY, entityId,
                     on(r -> Futures.addCallback(tsService.findLatest(sessionRef.getSecurityCtx().getTenantId(), entityId, keys), callback, executor), callback::onFailure));
         }
     }
 
-    private void handleWsTimeseriesSubscription(WebSocketSessionRef sessionRef,
+    private void handleWsTimeSeriesSubscription(WebSocketSessionRef sessionRef,
                                                 TimeseriesSubscriptionCmd cmd, String sessionId, EntityId entityId) {
+        long queryTs = System.currentTimeMillis();
         FutureCallback<List<TsKvEntry>> callback = new FutureCallback<List<TsKvEntry>>() {
             @Override
             public void onSuccess(List<TsKvEntry> data) {
@@ -705,7 +712,7 @@ public class DefaultWebSocketService implements WebSocketService {
                 data.forEach(v -> subState.put(v.getKey(), v.getTs()));
 
                 Lock subLock = new ReentrantLock();
-                TbTimeseriesSubscription sub = TbTimeseriesSubscription.builder()
+                TbTimeSeriesSubscription sub = TbTimeSeriesSubscription.builder()
                         .serviceId(serviceId)
                         .sessionId(sessionId)
                         .subscriptionId(cmd.getCmdId())
@@ -719,6 +726,7 @@ public class DefaultWebSocketService implements WebSocketService {
                                 subLock.unlock();
                             }
                         })
+                        .queryTs(queryTs)
                         .allKeys(true)
                         .keyStates(subState)
                         .build();
@@ -749,7 +757,8 @@ public class DefaultWebSocketService implements WebSocketService {
                 on(r -> Futures.addCallback(tsService.findAllLatest(sessionRef.getSecurityCtx().getTenantId(), entityId), callback, executor), callback::onFailure));
     }
 
-    private FutureCallback<List<TsKvEntry>> getSubscriptionCallback(final WebSocketSessionRef sessionRef, final TimeseriesSubscriptionCmd cmd, final String sessionId, final EntityId entityId, final long startTs, final List<String> keys) {
+    private FutureCallback<List<TsKvEntry>> getSubscriptionCallback(final WebSocketSessionRef sessionRef, final TimeseriesSubscriptionCmd cmd,
+                                                                    final String sessionId, final EntityId entityId, final long queryTs, final long startTs, final List<String> keys) {
         return new FutureCallback<>() {
             @Override
             public void onSuccess(List<TsKvEntry> data) {
@@ -758,7 +767,7 @@ public class DefaultWebSocketService implements WebSocketService {
                 data.forEach(v -> subState.put(v.getKey(), v.getTs()));
 
                 Lock subLock = new ReentrantLock();
-                TbTimeseriesSubscription sub = TbTimeseriesSubscription.builder()
+                TbTimeSeriesSubscription sub = TbTimeSeriesSubscription.builder()
                         .serviceId(serviceId)
                         .sessionId(sessionId)
                         .subscriptionId(cmd.getCmdId())
@@ -772,6 +781,7 @@ public class DefaultWebSocketService implements WebSocketService {
                                 subLock.unlock();
                             }
                         })
+                        .queryTs(queryTs)
                         .allKeys(false)
                         .keyStates(subState)
                         .build();

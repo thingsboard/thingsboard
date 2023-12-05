@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.sql.asset;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,7 +34,6 @@ import org.thingsboard.server.dao.model.sql.AssetProfileEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -71,7 +71,7 @@ public class JpaAssetProfileDao extends JpaAbstractDao<AssetProfileEntity, Asset
         return DaoUtil.toPageData(
                 assetProfileRepository.findAssetProfiles(
                         tenantId.getId(),
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 
@@ -80,7 +80,7 @@ public class JpaAssetProfileDao extends JpaAbstractDao<AssetProfileEntity, Asset
         return DaoUtil.pageToPageData(
                 assetProfileRepository.findAssetProfileInfos(
                         tenantId.getId(),
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 
@@ -97,6 +97,11 @@ public class JpaAssetProfileDao extends JpaAbstractDao<AssetProfileEntity, Asset
     @Override
     public AssetProfile findByName(TenantId tenantId, String profileName) {
         return DaoUtil.getData(assetProfileRepository.findByTenantIdAndName(tenantId.getId(), profileName));
+    }
+
+    @Override
+    public PageData<AssetProfile> findAllWithImages(PageLink pageLink) {
+        return DaoUtil.toPageData(assetProfileRepository.findAllByImageNotNull(DaoUtil.toPageable(pageLink)));
     }
 
     @Override
@@ -125,6 +130,16 @@ public class JpaAssetProfileDao extends JpaAbstractDao<AssetProfileEntity, Asset
     public AssetProfileId getExternalIdByInternal(AssetProfileId internalId) {
         return Optional.ofNullable(assetProfileRepository.getExternalIdById(internalId.getId()))
                 .map(AssetProfileId::new).orElse(null);
+    }
+
+    @Override
+    public List<AssetProfileInfo> findByTenantAndImageLink(TenantId tenantId, String imageLink, int limit) {
+        return assetProfileRepository.findByTenantAndImageLink(tenantId.getId(), imageLink, PageRequest.of(0, limit));
+    }
+
+    @Override
+    public List<AssetProfileInfo> findByImageLink(String imageLink, int limit) {
+        return assetProfileRepository.findByImageLink(imageLink, PageRequest.of(0, limit));
     }
 
     @Override

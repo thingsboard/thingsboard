@@ -83,7 +83,6 @@ import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
-import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
@@ -115,7 +114,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.thingsboard.server.common.data.DataConstants.DEFAULT_PROFILE_TYPE;
+import static org.thingsboard.server.common.data.DataConstants.DEFAULT_PROFILE_NAME;
 
 @Service
 @Profile("install")
@@ -261,6 +260,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         ObjectNode node = JacksonUtil.newObjectNode();
         node.put("baseUrl", "http://localhost:8080");
         node.put("prohibitDifferentUrl", false);
+        node.set("connectivity", createDeviceConnectivityConfiguration());
         generalSettings.setJsonValue(node);
         adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, generalSettings);
 
@@ -281,6 +281,53 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         node.put("showChangePassword", false);
         mailSettings.setJsonValue(node);
         adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, mailSettings);
+
+        AdminSettings connectivitySettings = new AdminSettings();
+        connectivitySettings.setTenantId(TenantId.SYS_TENANT_ID);
+        connectivitySettings.setKey("connectivity");
+        connectivitySettings.setJsonValue(createDeviceConnectivityConfiguration());
+        adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, connectivitySettings);
+    }
+
+    private ObjectNode createDeviceConnectivityConfiguration() {
+        ObjectNode config = JacksonUtil.newObjectNode();
+
+        ObjectNode http = JacksonUtil.newObjectNode();
+        http.put("enabled", true);
+        http.put("host", "");
+        http.put("port", 8080);
+        config.set("http", http);
+
+        ObjectNode https = JacksonUtil.newObjectNode();
+        https.put("enabled", false);
+        https.put("host", "");
+        https.put("port", 443);
+        config.set("https", https);
+
+        ObjectNode mqtt = JacksonUtil.newObjectNode();
+        mqtt.put("enabled", true);
+        mqtt.put("host", "");
+        mqtt.put("port", 1883);
+        config.set("mqtt", mqtt);
+
+        ObjectNode mqtts = JacksonUtil.newObjectNode();
+        mqtts.put("enabled", false);
+        mqtts.put("host", "");
+        mqtts.put("port", 8883);
+        config.set("mqtts", mqtts);
+
+        ObjectNode coap = JacksonUtil.newObjectNode();
+        coap.put("enabled", true);
+        coap.put("host", "");
+        coap.put("port", 5683);
+        config.set("coap", coap);
+
+        ObjectNode coaps = JacksonUtil.newObjectNode();
+        coaps.put("enabled", false);
+        coaps.put("host", "");
+        coaps.put("port", 5684);
+        config.set("coaps", coaps);
+        return config;
     }
 
     @Override
@@ -324,7 +371,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         createUser(Authority.CUSTOMER_USER, demoTenant.getId(), customerB.getId(), "customerB@thingsboard.org", CUSTOMER_CRED);
         createUser(Authority.CUSTOMER_USER, demoTenant.getId(), customerC.getId(), "customerC@thingsboard.org", CUSTOMER_CRED);
 
-        DeviceProfile defaultDeviceProfile = this.deviceProfileService.findOrCreateDeviceProfile(demoTenant.getId(), DEFAULT_PROFILE_TYPE);
+        DeviceProfile defaultDeviceProfile = this.deviceProfileService.findOrCreateDeviceProfile(demoTenant.getId(), DEFAULT_PROFILE_NAME);
 
         createDevice(demoTenant.getId(), customerA.getId(), defaultDeviceProfile.getId(), "Test Device A1", "A1_TEST_TOKEN", null);
         createDevice(demoTenant.getId(), customerA.getId(), defaultDeviceProfile.getId(), "Test Device A2", "A2_TEST_TOKEN", null);
@@ -483,47 +530,11 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
                         new BaseAttributeKvEntry(System.currentTimeMillis(), new LongDataEntry("humidityAlarmThreshold", (long) 30))));
 
         installScripts.loadDashboards(demoTenant.getId(), null);
-    }
-
-    @Override
-    public void deleteSystemWidgetBundle(String bundleAlias) throws Exception {
-        WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(TenantId.SYS_TENANT_ID, bundleAlias);
-        if (widgetsBundle != null) {
-            var widgetTypes = widgetTypeService.findWidgetTypesInfosByWidgetsBundleId(TenantId.SYS_TENANT_ID, widgetsBundle.getId());
-            for (var widgetType : widgetTypes) {
-                widgetTypeService.deleteWidgetType(TenantId.SYS_TENANT_ID, widgetType.getId());
-            }
-            widgetsBundleService.deleteWidgetsBundle(TenantId.SYS_TENANT_ID, widgetsBundle.getId());
-        }
+        installScripts.createDefaultTenantDashboards(demoTenant.getId(), null);
     }
 
     @Override
     public void loadSystemWidgets() throws Exception {
-        installScripts.loadSystemWidgets();
-    }
-
-    @Override
-    public void updateSystemWidgets() throws Exception {
-        this.deleteSystemWidgetBundle("charts");
-        this.deleteSystemWidgetBundle("cards");
-        this.deleteSystemWidgetBundle("maps");
-        this.deleteSystemWidgetBundle("analogue_gauges");
-        this.deleteSystemWidgetBundle("digital_gauges");
-        this.deleteSystemWidgetBundle("gpio_widgets");
-        this.deleteSystemWidgetBundle("alarm_widgets");
-        this.deleteSystemWidgetBundle("control_widgets");
-        this.deleteSystemWidgetBundle("maps_v2");
-        this.deleteSystemWidgetBundle("gateway_widgets");
-        this.deleteSystemWidgetBundle("input_widgets");
-        this.deleteSystemWidgetBundle("date");
-        this.deleteSystemWidgetBundle("entity_admin_widgets");
-        this.deleteSystemWidgetBundle("navigation_widgets");
-        this.deleteSystemWidgetBundle("edge_widgets");
-        this.deleteSystemWidgetBundle("home_page_widgets");
-        this.deleteSystemWidgetBundle("entity_widgets");
-        this.deleteSystemWidgetBundle("html_widgets");
-        this.deleteSystemWidgetBundle("tables");
-        this.deleteSystemWidgetBundle("count_widgets");
         installScripts.loadSystemWidgets();
     }
 

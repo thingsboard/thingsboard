@@ -194,7 +194,7 @@ class TbCheckMessageNodeTest {
         String data = emptyData ? TbMsg.EMPTY_JSON_OBJECT : "{\"temperature-0\": 25}";
         var metadata = new TbMsgMetaData();
         metadata.putValue(DataConstants.DEVICE_NAME, "Test Device");
-        metadata.putValue(DataConstants.DEVICE_TYPE, DataConstants.DEFAULT_PROFILE_TYPE);
+        metadata.putValue(DataConstants.DEVICE_TYPE, DataConstants.DEFAULT_PROFILE_NAME);
         metadata.putValue("ts", String.valueOf(System.currentTimeMillis()));
         return TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, DEVICE_ID, metadata, data);
     }

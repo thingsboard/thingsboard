@@ -204,6 +204,12 @@
     .mat-slide:only-child {
       margin: 8px 0;
     }
+    .tb-required::after {
+      font-size: 13px;
+      color: rgba(0, 0, 0, .54);
+      vertical-align: top;
+      content: " *";
+    }
   }
 
   .tb-form-panel, .tb-form-row {
@@ -219,6 +225,13 @@
         margin-left: 12px;
       }
     }
+    .tb-small-label {
+      height: 40px;
+      font-size: 14px;
+      line-height: 40px;
+      letter-spacing: 0.2px;
+      color: rgba(0, 0, 0, 0.38);
+    }
   }
 
   .tb-form-row:not(.tb-standard-fields) .mat-mdc-form-field:not(.tb-not-inline-field), .mat-mdc-form-field.tb-inline-field {
@@ -227,8 +240,10 @@
         &:before {
           opacity: 0;
         }
-        .mdc-line-ripple::before {
-          border-bottom-color: rgba(0, 0, 0, 0.12);
+        &:not(.mdc-text-field--invalid) {
+          .mdc-line-ripple::before {
+            border-bottom-color: rgba(0, 0, 0, 0.12);
+          }
         }
       }
       .mat-mdc-form-field-focus-overlay {
@@ -353,14 +368,20 @@
       .mat-mdc-text-field-wrapper {
         .mat-mdc-form-field-icon-suffix {
           padding: 0;
-          display: none;
+          display: flex;
+          align-items: center;
+
+          > *:not(.tb-suffix-show-always) {
+            display: none;
+          }
         }
       }
       &:hover {
         .mat-mdc-text-field-wrapper {
           .mat-mdc-form-field-icon-suffix {
-            display: flex;
-            align-items: center;
+            > * {
+              display: block;
+            }
           }
         }
       }
@@ -502,6 +523,7 @@
       right: 0;
       background: $tb-primary-color;
       opacity: 0.04;
+      pointer-events: none;
     }
   }
 

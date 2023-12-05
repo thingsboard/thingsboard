@@ -229,7 +229,7 @@ public class DeviceController extends BaseController {
         checkParameter(DEVICE_ID, strDeviceId);
         DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
         Device device = checkDeviceId(deviceId, Operation.DELETE);
-        tbDeviceService.delete(device, getCurrentUser()).get();
+        tbDeviceService.delete(device, getCurrentUser());
     }
 
     @ApiOperation(value = "Assign device to customer (assignDeviceToCustomer)",
@@ -539,7 +539,7 @@ public class DeviceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device/types", method = RequestMethod.GET)
     @ResponseBody
-    @Deprecated(since = "3.6.1")
+    @Deprecated(since = "3.6.2")
     public List<EntitySubtype> getDeviceTypes() throws ThingsboardException, ExecutionException, InterruptedException {
         SecurityUser user = getCurrentUser();
         TenantId tenantId = user.getTenantId();

@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.edge.rpc.processor.device;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
@@ -33,8 +32,10 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -45,46 +46,35 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
     @Autowired
     protected DataDecodingEncodingService dataDecodingEncodingService;
 
-    protected Pair<Boolean, Boolean> saveOrUpdateDevice(TenantId tenantId, DeviceId deviceId, DeviceUpdateMsg deviceUpdateMsg, CustomerId customerId) {
+    protected Pair<Boolean, Boolean> saveOrUpdateDevice(TenantId tenantId, DeviceId deviceId, DeviceUpdateMsg deviceUpdateMsg, EdgeVersion edgeVersion) {
         boolean created = false;
         boolean deviceNameUpdated = false;
         deviceCreationLock.lock();
         try {
-            Device device = deviceService.findDeviceById(tenantId, deviceId);
-            String deviceName = deviceUpdateMsg.getName();
+            Device device = EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)
+                    ? createDevice(tenantId, deviceId, deviceUpdateMsg)
+                    : JacksonUtil.fromStringIgnoreUnknownProperties(deviceUpdateMsg.getEntity(), Device.class);
             if (device == null) {
-                created = true;
-                device = new Device();
-                device.setTenantId(tenantId);
-                device.setCreatedTime(Uuids.unixTimestamp(deviceId.getId()));
+                throw new RuntimeException("[{" + tenantId + "}] deviceUpdateMsg {" + deviceUpdateMsg + "} cannot be converted to device");
             }
+            Device deviceById = deviceService.findDeviceById(tenantId, deviceId);
+            if (deviceById == null) {
+                created = true;
+                device.setId(null);
+            } else {
+                device.setId(deviceId);
+            }
+            String deviceName = device.getName();
             Device deviceByName = deviceService.findDeviceByTenantIdAndName(tenantId, deviceName);
             if (deviceByName != null && !deviceByName.getId().equals(deviceId)) {
                 deviceName = deviceName + "_" + StringUtils.randomAlphabetic(15);
                 log.warn("[{}] Device with name {} already exists. Renaming device name to {}",
-                        tenantId, deviceUpdateMsg.getName(), deviceName);
+                        tenantId, device.getName(), deviceName);
                 deviceNameUpdated = true;
             }
             device.setName(deviceName);
-            device.setType(deviceUpdateMsg.getType());
-            device.setLabel(deviceUpdateMsg.hasLabel() ? deviceUpdateMsg.getLabel() : null);
-            device.setAdditionalInfo(deviceUpdateMsg.hasAdditionalInfo()
-                    ? JacksonUtil.toJsonNode(deviceUpdateMsg.getAdditionalInfo()) : null);
+            setCustomerId(tenantId, created ? null : deviceById.getCustomerId(), device, deviceUpdateMsg, edgeVersion);
 
-            UUID deviceProfileUUID = safeGetUUID(deviceUpdateMsg.getDeviceProfileIdMSB(), deviceUpdateMsg.getDeviceProfileIdLSB());
-            device.setDeviceProfileId(deviceProfileUUID != null ? new DeviceProfileId(deviceProfileUUID) : null);
-
-            device.setCustomerId(customerId);
-
-            Optional<DeviceData> deviceDataOpt =
-                    dataDecodingEncodingService.decode(deviceUpdateMsg.getDeviceDataBytes().toByteArray());
-            device.setDeviceData(deviceDataOpt.orElse(null));
-
-            UUID firmwareUUID = safeGetUUID(deviceUpdateMsg.getFirmwareIdMSB(), deviceUpdateMsg.getFirmwareIdLSB());
-            device.setFirmwareId(firmwareUUID != null ? new OtaPackageId(firmwareUUID) : null);
-
-            UUID softwareUUID = safeGetUUID(deviceUpdateMsg.getSoftwareIdMSB(), deviceUpdateMsg.getSoftwareIdLSB());
-            device.setSoftwareId(softwareUUID != null ? new OtaPackageId(softwareUUID) : null);
             deviceValidator.validate(device, Device::getTenantId);
             if (created) {
                 device.setId(deviceId);
@@ -101,40 +91,73 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
         } catch (Exception e) {
             log.error("[{}] Failed to process device update msg [{}]", tenantId, deviceUpdateMsg, e);
             throw e;
-        }  finally {
+        } finally {
             deviceCreationLock.unlock();
         }
         return Pair.of(created, deviceNameUpdated);
     }
 
-    public ListenableFuture<Void> processDeviceCredentialsMsg(TenantId tenantId, DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg) {
-        log.debug("[{}] Executing processDeviceCredentialsMsg, deviceCredentialsUpdateMsg [{}]", tenantId, deviceCredentialsUpdateMsg);
-        DeviceId deviceId = new DeviceId(new UUID(deviceCredentialsUpdateMsg.getDeviceIdMSB(), deviceCredentialsUpdateMsg.getDeviceIdLSB()));
-        return dbCallbackExecutorService.submit(() -> {
-            Device device = deviceService.findDeviceById(tenantId, deviceId);
-            if (device != null) {
-                log.debug("[{}] Updating device credentials for device [{}]. New device credentials Id [{}], value [{}]",
-                        tenantId, device.getName(), deviceCredentialsUpdateMsg.getCredentialsId(), deviceCredentialsUpdateMsg.getCredentialsValue());
-                try {
-                    edgeSynchronizationManager.getSync().set(true);
+    private Device createDevice(TenantId tenantId, DeviceId deviceId, DeviceUpdateMsg deviceUpdateMsg) {
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setCreatedTime(Uuids.unixTimestamp(deviceId.getId()));
+        device.setName(deviceUpdateMsg.getName());
+        device.setType(deviceUpdateMsg.getType());
+        device.setLabel(deviceUpdateMsg.hasLabel() ? deviceUpdateMsg.getLabel() : null);
+        device.setAdditionalInfo(deviceUpdateMsg.hasAdditionalInfo()
+                ? JacksonUtil.toJsonNode(deviceUpdateMsg.getAdditionalInfo()) : null);
 
-                    DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, device.getId());
-                    deviceCredentials.setCredentialsType(DeviceCredentialsType.valueOf(deviceCredentialsUpdateMsg.getCredentialsType()));
-                    deviceCredentials.setCredentialsId(deviceCredentialsUpdateMsg.getCredentialsId());
-                    deviceCredentials.setCredentialsValue(deviceCredentialsUpdateMsg.hasCredentialsValue()
-                            ? deviceCredentialsUpdateMsg.getCredentialsValue() : null);
-                    deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials);
-                } catch (Exception e) {
-                    log.error("[{}] Can't update device credentials for device [{}], deviceCredentialsUpdateMsg [{}]",
-                            tenantId, device.getName(), deviceCredentialsUpdateMsg, e);
-                    throw new RuntimeException(e);
-                } finally {
-                    edgeSynchronizationManager.getSync().remove();
-                }
-            } else {
-                log.warn("[{}] Can't find device by id [{}], deviceCredentialsUpdateMsg [{}]", tenantId, deviceId, deviceCredentialsUpdateMsg);
-            }
-            return null;
-        });
+        UUID deviceProfileUUID = safeGetUUID(deviceUpdateMsg.getDeviceProfileIdMSB(), deviceUpdateMsg.getDeviceProfileIdLSB());
+        device.setDeviceProfileId(deviceProfileUUID != null ? new DeviceProfileId(deviceProfileUUID) : null);
+
+        Optional<DeviceData> deviceDataOpt = dataDecodingEncodingService.decode(deviceUpdateMsg.getDeviceDataBytes().toByteArray());
+        device.setDeviceData(deviceDataOpt.orElse(null));
+
+        UUID firmwareUUID = safeGetUUID(deviceUpdateMsg.getFirmwareIdMSB(), deviceUpdateMsg.getFirmwareIdLSB());
+        device.setFirmwareId(firmwareUUID != null ? new OtaPackageId(firmwareUUID) : null);
+        UUID softwareUUID = safeGetUUID(deviceUpdateMsg.getSoftwareIdMSB(), deviceUpdateMsg.getSoftwareIdLSB());
+        device.setSoftwareId(softwareUUID != null ? new OtaPackageId(softwareUUID) : null);
+
+        return device;
     }
+
+    protected void updateDeviceCredentials(TenantId tenantId, DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg, EdgeVersion edgeVersion) {
+        DeviceCredentials deviceCredentials = EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)
+                ? createDeviceCredentials(deviceCredentialsUpdateMsg)
+                : JacksonUtil.fromStringIgnoreUnknownProperties(deviceCredentialsUpdateMsg.getEntity(), DeviceCredentials.class);
+        if (deviceCredentials == null) {
+            throw new RuntimeException("[{" + tenantId + "}] deviceCredentialsUpdateMsg {" + deviceCredentialsUpdateMsg + "} cannot be converted to device credentials");
+        }
+        Device device = deviceService.findDeviceById(tenantId, deviceCredentials.getDeviceId());
+        if (device != null) {
+            log.debug("[{}] Updating device credentials for device [{}]. New device credentials Id [{}], value [{}]",
+                    tenantId, device.getName(), deviceCredentials.getCredentialsId(), deviceCredentials.getCredentialsValue());
+            try {
+                DeviceCredentials deviceCredentialsByDeviceId = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, device.getId());
+                deviceCredentialsByDeviceId.setCredentialsType(deviceCredentials.getCredentialsType());
+                deviceCredentialsByDeviceId.setCredentialsId(deviceCredentials.getCredentialsId());
+                deviceCredentialsByDeviceId.setCredentialsValue(deviceCredentials.getCredentialsValue());
+                deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentialsByDeviceId);
+
+            } catch (Exception e) {
+                log.error("[{}] Can't update device credentials for device [{}], deviceCredentialsUpdateMsg [{}]",
+                        tenantId, device.getName(), deviceCredentialsUpdateMsg, e);
+                throw new RuntimeException(e);
+            }
+        } else {
+            log.warn("[{}] Can't find device by id [{}], deviceCredentialsUpdateMsg [{}]", tenantId, deviceCredentials.getDeviceId(), deviceCredentialsUpdateMsg);
+        }
+    }
+
+    private DeviceCredentials createDeviceCredentials(DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg) {
+        DeviceCredentials deviceCredentials = new DeviceCredentials();
+        deviceCredentials.setDeviceId(new DeviceId(new UUID(deviceCredentialsUpdateMsg.getDeviceIdMSB(), deviceCredentialsUpdateMsg.getDeviceIdLSB())));
+        deviceCredentials.setCredentialsType(DeviceCredentialsType.valueOf(deviceCredentialsUpdateMsg.getCredentialsType()));
+        deviceCredentials.setCredentialsId(deviceCredentialsUpdateMsg.getCredentialsId());
+        deviceCredentials.setCredentialsValue(deviceCredentialsUpdateMsg.hasCredentialsValue()
+                ? deviceCredentialsUpdateMsg.getCredentialsValue() : null);
+        return deviceCredentials;
+    }
+
+    protected abstract void setCustomerId(TenantId tenantId, CustomerId customerId, Device device, DeviceUpdateMsg deviceUpdateMsg, EdgeVersion edgeVersion);
 }

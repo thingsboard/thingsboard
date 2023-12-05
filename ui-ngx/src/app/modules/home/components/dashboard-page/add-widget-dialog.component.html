@@ -75,14 +75,14 @@
       <button *ngIf="!previewMode"
               mat-button color="primary"
               type="button"
-              [disabled]="widgetFormGroup.invalid"
+              [disabled]="!widgetFormGroup.valid"
               (click)="previewMode = true"
               cdkFocusInitial>
         {{ 'widget-config.preview' | translate }}
       </button>
       <button mat-raised-button color="primary"
               (click)="add()"
-              [disabled]="widgetFormGroup.invalid">
+              [disabled]="!widgetFormGroup.valid">
         {{ 'action.add' | translate }}
       </button>
     </div>

@@ -489,6 +489,7 @@ CREATE TABLE IF NOT EXISTS widget_type (
     image varchar(1000000),
     deprecated boolean NOT NULL DEFAULT false,
     description varchar(1024),
+    tags text[],
     external_id uuid,
     CONSTRAINT uq_widget_type_fqn UNIQUE (tenant_id, fqn),
     CONSTRAINT widget_type_external_id_unq_key UNIQUE (tenant_id, external_id)
@@ -502,6 +503,7 @@ CREATE TABLE IF NOT EXISTS widgets_bundle (
     title varchar(255),
     image varchar(1000000),
     description varchar(1024),
+    widgets_bundle_order int,
     external_id uuid,
     CONSTRAINT uq_widgets_bundle_alias UNIQUE (tenant_id, alias),
     CONSTRAINT widgets_bundle_external_id_unq_key UNIQUE (tenant_id, external_id)
@@ -696,6 +698,7 @@ CREATE TABLE IF NOT EXISTS api_usage_state (
     db_storage varchar(32),
     re_exec varchar(32),
     js_exec varchar(32),
+    tbel_exec varchar(32),
     email_exec varchar(32),
     sms_exec varchar(32),
     alarm_exec varchar(32),
@@ -711,8 +714,11 @@ CREATE TABLE IF NOT EXISTS resource (
     resource_key varchar(255) NOT NULL,
     search_text varchar(255),
     file_name varchar(255) NOT NULL,
-    data varchar,
+    data bytea,
     etag varchar,
+    descriptor varchar,
+    preview bytea,
+    external_id uuid,
     CONSTRAINT resource_unq_key UNIQUE (tenant_id, resource_type, resource_key)
 );
 
@@ -851,8 +857,8 @@ CREATE TABLE IF NOT EXISTS notification_request (
 CREATE TABLE IF NOT EXISTS notification (
     id UUID NOT NULL,
     created_time BIGINT NOT NULL,
-    request_id UUID NULL CONSTRAINT fk_notification_request_id REFERENCES notification_request(id) ON DELETE CASCADE,
-    recipient_id UUID NOT NULL CONSTRAINT fk_notification_recipient_id REFERENCES tb_user(id) ON DELETE CASCADE,
+    request_id UUID,
+    recipient_id UUID NOT NULL,
     type VARCHAR(50) NOT NULL,
     subject VARCHAR(255),
     body VARCHAR(1000) NOT NULL,

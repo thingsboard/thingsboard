@@ -29,7 +29,7 @@ import org.thingsboard.server.dao.entity.EntityDaoService;
 import java.util.List;
 
 public interface DashboardService extends EntityDaoService {
-    
+
     Dashboard findDashboardById(TenantId tenantId, DashboardId dashboardId);
 
     ListenableFuture<Dashboard> findDashboardByIdAsync(TenantId tenantId, DashboardId dashboardId);

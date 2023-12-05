@@ -186,6 +186,7 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
                 .tenantId(sessionRef.getSecurityCtx().getTenantId())
                 .entityId(entityData.getEntityId())
                 .updateProcessor((sub, subscriptionUpdate) -> sendWsMsg(sub.getSessionId(), subscriptionUpdate, keysType))
+                .queryTs(createdTime)
                 .allKeys(false)
                 .keyStates(keyStates)
                 .scope(scope)
@@ -207,19 +208,20 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
         return createTsSub(entityData, subIdx, latestValues, startTs, endTs, keyStates);
     }
 
-    private TbTimeseriesSubscription createTsSub(EntityData entityData, int subIdx, boolean latestValues, long startTs, long endTs, Map<String, Long> keyStates) {
+    private TbTimeSeriesSubscription createTsSub(EntityData entityData, int subIdx, boolean latestValues, long startTs, long endTs, Map<String, Long> keyStates) {
         return createTsSub(entityData, subIdx, latestValues, startTs, endTs, keyStates, latestValues);
     }
 
-    private TbTimeseriesSubscription createTsSub(EntityData entityData, int subIdx, boolean latestValues, long startTs, long endTs, Map<String, Long> keyStates, boolean resultToLatestValues) {
+    private TbTimeSeriesSubscription createTsSub(EntityData entityData, int subIdx, boolean latestValues, long startTs, long endTs, Map<String, Long> keyStates, boolean resultToLatestValues) {
         log.trace("[{}][{}][{}] Creating time-series subscription for [{}] with keys: {}", serviceId, cmdId, subIdx, entityData.getEntityId(), keyStates);
-        return TbTimeseriesSubscription.builder()
+        return TbTimeSeriesSubscription.builder()
                 .serviceId(serviceId)
                 .sessionId(sessionRef.getSessionId())
                 .subscriptionId(subIdx)
                 .tenantId(sessionRef.getSecurityCtx().getTenantId())
                 .entityId(entityData.getEntityId())
                 .updateProcessor((sub, subscriptionUpdate) -> sendWsMsg(sub.getSessionId(), subscriptionUpdate, EntityKeyType.TIME_SERIES, resultToLatestValues))
+                .queryTs(createdTime)
                 .allKeys(false)
                 .keyStates(keyStates)
                 .latestValues(latestValues)

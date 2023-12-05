@@ -62,7 +62,7 @@ import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.thingsboard.server.common.data.DataConstants.DEFAULT_PROFILE_TYPE;
+import static org.thingsboard.server.common.data.DataConstants.DEFAULT_PROFILE_NAME;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.SOFTWARE;
 
@@ -1066,7 +1066,7 @@ public class DeviceProfileControllerTest extends AbstractControllerTest {
         Assert.assertFalse("Device Profile Names list is empty!", deviceProfileNames.isEmpty());
         Assert.assertEquals(expectedDeviceProfileNames, deviceProfileNames);
         Assert.assertEquals(1, deviceProfileNames.size());
-        Assert.assertEquals(DEFAULT_PROFILE_TYPE, deviceProfileNames.get(0).getName());
+        Assert.assertEquals(DEFAULT_PROFILE_NAME, deviceProfileNames.get(0).getName());
 
         int count = 3;
         for (int i = 0; i < count; i++) {
@@ -1098,7 +1098,7 @@ public class DeviceProfileControllerTest extends AbstractControllerTest {
         Assert.assertNotNull("Device Profile Names list is null!", deviceProfileNames);
         Assert.assertFalse("Device Profile Names list is empty!", deviceProfileNames.isEmpty());
         var expectedDeviceProfileNamesWithoutDefault = expectedDeviceProfileNames.stream()
-                .filter(entityInfo -> !entityInfo.getName().equals(DEFAULT_PROFILE_TYPE))
+                .filter(entityInfo -> !entityInfo.getName().equals(DEFAULT_PROFILE_NAME))
                 .collect(Collectors.toList());
         Assert.assertEquals(expectedDeviceProfileNamesWithoutDefault, deviceProfileNames);
         Assert.assertEquals(count, deviceProfileNames.size());

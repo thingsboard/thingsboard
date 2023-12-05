@@ -50,6 +50,7 @@ import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
@@ -77,6 +78,9 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
 
     @Autowired
     private EdgeDao edgeDao;
+
+    @Autowired
+    private ImageService imageService;
 
     @Autowired
     private DataValidator<Dashboard> dashboardValidator;
@@ -153,6 +157,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             dashboardValidator.validate(dashboard, DashboardInfo::getTenantId);
         }
         try {
+            imageService.replaceBase64WithImageUrl(dashboard);
             var saved = dashboardDao.save(dashboard.getTenantId(), dashboard);
             publishEvictEvent(new DashboardTitleEvictEvent(saved.getId()));
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(saved.getTenantId())
@@ -169,6 +174,8 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             throw e;
         }
     }
+
+
 
     @Override
     public Dashboard assignDashboardToCustomer(TenantId tenantId, DashboardId dashboardId, CustomerId customerId) {
@@ -364,19 +371,18 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         return dashboardDao.findByTenantIdAndTitle(tenantId.getId(), title);
     }
 
-    private PaginatedRemover<TenantId, DashboardInfo> tenantDashboardsRemover =
-            new PaginatedRemover<TenantId, DashboardInfo>() {
+    private final PaginatedRemover<TenantId, DashboardId> tenantDashboardsRemover = new PaginatedRemover<>() {
 
-                @Override
-                protected PageData<DashboardInfo> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-                    return dashboardInfoDao.findDashboardsByTenantId(id.getId(), pageLink);
-                }
+        @Override
+        protected PageData<DashboardId> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+            return dashboardDao.findIdsByTenantId(id, pageLink);
+        }
 
-                @Override
-                protected void removeEntity(TenantId tenantId, DashboardInfo entity) {
-                    deleteDashboard(tenantId, new DashboardId(entity.getUuidId()));
-                }
-            };
+        @Override
+        protected void removeEntity(TenantId tenantId, DashboardId dashboardId) {
+            deleteDashboard(tenantId, dashboardId);
+        }
+    };
 
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {

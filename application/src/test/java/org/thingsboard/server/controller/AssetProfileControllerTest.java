@@ -53,7 +53,7 @@ import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.thingsboard.server.common.data.DataConstants.DEFAULT_PROFILE_TYPE;
+import static org.thingsboard.server.common.data.DataConstants.DEFAULT_PROFILE_NAME;
 
 @ContextConfiguration(classes = {AssetProfileControllerTest.Config.class})
 @DaoSqlTest
@@ -480,7 +480,7 @@ public class AssetProfileControllerTest extends AbstractControllerTest {
         Assert.assertFalse("Asset Profile Names list is empty!", assetProfileNames.isEmpty());
         Assert.assertEquals(expectedAssetProfileNames, assetProfileNames);
         Assert.assertEquals(1, assetProfileNames.size());
-        Assert.assertEquals(DEFAULT_PROFILE_TYPE, assetProfileNames.get(0).getName());
+        Assert.assertEquals(DEFAULT_PROFILE_NAME, assetProfileNames.get(0).getName());
 
         int count = 3;
         for (int i = 0; i < count; i++) {
@@ -512,7 +512,7 @@ public class AssetProfileControllerTest extends AbstractControllerTest {
         Assert.assertNotNull("Asset Profile Names list is null!", assetProfileNames);
         Assert.assertFalse("Asset Profile Names list is empty!", assetProfileNames.isEmpty());
         var expectedAssetProfileNamesWithoutDefault = expectedAssetProfileNames.stream()
-                .filter(entityInfo -> !entityInfo.getName().equals(DEFAULT_PROFILE_TYPE))
+                .filter(entityInfo -> !entityInfo.getName().equals(DEFAULT_PROFILE_NAME))
                 .collect(Collectors.toList());
         Assert.assertEquals(expectedAssetProfileNamesWithoutDefault, assetProfileNames);
         Assert.assertEquals(count, assetProfileNames.size());

@@ -1537,7 +1537,7 @@ export class WidgetSubscription implements IWidgetSubscription {
     }
     if (this.type === widgetType.latest) {
       const prevData = currentData.data;
-      if (!data.data.length) {
+      if (!data.data.length && !prevData.length) {
         update = false;
       } else if (prevData && prevData[0] && prevData[0].length > 1 && data.data.length > 0) {
         const prevTs = prevData[0][0];
@@ -1560,6 +1560,8 @@ export class WidgetSubscription implements IWidgetSubscription {
       }
       this.notifyDataLoaded();
       this.onDataUpdated(detectChanges);
+    } else if (this.loadingData) {
+      this.notifyDataLoaded();
     }
   }
 

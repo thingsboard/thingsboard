@@ -17,5 +17,17 @@
     "settingsDirective": "tb-doc-links-widget-settings",
     "defaultConfig": "{\"showTitle\":false,\"backgroundColor\":\"rgb(255, 255, 255)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"8px\",\"settings\":{\"columns\":3},\"title\":\"Documentation links\",\"dropShadow\":true,\"enableFullscreen\":false,\"widgetStyle\":{},\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showLegend\":false}"
   },
-  "externalId": null
+  "externalId": null,
+  "tags": [
+    "link",
+    "web link",
+    "url",
+    "web address",
+    "anchor",
+    "hotlink",
+    "reference",
+    "pointer",
+    "shortcut",
+    "redirect"
+  ]
 }
