@@ -15,6 +15,7 @@
  */
 package org.thingsboard.script.api.tbel;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import org.mvel2.ConversionException;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
@@ -141,6 +142,7 @@ public class TbDate implements Serializable, Cloneable {
         return toLocaleString(localeStr, zoneIdUTC.getId(), (locale, options) -> DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL, FormatStyle.MEDIUM).withLocale(locale));
     }
 
+    @JsonValue
     public String toString() {
         return toString(Locale.getDefault().getLanguage());
     }

@@ -52,9 +52,7 @@ import java.util.regex.Pattern;
  */
 public class JacksonUtil {
 
-    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
-            .registerModule(new JavaTimeModule())
-            .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     public static final ObjectMapper PRETTY_SORTED_JSON_MAPPER = JsonMapper.builder()
             .enable(SerializationFeature.INDENT_OUTPUT)
             .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
@@ -66,8 +64,7 @@ public class JacksonUtil {
             .build();
     public static final ObjectMapper IGNORE_UNKNOWN_PROPERTIES_JSON_MAPPER = JsonMapper.builder()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-            .build()
-            .registerModule(new JavaTimeModule());
+            .build();
 
     public static ObjectMapper getObjectMapperWithJavaTimeModule() {
         return new ObjectMapper().registerModule(new JavaTimeModule());

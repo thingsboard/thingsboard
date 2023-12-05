@@ -37,6 +37,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -799,17 +800,11 @@ class TbDateTest {
     }
 
     @Test
-    public void tbDateSerializedPMapperTest() {
+    public void tbDateSerializedMapperTest() {
         String stringDateUTC = "2023-09-06T01:04:05.345Z";
         TbDate expectedDate = new TbDate(stringDateUTC);
-        String serializedTbDate = JacksonUtil.toString(expectedDate);
-        JsonNode tbDateNode = JacksonUtil.toJsonNode(serializedTbDate);
-        Assert.assertNotNull(tbDateNode);
-        ((ObjectNode) tbDateNode).put("test", (String) null);
-        serializedTbDate = JacksonUtil.toString(tbDateNode);
-        TbDate actualDate = JacksonUtil.fromStringIgnoreUnknownProperties(serializedTbDate, TbDate.class);
-        Assert.assertNotNull(actualDate);
-        Assert.assertEquals(expectedDate.toString(), actualDate.toString());
-        Assert.assertEquals(expectedDate.getInstant(), actualDate.getInstant());
+        String serializedTbDate = JacksonUtil.toJsonNode(JacksonUtil.toString(Map.of("date", expectedDate))).get("date").asText();
+        Assert.assertNotNull(serializedTbDate);
+        Assert.assertEquals(expectedDate.toString(), serializedTbDate);
     }
 }
