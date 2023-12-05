@@ -5240,8 +5240,8 @@
         },
         "devices": {
             "view-docs": "查看文档",
-            "inactive": "活动",
-            "active": "未活动",
+            "inactive": "非活动",
+            "active": "活动",
             "total": "总数"
         },
         "alarms": {
