@@ -47,6 +47,16 @@
     "fluid_temperature_progress_bar_with_background",
     "fluid_temperature_range_chart",
     "fluid_temperature_range_chart_with_background",
-    "fluid_temperature_gauge"
+    "fluid_temperature_gauge",
+    "pump_vibration_card",
+    "pump_vibration_card_with_background",
+    "horizontal_pump_vibration_card",
+    "horizontal_pump_vibration_card_with_background",
+    "pump_vibration_chart_card",
+    "pump_vibration_chart_card_with_background",
+    "simple_pump_vibration_chart_card",
+    "simple_pump_vibration_chart_card_with_background",
+    "pump_vibration_range_chart",
+    "pump_vibration_range_chart_with_background"
   ]
 }
