@@ -15,8 +15,6 @@
  */
 package org.thingsboard.script.api.tbel;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -454,6 +452,7 @@ class TbDateTest {
 
     @Test
     void Test_Year_Moth_Date_Hours_Min_Sec_Without_TZ() {
+
         TbDate d = new TbDate(2023, 8, 18);
         Assert.assertEquals("2023-08-18 00:00:00", d.toLocaleString());
         d = new TbDate(2023, 9, 17, 17, 34);
@@ -464,6 +463,64 @@ class TbDateTest {
         Assert.assertEquals("2023-09-07 08:04:05", d.toLocaleString());
         d = new TbDate(23, 9, 7, 8, 4, 5, 567);
         Assert.assertEquals("2023-09-07 08:04:05", d.toLocaleString());
+    }
+
+    @Test
+    void Test_DateString_With_TZ() {
+        int date = 7;
+        int tz = -4;
+        int hrs = 8;
+        String pattern = "2023-09-%s %s:04:05";
+        String tzStr = "-04:00:00";
+        String dateStr = "2023-09-0" + date + "T0" + hrs + ":04:05.123" + tzStr;
+        TbDate d = new TbDate(dateStr);
+        int localOffsetHrs = ZoneId.systemDefault().getRules().getOffset(d.getInstant()).getTotalSeconds()/60/60;
+        TbDateTestEntity tbDateTest = new TbDateTestEntity(23, 9, date, hrs + localOffsetHrs - tz);
+        String expected = String.format(pattern, tbDateTest.geDateStr(), tbDateTest.geHoursStr());
+        Assert.assertEquals(expected, d.toLocaleString());
+
+        tz = +5;
+        tzStr = "+05:00";
+        dateStr = "2023-09-0" + date + "T0" + hrs + ":04:05.123" + tzStr;
+        d = new TbDate(dateStr);
+        localOffsetHrs = ZoneId.systemDefault().getRules().getOffset(d.getInstant()).getTotalSeconds()/60/60;
+        tbDateTest = new TbDateTestEntity(23, 9, date, hrs + localOffsetHrs - tz);
+        expected = String.format(pattern, tbDateTest.geDateStr(), tbDateTest.geHoursStr());
+        Assert.assertEquals(expected, d.toLocaleString());
+
+        tz = -2;
+        tzStr = "-02";
+        dateStr = "2023-09-0" + date + "T0" + hrs + ":04:05.123" + tzStr;
+        d = new TbDate(dateStr);
+        localOffsetHrs = ZoneId.systemDefault().getRules().getOffset(d.getInstant()).getTotalSeconds()/60/60;
+        tbDateTest = new TbDateTestEntity(23, 9, date, hrs + localOffsetHrs - tz);
+        expected = String.format(pattern, tbDateTest.geDateStr(), tbDateTest.geHoursStr());
+        Assert.assertEquals(expected, d.toLocaleString());
+    }
+
+    @Test
+    void Test_DateString_Without_TZ() {
+        String dateStr = "2023-08-06T04:04:05.123";
+        String expected = "2023-08-06 04:04:05";
+        TbDate d = new TbDate(dateStr);
+        Assert.assertEquals(expected, d.toLocaleString());
+    }
+
+    @Test
+    void Test_DateString_Without_FailedTZ() {
+        try {
+            TbDate d = new TbDate("2023-08-06T04:04:05.123+04:00:00:00");
+            Assert.fail("Should throw ConversionException");
+        } catch (ConversionException e) {
+            Assert.assertTrue(e.getMessage().contains("Cannot parse value [2023-08-06T04:04:05.123+04:00:00:00] as instant"));
+        }
+
+        try {
+            TbDate d = new TbDate("2023-08-06T04:04:05.123+4");
+            Assert.fail("Should throw ConversionException");
+        } catch (ConversionException e) {
+            Assert.assertTrue(e.getMessage().contains("Cannot parse value [2023-08-06T04:04:05.123+4] as instant"));
+        }
     }
 
     @Test
