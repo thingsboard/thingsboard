@@ -13,34 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge.rpc.constructor;
+package org.thingsboard.server.service.edge.rpc.processor.dashboard;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.gen.edge.v1.EdgeVersion;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+@Primary
 @Component
 @TbCoreComponent
-public abstract class MsgConstructorFactory<T extends MsgConstructor, U extends MsgConstructor> {
+public class DashboardEdgeProcessorV2 extends DashboardEdgeProcessor {
 
-    @Autowired
-    protected T v1Constructor;
-
-    @Autowired
-    protected U v2Constructor;
-
-    public MsgConstructor getMsgConstructorByEdgeVersion(EdgeVersion edgeVersion) {
-        switch (edgeVersion) {
-            case V_3_3_0:
-            case V_3_3_3:
-            case V_3_4_0:
-            case V_3_6_0:
-            case V_3_6_1:
-                return v1Constructor;
-            case V_3_6_2:
-            default:
-                return v2Constructor;
-        }
+    @Override
+    protected Dashboard constructDashboardFromUpdateMsg(TenantId tenantId, DashboardId dashboardId, DashboardUpdateMsg dashboardUpdateMsg) {
+        return JacksonUtil.fromString(dashboardUpdateMsg.getEntity(), Dashboard.class, true);
     }
 }

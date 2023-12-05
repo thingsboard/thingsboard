@@ -55,7 +55,7 @@ public class EdgeTest extends AbstractEdgeTest {
         Optional<CustomerUpdateMsg> customerUpdateOpt = edgeImitator.findMessageByType(CustomerUpdateMsg.class);
         Assert.assertTrue(customerUpdateOpt.isPresent());
         CustomerUpdateMsg customerUpdateMsg = customerUpdateOpt.get();
-        Customer customerMsg = JacksonUtil.fromStringIgnoreUnknownProperties(customerUpdateMsg.getEntity(), Customer.class);
+        Customer customerMsg = JacksonUtil.fromString(customerUpdateMsg.getEntity(), Customer.class, true);
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, customerUpdateMsg.getMsgType());
         Assert.assertEquals(savedCustomer, customerMsg);
 

@@ -57,7 +57,7 @@ public class TenantProfileEdgeTest extends AbstractEdgeTest {
         AbstractMessage latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof TenantProfileUpdateMsg);
         TenantProfileUpdateMsg tenantProfileUpdateMsg = (TenantProfileUpdateMsg) latestMessage;
-        TenantProfile tenantProfileMsg = JacksonUtil.fromStringIgnoreUnknownProperties(tenantProfileUpdateMsg.getEntity(), TenantProfile.class);
+        TenantProfile tenantProfileMsg = JacksonUtil.fromString(tenantProfileUpdateMsg.getEntity(), TenantProfile.class, true);
         Assert.assertNotNull(tenantProfileMsg);
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, tenantProfileUpdateMsg.getMsgType());
         Assert.assertEquals(edgeTenantProfile, tenantProfileMsg);
@@ -85,7 +85,7 @@ public class TenantProfileEdgeTest extends AbstractEdgeTest {
         Optional<TenantProfileUpdateMsg> tenantProfileUpdateMsgOpt  = edgeImitator.findMessageByType(TenantProfileUpdateMsg.class);
         Assert.assertTrue(tenantProfileUpdateMsgOpt.isPresent());
         TenantProfileUpdateMsg tenantProfileUpdateMsg = tenantProfileUpdateMsgOpt.get();
-        TenantProfile tenantProfile = JacksonUtil.fromStringIgnoreUnknownProperties(tenantProfileUpdateMsg.getEntity(), TenantProfile.class);
+        TenantProfile tenantProfile = JacksonUtil.fromString(tenantProfileUpdateMsg.getEntity(), TenantProfile.class, true);
         Assert.assertNotNull(tenantProfile);
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, tenantProfileUpdateMsg.getMsgType());
         Assert.assertEquals(edgeTenantProfile.getId(), tenantProfile.getId());
@@ -106,7 +106,7 @@ public class TenantProfileEdgeTest extends AbstractEdgeTest {
         queueUpdateMsgs = edgeImitator.findAllMessagesByType(QueueUpdateMsg.class);
         Assert.assertEquals(2, queueUpdateMsgs.size());
         for (QueueUpdateMsg queueUpdateMsg : queueUpdateMsgs) {
-            Queue queue = JacksonUtil.fromStringIgnoreUnknownProperties(queueUpdateMsg.getEntity(), Queue.class);
+            Queue queue = JacksonUtil.fromString(queueUpdateMsg.getEntity(), Queue.class, true);
             Assert.assertNotNull(queue);
             Assert.assertEquals(tenantId, queue.getTenantId());
         }
