@@ -52,7 +52,7 @@ export class AlarmDataService {
     listener.alarmDataSubscriptionOptions = this.createAlarmSubscriptionOptions(listener, pageLink, keyFilters);
     if (alarmSource.type === DatasourceType.entity && (!alarmSource.entityFilter || !pageLink)) {
       listener.alarmsLoaded(emptyPageData<AlarmData>(), 0, 0);
-      return of(null);
+      return;
     }
     listener.subscription = new AlarmDataSubscription(listener, this.telemetryService);
     return listener.subscription.subscribe();
