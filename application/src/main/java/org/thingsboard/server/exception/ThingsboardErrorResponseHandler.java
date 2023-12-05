@@ -178,7 +178,8 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
     private void handleAuthenticationException(AuthenticationException authenticationException, HttpServletResponse response) throws IOException {
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         if (authenticationException instanceof BadCredentialsException || authenticationException instanceof UsernameNotFoundException) {
-            JacksonUtil.writeValue(response.getWriter(), ThingsboardErrorResponse.of(authenticationException.getMessage().isEmpty() ? "Invalid username or password" : authenticationException.getMessage(), ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED));
+            String message = (authenticationException.getMessage() == null || authenticationException.getMessage().isEmpty()) ? "Invalid username or password" : authenticationException.getMessage();
+            JacksonUtil.writeValue(response.getWriter(), ThingsboardErrorResponse.of(message, ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED));
         } else if (authenticationException instanceof DisabledException) {
             JacksonUtil.writeValue(response.getWriter(), ThingsboardErrorResponse.of("User account is not active", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED));
         } else if (authenticationException instanceof LockedException) {

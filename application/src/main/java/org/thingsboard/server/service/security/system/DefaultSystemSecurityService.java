@@ -135,11 +135,11 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
         SecuritySettings securitySettings = self.getSecuritySettings(tenantId);
         UserPasswordPolicy passwordPolicy = securitySettings.getPasswordPolicy();
 
-        if (passwordPolicy.getForceUserToResetPasswordIfNotValid()) {
+        if (Boolean.TRUE.equals(passwordPolicy.getForceUserToResetPasswordIfNotValid())) {
             try {
                 validatePasswordByPolicy(password, passwordPolicy);
             } catch (DataValidationException e) {
-                throw new BadCredentialsException("Password does not pass validation. Please try again or reset password to valid one.");
+                throw new BadCredentialsException("The entered password violates our policies. If this is your real password, please reset it.");
             }
         }
         if (!encoder.matches(password, userCredentials.getPassword())) {
@@ -150,7 +150,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
                     throw new LockedException("Authentication Failed. Username was locked due to security policy.");
                 }
             }
-            throw new BadCredentialsException("Authentication Failed. Username or Password not valid.");
+            throw new BadCredentialsException("Invalid username or Password.");
         }
 
         if (!userCredentials.isEnabled()) {
@@ -227,7 +227,12 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
 
     private void validatePasswordByPolicy(String password, UserPasswordPolicy passwordPolicy) {
         List<Rule> passwordRules = new ArrayList<>();
-        passwordRules.add(new LengthRule(passwordPolicy.getMinimumLength(), passwordPolicy.getMaximumLength()));
+
+        Integer maximumLength = passwordPolicy.getMaximumLength();
+        Integer minLengthBound = passwordPolicy.getMinimumLength();
+        int maxLengthBound = (maximumLength != null && maximumLength > passwordPolicy.getMinimumLength()) ? maximumLength : Integer.MAX_VALUE;
+
+        passwordRules.add(new LengthRule(minLengthBound, maxLengthBound));
         if (isPositiveInteger(passwordPolicy.getMinimumUppercaseLetters())) {
             passwordRules.add(new CharacterRule(EnglishCharacterData.UpperCase, passwordPolicy.getMinimumUppercaseLetters()));
         }
