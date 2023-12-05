@@ -49,7 +49,7 @@ public class JacksonUtilTest {
         ((ObjectNode) jsonNode).put("test", (String) null);
         serializedAsset = JacksonUtil.toString(jsonNode);
         // deserialize with FAIL_ON_UNKNOWN_PROPERTIES = false
-        Asset result = JacksonUtil.fromStringIgnoreUnknownProperties(serializedAsset, Asset.class);
+        Asset result = JacksonUtil.fromString(serializedAsset, Asset.class, true);
         Assert.assertNotNull(result);
         Assert.assertEquals(asset.getId(), result.getId());
         Assert.assertEquals(asset.getName(), result.getName());

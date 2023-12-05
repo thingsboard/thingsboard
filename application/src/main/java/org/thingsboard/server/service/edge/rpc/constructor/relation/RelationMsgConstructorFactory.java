@@ -15,16 +15,12 @@
  */
 package org.thingsboard.server.service.edge.rpc.constructor.relation;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.edge.rpc.constructor.MsgConstructorFactory;
-import org.thingsboard.server.service.edge.rpc.constructor.customer.CustomerMsgConstructorV1;
-import org.thingsboard.server.service.edge.rpc.constructor.customer.CustomerMsgConstructorV2;
+import org.thingsboard.server.service.edge.rpc.constructor.BaseMsgConstructorFactory;
 
 @Component
 @TbCoreComponent
-public class RelationMsgConstructorFactory extends MsgConstructorFactory<RelationMsgConstructorV1, RelationMsgConstructorV2> {
+public class RelationMsgConstructorFactory extends BaseMsgConstructorFactory<RelationMsgConstructorV1, RelationMsgConstructorV2> {
 
 }

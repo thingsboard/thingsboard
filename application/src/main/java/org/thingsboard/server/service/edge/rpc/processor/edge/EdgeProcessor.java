@@ -41,8 +41,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-@Component
 @Slf4j
+@Component
 @TbCoreComponent
 public class EdgeProcessor extends BaseEdgeProcessor {
 

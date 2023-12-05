@@ -59,7 +59,7 @@ public class ResourceEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, resourceUpdateMsg.getMsgType());
         Assert.assertEquals(savedResource.getUuidId().getMostSignificantBits(), resourceUpdateMsg.getIdMSB());
         Assert.assertEquals(savedResource.getUuidId().getLeastSignificantBits(), resourceUpdateMsg.getIdLSB());
-        TbResource tbResource = JacksonUtil.fromStringIgnoreUnknownProperties(resourceUpdateMsg.getEntity(), TbResource.class);
+        TbResource tbResource = JacksonUtil.fromString(resourceUpdateMsg.getEntity(), TbResource.class, true);
         Assert.assertNotNull(tbResource);
         Assert.assertEquals("Edge Test Resource", tbResource.getTitle());
         Assert.assertEquals(ResourceType.JKS, tbResource.getResourceType());
@@ -76,7 +76,7 @@ public class ResourceEdgeTest extends AbstractEdgeTest {
         latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof ResourceUpdateMsg);
         resourceUpdateMsg = (ResourceUpdateMsg) latestMessage;
-        tbResource = JacksonUtil.fromStringIgnoreUnknownProperties(resourceUpdateMsg.getEntity(), TbResource.class);
+        tbResource = JacksonUtil.fromString(resourceUpdateMsg.getEntity(), TbResource.class, true);
         Assert.assertNotNull(tbResource);
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, resourceUpdateMsg.getMsgType());
         Assert.assertEquals("Updated Edge Test Resource", tbResource.getTitle());
@@ -156,7 +156,9 @@ public class ResourceEdgeTest extends AbstractEdgeTest {
         Optional<ResourceUpdateMsg> resourceUpdateMsgOpt = edgeImitator.findMessageByType(ResourceUpdateMsg.class);
         Assert.assertTrue(resourceUpdateMsgOpt.isPresent());
         ResourceUpdateMsg latestResourceUpdateMsg = resourceUpdateMsgOpt.get();
-        Assert.assertNotEquals(FILE_NAME, latestResourceUpdateMsg.getResourceKey());
+        TbResource resourceMsg = JacksonUtil.fromString(latestResourceUpdateMsg.getEntity(), TbResource.class, true);
+        Assert.assertNotNull(resourceMsg);
+        Assert.assertNotEquals(FILE_NAME, resourceMsg.getResourceKey());
 
         Assert.assertNotEquals(savedResource.getUuidId(), uuid);
 
