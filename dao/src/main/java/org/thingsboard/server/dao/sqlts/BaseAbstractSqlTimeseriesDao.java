@@ -53,11 +53,15 @@ public abstract class BaseAbstractSqlTimeseriesDao extends JpaAbstractDaoListeni
         if (keyId == null) {
             Optional<TsKvDictionary> tsKvDictionaryOptional;
             tsKvDictionaryOptional = dictionaryRepository.findById(new TsKvDictionaryCompositeKey(strKey));
-            if (!tsKvDictionaryOptional.isPresent()) {
+            if (tsKvDictionaryOptional.isEmpty()) {
                 tsCreationLock.lock();
                 try {
+                    keyId = tsKvDictionaryMap.get(strKey);
+                    if (keyId != null) {
+                        return keyId;
+                    }
                     tsKvDictionaryOptional = dictionaryRepository.findById(new TsKvDictionaryCompositeKey(strKey));
-                    if (!tsKvDictionaryOptional.isPresent()) {
+                    if (tsKvDictionaryOptional.isEmpty()) {
                         TsKvDictionary tsKvDictionary = new TsKvDictionary();
                         tsKvDictionary.setKey(strKey);
                         try {

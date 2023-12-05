@@ -48,6 +48,7 @@
         <module>edge-api</module>
         <module>version-control</module>
         <module>script</module>
+        <module>proto</module>
     </modules>
 
 </project>

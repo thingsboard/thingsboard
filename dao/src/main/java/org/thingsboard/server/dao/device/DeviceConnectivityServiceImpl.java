@@ -43,7 +43,6 @@ import org.thingsboard.server.dao.util.DeviceConnectivityUtil;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -64,6 +63,7 @@ import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.LINUX;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.MQTT;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.MQTTS;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.WINDOWS;
+import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.getHost;
 
 @Service("DeviceConnectivityDaoService")
 @Slf4j
@@ -137,14 +137,15 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
         validateId(deviceId, INCORRECT_DEVICE_ID + deviceId);
 
         DeviceCredentials creds = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), deviceId);
+        String deviceName = device.getName();
 
         ObjectNode commands = JacksonUtil.newObjectNode();
         if (isEnabled(MQTT)) {
-            Optional.ofNullable(getGatewayDockerCommands(baseUrl, creds, MQTT))
+            Optional.ofNullable(getGatewayDockerCommands(baseUrl, deviceName, creds, MQTT))
                     .ifPresent(v -> commands.set(MQTT, v));
         }
         if (isEnabled(MQTTS)) {
-            Optional.ofNullable(getGatewayDockerCommands(baseUrl, creds, MQTTS))
+            Optional.ofNullable(getGatewayDockerCommands(baseUrl, deviceName, creds, MQTTS))
                     .ifPresent(v -> commands.set(MQTTS, v));
         }
         return commands;
@@ -230,7 +231,7 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
                 deviceCredentials.getCredentialsType() != DeviceCredentialsType.ACCESS_TOKEN) {
             return null;
         }
-        String hostName = getHost(baseUrl, properties);
+        String hostName = getHost(baseUrl, properties, protocol);
         String propertiesPort = properties.getPort();
         String port = (propertiesPort.isEmpty() || HTTP_DEFAULT_PORT.equals(propertiesPort) || HTTPS_DEFAULT_PORT.equals(propertiesPort))
                 ? "" : ":" + propertiesPort;
@@ -278,14 +279,14 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
 
     private String getMqttPublishCommand(String baseUrl, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) throws URISyntaxException {
         DeviceConnectivityInfo properties = getConnectivity(MQTT);
-        String mqttHost = getHost(baseUrl, properties);
+        String mqttHost = getHost(baseUrl, properties, MQTT);
         String mqttPort = properties.getPort().isEmpty() ? null : properties.getPort();
         return DeviceConnectivityUtil.getMqttPublishCommand(MQTT, mqttHost, mqttPort, deviceTelemetryTopic, deviceCredentials);
     }
 
     private List<String> getMqttsPublishCommand(String baseUrl, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) throws URISyntaxException {
         DeviceConnectivityInfo properties = getConnectivity(MQTTS);
-        String mqttHost = getHost(baseUrl, properties);
+        String mqttHost = getHost(baseUrl, properties, MQTTS);
         String mqttPort = properties.getPort().isEmpty() ? null : properties.getPort();
         String pubCommand = DeviceConnectivityUtil.getMqttPublishCommand(MQTTS, mqttHost, mqttPort, deviceTelemetryTopic, deviceCredentials);
 
@@ -298,21 +299,21 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
         return null;
     }
 
-    private JsonNode getGatewayDockerCommands(String baseUrl, DeviceCredentials deviceCredentials, String mqttType) throws URISyntaxException {
+    private JsonNode getGatewayDockerCommands(String baseUrl, String deviceName, DeviceCredentials deviceCredentials, String mqttType) throws URISyntaxException {
         ObjectNode dockerLaunchCommands = JacksonUtil.newObjectNode();
         DeviceConnectivityInfo properties = getConnectivity(mqttType);
-        String mqttHost = getHost(baseUrl, properties);
+        String mqttHost = getHost(baseUrl, properties, mqttType);
         String mqttPort = properties.getPort().isEmpty() ? null : properties.getPort();
-        Optional.ofNullable(DeviceConnectivityUtil.getGatewayLaunchCommand(LINUX, mqttHost, mqttPort, deviceCredentials))
+        Optional.ofNullable(DeviceConnectivityUtil.getGatewayLaunchCommand(LINUX, deviceName, mqttHost, mqttPort, deviceCredentials))
                 .ifPresent(v -> dockerLaunchCommands.put(LINUX, v));
-        Optional.ofNullable(DeviceConnectivityUtil.getGatewayLaunchCommand(WINDOWS, mqttHost, mqttPort, deviceCredentials))
+        Optional.ofNullable(DeviceConnectivityUtil.getGatewayLaunchCommand(WINDOWS,  deviceName, mqttHost, mqttPort, deviceCredentials))
                 .ifPresent(v -> dockerLaunchCommands.put(WINDOWS, v));
         return dockerLaunchCommands.isEmpty() ? null : dockerLaunchCommands;
     }
 
     private String getDockerMqttPublishCommand(String protocol, String baseUrl, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) throws URISyntaxException {
         DeviceConnectivityInfo properties = getConnectivity(protocol);
-        String mqttHost = getHost(baseUrl, properties);
+        String mqttHost = getHost(baseUrl, properties, protocol);
         String mqttPort = properties.getPort().isEmpty() ? null : properties.getPort();
         return DeviceConnectivityUtil.getDockerMqttPublishCommand(protocol, baseUrl, mqttHost, mqttPort, deviceTelemetryTopic, deviceCredentials);
     }
@@ -352,20 +353,16 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
 
     private String getCoapPublishCommand(String protocol, String baseUrl, DeviceCredentials deviceCredentials) throws URISyntaxException {
         DeviceConnectivityInfo properties = getConnectivity(protocol);
-        String hostName = getHost(baseUrl, properties);
+        String hostName = getHost(baseUrl, properties, protocol);
         String port = properties.getPort().isEmpty() ? "" : ":" + properties.getPort();
         return DeviceConnectivityUtil.getCoapPublishCommand(protocol, hostName, port, deviceCredentials);
     }
 
     private String getDockerCoapPublishCommand(String protocol, String baseUrl, DeviceCredentials deviceCredentials) throws URISyntaxException {
         DeviceConnectivityInfo properties = getConnectivity(protocol);
-        String host = getHost(baseUrl, properties);
+        String host = getHost(baseUrl, properties, protocol);
         String port = properties.getPort().isEmpty() ? "" : ":" + properties.getPort();
         return DeviceConnectivityUtil.getDockerCoapPublishCommand(protocol, host, port, deviceCredentials);
-    }
-
-    private String getHost(String baseUrl, DeviceConnectivityInfo properties) throws URISyntaxException {
-        return properties.getHost().isEmpty() ? new URI(baseUrl).getHost() : properties.getHost();
     }
 
 }

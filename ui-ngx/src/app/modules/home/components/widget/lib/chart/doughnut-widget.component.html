@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-doughnut-panel" [style]="backgroundStyle">
+<div class="tb-doughnut-panel" [style]="backgroundStyle$ | async">
   <div class="tb-doughnut-overlay" [style]="overlayStyle"></div>
   <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
   <div #doughnutContent class="tb-doughnut-content" [class]="legendClass">

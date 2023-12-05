@@ -139,11 +139,10 @@
           <mat-label translate>dashboard.mobile-order</mat-label>
           <input matInput formControlName="mobileOrder" type="number" step="1">
         </mat-form-field>
-        <tb-image-input fxFlex
-                        label="{{'dashboard.image' | translate}}"
-                        maxSizeByte="524288"
-                        formControlName="image">
-        </tb-image-input>
+        <tb-gallery-image-input fxFlex
+                                label="{{'dashboard.image' | translate}}"
+                                formControlName="image">
+        </tb-gallery-image-input>
       </div>
     </fieldset>
   </form>

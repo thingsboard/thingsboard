@@ -113,14 +113,12 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
     @Test
     public void testSubscribingToUnreadNotificationsCount() {
+        wsClient.subscribeForUnreadNotificationsCount().waitForReply(true);
         NotificationTarget notificationTarget = createNotificationTarget(customerUserId);
         String notificationText1 = "Notification 1";
         submitNotificationRequest(notificationTarget.getId(), notificationText1);
         String notificationText2 = "Notification 2";
         submitNotificationRequest(notificationTarget.getId(), notificationText2);
-
-        wsClient.subscribeForUnreadNotificationsCount();
-        wsClient.waitForReply(true);
 
         await().atMost(2, TimeUnit.SECONDS)
                 .until(() -> wsClient.getLastCountUpdate().getTotalUnreadCount() == 2);
