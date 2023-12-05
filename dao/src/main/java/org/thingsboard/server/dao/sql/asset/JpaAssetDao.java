@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.sql.asset;
 
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +39,6 @@ import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -196,8 +194,9 @@ public class JpaAssetDao extends JpaAbstractDao<AssetEntity, Asset> implements A
     }
 
     @Override
-    public List<EntitySubtype> findTenantAssetTypes(UUID tenantId) {
-        return convertTenantEntityInfosToDto(tenantId, EntityType.ASSET, assetProfileRepository.findActiveTenantAssetProfileNames(tenantId));
+    public ListenableFuture<List<EntitySubtype>> findTenantAssetTypesAsync(UUID tenantId) {
+        return service.submit(() ->
+                convertTenantEntityInfosToDto(tenantId, EntityType.ASSET, assetProfileRepository.findActiveTenantAssetProfileNames(tenantId)));
     }
 
     @Override

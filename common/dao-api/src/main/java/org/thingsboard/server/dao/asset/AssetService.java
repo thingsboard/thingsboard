@@ -81,7 +81,7 @@ public interface AssetService extends EntityDaoService {
 
     ListenableFuture<List<Asset>> findAssetsByQuery(TenantId tenantId, AssetSearchQuery query);
 
-    @Deprecated(since = "3.6.2")
+    @Deprecated(since = "3.6.2", forRemoval = true)
     ListenableFuture<List<EntitySubtype>> findAssetTypesByTenantId(TenantId tenantId);
 
     Asset assignAssetToEdge(TenantId tenantId, AssetId assetId, EdgeId edgeId);

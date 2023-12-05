@@ -24,10 +24,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.util.TbPair;
-import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.ExportableEntityDao;
-import org.thingsboard.server.dao.ImageContainerDao;
 import org.thingsboard.server.dao.TenantEntityDao;
 
 import java.util.List;
@@ -191,8 +189,8 @@ public interface AssetDao extends Dao<Asset>, TenantEntityDao, ExportableEntityD
      *
      * @return the list of tenant asset type objects
      */
-    @Deprecated(since = "3.6.2")
-    List<EntitySubtype> findTenantAssetTypes(UUID tenantId);
+    @Deprecated(since = "3.6.2", forRemoval = true)
+    ListenableFuture<List<EntitySubtype>> findTenantAssetTypesAsync(UUID tenantId);
 
     Long countAssetsByAssetProfileId(TenantId tenantId, UUID assetProfileId);
 

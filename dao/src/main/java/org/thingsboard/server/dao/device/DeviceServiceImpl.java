@@ -487,9 +487,12 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     public ListenableFuture<List<EntitySubtype>> findDeviceTypesByTenantId(TenantId tenantId) {
         log.trace("Executing findDeviceTypesByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        var entitySubTypes = deviceDao.findTenantDeviceTypes(tenantId.getId())
-                .stream().sorted(Comparator.comparing(EntitySubtype::getType)).collect(Collectors.toList());
-        return Futures.immediateFuture(entitySubTypes);
+        ListenableFuture<List<EntitySubtype>> tenantDeviceTypes = deviceDao.findTenantDeviceTypesAsync(tenantId.getId());
+        return Futures.transform(tenantDeviceTypes,
+                deviceTypes -> {
+                    deviceTypes.sort(Comparator.comparing(EntitySubtype::getType));
+                    return deviceTypes;
+                }, MoreExecutors.directExecutor());
     }
 
     @Transactional
