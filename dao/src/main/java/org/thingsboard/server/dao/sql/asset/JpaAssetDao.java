@@ -195,8 +195,7 @@ public class JpaAssetDao extends JpaAbstractDao<AssetEntity, Asset> implements A
 
     @Override
     public ListenableFuture<List<EntitySubtype>> findTenantAssetTypesAsync(UUID tenantId) {
-        return service.submit(() -> convertTenantEntityInfosToDto(tenantId, EntityType.ASSET,
-                assetProfileRepository.findActiveTenantAssetProfileNames(tenantId)));
+        return service.submit(() -> convertTenantEntityInfosToDto(tenantId, EntityType.ASSET, assetProfileRepository.findActiveTenantAssetProfileNames(tenantId)));
     }
 
     @Override

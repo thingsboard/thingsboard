@@ -219,8 +219,7 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
 
     @Override
     public ListenableFuture<List<EntitySubtype>> findTenantDeviceTypesAsync(UUID tenantId) {
-        return service.submit(() -> convertTenantEntityInfosToDto(tenantId, EntityType.DEVICE,
-                        deviceProfileRepository.findActiveTenantDeviceProfileNames(tenantId)));
+        return service.submit(() -> convertTenantEntityInfosToDto(tenantId, EntityType.DEVICE, deviceProfileRepository.findActiveTenantDeviceProfileNames(tenantId)));
     }
 
     @Override
