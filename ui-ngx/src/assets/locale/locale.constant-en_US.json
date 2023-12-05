@@ -1191,7 +1191,8 @@
         "assign-dashboard-to-edge": "Assign Dashboard(s) To Edge",
         "assign-dashboard-to-edge-text": "Please select the dashboards to assign to the edge",
         "non-existent-dashboard-state-error": "Dashboard state with id \"{{ stateId }}\" is not found",
-        "edit-mode": "Edit mode"
+        "edit-mode": "Edit mode",
+        "duplicate-state-action": "Duplicate state"
     },
     "datakey": {
         "settings": "Settings",
@@ -6329,8 +6330,7 @@
             "hidden-cell-button-display-mode": "Hidden cell button actions display mode",
             "show-empty-space-hidden-action": "Show empty space instead of hidden cell button action",
             "dont-reserve-space-hidden-action": "Don't reserve space for hidden action buttons",
-            "display-timestamp": "Display timestamp column",
-            "display-milliseconds": "Display timestamp milliseconds",
+            "display-timestamp": "Timestamp",
             "display-pagination": "Display pagination",
             "default-page-size": "Default page size",
             "use-entity-label-tab-name": "Use entity label in tab name",
@@ -6691,6 +6691,7 @@
             "ka_GE": "ქართული",
             "ko_KR": "한국어",
             "lv_LV": "Latviešu",
+            "nl_BE": "Koninkrijk België",
             "pt_BR": "Português do Brasil",
             "ro_RO": "Română",
             "ru_RU": "Русский",
