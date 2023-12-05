@@ -130,7 +130,7 @@ public class ImageUtils {
             }
         }
 
-        BufferedImage thumbnail = new BufferedImage(preview.getWidth(), preview.getHeight(), BufferedImage.TYPE_INT_RGB);
+        BufferedImage thumbnail = new BufferedImage(preview.getWidth(), preview.getHeight(), BufferedImage.TYPE_INT_ARGB);
         thumbnail.getGraphics().drawImage(bufferedImage, 0, 0, preview.getWidth(), preview.getHeight(), null);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ImageIO.write(thumbnail, "png", out);
