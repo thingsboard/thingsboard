@@ -103,8 +103,8 @@ interface MultipleInputWidgetDataKeySettings {
   invalidJsonErrorMessage?: string;
   useCustomIcon: boolean;
   icon: string;
-  customIcon: string ;
-  safeCustomIcon?: SafeUrl;
+  customIcon: string;
+  customIconUrl?: string;
   inputTypeNumber?: boolean;
   readOnly?: boolean;
   disabledOnCondition?: boolean;
@@ -312,7 +312,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
             }
 
             if (dataKey.settings.useCustomIcon && isDefinedAndNotNull(dataKey.settings.customIcon)) {
-              dataKey.settings.safeCustomIcon = this.sanitizer.bypassSecurityTrustUrl(dataKey.settings.customIcon);
+              dataKey.settings.customIconUrl = dataKey.settings.customIcon;
             }
 
             if (dataKey.settings.useGetValueFunction && dataKey.settings.getValueFunctionBody.length) {

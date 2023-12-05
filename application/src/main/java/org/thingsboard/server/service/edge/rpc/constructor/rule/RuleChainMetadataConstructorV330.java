@@ -36,7 +36,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class RuleChainMetadataConstructorV330 extends AbstractRuleChainMetadataConstructor {
+public class RuleChainMetadataConstructorV330 extends BaseRuleChainMetadataConstructor {
 
     private static final String RULE_CHAIN_INPUT_NODE = TbRuleChainInputNode.class.getName();
     private static final String TB_RULE_CHAIN_OUTPUT_NODE = TbRuleChainOutputNode.class.getName();
@@ -45,6 +45,8 @@ public class RuleChainMetadataConstructorV330 extends AbstractRuleChainMetadataC
     protected void constructRuleChainMetadataUpdatedMsg(TenantId tenantId,
                                                         RuleChainMetadataUpdateMsg.Builder builder,
                                                         RuleChainMetaData ruleChainMetaData) {
+        builder.setRuleChainIdMSB(ruleChainMetaData.getRuleChainId().getId().getMostSignificantBits())
+                .setRuleChainIdLSB(ruleChainMetaData.getRuleChainId().getId().getLeastSignificantBits());
         List<RuleNode> supportedNodes = filterNodes(ruleChainMetaData.getNodes());
 
         NavigableSet<Integer> removedNodeIndexes = getRemovedNodeIndexes(ruleChainMetaData.getNodes(), ruleChainMetaData.getConnections());

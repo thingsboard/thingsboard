@@ -43,6 +43,7 @@ import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.widgets.type.TbWidgetTypeService;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -53,6 +54,8 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.thingsboard.server.controller.ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER;
+import static org.thingsboard.server.controller.ControllerConstants.INLINE_IMAGES;
+import static org.thingsboard.server.controller.ControllerConstants.INLINE_IMAGES_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
@@ -72,6 +75,7 @@ import static org.thingsboard.server.controller.ControllerConstants.WIDGET_TYPE_
 public class WidgetTypeController extends AutoCommitController {
 
     private final TbWidgetTypeService tbWidgetTypeService;
+    private final ImageService imageService;
 
     private static final String WIDGET_TYPE_DESCRIPTION = "Widget Type represents the template for widget creation. Widget Type and Widget are similar to class and object in OOP theory.";
     private static final String WIDGET_TYPE_DETAILS_DESCRIPTION = "Widget Type Details extend Widget Type and add image and description properties. " +
@@ -92,10 +96,16 @@ public class WidgetTypeController extends AutoCommitController {
     @ResponseBody
     public WidgetTypeDetails getWidgetTypeById(
             @ApiParam(value = WIDGET_TYPE_ID_PARAM_DESCRIPTION, required = true)
-            @PathVariable("widgetTypeId") String strWidgetTypeId) throws ThingsboardException {
+            @PathVariable("widgetTypeId") String strWidgetTypeId,
+            @ApiParam(value = INLINE_IMAGES_DESCRIPTION)
+            @RequestParam(value = INLINE_IMAGES, required = false) boolean inlineImages) throws ThingsboardException {
         checkParameter("widgetTypeId", strWidgetTypeId);
         WidgetTypeId widgetTypeId = new WidgetTypeId(toUUID(strWidgetTypeId));
-        return checkWidgetTypeId(widgetTypeId, Operation.READ);
+        var result = checkWidgetTypeId(widgetTypeId, Operation.READ);
+        if (inlineImages) {
+            imageService.inlineImages(result);
+        }
+        return result;
     }
 
     @ApiOperation(value = "Get Widget Type Info (getWidgetTypeInfoById)",
@@ -253,9 +263,16 @@ public class WidgetTypeController extends AutoCommitController {
     @ResponseBody
     public List<WidgetTypeDetails> getBundleWidgetTypesDetails(
             @ApiParam(value = "Widget Bundle Id", required = true)
-            @RequestParam("widgetsBundleId") String strWidgetsBundleId) throws ThingsboardException {
+            @RequestParam("widgetsBundleId") String strWidgetsBundleId,
+            @ApiParam(value = INLINE_IMAGES_DESCRIPTION)
+            @RequestParam(value = INLINE_IMAGES, required = false) boolean inlineImages
+    ) throws ThingsboardException {
         WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
-        return checkNotNull(widgetTypeService.findWidgetTypesDetailsByWidgetsBundleId(getTenantId(), widgetsBundleId));
+        var result = checkNotNull(widgetTypeService.findWidgetTypesDetailsByWidgetsBundleId(getTenantId(), widgetsBundleId));
+        if (inlineImages) {
+            result.forEach(imageService::inlineImages);
+        }
+        return result;
     }
 
     @ApiOperation(value = "Get all Widget type fqns for specified Bundle (getBundleWidgetTypeFqns)",
@@ -369,6 +386,7 @@ public class WidgetTypeController extends AutoCommitController {
         String typeFqn = fqn.substring(scopeQualifier.length() + 1);
         WidgetType widgetType = widgetTypeService.findWidgetTypeByTenantIdAndFqn(tenantId, typeFqn);
         checkNotNull(widgetType);
+
         accessControlService.checkPermission(getCurrentUser(), Resource.WIDGET_TYPE, Operation.READ, widgetType.getId(), widgetType);
         return widgetType;
     }

@@ -326,6 +326,8 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
       EntityType.TB_RESOURCE,
       {
         type: 'entity.type-tb-resource',
+        typePlural: 'entity.type-tb-resources',
+        list: 'entity.list-of-tb-resources',
         details: 'resource.resource-library-details',
         add: 'resource.add',
         noEntities: 'resource.no-resource-text',
@@ -535,7 +537,9 @@ export const baseDetailsPageByEntityType = new Map<EntityType, string>([
   [EntityType.ENTITY_VIEW, '/entities/entityViews'],
   [EntityType.TB_RESOURCE, '/resources/resources-library'],
   [EntityType.OTA_PACKAGE, '/features/otaUpdates'],
-  [EntityType.QUEUE, '/settings/queues']
+  [EntityType.QUEUE, '/settings/queues'],
+  [EntityType.WIDGETS_BUNDLE, '/resources/widgets-library/widgets-bundles/details'],
+  [EntityType.WIDGET_TYPE, '/resources/widgets-library/widget-types/details']
 ]);
 
 export interface EntitySubtype {
