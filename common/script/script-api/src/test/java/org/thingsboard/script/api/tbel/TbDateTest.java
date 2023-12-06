@@ -154,7 +154,7 @@ class TbDateTest {
     void testToLocaleDateString() {
         String s = "02:15:30 PM, Sun 10/09/2022";
         String pattern = "hh:mm:ss a, EEE M/d/uuuu";
-        TbDate d = new TbDate(s, pattern, Locale.US);
+        TbDate d = new TbDate(s, pattern, "en-US");
             // tz = local
         int localOffsetHrs = ZoneId.systemDefault().getRules().getOffset(d.getInstant()).getTotalSeconds()/60/60;
         int hrs = 14 - localOffsetHrs;
@@ -167,9 +167,9 @@ class TbDateTest {
         Assert.assertEquals("2023-08-06T08:04:05Z", d.toISOString());
 
         s = "02:15:30 PM, Sun 10/09/2022";
-        d = new TbDate(s, pattern, Locale.US, "-04:00");
+        d = new TbDate(s, pattern, "en-US", "-04:00");
         Assert.assertEquals("2022-10-09T18:15:30Z", d.toISOString());
-        d = new TbDate(s, pattern, Locale.US, "America/New_York");
+        d = new TbDate(s, pattern,"en-US", "America/New_York");
         Assert.assertEquals("2022-10-09T18:15:30Z", d.toISOString());
             // tz = "+02:00"
         /**
@@ -179,12 +179,12 @@ class TbDateTest {
          * `{ "AM", "PM" }`
          */
         s = "09:15:30 nachm., So. 10/09/2022";
-        d = new TbDate(s, pattern, Locale.GERMAN, ZoneId.of("Europe/Berlin"));
+        d = new TbDate(s, pattern, "de","Europe/Berlin");
         Assert.assertEquals("2022-10-09T19:15:30Z", d.toISOString());
 
         s = "02:15:30 пп, середа, 4 жовтня 2023 р.";
         pattern = "hh:mm:ss a, EEEE, d MMMM y 'р.'";
-        d = new TbDate(s, pattern, Locale.forLanguageTag("uk-UA"));
+        d = new TbDate(s, pattern, "uk-UA");
         localOffsetHrs = ZoneId.systemDefault().getRules().getOffset(d.getInstant()).getTotalSeconds()/60/60;
         hrs = 14 - localOffsetHrs;
         expected = "2023-10-04T" + hrs + ":15:30Z";

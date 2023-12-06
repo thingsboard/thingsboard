@@ -58,15 +58,15 @@ public class TbDate implements Serializable, Cloneable {
         this.instant = parseInstant(s);
     }
 
-    public TbDate(String s, String pattern, Locale locale) {
-        instant =  parseInstant(s, pattern, locale, ZoneId.systemDefault());
+    public TbDate(String s, String pattern) {
+        instant =  parseInstant(s, pattern, localeUTC, ZoneId.systemDefault());
     }
-    public TbDate(String s, String pattern, Locale locale, String zoneIdStr) {
-        ZoneId zoneId = ZoneId.of(zoneIdStr);
-        instant =  parseInstant(s, pattern, locale, zoneId);
+
+    public TbDate(String s, String pattern, String localeStr) {
+        instant =  parseInstant(s, pattern, Locale.forLanguageTag(localeStr), ZoneId.systemDefault());
     }
-    public TbDate(String s, String pattern, Locale locale, ZoneId zoneId) {
-        instant =  parseInstant(s, pattern, locale, zoneId);
+    public TbDate(String s, String pattern, String localeStr, String zoneIdStr) {
+        instant =  parseInstant(s, pattern, Locale.forLanguageTag(localeStr), ZoneId.of(zoneIdStr));
     }
 
     public TbDate(long dateMilliSecond) {
