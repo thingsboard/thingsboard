@@ -43,7 +43,7 @@ public class WidgetEdgeTest extends AbstractEdgeTest {
         AbstractMessage latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof WidgetsBundleUpdateMsg);
         WidgetsBundleUpdateMsg widgetsBundleUpdateMsg = (WidgetsBundleUpdateMsg) latestMessage;
-        WidgetsBundle widgetsBundleMsg = JacksonUtil.fromStringIgnoreUnknownProperties(widgetsBundleUpdateMsg.getEntity(), WidgetsBundle.class);
+        WidgetsBundle widgetsBundleMsg = JacksonUtil.fromString(widgetsBundleUpdateMsg.getEntity(), WidgetsBundle.class, true);
         Assert.assertNotNull(widgetsBundleMsg);
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, widgetsBundleUpdateMsg.getMsgType());
         Assert.assertEquals(savedWidgetsBundle.getId(), widgetsBundleMsg.getId());
@@ -65,7 +65,7 @@ public class WidgetEdgeTest extends AbstractEdgeTest {
         latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof WidgetTypeUpdateMsg);
         WidgetTypeUpdateMsg widgetTypeUpdateMsg = (WidgetTypeUpdateMsg) latestMessage;
-        WidgetType widgetsType = JacksonUtil.fromStringIgnoreUnknownProperties(widgetTypeUpdateMsg.getEntity(), WidgetType.class);
+        WidgetType widgetsType = JacksonUtil.fromString(widgetTypeUpdateMsg.getEntity(), WidgetType.class, true);
         Assert.assertNotNull(widgetsType);
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, widgetTypeUpdateMsg.getMsgType());
         Assert.assertEquals(savedWidgetType, widgetsType);
@@ -78,7 +78,7 @@ public class WidgetEdgeTest extends AbstractEdgeTest {
         latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof WidgetsBundleUpdateMsg);
         widgetsBundleUpdateMsg = (WidgetsBundleUpdateMsg) latestMessage;
-        widgetsBundleMsg = JacksonUtil.fromStringIgnoreUnknownProperties(widgetsBundleUpdateMsg.getEntity(), WidgetsBundle.class);
+        widgetsBundleMsg = JacksonUtil.fromString(widgetsBundleUpdateMsg.getEntity(), WidgetsBundle.class, true);
         Assert.assertNotNull(widgetsBundleMsg);
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, widgetsBundleUpdateMsg.getMsgType());
         Assert.assertEquals(savedWidgetsBundle.getTitle(), widgetsBundleMsg.getTitle());
@@ -91,7 +91,7 @@ public class WidgetEdgeTest extends AbstractEdgeTest {
         latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof WidgetTypeUpdateMsg);
         widgetTypeUpdateMsg = (WidgetTypeUpdateMsg) latestMessage;
-        widgetsType = JacksonUtil.fromStringIgnoreUnknownProperties(widgetTypeUpdateMsg.getEntity(), WidgetType.class);
+        widgetsType = JacksonUtil.fromString(widgetTypeUpdateMsg.getEntity(), WidgetType.class, true);
         Assert.assertNotNull(widgetsType);
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, widgetTypeUpdateMsg.getMsgType());
         Assert.assertEquals(savedWidgetType.getName(), widgetsType.getName());

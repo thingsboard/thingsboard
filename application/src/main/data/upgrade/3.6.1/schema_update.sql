@@ -14,4 +14,26 @@
 -- limitations under the License.
 --
 
+-- RESOURCES UPDATE START
+
+DO
+$$
+    BEGIN
+        IF NOT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name = 'resource' AND column_name = 'data' AND data_type = 'bytea') THEN
+            ALTER TABLE resource RENAME COLUMN data TO base64_data;
+            ALTER TABLE resource ADD COLUMN data bytea;
+            UPDATE resource SET data = decode(base64_data, 'base64') WHERE base64_data IS NOT NULL;
+            ALTER TABLE resource DROP COLUMN base64_data;
+        END IF;
+    END;
+$$;
+
+ALTER TABLE resource ADD COLUMN IF NOT EXISTS descriptor varchar;
+ALTER TABLE resource ADD COLUMN IF NOT EXISTS preview bytea;
+ALTER TABLE resource ADD COLUMN IF NOT EXISTS external_id uuid;
+
+CREATE INDEX IF NOT EXISTS idx_resource_etag ON resource(tenant_id, etag);
+
+-- RESOURCES UPDATE END
+
 ALTER TABLE rule_node ADD COLUMN IF NOT EXISTS queue_name varchar(255);

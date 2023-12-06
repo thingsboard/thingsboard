@@ -15,34 +15,25 @@
  */
 package org.thingsboard.server.service.edge.rpc.processor.asset;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.util.Pair;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
-import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
-
-import java.util.UUID;
 
 @Slf4j
 public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
 
-    protected Pair<Boolean, Boolean> saveOrUpdateAsset(TenantId tenantId, AssetId assetId, AssetUpdateMsg assetUpdateMsg, EdgeVersion edgeVersion) {
+    protected Pair<Boolean, Boolean> saveOrUpdateAsset(TenantId tenantId, AssetId assetId, AssetUpdateMsg assetUpdateMsg) {
         boolean created = false;
         boolean assetNameUpdated = false;
         assetCreationLock.lock();
         try {
-            Asset asset = EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)
-                    ? createAsset(tenantId, assetId, assetUpdateMsg)
-                    : JacksonUtil.fromStringIgnoreUnknownProperties(assetUpdateMsg.getEntity(), Asset.class);
+            Asset asset = constructAssetFromUpdateMsg(tenantId, assetId, assetUpdateMsg);
             if (asset == null) {
                 throw new RuntimeException("[{" + tenantId + "}] assetUpdateMsg {" + assetUpdateMsg + " } cannot be converted to asset");
             }
@@ -62,7 +53,7 @@ public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
                 assetNameUpdated = true;
             }
             asset.setName(assetName);
-            setCustomerId(tenantId, created ? null : assetById.getCustomerId(), asset, assetUpdateMsg, edgeVersion);
+            setCustomerId(tenantId, created ? null : assetById.getCustomerId(), asset, assetUpdateMsg);
 
             assetValidator.validate(asset, Asset::getTenantId);
             if (created) {
@@ -78,23 +69,7 @@ public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
         return Pair.of(created, assetNameUpdated);
     }
 
-    private Asset createAsset(TenantId tenantId, AssetId assetId, AssetUpdateMsg assetUpdateMsg) {
-        Asset asset = new Asset();
-        asset.setTenantId(tenantId);
-        asset.setName(assetUpdateMsg.getName());
-        asset.setCreatedTime(Uuids.unixTimestamp(assetId.getId()));
-        asset.setType(assetUpdateMsg.getType());
-        asset.setLabel(assetUpdateMsg.hasLabel() ? assetUpdateMsg.getLabel() : null);
-        asset.setAdditionalInfo(assetUpdateMsg.hasAdditionalInfo()
-                ? JacksonUtil.toJsonNode(assetUpdateMsg.getAdditionalInfo()) : null);
+    protected abstract Asset constructAssetFromUpdateMsg(TenantId tenantId, AssetId assetId, AssetUpdateMsg assetUpdateMsg);
 
-        UUID assetProfileUUID = safeGetUUID(assetUpdateMsg.getAssetProfileIdMSB(), assetUpdateMsg.getAssetProfileIdLSB());
-        asset.setAssetProfileId(assetProfileUUID != null ? new AssetProfileId(assetProfileUUID) : null);
-
-        CustomerId customerId = safeGetCustomerId(assetUpdateMsg.getCustomerIdMSB(), assetUpdateMsg.getCustomerIdLSB());
-        asset.setCustomerId(customerId);
-        return asset;
-    }
-
-    protected abstract void setCustomerId(TenantId tenantId, CustomerId customerId, Asset asset, AssetUpdateMsg assetUpdateMsg, EdgeVersion edgeVersion);
+    protected abstract void setCustomerId(TenantId tenantId, CustomerId customerId, Asset asset, AssetUpdateMsg assetUpdateMsg);
 }

@@ -23,7 +23,7 @@ import { PageData } from '@shared/models/page/page-data';
 import { EntitySubtype } from '@app/shared/models/entity-type.models';
 import { Edge, EdgeEvent, EdgeInfo, EdgeInstallInstructions, EdgeSearchQuery } from '@shared/models/edge.models';
 import { EntityId } from '@shared/models/id/entity-id';
-import { BulkImportRequest, BulkImportResult } from '@home/components/import-export/import-export.models';
+import { BulkImportRequest, BulkImportResult } from '@shared/import-export/import-export.models';
 
 @Injectable({
   providedIn: 'root'

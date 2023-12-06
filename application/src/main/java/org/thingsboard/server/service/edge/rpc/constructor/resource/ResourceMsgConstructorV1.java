@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.edge.rpc.constructor.resource;
 
+import com.google.protobuf.ByteString;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -37,7 +38,7 @@ public class ResourceMsgConstructorV1 extends BaseResourceMsgConstructor {
                 .setResourceType(tbResource.getResourceType().name())
                 .setFileName(tbResource.getFileName());
         if (tbResource.getData() != null) {
-            builder.setData(tbResource.getData());
+            builder.setData(tbResource.getEncodedData());
         }
         if (tbResource.getEtag() != null) {
             builder.setEtag(tbResource.getEtag());

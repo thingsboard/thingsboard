@@ -27,7 +27,6 @@ import java.util.Map;
 @EqualsAndHashCode(callSuper = true)
 public class TbGetOriginatorFieldsConfiguration extends TbGetMappedDataNodeConfiguration implements NodeConfiguration<TbGetOriginatorFieldsConfiguration> {
 
-    private Map<String, String> dataMapping;
     private boolean ignoreNullStrings;
 
     @Override
