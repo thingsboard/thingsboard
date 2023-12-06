@@ -34,7 +34,6 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -351,16 +350,21 @@ class TbDateTest {
         stringDateTZ = "2023-09-06T01:04:05.00-04:00";
         d = new TbDate(stringDateTZ);
         Assert.assertEquals("2023-09-06T05:04:05Z", d.toISOString());
-       stringDateTZ = "2023-09-06T01:04:05.00+04:30:56";
+        stringDateTZ = "2023-09-06T01:04:05.00+04:30:56";
         d = new TbDate(stringDateTZ);
         Assert.assertEquals("2023-09-05T20:33:09Z", d.toISOString());
         stringDateTZ = "2023-09-06T01:04:05.00-02:00";
         d = new TbDate(stringDateTZ);
         Assert.assertEquals("2023-09-06T03:04:05Z", d.toISOString());
-        // Without_TZ
+            // Without_TZ
         stringDateTZ = "2023-08-06T04:04:05.123";
         d = new TbDate(stringDateTZ);
         Assert.assertEquals("2023-08-06 04:04:05", d.toLocaleString());
+            // With pattern + locale - ok
+        String pattern = "hh:mm:ss a, EEE M/d/uuuu";
+        stringDateTZ = "09:15:30 nachm., So. 10/09/2022";
+        d = new TbDate(stringDateTZ, pattern, "de");
+        Assert.assertEquals("2022-10-09 21:15:30", d.toLocaleString());
 
         String stringDateRFC_1123  = "Sat, 3 Jun 2023 11:05:30 GMT";
         d = new TbDate(stringDateRFC_1123);
@@ -379,25 +383,36 @@ class TbDateTest {
         d = new TbDate(stringDateRFC_1123);
         Assert.assertEquals("2024-02-29T14:05:30Z", d.toISOString());
 
+
+            // failed TZ
         String expectedMessage = "Cannot parse value";
         String finalStringDateZ_error0 = "2023-09-06T01:04:05.00+045";
         Exception actual = assertThrows(ConversionException.class, () -> {
             new TbDate(finalStringDateZ_error0);
         });
         assertTrue(actual.getMessage().contains(expectedMessage));
-
+            // failed TZ
         String finalStringDateZ_error1 = "2023-08-06T04:04:05.123+04:00:00:00";
         actual = assertThrows(ConversionException.class, () -> {
             new TbDate(finalStringDateZ_error1);
         });
         assertTrue(actual.getMessage().contains(expectedMessage));
-
+            // failed TZ
         String finalStringDateZ_error2 ="2023-08-06T04:04:05.123+4";
         actual = assertThrows(ConversionException.class, () -> {
             new TbDate(finalStringDateZ_error2);
         });
         assertTrue(actual.getMessage().contains(expectedMessage));
+            // The locale does not match the pattern
+        String finalStringDateZ_error3= "02:15:30 PM, Sun 10/09/2022";
+        pattern = "hh:mm:ss a, EEE M/d/uuuu";
+        String finalPattern = pattern;
+        actual = assertThrows(ConversionException.class, () -> {
+            new TbDate(finalStringDateZ_error3, finalPattern, "de");
+        });
+        assertTrue(actual.getMessage().contains(expectedMessage));
 
+        // failed DayOfWeek
        String stringDateRFC_1123_error  = "Tue, 3 Jun 2023 11:05:30 GMT";
        actual = assertThrows(ConversionException.class, () -> {
             new TbDate(stringDateRFC_1123_error);
@@ -482,6 +497,12 @@ class TbDateTest {
         Assert.assertEquals("2023-09-07 08:04:05", d.toLocaleString());
     }
 
+    @Test
+    void Test_DateString_With_Pattern() {
+        String pattern = "yyyy-MM-dd HH:mm:ss.SSSXXX";
+        TbDate d = new TbDate("2023-08-06 04:04:05.000-04:00", pattern);
+        Assert.assertEquals("2023-08-06T08:04:05Z", d.toISOString());
+    }
     @Test
     void Test_DateString_With_TZ() {
         int date = 7;

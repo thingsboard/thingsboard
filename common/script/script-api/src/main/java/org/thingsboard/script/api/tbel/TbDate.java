@@ -54,19 +54,15 @@ public class TbDate implements Serializable, Cloneable {
         this.instant = Instant.now();
     }
 
-    public TbDate(String s) {
-        this.instant = parseInstant(s);
-    }
-
-    public TbDate(String s, String pattern) {
-        instant =  parseInstant(s, pattern, localeUTC, ZoneId.systemDefault());
-    }
-
-    public TbDate(String s, String pattern, String localeStr) {
-        instant =  parseInstant(s, pattern, Locale.forLanguageTag(localeStr), ZoneId.systemDefault());
-    }
-    public TbDate(String s, String pattern, String localeStr, String zoneIdStr) {
-        instant =  parseInstant(s, pattern, Locale.forLanguageTag(localeStr), ZoneId.of(zoneIdStr));
+    public TbDate(String s, String... options) {
+        if (options.length <= 2) {
+            this.instant = parseInstant(s, options);
+        } else {
+            String pattern = options[0];
+            String localeStr = options[1];
+            String zoneIdStr = options[2];
+            instant =  parseInstant(s, pattern, Locale.forLanguageTag(localeStr), ZoneId.of(zoneIdStr));
+        }
     }
 
     public TbDate(long dateMilliSecond) {
@@ -487,22 +483,30 @@ public class TbDate implements Serializable, Cloneable {
         }
     }
 
-    private static Instant parseInstant(String s) {
+    private static Instant parseInstant(String s, String... options) {
+        Locale locale = options.length > 1 ? Locale.forLanguageTag( options[1]) : Locale.getDefault();
+        DateTimeFormatter formatter = null;
+        if (options.length > 0) {
+            formatter =  DateTimeFormatter.ofPattern(options[0], locale);
+        } else if (s.length() > 0 && Character.isDigit(s.charAt(0))) {
+            // assuming  "2007-12-03T10:15:30.00Z"  UTC instant
+            // assuming  "2007-12-03T10:15:30.00"  ZoneId.systemDefault() instant
+            // assuming  "2007-12-03T10:15:30.00-04:00"  TZ instant
+            // assuming  "2007-12-03T10:15:30.00+04:00"  TZ instant
+            formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+        } else {
+            // assuming RFC-1123 value "Tue, 3 Jun 2008 11:05:30 GMT"
+            // assuming RFC-1123 value "Tue, 3 Jun 2008 11:05:30 GMT-02:00"
+            // assuming RFC-1123 value "Tue, 3 Jun 2008 11:05:30 -0200"
+            formatter = DateTimeFormatter.RFC_1123_DATE_TIME;
+        }
         try{
-            if (s.length() > 0 && Character.isDigit(s.charAt(0))) {
-                // assuming  "2007-12-03T10:15:30.00Z"  UTC instant
-                // assuming  "2007-12-03T10:15:30.00"  ZoneId.systemDefault() instant
-                // assuming  "2007-12-03T10:15:30.00-04:00"  TZ instant
-                // assuming  "2007-12-03T10:15:30.00+04:00"  TZ instant
-                return OffsetDateTime.parse(s).toInstant();
-            }
-            else {
-                // assuming RFC-1123 value "Tue, 3 Jun 2008 11:05:30 GMT-02:00"
-                return Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(s));
-            }
-        } catch (final DateTimeParseException ex) {
+            return Instant.from(formatter.parse(s));
+        } catch (Exception ex) {
             try {
-                if (s.length() > 0 && Character.isDigit(s.charAt(0))) {
+                if (options.length > 0) {
+                    return parseInstant(s, options[0], locale, ZoneId.systemDefault());
+                } else if (s.length() > 0 && Character.isDigit(s.charAt(0))) {
                     long timeMS = parse(s);
                     if (timeMS != -1) {
                         return Instant.ofEpochMilli(timeMS);
