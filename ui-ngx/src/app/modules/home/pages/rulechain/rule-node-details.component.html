@@ -45,7 +45,7 @@
   </section>
 
   <tb-queue-autocomplete
-    *ngIf="queueEnabled"
+    *ngIf="isSingletonRuleNode()"
     [queueType]="serviceType"
     formControlName="queueName">
   </tb-queue-autocomplete>

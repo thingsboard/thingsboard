@@ -75,8 +75,6 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
   ruleNodeType = RuleNodeType;
   entityType = EntityType;
 
-  queueEnabled = false;
-
   serviceType = ServiceType.TB_RULE_ENGINE;
 
   ruleNodeFormGroup: UntypedFormGroup;
@@ -104,8 +102,7 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
         )
       });
 
-      if (this.ruleNode.component.name === 'mqtt' || this.ruleNode.component.name === 'azure iot hub') {
-        this.queueEnabled = true;
+      if (this.isSingletonRuleNode()) {
         this.ruleNodeFormGroup.addControl('queueName', this.fb.control(this.ruleNode?.queueName ? this.ruleNode.queueName : null));
         if (!this.ruleNodeFormGroup.get('singletonMode').value) {
           this.ruleNodeFormGroup.get('queueName').disable({emitEvent: false});
@@ -176,6 +173,11 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
         this.router.navigateByUrl(`/ruleChains/${ruleChainId}`);
       }
     }
+  }
+
+  isSingletonRuleNode() {
+    return this.ruleNode.component.clusteringMode === ComponentClusteringMode.USER_PREFERENCE ||
+      this.ruleNode.component.clusteringMode === ComponentClusteringMode.SINGLETON;
   }
 
   isSingletonEditAllowed() {
