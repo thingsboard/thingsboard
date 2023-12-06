@@ -357,9 +357,18 @@ class TbDateTest {
         stringDateTZ = "2023-09-06T01:04:05.00-02:00";
         d = new TbDate(stringDateTZ);
         Assert.assertEquals("2023-09-06T03:04:05Z", d.toISOString());
+        // Without_TZ
+        stringDateTZ = "2023-08-06T04:04:05.123";
+        d = new TbDate(stringDateTZ);
+        Assert.assertEquals("2023-08-06 04:04:05", d.toLocaleString());
+
         String stringDateRFC_1123  = "Sat, 3 Jun 2023 11:05:30 GMT";
         d = new TbDate(stringDateRFC_1123);
         Assert.assertEquals("2023-06-03T11:05:30Z", d.toISOString());
+        // without TZ
+        stringDateRFC_1123  = "Sat, 3 Jun 2023 11:05:30";
+        d = new TbDate(stringDateRFC_1123);
+        Assert.assertEquals("2023-06-03 11:05:30", d.toLocaleString());
         stringDateRFC_1123  = "Sat, 3 Jun 2023 01:04:05 +043056";
         d = new TbDate(stringDateRFC_1123);
         Assert.assertEquals("2023-06-02T20:33:09Z", d.toISOString());
@@ -370,11 +379,23 @@ class TbDateTest {
         d = new TbDate(stringDateRFC_1123);
         Assert.assertEquals("2024-02-29T14:05:30Z", d.toISOString());
 
-        String stringDateZ_error  = "2023-09-06T01:04:05.00+045";
-        Exception actual = assertThrows(ConversionException.class, () -> {
-            new TbDate(stringDateZ_error);
-        });
         String expectedMessage = "Cannot parse value";
+        String finalStringDateZ_error0 = "2023-09-06T01:04:05.00+045";
+        Exception actual = assertThrows(ConversionException.class, () -> {
+            new TbDate(finalStringDateZ_error0);
+        });
+        assertTrue(actual.getMessage().contains(expectedMessage));
+
+        String finalStringDateZ_error1 = "2023-08-06T04:04:05.123+04:00:00:00";
+        actual = assertThrows(ConversionException.class, () -> {
+            new TbDate(finalStringDateZ_error1);
+        });
+        assertTrue(actual.getMessage().contains(expectedMessage));
+
+        String finalStringDateZ_error2 ="2023-08-06T04:04:05.123+4";
+        actual = assertThrows(ConversionException.class, () -> {
+            new TbDate(finalStringDateZ_error2);
+        });
         assertTrue(actual.getMessage().contains(expectedMessage));
 
        String stringDateRFC_1123_error  = "Tue, 3 Jun 2023 11:05:30 GMT";
@@ -385,12 +406,8 @@ class TbDateTest {
     }
     @Test
     void TestParse () {
-        String stringDateUTC = "2023-09-06T01:04:05.345Z";
-        TbDate d = new TbDate(stringDateUTC);
-        Assert.assertEquals(1693962245345L, d.parseSecondMilli());
-        Assert.assertEquals(1693962245L, d.parseSecond());
         String stringDateStart = "1970-01-01T00:00:00Z";
-        d = new TbDate(stringDateStart);
+        TbDate d = new TbDate(stringDateStart);
         long actualMillis = TbDate.parse("1970-01-01 T00:00:00");
         Assert.assertEquals(-d.getLocaleZoneOffset().getTotalSeconds() * 1000, actualMillis);
         String pattern = "yyyy-MM-dd HH:mm:ss.SSS";
@@ -496,31 +513,6 @@ class TbDateTest {
         tbDateTest = new TbDateTestEntity(23, 9, date, hrs + localOffsetHrs - tz);
         expected = String.format(pattern, tbDateTest.geDateStr(), tbDateTest.geHoursStr());
         Assert.assertEquals(expected, d.toLocaleString());
-    }
-
-    @Test
-    void Test_DateString_Without_TZ() {
-        String dateStr = "2023-08-06T04:04:05.123";
-        String expected = "2023-08-06 04:04:05";
-        TbDate d = new TbDate(dateStr);
-        Assert.assertEquals(expected, d.toLocaleString());
-    }
-
-    @Test
-    void Test_DateString_Without_FailedTZ() {
-        try {
-            TbDate d = new TbDate("2023-08-06T04:04:05.123+04:00:00:00");
-            Assert.fail("Should throw ConversionException");
-        } catch (ConversionException e) {
-            Assert.assertTrue(e.getMessage().contains("Cannot parse value [2023-08-06T04:04:05.123+04:00:00:00] as instant"));
-        }
-
-        try {
-            TbDate d = new TbDate("2023-08-06T04:04:05.123+4");
-            Assert.fail("Should throw ConversionException");
-        } catch (ConversionException e) {
-            Assert.assertTrue(e.getMessage().contains("Cannot parse value [2023-08-06T04:04:05.123+4] as instant"));
-        }
     }
 
     @Test

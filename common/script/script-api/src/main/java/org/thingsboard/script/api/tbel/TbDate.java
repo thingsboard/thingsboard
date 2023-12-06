@@ -494,22 +494,31 @@ public class TbDate implements Serializable, Cloneable {
                 // assuming  "2007-12-03T10:15:30.00"  ZoneId.systemDefault() instant
                 // assuming  "2007-12-03T10:15:30.00-04:00"  TZ instant
                 // assuming  "2007-12-03T10:15:30.00+04:00"  TZ instant
-                Instant inst =  validateDateWithTZ(s);
-                if (inst == null) {
-                    LocalDateTime dt = LocalDateTime.parse(s);
-                    return parseInstant(dt.getYear(), dt.getMonthValue(), dt.getDayOfMonth(), dt.getHour(), dt.getMinute(),
-                            dt.getSecond(),dt.getNano()/1000000, ZoneId.systemDefault());
-                } else {
-                    return inst;
-                }
+                return OffsetDateTime.parse(s).toInstant();
             }
             else {
                 // assuming RFC-1123 value "Tue, 3 Jun 2008 11:05:30 GMT-02:00"
                 return Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(s));
             }
         } catch (final DateTimeParseException ex) {
-            final ConversionException exception = new ConversionException("Cannot parse value [" + s + "] as instant", ex);
-            throw exception;
+            try {
+                if (s.length() > 0 && Character.isDigit(s.charAt(0))) {
+                    long timeMS = parse(s);
+                    if (timeMS != -1) {
+                        return Instant.ofEpochMilli(timeMS);
+                    } else {
+                        final ConversionException exception = new ConversionException("Cannot parse value [" + s + "] as instant", ex);
+                        throw exception;
+                    }
+                } else {
+                    // assuming RFC-1123 value "Tue, 3 Jun 2008 11:05:30 -0200"
+                    // The offset ID without colons or seconds.
+                    return getInstantWithLocalZoneOffsetId_RFC_1123(s);
+                }
+            } catch (final DateTimeParseException e) {
+                final ConversionException exception = new ConversionException("Cannot parse value [" + s + "] as instant", ex);
+                throw exception;
+            }
         }
     }
 
@@ -525,11 +534,12 @@ public class TbDate implements Serializable, Cloneable {
         return zonedDateTime.toInstant();
     }
 
-    private static Instant validateDateWithTZ(String s) {
-        try {
-            return OffsetDateTime.parse(s).toInstant();
-        } catch (DateTimeParseException e) {
-            return null;
-        }
+    private static Instant getInstantWithLocalZoneOffsetId_RFC_1123(String value) {
+        String s = value.trim() + " GMT";
+        Instant instant = Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(s));
+        ZoneId systemZone = ZoneId.systemDefault(); // my timezone
+        String id =  systemZone.getRules().getOffset(instant).getId();
+        value =  value.trim() + " " + id.replaceAll(":", "");
+        return Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(value));
     }
 }
