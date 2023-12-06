@@ -22,7 +22,9 @@ import { DisplayColumnsPanelComponent } from '@home/components/widget/lib/displa
 import { AlarmsTableWidgetComponent } from '@home/components/widget/lib/alarm/alarms-table-widget.component';
 import { SharedHomeComponentsModule } from '@home/components/shared-home-components.module';
 import { TimeseriesTableWidgetComponent } from '@home/components/widget/lib/timeseries-table-widget.component';
-import { EntitiesHierarchyWidgetComponent } from '@home/components/widget/lib/entity/entities-hierarchy-widget.component';
+import {
+  EntitiesHierarchyWidgetComponent
+} from '@home/components/widget/lib/entity/entities-hierarchy-widget.component';
 import { RpcWidgetsModule } from '@home/components/widget/lib/rpc/rpc-widgets.module';
 import {
   DateRangeNavigatorPanelComponent,
@@ -47,6 +49,12 @@ import { GatewayConnectorComponent } from '@home/components/widget/lib/gateway/g
 import { GatewayLogsComponent } from '@home/components/widget/lib/gateway/gateway-logs.component';
 import { GatewayStatisticsComponent } from '@home/components/widget/lib/gateway/gateway-statistics.component';
 import { GatewayServiceRPCComponent } from '@home/components/widget/lib/gateway/gateway-service-rpc.component';
+import {
+  GatewayServiceRPCConnectorComponent
+} from '@home/components/widget/lib/gateway/gateway-service-rpc-connector.component';
+import {
+  GatewayServiceRPCConnectorTemplatesComponent
+} from '@home/components/widget/lib/gateway/gateway-service-rpc-connector-templates.component';
 import { DeviceGatewayCommandComponent } from '@home/components/widget/lib/gateway/device-gateway-command.component';
 import { GatewayConfigurationComponent } from '@home/components/widget/lib/gateway/gateway-configuration.component';
 import {
@@ -94,6 +102,8 @@ import { DoughnutWidgetComponent } from '@home/components/widget/lib/chart/dough
       GatewayLogsComponent,
       GatewayStatisticsComponent,
       GatewayServiceRPCComponent,
+      GatewayServiceRPCConnectorComponent,
+      GatewayServiceRPCConnectorTemplatesComponent,
       DeviceGatewayCommandComponent,
       GatewayConfigurationComponent,
       GatewayRemoteConfigurationDialogComponent,
@@ -115,46 +125,48 @@ import { DoughnutWidgetComponent } from '@home/components/widget/lib/chart/dough
     HomePageWidgetsModule,
     SharedHomeComponentsModule
   ],
-    exports: [
-        EntitiesTableWidgetComponent,
-        AlarmsTableWidgetComponent,
-        TimeseriesTableWidgetComponent,
-        EntitiesHierarchyWidgetComponent,
-        EdgesOverviewWidgetComponent,
-        RpcWidgetsModule,
-        HomePageWidgetsModule,
-        DateRangeNavigatorWidgetComponent,
-        JsonInputWidgetComponent,
-        MultipleInputWidgetComponent,
-        TripAnimationComponent,
-        PhotoCameraInputWidgetComponent,
-        GatewayFormComponent,
-        NavigationCardsWidgetComponent,
-        NavigationCardWidgetComponent,
-        QrCodeWidgetComponent,
-        MarkdownWidgetComponent,
-        LegendComponent,
-        FlotWidgetComponent,
-        GatewayConnectorComponent,
-        GatewayLogsComponent,
-        GatewayStatisticsComponent,
-        GatewayServiceRPCComponent,
-        DeviceGatewayCommandComponent,
-        GatewayConfigurationComponent,
-        GatewayRemoteConfigurationDialogComponent,
-        ValueCardWidgetComponent,
-        AggregatedValueCardWidgetComponent,
-        CountWidgetComponent,
-        BatteryLevelWidgetComponent,
-        WindSpeedDirectionWidgetComponent,
-        SignalStrengthWidgetComponent,
-        ValueChartCardWidgetComponent,
-        ProgressBarWidgetComponent,
-        LiquidLevelWidgetComponent,
-        DoughnutWidgetComponent
-    ],
+  exports: [
+    EntitiesTableWidgetComponent,
+    AlarmsTableWidgetComponent,
+    TimeseriesTableWidgetComponent,
+    EntitiesHierarchyWidgetComponent,
+    EdgesOverviewWidgetComponent,
+    RpcWidgetsModule,
+    HomePageWidgetsModule,
+    DateRangeNavigatorWidgetComponent,
+    JsonInputWidgetComponent,
+    MultipleInputWidgetComponent,
+    TripAnimationComponent,
+    PhotoCameraInputWidgetComponent,
+    GatewayFormComponent,
+    NavigationCardsWidgetComponent,
+    NavigationCardWidgetComponent,
+    QrCodeWidgetComponent,
+    MarkdownWidgetComponent,
+    LegendComponent,
+    FlotWidgetComponent,
+    GatewayConnectorComponent,
+    GatewayLogsComponent,
+    GatewayServiceRPCConnectorComponent,
+    GatewayServiceRPCConnectorTemplatesComponent,
+    GatewayStatisticsComponent,
+    GatewayServiceRPCComponent,
+    DeviceGatewayCommandComponent,
+    GatewayConfigurationComponent,
+    GatewayRemoteConfigurationDialogComponent,
+    ValueCardWidgetComponent,
+    AggregatedValueCardWidgetComponent,
+    CountWidgetComponent,
+    BatteryLevelWidgetComponent,
+    WindSpeedDirectionWidgetComponent,
+    SignalStrengthWidgetComponent,
+    ValueChartCardWidgetComponent,
+    ProgressBarWidgetComponent,
+    LiquidLevelWidgetComponent,
+    DoughnutWidgetComponent
+  ],
   providers: [
-    {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }
+    {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule}
   ]
 })
 export class WidgetComponentsModule {

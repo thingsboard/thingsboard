@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, Input } from '@angular/core';
+import { OnInit, Component, Input } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { WidgetContext } from '@home/models/widget-component.models';
@@ -24,13 +24,14 @@ import {
   JsonObjectEditDialogData
 } from '@shared/components/dialog/json-object-edit-dialog.component';
 import { jsonRequired } from '@shared/components/json-object-edit.component';
+import { ConnectorType, RPCCommand } from '@home/components/widget/lib/gateway/gateway-widget.models';
 
 @Component({
   selector: 'tb-gateway-service-rpc',
   templateUrl: './gateway-service-rpc.component.html',
   styleUrls: ['./gateway-service-rpc.component.scss']
 })
-export class GatewayServiceRPCComponent implements AfterViewInit {
+export class GatewayServiceRPCComponent implements OnInit {
 
   @Input()
   ctx: WidgetContext;
@@ -56,19 +57,19 @@ export class GatewayServiceRPCComponent implements AfterViewInit {
     'Reboot'
   ];
 
-  private connectorType: string;
+  public connectorType: ConnectorType;
 
   constructor(private fb: FormBuilder,
               private dialog: MatDialog) {
     this.commandForm = this.fb.group({
-      command: [null,[Validators.required]],
+      command: [null, [Validators.required]],
       time: [60, [Validators.required, Validators.min(1)]],
       params: ['{}', [jsonRequired]],
       result: [null]
     });
   }
 
-  ngAfterViewInit() {
+  ngOnInit() {
     this.isConnector = this.ctx.settings.isConnector;
     if (!this.isConnector) {
       this.commandForm.get('command').setValue(this.RPCCommands[0]);
@@ -77,17 +78,17 @@ export class GatewayServiceRPCComponent implements AfterViewInit {
     }
   }
 
-  sendCommand() {
+  sendCommand(value?: RPCCommand) {
     this.resultTime = null;
-    const formValues = this.commandForm.value;
+    const formValues = value || this.commandForm.value;
     const commandPrefix = this.isConnector ? `${this.connectorType}_` : 'gateway_';
-    this.ctx.controlApi.sendTwoWayCommand(commandPrefix+formValues.command.toLowerCase(), formValues.params,formValues.time).subscribe({
+    this.ctx.controlApi.sendTwoWayCommand(commandPrefix + formValues.command.toLowerCase(), formValues.params, formValues.time).subscribe({
       next: resp => {
-        this.resultTime  = new Date().getTime();
+        this.resultTime = new Date().getTime();
         this.commandForm.get('result').setValue(JSON.stringify(resp))
       },
       error: error => {
-        this.resultTime  = new Date().getTime();
+        this.resultTime = new Date().getTime();
         console.error(error);
         this.commandForm.get('result').setValue(JSON.stringify(error.error));
       }

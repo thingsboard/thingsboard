@@ -40,6 +40,7 @@ import { DatasourceType, widgetType } from '@shared/models/widget.models';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityType } from '@shared/models/entity-type.models';
 import {
+  ConnectorType,
   GatewayConnector,
   GatewayConnectorDefaultTypesTranslates,
   GatewayLogLevel
@@ -198,10 +199,10 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   saveConnector(): void {
     const value = this.connectorForm.value;
     value.configuration = camelCase(value.name) + '.json';
-    if (value.type !== 'grpc') {
+    if (value.type !== ConnectorType.GRPC) {
       delete value.key;
     }
-    if (value.type !== 'custom') {
+    if (value.type !== ConnectorType.CUSTOM) {
       delete value.class;
     }
     value.ts = new Date().getTime();
@@ -309,7 +310,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   private clearOutConnectorForm(): void {
     this.connectorForm.setValue({
       name: '',
-      type: 'mqtt',
+      type: ConnectorType.MQTT,
       logLevel: GatewayLogLevel.INFO,
       key: 'auto',
       class: '',
