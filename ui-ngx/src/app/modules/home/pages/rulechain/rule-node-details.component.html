@@ -43,6 +43,13 @@
       </mat-slide-toggle>
     </section>
   </section>
+
+  <tb-queue-autocomplete
+    *ngIf="queueEnabled"
+    [queueType]="serviceType"
+    formControlName="queueName">
+  </tb-queue-autocomplete>
+
   <tb-rule-node-config #ruleNodeConfigComponent
                        formControlName="configuration"
                        [ruleNodeId]="ruleNode.ruleNodeId?.id"
