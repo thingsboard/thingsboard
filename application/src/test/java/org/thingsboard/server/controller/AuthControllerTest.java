@@ -139,7 +139,7 @@ public class AuthControllerTest extends AbstractControllerTest {
         //try to login with user password that is not valid after security settings was updated
         doPost("/api/auth/login", new LoginRequest(TENANT_ADMIN_EMAIL, newPassword))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.message", is("Password does not pass validation. Please try again or reset password to valid one.")));
+                .andExpect(jsonPath("$.message", is("The entered password violates our policies. If this is your real password, please reset it.")));
     }
 
     @Test
