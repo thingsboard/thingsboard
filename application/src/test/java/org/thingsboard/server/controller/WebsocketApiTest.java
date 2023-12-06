@@ -648,7 +648,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testEntityCountCmd_filterTypeSingularCompatibilityTest() {
+    public void testEntityCountCmd_filterTypeSingularCompatibilityTest() throws Exception {
         ObjectNode oldFormatDeviceTypeFilterSingular = JacksonUtil.newObjectNode();
         oldFormatDeviceTypeFilterSingular.put("type", "deviceType");
         oldFormatDeviceTypeFilterSingular.put("deviceType", "default");
@@ -667,9 +667,10 @@ public class WebsocketApiTest extends AbstractControllerTest {
         ObjectNode wrapperNode = JacksonUtil.newObjectNode();
         wrapperNode.set("entityCountCmds", entityCountCmds);
 
-        getWsClient().send(JacksonUtil.toString(wrapperNode));
+        wsClient = buildAndConnectWebSocketClient("/api/ws/plugins/telemetry");
+        wsClient.send(JacksonUtil.toString(wrapperNode));
 
-        EntityCountUpdate update = getWsClient().parseCountReply(getWsClient().waitForReply());
+        EntityCountUpdate update = wsClient.parseCountReply(wsClient.waitForReply());
         Assert.assertEquals(1, update.getCmdId());
         Assert.assertEquals(1, update.getCount());
 

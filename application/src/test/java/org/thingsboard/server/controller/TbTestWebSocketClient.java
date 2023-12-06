@@ -16,7 +16,6 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.java_websocket.client.WebSocketClient;
@@ -28,11 +27,10 @@ import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityFilter;
 import org.thingsboard.server.common.data.query.EntityKey;
-import org.thingsboard.server.service.ws.telemetry.cmd.WsCmdsWrapper;
+import org.thingsboard.server.service.ws.WsCmd;
+import org.thingsboard.server.service.ws.WsCommandsWrapper;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.AttributesSubscriptionCmd;
-import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountUpdate;
-import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
@@ -103,24 +101,6 @@ public class TbTestWebSocketClient extends WebSocketClient {
         log.debug("send [{}]", text);
         reply = new CountDownLatch(1);
         super.send(text);
-    }
-
-    public void send(EntityDataCmd cmd) throws NotYetConnectedException {
-        WsCmdsWrapper wrapper = new WsCmdsWrapper();
-        wrapper.setEntityDataCmds(Collections.singletonList(cmd));
-        this.send(JacksonUtil.toString(wrapper));
-    }
-
-    public void send(EntityCountCmd cmd) throws NotYetConnectedException {
-        WsCmdsWrapper wrapper = new WsCmdsWrapper();
-        wrapper.setEntityCountCmds(Collections.singletonList(cmd));
-        this.send(JacksonUtil.toString(wrapper));
-    }
-
-    public void send(AlarmCountCmd cmd) throws NotYetConnectedException {
-        WsCmdsWrapper wrapper = new WsCmdsWrapper();
-        wrapper.setAlarmCountCmds(Collections.singletonList(cmd));
-        this.send(JacksonUtil.toString(wrapper));
     }
 
     public String waitForUpdate() {
@@ -240,11 +220,7 @@ public class TbTestWebSocketClient extends WebSocketClient {
         cmd.setEntityId(entityId.getId().toString());
         cmd.setScope(scope);
         cmd.setKeys(String.join(",", keys));
-        WsCmdsWrapper cmdsWrapper = new WsCmdsWrapper();
-        cmdsWrapper.setAttrSubCmds(List.of(cmd));
-        JsonNode msg = JacksonUtil.valueToTree(cmdsWrapper);
-        ((ObjectNode) msg.get("attrSubCmds").get(0)).remove("type");
-        send(msg.toString());
+        send(cmd);
         return JacksonUtil.toJsonNode(waitForReply());
     }
 
@@ -286,6 +262,12 @@ public class TbTestWebSocketClient extends WebSocketClient {
         EntityDataQuery edq = new EntityDataQuery(entityFilter, new EntityDataPageLink(1, 0, null, null),
                 Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
         return sendEntityDataQuery(edq);
+    }
+
+    public void send(WsCmd... cmds) {
+        WsCommandsWrapper cmdsWrapper = new WsCommandsWrapper();
+        cmdsWrapper.setCmds(List.of(cmds));
+        send(JacksonUtil.toString(cmdsWrapper));
     }
 
 }
