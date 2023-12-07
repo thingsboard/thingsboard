@@ -57,6 +57,7 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.user.UserServiceImpl;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
 import org.thingsboard.server.service.security.exception.UserPasswordExpiredException;
+import org.thingsboard.server.service.security.exception.UserPasswordNotValidException;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.utils.MiscUtils;
 import ua_parser.Client;
@@ -135,11 +136,12 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
         SecuritySettings securitySettings = self.getSecuritySettings(tenantId);
         UserPasswordPolicy passwordPolicy = securitySettings.getPasswordPolicy();
 
-        if (Boolean.TRUE.equals(passwordPolicy.getForceUserToResetPasswordIfNotValid())) {
+        if (!tenantId.isSysTenantId() && Boolean.TRUE.equals(passwordPolicy.getForceUserToResetPasswordIfNotValid())) {
             try {
                 validatePasswordByPolicy(password, passwordPolicy);
             } catch (DataValidationException e) {
-                throw new BadCredentialsException("The entered password violates our policies. If this is your real password, please reset it.");
+                throw new UserPasswordNotValidException("The entered password violates our policies. If this is your real password, please reset it.");
+
             }
         }
         if (!encoder.matches(password, userCredentials.getPassword())) {
@@ -150,7 +152,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
                     throw new LockedException("Authentication Failed. Username was locked due to security policy.");
                 }
             }
-            throw new BadCredentialsException("Invalid username or Password.");
+            throw new BadCredentialsException("Authentication Failed. Username or Password not valid.");
         }
 
         if (!userCredentials.isEnabled()) {
