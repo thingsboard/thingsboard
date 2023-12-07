@@ -67,6 +67,19 @@
     "simple_power_consumption_chart_card",
     "simple_power_consumption_chart_card_with_background",
     "power_consumption_range_chart",
-    "power_consumption_range_chart_with_background"
+    "power_consumption_range_chart_with_background",
+    "rotational_speed_card",
+    "rotational_speed_card_with_background",
+    "horizontal_rotational_speed_card",
+    "horizontal_rotational_speed_card_with_background",
+    "rotational_speed_chart_card",
+    "rotational_speed_chart_card_with_background",
+    "simple_rotational_speed_chart_card",
+    "simple_rotational_speed_chart_card_with_background",
+    "rotational_speed_progress_bar",
+    "rotational_speed_progress_bar_with_background",
+    "rotational_speed_range_chart",
+    "rotational_speed_range_chart_with_background",
+    "rotational_speed_gauge"
   ]
 }
