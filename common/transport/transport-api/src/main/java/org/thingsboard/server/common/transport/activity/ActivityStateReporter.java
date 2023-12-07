@@ -32,10 +32,10 @@ package org.thingsboard.server.common.transport.activity;
 
 import java.util.Map;
 
-public interface AsyncActivityStateReporter<Key, State extends ActivityState> {
+public interface ActivityStateReporter<Key, State extends ActivityState> {
 
-    void reportAsync(Key key, State activityState, ActivityStateReportCallback<Key> reportCallback);
+    void report(Key key, State activityState, ActivityStateReportCallback<Key> reportCallback);
 
-    void reportAsync(Map<Key, State> activityStates, ActivityStateReportCallback<Key> reportCallback);
+    void report(Map<Key, State> activityStates, ActivityStateReportCallback<Key> reportCallback);
 
 }

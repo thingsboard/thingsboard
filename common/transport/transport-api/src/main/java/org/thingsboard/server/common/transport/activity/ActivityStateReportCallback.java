@@ -36,6 +36,4 @@ public interface ActivityStateReportCallback<Key> {
 
     void onFailure(Key key, Throwable t);
 
-    void onRemove(Key key);
-
 }

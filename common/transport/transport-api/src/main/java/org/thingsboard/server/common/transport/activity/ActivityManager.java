@@ -32,11 +32,11 @@ package org.thingsboard.server.common.transport.activity;
 
 import java.util.function.Supplier;
 
-public interface ActivityStateManager<Key, State extends ActivityState> {
+public interface ActivityManager<Key, State extends ActivityState> {
 
     void init();
 
-    void recordActivity(Key key, Supplier<State> newActivityStateSupplier);
+    void onActivity(Key key, Supplier<State> newStateSupplier);
 
     void destroy();
 
