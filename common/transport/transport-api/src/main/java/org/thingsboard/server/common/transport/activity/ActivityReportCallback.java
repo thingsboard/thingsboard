@@ -30,7 +30,7 @@
  */
 package org.thingsboard.server.common.transport.activity;
 
-public interface ActivityStateReportCallback<Key> {
+public interface ActivityReportCallback<Key> {
 
     void onSuccess(Key key, long reportedTime);
 

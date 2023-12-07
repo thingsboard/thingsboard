@@ -73,7 +73,6 @@ import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.TransportTenantProfileCache;
 import org.thingsboard.server.common.transport.activity.ActivityManager;
-import org.thingsboard.server.common.transport.activity.ActivityStateReportCallback;
 import org.thingsboard.server.common.transport.activity.ActivityStateReporter;
 import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
@@ -81,7 +80,6 @@ import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsRes
 import org.thingsboard.server.common.transport.limits.EntityLimitKey;
 import org.thingsboard.server.common.transport.limits.EntityLimitsCache;
 import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
-import org.thingsboard.server.common.transport.service.activity.LastOnlyTransportActivityManager;
 import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
@@ -187,8 +185,8 @@ public class DefaultTransportService implements TransportService {
     private final ApplicationEventPublisher eventPublisher;
     private final TransportResourceCache transportResourceCache;
     private final NotificationRuleProcessor notificationRuleProcessor;
-
     private final EntityLimitsCache entityLimitsCache;
+    private ActivityManager<UUID, TransportActivityState> activityManager;
 
     protected TbQueueRequestTemplate<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> transportApiRequestTemplate;
     protected TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> ruleEngineMsgProducer;
@@ -203,7 +201,6 @@ public class DefaultTransportService implements TransportService {
     private ExecutorService mainConsumerExecutor;
 
     public final ConcurrentMap<UUID, SessionMetaData> sessions = new ConcurrentHashMap<>();
-    private ActivityManager<UUID, TransportActivityState> activityManager;
     private final Map<String, RpcRequestMetadata> toServerRpcPendingMap = new ConcurrentHashMap<>();
 
     private volatile boolean stopped = false;
@@ -237,6 +234,11 @@ public class DefaultTransportService implements TransportService {
         this.entityLimitsCache = entityLimitsCache;
     }
 
+    @Autowired
+    public void setActivityManager(ActivityManager<UUID, TransportActivityState> activityManager) {
+        this.activityManager = activityManager;
+    }
+
     @PostConstruct
     public void init() {
         this.ruleEngineProducerStats = statsFactory.createMessagesStats(StatsType.RULE_ENGINE.getName() + ".producer");
@@ -253,104 +255,32 @@ public class DefaultTransportService implements TransportService {
         transportNotificationsConsumer.subscribe(Collections.singleton(tpi));
         transportApiRequestTemplate.init();
         mainConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("transport-consumer"));
-        activityManager = new LastOnlyTransportActivityManager(reporter, sessionReportTimeout, "transport-activity-state-manager");
+
+        activityManager.setName("transport-activity-manager");
+        activityManager.setReportingPeriod(sessionReportTimeout);
+        activityManager.setActivityReporter(activityReporter);
         activityManager.init();
     }
 
-    // TODO: why sessions and session activities are managed in a separate maps? maybe it is better to manage in a single map
-    //       (eg. we can check if we had sent last activity event when deregistering session)
+    private final ActivityStateReporter<UUID, TransportActivityState> activityReporter = (sessionId, timeToReport, state, reportCallback) -> {
+        SessionMetaData sessionMetaData = sessions.get(sessionId);
+        TransportProtos.SubscriptionInfoProto subscriptionInfo = TransportProtos.SubscriptionInfoProto.newBuilder()
+                .setAttributeSubscription(sessionMetaData != null && sessionMetaData.isSubscribedToAttributes())
+                .setRpcSubscription(sessionMetaData != null && sessionMetaData.isSubscribedToRPC())
+                .setLastActivityTime(timeToReport)
+                .build();
+        process(state.getSessionInfoProto(), subscriptionInfo, new TransportServiceCallback<>() {
+            @Override
+            public void onSuccess(Void msgAcknowledged) {
+                reportCallback.onSuccess(sessionId, timeToReport);
 
-    // TODO: currently if activity event is received between precise session expiration time and reportLastEventAndStartNewPeriod() call
-    //       we will "resurrect" this session meaning that it will be considered alive but in fact it did not perform any activity for more than timeout allows
-
-    // TODO: I optimistically set alreadyBeenReported status to true to avoid reporting several activity events if they arrive in rapid succession
-    //       this can cause lost activity updates if first event that got reported failed to enqueue in Kafka and next reporting period is already started
-    //       (maybe having a queue of "first" events will help with this, queue will be cleared once event was successfully queued or later time was reported by event in next period)
-    //       setting alreadyBeenReported status in callbacks ensures that events are reported but can cause several "first" events to be reported
-    private final ActivityStateReporter<UUID, TransportActivityState> reporter = new ActivityStateReporter<>() {
-        @Override
-        public void report(UUID sessionId, TransportActivityState activityState, ActivityStateReportCallback<UUID> reportCallback) {
-            SessionMetaData sessionMetaData = sessions.get(sessionId);
-            reportActivityStateToCore(activityState.getSessionInfoProto(), sessionMetaData, activityState.getLastRecordedTime(), new TransportServiceCallback<>() {
-                @Override
-                public void onSuccess(Void msg) {
-                    reportCallback.onSuccess(sessionId, activityState.getLastRecordedTime());
-
-                }
-
-                @Override
-                public void onError(Throwable e) {
-                    reportCallback.onFailure(sessionId, e);
-
-                }
-            });
-        }
-
-        @Override
-        public void report(Map<UUID, TransportActivityState> activityStates, ActivityStateReportCallback<UUID> reportCallback) {
-            long expirationTime = System.currentTimeMillis() - sessionInactivityTimeout;
-            for (Map.Entry<UUID, TransportActivityState> entry : activityStates.entrySet()) {
-                var sessionId = entry.getKey();
-                var activityState = entry.getValue();
-
-                SessionMetaData sessionMetaData = sessions.get(sessionId);
-                if (sessionMetaData != null) {
-                    activityState.setSessionInfoProto(sessionMetaData.getSessionInfo());
-                } else {
-                    log.info("Removing activity state due to session deregistration.");
-                    activityStates.remove(sessionId);
-                }
-
-                long lastActivityTime = activityState.getLastRecordedTime();
-                TransportProtos.SessionInfoProto sessionInfo = activityState.getSessionInfoProto();
-
-                if (sessionInfo.getGwSessionIdMSB() != 0 && sessionInfo.getGwSessionIdLSB() != 0) {
-                    var gwSessionId = new UUID(sessionInfo.getGwSessionIdMSB(), sessionInfo.getGwSessionIdLSB());
-                    SessionMetaData gwSessionMetaData = sessions.get(gwSessionId);
-                    if (gwSessionMetaData != null && gwSessionMetaData.isOverwriteActivityTime()) {
-                        TransportActivityState gwActivityState = activityStates.get(gwSessionId);
-                        if (gwActivityState != null) {
-                            lastActivityTime = Math.max(gwActivityState.getLastRecordedTime(), lastActivityTime);
-                        }
-                    }
-                }
-
-                if (sessionMetaData != null && lastActivityTime < expirationTime) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("[{}] Session has expired due to last activity time: {}!", sessionId, lastActivityTime);
-                    }
-                    sessions.remove(sessionId);
-                    log.info("Removing activity state due to session expiration.");
-                    activityStates.remove(sessionId);
-                    process(sessionInfo, SESSION_EVENT_MSG_CLOSED, null);
-                    sessionMetaData.getListener().onRemoteSessionCloseCommand(sessionId, SESSION_EXPIRED_NOTIFICATION_PROTO);
-                } else if (activityState.getLastReportedTime() < lastActivityTime) {
-                    long finalLastActivityTime = lastActivityTime;
-                    reportActivityStateToCore(sessionInfo, sessionMetaData, lastActivityTime, new TransportServiceCallback<>() {
-                        @Override
-                        public void onSuccess(Void msgAcknowledged) {
-                            reportCallback.onSuccess(sessionId, finalLastActivityTime);
-                        }
-
-                        @Override
-                        public void onError(Throwable e) {
-                            reportCallback.onFailure(sessionId, e);
-                        }
-                    });
-                }
             }
-        }
 
-        private void reportActivityStateToCore(
-                TransportProtos.SessionInfoProto sessionInfo, SessionMetaData sessionMetaData, long lastActivityTime, TransportServiceCallback<Void> callback
-        ) {
-            TransportProtos.SubscriptionInfoProto subscriptionInfo = TransportProtos.SubscriptionInfoProto.newBuilder()
-                    .setAttributeSubscription(sessionMetaData != null && sessionMetaData.isSubscribedToAttributes())
-                    .setRpcSubscription(sessionMetaData != null && sessionMetaData.isSubscribedToRPC())
-                    .setLastActivityTime(lastActivityTime)
-                    .build();
-            process(sessionInfo, subscriptionInfo, callback);
-        }
+            @Override
+            public void onError(Throwable e) {
+                reportCallback.onFailure(sessionId, e);
+            }
+        });
     };
 
     @AfterStartUp(order = AfterStartUp.TRANSPORT_SERVICE)
@@ -658,7 +588,6 @@ public class DefaultTransportService implements TransportService {
 
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SessionEventMsg msg, TransportServiceCallback<Void> callback) {
-        log.info("Received session event: [{}]", msg.getEvent());
         if (checkLimits(sessionInfo, msg, callback)) {
             reportActivityInternal(sessionInfo);
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
@@ -949,7 +878,6 @@ public class DefaultTransportService implements TransportService {
             log.debug("Stopping scheduler to avoid resending response if request has been ack.");
             currentSession.getScheduledFuture().cancel(false);
         }
-        log.info("Deregistering session.");
         sessions.remove(toSessionId(sessionInfo));
     }
 
@@ -1368,6 +1296,11 @@ public class DefaultTransportService implements TransportService {
     @Override
     public boolean hasSession(TransportProtos.SessionInfoProto sessionInfo) {
         return sessions.containsKey(toSessionId(sessionInfo));
+    }
+
+    @Override
+    public SessionMetaData getSession(UUID sessionId) {
+        return sessions.get(sessionId);
     }
 
     @Override

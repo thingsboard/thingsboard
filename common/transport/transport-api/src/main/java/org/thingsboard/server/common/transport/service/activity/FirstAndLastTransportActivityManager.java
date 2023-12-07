@@ -28,7 +28,7 @@
  * DOES NOT CONVEY OR IMPLY ANY RIGHTS TO REPRODUCE, DISCLOSE OR DISTRIBUTE ITS CONTENTS,
  * OR TO MANUFACTURE, USE, OR SELL ANYTHING THAT IT  MAY DESCRIBE, IN WHOLE OR IN PART.
  */
-package org.thingsboard.server.service.integration.activity;
+package org.thingsboard.server.common.transport.service.activity;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -37,40 +37,56 @@ import com.google.common.util.concurrent.SettableFuture;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.activity.AbstractActivityManager;
 import org.thingsboard.server.common.transport.activity.ActivityReportCallback;
-import org.thingsboard.server.common.transport.activity.ActivityState;
+import org.thingsboard.server.common.transport.service.SessionMetaData;
+import org.thingsboard.server.common.transport.service.TransportActivityState;
+import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 
+import static org.thingsboard.server.common.transport.service.DefaultTransportService.SESSION_EVENT_MSG_CLOSED;
+import static org.thingsboard.server.common.transport.service.DefaultTransportService.SESSION_EXPIRED_NOTIFICATION_PROTO;
+
 @Slf4j
 @Component
-@ConditionalOnProperty(prefix = "integrations.activity", value = "reporting_strategy", havingValue = "first-and-last")
-public class FirstAndLastIntegrationActivityManager extends AbstractActivityManager<IntegrationActivityKey, ActivityState> {
+@ConditionalOnProperty(prefix = "transport.activity", value = "reporting_strategy", havingValue = "first-and-last")
+public class FirstAndLastTransportActivityManager extends AbstractActivityManager<UUID, TransportActivityState> {
 
-    private final ConcurrentMap<IntegrationActivityKey, ActivityStateWrapper> states = new ConcurrentHashMap<>();
+    private final ConcurrentMap<UUID, ActivityStateWrapper> states = new ConcurrentHashMap<>();
 
     @Data
     private static class ActivityStateWrapper {
 
-        volatile ActivityState state;
+        volatile TransportActivityState state;
         volatile boolean alreadyBeenReported;
 
     }
 
+    @Value("${transport.sessions.inactivity_timeout}")
+    private long sessionInactivityTimeout;
+
+    @Autowired
+    private TransportService transportService;
+
     @Override
-    protected void doOnActivity(IntegrationActivityKey activityKey, Supplier<ActivityState> newStateSupplier) {
+    protected void doOnActivity(UUID sessionId, Supplier<TransportActivityState> newStateSupplier) {
         long newLastRecordedTime = System.currentTimeMillis();
-        SettableFuture<Pair<IntegrationActivityKey, Long>> reportCompletedFuture = SettableFuture.create();
-        states.compute(activityKey, (key, activityStateWrapper) -> {
+        SettableFuture<Pair<UUID, Long>> reportCompletedFuture = SettableFuture.create();
+        states.compute(sessionId, (key, activityStateWrapper) -> {
             if (activityStateWrapper == null) {
-                ActivityState activityState = newStateSupplier.get();
+                TransportActivityState activityState = newStateSupplier.get();
                 activityState.setLastRecordedTime(newLastRecordedTime);
                 activityState.setLastReportedTime(0L);
                 activityStateWrapper = new ActivityStateWrapper();
@@ -86,12 +102,12 @@ public class FirstAndLastIntegrationActivityManager extends AbstractActivityMana
             if (activityState.getLastReportedTime() < activityState.getLastRecordedTime()) {
                 reporter.report(key, activityState.getLastRecordedTime(), activityState, new ActivityReportCallback<>() {
                     @Override
-                    public void onSuccess(IntegrationActivityKey key, long reportedTime) {
+                    public void onSuccess(UUID key, long reportedTime) {
                         reportCompletedFuture.set(Pair.of(key, reportedTime));
                     }
 
                     @Override
-                    public void onFailure(IntegrationActivityKey key, Throwable t) {
+                    public void onFailure(UUID key, Throwable t) {
                         reportCompletedFuture.setException(t);
                     }
                 });
@@ -101,46 +117,82 @@ public class FirstAndLastIntegrationActivityManager extends AbstractActivityMana
         });
         Futures.addCallback(reportCompletedFuture, new FutureCallback<>() {
             @Override
-            public void onSuccess(Pair<IntegrationActivityKey, Long> reportResult) {
+            public void onSuccess(Pair<UUID, Long> reportResult) {
                 updateLastReportedTime(reportResult.getFirst(), reportResult.getSecond());
             }
 
             @Override
             public void onFailure(@NonNull Throwable t) {
-                log.debug("[{}] Failed to report first activity event in a period for device with id: [{}]", activityKey.getTenantId().getId(), activityKey.getDeviceId().getId());
+                log.debug("[{}] Failed to report first activity event in a period for session.", sessionId);
             }
         }, MoreExecutors.directExecutor());
     }
 
     @Override
     protected void onReportingPeriodEnd() {
-        long expirationTime = System.currentTimeMillis() - reportingPeriodMillis;
-        for (Map.Entry<IntegrationActivityKey, ActivityStateWrapper> entry : states.entrySet()) {
-            var activityKey = entry.getKey();
+        long expirationTime = System.currentTimeMillis() - sessionInactivityTimeout;
+        for (Map.Entry<UUID, ActivityStateWrapper> entry : states.entrySet()) {
+            var sessionId = entry.getKey();
             var activityStateWrapper = entry.getValue();
             var activityState = activityStateWrapper.getState();
-            if (activityState.getLastRecordedTime() < expirationTime) {
-                states.remove(activityKey);
+
+            SessionMetaData sessionMetaData = transportService.getSession(sessionId);
+            if (sessionMetaData != null) {
+                activityState.setSessionInfoProto(sessionMetaData.getSessionInfo());
+            } else {
+                states.remove(sessionId);
             }
-            if (activityState.getLastReportedTime() < activityState.getLastRecordedTime()) {
-                reporter.report(activityKey, activityState.getLastRecordedTime(), activityState, new ActivityReportCallback<>() {
+
+            long lastActivityTime = activityState.getLastRecordedTime();
+            TransportProtos.SessionInfoProto sessionInfo = activityState.getSessionInfoProto();
+
+            if (sessionInfo.getGwSessionIdMSB() != 0 && sessionInfo.getGwSessionIdLSB() != 0) {
+                var gwSessionId = new UUID(sessionInfo.getGwSessionIdMSB(), sessionInfo.getGwSessionIdLSB());
+                SessionMetaData gwSessionMetaData = transportService.getSession(gwSessionId);
+                if (gwSessionMetaData != null && gwSessionMetaData.isOverwriteActivityTime()) {
+                    ActivityStateWrapper gwActivityStateWrapper = states.get(gwSessionId);
+                    if (gwActivityStateWrapper != null) {
+                        lastActivityTime = Math.max(gwActivityStateWrapper.getState().getLastRecordedTime(), lastActivityTime);
+                    }
+                }
+            }
+
+            boolean hasExpired = sessionMetaData != null && lastActivityTime < expirationTime;
+            if (hasExpired) {
+                if (log.isDebugEnabled()) {
+                    log.debug("[{}] Session has expired due to last activity time: [{}]!", sessionId, lastActivityTime);
+                }
+                transportService.deregisterSession(sessionInfo);
+                transportService.process(sessionInfo, SESSION_EVENT_MSG_CLOSED, new TransportServiceCallback<>() {
                     @Override
-                    public void onSuccess(IntegrationActivityKey key, long reportedTime) {
+                    public void onSuccess(Void msgAcknowledged) {
+                        states.remove(sessionId);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        states.remove(sessionId);
+                    }
+                });
+                sessionMetaData.getListener().onRemoteSessionCloseCommand(sessionId, SESSION_EXPIRED_NOTIFICATION_PROTO);
+            } else if (activityState.getLastReportedTime() < lastActivityTime) {
+                reporter.report(sessionId, lastActivityTime, activityState, new ActivityReportCallback<>() {
+                    @Override
+                    public void onSuccess(UUID key, long reportedTime) {
                         updateLastReportedTime(key, reportedTime);
                     }
 
                     @Override
-                    public void onFailure(IntegrationActivityKey key, Throwable t) {
-                        log.debug("[{}] Failed to report last activity event in a period for device with id: [{}]", activityKey.getTenantId().getId(), activityKey.getDeviceId().getId());
+                    public void onFailure(UUID key, Throwable t) {
+                        log.debug("[{}] Failed to report last activity event in a period for session.", sessionId);
                     }
                 });
             }
             activityStateWrapper.setAlreadyBeenReported(false);
-            activityState.getReportsCount().set(0);
         }
     }
 
-    private void updateLastReportedTime(IntegrationActivityKey key, long newLastReportedTime) {
+    private void updateLastReportedTime(UUID key, long newLastReportedTime) {
         states.computeIfPresent(key, (__, activityStateWrapper) -> {
             var activityState = activityStateWrapper.getState();
             activityState.setLastReportedTime(Math.max(activityState.getLastReportedTime(), newLastReportedTime));

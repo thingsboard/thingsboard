@@ -30,12 +30,9 @@
  */
 package org.thingsboard.server.common.transport.activity;
 
-import java.util.Map;
-
+@FunctionalInterface
 public interface ActivityStateReporter<Key, State extends ActivityState> {
 
-    void report(Key key, State activityState, ActivityStateReportCallback<Key> reportCallback);
-
-    void report(Map<Key, State> activityStates, ActivityStateReportCallback<Key> reportCallback);
+    void report(Key key, long timeToReport, State activityState, ActivityReportCallback<Key> callback);
 
 }

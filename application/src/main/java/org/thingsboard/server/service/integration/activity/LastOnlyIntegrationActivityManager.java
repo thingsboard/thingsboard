@@ -31,54 +31,28 @@
 package org.thingsboard.server.service.integration.activity;
 
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.server.common.transport.activity.ActivityManager;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.transport.activity.AbstractActivityManager;
+import org.thingsboard.server.common.transport.activity.ActivityReportCallback;
 import org.thingsboard.server.common.transport.activity.ActivityState;
-import org.thingsboard.server.common.transport.activity.ActivityStateReportCallback;
-import org.thingsboard.server.common.transport.activity.ActivityStateReporter;
 
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Random;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 @Slf4j
-public class LastOnlyIntegrationActivityManager implements ActivityManager<IntegrationActivityKey, ActivityState> {
+@Component
+@ConditionalOnProperty(prefix = "integrations.activity", value = "reporting_strategy", havingValue = "last")
+public class LastOnlyIntegrationActivityManager extends AbstractActivityManager<IntegrationActivityKey, ActivityState> {
 
-    private final ConcurrentMap<IntegrationActivityKey, ActivityState> activityStates = new ConcurrentHashMap<>();
-
-    private ScheduledExecutorService scheduler;
-    private final ActivityStateReporter<IntegrationActivityKey, ActivityState> reporter;
-    private final long reportingPeriodDurationMillis;
-    private final String name;
-    private boolean initialized;
-
-    public LastOnlyIntegrationActivityManager(ActivityStateReporter<IntegrationActivityKey, ActivityState> reporter, long reportingPeriodDurationMillis, String name) {
-        this.reporter = Objects.requireNonNull(reporter, "Failed to create activity manager: provided reporter is null.");
-        this.reportingPeriodDurationMillis = reportingPeriodDurationMillis; // TODO: add min/max duration validation
-        this.name = name == null ? "activity-state-manager" : name;
-    }
+    private final ConcurrentMap<IntegrationActivityKey, ActivityState> states = new ConcurrentHashMap<>();
 
     @Override
-    public synchronized void init() {
-        if (!initialized) {
-            scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName(name));
-            scheduler.scheduleAtFixedRate(this::onReportingPeriodEnd, new Random().nextInt((int) reportingPeriodDurationMillis), reportingPeriodDurationMillis, TimeUnit.MILLISECONDS);
-            initialized = true;
-        }
-    }
-
-    @Override
-    public void onActivity(IntegrationActivityKey activityKey, Supplier<ActivityState> newStateSupplier) {
+    protected void doOnActivity(IntegrationActivityKey activityKey, Supplier<ActivityState> newStateSupplier) {
         long newLastRecordedTime = System.currentTimeMillis();
-        activityStates.compute(activityKey, (key, activityState) -> {
+        states.compute(activityKey, (__, activityState) -> {
             if (activityState == null) {
                 activityState = newStateSupplier.get();
                 activityState.setLastRecordedTime(newLastRecordedTime);
@@ -90,18 +64,17 @@ public class LastOnlyIntegrationActivityManager implements ActivityManager<Integ
         });
     }
 
-    private void onReportingPeriodEnd() {
-        long expirationTime = System.currentTimeMillis() - reportingPeriodDurationMillis;
-        Set<IntegrationActivityKey> statesToRemove = new HashSet<>();
-        Set<Map.Entry<IntegrationActivityKey, ActivityState>> entries = activityStates.entrySet();
-        for (Map.Entry<IntegrationActivityKey, ActivityState> entry : entries) {
+    @Override
+    public void onReportingPeriodEnd() {
+        long expirationTime = System.currentTimeMillis() - reportingPeriodMillis;
+        for (Map.Entry<IntegrationActivityKey, ActivityState> entry : states.entrySet()) {
             var activityKey = entry.getKey();
             var activityState = entry.getValue();
             if (activityState.getLastRecordedTime() < expirationTime) {
-                statesToRemove.add(activityKey);
+                states.remove(activityKey);
             }
             if (activityState.getLastReportedTime() < activityState.getLastRecordedTime()) {
-                reporter.report(activityKey, activityState, new ActivityStateReportCallback<>() {
+                reporter.report(activityKey, activityState.getLastRecordedTime(), activityState, new ActivityReportCallback<>() {
                     @Override
                     public void onSuccess(IntegrationActivityKey key, long reportedTime) {
                         updateLastReportedTime(key, reportedTime);
@@ -109,37 +82,18 @@ public class LastOnlyIntegrationActivityManager implements ActivityManager<Integ
 
                     @Override
                     public void onFailure(IntegrationActivityKey key, Throwable t) {
-                        // TODO: log
+                        log.debug("[{}] Failed to report last activity event in a period for device with id: [{}]", activityKey.getTenantId().getId(), activityKey.getDeviceId().getId());
                     }
                 });
             }
         }
-        statesToRemove.forEach(activityStates::remove);
     }
 
     private void updateLastReportedTime(IntegrationActivityKey key, long newLastReportedTime) {
-        activityStates.computeIfPresent(key, (__, activityState) -> {
+        states.computeIfPresent(key, (__, activityState) -> {
             activityState.setLastReportedTime(Math.max(activityState.getLastReportedTime(), newLastReportedTime));
             return activityState;
         });
-    }
-
-    @Override
-    public synchronized void destroy() {
-        if (initialized) {
-            initialized = false;
-            if (scheduler != null) {
-                scheduler.shutdown();
-                try {
-                    if (scheduler.awaitTermination(10L, TimeUnit.SECONDS)) {
-                        scheduler.shutdownNow();
-                    }
-                } catch (InterruptedException e) {
-                    scheduler.shutdownNow();
-                    Thread.currentThread().interrupt();
-                }
-            }
-        }
     }
 
 }
