@@ -38,15 +38,7 @@ import { entityFields } from '@shared/models/entity.models';
 import { isUndefined } from '@core/utils';
 import { CmdWrapper, WsSubscriber } from '@shared/models/websocket/websocket.models';
 import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
-import {
-  MarkAllAsReadCmd,
-  MarkAsReadCmd,
-  NotificationCountUpdateMsg,
-  NotificationsUpdateMsg,
-  UnreadCountSubCmd,
-  UnreadSubCmd,
-  UnsubscribeCmd
-} from '@shared/models/websocket/notification-ws.models';
+import { NotificationCountUpdateMsg, NotificationsUpdateMsg } from '@shared/models/websocket/notification-ws.models';
 import { Notification } from '@shared/models/notification.models';
 
 export const NOT_SUPPORTED = 'Not supported!';
@@ -68,11 +60,6 @@ export enum AttributeScope {
   CLIENT_SCOPE = 'CLIENT_SCOPE',
   SERVER_SCOPE = 'SERVER_SCOPE',
   SHARED_SCOPE = 'SHARED_SCOPE'
-}
-
-export enum TelemetryFeature {
-  ATTRIBUTES = 'ATTRIBUTES',
-  TIMESERIES = 'TIMESERIES'
 }
 
 export enum TimeseriesDeleteStrategy {
@@ -134,8 +121,30 @@ export enum DataSortOrder {
   DESC = 'DESC'
 }
 
+export enum WsCmdType {
+  ATTRIBUTES = 'ATTRIBUTES',
+  TIMESERIES = 'TIMESERIES',
+  TIMESERIES_HISTORY = 'TIMESERIES_HISTORY',
+  ENTITY_DATA = 'ENTITY_DATA',
+  ENTITY_COUNT = 'ENTITY_COUNT',
+  ALARM_DATA = 'ALARM_DATA',
+  ALARM_COUNT = 'ALARM_COUNT',
+
+  NOTIFICATIONS = 'NOTIFICATIONS',
+  NOTIFICATIONS_COUNT = 'NOTIFICATIONS_COUNT',
+  MARK_NOTIFICATIONS_AS_READ = 'MARK_NOTIFICATIONS_AS_READ',
+  MARK_ALL_NOTIFICATIONS_AS_READ = 'MARK_ALL_NOTIFICATIONS_AS_READ',
+
+  ALARM_DATA_UNSUBSCRIBE = 'ALARM_DATA_UNSUBSCRIBE',
+  ALARM_COUNT_UNSUBSCRIBE = 'ALARM_COUNT_UNSUBSCRIBE',
+  ENTITY_DATA_UNSUBSCRIBE = 'ENTITY_DATA_UNSUBSCRIBE',
+  ENTITY_COUNT_UNSUBSCRIBE = 'ENTITY_COUNT_UNSUBSCRIBE',
+  NOTIFICATIONS_UNSUBSCRIBE = 'NOTIFICATIONS_UNSUBSCRIBE'
+}
+
 export interface WebsocketCmd {
   cmdId: number;
+  type: WsCmdType;
 }
 
 export interface TelemetryPluginCmd extends WebsocketCmd {
@@ -149,13 +158,11 @@ export abstract class SubscriptionCmd implements TelemetryPluginCmd {
   entityId: string;
   scope?: AttributeScope;
   unsubscribe: boolean;
-  abstract getType(): TelemetryFeature;
+  abstract type: WsCmdType;
 }
 
 export class AttributesSubscriptionCmd extends SubscriptionCmd {
-  getType() {
-    return TelemetryFeature.ATTRIBUTES;
-  }
+  type = WsCmdType.ATTRIBUTES;
 }
 
 export class TimeseriesSubscriptionCmd extends SubscriptionCmd {
@@ -164,10 +171,7 @@ export class TimeseriesSubscriptionCmd extends SubscriptionCmd {
   interval: number;
   limit: number;
   agg: AggregationType;
-
-  getType() {
-    return TelemetryFeature.TIMESERIES;
-  }
+  type = WsCmdType.TIMESERIES;
 }
 
 export class GetHistoryCmd implements TelemetryPluginCmd {
@@ -180,6 +184,7 @@ export class GetHistoryCmd implements TelemetryPluginCmd {
   interval: number;
   limit: number;
   agg: AggregationType;
+  type = WsCmdType.TIMESERIES_HISTORY;
 }
 
 export interface EntityHistoryCmd {
@@ -235,6 +240,7 @@ export class EntityDataCmd implements WebsocketCmd {
   tsCmd?: TimeSeriesCmd;
   aggHistoryCmd?: AggEntityHistoryCmd;
   aggTsCmd?: AggTimeSeriesCmd;
+  type = WsCmdType.ENTITY_DATA;
 
   public isEmpty(): boolean {
     return !this.query && !this.historyCmd && !this.latestCmd && !this.tsCmd && !this.aggTsCmd && !this.aggHistoryCmd;
@@ -244,11 +250,13 @@ export class EntityDataCmd implements WebsocketCmd {
 export class EntityCountCmd implements WebsocketCmd {
   cmdId: number;
   query?: EntityCountQuery;
+  type = WsCmdType.ENTITY_COUNT;
 }
 
 export class AlarmDataCmd implements WebsocketCmd {
   cmdId: number;
   query?: AlarmDataQuery;
+  type = WsCmdType.ALARM_DATA;
 
   public isEmpty(): boolean {
     return !this.query;
@@ -258,60 +266,36 @@ export class AlarmDataCmd implements WebsocketCmd {
 export class AlarmCountCmd implements WebsocketCmd {
   cmdId: number;
   query?: AlarmCountQuery;
+  type = WsCmdType.ALARM_COUNT;
 }
 
 export class EntityDataUnsubscribeCmd implements WebsocketCmd {
   cmdId: number;
+  type = WsCmdType.ENTITY_DATA_UNSUBSCRIBE;
 }
 
 export class EntityCountUnsubscribeCmd implements WebsocketCmd {
   cmdId: number;
+  type = WsCmdType.ENTITY_COUNT_UNSUBSCRIBE;
 }
 
 export class AlarmDataUnsubscribeCmd implements WebsocketCmd {
   cmdId: number;
+  type = WsCmdType.ALARM_DATA_UNSUBSCRIBE;
 }
 
 export class AlarmCountUnsubscribeCmd implements WebsocketCmd {
   cmdId: number;
+  type = WsCmdType.ALARM_COUNT_UNSUBSCRIBE;
 }
 
 export class TelemetryPluginCmdsWrapper implements CmdWrapper {
 
   constructor() {
-    this.attrSubCmds = [];
-    this.tsSubCmds = [];
-    this.historyCmds = [];
-    this.entityDataCmds = [];
-    this.entityDataUnsubscribeCmds = [];
-    this.alarmDataCmds = [];
-    this.alarmDataUnsubscribeCmds = [];
-    this.entityCountCmds = [];
-    this.entityCountUnsubscribeCmds = [];
-    this.alarmCountCmds = [];
-    this.alarmCountUnsubscribeCmds = [];
-    this.unreadNotificationsCountSubCmds = [];
-    this.unreadNotificationsSubCmds = [];
-    this.notificationsUnsubCmds = [];
-    this.markNotificationAsReadCmds = [];
-    this.markAllNotificationsAsReadCmds = [];
+    this.cmds = [];
   }
-  attrSubCmds: Array<AttributesSubscriptionCmd>;
-  tsSubCmds: Array<TimeseriesSubscriptionCmd>;
-  historyCmds: Array<GetHistoryCmd>;
-  entityDataCmds: Array<EntityDataCmd>;
-  entityDataUnsubscribeCmds: Array<EntityDataUnsubscribeCmd>;
-  alarmDataCmds: Array<AlarmDataCmd>;
-  alarmDataUnsubscribeCmds: Array<AlarmDataUnsubscribeCmd>;
-  entityCountCmds: Array<EntityCountCmd>;
-  entityCountUnsubscribeCmds: Array<EntityCountUnsubscribeCmd>;
-  alarmCountCmds: Array<AlarmCountCmd>;
-  alarmCountUnsubscribeCmds: Array<AlarmCountUnsubscribeCmd>;
-  unreadNotificationsCountSubCmds: Array<UnreadCountSubCmd>;
-  unreadNotificationsSubCmds: Array<UnreadSubCmd>;
-  notificationsUnsubCmds: Array<UnsubscribeCmd>;
-  markNotificationAsReadCmds: Array<MarkAsReadCmd>;
-  markAllNotificationsAsReadCmds: Array<MarkAllAsReadCmd>;
+
+  cmds: Array<WebsocketCmd>;
 
   private static popCmds<T>(cmds: Array<T>, leftCount: number): Array<T> {
     const toPublish = Math.min(cmds.length, leftCount);
@@ -323,77 +307,16 @@ export class TelemetryPluginCmdsWrapper implements CmdWrapper {
   }
 
   public hasCommands(): boolean {
-    return this.tsSubCmds.length > 0 ||
-      this.historyCmds.length > 0 ||
-      this.attrSubCmds.length > 0 ||
-      this.entityDataCmds.length > 0 ||
-      this.entityDataUnsubscribeCmds.length > 0 ||
-      this.alarmDataCmds.length > 0 ||
-      this.alarmDataUnsubscribeCmds.length > 0 ||
-      this.entityCountCmds.length > 0 ||
-      this.entityCountUnsubscribeCmds.length > 0 ||
-      this.alarmCountCmds.length > 0 ||
-      this.alarmCountUnsubscribeCmds.length > 0 ||
-      this.unreadNotificationsCountSubCmds.length > 0 ||
-      this.unreadNotificationsSubCmds.length > 0 ||
-      this.notificationsUnsubCmds.length  > 0 ||
-      this.markNotificationAsReadCmds.length > 0 ||
-      this.markAllNotificationsAsReadCmds.length > 0;
+    return this.cmds.length > 0;
   }
 
   public clear() {
-    this.attrSubCmds.length = 0;
-    this.tsSubCmds.length = 0;
-    this.historyCmds.length = 0;
-    this.entityDataCmds.length = 0;
-    this.entityDataUnsubscribeCmds.length = 0;
-    this.alarmDataCmds.length = 0;
-    this.alarmDataUnsubscribeCmds.length = 0;
-    this.entityCountCmds.length = 0;
-    this.entityCountUnsubscribeCmds.length = 0;
-    this.alarmCountCmds.length = 0;
-    this.alarmCountUnsubscribeCmds.length = 0;
-    this.unreadNotificationsSubCmds.length = 0;
-    this.unreadNotificationsCountSubCmds.length = 0;
-    this.notificationsUnsubCmds.length = 0;
-    this.markNotificationAsReadCmds.length = 0;
-    this.markAllNotificationsAsReadCmds.length = 0;
+    this.cmds.length = 0;
   }
 
   public preparePublishCommands(maxCommands: number): TelemetryPluginCmdsWrapper {
     const preparedWrapper = new TelemetryPluginCmdsWrapper();
-    let leftCount = maxCommands;
-    preparedWrapper.tsSubCmds = TelemetryPluginCmdsWrapper.popCmds(this.tsSubCmds, leftCount);
-    leftCount -= preparedWrapper.tsSubCmds.length;
-    preparedWrapper.historyCmds = TelemetryPluginCmdsWrapper.popCmds(this.historyCmds, leftCount);
-    leftCount -= preparedWrapper.historyCmds.length;
-    preparedWrapper.attrSubCmds = TelemetryPluginCmdsWrapper.popCmds(this.attrSubCmds, leftCount);
-    leftCount -= preparedWrapper.attrSubCmds.length;
-    preparedWrapper.entityDataCmds = TelemetryPluginCmdsWrapper.popCmds(this.entityDataCmds, leftCount);
-    leftCount -= preparedWrapper.entityDataCmds.length;
-    preparedWrapper.entityDataUnsubscribeCmds = TelemetryPluginCmdsWrapper.popCmds(this.entityDataUnsubscribeCmds, leftCount);
-    leftCount -= preparedWrapper.entityDataUnsubscribeCmds.length;
-    preparedWrapper.alarmDataCmds = TelemetryPluginCmdsWrapper.popCmds(this.alarmDataCmds, leftCount);
-    leftCount -= preparedWrapper.alarmDataCmds.length;
-    preparedWrapper.alarmDataUnsubscribeCmds = TelemetryPluginCmdsWrapper.popCmds(this.alarmDataUnsubscribeCmds, leftCount);
-    leftCount -= preparedWrapper.alarmDataUnsubscribeCmds.length;
-    preparedWrapper.entityCountCmds = TelemetryPluginCmdsWrapper.popCmds(this.entityCountCmds, leftCount);
-    leftCount -= preparedWrapper.entityCountCmds.length;
-    preparedWrapper.entityCountUnsubscribeCmds = TelemetryPluginCmdsWrapper.popCmds(this.entityCountUnsubscribeCmds, leftCount);
-    leftCount -= preparedWrapper.entityCountUnsubscribeCmds.length;
-    preparedWrapper.alarmCountCmds = TelemetryPluginCmdsWrapper.popCmds(this.alarmCountCmds, leftCount);
-    leftCount -= preparedWrapper.alarmCountCmds.length;
-    preparedWrapper.alarmCountUnsubscribeCmds = TelemetryPluginCmdsWrapper.popCmds(this.alarmCountUnsubscribeCmds, leftCount);
-    leftCount -= preparedWrapper.unreadNotificationsSubCmds.length;
-    preparedWrapper.unreadNotificationsSubCmds = TelemetryPluginCmdsWrapper.popCmds(this.unreadNotificationsSubCmds, leftCount);
-    leftCount -= preparedWrapper.unreadNotificationsCountSubCmds.length;
-    preparedWrapper.unreadNotificationsCountSubCmds = TelemetryPluginCmdsWrapper.popCmds(this.unreadNotificationsCountSubCmds, leftCount);
-    leftCount -= preparedWrapper.notificationsUnsubCmds.length;
-    preparedWrapper.notificationsUnsubCmds = TelemetryPluginCmdsWrapper.popCmds(this.notificationsUnsubCmds, leftCount);
-    leftCount -= preparedWrapper.markNotificationAsReadCmds.length;
-    preparedWrapper.markNotificationAsReadCmds = TelemetryPluginCmdsWrapper.popCmds(this.markNotificationAsReadCmds, leftCount);
-    leftCount -= preparedWrapper.markAllNotificationsAsReadCmds.length;
-    preparedWrapper.markAllNotificationsAsReadCmds = TelemetryPluginCmdsWrapper.popCmds(this.markAllNotificationsAsReadCmds, leftCount);
+    preparedWrapper.cmds = TelemetryPluginCmdsWrapper.popCmds(this.cmds, maxCommands);
     return preparedWrapper;
   }
 }

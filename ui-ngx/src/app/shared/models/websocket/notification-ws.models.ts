@@ -20,7 +20,8 @@ import {
   NotificationCountUpdate,
   NotificationsUpdate,
   WebsocketCmd,
-  WebsocketDataMsg
+  WebsocketDataMsg,
+  WsCmdType
 } from '@shared/models/telemetry/telemetry.models';
 import { NgZone } from '@angular/core';
 import { isDefinedAndNotNull } from '@core/utils';
@@ -127,11 +128,13 @@ export class NotificationSubscriber extends WsSubscriber {
 
 export class UnreadCountSubCmd implements WebsocketCmd {
   cmdId: number;
+  type = WsCmdType.NOTIFICATIONS_COUNT;
 }
 
 export class UnreadSubCmd implements WebsocketCmd {
   limit: number;
   cmdId: number;
+  type = WsCmdType.NOTIFICATIONS;
 
   constructor(limit = 10) {
     this.limit = limit;
@@ -140,12 +143,14 @@ export class UnreadSubCmd implements WebsocketCmd {
 
 export class UnsubscribeCmd implements WebsocketCmd {
   cmdId: number;
+  type = WsCmdType.NOTIFICATIONS_UNSUBSCRIBE;
 }
 
 export class MarkAsReadCmd implements WebsocketCmd {
 
   cmdId: number;
   notifications: string[];
+  type = WsCmdType.MARK_NOTIFICATIONS_AS_READ;
 
   constructor(ids: string[]) {
     this.notifications = ids;
@@ -154,6 +159,7 @@ export class MarkAsReadCmd implements WebsocketCmd {
 
 export class MarkAllAsReadCmd implements WebsocketCmd {
   cmdId: number;
+  type = WsCmdType.MARK_ALL_NOTIFICATIONS_AS_READ;
 }
 
 export interface NotificationCountUpdateMsg extends CmdUpdateMsg {
