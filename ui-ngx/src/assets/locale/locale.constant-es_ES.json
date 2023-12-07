@@ -3247,15 +3247,13 @@
         "recipient-type": {
             "affected-tenant-administrators": "Administradores afectados",
             "affected-user": "Usuario afectado",
-            "affected-user-hint": "Sugerencia en usuario afectado",
             "all-users": "Todos los usuarios",
             "customer-users": "Usuarios del cliente",
             "system-administrators": "Administradores del sistema",
             "tenant-administrators": "Administradores de propietarios",
             "user-filters": "Filtro de usuarios",
             "user-list": "Lista de usuarios",
-            "users-entity-owner": "Usuarios que sean propietarios de la entidad",
-            "users-entity-owner-hint": "Sugerencia en usuarios propietarios de la entidad"
+            "users-entity-owner": "Usuarios que sean propietarios de la entidad"
         },
         "recipients": "Destinatarios",
         "notification-recipients": "Notificaciones / Destinatarios",

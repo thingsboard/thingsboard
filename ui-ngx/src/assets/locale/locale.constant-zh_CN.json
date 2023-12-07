@@ -3278,15 +3278,13 @@
         "recipient-type": {
             "affected-tenant-administrators": "受影响的租户管理员",
             "affected-user": "受影响的用户",
-            "affected-user-hint": "受影响用户的提示",
             "all-users": "所有用户",
             "customer-users": "客户用户",
             "system-administrators": "系统管理员",
             "tenant-administrators": "租户管理员",
             "user-filters": "用户筛选器",
             "user-list": "用户列表",
-            "users-entity-owner": "实体所有者的用户",
-            "users-entity-owner-hint": "实体所有者用户的提示"
+            "users-entity-owner": "实体所有者的用户"
         },
         "recipients": "收件人",
         "notification-recipients": "通知 / 收件人",

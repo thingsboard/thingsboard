@@ -3902,7 +3902,6 @@
         "recipient-type": {
             "affected-tenant-administrators": "Betrokken tenantbeheerders",
             "affected-user": "Betrokken gebruiker",
-            "affected-user-hint": "Betrokken gebruikershint",
             "all-users": "Alle gebruikers",
             "customer-users": "Klant-gebruikers",
             "system-administrators": "Systeembeheerders",
@@ -3911,8 +3910,7 @@
             "user-group-list": "Lijst met gebruikersgroepen",
             "user-list": "Lijst met gebruikers",
             "user-role": "Rol van de gebruiker",
-            "users-entity-owner": "Gebruikers van de entiteitseigenaar",
-            "users-entity-owner-hint": "Hint voor gebruikers van de eigenaar van de entiteit"
+            "users-entity-owner": "Gebruikers van de entiteitseigenaar"
         },
         "recipients": "Ontvangers",
         "notification-recipients": "Meldingen / Ontvangers",
