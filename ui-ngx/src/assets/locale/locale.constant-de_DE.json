@@ -34,7 +34,7 @@
     "unassign": "Zuordnung aufheben",
     "share": "Teilen",
     "make-private": "Privat machen",
-    "make-public": "Öffentlich machen",							 
+    "make-public": "Öffentlich machen",
     "apply": "Anwenden",
     "apply-changes": "Änderungen übernehmen",
     "edit-mode": "Bearbeitungsmodus",
@@ -70,7 +70,7 @@
 	"done": "Erledigt",
 	"print": "Drucken",
 	"restore": "Wiederherstellen",
-	"confirm": "Bestätigen"
+	"confirm": "Bestätigen",
     "more": "Mehr",
     "less": "Weniger",
     "skip": "Überspringen",
@@ -138,7 +138,7 @@
       "mail-template": "E-Mail Vorlage",
       "test": "E-Mail Nachricht testen",
       "activation": "Nachricht Benutzerkontoaktivierung",
-      "account-activated": "Nachricht Benutzerkonto aktiviert",
+      "account-activated": "Nachricht Benutzerkonto aktiviert"
     },
     "mail-subject": "E-Mail Betreff",
     "mail-body": "E-Mail Nachricht",
@@ -270,8 +270,8 @@
     "filter-type-edge-type-description": "Rand vom Typ '{{edgeTypes}}'",
     "filter-type-relations-query": "Beziehungsabfrage",
     "filter-type-relations-query-description": "{{entities}} mit {{relationType}} Beziehung {{direction}} {{rootEntity}}",
-    "filter-type-edge-search-query": "Edge-Abfrage",														 
-    "filter-type-edge-search-query-description": "Edge vom Typ {{edgeTypes}} mit {{relationType}} Beziehung {{direction}} {{rootEntity}}",																																				   
+    "filter-type-edge-search-query": "Edge-Abfrage",
+    "filter-type-edge-search-query-description": "Edge vom Typ {{edgeTypes}} mit {{relationType}} Beziehung {{direction}} {{rootEntity}}",
     "filter-type-asset-search-query": "Objektabfrage",
     "filter-type-asset-search-query-description": "Objekte vom Typ {{assetTypes}} mit {{relationType}} Beziehung {{direction}} {{rootEntity}}",
     "filter-type-device-search-query": "Geräteabfrage",
@@ -404,12 +404,12 @@
     "add-to-dashboard": "Zum Dashboard hinzufügen",
     "add-widget-to-dashboard": "Widget zum Dashboard hinzufügen",
     "selected-attributes": "{ count, plural, =1 {1 Eigenschaft} other {# Eigenschaften} } ausgewählt",
-    "selected-telemetry": "{ count, plural, =1 {1 Telemetrieeinheit } other {# Telemetrieeinheiten} } ausgewählt"
+    "selected-telemetry": "{ count, plural, =1 {1 Telemetrieeinheit } other {# Telemetrieeinheiten} } ausgewählt",
     "no-attributes-text": "Keine Attribute gefunden",
     "no-telemetry-text": "Keine Telemetriedaten gefunden",
     "copy-key": "Schlüssel kopieren",
     "add-telemetry": "Telemetriedaten hinzufügen",
-    "copy-value": "Wert kopieren",
+    "copy-value": "Wert kopieren"
   },
   "audit-log": {
     "audit": "Audit",
@@ -1677,7 +1677,7 @@
     "hours": "Stunden",
     "minutes": "Minuten",
     "seconds": "Sekunden",
-    "advanced": "Erweitert"
+    "advanced": "Erweitert",
     "predefined": {
       "yesterday": "Gestern",
       "day-before-yesterday": "Vorgestern",
