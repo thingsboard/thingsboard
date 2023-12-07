@@ -43,11 +43,9 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -325,9 +323,7 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
     public List<EntityInfo> findAssetProfileNamesByTenantId(TenantId tenantId, boolean activeOnly) {
         log.trace("Executing findAssetProfileNamesByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        return assetProfileDao.findTenantAssetProfileNames(tenantId.getId(), activeOnly)
-                .stream().sorted(Comparator.comparing(EntityInfo::getName))
-                .collect(Collectors.toList());
+        return assetProfileDao.findTenantAssetProfileNames(tenantId.getId(), activeOnly);
     }
 
     private final PaginatedRemover<TenantId, AssetProfile> tenantAssetProfilesRemover =

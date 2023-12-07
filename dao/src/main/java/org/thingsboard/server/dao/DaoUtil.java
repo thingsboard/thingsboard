@@ -153,28 +153,24 @@ public abstract class DaoUtil {
         }
     }
 
-    public static List<EntitySubtype> convertTenantEntityTypesToDto(UUID tenantId, EntityType entityType, List<String> types) {
+    public static List<EntitySubtype> convertTenantEntityTypesToDto(UUID tenantUUID, EntityType entityType, List<String> types) {
         if (CollectionUtils.isEmpty(types)) {
             return Collections.emptyList();
         }
-
-        List<EntitySubtype> list = new ArrayList<>(types.size());
-        for (String type : types) {
-            list.add(new EntitySubtype(TenantId.fromUUID(tenantId), entityType, type));
-        }
-        return list;
+        TenantId tenantId = TenantId.fromUUID(tenantUUID);
+        return types.stream()
+                .map(type -> new EntitySubtype(tenantId, entityType, type))
+                .collect(Collectors.toList());
     }
 
-    public static List<EntitySubtype> convertTenantEntityInfosToDto(UUID tenantId, EntityType entityType, List<EntityInfo> entityInfos) {
+    public static List<EntitySubtype> convertTenantEntityInfosToDto(UUID tenantUUID, EntityType entityType, List<EntityInfo> entityInfos) {
         if (CollectionUtils.isEmpty(entityInfos)) {
             return Collections.emptyList();
         }
-
-        List<EntitySubtype> list = new ArrayList<>(entityInfos.size());
-        for (var info : entityInfos) {
-            list.add(new EntitySubtype(TenantId.fromUUID(tenantId), entityType, info.getName()));
-        }
-        return list;
+        var tenantId = TenantId.fromUUID(tenantUUID);
+        return entityInfos.stream()
+                .map(info -> new EntitySubtype(tenantId, entityType, info.getName()))
+                .collect(Collectors.toList());
     }
 
 }
