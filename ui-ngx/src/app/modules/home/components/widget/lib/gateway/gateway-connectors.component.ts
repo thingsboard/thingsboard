@@ -139,6 +139,21 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       this.cd.detectChanges();
     });
 
+    this.connectorForm.get('type').valueChanges.subscribe(type=> {
+      if(type && this.initialConnector === null) {
+        this.attributeService.getEntityAttributes(this.device, AttributeScope.CLIENT_SCOPE,
+          [`${type.toUpperCase()}_DEFAULT_CONFIG`], {ignoreErrors: true}).subscribe(defaultConfig=>{
+          if (defaultConfig && defaultConfig.length) {
+            this.connectorForm.get('configurationJson').setValue(
+              isString(defaultConfig[0].value) ?
+                JSON.parse(defaultConfig[0].value) :
+                defaultConfig[0].value);
+            this.cd.detectChanges();
+          }
+        })
+      }
+    });
+
     this.dataSource.sort = this.sort;
     this.dataSource.sortingDataAccessor = (data: AttributeData, sortHeaderId: string) => {
       if (sortHeaderId === 'syncStatus') {
