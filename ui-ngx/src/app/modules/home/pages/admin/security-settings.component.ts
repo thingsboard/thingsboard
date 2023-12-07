@@ -126,7 +126,7 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
     return (control: AbstractControl): ValidationErrors | null => {
       const value: string = control.value;
       if (value) {
-        if (value < this.securitySettingsFormGroup.get('passwordPolicy.minimumLength').value) {
+        if (value < control.parent.value?.minimumLength) {
           return {lessMin: true};
         }
       }
