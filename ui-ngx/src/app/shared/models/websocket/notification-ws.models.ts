@@ -14,36 +14,21 @@
 /// limitations under the License.
 ///
 
-import { BehaviorSubject, ReplaySubject } from 'rxjs';
-import { CmdUpdate, CmdUpdateMsg, CmdUpdateType, WebsocketCmd } from '@shared/models/telemetry/telemetry.models';
-import { map } from 'rxjs/operators';
+import {
+  CmdUpdateMsg,
+  CmdUpdateType,
+  NotificationCountUpdate,
+  NotificationsUpdate,
+  WebsocketCmd,
+  WebsocketDataMsg
+} from '@shared/models/telemetry/telemetry.models';
 import { NgZone } from '@angular/core';
 import { isDefinedAndNotNull } from '@core/utils';
 import { Notification } from '@shared/models/notification.models';
-import { CmdWrapper, WsSubscriber } from '@shared/models/websocket/websocket.models';
-import { NotificationWebsocketService } from '@core/ws/notification-websocket.service';
-
-export class NotificationCountUpdate extends CmdUpdate {
-  totalUnreadCount: number;
-
-  constructor(msg: NotificationCountUpdateMsg) {
-    super(msg);
-    this.totalUnreadCount = msg.totalUnreadCount;
-  }
-}
-
-export class NotificationsUpdate extends CmdUpdate {
-  totalUnreadCount: number;
-  update?: Notification;
-  notifications?: Notification[];
-
-  constructor(msg: NotificationsUpdateMsg) {
-    super(msg);
-    this.totalUnreadCount = msg.totalUnreadCount;
-    this.update = msg.update;
-    this.notifications = msg.notifications;
-  }
-}
+import { WsService, WsSubscriber } from '@shared/models/websocket/websocket.models';
+import { BehaviorSubject, ReplaySubject } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { WebsocketService } from '@core/ws/websocket.service';
 
 export class NotificationSubscriber extends WsSubscriber {
   private notificationCountSubject = new ReplaySubject<NotificationCountUpdate>(1);
@@ -61,40 +46,40 @@ export class NotificationSubscriber extends WsSubscriber {
   public notificationCount$ = this.notificationCountSubject.asObservable().pipe(map(msg => msg.totalUnreadCount));
   public notifications$ = this.notificationsSubject.asObservable().pipe(map(msg => msg.notifications ));
 
-  public static createNotificationCountSubscription(notificationWsService: NotificationWebsocketService,
+  public static createNotificationCountSubscription(websocketService: WebsocketService<WsSubscriber>,
                                                     zone: NgZone): NotificationSubscriber {
     const subscriptionCommand = new UnreadCountSubCmd();
-    const subscriber = new NotificationSubscriber(notificationWsService, zone);
+    const subscriber = new NotificationSubscriber(websocketService, zone);
     subscriber.subscriptionCommands.push(subscriptionCommand);
     return subscriber;
   }
 
-  public static createNotificationsSubscription(notificationWsService: NotificationWebsocketService,
+  public static createNotificationsSubscription(websocketService: WebsocketService<WsSubscriber>,
                                                 zone: NgZone, limit = 10): NotificationSubscriber {
     const subscriptionCommand = new UnreadSubCmd(limit);
-    const subscriber = new NotificationSubscriber(notificationWsService, zone);
+    const subscriber = new NotificationSubscriber(websocketService, zone);
     subscriber.messageLimit = limit;
     subscriber.subscriptionCommands.push(subscriptionCommand);
     return subscriber;
   }
 
-  public static createMarkAsReadCommand(notificationWsService: NotificationWebsocketService,
+  public static createMarkAsReadCommand(websocketService: WebsocketService<WsSubscriber>,
                                         ids: string[]): NotificationSubscriber {
     const subscriptionCommand = new MarkAsReadCmd(ids);
-    const subscriber = new NotificationSubscriber(notificationWsService);
+    const subscriber = new NotificationSubscriber(websocketService);
     subscriber.subscriptionCommands.push(subscriptionCommand);
     return subscriber;
   }
 
-  public static createMarkAllAsReadCommand(notificationWsService: NotificationWebsocketService): NotificationSubscriber {
+  public static createMarkAllAsReadCommand(websocketService: WebsocketService<WsSubscriber>): NotificationSubscriber {
     const subscriptionCommand = new MarkAllAsReadCmd();
-    const subscriber = new NotificationSubscriber(notificationWsService);
+    const subscriber = new NotificationSubscriber(websocketService);
     subscriber.subscriptionCommands.push(subscriptionCommand);
     return subscriber;
   }
 
-  constructor(private notificationWsService: NotificationWebsocketService, protected zone?: NgZone) {
-    super(notificationWsService, zone);
+  constructor(private websocketService: WsService<any>, protected zone?: NgZone) {
+    super(websocketService, zone);
   }
 
   onNotificationCountUpdate(message: NotificationCountUpdate) {
@@ -183,58 +168,12 @@ export interface NotificationsUpdateMsg extends CmdUpdateMsg {
   notifications?: Notification[];
 }
 
-export type WebsocketNotificationMsg = NotificationCountUpdateMsg | NotificationsUpdateMsg;
-
-export const isNotificationCountUpdateMsg = (message: WebsocketNotificationMsg): message is NotificationCountUpdateMsg => {
+export const isNotificationCountUpdateMsg = (message: WebsocketDataMsg): message is NotificationCountUpdateMsg => {
   const updateMsg = (message as CmdUpdateMsg);
   return updateMsg.cmdId !== undefined && updateMsg.cmdUpdateType === CmdUpdateType.NOTIFICATIONS_COUNT;
 };
 
-export const isNotificationsUpdateMsg = (message: WebsocketNotificationMsg): message is NotificationsUpdateMsg => {
+export const isNotificationsUpdateMsg = (message: WebsocketDataMsg): message is NotificationsUpdateMsg => {
   const updateMsg = (message as CmdUpdateMsg);
   return updateMsg.cmdId !== undefined && updateMsg.cmdUpdateType === CmdUpdateType.NOTIFICATIONS;
 };
-
-export class NotificationPluginCmdWrapper implements CmdWrapper {
-
-  constructor() {
-    this.unreadCountSubCmd = null;
-    this.unreadSubCmd = null;
-    this.unsubCmd = null;
-    this.markAsReadCmd = null;
-    this.markAllAsReadCmd = null;
-  }
-
-  unreadCountSubCmd: UnreadCountSubCmd;
-  unreadSubCmd: UnreadSubCmd;
-  unsubCmd: UnsubscribeCmd;
-  markAsReadCmd: MarkAsReadCmd;
-  markAllAsReadCmd: MarkAllAsReadCmd;
-
-  public hasCommands(): boolean {
-    return isDefinedAndNotNull(this.unreadCountSubCmd) ||
-      isDefinedAndNotNull(this.unreadSubCmd) ||
-      isDefinedAndNotNull(this.unsubCmd) ||
-      isDefinedAndNotNull(this.markAsReadCmd) ||
-      isDefinedAndNotNull(this.markAllAsReadCmd);
-  }
-
-  public clear() {
-    this.unreadCountSubCmd = null;
-    this.unreadSubCmd = null;
-    this.unsubCmd = null;
-    this.markAsReadCmd = null;
-    this.markAllAsReadCmd = null;
-  }
-
-  public preparePublishCommands(): NotificationPluginCmdWrapper {
-    const preparedWrapper = new NotificationPluginCmdWrapper();
-    preparedWrapper.unreadCountSubCmd = this.unreadCountSubCmd || undefined;
-    preparedWrapper.unreadSubCmd = this.unreadSubCmd || undefined;
-    preparedWrapper.unsubCmd = this.unsubCmd || undefined;
-    preparedWrapper.markAsReadCmd = this.markAsReadCmd || undefined;
-    preparedWrapper.markAllAsReadCmd = this.markAllAsReadCmd || undefined;
-    this.clear();
-    return preparedWrapper;
-  }
-}

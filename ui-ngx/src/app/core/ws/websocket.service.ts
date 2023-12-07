@@ -21,10 +21,10 @@ import { AuthService } from '@core/auth/auth.service';
 import { NgZone } from '@angular/core';
 import { selectIsAuthenticated } from '@core/auth/auth.selectors';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
-import { WebsocketNotificationMsg } from '@shared/models/websocket/notification-ws.models';
-import { CmdUpdateMsg } from '@shared/models/telemetry/telemetry.models';
+import { CmdUpdateMsg, TelemetrySubscriber, WebsocketDataMsg } from '@shared/models/telemetry/telemetry.models';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import Timeout = NodeJS.Timeout;
+import { NotificationSubscriber } from '@shared/models/websocket/notification-ws.models';
 
 const RECONNECT_INTERVAL = 2000;
 const WS_IDLE_TIMEOUT = 90000;
@@ -42,11 +42,11 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
 
   lastCmdId = 0;
   subscribersCount = 0;
-  subscribersMap = new Map<number, T>();
+  subscribersMap = new Map<number, TelemetrySubscriber | NotificationSubscriber>();
 
-  reconnectSubscribers = new Set<T>();
+  reconnectSubscribers = new Set<WsSubscriber>();
 
-  notificationUri: string;
+  wsUri: string;
 
   dataStream: WebSocketSubject<CmdWrapper | CmdUpdateMsg>;
 
@@ -69,23 +69,23 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
       if (!port) {
         port = '443';
       }
-      this.notificationUri = 'wss:';
+      this.wsUri = 'wss:';
     } else {
       if (!port) {
         port = '80';
       }
-      this.notificationUri = 'ws:';
+      this.wsUri = 'ws:';
     }
-    this.notificationUri += `//${this.window.location.hostname}:${port}/${apiEndpoint}`;
+    this.wsUri += `//${this.window.location.hostname}:${port}/${apiEndpoint}`;
   }
 
-  abstract subscribe(subscriber: T);
+  abstract subscribe(subscriber: WsSubscriber);
 
   abstract update(subscriber: T);
 
   abstract unsubscribe(subscriber: T);
 
-  abstract processOnMessage(message: any);
+  abstract processOnMessage(message: WebsocketDataMsg);
 
   protected nextCmdId(): number {
     this.lastCmdId++;
@@ -158,8 +158,8 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
   }
 
   private openSocket(token: string) {
-    const uri = `${this.notificationUri}?token=${token}`;
-    this.dataStream = webSocket(
+    const uri = `${this.wsUri}?token=${token}`;
+    this.dataStream = webSocket<CmdUpdateMsg>(
       {
         url: uri,
         openObserver: {
@@ -176,9 +176,9 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
     );
 
     this.dataStream.subscribe({
-      next: (message) => {
+      next: (message: CmdUpdateMsg) => {
         this.ngZone.runOutsideAngular(() => {
-          this.onMessage(message as WebsocketNotificationMsg);
+          this.onMessage(message);
         });
       },
       error: (error) => {
@@ -208,11 +208,11 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
     }
   }
 
-  private onMessage(message: WebsocketNotificationMsg) {
+  private onMessage(message: CmdUpdateMsg) {
     if (message.errorCode) {
       this.showWsError(message.errorCode, message.errorMsg);
     } else {
-      this.processOnMessage(message);
+      this.processOnMessage(message as WebsocketDataMsg);
     }
     this.checkToClose();
   }

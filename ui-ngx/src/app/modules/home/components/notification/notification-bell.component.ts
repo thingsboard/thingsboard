@@ -77,11 +77,11 @@ export class NotificationBellComponent implements OnDestroy {
     if ($event) {
       $event.stopPropagation();
     }
-    this.unsubscribeSubscription();
     const trigger = createVersionButton._elementRef.nativeElement;
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
+      this.unsubscribeSubscription();
       const showNotificationPopover = this.popoverService.displayPopover(trigger, this.renderer,
         this.viewContainerRef, ShowNotificationPopoverComponent, 'bottom', true, null,
         {
@@ -108,5 +108,6 @@ export class NotificationBellComponent implements OnDestroy {
   private unsubscribeSubscription() {
     this.notificationCountSubscriber.unsubscribe();
     this.notificationSubscriber.unsubscribe();
+    this.notificationSubscriber = null;
   }
 }

@@ -24,9 +24,11 @@ import { NgZone } from '@angular/core';
 import {
   AlarmCountQuery,
   AlarmData,
-  AlarmDataQuery, EntityCountQuery,
+  AlarmDataQuery,
+  EntityCountQuery,
   EntityData,
-  EntityDataQuery, EntityFilter,
+  EntityDataQuery,
+  EntityFilter,
   EntityKey,
   TsValue
 } from '@shared/models/query/query.models';
@@ -36,6 +38,16 @@ import { entityFields } from '@shared/models/entity.models';
 import { isUndefined } from '@core/utils';
 import { CmdWrapper, WsSubscriber } from '@shared/models/websocket/websocket.models';
 import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
+import {
+  MarkAllAsReadCmd,
+  MarkAsReadCmd,
+  NotificationCountUpdateMsg,
+  NotificationsUpdateMsg,
+  UnreadCountSubCmd,
+  UnreadSubCmd,
+  UnsubscribeCmd
+} from '@shared/models/websocket/notification-ws.models';
+import { Notification } from '@shared/models/notification.models';
 
 export const NOT_SUPPORTED = 'Not supported!';
 
@@ -105,7 +117,7 @@ export const timeseriesDeleteStrategyTranslations = new Map<TimeseriesDeleteStra
     [TimeseriesDeleteStrategy.DELETE_LATEST_VALUE, 'attribute.delete-timeseries.latest-value'],
     [TimeseriesDeleteStrategy.DELETE_ALL_DATA_FOR_TIME_PERIOD, 'attribute.delete-timeseries.all-data-for-time-period']
   ]
-)
+);
 
 export interface AttributeData {
   lastUpdateTs?: number;
@@ -278,6 +290,11 @@ export class TelemetryPluginCmdsWrapper implements CmdWrapper {
     this.entityCountUnsubscribeCmds = [];
     this.alarmCountCmds = [];
     this.alarmCountUnsubscribeCmds = [];
+    this.unreadNotificationsCountSubCmds = [];
+    this.unreadNotificationsSubCmds = [];
+    this.notificationsUnsubCmds = [];
+    this.markNotificationAsReadCmds = [];
+    this.markAllNotificationsAsReadCmds = [];
   }
   attrSubCmds: Array<AttributesSubscriptionCmd>;
   tsSubCmds: Array<TimeseriesSubscriptionCmd>;
@@ -290,6 +307,11 @@ export class TelemetryPluginCmdsWrapper implements CmdWrapper {
   entityCountUnsubscribeCmds: Array<EntityCountUnsubscribeCmd>;
   alarmCountCmds: Array<AlarmCountCmd>;
   alarmCountUnsubscribeCmds: Array<AlarmCountUnsubscribeCmd>;
+  unreadNotificationsCountSubCmds: Array<UnreadCountSubCmd>;
+  unreadNotificationsSubCmds: Array<UnreadSubCmd>;
+  notificationsUnsubCmds: Array<UnsubscribeCmd>;
+  markNotificationAsReadCmds: Array<MarkAsReadCmd>;
+  markAllNotificationsAsReadCmds: Array<MarkAllAsReadCmd>;
 
   private static popCmds<T>(cmds: Array<T>, leftCount: number): Array<T> {
     const toPublish = Math.min(cmds.length, leftCount);
@@ -311,7 +333,12 @@ export class TelemetryPluginCmdsWrapper implements CmdWrapper {
       this.entityCountCmds.length > 0 ||
       this.entityCountUnsubscribeCmds.length > 0 ||
       this.alarmCountCmds.length > 0 ||
-      this.alarmCountUnsubscribeCmds.length > 0;
+      this.alarmCountUnsubscribeCmds.length > 0 ||
+      this.unreadNotificationsCountSubCmds.length > 0 ||
+      this.unreadNotificationsSubCmds.length > 0 ||
+      this.notificationsUnsubCmds.length  > 0 ||
+      this.markNotificationAsReadCmds.length > 0 ||
+      this.markAllNotificationsAsReadCmds.length > 0;
   }
 
   public clear() {
@@ -326,6 +353,11 @@ export class TelemetryPluginCmdsWrapper implements CmdWrapper {
     this.entityCountUnsubscribeCmds.length = 0;
     this.alarmCountCmds.length = 0;
     this.alarmCountUnsubscribeCmds.length = 0;
+    this.unreadNotificationsSubCmds.length = 0;
+    this.unreadNotificationsCountSubCmds.length = 0;
+    this.notificationsUnsubCmds.length = 0;
+    this.markNotificationAsReadCmds.length = 0;
+    this.markAllNotificationsAsReadCmds.length = 0;
   }
 
   public preparePublishCommands(maxCommands: number): TelemetryPluginCmdsWrapper {
@@ -352,6 +384,16 @@ export class TelemetryPluginCmdsWrapper implements CmdWrapper {
     preparedWrapper.alarmCountCmds = TelemetryPluginCmdsWrapper.popCmds(this.alarmCountCmds, leftCount);
     leftCount -= preparedWrapper.alarmCountCmds.length;
     preparedWrapper.alarmCountUnsubscribeCmds = TelemetryPluginCmdsWrapper.popCmds(this.alarmCountUnsubscribeCmds, leftCount);
+    leftCount -= preparedWrapper.unreadNotificationsSubCmds.length;
+    preparedWrapper.unreadNotificationsSubCmds = TelemetryPluginCmdsWrapper.popCmds(this.unreadNotificationsSubCmds, leftCount);
+    leftCount -= preparedWrapper.unreadNotificationsCountSubCmds.length;
+    preparedWrapper.unreadNotificationsCountSubCmds = TelemetryPluginCmdsWrapper.popCmds(this.unreadNotificationsCountSubCmds, leftCount);
+    leftCount -= preparedWrapper.notificationsUnsubCmds.length;
+    preparedWrapper.notificationsUnsubCmds = TelemetryPluginCmdsWrapper.popCmds(this.notificationsUnsubCmds, leftCount);
+    leftCount -= preparedWrapper.markNotificationAsReadCmds.length;
+    preparedWrapper.markNotificationAsReadCmds = TelemetryPluginCmdsWrapper.popCmds(this.markNotificationAsReadCmds, leftCount);
+    leftCount -= preparedWrapper.markAllNotificationsAsReadCmds.length;
+    preparedWrapper.markAllNotificationsAsReadCmds = TelemetryPluginCmdsWrapper.popCmds(this.markAllNotificationsAsReadCmds, leftCount);
     return preparedWrapper;
   }
 }
@@ -416,7 +458,7 @@ export interface AlarmCountUpdateMsg extends CmdUpdateMsg {
 }
 
 export type WebsocketDataMsg = AlarmDataUpdateMsg | AlarmCountUpdateMsg |
-  EntityDataUpdateMsg | EntityCountUpdateMsg | SubscriptionUpdateMsg;
+  EntityDataUpdateMsg | EntityCountUpdateMsg | SubscriptionUpdateMsg | NotificationCountUpdateMsg | NotificationsUpdateMsg;
 
 export const isEntityDataUpdateMsg = (message: WebsocketDataMsg): message is EntityDataUpdateMsg => {
   const updateMsg = (message as CmdUpdateMsg);
@@ -624,6 +666,28 @@ export class AlarmCountUpdate extends CmdUpdate {
   constructor(msg: AlarmCountUpdateMsg) {
     super(msg);
     this.count = msg.count;
+  }
+}
+
+export class NotificationCountUpdate extends CmdUpdate {
+  totalUnreadCount: number;
+
+  constructor(msg: NotificationCountUpdateMsg) {
+    super(msg);
+    this.totalUnreadCount = msg.totalUnreadCount;
+  }
+}
+
+export class NotificationsUpdate extends CmdUpdate {
+  totalUnreadCount: number;
+  update?: Notification;
+  notifications?: Notification[];
+
+  constructor(msg: NotificationsUpdateMsg) {
+    super(msg);
+    this.totalUnreadCount = msg.totalUnreadCount;
+    this.update = msg.update;
+    this.notifications = msg.notifications;
   }
 }
 

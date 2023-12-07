@@ -16,7 +16,8 @@
 
 import { Inject, Injectable, NgZone } from '@angular/core';
 import {
-  AlarmCountCmd, AlarmCountUnsubscribeCmd,
+  AlarmCountCmd,
+  AlarmCountUnsubscribeCmd,
   AlarmCountUpdate,
   AlarmDataCmd,
   AlarmDataUnsubscribeCmd,
@@ -28,10 +29,13 @@ import {
   EntityDataCmd,
   EntityDataUnsubscribeCmd,
   EntityDataUpdate,
-  GetHistoryCmd, isAlarmCountUpdateMsg,
+  GetHistoryCmd,
+  isAlarmCountUpdateMsg,
   isAlarmDataUpdateMsg,
   isEntityCountUpdateMsg,
   isEntityDataUpdateMsg,
+  NotificationCountUpdate,
+  NotificationsUpdate,
   SubscriptionCmd,
   SubscriptionUpdate,
   TelemetryFeature,
@@ -45,6 +49,16 @@ import { AppState } from '@core/core.state';
 import { AuthService } from '@core/auth/auth.service';
 import { WINDOW } from '@core/services/window.service';
 import { WebsocketService } from '@core/ws/websocket.service';
+import {
+  isNotificationCountUpdateMsg,
+  isNotificationsUpdateMsg,
+  MarkAllAsReadCmd,
+  MarkAsReadCmd,
+  NotificationSubscriber,
+  UnreadCountSubCmd,
+  UnreadSubCmd,
+  UnsubscribeCmd
+} from '@shared/models/websocket/notification-ws.models';
 
 // @dynamic
 @Injectable({
@@ -84,6 +98,16 @@ export class TelemetryWebsocketService extends WebsocketService<TelemetrySubscri
           this.cmdWrapper.entityCountCmds.push(subscriptionCommand);
         } else if (subscriptionCommand instanceof AlarmCountCmd) {
           this.cmdWrapper.alarmCountCmds.push(subscriptionCommand);
+        } else if (subscriptionCommand instanceof UnreadCountSubCmd) {
+          this.cmdWrapper.unreadNotificationsCountSubCmds.push(subscriptionCommand);
+        } else if (subscriptionCommand instanceof UnreadSubCmd) {
+          this.cmdWrapper.unreadNotificationsSubCmds.push(subscriptionCommand);
+        } else if (subscriptionCommand instanceof MarkAsReadCmd) {
+          this.cmdWrapper.markNotificationAsReadCmds.push(subscriptionCommand);
+          this.subscribersMap.delete(cmdId);
+        } else if (subscriptionCommand instanceof MarkAllAsReadCmd) {
+          this.cmdWrapper.markAllNotificationsAsReadCmds.push(subscriptionCommand);
+          this.subscribersMap.delete(cmdId);
         }
       }
     );
@@ -97,6 +121,8 @@ export class TelemetryWebsocketService extends WebsocketService<TelemetrySubscri
         (subscriptionCommand) => {
           if (subscriptionCommand.cmdId && subscriptionCommand instanceof EntityDataCmd) {
             this.cmdWrapper.entityDataCmds.push(subscriptionCommand);
+          } else if (subscriptionCommand.cmdId && subscriptionCommand instanceof UnreadSubCmd) {
+            this.cmdWrapper.unreadNotificationsSubCmds.push(subscriptionCommand);
           }
         }
       );
@@ -131,6 +157,10 @@ export class TelemetryWebsocketService extends WebsocketService<TelemetrySubscri
             const alarmCountUnsubscribeCmd = new AlarmCountUnsubscribeCmd();
             alarmCountUnsubscribeCmd.cmdId = subscriptionCommand.cmdId;
             this.cmdWrapper.alarmCountUnsubscribeCmds.push(alarmCountUnsubscribeCmd);
+          } else if (subscriptionCommand instanceof UnreadCountSubCmd || subscriptionCommand instanceof UnreadSubCmd) {
+            const notificationsUnsubCmds = new UnsubscribeCmd();
+            notificationsUnsubCmds.cmdId = subscriptionCommand.cmdId;
+            this.cmdWrapper.notificationsUnsubCmds.push(notificationsUnsubCmds);
           }
           const cmdId = subscriptionCommand.cmdId;
           if (cmdId) {
@@ -145,29 +175,28 @@ export class TelemetryWebsocketService extends WebsocketService<TelemetrySubscri
   }
 
   processOnMessage(message: WebsocketDataMsg) {
-    let subscriber: TelemetrySubscriber;
-    if (isEntityDataUpdateMsg(message)) {
+    let subscriber: TelemetrySubscriber | NotificationSubscriber;
+    if ('cmdId' in message && message.cmdId) {
       subscriber = this.subscribersMap.get(message.cmdId);
-      if (subscriber) {
-        subscriber.onEntityData(new EntityDataUpdate(message));
+      if (subscriber instanceof NotificationSubscriber) {
+        if (isNotificationCountUpdateMsg(message) && subscriber) {
+          subscriber.onNotificationCountUpdate(new NotificationCountUpdate(message));
+        } else if (isNotificationsUpdateMsg(message) && subscriber) {
+          subscriber.onNotificationsUpdate(new NotificationsUpdate(message));
+        }
+      } else if (subscriber instanceof TelemetrySubscriber) {
+        if (isEntityDataUpdateMsg(message) && subscriber) {
+          subscriber.onEntityData(new EntityDataUpdate(message));
+        } else if (isAlarmDataUpdateMsg(message) && subscriber) {
+          subscriber.onAlarmData(new AlarmDataUpdate(message));
+        } else if (isEntityCountUpdateMsg(message) && subscriber) {
+          subscriber.onEntityCount(new EntityCountUpdate(message));
+        } else if (isAlarmCountUpdateMsg(message) && subscriber) {
+          subscriber.onAlarmCount(new AlarmCountUpdate(message));
+        }
       }
-    } else if (isAlarmDataUpdateMsg(message)) {
-      subscriber = this.subscribersMap.get(message.cmdId);
-      if (subscriber) {
-        subscriber.onAlarmData(new AlarmDataUpdate(message));
-      }
-    } else if (isEntityCountUpdateMsg(message)) {
-      subscriber = this.subscribersMap.get(message.cmdId);
-      if (subscriber) {
-        subscriber.onEntityCount(new EntityCountUpdate(message));
-      }
-    } else if (isAlarmCountUpdateMsg(message)) {
-      subscriber = this.subscribersMap.get(message.cmdId);
-      if (subscriber) {
-        subscriber.onAlarmCount(new AlarmCountUpdate(message));
-      }
-    } else if (message.subscriptionId) {
-      subscriber = this.subscribersMap.get(message.subscriptionId);
+    } else if ('subscriptionId' in message && message.subscriptionId) {
+      subscriber = this.subscribersMap.get(message.subscriptionId) as TelemetrySubscriber;
       if (subscriber) {
         subscriber.onData(new SubscriptionUpdate(message));
       }
