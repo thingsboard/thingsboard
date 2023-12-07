@@ -140,7 +140,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     });
 
     this.connectorForm.get('type').valueChanges.subscribe(type=> {
-      if(type && this.initialConnector === null) {
+      if(type && !this.initialConnector) {
         this.attributeService.getEntityAttributes(this.device, AttributeScope.CLIENT_SCOPE,
           [`${type.toUpperCase()}_DEFAULT_CONFIG`], {ignoreErrors: true}).subscribe(defaultConfig=>{
           if (defaultConfig && defaultConfig.length) {
@@ -322,6 +322,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   }
 
   private clearOutConnectorForm(): void {
+    this.initialConnector = null;
     this.connectorForm.setValue({
       name: '',
       type: 'mqtt',
@@ -331,7 +332,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       configuration: '',
       configurationJson: {}
     });
-    this.initialConnector = null;
     this.connectorForm.markAsPristine();
   }
 
