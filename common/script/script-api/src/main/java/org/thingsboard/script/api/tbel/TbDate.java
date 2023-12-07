@@ -54,15 +54,20 @@ public class TbDate implements Serializable, Cloneable {
         this.instant = Instant.now();
     }
 
-    public TbDate(String s, String... options) {
-        if (options.length <= 2) {
-            this.instant = parseInstant(s, options);
-        } else {
-            String pattern = options[0];
-            String localeStr = options[1];
-            String zoneIdStr = options[2];
-            instant =  parseInstant(s, pattern, Locale.forLanguageTag(localeStr), ZoneId.of(zoneIdStr));
-        }
+    public TbDate(String s) {
+        this.instant = parseInstant(s);
+    }
+
+    public TbDate(String s, String pattern) {
+        this.instant = parseInstant(s, pattern);
+    }
+
+    public TbDate(String s, String pattern, String locale) {
+        this.instant = parseInstant(s, pattern, locale);
+    }
+
+    public TbDate(String s, String pattern, String locale, String zoneId) {
+       this.instant = parseInstant(s, pattern, locale,  zoneId);
     }
 
     public TbDate(long dateMilliSecond) {
@@ -505,7 +510,8 @@ public class TbDate implements Serializable, Cloneable {
         } catch (Exception ex) {
             try {
                 if (options.length > 0) {
-                    return parseInstant(s, options[0], locale, ZoneId.systemDefault());
+                    String zoneIdStr = options.length > 3 ? options[2] : ZoneId.systemDefault().getId();
+                    return parseInstant(s, options[0], locale.getLanguage(), zoneIdStr);
                 } else if (s.length() > 0 && Character.isDigit(s.charAt(0))) {
                     long timeMS = parse(s);
                     if (timeMS != -1) {
@@ -531,10 +537,10 @@ public class TbDate implements Serializable, Cloneable {
         ZonedDateTime zonedDateTime = ZonedDateTime.of(year, month, date, hrs, min, second, secondMilli*1000000, zoneId);
         return zonedDateTime.toInstant();
     }
-    private static Instant parseInstant(String s, String pattern, Locale locale, ZoneId zoneId) {
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(pattern, locale);
+    private static Instant parseInstant(String s, String pattern, String localeStr, String zoneIdStr) {
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(pattern, Locale.forLanguageTag(localeStr));
         LocalDateTime localDateTime = LocalDateTime.parse(s, dateTimeFormatter);
-        ZonedDateTime zonedDateTime = localDateTime.atZone(zoneId);
+        ZonedDateTime zonedDateTime = localDateTime.atZone(ZoneId.of(zoneIdStr));
         return zonedDateTime.toInstant();
     }
 
