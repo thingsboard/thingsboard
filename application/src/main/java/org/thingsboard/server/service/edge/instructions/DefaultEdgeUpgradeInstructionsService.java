@@ -85,18 +85,18 @@ public class DefaultEdgeUpgradeInstructionsService implements EdgeUpgradeInstruc
         StringBuilder result = new StringBuilder(readFile(resolveFile("docker", "upgrade_preparing.md")));
         while (edgeUpgradeInfo.getNextEdgeVersion() != null || !tbVersion.equals(currentEdgeVersion)) {
             String edgeVersion = edgeUpgradeInfo.getNextEdgeVersion();
-            String ubuntuUpgradeInstructions = readFile(resolveFile("docker", "instructions.md"));
+            String dockerUpgradeInstructions = readFile(resolveFile("docker", "instructions.md"));
             if (edgeUpgradeInfo.isRequiresUpdateDb()) {
                 String upgradeDb = readFile(resolveFile("docker", "upgrade_db.md"));
-                ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${UPGRADE_DB}", upgradeDb);
+                dockerUpgradeInstructions = dockerUpgradeInstructions.replace("${UPGRADE_DB}", upgradeDb);
             } else {
-                ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${UPGRADE_DB}", "");
+                dockerUpgradeInstructions = dockerUpgradeInstructions.replace("${UPGRADE_DB}", "");
             }
-            ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${TB_EDGE_VERSION}", edgeVersion + "EDGE");
-            ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${FROM_TB_EDGE_VERSION}", currentEdgeVersion + "EDGE");
+            dockerUpgradeInstructions = dockerUpgradeInstructions.replace("${TB_EDGE_VERSION}", edgeVersion + "EDGE");
+            dockerUpgradeInstructions = dockerUpgradeInstructions.replace("${FROM_TB_EDGE_VERSION}", currentEdgeVersion + "EDGE");
             currentEdgeVersion = edgeVersion;
             edgeUpgradeInfo = upgradeVersionHashMap.get(edgeUpgradeInfo.getNextEdgeVersion());
-            result.append(ubuntuUpgradeInstructions);
+            result.append(dockerUpgradeInstructions);
         }
         String startService = readFile(resolveFile("docker", "start_service.md"));
         startService = startService.replace("${TB_EDGE_VERSION}", currentEdgeVersion + "EDGE");
@@ -114,20 +114,20 @@ public class DefaultEdgeUpgradeInstructionsService implements EdgeUpgradeInstruc
         StringBuilder result = new StringBuilder(upgrade_preparing);
         while (edgeUpgradeInfo.getNextEdgeVersion() != null || !tbVersion.equals(currentEdgeVersion)) {
             String edgeVersion = edgeUpgradeInfo.getNextEdgeVersion();
-            String ubuntuUpgradeInstructions = readFile(resolveFile(os, "instructions.md"));
+            String linuxUpgradeInstructions = readFile(resolveFile(os, "instructions.md"));
             if (edgeUpgradeInfo.isRequiresUpdateDb()) {
                 String upgradeDb = readFile(resolveFile("upgrade_db.md"));
-                ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${UPGRADE_DB}", upgradeDb);
+                linuxUpgradeInstructions = linuxUpgradeInstructions.replace("${UPGRADE_DB}", upgradeDb);
             } else {
-                ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${UPGRADE_DB}", "");
+                linuxUpgradeInstructions = linuxUpgradeInstructions.replace("${UPGRADE_DB}", "");
             }
-            ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${TB_EDGE_TAG}", getTagVersion(edgeVersion));
-            ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${FROM_TB_EDGE_TAG}", getTagVersion(currentEdgeVersion));
-            ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${TB_EDGE_VERSION}", edgeVersion);
-            ubuntuUpgradeInstructions = ubuntuUpgradeInstructions.replace("${FROM_TB_EDGE_VERSION}", currentEdgeVersion);
+            linuxUpgradeInstructions = linuxUpgradeInstructions.replace("${TB_EDGE_TAG}", getTagVersion(edgeVersion));
+            linuxUpgradeInstructions = linuxUpgradeInstructions.replace("${FROM_TB_EDGE_TAG}", getTagVersion(currentEdgeVersion));
+            linuxUpgradeInstructions = linuxUpgradeInstructions.replace("${TB_EDGE_VERSION}", edgeVersion);
+            linuxUpgradeInstructions = linuxUpgradeInstructions.replace("${FROM_TB_EDGE_VERSION}", currentEdgeVersion);
             currentEdgeVersion = edgeVersion;
             edgeUpgradeInfo = upgradeVersionHashMap.get(edgeUpgradeInfo.getNextEdgeVersion());
-            result.append(ubuntuUpgradeInstructions);
+            result.append(linuxUpgradeInstructions);
         }
         String startService = readFile(resolveFile("start_service.md"));
         result.append(startService);
