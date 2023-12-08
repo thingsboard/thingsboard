@@ -499,6 +499,8 @@ public class ModelConstants {
     public static final String RESOURCE_FILE_NAME_COLUMN = "file_name";
     public static final String RESOURCE_DATA_COLUMN = "data";
     public static final String RESOURCE_ETAG_COLUMN = "etag";
+    public static final String RESOURCE_DESCRIPTOR_COLUMN = "descriptor";
+    public static final String RESOURCE_PREVIEW_COLUMN = "preview";
 
     /**
      * Ota Package constants.

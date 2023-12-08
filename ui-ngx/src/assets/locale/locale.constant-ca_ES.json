@@ -5692,7 +5692,6 @@
             "show-empty-space-hidden-action": "Mostrar espai buit en lloc de cel·la oculta",
             "dont-reserve-space-hidden-action": "No reserveu espai per als botons en cel·la oculta",
             "display-timestamp": "Mostra columna timestamp",
-            "display-milliseconds": "Mostrar mil·lisegons",
             "display-pagination": "Mostrar pàgines",
             "default-page-size": "Mida de pàgina per defecte",
             "use-entity-label-tab-name": "Usar etiqueta important al nom de la taula",

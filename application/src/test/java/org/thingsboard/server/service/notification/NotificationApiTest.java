@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.notification;
 
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.data.Offset;
@@ -709,7 +710,17 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
     private NotificationRequestStats submitNotificationRequestAndWait(NotificationRequest notificationRequest) throws Exception {
         SettableFuture<NotificationRequestStats> future = SettableFuture.create();
-        notificationCenter.processNotificationRequest(notificationRequest.getTenantId(), notificationRequest, future::set);
+        notificationCenter.processNotificationRequest(notificationRequest.getTenantId(), notificationRequest, new FutureCallback<>() {
+            @Override
+            public void onSuccess(NotificationRequestStats result) {
+                future.set(result);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                future.setException(t);
+            }
+        });
         return future.get(30, TimeUnit.SECONDS);
     }
 

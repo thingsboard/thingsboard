@@ -28,12 +28,14 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Customer;
@@ -51,7 +53,6 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
-import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -73,7 +74,9 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
+import org.thingsboard.server.service.state.DeviceStateService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,6 +85,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -105,6 +109,9 @@ public class DeviceControllerTest extends AbstractControllerTest {
 
     @SpyBean
     private GatewayNotificationsService gatewayNotificationsService;
+
+    @SpyBean
+    private DeviceStateService deviceStateService;
 
     @Autowired
     private DeviceDao deviceDao;
@@ -1339,6 +1346,28 @@ public class DeviceControllerTest extends AbstractControllerTest {
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.ASSIGNED_TO_TENANT, savedDifferentTenant.getId().getId().toString(), savedDifferentTenant.getTitle());
         testNotificationUpdateGatewayNever();
+
+        ArgumentCaptor<TransportProtos.DeviceStateServiceMsgProto> protoCaptor = ArgumentCaptor.forClass(TransportProtos.DeviceStateServiceMsgProto.class);
+
+        Awaitility.await().atMost(5, TimeUnit.SECONDS).until(() -> {
+            Mockito.verify(deviceStateService, Mockito.atLeastOnce()).onQueueMsg(protoCaptor.capture(), any());
+            return protoCaptor.getAllValues().stream().anyMatch(proto ->
+                    proto.getTenantIdMSB() == savedTenant.getUuidId().getMostSignificantBits() &&
+                            proto.getTenantIdLSB() == savedTenant.getUuidId().getLeastSignificantBits() &&
+                            proto.getDeviceIdMSB() == savedDevice.getUuidId().getMostSignificantBits() &&
+                            proto.getDeviceIdLSB() == savedDevice.getUuidId().getLeastSignificantBits() &&
+                            proto.getDeleted());
+        });
+
+        Awaitility.await().atMost(5, TimeUnit.SECONDS).until(() -> {
+            Mockito.verify(deviceStateService, Mockito.atLeastOnce()).onQueueMsg(protoCaptor.capture(), any());
+            return protoCaptor.getAllValues().stream().anyMatch(proto ->
+                    proto.getTenantIdMSB() == savedDifferentTenant.getUuidId().getMostSignificantBits() &&
+                            proto.getTenantIdLSB() == savedDifferentTenant.getUuidId().getLeastSignificantBits() &&
+                            proto.getDeviceIdMSB() == savedDevice.getUuidId().getMostSignificantBits() &&
+                            proto.getDeviceIdLSB() == savedDevice.getUuidId().getLeastSignificantBits() &&
+                            proto.getAdded());
+        });
 
         login("tenant9@thingsboard.org", "testPassword1");
 

@@ -42,6 +42,7 @@ import { isNotEmptyStr } from '@core/utils';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 import { ComponentStyle, Font, TimewindowStyle } from '@shared/models/widget-settings.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
+import { HasTenantId } from '@shared/models/entity.models';
 
 export enum widgetType {
   timeseries = 'timeseries',
@@ -193,7 +194,7 @@ export interface WidgetControllerDescriptor {
   actionSources?: {[actionSourceId: string]: WidgetActionSource};
 }
 
-export interface BaseWidgetType extends BaseData<WidgetTypeId> {
+export interface BaseWidgetType extends BaseData<WidgetTypeId>, HasTenantId {
   tenantId: TenantId;
   fqn: string;
   name: string;

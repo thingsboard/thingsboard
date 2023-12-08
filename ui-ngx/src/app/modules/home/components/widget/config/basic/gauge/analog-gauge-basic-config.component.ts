@@ -108,6 +108,7 @@ export class GaugeBasicConfigComponent extends BasicWidgetConfigComponent {
 
     this.widgetConfig.config.settings = this.widgetConfig.config.settings || {};
     this.setCardButtons(config.cardButtons, this.widgetConfig.config);
+    this.widgetConfig.config.borderRadius = config.borderRadius;
     this.widgetConfig.config.backgroundColor = config.backgroundColor;
 
     this.widgetConfig.config.settings.showUnitTitle = config.showUnitTitle;

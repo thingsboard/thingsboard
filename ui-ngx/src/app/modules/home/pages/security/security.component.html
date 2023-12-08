@@ -86,23 +86,33 @@
             <h3 class="card-title" translate>security.password-requirement.password-requirements</h3>
             <h4 class="mat-h4" translate>security.password-requirement.at-least</h4>
             <p class="mat-body" *ngIf="passwordPolicy.minimumUppercaseLetters > 0">
-              <mat-icon class="tb-mat-20" [svgIcon]="changePassword.get('newPassword').hasError('notUpperCase') ? 'mdi:circle-small' : 'mdi:check'"></mat-icon>
+              <tb-icon class="tb-mat-20">
+                {{ changePassword.get('newPassword').hasError('notUpperCase') ? 'mdi:circle-small' : 'mdi:check' }}
+              </tb-icon>
               {{ 'security.password-requirement.uppercase-letter' | translate : {count: passwordPolicy.minimumUppercaseLetters} }}
             </p>
             <p class="mat-body" *ngIf="passwordPolicy.minimumLowercaseLetters > 0">
-              <mat-icon class="tb-mat-20" [svgIcon]="changePassword.get('newPassword').hasError('notLowerCase') ? 'mdi:circle-small' : 'mdi:check'"></mat-icon>
+              <tb-icon class="tb-mat-20">
+                {{ changePassword.get('newPassword').hasError('notLowerCase') ? 'mdi:circle-small' : 'mdi:check' }}
+              </tb-icon>
               {{ 'security.password-requirement.lowercase-letter' | translate : {count: passwordPolicy.minimumLowercaseLetters} }}
             </p>
             <p class="mat-body" *ngIf="passwordPolicy.minimumDigits > 0">
-              <mat-icon class="tb-mat-20" [svgIcon]="changePassword.get('newPassword').hasError('notNumeric') ? 'mdi:circle-small' : 'mdi:check'"></mat-icon>
+              <tb-icon class="tb-mat-20">
+                {{ changePassword.get('newPassword').hasError('notNumeric') ? 'mdi:circle-small' : 'mdi:check' }}
+              </tb-icon>
               {{ 'security.password-requirement.digit' | translate : {count: passwordPolicy.minimumDigits} }}
             </p>
             <p class="mat-body" *ngIf="passwordPolicy.minimumSpecialCharacters > 0">
-              <mat-icon class="tb-mat-20" [svgIcon]="changePassword.get('newPassword').hasError('notSpecial') ? 'mdi:circle-small' : 'mdi:check'"></mat-icon>
+              <tb-icon class="tb-mat-20">
+                {{ changePassword.get('newPassword').hasError('notSpecial') ? 'mdi:circle-small' : 'mdi:check' }}
+              </tb-icon>
               {{ 'security.password-requirement.special-character' | translate : {count: passwordPolicy.minimumSpecialCharacters} }}
             </p>
             <p class="mat-body" *ngIf="passwordPolicy.minimumLength > 0">
-              <mat-icon class="tb-mat-20" [svgIcon]="changePassword.get('newPassword').hasError('minLength') ? 'mdi:circle-small' : 'mdi:check'"></mat-icon>
+              <tb-icon class="tb-mat-20">
+                {{ changePassword.get('newPassword').hasError('minLength') ? 'mdi:circle-small' : 'mdi:check' }}
+              </tb-icon>
               {{ 'security.password-requirement.character' | translate : {count: passwordPolicy.minimumLength} }}
             </p>
           </div>

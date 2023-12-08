@@ -208,10 +208,10 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
             }
 
             if (config.isAllEntities()) {
-                DaoUtil.processInBatches(pageLink -> exportableEntitiesService.findEntitiesByTenantId(ctx.getTenantId(), entityType, pageLink)
-                        , 100, entity -> {
+                DaoUtil.processInBatches(pageLink -> exportableEntitiesService.findEntitiesIdsByTenantId(ctx.getTenantId(), entityType, pageLink),
+                        100, entityId -> {
                             try {
-                                ctx.add(saveEntityData(ctx, entity.getId()));
+                                ctx.add(saveEntityData(ctx, entityId));
                             } catch (Exception e) {
                                 throw new RuntimeException(e);
                             }

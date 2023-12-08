@@ -18,6 +18,7 @@ export interface UserSettings {
   openedMenuSections?: string[];
   notDisplayConnectivityAfterAddDevice?: boolean;
   notDisplayInstructionsAfterAddEdge?: boolean;
+  includeBundleWidgetsInExport?: boolean;
 }
 
 export const initialUserSettings: UserSettings = {
