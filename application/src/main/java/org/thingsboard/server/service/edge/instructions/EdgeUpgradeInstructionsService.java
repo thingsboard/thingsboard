@@ -26,5 +26,5 @@ public interface EdgeUpgradeInstructionsService {
 
     void updateInstructionMap(Map<String, EdgeUpgradeInfo> upgradeVersions);
 
-    void updateApplicationVersion(String version);
+    void setAppVersion(String version);
 }

@@ -155,15 +155,13 @@ public class DefaultUpdateService implements UpdateService {
                         .build());
             }
             ObjectNode edgeRequest = JacksonUtil.newObjectNode().put(VERSION_PARAM, version);
-            String prevEdgeInstallVersion = edgeInstallVersion;
-            edgeInstallVersion = restClient.postForObject(UPDATE_SERVER_BASE_URL + "/api/v1/edge/installMapping", new HttpEntity<>(edgeRequest.toString(), headers), String.class);
-            if (edgeInstallVersion != null && !edgeInstallVersion.equals(prevEdgeInstallVersion)) {
-                edgeInstallInstructionsService.updateApplicationVersion(edgeInstallVersion);
-                edgeUpgradeInstructionsService.updateApplicationVersion(edgeInstallVersion);
+            String edgeInstallVersion = restClient.postForObject(UPDATE_SERVER_BASE_URL + "/api/v1/edge/installMapping", new HttpEntity<>(edgeRequest.toString(), headers), String.class);
+            if (edgeInstallVersion != null) {
+                edgeInstallInstructionsService.setAppVersion(edgeInstallVersion);
+                edgeUpgradeInstructionsService.setAppVersion(edgeInstallVersion);
             }
-            EdgeUpgradeMessage prevEdgeUpgradeMessage = edgeUpgradeMessage;
-            edgeUpgradeMessage = restClient.postForObject(UPDATE_SERVER_BASE_URL + "/api/v1/edge/upgradeMapping", new HttpEntity<>(edgeRequest.toString(), headers), EdgeUpgradeMessage.class);
-            if (edgeUpgradeMessage != null && !edgeUpgradeMessage.equals(prevEdgeUpgradeMessage)) {
+            EdgeUpgradeMessage edgeUpgradeMessage = restClient.postForObject(UPDATE_SERVER_BASE_URL + "/api/v1/edge/upgradeMapping", new HttpEntity<>(edgeRequest.toString(), headers), EdgeUpgradeMessage.class);
+            if (edgeUpgradeMessage != null) {
                 edgeUpgradeInstructionsService.updateInstructionMap(edgeUpgradeMessage.getEdgeVersions());
             }
         } catch (Exception e) {

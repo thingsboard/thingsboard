@@ -24,5 +24,5 @@ public interface EdgeInstallInstructionsService {
 
     EdgeInstructions getInstallInstructions(Edge edge, String installationMethod, HttpServletRequest request);
 
-    void updateApplicationVersion(String version);
+    void setAppVersion(String version);
 }
