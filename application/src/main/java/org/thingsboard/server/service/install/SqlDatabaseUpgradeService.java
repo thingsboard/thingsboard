@@ -766,6 +766,10 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     } catch (Exception e) {
                         log.warn("Failed to execute update script for save attributes rule nodes due to: ", e);
                     }
+                    try {
+                        connection.createStatement().execute("CREATE INDEX IF NOT EXISTS idx_asset_profile_id ON asset(tenant_id, asset_profile_id);");
+                    } catch (Exception e) {
+                    }
                 });
                 break;
             default:
