@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityFilter;
 import org.thingsboard.server.common.data.query.EntityKey;
+import org.thingsboard.server.service.ws.AuthCmd;
 import org.thingsboard.server.service.ws.WsCmd;
 import org.thingsboard.server.service.ws.WsCommandsWrapper;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.AttributesSubscriptionCmd;
@@ -62,6 +63,13 @@ public class TbTestWebSocketClient extends WebSocketClient {
     @Override
     public void onOpen(ServerHandshake serverHandshake) {
 
+    }
+
+    public void authenticate(String token) {
+        WsCommandsWrapper cmdsWrapper = new WsCommandsWrapper();
+        cmdsWrapper.setAuthCmd(new AuthCmd(1, token));
+        send(JacksonUtil.toString(cmdsWrapper));
+        waitForReply();
     }
 
     @Override

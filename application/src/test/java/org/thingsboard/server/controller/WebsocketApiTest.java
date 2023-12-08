@@ -667,7 +667,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
         ObjectNode wrapperNode = JacksonUtil.newObjectNode();
         wrapperNode.set("entityCountCmds", entityCountCmds);
 
-        wsClient = buildAndConnectWebSocketClient("/api/ws/plugins/telemetry");
+        wsClient = buildAndConnectWebSocketClient("/api/ws/plugins/telemetry?token=" + token);
         wsClient.send(JacksonUtil.toString(wrapperNode));
 
         EntityCountUpdate update = wsClient.parseCountReply(wsClient.waitForReply());

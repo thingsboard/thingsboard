@@ -13,14 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.ws.telemetry.cmd.v2;
+package org.thingsboard.server.service.ws;
 
-public enum CmdUpdateType {
-    ENTITY_DATA,
-    ALARM_DATA,
-    ALARM_COUNT_DATA,
-    COUNT_DATA,
-    NOTIFICATIONS,
-    NOTIFICATIONS_COUNT,
-    AUTH
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class AuthCmd implements WsCmd {
+    private int cmdId;
+    private String token;
+
+    @Override
+    public WsCmdType getType() {
+        return WsCmdType.AUTH;
+    }
 }

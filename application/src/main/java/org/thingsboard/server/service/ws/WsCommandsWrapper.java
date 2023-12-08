@@ -45,6 +45,8 @@ import java.util.List;
 @NoArgsConstructor
 public class WsCommandsWrapper {
 
+    private AuthCmd authCmd;
+
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
     @JsonSubTypes({
             @Type(name = "ATTRIBUTES", value = AttributesSubscriptionCmd.class),

@@ -48,8 +48,8 @@ public class NotificationApiWsClient extends TbTestWebSocketClient {
     private int unreadCount;
     private List<Notification> notifications;
 
-    public NotificationApiWsClient(String wsUrl, String token) throws URISyntaxException {
-        super(new URI(wsUrl + "/api/ws?token=" + token));
+    public NotificationApiWsClient(String wsUrl) throws URISyntaxException {
+        super(new URI(wsUrl + "/api/ws"));
     }
 
     public NotificationApiWsClient subscribeForUnreadNotifications(int limit) {

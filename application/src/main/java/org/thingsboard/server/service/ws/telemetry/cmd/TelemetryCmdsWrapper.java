@@ -67,7 +67,7 @@ public class TelemetryCmdsWrapper {
 
     @JsonIgnore
     public WsCommandsWrapper toCommonCmdsWrapper() {
-        return new WsCommandsWrapper(Stream.of(
+        return new WsCommandsWrapper(null, Stream.of(
                         attrSubCmds, tsSubCmds, historyCmds, entityDataCmds,
                         entityDataUnsubscribeCmds, alarmDataCmds, alarmDataUnsubscribeCmds,
                         entityCountCmds, entityCountUnsubscribeCmds,

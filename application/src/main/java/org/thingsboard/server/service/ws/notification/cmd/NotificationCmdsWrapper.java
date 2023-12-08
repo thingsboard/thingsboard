@@ -42,7 +42,7 @@ public class NotificationCmdsWrapper {
 
     @JsonIgnore
     public WsCommandsWrapper toCommonCmdsWrapper() {
-        return new WsCommandsWrapper(Stream.of(
+        return new WsCommandsWrapper(null, Stream.of(
                         unreadCountSubCmd, unreadSubCmd, markAsReadCmd, markAllAsReadCmd, unsubCmd
                 )
                 .filter(Objects::nonNull)

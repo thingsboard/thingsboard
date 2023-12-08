@@ -15,12 +15,20 @@
  */
 package org.thingsboard.server.service.ws.telemetry.cmd.v2;
 
-public enum CmdUpdateType {
-    ENTITY_DATA,
-    ALARM_DATA,
-    ALARM_COUNT_DATA,
-    COUNT_DATA,
-    NOTIFICATIONS,
-    NOTIFICATIONS_COUNT,
-    AUTH
+import org.thingsboard.server.service.subscription.SubscriptionErrorCode;
+
+public class AuthCmdUpdate extends CmdUpdate {
+
+    public AuthCmdUpdate(int cmdId) {
+        this(cmdId, SubscriptionErrorCode.NO_ERROR.getCode(), null);
+    }
+
+    public AuthCmdUpdate(int cmdId, int errorCode, String errorMsg) {
+        super(cmdId, errorCode, errorMsg);
+    }
+
+    @Override
+    public CmdUpdateType getCmdUpdateType() {
+        return CmdUpdateType.AUTH;
+    }
 }
