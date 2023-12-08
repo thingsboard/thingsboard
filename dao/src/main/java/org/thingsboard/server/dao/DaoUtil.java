@@ -32,6 +32,7 @@ import org.thingsboard.server.dao.model.ToData;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -163,6 +164,7 @@ public abstract class DaoUtil {
                 .collect(Collectors.toList());
     }
 
+    @Deprecated // used only in deprecated DAO api
     public static List<EntitySubtype> convertTenantEntityInfosToDto(UUID tenantUUID, EntityType entityType, List<EntityInfo> entityInfos) {
         if (CollectionUtils.isEmpty(entityInfos)) {
             return Collections.emptyList();
@@ -170,6 +172,7 @@ public abstract class DaoUtil {
         var tenantId = TenantId.fromUUID(tenantUUID);
         return entityInfos.stream()
                 .map(info -> new EntitySubtype(tenantId, entityType, info.getName()))
+                .sorted(Comparator.comparing(EntitySubtype::getType))
                 .collect(Collectors.toList());
     }
 

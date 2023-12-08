@@ -85,11 +85,11 @@ public interface DeviceProfileRepository extends JpaRepository<DeviceProfileEnti
 
     @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(dp.id, 'DEVICE_PROFILE', dp.name) " +
             "FROM DeviceProfileEntity dp WHERE dp.tenantId = :tenantId AND EXISTS " +
-            "(SELECT 1 FROM DeviceEntity dv WHERE dv.tenantId = :tenantId AND dv.deviceProfileId = dp.id) ORDER BY dp.name ASC")
+            "(SELECT 1 FROM DeviceEntity dv WHERE dv.tenantId = :tenantId AND dv.deviceProfileId = dp.id)")
     List<EntityInfo> findActiveTenantDeviceProfileNames(@Param("tenantId") UUID tenantId);
 
     @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(d.id, 'DEVICE_PROFILE', d.name) " +
-            "FROM DeviceProfileEntity d WHERE d.tenantId = :tenantId ORDER BY d.name ASC")
+            "FROM DeviceProfileEntity d WHERE d.tenantId = :tenantId")
     List<EntityInfo> findAllTenantDeviceProfileNames(@Param("tenantId") UUID tenantId);
 
 }
