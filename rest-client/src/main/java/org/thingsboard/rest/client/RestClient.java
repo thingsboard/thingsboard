@@ -84,7 +84,7 @@ import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
-import org.thingsboard.server.common.data.edge.EdgeInstallInstructions;
+import org.thingsboard.server.common.data.edge.EdgeInstructions;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
@@ -3261,10 +3261,16 @@ public class RestClient implements Closeable {
                 }).getBody();
     }
 
-    public Optional<EdgeInstallInstructions> getEdgeDockerInstallInstructions(EdgeId edgeId) {
-        ResponseEntity<EdgeInstallInstructions> edgeInstallInstructionsResult =
-                restTemplate.getForEntity(baseURL + "/api/edge/instructions/{edgeId}", EdgeInstallInstructions.class, edgeId.getId());
+    public Optional<EdgeInstructions> getEdgeInstallInstructions(EdgeId edgeId, String method) {
+        ResponseEntity<EdgeInstructions> edgeInstallInstructionsResult =
+                restTemplate.getForEntity(baseURL + "/api/edge/instructions/install/{edgeId}/{method}", EdgeInstructions.class, edgeId.getId(), method);
         return Optional.ofNullable(edgeInstallInstructionsResult.getBody());
+    }
+
+    public Optional<EdgeInstructions> getEdgeUpgradeInstructions(String edgeVersion, String method) {
+        ResponseEntity<EdgeInstructions> edgeUpgradeInstructionsResult =
+                restTemplate.getForEntity(baseURL + "/api/edge/instructions/upgrade/{edgeVersion}/{method}", EdgeInstructions.class, edgeVersion, method);
+        return Optional.ofNullable(edgeUpgradeInstructionsResult.getBody());
     }
 
     public UUID saveEntitiesVersion(VersionCreateRequest request) {

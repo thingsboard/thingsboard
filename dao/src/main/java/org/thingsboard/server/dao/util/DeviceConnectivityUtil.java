@@ -217,7 +217,7 @@ public class DeviceConnectivityUtil {
         return host;
     }
 
-    private static boolean isLocalhost(String host) {
+    public static boolean isLocalhost(String host) {
         try {
             InetAddress inetAddress = InetAddress.getByName(host);
             return inetAddress.isLoopbackAddress();
