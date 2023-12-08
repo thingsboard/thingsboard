@@ -36,14 +36,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportService;
-import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.activity.AbstractActivityManager;
 import org.thingsboard.server.common.transport.activity.ActivityReportCallback;
 import org.thingsboard.server.common.transport.service.SessionMetaData;
 import org.thingsboard.server.common.transport.service.TransportActivityState;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -71,9 +72,8 @@ public class LastOnlyTransportActivityManager extends AbstractActivityManager<UU
         states.compute(activityKey, (__, activityState) -> {
             if (activityState == null) {
                 activityState = newStateSupplier.get();
-                activityState.setLastRecordedTime(newLastRecordedTime);
-                activityState.setLastReportedTime(0L);
-            } else {
+            }
+            if (activityState.getLastRecordedTime() < newLastRecordedTime) {
                 activityState.setLastRecordedTime(newLastRecordedTime);
             }
             return activityState;
@@ -82,7 +82,7 @@ public class LastOnlyTransportActivityManager extends AbstractActivityManager<UU
 
     @Override
     protected void onReportingPeriodEnd() {
-        long expirationTime = System.currentTimeMillis() - sessionInactivityTimeout;
+        Set<UUID> statesToRemove = new HashSet<>();
         for (Map.Entry<UUID, TransportActivityState> entry : states.entrySet()) {
             var sessionId = entry.getKey();
             var activityState = entry.getValue();
@@ -91,7 +91,7 @@ public class LastOnlyTransportActivityManager extends AbstractActivityManager<UU
             if (sessionMetaData != null) {
                 activityState.setSessionInfoProto(sessionMetaData.getSessionInfo());
             } else {
-                states.remove(sessionId);
+                statesToRemove.add(sessionId);
             }
 
             long lastActivityTime = activityState.getLastRecordedTime();
@@ -108,25 +108,18 @@ public class LastOnlyTransportActivityManager extends AbstractActivityManager<UU
                 }
             }
 
+            long expirationTime = System.currentTimeMillis() - sessionInactivityTimeout;
             boolean hasExpired = sessionMetaData != null && lastActivityTime < expirationTime;
             if (hasExpired) {
                 if (log.isDebugEnabled()) {
-                    log.debug("[{}] Session has expired due to last activity time: [{}]!", sessionId, lastActivityTime);
+                    log.debug("[{}] Session has expired due to last activity time: [{}].", sessionId, lastActivityTime);
                 }
+                statesToRemove.add(sessionId);
                 transportService.deregisterSession(sessionInfo);
-                transportService.process(sessionInfo, SESSION_EVENT_MSG_CLOSED, new TransportServiceCallback<>() {
-                    @Override
-                    public void onSuccess(Void msgAcknowledged) {
-                        states.remove(sessionId);
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        states.remove(sessionId);
-                    }
-                });
+                transportService.process(sessionInfo, SESSION_EVENT_MSG_CLOSED, null);
                 sessionMetaData.getListener().onRemoteSessionCloseCommand(sessionId, SESSION_EXPIRED_NOTIFICATION_PROTO);
-            } else if (activityState.getLastReportedTime() < lastActivityTime) {
+            }
+            if (activityState.getLastReportedTime() < lastActivityTime) {
                 reporter.report(sessionId, lastActivityTime, activityState, new ActivityReportCallback<>() {
                     @Override
                     public void onSuccess(UUID key, long reportedTime) {
@@ -135,11 +128,12 @@ public class LastOnlyTransportActivityManager extends AbstractActivityManager<UU
 
                     @Override
                     public void onFailure(UUID key, Throwable t) {
-                        log.debug("[{}] Failed to report last activity event in a period for session.", sessionId);
+                        log.debug("[{}] Failed to report last activity event in a period.", sessionId);
                     }
                 });
             }
         }
+        statesToRemove.forEach(states::remove);
     }
 
     private void updateLastReportedTime(UUID key, long newLastReportedTime) {

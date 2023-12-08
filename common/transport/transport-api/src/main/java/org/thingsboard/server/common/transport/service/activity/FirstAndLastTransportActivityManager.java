@@ -43,14 +43,15 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportService;
-import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.activity.AbstractActivityManager;
 import org.thingsboard.server.common.transport.activity.ActivityReportCallback;
 import org.thingsboard.server.common.transport.service.SessionMetaData;
 import org.thingsboard.server.common.transport.service.TransportActivityState;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -86,19 +87,16 @@ public class FirstAndLastTransportActivityManager extends AbstractActivityManage
         SettableFuture<Pair<UUID, Long>> reportCompletedFuture = SettableFuture.create();
         states.compute(sessionId, (key, activityStateWrapper) -> {
             if (activityStateWrapper == null) {
-                TransportActivityState activityState = newStateSupplier.get();
-                activityState.setLastRecordedTime(newLastRecordedTime);
-                activityState.setLastReportedTime(0L);
                 activityStateWrapper = new ActivityStateWrapper();
-                activityStateWrapper.setState(activityState);
-                activityStateWrapper.setAlreadyBeenReported(false);
-            } else {
-                activityStateWrapper.getState().setLastRecordedTime(newLastRecordedTime);
+                activityStateWrapper.setState(newStateSupplier.get());
+            }
+            var activityState = activityStateWrapper.getState();
+            if (activityState.getLastRecordedTime() < newLastRecordedTime) {
+                activityState.setLastRecordedTime(newLastRecordedTime);
             }
             if (activityStateWrapper.isAlreadyBeenReported()) {
                 return activityStateWrapper;
             }
-            var activityState = activityStateWrapper.getState();
             if (activityState.getLastReportedTime() < activityState.getLastRecordedTime()) {
                 reporter.report(key, activityState.getLastRecordedTime(), activityState, new ActivityReportCallback<>() {
                     @Override
@@ -123,14 +121,14 @@ public class FirstAndLastTransportActivityManager extends AbstractActivityManage
 
             @Override
             public void onFailure(@NonNull Throwable t) {
-                log.debug("[{}] Failed to report first activity event in a period for session.", sessionId);
+                log.debug("[{}] Failed to report first activity event in a period.", sessionId);
             }
         }, MoreExecutors.directExecutor());
     }
 
     @Override
     protected void onReportingPeriodEnd() {
-        long expirationTime = System.currentTimeMillis() - sessionInactivityTimeout;
+        Set<UUID> statesToRemove = new HashSet<>();
         for (Map.Entry<UUID, ActivityStateWrapper> entry : states.entrySet()) {
             var sessionId = entry.getKey();
             var activityStateWrapper = entry.getValue();
@@ -140,7 +138,7 @@ public class FirstAndLastTransportActivityManager extends AbstractActivityManage
             if (sessionMetaData != null) {
                 activityState.setSessionInfoProto(sessionMetaData.getSessionInfo());
             } else {
-                states.remove(sessionId);
+                statesToRemove.add(sessionId);
             }
 
             long lastActivityTime = activityState.getLastRecordedTime();
@@ -157,25 +155,18 @@ public class FirstAndLastTransportActivityManager extends AbstractActivityManage
                 }
             }
 
+            long expirationTime = System.currentTimeMillis() - sessionInactivityTimeout;
             boolean hasExpired = sessionMetaData != null && lastActivityTime < expirationTime;
             if (hasExpired) {
                 if (log.isDebugEnabled()) {
-                    log.debug("[{}] Session has expired due to last activity time: [{}]!", sessionId, lastActivityTime);
+                    log.debug("[{}] Session has expired due to last activity time: [{}].", sessionId, lastActivityTime);
                 }
+                statesToRemove.add(sessionId);
                 transportService.deregisterSession(sessionInfo);
-                transportService.process(sessionInfo, SESSION_EVENT_MSG_CLOSED, new TransportServiceCallback<>() {
-                    @Override
-                    public void onSuccess(Void msgAcknowledged) {
-                        states.remove(sessionId);
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        states.remove(sessionId);
-                    }
-                });
+                transportService.process(sessionInfo, SESSION_EVENT_MSG_CLOSED, null);
                 sessionMetaData.getListener().onRemoteSessionCloseCommand(sessionId, SESSION_EXPIRED_NOTIFICATION_PROTO);
-            } else if (activityState.getLastReportedTime() < lastActivityTime) {
+            }
+            if (activityState.getLastReportedTime() < lastActivityTime) {
                 reporter.report(sessionId, lastActivityTime, activityState, new ActivityReportCallback<>() {
                     @Override
                     public void onSuccess(UUID key, long reportedTime) {
@@ -184,12 +175,13 @@ public class FirstAndLastTransportActivityManager extends AbstractActivityManage
 
                     @Override
                     public void onFailure(UUID key, Throwable t) {
-                        log.debug("[{}] Failed to report last activity event in a period for session.", sessionId);
+                        log.debug("[{}] Failed to report last activity event in a period.", sessionId);
                     }
                 });
             }
             activityStateWrapper.setAlreadyBeenReported(false);
         }
+        statesToRemove.forEach(states::remove);
     }
 
     private void updateLastReportedTime(UUID key, long newLastReportedTime) {

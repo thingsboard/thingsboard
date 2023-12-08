@@ -255,11 +255,7 @@ public class DefaultTransportService implements TransportService {
         transportNotificationsConsumer.subscribe(Collections.singleton(tpi));
         transportApiRequestTemplate.init();
         mainConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("transport-consumer"));
-
-        activityManager.setName("transport-activity-manager");
-        activityManager.setReportingPeriod(sessionReportTimeout);
-        activityManager.setActivityReporter(activityReporter);
-        activityManager.init();
+        activityManager.init("transport-activity-manager", sessionReportTimeout, activityReporter);
     }
 
     private final ActivityStateReporter<UUID, TransportActivityState> activityReporter = (sessionId, timeToReport, state, reportCallback) -> {
