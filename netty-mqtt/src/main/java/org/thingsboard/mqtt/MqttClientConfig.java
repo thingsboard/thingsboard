@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import io.netty.channel.Channel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.mqtt.MqttVersion;
 import io.netty.handler.ssl.SslContext;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -26,10 +28,12 @@ import java.util.Random;
 
 @SuppressWarnings({"WeakerAccess", "unused"})
 public final class MqttClientConfig {
-
     private final SslContext sslContext;
     private final String randomClientId;
 
+    @Getter
+    @Setter
+    private String ownerId; // [TenantId][IntegrationId] or [TenantId][RuleNodeId] for exceptions logging purposes
     private String clientId;
     private int timeoutSeconds = 60;
     private MqttVersion protocolVersion = MqttVersion.MQTT_3_1;

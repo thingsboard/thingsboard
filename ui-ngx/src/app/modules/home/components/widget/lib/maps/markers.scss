@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,4 +40,16 @@
 
 .leaflet-container {
   background-color: white;
+}
+
+.tb-cluster-marker-container {
+  border: none;
+  background-color: transparent;
+}
+.tb-cluster-marker-element {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40px;
+  height: 40px;
 }

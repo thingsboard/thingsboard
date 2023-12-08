@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,22 @@
 package org.thingsboard.rule.engine.metadata;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 
 import java.util.Collections;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class TbGetCustomerDetailsNodeConfiguration extends TbAbstractGetEntityDetailsNodeConfiguration implements NodeConfiguration<TbGetCustomerDetailsNodeConfiguration> {
-
 
     @Override
     public TbGetCustomerDetailsNodeConfiguration defaultConfiguration() {
-        TbGetCustomerDetailsNodeConfiguration configuration = new TbGetCustomerDetailsNodeConfiguration();
+        var configuration = new TbGetCustomerDetailsNodeConfiguration();
         configuration.setDetailsList(Collections.emptyList());
+        configuration.setFetchTo(TbMsgSource.DATA);
         return configuration;
     }
+
 }

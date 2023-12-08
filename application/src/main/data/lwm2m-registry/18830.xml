@@ -1,0 +1,173 @@
+<!--
+BSD-3 Clause License
+
+Copyright 2019 IoTerop. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+1. Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+3. Neither the name of the copyright holder nor the names of its
+contributors may be used to endorse or promote products derived
+from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
+The above license is used as a license under copyright only. Please
+reference the company patent licensing terms:
+https://ioterop.com/
+-->
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.openmobilealliance.org/tech/profiles/LWM2M-v1_1.xsd">
+    <Object ObjectType="MODefinition">
+        <Name>MQTT Broker</Name>
+        <Description1><![CDATA[This LwM2M Object provides the information to connect to an MQTT Broker i.e. URI, configuration, and keying material.]]></Description1>
+        <ObjectID>18830</ObjectID>
+        <ObjectURN>urn:oma:lwm2m:x:18830</ObjectURN>
+        <LWM2MVersion>1.1</LWM2MVersion>
+        <ObjectVersion>1.0</ObjectVersion>
+        <MultipleInstances>Multiple</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <Resources>
+            <Item ID="0">
+                <Name>URI</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Mandatory</Mandatory>
+                <Type>String</Type>
+                <RangeEnumeration></RangeEnumeration>
+                <Units></Units>
+                <Description><![CDATA[URI of the MQTT broker.]]></Description>
+            </Item>
+            <Item ID="1">
+                <Name>Client Identifier</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Mandatory</Mandatory>
+                <Type>String</Type>
+                <RangeEnumeration></RangeEnumeration>
+                <Units></Units>
+                <Description><![CDATA[MQTT Client Identifier to use when connecting to this MQTT broker.]]></Description>
+            </Item>
+            <Item ID="2">
+                <Name>Clean Session</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Mandatory</Mandatory>
+                <Type>Boolean</Type>
+                <RangeEnumeration></RangeEnumeration>
+                <Units></Units>
+                <Description><![CDATA[The Clean Session value to declare in the MQTT CONNECT message.]]></Description>
+            </Item>
+            <Item ID="3">
+                <Name>Keep Alive</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Mandatory</Mandatory>
+                <Type>Unsigned Integer</Type>
+                <RangeEnumeration>0..65535</RangeEnumeration>
+                <Units>s</Units>
+                <Description><![CDATA[The Keep Alive value to declare in the MQTT CONNECT message.]]></Description>
+            </Item>
+            <Item ID="4">
+                <Name>User Name</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type>String</Type>
+                <RangeEnumeration></RangeEnumeration>
+                <Units></Units>
+                <Description><![CDATA[The User Name to declare in the MQTT CONNECT message.]]></Description>
+            </Item>
+            <Item ID="5">
+                <Name>Password</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type>Opaque</Type>
+                <RangeEnumeration>0..65535</RangeEnumeration>
+                <Units></Units>
+                <Description><![CDATA[The Password value to declare in the MQTT CONNECT message.]]></Description>
+            </Item>
+            <Item ID="6">
+                <Name>Security Mode</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Mandatory</Mandatory>
+                <Type>Integer</Type>
+                <RangeEnumeration>0..4</RangeEnumeration>
+                <Units></Units>
+                <Description><![CDATA[Determines which security mode is used
+                    0: PreShared Key mode
+                    1: Raw Public Key mode
+                    2: Certificate mode
+                    3: NoSec mode
+                    4: Certificate mode with EST
+                ]]></Description>
+            </Item>
+            <Item ID="7">
+                <Name>Public Key or Identity</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type>Opaque</Type>
+                <RangeEnumeration></RangeEnumeration>
+                <Units></Units>
+                <Description><![CDATA[Stores the Device’s certificate, public key (RPK mode) or PSK Identity (PSK mode).]]></Description>
+            </Item>
+            <Item ID="8">
+                <Name>MQTT Broker Public Key</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type>Opaque</Type>
+                <RangeEnumeration></RangeEnumeration>
+                <Units></Units>
+                <Description><![CDATA[Stores the MQTT Broker’s certificate, public key (RPK mode) or trust anchor. The Certificate Usage Resource determines the content of this resource.]]></Description>
+            </Item>
+            <Item ID="9">
+                <Name>Secret Key</Name>
+                <Operations>W</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type>Opaque</Type>
+                <RangeEnumeration></RangeEnumeration>
+                <Units></Units>
+                <Description><![CDATA[Stores the secret key (PSK mode) or private key (RPK or certificate mode).]]></Description>
+            </Item>
+            <Item ID="10">
+                <Name>Certificate Usage</Name>
+                <Operations>RW</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Optional</Mandatory>
+                <Type>Integer</Type>
+                <RangeEnumeration>0..3</RangeEnumeration>
+                <Units></Units>
+                <Description><![CDATA[The Certificate Usage Resource specifies the semantic of the certificate or raw public key stored in the "MQTT Broker Public Key" Resource, which is used to match the certificate presented in the TLS/DTLS handshake. The currently defined values are:
+                    0: CA constraint
+                    1: service certificate constraint
+                    2: trust anchor assertion
+                    3: domain-issued certificate
+
+                    When this Resource is absent, value (3) for domain issued certificate mode is assumed.
+                ]]></Description>
+            </Item>
+        </Resources>
+        <Description2 />
+    </Object>
+</LWM2M>

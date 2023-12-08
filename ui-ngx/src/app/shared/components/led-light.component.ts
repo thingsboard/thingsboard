@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@
 import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { RaphaelElement, RaphaelPaper, RaphaelSet } from 'raphael';
-import * as tinycolor_ from 'tinycolor2';
-
-const tinycolor = tinycolor_;
+import tinycolor from 'tinycolor2';
 
 interface CircleElement extends RaphaelElement {
   theGlow?: RaphaelSet;

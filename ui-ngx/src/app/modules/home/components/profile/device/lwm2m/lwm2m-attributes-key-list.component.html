@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -25,8 +25,7 @@
        *ngFor="let nameValueControl of attributesValueFormArray().controls; let $index = index"
         [formGroup]="nameValueControl">
     <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-      <mat-form-field fxFlex="40" floatLabel="always" hideRequiredMarker>
-        <mat-label></mat-label>
+      <mat-form-field fxFlex="40">
         <mat-select formControlName="name" required>
           <mat-option *ngFor="let attributeName of attributeNames" [value]="attributeName"
                       [disabled]="isDisabledAttributeName(attributeName, $index)">
@@ -37,8 +36,7 @@
           {{ 'device-profile.lwm2m.attribute-name-required' | translate }}
         </mat-error>
       </mat-form-field>
-      <mat-form-field fxFlex="60" floatLabel="always" hideRequiredMarker>
-        <mat-label></mat-label>
+      <mat-form-field fxFlex="60">
         <input formControlName="value" matInput required type="number"
                placeholder="{{ 'key-val.value' | translate }}">
         <mat-error fxLayout="row" *ngIf="nameValueControl.get('value').hasError('required')">

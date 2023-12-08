@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 
@@ -33,7 +33,7 @@ export interface RateLimitsDetailsDialogData {
 })
 export class RateLimitsDetailsDialogComponent extends DialogComponent<RateLimitsDetailsDialogComponent> {
 
-  editDetailsFormGroup: FormGroup;
+  editDetailsFormGroup: UntypedFormGroup;
 
   rateLimits: string = this.data.rateLimits;
 
@@ -43,7 +43,7 @@ export class RateLimitsDetailsDialogComponent extends DialogComponent<RateLimits
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: RateLimitsDetailsDialogData,
               public dialogRef: MatDialogRef<RateLimitsDetailsDialogComponent>,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
     this.editDetailsFormGroup = this.fb.group({
       rateLimits: [this.rateLimits, []]

@@ -1,0 +1,121 @@
+/**
+ * Copyright © 2016-2023 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+:host {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+
+  .saturation-component {
+    height: 238px;
+    border-radius: 8px;
+  }
+
+  .control-component {
+    max-height: 48px;
+    display: flex;
+    gap: 16px;
+
+    .indicator-component {
+      height: 48px;
+      width: 48px;
+      border-radius: 8px;
+      background: transparent url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUAAAAAAAClZ7nPAAAAAnRSTlMUAFg9Gm0AAAAPSURBVAjXY2D4jxXhEgYAfr8P8QhChVEAAAAASUVORK5CYII=') repeat;
+    }
+
+    .hue-alpha-range {
+      display: flex;
+      justify-content: space-between;
+      flex-direction: column;
+      flex: 1;
+
+      > * {
+        height: 18px;
+        overflow: hidden;
+        border-radius: 9px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+      }
+    }
+  }
+
+  .color-input-block {
+    display: flex;
+    gap: 20px;
+
+    .presentation-select {
+      font-size: 14px;
+      width: 56px;
+    }
+
+    .color-input {
+      flex: 1;
+      width: min-content;
+      &> * {
+        color: initial;
+      }
+    }
+  }
+
+  .color-presets-block {
+    .color-presets-component {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+  }
+}
+
+:host ::ng-deep {
+  .saturation-component {
+    .pointer {
+      border-width: 2px;
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  indicator-component {
+    svg {
+      vertical-align: -70% !important;
+    }
+  }
+
+  .hue-alpha-range {
+    alpha-component, hue-component {
+      .pointer {
+        height: 18px;
+        width: 18px;
+        background: none;
+        border: 2px solid #fff;
+      }
+      .gradient-color {
+        border-radius: 9px;
+      }
+    }
+  }
+
+  .color-presets-component {
+    .presets-row {
+      gap: 10px;
+      justify-content: space-between;
+    }
+    color-preset {
+      height: 20px;
+      width: 20px;
+      border-radius: 4px;
+    }
+  }
+}

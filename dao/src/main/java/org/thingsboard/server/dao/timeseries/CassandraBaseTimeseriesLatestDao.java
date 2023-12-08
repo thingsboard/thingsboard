@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
+import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -43,6 +44,7 @@ import org.thingsboard.server.dao.util.NoSqlTsLatestDao;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 
@@ -59,14 +61,33 @@ public class CassandraBaseTimeseriesLatestDao extends AbstractCassandraBaseTimes
     private PreparedStatement findAllLatestStmt;
 
     @Override
+    public ListenableFuture<Optional<TsKvEntry>> findLatestOpt(TenantId tenantId, EntityId entityId, String key) {
+        return findLatest(tenantId, entityId, key, rs -> convertResultToTsKvEntryOpt(key, rs.one()));
+    }
+
+    @Override
     public ListenableFuture<TsKvEntry> findLatest(TenantId tenantId, EntityId entityId, String key) {
+        return findLatest(tenantId, entityId, key, rs -> convertResultToTsKvEntry(key, rs.one()));
+    }
+
+    @Override
+    public TsKvEntry findLatestSync(TenantId tenantId, EntityId entityId, String key) {
+        try {
+            return findLatest(tenantId, entityId, key, rs -> convertResultToTsKvEntry(key, rs.one())).get();
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("[{}][{}] Failed to get latest entry for key: {} due to: ", tenantId, entityId, key, e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    private <T> ListenableFuture<T> findLatest(TenantId tenantId, EntityId entityId, String key, java.util.function.Function<TbResultSet, T> function) {
         BoundStatementBuilder stmtBuilder = new BoundStatementBuilder(getFindLatestStmt().bind());
         stmtBuilder.setString(0, entityId.getEntityType().name());
         stmtBuilder.setUuid(1, entityId.getId());
         stmtBuilder.setString(2, key);
         BoundStatement stmt = stmtBuilder.build();
         log.debug(GENERATED_QUERY_FOR_ENTITY_TYPE_AND_ENTITY_ID, stmt, entityId.getEntityType(), entityId.getId());
-        return getFuture(executeAsyncRead(tenantId, stmt), rs -> convertResultToTsKvEntry(key, rs.one()));
+        return getFuture(executeAsyncRead(tenantId, stmt), function);
     }
 
     @Override
@@ -145,9 +166,10 @@ public class CassandraBaseTimeseriesLatestDao extends AbstractCassandraBaseTimes
         long endTs = query.getStartTs() - 1;
         ReadTsKvQuery findNewLatestQuery = new BaseReadTsKvQuery(query.getKey(), startTs, endTs, endTs - startTs, 1,
                 Aggregation.NONE, DESC_ORDER);
-        ListenableFuture<List<TsKvEntry>> future = aggregationTimeseriesDao.findAllAsync(tenantId, entityId, findNewLatestQuery);
+        ListenableFuture<ReadTsKvQueryResult> future = aggregationTimeseriesDao.findAllAsync(tenantId, entityId, findNewLatestQuery);
 
-        return Futures.transformAsync(future, entryList -> {
+        return Futures.transformAsync(future, result -> {
+            var entryList = result.getData();
             if (entryList.size() == 1) {
                 TsKvEntry entry = entryList.get(0);
                 return Futures.transform(saveLatest(tenantId, entityId, entryList.get(0)), v -> new TsKvLatestRemovingResult(entry), MoreExecutors.directExecutor());

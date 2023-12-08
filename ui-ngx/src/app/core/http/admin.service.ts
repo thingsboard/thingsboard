@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,21 +15,25 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
-import { Observable, of } from 'rxjs';
+import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
+import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import {
   AdminSettings,
-  RepositorySettings,
+  AutoCommitSettings,
+  MailConfigTemplate,
+  FeaturesInfo,
+  JwtSettings,
   MailServerSettings,
+  RepositorySettings,
+  RepositorySettingsInfo,
   SecuritySettings,
   TestSmsRequest,
-  UpdateMessage, AutoCommitSettings
+  UpdateMessage
 } from '@shared/models/settings.models';
 import { EntitiesVersionControlService } from '@core/http/entities-version-control.service';
 import { tap } from 'rxjs/operators';
-import { AuthUser } from '@shared/models/user.model';
-import { Authority } from '@shared/models/authority.enum';
+import { LoginResponse } from '@shared/models/login.models';
 
 @Injectable({
   providedIn: 'root'
@@ -70,6 +74,14 @@ export class AdminService {
       defaultHttpOptionsFromConfig(config));
   }
 
+  public getJwtSettings(config?: RequestConfig): Observable<JwtSettings> {
+    return this.http.get<JwtSettings>(`/api/admin/jwtSettings`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public saveJwtSettings(jwtSettings: JwtSettings, config?: RequestConfig): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>('/api/admin/jwtSettings', jwtSettings, defaultHttpOptionsFromConfig(config));
+  }
+
   public getRepositorySettings(config?: RequestConfig): Observable<RepositorySettings> {
     return this.http.get<RepositorySettings>(`/api/admin/repositorySettings`, defaultHttpOptionsFromConfig(config));
   }
@@ -97,6 +109,10 @@ export class AdminService {
     return this.http.post<void>('/api/admin/repositorySettings/checkAccess', repositorySettings, defaultHttpOptionsFromConfig(config));
   }
 
+  public getRepositorySettingsInfo(config?: RequestConfig): Observable<RepositorySettingsInfo> {
+    return this.http.get<RepositorySettingsInfo>('/api/admin/repositorySettings/info', defaultHttpOptionsFromConfig(config));
+  }
+
   public getAutoCommitSettings(config?: RequestConfig): Observable<AutoCommitSettings> {
     return this.http.get<AutoCommitSettings>(`/api/admin/autoCommitSettings`, defaultHttpOptionsFromConfig(config));
   }
@@ -116,5 +132,21 @@ export class AdminService {
 
   public checkUpdates(config?: RequestConfig): Observable<UpdateMessage> {
     return this.http.get<UpdateMessage>(`/api/admin/updates`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getFeaturesInfo(config?: RequestConfig): Observable<FeaturesInfo> {
+    return this.http.get<FeaturesInfo>('/api/admin/featuresInfo', defaultHttpOptionsFromConfig(config));
+  }
+
+  public getLoginProcessingUrl(config?: RequestConfig): Observable<string> {
+    return this.http.get<string>(`/api/admin/mail/oauth2/loginProcessingUrl`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public generateAccessToken(config?: RequestConfig): Observable<string> {
+    return this.http.get<string>(`/api/admin/mail/oauth2/authorize`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getMailConfigTemplate(config?: RequestConfig): Observable<Array<MailConfigTemplate>> {
+    return this.http.get<Array<MailConfigTemplate>>('/api/mail/config/template', defaultHttpOptionsFromConfig(config));
   }
 }

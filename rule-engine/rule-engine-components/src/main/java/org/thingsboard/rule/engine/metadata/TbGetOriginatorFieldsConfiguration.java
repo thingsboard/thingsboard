@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,29 @@
 package org.thingsboard.rule.engine.metadata;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Data
-public class TbGetOriginatorFieldsConfiguration implements NodeConfiguration<TbGetOriginatorFieldsConfiguration> {
+@EqualsAndHashCode(callSuper = true)
+public class TbGetOriginatorFieldsConfiguration extends TbGetMappedDataNodeConfiguration implements NodeConfiguration<TbGetOriginatorFieldsConfiguration> {
 
-    private Map<String, String> fieldsMapping;
+    private boolean ignoreNullStrings;
 
     @Override
     public TbGetOriginatorFieldsConfiguration defaultConfiguration() {
-        TbGetOriginatorFieldsConfiguration configuration = new TbGetOriginatorFieldsConfiguration();
-        Map<String, String> fieldsMapping = new HashMap<>();
-        fieldsMapping.put("name", "originatorName");
-        fieldsMapping.put("type", "originatorType");
-        configuration.setFieldsMapping(fieldsMapping);
+        var configuration = new TbGetOriginatorFieldsConfiguration();
+        var dataMapping = new HashMap<String, String>();
+        dataMapping.put("name", "originatorName");
+        dataMapping.put("type", "originatorType");
+        configuration.setDataMapping(dataMapping);
+        configuration.setIgnoreNullStrings(false);
+        configuration.setFetchTo(TbMsgSource.METADATA);
         return configuration;
     }
+
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,15 +43,19 @@ public interface EdgeEventDao extends Dao<EdgeEvent> {
      *
      * @param tenantId the tenantId
      * @param edgeId   the edgeId
+     * @param seqIdStart  the seq id start
+     * @param seqIdEnd  the seq id end
      * @param pageLink the pageLink
      * @return the event list
      */
-    PageData<EdgeEvent> findEdgeEvents(UUID tenantId, EdgeId edgeId, TimePageLink pageLink, boolean withTsUpdate);
+    PageData<EdgeEvent> findEdgeEvents(UUID tenantId, EdgeId edgeId, Long seqIdStart, Long seqIdEnd, TimePageLink pageLink);
 
     /**
      * Executes stored procedure to cleanup old edge events.
      * @param ttl the ttl for edge events in seconds
      */
     void cleanupEvents(long ttl);
+
+    void migrateEdgeEvents();
 
 }

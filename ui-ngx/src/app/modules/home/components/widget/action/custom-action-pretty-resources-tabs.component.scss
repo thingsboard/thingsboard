@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,6 @@
  * limitations under the License.
  */
 .tb-custom-action-editor-container {
-
-  mat-form-field.resource-field {
-    max-height: 40px;
-    margin: 10px 0 0;
-    .mat-form-field-wrapper {
-      padding-bottom: 0;
-      .mat-form-field-flex {
-        max-height: 40px;
-        .mat-form-field-infix {
-          border: 0;
-        }
-      }
-      .mat-form-field-underline {
-        bottom: 0;
-      }
-    }
-  }
-
   .html-panel,
   .css-panel {
     width: 100%;
@@ -58,7 +40,7 @@
       }
     }
 
-    button.mat-button, button.mat-icon-button, button.mat-icon-button.tb-mat-32 {
+    button.mat-mdc-button-base, button.mat-icon-button-base.tb-mat-32 {
       align-items: center;
       vertical-align: middle;
       min-width: 32px;
@@ -72,6 +54,10 @@
       &:not(:last-child) {
         margin-right: 4px;
       }
+    }
+
+    button.mat-mdc-button-base:not(.mat-mdc-icon-button) {
+      height: 23px;
     }
   }
 

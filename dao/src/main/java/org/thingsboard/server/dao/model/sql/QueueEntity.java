@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.ProcessingStrategy;
@@ -40,10 +40,8 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
-@Table(name = ModelConstants.QUEUE_COLUMN_FAMILY_NAME)
+@Table(name = ModelConstants.QUEUE_TABLE_NAME)
 public class QueueEntity extends BaseSqlEntity<Queue> {
-
-    private static final ObjectMapper mapper = new ObjectMapper();
 
     @Column(name = ModelConstants.QUEUE_TENANT_ID_PROPERTY)
     private UUID tenantId;
@@ -92,8 +90,8 @@ public class QueueEntity extends BaseSqlEntity<Queue> {
         this.partitions = queue.getPartitions();
         this.consumerPerPartition = queue.isConsumerPerPartition();
         this.packProcessingTimeout = queue.getPackProcessingTimeout();
-        this.submitStrategy = mapper.valueToTree(queue.getSubmitStrategy());
-        this.processingStrategy = mapper.valueToTree(queue.getProcessingStrategy());
+        this.submitStrategy = JacksonUtil.valueToTree(queue.getSubmitStrategy());
+        this.processingStrategy = JacksonUtil.valueToTree(queue.getProcessingStrategy());
         this.additionalInfo = queue.getAdditionalInfo();
     }
 
@@ -108,8 +106,8 @@ public class QueueEntity extends BaseSqlEntity<Queue> {
         queue.setPartitions(partitions);
         queue.setConsumerPerPartition(consumerPerPartition);
         queue.setPackProcessingTimeout(packProcessingTimeout);
-        queue.setSubmitStrategy(mapper.convertValue(submitStrategy, SubmitStrategy.class));
-        queue.setProcessingStrategy(mapper.convertValue(processingStrategy, ProcessingStrategy.class));
+        queue.setSubmitStrategy(JacksonUtil.convertValue(submitStrategy, SubmitStrategy.class));
+        queue.setProcessingStrategy(JacksonUtil.convertValue(processingStrategy, ProcessingStrategy.class));
         queue.setAdditionalInfo(additionalInfo);
         return queue;
     }

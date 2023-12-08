@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,14 +16,14 @@
 
 -->
 <div fxFlex fxLayout="column" class="tb-progress-cover" fxLayoutAlign="center center"
-     [ngStyle]="dashboardStyle"
+     [style]="dashboardStyle"
      [style.backgroundImage]="backgroundImage"
      [fxShow]="(isLoading$ | async) && !ignoreLoading && !isEdit">
   <mat-spinner color="warn" mode="indeterminate" diameter="100">
   </mat-spinner>
 </div>
 <div id="gridster-parent"
-     fxFlex class="tb-dashboard-content layout-wrap" [ngStyle]="{overflowY: isAutofillHeight() ? 'hidden' : 'auto'}"
+     fxFlex class="tb-dashboard-content layout-wrap" [class]="{'autofill-height': isAutofillHeight()}"
                 (contextmenu)="openDashboardContextMenu($event)">
   <div #dashboardMenuTrigger="matMenuTrigger" style="visibility: hidden; position: fixed"
        [style.left]="dashboardMenuPosition.x"
@@ -61,9 +61,9 @@
       </div>
     </ng-template>
   </mat-menu>
-  <div [ngClass]="dashboardClass" id="gridster-background" style="height: auto; min-height: 100%; display: inline;">
+  <div [class]="dashboardClass" id="gridster-background" style="height: 100%;">
     <gridster #gridster id="gridster-child" [options]="gridsterOpts">
-      <gridster-item #gridsterItem [item]="widget" [ngClass]="{'tb-noselect': isEdit}" *ngFor="let widget of dashboardWidgets">
+      <gridster-item #gridsterItem [item]="widget" [class]="{'tb-noselect': isEdit}" *ngFor="let widget of dashboardWidgets">
         <tb-widget-container
           [gridsterItem]="gridsterItem"
           [widget]="widget"

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -56,13 +56,13 @@
     <input matInput formControlName="address2">
   </mat-form-field>
   <tb-phone-input [required]="false"
-                  [label]="'contact.phone'"
+                  label="{{ 'contact.phone' | translate }}"
                   [enableFlagsSelect]="true"
                   formControlName="phone">
   </tb-phone-input>
   <mat-form-field class="mat-block">
     <mat-label translate>contact.email</mat-label>
-    <input matInput formControlName="email">
+    <input matInput type="email" formControlName="email">
     <mat-error *ngIf="parentForm.get('email').hasError('email')">
       {{ 'user.invalid-email-format' | translate }}
     </mat-error>

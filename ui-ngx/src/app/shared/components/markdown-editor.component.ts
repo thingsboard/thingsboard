@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,11 +14,23 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  forwardRef,
+  Input,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  ViewEncapsulation
+} from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Ace } from 'ace-builds';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { getAce } from '@shared/models/ace/ace.models';
+import { ResizeObserver } from '@juggle/resize-observer';
+import { coerceBoolean } from '@shared/decorators/coercion';
+import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 
 @Component({
   selector: 'tb-markdown-editor',
@@ -30,9 +42,10 @@ import { getAce } from '@shared/models/ace/ace.models';
       useExisting: forwardRef(() => MarkdownEditorComponent),
       multi: true
     }
-  ]
+  ],
+  encapsulation: ViewEncapsulation.None
 })
-export class MarkdownEditorComponent implements OnInit, ControlValueAccessor {
+export class MarkdownEditorComponent implements OnInit, ControlValueAccessor, OnDestroy {
 
   @Input() label: string;
 
@@ -40,10 +53,14 @@ export class MarkdownEditorComponent implements OnInit, ControlValueAccessor {
 
   @Input() readonly: boolean;
 
+  @Input() helpId: string;
+
+  @Input()
+  @coerceBoolean()
+  required: boolean;
+
   @ViewChild('markdownEditor', {static: true})
   markdownEditorElmRef: ElementRef;
-
-  private markdownEditor: Ace.Editor;
 
   editorMode = true;
 
@@ -52,22 +69,15 @@ export class MarkdownEditorComponent implements OnInit, ControlValueAccessor {
   markdownValue: string;
   renderValue: string;
 
-  ignoreChange = false;
+  private markdownEditor: Ace.Editor;
+  private ignoreChange = false;
 
-  private propagateChange = null;
+  private editorResize$: ResizeObserver;
+  private editorsResizeCaf: CancelAnimationFrame;
+  private propagateChange: (value: any) => void = () => {};
 
-  private requiredValue: boolean;
-
-  get required(): boolean {
-    return this.requiredValue;
-  }
-
-  @Input()
-  set required(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
-
-  constructor() {
+  constructor(private cd: ChangeDetectorRef,
+              private raf: RafService) {
   }
 
   ngOnInit(): void {
@@ -98,9 +108,26 @@ export class MarkdownEditorComponent implements OnInit, ControlValueAccessor {
               this.updateView();
             }
           });
+          this.editorResize$ = new ResizeObserver(() => {
+            this.onAceEditorResize();
+          });
+          this.editorResize$.observe(editorElement);
         }
       );
 
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.editorResize$) {
+      this.editorResize$.disconnect();
+    }
+    if (this.editorsResizeCaf) {
+      this.editorsResizeCaf();
+      this.editorsResizeCaf = null;
+    }
+    if (this.markdownEditor) {
+      this.markdownEditor.destroy();
     }
   }
 
@@ -126,15 +153,6 @@ export class MarkdownEditorComponent implements OnInit, ControlValueAccessor {
     }
   }
 
-  updateView() {
-    const editorValue = this.markdownEditor.getValue();
-    if (this.markdownValue !== editorValue) {
-      this.markdownValue = editorValue;
-      this.renderValue = this.markdownValue ? this.markdownValue : ' ';
-      this.propagateChange(this.markdownValue);
-    }
-  }
-
   onFullscreen() {
     if (this.markdownEditor) {
       setTimeout(() => {
@@ -150,5 +168,26 @@ export class MarkdownEditorComponent implements OnInit, ControlValueAccessor {
         this.markdownEditor.resize();
       }, 0);
     }
+  }
+
+  private updateView() {
+    const editorValue = this.markdownEditor.getValue();
+    if (this.markdownValue !== editorValue) {
+      this.markdownValue = editorValue;
+      this.renderValue = this.markdownValue ? this.markdownValue : ' ';
+      this.propagateChange(this.markdownValue);
+      this.cd.markForCheck();
+    }
+  }
+
+  private onAceEditorResize() {
+    if (this.editorsResizeCaf) {
+      this.editorsResizeCaf();
+      this.editorsResizeCaf = null;
+    }
+    this.editorsResizeCaf = this.raf.raf(() => {
+      this.markdownEditor.resize();
+      this.markdownEditor.renderer.updateFull();
+    });
   }
 }

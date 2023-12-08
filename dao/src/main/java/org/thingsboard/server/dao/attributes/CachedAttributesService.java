@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,12 +36,14 @@ import org.thingsboard.server.common.stats.DefaultCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.cache.CacheExecutorService;
 import org.thingsboard.server.dao.service.Validator;
+import org.thingsboard.server.dao.sql.JpaExecutorService;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -60,20 +62,25 @@ public class CachedAttributesService implements AttributesService {
     public static final String LOCAL_CACHE_TYPE = "caffeine";
 
     private final AttributesDao attributesDao;
+    private final JpaExecutorService jpaExecutorService;
     private final CacheExecutorService cacheExecutorService;
     private final DefaultCounter hitCounter;
     private final DefaultCounter missCounter;
     private final TbTransactionalCache<AttributeCacheKey, AttributeKvEntry> cache;
     private ListeningExecutorService cacheExecutor;
 
-    @Value("${cache.type}")
+    @Value("${cache.type:caffeine}")
     private String cacheType;
+    @Value("${sql.attributes.value_no_xss_validation:false}")
+    private boolean valueNoXssValidation;
 
     public CachedAttributesService(AttributesDao attributesDao,
+                                   JpaExecutorService jpaExecutorService,
                                    StatsFactory statsFactory,
                                    CacheExecutorService cacheExecutorService,
                                    TbTransactionalCache<AttributeCacheKey, AttributeKvEntry> cache) {
         this.attributesDao = attributesDao;
+        this.jpaExecutorService = jpaExecutorService;
         this.cacheExecutorService = cacheExecutorService;
         this.cache = cache;
 
@@ -123,6 +130,7 @@ public class CachedAttributesService implements AttributesService {
                     return result;
                 } catch (Throwable e) {
                     cacheTransaction.rollback();
+                    log.debug("Could not find attribute from cache: [{}] [{}] [{}]", entityId, scope, attributeKey, e);
                     throw e;
                 }
             });
@@ -130,11 +138,14 @@ public class CachedAttributesService implements AttributesService {
     }
 
     @Override
-    public ListenableFuture<List<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String scope, Collection<String> attributeKeys) {
+    public ListenableFuture<List<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String scope, final Collection<String> attributeKeysNonUnique) {
         validate(entityId, scope);
+        final var attributeKeys = new LinkedHashSet<>(attributeKeysNonUnique); // deduplicate the attributes
         attributeKeys.forEach(attributeKey -> Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey));
 
-        Map<String, TbCacheValueWrapper<AttributeKvEntry>> wrappedCachedAttributes = findCachedAttributes(entityId, scope, attributeKeys);
+        //CacheExecutor for Redis or DirectExecutor for local Caffeine
+        return Futures.transformAsync(cacheExecutor.submit(() -> findCachedAttributes(entityId, scope, attributeKeys)),
+                wrappedCachedAttributes -> {
 
         List<AttributeKvEntry> cachedAttributes = wrappedCachedAttributes.values().stream()
                 .map(TbCacheValueWrapper::get)
@@ -150,7 +161,8 @@ public class CachedAttributesService implements AttributesService {
 
         List<AttributeCacheKey> notFoundKeys = notFoundAttributeKeys.stream().map(k -> new AttributeCacheKey(scope, entityId, k)).collect(Collectors.toList());
 
-        return cacheExecutor.submit(() -> {
+        // DB call should run in DB executor, not in cache-related executor
+        return jpaExecutorService.submit(() -> {
             var cacheTransaction = cache.newTransactionForKeys(notFoundKeys);
             try {
                 log.trace("[{}][{}] Lookup attributes from db: {}", entityId, scope, notFoundAttributeKeys);
@@ -170,9 +182,12 @@ public class CachedAttributesService implements AttributesService {
                 return mergedAttributes;
             } catch (Throwable e) {
                 cacheTransaction.rollback();
+                log.debug("Could not find attributes from cache: [{}] [{}] [{}]", entityId, scope, notFoundAttributeKeys, e);
                 throw e;
             }
         });
+
+        }, MoreExecutors.directExecutor()); // cacheExecutor analyse and returns results or submit to DB executor
     }
 
     private Map<String, TbCacheValueWrapper<AttributeKvEntry>> findCachedAttributes(EntityId entityId, String scope, Collection<String> attributeKeys) {
@@ -206,22 +221,32 @@ public class CachedAttributesService implements AttributesService {
     }
 
     @Override
+    public ListenableFuture<String> save(TenantId tenantId, EntityId entityId, String scope, AttributeKvEntry attribute) {
+        validate(entityId, scope);
+        AttributeUtils.validate(attribute, valueNoXssValidation);
+        ListenableFuture<String> future = attributesDao.save(tenantId, entityId, scope, attribute);
+        return Futures.transform(future, key -> evict(entityId, scope, attribute, key), cacheExecutor);
+    }
+
+    @Override
     public ListenableFuture<List<String>> save(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
         validate(entityId, scope);
-        attributes.forEach(AttributeUtils::validate);
+        AttributeUtils.validate(attributes, valueNoXssValidation);
 
         List<ListenableFuture<String>> futures = new ArrayList<>(attributes.size());
         for (var attribute : attributes) {
             ListenableFuture<String> future = attributesDao.save(tenantId, entityId, scope, attribute);
-            futures.add(Futures.transform(future, key -> {
-                log.trace("[{}][{}][{}] Before cache evict: {}", entityId, scope, key, attribute);
-                cache.evictOrPut(new AttributeCacheKey(scope, entityId, key), attribute);
-                log.trace("[{}][{}][{}] after cache evict.", entityId, scope, key);
-                return key;
-            }, cacheExecutor));
+            futures.add(Futures.transform(future, key -> evict(entityId, scope, attribute, key), cacheExecutor));
         }
 
         return Futures.allAsList(futures);
+    }
+
+    private String evict(EntityId entityId, String scope, AttributeKvEntry attribute, String key) {
+        log.trace("[{}][{}][{}] Before cache evict: {}", entityId, scope, key, attribute);
+        cache.evictOrPut(new AttributeCacheKey(scope, entityId, key), attribute);
+        log.trace("[{}][{}][{}] after cache evict.", entityId, scope, key);
+        return key;
     }
 
     @Override

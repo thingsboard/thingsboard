@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2022 The Thingsboard Authors
+# Copyright © 2016-2023 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-version: '2.2'
+version: '3.0'
 
 services:
   tb-core1:
@@ -59,23 +59,23 @@ services:
 
 volumes:
   tb-log-volume:
-    external: true
-    name: ${TB_LOG_VOLUME}
+    external:
+      name: ${TB_LOG_VOLUME}
   tb-coap-transport-log-volume:
-    external: true
-    name: ${TB_COAP_TRANSPORT_LOG_VOLUME}
+    external:
+      name: ${TB_COAP_TRANSPORT_LOG_VOLUME}
   tb-lwm2m-transport-log-volume:
-    external: true
-    name: ${TB_LWM2M_TRANSPORT_LOG_VOLUME}
+    external:
+      name: ${TB_LWM2M_TRANSPORT_LOG_VOLUME}
   tb-http-transport-log-volume:
-    external: true
-    name: ${TB_HTTP_TRANSPORT_LOG_VOLUME}
+    external:
+      name: ${TB_HTTP_TRANSPORT_LOG_VOLUME}
   tb-mqtt-transport-log-volume:
-    external: true
-    name: ${TB_MQTT_TRANSPORT_LOG_VOLUME}
+    external:
+      name: ${TB_MQTT_TRANSPORT_LOG_VOLUME}
   tb-snmp-transport-log-volume:
-    external: true
-    name: ${TB_SNMP_TRANSPORT_LOG_VOLUME}
+    external:
+      name: ${TB_SNMP_TRANSPORT_LOG_VOLUME}
   tb-vc-executor-log-volume:
-    external: true
-    name: ${TB_VC_EXECUTOR_LOG_VOLUME}
+    external:
+      name: ${TB_VC_EXECUTOR_LOG_VOLUME}

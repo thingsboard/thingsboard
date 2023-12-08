@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
 ///
 
 import {
-  AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef,
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   DoCheck,
   Input,
@@ -56,6 +58,7 @@ import { distinct } from 'rxjs/operators';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetComponentAction, WidgetComponentActionType } from '@home/components/widget/widget-container.component';
+import { TbPopoverComponent } from '@shared/components/popover.component';
 
 @Component({
   selector: 'tb-dashboard',
@@ -87,6 +90,9 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   @Input()
   margin: number;
+
+  @Input()
+  outerMargin: boolean;
 
   @Input()
   isEdit: boolean;
@@ -135,6 +141,9 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   @Input()
   parentDashboard?: IDashboardComponent = null;
+
+  @Input()
+  popoverComponent?: TbPopoverComponent = null;
 
   dashboardTimewindowChangedSubject: Subject<Timewindow> = new ReplaySubject<Timewindow>();
 
@@ -191,6 +200,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   ngOnInit(): void {
     this.dashboardWidgets.parentDashboard = this.parentDashboard;
+    this.dashboardWidgets.popoverComponent = this.popoverComponent;
     if (!this.dashboardTimewindow) {
       this.dashboardTimewindow = this.timeService.defaultTimewindow();
     }
@@ -207,7 +217,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       maxItemCols: 1000,
       maxItemRows: 1000,
       maxItemArea: 1000000,
-      outerMargin: true,
+      outerMargin: isDefined(this.outerMargin) ? this.outerMargin : true,
       margin: isDefined(this.margin) ? this.margin : 10,
       minItemCols: 1,
       minItemRows: 1,
@@ -263,7 +273,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       if (!change.firstChange && change.currentValue !== change.previousValue) {
         if (['isMobile', 'isMobileDisabled', 'autofillHeight', 'mobileAutofillHeight', 'mobileRowHeight'].includes(propName)) {
           updateMobileOpts = true;
-        } else if (['margin', 'columns'].includes(propName)) {
+        } else if (['outerMargin', 'margin', 'columns'].includes(propName)) {
           updateLayoutOpts = true;
         } else if (propName === 'isEdit') {
           updateEditingOpts = true;
@@ -307,7 +317,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     this.gridsterResize$ = new ResizeObserver(() => {
       this.onGridsterParentResize();
     });
-    this.gridsterResize$.observe(this.gridster.el);
+    this.gridsterResize$.observe(this.gridster.el.parentElement);
   }
 
   onUpdateTimewindow(startTimeMs: number, endTimeMs: number, interval?: number, persist?: boolean): void {
@@ -503,7 +513,12 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   }
 
   private updateMobileOpts(parentHeight?: number) {
-    this.isMobileSize = this.checkIsMobileSize();
+    let updateWidgetRowsAndSort = false;
+    const isMobileSize = this.checkIsMobileSize();
+    if (this.isMobileSize !== isMobileSize) {
+      this.isMobileSize = isMobileSize;
+      updateWidgetRowsAndSort = true;
+    }
     const autofillHeight = this.isAutofillHeight();
     if (autofillHeight) {
       this.gridsterOpts.gridType = this.isMobileSize ? GridType.Fixed : GridType.Fit;
@@ -515,6 +530,9 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     const rowSize = this.detectRowSize(this.isMobileSize, autofillHeight, parentHeight);
     if (this.gridsterOpts.fixedRowHeight !== rowSize) {
       this.gridsterOpts.fixedRowHeight = rowSize;
+    }
+    if (updateWidgetRowsAndSort) {
+      this.dashboardWidgets.updateRowsAndSort();
     }
   }
 
@@ -528,6 +546,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   private updateLayoutOpts() {
     this.gridsterOpts.minCols = this.columns ? this.columns : 24;
+    this.gridsterOpts.outerMargin = isDefined(this.outerMargin) ? this.outerMargin : true;
     this.gridsterOpts.margin = isDefined(this.margin) ? this.margin : 10;
   }
 
@@ -568,10 +587,11 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       }
       if (parentHeight) {
         let totalRows = 0;
-        for (const widget of this.dashboardWidgets.dashboardWidgets) {
+        for (const widget of this.dashboardWidgets.activeDashboardWidgets) {
           totalRows += widget.rows;
         }
-        rowHeight = (parentHeight - this.gridsterOpts.margin * (this.dashboardWidgets.dashboardWidgets.length + 2)) / totalRows;
+        rowHeight = ( parentHeight - this.gridsterOpts.margin *
+          ( totalRows + (this.gridsterOpts.outerMargin ? 1 : -1) ) ) / totalRows;
       }
     }
     return rowHeight;

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ///
 
 import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Observable, of } from 'rxjs';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
@@ -29,7 +29,10 @@ import { getCurrentAuthUser } from '@app/core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { TranslateService } from '@ngx-translate/core';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { FloatLabelType } from '@angular/material/form-field/form-field';
+import { FloatLabelType, MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
+import { getEntityDetailsPageURL } from '@core/utils';
+import { EntityType } from '@shared/models/entity-type.models';
+import { AuthUser } from '@shared/models/user.model';
 
 @Component({
   selector: 'tb-dashboard-autocomplete',
@@ -45,7 +48,7 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
 
   private dirty = false;
 
-  selectDashboardFormGroup: FormGroup;
+  selectDashboardFormGroup: UntypedFormGroup;
 
   modelValue: DashboardInfo | string | null;
 
@@ -54,6 +57,9 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
 
   @Input()
   selectFirstDashboard = false;
+
+  @Input()
+  label = this.translate.instant('dashboard.dashboard');
 
   @Input()
   placeholder: string;
@@ -69,6 +75,12 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
 
   @Input()
   floatLabel: FloatLabelType = 'auto';
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
+
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -88,12 +100,23 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
 
   searchText = '';
 
+  dashboardURL: string;
+
+  useDashboardLink = true;
+
+  private authUser: AuthUser;
+
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
               private dashboardService: DashboardService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
+    this.authUser = getCurrentAuthUser(this.store);
+    if (this.authUser.authority === Authority.SYS_ADMIN) {
+      this.useDashboardLink = false;
+    }
+
     this.selectDashboardFormGroup = this.fb.group({
       dashboard: [null]
     });
@@ -132,7 +155,10 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
 
   selectFirstDashboardIfNeeded(): void {
     if (this.selectFirstDashboard && !this.modelValue) {
-      this.getDashboards(new PageLink(1)).subscribe(
+      this.getDashboards(new PageLink(1, 0, null, {
+        property: 'title',
+        direction: Direction.ASC
+      })).subscribe(
         (data) => {
           if (data.data.length) {
             const dashboard = data.data[0];
@@ -161,6 +187,9 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
         this.dashboardService.getDashboardInfo(value).subscribe(
           (dashboard) => {
             this.modelValue = this.useIdValue ? dashboard.id.id : dashboard;
+            if (this.useDashboardLink) {
+              this.dashboardURL = getEntityDetailsPageURL(this.modelValue as string, EntityType.DASHBOARD);
+            }
             this.selectDashboardFormGroup.get('dashboard').patchValue(dashboard, {emitEvent: false});
           }
         );
@@ -203,8 +232,7 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
 
   getDashboards(pageLink: PageLink): Observable<PageData<DashboardInfo>> {
     let dashboardsObservable: Observable<PageData<DashboardInfo>>;
-    const authUser = getCurrentAuthUser(this.store);
-    if (this.dashboardsScope === 'customer' || authUser.authority === Authority.CUSTOMER_USER) {
+    if (this.dashboardsScope === 'customer' || this.authUser.authority === Authority.CUSTOMER_USER) {
       if (this.customerId) {
         dashboardsObservable = this.dashboardService.getCustomerDashboards(this.customerId, pageLink,
           {ignoreLoading: true});
@@ -212,7 +240,7 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
         dashboardsObservable = of(emptyPageData());
       }
     } else {
-      if (authUser.authority === Authority.SYS_ADMIN) {
+      if (this.authUser.authority === Authority.SYS_ADMIN) {
         if (this.tenantId) {
           dashboardsObservable = this.dashboardService.getTenantDashboardsByTenantId(this.tenantId, pageLink,
             {ignoreLoading: true});

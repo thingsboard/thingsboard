@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,17 +34,21 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 public class EntitiesSchemaSqlTest extends AbstractServiceTest {
 
     @Value("${classpath:sql/schema-entities.sql}")
-    private Path installScriptPath;
+    private Path installEntitiesPath;
+    @Value("${classpath:sql/schema-views-and-functions.sql}")
+    private Path installViewsPath;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
     @Test
     public void testRepeatedInstall() throws IOException {
-        String installScript = Files.readString(installScriptPath);
+        String entitiesScript = Files.readString(installEntitiesPath);
+        String viewsScript = Files.readString(installViewsPath);
         try {
             for (int i = 1; i <= 2; i++) {
-                jdbcTemplate.execute(installScript);
+                jdbcTemplate.execute(entitiesScript);
+                jdbcTemplate.execute(viewsScript);
             }
         } catch (Exception e) {
             Assertions.fail("Failed to execute reinstall", e);

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,14 @@ public class EncryptionUtil {
                 .replaceAll("\n", "")
                 .replaceAll("\r", "")
                 .replaceAll("-----END CERTIFICATE-----", "");
+    }
+
+    public static String certTrimNewLinesForChainInDeviceProfile(String input) {
+        return input.replaceAll("\n", "")
+                .replaceAll("\r", "")
+                .replaceAll("-----BEGIN CERTIFICATE-----", "-----BEGIN CERTIFICATE-----\n")
+                .replaceAll("-----END CERTIFICATE-----", "\n-----END CERTIFICATE-----\n")
+                .trim();
     }
 
     public static String pubkTrimNewLines(String input) {

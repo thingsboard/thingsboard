@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 import { Injectable } from '@angular/core';
 import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
-import { User } from '@shared/models/user.model';
+import { User, UserEmailInfo } from '@shared/models/user.model';
 import { Observable } from 'rxjs';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
@@ -51,6 +51,12 @@ export class UserService {
       defaultHttpOptionsFromConfig(config));
   }
 
+  public getUsersForAssign(alarmId: string, pageLink: PageLink,
+                          config?: RequestConfig): Observable<PageData<UserEmailInfo>> {
+    return this.http.get<PageData<UserEmailInfo>>(`/api/users/assign/${alarmId}${pageLink.toQuery()}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
   public getUser(userId: string, config?: RequestConfig): Observable<User> {
     return this.http.get<User>(`/api/user/${userId}`, defaultHttpOptionsFromConfig(config));
   }
@@ -82,6 +88,10 @@ export class UserService {
       url += `?userCredentialsEnabled=${userCredentialsEnabled}`;
     }
     return this.http.post<User>(url, null, defaultHttpOptionsFromConfig(config));
+  }
+
+  public findUsersByQuery(pageLink: PageLink, config?: RequestConfig) : Observable<PageData<UserEmailInfo>> {
+    return this.http.get<PageData<UserEmailInfo>>(`/api/users/info${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
   }
 
 }

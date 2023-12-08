@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,7 +20,19 @@ import { customTranslationsPrefix } from '@app/shared/models/constants';
 export class TbMissingTranslationHandler implements MissingTranslationHandler {
   handle(params: MissingTranslationHandlerParams) {
     if (params.key && !params.key.startsWith(customTranslationsPrefix)) {
-      console.warn('Translation for ' + params.key + ' doesn\'t exist');
+      console.warn('Translation for \'' + params.key + '\' doesn\'t exist');
+      let translations: any;
+      const parts = params.key.split('.');
+      for (let i=parts.length-1; i>=0; i--) {
+        const newTranslations = {};
+        if (i === parts.length-1) {
+          newTranslations[parts[i]] = params.key;
+        } else {
+          newTranslations[parts[i]] = translations;
+        }
+        translations = newTranslations;
+      }
+      params.translateService.setTranslation(params.translateService.currentLang, translations, true);
     }
   }
 }

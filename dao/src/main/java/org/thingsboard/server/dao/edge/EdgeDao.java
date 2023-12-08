@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -169,5 +169,13 @@ public interface EdgeDao extends Dao<Edge> {
      * @return the list of edge objects
      */
     PageData<Edge> findEdgesByTenantIdAndEntityId(UUID tenantId, UUID entityId, EntityType entityType, PageLink pageLink);
+
+    /**
+     * Find edges by tenantProfileId.
+     *
+     * @param tenantProfileId the tenantProfileId
+     * @return the list of edge objects
+     */
+    PageData<Edge> findEdgesByTenantProfileId(UUID tenantProfileId, PageLink pageLink);
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,11 +51,12 @@
     padding: 0 18px;
     margin: 8px;
     .toast-text {
-      padding: 0 6px;
+      padding: 8px;
       width: 100%;
     }
     button {
       margin: 6px 0 6px 12px;
+      color: inherit;
     }
     &.info-toast {
       background: #323232;

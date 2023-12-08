@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,48 +15,40 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.Immutable;
 import org.thingsboard.server.common.data.DeviceInfo;
+import org.thingsboard.server.dao.model.ModelConstants;
 
-import java.util.HashMap;
-import java.util.Map;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
+@Entity
+@Immutable
+@Table(name = ModelConstants.DEVICE_INFO_VIEW_TABLE_NAME)
 public class DeviceInfoEntity extends AbstractDeviceEntity<DeviceInfo> {
 
-    public static final Map<String,String> deviceInfoColumnMap = new HashMap<>();
-    static {
-        deviceInfoColumnMap.put("customerTitle", "c.title");
-        deviceInfoColumnMap.put("deviceProfileName", "p.name");
-    }
-
+    @Column(name = ModelConstants.DEVICE_CUSTOMER_TITLE_PROPERTY)
     private String customerTitle;
+    @Column(name = ModelConstants.DEVICE_CUSTOMER_IS_PUBLIC_PROPERTY)
     private boolean customerIsPublic;
+    @Column(name = ModelConstants.DEVICE_DEVICE_PROFILE_NAME_PROPERTY)
     private String deviceProfileName;
+    @Column(name = ModelConstants.DEVICE_ACTIVE_PROPERTY)
+    private boolean active;
 
     public DeviceInfoEntity() {
         super();
     }
 
-    public DeviceInfoEntity(DeviceEntity deviceEntity,
-                            String customerTitle,
-                            Object customerAdditionalInfo,
-                            String deviceProfileName) {
-        super(deviceEntity);
-        this.customerTitle = customerTitle;
-        if (customerAdditionalInfo != null && ((JsonNode)customerAdditionalInfo).has("isPublic")) {
-            this.customerIsPublic = ((JsonNode)customerAdditionalInfo).get("isPublic").asBoolean();
-        } else {
-            this.customerIsPublic = false;
-        }
-        this.deviceProfileName = deviceProfileName;
-    }
 
     @Override
     public DeviceInfo toData() {
-        return new DeviceInfo(super.toDevice(), customerTitle, customerIsPublic, deviceProfileName);
+        return new DeviceInfo(super.toDevice(), customerTitle, customerIsPublic, deviceProfileName, active);
     }
+
 }

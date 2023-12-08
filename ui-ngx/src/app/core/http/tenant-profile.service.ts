@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import { Observable } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { TenantProfile } from '@shared/models/tenant.model';
 import { EntityInfoData } from '@shared/models/entity.models';
+import { sortEntitiesByIds } from '@shared/models/base-data';
+import { map } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -62,6 +64,13 @@ export class TenantProfileService {
 
   public getTenantProfileInfos(pageLink: PageLink, config?: RequestConfig): Observable<PageData<EntityInfoData>> {
     return this.http.get<PageData<EntityInfoData>>(`/api/tenantProfileInfos${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getTenantProfilesByIds(tenantProfileIds: Array<string>, config?: RequestConfig): Observable<Array<EntityInfoData>> {
+    return this.http.get<Array<EntityInfoData>>(`/api/tenantProfiles?ids=${tenantProfileIds.join(',')}`,
+      defaultHttpOptionsFromConfig(config)).pipe(
+      map((tenantProfiles) => sortEntitiesByIds(tenantProfiles, tenantProfileIds))
+    );
   }
 
 }

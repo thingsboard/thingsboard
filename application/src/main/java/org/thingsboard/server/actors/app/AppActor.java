@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
-import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
+import org.thingsboard.server.common.msg.edge.EdgeSessionMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
@@ -46,6 +46,7 @@ import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 @Slf4j
@@ -73,10 +74,14 @@ public class AppActor extends ContextAwareActor {
     @Override
     protected boolean doProcess(TbActorMsg msg) {
         if (!ruleChainsInitialized) {
-            initTenantActors();
-            ruleChainsInitialized = true;
-            if (msg.getMsgType() != MsgType.APP_INIT_MSG && msg.getMsgType() != MsgType.PARTITION_CHANGE_MSG) {
-                log.warn("Rule Chains initialized by unexpected message: {}", msg);
+            if (MsgType.APP_INIT_MSG.equals(msg.getMsgType())) {
+                initTenantActors();
+                ruleChainsInitialized = true;
+            } else {
+                if (!msg.getMsgType().isIgnoreOnStart()) {
+                    log.warn("Attempt to initialize Rule Chains by unexpected message: {}", msg);
+                }
+                return true;
             }
         }
         switch (msg.getMsgType()) {
@@ -105,7 +110,9 @@ public class AppActor extends ContextAwareActor {
                 onToDeviceActorMsg((TenantAwareMsg) msg, true);
                 break;
             case EDGE_EVENT_UPDATE_TO_EDGE_SESSION_MSG:
-                onToTenantActorMsg((EdgeEventUpdateMsg) msg);
+            case EDGE_SYNC_REQUEST_TO_EDGE_SESSION_MSG:
+            case EDGE_SYNC_RESPONSE_FROM_EDGE_SESSION_MSG:
+                onToEdgeSessionMsg((EdgeSessionMsg) msg);
                 break;
             case SESSION_TIMEOUT_MSG:
                 ctx.broadcastToChildrenByType(msg, EntityType.TENANT);
@@ -123,8 +130,11 @@ public class AppActor extends ContextAwareActor {
                 PageDataIterable<Tenant> tenantIterator = new PageDataIterable<>(tenantService::findTenants, ENTITY_PACK_LIMIT);
                 for (Tenant tenant : tenantIterator) {
                     log.debug("[{}] Creating tenant actor", tenant.getId());
-                    getOrCreateTenantActor(tenant.getId());
-                    log.debug("[{}] Tenant actor created.", tenant.getId());
+                    getOrCreateTenantActor(tenant.getId()).ifPresentOrElse(tenantActor -> {
+                        log.debug("[{}] Tenant actor created.", tenant.getId());
+                    }, () -> {
+                        log.debug("[{}] Skipped actor creation", tenant.getId());
+                    });
                 }
             }
             log.info("Main system actor started.");
@@ -137,11 +147,9 @@ public class AppActor extends ContextAwareActor {
         if (TenantId.SYS_TENANT_ID.equals(msg.getTenantId())) {
             msg.getMsg().getCallback().onFailure(new RuleEngineException("Message has system tenant id!"));
         } else {
-            if (!deletedTenants.contains(msg.getTenantId())) {
-                getOrCreateTenantActor(msg.getTenantId()).tell(msg);
-            } else {
-                msg.getMsg().getCallback().onSuccess();
-            }
+            getOrCreateTenantActor(msg.getTenantId()).ifPresentOrElse(actor -> {
+                actor.tell(msg);
+            }, () -> msg.getMsg().getCallback().onSuccess());
         }
     }
 
@@ -158,12 +166,13 @@ public class AppActor extends ContextAwareActor {
                     log.info("[{}] Handling tenant deleted notification: {}", msg.getTenantId(), msg);
                     deletedTenants.add(tenantId);
                     ctx.stop(new TbEntityActorId(tenantId));
-                } else {
-                    target = getOrCreateTenantActor(msg.getTenantId());
+                    return;
                 }
-            } else {
-                target = getOrCreateTenantActor(msg.getTenantId());
             }
+            target = getOrCreateTenantActor(msg.getTenantId()).orElseGet(() -> {
+                log.debug("Ignoring component lifecycle msg for tenant {} because it is not managed by this service", msg.getTenantId());
+                return null;
+            });
         }
         if (target != null) {
             target.tellWithHighPriority(msg);
@@ -173,37 +182,41 @@ public class AppActor extends ContextAwareActor {
     }
 
     private void onToDeviceActorMsg(TenantAwareMsg msg, boolean priority) {
-        if (!deletedTenants.contains(msg.getTenantId())) {
-            TbActorRef tenantActor = getOrCreateTenantActor(msg.getTenantId());
+        getOrCreateTenantActor(msg.getTenantId()).ifPresentOrElse(tenantActor -> {
             if (priority) {
                 tenantActor.tellWithHighPriority(msg);
             } else {
                 tenantActor.tell(msg);
             }
-        } else {
+        }, () -> {
             if (msg instanceof TransportToDeviceActorMsgWrapper) {
                 ((TransportToDeviceActorMsgWrapper) msg).getCallback().onSuccess();
             }
+        });
+    }
+
+    private Optional<TbActorRef> getOrCreateTenantActor(TenantId tenantId) {
+        if (deletedTenants.contains(tenantId)) {
+            return Optional.empty();
         }
-    }
-
-    private TbActorRef getOrCreateTenantActor(TenantId tenantId) {
-        return ctx.getOrCreateChildActor(new TbEntityActorId(tenantId),
+        return Optional.ofNullable(ctx.getOrCreateChildActor(new TbEntityActorId(tenantId),
                 () -> DefaultActorService.TENANT_DISPATCHER_NAME,
-                () -> new TenantActor.ActorCreator(systemContext, tenantId));
+                () -> new TenantActor.ActorCreator(systemContext, tenantId),
+                () -> systemContext.getServiceInfoProvider().isService(ServiceType.TB_CORE) ||
+                        systemContext.getPartitionService().isManagedByCurrentService(tenantId)));
     }
 
-    private void onToTenantActorMsg(EdgeEventUpdateMsg msg) {
+    private void onToEdgeSessionMsg(EdgeSessionMsg msg) {
         TbActorRef target = null;
         if (ModelConstants.SYSTEM_TENANT.equals(msg.getTenantId())) {
             log.warn("Message has system tenant id: {}", msg);
         } else {
-            target = getOrCreateTenantActor(msg.getTenantId());
+            target = getOrCreateTenantActor(msg.getTenantId()).orElse(null);
         }
         if (target != null) {
             target.tellWithHighPriority(msg);
         } else {
-            log.debug("[{}] Invalid edge event update msg: {}", msg.getTenantId(), msg);
+            log.debug("[{}] Invalid edge session msg: {}", msg.getTenantId(), msg);
         }
     }
 

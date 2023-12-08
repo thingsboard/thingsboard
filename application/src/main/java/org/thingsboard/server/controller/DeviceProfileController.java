@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.device.profile.TbDeviceProfileService;
@@ -52,6 +53,8 @@ import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFI
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFILE_INFO_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFILE_SORT_PROPERTY_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFILE_TEXT_SEARCH_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.INLINE_IMAGES;
+import static org.thingsboard.server.controller.ControllerConstants.INLINE_IMAGES_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
@@ -72,6 +75,7 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 public class DeviceProfileController extends BaseController {
 
     private final TbDeviceProfileService tbDeviceProfileService;
+    private final ImageService imageService;
 
     @Autowired
     private TimeseriesService timeseriesService;
@@ -85,14 +89,16 @@ public class DeviceProfileController extends BaseController {
     @ResponseBody
     public DeviceProfile getDeviceProfileById(
             @ApiParam(value = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
-            @PathVariable(DEVICE_PROFILE_ID) String strDeviceProfileId) throws ThingsboardException {
+            @PathVariable(DEVICE_PROFILE_ID) String strDeviceProfileId,
+            @ApiParam(value = INLINE_IMAGES_DESCRIPTION)
+            @RequestParam(value = INLINE_IMAGES, required = false) boolean inlineImages) throws ThingsboardException {
         checkParameter(DEVICE_PROFILE_ID, strDeviceProfileId);
-        try {
-            DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
-            return checkDeviceProfileId(deviceProfileId, Operation.READ);
-        } catch (Exception e) {
-            throw handleException(e);
+        DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
+        var result = checkDeviceProfileId(deviceProfileId, Operation.READ);
+        if (inlineImages) {
+            imageService.inlineImage(result);
         }
+        return result;
     }
 
     @ApiOperation(value = "Get Device Profile Info (getDeviceProfileInfoById)",
@@ -106,12 +112,8 @@ public class DeviceProfileController extends BaseController {
             @ApiParam(value = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
             @PathVariable(DEVICE_PROFILE_ID) String strDeviceProfileId) throws ThingsboardException {
         checkParameter(DEVICE_PROFILE_ID, strDeviceProfileId);
-        try {
-            DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
-            return new DeviceProfileInfo(checkDeviceProfileId(deviceProfileId, Operation.READ));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
+        return new DeviceProfileInfo(checkDeviceProfileId(deviceProfileId, Operation.READ));
     }
 
     @ApiOperation(value = "Get Default Device Profile (getDefaultDeviceProfileInfo)",
@@ -122,11 +124,7 @@ public class DeviceProfileController extends BaseController {
     @RequestMapping(value = "/deviceProfileInfo/default", method = RequestMethod.GET)
     @ResponseBody
     public DeviceProfileInfo getDefaultDeviceProfileInfo() throws ThingsboardException {
-        try {
-            return checkNotNull(deviceProfileService.findDefaultDeviceProfileInfo(getTenantId()));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        return checkNotNull(deviceProfileService.findDefaultDeviceProfileInfo(getTenantId()));
     }
 
     @ApiOperation(value = "Get time-series keys (getTimeseriesKeys)",
@@ -150,11 +148,7 @@ public class DeviceProfileController extends BaseController {
             deviceProfileId = null;
         }
 
-        try {
-            return timeseriesService.findAllKeysByDeviceProfileId(getTenantId(), deviceProfileId);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        return timeseriesService.findAllKeysByDeviceProfileId(getTenantId(), deviceProfileId);
     }
 
     @ApiOperation(value = "Get attribute keys (getAttributesKeys)",
@@ -178,11 +172,7 @@ public class DeviceProfileController extends BaseController {
             deviceProfileId = null;
         }
 
-        try {
-            return attributesService.findAllKeysByDeviceProfileId(getTenantId(), deviceProfileId);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        return attributesService.findAllKeysByDeviceProfileId(getTenantId(), deviceProfileId);
     }
 
     @ApiOperation(value = "Create Or Update Device Profile (saveDeviceProfile)",
@@ -191,7 +181,7 @@ public class DeviceProfileController extends BaseController {
                     "Specify existing device profile id to update the device profile. " +
                     "Referencing non-existing device profile Id will cause 'Not Found' error. " + NEW_LINE +
                     "Device profile name is unique in the scope of tenant. Only one 'default' device profile may exist in scope of tenant." + DEVICE_PROFILE_DATA +
-                    "Remove 'id', 'tenantId' and optionally 'customerId' from the request body example (below) to create new Device Profile entity. " +
+                    "Remove 'id', 'tenantId' from the request body example (below) to create new Device Profile entity. " +
                     TENANT_AUTHORITY_PARAGRAPH,
             produces = "application/json",
             consumes = "application/json")
@@ -256,12 +246,8 @@ public class DeviceProfileController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
-        try {
-            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-            return checkNotNull(deviceProfileService.findDeviceProfiles(getTenantId(), pageLink));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        return checkNotNull(deviceProfileService.findDeviceProfiles(getTenantId(), pageLink));
     }
 
     @ApiOperation(value = "Get Device Profiles for transport type (getDeviceProfileInfos)",
@@ -284,11 +270,7 @@ public class DeviceProfileController extends BaseController {
             @RequestParam(required = false) String sortOrder,
             @ApiParam(value = "Type of the transport", allowableValues = TRANSPORT_TYPE_ALLOWABLE_VALUES)
             @RequestParam(required = false) String transportType) throws ThingsboardException {
-        try {
-            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-            return checkNotNull(deviceProfileService.findDeviceProfileInfos(getTenantId(), pageLink, transportType));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        return checkNotNull(deviceProfileService.findDeviceProfileInfos(getTenantId(), pageLink, transportType));
     }
 }

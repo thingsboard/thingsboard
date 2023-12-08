@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ import { Injectable, NgZone } from '@angular/core';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { HttpClient } from '@angular/common/http';
 
-import { forkJoin, Observable, of, ReplaySubject, throwError } from 'rxjs';
+import { Observable, of, ReplaySubject, throwError } from 'rxjs';
 import { catchError, map, mergeMap, tap } from 'rxjs/operators';
 
 import { LoginRequest, LoginResponse, PublicLoginRequest } from '@shared/models/login.models';
@@ -27,21 +27,20 @@ import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from 
 import { UserService } from '../http/user.service';
 import { Store } from '@ngrx/store';
 import { AppState } from '../core.state';
-import { ActionAuthAuthenticated, ActionAuthLoadUser, ActionAuthUnauthenticated } from './auth.actions';
+import {
+  ActionAuthAuthenticated,
+  ActionAuthLoadUser,
+  ActionAuthUnauthenticated,
+  ActionAuthUpdateAuthUser
+} from './auth.actions';
 import { getCurrentAuthState, getCurrentAuthUser } from './auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { ActionSettingsChangeLanguage } from '@app/core/settings/settings.actions';
-import { AuthPayload, AuthState, SysParamsState } from '@core/auth/auth.models';
+import { AuthPayload, AuthState, SysParams, SysParamsState } from '@core/auth/auth.models';
 import { TranslateService } from '@ngx-translate/core';
 import { AuthUser } from '@shared/models/user.model';
 import { TimeService } from '@core/services/time.service';
 import { UtilsService } from '@core/services/utils.service';
-import { DashboardService } from '@core/http/dashboard.service';
-import { PageLink } from '@shared/models/page/page-link';
-import { DashboardInfo } from '@shared/models/dashboard.models';
-import { PageData } from '@app/shared/models/page/page-data';
-import { AdminService } from '@core/http/admin.service';
-import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { AlertDialogComponent } from '@shared/components/dialog/alert-dialog.component';
 import { OAuth2ClientInfo, PlatformType } from '@shared/models/oauth2.models';
@@ -63,8 +62,6 @@ export class AuthService {
     private route: ActivatedRoute,
     private zone: NgZone,
     private utils: UtilsService,
-    private dashboardService: DashboardService,
-    private adminService: AdminService,
     private translate: TranslateService,
     private dialog: MatDialog
   ) {
@@ -127,7 +124,8 @@ export class AuthService {
   }
 
   public checkTwoFaVerificationCode(providerType: TwoFactorAuthProviderType, verificationCode: number): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`/api/auth/2fa/verification/check?providerType=${providerType}&verificationCode=${verificationCode}`,
+    return this.http.post<LoginResponse>
+    (`/api/auth/2fa/verification/check?providerType=${providerType}&verificationCode=${verificationCode}`,
       null, defaultHttpOptions(false, true)).pipe(
       tap((loginResponse: LoginResponse) => {
           this.setUserFromJwtToken(loginResponse.token, loginResponse.refreshToken, true);
@@ -195,18 +193,22 @@ export class AuthService {
       ));
   }
 
-  public logout(captureLastUrl: boolean = false) {
+  public logout(captureLastUrl: boolean = false, ignoreRequest = false) {
     if (captureLastUrl) {
       this.redirectUrl = this.router.url;
     }
-    this.http.post('/api/auth/logout', null, defaultHttpOptions(true, true))
-      .subscribe(() => {
-          this.clearJwtToken();
-        },
-        () => {
-          this.clearJwtToken();
-        }
-      );
+    if (!ignoreRequest) {
+      this.http.post('/api/auth/logout', null, defaultHttpOptions(true, true))
+        .subscribe(() => {
+            this.clearJwtToken();
+          },
+          () => {
+            this.clearJwtToken();
+          }
+        );
+    } else {
+      this.clearJwtToken();
+    }
   }
 
   private notifyUserLoaded(isUserLoaded: boolean) {
@@ -247,7 +249,7 @@ export class AuthService {
     if (authState && authState.authUser) {
       if (authState.authUser.authority === Authority.TENANT_ADMIN || authState.authUser.authority === Authority.CUSTOMER_USER) {
         if ((this.userHasDefaultDashboard(authState) && authState.forceFullscreen) || authState.authUser.isPublic) {
-          if (path === 'profile' || path === 'security') {
+          if (path.startsWith('account')) {
             if (this.userHasProfile(authState.authUser)) {
               return false;
             } else {
@@ -289,16 +291,6 @@ export class AuthService {
           } else if (authState.authUser.isPublic) {
             result = this.router.parseUrl(`dashboard/${authState.lastPublicDashboardId}`);
           }
-        } else if (authState.authUser.authority === Authority.SYS_ADMIN) {
-          this.adminService.checkUpdates().subscribe((updateMessage) => {
-            if (updateMessage && updateMessage.updateAvailable) {
-              this.store.dispatch(new ActionNotificationShow(
-                {message: updateMessage.message,
-                           type: 'info',
-                           verticalPosition: 'bottom',
-                           horizontalPosition: 'right'}));
-            }
-          });
         }
       }
     } else {
@@ -378,7 +370,8 @@ export class AuthService {
           data: {
             title: translations['login.error'],
             message: loginError,
-            ok: translations['action.close']
+            ok: translations['action.close'],
+            textMode: true
           }
         };
         this.dialog.open(AlertDialogComponent, dialogConfig);
@@ -398,11 +391,11 @@ export class AuthService {
         } else if (authPayload.authUser) {
           authPayload.authUser.authority = Authority.ANONYMOUS;
         }
-        if (authPayload.authUser.isPublic) {
+        if (authPayload.authUser?.isPublic) {
           authPayload.forceFullscreen = true;
         }
-        if (authPayload.authUser.isPublic) {
-          this.loadSystemParams(authPayload).subscribe(
+        if (authPayload.authUser?.isPublic) {
+          this.loadSystemParams().subscribe(
             (sysParams) => {
               authPayload = {...authPayload, ...sysParams};
               loadUserSubject.next(authPayload);
@@ -412,10 +405,10 @@ export class AuthService {
               loadUserSubject.error(err);
             }
           );
-        } else if (authPayload.authUser.authority === Authority.PRE_VERIFICATION_TOKEN) {
+        } else if (authPayload.authUser?.authority === Authority.PRE_VERIFICATION_TOKEN) {
           loadUserSubject.next(authPayload);
           loadUserSubject.complete();
-        } else if (authPayload.authUser.userId) {
+        } else if (authPayload.authUser?.userId) {
           this.userService.getUser(authPayload.authUser.userId).subscribe(
             (user) => {
               authPayload.userDetails = user;
@@ -423,7 +416,7 @@ export class AuthService {
               if (this.userForceFullscreen(authPayload)) {
                 authPayload.forceFullscreen = true;
               }
-              this.loadSystemParams(authPayload).subscribe(
+              this.loadSystemParams().subscribe(
                 (sysParams) => {
                   authPayload = {...authPayload, ...sysParams};
                   let userLang;
@@ -432,8 +425,8 @@ export class AuthService {
                   } else {
                     userLang = null;
                   }
-                  this.notifyUserLang(userLang);
                   loadUserSubject.next(authPayload);
+                  this.notifyUserLang(userLang);
                   loadUserSubject.complete();
                 },
                 (err) => {
@@ -457,43 +450,14 @@ export class AuthService {
     return loadUserSubject;
   }
 
-  private loadIsUserTokenAccessEnabled(authUser: AuthUser): Observable<boolean> {
-    if (authUser.authority === Authority.SYS_ADMIN ||
-        authUser.authority === Authority.TENANT_ADMIN) {
-      return this.http.get<boolean>('/api/user/tokenAccessEnabled', defaultHttpOptions());
-    } else {
-      return of(false);
-    }
-  }
-
-  public loadIsEdgesSupportEnabled(): Observable<boolean> {
-    return this.http.get<boolean>('/api/edges/enabled', defaultHttpOptions());
-  }
-
-  private loadHasRepository(authUser: AuthUser): Observable<boolean> {
-    if (authUser.authority === Authority.TENANT_ADMIN) {
-      return this.http.get<boolean>('/api/admin/repositorySettings/exists', defaultHttpOptions());
-    } else {
-      return of(false);
-    }
-  }
-
-  private loadSystemParams(authPayload: AuthPayload): Observable<SysParamsState> {
-    const sources = [this.loadIsUserTokenAccessEnabled(authPayload.authUser),
-                     this.fetchAllowedDashboardIds(authPayload),
-                     this.loadIsEdgesSupportEnabled(),
-                     this.loadHasRepository(authPayload.authUser),
-                     this.timeService.loadMaxDatapointsLimit()];
-    return forkJoin(sources)
-      .pipe(map((data) => {
-        const userTokenAccessEnabled: boolean = data[0] as boolean;
-        const allowedDashboardIds: string[] = data[1] as string[];
-        const edgesSupportEnabled: boolean = data[2] as boolean;
-        const hasRepository: boolean = data[3] as boolean;
-        return {userTokenAccessEnabled, allowedDashboardIds, edgesSupportEnabled, hasRepository};
-      }, catchError((err) => {
-        return of({});
-      })));
+  private loadSystemParams(): Observable<SysParamsState> {
+    return this.http.get<SysParams>('/api/system/params', defaultHttpOptions()).pipe(
+      map((sysParams) => {
+        this.timeService.setMaxDatapointsLimit(sysParams.maxDatapointsLimit);
+        return sysParams;
+      }),
+      catchError(() => of({} as SysParamsState))
+    );
   }
 
   public refreshJwtToken(loadUserElseStoreJwtToken = true): Observable<LoginResponse> {
@@ -522,6 +486,7 @@ export class AuthService {
             } else {
               this.updateAndValidateTokens(loginResponse.token, loginResponse.refreshToken, true);
             }
+            this.updatedAuthUserFromToken(loginResponse.token);
             this.refreshTokenSubject.next(loginResponse);
             this.refreshTokenSubject.complete();
             this.refreshTokenSubject = null;
@@ -533,6 +498,18 @@ export class AuthService {
         }
     }
     return response;
+  }
+
+  private updatedAuthUserFromToken(token: string) {
+    const authUser = getCurrentAuthUser(this.store);
+    const tokenData = this.jwtHelper.decodeToken(token);
+    if (authUser && tokenData && ['sub', 'firstName', 'lastName'].some(value => authUser[value] !== tokenData[value])) {
+      this.store.dispatch(new ActionAuthUpdateAuthUser({
+        sub: tokenData.sub,
+        firstName: tokenData.firstName,
+        lastName: tokenData.lastName,
+      }));
+    }
   }
 
   private validateJwtToken(doRefresh): Observable<void> {
@@ -677,24 +654,4 @@ export class AuthService {
     }
   }
 
-  private fetchAllowedDashboardIds(authPayload: AuthPayload): Observable<string[]> {
-    if (authPayload.forceFullscreen && (authPayload.authUser.authority === Authority.TENANT_ADMIN ||
-      authPayload.authUser.authority === Authority.CUSTOMER_USER)) {
-      const pageLink = new PageLink(100);
-      let fetchDashboardsObservable: Observable<PageData<DashboardInfo>>;
-      if (authPayload.authUser.authority === Authority.TENANT_ADMIN) {
-        fetchDashboardsObservable = this.dashboardService.getTenantDashboards(pageLink);
-      } else {
-        fetchDashboardsObservable = this.dashboardService.getCustomerDashboards(authPayload.authUser.customerId, pageLink);
-      }
-      return fetchDashboardsObservable.pipe(
-        map((result) => {
-          const dashboards = result.data;
-          return dashboards.map(dashboard => dashboard.id.id);
-        })
-      );
-    } else {
-      return of([]);
-    }
-  }
 }

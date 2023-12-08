@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -36,9 +36,8 @@ import { AppState } from '@core/core.state';
 import { getCurrentAuthState, getCurrentAuthUser } from '@app/core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { DialogService } from '@core/services/dialog.service';
-import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { ImportExportService } from '@shared/import-export/import-export.service';
 import { Direction } from '@shared/models/page/sort-order';
-import { map } from 'rxjs/operators';
 import { WidgetsBundleTabsComponent } from '@home/pages/widget/widgets-bundle-tabs.component';
 
 @Injectable()
@@ -60,6 +59,8 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.WIDGETS_BUNDLE);
     this.config.entityResources = entityTypeResources.get(EntityType.WIDGETS_BUNDLE);
     this.config.defaultSortOrder = {property: 'title', direction: Direction.ASC};
+
+    this.config.rowPointer = true;
 
     this.config.entityTitle = (widgetsBundle) => widgetsBundle ?
       widgetsBundle.title : '';
@@ -90,16 +91,16 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
 
     this.config.cellActionDescriptors.push(
       {
-        name: this.translate.instant('widgets-bundle.open-widgets-bundle'),
-        icon: 'now_widgets',
-        isEnabled: () => true,
-        onAction: ($event, entity) => this.openWidgetsBundle($event, entity)
-      },
-      {
         name: this.translate.instant('widgets-bundle.export'),
         icon: 'file_download',
         isEnabled: () => true,
         onAction: ($event, entity) => this.exportWidgetsBundle($event, entity)
+      },
+      {
+        name: this.translate.instant('widgets-bundle.widgets-bundle-details'),
+        icon: 'edit',
+        isEnabled: () => true,
+        onAction: ($event, entity) => this.config.toggleEntityDetails($event, entity)
       }
     );
 
@@ -113,7 +114,20 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
     this.config.loadEntity = id => this.widgetsService.getWidgetsBundle(id.id);
     this.config.saveEntity = widgetsBundle => this.widgetsService.saveWidgetsBundle(widgetsBundle);
     this.config.deleteEntity = id => this.widgetsService.deleteWidgetsBundle(id.id);
-    this.config.onEntityAction = action => this.onWidgetsBundleAction(action);
+    this.config.onEntityAction = action => this.onWidgetsBundleAction(action, this.config);
+
+    this.config.handleRowClick = ($event, widgetsBundle) => {
+      if (this.config.isDetailsOpen()) {
+        this.config.toggleEntityDetails($event, widgetsBundle);
+      } else {
+        this.openWidgetsBundle($event, widgetsBundle);
+      }
+      return true;
+    };
+
+    this.config.entityAdded = widgetsBundle => {
+      this.openWidgetsBundle(null, widgetsBundle);
+    };
   }
 
   resolve(): EntityTableConfig<WidgetsBundle> {
@@ -149,7 +163,15 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
     if ($event) {
       $event.stopPropagation();
     }
-    this.router.navigateByUrl(`widgets-bundles/${widgetsBundle.id.id}/widgetTypes`);
+    this.router.navigateByUrl(`resources/widgets-bundles/${widgetsBundle.id.id}/widgetTypes`);
+  }
+
+  private openWidgetsBundleDetails($event: Event, widgetsBundle: WidgetsBundle, config: EntityTableConfig<WidgetsBundle>) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const url = this.router.createUrlTree(['details', widgetsBundle.id.id], {relativeTo: config.getActivatedRoute()});
+    this.router.navigateByUrl(url);
   }
 
   exportWidgetsBundle($event: Event, widgetsBundle: WidgetsBundle) {
@@ -159,10 +181,13 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
     this.importExport.exportWidgetsBundle(widgetsBundle.id.id);
   }
 
-  onWidgetsBundleAction(action: EntityAction<WidgetsBundle>): boolean {
+  onWidgetsBundleAction(action: EntityAction<WidgetsBundle>, config: EntityTableConfig<WidgetsBundle>): boolean {
     switch (action.action) {
       case 'open':
         this.openWidgetsBundle(action.event, action.entity);
+        return true;
+      case 'openDetails':
+        this.openWidgetsBundleDetails(action.event, action.entity, config);
         return true;
       case 'export':
         this.exportWidgetsBundle(action.event, action.entity);

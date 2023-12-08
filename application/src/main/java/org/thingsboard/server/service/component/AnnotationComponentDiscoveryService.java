@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.component;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,11 +26,16 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.rule.engine.api.NodeDefinition;
 import org.thingsboard.rule.engine.api.RuleNode;
-import org.thingsboard.rule.engine.api.TbRelationTypes;
+import org.thingsboard.rule.engine.filter.TbMsgTypeSwitchNode;
+import org.thingsboard.rule.engine.filter.TbOriginatorTypeSwitchNode;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChainType;
@@ -48,12 +52,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 public class AnnotationComponentDiscoveryService implements ComponentDiscoveryService {
 
     public static final int MAX_OPTIMISITC_RETRIES = 3;
+
     @Value("${plugins.scan_packages}")
     private String[] scanPackages;
 
@@ -63,13 +69,13 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
     @Autowired
     private ComponentDescriptorService componentDescriptorService;
 
-    private Map<String, ComponentDescriptor> components = new HashMap<>();
+    private final Map<String, RuleNodeClassInfo> ruleNodeClasses = new HashMap<>();
 
-    private Map<ComponentType, List<ComponentDescriptor>> coreComponentsMap = new HashMap<>();
+    private final Map<String, ComponentDescriptor> components = new HashMap<>();
 
-    private Map<ComponentType, List<ComponentDescriptor>> edgeComponentsMap = new HashMap<>();
+    private final Map<ComponentType, List<ComponentDescriptor>> coreComponentsMap = new HashMap<>();
 
-    private ObjectMapper mapper = new ObjectMapper();
+    private final Map<ComponentType, List<ComponentDescriptor>> edgeComponentsMap = new HashMap<>();
 
     private boolean isInstall() {
         return environment.acceptsProfiles(Profiles.of("install"));
@@ -77,28 +83,54 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
 
     @PostConstruct
     public void init() {
+        for (var def : discoverBeansByAnnotationType(RuleNode.class)) {
+            String clazzName = def.getBeanClassName();
+            try {
+                var clazz = Class.forName(clazzName);
+                RuleNode annotation = clazz.getAnnotation(RuleNode.class);
+                ruleNodeClasses.put(clazzName, new RuleNodeClassInfo(clazz, annotation));
+            } catch (Exception e) {
+                log.warn("Failed to create instance of rule node type: {} due to: ", clazzName, e);
+            }
+        }
         if (!isInstall()) {
             discoverComponents();
         }
     }
 
+    private Set<BeanDefinition> discoverBeansByAnnotationType(Class<? extends Annotation> annotationType) {
+        ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
+        scanner.addIncludeFilter(new AnnotationTypeFilter(annotationType));
+        Set<BeanDefinition> defs = new HashSet<>();
+        for (String scanPackage : scanPackages) {
+            defs.addAll(scanner.findCandidateComponents(scanPackage));
+        }
+        return defs;
+    }
+
+    @Override
+    public Optional<RuleNodeClassInfo> getRuleNodeInfo(String clazz) {
+        return Optional.ofNullable(ruleNodeClasses.get(clazz));
+    }
+
+    @Override
+    public List<RuleNodeClassInfo> getVersionedNodes() {
+        return ruleNodeClasses.values().stream().filter(RuleNodeClassInfo::isVersioned).collect(Collectors.toList());
+    }
+
     private void registerRuleNodeComponents() {
-        Set<BeanDefinition> ruleNodeBeanDefinitions = getBeanDefinitions(RuleNode.class);
-        for (BeanDefinition def : ruleNodeBeanDefinitions) {
+        for (RuleNodeClassInfo def : ruleNodeClasses.values()) {
             int retryCount = 0;
             Exception cause = null;
             while (retryCount < MAX_OPTIMISITC_RETRIES) {
                 try {
-                    String clazzName = def.getBeanClassName();
-                    Class<?> clazz = Class.forName(clazzName);
-                    RuleNode ruleNodeAnnotation = clazz.getAnnotation(RuleNode.class);
-                    ComponentType type = ruleNodeAnnotation.type();
+                    ComponentType type = def.getAnnotation().type();
                     ComponentDescriptor component = scanAndPersistComponent(def, type);
                     components.put(component.getClazz(), component);
-                    putComponentIntoMaps(type, ruleNodeAnnotation, component);
+                    putComponentIntoMaps(type, def.getAnnotation(), component);
                     break;
                 } catch (Exception e) {
-                    log.trace("Can't initialize component {}, due to {}", def.getBeanClassName(), e.getMessage(), e);
+                    log.trace("Can't initialize component {}, due to {}", def.getClassName(), e.getMessage(), e);
                     cause = e;
                     retryCount++;
                     try {
@@ -109,7 +141,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
                 }
             }
             if (cause != null && retryCount == MAX_OPTIMISITC_RETRIES) {
-                log.error("Can't initialize component {}, due to {}", def.getBeanClassName(), cause.getMessage(), cause);
+                log.error("Can't initialize component {}, due to {}", def.getClassName(), cause.getMessage(), cause);
                 throw new RuntimeException(cause);
             }
         }
@@ -146,24 +178,26 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
         return false;
     }
 
-    private ComponentDescriptor scanAndPersistComponent(BeanDefinition def, ComponentType type) {
+    private ComponentDescriptor scanAndPersistComponent(RuleNodeClassInfo def, ComponentType type) {
         ComponentDescriptor scannedComponent = new ComponentDescriptor();
-        String clazzName = def.getBeanClassName();
+        String clazzName = def.getClassName();
         try {
             scannedComponent.setType(type);
-            Class<?> clazz = Class.forName(clazzName);
+            Class<?> clazz = def.getClazz();
             RuleNode ruleNodeAnnotation = clazz.getAnnotation(RuleNode.class);
+            scannedComponent.setConfigurationVersion(def.getCurrentVersion());
             scannedComponent.setName(ruleNodeAnnotation.name());
             scannedComponent.setScope(ruleNodeAnnotation.scope());
-            NodeDefinition nodeDefinition = prepareNodeDefinition(ruleNodeAnnotation);
-            ObjectNode configurationDescriptor = mapper.createObjectNode();
-            JsonNode node = mapper.valueToTree(nodeDefinition);
+            scannedComponent.setClusteringMode(ruleNodeAnnotation.clusteringMode());
+            NodeDefinition nodeDefinition = prepareNodeDefinition(clazz, ruleNodeAnnotation);
+            ObjectNode configurationDescriptor = JacksonUtil.newObjectNode();
+            JsonNode node = JacksonUtil.valueToTree(nodeDefinition);
             configurationDescriptor.set("nodeDefinition", node);
             scannedComponent.setConfigurationDescriptor(configurationDescriptor);
             scannedComponent.setClazz(clazzName);
             log.debug("Processing scanned component: {}", scannedComponent);
         } catch (Exception e) {
-            log.error("Can't initialize component {}, due to {}", def.getBeanClassName(), e.getMessage(), e);
+            log.error("Can't initialize component {}, due to {}", clazzName, e.getMessage(), e);
             throw new RuntimeException(e);
         }
         ComponentDescriptor persistedComponent = componentDescriptorService.findByClazz(TenantId.SYS_TENANT_ID, clazzName);
@@ -182,19 +216,19 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
         return scannedComponent;
     }
 
-    private NodeDefinition prepareNodeDefinition(RuleNode nodeAnnotation) throws Exception {
+    private NodeDefinition prepareNodeDefinition(Class<?> clazz, RuleNode nodeAnnotation) throws Exception {
         NodeDefinition nodeDefinition = new NodeDefinition();
         nodeDefinition.setDetails(nodeAnnotation.nodeDetails());
         nodeDefinition.setDescription(nodeAnnotation.nodeDescription());
         nodeDefinition.setInEnabled(nodeAnnotation.inEnabled());
         nodeDefinition.setOutEnabled(nodeAnnotation.outEnabled());
-        nodeDefinition.setRelationTypes(getRelationTypesWithFailureRelation(nodeAnnotation));
+        nodeDefinition.setRelationTypes(getRelationTypesWithFailureRelation(clazz, nodeAnnotation));
         nodeDefinition.setCustomRelations(nodeAnnotation.customRelations());
         nodeDefinition.setRuleChainNode(nodeAnnotation.ruleChainNode());
         Class<? extends NodeConfiguration> configClazz = nodeAnnotation.configClazz();
         NodeConfiguration config = configClazz.getDeclaredConstructor().newInstance();
         NodeConfiguration defaultConfiguration = config.defaultConfiguration();
-        nodeDefinition.setDefaultConfiguration(mapper.valueToTree(defaultConfiguration));
+        nodeDefinition.setDefaultConfiguration(JacksonUtil.valueToTree(defaultConfiguration));
         nodeDefinition.setUiResources(nodeAnnotation.uiResources());
         nodeDefinition.setConfigDirective(nodeAnnotation.configDirective());
         nodeDefinition.setIcon(nodeAnnotation.icon());
@@ -203,22 +237,19 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
         return nodeDefinition;
     }
 
-    private String[] getRelationTypesWithFailureRelation(RuleNode nodeAnnotation) {
+    private String[] getRelationTypesWithFailureRelation(Class<?> clazz, RuleNode nodeAnnotation) {
         List<String> relationTypes = new ArrayList<>(Arrays.asList(nodeAnnotation.relationTypes()));
-        if (!relationTypes.contains(TbRelationTypes.FAILURE)) {
-            relationTypes.add(TbRelationTypes.FAILURE);
+        if (TbOriginatorTypeSwitchNode.class.equals(clazz)) {
+            relationTypes.addAll(EntityType.NORMAL_NAMES);
+        }
+        if (TbMsgTypeSwitchNode.class.equals(clazz)) {
+            relationTypes.addAll(TbMsgType.NODE_CONNECTIONS);
+            relationTypes.add(TbNodeConnectionType.OTHER);
+        }
+        if (!relationTypes.contains(TbNodeConnectionType.FAILURE)) {
+            relationTypes.add(TbNodeConnectionType.FAILURE);
         }
         return relationTypes.toArray(new String[relationTypes.size()]);
-    }
-
-    private Set<BeanDefinition> getBeanDefinitions(Class<? extends Annotation> componentType) {
-        ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
-        scanner.addIncludeFilter(new AnnotationTypeFilter(componentType));
-        Set<BeanDefinition> defs = new HashSet<>();
-        for (String scanPackage : scanPackages) {
-            defs.addAll(scanner.findCandidateComponents(scanPackage));
-        }
-        return defs;
     }
 
     @Override

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -30,9 +30,16 @@ export enum ComponentScope {
   TENANT = 'TENANT'
 }
 
+export enum ComponentClusteringMode {
+  USER_PREFERENCE = 'USER_PREFERENCE',
+  ENABLED = 'ENABLED',
+  SINGLETON = 'SINGLETON'
+}
+
 export interface ComponentDescriptor {
   type: ComponentType | RuleNodeType;
   scope?: ComponentScope;
+  clusteringMode: ComponentClusteringMode;
   name: string;
   clazz: string;
   configurationDescriptor?: any;

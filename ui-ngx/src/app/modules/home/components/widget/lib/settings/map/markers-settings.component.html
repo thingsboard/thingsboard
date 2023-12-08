@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 <section class="tb-widget-settings" [formGroup]="markersSettingsFormGroup">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.maps.markers-settings</legend>
-    <section class="row-fill" fxLayout="row" fxLayoutGap="8px">
+    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
       <mat-form-field fxFlex class="mat-block">
         <mat-label translate>widgets.maps.marker-offset-x</mat-label>
         <input matInput type="number" formControlName="markerOffsetX">
@@ -32,11 +32,11 @@
                 formControlName="posFunction"
                 minHeight="100px"
                 [globalVariables]="functionScopeVariables"
-                [functionArgs]="['origXPos', 'origYPos']"
+                [functionArgs]="['origXPos', 'origYPos', 'data', 'dsData', 'dsIndex', 'aspect']"
                 functionTitle="{{ 'widgets.maps.position-function' | translate }}"
                 helpId="widget/lib/map/position_fn">
     </tb-js-func>
-    <mat-checkbox formControlName="draggableMarker" style="margin-bottom: 16px;">
+    <mat-checkbox formControlName="draggableMarker">
       {{ 'widgets.maps.draggable-marker' | translate }}
     </mat-checkbox>
     <fieldset class="fields-group fields-group-slider">
@@ -113,7 +113,7 @@
                       functionTitle="{{ 'widgets.maps.tooltip-function' | translate }}"
                       helpId="widget/lib/map/tooltip_fn">
           </tb-js-func>
-          <section class="row-fill"  fxLayout="row" fxLayoutGap="8px">
+          <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
             <mat-form-field fxFlex class="mat-block">
               <mat-label translate>widgets.maps.tooltip-offset-x</mat-label>
               <input matInput type="number" formControlName="tooltipOffsetX">
@@ -170,10 +170,10 @@
           </mat-panel-description>
         </mat-expansion-panel-header>
         <ng-template matExpansionPanelContent>
-          <tb-image-input [fxShow]="!markersSettingsFormGroup.get('useMarkerImageFunction').value"
+          <tb-gallery-image-input [fxShow]="!markersSettingsFormGroup.get('useMarkerImageFunction').value"
                           label="{{ 'widgets.maps.custom-marker-image' | translate }}"
                           formControlName="markerImage">
-          </tb-image-input>
+          </tb-gallery-image-input>
           <mat-form-field [fxShow]="!markersSettingsFormGroup.get('useMarkerImageFunction').value"
                           fxFlex class="mat-block">
             <mat-label translate>widgets.maps.custom-marker-image-size</mat-label>
@@ -186,10 +186,10 @@
                       functionTitle="{{ 'widgets.maps.marker-image-function' | translate }}"
                       helpId="widget/lib/map/marker_image_fn">
           </tb-js-func>
-          <tb-multiple-image-input [fxShow]="markersSettingsFormGroup.get('useMarkerImageFunction').value"
-                                   label="{{ 'widgets.maps.marker-images' | translate }}"
-                                   formControlName="markerImages">
-          </tb-multiple-image-input>
+          <tb-multiple-gallery-image-input [fxShow]="markersSettingsFormGroup.get('useMarkerImageFunction').value"
+                                           label="{{ 'widgets.maps.marker-images' | translate }}"
+                                           formControlName="markerImages">
+          </tb-multiple-gallery-image-input>
         </ng-template>
       </mat-expansion-panel>
     </fieldset>

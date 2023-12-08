@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.customer.CustomerDao;
@@ -59,12 +58,8 @@ public class EntityViewDataValidator extends DataValidator<EntityView> {
 
     @Override
     protected void validateDataImpl(TenantId tenantId, EntityView entityView) {
-        if (StringUtils.isEmpty(entityView.getType())) {
-            throw new DataValidationException("Entity View type should be specified!");
-        }
-        if (StringUtils.isEmpty(entityView.getName())) {
-            throw new DataValidationException("Entity view name should be specified!");
-        }
+        validateString("Entity view name", entityView.getName());
+        validateString("Entity view type", entityView.getType());
         if (entityView.getTenantId() == null) {
             throw new DataValidationException("Entity view should be assigned to tenant!");
         } else {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,13 @@ package org.thingsboard.server.common.data.queue;
 
 import lombok.Data;
 
+import java.io.Serializable;
+
 @Data
-public class SubmitStrategy {
+public class SubmitStrategy implements Serializable {
+
+    private static final long serialVersionUID = 2938457983298400L;
+
     private SubmitStrategyType type;
     private int batchSize;
 }

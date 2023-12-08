@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,17 @@
  */
 package org.thingsboard.server.dao.device;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.core.util.SecurityUtil;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapClientCredential;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapClientCredentials;
@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
+import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -81,7 +82,7 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
         validateString(credentialsId, "Incorrect credentialsId " + credentialsId);
         return cache.getAndPutInTransaction(credentialsId,
                 () -> deviceCredentialsDao.findByCredentialsId(TenantId.SYS_TENANT_ID, credentialsId),
-                false);
+                true); // caching null values is essential for permanently invalid requests
     }
 
     @Override
@@ -108,6 +109,9 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
         try {
             var value = deviceCredentialsDao.saveAndFlush(tenantId, deviceCredentials);
             publishEvictEvent(new DeviceCredentialsEvictEvent(value.getCredentialsId(), oldDeviceCredentials != null ? oldDeviceCredentials.getCredentialsId() : null));
+            if (oldDeviceCredentials != null) {
+                eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(value.getDeviceId()).actionType(ActionType.CREDENTIALS_UPDATED).build());
+            }
             return value;
         } catch (Exception t) {
             handleEvictEvent(new DeviceCredentialsEvictEvent(deviceCredentials.getCredentialsId(), oldDeviceCredentials != null ? oldDeviceCredentials.getCredentialsId() : null));
@@ -136,6 +140,17 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
         }
     }
 
+    @Override
+    public JsonNode toCredentialsInfo(DeviceCredentials deviceCredentials) {
+        switch (deviceCredentials.getCredentialsType()) {
+            case ACCESS_TOKEN:
+                return JacksonUtil.valueToTree(deviceCredentials.getCredentialsId());
+            case X509_CERTIFICATE:
+                return JacksonUtil.valueToTree(deviceCredentials.getCredentialsValue());
+        }
+        return JacksonUtil.fromString(deviceCredentials.getCredentialsValue(), JsonNode.class);
+    }
+
     private void formatSimpleMqttCredentials(DeviceCredentials deviceCredentials) {
         BasicMqttCredentials mqttCredentials;
         try {
@@ -160,9 +175,6 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
             deviceCredentials.setCredentialsId(EncryptionUtil.getSha3Hash(mqttCredentials.getClientId()));
         } else {
             deviceCredentials.setCredentialsId(EncryptionUtil.getSha3Hash("|", mqttCredentials.getClientId(), mqttCredentials.getUserName()));
-        }
-        if (StringUtils.isNotEmpty(mqttCredentials.getPassword())) {
-            mqttCredentials.setPassword(mqttCredentials.getPassword());
         }
         deviceCredentials.setCredentialsValue(JacksonUtil.toString(mqttCredentials));
     }
@@ -386,6 +398,15 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
         log.trace("Executing deleteDeviceCredentials [{}]", deviceCredentials);
         deviceCredentialsDao.removeById(tenantId, deviceCredentials.getUuidId());
         publishEvictEvent(new DeviceCredentialsEvictEvent(deviceCredentials.getCredentialsId(), null));
+    }
+
+    @Override
+    public void deleteDeviceCredentialsByDeviceId(TenantId tenantId, DeviceId deviceId) {
+        log.trace("Executing deleteDeviceCredentialsByDeviceId [{}]", deviceId);
+        DeviceCredentials credentials = deviceCredentialsDao.removeByDeviceId(tenantId, deviceId);
+        if (credentials != null) {
+            publishEvictEvent(new DeviceCredentialsEvictEvent(credentials.getCredentialsId(), null));
+        }
     }
 
 }

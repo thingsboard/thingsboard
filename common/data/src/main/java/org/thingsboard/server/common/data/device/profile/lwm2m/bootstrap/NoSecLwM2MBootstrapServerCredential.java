@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,9 @@ package org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
 
 public class NoSecLwM2MBootstrapServerCredential extends AbstractLwM2MBootstrapServerCredential {
+
+    private static final long serialVersionUID = 5540417758424747066L;
+
     @Override
     public LwM2MSecurityMode getSecurityMode() {
         return LwM2MSecurityMode.NO_SEC;

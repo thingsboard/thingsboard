@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,13 +19,12 @@
   <div fxFlex fxLayout="column" tb-fullscreen [fullscreen]="fullscreen" tb-hotkeys [hotkeys]="hotKeys" [cheatSheet]="cheatSheetComponent">
     <tb-hotkeys-cheatsheet #cheatSheetComponent></tb-hotkeys-cheatsheet>
     <mat-toolbar class="mat-elevation-z1 tb-edit-toolbar mat-hue-3" fxLayoutGap="16px" fxLayoutGap.lt-xl="8px">
-      <mat-form-field floatLabel="always" hideRequiredMarker class="tb-widget-title">
-        <mat-label></mat-label>
+      <mat-form-field class="tb-widget-title tb-appearance-transparent">
         <input [disabled]="isReadOnly" matInput required maxlength="255"
                [(ngModel)]="widget.widgetName" (ngModelChange)="isDirty = true"
-               placeholder="{{ 'widget.title' | translate }}"/>
+               placeholder="{{ 'widget.widget-title' | translate }}"/>
       </mat-form-field>
-      <mat-form-field>
+      <mat-form-field class="tb-appearance-transparent">
         <mat-select [disabled]="isReadOnly" matInput placeholder="{{ 'widget.type' | translate }}"
                     [(ngModel)]="widget.type" (ngModelChange)="widetTypeChanged()">
           <mat-option *ngFor="let type of allWidgetTypes" [value]="type">
@@ -64,7 +63,7 @@
               [tb-circular-progress]="saveWidgetAsPending"
               matTooltip="{{ 'widget.saveAs' | translate }} (Shift + CTRL + S)"
               matTooltipPosition="below">
-        <mat-icon>save</mat-icon>
+        <mat-icon>save_as</mat-icon>
         <span translate>action.saveAs</span>
       </button>
       <button mat-button
@@ -107,7 +106,7 @@
         <button mat-menu-item
                 [disabled]="(isLoading$ | async) || saveAsDisabled()"
                 (click)="saveWidgetAs()">
-          <mat-icon>save</mat-icon>
+          <mat-icon>save_as</mat-icon>
           <span translate>action.saveAs</span>
         </button>
       </mat-menu>
@@ -116,19 +115,21 @@
       <div class="tb-editor tb-absolute-fill">
         <div #topPanel class="tb-split tb-split-vertical">
           <div #topLeftPanel class="tb-split tb-content">
-            <mat-tab-group selectedIndex="1" dynamicHeight="true" style="width: 100%; height: 100%;">
+            <mat-tab-group mat-stretch-tabs="false" selectedIndex="1" dynamicHeight="true" style="width: 100%; height: 100%;">
               <mat-tab label="{{ 'widget.resources' | translate }}">
                 <div class="tb-resize-container" style="background-color: #fff;">
                   <div class="mat-padding">
                     <div fxFlex fxLayout="row" style="max-height: 40px;"
                          fxLayoutAlign="start center"
                          *ngFor="let resource of widget.resources; let i = index" >
-                      <mat-form-field fxFlex class="mat-block resource-field" floatLabel="never"
-                                      style="margin: 10px 0 0 0; max-height: 40px;">
-                        <input required matInput [(ngModel)]="resource.url"
-                               (ngModelChange)="isDirty = true"
-                               placeholder="{{ 'widget.resource-url' | translate }}"/>
-                      </mat-form-field>
+                      <tb-resource-autocomplete fxFlex class="mat-block resource-field"
+                                                hideRequiredMarker required
+                                                subscriptSizing="dynamic"
+                                                [allowAutocomplete]="resource.isModule"
+                                                [(ngModel)]="resource.url"
+                                                (ngModelChange)="isDirty = true"
+                                                placeholder="{{ 'widget.resource-url' | translate }}">
+                      </tb-resource-autocomplete>
                       <mat-checkbox [(ngModel)]="resource.isModule"
                                     (ngModelChange)="isDirty = true">
                         {{ 'widget.resource-is-module' | translate }}
@@ -141,15 +142,14 @@
                         <mat-icon>close</mat-icon>
                       </button>
                     </div>
-                    <div style="margin-top: 6px;">
-                      <button mat-raised-button color="primary"
-                              [disabled]="isLoading$ | async"
-                              (click)="addResource()"
-                              matTooltip="{{'widget.add-resource' | translate}}"
-                              matTooltipPosition="above">
-                        <span translate>action.add</span>
-                      </button>
-                    </div>
+                    <button mat-raised-button color="primary"
+                            style="margin-top: 8px;"
+                            [disabled]="isLoading$ | async"
+                            (click)="addResource()"
+                            matTooltip="{{'widget.add-resource' | translate}}"
+                            matTooltipPosition="above">
+                      <span translate>action.add</span>
+                    </button>
                   </div>
                 </div>
               </mat-tab>
@@ -159,7 +159,7 @@
                     <button mat-button (click)="beautifyHtml()">
                       {{ 'widget.tidy' | translate }}
                     </button>
-                    <button mat-button mat-icon-button class="tb-mat-32"
+                    <button mat-icon-button class="tb-mat-32"
                             (click)="htmlFullscreen = !htmlFullscreen"
                             matTooltip="{{(htmlFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
                             matTooltipPosition="above">
@@ -188,7 +188,7 @@
             </mat-tab-group>
           </div>
           <div #topRightPanel class="tb-split tb-content">
-            <mat-tab-group dynamicHeight="true" style="width: 100%; height: 100%;">
+            <mat-tab-group mat-stretch-tabs="false" dynamicHeight="true" style="width: 100%; height: 100%;">
               <mat-tab label="{{ 'widget.settings-schema' | translate }}">
                 <div class="tb-resize-container" tb-fullscreen [fullscreen]="jsonSettingsFullscreen">
                   <div class="tb-editor-area-title-panel">
@@ -240,11 +240,10 @@
               <mat-tab label="{{ 'widget.widget-settings' | translate }}">
                 <div class="tb-resize-container" style="background-color: #fff;">
                   <div class="mat-padding">
-                    <tb-image-input fxFlex label="{{'widget.image-preview' | translate}}"
-                                    maxSizeByte="524288"
+                    <tb-gallery-image-input fxFlex label="{{'widget.image-preview' | translate}}"
                                     [(ngModel)]="widget.image"
                                     (ngModelChange)="isDirty = true" >
-                    </tb-image-input>
+                    </tb-gallery-image-input>
                     <mat-form-field class="mat-block">
                       <mat-label translate>widget.description</mat-label>
                       <textarea matInput #descriptionInput
@@ -253,6 +252,16 @@
                                 rows="2" maxlength="255"></textarea>
                       <mat-hint align="end">{{descriptionInput.value?.length || 0}}/255</mat-hint>
                     </mat-form-field>
+                    <tb-string-items-list
+                      label="{{ 'widget.tags' | translate }}"
+                      [(ngModel)]="widget.tags"
+                      (ngModelChange)="isDirty = true">
+                    </tb-string-items-list>
+                    <mat-slide-toggle class="mat-block" style="padding-bottom: 16px;"
+                                      [(ngModel)]="widget.deprecated"
+                                      (ngModelChange)="isDirty = true">
+                      {{ 'widget.deprecated' | translate }}
+                    </mat-slide-toggle>
                     <mat-form-field class="mat-block">
                       <mat-label translate>widget.settings-form-selector</mat-label>
                       <input matInput
@@ -269,6 +278,17 @@
                       <mat-label translate>widget.latest-data-key-settings-form-selector</mat-label>
                       <input matInput
                              [(ngModel)]="widget.latestDataKeySettingsDirective"
+                             (ngModelChange)="isDirty = true"/>
+                    </mat-form-field>
+                    <mat-slide-toggle class="mat-block" style="padding-bottom: 16px;"
+                                      [(ngModel)]="widget.hasBasicMode"
+                                      (ngModelChange)="isDirty = true">
+                      {{ 'widget.has-basic-mode' | translate }}
+                    </mat-slide-toggle>
+                    <mat-form-field *ngIf="widget.hasBasicMode" class="mat-block">
+                      <mat-label translate>widget.basic-mode-form-selector</mat-label>
+                      <input matInput
+                             [(ngModel)]="widget.basicModeDirective"
                              (ngModelChange)="isDirty = true"/>
                     </mat-form-field>
                   </div>

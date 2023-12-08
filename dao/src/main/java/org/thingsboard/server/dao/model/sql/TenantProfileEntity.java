@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonBinaryType;
 
 import javax.persistence.Column;
@@ -38,17 +37,14 @@ import javax.persistence.Table;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
-@Table(name = ModelConstants.TENANT_PROFILE_COLUMN_FAMILY_NAME)
-public final class TenantProfileEntity extends BaseSqlEntity<TenantProfile> implements SearchTextEntity<TenantProfile> {
+@Table(name = ModelConstants.TENANT_PROFILE_TABLE_NAME)
+public final class TenantProfileEntity extends BaseSqlEntity<TenantProfile> {
 
     @Column(name = ModelConstants.TENANT_PROFILE_NAME_PROPERTY)
     private String name;
 
     @Column(name = ModelConstants.TENANT_PROFILE_DESCRIPTION_PROPERTY)
     private String description;
-
-    @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
-    private String searchText;
 
     @Column(name = ModelConstants.TENANT_PROFILE_IS_DEFAULT_PROPERTY)
     private boolean isDefault;
@@ -74,20 +70,6 @@ public final class TenantProfileEntity extends BaseSqlEntity<TenantProfile> impl
         this.isDefault = tenantProfile.isDefault();
         this.isolatedTbRuleEngine = tenantProfile.isIsolatedTbRuleEngine();
         this.profileData = JacksonUtil.convertValue(tenantProfile.getProfileData(), ObjectNode.class);
-    }
-
-    @Override
-    public String getSearchTextSource() {
-        return name;
-    }
-
-    @Override
-    public void setSearchText(String searchText) {
-        this.searchText = searchText;
-    }
-
-    public String getSearchText() {
-        return searchText;
     }
 
     @Override

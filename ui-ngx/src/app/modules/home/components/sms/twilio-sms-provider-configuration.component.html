@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 -->
 <form [formGroup]="twilioSmsProviderConfigurationFormGroup" style="padding-bottom: 16px;">
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" subscriptSizing="dynamic">
     <mat-label translate>admin.number-from</mat-label>
     <input type="tel" required [pattern]="phoneNumberPatternTwilio" matInput formControlName="numberFrom">
     <mat-error *ngIf="twilioSmsProviderConfigurationFormGroup.get('numberFrom').hasError('required')">

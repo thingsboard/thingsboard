@@ -1,0 +1,70 @@
+/**
+ * Copyright © 2016-2023 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import "../../../../../../../scss/constants";
+
+:host {
+
+  .tb-card-content {
+    width: 100%;
+    height: 100%;
+  }
+
+  .tb-title {
+    font-style: normal;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: 0.25px;
+    color: rgba(0, 0, 0, 0.54);
+    @media #{$mat-md-lg} {
+      font-size: 12px;
+      line-height: 16px;
+    }
+  }
+
+  .tb-title-link {
+    font-style: normal;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: 0.25px;
+    color: rgba(0, 0, 0, 0.54);
+    position: relative;
+    border-bottom: none;
+    @media #{$mat-md-lg} {
+      font-size: 12px;
+      line-height: 16px;
+    }
+    &:hover, &:focus {
+      border-bottom: none;
+    }
+    &::after {
+      content: 'arrow_forward';
+      display: inline-block;
+      transform: rotate(315deg);
+      font-family: 'Material Icons';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 18px;
+      color: rgba(0, 0, 0, 0.12);
+      vertical-align: bottom;
+      margin-left: 6px;
+    }
+    &:hover::after {
+      color: inherit;
+    }
+  }
+}

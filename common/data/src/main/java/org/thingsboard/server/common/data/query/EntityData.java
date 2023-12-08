@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,33 @@
  */
 package org.thingsboard.server.common.data.query;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.Map;
 
 @Data
+@RequiredArgsConstructor
 public class EntityData {
 
     private final EntityId entityId;
     private final Map<EntityKeyType, Map<String, TsValue>> latest;
     private final Map<String, TsValue[]> timeseries;
+    private final Map<Integer, ComparisonTsValue> aggLatest;
 
+    public EntityData(EntityId entityId, Map<EntityKeyType, Map<String, TsValue>> latest, Map<String, TsValue[]> timeseries) {
+        this(entityId, latest, timeseries, null);
+    }
+
+    @JsonIgnore
+    public void clearTsAndAggData() {
+        if (timeseries != null) {
+            timeseries.clear();
+        }
+        if (aggLatest != null) {
+            aggLatest.clear();
+        }
+    }
 }

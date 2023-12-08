@@ -11,29 +11,34 @@
     "experimentalDecorators": true,
     "moduleResolution": "node",
     "importHelpers": true,
-    "target": "es2017",
+    "target": "ES2022",
     "module": "es2020",
     "emitDecoratorMetadata": true,
     "allowSyntheticDefaultImports": true,
     "jsx": "react",
     "typeRoots": [
       "node_modules/@types",
-      "src/typings/rawloader.typings.d.ts",
-      "src/typings/jquery.typings.d.ts",
-      "src/typings/jquery.flot.typings.d.ts",
-      "src/typings/jquery.jstree.typings.d.ts",
-      "src/typings/split.js.typings.d.ts",
-      "src/typings/leaflet-geoman-extend.d.ts"
+      "src/typings"
     ],
     "paths": {
-      "@app/*": ["src/app/*"],
+      "@app/*": [
+        "src/app/*"
+      ],
       "@env/*": [
         "src/environments/*"
       ],
-      "@core/*": ["src/app/core/*"],
-      "@modules/*": ["src/app/modules/*"],
-      "@shared/*": ["src/app/shared/*"],
-      "@home/*": ["src/app/modules/home/*"],
+      "@core/*": [
+        "src/app/core/*"
+      ],
+      "@modules/*": [
+        "src/app/modules/*"
+      ],
+      "@shared/*": [
+        "src/app/shared/*"
+      ],
+      "@home/*": [
+        "src/app/modules/home/*"
+      ],
       "jszip": [
         "node_modules/jszip/dist/jszip.min.js"
       ],
@@ -56,7 +61,8 @@
     "lib": [
       "es2020",
       "dom"
-    ]
+    ],
+    "useDefineForClassFields": false
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

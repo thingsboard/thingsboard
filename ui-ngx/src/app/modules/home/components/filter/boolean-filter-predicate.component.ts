@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormBuilder,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   ValidationErrors,
@@ -60,7 +60,7 @@ export class BooleanFilterPredicateComponent implements ControlValueAccessor, Va
 
   valueTypeEnum = EntityKeyValueType;
 
-  booleanFilterPredicateFormGroup: FormGroup;
+  booleanFilterPredicateFormGroup: UntypedFormGroup;
 
   booleanOperations = Object.keys(BooleanOperation);
   booleanOperationEnum = BooleanOperation;
@@ -68,7 +68,7 @@ export class BooleanFilterPredicateComponent implements ControlValueAccessor, Va
 
   private propagateChange = null;
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: UntypedFormBuilder) {
   }
 
   ngOnInit(): void {

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -33,9 +33,15 @@ import { catchError, map, mergeMap } from 'rxjs/operators';
 @NgModule()
 export abstract class DynamicComponentModule implements OnDestroy {
 
+  // eslint-disable-next-line @angular-eslint/contextual-lifecycle
   ngOnDestroy(): void {
   }
 
+}
+
+interface DynamicComponentData<T> {
+  componentType: Type<T>;
+  componentModuleRef: NgModuleRef<DynamicComponentModule>;
 }
 
 interface DynamicComponentModuleData {
@@ -48,21 +54,22 @@ interface DynamicComponentModuleData {
 })
 export class DynamicComponentFactoryService {
 
-  private dynamicComponentModulesMap = new Map<ComponentFactory<any>, DynamicComponentModuleData>();
+  private dynamicComponentModulesMap = new Map<Type<any>, DynamicComponentModuleData>();
 
   constructor(private compiler: Compiler,
               private injector: Injector) {
   }
 
-  public createDynamicComponentFactory<T>(
+  public createDynamicComponent<T>(
                      componentType: Type<T>,
                      template: string,
                      modules?: Type<any>[],
                      preserveWhitespaces?: boolean,
-                     compileAttempt = 1): Observable<ComponentFactory<T>> {
+                     compileAttempt = 1,
+                     styles?: string[]): Observable<DynamicComponentData<T>> {
     return from(import('@angular/compiler')).pipe(
       mergeMap(() => {
-        const comp = this.createDynamicComponent(componentType, template, preserveWhitespaces);
+        const comp = this._createDynamicComponent(componentType, template, preserveWhitespaces, styles);
         let moduleImports: Type<any>[] = [CommonModule];
         if (modules) {
           moduleImports = [...moduleImports, ...modules];
@@ -81,17 +88,19 @@ export class DynamicComponentFactoryService {
               this.compiler.clearCacheFor(module.moduleType);
               throw e;
             }
-            const factory = moduleRef.componentFactoryResolver.resolveComponentFactory(comp);
-            this.dynamicComponentModulesMap.set(factory, {
+            this.dynamicComponentModulesMap.set(comp, {
               moduleRef,
               moduleType: module.moduleType
             });
-            return factory;
+            return {
+              componentType: comp,
+              componentModuleRef: moduleRef
+            };
           }),
           catchError((error) => {
             if (compileAttempt === 1) {
               ɵresetCompiledComponents();
-              return this.createDynamicComponentFactory(componentType, template, modules, preserveWhitespaces, ++compileAttempt);
+              return this.createDynamicComponent(componentType, template, modules, preserveWhitespaces, ++compileAttempt, styles);
             } else {
               throw error;
             }
@@ -101,20 +110,21 @@ export class DynamicComponentFactoryService {
     );
   }
 
-  public destroyDynamicComponentFactory<T>(factory: ComponentFactory<T>) {
-    const moduleData = this.dynamicComponentModulesMap.get(factory);
+  public destroyDynamicComponent<T>(componentType: Type<T>) {
+    const moduleData = this.dynamicComponentModulesMap.get(componentType);
     if (moduleData) {
       moduleData.moduleRef.destroy();
       this.compiler.clearCacheFor(moduleData.moduleType);
-      this.dynamicComponentModulesMap.delete(factory);
+      this.dynamicComponentModulesMap.delete(componentType);
     }
   }
 
-  private createDynamicComponent<T>(componentType: Type<T>, template: string, preserveWhitespaces?: boolean): Type<T> {
+  private _createDynamicComponent<T>(componentType: Type<T>, template: string, preserveWhitespaces?: boolean, styles?: string[]): Type<T> {
     // noinspection AngularMissingOrInvalidDeclarationInModule
     return Component({
       template,
-      preserveWhitespaces
+      preserveWhitespaces,
+      styles
     })(componentType);
   }
 

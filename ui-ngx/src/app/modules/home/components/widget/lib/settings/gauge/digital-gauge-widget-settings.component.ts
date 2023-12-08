@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
 import { Component } from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, UntypedFormArray, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { GaugeType } from '@home/components/widget/lib/canvas-digital-gauge';
@@ -34,14 +34,14 @@ import { ValueSourceProperty } from '@home/components/widget/lib/settings/common
 })
 export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent {
 
-  digitalGaugeWidgetSettingsForm: FormGroup;
+  digitalGaugeWidgetSettingsForm: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
-              protected fb: FormBuilder) {
+              protected fb: UntypedFormBuilder) {
     super(store);
   }
 
-  protected settingsForm(): FormGroup {
+  protected settingsForm(): UntypedFormGroup {
     return this.digitalGaugeWidgetSettingsForm;
   }
 
@@ -254,13 +254,13 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
     this.digitalGaugeWidgetSettingsForm.get('animationRule').updateValueAndValidity({emitEvent});
   }
 
-  protected doUpdateSettings(settingsForm: FormGroup, settings: WidgetSettings) {
+  protected doUpdateSettings(settingsForm: UntypedFormGroup, settings: WidgetSettings) {
     settingsForm.setControl('levelColors', this.prepareLevelColorFormArray(settings.levelColors), {emitEvent: false});
     settingsForm.setControl('fixedLevelColors', this.prepareFixedLevelColorFormArray(settings.fixedLevelColors), {emitEvent: false});
     settingsForm.setControl('ticksValue', this.prepareTicksValueFormArray(settings.ticksValue), {emitEvent: false});
   }
 
-  private prepareLevelColorFormArray(levelColors: string[] | undefined): FormArray {
+  private prepareLevelColorFormArray(levelColors: string[] | undefined): UntypedFormArray {
     const levelColorsControls: Array<AbstractControl> = [];
     if (levelColors) {
       levelColors.forEach((levelColor) => {
@@ -270,7 +270,7 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
     return this.fb.array(levelColorsControls);
   }
 
-  private prepareFixedLevelColorFormArray(fixedLevelColors: FixedColorLevel[] | undefined): FormArray {
+  private prepareFixedLevelColorFormArray(fixedLevelColors: FixedColorLevel[] | undefined): UntypedFormArray {
     const fixedLevelColorsControls: Array<AbstractControl> = [];
     if (fixedLevelColors) {
       fixedLevelColors.forEach((fixedLevelColor) => {
@@ -280,7 +280,7 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
     return this.fb.array(fixedLevelColorsControls);
   }
 
-  private prepareTicksValueFormArray(ticksValue: ValueSourceProperty[] | undefined): FormArray {
+  private prepareTicksValueFormArray(ticksValue: ValueSourceProperty[] | undefined): UntypedFormArray {
     const ticksValueControls: Array<AbstractControl> = [];
     if (ticksValue) {
       ticksValue.forEach((tickValue) => {
@@ -290,8 +290,8 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
     return this.fb.array(ticksValueControls);
   }
 
-  levelColorsFormArray(): FormArray {
-    return this.digitalGaugeWidgetSettingsForm.get('levelColors') as FormArray;
+  levelColorsFormArray(): UntypedFormArray {
+    return this.digitalGaugeWidgetSettingsForm.get('levelColors') as UntypedFormArray;
   }
 
   public trackByLevelColor(index: number, levelColorControl: AbstractControl): any {
@@ -299,25 +299,25 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
   }
 
   public removeLevelColor(index: number) {
-    (this.digitalGaugeWidgetSettingsForm.get('levelColors') as FormArray).removeAt(index);
+    (this.digitalGaugeWidgetSettingsForm.get('levelColors') as UntypedFormArray).removeAt(index);
   }
 
   public addLevelColor() {
-    const levelColorsArray = this.digitalGaugeWidgetSettingsForm.get('levelColors') as FormArray;
+    const levelColorsArray = this.digitalGaugeWidgetSettingsForm.get('levelColors') as UntypedFormArray;
     const levelColorControl = this.fb.control(null, []);
     levelColorsArray.push(levelColorControl);
     this.digitalGaugeWidgetSettingsForm.updateValueAndValidity();
   }
 
   levelColorDrop(event: CdkDragDrop<string[]>) {
-    const levelColorsArray = this.digitalGaugeWidgetSettingsForm.get('levelColors') as FormArray;
+    const levelColorsArray = this.digitalGaugeWidgetSettingsForm.get('levelColors') as UntypedFormArray;
     const levelColor = levelColorsArray.at(event.previousIndex);
     levelColorsArray.removeAt(event.previousIndex);
     levelColorsArray.insert(event.currentIndex, levelColor);
   }
 
-  fixedLevelColorFormArray(): FormArray {
-    return this.digitalGaugeWidgetSettingsForm.get('fixedLevelColors') as FormArray;
+  fixedLevelColorFormArray(): UntypedFormArray {
+    return this.digitalGaugeWidgetSettingsForm.get('fixedLevelColors') as UntypedFormArray;
   }
 
   public trackByFixedLevelColor(index: number, fixedLevelColorControl: AbstractControl): any {
@@ -325,7 +325,7 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
   }
 
   public removeFixedLevelColor(index: number) {
-    (this.digitalGaugeWidgetSettingsForm.get('fixedLevelColors') as FormArray).removeAt(index);
+    (this.digitalGaugeWidgetSettingsForm.get('fixedLevelColors') as UntypedFormArray).removeAt(index);
   }
 
   public addFixedLevelColor() {
@@ -338,7 +338,7 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
       },
       color: null
     };
-    const fixedLevelColorsArray = this.digitalGaugeWidgetSettingsForm.get('fixedLevelColors') as FormArray;
+    const fixedLevelColorsArray = this.digitalGaugeWidgetSettingsForm.get('fixedLevelColors') as UntypedFormArray;
     const fixedLevelColorControl = this.fb.control(fixedLevelColor, [fixedColorLevelValidator]);
     (fixedLevelColorControl as any).new = true;
     fixedLevelColorsArray.push(fixedLevelColorControl);
@@ -349,14 +349,14 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
   }
 
   fixedLevelColorDrop(event: CdkDragDrop<string[]>) {
-    const fixedLevelColorsArray = this.digitalGaugeWidgetSettingsForm.get('fixedLevelColors') as FormArray;
+    const fixedLevelColorsArray = this.digitalGaugeWidgetSettingsForm.get('fixedLevelColors') as UntypedFormArray;
     const fixedLevelColor = fixedLevelColorsArray.at(event.previousIndex);
     fixedLevelColorsArray.removeAt(event.previousIndex);
     fixedLevelColorsArray.insert(event.currentIndex, fixedLevelColor);
   }
 
-  tickValuesFormArray(): FormArray {
-    return this.digitalGaugeWidgetSettingsForm.get('ticksValue') as FormArray;
+  tickValuesFormArray(): UntypedFormArray {
+    return this.digitalGaugeWidgetSettingsForm.get('ticksValue') as UntypedFormArray;
   }
 
   public trackByTickValue(index: number, tickValueControl: AbstractControl): any {
@@ -364,14 +364,14 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
   }
 
   public removeTickValue(index: number) {
-    (this.digitalGaugeWidgetSettingsForm.get('ticksValue') as FormArray).removeAt(index);
+    (this.digitalGaugeWidgetSettingsForm.get('ticksValue') as UntypedFormArray).removeAt(index);
   }
 
   public addTickValue() {
     const tickValue: ValueSourceProperty = {
       valueSource: 'predefinedValue'
     };
-    const tickValuesArray = this.digitalGaugeWidgetSettingsForm.get('ticksValue') as FormArray;
+    const tickValuesArray = this.digitalGaugeWidgetSettingsForm.get('ticksValue') as UntypedFormArray;
     const tickValueControl = this.fb.control(tickValue, []);
     (tickValueControl as any).new = true;
     tickValuesArray.push(tickValueControl);
@@ -379,7 +379,7 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
   }
 
   tickValueDrop(event: CdkDragDrop<string[]>) {
-    const tickValuesArray = this.digitalGaugeWidgetSettingsForm.get('ticksValue') as FormArray;
+    const tickValuesArray = this.digitalGaugeWidgetSettingsForm.get('ticksValue') as UntypedFormArray;
     const tickValue = tickValuesArray.at(event.previousIndex);
     tickValuesArray.removeAt(event.previousIndex);
     tickValuesArray.insert(event.currentIndex, tickValue);

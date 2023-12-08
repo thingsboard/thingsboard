@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import { QuickTimeInterval, QuickTimeIntervalTranslationMap } from '@shared/mode
 @Component({
   selector: 'tb-quick-time-interval',
   templateUrl: './quick-time-interval.component.html',
+  styleUrls: ['./quick-time-interval.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

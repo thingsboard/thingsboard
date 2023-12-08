@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 -->
 <div fxLayout="column">
   <mat-accordion multi="true">
-    <div *ngFor="let serverConfig of serverConfigsFromArray().controls; trackBy: trackByParams; let $index = index;">
+    <div *ngFor="let serverConfig of serverConfigsFromArray.controls; trackBy: trackByParams; let $index = index;">
       <tb-profile-lwm2m-device-config-server
         [formControl]="serverConfig"
         (removeServer)="removeServerConfig($event, $index)"
@@ -25,7 +25,7 @@
       </tb-profile-lwm2m-device-config-server>
     </div>
   </mat-accordion>
-  <div *ngIf="!serverConfigsFromArray().controls.length" style="margin:32px 0">
+  <div *ngIf="!serverConfigsFromArray.controls.length" style="margin:32px 0">
       <span translate fxLayoutAlign="center center"
             class="tb-prompt">device-profile.lwm2m.no-config-servers</span>
   </div>

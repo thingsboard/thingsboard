@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import { AppState } from '@core/core.state';
 import { selectHasRepository } from '@core/auth/auth.selectors';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { RepositorySettingsComponent } from '@home/components/vc/repository-settings.component';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { EntityId } from '@shared/models/id/entity-id';
 import { Observable } from 'rxjs';
 import { TbPopoverComponent } from '@shared/components/popover.component';
@@ -71,7 +71,7 @@ export class VersionControlComponent implements OnInit, HasConfirmForm {
 
   }
 
-  confirmForm(): FormGroup {
+  confirmForm(): UntypedFormGroup {
     return this.repositorySettingsComponent?.repositorySettingsForm;
   }
 

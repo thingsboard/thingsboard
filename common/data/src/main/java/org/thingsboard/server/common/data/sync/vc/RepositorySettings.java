@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.data.sync.vc;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -32,6 +31,8 @@ public class RepositorySettings implements Serializable {
     private String privateKey;
     private String privateKeyPassword;
     private String defaultBranch;
+    private boolean readOnly;
+    private boolean showMergeCommits;
 
     public RepositorySettings() {
     }
@@ -45,5 +46,7 @@ public class RepositorySettings implements Serializable {
         this.privateKey = settings.getPrivateKey();
         this.privateKeyPassword = settings.getPrivateKeyPassword();
         this.defaultBranch = settings.getDefaultBranch();
+        this.readOnly = settings.isReadOnly();
+        this.showMergeCommits = settings.isShowMergeCommits();
     }
 }

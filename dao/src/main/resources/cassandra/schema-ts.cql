@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2022 The Thingsboard Authors
+-- Copyright © 2016-2023 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -14,14 +14,8 @@
 -- limitations under the License.
 --
 
-CREATE KEYSPACE IF NOT EXISTS thingsboard
-WITH replication = {
-	'class' : 'SimpleStrategy',
-	'replication_factor' : 1
-};
-
 CREATE TABLE IF NOT EXISTS thingsboard.ts_kv_cf (
-    entity_type text, // (DEVICE, CUSTOMER, TENANT)
+    entity_type text, -- (DEVICE, CUSTOMER, TENANT)
     entity_id timeuuid,
     key text,
     partition bigint,
@@ -35,7 +29,7 @@ CREATE TABLE IF NOT EXISTS thingsboard.ts_kv_cf (
 );
 
 CREATE TABLE IF NOT EXISTS thingsboard.ts_kv_partitions_cf (
-    entity_type text, // (DEVICE, CUSTOMER, TENANT)
+    entity_type text, -- (DEVICE, CUSTOMER, TENANT)
     entity_id timeuuid,
     key text,
     partition bigint,

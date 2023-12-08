@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
@@ -42,13 +41,12 @@ import static org.thingsboard.server.dao.model.ModelConstants.EDGE_ROUTING_KEY_P
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_SECRET_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_TENANT_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_TYPE_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @MappedSuperclass
-public abstract class AbstractEdgeEntity<T extends Edge> extends BaseSqlEntity<T> implements SearchTextEntity<T> {
+public abstract class AbstractEdgeEntity<T extends Edge> extends BaseSqlEntity<T> {
 
     @Column(name = EDGE_TENANT_ID_PROPERTY, columnDefinition = "uuid")
     private UUID tenantId;
@@ -67,9 +65,6 @@ public abstract class AbstractEdgeEntity<T extends Edge> extends BaseSqlEntity<T
 
     @Column(name = EDGE_LABEL_PROPERTY)
     private String label;
-
-    @Column(name = SEARCH_TEXT_PROPERTY)
-    private String searchText;
 
     @Column(name = EDGE_ROUTING_KEY_PROPERTY)
     private String routingKey;
@@ -116,24 +111,9 @@ public abstract class AbstractEdgeEntity<T extends Edge> extends BaseSqlEntity<T
         this.type = edgeEntity.getType();
         this.name = edgeEntity.getName();
         this.label = edgeEntity.getLabel();
-        this.searchText = edgeEntity.getSearchText();
         this.routingKey = edgeEntity.getRoutingKey();
         this.secret = edgeEntity.getSecret();
         this.additionalInfo = edgeEntity.getAdditionalInfo();
-    }
-
-    public String getSearchText() {
-        return searchText;
-    }
-
-    @Override
-    public String getSearchTextSource() {
-        return name;
-    }
-
-    @Override
-    public void setSearchText(String searchText) {
-        this.searchText = searchText;
     }
 
     protected Edge toEdge() {

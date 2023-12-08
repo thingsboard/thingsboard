@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,11 @@ dirTree("./src/assets/locale/", {extensions: /\.json$/}, (item) => {
 });
 
 module.exports = (config, options) => {
+
+  config.ignoreWarnings.push(/Usage of '~' in imports is deprecated/);
+  config.ignoreWarnings.push(/Did you mean "left" instead?/);
+  config.ignoreWarnings.push(/autoprefixer/);
+
   config.plugins.push(
     new webpack.DefinePlugin({
       TB_VERSION: JSON.stringify(require("./package.json").version),
@@ -59,20 +64,20 @@ module.exports = (config, options) => {
     })
   );
 
-  const index = config.plugins.findIndex(p => p instanceof ngWebpack.ivy.AngularWebpackPlugin || p instanceof ngWebpack.AngularWebpackPlugin);
+  config.module.rules[2].use[0].options.aot = false;
+  const index = config.plugins.findIndex(p => p instanceof ngWebpack.AngularWebpackPlugin);
   let angularWebpackPlugin = config.plugins[index];
-
   if (config.mode === 'production') {
     const angularCompilerOptions = angularWebpackPlugin.pluginOptions;
     angularCompilerOptions.emitClassMetadata = true;
     angularCompilerOptions.emitNgModuleScope = true;
     config.plugins.splice(index, 1);
-    angularWebpackPlugin = new ngWebpack.ivy.AngularWebpackPlugin(angularCompilerOptions);
+    angularWebpackPlugin = new ngWebpack.AngularWebpackPlugin(angularCompilerOptions);
     config.plugins.push(angularWebpackPlugin);
-    const javascriptOptimizerOptions = config.optimization.minimizer[1].options;
+    const javascriptOptimizerOptions = config.optimization.minimizer[0].options;
     delete javascriptOptimizerOptions.define.ngJitMode;
-    config.optimization.minimizer.splice(1, 1);
-    config.optimization.minimizer.push(new JavaScriptOptimizerPlugin(javascriptOptimizerOptions));
+    config.optimization.minimizer.splice(0, 1);
+    config.optimization.minimizer.unshift(new JavaScriptOptimizerPlugin(javascriptOptimizerOptions));
   }
 
   addTransformerToAngularWebpackPlugin(angularWebpackPlugin, keysTransformer);

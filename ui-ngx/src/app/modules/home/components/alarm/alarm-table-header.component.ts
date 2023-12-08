@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import { AppState } from '@core/core.state';
 import { EntityTableHeaderComponent } from '../../components/entity/entity-table-header.component';
 import { AlarmInfo, AlarmSearchStatus, alarmSearchStatusTranslations } from '@shared/models/alarm.models';
 import { AlarmTableConfig } from './alarm-table-config';
+import { AlarmFilterConfig } from '@shared/models/query/query.models';
 
 @Component({
   selector: 'tb-alarm-table-header',
@@ -27,11 +28,6 @@ import { AlarmTableConfig } from './alarm-table-config';
   styleUrls: ['./alarm-table-header.component.scss']
 })
 export class AlarmTableHeaderComponent extends EntityTableHeaderComponent<AlarmInfo> {
-
-  alarmSearchStatusTranslationsMap = alarmSearchStatusTranslations;
-
-  alarmSearchStatusTypes = Object.keys(AlarmSearchStatus);
-  alarmSearchStatusEnum = AlarmSearchStatus;
 
   get alarmTableConfig(): AlarmTableConfig {
     return this.entitiesTableConfig as AlarmTableConfig;
@@ -41,8 +37,8 @@ export class AlarmTableHeaderComponent extends EntityTableHeaderComponent<AlarmI
     super(store);
   }
 
-  searchStatusChanged(searchStatus: AlarmSearchStatus) {
-    this.alarmTableConfig.searchStatus = searchStatus;
+  alarmFilterChanged(alarmFilterConfig: AlarmFilterConfig) {
+    this.alarmTableConfig.alarmFilterConfig = alarmFilterConfig;
     this.alarmTableConfig.getTable().resetSortAndFilter(true, true);
   }
 }

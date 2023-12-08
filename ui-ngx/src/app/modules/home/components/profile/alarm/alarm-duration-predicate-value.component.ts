@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ///
 
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import {
   DynamicValueSourceType,
   dynamicValueSourceTypeTranslationMap,
@@ -28,7 +28,7 @@ import { AlarmConditionType } from '@shared/models/device.models';
 @Component({
   selector: 'tb-alarm-duration-predicate-value',
   templateUrl: './alarm-duration-predicate-value.component.html',
-  styleUrls: ['./alarm-duration-predicate-value.component.scss'],
+  styleUrls: [],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -68,7 +68,7 @@ export class AlarmDurationPredicateValueComponent implements ControlValueAccesso
 
   dynamicValueSourceTypeTranslations = dynamicValueSourceTypeTranslationMap;
 
-  alarmDurationPredicateValueFormGroup: FormGroup;
+  alarmDurationPredicateValueFormGroup: UntypedFormGroup;
 
   dynamicMode = false;
 
@@ -76,7 +76,7 @@ export class AlarmDurationPredicateValueComponent implements ControlValueAccesso
 
   private propagateChange = null;
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: UntypedFormBuilder) {
   }
 
   ngOnInit(): void {

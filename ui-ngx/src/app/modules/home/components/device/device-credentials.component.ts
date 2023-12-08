@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -34,7 +34,8 @@ import {
 } from '@shared/models/device.models';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { isDefinedAndNotNull } from '@core/utils';
+import { generateSecret, isDefinedAndNotNull } from '@core/utils';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-device-credentials',
@@ -50,7 +51,7 @@ import { isDefinedAndNotNull } from '@core/utils';
       useExisting: forwardRef(() => DeviceCredentialsComponent),
       multi: true,
     }],
-  styleUrls: []
+  styleUrls: ['./device-credentials.component.scss']
 })
 export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit, Validator, OnDestroy {
 
@@ -73,7 +74,11 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
     }
   }
 
-  private destroy$ = new Subject();
+  @Input()
+  @coerceBoolean()
+  initAccessToken = false;
+
+  private destroy$ = new Subject<void>();
 
   deviceCredentialsFormGroup: FormGroup;
 
@@ -83,7 +88,8 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
 
   credentialTypeNamesMap = credentialTypeNames;
 
-  private propagateChange = (v: any) => {};
+  private propagateChange = null;
+  private propagateChangePending = false;
 
   constructor(public fb: FormBuilder) {
     this.deviceCredentialsFormGroup = this.fb.group({
@@ -98,14 +104,18 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
     });
     this.deviceCredentialsFormGroup.get('credentialsType').valueChanges.pipe(
       takeUntil(this.destroy$)
-    ).subscribe(() => {
-      this.credentialsTypeChanged();
+    ).subscribe((value) => {
+      this.credentialsTypeChanged(value);
     });
   }
 
   ngOnInit(): void {
     if (this.disabled) {
       this.deviceCredentialsFormGroup.disable({emitEvent: false});
+    }
+    if (this.initAccessToken && !this.deviceCredentialsFormGroup.get('credentialsId').value &&
+      this.deviceCredentialsFormGroup.get('credentialsType').value === DeviceCredentialsType.ACCESS_TOKEN) {
+      this.deviceCredentialsFormGroup.get('credentialsId').patchValue(generateSecret(20));
     }
   }
 
@@ -128,11 +138,21 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
 
   updateView() {
     const deviceCredentialsValue = this.deviceCredentialsFormGroup.value;
-    this.propagateChange(deviceCredentialsValue);
+    if (this.propagateChange) {
+      this.propagateChange(deviceCredentialsValue);
+    } else {
+      this.propagateChangePending = true;
+    }
   }
 
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
+    if (this.propagateChangePending) {
+      this.propagateChangePending = false;
+      setTimeout(() => {
+        this.updateView();
+      }, 0);
+    }
   }
 
   registerOnTouched(fn: any): void {}
@@ -144,7 +164,6 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
     } else {
       this.deviceCredentialsFormGroup.enable({emitEvent: false});
       this.updateValidators();
-      this.deviceCredentialsFormGroup.updateValueAndValidity();
     }
   }
 
@@ -156,12 +175,15 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
     };
   }
 
-  credentialsTypeChanged(): void {
+  credentialsTypeChanged(type: DeviceCredentialsType): void {
     this.deviceCredentialsFormGroup.patchValue({
       credentialsId: null,
       credentialsValue: null
     });
     this.updateValidators();
+    if (type === DeviceCredentialsType.ACCESS_TOKEN && this.initAccessToken) {
+      this.deviceCredentialsFormGroup.get('credentialsId').patchValue(generateSecret(20));
+    }
   }
 
   updateValidators(): void {
@@ -180,5 +202,9 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
         this.deviceCredentialsFormGroup.get('credentialsId').updateValueAndValidity({emitEvent: false});
         break;
     }
+  }
+
+  public generate(formControlName: string) {
+    this.deviceCredentialsFormGroup.get(formControlName).patchValue(generateSecret(20));
   }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,16 @@
  */
 package org.thingsboard.server.dao.service;
 
-import org.junit.jupiter.api.BeforeAll;
+import com.fasterxml.jackson.databind.node.TextNode;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.asset.Asset;
 
-import javax.validation.ConstraintValidatorContext;
-
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.mockito.Mockito.mock;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class NoXssValidatorTest {
-    private static NoXssValidator validator;
-
-    @BeforeAll
-    public static void beforeAll() {
-        validator = new NoXssValidator();
-        validator.initialize(null);
-    }
 
     @ParameterizedTest
     @ValueSource(strings = {
@@ -42,11 +35,27 @@ public class NoXssValidatorTest {
             "<p><a href=\"http://htmlbook.ru/example/knob.html\">Link!!!</a></p>1221",
             "<h3>Please log in to proceed</h3> <form action=http://192.168.149.128>Username:<br><input type=\"username\" name=\"username\"></br>Password:<br><input type=\"password\" name=\"password\"></br><br><input type=\"submit\" value=\"Log in\"></br>",
             "   <img src= \"http://site.com/\"  >  ",
-            "123 <input type=text value=a onfocus=alert(1337) AUTOFOCUS>bebe",
+            "123 <input type=text value=a onfocus=alert(1337) AUTOFOCUS>bebe"
     })
-    public void testIsNotValid(String stringWithXss) {
-        boolean isValid = validator.isValid(stringWithXss, mock(ConstraintValidatorContext.class));
-        assertFalse(isValid);
+    public void givenEntityWithMaliciousPropertyValue_thenReturnValidationError(String maliciousString) {
+        Asset invalidAsset = new Asset();
+        invalidAsset.setName(maliciousString);
+
+        assertThatThrownBy(() -> {
+            ConstraintValidator.validateFields(invalidAsset);
+        }).hasMessageContaining("is malformed");
+    }
+
+    @Test
+    public void givenEntityWithMaliciousValueInAdditionalInfo_thenReturnValidationError() {
+        Asset invalidAsset = new Asset();
+        String maliciousValue = "qwerty<script>alert(document.cookie)</script>qwerty";
+        invalidAsset.setAdditionalInfo(JacksonUtil.newObjectNode()
+                .set("description", new TextNode(maliciousValue)));
+
+        assertThatThrownBy(() -> {
+            ConstraintValidator.validateFields(invalidAsset);
+        }).hasMessageContaining("is malformed");
     }
 
 }

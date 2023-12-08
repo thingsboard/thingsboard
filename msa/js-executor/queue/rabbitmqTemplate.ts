@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,7 +24,8 @@ import { Options, Replies } from 'amqplib/properties';
 export class RabbitMqTemplate implements IQueue {
 
     private logger = _logger(`rabbitmqTemplate`);
-    private requestTopic: string = config.get('request_topic');
+    private queuePrefix: string = config.get('queue_prefix');
+    private requestTopic: string = this.queuePrefix ? this.queuePrefix + "." + config.get('request_topic') : config.get('request_topic');
     private host = config.get('rabbitmq.host');
     private port = config.get('rabbitmq.port');
     private vhost = config.get('rabbitmq.virtual_host');
@@ -65,7 +66,7 @@ export class RabbitMqTemplate implements IQueue {
         })
     }
 
-    async send(responseTopic: string, scriptId: string, rawResponse: Buffer, headers: any): Promise<any> {
+    async send(responseTopic: string, msgKey: string, rawResponse: Buffer, headers: any): Promise<any> {
 
         if (!this.topics.includes(responseTopic)) {
             await this.createQueue(responseTopic);
@@ -74,7 +75,7 @@ export class RabbitMqTemplate implements IQueue {
 
         let data = JSON.stringify(
             {
-                key: scriptId,
+                key: msgKey,
                 data: [...rawResponse],
                 headers: headers
             });

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormBuilder,
-  FormControl,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   Validator
@@ -69,7 +69,7 @@ export class ImageMapProviderSettingsComponent extends PageComponent implements 
 
   private propagateChange = null;
 
-  public providerSettingsFormGroup: FormGroup;
+  public providerSettingsFormGroup: UntypedFormGroup;
 
   filteredEntityAliases: Observable<Array<string>>;
   aliasSearchText = '';
@@ -85,7 +85,7 @@ export class ImageMapProviderSettingsComponent extends PageComponent implements 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
               private entityService: EntityService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
@@ -149,7 +149,7 @@ export class ImageMapProviderSettingsComponent extends PageComponent implements 
     );
   }
 
-  public validate(c: FormControl) {
+  public validate(c: UntypedFormControl) {
     return this.providerSettingsFormGroup.valid ? null : {
       imageMapProviderSettings: {
         valid: false,
@@ -236,7 +236,7 @@ export class ImageMapProviderSettingsComponent extends PageComponent implements 
       mergeMap((aliasInfo) => {
         return this.entityService.getEntityKeysByEntityFilter(
           aliasInfo.entityFilter,
-          dataKeyTypes,
+          dataKeyTypes, [],
           {ignoreLoading: true, ignoreErrors: true}
         ).pipe(
           catchError(() => of([]))

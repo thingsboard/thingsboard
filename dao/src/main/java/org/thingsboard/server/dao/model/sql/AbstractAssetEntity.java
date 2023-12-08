@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,11 @@ import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
@@ -39,13 +39,12 @@ import static org.thingsboard.server.dao.model.ModelConstants.ASSET_NAME_PROPERT
 import static org.thingsboard.server.dao.model.ModelConstants.ASSET_TENANT_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ASSET_TYPE_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EXTERNAL_ID_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @MappedSuperclass
-public abstract class AbstractAssetEntity<T extends Asset> extends BaseSqlEntity<T> implements SearchTextEntity<T> {
+public abstract class AbstractAssetEntity<T extends Asset> extends BaseSqlEntity<T> {
 
     @Column(name = ASSET_TENANT_ID_PROPERTY)
     private UUID tenantId;
@@ -62,12 +61,12 @@ public abstract class AbstractAssetEntity<T extends Asset> extends BaseSqlEntity
     @Column(name = ASSET_LABEL_PROPERTY)
     private String label;
 
-    @Column(name = SEARCH_TEXT_PROPERTY)
-    private String searchText;
-
     @Type(type = "json")
     @Column(name = ModelConstants.ASSET_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
+
+    @Column(name = ModelConstants.ASSET_ASSET_PROFILE_ID_PROPERTY, columnDefinition = "uuid")
+    private UUID assetProfileId;
 
     @Column(name = EXTERNAL_ID_PROPERTY)
     private UUID externalId;
@@ -87,6 +86,9 @@ public abstract class AbstractAssetEntity<T extends Asset> extends BaseSqlEntity
         if (asset.getCustomerId() != null) {
             this.customerId = asset.getCustomerId().getId();
         }
+        if (asset.getAssetProfileId() != null) {
+            this.assetProfileId = asset.getAssetProfileId().getId();
+        }
         this.name = asset.getName();
         this.type = asset.getType();
         this.label = asset.getLabel();
@@ -101,26 +103,12 @@ public abstract class AbstractAssetEntity<T extends Asset> extends BaseSqlEntity
         this.setCreatedTime(assetEntity.getCreatedTime());
         this.tenantId = assetEntity.getTenantId();
         this.customerId = assetEntity.getCustomerId();
+        this.assetProfileId = assetEntity.getAssetProfileId();
         this.type = assetEntity.getType();
         this.name = assetEntity.getName();
         this.label = assetEntity.getLabel();
-        this.searchText = assetEntity.getSearchText();
         this.additionalInfo = assetEntity.getAdditionalInfo();
         this.externalId = assetEntity.getExternalId();
-    }
-
-    @Override
-    public String getSearchTextSource() {
-        return name;
-    }
-
-    @Override
-    public void setSearchText(String searchText) {
-        this.searchText = searchText;
-    }
-
-    public String getSearchText() {
-        return searchText;
     }
 
     protected Asset toAsset() {
@@ -131,6 +119,9 @@ public abstract class AbstractAssetEntity<T extends Asset> extends BaseSqlEntity
         }
         if (customerId != null) {
             asset.setCustomerId(new CustomerId(customerId));
+        }
+        if (assetProfileId != null) {
+            asset.setAssetProfileId(new AssetProfileId(assetProfileId));
         }
         asset.setName(name);
         asset.setType(type);

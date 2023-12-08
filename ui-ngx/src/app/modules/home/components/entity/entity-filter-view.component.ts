@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -84,47 +84,63 @@ export class EntityFilterViewComponent implements ControlValueAccessor {
           this.filterDisplayValue = this.translate.instant('alias.filter-type-state-entity-description');
           break;
         case AliasFilterType.assetType:
-          const assetType = this.filter.assetType;
+          const assetTypesQuoted = [];
+          this.filter.assetTypes.forEach((filterAssetType) => {
+            assetTypesQuoted.push(`'${filterAssetType}'`);
+          });
+          const assetTypes = assetTypesQuoted.join(', ');
           prefix = this.filter.assetNameFilter;
           if (prefix && prefix.length) {
             this.filterDisplayValue = this.translate.instant('alias.filter-type-asset-type-and-name-description',
-              {assetType, prefix});
+              {assetTypes, prefix});
           } else {
             this.filterDisplayValue = this.translate.instant('alias.filter-type-asset-type-description',
-              {assetType});
+              {assetTypes});
           }
           break;
         case AliasFilterType.deviceType:
-          const deviceType = this.filter.deviceType;
+          const deviceTypesQuoted = [];
+          this.filter.deviceTypes.forEach((filterDeviceType) => {
+            deviceTypesQuoted.push(`'${filterDeviceType}'`);
+          });
+          const deviceTypes = deviceTypesQuoted.join(', ');
           prefix = this.filter.deviceNameFilter;
           if (prefix && prefix.length) {
             this.filterDisplayValue = this.translate.instant('alias.filter-type-device-type-and-name-description',
-              {deviceType, prefix});
+              {deviceTypes, prefix});
           } else {
             this.filterDisplayValue = this.translate.instant('alias.filter-type-device-type-description',
-              {deviceType});
+              {deviceTypes});
           }
           break;
         case AliasFilterType.edgeType:
-          const edgeType = this.filter.edgeType;
+          const edgeTypesQuoted = [];
+          this.filter.edgeTypes.forEach((filterEdgeType) => {
+            edgeTypesQuoted.push(`'${filterEdgeType}'`);
+          });
+          const edgeTypes = edgeTypesQuoted.join(', ');
           prefix = this.filter.edgeNameFilter;
           if (prefix && prefix.length) {
             this.filterDisplayValue = this.translate.instant('alias.filter-type-edge-type-and-name-description',
-              {edgeType, prefix});
+              {edgeTypes, prefix});
           } else {
             this.filterDisplayValue = this.translate.instant('alias.filter-type-edge-type-description',
-              {edgeType});
+              {edgeTypes});
           }
           break;
         case AliasFilterType.entityViewType:
-          const entityView = this.filter.entityViewType;
+          const entityViewTypesQuoted = [];
+          this.filter.entityViewTypes.forEach((entityViewType) => {
+            entityViewTypesQuoted.push(`'${entityViewType}'`);
+          });
+          const entityViewTypes = entityViewTypesQuoted.join(', ');
           prefix = this.filter.entityViewNameFilter;
           if (prefix && prefix.length) {
             this.filterDisplayValue = this.translate.instant('alias.filter-type-entity-view-type-and-name-description',
-              {entityView, prefix});
+              {entityViewTypes, prefix});
           } else {
             this.filterDisplayValue = this.translate.instant('alias.filter-type-entity-view-type-description',
-              {entityView});
+              {entityViewTypes});
           }
           break;
         case AliasFilterType.relationsQuery:

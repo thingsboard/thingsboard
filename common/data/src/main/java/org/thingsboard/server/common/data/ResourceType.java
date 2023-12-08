@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,22 @@
  */
 package org.thingsboard.server.common.data;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
 public enum ResourceType {
-    LWM2M_MODEL, JKS, PKCS_12
+    LWM2M_MODEL("application/xml", false, false),
+    JKS("application/x-java-keystore", false, false),
+    PKCS_12("application/x-pkcs12", false, false),
+    JS_MODULE("application/javascript", true, true),
+    IMAGE(null, true, true);
+
+    @Getter
+    private final String mediaType;
+    @Getter
+    private final boolean customerAccess;
+    @Getter
+    private final boolean updatable;
+
 }

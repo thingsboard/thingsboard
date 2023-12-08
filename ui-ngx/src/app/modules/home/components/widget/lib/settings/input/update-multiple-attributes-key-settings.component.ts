@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 import { Component } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, UntypedFormArray, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
@@ -24,6 +24,10 @@ import {
   dataKeySelectOptionValidator
 } from '@home/components/widget/lib/settings/input/datakey-select-option.component';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
+import {
+  MultipleInputWidgetDataKeyEditableType,
+  MultipleInputWidgetDataKeyValueType
+} from '@home/components/widget/lib/multiple-input-widget.component';
 
 @Component({
   selector: 'tb-update-multiple-attributes-key-settings',
@@ -32,14 +36,14 @@ import { CdkDragDrop } from '@angular/cdk/drag-drop';
 })
 export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettingsComponent {
 
-  updateMultipleAttributesKeySettingsForm: FormGroup;
+  updateMultipleAttributesKeySettingsForm: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
-  protected settingsForm(): FormGroup {
+  protected settingsForm(): UntypedFormGroup {
     return this.updateMultipleAttributesKeySettingsForm;
   }
 
@@ -51,6 +55,8 @@ export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettings
       required: false,
       isEditable: 'editable',
       disabledOnDataKey: '',
+      appearance: 'outline',
+      subscriptSizing: 'fixed',
 
       slideToggleLabelPosition: 'after',
       selectOptions: [],
@@ -62,6 +68,11 @@ export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettings
       minValueErrorMessage: '',
       maxValueErrorMessage: '',
       invalidDateErrorMessage: '',
+      invalidJsonErrorMessage: '',
+
+      dialogTitle: '',
+      saveButtonLabel: '',
+      cancelButtonLabel: '',
 
       useCustomIcon: false,
       icon: '',
@@ -86,6 +97,8 @@ export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettings
       required: [settings.required, []],
       isEditable: [settings.isEditable, []],
       disabledOnDataKey: [settings.disabledOnDataKey, []],
+      appearance: [settings.appearance, []],
+      subscriptSizing: [settings.subscriptSizing, []],
 
       // Slide toggle settings
 
@@ -107,6 +120,13 @@ export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettings
       minValueErrorMessage: [settings.minValueErrorMessage, []],
       maxValueErrorMessage: [settings.maxValueErrorMessage, []],
       invalidDateErrorMessage: [settings.invalidDateErrorMessage, []],
+      invalidJsonErrorMessage: [settings.invalidJsonErrorMessage, []],
+
+      // Dialog settings
+
+      dialogTitle: [settings.dialogTitle, []],
+      saveButtonLabel: [settings.saveButtonLabel, []],
+      cancelButtonLabel: [settings.cancelButtonLabel, []],
 
       // Icon settings
 
@@ -130,9 +150,10 @@ export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettings
 
   protected updateValidators(emitEvent: boolean) {
     const dataKeyHidden: boolean = this.updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value;
-    const dataKeyValueType: string = this.updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value;
+    const dataKeyValueType: MultipleInputWidgetDataKeyValueType =
+      this.updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value;
     const required: boolean = this.updateMultipleAttributesKeySettingsForm.get('required').value;
-    const isEditable: string = this.updateMultipleAttributesKeySettingsForm.get('isEditable').value;
+    const isEditable: MultipleInputWidgetDataKeyEditableType = this.updateMultipleAttributesKeySettingsForm.get('isEditable').value;
     const useCustomIcon: boolean = this.updateMultipleAttributesKeySettingsForm.get('useCustomIcon').value;
     const useGetValueFunction: boolean = this.updateMultipleAttributesKeySettingsForm.get('useGetValueFunction').value;
     const useSetValueFunction: boolean = this.updateMultipleAttributesKeySettingsForm.get('useSetValueFunction').value;
@@ -149,8 +170,13 @@ export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettings
       this.updateMultipleAttributesKeySettingsForm.get('useGetValueFunction').enable({emitEvent: false});
       this.updateMultipleAttributesKeySettingsForm.get('useSetValueFunction').enable({emitEvent: false});
 
-      if (isEditable !== 'disabled') {
+      if (isEditable === 'editable') {
         this.updateMultipleAttributesKeySettingsForm.get('disabledOnDataKey').enable({emitEvent: false});
+      }
+
+      if (!['booleanSwitch', 'booleanCheckbox'].includes(dataKeyValueType)) {
+        this.updateMultipleAttributesKeySettingsForm.get('appearance').enable({emitEvent: false});
+        this.updateMultipleAttributesKeySettingsForm.get('subscriptSizing').enable({emitEvent: false});
       }
 
       if (dataKeyValueType === 'booleanSwitch') {
@@ -165,6 +191,11 @@ export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettings
         this.updateMultipleAttributesKeySettingsForm.get('maxValueErrorMessage').enable({emitEvent: false});
       } else if (dataKeyValueType === 'dateTime' || dataKeyValueType === 'date' || dataKeyValueType === 'time') {
         this.updateMultipleAttributesKeySettingsForm.get('invalidDateErrorMessage').enable({emitEvent: false});
+      } else if (dataKeyValueType === 'JSON') {
+        this.updateMultipleAttributesKeySettingsForm.get('invalidJsonErrorMessage').enable({emitEvent: false});
+        this.updateMultipleAttributesKeySettingsForm.get('dialogTitle').enable({emitEvent: false});
+        this.updateMultipleAttributesKeySettingsForm.get('saveButtonLabel').enable({emitEvent: false});
+        this.updateMultipleAttributesKeySettingsForm.get('cancelButtonLabel').enable({emitEvent: false});
       }
       if (required) {
         this.updateMultipleAttributesKeySettingsForm.get('requiredErrorMessage').enable({emitEvent: false});
@@ -184,11 +215,11 @@ export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettings
     this.updateMultipleAttributesKeySettingsForm.updateValueAndValidity({emitEvent: false});
   }
 
-  protected doUpdateSettings(settingsForm: FormGroup, settings: WidgetSettings) {
+  protected doUpdateSettings(settingsForm: UntypedFormGroup, settings: WidgetSettings) {
     settingsForm.setControl('selectOptions', this.prepareSelectOptionsFormArray(settings.selectOptions), {emitEvent: false});
   }
 
-  private prepareSelectOptionsFormArray(selectOptions: DataKeySelectOption[] | undefined): FormArray {
+  private prepareSelectOptionsFormArray(selectOptions: DataKeySelectOption[] | undefined): UntypedFormArray {
     const selectOptionsControls: Array<AbstractControl> = [];
     if (selectOptions) {
       selectOptions.forEach((selectOption) => {
@@ -206,8 +237,8 @@ export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettings
     }]);
   }
 
-  selectOptionsFormArray(): FormArray {
-    return this.updateMultipleAttributesKeySettingsForm.get('selectOptions') as FormArray;
+  selectOptionsFormArray(): UntypedFormArray {
+    return this.updateMultipleAttributesKeySettingsForm.get('selectOptions') as UntypedFormArray;
   }
 
   public trackBySelectOption(index: number, selectOptionControl: AbstractControl): any {
@@ -215,7 +246,7 @@ export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettings
   }
 
   public removeSelectOption(index: number) {
-    (this.updateMultipleAttributesKeySettingsForm.get('selectOptions') as FormArray).removeAt(index);
+    (this.updateMultipleAttributesKeySettingsForm.get('selectOptions') as UntypedFormArray).removeAt(index);
   }
 
   public addSelectOption() {
@@ -223,7 +254,7 @@ export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettings
       value: null,
       label: null
     };
-    const selectOptionsArray = this.updateMultipleAttributesKeySettingsForm.get('selectOptions') as FormArray;
+    const selectOptionsArray = this.updateMultipleAttributesKeySettingsForm.get('selectOptions') as UntypedFormArray;
     const selectOptionControl = this.fb.control(selectOption, [dataKeySelectOptionValidator]);
     (selectOptionControl as any).new = true;
     selectOptionsArray.push(selectOptionControl);
@@ -234,7 +265,7 @@ export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettings
   }
 
   selectOptionDrop(event: CdkDragDrop<any[]>) {
-    const selectOptionsArray = this.updateMultipleAttributesKeySettingsForm.get('selectOptions') as FormArray;
+    const selectOptionsArray = this.updateMultipleAttributesKeySettingsForm.get('selectOptions') as UntypedFormArray;
     const selectOption = selectOptionsArray.at(event.previousIndex);
     selectOptionsArray.removeAt(event.previousIndex);
     selectOptionsArray.insert(event.currentIndex, selectOption);
@@ -243,8 +274,9 @@ export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettings
   displayErrorMessagesSection(): boolean {
     const dataKeyHidden: boolean = this.updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value;
     const required: boolean = this.updateMultipleAttributesKeySettingsForm.get('required').value;
-    const dataKeyValueType: string = this.updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value;
-    return !dataKeyHidden && (required || (['integer', 'double', 'dateTime', 'date', 'time'].includes(dataKeyValueType)));
+    const dataKeyValueType: MultipleInputWidgetDataKeyValueType =
+      this.updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value;
+    return !dataKeyHidden && (required || (['integer', 'double', 'dateTime', 'date', 'time', 'JSON'].includes(dataKeyValueType)));
   }
 }
 

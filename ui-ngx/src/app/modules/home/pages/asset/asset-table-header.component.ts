@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,11 +20,12 @@ import { AppState } from '@core/core.state';
 import { EntityTableHeaderComponent } from '../../components/entity/entity-table-header.component';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AssetInfo } from '@shared/models/asset.models';
+import { AssetProfileId } from '@shared/models/id/asset-profile-id';
 
 @Component({
   selector: 'tb-asset-table-header',
   templateUrl: './asset-table-header.component.html',
-  styleUrls: ['./asset-table-header.component.scss']
+  styleUrls: []
 })
 export class AssetTableHeaderComponent extends EntityTableHeaderComponent<AssetInfo> {
 
@@ -34,8 +35,8 @@ export class AssetTableHeaderComponent extends EntityTableHeaderComponent<AssetI
     super(store);
   }
 
-  assetTypeChanged(assetType: string) {
-    this.entitiesTableConfig.componentsData.assetType = assetType;
+  assetProfileChanged(assetProfileId: AssetProfileId) {
+    this.entitiesTableConfig.componentsData.assetProfileId = assetProfileId;
     this.entitiesTableConfig.getTable().resetSortAndFilter(true);
   }
 

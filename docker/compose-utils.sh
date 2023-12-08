@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2016-2022 The Thingsboard Authors
+# Copyright © 2016-2023 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -84,8 +84,11 @@ function additionalComposeCacheArgs() {
         redis-cluster)
         CACHE_COMPOSE_ARGS="-f docker-compose.redis-cluster.yml"
         ;;
+        redis-sentinel)
+        CACHE_COMPOSE_ARGS="-f docker-compose.redis-sentinel.yml"
+        ;;
         *)
-        echo "Unknown CACHE value specified in the .env file: '${CACHE}'. Should be either 'redis' or 'redis-cluster'." >&2
+        echo "Unknown CACHE value specified in the .env file: '${CACHE}'. Should be either 'redis' or 'redis-cluster' or 'redis-sentinel'." >&2
         exit 1
     esac
     echo $CACHE_COMPOSE_ARGS
@@ -114,8 +117,11 @@ function additionalStartupServices() {
         redis-cluster)
         ADDITIONAL_STARTUP_SERVICES="$ADDITIONAL_STARTUP_SERVICES redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5"
         ;;
+        redis-sentinel)
+        ADDITIONAL_STARTUP_SERVICES="$ADDITIONAL_STARTUP_SERVICES redis-master redis-slave redis-sentinel"
+        ;;
         *)
-        echo "Unknown CACHE value specified in the .env file: '${CACHE}'. Should be either 'redis' or 'redis-cluster'." >&2
+        echo "Unknown CACHE value specified in the .env file: '${CACHE}'. Should be either 'redis' or 'redis-cluster' or 'redis-sentinel'." >&2
         exit 1
     esac
 
@@ -160,8 +166,15 @@ function permissionList() {
           1001 1001 tb-node/redis-cluster-data-5
           "
         ;;
+        redis-sentinel)
+          PERMISSION_LIST="$PERMISSION_LIST
+          1001 1001 tb-node/redis-sentinel-data-master
+          1001 1001 tb-node/redis-sentinel-data-slave
+          1001 1001 tb-node/redis-sentinel-data-sentinel
+          "
+        ;;
         *)
-        echo "Unknown CACHE value specified in the .env file: '${CACHE}'. Should be either 'redis' or 'redis-cluster'." >&2
+        echo "Unknown CACHE value specified in the .env file: '${CACHE}'. Should be either 'redis' or 'redis-cluster' or 'redis-sentinel'." >&2
         exit 1
     esac
 
@@ -194,4 +207,36 @@ function checkFolders() {
     fi
   done < <(echo "$PERMISSION_LIST")
   return $EXIT_CODE
+}
+
+function composeVersion() {
+    #Checking whether "set -e" shell option should be restored after Compose version check
+    FLAG_SET=false
+    if [[ $SHELLOPTS =~ errexit ]]; then
+        set +e
+        FLAG_SET=true
+    fi
+
+    #Checking Compose V1 availablity
+    docker-compose version >/dev/null 2>&1
+    if [ $? -eq 0 ]; then status_v1=true; else status_v1=false; fi
+
+    #Checking Compose V2 availablity
+    docker compose version >/dev/null 2>&1
+    if [ $? -eq 0 ]; then status_v2=true; else status_v2=false; fi
+
+    COMPOSE_VERSION=""
+
+    if $status_v2 ; then
+        COMPOSE_VERSION="V2"
+    elif $status_v1 ; then
+        COMPOSE_VERSION="V1"
+    else
+        echo "Docker Compose plugin is not detected. Please check your environment." >&2
+        exit 1
+    fi
+
+    echo $COMPOSE_VERSION
+
+    if $FLAG_SET ; then set -e; fi
 }

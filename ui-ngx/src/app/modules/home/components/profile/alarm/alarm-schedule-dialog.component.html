@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<form [formGroup]="alarmScheduleFormGroup" (ngSubmit)="save()" style="width: 800px;">
+<form [formGroup]="alarmScheduleFormGroup" (ngSubmit)="save()" style="width: 900px;">
   <mat-toolbar color="primary">
     <h2>{{ (readonly ? 'device-profile.schedule' : 'device-profile.edit-schedule') | translate }}</h2>
     <span fxFlex></span>
@@ -28,13 +28,9 @@
   <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
   </mat-progress-bar>
   <div mat-dialog-content>
-    <fieldset [disabled]="isLoading$ | async">
-      <div fxFlex fxLayout="column">
-        <tb-alarm-schedule
-          formControlName="alarmSchedule">
-        </tb-alarm-schedule>
-      </div>
-    </fieldset>
+    <tb-alarm-schedule
+      formControlName="alarmSchedule">
+    </tb-alarm-schedule>
   </div>
   <div mat-dialog-actions fxLayoutAlign="end center">
     <button mat-button color="primary"

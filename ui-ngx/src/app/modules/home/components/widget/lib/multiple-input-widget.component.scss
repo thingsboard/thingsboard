@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,18 @@
 
   .tb-multiple-input {
     height: 100%;
-    overflow-x: hidden;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+
+    .tb-multiple-input-container {
+      padding: 8px 8px 0;
+      flex: 1 1 100%;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
 
     .fields-group {
-      padding: 0 8px;
+      padding: 8px 8px 0;
       margin: 10px 0;
       border: 1px groove rgba(0, 0, 0, .25);
 
@@ -30,50 +37,70 @@
       }
     }
 
-    .input-field {
-      padding-right: 10px;
-
-      mat-form-field {
-        margin-bottom: 5px;
-      }
+    .tb-multiple-input-layout {
+      display: grid;
     }
 
-    mat-checkbox,
-    mat-slide-toggle {
+    .mat-mdc-slide-toggle {
       display: block;
-      margin-top: 20px;
-      margin-bottom: 16px;
-      .label-wrapper {
-        white-space: normal;
+      margin-top: 10px;
+      margin-bottom: 8px;
+    }
+
+    &--buttons-container {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: end;
+      &__button {
+        max-height: 50px;
+        margin-right:20px;
       }
     }
 
-    mat-slide-toggle {
-      height: auto;
-    }
-
-    .date-time-input {
-      mat-form-field {
-        width: 100%;
-        margin: 2px 0;
-      }
-    }
-
-    .vertical-alignment {
+    &--errors-container {
+      height: 100%;
+      display: flex;
       flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      &__error {
+        text-align: center;
+        font-size: 18px;
+        color: #a0a0a0;
+      }
     }
   }
 }
 
 :host ::ng-deep {
   .tb-multiple-input {
-    .mat-slide-toggle-content {
-      width: 100%;
-      display: flex;
-      align-items: center;
-
-      .mat-icon {
-        margin-right: 8px;
+    .mat-mdc-slide-toggle, .mat-mdc-checkbox {
+      .mdc-form-field {
+        width: 100%;
+        & > label {
+          display: flex;
+          align-items: center;
+          width: 100%;
+          margin: 0;
+          .mat-icon {
+            margin-right: 8px;
+          }
+        }
+      }
+    }
+    .mat-mdc-slide-toggle {
+      .mdc-form-field {
+        & > label {
+          .mat-icon {
+            margin-left: 8px;
+          }
+        }
+      }
+    }
+    .color-input {
+      .mat-mdc-form-field-icon-suffix {
+        padding: 0 8px 0 4px;
       }
     }
   }

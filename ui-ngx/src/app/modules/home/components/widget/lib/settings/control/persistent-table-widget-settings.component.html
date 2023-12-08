@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,20 +20,20 @@
     <legend class="group-title" translate>widgets.persistent-table.general-settings</legend>
     <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px">
       <section fxLayout="column" fxFlex>
-        <mat-checkbox formControlName="enableFilter" style="margin-bottom: 16px;">
+        <mat-checkbox formControlName="enableFilter">
           {{ 'widgets.persistent-table.enable-filter' | translate }}
         </mat-checkbox>
       </section>
       <section fxLayout="column" fxFlex>
-        <mat-checkbox formControlName="enableStickyHeader" style="margin-bottom: 16px;">
+        <mat-checkbox formControlName="enableStickyHeader">
           {{ 'widgets.persistent-table.enable-sticky-header' | translate }}
         </mat-checkbox>
-        <mat-checkbox formControlName="enableStickyAction" style="margin-bottom: 16px;">
+        <mat-checkbox formControlName="enableStickyAction">
           {{ 'widgets.persistent-table.enable-sticky-action' | translate }}
         </mat-checkbox>
       </section>
     </section>
-    <section fxLayout="column" fxLayoutGap="8px">
+    <section fxLayout="column" fxLayoutGap.gt-xs="8px">
       <mat-slide-toggle fxFlex formControlName="displayDetails">
         {{ 'widgets.persistent-table.display-request-details' | translate }}
       </mat-slide-toggle>
@@ -62,16 +62,16 @@
     <legend class="group-title" translate>widgets.persistent-table.columns-settings</legend>
     <mat-form-field fxFlex class="mat-block">
       <mat-label translate>widgets.persistent-table.display-columns</mat-label>
-      <mat-chip-list #columnsChipList class="tb-drop-list"
+      <mat-chip-grid #columnsChipList class="tb-drop-list"
                      required
                      cdkDropList
                      cdkDropListOrientation="horizontal"
                      (cdkDropListDropped)="columnDrop($event)">
-        <mat-chip class="tb-draggable" cdkDrag *ngFor="let column of persistentTableWidgetSettingsForm.get('displayColumns').value"
+        <mat-chip-row class="tb-draggable" cdkDrag *ngFor="let column of persistentTableWidgetSettingsForm.get('displayColumns').value"
                   [removable]="true" (removed)="onColumnRemoved(column)">
           {{ displayColumnFromValue(column)?.name }}
           <mat-icon matChipRemove>cancel</mat-icon>
-        </mat-chip>
+        </mat-chip-row>
         <input matInput type="text" placeholder="{{ 'widgets.persistent-table.column' | translate }}"
                style="max-width: 200px;"
                #columnInput
@@ -84,7 +84,7 @@
                [matChipInputFor]="columnsChipList"
                [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
                (matChipInputTokenEnd)="addColumnFromChipInput($event)">
-      </mat-chip-list>
+      </mat-chip-grid>
       <mat-autocomplete #columnAutocomplete="matAutocomplete"
                         class="tb-autocomplete"
                         (optionSelected)="columnSelected($event)"

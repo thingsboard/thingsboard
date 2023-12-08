@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -33,9 +33,9 @@ export class RafService {
     private ngZone: NgZone
   ) {
     const requestAnimationFrame: (frameCallback: () => void) => number = window.requestAnimationFrame ||
-      window.webkitRequestAnimationFrame;
+      (window as any).webkitRequestAnimationFrame;
     const cancelAnimationFrame = window.cancelAnimationFrame ||
-      window.webkitCancelAnimationFrame ||
+      (window as any).webkitCancelAnimationFrame ||
       // @ts-ignore
       window.webkitCancelRequestAnimationFrame;
 

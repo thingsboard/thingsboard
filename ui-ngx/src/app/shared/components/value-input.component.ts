@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -73,13 +73,15 @@ export class ValueInputComponent implements OnInit, ControlValueAccessor {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        jsonValue: this.modelValue
+        jsonValue: this.modelValue,
+        required: true
       }
     }).afterClosed().subscribe(
       (res) => {
         if (res) {
           this.modelValue = res;
           this.inputForm.control.patchValue({value: this.modelValue});
+          this.updateView();
         }
       }
     );
@@ -114,7 +116,8 @@ export class ValueInputComponent implements OnInit, ControlValueAccessor {
   }
 
   updateView() {
-    if (this.inputForm.valid || this.valueType === ValueType.BOOLEAN) {
+    if (this.inputForm.valid || this.valueType === ValueType.BOOLEAN ||
+        (this.valueType === ValueType.JSON && Array.isArray(this.modelValue))) {
       this.propagateChange(this.modelValue);
     } else {
       this.propagateChange(null);

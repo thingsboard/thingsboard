@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,16 +18,16 @@ import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
-  FormArray,
-  FormBuilder,
-  FormGroup,
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   Validator,
   Validators
 } from '@angular/forms';
 import { SnmpCommunicationConfig, SnmpSpecType, SnmpSpecTypeTranslationMap } from '@shared/models/device.models';
-import { Subject, Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
 import { isUndefinedOrNull } from '@core/utils';
 import { takeUntil } from 'rxjs/operators';
 
@@ -52,34 +52,33 @@ export class SnmpDeviceProfileCommunicationConfigComponent implements OnInit, On
   snmpSpecTypes = Object.values(SnmpSpecType);
   snmpSpecTypeTranslationMap = SnmpSpecTypeTranslationMap;
 
-  deviceProfileCommunicationConfig: FormGroup;
+  deviceProfileCommunicationConfig: UntypedFormGroup;
 
   @Input()
   disabled: boolean;
 
   private usedSpecType: SnmpSpecType[] = [];
-  private valueChange$: Subscription = null;
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
   private propagateChange = (v: any) => { };
 
-  constructor(private fb: FormBuilder) { }
+  constructor(private fb: UntypedFormBuilder) { }
 
   ngOnInit(): void {
     this.deviceProfileCommunicationConfig = this.fb.group({
       communicationConfig: this.fb.array([])
     });
+    this.deviceProfileCommunicationConfig.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => this.updateModel());
   }
 
   ngOnDestroy() {
-    if (this.valueChange$) {
-      this.valueChange$.unsubscribe();
-    }
     this.destroy$.next();
     this.destroy$.complete();
   }
 
-  communicationConfigFormArray(): FormArray {
-    return this.deviceProfileCommunicationConfig.get('communicationConfig') as FormArray;
+  get communicationConfigFormArray(): UntypedFormArray {
+    return this.deviceProfileCommunicationConfig.get('communicationConfig') as UntypedFormArray;
   }
 
   registerOnChange(fn: any): void {
@@ -99,27 +98,27 @@ export class SnmpDeviceProfileCommunicationConfigComponent implements OnInit, On
   }
 
   writeValue(communicationConfig: SnmpCommunicationConfig[]) {
-    if (this.valueChange$) {
-      this.valueChange$.unsubscribe();
-    }
-    const communicationConfigControl: Array<AbstractControl> = [];
-    if (communicationConfig) {
-      communicationConfig.forEach((config) => {
-        communicationConfigControl.push(this.createdFormGroup(config));
-      });
-    }
-    this.deviceProfileCommunicationConfig.setControl('communicationConfig', this.fb.array(communicationConfigControl));
-    if (!communicationConfig || !communicationConfig.length) {
-      this.addCommunicationConfig();
-    }
-    if (this.disabled) {
-      this.deviceProfileCommunicationConfig.disable({emitEvent: false});
+    if (communicationConfig?.length === this.communicationConfigFormArray.length) {
+      this.communicationConfigFormArray.patchValue(communicationConfig, {emitEvent: false});
     } else {
-      this.deviceProfileCommunicationConfig.enable({emitEvent: false});
+      const communicationConfigControl: Array<AbstractControl> = [];
+      if (communicationConfig) {
+        communicationConfig.forEach((config) => {
+          communicationConfigControl.push(this.createdFormGroup(config));
+        });
+      }
+      this.deviceProfileCommunicationConfig.setControl(
+        'communicationConfig', this.fb.array(communicationConfigControl), {emitEvent: false}
+      );
+      if (!communicationConfig || !communicationConfig.length) {
+        this.addCommunicationConfig();
+      }
+      if (this.disabled) {
+        this.deviceProfileCommunicationConfig.disable({emitEvent: false});
+      } else {
+        this.deviceProfileCommunicationConfig.enable({emitEvent: false});
+      }
     }
-    this.valueChange$ = this.deviceProfileCommunicationConfig.valueChanges.subscribe(() => {
-      this.updateModel();
-    });
     this.updateUsedSpecType();
     if (!this.disabled && !this.deviceProfileCommunicationConfig.valid) {
       this.updateModel();
@@ -133,16 +132,16 @@ export class SnmpDeviceProfileCommunicationConfigComponent implements OnInit, On
   }
 
   public removeCommunicationConfig(index: number) {
-    this.communicationConfigFormArray().removeAt(index);
+    this.communicationConfigFormArray.removeAt(index);
   }
 
 
   get isAddEnabled(): boolean {
-    return this.communicationConfigFormArray().length !== Object.keys(SnmpSpecType).length;
+    return this.communicationConfigFormArray.length !== Object.keys(SnmpSpecType).length;
   }
 
   public addCommunicationConfig() {
-    this.communicationConfigFormArray().push(this.createdFormGroup());
+    this.communicationConfigFormArray.push(this.createdFormGroup());
     this.deviceProfileCommunicationConfig.updateValueAndValidity();
     if (!this.deviceProfileCommunicationConfig.valid) {
       this.updateModel();
@@ -175,7 +174,7 @@ export class SnmpDeviceProfileCommunicationConfigComponent implements OnInit, On
     });
   }
 
-  private createdFormGroup(value?: SnmpCommunicationConfig): FormGroup {
+  private createdFormGroup(value?: SnmpCommunicationConfig): UntypedFormGroup {
     if (isUndefinedOrNull(value)) {
       value = {
         spec: this.getFirstUnusedSeverity(),

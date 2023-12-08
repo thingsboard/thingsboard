@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,14 +99,16 @@ public class JpaSqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDao
 
     @Override
     public void cleanup(long systemTtl) {
-        cleanupPartitions(systemTtl);
+        if (systemTtl > 0) {
+            cleanupPartitions(systemTtl);
+        }
         super.cleanup(systemTtl);
     }
 
     private void cleanupPartitions(long systemTtl) {
         log.info("Going to cleanup old timeseries data partitions using partition type: {} and ttl: {}s", partitioning, systemTtl);
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement("call drop_partitions_by_max_ttl(?,?,?)")) {
+             PreparedStatement stmt = connection.prepareStatement("call drop_partitions_by_system_ttl(?,?,?)")) {
             stmt.setString(1, partitioning);
             stmt.setLong(2, systemTtl);
             stmt.setLong(3, 0);

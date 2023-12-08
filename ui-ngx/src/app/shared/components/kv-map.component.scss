@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,17 +24,5 @@
         color: rgba(0, 0, 0, .38);
       }
     }
-  }
-}
-
-:host ::ng-deep {
-  .mat-form-field-wrapper {
-    padding-bottom: 0;
-  }
-  .mat-form-field-infix {
-    border-top: 0;
-  }
-  .mat-form-field-underline {
-    bottom: 0;
   }
 }

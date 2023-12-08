@@ -63,7 +63,7 @@ Tool execution time depends on DB size, CPU resources and Disk throughput
 * Note that this this part works only for single node Cassandra Cluster. If you have more nodes - it is better to use `sstableloader` tool.
 
 1. [Optional] install Cassandra on the instance
-2. [Optional] Using `cqlsh` create `thingsboard` keyspace and requred tables from this files `schema-ts.cql` and `schema-ts-latest.cql` using `source` command
+2. [Optional] Using `cqlsh` create `thingsboard` keyspace and requred tables from this files `schema-keyspace.cql`, `schema-ts.cql` and `schema-ts-latest.cql` using `source` command
 3. Stop Cassandra
 4. Look at `/var/lib/cassandra/data/thingsboard` and check for names of data folders
 5. Copy generated SSTable files into cassandra data dir using next command:

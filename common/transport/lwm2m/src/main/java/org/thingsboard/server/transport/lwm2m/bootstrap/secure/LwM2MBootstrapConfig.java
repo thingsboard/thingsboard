@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,8 @@ import java.util.List;
 @Slf4j
 @Data
 public class LwM2MBootstrapConfig implements Serializable {
+
+    private static final long serialVersionUID = -4729088085817468640L;
 
     List<LwM2MBootstrapServerCredential> serverConfiguration;
 

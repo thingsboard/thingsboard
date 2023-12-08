@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -81,15 +81,19 @@ process.on('exit', (code: number) => {
 
 async function exit(status: number) {
     logger.info('Exiting with status: %d ...', status);
-    if (httpServer) {
-        const _httpServer = httpServer;
-        httpServer = null;
-        await _httpServer.stop();
-    }
-    if (queues) {
-        const _queues = queues;
-        queues = null;
-        await _queues.destroy();
+    try {
+        if (httpServer) {
+            const _httpServer = httpServer;
+            httpServer = null;
+            await _httpServer.stop();
+        }
+        if (queues) {
+            const _queues = queues;
+            queues = null;
+            await _queues.destroy();
+        }
+    } catch (e) {
+        logger.error('Error on exit');
     }
     process.exit(status);
 }

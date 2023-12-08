@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,6 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.user.UserServiceImpl;
-import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
 import org.thingsboard.server.service.security.exception.UserPasswordExpiredException;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -73,7 +72,6 @@ import static org.thingsboard.server.common.data.CacheConstants.SECURITY_SETTING
 
 @Service
 @Slf4j
-@TbCoreComponent
 public class DefaultSystemSecurityService implements SystemSecurityService {
 
     @Autowired
@@ -228,8 +226,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
 
         if (userCredentials != null && isPositiveInteger(passwordPolicy.getPasswordReuseFrequencyDays())) {
             long passwordReuseFrequencyTs = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(passwordPolicy.getPasswordReuseFrequencyDays());
-            User user = userService.findUserById(tenantId, userCredentials.getUserId());
-            JsonNode additionalInfo = user.getAdditionalInfo();
+            JsonNode additionalInfo = userCredentials.getAdditionalInfo();
             if (additionalInfo instanceof ObjectNode && additionalInfo.has(UserServiceImpl.USER_PASSWORD_HISTORY)) {
                 JsonNode userPasswordHistoryJson = additionalInfo.get(UserServiceImpl.USER_PASSWORD_HISTORY);
                 Map<String, String> userPasswordHistoryMap = JacksonUtil.convertValue(userPasswordHistoryJson, new TypeReference<>() {});
@@ -250,11 +247,11 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
 
         JsonNode prohibitDifferentUrl = generalSettings.getJsonValue().get("prohibitDifferentUrl");
 
-        if (prohibitDifferentUrl != null && prohibitDifferentUrl.asBoolean()) {
+        if ((prohibitDifferentUrl != null && prohibitDifferentUrl.asBoolean()) || httpServletRequest == null) {
             baseUrl = generalSettings.getJsonValue().get("baseUrl").asText();
         }
 
-        if (StringUtils.isEmpty(baseUrl)) {
+        if (StringUtils.isEmpty(baseUrl) && httpServletRequest != null) {
             baseUrl = MiscUtils.constructBaseUrl(httpServletRequest);
         }
 
@@ -263,6 +260,11 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
 
     @Override
     public void logLoginAction(User user, Object authenticationDetails, ActionType actionType, Exception e) {
+        logLoginAction(user, authenticationDetails, actionType, null, e);
+    }
+
+    @Override
+    public void logLoginAction(User user, Object authenticationDetails, ActionType actionType, String provider, Exception e) {
         String clientAddress = "Unknown";
         String browser = "Unknown";
         String os = "Unknown";
@@ -278,38 +280,38 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
                         browser += " " + userAgent.userAgent.major;
                         if (userAgent.userAgent.minor != null) {
                             browser += "." + userAgent.userAgent.minor;
-                                if (userAgent.userAgent.patch != null) {
-                                    browser += "." + userAgent.userAgent.patch;
-                                }
+                            if (userAgent.userAgent.patch != null) {
+                                browser += "." + userAgent.userAgent.patch;
                             }
                         }
-                    }
-                    if (userAgent.os != null) {
-                        os = userAgent.os.family;
-                        if (userAgent.os.major != null) {
-                            os += " " + userAgent.os.major;
-                            if (userAgent.os.minor != null) {
-                                os += "." + userAgent.os.minor;
-                                if (userAgent.os.patch != null) {
-                                    os += "." + userAgent.os.patch;
-                                    if (userAgent.os.patchMinor != null) {
-                                        os += "." + userAgent.os.patchMinor;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if (userAgent.device != null) {
-                        device = userAgent.device.family;
                     }
                 }
+                if (userAgent.os != null) {
+                    os = userAgent.os.family;
+                    if (userAgent.os.major != null) {
+                        os += " " + userAgent.os.major;
+                        if (userAgent.os.minor != null) {
+                            os += "." + userAgent.os.minor;
+                            if (userAgent.os.patch != null) {
+                                os += "." + userAgent.os.patch;
+                                if (userAgent.os.patchMinor != null) {
+                                    os += "." + userAgent.os.patchMinor;
+                                }
+                            }
+                        }
+                    }
+                }
+                if (userAgent.device != null) {
+                    device = userAgent.device.family;
+                }
             }
+        }
         if (actionType == ActionType.LOGIN && e == null) {
             userService.setLastLoginTs(user.getTenantId(), user.getId());
         }
         auditLogService.logEntityAction(
                 user.getTenantId(), user.getCustomerId(), user.getId(),
-                user.getName(), user.getId(), null, actionType, e, clientAddress, browser, os, device);
+                user.getName(), user.getId(), null, actionType, e, clientAddress, browser, os, device, provider);
     }
 
     private static boolean isPositiveInteger(Integer val) {

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 import { Component, EventEmitter, forwardRef, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import {
   ControlValueAccessor,
-  FormBuilder,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   ValidationErrors,
@@ -59,11 +59,11 @@ import {
 export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAccessor, Validator, OnDestroy {
 
   public disabled = false;
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
 
   private isDataLoadedIntoCache = false;
 
-  serverFormGroup: FormGroup;
+  serverFormGroup: UntypedFormGroup;
   bindingModeTypes = Object.values(BingingMode);
   bindingModeTypeNamesMap = BingingModeTranslationsMap;
   securityConfigLwM2MType = Lwm2mSecurityType;
@@ -81,7 +81,7 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
 
   private propagateChange = (v: any) => { };
 
-  constructor(public fb: FormBuilder,
+  constructor(public fb: UntypedFormBuilder,
               private deviceProfileService: DeviceProfileService) {
   }
 

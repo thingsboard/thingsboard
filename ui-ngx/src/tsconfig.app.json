@@ -3,7 +3,7 @@
   "compilerOptions": {
     "outDir": "../out-tsc/app",
     "types": ["node", "jquery", "flot", "tooltipster", "tinycolor2", "js-beautify",
-       "react", "react-dom", "jstree", "raphael", "canvas-gauges", "systemjs"]
+       "react", "react-dom", "raphael", "canvas-gauges", "systemjs"]
   },
   "angularCompilerOptions": {
     "fullTemplateTypeCheck": true

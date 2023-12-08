@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -73,6 +73,7 @@ export class OtaUpdateTableConfigResolve implements Resolve<EntityTableConfig<Ot
           name: this.translate.instant('ota-update.copy-direct-url'),
           icon: 'content_paste',
           style: {
+            padding: '4px',
             'font-size': '16px',
             color: 'rgba(0,0,0,.87)'
           },
@@ -91,6 +92,7 @@ export class OtaUpdateTableConfigResolve implements Resolve<EntityTableConfig<Ot
         name: this.translate.instant('ota-update.copy-checksum'),
         icon: 'content_paste',
         style: {
+          padding: '4px',
           'font-size': '16px',
           color: 'rgba(0,0,0,.87)'
         },

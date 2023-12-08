@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.UserCredentials;
@@ -34,7 +33,6 @@ import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.List;
 
 import static org.thingsboard.server.controller.UserController.ACTIVATE_URL_PATTERN;
 
@@ -54,7 +52,7 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
         ActionType actionType = tbUser.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         try {
             boolean sendEmail = tbUser.getId() == null && sendActivationMail;
-            User savedUser = checkNotNull(userService.saveUser(tbUser));
+            User savedUser = checkNotNull(userService.saveUser(tenantId, tbUser));
             if (sendEmail) {
                 UserCredentials userCredentials = userService.findUserCredentialsByUserId(tenantId, savedUser.getId());
                 String baseUrl = systemSecurityService.getBaseUrl(tenantId, customerId, request);
@@ -64,12 +62,11 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
                 try {
                     mailService.sendActivationEmail(activateUrl, email);
                 } catch (ThingsboardException e) {
-                    userService.deleteUser(tenantId, savedUser.getId());
+                    userService.deleteUser(tenantId, savedUser);
                     throw e;
                 }
             }
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, customerId, savedUser.getId(),
-                    savedUser, user, actionType, true, null);
+            notificationEntityService.logEntityAction(tenantId, savedUser.getId(), savedUser, customerId, actionType, user);
             return savedUser;
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.USER), tbUser, actionType, user, e);
@@ -78,17 +75,16 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
     }
 
     @Override
-    public void delete(TenantId tenantId, CustomerId customerId, User tbUser, User user) throws ThingsboardException {
-        UserId userId = tbUser.getId();
+    public void delete(TenantId tenantId, CustomerId customerId, User user, User responsibleUser) throws ThingsboardException {
+        ActionType actionType = ActionType.DELETED;
+        UserId userId = user.getId();
 
         try {
-            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(tenantId, userId);
-            userService.deleteUser(tenantId, userId);
-            notificationEntityService.notifyDeleteEntity(tenantId, userId, tbUser, customerId,
-                    ActionType.DELETED, relatedEdgeIds, user, userId.toString());
+            userService.deleteUser(tenantId, user);
+            notificationEntityService.logEntityAction(tenantId, userId, user, customerId, actionType, responsibleUser, customerId.toString());
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.USER),
-                    ActionType.DELETED, user, e, userId.toString());
+                    actionType, responsibleUser, e, userId.toString());
             throw e;
         }
     }

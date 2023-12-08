@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -55,8 +55,7 @@
                       matTooltipPosition="above">
         </mat-checkbox>
       </div>
-      <mat-form-field fxFlex="33" hideRequiredMarker>
-        <mat-label></mat-label>
+      <mat-form-field fxFlex="33">
         <input matInput type="text" formControlName="keyName" required>
         <mat-error *ngIf="resourceLwM2M.get('keyName').hasError('required') ||
                             resourceLwM2M.get('keyName').hasError('pattern')">

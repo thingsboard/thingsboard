@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2023 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -76,26 +76,26 @@
           <mat-cell *matCellDef="let column">
             <div fxHide fxShow.gt-md fxLayout="row" fxLayoutAlign="end">
               <ng-container *ngFor="let actionDescriptor of actionCellButtonAction">
-                <button mat-button mat-icon-button [disabled]="isLoading$ | async"
+                <button mat-icon-button [disabled]="isLoading$ | async"
                         matTooltip="{{ actionDescriptor.displayName }}"
                         matTooltipPosition="above"
                         (click)="onActionButtonClick($event, column, actionDescriptor)">
-                  <mat-icon>{{ actionDescriptor.icon }}</mat-icon>
+                  <tb-icon>{{ actionDescriptor.icon }}</tb-icon>
                 </button>
               </ng-container>
             </div>
             <div fxHide fxShow.lt-lg *ngIf="actionCellButtonAction.length">
-              <button mat-button mat-icon-button
+              <button mat-icon-button
                       (click)="$event.stopPropagation(); ctx.detectChanges();"
                       [matMenuTriggerFor]="cellActionsMenu">
-                <mat-icon class="material-icons">more_vert</mat-icon>
+                <tb-icon>more_vert</tb-icon>
               </button>
               <mat-menu #cellActionsMenu="matMenu" xPosition="before">
                 <ng-container *ngFor="let actionDescriptor of actionCellButtonAction">
                   <button mat-menu-item *ngIf="actionDescriptor.icon"
                           [disabled]="(isLoading$ | async)"
                           (click)="onActionButtonClick($event, column, actionDescriptor)">
-                    <mat-icon>{{actionDescriptor.icon}}</mat-icon>
+                    <tb-icon matMenuItemIcon>{{actionDescriptor.icon}}</tb-icon>
                     <span>{{ actionDescriptor.displayName }}</span>
                   </button>
                 </ng-container>

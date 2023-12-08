@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,20 +15,28 @@
 ///
 
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
-  Component, ElementRef,
-  EventEmitter, HostBinding, Inject,
-  Input, OnDestroy,
+  Component,
+  ElementRef,
+  EventEmitter,
+  HostBinding,
+  Inject,
+  Input,
+  OnDestroy,
   OnInit,
-  Output, Renderer2, ViewChild
+  Output,
+  Renderer2,
+  ViewChild,
+  ViewEncapsulation
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { DashboardWidget, DashboardWidgets } from '@home/models/dashboard-component.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { SafeStyle } from '@angular/platform-browser';
-import { guid, hashCode, isNotEmptyStr } from '@core/utils';
+import { guid, isNotEmptyStr } from '@core/utils';
 import cssjs from '@core/css/css';
 import { DOCUMENT } from '@angular/common';
 import { GridsterItemComponent } from 'angular-gridster2';
@@ -52,9 +60,10 @@ export class WidgetComponentAction {
   selector: 'tb-widget-container',
   templateUrl: './widget-container.component.html',
   styleUrls: ['./widget-container.component.scss'],
+  encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class WidgetContainerComponent extends PageComponent implements OnInit, OnDestroy {
+export class WidgetContainerComponent extends PageComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @HostBinding('class')
   widgetContainerClass = 'tb-widget-container';
@@ -121,6 +130,10 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
       cssParser.cssPreviewNamespace = this.cssClass;
       cssParser.createStyleElement(this.cssClass, cssString);
     }
+  }
+
+  ngAfterViewInit(): void {
+    this.widget.widgetContext.$widgetElement = $(this.tbWidgetElement.nativeElement);
   }
 
   ngOnDestroy(): void {

@@ -1,20 +1,33 @@
 {
   "title": "Thermostats",
+  "image": null,
+  "mobileHide": false,
+  "mobileOrder": null,
   "configuration": {
     "widgets": {
       "f33c746c-0dfc-c212-395b-b448c8a17209": {
-        "isSystemType": true,
-        "bundleAlias": "cards",
-        "typeAlias": "entities_table",
         "type": "latest",
-        "title": "New widget",
         "sizeX": 11,
         "sizeY": 11,
         "config": {
           "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
             "realtime": {
+              "realtimeType": 1,
               "interval": 1000,
-              "timewindowMs": 86400000
+              "timewindowMs": 86400000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1694085177686,
+                "endTimeMs": 1694171577686
+              },
+              "quickInterval": "CURRENT_DAY"
             },
             "aggregation": {
               "type": "NONE",
@@ -184,14 +197,11 @@
             "rowClick": []
           }
         },
-        "id": "f33c746c-0dfc-c212-395b-b448c8a17209"
+        "id": "f33c746c-0dfc-c212-395b-b448c8a17209",
+        "typeFullFqn": "system.cards.entities_table"
       },
       "7943196b-eedb-d422-f9c3-b32d379ad172": {
-        "isSystemType": true,
-        "bundleAlias": "alarm_widgets",
-        "typeAlias": "alarms_table",
         "type": "alarm",
-        "title": "New widget",
         "sizeX": 13,
         "sizeY": 5,
         "config": {
@@ -215,6 +225,8 @@
             "displayDetails": true,
             "allowAcknowledgment": true,
             "allowClear": true,
+            "allowAssign": true,
+            "displayComments": true,
             "displayPagination": true,
             "defaultPageSize": 10,
             "defaultSortOrder": "-createdTime",
@@ -228,7 +240,7 @@
           "titleStyle": {
             "fontSize": "16px",
             "fontWeight": 400,
-            "padding": "5px 10px 5px 10px"
+            "padding": "5px 10px 5px 2px"
           },
           "useDashboardTimewindow": false,
           "showLegend": false,
@@ -277,10 +289,17 @@
                 "color": "#607d8b",
                 "settings": {},
                 "_hash": 0.7977920750136249
+              },
+              {
+                "name": "assignee",
+                "type": "alarm",
+                "label": "Assignee",
+                "color": "#9c27b0",
+                "settings": {},
+                "_hash": 0.8678751039018493
               }
             ]
           },
-          "alarmSearchStatus": "ANY",
           "alarmsPollingInterval": 5,
           "showTitleIcon": false,
           "titleIcon": null,
@@ -292,16 +311,22 @@
           "actions": {},
           "datasources": [],
           "alarmsMaxCountLoad": 0,
-          "alarmsFetchSize": 100
+          "alarmsFetchSize": 100,
+          "alarmFilterConfig": {
+            "statusList": [],
+            "severityList": [],
+            "typeList": [],
+            "searchPropagatedAlarms": true
+          },
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": ""
         },
-        "id": "7943196b-eedb-d422-f9c3-b32d379ad172"
+        "id": "7943196b-eedb-d422-f9c3-b32d379ad172",
+        "typeFullFqn": "system.alarm_widgets.alarms_table"
       },
       "14a19183-f0b2-d6be-0f62-9863f0a51111": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "basic_timeseries",
         "type": "timeseries",
-        "title": "New widget",
         "sizeX": 18,
         "sizeY": 6,
         "config": {
@@ -385,7 +410,16 @@
               "axisPosition": "top",
               "showLabels": true
             },
-            "smoothLines": true
+            "smoothLines": true,
+            "showLegend": true,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "showMin": true,
+              "showMax": true,
+              "showAvg": true,
+              "showTotal": false
+            }
           },
           "title": "Temperature",
           "dropShadow": true,
@@ -403,25 +437,13 @@
           "widgetStyle": {},
           "useDashboardTimewindow": false,
           "displayTimewindow": true,
-          "showLegend": true,
-          "legendConfig": {
-            "direction": "column",
-            "position": "bottom",
-            "showMin": true,
-            "showMax": true,
-            "showAvg": true,
-            "showTotal": false
-          },
           "actions": {}
         },
-        "id": "14a19183-f0b2-d6be-0f62-9863f0a51111"
+        "id": "14a19183-f0b2-d6be-0f62-9863f0a51111",
+        "typeFullFqn": "system.charts.basic_timeseries"
       },
       "07f49fd5-a73b-d74c-c220-362c20af81f4": {
-        "isSystemType": true,
-        "bundleAlias": "charts",
-        "typeAlias": "basic_timeseries",
         "type": "timeseries",
-        "title": "New widget",
         "sizeX": 18,
         "sizeY": 6,
         "config": {
@@ -505,7 +527,16 @@
               "axisPosition": "top",
               "showLabels": true
             },
-            "smoothLines": true
+            "smoothLines": true,
+            "showLegend": true,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "showMin": true,
+              "showMax": true,
+              "showAvg": true,
+              "showTotal": false
+            }
           },
           "title": "Humidity",
           "dropShadow": true,
@@ -523,25 +554,13 @@
           "widgetStyle": {},
           "useDashboardTimewindow": false,
           "displayTimewindow": true,
-          "showLegend": true,
-          "legendConfig": {
-            "direction": "column",
-            "position": "bottom",
-            "showMin": true,
-            "showMax": true,
-            "showAvg": true,
-            "showTotal": false
-          },
           "actions": {}
         },
-        "id": "07f49fd5-a73b-d74c-c220-362c20af81f4"
+        "id": "07f49fd5-a73b-d74c-c220-362c20af81f4",
+        "typeFullFqn": "system.charts.basic_timeseries"
       },
       "c4631f94-2db3-523b-4d09-2a1a0a75d93f": {
-        "isSystemType": true,
-        "bundleAlias": "input_widgets",
-        "typeAlias": "update_multiple_attributes",
         "type": "latest",
-        "title": "New widget",
         "sizeX": 6,
         "sizeY": 6,
         "config": {
@@ -616,8 +635,27 @@
             }
           ],
           "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
             "realtime": {
-              "timewindowMs": 60000
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1694085177686,
+                "endTimeMs": 1694171577686
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
             }
           },
           "showTitle": true,
@@ -651,14 +689,11 @@
           "titleTooltip": "",
           "displayTimewindow": true
         },
-        "id": "c4631f94-2db3-523b-4d09-2a1a0a75d93f"
+        "id": "c4631f94-2db3-523b-4d09-2a1a0a75d93f",
+        "typeFullFqn": "system.input_widgets.update_multiple_attributes"
       },
       "3da9a9a1-0b9a-2e1f-0dcb-0ff34a695abb": {
-        "isSystemType": true,
-        "bundleAlias": "maps_v2",
-        "typeAlias": "openstreetmap",
         "type": "latest",
-        "title": "New widget",
         "sizeX": 13,
         "sizeY": 6,
         "config": {
@@ -715,8 +750,27 @@
             }
           ],
           "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
             "realtime": {
-              "timewindowMs": 60000
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1694085177686,
+                "endTimeMs": 1694171577686
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
             }
           },
           "showTitle": false,
@@ -792,14 +846,11 @@
           "titleTooltip": "",
           "displayTimewindow": true
         },
-        "id": "3da9a9a1-0b9a-2e1f-0dcb-0ff34a695abb"
+        "id": "3da9a9a1-0b9a-2e1f-0dcb-0ff34a695abb",
+        "typeFullFqn": "system.maps_v2.openstreetmap"
       },
       "00fb2742-ba1f-7e43-673f-d6c08b72ed06": {
-        "isSystemType": true,
-        "bundleAlias": "input_widgets",
-        "typeAlias": "markers_placement_openstreetmap",
         "type": "latest",
-        "title": "New widget",
         "sizeX": 24,
         "sizeY": 12,
         "config": {
@@ -854,8 +905,27 @@
             }
           ],
           "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
             "realtime": {
-              "timewindowMs": 60000
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1694085177686,
+                "endTimeMs": 1694171577686
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
             }
           },
           "showTitle": false,
@@ -927,14 +997,11 @@
           "titleTooltip": "",
           "displayTimewindow": true
         },
-        "id": "00fb2742-ba1f-7e43-673f-d6c08b72ed06"
+        "id": "00fb2742-ba1f-7e43-673f-d6c08b72ed06",
+        "typeFullFqn": "system.input_widgets.markers_placement_openstreetmap"
       },
       "0a430429-9078-9ae6-2b67-e4a15a2bf8bf": {
-        "isSystemType": true,
-        "bundleAlias": "input_widgets",
-        "typeAlias": "markers_placement_openstreetmap",
         "type": "latest",
-        "title": "New widget",
         "sizeX": 6,
         "sizeY": 6,
         "config": {
@@ -989,8 +1056,27 @@
             }
           ],
           "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
             "realtime": {
-              "timewindowMs": 60000
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1694085177686,
+                "endTimeMs": 1694171577686
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
             }
           },
           "showTitle": false,
@@ -1063,7 +1149,8 @@
           "titleTooltip": "",
           "displayTimewindow": true
         },
-        "id": "0a430429-9078-9ae6-2b67-e4a15a2bf8bf"
+        "id": "0a430429-9078-9ae6-2b67-e4a15a2bf8bf",
+        "typeFullFqn": "system.input_widgets.markers_placement_openstreetmap"
       }
     },
     "states": {
@@ -1100,7 +1187,8 @@
               "autoFillHeight": true,
               "mobileAutoFillHeight": false,
               "mobileRowHeight": 70,
-              "margin": 10
+              "margin": 10,
+              "outerMargin": true
             }
           }
         }
@@ -1126,7 +1214,8 @@
               "autoFillHeight": true,
               "mobileAutoFillHeight": false,
               "mobileRowHeight": 70,
-              "margin": 10
+              "margin": 10,
+              "outerMargin": true
             }
           }
         }
@@ -1172,7 +1261,8 @@
               "autoFillHeight": true,
               "mobileAutoFillHeight": false,
               "mobileRowHeight": 70,
-              "margin": 10
+              "margin": 10,
+              "outerMargin": true
             }
           }
         }
@@ -1185,8 +1275,10 @@
         "filter": {
           "type": "deviceType",
           "resolveMultiple": true,
-          "deviceType": "thermostat",
-          "deviceNameFilter": ""
+          "deviceNameFilter": "",
+          "deviceTypes": [
+            "thermostat"
+          ]
         }
       },
       "12ae98c7-1ea2-52cf-64d5-763e9d993547": {
@@ -1235,5 +1327,6 @@
     },
     "filters": {}
   },
+  "externalId": null,
   "name": "Thermostats"
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,21 +33,20 @@
       white-space: nowrap;
       outline: none;
     }
-
-    mat-select {
-      margin: 0;
-    }
   }
 }
 
 :host ::ng-deep {
-  mat-select {
-    .mat-select-value {
+  .mat-mdc-select {
+    .mat-mdc-select-value {
       max-width: 200px;
-      .mat-select-value-text {
+      .mat-mdc-select-value-text {
         font-size: 18px;
         font-weight: 700;
       }
+    }
+    .mat-mdc-select-arrow {
+      width: 24px;
     }
   }
 }

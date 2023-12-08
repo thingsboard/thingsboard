@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -22,8 +22,10 @@ import { Widget } from './widget.models';
 import { Timewindow } from '@shared/models/time/time.models';
 import { EntityAliases } from './alias.models';
 import { Filters } from '@shared/models/query/query.models';
+import { MatDialogRef } from '@angular/material/dialog';
+import { HasTenantId } from '@shared/models/entity.models';
 
-export interface DashboardInfo extends BaseData<DashboardId>, ExportableEntity<DashboardId> {
+export interface DashboardInfo extends BaseData<DashboardId>, HasTenantId, ExportableEntity<DashboardId> {
   tenantId?: TenantId;
   title?: string;
   image?: string;
@@ -35,6 +37,7 @@ export interface DashboardInfo extends BaseData<DashboardId>, ExportableEntity<D
 export interface WidgetLayout {
   sizeX?: number;
   sizeY?: number;
+  desktopHide?: boolean;
   mobileHide?: boolean;
   mobileHeight?: number;
   mobileOrder?: number;
@@ -50,11 +53,13 @@ export interface GridSettings {
   backgroundColor?: string;
   columns?: number;
   margin?: number;
+  outerMargin?: boolean;
   backgroundSizeMode?: string;
   backgroundImageUrl?: string;
   autoFillHeight?: boolean;
   mobileAutoFillHeight?: boolean;
   mobileRowHeight?: number;
+  layoutDimension?: LayoutDimension;
   [key: string]: any;
 }
 
@@ -69,7 +74,16 @@ export interface DashboardLayoutInfo {
   gridSettings?: GridSettings;
 }
 
+export interface LayoutDimension {
+  type?: LayoutType;
+  fixedWidth?: number;
+  fixedLayout?: DashboardLayoutId;
+  leftWidthPercentage?: number;
+}
+
 export declare type DashboardLayoutId = 'main' | 'right';
+
+export declare type LayoutType = 'percentage' | 'fixed';
 
 export declare type DashboardStateLayouts = {[key in DashboardLayoutId]?: DashboardLayout};
 
@@ -112,6 +126,7 @@ export interface DashboardConfiguration {
 
 export interface Dashboard extends DashboardInfo {
   configuration?: DashboardConfiguration;
+  dialogRef?: MatDialogRef<any>;
 }
 
 export interface HomeDashboard extends Dashboard {
@@ -123,16 +138,20 @@ export interface HomeDashboardInfo {
   hideDashboardToolbar: boolean;
 }
 
-export function isPublicDashboard(dashboard: DashboardInfo): boolean {
+export interface DashboardSetup extends Dashboard {
+  assignedCustomerIds?: Array<string>;
+}
+
+export const isPublicDashboard = (dashboard: DashboardInfo): boolean => {
   if (dashboard && dashboard.assignedCustomers) {
     return dashboard.assignedCustomers
       .filter(customerInfo => customerInfo.public).length > 0;
   } else {
     return false;
   }
-}
+};
 
-export function getDashboardAssignedCustomersText(dashboard: DashboardInfo): string {
+export const getDashboardAssignedCustomersText = (dashboard: DashboardInfo): string => {
   if (dashboard && dashboard.assignedCustomers && dashboard.assignedCustomers.length > 0) {
     return dashboard.assignedCustomers
       .filter(customerInfo => !customerInfo.public)
@@ -141,14 +160,13 @@ export function getDashboardAssignedCustomersText(dashboard: DashboardInfo): str
   } else {
     return '';
   }
-}
+};
 
-export function isCurrentPublicDashboardCustomer(dashboard: DashboardInfo, customerId: string): boolean {
+export const isCurrentPublicDashboardCustomer = (dashboard: DashboardInfo, customerId: string): boolean => {
   if (customerId && dashboard && dashboard.assignedCustomers) {
-    return dashboard.assignedCustomers.filter(customerInfo => {
-      return customerInfo.public && customerId === customerInfo.customerId.id;
-    }).length > 0;
+    return dashboard.assignedCustomers.filter(customerInfo =>
+      customerInfo.public && customerId === customerInfo.customerId.id).length > 0;
   } else {
     return false;
   }
-}
+};

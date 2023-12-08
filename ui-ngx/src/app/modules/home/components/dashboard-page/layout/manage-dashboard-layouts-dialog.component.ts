@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,23 +14,38 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
+import { Component, Inject, SkipSelf, ViewChild } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm } from '@angular/forms';
+import {
+  AbstractControl,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
+  FormGroupDirective,
+  NgForm,
+  Validators
+} from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { DashboardLayoutId, DashboardStateLayouts } from '@app/shared/models/dashboard.models';
+import { DashboardLayoutId, DashboardStateLayouts, LayoutDimension } from '@app/shared/models/dashboard.models';
 import { deepClone, isDefined } from '@core/utils';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import {
   DashboardSettingsDialogComponent,
   DashboardSettingsDialogData
 } from '@home/components/dashboard-page/dashboard-settings-dialog.component';
+import {
+  LayoutFixedSize,
+  LayoutPercentageSize,
+  LayoutWidthType
+} from '@home/components/dashboard-page/layout/layout.models';
+import { Subscription } from 'rxjs';
+import { MatTooltip } from '@angular/material/tooltip';
 
 export interface ManageDashboardLayoutsDialogData {
   layouts: DashboardStateLayouts;
@@ -40,23 +55,33 @@ export interface ManageDashboardLayoutsDialogData {
   selector: 'tb-manage-dashboard-layouts-dialog',
   templateUrl: './manage-dashboard-layouts-dialog.component.html',
   providers: [{provide: ErrorStateMatcher, useExisting: ManageDashboardLayoutsDialogComponent}],
-  styleUrls: ['../../../components/dashboard/layout-button.scss']
+  styleUrls: ['./manage-dashboard-layouts-dialog.component.scss', '../../../components/dashboard/layout-button.scss']
 })
 export class ManageDashboardLayoutsDialogComponent extends DialogComponent<ManageDashboardLayoutsDialogComponent, DashboardStateLayouts>
-  implements OnInit, ErrorStateMatcher {
+  implements ErrorStateMatcher {
 
-  layoutsFormGroup: FormGroup;
+  @ViewChild('tooltip', {static: true}) tooltip: MatTooltip;
 
-  layouts: DashboardStateLayouts;
+  layoutsFormGroup: UntypedFormGroup;
 
-  submitted = false;
+  layoutWidthType = LayoutWidthType;
+
+  layoutPercentageSize = LayoutPercentageSize;
+
+  layoutFixedSize = LayoutFixedSize;
+
+  private readonly layouts: DashboardStateLayouts;
+
+  private subscriptions: Array<Subscription> = [];
+
+  private submitted = false;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
-              @Inject(MAT_DIALOG_DATA) public data: ManageDashboardLayoutsDialogData,
+              @Inject(MAT_DIALOG_DATA) private data: ManageDashboardLayoutsDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
-              public dialogRef: MatDialogRef<ManageDashboardLayoutsDialogComponent, DashboardStateLayouts>,
-              private fb: FormBuilder,
+              protected dialogRef: MatDialogRef<ManageDashboardLayoutsDialogComponent, DashboardStateLayouts>,
+              private fb: UntypedFormBuilder,
               private utils: UtilsService,
               private dashboardUtils: DashboardUtilsService,
               private translate: TranslateService,
@@ -64,23 +89,121 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
     super(store, router, dialogRef);
 
     this.layouts = this.data.layouts;
+
     this.layoutsFormGroup = this.fb.group({
-        main:  [{value: isDefined(this.layouts.main), disabled: true}, []],
-        right: [isDefined(this.layouts.right), []],
+        main: [{value: isDefined(this.layouts.main), disabled: true}],
+        right: [isDefined(this.layouts.right)],
+        sliderPercentage: [50],
+        sliderFixed: [this.layoutFixedSize.MIN],
+        leftWidthPercentage: [50,
+          [Validators.min(this.layoutPercentageSize.MIN), Validators.max(this.layoutPercentageSize.MAX), Validators.required]],
+        rightWidthPercentage: [50,
+          [Validators.min(this.layoutPercentageSize.MIN), Validators.max(this.layoutPercentageSize.MAX), Validators.required]],
+        type: [LayoutWidthType.PERCENTAGE],
+        fixedWidth: [this.layoutFixedSize.MIN,
+          [Validators.min(this.layoutFixedSize.MIN), Validators.max(this.layoutFixedSize.MAX), Validators.required]],
+        fixedLayout: ['main', []]
       }
     );
-    for (const l of Object.keys(this.layoutsFormGroup.controls)) {
-      const control = this.layoutsFormGroup.controls[l];
-      if (!this.layouts[l]) {
-        this.layouts[l] = this.dashboardUtils.createDefaultLayoutData();
+
+    this.subscriptions.push(
+      this.layoutsFormGroup.get('type').valueChanges.subscribe(
+        (value) => {
+          if (value === LayoutWidthType.FIXED) {
+            this.layoutsFormGroup.get('leftWidthPercentage').disable();
+            this.layoutsFormGroup.get('rightWidthPercentage').disable();
+            this.layoutsFormGroup.get('fixedWidth').enable();
+            this.layoutsFormGroup.get('fixedLayout').enable();
+          } else {
+            this.layoutsFormGroup.get('leftWidthPercentage').enable();
+            this.layoutsFormGroup.get('rightWidthPercentage').enable();
+            this.layoutsFormGroup.get('fixedWidth').disable();
+            this.layoutsFormGroup.get('fixedLayout').disable();
+          }
+        }
+      )
+    );
+
+    if (this.layouts.right) {
+      if (this.layouts.right.gridSettings.layoutDimension) {
+        this.layoutsFormGroup.patchValue({
+          fixedLayout: this.layouts.right.gridSettings.layoutDimension.fixedLayout,
+          type: LayoutWidthType.FIXED,
+          fixedWidth: this.layouts.right.gridSettings.layoutDimension.fixedWidth,
+          sliderFixed: this.layouts.right.gridSettings.layoutDimension.fixedWidth
+        }, {emitEvent: false});
+      } else if (this.layouts.main.gridSettings.layoutDimension) {
+        if (this.layouts.main.gridSettings.layoutDimension.type === LayoutWidthType.FIXED) {
+          this.layoutsFormGroup.patchValue({
+            fixedLayout: this.layouts.main.gridSettings.layoutDimension.fixedLayout,
+            type: LayoutWidthType.FIXED,
+            fixedWidth: this.layouts.main.gridSettings.layoutDimension.fixedWidth,
+            sliderFixed: this.layouts.main.gridSettings.layoutDimension.fixedWidth
+          }, {emitEvent: false});
+        } else {
+          const leftWidthPercentage: number = Number(this.layouts.main.gridSettings.layoutDimension.leftWidthPercentage);
+          this.layoutsFormGroup.patchValue({
+            leftWidthPercentage,
+            sliderPercentage: leftWidthPercentage,
+            rightWidthPercentage: 100 - Number(leftWidthPercentage)
+          }, {emitEvent: false});
+        }
       }
+    }
+
+    if (!this.layouts.main) {
+      this.layouts.main = this.dashboardUtils.createDefaultLayoutData();
+    }
+    if (!this.layouts.right) {
+      this.layouts.right = this.dashboardUtils.createDefaultLayoutData();
+    }
+
+    this.subscriptions.push(
+      this.layoutsFormGroup.get('sliderPercentage').valueChanges
+        .subscribe(
+          (value) => this.layoutsFormGroup.get('leftWidthPercentage').patchValue(value)
+        ));
+    this.subscriptions.push(
+      this.layoutsFormGroup.get('sliderFixed').valueChanges
+        .subscribe(
+          (value) => {
+            this.layoutsFormGroup.get('fixedWidth').patchValue(value);
+          }
+        ));
+    this.subscriptions.push(
+      this.layoutsFormGroup.get('leftWidthPercentage').valueChanges
+        .subscribe(
+          (value) => {
+            this.showTooltip(this.layoutsFormGroup.get('leftWidthPercentage'), LayoutWidthType.PERCENTAGE, 'main');
+            this.layoutControlChange('rightWidthPercentage', value);
+          }
+        ));
+    this.subscriptions.push(
+      this.layoutsFormGroup.get('rightWidthPercentage').valueChanges
+        .subscribe(
+          (value) => {
+            this.showTooltip(this.layoutsFormGroup.get('rightWidthPercentage'), LayoutWidthType.PERCENTAGE, 'right');
+            this.layoutControlChange('leftWidthPercentage', value);
+          }
+        ));
+    this.subscriptions.push(
+      this.layoutsFormGroup.get('fixedWidth').valueChanges
+        .subscribe(
+          (value) => {
+            this.showTooltip(this.layoutsFormGroup.get('fixedWidth'), LayoutWidthType.FIXED,
+              this.layoutsFormGroup.get('fixedLayout').value);
+            this.layoutsFormGroup.get('sliderFixed').setValue(value, {emitEvent: false});
+          }
+        ));
+  }
+
+  ngOnDestroy(): void {
+    for (const subscription of this.subscriptions) {
+      subscription.unsubscribe();
     }
   }
 
-  ngOnInit(): void {
-  }
-
-  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
     const customErrorState = !!(control && control.invalid && this.submitted);
     return originalErrorState || customErrorState;
@@ -110,12 +233,133 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
 
   save(): void {
     this.submitted = true;
-    for (const l of Object.keys(this.layoutsFormGroup.controls)) {
+    const layouts = ['main', 'right'];
+    for (const l of layouts) {
       const control = this.layoutsFormGroup.controls[l];
       if (!control.value) {
-        delete this.layouts[l];
+        if (this.layouts[l]) {
+          delete this.layouts[l];
+        }
+      }
+    }
+    delete this.layouts.main.gridSettings.layoutDimension;
+    if (this.layouts.right?.gridSettings) {
+      delete this.layouts.right.gridSettings.layoutDimension;
+    }
+    if (this.layoutsFormGroup.value.right) {
+      const formValues = this.layoutsFormGroup.value;
+      const widthType = formValues.type;
+      const layoutDimension: LayoutDimension = {
+        type: widthType
+      };
+      if (widthType === LayoutWidthType.PERCENTAGE) {
+        layoutDimension.leftWidthPercentage = formValues.leftWidthPercentage;
+        this.layouts.main.gridSettings.layoutDimension = layoutDimension;
+      } else {
+        layoutDimension.fixedWidth = formValues.fixedWidth;
+        layoutDimension.fixedLayout = formValues.fixedLayout;
+        if (formValues.fixedLayout === 'main') {
+          this.layouts.main.gridSettings.layoutDimension = layoutDimension;
+        } else {
+          this.layouts.right.gridSettings.layoutDimension = layoutDimension;
+        }
       }
     }
     this.dialogRef.close(this.layouts);
+  }
+
+  buttonFlexValue(): number {
+    const formValues = this.layoutsFormGroup.value;
+    if (formValues.right) {
+      if (formValues.type !== LayoutWidthType.FIXED) {
+        return formValues.leftWidthPercentage;
+      } else {
+        if (formValues.fixedLayout === 'main') {
+          return 10;
+        } else {
+          return 90;
+        }
+      }
+    }
+  }
+
+  formatSliderTooltipLabel(value: number): string | number {
+    return this.layoutsFormGroup.get('type').value === LayoutWidthType.FIXED ? value : `${value}|${100 - value}`;
+  }
+
+  private layoutControlChange(key: string, value) {
+    const valueToSet = 100 - Number(value);
+    this.layoutsFormGroup.get(key).setValue(valueToSet, {emitEvent: false});
+    this.layoutsFormGroup.get('sliderPercentage')
+      .setValue(key === 'leftWidthPercentage' ? valueToSet : Number(value), {emitEvent: false});
+  }
+
+  setFixedLayout(layout: string): void {
+    if (this.layoutsFormGroup.get('type').value === LayoutWidthType.FIXED && this.layoutsFormGroup.get('right').value) {
+      this.layoutsFormGroup.get('fixedLayout').setValue(layout);
+      this.layoutsFormGroup.get('fixedLayout').markAsDirty();
+    }
+  }
+
+  private showTooltip(control: AbstractControl, layoutType: LayoutWidthType, layoutSide: DashboardLayoutId): void {
+    if (control.errors) {
+      let message: string;
+      const unit = layoutType === LayoutWidthType.FIXED ? 'px' : '%';
+
+      if (control.errors.required) {
+        if (layoutType === LayoutWidthType.FIXED) {
+          message = this.translate.instant('layout.layout-fixed-width-required');
+        } else {
+          if (layoutSide === 'right') {
+            message = this.translate.instant('layout.right-width-percentage-required');
+          } else {
+            message = this.translate.instant('layout.left-width-percentage-required');
+          }
+        }
+      } else if (control.errors.min) {
+        message = this.translate.instant('layout.value-min-error', {min: control.errors.min.min, unit});
+      } else if (control.errors.max) {
+        message = this.translate.instant('layout.value-max-error', {max: control.errors.max.max, unit});
+      }
+
+      if (layoutSide === 'main') {
+        this.tooltip.tooltipClass = 'tb-layout-error-tooltip-main';
+      } else {
+        this.tooltip.tooltipClass = 'tb-layout-error-tooltip-right';
+      }
+
+      this.tooltip.message = message;
+      this.tooltip.show(1300);
+    } else {
+      this.tooltip.message = '';
+      this.tooltip.hide();
+    }
+  }
+
+  layoutButtonClass(side: DashboardLayoutId, border: boolean = false): string {
+    const formValues = this.layoutsFormGroup.value;
+    if (formValues.right) {
+      let classString = border ? 'tb-layout-button-main ' : '';
+      if (!(formValues.fixedLayout === side || formValues.type === LayoutWidthType.PERCENTAGE)) {
+        classString += 'tb-fixed-layout-button';
+      }
+      return classString;
+    }
+  }
+
+  layoutButtonText(side: DashboardLayoutId): string {
+    const formValues = this.layoutsFormGroup.value;
+    if (!(formValues.fixedLayout === side || !formValues.right || formValues.type === LayoutWidthType.PERCENTAGE)) {
+      if (side === 'main') {
+        return this.translate.instant('layout.left-side');
+      } else {
+        return this.translate.instant('layout.right-side');
+      }
+    }
+  }
+
+  showPreviewInputs(side: DashboardLayoutId): boolean {
+    const formValues = this.layoutsFormGroup.value;
+    return formValues.right && (formValues.type === LayoutWidthType.PERCENTAGE || formValues.fixedLayout === side);
   }
 }

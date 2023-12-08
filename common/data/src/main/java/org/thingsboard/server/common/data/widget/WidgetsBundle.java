@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,18 @@
  */
 package org.thingsboard.server.common.data.widget;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.HasImage;
+import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
-import org.thingsboard.server.common.data.SearchTextBased;
+import org.thingsboard.server.common.data.HasTitle;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.validation.Length;
@@ -31,7 +34,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 
 @ApiModel
 @EqualsAndHashCode(callSuper = true)
-public class WidgetsBundle extends SearchTextBased<WidgetsBundleId> implements HasTenantId, ExportableEntity<WidgetsBundleId> {
+public class WidgetsBundle extends BaseData<WidgetsBundleId> implements HasName, HasTenantId, ExportableEntity<WidgetsBundleId>, HasTitle, HasImage {
 
     private static final long serialVersionUID = -7627368878362410489L;
 
@@ -57,15 +60,21 @@ public class WidgetsBundle extends SearchTextBased<WidgetsBundleId> implements H
     @Length(fieldName = "image", max = 1000000)
     @Getter
     @Setter
-    @ApiModelProperty(position = 6, value = "Base64 encoded thumbnail", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @ApiModelProperty(position = 6, value = "Relative or external image URL. Replaced with image data URL (Base64) in case of relative URL and 'inlineImages' option enabled.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String image;
 
     @NoXss
-    @Length(fieldName = "description")
+    @Length(fieldName = "description", max = 1024)
     @Getter
+
     @Setter
     @ApiModelProperty(position = 7, value = "Description", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String description;
+
+    @Getter
+    @Setter
+    @ApiModelProperty(position = 8, value = "Order", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    private Integer order;
 
     @Getter
     @Setter
@@ -86,6 +95,7 @@ public class WidgetsBundle extends SearchTextBased<WidgetsBundleId> implements H
         this.title = widgetsBundle.getTitle();
         this.image = widgetsBundle.getImage();
         this.description = widgetsBundle.getDescription();
+        this.order = widgetsBundle.getOrder();
         this.externalId = widgetsBundle.getExternalId();
     }
 
@@ -104,13 +114,9 @@ public class WidgetsBundle extends SearchTextBased<WidgetsBundleId> implements H
         return super.getCreatedTime();
     }
 
+    @ApiModelProperty(position = 3, value = "Same as title of the Widget Bundle. Read-only field. Update the 'title' to change the 'name' of the Widget Bundle.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     @Override
-    public String getSearchText() {
-        return getTitle();
-    }
-
-    @JsonIgnore
-    @Override
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public String getName() {
         return title;
     }

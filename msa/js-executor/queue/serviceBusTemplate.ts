@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -31,7 +31,8 @@ import {
 export class ServiceBusTemplate implements IQueue {
 
     private logger = _logger(`serviceBusTemplate`);
-    private requestTopic: string = config.get('request_topic');
+    private queuePrefix: string = config.get('queue_prefix');
+    private requestTopic: string = this.queuePrefix ? this.queuePrefix + "." + config.get('request_topic') : config.get('request_topic');
     private namespaceName = config.get('service_bus.namespace_name');
     private sasKeyName = config.get('service_bus.sas_key_name');
     private sasKey = config.get('service_bus.sas_key');
@@ -82,7 +83,7 @@ export class ServiceBusTemplate implements IQueue {
         this.receiver.subscribe({processMessage: messageHandler, processError: errorHandler})
     }
 
-    async send(responseTopic: string, scriptId: string, rawResponse: Buffer, headers: any): Promise<any> {
+    async send(responseTopic: string, msgKey: string, rawResponse: Buffer, headers: any): Promise<any> {
         if (!this.queues.includes(this.requestTopic)) {
             await this.createQueueIfNotExist(this.requestTopic);
             this.queues.push(this.requestTopic);
@@ -96,7 +97,7 @@ export class ServiceBusTemplate implements IQueue {
         }
 
         let data = {
-            key: scriptId,
+            key: msgKey,
             data: [...rawResponse],
             headers: headers
         };

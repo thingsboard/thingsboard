@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,12 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
@@ -39,14 +40,11 @@ import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
-import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
+import org.thingsboard.server.dao.util.KvUtils;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
@@ -76,19 +74,19 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     private final AttributesService attrService;
     private final TimeseriesService tsService;
     private final TbEntityViewService tbEntityViewService;
-    private final TbApiUsageClient apiUsageClient;
+    private final TbApiUsageReportClient apiUsageClient;
     private final TbApiUsageStateService apiUsageStateService;
 
     private ExecutorService tsCallBackExecutor;
 
+    @Value("${sql.ts.value_no_xss_validation:false}")
+    private boolean valueNoXssValidation;
+
     public DefaultTelemetrySubscriptionService(AttributesService attrService,
                                                TimeseriesService tsService,
                                                @Lazy TbEntityViewService tbEntityViewService,
-                                               TbClusterService clusterService,
-                                               PartitionService partitionService,
-                                               TbApiUsageClient apiUsageClient,
+                                               TbApiUsageReportClient apiUsageClient,
                                                TbApiUsageStateService apiUsageStateService) {
-        super(clusterService, partitionService);
         this.attrService = attrService;
         this.tsService = tsService;
         this.tbEntityViewService = tbEntityViewService;
@@ -116,6 +114,13 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     @Override
+    public ListenableFuture<Void> saveAndNotify(TenantId tenantId, EntityId entityId, TsKvEntry ts) {
+        SettableFuture<Void> future = SettableFuture.create();
+        saveAndNotify(tenantId, entityId, Collections.singletonList(ts), new VoidFutureCallback(future));
+        return future;
+    }
+
+    @Override
     public void saveAndNotify(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, FutureCallback<Void> callback) {
         saveAndNotify(tenantId, null, entityId, ts, 0L, callback);
     }
@@ -134,6 +139,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         checkInternalEntity(entityId);
         boolean sysTenant = TenantId.SYS_TENANT_ID.equals(tenantId) || tenantId == null;
         if (sysTenant || apiUsageStateService.getApiUsageState(tenantId).isDbStorageEnabled()) {
+            KvUtils.validate(ts, valueNoXssValidation);
             if (saveLatest) {
                 saveAndNotifyInternal(tenantId, entityId, ts, ttl, getCallback(tenantId, customerId, sysTenant, callback));
             } else {
@@ -169,20 +175,21 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     @Override
     public void saveAndNotifyInternal(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, long ttl, FutureCallback<Integer> callback) {
         ListenableFuture<Integer> saveFuture = tsService.save(tenantId, entityId, ts, ttl);
-        addCallbacks(tenantId, entityId, ts, callback, saveFuture);
+        addMainCallback(saveFuture, callback);
+        addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, ts));
+        addEntityViewCallback(tenantId, entityId, ts);
     }
 
     private void saveWithoutLatestAndNotifyInternal(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, long ttl, FutureCallback<Integer> callback) {
         ListenableFuture<Integer> saveFuture = tsService.saveWithoutLatest(tenantId, entityId, ts, ttl);
-        addCallbacks(tenantId, entityId, ts, callback, saveFuture);
-    }
-
-    private void addCallbacks(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, FutureCallback<Integer> callback, ListenableFuture<Integer> saveFuture) {
         addMainCallback(saveFuture, callback);
         addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, ts));
+    }
+
+    private void addEntityViewCallback(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts) {
         if (EntityType.DEVICE.equals(entityId.getEntityType()) || EntityType.ASSET.equals(entityId.getEntityType())) {
             Futures.addCallback(this.tbEntityViewService.findEntityViewsByTenantIdAndEntityIdAsync(tenantId, entityId),
-                    new FutureCallback<List<EntityView>>() {
+                    new FutureCallback<>() {
                         @Override
                         public void onSuccess(@Nullable List<EntityView> result) {
                             if (result != null && !result.isEmpty()) {
@@ -206,7 +213,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                                         }
                                     }
                                     if (!entityViewLatest.isEmpty()) {
-                                        saveLatestAndNotify(tenantId, entityView.getId(), entityViewLatest, new FutureCallback<Void>() {
+                                        saveLatestAndNotify(tenantId, entityView.getId(), entityViewLatest, new FutureCallback<>() {
                                             @Override
                                             public void onSuccess(@Nullable Void tmp) {
                                             }
@@ -263,14 +270,20 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     @Override
     public void deleteAndNotify(TenantId tenantId, EntityId entityId, String scope, List<String> keys, FutureCallback<Void> callback) {
         checkInternalEntity(entityId);
-        deleteAndNotifyInternal(tenantId, entityId, scope, keys, callback);
+        deleteAndNotifyInternal(tenantId, entityId, scope, keys, false, callback);
     }
 
     @Override
-    public void deleteAndNotifyInternal(TenantId tenantId, EntityId entityId, String scope, List<String> keys, FutureCallback<Void> callback) {
+    public void deleteAndNotify(TenantId tenantId, EntityId entityId, String scope, List<String> keys, boolean notifyDevice, FutureCallback<Void> callback) {
+        checkInternalEntity(entityId);
+        deleteAndNotifyInternal(tenantId, entityId, scope, keys, notifyDevice, callback);
+    }
+
+    @Override
+    public void deleteAndNotifyInternal(TenantId tenantId, EntityId entityId, String scope, List<String> keys, boolean notifyDevice, FutureCallback<Void> callback) {
         ListenableFuture<List<String>> deleteFuture = attrService.removeAll(tenantId, entityId, scope, keys);
         addVoidCallback(deleteFuture, callback);
-        addWsCallback(deleteFuture, success -> onAttributesDelete(tenantId, entityId, scope, keys));
+        addWsCallback(deleteFuture, success -> onAttributesDelete(tenantId, entityId, scope, keys, notifyDevice));
     }
 
     @Override
@@ -332,77 +345,82 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                 , System.currentTimeMillis())), callback);
     }
 
-    private void onAttributesUpdate(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, boolean notifyDevice) {
-        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
-        if (currentPartitions.contains(tpi)) {
-            if (subscriptionManagerService.isPresent()) {
-                subscriptionManagerService.get().onAttributesUpdate(tenantId, entityId, scope, attributes, notifyDevice, TbCallback.EMPTY);
-            } else {
-                log.warn("Possible misconfiguration because subscriptionManagerService is null!");
-            }
-        } else {
-            TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAttributesUpdateProto(tenantId, entityId, scope, attributes);
-            clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
-        }
+    @Override
+    public ListenableFuture<Void> saveAttrAndNotify(TenantId tenantId, EntityId entityId, String scope, String key, long value) {
+        SettableFuture<Void> future = SettableFuture.create();
+        saveAttrAndNotify(tenantId, entityId, scope, key, value, new VoidFutureCallback(future));
+        return future;
     }
 
-    private void onAttributesDelete(TenantId tenantId, EntityId entityId, String scope, List<String> keys) {
-        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
-        if (currentPartitions.contains(tpi)) {
-            if (subscriptionManagerService.isPresent()) {
-                subscriptionManagerService.get().onAttributesDelete(tenantId, entityId, scope, keys, TbCallback.EMPTY);
-            } else {
-                log.warn("Possible misconfiguration because subscriptionManagerService is null!");
-            }
-        } else {
-            TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toAttributesDeleteProto(tenantId, entityId, scope, keys);
-            clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
-        }
+    @Override
+    public ListenableFuture<Void> saveAttrAndNotify(TenantId tenantId, EntityId entityId, String scope, String key, String value) {
+        SettableFuture<Void> future = SettableFuture.create();
+        saveAttrAndNotify(tenantId, entityId, scope, key, value, new VoidFutureCallback(future));
+        return future;
+    }
+
+    @Override
+    public ListenableFuture<Void> saveAttrAndNotify(TenantId tenantId, EntityId entityId, String scope, String key, double value) {
+        SettableFuture<Void> future = SettableFuture.create();
+        saveAttrAndNotify(tenantId, entityId, scope, key, value, new VoidFutureCallback(future));
+        return future;
+    }
+
+    @Override
+    public ListenableFuture<Void> saveAttrAndNotify(TenantId tenantId, EntityId entityId, String scope, String key, boolean value) {
+        SettableFuture<Void> future = SettableFuture.create();
+        saveAttrAndNotify(tenantId, entityId, scope, key, value, new VoidFutureCallback(future));
+        return future;
+    }
+
+    private void onAttributesUpdate(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, boolean notifyDevice) {
+        forwardToSubscriptionManagerService(tenantId, entityId, subscriptionManagerService -> {
+            subscriptionManagerService.onAttributesUpdate(tenantId, entityId, scope, attributes, notifyDevice, TbCallback.EMPTY);
+        }, () -> {
+            return TbSubscriptionUtils.toAttributesUpdateProto(tenantId, entityId, scope, attributes);
+        });
+    }
+
+    private void onAttributesDelete(TenantId tenantId, EntityId entityId, String scope, List<String> keys, boolean notifyDevice) {
+        forwardToSubscriptionManagerService(tenantId, entityId, subscriptionManagerService -> {
+            subscriptionManagerService.onAttributesDelete(tenantId, entityId, scope, keys, notifyDevice, TbCallback.EMPTY);
+        }, () -> {
+            return TbSubscriptionUtils.toAttributesDeleteProto(tenantId, entityId, scope, keys, notifyDevice);
+        });
     }
 
     private void onTimeSeriesUpdate(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts) {
-        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
-        if (currentPartitions.contains(tpi)) {
-            if (subscriptionManagerService.isPresent()) {
-                subscriptionManagerService.get().onTimeSeriesUpdate(tenantId, entityId, ts, TbCallback.EMPTY);
-            } else {
-                log.warn("Possible misconfiguration because subscriptionManagerService is null!");
-            }
-        } else {
-            TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toTimeseriesUpdateProto(tenantId, entityId, ts);
-            clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
-        }
+        forwardToSubscriptionManagerService(tenantId, entityId, subscriptionManagerService -> {
+            subscriptionManagerService.onTimeSeriesUpdate(tenantId, entityId, ts, TbCallback.EMPTY);
+        }, () -> {
+            return TbSubscriptionUtils.toTimeseriesUpdateProto(tenantId, entityId, ts);
+        });
     }
 
     private void onTimeSeriesDelete(TenantId tenantId, EntityId entityId, List<String> keys, List<TsKvLatestRemovingResult> ts) {
-        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
-        if (currentPartitions.contains(tpi)) {
-            if (subscriptionManagerService.isPresent()) {
-                List<TsKvEntry> updated = new ArrayList<>();
-                List<String> deleted = new ArrayList<>();
+        forwardToSubscriptionManagerService(tenantId, entityId, subscriptionManagerService -> {
+            List<TsKvEntry> updated = new ArrayList<>();
+            List<String> deleted = new ArrayList<>();
 
-                ts.stream().filter(Objects::nonNull).forEach(res -> {
-                    if (res.isRemoved()) {
-                        if (res.getData() != null) {
-                            updated.add(res.getData());
-                        } else {
-                            deleted.add(res.getKey());
-                        }
+            ts.stream().filter(Objects::nonNull).forEach(res -> {
+                if (res.isRemoved()) {
+                    if (res.getData() != null) {
+                        updated.add(res.getData());
+                    } else {
+                        deleted.add(res.getKey());
                     }
-                });
+                }
+            });
 
-                subscriptionManagerService.get().onTimeSeriesUpdate(tenantId, entityId, updated, TbCallback.EMPTY);
-                subscriptionManagerService.get().onTimeSeriesDelete(tenantId, entityId, deleted, TbCallback.EMPTY);
-            } else {
-                log.warn("Possible misconfiguration because subscriptionManagerService is null!");
-            }
-        } else {
-            TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toTimeseriesDeleteProto(tenantId, entityId, keys);
-            clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
-        }
+            subscriptionManagerService.onTimeSeriesUpdate(tenantId, entityId, updated, TbCallback.EMPTY);
+            subscriptionManagerService.onTimeSeriesDelete(tenantId, entityId, deleted, TbCallback.EMPTY);
+        }, () -> {
+            return TbSubscriptionUtils.toTimeseriesDeleteProto(tenantId, entityId, keys);
+        });
     }
 
     private <S> void addVoidCallback(ListenableFuture<S> saveFuture, final FutureCallback<Void> callback) {
+        if (callback == null) return;
         Futures.addCallback(saveFuture, new FutureCallback<S>() {
             @Override
             public void onSuccess(@Nullable S result) {
@@ -433,6 +451,24 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     private void checkInternalEntity(EntityId entityId) {
         if (EntityType.API_USAGE_STATE.equals(entityId.getEntityType())) {
             throw new RuntimeException("Can't update API Usage State!");
+        }
+    }
+
+    private static class VoidFutureCallback implements FutureCallback<Void> {
+        private final SettableFuture<Void> future;
+
+        public VoidFutureCallback(SettableFuture<Void> future) {
+            this.future = future;
+        }
+
+        @Override
+        public void onSuccess(Void result) {
+            future.set(null);
+        }
+
+        @Override
+        public void onFailure(Throwable t) {
+            future.setException(t);
         }
     }
 

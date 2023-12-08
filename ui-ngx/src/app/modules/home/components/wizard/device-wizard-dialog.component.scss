@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,59 +15,65 @@
  */
 @import "../../../../../scss/constants";
 
-:host-context(.tb-fullscreen-dialog .mat-dialog-container) {
-  @media #{$mat-lt-sm} {
-    .mat-dialog-content {
-      max-height: 75vh;
-    }
+:host {
+  height: 100%;
+  display: grid;
+  grid-template-rows: min-content 4px auto min-content;
+
+  .toggle-group {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 16px;
   }
 
-  .invisible{
-    visibility: hidden;
+  @media #{$mat-sm} {
+    min-width: 470px;
+  }
+
+  @media #{$mat-gt-sm} {
+    min-width: 650px;
   }
 }
 
-:host ::ng-deep {
-  .mat-dialog-content {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    padding: 0 !important;
+:host-context(.mat-mdc-dialog-container) {
+  .tb-dialog-actions {
+    padding: 0;
+    grid-row: 4;
 
+    .dialog-actions-row {
+      padding: 8px;
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      flex: 1;
+    }
+  }
+
+  .mat-mdc-dialog-content {
+    grid-row: 3;
+    padding: 0;
+  }
+
+}
+
+:host ::ng-deep {
+  .mat-mdc-dialog-content {
     .mat-stepper-horizontal {
       display: flex;
-      flex-direction: column;
       height: 100%;
       overflow: hidden;
-      @media #{$mat-lt-sm} {
-        .mat-step-label {
-          white-space: normal;
-          overflow: visible;
-          .mat-step-text-label {
-            overflow: visible;
-          }
-        }
-      }
-      .mat-horizontal-content-container {
-        height: 530px;
-        max-height: 100%;
-        width: 100%;;
-        overflow-y: auto;
-        @media #{$mat-gt-sm} {
-          min-width: 800px;
-        }
-      }
-      .mat-horizontal-stepper-content[aria-expanded=true] {
-        height: 100%;
-        form {
-          height: 100%;
-        }
+
+      .mat-horizontal-stepper-wrapper {
+        width: 100%;
       }
 
-      tb-device-profile-autocomplete, tb-queue-autocomplete{
-        .mat-form-field-wrapper{
-          width: 180px !important;
-        }
+      .mat-horizontal-content-container {
+        height: 500px;
+        max-height: 100%;
+        overflow-y: auto;
+        scrollbar-gutter: stable;
       }
     }
   }

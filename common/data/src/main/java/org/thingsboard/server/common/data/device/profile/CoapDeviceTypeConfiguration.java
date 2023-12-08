@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.thingsboard.server.common.data.CoapDeviceType;
 
+import java.io.Serializable;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -29,7 +31,7 @@ import org.thingsboard.server.common.data.CoapDeviceType;
 @JsonSubTypes({
         @JsonSubTypes.Type(value = DefaultCoapDeviceTypeConfiguration.class, name = "DEFAULT"),
         @JsonSubTypes.Type(value = EfentoCoapDeviceTypeConfiguration.class, name = "EFENTO")})
-public interface CoapDeviceTypeConfiguration {
+public interface CoapDeviceTypeConfiguration extends Serializable {
 
     @JsonIgnore
     CoapDeviceType getCoapDeviceType();

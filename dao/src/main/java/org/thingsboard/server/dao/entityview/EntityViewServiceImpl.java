@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,18 +22,21 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -41,6 +44,9 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
+import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -51,6 +57,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -60,7 +67,7 @@ import static org.thingsboard.server.dao.service.Validator.validateString;
 /**
  * Created by Victor Basanets on 8/28/2017.
  */
-@Service
+@Service("EntityViewDaoService")
 @Slf4j
 public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityViewCacheKey, EntityViewCacheValue, EntityViewEvictEvent> implements EntityViewService {
 
@@ -95,12 +102,28 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
     }
 
     @Override
+    public EntityView saveEntityView(EntityView entityView, boolean doValidate) {
+        return doSaveEntityView(entityView, doValidate);
+    }
+
+    @Override
     public EntityView saveEntityView(EntityView entityView) {
+        return doSaveEntityView(entityView, true);
+    }
+
+    private EntityView doSaveEntityView(EntityView entityView, boolean doValidate) {
         log.trace("Executing save entity view [{}]", entityView);
-        EntityView old = entityViewValidator.validate(entityView, EntityView::getTenantId);
+        EntityView old = null;
+        if (doValidate) {
+            old = entityViewValidator.validate(entityView, EntityView::getTenantId);
+        } else if (entityView.getId() != null) {
+            old = findEntityViewById(entityView.getTenantId(), entityView.getId());
+        }
         try {
             EntityView saved = entityViewDao.save(entityView.getTenantId(), entityView);
             publishEvictEvent(new EntityViewEvictEvent(saved.getTenantId(), saved.getId(), saved.getEntityId(), old != null ? old.getEntityId() : null, saved.getName(), old != null ? old.getName() : null));
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(saved.getTenantId())
+                    .entityId(saved.getId()).added(entityView.getId() == null).build());
             return saved;
         } catch (Exception t) {
             checkConstraintViolation(t,
@@ -140,11 +163,16 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
 
     @Override
     public EntityView findEntityViewById(TenantId tenantId, EntityViewId entityViewId) {
+        return findEntityViewById(tenantId, entityViewId, true);
+    }
+
+    @Override
+    public EntityView findEntityViewById(TenantId tenantId, EntityViewId entityViewId, boolean putInCache) {
         log.trace("Executing findEntityViewById [{}]", entityViewId);
         validateId(entityViewId, INCORRECT_ENTITY_VIEW_ID + entityViewId);
-        return cache.getAndPutInTransaction(EntityViewCacheKey.byId(entityViewId),
+        return cache.getOrFetchFromDB(EntityViewCacheKey.byId(entityViewId),
                 () -> entityViewDao.findById(tenantId, entityViewId.getId())
-                , EntityViewCacheValue::getEntityView, v -> new EntityViewCacheValue(v, null), true);
+                , EntityViewCacheValue::getEntityView, v -> new EntityViewCacheValue(v, null), true, putInCache);
     }
 
     @Override
@@ -294,6 +322,12 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
     }
 
     @Override
+    public boolean existsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId) {
+        return entityViewDao.existsByTenantIdAndEntityId(tenantId.getId(), entityId.getId());
+    }
+
+    @Override
+    @Transactional
     public void deleteEntityView(TenantId tenantId, EntityViewId entityViewId) {
         log.trace("Executing deleteEntityView [{}]", entityViewId);
         validateId(entityViewId, INCORRECT_ENTITY_VIEW_ID + entityViewId);
@@ -301,6 +335,7 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
         EntityView entityView = entityViewDao.findById(tenantId, entityViewId.getId());
         entityViewDao.removeById(tenantId, entityViewId.getId());
         publishEvictEvent(new EntityViewEvictEvent(entityView.getTenantId(), entityView.getId(), entityView.getEntityId(), null, entityView.getName(), null));
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(entityViewId).build());
     }
 
     @Override
@@ -333,7 +368,7 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
             throw new DataValidationException("Can't assign entityView to edge from different tenant!");
         }
 
-        Boolean relationExists = relationService.checkRelation(tenantId, edgeId, entityView.getEntityId(),
+        boolean relationExists = relationService.checkRelation(tenantId, edgeId, entityView.getEntityId(),
                 EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE);
         if (!relationExists) {
             throw new DataValidationException("Can't assign entity view to edge because related device/asset doesn't assigned to edge!");
@@ -345,6 +380,8 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
             log.warn("[{}] Failed to create entityView relation. Edge Id: [{}]", entityViewId, edgeId);
             throw new RuntimeException(e);
         }
+        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(entityViewId)
+                .actionType(ActionType.ASSIGNED_TO_EDGE).build());
         return entityView;
     }
 
@@ -361,6 +398,8 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
             log.warn("[{}] Failed to delete entityView relation. Edge Id: [{}]", entityViewId, edgeId);
             throw new RuntimeException(e);
         }
+        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(entityViewId)
+                .actionType(ActionType.UNASSIGNED_FROM_EDGE).build());
         return entityView;
     }
 
@@ -406,4 +445,15 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
             unassignEntityViewFromCustomer(tenantId, new EntityViewId(entity.getUuidId()));
         }
     };
+
+    @Override
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.ofNullable(findEntityViewById(tenantId, new EntityViewId(entityId.getId())));
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.ENTITY_VIEW;
+    }
+
 }

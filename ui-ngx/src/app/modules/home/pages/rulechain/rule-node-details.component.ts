@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2023 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,18 +14,19 @@
 /// limitations under the License.
 ///
 
-import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { FcRuleNode, RuleNodeType } from '@shared/models/rule-node.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { Subscription } from 'rxjs';
-import { RuleChainService } from '@core/http/rule-chain.service';
 import { RuleNodeConfigComponent } from './rule-node-config.component';
 import { Router } from '@angular/router';
 import { RuleChainType } from '@app/shared/models/rule-chain.models';
+import { ComponentClusteringMode } from '@shared/models/component-descriptor.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-rule-node',
@@ -46,24 +47,28 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
   ruleChainType: RuleChainType;
 
   @Input()
-  isEdit: boolean;
+  @coerceBoolean()
+  disabled = false;
 
   @Input()
-  isReadOnly: boolean;
-
-  @Input()
+  @coerceBoolean()
   isAdd = false;
+
+  @Output()
+  initRuleNode = new EventEmitter<void>();
+
+  @Output()
+  changeScript = new EventEmitter<void>();
 
   ruleNodeType = RuleNodeType;
   entityType = EntityType;
 
-  ruleNodeFormGroup: FormGroup;
+  ruleNodeFormGroup: UntypedFormGroup;
 
   private ruleNodeFormSubscription: Subscription;
 
   constructor(protected store: Store<AppState>,
-              private fb: FormBuilder,
-              private ruleChainService: RuleChainService,
+              private fb: UntypedFormBuilder,
               private router: Router) {
     super(store);
     this.ruleNodeFormGroup = this.fb.group({});
@@ -78,6 +83,7 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
       this.ruleNodeFormGroup = this.fb.group({
         name: [this.ruleNode.name, [Validators.required, Validators.pattern('(.|\\s)*\\S(.|\\s)*'), Validators.maxLength(255)]],
         debugMode: [this.ruleNode.debugMode, []],
+        singletonMode: [this.ruleNode.singletonMode, []],
         configuration: [this.ruleNode.configuration, [Validators.required]],
         additionalInfo: this.fb.group(
           {
@@ -91,6 +97,9 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
     } else {
       this.ruleNodeFormGroup = this.fb.group({});
     }
+    if (this.disabled) {
+      this.ruleNodeFormGroup.disable({emitEvent: false});
+    }
   }
 
   private updateRuleNode() {
@@ -100,6 +109,9 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
   }
 
   ngOnInit(): void {
+    if (this.disabled) {
+      this.ruleNodeFormGroup.disable({emitEvent: false});
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -129,5 +141,9 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
         this.router.navigateByUrl(`/ruleChains/${ruleChainId}`);
       }
     }
+  }
+
+  isSingletonEditAllowed() {
+    return this.ruleNode.component.clusteringMode === ComponentClusteringMode.USER_PREFERENCE;
   }
 }

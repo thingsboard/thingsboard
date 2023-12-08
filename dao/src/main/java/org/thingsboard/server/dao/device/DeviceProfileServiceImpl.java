@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2023 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -27,36 +28,52 @@ import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
+import org.thingsboard.server.common.data.device.profile.X509CertificateChainProvisionConfiguration;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.queue.Queue;
+import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.queue.QueueService;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 
+import java.io.ByteArrayInputStream;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
+import static org.thingsboard.server.dao.service.Validator.validateString;
 
-@Service
+@Service("DeviceProfileDaoService")
 @Slf4j
 public class DeviceProfileServiceImpl extends AbstractCachedEntityService<DeviceProfileCacheKey, DeviceProfile, DeviceProfileEvictEvent> implements DeviceProfileService {
 
     private static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     private static final String INCORRECT_DEVICE_PROFILE_ID = "Incorrect deviceProfileId ";
     private static final String INCORRECT_DEVICE_PROFILE_NAME = "Incorrect deviceProfileName ";
+    private static final String INCORRECT_PROVISION_DEVICE_KEY = "Incorrect provisionDeviceKey ";
     private static final String DEVICE_PROFILE_WITH_SUCH_NAME_ALREADY_EXISTS = "Device profile with such name already exists!";
 
     @Autowired
@@ -75,6 +92,9 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     @Autowired
     private QueueService queueService;
 
+    @Autowired
+    private ImageService imageService;
+
     @TransactionalEventListener(classes = DeviceProfileEvictEvent.class)
     @Override
     public void handleEvictEvent(DeviceProfileEvictEvent event) {
@@ -89,47 +109,96 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
         if (StringUtils.isNotEmpty(event.getOldName()) && !event.getOldName().equals(event.getNewName())) {
             keys.add(DeviceProfileCacheKey.fromName(event.getTenantId(), event.getOldName()));
         }
+        if (StringUtils.isNotEmpty(event.getProvisionDeviceKey())) {
+            keys.add(DeviceProfileCacheKey.fromProvisionDeviceKey(event.getProvisionDeviceKey()));
+        }
         cache.evict(keys);
     }
 
     @Override
     public DeviceProfile findDeviceProfileById(TenantId tenantId, DeviceProfileId deviceProfileId) {
+        return findDeviceProfileById(tenantId, deviceProfileId, true);
+    }
+
+    @Override
+    public DeviceProfile findDeviceProfileById(TenantId tenantId, DeviceProfileId deviceProfileId, boolean putInCache) {
         log.trace("Executing findDeviceProfileById [{}]", deviceProfileId);
-        Validator.validateId(deviceProfileId, INCORRECT_DEVICE_PROFILE_ID + deviceProfileId);
-        return cache.getAndPutInTransaction(DeviceProfileCacheKey.fromId(deviceProfileId),
-                () -> deviceProfileDao.findById(tenantId, deviceProfileId.getId()), true);
+        validateId(deviceProfileId, INCORRECT_DEVICE_PROFILE_ID + deviceProfileId);
+        return cache.getOrFetchFromDB(DeviceProfileCacheKey.fromId(deviceProfileId),
+                () -> deviceProfileDao.findById(tenantId, deviceProfileId.getId()), true, putInCache);
     }
 
     @Override
     public DeviceProfile findDeviceProfileByName(TenantId tenantId, String profileName) {
+        return findDeviceProfileByName(tenantId, profileName, true);
+    }
+
+    @Override
+    public DeviceProfile findDeviceProfileByName(TenantId tenantId, String profileName, boolean putInCache) {
         log.trace("Executing findDeviceProfileByName [{}][{}]", tenantId, profileName);
-        Validator.validateString(profileName, INCORRECT_DEVICE_PROFILE_NAME + profileName);
-        return cache.getAndPutInTransaction(DeviceProfileCacheKey.fromName(tenantId, profileName),
-                () -> deviceProfileDao.findByName(tenantId, profileName), true);
+        validateString(profileName, INCORRECT_DEVICE_PROFILE_NAME + profileName);
+        return cache.getOrFetchFromDB(DeviceProfileCacheKey.fromName(tenantId, profileName),
+                () -> deviceProfileDao.findByName(tenantId, profileName), true, putInCache);
+    }
+
+    @Override
+    public DeviceProfile findDeviceProfileByProvisionDeviceKey(String provisionDeviceKey) {
+        log.trace("Executing findDeviceProfileByProvisionDeviceKey provisionKey [{}]", provisionDeviceKey);
+        validateString(provisionDeviceKey, INCORRECT_PROVISION_DEVICE_KEY + provisionDeviceKey);
+        return cache.getAndPutInTransaction(DeviceProfileCacheKey.fromProvisionDeviceKey(provisionDeviceKey),
+                () -> deviceProfileDao.findByProvisionDeviceKey(provisionDeviceKey), false);
     }
 
     @Override
     public DeviceProfileInfo findDeviceProfileInfoById(TenantId tenantId, DeviceProfileId deviceProfileId) {
         log.trace("Executing findDeviceProfileById [{}]", deviceProfileId);
-        Validator.validateId(deviceProfileId, INCORRECT_DEVICE_PROFILE_ID + deviceProfileId);
+        validateId(deviceProfileId, INCORRECT_DEVICE_PROFILE_ID + deviceProfileId);
         return toDeviceProfileInfo(findDeviceProfileById(tenantId, deviceProfileId));
     }
 
     @Override
+    public DeviceProfile saveDeviceProfile(DeviceProfile deviceProfile, boolean doValidate) {
+        return doSaveDeviceProfile(deviceProfile, doValidate);
+    }
+
+    @Override
     public DeviceProfile saveDeviceProfile(DeviceProfile deviceProfile) {
+        return doSaveDeviceProfile(deviceProfile, true);
+    }
+
+    private DeviceProfile doSaveDeviceProfile(DeviceProfile deviceProfile, boolean doValidate) {
         log.trace("Executing saveDeviceProfile [{}]", deviceProfile);
-        DeviceProfile oldDeviceProfile = deviceProfileValidator.validate(deviceProfile, DeviceProfile::getTenantId);
+        if (deviceProfile.getProfileData() != null && deviceProfile.getProfileData().getProvisionConfiguration() instanceof X509CertificateChainProvisionConfiguration) {
+            X509CertificateChainProvisionConfiguration x509Configuration = (X509CertificateChainProvisionConfiguration) deviceProfile.getProfileData().getProvisionConfiguration();
+            if (x509Configuration.getProvisionDeviceSecret() != null) {
+                formatDeviceProfileCertificate(deviceProfile, x509Configuration);
+            }
+        }
+        DeviceProfile oldDeviceProfile = null;
+        if (doValidate) {
+            oldDeviceProfile = deviceProfileValidator.validate(deviceProfile, DeviceProfile::getTenantId);
+        } else if (deviceProfile.getId() != null) {
+            oldDeviceProfile = findDeviceProfileById(deviceProfile.getTenantId(), deviceProfile.getId(), false);
+        }
         DeviceProfile savedDeviceProfile;
         try {
+            imageService.replaceBase64WithImageUrl(deviceProfile, "device profile");
             savedDeviceProfile = deviceProfileDao.saveAndFlush(deviceProfile.getTenantId(), deviceProfile);
             publishEvictEvent(new DeviceProfileEvictEvent(savedDeviceProfile.getTenantId(), savedDeviceProfile.getName(),
-                    oldDeviceProfile != null ? oldDeviceProfile.getName() : null, savedDeviceProfile.getId(), savedDeviceProfile.isDefault()));
+                    oldDeviceProfile != null ? oldDeviceProfile.getName() : null, savedDeviceProfile.getId(), savedDeviceProfile.isDefault(),
+                    oldDeviceProfile != null ? oldDeviceProfile.getProvisionDeviceKey() : null));
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedDeviceProfile.getTenantId())
+                    .entityId(savedDeviceProfile.getId()).added(oldDeviceProfile == null).build());
         } catch (Exception t) {
             handleEvictEvent(new DeviceProfileEvictEvent(deviceProfile.getTenantId(), deviceProfile.getName(),
-                    oldDeviceProfile != null ? oldDeviceProfile.getName() : null, null, deviceProfile.isDefault()));
+                    oldDeviceProfile != null ? oldDeviceProfile.getName() : null, null, deviceProfile.isDefault(),
+                    oldDeviceProfile != null ? oldDeviceProfile.getProvisionDeviceKey() : null));
+            String unqProvisionKeyErrorMsg = DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN.equals(deviceProfile.getProvisionType())
+                    ? "Device profile with such certificate already exists!"
+                    : "Device profile with such provision device key already exists!";
             checkConstraintViolation(t,
                     Map.of("device_profile_name_unq_key", DEVICE_PROFILE_WITH_SUCH_NAME_ALREADY_EXISTS,
-                            "device_provision_key_unq_key", "Device profile with such provision device key already exists!",
+                            "device_provision_key_unq_key", unqProvisionKeyErrorMsg,
                             "device_profile_external_id_unq_key", "Device profile with such external id already exists!"));
             throw t;
         }
@@ -149,9 +218,10 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     }
 
     @Override
+    @Transactional
     public void deleteDeviceProfile(TenantId tenantId, DeviceProfileId deviceProfileId) {
         log.trace("Executing deleteDeviceProfile [{}]", deviceProfileId);
-        Validator.validateId(deviceProfileId, INCORRECT_DEVICE_PROFILE_ID + deviceProfileId);
+        validateId(deviceProfileId, INCORRECT_DEVICE_PROFILE_ID + deviceProfileId);
         DeviceProfile deviceProfile = deviceProfileDao.findById(tenantId, deviceProfileId.getId());
         if (deviceProfile != null && deviceProfile.isDefault()) {
             throw new DataValidationException("Deletion of Default Device Profile is prohibited!");
@@ -162,9 +232,12 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     private void removeDeviceProfile(TenantId tenantId, DeviceProfile deviceProfile) {
         DeviceProfileId deviceProfileId = deviceProfile.getId();
         try {
+            deleteEntityRelations(tenantId, deviceProfileId);
             deviceProfileDao.removeById(tenantId, deviceProfileId.getId());
             publishEvictEvent(new DeviceProfileEvictEvent(deviceProfile.getTenantId(), deviceProfile.getName(),
-                    null, deviceProfile.getId(), deviceProfile.isDefault()));
+                    null, deviceProfile.getId(), deviceProfile.isDefault(),
+                    deviceProfile.getProvisionDeviceKey()));
+            eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(deviceProfileId).build());
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_device_profile")) {
@@ -173,7 +246,6 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
                 throw t;
             }
         }
-        deleteEntityRelations(tenantId, deviceProfileId);
     }
 
     @Override
@@ -195,13 +267,13 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     @Override
     public DeviceProfile findOrCreateDeviceProfile(TenantId tenantId, String name) {
         log.trace("Executing findOrCreateDefaultDeviceProfile");
-        DeviceProfile deviceProfile = findDeviceProfileByName(tenantId, name);
+        DeviceProfile deviceProfile = findDeviceProfileByName(tenantId, name, false);
         if (deviceProfile == null) {
             try {
                 deviceProfile = this.doCreateDefaultDeviceProfile(tenantId, name, name.equals("default"));
             } catch (DataValidationException e) {
                 if (DEVICE_PROFILE_WITH_SUCH_NAME_ALREADY_EXISTS.equals(e.getMessage())) {
-                    deviceProfile = findDeviceProfileByName(tenantId, name);
+                    deviceProfile = findDeviceProfileByName(tenantId, name, false);
                 } else {
                     throw e;
                 }
@@ -255,7 +327,7 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     @Override
     public boolean setDefaultDeviceProfile(TenantId tenantId, DeviceProfileId deviceProfileId) {
         log.trace("Executing setDefaultDeviceProfile [{}]", deviceProfileId);
-        Validator.validateId(deviceProfileId, INCORRECT_DEVICE_PROFILE_ID + deviceProfileId);
+        validateId(deviceProfileId, INCORRECT_DEVICE_PROFILE_ID + deviceProfileId);
         DeviceProfile deviceProfile = deviceProfileDao.findById(tenantId, deviceProfileId.getId());
         if (!deviceProfile.isDefault()) {
             deviceProfile.setDefault(true);
@@ -263,14 +335,14 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
             boolean changed = false;
             if (previousDefaultDeviceProfile == null) {
                 deviceProfileDao.save(tenantId, deviceProfile);
-                publishEvictEvent(new DeviceProfileEvictEvent(deviceProfile.getTenantId(), deviceProfile.getName(), null, deviceProfile.getId(), true));
+                publishEvictEvent(new DeviceProfileEvictEvent(deviceProfile.getTenantId(), deviceProfile.getName(), null, deviceProfile.getId(), true, deviceProfile.getProvisionDeviceKey()));
                 changed = true;
             } else if (!previousDefaultDeviceProfile.getId().equals(deviceProfile.getId())) {
                 previousDefaultDeviceProfile.setDefault(false);
                 deviceProfileDao.save(tenantId, previousDefaultDeviceProfile);
                 deviceProfileDao.save(tenantId, deviceProfile);
-                publishEvictEvent(new DeviceProfileEvictEvent(previousDefaultDeviceProfile.getTenantId(), previousDefaultDeviceProfile.getName(), null, previousDefaultDeviceProfile.getId(), false));
-                publishEvictEvent(new DeviceProfileEvictEvent(deviceProfile.getTenantId(), deviceProfile.getName(), null, deviceProfile.getId(), true));
+                publishEvictEvent(new DeviceProfileEvictEvent(previousDefaultDeviceProfile.getTenantId(), previousDefaultDeviceProfile.getName(), null, previousDefaultDeviceProfile.getId(), false, deviceProfile.getProvisionDeviceKey()));
+                publishEvictEvent(new DeviceProfileEvictEvent(deviceProfile.getTenantId(), deviceProfile.getName(), null, deviceProfile.getId(), true, deviceProfile.getProvisionDeviceKey()));
                 changed = true;
             }
             return changed;
@@ -283,6 +355,22 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
         log.trace("Executing deleteDeviceProfilesByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         tenantDeviceProfilesRemover.removeEntities(tenantId, tenantId);
+    }
+
+    @Override
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.ofNullable(findDeviceProfileById(tenantId, new DeviceProfileId(entityId.getId())));
+    }
+
+    @Override
+    @Transactional
+    public void deleteEntity(TenantId tenantId, EntityId id) {
+        deleteDeviceProfile(tenantId, (DeviceProfileId) id);
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.DEVICE_PROFILE;
     }
 
     private PaginatedRemover<TenantId, DeviceProfile> tenantDeviceProfilesRemover =
@@ -300,8 +388,42 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
             };
 
     private DeviceProfileInfo toDeviceProfileInfo(DeviceProfile profile) {
-        return profile == null ? null : new DeviceProfileInfo(profile.getId(), profile.getName(), profile.getImage(),
+        return profile == null ? null : new DeviceProfileInfo(profile.getId(), profile.getTenantId(), profile.getName(), profile.getImage(),
                 profile.getDefaultDashboardId(), profile.getType(), profile.getTransportType());
+    }
+
+    private void formatDeviceProfileCertificate(DeviceProfile deviceProfile, X509CertificateChainProvisionConfiguration x509Configuration) {
+        String formattedCertificateValue = formatCertificateValue(x509Configuration.getProvisionDeviceSecret());
+        String cert = fetchLeafCertificateFromChain(formattedCertificateValue);
+        String sha3Hash = EncryptionUtil.getSha3Hash(cert);
+        DeviceProfileData deviceProfileData = deviceProfile.getProfileData();
+        x509Configuration.setProvisionDeviceSecret(formattedCertificateValue);
+        deviceProfileData.setProvisionConfiguration(x509Configuration);
+        deviceProfile.setProfileData(deviceProfileData);
+        deviceProfile.setProvisionDeviceKey(sha3Hash);
+    }
+
+    private String fetchLeafCertificateFromChain(String value) {
+        String regex = "-----BEGIN CERTIFICATE-----\\s*.*?\\s*-----END CERTIFICATE-----";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(value);
+        if (matcher.find()) {
+            // if the method receives a chain it fetches the leaf (end-entity) certificate, else if it gets a single certificate, it returns the single certificate
+            return matcher.group(0);
+        }
+        return value;
+    }
+
+    private String formatCertificateValue(String certificateValue) {
+        try {
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(certificateValue.getBytes());
+            Certificate[] certificates = cf.generateCertificates(inputStream).toArray(new Certificate[0]);
+            if (certificates.length > 1) {
+                return EncryptionUtil.certTrimNewLinesForChainInDeviceProfile(certificateValue);
+            }
+        } catch (CertificateException ignored) {}
+        return EncryptionUtil.certTrimNewLines(certificateValue);
     }
 
 }
