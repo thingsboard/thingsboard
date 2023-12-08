@@ -47,7 +47,9 @@ public interface ImageService {
     TbResourceInfo findSystemOrTenantImageByEtag(TenantId tenantId, String etag);
 
     boolean replaceBase64WithImageUrl(HasImage entity, String type);
+
     boolean replaceBase64WithImageUrl(Dashboard dashboard);
+
     boolean replaceBase64WithImageUrl(WidgetTypeDetails widgetType);
 
     void inlineImage(HasImage entity);
@@ -55,4 +57,10 @@ public interface ImageService {
     void inlineImages(Dashboard dashboard);
 
     void inlineImages(WidgetTypeDetails widgetTypeDetails);
+
+    void inlineImageForEdge(HasImage entity);
+
+    void inlineImagesForEdge(Dashboard dashboard);
+
+    void inlineImagesForEdge(WidgetTypeDetails widgetTypeDetails);
 }
