@@ -122,6 +122,8 @@ export enum DataSortOrder {
 }
 
 export enum WsCmdType {
+  AUTH = 'AUTH',
+
   ATTRIBUTES = 'ATTRIBUTES',
   TIMESERIES = 'TIMESERIES',
   TIMESERIES_HISTORY = 'TIMESERIES_HISTORY',
@@ -145,6 +147,10 @@ export enum WsCmdType {
 export interface WebsocketCmd {
   cmdId: number;
   type: WsCmdType;
+}
+
+export interface AuthWsCmd {
+  authCmd: AuthCmd;
 }
 
 export interface TelemetryPluginCmd extends WebsocketCmd {
@@ -287,6 +293,16 @@ export class AlarmDataUnsubscribeCmd implements WebsocketCmd {
 export class AlarmCountUnsubscribeCmd implements WebsocketCmd {
   cmdId: number;
   type = WsCmdType.ALARM_COUNT_UNSUBSCRIBE;
+}
+
+export class AuthCmd implements WebsocketCmd {
+  cmdId = 0;
+  type: WsCmdType.AUTH;
+  token: string;
+
+  constructor(token: string) {
+    this.token = token;
+  }
 }
 
 export class TelemetryPluginCmdsWrapper implements CmdWrapper {

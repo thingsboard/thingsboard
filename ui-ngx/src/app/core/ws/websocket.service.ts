@@ -21,10 +21,16 @@ import { AuthService } from '@core/auth/auth.service';
 import { NgZone } from '@angular/core';
 import { selectIsAuthenticated } from '@core/auth/auth.selectors';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
-import { CmdUpdateMsg, TelemetrySubscriber, WebsocketDataMsg } from '@shared/models/telemetry/telemetry.models';
+import {
+  AuthCmd,
+  AuthWsCmd,
+  CmdUpdateMsg,
+  TelemetrySubscriber,
+  WebsocketDataMsg
+} from '@shared/models/telemetry/telemetry.models';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
-import Timeout = NodeJS.Timeout;
 import { NotificationSubscriber } from '@shared/models/websocket/notification-ws.models';
+import Timeout = NodeJS.Timeout;
 
 const RECONNECT_INTERVAL = 2000;
 const WS_IDLE_TIMEOUT = 90000;
@@ -48,7 +54,7 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
 
   wsUri: string;
 
-  dataStream: WebSocketSubject<CmdWrapper | CmdUpdateMsg>;
+  dataStream: WebSocketSubject<CmdWrapper | CmdUpdateMsg | AuthWsCmd>;
 
   errorName = 'WebSocket Error';
 
@@ -158,13 +164,13 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
   }
 
   private openSocket(token: string) {
-    const uri = `${this.wsUri}?token=${token}`;
+    const uri = `${this.wsUri}`;
     this.dataStream = webSocket<CmdUpdateMsg>(
       {
         url: uri,
         openObserver: {
           next: () => {
-            this.onOpen();
+            this.onOpen(token);
           }
         },
         closeObserver: {
@@ -187,9 +193,10 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
     });
   }
 
-  private onOpen() {
+  private onOpen(token: string) {
     this.isOpening = false;
     this.isOpened = true;
+    this.dataStream.next(this.createdAuthMsg(token));
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
@@ -260,4 +267,9 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
       }));
   }
 
+  private createdAuthMsg(token: string): AuthWsCmd {
+    return {
+      authCmd: new AuthCmd(token)
+    };
+  }
 }
