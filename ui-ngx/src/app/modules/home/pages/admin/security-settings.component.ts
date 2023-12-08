@@ -213,7 +213,4 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
   confirmForm(): UntypedFormGroup {
     return this.securitySettingsFormGroup.dirty ? this.securitySettingsFormGroup : this.jwtSecuritySettingsFormGroup;
   }
-
-  protected readonly queueProcessingStrategyTypes = QueueProcessingStrategyTypes;
-  protected readonly queueProcessingStrategyTypesMap = QueueProcessingStrategyTypesMap;
 }

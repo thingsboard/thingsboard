@@ -171,6 +171,7 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
   private loadPasswordPolicy() {
     this.authService.getUserPasswordPolicy().subscribe(policy => {
       this.passwordPolicy = policy;
+      this.passwordPolicy.maximumLength = 7;
       this.changePassword.get('newPassword').setValidators([
         this.passwordStrengthValidator(),
         this.samePasswordValidation(true, 'currentPassword'),
@@ -213,8 +214,7 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
         errors.minLength = true;
       }
 
-      if (this.passwordPolicy?.maximumLength > 0 &&
-        (value.length > this.passwordPolicy?.maximumLength || value.length < this.passwordPolicy.minimumLength)) {
+      if (!value.length || this.passwordPolicy.maximumLength > 0 && value.length > this.passwordPolicy.maximumLength) {
         errors.maxLength = true;
       }
 

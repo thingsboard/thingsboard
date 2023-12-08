@@ -73,6 +73,7 @@
               <mat-form-field fxFlex class="mat-block" subscriptSizing="dynamic">
                 <mat-label translate>admin.maximum-password-length</mat-label>
                 <input matInput type="number" formControlName="maximumLength" step="1" min="6"/>
+                <mat-hint></mat-hint>
                 <mat-error *ngIf="securitySettingsFormGroup.get('passwordPolicy.maximumLength').hasError('min')">
                   {{ 'admin.maximum-password-length-min' | translate }}
                 </mat-error>
@@ -157,13 +158,8 @@
                 <mat-label translate>admin.allow-whitespace</mat-label>
               </mat-checkbox>
               <mat-checkbox fxFlex formControlName="forceUserToResetPasswordIfNotValid" style="margin-bottom: 16px">
-                <mat-label>
+                <mat-label tb-hint-tooltip-icon="{{'admin.force-reset-password-if-no-valid-hint' | translate}}">
                   {{'admin.force-reset-password-if-no-valid' | translate}}
-                  <mat-icon
-                    class="hint-icon"
-                    matTooltip="{{'admin.force-reset-password-if-no-valid-hint' | translate}}"
-                    svgIcon="mdi:information-outline">
-                  </mat-icon>
                 </mat-label>
               </mat-checkbox>
             </div>
