@@ -27,7 +27,7 @@ import {
   ViewChild
 } from '@angular/core';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { formatValue, isDefinedAndNotNull, isNumeric } from '@core/utils';
+import { formatValue, isDefinedAndNotNull } from '@core/utils';
 import {
   backgroundStyle,
   ColorProcessor,
@@ -183,7 +183,7 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
     const tsValue = getSingleTsValue(this.ctx.data);
     let ts;
     let value;
-    if (tsValue && isDefinedAndNotNull(tsValue[1]) && isNumeric(tsValue[1])) {
+    if (tsValue && isDefinedAndNotNull(tsValue[1])) {
       ts = tsValue[0];
       value = tsValue[1];
       this.valueText = formatValue(value, this.decimals, this.units, false);

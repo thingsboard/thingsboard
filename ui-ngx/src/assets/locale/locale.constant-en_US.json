@@ -1191,7 +1191,8 @@
         "assign-dashboard-to-edge": "Assign Dashboard(s) To Edge",
         "assign-dashboard-to-edge-text": "Please select the dashboards to assign to the edge",
         "non-existent-dashboard-state-error": "Dashboard state with id \"{{ stateId }}\" is not found",
-        "edit-mode": "Edit mode"
+        "edit-mode": "Edit mode",
+        "duplicate-state-action": "Duplicate state"
     },
     "datakey": {
         "settings": "Settings",
@@ -2020,6 +2021,7 @@
         "sync-process-started-successfully": "Sync process started successfully!",
         "missing-related-rule-chains-title": "Edge has missing related rule chain(s)",
         "missing-related-rule-chains-text": "Assigned to edge rule chain(s) use rule nodes that forward message(s) to rule chain(s) that are not assigned to this edge. <br><br> List of missing rule chain(s): <br> {{missingRuleChains}}",
+        "upgrade-instructions": "Upgrade Instructions",
         "widget-datasource-error": "This widget supports only EDGE entity datasource"
     },
     "edge-event": {
@@ -3330,15 +3332,13 @@
         "recipient-type": {
             "affected-tenant-administrators": "Affected tenant administrators",
             "affected-user": "Affected user",
-            "affected-user-hint": "Affected user hint",
             "all-users": "All users",
             "customer-users": "Customer users",
             "system-administrators": "System administrators",
             "tenant-administrators": "Tenant administrators",
             "user-filters": "User filter",
             "user-list": "User list",
-            "users-entity-owner": "Users of the entity owner",
-            "users-entity-owner-hint": "Users of the entity owner hint"
+            "users-entity-owner": "Users of the entity owner"
         },
         "recipients": "Recipients",
         "notification-recipients": "Notifications / Recipients",
@@ -6329,8 +6329,7 @@
             "hidden-cell-button-display-mode": "Hidden cell button actions display mode",
             "show-empty-space-hidden-action": "Show empty space instead of hidden cell button action",
             "dont-reserve-space-hidden-action": "Don't reserve space for hidden action buttons",
-            "display-timestamp": "Display timestamp column",
-            "display-milliseconds": "Display timestamp milliseconds",
+            "display-timestamp": "Timestamp",
             "display-pagination": "Display pagination",
             "default-page-size": "Default page size",
             "use-entity-label-tab-name": "Use entity label in tab name",
@@ -6691,6 +6690,7 @@
             "ka_GE": "ქართული",
             "ko_KR": "한국어",
             "lv_LV": "Latviešu",
+            "nl_BE": "Koninkrijk België",
             "pt_BR": "Português do Brasil",
             "ro_RO": "Română",
             "ru_RU": "Русский",

@@ -33,8 +33,8 @@ import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 import static org.thingsboard.server.service.edge.DefaultEdgeNotificationService.EDGE_IS_ROOT_BODY_KEY;
 
-@Component
 @Slf4j
+@Component
 @TbCoreComponent
 public class RuleChainEdgeProcessor extends BaseEdgeProcessor {
 

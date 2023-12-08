@@ -20,12 +20,15 @@ import { AppState } from '@core/core.state';
 import { EntityComponent } from '@home/components/entity/entity.component';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { EntityType } from '@shared/models/entity-type.models';
-import { EdgeInfo } from '@shared/models/edge.models';
+import { EdgeInfo, edgeVersionAttributeKey } from '@shared/models/edge.models';
 import { TranslateService } from '@ngx-translate/core';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { generateSecret, guid } from '@core/utils';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
+import { environment as env } from '@env/environment';
+import { AttributeService } from '@core/http/attribute.service';
+import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 
 @Component({
   selector: 'tb-edge',
@@ -37,9 +40,11 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
   entityType = EntityType;
 
   edgeScope: 'tenant' | 'customer' | 'customer_user';
+  upgradeAvailable: boolean = false;
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
+              private attributeService: AttributeService,
               @Inject('entity') protected entityValue: EdgeInfo,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<EdgeInfo>,
               public fb: UntypedFormBuilder,
@@ -95,6 +100,7 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
       }
     });
     this.generateRoutingKeyAndSecret(entity, this.entityForm);
+    this.checkEdgeVersion();
   }
 
   updateFormState() {
@@ -132,5 +138,26 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
       form.get('routingKey').patchValue(guid(), {emitEvent: false});
       form.get('secret').patchValue(generateSecret(20), {emitEvent: false});
     }
+  }
+
+  checkEdgeVersion() {
+    this.attributeService.getEntityAttributes(this.entity.id, AttributeScope.SERVER_SCOPE, [edgeVersionAttributeKey])
+      .subscribe(attributes => {
+        if (attributes?.length) {
+          const edgeVersion = attributes[0].value;
+          const tbVersion = 'V_' + env.tbVersion.replaceAll('.', '_');
+          this.upgradeAvailable = this.versionUpgradeSupported(edgeVersion) && (edgeVersion !== tbVersion);
+        } else {
+          this.upgradeAvailable = false;
+        }
+      }
+    );
+  }
+
+  private versionUpgradeSupported(edgeVersion: string): boolean {
+    const edgeVersionArray = edgeVersion.split('_');
+    const major = parseInt(edgeVersionArray[1]);
+    const minor = parseInt(edgeVersionArray[2]);
+    return major >= 3 && minor >= 6;
   }
 }

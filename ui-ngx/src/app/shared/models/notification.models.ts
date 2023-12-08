@@ -442,14 +442,12 @@ export const NotificationTargetConfigTypeInfoMap = new Map<NotificationTargetCon
   ],
   [NotificationTargetConfigType.ORIGINATOR_ENTITY_OWNER_USERS,
     {
-      name: 'notification.recipient-type.users-entity-owner',
-      hint: 'notification.recipient-type.users-entity-owner-hint'
+      name: 'notification.recipient-type.users-entity-owner'
     }
   ],
   [NotificationTargetConfigType.AFFECTED_USER,
     {
-      name: 'notification.recipient-type.affected-user',
-      hint: 'notification.recipient-type.affected-user-hint'
+      name: 'notification.recipient-type.affected-user'
     }
   ],
   [NotificationTargetConfigType.SYSTEM_ADMINISTRATORS,

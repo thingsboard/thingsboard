@@ -3247,15 +3247,13 @@
         "recipient-type": {
             "affected-tenant-administrators": "Administradores afectados",
             "affected-user": "Usuario afectado",
-            "affected-user-hint": "Sugerencia en usuario afectado",
             "all-users": "Todos los usuarios",
             "customer-users": "Usuarios del cliente",
             "system-administrators": "Administradores del sistema",
             "tenant-administrators": "Administradores de propietarios",
             "user-filters": "Filtro de usuarios",
             "user-list": "Lista de usuarios",
-            "users-entity-owner": "Usuarios que sean propietarios de la entidad",
-            "users-entity-owner-hint": "Sugerencia en usuarios propietarios de la entidad"
+            "users-entity-owner": "Usuarios que sean propietarios de la entidad"
         },
         "recipients": "Destinatarios",
         "notification-recipients": "Notificaciones / Destinatarios",
@@ -6066,7 +6064,6 @@
             "show-empty-space-hidden-action": "Mostrar espacio vacío en lugar de celda oculta",
             "dont-reserve-space-hidden-action": "No reservar espacio para los botones en celda oculta",
             "display-timestamp": "Mostrar columna timestamp",
-            "display-milliseconds": "Mostrar milisegundos",
             "display-pagination": "Mostrar páginas",
             "default-page-size": "Tamaño de página por defecto",
             "use-entity-label-tab-name": "Usar etiqueta de entidad en el nombre de la tabla",

@@ -48,6 +48,7 @@ import {
   CellActionDescriptorType,
   EntityActionTableColumn,
   EntityColumn,
+  EntityLinkTableColumn,
   EntityTableColumn,
   EntityTableConfig,
   GroupActionDescriptor,
@@ -613,7 +614,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
 
   columnsUpdated(resetData: boolean = false) {
     this.entityColumns = this.entitiesTableConfig.columns.filter(
-      (column) => column instanceof EntityTableColumn)
+      (column) => column instanceof EntityTableColumn || column instanceof EntityLinkTableColumn)
       .map(column => column as EntityTableColumn<BaseData<HasId>>);
     this.actionColumns = this.entitiesTableConfig.columns.filter(
       (column) => column instanceof EntityActionTableColumn)
@@ -670,7 +671,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
   }
 
   cellContent(entity: BaseData<HasId>, column: EntityColumn<BaseData<HasId>>, row: number) {
-    if (column instanceof EntityTableColumn) {
+    if (column instanceof EntityTableColumn || column instanceof EntityLinkTableColumn) {
       const col = this.entitiesTableConfig.columns.indexOf(column);
       const index = row * this.entitiesTableConfig.columns.length + col;
       let res = this.cellContentCache[index];

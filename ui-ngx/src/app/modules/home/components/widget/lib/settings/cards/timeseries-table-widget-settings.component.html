@@ -30,12 +30,14 @@
   </div>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.table.columns</div>
-    <mat-slide-toggle class="mat-slide"  formControlName="showTimestamp">
-      {{ 'widgets.table.display-timestamp' | translate }}
-    </mat-slide-toggle>
-    <mat-slide-toggle class="mat-slide"  formControlName="showMilliseconds">
-      {{ 'widgets.table.display-milliseconds' | translate }}
-    </mat-slide-toggle>
+
+    <div  class="tb-form-row column-xs">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTimestamp">
+        {{ 'widgets.table.display-timestamp' | translate }}
+      </mat-slide-toggle>
+      <tb-date-format-select fxFlex excludeLastUpdateAgo formControlName="dateFormat"></tb-date-format-select>
+    </div>
+
     <mat-slide-toggle class="mat-slide"  formControlName="enableStickyAction">
       {{ 'widgets.table.enable-sticky-action' | translate }}
     </mat-slide-toggle>
