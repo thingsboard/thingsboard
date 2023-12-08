@@ -171,7 +171,6 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
   private loadPasswordPolicy() {
     this.authService.getUserPasswordPolicy().subscribe(policy => {
       this.passwordPolicy = policy;
-      this.passwordPolicy.maximumLength = 7;
       this.changePassword.get('newPassword').setValidators([
         this.passwordStrengthValidator(),
         this.samePasswordValidation(true, 'currentPassword'),
