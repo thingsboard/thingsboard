@@ -157,7 +157,14 @@
                 <mat-label translate>admin.allow-whitespace</mat-label>
               </mat-checkbox>
               <mat-checkbox fxFlex formControlName="forceUserToResetPasswordIfNotValid" style="margin-bottom: 16px">
-                <mat-label translate>admin.force-reset-password-if-no-valid</mat-label>
+                <mat-label>
+                  {{'admin.force-reset-password-if-no-valid' | translate}}
+                  <mat-icon
+                    class="hint-icon"
+                    matTooltip="{{'admin.force-reset-password-if-no-valid-hint' | translate}}"
+                    svgIcon="mdi:information-outline">
+                  </mat-icon>
+                </mat-label>
               </mat-checkbox>
             </div>
           </section>

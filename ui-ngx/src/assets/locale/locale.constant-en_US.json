@@ -200,6 +200,7 @@
         "password-reuse-frequency-days-range": "Password reuse frequency in days can't be negative",
         "allow-whitespace": "Allow whitespace",
         "force-reset-password-if-no-valid": "Force to reset password if not valid",
+        "force-reset-password-if-no-valid-hint": "Please, take into it can affect all users with passwords that violate current policy.",
         "general-policy": "General policy",
         "max-failed-login-attempts": "Maximum number of failed login attempts, before account is locked",
         "minimum-max-failed-login-attempts-range": "Maximum number of failed login attempts can't be negative",
