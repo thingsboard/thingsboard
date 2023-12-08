@@ -64,7 +64,7 @@ public class LastOnlyIntegrationActivityManager extends AbstractActivityManager<
     }
 
     @Override
-    public void onReportingPeriodEnd() {
+    public void doOnReportingPeriodEnd() {
         long expirationTime = System.currentTimeMillis() - reportingPeriodMillis;
         for (Map.Entry<IntegrationActivityKey, ActivityState> entry : states.entrySet()) {
             var activityKey = entry.getKey();
@@ -72,6 +72,8 @@ public class LastOnlyIntegrationActivityManager extends AbstractActivityManager<
             long lastRecordedTime = activityState.getLastRecordedTime();
             // if there were no activities during the reporting period, we should remove the entry to prevent memory leaks
             if (lastRecordedTime < expirationTime) {
+                log.debug("[{}][{}] No activity events were received during reporting period for device with id: [{}]. Going to remove activity state.",
+                        activityKey.getTenantId().getId(), name, activityKey.getDeviceId().getId());
                 states.remove(activityKey);
             }
             if (activityState.getLastReportedTime() < lastRecordedTime) {
@@ -83,7 +85,8 @@ public class LastOnlyIntegrationActivityManager extends AbstractActivityManager<
 
                     @Override
                     public void onFailure(IntegrationActivityKey key, Throwable t) {
-                        log.debug("[{}] Failed to report last activity event in a period for device with id: [{}].", activityKey.getTenantId().getId(), activityKey.getDeviceId().getId());
+                        log.debug("[{}][{}] Failed to report last activity event in a period for device with id: [{}].",
+                                activityKey.getTenantId().getId(), name, activityKey.getDeviceId().getId());
                     }
                 });
             }

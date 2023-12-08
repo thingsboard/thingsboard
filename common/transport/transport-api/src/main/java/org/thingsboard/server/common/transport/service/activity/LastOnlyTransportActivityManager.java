@@ -81,7 +81,7 @@ public class LastOnlyTransportActivityManager extends AbstractActivityManager<UU
     }
 
     @Override
-    protected void onReportingPeriodEnd() {
+    protected void doOnReportingPeriodEnd() {
         Set<UUID> statesToRemove = new HashSet<>();
         for (Map.Entry<UUID, TransportActivityState> entry : states.entrySet()) {
             var sessionId = entry.getKey();
@@ -91,6 +91,7 @@ public class LastOnlyTransportActivityManager extends AbstractActivityManager<UU
             if (sessionMetaData != null) {
                 activityState.setSessionInfoProto(sessionMetaData.getSessionInfo());
             } else {
+                log.debug("[{}] Session with id: [{}] is not present. Marking it's activity state for removal.", name, sessionId);
                 statesToRemove.add(sessionId);
             }
 
@@ -103,6 +104,7 @@ public class LastOnlyTransportActivityManager extends AbstractActivityManager<UU
                 if (gwSessionMetaData != null && gwSessionMetaData.isOverwriteActivityTime()) {
                     TransportActivityState gwActivityState = states.get(gwSessionId);
                     if (gwActivityState != null) {
+                        log.debug("[{}] Session with id: [{}] has gateway session with id: [{}] with overwrite activity time enabled. Updating last activity time.", name, sessionId, gwSessionId);
                         lastActivityTime = Math.max(gwActivityState.getLastRecordedTime(), lastActivityTime);
                     }
                 }
@@ -111,15 +113,14 @@ public class LastOnlyTransportActivityManager extends AbstractActivityManager<UU
             long expirationTime = System.currentTimeMillis() - sessionInactivityTimeout;
             boolean hasExpired = sessionMetaData != null && lastActivityTime < expirationTime;
             if (hasExpired) {
-                if (log.isDebugEnabled()) {
-                    log.debug("[{}] Session has expired due to last activity time: [{}].", sessionId, lastActivityTime);
-                }
+                log.debug("[{}] Session with id: [{}] has expired due to last activity time: [{}]. Marking it's activity state for removal.", name, sessionId, lastActivityTime);
                 statesToRemove.add(sessionId);
                 transportService.deregisterSession(sessionInfo);
                 transportService.process(sessionInfo, SESSION_EVENT_MSG_CLOSED, null);
                 sessionMetaData.getListener().onRemoteSessionCloseCommand(sessionId, SESSION_EXPIRED_NOTIFICATION_PROTO);
             }
             if (activityState.getLastReportedTime() < lastActivityTime) {
+                log.debug("[{}] Going to report last activity event for session with id: [{}].", name, sessionId);
                 reporter.report(sessionId, lastActivityTime, activityState, new ActivityReportCallback<>() {
                     @Override
                     public void onSuccess(UUID key, long reportedTime) {
@@ -128,7 +129,7 @@ public class LastOnlyTransportActivityManager extends AbstractActivityManager<UU
 
                     @Override
                     public void onFailure(UUID key, Throwable t) {
-                        log.debug("[{}] Failed to report last activity event in a period.", sessionId);
+                        log.debug("[{}] Failed to report last activity event for session with id: [{}].", name, sessionId);
                     }
                 });
             }

@@ -44,7 +44,7 @@ import java.util.function.Supplier;
 @Slf4j
 public abstract class AbstractActivityManager<Key, State extends ActivityState> implements ActivityManager<Key, State> {
 
-    private String name;
+    protected String name;
     protected long reportingPeriodMillis;
     protected ActivityStateReporter<Key, State> reporter;
     private ScheduledExecutorService scheduler;
@@ -52,17 +52,19 @@ public abstract class AbstractActivityManager<Key, State extends ActivityState> 
 
     @Override
     public synchronized void init(String name, long reportingPeriodMillis, ActivityStateReporter<Key, State> reporter) {
-        this.name = StringUtils.notBlankOrDefault(name, "activity-manager");
-        this.reporter = Objects.requireNonNull(reporter, "Failed to initialize activity manager: provided activity reporter is null.");
-        if (reportingPeriodMillis <= 0) {
-            reportingPeriodMillis = 3000;
-            log.error("[{}] Negative or zero reporting period millisecond was provided. Going to use reporting period value of 3 seconds.", this.name);
-        }
-        this.reportingPeriodMillis = reportingPeriodMillis;
         if (!initialized) {
+            log.info("[{}] initializing.", this.name);
+            this.name = StringUtils.notBlankOrDefault(name, "activity-manager");
+            this.reporter = Objects.requireNonNull(reporter, "Failed to initialize activity manager: provided activity reporter is null.");
+            if (reportingPeriodMillis <= 0) {
+                reportingPeriodMillis = 3000;
+                log.error("[{}] Negative or zero reporting period millisecond was provided. Going to use reporting period value of 3 seconds.", this.name);
+            }
+            this.reportingPeriodMillis = reportingPeriodMillis;
             scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName(this.name));
             scheduler.scheduleAtFixedRate(this::onReportingPeriodEnd, new Random().nextInt((int) reportingPeriodMillis), reportingPeriodMillis, TimeUnit.MILLISECONDS);
             initialized = true;
+            log.info("[{}] initialized.", this.name);
         }
     }
 
@@ -80,12 +82,18 @@ public abstract class AbstractActivityManager<Key, State extends ActivityState> 
             log.error("[{}] Failed to process activity event: provided new activity state supplier is null.", name);
             return;
         }
+        log.debug("[{}] Received activity event for key: [{}]", name, key);
         doOnActivity(key, newStateSupplier);
     }
 
     protected abstract void doOnActivity(Key key, Supplier<State> newStateSupplier);
 
-    protected abstract void onReportingPeriodEnd();
+    private void onReportingPeriodEnd() {
+        log.debug("[{}] Going to end reporting period.", name);
+        doOnReportingPeriodEnd();
+    }
+
+    protected abstract void doOnReportingPeriodEnd();
 
     @Override
     public synchronized void destroy() {

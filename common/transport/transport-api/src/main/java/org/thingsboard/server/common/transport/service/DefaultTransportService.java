@@ -187,6 +187,7 @@ public class DefaultTransportService implements TransportService {
     private final NotificationRuleProcessor notificationRuleProcessor;
     private final EntityLimitsCache entityLimitsCache;
     private ActivityManager<UUID, TransportActivityState> activityManager;
+    private static final String ACTIVITY_MANAGER_NAME = "transport-activity-manager";
 
     protected TbQueueRequestTemplate<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> transportApiRequestTemplate;
     protected TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> ruleEngineMsgProducer;
@@ -255,10 +256,11 @@ public class DefaultTransportService implements TransportService {
         transportNotificationsConsumer.subscribe(Collections.singleton(tpi));
         transportApiRequestTemplate.init();
         mainConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("transport-consumer"));
-        activityManager.init("transport-activity-manager", sessionReportTimeout, activityReporter);
+        activityManager.init(ACTIVITY_MANAGER_NAME, sessionReportTimeout, activityReporter);
     }
 
     private final ActivityStateReporter<UUID, TransportActivityState> activityReporter = (sessionId, timeToReport, state, reportCallback) -> {
+        log.debug("[{}] Reporting activity state for key: [{}]. Time to report: [{}].", ACTIVITY_MANAGER_NAME, sessionId, timeToReport);
         SessionMetaData sessionMetaData = sessions.get(sessionId);
         TransportProtos.SubscriptionInfoProto subscriptionInfo = TransportProtos.SubscriptionInfoProto.newBuilder()
                 .setAttributeSubscription(sessionMetaData != null && sessionMetaData.isSubscribedToAttributes())
