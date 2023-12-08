@@ -26,7 +26,6 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -55,11 +54,11 @@ public class TbDate implements Serializable, Cloneable {
     }
 
     public TbDate(String s) {
-        this.instant = parseInstant(s);
+        this.instant = parseInstant(s, null, Locale.getDefault().toLanguageTag());
     }
 
     public TbDate(String s, String pattern) {
-        this.instant = parseInstant(s, pattern);
+        this.instant = parseInstant(s, pattern, Locale.getDefault().toLanguageTag());
     }
 
     public TbDate(String s, String pattern, String locale) {
@@ -488,11 +487,10 @@ public class TbDate implements Serializable, Cloneable {
         }
     }
 
-    private static Instant parseInstant(String s, String... options) {
-        Locale locale = options.length > 1 ? Locale.forLanguageTag( options[1]) : Locale.getDefault();
-        DateTimeFormatter formatter = null;
-        if (options.length > 0) {
-            formatter =  DateTimeFormatter.ofPattern(options[0], locale);
+    private static Instant parseInstant(String s, String pattern, String localeStr) {
+        DateTimeFormatter formatter;
+        if (pattern != null) {
+            formatter =  DateTimeFormatter.ofPattern(pattern, Locale.forLanguageTag(localeStr));
         } else if (s.length() > 0 && Character.isDigit(s.charAt(0))) {
             // assuming  "2007-12-03T10:15:30.00Z"  UTC instant
             // assuming  "2007-12-03T10:15:30.00"  ZoneId.systemDefault() instant
@@ -509,9 +507,9 @@ public class TbDate implements Serializable, Cloneable {
             return Instant.from(formatter.parse(s));
         } catch (Exception ex) {
             try {
-                if (options.length > 0) {
-                    String zoneIdStr = options.length > 3 ? options[2] : ZoneId.systemDefault().getId();
-                    return parseInstant(s, options[0], locale.getLanguage(), zoneIdStr);
+                if (pattern != null) {
+                    String zoneIdStr = ZoneId.systemDefault().getId();
+                    return parseInstant(s, pattern, localeStr, zoneIdStr);
                 } else if (s.length() > 0 && Character.isDigit(s.charAt(0))) {
                     long timeMS = parse(s);
                     if (timeMS != -1) {
