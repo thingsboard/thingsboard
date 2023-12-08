@@ -15,10 +15,69 @@ docker compose rm mytbedge
 docker-compose stop
 docker-compose rm mytbedge
 ```
-##### Backup Database
-Make a copy of the database folder before upgrading:
+
+##### Migrating Data from Docker Bind Mount Folders to Docker Volumes
+Starting with the **3.6.2** release, the ThingsBoard team has transitioned from using Docker bind mount folders to Docker volumes.
+This change aims to enhance security and efficiency in storing data for Docker containers and to mitigate permission issues across various environments.
+
+To migrate from Docker bind mounts to Docker volumes, please execute the following commands:
 
 ```bash
-sudo cp -r ~/.mytb-edge-data/db ~/.mytb-edge-db-BACKUP
+docker run --rm -v tb-edge-data:/volume -v ~/.mytb-edge-data:/backup busybox sh -c "cp -a /backup/. /volume"
+docker run --rm -v tb-edge-logs:/volume -v ~/.mytb-edge-logs:/backup busybox sh -c "cp -a /backup/. /volume"
+docker run --rm -v tb-edge-postgres-data:/volume -v ~/.mytb-edge-data/db:/backup busybox sh -c "cp -a /backup/. /volume"
+{:copy-code}
+```
+
+After completing the data migration to the newly created Docker volumes, you'll need to update the volume mounts in your Docker Compose configuration.
+Modify the `docker-compose.yml` file for ThingsBoard Edge to update the volume settings.
+
+First, please update docker compose file version. Find next snippet:
+```text
+version: '3.0'
+...
+```
+
+And replace it with:
+```text
+version: '3.8'
+...
+```
+
+Then update volume mounts. Locate the following snippet:
+```text
+    volumes:
+      - ~/.mytb-edge-data:/data
+      - ~/.mytb-edge-logs:/var/log/tb-edge
+...
+```
+
+And replace it with:
+```text
+    volumes:
+      - tb-edge-data:/data
+      - tb-edge-logs:/var/log/tb-edge
+...
+```
+
+Apply a similar update for the PostgreSQL service. Find the section:
+```text
+    volumes:
+      - ~/.mytb-edge-data/db:/var/lib/postgresql/data
+...
+```
+
+And replace it with:
+```text
+    volumes:
+      - tb-edge-postgres-data/:/var/lib/postgresql/data
+...
+```
+
+##### Backup Database
+Make a copy of the database volume before upgrading:
+
+```bash
+docker run --rm -v tb-edge-postgres-data:/source -v tb-edge-postgres-data-backup:/backup busybox sh -c "cp -a /source/. /backup"
 {:copy-code}
 ```

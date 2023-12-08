@@ -22,6 +22,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInstructions;
+import org.thingsboard.server.dao.util.DeviceConnectivityUtil;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.install.InstallScripts;
 
@@ -75,12 +76,12 @@ public class DefaultEdgeInstallInstructionsService implements EdgeInstallInstruc
     private EdgeInstructions getDockerInstallInstructions(Edge edge, HttpServletRequest request) {
         String dockerInstallInstructions = readFile(resolveFile("docker", "instructions.md"));
         String baseUrl = request.getServerName();
-        if (baseUrl.contains("localhost") || baseUrl.contains("127.0.0.1")) {
-            String localhostWarning = readFile(resolveFile("docker", "localhost_warning.md"));
-            dockerInstallInstructions = dockerInstallInstructions.replace("${LOCALHOST_WARNING}", localhostWarning);
-            dockerInstallInstructions = dockerInstallInstructions.replace("${BASE_URL}", "!!!REPLACE_ME_TO_HOST_IP_ADDRESS!!!");
+
+        if (DeviceConnectivityUtil.isLocalhost(baseUrl)) {
+            dockerInstallInstructions = dockerInstallInstructions.replace("${EXTRA_HOSTS}", "extra_hosts:\n      - \"host.docker.internal:host-gateway\"\n");
+            dockerInstallInstructions = dockerInstallInstructions.replace("${BASE_URL}", "host.docker.internal");
         } else {
-            dockerInstallInstructions = dockerInstallInstructions.replace("${LOCALHOST_WARNING}", "");
+            dockerInstallInstructions = dockerInstallInstructions.replace("${EXTRA_HOSTS}", "");
             dockerInstallInstructions = dockerInstallInstructions.replace("${BASE_URL}", baseUrl);
         }
         String edgeVersion = appVersion + "EDGE";

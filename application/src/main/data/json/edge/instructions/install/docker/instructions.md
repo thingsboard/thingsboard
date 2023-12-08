@@ -4,21 +4,7 @@ Here is the list of commands, that can be used to quickly install ThingsBoard Ed
 
 Install <a href="https://docs.docker.com/engine/install/" target="_blank"> Docker CE</a> and <a href="https://docs.docker.com/compose/install/" target="_blank"> Docker Compose</a>.
 
-#### Create data and logs folders
-
-Run following commands, before starting docker container(s), to create folders for storing data and logs.
-These commands additionally will change owner of newly created folders to docker container user.
-To do this (to change user) **chown** command is used, and this command requires *sudo* permissions (command will request password for a *sudo* access):
-
-```bash
-mkdir -p ~/.mytb-edge-data && sudo chown -R 799:799 ~/.mytb-edge-data
-mkdir -p ~/.mytb-edge-logs && sudo chown -R 799:799 ~/.mytb-edge-logs
-{:copy-code}
-```
-
 #### Running ThingsBoard Edge as docker service
-
-${LOCALHOST_WARNING}
 
 Create docker compose file for ThingsBoard Edge service:
 
@@ -30,7 +16,7 @@ nano docker-compose.yml
 Add the following lines to the yml file:
 
 ```bash
-version: '3.0'
+version: '3.8'
 services:
   mytbedge:
     restart: always
@@ -47,8 +33,9 @@ services:
       CLOUD_RPC_PORT: ${CLOUD_RPC_PORT}
       CLOUD_RPC_SSL_ENABLED: ${CLOUD_RPC_SSL_ENABLED}
     volumes:
-      - ~/.mytb-edge-data:/data
-      - ~/.mytb-edge-logs:/var/log/tb-edge
+      - tb-edge-data:/data
+      - tb-edge-logs:/var/log/tb-edge
+    ${EXTRA_HOSTS}
   postgres:
     restart: always
     image: "postgres:15"
@@ -58,7 +45,15 @@ services:
       POSTGRES_DB: tb-edge
       POSTGRES_PASSWORD: postgres
     volumes:
-      - ~/.mytb-edge-data/db:/var/lib/postgresql/data
+      - tb-edge-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  tb-edge-data:
+    name: tb-edge-data
+  tb-edge-logs:
+    name: tb-edge-logs
+  tb-edge-postgres-data:
+    name: tb-edge-postgres-data
 {:copy-code}
 ```
 

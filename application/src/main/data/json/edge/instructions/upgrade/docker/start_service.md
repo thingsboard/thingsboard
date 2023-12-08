@@ -5,15 +5,15 @@ nano docker-compose.yml
 ```
 
 ```text
-version: '3.0'
+version: '3.8'
 services:
-mytbedge:
-restart: always
-image: "thingsboard/tb-edge:${TB_EDGE_VERSION}"
+    mytbedge:
+        restart: always
+        image: "thingsboard/tb-edge:${TB_EDGE_VERSION}"
 ...
 ```
 
-Make sure your image is the set to tb-edge-${TB_EDGE_VERSION}.
+Make sure your image is the set to **tb-edge-${TB_EDGE_VERSION}**.
 Execute the following commands to up this docker compose directly:
 
 ```bash

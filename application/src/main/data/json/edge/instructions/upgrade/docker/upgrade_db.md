@@ -1,16 +1,14 @@
-${CLEAR_DOCKER_UPGRADE}
-
 Create docker compose file for ThingsBoard Edge upgrade process:
 
 ```bash
-nano docker-compose-upgrade.yml
+> docker-compose-upgrade.yml && nano docker-compose-upgrade.yml
 {:copy-code}
 ```
 
 Add the following lines to the yml file:
 
 ```bash
-version: '3.0'
+version: '3.8'
 services:
   mytbedge:
     restart: on-failure
@@ -18,8 +16,8 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/tb-edge
     volumes:
-      - ~/.mytb-edge-data:/data
-      - ~/.mytb-edge-logs:/var/log/tb-edge
+      - tb-edge-data:/data
+      - tb-edge-logs:/var/log/tb-edge
     entrypoint: upgrade-tb-edge.sh
   postgres:
     restart: always
@@ -30,7 +28,15 @@ services:
       POSTGRES_DB: tb-edge
       POSTGRES_PASSWORD: postgres
     volumes:
-      - ~/.mytb-edge-data/db:/var/lib/postgresql/data
+      - tb-edge-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  tb-edge-data:
+    name: tb-edge-data
+  tb-edge-logs:
+    name: tb-edge-logs
+  tb-edge-postgres-data:
+    name: tb-edge-postgres-data
 {:copy-code}
 ```
 
