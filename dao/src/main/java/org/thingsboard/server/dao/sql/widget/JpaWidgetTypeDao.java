@@ -121,7 +121,7 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
     }
 
     @Override
-    public PageData<WidgetTypeInfo> findTenantWidgetTypesByTenantId(UUID tenantId, boolean fullSearch, DeprecatedFilter deprecatedFilter, List<String> widgetTypes,  PageLink pageLink) {
+    public PageData<WidgetTypeInfo> findTenantWidgetTypesByTenantId(UUID tenantId, boolean fullSearch, DeprecatedFilter deprecatedFilter, List<String> widgetTypes, PageLink pageLink) {
         boolean deprecatedFilterEnabled = !DeprecatedFilter.ALL.equals(deprecatedFilter);
         boolean deprecatedFilterBool = DeprecatedFilter.DEPRECATED.equals(deprecatedFilter);
         boolean widgetTypesEmpty = widgetTypes == null || widgetTypes.isEmpty();
@@ -205,6 +205,12 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
     }
 
     @Override
+    public PageData<WidgetTypeId> findIdsByTenantId(UUID tenantId, PageLink pageLink) {
+        return DaoUtil.pageToPageData(widgetTypeRepository.findIdsByTenantId(tenantId, DaoUtil.toPageable(pageLink))
+                .map(WidgetTypeId::new));
+    }
+
+    @Override
     public WidgetTypeId getExternalIdByInternal(WidgetTypeId internalId) {
         return Optional.ofNullable(widgetTypeRepository.getExternalIdById(internalId.getId()))
                 .map(WidgetTypeId::new).orElse(null);
@@ -223,6 +229,21 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
     @Override
     public void removeWidgetTypeFromWidgetsBundle(UUID widgetsBundleId, UUID widgetTypeId) {
         widgetsBundleWidgetRepository.deleteById(new WidgetsBundleWidgetCompositeKey(widgetsBundleId, widgetTypeId));
+    }
+
+    @Override
+    public PageData<WidgetTypeId> findAllWidgetTypesIds(PageLink pageLink) {
+        return DaoUtil.pageToPageData(widgetTypeRepository.findAllIds(DaoUtil.toPageable(pageLink)).map(WidgetTypeId::new));
+    }
+
+    @Override
+    public List<WidgetTypeInfo> findByTenantAndImageLink(TenantId tenantId, String imageUrl, int limit) {
+        return DaoUtil.convertDataList(widgetTypeInfoRepository.findByTenantAndImageUrl(tenantId.getId(), imageUrl, limit));
+    }
+
+    @Override
+    public List<WidgetTypeInfo> findByImageLink(String imageUrl, int limit) {
+        return DaoUtil.convertDataList(widgetTypeInfoRepository.findByImageUrl(imageUrl, limit));
     }
 
     @Override

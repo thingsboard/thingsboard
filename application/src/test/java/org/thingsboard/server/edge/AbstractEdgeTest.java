@@ -321,7 +321,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         Assert.assertTrue(tenantUpdateMsgOpt.isPresent());
         TenantUpdateMsg tenantUpdateMsg = tenantUpdateMsgOpt.get();
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, tenantUpdateMsg.getMsgType());
-        Tenant tenantMsg = JacksonUtil.fromStringIgnoreUnknownProperties(tenantUpdateMsg.getEntity(), Tenant.class);
+        Tenant tenantMsg = JacksonUtil.fromString(tenantUpdateMsg.getEntity(), Tenant.class, true);
         Assert.assertNotNull(tenantMsg);
         Tenant tenant = doGet("/api/tenant/" + tenantMsg.getUuidId(), Tenant.class);
         Assert.assertNotNull(tenant);
@@ -333,7 +333,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         Assert.assertTrue(tenantProfileUpdateMsgOpt.isPresent());
         TenantProfileUpdateMsg tenantProfileUpdateMsg = tenantProfileUpdateMsgOpt.get();
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, tenantProfileUpdateMsg.getMsgType());
-        TenantProfile tenantProfile = JacksonUtil.fromStringIgnoreUnknownProperties(tenantProfileUpdateMsg.getEntity(), TenantProfile.class);
+        TenantProfile tenantProfile = JacksonUtil.fromString(tenantProfileUpdateMsg.getEntity(), TenantProfile.class, true);
         Assert.assertNotNull(tenantProfile);
         Tenant tenant = doGet("/api/tenant/" + tenantId.getId(), Tenant.class);
         Assert.assertNotNull(tenant);
@@ -350,7 +350,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(expectedMsgCnt, deviceProfileUpdateMsgList.size());
         Optional<DeviceProfileUpdateMsg> thermostatProfileUpdateMsgOpt =
                 deviceProfileUpdateMsgList.stream().filter(dfum -> {
-                    DeviceProfile deviceProfile = JacksonUtil.fromStringIgnoreUnknownProperties(dfum.getEntity(), DeviceProfile.class);
+                    DeviceProfile deviceProfile = JacksonUtil.fromString(dfum.getEntity(), DeviceProfile.class, true);
                     Assert.assertNotNull(deviceProfile);
                     return THERMOSTAT_DEVICE_PROFILE_NAME.equals(deviceProfile.getName());
                 }).findAny();
@@ -428,7 +428,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         Assert.assertTrue(ruleChainMetadataUpdateOpt.isPresent());
         RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = ruleChainMetadataUpdateOpt.get();
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, ruleChainMetadataUpdateMsg.getMsgType());
-        RuleChainMetaData ruleChainMetaData = JacksonUtil.fromStringIgnoreUnknownProperties(ruleChainMetadataUpdateMsg.getEntity(), RuleChainMetaData.class);
+        RuleChainMetaData ruleChainMetaData = JacksonUtil.fromString(ruleChainMetadataUpdateMsg.getEntity(), RuleChainMetaData.class, true);
         Assert.assertNotNull(ruleChainMetaData);
         Assert.assertEquals(expectedRuleChainUUID, ruleChainMetaData.getRuleChainId().getId());
     }
@@ -438,7 +438,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(expectedMsgCnt, adminSettingsUpdateMsgs.size());
 
         for (AdminSettingsUpdateMsg adminSettingsUpdateMsg : adminSettingsUpdateMsgs) {
-            AdminSettings adminSettings = JacksonUtil.fromStringIgnoreUnknownProperties(adminSettingsUpdateMsg.getEntity(), AdminSettings.class);
+            AdminSettings adminSettings = JacksonUtil.fromString(adminSettingsUpdateMsg.getEntity(), AdminSettings.class, true);
             Assert.assertNotNull(adminSettings);
             if (adminSettings.getKey().equals("general")) {
                 validateGeneralAdminSettings(adminSettings);

@@ -975,7 +975,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         for (AbstractMessage message : messages) {
             if (message instanceof QueueUpdateMsg) {
                 QueueUpdateMsg queueUpdateMsg = (QueueUpdateMsg) message;
-                Queue queue = JacksonUtil.fromStringIgnoreUnknownProperties(queueUpdateMsg.getEntity(), Queue.class);
+                Queue queue = JacksonUtil.fromString(queueUpdateMsg.getEntity(), Queue.class, true);
                 Assert.assertNotNull(queue);
                 if (msgType.equals(queueUpdateMsg.getMsgType()) && name.equals(queue.getName())) {
                     messages.remove(message);
@@ -990,7 +990,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         for (AbstractMessage message : messages) {
             if (message instanceof RuleChainUpdateMsg) {
                 RuleChainUpdateMsg ruleChainUpdateMsg = (RuleChainUpdateMsg) message;
-                RuleChain ruleChain = JacksonUtil.fromStringIgnoreUnknownProperties(ruleChainUpdateMsg.getEntity(), RuleChain.class);
+                RuleChain ruleChain = JacksonUtil.fromString(ruleChainUpdateMsg.getEntity(), RuleChain.class, true);
                 Assert.assertNotNull(ruleChain);
                 if (msgType.equals(ruleChainUpdateMsg.getMsgType())
                         && name.equals(ruleChain.getName())
@@ -1007,7 +1007,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         for (AbstractMessage message : messages) {
             if (message instanceof AdminSettingsUpdateMsg) {
                 AdminSettingsUpdateMsg adminSettingsUpdateMsg = (AdminSettingsUpdateMsg) message;
-                AdminSettings adminSettings = JacksonUtil.fromStringIgnoreUnknownProperties(adminSettingsUpdateMsg.getEntity(), AdminSettings.class);
+                AdminSettings adminSettings = JacksonUtil.fromString(adminSettingsUpdateMsg.getEntity(), AdminSettings.class, true);
                 Assert.assertNotNull(adminSettings);
                 if (key.equals(adminSettings.getKey())) {
                     messages.remove(message);
@@ -1022,7 +1022,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         for (AbstractMessage message : messages) {
             if (message instanceof DeviceProfileUpdateMsg) {
                 DeviceProfileUpdateMsg deviceProfileUpdateMsg = (DeviceProfileUpdateMsg) message;
-                DeviceProfile deviceProfile = JacksonUtil.fromStringIgnoreUnknownProperties(deviceProfileUpdateMsg.getEntity(), DeviceProfile.class);
+                DeviceProfile deviceProfile = JacksonUtil.fromString(deviceProfileUpdateMsg.getEntity(), DeviceProfile.class, true);
                 Assert.assertNotNull(deviceProfile);
                 if (msgType.equals(deviceProfileUpdateMsg.getMsgType())
                         && name.equals(deviceProfile.getName())) {
@@ -1038,7 +1038,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         for (AbstractMessage message : messages) {
             if (message instanceof DeviceUpdateMsg) {
                 DeviceUpdateMsg deviceUpdateMsg = (DeviceUpdateMsg) message;
-                Device device = JacksonUtil.fromStringIgnoreUnknownProperties(deviceUpdateMsg.getEntity(), Device.class);
+                Device device = JacksonUtil.fromString(deviceUpdateMsg.getEntity(), Device.class, true);
                 Assert.assertNotNull(device);
                 if (msgType.equals(deviceUpdateMsg.getMsgType())
                         && name.equals(device.getName())) {
@@ -1054,7 +1054,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         for (AbstractMessage message : messages) {
             if (message instanceof AssetProfileUpdateMsg) {
                 AssetProfileUpdateMsg assetProfileUpdateMsg = (AssetProfileUpdateMsg) message;
-                AssetProfile assetProfile = JacksonUtil.fromStringIgnoreUnknownProperties(assetProfileUpdateMsg.getEntity(), AssetProfile.class);
+                AssetProfile assetProfile = JacksonUtil.fromString(assetProfileUpdateMsg.getEntity(), AssetProfile.class, true);
                 Assert.assertNotNull(assetProfile);
                 if (msgType.equals(assetProfileUpdateMsg.getMsgType())
                         && name.equals(assetProfile.getName())) {
@@ -1070,7 +1070,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         for (AbstractMessage message : messages) {
             if (message instanceof AssetUpdateMsg) {
                 AssetUpdateMsg assetUpdateMsg = (AssetUpdateMsg) message;
-                Asset asset = JacksonUtil.fromStringIgnoreUnknownProperties(assetUpdateMsg.getEntity(), Asset.class);
+                Asset asset = JacksonUtil.fromString(assetUpdateMsg.getEntity(), Asset.class, true);
                 Assert.assertNotNull(asset);
                 if (msgType.equals(assetUpdateMsg.getMsgType())
                         && name.equals(asset.getName())) {
@@ -1086,7 +1086,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         for (AbstractMessage message : messages) {
             if (message instanceof UserUpdateMsg) {
                 UserUpdateMsg userUpdateMsg = (UserUpdateMsg) message;
-                User user = JacksonUtil.fromStringIgnoreUnknownProperties(userUpdateMsg.getEntity(), User.class);
+                User user = JacksonUtil.fromString(userUpdateMsg.getEntity(), User.class, true);
                 Assert.assertNotNull(user);
                 if (msgType.equals(userUpdateMsg.getMsgType())
                         && email.equals(user.getEmail())
@@ -1103,7 +1103,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         for (AbstractMessage message : messages) {
             if (message instanceof CustomerUpdateMsg) {
                 CustomerUpdateMsg customerUpdateMsg = (CustomerUpdateMsg) message;
-                Customer customer = JacksonUtil.fromStringIgnoreUnknownProperties(customerUpdateMsg.getEntity(), Customer.class);
+                Customer customer = JacksonUtil.fromString(customerUpdateMsg.getEntity(), Customer.class, true);
                 Assert.assertNotNull(customer);
                 if (msgType.equals(customerUpdateMsg.getMsgType())
                         && title.equals(customer.getTitle())) {
@@ -1119,7 +1119,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         for (AbstractMessage message : messages) {
             if (message instanceof TenantUpdateMsg) {
                 TenantUpdateMsg tenantUpdateMsg = (TenantUpdateMsg) message;
-                Tenant tenant = JacksonUtil.fromStringIgnoreUnknownProperties(tenantUpdateMsg.getEntity(), Tenant.class);
+                Tenant tenant = JacksonUtil.fromString(tenantUpdateMsg.getEntity(), Tenant.class, true);
                 Assert.assertNotNull(tenant);
                 if (UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE.equals(tenantUpdateMsg.getMsgType())
                         && tenantId1.equals(tenant.getId())) {
@@ -1135,7 +1135,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         for (AbstractMessage message : messages) {
             if (message instanceof TenantProfileUpdateMsg) {
                 TenantProfileUpdateMsg tenantProfileUpdateMsg = (TenantProfileUpdateMsg) message;
-                TenantProfile tenantProfile = JacksonUtil.fromStringIgnoreUnknownProperties(tenantProfileUpdateMsg.getEntity(), TenantProfile.class);
+                TenantProfile tenantProfile = JacksonUtil.fromString(tenantProfileUpdateMsg.getEntity(), TenantProfile.class, true);
                 Assert.assertNotNull(tenantProfile);
                 if (UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE.equals(tenantProfileUpdateMsg.getMsgType())
                         && tenantProfileId.equals(tenantProfile.getId())) {

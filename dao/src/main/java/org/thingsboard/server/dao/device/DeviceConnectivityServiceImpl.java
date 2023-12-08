@@ -137,14 +137,15 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
         validateId(deviceId, INCORRECT_DEVICE_ID + deviceId);
 
         DeviceCredentials creds = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), deviceId);
+        String deviceName = device.getName();
 
         ObjectNode commands = JacksonUtil.newObjectNode();
         if (isEnabled(MQTT)) {
-            Optional.ofNullable(getGatewayDockerCommands(baseUrl, creds, MQTT))
+            Optional.ofNullable(getGatewayDockerCommands(baseUrl, deviceName, creds, MQTT))
                     .ifPresent(v -> commands.set(MQTT, v));
         }
         if (isEnabled(MQTTS)) {
-            Optional.ofNullable(getGatewayDockerCommands(baseUrl, creds, MQTTS))
+            Optional.ofNullable(getGatewayDockerCommands(baseUrl, deviceName, creds, MQTTS))
                     .ifPresent(v -> commands.set(MQTTS, v));
         }
         return commands;
@@ -298,14 +299,14 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
         return null;
     }
 
-    private JsonNode getGatewayDockerCommands(String baseUrl, DeviceCredentials deviceCredentials, String mqttType) throws URISyntaxException {
+    private JsonNode getGatewayDockerCommands(String baseUrl, String deviceName, DeviceCredentials deviceCredentials, String mqttType) throws URISyntaxException {
         ObjectNode dockerLaunchCommands = JacksonUtil.newObjectNode();
         DeviceConnectivityInfo properties = getConnectivity(mqttType);
         String mqttHost = getHost(baseUrl, properties, mqttType);
         String mqttPort = properties.getPort().isEmpty() ? null : properties.getPort();
-        Optional.ofNullable(DeviceConnectivityUtil.getGatewayLaunchCommand(LINUX, mqttHost, mqttPort, deviceCredentials))
+        Optional.ofNullable(DeviceConnectivityUtil.getGatewayLaunchCommand(LINUX, deviceName, mqttHost, mqttPort, deviceCredentials))
                 .ifPresent(v -> dockerLaunchCommands.put(LINUX, v));
-        Optional.ofNullable(DeviceConnectivityUtil.getGatewayLaunchCommand(WINDOWS, mqttHost, mqttPort, deviceCredentials))
+        Optional.ofNullable(DeviceConnectivityUtil.getGatewayLaunchCommand(WINDOWS,  deviceName, mqttHost, mqttPort, deviceCredentials))
                 .ifPresent(v -> dockerLaunchCommands.put(WINDOWS, v));
         return dockerLaunchCommands.isEmpty() ? null : dockerLaunchCommands;
     }

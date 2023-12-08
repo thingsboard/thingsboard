@@ -17,7 +17,6 @@ package org.thingsboard.server.service.edge.rpc.processor.resource;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
@@ -25,20 +24,16 @@ import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
-import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.ResourceUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 @Slf4j
 public abstract class BaseResourceProcessor extends BaseEdgeProcessor {
 
-    protected boolean saveOrUpdateTbResource(TenantId tenantId, TbResourceId tbResourceId, ResourceUpdateMsg resourceUpdateMsg, EdgeVersion edgeVersion) {
+    protected boolean saveOrUpdateTbResource(TenantId tenantId, TbResourceId tbResourceId, ResourceUpdateMsg resourceUpdateMsg) {
         boolean resourceKeyUpdated = false;
         try {
-            TbResource resource = EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)
-                    ? createTbResource(tenantId, resourceUpdateMsg)
-                    : JacksonUtil.fromStringIgnoreUnknownProperties(resourceUpdateMsg.getEntity(), TbResource.class);
+            TbResource resource = constructResourceFromUpdateMsg(tenantId, tbResourceId, resourceUpdateMsg);
             if (resource == null) {
                 throw new RuntimeException("[{" + tenantId + "}] resourceUpdateMsg {" + resourceUpdateMsg + " } cannot be converted to resource");
             }
@@ -76,19 +71,5 @@ public abstract class BaseResourceProcessor extends BaseEdgeProcessor {
         return resourceKeyUpdated;
     }
 
-    private TbResource createTbResource(TenantId tenantId, ResourceUpdateMsg resourceUpdateMsg) {
-        TbResource resource = new TbResource();
-        if (resourceUpdateMsg.getIsSystem()) {
-            resource.setTenantId(TenantId.SYS_TENANT_ID);
-        } else {
-            resource.setTenantId(tenantId);
-        }
-        resource.setTitle(resourceUpdateMsg.getTitle());
-        resource.setResourceKey(resourceUpdateMsg.getResourceKey());
-        resource.setResourceType(ResourceType.valueOf(resourceUpdateMsg.getResourceType()));
-        resource.setFileName(resourceUpdateMsg.getFileName());
-        resource.setData(resourceUpdateMsg.hasData() ? resourceUpdateMsg.getData() : null);
-        resource.setEtag(resourceUpdateMsg.hasEtag() ? resourceUpdateMsg.getEtag() : null);
-        return resource;
-    }
+    protected abstract TbResource constructResourceFromUpdateMsg(TenantId tenantId, TbResourceId tbResourceId, ResourceUpdateMsg resourceUpdateMsg);
 }

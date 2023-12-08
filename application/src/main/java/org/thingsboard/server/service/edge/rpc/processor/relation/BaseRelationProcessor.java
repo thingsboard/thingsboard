@@ -18,29 +18,18 @@ package org.thingsboard.server.service.edge.rpc.processor.relation;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
-import org.thingsboard.server.common.data.relation.RelationTypeGroup;
-import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.RelationUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
-
-import java.util.UUID;
 
 @Slf4j
 public abstract class BaseRelationProcessor extends BaseEdgeProcessor {
 
-    protected ListenableFuture<Void> processRelationMsg(TenantId tenantId, RelationUpdateMsg relationUpdateMsg, EdgeVersion edgeVersion) {
+    protected ListenableFuture<Void> processRelationMsg(TenantId tenantId, RelationUpdateMsg relationUpdateMsg) {
         log.trace("[{}] processRelationMsg [{}]", tenantId, relationUpdateMsg);
         try {
-            EntityRelation entityRelation = EdgeVersionUtils.isEdgeVersionOlderThan_3_6_2(edgeVersion)
-                    ? createEntityRelation(relationUpdateMsg)
-                    : JacksonUtil.fromStringIgnoreUnknownProperties(relationUpdateMsg.getEntity(), EntityRelation.class);
+            EntityRelation entityRelation = constructEntityRelationFromUpdateMsg(relationUpdateMsg);
             if (entityRelation == null) {
                 throw new RuntimeException("[{" + tenantId + "}] relationUpdateMsg {" + relationUpdateMsg + "} cannot be converted to entity relation");
             }
@@ -68,21 +57,5 @@ public abstract class BaseRelationProcessor extends BaseEdgeProcessor {
         return Futures.immediateFuture(null);
     }
 
-    private EntityRelation createEntityRelation(RelationUpdateMsg relationUpdateMsg) {
-        EntityRelation entityRelation = new EntityRelation();
-
-        UUID fromUUID = new UUID(relationUpdateMsg.getFromIdMSB(), relationUpdateMsg.getFromIdLSB());
-        EntityId fromId = EntityIdFactory.getByTypeAndUuid(EntityType.valueOf(relationUpdateMsg.getFromEntityType()), fromUUID);
-        entityRelation.setFrom(fromId);
-
-        UUID toUUID = new UUID(relationUpdateMsg.getToIdMSB(), relationUpdateMsg.getToIdLSB());
-        EntityId toId = EntityIdFactory.getByTypeAndUuid(EntityType.valueOf(relationUpdateMsg.getToEntityType()), toUUID);
-        entityRelation.setTo(toId);
-
-        entityRelation.setType(relationUpdateMsg.getType());
-        entityRelation.setTypeGroup(relationUpdateMsg.hasTypeGroup()
-                ? RelationTypeGroup.valueOf(relationUpdateMsg.getTypeGroup()) : RelationTypeGroup.COMMON);
-        entityRelation.setAdditionalInfo(JacksonUtil.toJsonNode(relationUpdateMsg.getAdditionalInfo()));
-        return entityRelation;
-    }
+    protected abstract EntityRelation constructEntityRelationFromUpdateMsg(RelationUpdateMsg relationUpdateMsg);
 }
