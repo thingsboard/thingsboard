@@ -70,19 +70,16 @@ public class FirstOnlyIntegrationActivityManager extends AbstractActivityManager
         SettableFuture<Pair<IntegrationActivityKey, Long>> reportCompletedFuture = SettableFuture.create();
         states.compute(activityKey, (key, activityStateWrapper) -> {
             if (activityStateWrapper == null) {
-                ActivityState activityState = newStateSupplier.get();
-                activityState.setLastRecordedTime(newLastRecordedTime);
-                activityState.setLastReportedTime(0L);
                 activityStateWrapper = new ActivityStateWrapper();
-                activityStateWrapper.setState(activityState);
-                activityStateWrapper.setAlreadyBeenReported(false);
-            } else {
-                activityStateWrapper.getState().setLastRecordedTime(newLastRecordedTime);
+                activityStateWrapper.setState(newStateSupplier.get());
+            }
+            var activityState = activityStateWrapper.getState();
+            if (activityState.getLastRecordedTime() < newLastRecordedTime) {
+                activityState.setLastRecordedTime(newLastRecordedTime);
             }
             if (activityStateWrapper.isAlreadyBeenReported()) {
                 return activityStateWrapper;
             }
-            var activityState = activityStateWrapper.getState();
             if (activityState.getLastReportedTime() < activityState.getLastRecordedTime()) {
                 reporter.report(key, activityState.getLastRecordedTime(), activityState, new ActivityReportCallback<>() {
                     @Override
@@ -107,17 +104,9 @@ public class FirstOnlyIntegrationActivityManager extends AbstractActivityManager
 
             @Override
             public void onFailure(@NonNull Throwable t) {
-                log.debug("[{}] Failed to report first activity event in a period for device with id: [{}]", activityKey.getTenantId().getId(), activityKey.getDeviceId().getId());
+                log.debug("[{}] Failed to report first activity event in a period for device with id: [{}].", activityKey.getTenantId().getId(), activityKey.getDeviceId().getId());
             }
         }, MoreExecutors.directExecutor());
-    }
-
-    private void updateLastReportedTime(IntegrationActivityKey key, long newLastReportedTime) {
-        states.computeIfPresent(key, (__, activityStateWrapper) -> {
-            var activityState = activityStateWrapper.getState();
-            activityState.setLastReportedTime(Math.max(activityState.getLastReportedTime(), newLastReportedTime));
-            return activityStateWrapper;
-        });
     }
 
     @Override
@@ -126,21 +115,35 @@ public class FirstOnlyIntegrationActivityManager extends AbstractActivityManager
             var activityKey = entry.getKey();
             var activityStateWrapper = entry.getValue();
             var activityState = activityStateWrapper.getState();
-            if (!activityStateWrapper.isAlreadyBeenReported() && activityState.getLastReportedTime() < activityState.getLastRecordedTime()) {
-                reporter.report(activityKey, activityState.getLastRecordedTime(), activityState, new ActivityReportCallback<>() {
-                    @Override
-                    public void onSuccess(IntegrationActivityKey key, long reportedTime) {
-                        states.remove(key);
-                    }
+            long lastRecordedTime = activityState.getLastRecordedTime();
+            // if there were no activities during the reporting period, we should remove the entry to prevent memory leaks
+            if (!activityStateWrapper.isAlreadyBeenReported()) {
+                states.remove(activityKey);
+                // report leftover events
+                if (activityState.getLastReportedTime() < lastRecordedTime) {
+                    reporter.report(activityKey, lastRecordedTime, activityState, new ActivityReportCallback<>() {
+                        @Override
+                        public void onSuccess(IntegrationActivityKey key, long reportedTime) {
+                            updateLastReportedTime(key, reportedTime); // just in case the same key was added again
+                        }
 
-                    @Override
-                    public void onFailure(IntegrationActivityKey key, Throwable t) {
-                        log.debug("[{}] Failed to report last activity event in a period for device with id: [{}]", activityKey.getTenantId().getId(), activityKey.getDeviceId().getId());
-                    }
-                });
+                        @Override
+                        public void onFailure(IntegrationActivityKey key, Throwable t) {
+                            log.debug("[{}] Failed to report last activity event in a period for device with id: [{}].", activityKey.getTenantId().getId(), activityKey.getDeviceId().getId());
+                        }
+                    });
+                }
             }
             activityStateWrapper.setAlreadyBeenReported(false);
         }
+    }
+
+    private void updateLastReportedTime(IntegrationActivityKey key, long newLastReportedTime) {
+        states.computeIfPresent(key, (__, activityStateWrapper) -> {
+            var activityState = activityStateWrapper.getState();
+            activityState.setLastReportedTime(Math.max(activityState.getLastReportedTime(), newLastReportedTime));
+            return activityStateWrapper;
+        });
     }
 
 }

@@ -30,7 +30,9 @@
  */
 package org.thingsboard.server.common.transport.activity;
 
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.StringUtils;
 
 import java.util.Objects;
 import java.util.Random;
@@ -39,52 +41,44 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+@Slf4j
 public abstract class AbstractActivityManager<Key, State extends ActivityState> implements ActivityManager<Key, State> {
 
     private String name;
     protected long reportingPeriodMillis;
     protected ActivityStateReporter<Key, State> reporter;
     private ScheduledExecutorService scheduler;
-    protected boolean initialized;
+    private boolean initialized;
 
     @Override
-    public synchronized void init() {
-        Objects.requireNonNull(reporter, "Failed to initialize activity manager: provided activity reporter is null.");
-        if (reportingPeriodMillis < 1000) {
-            throw new IllegalArgumentException("Failed to initialize activity manager: provided reporting period duration is less that 1 second.");
+    public synchronized void init(String name, long reportingPeriodMillis, ActivityStateReporter<Key, State> reporter) {
+        this.name = StringUtils.notBlankOrDefault(name, "activity-manager");
+        this.reporter = Objects.requireNonNull(reporter, "Failed to initialize activity manager: provided activity reporter is null.");
+        if (reportingPeriodMillis <= 0) {
+            reportingPeriodMillis = 3000;
+            log.error("[{}] Negative or zero reporting period millisecond was provided. Going to use reporting period value of 3 seconds.", this.name);
         }
+        this.reportingPeriodMillis = reportingPeriodMillis;
         if (!initialized) {
-            scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName(name == null ? "activity-manager" : name));
+            scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName(this.name));
             scheduler.scheduleAtFixedRate(this::onReportingPeriodEnd, new Random().nextInt((int) reportingPeriodMillis), reportingPeriodMillis, TimeUnit.MILLISECONDS);
             initialized = true;
         }
     }
 
     @Override
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    @Override
-    public void setReportingPeriod(long reportingPeriodMillis) {
-        this.reportingPeriodMillis = reportingPeriodMillis;
-    }
-
-    @Override
-    public void setActivityReporter(ActivityStateReporter<Key, State> activityReporter) {
-        reporter = activityReporter;
-    }
-
-    @Override
     public void onActivity(Key key, Supplier<State> newStateSupplier) {
         if (!initialized) {
-            throw new IllegalStateException(name + " is not initialized.");
+            log.error("[{}] Failed to process activity event: activity manager is not initialized.", name);
+            return;
         }
         if (key == null) {
-            throw new IllegalArgumentException("Activity key can't be null.");
+            log.error("[{}] Failed to process activity event: provided activity key is null.", name);
+            return;
         }
         if (newStateSupplier == null) {
-            throw new IllegalArgumentException("New activity state supplier can't be null.");
+            log.error("[{}] Failed to process activity event: provided new activity state supplier is null.", name);
+            return;
         }
         doOnActivity(key, newStateSupplier);
     }

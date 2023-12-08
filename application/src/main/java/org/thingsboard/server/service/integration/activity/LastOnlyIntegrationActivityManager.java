@@ -55,9 +55,8 @@ public class LastOnlyIntegrationActivityManager extends AbstractActivityManager<
         states.compute(activityKey, (__, activityState) -> {
             if (activityState == null) {
                 activityState = newStateSupplier.get();
-                activityState.setLastRecordedTime(newLastRecordedTime);
-                activityState.setLastReportedTime(0L);
-            } else {
+            }
+            if (activityState.getLastRecordedTime() < newLastRecordedTime) {
                 activityState.setLastRecordedTime(newLastRecordedTime);
             }
             return activityState;
@@ -70,11 +69,13 @@ public class LastOnlyIntegrationActivityManager extends AbstractActivityManager<
         for (Map.Entry<IntegrationActivityKey, ActivityState> entry : states.entrySet()) {
             var activityKey = entry.getKey();
             var activityState = entry.getValue();
-            if (activityState.getLastRecordedTime() < expirationTime) {
+            long lastRecordedTime = activityState.getLastRecordedTime();
+            // if there were no activities during the reporting period, we should remove the entry to prevent memory leaks
+            if (lastRecordedTime < expirationTime) {
                 states.remove(activityKey);
             }
-            if (activityState.getLastReportedTime() < activityState.getLastRecordedTime()) {
-                reporter.report(activityKey, activityState.getLastRecordedTime(), activityState, new ActivityReportCallback<>() {
+            if (activityState.getLastReportedTime() < lastRecordedTime) {
+                reporter.report(activityKey, lastRecordedTime, activityState, new ActivityReportCallback<>() {
                     @Override
                     public void onSuccess(IntegrationActivityKey key, long reportedTime) {
                         updateLastReportedTime(key, reportedTime);
@@ -82,7 +83,7 @@ public class LastOnlyIntegrationActivityManager extends AbstractActivityManager<
 
                     @Override
                     public void onFailure(IntegrationActivityKey key, Throwable t) {
-                        log.debug("[{}] Failed to report last activity event in a period for device with id: [{}]", activityKey.getTenantId().getId(), activityKey.getDeviceId().getId());
+                        log.debug("[{}] Failed to report last activity event in a period for device with id: [{}].", activityKey.getTenantId().getId(), activityKey.getDeviceId().getId());
                     }
                 });
             }

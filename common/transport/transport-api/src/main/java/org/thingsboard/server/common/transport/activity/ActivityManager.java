@@ -34,13 +34,7 @@ import java.util.function.Supplier;
 
 public interface ActivityManager<Key, State extends ActivityState> {
 
-    void setName(String name);
-
-    void setReportingPeriod(long reportingPeriodMillis);
-
-    void setActivityReporter(ActivityStateReporter<Key, State> activityReporter);
-
-    void init();
+    void init(String name, long reportingPeriodMillis, ActivityStateReporter<Key, State> reporter);
 
     void onActivity(Key key, Supplier<State> newStateSupplier);
 
