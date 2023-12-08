@@ -612,7 +612,9 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
     if (this.selectionMode) {
       this.selectImage($event, image);
     } else {
-      this.dataSource.selection.toggle(image);
+      if (this.deleteEnabled(image)) {
+        this.dataSource.selection.toggle(image);
+      }
     }
   }
 
