@@ -65,12 +65,12 @@ public class LastOnlyIntegrationActivityManager extends AbstractActivityManager<
 
     @Override
     public void doOnReportingPeriodEnd() {
-        long expirationTime = System.currentTimeMillis() - reportingPeriodMillis;
         for (Map.Entry<IntegrationActivityKey, ActivityState> entry : states.entrySet()) {
             var activityKey = entry.getKey();
             var activityState = entry.getValue();
             long lastRecordedTime = activityState.getLastRecordedTime();
             // if there were no activities during the reporting period, we should remove the entry to prevent memory leaks
+            long expirationTime = System.currentTimeMillis() - reportingPeriodMillis;
             if (lastRecordedTime < expirationTime) {
                 log.debug("[{}][{}] No activity events were received during reporting period for device with id: [{}]. Going to remove activity state.",
                         activityKey.getTenantId().getId(), name, activityKey.getDeviceId().getId());
