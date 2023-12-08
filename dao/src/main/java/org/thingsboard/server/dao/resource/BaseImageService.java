@@ -510,7 +510,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
     @Override
     public void inlineImage(HasImage entity) {
         log.trace("Executing inlineImage [{}] [{}] [{}]", entity.getTenantId(), entity.getClass().getSimpleName(), entity.getName());
-        entity.setImage(inlineImage(entity.getTenantId(), "image", entity.getImage()));
+        entity.setImage(inlineImage(entity.getTenantId(), "image", entity.getImage(), true));
     }
 
     @Override
@@ -580,10 +580,6 @@ public class BaseImageService extends BaseResourceService implements ImageServic
                 }
             }
         }
-    }
-
-    private String inlineImage(TenantId tenantId, String path, String url) {
-        return inlineImage(tenantId, path, url, true);
     }
 
     private String inlineImage(TenantId tenantId, String path, String url, boolean addTbImagePrefix) {
