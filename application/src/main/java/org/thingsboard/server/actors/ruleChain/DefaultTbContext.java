@@ -310,12 +310,7 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public boolean isLocalEntity(EntityId entityId) {
-        return mainCtx.resolve(ServiceType.TB_RULE_ENGINE, getTenantId(), entityId).isMyPartition();
-    }
-
-    public boolean isLocalRuleNode() {
-        RuleNode ruleNode = nodeCtx.getSelf();
-        return mainCtx.resolve(ServiceType.TB_RULE_ENGINE, ruleNode.getQueueName(), getTenantId(), ruleNode.getId()).isMyPartition();
+        return mainCtx.resolve(ServiceType.TB_RULE_ENGINE, nodeCtx.getSelf().getQueueName(), getTenantId(), entityId).isMyPartition();
     }
 
     private void scheduleMsgWithDelay(TbActorMsg msg, long delayInMs, TbActorRef target) {

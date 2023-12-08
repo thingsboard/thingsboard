@@ -187,7 +187,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     private boolean isMyNodePartition(RuleNode ruleNode) {
         return ruleNode == null || !ruleNode.isSingletonMode()
                 || systemContext.getDiscoveryService().isMonolith()
-                || defaultCtx.isLocalRuleNode();
+                || defaultCtx.isLocalEntity(entityId);
     }
 
     //Message will return after processing. See RuleChainActorMessageProcessor.pushToTarget.
