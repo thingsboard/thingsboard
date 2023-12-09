@@ -54,19 +54,19 @@ public class TbDate implements Serializable, Cloneable {
     }
 
     public TbDate(String s) {
-        this.instant = parseInstant(s, null, Locale.getDefault().toLanguageTag());
+        this.instant = parseInstant(s);
     }
 
     public TbDate(String s, String pattern) {
-        this.instant = parseInstant(s, pattern, Locale.getDefault().toLanguageTag());
+        this.instant = parseInstant(s, Locale.getDefault().toLanguageTag(), pattern);
     }
 
     public TbDate(String s, String pattern, String locale) {
-        this.instant = parseInstant(s, pattern, locale);
+        this.instant = parseInstant(s, locale, pattern);
     }
 
     public TbDate(String s, String pattern, String locale, String zoneId) {
-       this.instant = parseInstant(s, pattern, locale,  zoneId);
+       this.instant = parseInstant(s, pattern, locale, zoneId);
     }
 
     public TbDate(long dateMilliSecond) {
@@ -487,11 +487,10 @@ public class TbDate implements Serializable, Cloneable {
         }
     }
 
-    private static Instant parseInstant(String s, String pattern, String localeStr) {
+    private static Instant parseInstant(String s) {
         DateTimeFormatter formatter;
-        if (pattern != null) {
-            formatter =  DateTimeFormatter.ofPattern(pattern, Locale.forLanguageTag(localeStr));
-        } else if (s.length() > 0 && Character.isDigit(s.charAt(0))) {
+        boolean isIsoFormat = s.length() > 0 && Character.isDigit(s.charAt(0));
+        if (isIsoFormat) {
             // assuming  "2007-12-03T10:15:30.00Z"  UTC instant
             // assuming  "2007-12-03T10:15:30.00"  ZoneId.systemDefault() instant
             // assuming  "2007-12-03T10:15:30.00-04:00"  TZ instant
@@ -507,10 +506,7 @@ public class TbDate implements Serializable, Cloneable {
             return Instant.from(formatter.parse(s));
         } catch (Exception ex) {
             try {
-                if (pattern != null) {
-                    String zoneIdStr = ZoneId.systemDefault().getId();
-                    return parseInstant(s, pattern, localeStr, zoneIdStr);
-                } else if (s.length() > 0 && Character.isDigit(s.charAt(0))) {
+                if (isIsoFormat) {
                     long timeMS = parse(s);
                     if (timeMS != -1) {
                         return Instant.ofEpochMilli(timeMS);
@@ -523,6 +519,20 @@ public class TbDate implements Serializable, Cloneable {
                     // The offset ID without colons or seconds.
                     return getInstantWithLocalZoneOffsetId_RFC_1123(s);
                 }
+            } catch (final DateTimeParseException e) {
+                final ConversionException exception = new ConversionException("Cannot parse value [" + s + "] as instant", e);
+                throw exception;
+            }
+        }
+    }
+
+    private static Instant parseInstant(String s, String localeStr, String pattern) {
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern, Locale.forLanguageTag(localeStr));
+            return Instant.from(formatter.parse(s));
+        } catch (Exception ex) {
+            try {
+                return parseInstant(s, pattern, localeStr, ZoneId.systemDefault().getId());
             } catch (final DateTimeParseException e) {
                 final ConversionException exception = new ConversionException("Cannot parse value [" + s + "] as instant", ex);
                 throw exception;

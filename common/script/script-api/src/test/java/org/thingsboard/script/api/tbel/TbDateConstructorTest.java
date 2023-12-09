@@ -44,7 +44,6 @@ public class TbDateConstructorTest {
         executionContext = new ExecutionContext(parserConfig, 5 * 1024 * 1024);
     }
 
-
     @AfterAll
     public static void tearDown() {
         ParserContext.disableSandboxedMode();
