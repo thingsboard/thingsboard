@@ -48,6 +48,7 @@ import org.thingsboard.server.common.transport.activity.ActivityReportCallback;
 import org.thingsboard.server.common.transport.service.SessionMetaData;
 import org.thingsboard.server.common.transport.service.TransportActivityState;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.util.TbTransportComponent;
 
 import java.util.Map;
 import java.util.UUID;
@@ -60,6 +61,7 @@ import static org.thingsboard.server.common.transport.service.DefaultTransportSe
 
 @Slf4j
 @Component
+@TbTransportComponent
 @ConditionalOnProperty(prefix = "transport.activity", value = "reporting_strategy", havingValue = "first-and-last")
 public class FirstAndLastTransportActivityManager extends AbstractActivityManager<UUID, TransportActivityState> {
 

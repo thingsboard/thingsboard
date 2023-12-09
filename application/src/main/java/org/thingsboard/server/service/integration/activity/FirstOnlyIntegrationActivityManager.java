@@ -43,6 +43,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.activity.AbstractActivityManager;
 import org.thingsboard.server.common.transport.activity.ActivityReportCallback;
 import org.thingsboard.server.common.transport.activity.ActivityState;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -51,6 +52,7 @@ import java.util.function.Supplier;
 
 @Slf4j
 @Component
+@TbCoreComponent
 @ConditionalOnProperty(prefix = "integrations.activity", value = "reporting_strategy", havingValue = "first")
 public class FirstOnlyIntegrationActivityManager extends AbstractActivityManager<IntegrationActivityKey, ActivityState> {
 
