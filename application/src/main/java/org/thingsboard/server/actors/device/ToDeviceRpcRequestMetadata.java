@@ -16,7 +16,7 @@
 package org.thingsboard.server.actors.device;
 
 import lombok.Data;
-import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
+import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequestActorMsg;
 
 /**
  * @author Andrew Shvayka

@@ -18,38 +18,30 @@ package org.thingsboard.server.service.notification.rule.trigger;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.info.DeviceActivityNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
-import org.thingsboard.server.common.data.notification.rule.trigger.DeviceActivityNotificationRuleTriggerConfig;
-import org.thingsboard.server.common.data.notification.rule.trigger.DeviceActivityNotificationRuleTriggerConfig.DeviceEvent;
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
-import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.notification.trigger.RuleEngineMsgTrigger;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.DeviceActivityNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.DeviceActivityNotificationRuleTriggerConfig.DeviceEvent;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
+import org.thingsboard.server.common.data.notification.rule.trigger.DeviceActivityTrigger;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
-public class DeviceActivityTriggerProcessor implements RuleEngineMsgNotificationRuleTriggerProcessor<DeviceActivityNotificationRuleTriggerConfig> {
+public class DeviceActivityTriggerProcessor implements NotificationRuleTriggerProcessor<DeviceActivityTrigger, DeviceActivityNotificationRuleTriggerConfig> {
 
     private final TbDeviceProfileCache deviceProfileCache;
 
     @Override
-    public boolean matchesFilter(RuleEngineMsgTrigger trigger, DeviceActivityNotificationRuleTriggerConfig triggerConfig) {
-        if (trigger.getMsg().getOriginator().getEntityType() != EntityType.DEVICE) {
-            return false;
-        }
-        DeviceEvent event = trigger.getMsg().getType().equals(DataConstants.ACTIVITY_EVENT) ? DeviceEvent.ACTIVE : DeviceEvent.INACTIVE;
+    public boolean matchesFilter(DeviceActivityTrigger trigger, DeviceActivityNotificationRuleTriggerConfig triggerConfig) {
+        DeviceEvent event = trigger.isActive() ? DeviceEvent.ACTIVE : DeviceEvent.INACTIVE;
         if (!triggerConfig.getNotifyOn().contains(event)) {
             return false;
         }
-        DeviceId deviceId = (DeviceId) trigger.getMsg().getOriginator();
+        DeviceId deviceId = trigger.getDeviceId();
         if (CollectionUtils.isNotEmpty(triggerConfig.getDevices())) {
             return triggerConfig.getDevices().contains(deviceId.getId());
         } else if (CollectionUtils.isNotEmpty(triggerConfig.getDeviceProfiles())) {
@@ -61,26 +53,20 @@ public class DeviceActivityTriggerProcessor implements RuleEngineMsgNotification
     }
 
     @Override
-    public RuleOriginatedNotificationInfo constructNotificationInfo(RuleEngineMsgTrigger trigger) {
-        TbMsg msg = trigger.getMsg();
+    public RuleOriginatedNotificationInfo constructNotificationInfo(DeviceActivityTrigger trigger) {
         return DeviceActivityNotificationInfo.builder()
-                .eventType(trigger.getMsg().getType().equals(DataConstants.ACTIVITY_EVENT) ? "active" : "inactive")
-                .deviceId(msg.getOriginator().getId())
-                .deviceName(msg.getMetaData().getValue("deviceName"))
-                .deviceType(msg.getMetaData().getValue("deviceType"))
-                .deviceLabel(msg.getMetaData().getValue("deviceLabel"))
-                .deviceCustomerId(msg.getCustomerId())
+                .eventType(trigger.isActive() ? "active" : "inactive")
+                .deviceId(trigger.getDeviceId().getId())
+                .deviceName(trigger.getDeviceName())
+                .deviceType(trigger.getDeviceType())
+                .deviceLabel(trigger.getDeviceLabel())
+                .deviceCustomerId(trigger.getCustomerId())
                 .build();
     }
 
     @Override
     public NotificationRuleTriggerType getTriggerType() {
         return NotificationRuleTriggerType.DEVICE_ACTIVITY;
-    }
-
-    @Override
-    public Set<String> getSupportedMsgTypes() {
-        return Set.of(DataConstants.ACTIVITY_EVENT, DataConstants.INACTIVITY_EVENT);
     }
 
 }

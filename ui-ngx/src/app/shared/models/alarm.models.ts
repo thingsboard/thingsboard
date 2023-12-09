@@ -102,6 +102,8 @@ export interface Alarm extends BaseData<AlarmId> {
   originator: EntityId;
   severity: AlarmSeverity;
   status: AlarmStatus;
+  acknowledged: boolean;
+  cleared: boolean;
   startTs: number;
   endTs: number;
   ackTs: number;
@@ -145,6 +147,11 @@ export interface AlarmAssignee {
   email: string;
 }
 
+export enum AlarmAssigneeOption {
+  noAssignee = 'noAssignee',
+  currentUser = 'currentUser'
+}
+
 export interface AlarmDataInfo extends AlarmInfo {
   actionCellButtons?: TableCellButtonActionDescriptor[];
   hasActions?: boolean;
@@ -176,6 +183,8 @@ export const simulatedAlarm: AlarmInfo = {
   type: 'TEMPERATURE',
   severity: AlarmSeverity.MAJOR,
   status: AlarmStatus.ACTIVE_UNACK,
+  acknowledged: false,
+  cleared: false,
   details: {
     message: 'Temperature is high!'
   },

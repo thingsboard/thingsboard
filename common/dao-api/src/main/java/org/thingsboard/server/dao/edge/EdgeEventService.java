@@ -26,7 +26,7 @@ public interface EdgeEventService {
 
     ListenableFuture<Void> saveAsync(EdgeEvent edgeEvent);
 
-    PageData<EdgeEvent> findEdgeEvents(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink, boolean withTsUpdate);
+    PageData<EdgeEvent> findEdgeEvents(TenantId tenantId, EdgeId edgeId, Long seqIdStart, Long seqIdEnd, TimePageLink pageLink);
 
     /**
      * Executes stored procedure to cleanup old edge events.

@@ -19,9 +19,12 @@ import {
   ChangeDetectorRef,
   Component,
   ElementRef,
+  Injector,
   Input,
+  OnDestroy,
   OnInit,
   QueryList,
+  StaticProvider,
   ViewChild,
   ViewChildren,
   ViewContainerRef
@@ -53,9 +56,9 @@ import cssjs from '@core/css/css';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder, sortOrderFromString } from '@shared/models/page/sort-order';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
-import { BehaviorSubject, fromEvent, merge, Observable, of, Subscription } from 'rxjs';
+import { BehaviorSubject, fromEvent, merge, Observable, of, Subject, Subscription } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
-import { catchError, debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, skip, startWith, takeUntil } from 'rxjs/operators';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -64,8 +67,11 @@ import {
   CellStyleInfo,
   checkHasActions,
   constructTableCssString,
+  DisplayColumn,
   getCellContentInfo,
   getCellStyleInfo,
+  getColumnDefaultVisibility,
+  getColumnSelectionAvailability,
   getRowStyleInfo,
   getTableCellButtonActions,
   noDataMessage,
@@ -75,12 +81,19 @@ import {
   TableWidgetDataKeySettings,
   TableWidgetSettings
 } from '@home/components/widget/lib/table-widget.models';
-import { Overlay } from '@angular/cdk/overlay';
+import { Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { SubscriptionEntityInfo } from '@core/api/widget-api.models';
 import { DatePipe } from '@angular/common';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
+import {
+  DISPLAY_COLUMNS_PANEL_DATA,
+  DisplayColumnsPanelComponent
+} from '@home/components/widget/lib/display-columns-panel.component';
+import { ComponentPortal } from '@angular/cdk/portal';
+import { FormBuilder } from '@angular/forms';
+import { DEFAULT_OVERLAY_POSITIONS } from '@shared/models/overlay.models';
 
 export interface TimeseriesTableWidgetSettings extends TableWidgetSettings {
   showTimestamp: boolean;
@@ -105,6 +118,8 @@ interface TimeseriesHeader {
   dataKey: DataKey;
   sortable: boolean;
   show: boolean;
+  columnDefaultVisibility?: boolean;
+  columnSelectionAvailability?: boolean;
   styleInfo: CellStyleInfo;
   contentInfo: CellContentInfo;
   order?: number;
@@ -131,7 +146,7 @@ interface TimeseriesTableSource {
   templateUrl: './timeseries-table-widget.component.html',
   styleUrls: ['./timeseries-table-widget.component.scss', './table-widget.scss']
 })
-export class TimeseriesTableWidgetComponent extends PageComponent implements OnInit, AfterViewInit {
+export class TimeseriesTableWidgetComponent extends PageComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @Input()
   ctx: WidgetContext;
@@ -140,16 +155,19 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   @ViewChildren(MatPaginator) paginators: QueryList<MatPaginator>;
   @ViewChildren(MatSort) sorts: QueryList<MatSort>;
 
+  textSearch = this.fb.control('', {nonNullable: true});
+
   public displayPagination = true;
   public enableStickyHeader = true;
   public enableStickyAction = true;
+  public showCellActionsMenu = true;
   public pageSizeOptions;
   public textSearchMode = false;
   public hidePageSize = false;
-  public textSearch: string = null;
   public sources: TimeseriesTableSource[];
   public sourceIndex: number;
   public noDataDisplayMessageText: string;
+  public hasRowAction: boolean;
   private setCellButtonAction: boolean;
 
   private cellContentCache: Array<any> = [];
@@ -169,11 +187,14 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   private useEntityLabel = false;
   private dateFormatFilter: string;
 
+  private displayedColumns: Array<DisplayColumn[]> = [];
+
   private rowStylesInfo: RowStyleInfo;
 
   private subscriptions: Subscription[] = [];
   private widgetTimewindowChanged$: Subscription;
   private widgetResize$: ResizeObserver;
+  private destroy$ = new Subject<void>();
 
   private searchAction: WidgetAction = {
     name: 'action.search',
@@ -181,6 +202,15 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     icon: 'search',
     onAction: () => {
       this.enterFilterMode();
+    }
+  };
+
+  private columnDisplayAction: WidgetAction = {
+    name: 'entity.columns-to-display',
+    show: true,
+    icon: 'view_column',
+    onAction: ($event) => {
+      this.editColumnsToDisplay($event);
     }
   };
 
@@ -192,7 +222,8 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
               private translate: TranslateService,
               private domSanitizer: DomSanitizer,
               private datePipe: DatePipe,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private fb: FormBuilder) {
     super(store);
   }
 
@@ -238,24 +269,24 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   }
 
   ngAfterViewInit(): void {
-    fromEvent(this.searchInputField.nativeElement, 'keyup')
-      .pipe(
-        debounceTime(150),
-        distinctUntilChanged(),
-        tap(() => {
-          this.sources.forEach((source) => {
-            source.pageLink.textSearch = this.textSearch;
-            if (this.displayPagination) {
-              source.pageLink.page = 0;
-            }
-          });
-          this.loadCurrentSourceRow();
-          this.ctx.detectChanges();
-        })
-      )
-      .subscribe();
+    this.textSearch.valueChanges.pipe(
+      debounceTime(150),
+      startWith(''),
+      distinctUntilChanged((a: string, b: string) => a.trim() === b.trim()),
+      skip(1),
+      takeUntil(this.destroy$)
+    ).subscribe((textSearch) => {
+      this.sources.forEach((source) => {
+        source.pageLink.textSearch = textSearch.trim();
+        if (this.displayPagination) {
+          source.pageLink.page = 0;
+        }
+      });
+      this.loadCurrentSourceRow();
+      this.ctx.detectChanges();
+    });
 
-    this.sorts.changes.subscribe(() => {
+    this.sorts.changes.pipe(takeUntil(this.destroy$)).subscribe(() => {
       this.initSubscriptionsToSortAndPaginator();
     });
 
@@ -275,14 +306,17 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   }
 
   private initialize() {
-    this.ctx.widgetActions = [this.searchAction ];
+    this.ctx.widgetActions = [this.searchAction, this.columnDisplayAction];
 
     this.setCellButtonAction = !!this.ctx.actionsApi.getActionDescriptors('actionCellButton').length;
+    this.hasRowAction = !!this.ctx.actionsApi.getActionDescriptors('rowClick').length;
 
     this.searchAction.show = isDefined(this.settings.enableSearch) ? this.settings.enableSearch : true;
+    this.columnDisplayAction.show = isDefined(this.settings.enableSelectColumnDisplay) ? this.settings.enableSelectColumnDisplay : true;
     this.displayPagination = isDefined(this.settings.displayPagination) ? this.settings.displayPagination : true;
     this.enableStickyHeader = isDefined(this.settings.enableStickyHeader) ? this.settings.enableStickyHeader : true;
     this.enableStickyAction = isDefined(this.settings.enableStickyAction) ? this.settings.enableStickyAction : true;
+    this.showCellActionsMenu = isDefined(this.settings.showCellActionsMenu) ? this.settings.showCellActionsMenu : true;
     this.hideEmptyLines = isDefined(this.settings.hideEmptyLines) ? this.settings.hideEmptyLines : false;
     this.useEntityLabel = isDefined(this.widgetConfig.settings.useEntityLabel) ? this.widgetConfig.settings.useEntityLabel : false;
     this.showTimestamp = this.settings.showTimestamp !== false;
@@ -365,7 +399,92 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
         this.sources.push(source);
       }
     }
+    if (this.sources.length) {
+      this.prepareDisplayedColumn();
+      this.sources[this.sourceIndex].displayedColumns =
+        this.displayedColumns[this.sourceIndex].filter(value => value.display).map(value => value.def);
+    }
     this.updateActiveEntityInfo();
+  }
+
+  private editColumnsToDisplay($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    if (this.sources.length) {
+      const target = $event.target || $event.srcElement || $event.currentTarget;
+      const config = new OverlayConfig({
+        panelClass: 'tb-panel-container',
+        backdropClass: 'cdk-overlay-transparent-backdrop',
+        hasBackdrop: true,
+        height: 'fit-content',
+        maxHeight: '75vh'
+      });
+      config.positionStrategy = this.overlay.position()
+        .flexibleConnectedTo(target as HTMLElement)
+        .withPositions(DEFAULT_OVERLAY_POSITIONS);
+
+      const overlayRef = this.overlay.create(config);
+      overlayRef.backdropClick().subscribe(() => {
+        overlayRef.dispose();
+      });
+
+      const source = this.sources[this.sourceIndex];
+
+      this.prepareDisplayedColumn();
+
+      const providers: StaticProvider[] = [
+        {
+          provide: DISPLAY_COLUMNS_PANEL_DATA,
+          useValue: {
+            columns: this.displayedColumns[this.sourceIndex],
+            columnsUpdated: (newColumns) => {
+              source.displayedColumns = newColumns.filter(value => value.display).map(value => value.def);
+              this.clearCache();
+            }
+          }
+        },
+        {
+          provide: OverlayRef,
+          useValue: overlayRef
+        }
+      ];
+
+      const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
+      const componentRef = overlayRef.attach(new ComponentPortal(DisplayColumnsPanelComponent,
+        this.viewContainerRef, injector));
+
+      const resizeWindows$ = fromEvent(window, 'resize').subscribe(() => {
+        overlayRef.updatePosition();
+      });
+      componentRef.onDestroy(() => {
+        resizeWindows$.unsubscribe();
+      });
+
+      this.ctx.detectChanges();
+    }
+  }
+
+  private prepareDisplayedColumn() {
+    if (!this.displayedColumns[this.sourceIndex]) {
+      this.displayedColumns[this.sourceIndex] = this.sources[this.sourceIndex].displayedColumns.map(value => {
+        let title = '';
+        const header = this.sources[this.sourceIndex].header.find(column => column.index.toString() === value);
+        if (value === '0') {
+          title = 'Timestamp';
+        } else if (value === 'actions') {
+          title = 'Actions';
+        } else {
+          title = header.dataKey.label;
+        }
+        return {
+          title,
+          def: value,
+          display: header?.columnDefaultVisibility ?? true,
+          selectable: header?.columnSelectionAvailability ?? true
+        };
+      });
+    }
   }
 
   private prepareHeader(datasource: Datasource): TimeseriesHeader[] {
@@ -377,6 +496,8 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
       const keySettings: TableWidgetDataKeySettings = dataKey.settings;
       const styleInfo = getCellStyleInfo(keySettings, 'value, rowData, ctx');
       const contentInfo = getCellContentInfo(keySettings, 'value, rowData, ctx');
+      const columnDefaultVisibility = getColumnDefaultVisibility(keySettings, this.ctx);
+      const columnSelectionAvailability = getColumnSelectionAvailability(keySettings);
       contentInfo.units = dataKey.units;
       contentInfo.decimals = dataKey.decimals;
       header.push({
@@ -386,6 +507,8 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
         styleInfo,
         contentInfo,
         show: true,
+        columnDefaultVisibility,
+        columnSelectionAvailability,
         order: index + 2
       });
     });
@@ -396,6 +519,8 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
         const keySettings: TimeseriesWidgetLatestDataKeySettings = dataKey.settings;
         const styleInfo = getCellStyleInfo(keySettings, 'value, rowData, ctx');
         const contentInfo = getCellContentInfo(keySettings, 'value, rowData, ctx');
+        const columnDefaultVisibility = getColumnDefaultVisibility(keySettings, this.ctx);
+        const columnSelectionAvailability = getColumnSelectionAvailability(keySettings);
         contentInfo.units = dataKey.units;
         contentInfo.decimals = dataKey.decimals;
         header.push({
@@ -405,13 +530,13 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
           styleInfo,
           contentInfo,
           show: isDefinedAndNotNull(keySettings.show) ? keySettings.show : true,
+          columnDefaultVisibility,
+          columnSelectionAvailability,
           order: isDefinedAndNotNull(keySettings.order) ? keySettings.order : (index + 2)
         });
       });
     }
-    header = header.sort((a, b) => {
-      return a.order - b.order;
-    });
+    header = header.sort((a, b) => a.order - b.order);
     return header;
   }
 
@@ -449,9 +574,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
         observables.push(paginator.page);
       }
       this.updateData(sort, paginator);
-      this.subscriptions.push(merge(...observables).pipe(
-        tap(() => this.updateData(sort, paginator))
-      ).subscribe());
+      this.subscriptions.push(merge(...observables).subscribe(() => this.updateData(sort, paginator)));
     });
   }
 
@@ -463,10 +586,6 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
 
   private enterFilterMode() {
     this.textSearchMode = true;
-    this.textSearch = '';
-    this.sources.forEach((source) => {
-      source.pageLink.textSearch = this.textSearch;
-    });
     this.ctx.hideTitlePanel = true;
     this.ctx.detectChanges(true);
     setTimeout(() => {
@@ -477,13 +596,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
 
   exitFilterMode() {
     this.textSearchMode = false;
-    this.textSearch = null;
-    this.sources.forEach((source) => {
-      source.pageLink.textSearch = this.textSearch;
-      if (this.displayPagination) {
-        source.pageLink.page = 0;
-      }
-    });
+    this.textSearch.reset();
     this.loadCurrentSourceRow();
     this.ctx.hideTitlePanel = false;
     this.ctx.detectChanges(true);
@@ -766,7 +879,7 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
     const rowsMap: {[timestamp: number]: TimeseriesRow} = {};
     for (let d = 0; d < data.length; d++) {
       const columnData = data[d].data;
-      columnData.forEach((cellData, index) => {
+      columnData.forEach((cellData) => {
         const timestamp = cellData[0];
         let row = rowsMap[timestamp];
         if (!row) {
@@ -775,7 +888,7 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
           };
           if (this.cellButtonActions.length) {
             if (this.usedShowCellActionFunction) {
-              const parsedData = formattedDataFormDatasourceData(data, index);
+              const parsedData = formattedDataFormDatasourceData(data, undefined, timestamp);
               row.actionCellButtons = prepareTableCellButtonActions(this.widgetContext, this.cellButtonActions,
                 parsedData[0], this.reserveSpaceForHiddenAction);
               row.hasActions = checkHasActions(row.actionCellButtons);

@@ -22,14 +22,13 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
+import org.thingsboard.server.common.msg.rule.engine.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -50,11 +49,11 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -130,7 +129,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
                 result.add(processAttributeDeleteMsg(tenantId, entityId, entityData.getAttributeDeleteMsg(), entityData.getEntityType()));
             }
         } else {
-            log.warn("Skipping telemetry update msg because entity doesn't exists on edge, {}", entityData);
+            log.warn("[{}] Skipping telemetry update msg because entity doesn't exists on edge, {}", tenantId, entityData);
         }
         return result;
     }
@@ -172,7 +171,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
                 }
                 break;
             default:
-                log.debug("Using empty metadata for entityId [{}]", entityId);
+                log.debug("[{}] Using empty metadata for entityId [{}]", tenantId, entityId);
                 break;
         }
         return new ImmutablePair<>(metaData, customerId != null ? customerId : new CustomerId(ModelConstants.NULL_UUID));
@@ -184,7 +183,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
             JsonObject json = JsonUtils.getJsonObject(tsKv.getKvList());
             metaData.putValue("ts", tsKv.getTs() + "");
             var defaultQueueAndRuleChain = getDefaultQueueNameAndRuleChainId(tenantId, entityId);
-            TbMsg tbMsg = TbMsg.newMsg(defaultQueueAndRuleChain.getKey(), SessionMsgType.POST_TELEMETRY_REQUEST.name(), entityId, customerId, metaData, gson.toJson(json), defaultQueueAndRuleChain.getValue(), null);
+            TbMsg tbMsg = TbMsg.newMsg(defaultQueueAndRuleChain.getKey(), TbMsgType.POST_TELEMETRY_REQUEST, entityId, customerId, metaData, gson.toJson(json), defaultQueueAndRuleChain.getValue(), null);
             tbClusterService.pushMsgToRuleEngine(tenantId, tbMsg.getOriginator(), tbMsg, new TbQueueCallback() {
                 @Override
                 public void onSuccess(TbQueueMsgMetadata metadata) {
@@ -193,7 +192,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
 
                 @Override
                 public void onFailure(Throwable t) {
-                    log.error("Can't process post telemetry [{}]", msg, t);
+                    log.error("[{}] Can't process post telemetry [{}]", tenantId, msg, t);
                     futureToSet.setException(t);
                 }
             });
@@ -207,7 +206,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
         if (EntityType.DEVICE.equals(entityId.getEntityType())) {
             DeviceProfile deviceProfile = deviceProfileCache.get(tenantId, new DeviceId(entityId.getId()));
             if (deviceProfile == null) {
-                log.warn("[{}] Device profile is null!", entityId);
+                log.warn("[{}][{}] Device profile is null!", tenantId, entityId);
             } else {
                 ruleChainId = deviceProfile.getDefaultRuleChainId();
                 queueName = deviceProfile.getDefaultQueueName();
@@ -215,7 +214,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
         } else if (EntityType.ASSET.equals(entityId.getEntityType())) {
             AssetProfile assetProfile = assetProfileCache.get(tenantId, new AssetId(entityId.getId()));
             if (assetProfile == null) {
-                log.warn("[{}] Asset profile is null!", entityId);
+                log.warn("[{}][{}] Asset profile is null!", tenantId, entityId);
             } else {
                 ruleChainId = assetProfile.getDefaultRuleChainId();
                 queueName = assetProfile.getDefaultQueueName();
@@ -228,7 +227,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
         SettableFuture<Void> futureToSet = SettableFuture.create();
         JsonObject json = JsonUtils.getJsonObject(msg.getKvList());
         var defaultQueueAndRuleChain = getDefaultQueueNameAndRuleChainId(tenantId, entityId);
-        TbMsg tbMsg = TbMsg.newMsg(defaultQueueAndRuleChain.getKey(), SessionMsgType.POST_ATTRIBUTES_REQUEST.name(), entityId, customerId, metaData, gson.toJson(json), defaultQueueAndRuleChain.getValue(), null);
+        TbMsg tbMsg = TbMsg.newMsg(defaultQueueAndRuleChain.getKey(), TbMsgType.POST_ATTRIBUTES_REQUEST, entityId, customerId, metaData, gson.toJson(json), defaultQueueAndRuleChain.getValue(), null);
         tbClusterService.pushMsgToRuleEngine(tenantId, tbMsg.getOriginator(), tbMsg, new TbQueueCallback() {
             @Override
             public void onSuccess(TbQueueMsgMetadata metadata) {
@@ -237,7 +236,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
 
             @Override
             public void onFailure(Throwable t) {
-                log.error("Can't process post attributes [{}]", msg, t);
+                log.error("[{}] Can't process post attributes [{}]", tenantId, msg, t);
                 futureToSet.setException(t);
             }
         });
@@ -257,7 +256,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
             @Override
             public void onSuccess(@Nullable Void tmp) {
                 var defaultQueueAndRuleChain = getDefaultQueueNameAndRuleChainId(tenantId, entityId);
-                TbMsg tbMsg = TbMsg.newMsg(defaultQueueAndRuleChain.getKey(), DataConstants.ATTRIBUTES_UPDATED, entityId,
+                TbMsg tbMsg = TbMsg.newMsg(defaultQueueAndRuleChain.getKey(), TbMsgType.ATTRIBUTES_UPDATED, entityId,
                         customerId, metaData, gson.toJson(json), defaultQueueAndRuleChain.getValue(), null);
                 tbClusterService.pushMsgToRuleEngine(tenantId, tbMsg.getOriginator(), tbMsg, new TbQueueCallback() {
                     @Override
@@ -267,7 +266,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
 
                     @Override
                     public void onFailure(Throwable t) {
-                        log.error("Can't process attributes update [{}]", msg, t);
+                        log.error("[{}] Can't process attributes update [{}]", tenantId, msg, t);
                         futureToSet.setException(t);
                     }
                 });
@@ -275,7 +274,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
 
             @Override
             public void onFailure(Throwable t) {
-                log.error("Can't process attributes update [{}]", msg, t);
+                log.error("[{}] Can't process attributes update [{}]", tenantId, msg, t);
                 futureToSet.setException(t);
             }
         });
@@ -300,7 +299,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
 
                     @Override
                     public void onFailure(Throwable t) {
-                        log.error("Can't process attribute delete msg [{}]", attributeDeleteMsg, t);
+                        log.error("[{}] Can't process attribute delete msg [{}]", tenantId, attributeDeleteMsg, t);
                         futureToSet.setException(t);
                     }
                 });
@@ -311,7 +310,8 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
         }, dbCallbackExecutorService);
     }
 
-    public EntityDataProto convertTelemetryEventToEntityDataProto(EntityType entityType,
+    public EntityDataProto convertTelemetryEventToEntityDataProto(TenantId tenantId,
+                                                                  EntityType entityType,
                                                                   UUID entityUUID,
                                                                   EdgeEventActionType actionType,
                                                                   JsonNode body) throws JsonProcessingException {
@@ -342,11 +342,12 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
                 entityId = new EdgeId(entityUUID);
                 break;
             default:
-                log.warn("Unsupported edge event type [{}]", entityType);
+                log.warn("[{}] Unsupported edge event type [{}]", tenantId, entityType);
                 return null;
         }
-        JsonElement entityData = JsonParser.parseString(JacksonUtil.OBJECT_MAPPER.writeValueAsString(body));
-        return entityDataMsgConstructor.constructEntityDataMsg(entityId, actionType, entityData);
+        String bodyJackson = JacksonUtil.toString(body);
+        return bodyJackson == null ? null :
+                entityDataMsgConstructor.constructEntityDataMsg(tenantId, entityId, actionType, JsonParser.parseString(bodyJackson));
     }
 
 }

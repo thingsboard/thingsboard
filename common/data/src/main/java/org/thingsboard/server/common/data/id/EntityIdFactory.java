@@ -29,6 +29,10 @@ public class EntityIdFactory {
         return getByTypeAndUuid(EntityType.values()[type], UUID.fromString(uuid));
     }
 
+    public static EntityId getByTypeAndUuid(int type, UUID uuid) {
+        return getByTypeAndUuid(EntityType.values()[type], uuid);
+    }
+
     public static EntityId getByTypeAndUuid(String type, String uuid) {
         return getByTypeAndUuid(EntityType.valueOf(type), UUID.fromString(uuid));
     }
@@ -115,10 +119,6 @@ public class EntityIdFactory {
                 return new DashboardId(uuid);
             case DEVICE:
                 return new DeviceId(uuid);
-            case DEVICE_PROFILE:
-                return new DeviceProfileId(uuid);
-            case ASSET_PROFILE:
-                return new AssetProfileId(uuid);
             case ASSET:
                 return new AssetId(uuid);
             case ALARM:
@@ -131,12 +131,20 @@ public class EntityIdFactory {
                 return new WidgetsBundleId(uuid);
             case WIDGET_TYPE:
                 return new WidgetTypeId(uuid);
+            case DEVICE_PROFILE:
+                return new DeviceProfileId(uuid);
+            case ASSET_PROFILE:
+                return new AssetProfileId(uuid);
+            case TENANT_PROFILE:
+                return new TenantProfileId(uuid);
             case OTA_PACKAGE:
                 return new OtaPackageId(uuid);
-            case QUEUE:
-                return new QueueId(uuid);
             case EDGE:
                 return new EdgeId(uuid);
+            case QUEUE:
+                return new QueueId(uuid);
+            case TB_RESOURCE:
+                return new TbResourceId(uuid);
         }
         throw new IllegalArgumentException("EdgeEventType " + edgeEventType + " is not supported!");
     }

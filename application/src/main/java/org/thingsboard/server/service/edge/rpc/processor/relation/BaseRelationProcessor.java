@@ -33,8 +33,7 @@ import java.util.UUID;
 @Slf4j
 public abstract class BaseRelationProcessor extends BaseEdgeProcessor {
 
-    public ListenableFuture<Void> processRelationMsg(TenantId tenantId, RelationUpdateMsg relationUpdateMsg) {
-        log.trace("[{}] processRelationFromEdge [{}]", tenantId, relationUpdateMsg);
+    protected ListenableFuture<Void> processRelationMsg(TenantId tenantId, RelationUpdateMsg relationUpdateMsg) {
         try {
             EntityRelation entityRelation = new EntityRelation();
 
@@ -55,15 +54,15 @@ public abstract class BaseRelationProcessor extends BaseEdgeProcessor {
                 case ENTITY_UPDATED_RPC_MESSAGE:
                     if (isEntityExists(tenantId, entityRelation.getTo())
                             && isEntityExists(tenantId, entityRelation.getFrom())) {
-                        return Futures.transform(relationService.saveRelationAsync(tenantId, entityRelation),
-                                (result) -> null, dbCallbackExecutorService);
+                        relationService.saveRelation(tenantId, entityRelation);
+                        break;
                     } else {
-                        log.warn("Skipping relating update msg because from/to entity doesn't exists on edge, {}", relationUpdateMsg);
-                        return Futures.immediateFuture(null);
+                        log.warn("[{}] Skipping relating update msg because from/to entity doesn't exists on edge, {}", tenantId, relationUpdateMsg);
+                        break;
                     }
                 case ENTITY_DELETED_RPC_MESSAGE:
-                    return Futures.transform(relationService.deleteRelationAsync(tenantId, entityRelation),
-                            (result) -> null, dbCallbackExecutorService);
+                    relationService.deleteRelation(tenantId, entityRelation);
+                    break;
                 case UNRECOGNIZED:
                 default:
                     return handleUnsupportedMsgType(relationUpdateMsg.getMsgType());
@@ -72,5 +71,6 @@ public abstract class BaseRelationProcessor extends BaseEdgeProcessor {
             log.error("[{}] Failed to process relation update msg [{}]", tenantId, relationUpdateMsg, e);
             return Futures.immediateFailedFuture(e);
         }
+        return Futures.immediateFuture(null);
     }
 }

@@ -28,7 +28,6 @@ import { GettingStartedWidgetComponent } from '@home/components/widget/lib/home-
 import {
   GettingStartedCompletedDialogComponent
 } from '@home/components/widget/lib/home-page/getting-started-completed-dialog.component';
-import { ToggleHeaderComponent } from '@home/components/widget/lib/home-page/toggle-header.component';
 import { UsageInfoWidgetComponent } from '@home/components/widget/lib/home-page/usage-info-widget.component';
 import { QuickLinksWidgetComponent } from '@home/components/widget/lib/home-page/quick-links-widget.component';
 import { QuickLinkComponent } from '@home/components/widget/lib/home-page/quick-link.component';
@@ -49,7 +48,6 @@ import {
       EditLinksDialogComponent,
       GettingStartedWidgetComponent,
       GettingStartedCompletedDialogComponent,
-      ToggleHeaderComponent,
       UsageInfoWidgetComponent,
       QuickLinksWidgetComponent,
       QuickLinkComponent,
@@ -70,7 +68,6 @@ import {
     EditLinksDialogComponent,
     GettingStartedWidgetComponent,
     GettingStartedCompletedDialogComponent,
-    ToggleHeaderComponent,
     UsageInfoWidgetComponent,
     QuickLinksWidgetComponent,
     QuickLinkComponent,

@@ -42,6 +42,8 @@ public interface TimeseriesService {
 
     ListenableFuture<List<TsKvEntry>> findLatest(TenantId tenantId, EntityId entityId, Collection<String> keys);
 
+    List<TsKvEntry> findLatestSync(TenantId tenantId, EntityId entityId, Collection<String> keys);
+
     ListenableFuture<List<TsKvEntry>> findAllLatest(TenantId tenantId, EntityId entityId);
 
     ListenableFuture<Integer> save(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry);

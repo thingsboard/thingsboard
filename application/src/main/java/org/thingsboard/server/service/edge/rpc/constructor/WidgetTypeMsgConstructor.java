@@ -20,24 +20,32 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.WidgetTypeUpdateMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
+
+import java.util.Arrays;
 
 @Component
 @TbCoreComponent
 public class WidgetTypeMsgConstructor {
 
-    public WidgetTypeUpdateMsg constructWidgetTypeUpdateMsg(UpdateMsgType msgType, WidgetTypeDetails widgetTypeDetails) {
+    public WidgetTypeUpdateMsg constructWidgetTypeUpdateMsg(UpdateMsgType msgType, WidgetTypeDetails widgetTypeDetails, EdgeVersion edgeVersion) {
         WidgetTypeUpdateMsg.Builder builder = WidgetTypeUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(widgetTypeDetails.getId().getId().getMostSignificantBits())
                 .setIdLSB(widgetTypeDetails.getId().getId().getLeastSignificantBits());
-        if (widgetTypeDetails.getBundleAlias() != null) {
-            builder.setBundleAlias(widgetTypeDetails.getBundleAlias());
-        }
-        if (widgetTypeDetails.getAlias() != null) {
-            builder.setAlias(widgetTypeDetails.getAlias());
+        if (widgetTypeDetails.getFqn() != null) {
+            builder.setFqn(widgetTypeDetails.getFqn());
+            if (widgetTypeDetails.getFqn().contains(".")) {
+                String[] aliases = widgetTypeDetails.getFqn().split("\\.", 2);
+                if (aliases.length == 2) {
+                    builder.setBundleAlias(aliases[0]);
+                    builder.setAlias(aliases[1]);
+                }
+            }
         }
         if (widgetTypeDetails.getName() != null) {
             builder.setName(widgetTypeDetails.getName());
@@ -52,7 +60,16 @@ public class WidgetTypeMsgConstructor {
             builder.setImage(widgetTypeDetails.getImage());
         }
         if (widgetTypeDetails.getDescription() != null) {
-            builder.setDescription(widgetTypeDetails.getDescription());
+            if (EdgeVersionUtils.isEdgeVersionOlderThan(edgeVersion, EdgeVersion.V_3_6_0) &&
+                    widgetTypeDetails.getDescription().length() > 255) {
+                builder.setDescription(widgetTypeDetails.getDescription().substring(0, 254));
+            } else {
+                builder.setDescription(widgetTypeDetails.getDescription());
+            }
+        }
+        builder.setDeprecated(widgetTypeDetails.isDeprecated());
+        if (widgetTypeDetails.getTags() != null) {
+            builder.addAllTags(Arrays.asList(widgetTypeDetails.getTags()));
         }
         return builder.build();
     }

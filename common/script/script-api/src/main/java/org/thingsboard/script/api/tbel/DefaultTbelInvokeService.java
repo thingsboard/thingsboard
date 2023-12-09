@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.mvel2.CompileException;
 import org.mvel2.ExecutionContext;
 import org.mvel2.MVEL;
 import org.mvel2.ParserContext;
@@ -39,6 +40,8 @@ import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.script.api.AbstractScriptInvokeService;
 import org.thingsboard.script.api.ScriptType;
 import org.thingsboard.script.api.TbScriptException;
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.common.stats.TbApiUsageStateClient;
@@ -68,6 +71,8 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
     protected Cache<String, Serializable> compiledScriptsCache;
 
     private SandboxedParserConfiguration parserConfig;
+    private final Optional<TbApiUsageStateClient> apiUsageStateClient;
+    private final Optional<TbApiUsageReportClient> apiUsageReportClient;
 
     @Getter
     @Value("${tbel.max_total_args_size:100000}")
@@ -109,7 +114,8 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
     private final Lock lock = new ReentrantLock();
 
     protected DefaultTbelInvokeService(Optional<TbApiUsageStateClient> apiUsageStateClient, Optional<TbApiUsageReportClient> apiUsageReportClient) {
-        super(apiUsageStateClient, apiUsageReportClient);
+        this.apiUsageStateClient = apiUsageStateClient;
+        this.apiUsageReportClient = apiUsageReportClient;
     }
 
     @Scheduled(fixedDelayString = "${tbel.stats.print_interval_ms:10000}")
@@ -164,6 +170,16 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
     @Override
     protected boolean isScriptPresent(UUID scriptId) {
         return scriptIdToHash.containsKey(scriptId);
+    }
+
+    @Override
+    protected boolean isExecEnabled(TenantId tenantId) {
+        return !apiUsageStateClient.isPresent() || apiUsageStateClient.get().getApiUsageState(tenantId).isTbelExecEnabled();
+    }
+
+    @Override
+    protected void reportExecution(TenantId tenantId, CustomerId customerId) {
+        apiUsageReportClient.ifPresent(client -> client.report(tenantId, customerId, ApiUsageRecordKey.TBEL_EXEC_COUNT, 1));
     }
 
     @Override

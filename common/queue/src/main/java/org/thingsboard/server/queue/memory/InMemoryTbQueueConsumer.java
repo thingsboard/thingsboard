@@ -58,8 +58,14 @@ public class InMemoryTbQueueConsumer<T extends TbQueueMsg> implements TbQueueCon
     }
 
     @Override
+    public void stop() {
+        stopped = true;
+    }
+
+    @Override
     public void unsubscribe() {
         stopped = true;
+        subscribed = false;
     }
 
     @Override
@@ -101,6 +107,11 @@ public class InMemoryTbQueueConsumer<T extends TbQueueMsg> implements TbQueueCon
     @Override
     public boolean isStopped() {
         return stopped;
+    }
+
+    @Override
+    public List<String> getFullTopicNames() {
+        return partitions.stream().map(TopicPartitionInfo::getFullTopicName).collect(Collectors.toList());
     }
 
 }

@@ -17,7 +17,6 @@ package org.thingsboard.rule.engine.util;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.HasCustomerId;
@@ -29,24 +28,24 @@ import org.thingsboard.server.common.data.id.UserId;
 
 public class EntitiesCustomerIdAsyncLoader {
 
-
-    public static ListenableFuture<CustomerId> findEntityIdAsync(TbContext ctx, EntityId original) {
-        switch (original.getEntityType()) {
+    public static ListenableFuture<CustomerId> findEntityIdAsync(TbContext ctx, EntityId originator) {
+        switch (originator.getEntityType()) {
             case CUSTOMER:
-                return Futures.immediateFuture((CustomerId) original);
+                return Futures.immediateFuture((CustomerId) originator);
             case USER:
-                return getCustomerAsync(ctx.getUserService().findUserByIdAsync(ctx.getTenantId(), (UserId) original));
+                return toCustomerIdAsync(ctx, ctx.getUserService().findUserByIdAsync(ctx.getTenantId(), (UserId) originator));
             case ASSET:
-                return getCustomerAsync(ctx.getAssetService().findAssetByIdAsync(ctx.getTenantId(), (AssetId) original));
+                return toCustomerIdAsync(ctx, ctx.getAssetService().findAssetByIdAsync(ctx.getTenantId(), (AssetId) originator));
             case DEVICE:
-                return getCustomerAsync(Futures.immediateFuture(ctx.getDeviceService().findDeviceById(ctx.getTenantId(), (DeviceId) original)));
+                return toCustomerIdAsync(ctx, Futures.immediateFuture(ctx.getDeviceService().findDeviceById(ctx.getTenantId(), (DeviceId) originator)));
             default:
-                return Futures.immediateFailedFuture(new TbNodeException("Unexpected original EntityType " + original.getEntityType()));
+                return Futures.immediateFailedFuture(new TbNodeException("Unexpected originator EntityType: " + originator.getEntityType()));
         }
     }
 
-    private static <T extends HasCustomerId> ListenableFuture<CustomerId> getCustomerAsync(ListenableFuture<T> future) {
+    private static <T extends HasCustomerId> ListenableFuture<CustomerId> toCustomerIdAsync(TbContext ctx, ListenableFuture<T> future) {
         return Futures.transformAsync(future, in -> in != null ? Futures.immediateFuture(in.getCustomerId())
-                : Futures.immediateFuture(null), MoreExecutors.directExecutor());
+                : Futures.immediateFuture(null), ctx.getDbCallbackExecutor());
     }
+
 }

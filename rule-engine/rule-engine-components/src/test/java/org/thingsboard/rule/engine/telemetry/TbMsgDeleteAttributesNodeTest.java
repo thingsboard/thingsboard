@@ -15,17 +15,19 @@
  */
 package org.thingsboard.rule.engine.telemetry;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
@@ -49,15 +51,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.thingsboard.server.common.data.DataConstants.NOTIFY_DEVICE_METADATA_KEY;
-import static org.thingsboard.server.common.data.DataConstants.SCOPE;
-import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
-import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 
 @Slf4j
 public class TbMsgDeleteAttributesNodeTest {
-    final ObjectMapper mapper = new ObjectMapper();
-
     DeviceId deviceId;
     TbMsgDeleteAttributesNode node;
     TbMsgDeleteAttributesNodeConfiguration config;
@@ -74,7 +70,7 @@ public class TbMsgDeleteAttributesNodeTest {
         ctx = mock(TbContext.class);
         config = new TbMsgDeleteAttributesNodeConfiguration().defaultConfiguration();
         config.setKeys(List.of("${TestAttribute_1}", "$[TestAttribute_2]", "$[TestAttribute_3]", "TestAttribute_4"));
-        nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node = spy(new TbMsgDeleteAttributesNode());
         node.init(ctx, nodeConfiguration);
         telemetryService = mock(RuleEngineTelemetryService.class);
@@ -96,7 +92,7 @@ public class TbMsgDeleteAttributesNodeTest {
     @Test
     void givenDefaultConfig_whenVerify_thenOK() {
         TbMsgDeleteAttributesNodeConfiguration defaultConfig = new TbMsgDeleteAttributesNodeConfiguration().defaultConfiguration();
-        assertThat(defaultConfig.getScope()).isEqualTo(SERVER_SCOPE);
+        assertThat(defaultConfig.getScope()).isEqualTo(DataConstants.SERVER_SCOPE);
         assertThat(defaultConfig.getKeys()).isEqualTo(Collections.emptyList());
     }
 
@@ -108,7 +104,7 @@ public class TbMsgDeleteAttributesNodeTest {
     @Test
     void givenMsg_whenOnMsg_thenVerifyOutput_SendAttributesDeletedNotification_NoNotifyDevice() throws Exception {
         config.setSendAttributesDeletedNotification(true);
-        nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
         onMsg_thenVerifyOutput(true, false, false);
     }
@@ -117,15 +113,15 @@ public class TbMsgDeleteAttributesNodeTest {
     void givenMsg_whenOnMsg_thenVerifyOutput_SendAttributesDeletedNotification_NotifyDevice() throws Exception {
         config.setSendAttributesDeletedNotification(true);
         config.setNotifyDevice(true);
-        config.setScope(SHARED_SCOPE);
-        nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+        config.setScope(DataConstants.SHARED_SCOPE);
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
         onMsg_thenVerifyOutput(true, true, false);
     }
 
     @Test
     void givenMsg_whenOnMsg_thenVerifyOutput_NoSendAttributesDeletedNotification_NotifyDeviceMetadata() throws Exception {
-        nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
         onMsg_thenVerifyOutput(false, false, true);
     }
@@ -137,12 +133,12 @@ public class TbMsgDeleteAttributesNodeTest {
         );
         TbMsgMetaData metaData = new TbMsgMetaData(mdMap);
         if (notifyDeviceMetadata) {
-            metaData.putValue(NOTIFY_DEVICE_METADATA_KEY, "true");
-            metaData.putValue(SCOPE, SHARED_SCOPE);
+            metaData.putValue(DataConstants.NOTIFY_DEVICE_METADATA_KEY, "true");
+            metaData.putValue(DataConstants.SCOPE, DataConstants.SHARED_SCOPE);
         }
         final String data = "{\"TestAttribute_2\": \"humidity\", \"TestAttribute_3\": \"voltage\"}";
 
-        TbMsg msg = TbMsg.newMsg("POST_ATTRIBUTES_REQUEST", deviceId, metaData, data, callback);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, deviceId, metaData, data, callback);
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<Runnable> successCaptor = ArgumentCaptor.forClass(Runnable.class);

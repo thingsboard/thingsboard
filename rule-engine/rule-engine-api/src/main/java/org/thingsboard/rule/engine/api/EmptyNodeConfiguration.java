@@ -24,7 +24,6 @@ public class EmptyNodeConfiguration implements NodeConfiguration<EmptyNodeConfig
 
     @Override
     public EmptyNodeConfiguration defaultConfiguration() {
-        EmptyNodeConfiguration configuration = new EmptyNodeConfiguration();
-        return configuration;
+        return new EmptyNodeConfiguration();
     }
 }

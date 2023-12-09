@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.security.model.mfa.provider.SmsTwoFaPr
 import org.thingsboard.server.common.data.security.model.mfa.provider.TotpTwoFaProviderConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFaConfigManager;
 import org.thingsboard.server.service.security.auth.mfa.provider.impl.OtpBasedTwoFaProvider;
@@ -58,7 +59,8 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
+@DaoSqlTest
+public class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
     @SpyBean
     private TotpTwoFaProvider totpTwoFactorAuthProvider;

@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.notification.channels;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.MailService;
@@ -24,7 +23,6 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.template.EmailDeliveryMethodNotificationTemplate;
-import org.thingsboard.server.service.mail.MailExecutorService;
 import org.thingsboard.server.service.notification.NotificationProcessingContext;
 
 @Component
@@ -32,19 +30,15 @@ import org.thingsboard.server.service.notification.NotificationProcessingContext
 public class EmailNotificationChannel implements NotificationChannel<User, EmailDeliveryMethodNotificationTemplate> {
 
     private final MailService mailService;
-    private final MailExecutorService executor;
 
     @Override
-    public ListenableFuture<Void> sendNotification(User recipient, EmailDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) {
-        return executor.submit(() -> {
-            mailService.send(recipient.getTenantId(), null, TbEmail.builder()
-                    .to(recipient.getEmail())
-                    .subject(processedTemplate.getSubject())
-                    .body(processedTemplate.getBody())
-                    .html(true)
-                    .build());
-            return null;
-        });
+    public void sendNotification(User recipient, EmailDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) throws Exception {
+        mailService.send(recipient.getTenantId(), null, TbEmail.builder()
+                .to(recipient.getEmail())
+                .subject(processedTemplate.getSubject())
+                .body(processedTemplate.getBody())
+                .html(true)
+                .build());
     }
 
     @Override

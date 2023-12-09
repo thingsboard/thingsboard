@@ -140,7 +140,7 @@ public class SqlPartitioningRepository {
             try {
                 partitions.add(Long.parseLong(partitionTsStr));
             } catch (NumberFormatException nfe) {
-                log.warn("Failed to parse table name: {}", partitionTableName);
+                log.debug("Failed to parse table name: {}", partitionTableName);
             }
         }
         return partitions;

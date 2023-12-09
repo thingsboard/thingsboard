@@ -61,7 +61,7 @@ public class Validator {
 
 
     /**
-     * This method validate <code>String</code> string. If string is invalid than throw
+     * This method validate <code>long</code> value. If value isn't possitive than throw
      * <code>IncorrectParameterException</code> exception
      *
      * @param val          the val
@@ -155,6 +155,12 @@ public class Validator {
 
     public static boolean isValidProperty(String key) {
         return StringUtils.isEmpty(key) || RegexUtils.matches(key, PROPERTY_PATTERN);
+    }
+
+    public static void checkNotNull(Object reference, String errorMessage) {
+        if (reference == null) {
+            throw new IncorrectParameterException(errorMessage);
+        }
     }
 
 }

@@ -12,6 +12,9 @@ tb-node/redis-cluster-data-2/**
 tb-node/redis-cluster-data-3/**
 tb-node/redis-cluster-data-4/**
 tb-node/redis-cluster-data-5/**
+tb-node/redis-sentinel-data-master/**
+tb-node/redis-sentinel-data-slave/**
+tb-node/redis-sentinel-data-sentinel/**
 tb-node/redis-data/**
 
 !.env

@@ -286,6 +286,7 @@ export class GatewayFormComponent extends PageComponent implements OnInit, OnDes
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         jsonValue: config,
+        required: true,
         title: this.translate.instant('gateway.title-connectors-json', {typeName: type})
       }
     }).afterClosed().subscribe(

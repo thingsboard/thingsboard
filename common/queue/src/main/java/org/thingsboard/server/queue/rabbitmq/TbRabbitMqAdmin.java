@@ -18,9 +18,11 @@ package org.thingsboard.server.queue.rabbitmq;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.queue.TbQueueAdmin;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
@@ -50,7 +52,12 @@ public class TbRabbitMqAdmin implements TbQueueAdmin {
     }
 
     @Override
-    public void createTopicIfNotExists(String topic) {
+    public void createTopicIfNotExists(String topic, String properties) {
+        Map<String, Object> arguments = this.arguments;
+        if (StringUtils.isNotBlank(properties)) {
+            arguments = new HashMap<>(arguments);
+            arguments.putAll(TbRabbitMqQueueArguments.getArgs(properties));
+        }
         try {
             channel.queueDeclare(topic, false, false, false, arguments);
         } catch (IOException e) {

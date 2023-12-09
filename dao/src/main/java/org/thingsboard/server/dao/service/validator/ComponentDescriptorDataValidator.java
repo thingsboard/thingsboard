@@ -27,14 +27,12 @@ public class ComponentDescriptorDataValidator extends DataValidator<ComponentDes
 
     @Override
     protected void validateDataImpl(TenantId tenantId, ComponentDescriptor plugin) {
+        validateString("Component name", plugin.getName());
         if (plugin.getType() == null) {
             throw new DataValidationException("Component type should be specified!");
         }
         if (plugin.getScope() == null) {
             throw new DataValidationException("Component scope should be specified!");
-        }
-        if (StringUtils.isEmpty(plugin.getName())) {
-            throw new DataValidationException("Component name should be specified!");
         }
         if (StringUtils.isEmpty(plugin.getClazz())) {
             throw new DataValidationException("Component clazz should be specified!");

@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
+import org.thingsboard.server.common.data.TbResourceInfoFilter;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -31,17 +32,21 @@ public interface ResourceService extends EntityDaoService {
 
     TbResource saveResource(TbResource resource);
 
+    TbResource saveResource(TbResource resource, boolean doValidate);
+
     TbResource getResource(TenantId tenantId, ResourceType resourceType, String resourceId);
 
     TbResource findResourceById(TenantId tenantId, TbResourceId resourceId);
 
     TbResourceInfo findResourceInfoById(TenantId tenantId, TbResourceId resourceId);
 
+    PageData<TbResource> findAllTenantResources(TenantId tenantId, PageLink pageLink);
+
     ListenableFuture<TbResourceInfo> findResourceInfoByIdAsync(TenantId tenantId, TbResourceId resourceId);
 
-    PageData<TbResourceInfo> findAllTenantResourcesByTenantId(TenantId tenantId, PageLink pageLink);
+    PageData<TbResourceInfo> findAllTenantResourcesByTenantId(TbResourceInfoFilter filter, PageLink pageLink);
 
-    PageData<TbResourceInfo> findTenantResourcesByTenantId(TenantId tenantId, PageLink pageLink);
+    PageData<TbResourceInfo> findTenantResourcesByTenantId(TbResourceInfoFilter filter, PageLink pageLink);
 
     List<TbResource> findTenantResourcesByResourceTypeAndObjectIds(TenantId tenantId, ResourceType lwm2mModel, String[] objectIds);
 

@@ -15,6 +15,7 @@
 #
 
 queue_type: "TB_QUEUE_TYPE" #kafka (Apache Kafka) or aws-sqs (AWS SQS) or pubsub (PubSub) or service-bus (Azure Service Bus) or rabbitmq (RabbitMQ)
+queue_prefix: "TB_QUEUE_PREFIX"
 request_topic: "REMOTE_JS_EVAL_REQUEST_TOPIC"
 http_port: "HTTP_PORT"      # /livenessProbe
 

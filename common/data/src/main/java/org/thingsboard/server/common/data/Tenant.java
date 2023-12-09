@@ -34,14 +34,14 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId, HasTi
 
     @Length(fieldName = "title")
     @NoXss
-    @ApiModelProperty(position = 3, value = "Title of the tenant", example = "Company A")
+    @ApiModelProperty(position = 3, required = true, value = "Title of the tenant", example = "Company A")
     private String title;
     @NoXss
     @Length(fieldName = "region")
     @ApiModelProperty(position = 5, value = "Geo region of the tenant", example = "North America")
     private String region;
 
-    @ApiModelProperty(position = 6, required = true, value = "JSON object with Tenant Profile Id")
+    @ApiModelProperty(position = 6, value = "JSON object with Tenant Profile Id")
     private TenantProfileId tenantProfileId;
 
     public Tenant() {
@@ -96,11 +96,6 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId, HasTi
         this.tenantProfileId = tenantProfileId;
     }
 
-    @Override
-    public String getSearchText() {
-        return getTitle();
-    }
-
     @ApiModelProperty(position = 1, value = "JSON object with the tenant Id. " +
             "Specify this field to update the tenant. " +
             "Referencing non-existing tenant Id will cause error. " +
@@ -116,43 +111,43 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId, HasTi
         return super.getCreatedTime();
     }
 
-    @ApiModelProperty(position = 7, required = true, value = "Country", example = "US")
+    @ApiModelProperty(position = 7, value = "Country", example = "US")
     @Override
     public String getCountry() {
         return super.getCountry();
     }
 
-    @ApiModelProperty(position = 8, required = true, value = "State", example = "NY")
+    @ApiModelProperty(position = 8, value = "State", example = "NY")
     @Override
     public String getState() {
         return super.getState();
     }
 
-    @ApiModelProperty(position = 9, required = true, value = "City", example = "New York")
+    @ApiModelProperty(position = 9, value = "City", example = "New York")
     @Override
     public String getCity() {
         return super.getCity();
     }
 
-    @ApiModelProperty(position = 10, required = true, value = "Address Line 1", example = "42 Broadway Suite 12-400")
+    @ApiModelProperty(position = 10, value = "Address Line 1", example = "42 Broadway Suite 12-400")
     @Override
     public String getAddress() {
         return super.getAddress();
     }
 
-    @ApiModelProperty(position = 11, required = true, value = "Address Line 2", example = "")
+    @ApiModelProperty(position = 11, value = "Address Line 2", example = "")
     @Override
     public String getAddress2() {
         return super.getAddress2();
     }
 
-    @ApiModelProperty(position = 12, required = true, value = "Zip code", example = "10004")
+    @ApiModelProperty(position = 12, value = "Zip code", example = "10004")
     @Override
     public String getZip() {
         return super.getZip();
     }
 
-    @ApiModelProperty(position = 13, required = true, value = "Phone number", example = "+1(415)777-7777")
+    @ApiModelProperty(position = 13, value = "Phone number", example = "+1(415)777-7777")
     @Override
     public String getPhone() {
         return super.getPhone();

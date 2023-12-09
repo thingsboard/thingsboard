@@ -20,12 +20,14 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.model.mfa.account.SmsTwoFaAccountConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.SmsTwoFaProviderConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
+import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
@@ -36,10 +38,12 @@ import java.util.Map;
 public class SmsTwoFaProvider extends OtpBasedTwoFaProvider<SmsTwoFaProviderConfig, SmsTwoFaAccountConfig> {
 
     private final SmsService smsService;
+    private final AuditLogService auditLogService;
 
-    public SmsTwoFaProvider(CacheManager cacheManager, SmsService smsService) {
+    public SmsTwoFaProvider(CacheManager cacheManager, SmsService smsService, AuditLogService auditLogService) {
         super(cacheManager);
         this.smsService = smsService;
+        this.auditLogService = auditLogService;
     }
 
 
@@ -56,8 +60,13 @@ public class SmsTwoFaProvider extends OtpBasedTwoFaProvider<SmsTwoFaProviderConf
         );
         String message = TbNodeUtils.processTemplate(providerConfig.getSmsVerificationMessageTemplate(), messageData);
         String phoneNumber = accountConfig.getPhoneNumber();
-
-        smsService.sendSms(user.getTenantId(), user.getCustomerId(), new String[]{phoneNumber}, message);
+        try {
+            smsService.sendSms(user.getTenantId(), user.getCustomerId(), new String[]{phoneNumber}, message);
+            auditLogService.logEntityAction(user.getTenantId(), user.getCustomerId(), user.getId(), user.getName(), user.getId(), user, ActionType.SMS_SENT, null, phoneNumber);
+        } catch (ThingsboardException e) {
+            auditLogService.logEntityAction(user.getTenantId(), user.getCustomerId(), user.getId(), user.getName(), user.getId(), user, ActionType.SMS_SENT, e, phoneNumber);
+            throw e;
+        }
     }
 
     @Override

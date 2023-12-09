@@ -39,7 +39,7 @@ import org.thingsboard.server.dao.util.SqlDao;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static org.thingsboard.server.dao.model.ModelConstants.ALARM_COMMENT_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.ALARM_COMMENT_TABLE_NAME;
 
 @Slf4j
 @Component
@@ -56,7 +56,7 @@ public class JpaAlarmCommentDao extends JpaAbstractDao<AlarmCommentEntity, Alarm
     @Override
     public AlarmComment createAlarmComment(TenantId tenantId, AlarmComment alarmComment){
         log.trace("Saving entity {}", alarmComment);
-        partitioningRepository.createPartitionIfNotExists(ALARM_COMMENT_COLUMN_FAMILY_NAME, alarmComment.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
+        partitioningRepository.createPartitionIfNotExists(ALARM_COMMENT_TABLE_NAME, alarmComment.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
         AlarmCommentEntity saved = alarmCommentRepository.save(new AlarmCommentEntity(alarmComment));
         return DaoUtil.getData(saved);
     }

@@ -19,7 +19,6 @@
      [fullscreenBackgroundStyle]="dashboardStyle"
      [fullscreenBackgroundImage]="backgroundImage"
      (fullscreenChanged)="onFullscreenChanged($event)"
-     fxLayout="column"
      class="tb-widget"
      [ngClass]="{
                 'tb-highlighted': isHighlighted(widget),
@@ -32,85 +31,93 @@
      (mousedown)="onMouseDown($event)"
      (click)="onClicked($event)"
      (contextmenu)="onContextMenu($event)">
-  <div *ngIf="!!widgetComponent.widgetContext?.inited" fxLayout="row" fxLayoutAlign="space-between start">
-    <div class="tb-widget-title" fxLayout="column" fxLayoutAlign="center start" *ngIf="widget.showWidgetTitlePanel">
-              <span *ngIf="widget.showTitle"
-                    [ngClass]="{'single-row': widget.hasTimewindow}"
-                    [ngStyle]="widget.titleStyle"
-                    [matTooltip]="widget.titleTooltip"
-                    matTooltipClass="tb-tooltip-multiline"
-                    matTooltipPosition="above"
-                    class="mat-subtitle-1 title">
-                <mat-icon *ngIf="widget.showTitleIcon" [ngStyle]="widget.titleIconStyle">{{widget.titleIcon}}</mat-icon>
-                {{widget.customTranslatedTitle}}
-              </span>
-      <tb-timewindow *ngIf="widget.hasTimewindow"
-                     aggregation="{{widget.hasAggregation}}"
-                     quickIntervalOnly="{{widget.onlyQuickInterval}}"
-                     historyOnly="{{widget.onlyHistoryTimewindow}}"
-                     alwaysDisplayTypePrefix
-                     timezone="true"
-                     [isEdit]="isEdit"
-                     [(ngModel)]="widgetComponent.widget.config.timewindow"
-                     (ngModelChange)="widgetComponent.onTimewindowChanged($event)">
-      </tb-timewindow>
-    </div>
+  <div *ngIf="!!widgetComponent.widgetContext?.inited"
+       class="tb-widget-header">
+    <ng-container *ngIf="!widgetComponent.widgetContext?.embedTitlePanel">
+      <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
+    </ng-container>
     <div *ngIf="widget.showWidgetActions"
          class="tb-widget-actions"
-         [ngClass]="{'tb-widget-actions-absolute': !(widget.showWidgetTitlePanel&&(widget.showTitle||widget.hasAggregation))}"
-         fxLayout="row"
-         fxLayoutAlign="start center"
+         [class]="{'tb-widget-actions-absolute': !(widget.showWidgetTitlePanel && !widgetComponent.widgetContext?.embedTitlePanel && (widget.showTitle||widget.hasAggregation))}"
          (mousedown)="$event.stopPropagation()">
       <button mat-icon-button *ngFor="let action of widget.customHeaderActions"
               [fxShow]="!isEdit"
               (click)="action.onAction($event)"
               matTooltip="{{ action.displayName }}"
               matTooltipPosition="above">
-        <mat-icon>{{ action.icon }}</mat-icon>
+        <tb-icon>{{ action.icon }}</tb-icon>
       </button>
       <button mat-icon-button *ngFor="let action of widget.widgetActions"
               [fxShow]="!isEdit && action.show"
               (click)="action.onAction($event)"
               matTooltip="{{ action.name | translate }}"
               matTooltipPosition="above">
-        <mat-icon>{{ action.icon }}</mat-icon>
+        <tb-icon>{{ action.icon }}</tb-icon>
       </button>
       <button mat-icon-button
               [fxShow]="!isEdit && widget.enableFullscreen"
               (click)="$event.stopPropagation(); widget.isFullscreen = !widget.isFullscreen"
               matTooltip="{{(widget.isFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
               matTooltipPosition="above">
-        <mat-icon>{{ widget.isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+        <tb-icon>{{ widget.isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</tb-icon>
       </button>
       <button mat-icon-button
               [fxShow]="isEditActionEnabled && !widget.isFullscreen"
               (click)="onEdit($event)"
               matTooltip="{{ 'widget.edit' | translate }}"
               matTooltipPosition="above">
-        <mat-icon>edit</mat-icon>
+        <tb-icon>edit</tb-icon>
       </button>
       <button mat-icon-button
               [fxShow]="isExportActionEnabled && !widget.isFullscreen"
               (click)="onExport($event)"
               matTooltip="{{ 'widget.export' | translate }}"
               matTooltipPosition="above">
-        <mat-icon>file_download</mat-icon>
+        <tb-icon>file_download</tb-icon>
       </button>
       <button mat-icon-button
               [fxShow]="isRemoveActionEnabled && !widget.isFullscreen"
               (click)="onRemove($event);"
               matTooltip="{{ 'widget.remove' | translate }}"
               matTooltipPosition="above">
-        <mat-icon>close</mat-icon>
+        <tb-icon>close</tb-icon>
       </button>
     </div>
   </div>
-  <div fxFlex fxLayout="column" class="tb-widget-content" [ngClass]="{'tb-no-interaction': disableWidgetInteraction}">
-    <tb-widget fxFlex
-               #widgetComponent
+  <div class="tb-widget-content" [ngClass]="{'tb-no-interaction': disableWidgetInteraction}">
+    <tb-widget #widgetComponent
                [dashboardWidget]="widget"
                [isEdit]="isEdit"
-               [isMobile]="isMobile">
+               [isMobile]="isMobile"
+               [widgetTitlePanel]="widgetTitlePanel">
     </tb-widget>
   </div>
 </div>
+<ng-template #widgetTitlePanel>
+  <div *ngIf="widget.showWidgetTitlePanel"
+       class="tb-widget-title">
+              <div *ngIf="widget.showTitle"
+                    [matTooltip]="widget.titleTooltip"
+                    matTooltipClass="tb-tooltip-multiline"
+                    matTooltipPosition="above"
+                    class="title-row">
+                <tb-icon *ngIf="widget.showTitleIcon" [style]="widget.titleIconStyle">{{widget.titleIcon}}</tb-icon>
+                <div class="mat-subtitle-1 title" [style]="widget.titleStyle">
+                  {{widget.title$ | async}}
+                </div>
+              </div>
+    <tb-timewindow *ngIf="widget.hasTimewindow"
+                   aggregation="{{widget.hasAggregation}}"
+                   quickIntervalOnly="{{widget.onlyQuickInterval}}"
+                   historyOnly="{{widget.onlyHistoryTimewindow}}"
+                   alwaysDisplayTypePrefix
+                   timezone="true"
+                   noMargin
+                   noPadding
+                   [isEdit]="isEdit"
+                   [timewindowStyle]="widgetComponent.widget.config.timewindowStyle"
+                   [(ngModel)]="widgetComponent.widget.config.timewindow"
+                   (ngModelChange)="widgetComponent.onTimewindowChanged($event)">
+    </tb-timewindow>
+  </div>
+</ng-template>

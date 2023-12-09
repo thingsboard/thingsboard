@@ -39,6 +39,10 @@ public interface TbMsgCallback {
 
     void onFailure(RuleEngineException e);
 
+    default void onRateLimit(RuleEngineException e) {
+        onFailure(e);
+    };
+
     /**
      * Returns 'true' if rule engine is expecting the message to be processed, 'false' otherwise.
      * message may no longer be valid, if the message pack is already expired/canceled/failed.

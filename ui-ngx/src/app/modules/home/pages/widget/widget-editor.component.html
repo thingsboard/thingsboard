@@ -22,7 +22,7 @@
       <mat-form-field class="tb-widget-title tb-appearance-transparent">
         <input [disabled]="isReadOnly" matInput required maxlength="255"
                [(ngModel)]="widget.widgetName" (ngModelChange)="isDirty = true"
-               placeholder="{{ 'widget.title' | translate }}"/>
+               placeholder="{{ 'widget.widget-title' | translate }}"/>
       </mat-form-field>
       <mat-form-field class="tb-appearance-transparent">
         <mat-select [disabled]="isReadOnly" matInput placeholder="{{ 'widget.type' | translate }}"
@@ -63,7 +63,7 @@
               [tb-circular-progress]="saveWidgetAsPending"
               matTooltip="{{ 'widget.saveAs' | translate }} (Shift + CTRL + S)"
               matTooltipPosition="below">
-        <mat-icon>save</mat-icon>
+        <mat-icon>save_as</mat-icon>
         <span translate>action.saveAs</span>
       </button>
       <button mat-button
@@ -106,7 +106,7 @@
         <button mat-menu-item
                 [disabled]="(isLoading$ | async) || saveAsDisabled()"
                 (click)="saveWidgetAs()">
-          <mat-icon>save</mat-icon>
+          <mat-icon>save_as</mat-icon>
           <span translate>action.saveAs</span>
         </button>
       </mat-menu>
@@ -122,12 +122,14 @@
                     <div fxFlex fxLayout="row" style="max-height: 40px;"
                          fxLayoutAlign="start center"
                          *ngFor="let resource of widget.resources; let i = index" >
-                      <mat-form-field fxFlex class="mat-block resource-field" hideRequiredMarker="false"
-                                      style="margin: 10px 0 0 0; max-height: 40px;">
-                        <input required matInput [(ngModel)]="resource.url"
-                               (ngModelChange)="isDirty = true"
-                               placeholder="{{ 'widget.resource-url' | translate }}"/>
-                      </mat-form-field>
+                      <tb-resource-autocomplete fxFlex class="mat-block resource-field"
+                                                hideRequiredMarker required
+                                                subscriptSizing="dynamic"
+                                                [allowAutocomplete]="resource.isModule"
+                                                [(ngModel)]="resource.url"
+                                                (ngModelChange)="isDirty = true"
+                                                placeholder="{{ 'widget.resource-url' | translate }}">
+                      </tb-resource-autocomplete>
                       <mat-checkbox [(ngModel)]="resource.isModule"
                                     (ngModelChange)="isDirty = true">
                         {{ 'widget.resource-is-module' | translate }}
@@ -140,15 +142,14 @@
                         <mat-icon>close</mat-icon>
                       </button>
                     </div>
-                    <div style="margin-top: 6px;">
-                      <button mat-raised-button color="primary"
-                              [disabled]="isLoading$ | async"
-                              (click)="addResource()"
-                              matTooltip="{{'widget.add-resource' | translate}}"
-                              matTooltipPosition="above">
-                        <span translate>action.add</span>
-                      </button>
-                    </div>
+                    <button mat-raised-button color="primary"
+                            style="margin-top: 8px;"
+                            [disabled]="isLoading$ | async"
+                            (click)="addResource()"
+                            matTooltip="{{'widget.add-resource' | translate}}"
+                            matTooltipPosition="above">
+                      <span translate>action.add</span>
+                    </button>
                   </div>
                 </div>
               </mat-tab>
@@ -252,6 +253,16 @@
                                 rows="2" maxlength="255"></textarea>
                       <mat-hint align="end">{{descriptionInput.value?.length || 0}}/255</mat-hint>
                     </mat-form-field>
+                    <tb-string-items-list
+                      label="{{ 'widget.tags' | translate }}"
+                      [(ngModel)]="widget.tags"
+                      (ngModelChange)="isDirty = true">
+                    </tb-string-items-list>
+                    <mat-slide-toggle class="mat-block" style="padding-bottom: 16px;"
+                                      [(ngModel)]="widget.deprecated"
+                                      (ngModelChange)="isDirty = true">
+                      {{ 'widget.deprecated' | translate }}
+                    </mat-slide-toggle>
                     <mat-form-field class="mat-block">
                       <mat-label translate>widget.settings-form-selector</mat-label>
                       <input matInput
@@ -268,6 +279,17 @@
                       <mat-label translate>widget.latest-data-key-settings-form-selector</mat-label>
                       <input matInput
                              [(ngModel)]="widget.latestDataKeySettingsDirective"
+                             (ngModelChange)="isDirty = true"/>
+                    </mat-form-field>
+                    <mat-slide-toggle class="mat-block" style="padding-bottom: 16px;"
+                                      [(ngModel)]="widget.hasBasicMode"
+                                      (ngModelChange)="isDirty = true">
+                      {{ 'widget.has-basic-mode' | translate }}
+                    </mat-slide-toggle>
+                    <mat-form-field *ngIf="widget.hasBasicMode" class="mat-block">
+                      <mat-label translate>widget.basic-mode-form-selector</mat-label>
+                      <input matInput
+                             [(ngModel)]="widget.basicModeDirective"
                              (ngModelChange)="isDirty = true"/>
                     </mat-form-field>
                   </div>

@@ -15,6 +15,12 @@
  */
 package org.thingsboard.server.common.msg.session;
 
+/**
+ * @deprecated This enum is deprecated and will be removed in a future version.
+ * Note: This enum was originally part of the public API but is now specific to CoAP transport only.
+ * Please use {@link org.thingsboard.server.transport.coap.CoapSessionMsgType} instead.
+ */
+@Deprecated(since="3.6.0", forRemoval = true)
 public enum SessionMsgType {
     GET_ATTRIBUTES_REQUEST(true), POST_ATTRIBUTES_REQUEST(true), GET_ATTRIBUTES_RESPONSE,
     SUBSCRIBE_ATTRIBUTES_REQUEST, UNSUBSCRIBE_ATTRIBUTES_REQUEST, ATTRIBUTES_UPDATE_NOTIFICATION,

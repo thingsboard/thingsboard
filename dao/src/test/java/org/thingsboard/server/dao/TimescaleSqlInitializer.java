@@ -36,7 +36,7 @@ public class TimescaleSqlInitializer {
             "sql/schema-views-and-functions.sql",
             "sql/system-data.sql",
             "sql/system-test-psql.sql");
-    private static final String dropAllTablesSqlFile = "sql/timescale/drop-all-tables.sql";
+    private static final String dropAllTablesSqlFile = "sql/psql/drop-all-tables.sql";
 
     public static void initDb(Connection conn) {
         cleanUpDb(conn);

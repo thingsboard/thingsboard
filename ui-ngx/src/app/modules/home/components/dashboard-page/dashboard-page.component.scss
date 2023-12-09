@@ -77,6 +77,11 @@ div.tb-dashboard-page {
     }
   }
 
+  .mat-divider-vertical.tb-toolbar-divider {
+    border-right-color: rgba(255,255,255,0.75);
+    height: 30px;
+  }
+
   .tb-dashboard-container {
     &.tb-dashboard-toolbar-opened {
       &.is-fullscreen {
@@ -120,7 +125,11 @@ div.tb-dashboard-page {
     mat-drawer-container.tb-dashboard-layouts {
       width: 100%;
       &.tb-shrinked {
-        width: 40%;
+        width: max(40%, calc(100% - 956px));
+
+        @media screen and (min-width: 2000px) {
+          width: max(40%, calc(100% - 1192px));
+        }
       }
     }
 
@@ -130,12 +139,19 @@ div.tb-dashboard-page {
       }
 
       @media #{$mat-gt-md} {
-        width: 75% !important;
+        width: min(85%, 956px) !important;
       }
 
-      @media #{$mat-gt-xl} {
-        width: 60% !important;
+      @media screen and (min-width: 2000px) {
+        width: min(60%, 1192px) !important;
       }
+    }
+  }
+
+  section.tb-header-buttons.tb-enter-edit-mode {
+    top: 2px;
+    .mdc-fab.tb-btn-edit {
+      opacity: .5;
     }
   }
 

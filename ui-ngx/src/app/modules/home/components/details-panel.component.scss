@@ -32,16 +32,14 @@
     max-height: 120px;
     &.tb-details-title-header {
       min-width: 0;
+      padding: 0 16px 0 8px;
     }
   }
   .tb-details-title {
     width: inherit;
     margin: 20px 8px 0 0;
-    overflow: hidden;
     font-size: 1rem;
     font-weight: 400;
-    text-overflow: ellipsis;
-    white-space: nowrap;
 
     @media #{$mat-gt-sm} {
       font-size: 1.5rem;
@@ -49,13 +47,16 @@
   }
 
   .tb-details-subtitle {
-    width: inherit;
     margin: 10px 0;
-    overflow: hidden;
     font-size: 1rem;
+    opacity: .8;
+  }
+
+  .tb-details-title-text, .tb-details-subtitle {
+    width: inherit;
+    overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    opacity: .8;
   }
 
   tb-dashboard {

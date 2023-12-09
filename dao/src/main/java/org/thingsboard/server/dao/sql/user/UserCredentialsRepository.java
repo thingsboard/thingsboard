@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.sql.user;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sql.UserCredentialsEntity;
 
 import java.util.UUID;
@@ -30,4 +31,8 @@ public interface UserCredentialsRepository extends JpaRepository<UserCredentials
     UserCredentialsEntity findByActivateToken(String activateToken);
 
     UserCredentialsEntity findByResetToken(String resetToken);
+
+    @Transactional
+    void removeByUserId(UUID userId);
+
 }

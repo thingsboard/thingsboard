@@ -42,6 +42,7 @@ import {
   EntityCountCmd,
   EntityDataCmd,
   IndexedSubscriptionData,
+  NOT_SUPPORTED,
   SubscriptionData,
   TelemetrySubscriber
 } from '@shared/models/telemetry/telemetry.models';
@@ -786,7 +787,7 @@ export class EntityDataSubscription {
   private reportNotSupported(keys: AggKey[], isUpdate: boolean) {
     const indexedData: IndexedSubscriptionData = [];
     for (const key of keys) {
-      indexedData[key.id] = [[0, 'Not supported!']];
+      indexedData[key.id] = [[0, NOT_SUPPORTED]];
     }
     for (let dataIndex = 0; dataIndex < this.pageData.data.length; dataIndex++) {
       this.onIndexedData(indexedData, dataIndex, true,

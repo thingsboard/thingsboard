@@ -30,11 +30,18 @@ import java.util.List;
  */
 public interface RuleNodeDao extends Dao<RuleNode> {
 
-    List<RuleNode> findRuleNodesByTenantIdAndType(TenantId tenantId, String type, String search);
+    List<RuleNode> findRuleNodesByTenantIdAndType(TenantId tenantId, String type, String configurationSearch);
 
     PageData<RuleNode> findAllRuleNodesByType(String type, PageLink pageLink);
+
+    PageData<RuleNode> findAllRuleNodesByTypeAndVersionLessThan(String type, int version, PageLink pageLink);
+
+    PageData<RuleNodeId> findAllRuleNodeIdsByTypeAndVersionLessThan(String type, int version, PageLink pageLink);
+
+    List<RuleNode> findAllRuleNodeByIds(List<RuleNodeId> ruleNodeIds);
 
     List<RuleNode> findByExternalIds(RuleChainId ruleChainId, List<RuleNodeId> externalIds);
 
     void deleteByIdIn(List<RuleNodeId> ruleNodeIds);
+
 }

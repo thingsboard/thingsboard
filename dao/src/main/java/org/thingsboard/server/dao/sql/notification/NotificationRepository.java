@@ -32,16 +32,16 @@ import java.util.UUID;
 public interface NotificationRepository extends JpaRepository<NotificationEntity, UUID> {
 
     @Query("SELECT n FROM NotificationEntity n WHERE n.recipientId = :recipientId AND n.status <> :status " +
-            "AND (:searchText = '' OR lower(n.subject) LIKE lower(concat('%', :searchText, '%')) " +
-            "OR lower(n.text) LIKE lower(concat('%', :searchText, '%')))")
+            "AND (:searchText is NULL OR ilike(n.subject, concat('%', :searchText, '%')) = true " +
+            "OR ilike(n.text, concat('%', :searchText, '%')) = true)")
     Page<NotificationEntity> findByRecipientIdAndStatusNot(@Param("recipientId") UUID recipientId,
                                                            @Param("status") NotificationStatus status,
                                                            @Param("searchText") String searchText,
                                                            Pageable pageable);
 
     @Query("SELECT n FROM NotificationEntity n WHERE n.recipientId = :recipientId " +
-            "AND (:searchText = '' OR lower(n.subject) LIKE lower(concat('%', :searchText, '%')) " +
-            "OR lower(n.text) LIKE lower(concat('%', :searchText, '%')))")
+            "AND (:searchText is NULL OR ilike(n.subject, concat('%', :searchText, '%')) = true " +
+            "OR ilike(n.text, concat('%', :searchText, '%')) = true)")
     Page<NotificationEntity> findByRecipientId(@Param("recipientId") UUID recipientId,
                                                @Param("searchText") String searchText,
                                                Pageable pageable);
@@ -59,7 +59,19 @@ public interface NotificationRepository extends JpaRepository<NotificationEntity
     Page<NotificationEntity> findByRequestId(UUID requestId, Pageable pageable);
 
     @Transactional
-    int deleteByIdAndRecipientId(UUID id, UUID recipientId);
+    @Modifying
+    @Query("DELETE FROM NotificationEntity n WHERE n.id = :id AND n.recipientId = :recipientId")
+    int deleteByIdAndRecipientId(@Param("id") UUID id, @Param("recipientId") UUID recipientId);
+
+    @Transactional
+    @Modifying
+    @Query("DELETE FROM NotificationEntity n WHERE n.requestId = :requestId")
+    void deleteByRequestId(@Param("requestId") UUID requestId);
+
+    @Transactional
+    @Modifying
+    @Query("DELETE FROM NotificationEntity n WHERE n.recipientId = :recipientId")
+    void deleteByRecipientId(@Param("recipientId") UUID recipientId);
 
     @Modifying
     @Transactional

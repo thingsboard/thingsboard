@@ -95,6 +95,11 @@ public class DefaultNotificationTemplateService extends AbstractEntityService im
     }
 
     @Override
+    public void deleteEntity(TenantId tenantId, EntityId id) {
+        deleteNotificationTemplateById(tenantId, (NotificationTemplateId) id);
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.NOTIFICATION_TEMPLATE;
     }

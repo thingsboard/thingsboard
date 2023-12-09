@@ -1,0 +1,27 @@
+{
+  "fqn": "date.date_range_navigator",
+  "name": "Date-range-navigator",
+  "deprecated": false,
+  "image": "data:image/png;base64,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",
+  "description": "The date-time stepper to change the time window of the dashboard. The change affects all widgets that use the dashboard time window.",
+  "descriptor": {
+    "type": "static",
+    "sizeX": 5,
+    "sizeY": 5.5,
+    "resources": [],
+    "templateHtml": "<tb-date-range-navigator-widget [ctx]=\"ctx\"></tb-date-range-navigator-widget>",
+    "templateCss": "",
+    "controllerScript": "self.onInit = function() {\n}\n",
+    "settingsSchema": "",
+    "dataKeySettingsSchema": "{}\n",
+    "settingsDirective": "tb-date-range-navigator-widget-settings",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"static\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Random\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.15479322438769105,\"funcBody\":\"var value = prevValue + Math.random() * 100 - 50;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < -1000) {\\n\\tvalue = -1000;\\n} else if (value > 1000) {\\n\\tvalue = 1000;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":true,\"backgroundColor\":\"rgb(255, 255, 255)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"8px\",\"settings\":{\"defaultInterval\":\"week\",\"stepSize\":\"day\"},\"title\":\"Date-range-navigator\",\"dropShadow\":true,\"enableFullscreen\":true,\"widgetStyle\":{},\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"useDashboardTimewindow\":true,\"showLegend\":false,\"actions\":{}}"
+  },
+  "externalId": null,
+  "tags": [
+    "time-window",
+    "interval",
+    "date",
+    "date-range"
+  ]
+}

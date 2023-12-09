@@ -1,0 +1,51 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<button mat-icon-button
+        type="button"
+        [disabled]="!leftPaginationEnabled"
+        (click)="handlePaginatorClick('before', $event)"
+        (touchstart)="handlePaginatorTouchStart('before', $event)"
+        class="tb-toggle-header-pagination-button" [class]="{'tb-mat-32': !isMdLg, 'tb-mat-24': isMdLg}">
+  <mat-icon>chevron_left</mat-icon>
+</button>
+<div #toggleGroupContainer class="tb-toggle-container" [class]="{'tb-disable-pagination': disablePagination}" *ngIf="(useSelect$ | async) === false; else select" >
+  <mat-button-toggle-group #toggleGroup
+                           class="tb-toggle-header"
+                           [ngClass]="{'tb-fill': (appearance === 'fill' || appearance === 'fill-invert'),
+                                       'tb-invert': appearance === 'fill-invert',
+                                       'tb-ignore-md-lg': ignoreMdLgSize,
+                                       'tb-disabled': disabled }" [name]="name" [(ngModel)]="value"
+                           (ngModelChange)="valueChange.emit(value)">
+    <mat-button-toggle *ngFor="let option of options; trackBy: trackByHeaderOption" [value]="option.value" [disabled]="disabled">{{ option.name }}</mat-button-toggle>
+  </mat-button-toggle-group>
+</div>
+<button mat-icon-button
+        type="button"
+        [disabled]="!rightPaginationEnabled"
+        (click)="handlePaginatorClick('after', $event)"
+        (touchstart)="handlePaginatorTouchStart('after', $event)"
+        class="tb-toggle-header-pagination-button" [class]="{'tb-mat-32': !isMdLg, 'tb-mat-24': isMdLg}">
+  <mat-icon>chevron_right</mat-icon>
+</button>
+<ng-template #select>
+  <mat-form-field appearance="outline" class="tb-toggle-header-select" subscriptSizing="dynamic">
+    <mat-select [(ngModel)]="value" (ngModelChange)="valueChange.emit($event)" [disabled]="disabled">
+      <mat-option *ngFor="let option of options" [value]="option.value"> {{ option.name }}</mat-option>
+    </mat-select>
+  </mat-form-field>
+</ng-template>

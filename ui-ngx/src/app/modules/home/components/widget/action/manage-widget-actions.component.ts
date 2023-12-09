@@ -76,6 +76,8 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
 
   @Input() callbacks: WidgetActionCallbacks;
 
+  @Input() actionSources: {[actionSourceId: string]: WidgetActionSource};
+
   innerValue: WidgetActionsData;
 
   displayedColumns: string[];
@@ -89,6 +91,7 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
   dragDisabled = true;
 
   private widgetResize$: ResizeObserver;
+  private destroyed = false;
 
   @ViewChild('searchInput') searchInputField: ElementRef;
 
@@ -123,6 +126,7 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
     if (this.widgetResize$) {
       this.widgetResize$.disconnect();
     }
@@ -336,22 +340,25 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
     this.disabled = isDisabled;
   }
 
-  writeValue(obj: WidgetActionsData): void {
-    this.innerValue = obj;
-    if (this.innerValue) {
-      setTimeout(() => {
+  writeValue(actions?: {[actionSourceId: string]: Array<WidgetActionDescriptor>}): void {
+    this.innerValue = {
+      actionsMap: actions || {},
+      actionSources: this.actionSources || {}
+    };
+    setTimeout(() => {
+      if (!this.destroyed) {
         this.dataSource.setActions(this.innerValue);
         if (this.viewsInited) {
           this.resetSortAndFilter(true);
         } else {
           this.dirtyValue = true;
         }
-      }, 0);
-    }
+      }
+    }, 0);
   }
 
   private onActionsUpdated() {
     this.updateData(true);
-    this.propagateChange(this.innerValue);
+    this.propagateChange(this.innerValue.actionsMap);
   }
 }

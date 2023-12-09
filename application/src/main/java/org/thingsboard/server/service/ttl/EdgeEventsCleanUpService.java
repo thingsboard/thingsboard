@@ -27,7 +27,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.concurrent.TimeUnit;
 
-import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_TABLE_NAME;
 
 @TbCoreComponent
 @Slf4j
@@ -63,7 +63,7 @@ public class EdgeEventsCleanUpService extends AbstractCleanUpService {
         if (ttlTaskExecutionEnabled && isSystemTenantPartitionMine()) {
             edgeEventService.cleanupEvents(edgeEventsExpTime);
         } else {
-            partitioningRepository.cleanupPartitionsCache(EDGE_EVENT_COLUMN_FAMILY_NAME, edgeEventsExpTime, TimeUnit.HOURS.toMillis(partitionSizeInHours));
+            partitioningRepository.cleanupPartitionsCache(EDGE_EVENT_TABLE_NAME, edgeEventsExpTime, TimeUnit.HOURS.toMillis(partitionSizeInHours));
         }
     }
 

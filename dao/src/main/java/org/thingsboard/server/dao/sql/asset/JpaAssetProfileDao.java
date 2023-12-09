@@ -29,14 +29,14 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.asset.AssetProfileDao;
 import org.thingsboard.server.dao.model.sql.AssetProfileEntity;
-import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
+import org.thingsboard.server.dao.sql.JpaAbstractDao;
 
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
 @Component
-public class JpaAssetProfileDao extends JpaAbstractSearchTextDao<AssetProfileEntity, AssetProfile> implements AssetProfileDao {
+public class JpaAssetProfileDao extends JpaAbstractDao<AssetProfileEntity, AssetProfile> implements AssetProfileDao {
 
     @Autowired
     private AssetProfileRepository assetProfileRepository;
@@ -69,7 +69,7 @@ public class JpaAssetProfileDao extends JpaAbstractSearchTextDao<AssetProfileEnt
         return DaoUtil.toPageData(
                 assetProfileRepository.findAssetProfiles(
                         tenantId.getId(),
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 
@@ -78,7 +78,7 @@ public class JpaAssetProfileDao extends JpaAbstractSearchTextDao<AssetProfileEnt
         return DaoUtil.pageToPageData(
                 assetProfileRepository.findAssetProfileInfos(
                         tenantId.getId(),
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 

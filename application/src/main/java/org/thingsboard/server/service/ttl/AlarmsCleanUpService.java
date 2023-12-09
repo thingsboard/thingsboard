@@ -39,7 +39,9 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.action.EntityActionService;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @TbCoreComponent
@@ -86,20 +88,24 @@ public class AlarmsCleanUpService {
 
         PageLink removalBatchRequest = new PageLink(removalBatchSize, 0);
         long totalRemoved = 0;
+        Set<String> typesToRemove = new HashSet<>();
         while (true) {
             PageData<AlarmId> toRemove = alarmDao.findAlarmsIdsByEndTsBeforeAndTenantId(expirationTime, tenantId, removalBatchRequest);
             for (AlarmId alarmId : toRemove.getData()) {
-                relationService.deleteEntityRelations(tenantId, alarmId);
-                Alarm alarm = alarmService.delAlarm(tenantId, alarmId).getAlarm();
+                Alarm alarm = alarmService.delAlarm(tenantId, alarmId, false).getAlarm();
                 if (alarm != null) {
                     entityActionService.pushEntityActionToRuleEngine(alarm.getOriginator(), alarm, tenantId, null, ActionType.ALARM_DELETE, null);
                     totalRemoved++;
+                    typesToRemove.add(alarm.getType());
                 }
             }
             if (!toRemove.hasNext()) {
                 break;
             }
         }
+
+        alarmService.delAlarmTypes(tenantId, typesToRemove);
+
         if (totalRemoved > 0) {
             log.info("Removed {} outdated alarm(s) for tenant {} older than {}", totalRemoved, tenantId, new Date(expirationTime));
         }

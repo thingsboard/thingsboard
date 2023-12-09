@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thingsboard</groupId>
     <artifactId>thingsboard</artifactId>
-    <version>3.5.1</version>
+    <version>3.6.1</version>
     <packaging>pom</packaging>
 
     <name>Thingsboard</name>
@@ -78,7 +78,7 @@
         <zookeeper.version>3.8.1</zookeeper.version>
         <protobuf.version>3.21.9</protobuf.version>
         <grpc.version>1.42.1</grpc.version>
-        <tbel.version>1.0.6</tbel.version>
+        <tbel.version>1.1.4</tbel.version>
         <lombok.version>1.18.18</lombok.version>
         <paho.client.version>1.2.4</paho.client.version>
         <paho.mqttv5.client.version>1.2.5</paho.mqttv5.client.version>
@@ -111,7 +111,7 @@
         <aws.sdk.version>1.11.747</aws.sdk.version>
         <pubsub.client.version>1.105.0</pubsub.client.version>
         <google.common.protos.version>2.1.0</google.common.protos.version> <!-- required by io.grpc:grpc-protobuf:1.38.0-->
-        <azure-servicebus.version>3.2.0</azure-servicebus.version>
+        <azure-servicebus.version>3.6.7</azure-servicebus.version>
         <passay.version>1.5.0</passay.version>
         <ua-parser.version>1.5.4</ua-parser.version>
         <commons-beanutils.version>1.9.4</commons-beanutils.version>
@@ -121,6 +121,7 @@
         <wire-schema.version>3.4.0</wire-schema.version>
         <twilio.version>8.17.0</twilio.version>
         <hibernate-validator.version>6.0.20.Final</hibernate-validator.version>
+        <hypersistence-utils.version>3.5.2</hypersistence-utils.version>
         <javax.el.version>3.0.0</javax.el.version>
         <javax.validation-api.version>2.0.1.Final</javax.validation-api.version>
         <antisamy.version>1.7.2</antisamy.version>
@@ -151,6 +152,7 @@
         <allure-maven.version>2.12.0</allure-maven.version>
         <slack-api.version>1.12.1</slack-api.version>
         <oshi.version>6.4.2</oshi.version>
+        <google-oauth-client.version>1.34.1</google-oauth-client.version>
     </properties>
 
     <modules>
@@ -1836,6 +1838,16 @@
                 <groupId>com.microsoft.azure</groupId>
                 <artifactId>azure-servicebus</artifactId>
                 <version>${azure-servicebus.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.nimbusds</groupId>
+                        <artifactId>content-type</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.ow2.asm</groupId>
+                        <artifactId>asm</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.passay</groupId>
@@ -1911,6 +1923,11 @@
                 <groupId>org.hibernate.validator</groupId>
                 <artifactId>hibernate-validator</artifactId>
                 <version>${hibernate-validator.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.hypersistence</groupId>
+                <artifactId>hypersistence-utils-hibernate-55</artifactId>
+                <version>${hypersistence-utils.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.glassfish</groupId>
@@ -2006,6 +2023,11 @@
                 <groupId>com.github.oshi</groupId>
                 <artifactId>oshi-core</artifactId>
                 <version>${oshi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.oauth-client</groupId>
+                <artifactId>google-oauth-client</artifactId>
+                <version>${google-oauth-client.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

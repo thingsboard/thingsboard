@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.transform;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.PathNotFoundException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +27,7 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
@@ -45,8 +45,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 public class TbJsonPathNodeTest {
-    final ObjectMapper mapper = new ObjectMapper();
-
     DeviceId deviceId;
     TbJsonPathNode node;
     TbJsonPathNodeConfiguration config;
@@ -61,7 +59,7 @@ public class TbJsonPathNodeTest {
         ctx = mock(TbContext.class);
         config = new TbJsonPathNodeConfiguration();
         config.setJsonPath("$.Attribute_2");
-        nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node = spy(new TbJsonPathNode());
         node.init(ctx, nodeConfiguration);
     }
@@ -74,7 +72,7 @@ public class TbJsonPathNodeTest {
     @Test
     void givenDefaultConfig_whenInit_thenFail() {
         config.setJsonPath("");
-        nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         assertThatThrownBy(() -> node.init(ctx, nodeConfiguration)).isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -96,7 +94,7 @@ public class TbJsonPathNodeTest {
     @Test
     void givenJsonMsg_whenOnMsg_thenVerifyJavaPrimitiveOutput() throws Exception {
         config.setJsonPath("$.attributes.length()");
-        nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
 
         String data = "{\"attributes\":[{\"attribute_1\":10},{\"attribute_2\":20},{\"attribute_3\":30},{\"attribute_4\":40}]}";
@@ -119,7 +117,7 @@ public class TbJsonPathNodeTest {
     @Test
     void givenJsonArrayWithFilter_whenOnMsg_thenVerifyOutput() throws Exception {
         config.setJsonPath("$.Attribute_2[?(@.voltage > 200)]");
-        nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
 
         String data = "{\"Attribute_1\":22.5,\"Attribute_2\":[{\"voltage\":220}, {\"voltage\":250}, {\"voltage\":110}]}";
@@ -173,6 +171,6 @@ public class TbJsonPathNodeTest {
         Map<String, String> mdMap = Map.of("country", "US",
                 "city", "NY"
         );
-        return TbMsg.newMsg("POST_ATTRIBUTES_REQUEST", entityId, new TbMsgMetaData(mdMap), data, callback);
+        return TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, entityId, new TbMsgMetaData(mdMap), data, callback);
     }
 }

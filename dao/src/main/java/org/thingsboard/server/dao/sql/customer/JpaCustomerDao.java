@@ -27,7 +27,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.model.sql.CustomerEntity;
-import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
+import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Objects;
@@ -39,7 +39,7 @@ import java.util.UUID;
  */
 @Component
 @SqlDao
-public class JpaCustomerDao extends JpaAbstractSearchTextDao<CustomerEntity, Customer> implements CustomerDao {
+public class JpaCustomerDao extends JpaAbstractDao<CustomerEntity, Customer> implements CustomerDao {
 
     @Autowired
     private CustomerRepository customerRepository;
@@ -58,7 +58,7 @@ public class JpaCustomerDao extends JpaAbstractSearchTextDao<CustomerEntity, Cus
     public PageData<Customer> findCustomersByTenantId(UUID tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(customerRepository.findByTenantId(
                 tenantId,
-                Objects.toString(pageLink.getTextSearch(), ""),
+                pageLink.getTextSearch(),
                 DaoUtil.toPageable(pageLink)));
     }
 

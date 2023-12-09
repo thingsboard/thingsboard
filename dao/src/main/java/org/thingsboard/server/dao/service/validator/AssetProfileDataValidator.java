@@ -53,9 +53,7 @@ public class AssetProfileDataValidator extends DataValidator<AssetProfile> {
 
     @Override
     protected void validateDataImpl(TenantId tenantId, AssetProfile assetProfile) {
-        if (StringUtils.isEmpty(assetProfile.getName())) {
-            throw new DataValidationException("Asset profile name should be specified!");
-        }
+        validateString("Asset profile name", assetProfile.getName());
         if (assetProfile.getTenantId() == null) {
             throw new DataValidationException("Asset profile should be assigned to tenant!");
         } else {

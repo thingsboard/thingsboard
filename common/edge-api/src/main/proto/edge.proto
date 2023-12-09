@@ -34,6 +34,8 @@ enum EdgeVersion {
   V_3_3_0 = 0;
   V_3_3_3 = 1;
   V_3_4_0 = 2;
+  V_3_6_0 = 3;
+  V_3_6_1 = 4;
 }
 
 /**
@@ -85,7 +87,7 @@ message ConnectResponseMsg {
 }
 
 message SyncRequestMsg {
-  bool syncRequired = 1;
+  bool syncRequired = 1 [deprecated = true];
   optional bool fullSync = 2;
 }
 
@@ -113,7 +115,7 @@ enum UpdateMsgType {
   ENTITY_DELETED_RPC_MESSAGE = 2;
   ALARM_ACK_RPC_MESSAGE = 3;
   ALARM_CLEAR_RPC_MESSAGE = 4;
-  ENTITY_MERGE_RPC_MESSAGE = 5; // deprecated
+  ENTITY_MERGE_RPC_MESSAGE = 5 [deprecated = true];
 }
 
 message EntityDataProto {
@@ -162,6 +164,8 @@ message RuleNodeProto {
   bool debugMode = 5;
   string configuration = 6;
   string additionalInfo = 7;
+  bool singletonMode = 8;
+  int32 configurationVersion = 9;
 }
 
 message NodeConnectionInfoProto {
@@ -187,6 +191,9 @@ message DashboardUpdateMsg {
   string title = 6;
   string configuration = 7;
   optional string assignedCustomers = 8;
+  optional string image = 9;
+  optional int32 mobileOrder = 10;
+  bool mobileHide = 11;
 }
 
 message DeviceUpdateMsg {
@@ -201,7 +208,7 @@ message DeviceUpdateMsg {
   string type = 9;
   optional string label = 10;
   optional string additionalInfo = 11;
-  optional string conflictName = 12; // deprecated
+  optional string conflictName = 12 [deprecated = true];
   optional int64 firmwareIdMSB = 13;
   optional int64 firmwareIdLSB = 14;
   optional bytes deviceDataBytes = 15;
@@ -355,19 +362,24 @@ message WidgetsBundleUpdateMsg {
   optional bytes image = 6;
   bool isSystem = 7;
   optional string description = 8;
+  optional string widgets = 9;
+  optional int32 order = 10;
 }
 
 message WidgetTypeUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  optional string bundleAlias = 4;
-  optional string alias = 5;
+  optional string bundleAlias = 4 [deprecated = true];
+  optional string alias = 5 [deprecated = true];
   optional string name = 6;
   optional string descriptorJson = 7;
   bool isSystem = 8;
   optional string image = 9;
   optional string description = 10;
+  optional string fqn = 11;
+  bool deprecated = 12;
+  repeated string tags = 13;
 }
 
 message AdminSettingsUpdateMsg {
@@ -381,6 +393,49 @@ message UserCredentialsUpdateMsg {
   int64 userIdLSB = 2;
   bool enabled = 3;
   string password = 4;
+}
+
+message TenantUpdateMsg {
+  UpdateMsgType msgType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string title = 4;
+  int64 profileIdMSB = 5;
+  int64 profileIdLSB = 6;
+  string region = 7;
+  optional string country = 8;
+  optional string state = 9;
+  optional string city = 10;
+  optional string address = 11;
+  optional string address2 = 12;
+  optional string zip = 13;
+  optional string phone = 14;
+  optional string email = 15;
+  optional string additionalInfo = 16;
+}
+
+message TenantProfileUpdateMsg {
+  UpdateMsgType msgType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string name = 4;
+  optional string description = 5;
+  bool default = 6;
+  bool isolatedRuleChain = 7;
+  bytes profileDataBytes = 8;
+}
+
+message ResourceUpdateMsg {
+  UpdateMsgType msgType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string title = 4;
+  string resourceType = 5;
+  string resourceKey = 6;
+  string fileName = 7;
+  optional string data = 8;
+  optional string etag = 9;
+  bool isSystem = 10;
 }
 
 message RuleChainMetadataRequestMsg {
@@ -411,8 +466,8 @@ message DeviceCredentialsRequestMsg {
   int64 deviceIdLSB = 2;
 }
 
-// deprecated
 message DeviceProfileDevicesRequestMsg {
+  option deprecated = true;
   int64 deviceProfileIdMSB = 1;
   int64 deviceProfileIdLSB = 2;
 }
@@ -526,9 +581,15 @@ message UplinkMsg {
   repeated UserCredentialsRequestMsg userCredentialsRequestMsg = 10;
   repeated DeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 11;
   repeated DeviceRpcCallMsg deviceRpcCallMsg = 12;
-  repeated DeviceProfileDevicesRequestMsg deviceProfileDevicesRequestMsg = 13; // deprecated
+  repeated DeviceProfileDevicesRequestMsg deviceProfileDevicesRequestMsg = 13 [deprecated = true];
   repeated WidgetBundleTypesRequestMsg widgetBundleTypesRequestMsg = 14;
   repeated EntityViewsRequestMsg entityViewsRequestMsg = 15;
+  repeated AssetUpdateMsg assetUpdateMsg = 16;
+  repeated DashboardUpdateMsg dashboardUpdateMsg = 17;
+  repeated EntityViewUpdateMsg entityViewUpdateMsg = 18;
+  repeated AssetProfileUpdateMsg assetProfileUpdateMsg = 19;
+  repeated DeviceProfileUpdateMsg deviceProfileUpdateMsg = 20;
+  repeated ResourceUpdateMsg resourceUpdateMsg = 21;
 }
 
 message UplinkResponseMsg {
@@ -569,5 +630,8 @@ message DownlinkMsg {
   repeated QueueUpdateMsg queueUpdateMsg = 23;
   repeated AssetProfileUpdateMsg assetProfileUpdateMsg = 24;
   EdgeConfiguration edgeConfiguration = 25;
+  repeated TenantUpdateMsg tenantUpdateMsg = 26;
+  repeated TenantProfileUpdateMsg tenantProfileUpdateMsg = 27;
+  repeated ResourceUpdateMsg resourceUpdateMsg = 28;
 }
 

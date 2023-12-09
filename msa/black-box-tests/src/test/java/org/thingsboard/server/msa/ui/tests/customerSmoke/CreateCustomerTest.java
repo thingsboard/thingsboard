@@ -207,9 +207,9 @@ public class CreateCustomerTest extends AbstractDriverBaseTest {
 
         sideBarMenuView.customerBtn().click();
         customerPage.plusBtn().click();
-        customerPage.titleFieldAddEntityView().sendKeys(customerName);
-        customerPage.phoneNumberAddEntityView().sendKeys(number);
-        customerPage.phoneNumberAddEntityView().sendKeys(Keys.CONTROL + "A" + Keys.BACK_SPACE);
+        customerPage.addCustomerViewEnterName(customerName);
+        customerPage.enterText(customerPage.phoneNumberAddEntityView(), number);
+        customerPage.clearInputField(customerPage.phoneNumberAddEntityView());
         customerPage.addBtnC().click();
         this.customerName = customerName;
         customerPage.entity(customerName).click();
