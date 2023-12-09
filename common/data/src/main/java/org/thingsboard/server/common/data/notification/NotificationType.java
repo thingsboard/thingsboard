@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.common.data.notification;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 public enum NotificationType {
 
     GENERAL,
@@ -28,6 +31,8 @@ public enum NotificationType {
     ENTITIES_LIMIT,
     API_USAGE_LIMIT,
     RULE_NODE,
-    RATE_LIMITS
+    RATE_LIMITS;
+
+    public static final Set<NotificationType> all = EnumSet.allOf(NotificationType.class);
 
 }

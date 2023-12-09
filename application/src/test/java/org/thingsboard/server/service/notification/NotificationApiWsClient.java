@@ -21,10 +21,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.notification.Notification;
+import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.controller.TbTestWebSocketClient;
 import org.thingsboard.server.service.ws.notification.cmd.MarkAllNotificationsAsReadCmd;
 import org.thingsboard.server.service.ws.notification.cmd.MarkNotificationsAsReadCmd;
-import org.thingsboard.server.service.ws.notification.cmd.NotificationCmdsWrapper;
 import org.thingsboard.server.service.ws.notification.cmd.NotificationsCountSubCmd;
 import org.thingsboard.server.service.ws.notification.cmd.NotificationsSubCmd;
 import org.thingsboard.server.service.ws.notification.cmd.UnreadNotificationsCountUpdate;
@@ -36,7 +36,10 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Getter
@@ -49,40 +52,37 @@ public class NotificationApiWsClient extends TbTestWebSocketClient {
     private int unreadCount;
     private List<Notification> notifications;
 
+    private final Map<Integer, UnreadNotificationsUpdate> lastUpdates = new ConcurrentHashMap<>();
+
     public NotificationApiWsClient(String wsUrl, String token) throws URISyntaxException {
-        super(new URI(wsUrl + "/api/ws/plugins/notifications?token=" + token));
+        super(new URI(wsUrl + "/api/ws?token=" + token));
     }
 
-    public NotificationApiWsClient subscribeForUnreadNotifications(int limit) {
-        NotificationCmdsWrapper cmdsWrapper = new NotificationCmdsWrapper();
-        cmdsWrapper.setUnreadSubCmd(new NotificationsSubCmd(1, limit));
-        sendCmd(cmdsWrapper);
+    public NotificationApiWsClient subscribeForUnreadNotifications(int limit, NotificationType... types) {
+        send(new NotificationsSubCmd(newCmdId(), limit, Arrays.stream(types).collect(Collectors.toSet())));
         this.limit = limit;
         return this;
     }
 
+    public int subscribeForUnreadNotificationsAndWait(int limit, NotificationType... types) {
+        int subId = newCmdId();
+        send(new NotificationsSubCmd(subId, limit, Arrays.stream(types).collect(Collectors.toSet())));
+        waitForReply();
+        this.limit = limit;
+        return subId;
+    }
+
     public NotificationApiWsClient subscribeForUnreadNotificationsCount() {
-        NotificationCmdsWrapper cmdsWrapper = new NotificationCmdsWrapper();
-        cmdsWrapper.setUnreadCountSubCmd(new NotificationsCountSubCmd(2));
-        sendCmd(cmdsWrapper);
+        send(new NotificationsCountSubCmd(newCmdId()));
         return this;
     }
 
     public void markNotificationAsRead(UUID... notifications) {
-        NotificationCmdsWrapper cmdsWrapper = new NotificationCmdsWrapper();
-        cmdsWrapper.setMarkAsReadCmd(new MarkNotificationsAsReadCmd(newCmdId(), Arrays.asList(notifications)));
-        sendCmd(cmdsWrapper);
+        send(new MarkNotificationsAsReadCmd(newCmdId(), Arrays.asList(notifications)));
     }
 
     public void markAllNotificationsAsRead() {
-        NotificationCmdsWrapper cmdsWrapper = new NotificationCmdsWrapper();
-        cmdsWrapper.setMarkAllAsReadCmd(new MarkAllNotificationsAsReadCmd(newCmdId()));
-        sendCmd(cmdsWrapper);
-    }
-
-    public void sendCmd(NotificationCmdsWrapper cmdsWrapper) {
-        String cmd = JacksonUtil.toString(cmdsWrapper);
-        send(cmd);
+        send(new MarkAllNotificationsAsReadCmd(newCmdId()));
     }
 
     @Override
@@ -98,6 +98,7 @@ public class NotificationApiWsClient extends TbTestWebSocketClient {
         CmdUpdateType updateType = CmdUpdateType.valueOf(update.get("cmdUpdateType").asText());
         if (updateType == CmdUpdateType.NOTIFICATIONS) {
             lastDataUpdate = JacksonUtil.treeToValue(update, UnreadNotificationsUpdate.class);
+            lastUpdates.put(lastDataUpdate.getCmdId(), lastDataUpdate);
             unreadCount = lastDataUpdate.getTotalUnreadCount();
             if (lastDataUpdate.getNotifications() != null) {
                 notifications = new ArrayList<>(lastDataUpdate.getNotifications());
@@ -126,7 +127,7 @@ public class NotificationApiWsClient extends TbTestWebSocketClient {
         super.onMessage(s);
     }
 
-    private static int newCmdId() {
+    private int newCmdId() {
         return RandomUtils.nextInt(1, 1000);
     }
 

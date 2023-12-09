@@ -28,14 +28,17 @@ import org.thingsboard.server.service.ws.telemetry.cmd.v2.CmdUpdateType;
 public class UnreadNotificationsCountUpdate extends CmdUpdate {
 
     private final int totalUnreadCount;
+    private final int sequenceNumber;
 
     @Builder
     @JsonCreator
     public UnreadNotificationsCountUpdate(@JsonProperty("cmdId") int cmdId, @JsonProperty("errorCode") int errorCode,
                                           @JsonProperty("errorMsg") String errorMsg,
-                                          @JsonProperty("totalUnreadCount") int totalUnreadCount) {
+                                          @JsonProperty("totalUnreadCount") int totalUnreadCount,
+                                          @JsonProperty("sequenceNumber") int sequenceNumber) {
         super(cmdId, errorCode, errorMsg);
         this.totalUnreadCount = totalUnreadCount;
+        this.sequenceNumber = sequenceNumber;
     }
 
     @Override

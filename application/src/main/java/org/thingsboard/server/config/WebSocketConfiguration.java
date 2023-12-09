@@ -46,8 +46,9 @@ import java.util.Map;
 @Slf4j
 public class WebSocketConfiguration implements WebSocketConfigurer {
 
-    public static final String WS_PLUGIN_PREFIX = "/api/ws/plugins/";
-    private static final String WS_PLUGIN_MAPPING = WS_PLUGIN_PREFIX + "**";
+    public static final String WS_API_ENDPOINT = "/api/ws";
+    public static final String WS_PLUGINS_ENDPOINT = "/api/ws/plugins/";
+    private static final String WS_API_MAPPING = "/api/ws/**";
 
     private final WebSocketHandler wsHandler;
 
@@ -65,7 +66,7 @@ public class WebSocketConfiguration implements WebSocketConfigurer {
             log.error("TbWebSocketHandler expected but [{}] provided", wsHandler);
             throw new RuntimeException("TbWebSocketHandler expected but " + wsHandler + " provided");
         }
-        registry.addHandler(wsHandler, WS_PLUGIN_MAPPING).setAllowedOriginPatterns("*")
+        registry.addHandler(wsHandler, WS_API_MAPPING).setAllowedOriginPatterns("*")
                 .addInterceptors(new HttpSessionHandshakeInterceptor(), new HandshakeInterceptor() {
 
                     @Override
