@@ -115,31 +115,33 @@ public class FirstOnlyIntegrationActivityManager extends AbstractActivityManager
     @Override
     protected void doOnReportingPeriodEnd() {
         for (Map.Entry<IntegrationActivityKey, ActivityStateWrapper> entry : states.entrySet()) {
-            var activityKey = entry.getKey();
             var activityStateWrapper = entry.getValue();
+            if (activityStateWrapper.isAlreadyBeenReported()) {
+                activityStateWrapper.setAlreadyBeenReported(false);
+                continue;
+            }
+            var activityKey = entry.getKey();
             var activityState = activityStateWrapper.getState();
             long lastRecordedTime = activityState.getLastRecordedTime();
             // if there were no activities during the reporting period, we should remove the entry to prevent memory leaks
-            if (!activityStateWrapper.isAlreadyBeenReported()) {
-                log.debug("[{}][{}] No activity events were received during reporting period for device with id: [{}]. Going to remove activity state.",
-                        activityKey.getTenantId().getId(), name, activityKey.getDeviceId().getId());
-                states.remove(activityKey);
-                // report leftover events
-                if (activityState.getLastReportedTime() < lastRecordedTime) {
-                    log.debug("[{}][{}] Going to report leftover activity event for device with id: [{}].", activityKey.getTenantId().getId(), name, activityKey.getDeviceId().getId());
-                    reporter.report(activityKey, lastRecordedTime, activityState, new ActivityReportCallback<>() {
-                        @Override
-                        public void onSuccess(IntegrationActivityKey key, long reportedTime) {
-                            updateLastReportedTime(key, reportedTime); // just in case the same key was added again
-                        }
+            log.debug("[{}][{}] No activity events were received during reporting period for device with id: [{}]. Going to remove activity state.",
+                    activityKey.getTenantId().getId(), name, activityKey.getDeviceId().getId());
+            states.remove(activityKey);
+            // report leftover events
+            if (activityState.getLastReportedTime() < lastRecordedTime) {
+                log.debug("[{}][{}] Going to report leftover activity event for device with id: [{}].", activityKey.getTenantId().getId(), name, activityKey.getDeviceId().getId());
+                reporter.report(activityKey, lastRecordedTime, activityState, new ActivityReportCallback<>() {
+                    @Override
+                    public void onSuccess(IntegrationActivityKey key, long reportedTime) {
+                        updateLastReportedTime(key, reportedTime); // just in case the same key was added again
+                    }
 
-                        @Override
-                        public void onFailure(IntegrationActivityKey key, Throwable t) {
-                            log.debug("[{}][{}] Failed to report last activity event in a period for device with id: [{}].",
-                                    activityKey.getTenantId().getId(), name, activityKey.getDeviceId().getId());
-                        }
-                    });
-                }
+                    @Override
+                    public void onFailure(IntegrationActivityKey key, Throwable t) {
+                        log.debug("[{}][{}] Failed to report last activity event in a period for device with id: [{}].",
+                                activityKey.getTenantId().getId(), name, activityKey.getDeviceId().getId());
+                    }
+                });
             }
             activityStateWrapper.setAlreadyBeenReported(false);
         }

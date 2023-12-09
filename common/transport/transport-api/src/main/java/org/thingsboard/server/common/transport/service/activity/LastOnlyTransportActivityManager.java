@@ -42,9 +42,7 @@ import org.thingsboard.server.common.transport.service.SessionMetaData;
 import org.thingsboard.server.common.transport.service.TransportActivityState;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -82,7 +80,6 @@ public class LastOnlyTransportActivityManager extends AbstractActivityManager<UU
 
     @Override
     protected void doOnReportingPeriodEnd() {
-        Set<UUID> statesToRemove = new HashSet<>();
         for (Map.Entry<UUID, TransportActivityState> entry : states.entrySet()) {
             var sessionId = entry.getKey();
             var activityState = entry.getValue();
@@ -91,8 +88,8 @@ public class LastOnlyTransportActivityManager extends AbstractActivityManager<UU
             if (sessionMetaData != null) {
                 activityState.setSessionInfoProto(sessionMetaData.getSessionInfo());
             } else {
-                log.debug("[{}] Session with id: [{}] is not present. Marking it's activity state for removal.", name, sessionId);
-                statesToRemove.add(sessionId);
+                log.debug("[{}] Session with id: [{}] is not present. Removing it's activity state.", name, sessionId);
+                states.remove(sessionId);
             }
 
             long lastActivityTime = activityState.getLastRecordedTime();
@@ -113,8 +110,8 @@ public class LastOnlyTransportActivityManager extends AbstractActivityManager<UU
             long expirationTime = System.currentTimeMillis() - sessionInactivityTimeout;
             boolean hasExpired = sessionMetaData != null && lastActivityTime < expirationTime;
             if (hasExpired) {
-                log.debug("[{}] Session with id: [{}] has expired due to last activity time: [{}]. Marking it's activity state for removal.", name, sessionId, lastActivityTime);
-                statesToRemove.add(sessionId);
+                log.debug("[{}] Session with id: [{}] has expired due to last activity time: [{}]. Removing it's activity state.", name, sessionId, lastActivityTime);
+                states.remove(sessionId);
                 transportService.deregisterSession(sessionInfo);
                 transportService.process(sessionInfo, SESSION_EVENT_MSG_CLOSED, null);
                 sessionMetaData.getListener().onRemoteSessionCloseCommand(sessionId, SESSION_EXPIRED_NOTIFICATION_PROTO);
@@ -134,7 +131,6 @@ public class LastOnlyTransportActivityManager extends AbstractActivityManager<UU
                 });
             }
         }
-        statesToRemove.forEach(states::remove);
     }
 
     private void updateLastReportedTime(UUID key, long newLastReportedTime) {

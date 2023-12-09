@@ -785,7 +785,9 @@ state:
   # If 'persistToTelemetry' is changed from 'false' to 'true': 'CREATE OR REPLACE VIEW device_info_view AS SELECT * FROM device_info_active_ts_view;'
   # If 'persistToTelemetry' is changed from 'true' to 'false': 'CREATE OR REPLACE VIEW device_info_view AS SELECT * FROM device_info_active_attribute_view;'
   persistToTelemetry: "${PERSIST_STATE_TO_TELEMETRY:false}"
-  # Time-to-live for device state telemetry data (e.g. 'active', 'lastActivityTime'). Used only when state.persistToTelemetry is set to 'true'.
+  # Millisecond value defining time-to-live for device state telemetry data (e.g. 'active', 'lastActivityTime').
+  # Used only when state.persistToTelemetry is set to 'true' and Cassandra is used for timeseries data.
+  # 0 means time-to-live mechanism is disabled.
   telemetryTtl: "${STATE_TELEMETRY_TTL:0}"
 
 # Tbel parameters
@@ -870,11 +872,10 @@ transport:
     report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:3000}"
   activity:
       # This property specifies the strategy for reporting activity events within each reporting period.
-      # The accepted values are 'first', 'last', and 'first and last'.
+      # The accepted values are 'first', 'last', and 'first-and-last'.
       # - 'first': Only the first activity event in each reporting period is reported.
       # - 'last': Only the last activity event in the reporting period is reported.
       # - 'first-and-last': Both the first and last activity events in the reporting period are reported.
-      # - 'all': All activity events in the reporting period are reported.
     reporting_strategy: "${TB_TRANSPORT_ACTIVITY_REPORTING_STRATEGY:last}"
   json:
     # Cast String data types to Numeric if possible when processing Telemetry/Attributes JSON

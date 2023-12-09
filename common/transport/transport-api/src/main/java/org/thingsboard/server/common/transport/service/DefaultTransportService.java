@@ -136,6 +136,7 @@ public class DefaultTransportService implements TransportService {
 
     public static final String OVERWRITE_ACTIVITY_TIME = "overwriteActivityTime";
     public static final String SESSION_EXPIRED_MESSAGE = "Session has expired due to last activity time!";
+    private static final String ACTIVITY_MANAGER_NAME = "transport-activity-manager";
     public static final TransportProtos.SessionEventMsg SESSION_EVENT_MSG_OPEN = getSessionEventMsg(TransportProtos.SessionEvent.OPEN);
     public static final TransportProtos.SessionEventMsg SESSION_EVENT_MSG_CLOSED = getSessionEventMsg(TransportProtos.SessionEvent.CLOSED);
     public static final TransportProtos.SessionCloseNotificationProto SESSION_EXPIRED_NOTIFICATION_PROTO = TransportProtos.SessionCloseNotificationProto.newBuilder()
@@ -187,7 +188,6 @@ public class DefaultTransportService implements TransportService {
     private final NotificationRuleProcessor notificationRuleProcessor;
     private final EntityLimitsCache entityLimitsCache;
     private ActivityManager<UUID, TransportActivityState> activityManager;
-    private static final String ACTIVITY_MANAGER_NAME = "transport-activity-manager";
 
     protected TbQueueRequestTemplate<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> transportApiRequestTemplate;
     protected TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> ruleEngineMsgProducer;
@@ -260,7 +260,7 @@ public class DefaultTransportService implements TransportService {
     }
 
     private final ActivityStateReporter<UUID, TransportActivityState> activityReporter = (sessionId, timeToReport, state, reportCallback) -> {
-        log.debug("[{}] Reporting activity state for key: [{}]. Time to report: [{}].", ACTIVITY_MANAGER_NAME, sessionId, timeToReport);
+        log.debug("[{}] Reporting activity state for session with id: [{}]. Time to report: [{}].", ACTIVITY_MANAGER_NAME, sessionId, timeToReport);
         SessionMetaData sessionMetaData = sessions.get(sessionId);
         TransportProtos.SubscriptionInfoProto subscriptionInfo = TransportProtos.SubscriptionInfoProto.newBuilder()
                 .setAttributeSubscription(sessionMetaData != null && sessionMetaData.isSubscribedToAttributes())
