@@ -27,6 +27,8 @@ public class UserPasswordPolicy implements Serializable {
 
     @ApiModelProperty(position = 1, value = "Minimum number of symbols in the password." )
     private Integer minimumLength;
+    @ApiModelProperty(position = 1, value = "Maximum number of symbols in the password." )
+    private Integer maximumLength;
     @ApiModelProperty(position = 1, value = "Minimum number of uppercase letters in the password." )
     private Integer minimumUppercaseLetters;
     @ApiModelProperty(position = 1, value = "Minimum number of lowercase letters in the password." )
@@ -37,6 +39,8 @@ public class UserPasswordPolicy implements Serializable {
     private Integer minimumSpecialCharacters;
     @ApiModelProperty(position = 1, value = "Allow whitespaces")
     private Boolean allowWhitespaces = true;
+    @ApiModelProperty(position = 1, value = "Force user to update password if existing one does not pass validation")
+    private Boolean forceUserToResetPasswordIfNotValid = false;
 
     @ApiModelProperty(position = 1, value = "Password expiration period (days). Force expiration of the password." )
     private Integer passwordExpirationPeriodDays;
