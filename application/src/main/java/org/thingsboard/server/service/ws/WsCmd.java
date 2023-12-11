@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge.instructions;
+package org.thingsboard.server.service.ws;
 
-import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.edge.EdgeInstallInstructions;
-import org.thingsboard.server.common.data.id.TenantId;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import javax.servlet.http.HttpServletRequest;
 
-public interface EdgeInstallService {
+public interface WsCmd {
 
-    EdgeInstallInstructions getInstallInstructions(TenantId tenantId, Edge edge, String installationMethod, HttpServletRequest request);
+    int getCmdId();
+
+    @JsonIgnore
+    WsCmdType getType();
+
 }

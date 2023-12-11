@@ -596,7 +596,11 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
   importImage(): void {
     this.importExportService.importImage().subscribe((image) => {
       if (image) {
-        this.updateData();
+        if (this.selectionMode) {
+          this.imageSelected.next(image);
+        } else {
+          this.updateData();
+        }
       }
     });
   }

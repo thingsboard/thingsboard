@@ -13,20 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.edge;
+package org.thingsboard.server.service.ws;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+public enum WsCmdType {
+    AUTH,
 
-@ApiModel
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class EdgeInstallInstructions {
+    ATTRIBUTES,
+    TIMESERIES,
+    TIMESERIES_HISTORY,
+    ENTITY_DATA,
+    ENTITY_COUNT,
+    ALARM_DATA,
+    ALARM_COUNT,
 
-    @ApiModelProperty(position = 1, value = "Markdown with install instructions")
-    private String installInstructions;
+    NOTIFICATIONS,
+    NOTIFICATIONS_COUNT,
+    MARK_NOTIFICATIONS_AS_READ,
+    MARK_ALL_NOTIFICATIONS_AS_READ,
+
+    ALARM_DATA_UNSUBSCRIBE,
+    ALARM_COUNT_UNSUBSCRIBE,
+    ENTITY_DATA_UNSUBSCRIBE,
+    ENTITY_COUNT_UNSUBSCRIBE,
+    NOTIFICATIONS_UNSUBSCRIBE
 }

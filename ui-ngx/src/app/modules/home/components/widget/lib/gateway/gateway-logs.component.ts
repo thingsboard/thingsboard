@@ -114,9 +114,15 @@ export class GatewayLogsComponent implements AfterViewInit {
         const result = {
           ts: data[0],
           key: this.activeLink.key,
-          message: /\[(.*)/.exec(data[1])[0],
+          message: data[1],
           status: 'INVALID LOG FORMAT' as GatewayStatus
         };
+
+        try {
+          result.message = /\[(.*)/.exec(data[1])[0];
+        } catch (e) {
+          result.message = data[1];
+        }
 
         try {
           result.status = data[1].match(/\|(\w+)\|/)[1];
