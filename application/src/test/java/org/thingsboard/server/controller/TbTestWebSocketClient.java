@@ -69,7 +69,6 @@ public class TbTestWebSocketClient extends WebSocketClient {
         WsCommandsWrapper cmdsWrapper = new WsCommandsWrapper();
         cmdsWrapper.setAuthCmd(new AuthCmd(1, token));
         send(JacksonUtil.toString(cmdsWrapper));
-        waitForReply();
     }
 
     @Override
