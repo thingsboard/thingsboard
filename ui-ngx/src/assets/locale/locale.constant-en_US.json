@@ -2021,6 +2021,7 @@
         "sync-process-started-successfully": "Sync process started successfully!",
         "missing-related-rule-chains-title": "Edge has missing related rule chain(s)",
         "missing-related-rule-chains-text": "Assigned to edge rule chain(s) use rule nodes that forward message(s) to rule chain(s) that are not assigned to this edge. <br><br> List of missing rule chain(s): <br> {{missingRuleChains}}",
+        "upgrade-instructions": "Upgrade Instructions",
         "widget-datasource-error": "This widget supports only EDGE entity datasource"
     },
     "edge-event": {
@@ -2688,7 +2689,7 @@
         "connectors-table-key": "Key",
         "connectors-table-class": "Class",
         "rpc-command-send": "Send",
-        "rpc-command-result": "Result",
+        "rpc-command-result": "Response",
         "rpc-command-edit-params": "Edit parameters",
         "gateway-configuration": "General Configuration",
         "docker-label": "In order to run ThingsBoard IoT gateway in docker with credentials for this device you can use the following commands.",
@@ -3331,15 +3332,13 @@
         "recipient-type": {
             "affected-tenant-administrators": "Affected tenant administrators",
             "affected-user": "Affected user",
-            "affected-user-hint": "Affected user hint",
             "all-users": "All users",
             "customer-users": "Customer users",
             "system-administrators": "System administrators",
             "tenant-administrators": "Tenant administrators",
             "user-filters": "User filter",
             "user-list": "User list",
-            "users-entity-owner": "Users of the entity owner",
-            "users-entity-owner-hint": "Users of the entity owner hint"
+            "users-entity-owner": "Users of the entity owner"
         },
         "recipients": "Recipients",
         "notification-recipients": "Notifications / Recipients",
@@ -4535,6 +4534,7 @@
         "gram-per-cubic-centimeter": "Gram per cubic centimeter",
         "kilogram-per-square-meter": "Kilogram per square metre",
         "milligram-per-milliliter": "Milligram per milliliter",
+        "milligram-per-cubic-meter": "Milligram per cubic meter",
         "pound-per-cubic-foot": "Pound per cubic foot",
         "ounces-per-cubic-inch": "Ounces per cubic inch",
         "tons-per-cubic-yard": "Tons per cubic yard",
@@ -6694,7 +6694,6 @@
             "nl_BE": "Koninkrijk België",
             "pt_BR": "Português do Brasil",
             "ro_RO": "Română",
-            "ru_RU": "Русский",
             "sl_SI": "Slovenščina",
             "tr_TR": "Türkçe",
             "uk_UA": "Українська",

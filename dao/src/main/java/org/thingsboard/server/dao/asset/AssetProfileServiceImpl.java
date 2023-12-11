@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -42,9 +43,11 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -318,7 +321,16 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
         return EntityType.ASSET_PROFILE;
     }
 
-    private PaginatedRemover<TenantId, AssetProfile> tenantAssetProfilesRemover =
+    @Override
+    public List<EntityInfo> findAssetProfileNamesByTenantId(TenantId tenantId, boolean activeOnly) {
+        log.trace("Executing findAssetProfileNamesByTenantId, tenantId [{}]", tenantId);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        return assetProfileDao.findTenantAssetProfileNames(tenantId.getId(), activeOnly)
+                .stream().sorted(Comparator.comparing(EntityInfo::getName))
+                .collect(Collectors.toList());
+    }
+
+    private final PaginatedRemover<TenantId, AssetProfile> tenantAssetProfilesRemover =
             new PaginatedRemover<>() {
 
                 @Override
