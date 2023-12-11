@@ -30,7 +30,8 @@ export const Constants = {
     badRequestParams: 31,
     itemNotFound: 32,
     tooManyRequests: 33,
-    tooManyUpdates: 34
+    tooManyUpdates: 34,
+    passwordViolation: 45
   },
   entryPoints: {
     login: '/api/auth/login',
