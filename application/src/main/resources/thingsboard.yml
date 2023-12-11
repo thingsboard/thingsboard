@@ -76,6 +76,8 @@ server:
     max_entities_per_alarm_subscription: "${TB_SERVER_WS_MAX_ENTITIES_PER_ALARM_SUBSCRIPTION:10000}"
     # Maximum queue size of the websocket updates per session. This restriction prevents infinite updates of WS
     max_queue_messages_per_session: "${TB_SERVER_WS_DEFAULT_QUEUE_MESSAGES_PER_SESSION:1000}"
+    # Maximum time between WS session opening and sending auth command
+    auth_timeout_ms: "${TB_SERVER_WS_AUTH_TIMEOUT_MS:10000}"
   rest:
     server_side_rpc:
       # Minimum value of the server-side RPC timeout. May override value provided in the REST API call.

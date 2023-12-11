@@ -59,6 +59,7 @@ import org.thingsboard.server.service.ws.WsCommandsWrapper;
 import org.thingsboard.server.service.ws.notification.cmd.NotificationCmdsWrapper;
 import org.thingsboard.server.service.ws.telemetry.cmd.TelemetryCmdsWrapper;
 
+import javax.annotation.PostConstruct;
 import javax.websocket.RemoteEndpoint;
 import javax.websocket.SendHandler;
 import javax.websocket.SendResult;
@@ -104,6 +105,8 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
     private long pingTimeout;
     @Value("${server.ws.max_queue_messages_per_session:1000}")
     private int wsMaxQueueMessagesPerSession;
+    @Value("${server.ws.auth_timeout_ms:10000}")
+    private int authTimeoutMs;
 
     private final ConcurrentMap<String, WebSocketSessionRef> blacklistedSessions = new ConcurrentHashMap<>();
 
@@ -112,18 +115,23 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
     private final ConcurrentMap<UserId, Set<String>> regularUserSessionsMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<UserId, Set<String>> publicUserSessionsMap = new ConcurrentHashMap<>();
 
-    private final Cache<String, SessionMetaData> pendingSessions = Caffeine.newBuilder()
-            .expireAfterWrite(10, TimeUnit.SECONDS)
-            .<String, SessionMetaData>removalListener((sessionId, sessionMd, removalCause) -> {
-                if (removalCause == RemovalCause.EXPIRED && sessionMd != null) {
-                    try {
-                        close(sessionMd.sessionRef, CloseStatus.POLICY_VIOLATION);
-                    } catch (IOException e) {
-                        log.warn("IO error", e);
+    private Cache<String, SessionMetaData> pendingSessions;
+
+    @PostConstruct
+    private void init() {
+        pendingSessions = Caffeine.newBuilder()
+                .expireAfterWrite(authTimeoutMs, TimeUnit.MILLISECONDS)
+                .<String, SessionMetaData>removalListener((sessionId, sessionMd, removalCause) -> {
+                    if (removalCause == RemovalCause.EXPIRED && sessionMd != null) {
+                        try {
+                            close(sessionMd.sessionRef, CloseStatus.POLICY_VIOLATION);
+                        } catch (IOException e) {
+                            log.warn("IO error", e);
+                        }
                     }
-                }
-            })
-            .build();
+                })
+                .build();
+    }
 
     @Override
     public void handleTextMessage(WebSocketSession session, TextMessage message) {
