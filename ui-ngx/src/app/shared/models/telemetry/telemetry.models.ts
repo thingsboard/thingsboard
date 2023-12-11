@@ -610,21 +610,25 @@ export class AlarmCountUpdate extends CmdUpdate {
 
 export class NotificationCountUpdate extends CmdUpdate {
   totalUnreadCount: number;
+  sequenceNumber: number;
 
   constructor(msg: NotificationCountUpdateMsg) {
     super(msg);
     this.totalUnreadCount = msg.totalUnreadCount;
+    this.sequenceNumber = msg.sequenceNumber;
   }
 }
 
 export class NotificationsUpdate extends CmdUpdate {
   totalUnreadCount: number;
+  sequenceNumber: number;
   update?: Notification;
   notifications?: Notification[];
 
   constructor(msg: NotificationsUpdateMsg) {
     super(msg);
     this.totalUnreadCount = msg.totalUnreadCount;
+    this.sequenceNumber = msg.sequenceNumber;
     this.update = msg.update;
     this.notifications = msg.notifications;
   }

@@ -25,7 +25,7 @@ import {
 } from '@angular/core';
 import { NotificationWebsocketService } from '@core/ws/notification-websocket.service';
 import { BehaviorSubject, ReplaySubject, Subscription } from 'rxjs';
-import { distinctUntilChanged, map, share, tap } from 'rxjs/operators';
+import { distinctUntilChanged, map, share, skip, tap } from 'rxjs/operators';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { ShowNotificationPopoverComponent } from '@home/components/notification/show-notification-popover.component';
@@ -100,7 +100,9 @@ export class NotificationBellComponent implements OnDestroy {
 
   private initSubscription() {
     this.notificationSubscriber = NotificationSubscriber.createNotificationCountSubscription(this.notificationWsService, this.zone);
-    this.notificationCountSubscriber = this.notificationSubscriber.notificationCount$.subscribe(value => this.countSubject.next(value));
+    this.notificationCountSubscriber = this.notificationSubscriber.notificationCount$.pipe(
+      skip(1),
+    ).subscribe(value => this.countSubject.next(value));
 
     this.notificationSubscriber.subscribe();
   }

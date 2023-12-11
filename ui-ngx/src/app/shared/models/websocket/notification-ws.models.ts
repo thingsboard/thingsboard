@@ -27,19 +27,27 @@ import { NgZone } from '@angular/core';
 import { isDefinedAndNotNull } from '@core/utils';
 import { Notification } from '@shared/models/notification.models';
 import { WsService, WsSubscriber } from '@shared/models/websocket/websocket.models';
-import { BehaviorSubject, ReplaySubject } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { WebsocketService } from '@core/ws/websocket.service';
 
 export class NotificationSubscriber extends WsSubscriber {
-  private notificationCountSubject = new ReplaySubject<NotificationCountUpdate>(1);
+  private notificationCountSubject = new BehaviorSubject<NotificationCountUpdate>({
+    cmdId: 0,
+    cmdUpdateType: undefined,
+    errorCode: 0,
+    errorMsg: '',
+    totalUnreadCount: 0,
+    sequenceNumber: 0
+  });
   private notificationsSubject = new BehaviorSubject<NotificationsUpdate>({
     cmdId: 0,
     cmdUpdateType: undefined,
     errorCode: 0,
     errorMsg: '',
     notifications: null,
-    totalUnreadCount: 0
+    totalUnreadCount: 0,
+    sequenceNumber: 0
   });
 
   public messageLimit = 10;
@@ -84,6 +92,10 @@ export class NotificationSubscriber extends WsSubscriber {
   }
 
   onNotificationCountUpdate(message: NotificationCountUpdate) {
+    const currentNotificationCount = this.notificationCountSubject.value;
+    if (message.sequenceNumber <= currentNotificationCount.sequenceNumber) {
+      return;
+    }
     if (this.zone) {
       this.zone.run(
         () => {
@@ -103,6 +115,9 @@ export class NotificationSubscriber extends WsSubscriber {
 
   onNotificationsUpdate(message: NotificationsUpdate) {
     const currentNotifications = this.notificationsSubject.value;
+    if (message.sequenceNumber <= currentNotifications.sequenceNumber) {
+      message.totalUnreadCount = currentNotifications.totalUnreadCount;
+    }
     let processMessage = message;
     if (isDefinedAndNotNull(currentNotifications) && message.update) {
       currentNotifications.notifications.unshift(message.update);
@@ -165,13 +180,15 @@ export class MarkAllAsReadCmd implements WebsocketCmd {
 export interface NotificationCountUpdateMsg extends CmdUpdateMsg {
   cmdUpdateType: CmdUpdateType.NOTIFICATIONS_COUNT;
   totalUnreadCount: number;
+  sequenceNumber: number;
 }
 
 export interface NotificationsUpdateMsg extends CmdUpdateMsg {
   cmdUpdateType: CmdUpdateType.NOTIFICATIONS;
-  totalUnreadCount: number;
   update?: Notification;
   notifications?: Notification[];
+  totalUnreadCount: number;
+  sequenceNumber: number;
 }
 
 export const isNotificationCountUpdateMsg = (message: WebsocketDataMsg): message is NotificationCountUpdateMsg => {
