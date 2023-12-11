@@ -53,8 +53,8 @@ public abstract class AbstractActivityManager<Key, State extends ActivityState> 
     @Override
     public synchronized void init(String name, long reportingPeriodMillis, ActivityStateReporter<Key, State> reporter) {
         if (!initialized) {
-            log.info("[{}] initializing.", this.name);
             this.name = StringUtils.notBlankOrDefault(name, "activity-manager");
+            log.info("[{}] initializing.", this.name);
             this.reporter = Objects.requireNonNull(reporter, "Failed to initialize activity manager: provided activity reporter is null.");
             if (reportingPeriodMillis <= 0) {
                 reportingPeriodMillis = 3000;

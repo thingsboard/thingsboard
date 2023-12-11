@@ -30,14 +30,8 @@
  */
 package org.thingsboard.server.service.integration.activity;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.activity.AbstractActivityManager;
 import org.thingsboard.server.common.transport.activity.ActivityReportCallback;
@@ -52,51 +46,53 @@ import java.util.function.Supplier;
 @Slf4j
 @Component
 @TbCoreComponent
-@ConditionalOnProperty(prefix = "integrations.activity", value = "reporting_strategy", havingValue = "all")
-public class AllIntegrationActivityManager extends AbstractActivityManager<IntegrationActivityKey, ActivityState> {
+@ConditionalOnProperty(prefix = "integrations.activity", value = "reporting_strategy", havingValue = "last")
+public class LastEventOnlyIntegrationActivityManager extends AbstractActivityManager<IntegrationActivityKey, ActivityState> {
 
     private final ConcurrentMap<IntegrationActivityKey, ActivityState> states = new ConcurrentHashMap<>();
 
     @Override
     protected void doOnActivity(IntegrationActivityKey activityKey, Supplier<ActivityState> newStateSupplier) {
         long newLastRecordedTime = System.currentTimeMillis();
-        SettableFuture<Pair<IntegrationActivityKey, Long>> reportCompletedFuture = SettableFuture.create();
-        states.compute(activityKey, (key, activityState) -> {
+        states.compute(activityKey, (__, activityState) -> {
             if (activityState == null) {
                 activityState = newStateSupplier.get();
             }
             if (activityState.getLastRecordedTime() < newLastRecordedTime) {
                 activityState.setLastRecordedTime(newLastRecordedTime);
             }
-            if (activityState.getLastReportedTime() < activityState.getLastRecordedTime()) {
-                log.debug("[{}][{}] Going to report activity event for device with id: [{}].",
+            return activityState;
+        });
+    }
+
+    @Override
+    public void doOnReportingPeriodEnd() {
+        for (Map.Entry<IntegrationActivityKey, ActivityState> entry : states.entrySet()) {
+            var activityKey = entry.getKey();
+            var activityState = entry.getValue();
+            long lastRecordedTime = activityState.getLastRecordedTime();
+            // if there were no activities during the reporting period, we should remove the entry to prevent memory leaks
+            long expirationTime = System.currentTimeMillis() - reportingPeriodMillis;
+            if (lastRecordedTime < expirationTime) {
+                log.debug("[{}][{}] No activity events were received during reporting period for device with id: [{}]. Going to remove activity state.",
                         activityKey.getTenantId().getId(), name, activityKey.getDeviceId().getId());
-                reporter.report(key, activityState.getLastRecordedTime(), activityState, new ActivityReportCallback<>() {
+                states.remove(activityKey);
+            }
+            if (activityState.getLastReportedTime() < lastRecordedTime) {
+                reporter.report(activityKey, lastRecordedTime, activityState, new ActivityReportCallback<>() {
                     @Override
                     public void onSuccess(IntegrationActivityKey key, long reportedTime) {
-                        reportCompletedFuture.set(Pair.of(key, reportedTime));
+                        updateLastReportedTime(key, reportedTime);
                     }
 
                     @Override
                     public void onFailure(IntegrationActivityKey key, Throwable t) {
-                        reportCompletedFuture.setException(t);
+                        log.debug("[{}][{}] Failed to report last activity event in a period for device with id: [{}].",
+                                activityKey.getTenantId().getId(), name, activityKey.getDeviceId().getId());
                     }
                 });
             }
-            return activityState;
-        });
-        Futures.addCallback(reportCompletedFuture, new FutureCallback<>() {
-            @Override
-            public void onSuccess(Pair<IntegrationActivityKey, Long> reportResult) {
-                updateLastReportedTime(reportResult.getFirst(), reportResult.getSecond());
-            }
-
-            @Override
-            public void onFailure(@NonNull Throwable t) {
-                log.debug("[{}][{}] Failed to report activity event for device with id: [{}].",
-                        name, activityKey.getTenantId().getId(), activityKey.getDeviceId().getId());
-            }
-        }, MoreExecutors.directExecutor());
+        }
     }
 
     private void updateLastReportedTime(IntegrationActivityKey key, long newLastReportedTime) {
@@ -104,21 +100,6 @@ public class AllIntegrationActivityManager extends AbstractActivityManager<Integ
             activityState.setLastReportedTime(Math.max(activityState.getLastReportedTime(), newLastReportedTime));
             return activityState;
         });
-    }
-
-    @Override
-    protected void doOnReportingPeriodEnd() {
-        for (Map.Entry<IntegrationActivityKey, ActivityState> entry : states.entrySet()) {
-            var activityKey = entry.getKey();
-            var activityState = entry.getValue();
-            // if there were no activities during the reporting period, we should remove the entry to prevent memory leaks
-            long expirationTime = System.currentTimeMillis() - reportingPeriodMillis;
-            if (activityState.getLastRecordedTime() < expirationTime) {
-                log.debug("[{}][{}] No activity events were received during reporting period for device with id: [{}]. Going to remove activity state.",
-                        activityKey.getTenantId().getId(), name, activityKey.getDeviceId().getId());
-                states.remove(activityKey);
-            }
-        }
     }
 
 }

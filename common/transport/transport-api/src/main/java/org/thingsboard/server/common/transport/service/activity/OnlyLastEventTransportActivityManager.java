@@ -30,17 +30,10 @@
  */
 package org.thingsboard.server.common.transport.service.activity;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.SettableFuture;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.activity.AbstractActivityManager;
@@ -50,7 +43,9 @@ import org.thingsboard.server.common.transport.service.TransportActivityState;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbTransportComponent;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -62,18 +57,10 @@ import static org.thingsboard.server.common.transport.service.DefaultTransportSe
 @Slf4j
 @Component
 @TbTransportComponent
-@ConditionalOnProperty(prefix = "transport.activity", value = "reporting_strategy", havingValue = "first")
-public class FirstOnlyTransportActivityManager extends AbstractActivityManager<UUID, TransportActivityState> {
+@ConditionalOnProperty(prefix = "transport.activity", value = "reporting_strategy", havingValue = "last")
+public class OnlyLastEventTransportActivityManager extends AbstractActivityManager<UUID, TransportActivityState> {
 
-    private final ConcurrentMap<UUID, ActivityStateWrapper> states = new ConcurrentHashMap<>();
-
-    @Data
-    private static class ActivityStateWrapper {
-
-        volatile TransportActivityState state;
-        volatile boolean alreadyBeenReported;
-
-    }
+    private final ConcurrentMap<UUID, TransportActivityState> states = new ConcurrentHashMap<>();
 
     @Value("${transport.sessions.inactivity_timeout}")
     private long sessionInactivityTimeout;
@@ -84,62 +71,30 @@ public class FirstOnlyTransportActivityManager extends AbstractActivityManager<U
     @Override
     protected void doOnActivity(UUID sessionId, Supplier<TransportActivityState> newStateSupplier) {
         long newLastRecordedTime = System.currentTimeMillis();
-        SettableFuture<Pair<UUID, Long>> reportCompletedFuture = SettableFuture.create();
-        states.compute(sessionId, (key, activityStateWrapper) -> {
-            if (activityStateWrapper == null) {
-                activityStateWrapper = new ActivityStateWrapper();
-                activityStateWrapper.setState(newStateSupplier.get());
+        states.compute(sessionId, (__, activityState) -> {
+            if (activityState == null) {
+                activityState = newStateSupplier.get();
             }
-            var activityState = activityStateWrapper.getState();
             if (activityState.getLastRecordedTime() < newLastRecordedTime) {
                 activityState.setLastRecordedTime(newLastRecordedTime);
             }
-            if (activityStateWrapper.isAlreadyBeenReported()) {
-                return activityStateWrapper;
-            }
-            if (activityState.getLastReportedTime() < activityState.getLastRecordedTime()) {
-                log.debug("[{}] Going to report first activity event for session with id: [{}]", name, sessionId);
-                reporter.report(key, activityState.getLastRecordedTime(), activityState, new ActivityReportCallback<>() {
-                    @Override
-                    public void onSuccess(UUID key, long reportedTime) {
-                        reportCompletedFuture.set(Pair.of(key, reportedTime));
-                    }
-
-                    @Override
-                    public void onFailure(UUID key, Throwable t) {
-                        reportCompletedFuture.setException(t);
-                    }
-                });
-            }
-            activityStateWrapper.setAlreadyBeenReported(true);
-            return activityStateWrapper;
+            return activityState;
         });
-        Futures.addCallback(reportCompletedFuture, new FutureCallback<>() {
-            @Override
-            public void onSuccess(Pair<UUID, Long> reportResult) {
-                updateLastReportedTime(reportResult.getFirst(), reportResult.getSecond());
-            }
-
-            @Override
-            public void onFailure(@NonNull Throwable t) {
-                log.debug("[{}] Failed to report first activity event for session with id: [{}]", name, sessionId);
-            }
-        }, MoreExecutors.directExecutor());
     }
 
     @Override
     protected void doOnReportingPeriodEnd() {
-        for (Map.Entry<UUID, ActivityStateWrapper> entry : states.entrySet()) {
+        Set<UUID> statesToRemove = new HashSet<>();
+        for (Map.Entry<UUID, TransportActivityState> entry : states.entrySet()) {
             var sessionId = entry.getKey();
-            var activityStateWrapper = entry.getValue();
-            var activityState = activityStateWrapper.getState();
+            var activityState = entry.getValue();
 
             SessionMetaData sessionMetaData = transportService.getSession(sessionId);
             if (sessionMetaData != null) {
                 activityState.setSessionInfoProto(sessionMetaData.getSessionInfo());
             } else {
-                log.debug("[{}] Session with id: [{}] is not present. Removing it's activity state.", name, sessionId);
-                states.remove(sessionId);
+                log.debug("[{}] Session with id: [{}] is not present. Marking it's activity state for removal.", name, sessionId);
+                statesToRemove.add(sessionId);
             }
 
             long lastActivityTime = activityState.getLastRecordedTime();
@@ -149,10 +104,10 @@ public class FirstOnlyTransportActivityManager extends AbstractActivityManager<U
                 var gwSessionId = new UUID(sessionInfo.getGwSessionIdMSB(), sessionInfo.getGwSessionIdLSB());
                 SessionMetaData gwSessionMetaData = transportService.getSession(gwSessionId);
                 if (gwSessionMetaData != null && gwSessionMetaData.isOverwriteActivityTime()) {
-                    ActivityStateWrapper gwActivityStateWrapper = states.get(gwSessionId);
-                    if (gwActivityStateWrapper != null) {
+                    TransportActivityState gwActivityState = states.get(gwSessionId);
+                    if (gwActivityState != null) {
                         log.debug("[{}] Session with id: [{}] has gateway session with id: [{}] with overwrite activity time enabled. Updating last activity time.", name, sessionId, gwSessionId);
-                        lastActivityTime = Math.max(gwActivityStateWrapper.getState().getLastRecordedTime(), lastActivityTime);
+                        lastActivityTime = Math.max(gwActivityState.getLastRecordedTime(), lastActivityTime);
                     }
                 }
             }
@@ -160,15 +115,14 @@ public class FirstOnlyTransportActivityManager extends AbstractActivityManager<U
             long expirationTime = System.currentTimeMillis() - sessionInactivityTimeout;
             boolean hasExpired = sessionMetaData != null && lastActivityTime < expirationTime;
             if (hasExpired) {
-                log.debug("[{}] Session with id: [{}] has expired due to last activity time: [{}]. Removing it's activity state.", name, sessionId, lastActivityTime);
-                states.remove(sessionId);
+                log.debug("[{}] Session with id: [{}] has expired due to last activity time: [{}]. Marking it's activity state for removal.", name, sessionId, lastActivityTime);
                 transportService.deregisterSession(sessionInfo);
+                statesToRemove.add(sessionId);
                 transportService.process(sessionInfo, SESSION_EVENT_MSG_CLOSED, null);
                 sessionMetaData.getListener().onRemoteSessionCloseCommand(sessionId, SESSION_EXPIRED_NOTIFICATION_PROTO);
             }
-            boolean shouldReportLeftoverEvents = sessionMetaData == null || hasExpired;
-            if (shouldReportLeftoverEvents && activityState.getLastReportedTime() < lastActivityTime) {
-                log.debug("[{}] Going to report leftover activity event for session with id: [{}].", name, sessionId);
+            if (activityState.getLastReportedTime() < lastActivityTime) {
+                log.debug("[{}] Going to report last activity event for session with id: [{}].", name, sessionId);
                 reporter.report(sessionId, lastActivityTime, activityState, new ActivityReportCallback<>() {
                     @Override
                     public void onSuccess(UUID key, long reportedTime) {
@@ -177,19 +131,18 @@ public class FirstOnlyTransportActivityManager extends AbstractActivityManager<U
 
                     @Override
                     public void onFailure(UUID key, Throwable t) {
-                        log.debug("[{}] Failed to report leftover activity event for session with id: [{}].", name, sessionId);
+                        log.debug("[{}] Failed to report last activity event for session with id: [{}].", name, sessionId);
                     }
                 });
             }
-            activityStateWrapper.setAlreadyBeenReported(false);
         }
+        statesToRemove.forEach(states::remove);
     }
 
     private void updateLastReportedTime(UUID key, long newLastReportedTime) {
-        states.computeIfPresent(key, (__, activityStateWrapper) -> {
-            var activityState = activityStateWrapper.getState();
+        states.computeIfPresent(key, (__, activityState) -> {
             activityState.setLastReportedTime(Math.max(activityState.getLastReportedTime(), newLastReportedTime));
-            return activityStateWrapper;
+            return activityState;
         });
     }
 

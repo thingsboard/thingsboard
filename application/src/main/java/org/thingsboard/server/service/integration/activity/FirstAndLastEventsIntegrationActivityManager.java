@@ -54,7 +54,7 @@ import java.util.function.Supplier;
 @Component
 @TbCoreComponent
 @ConditionalOnProperty(prefix = "integrations.activity", value = "reporting_strategy", havingValue = "first-and-last")
-public class FirstAndLastIntegrationActivityManager extends AbstractActivityManager<IntegrationActivityKey, ActivityState> {
+public class FirstAndLastEventsIntegrationActivityManager extends AbstractActivityManager<IntegrationActivityKey, ActivityState> {
 
     private final ConcurrentMap<IntegrationActivityKey, ActivityStateWrapper> states = new ConcurrentHashMap<>();
 

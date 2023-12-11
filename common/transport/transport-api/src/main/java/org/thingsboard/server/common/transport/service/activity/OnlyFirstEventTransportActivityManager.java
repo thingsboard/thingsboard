@@ -50,7 +50,9 @@ import org.thingsboard.server.common.transport.service.TransportActivityState;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbTransportComponent;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -62,8 +64,8 @@ import static org.thingsboard.server.common.transport.service.DefaultTransportSe
 @Slf4j
 @Component
 @TbTransportComponent
-@ConditionalOnProperty(prefix = "transport.activity", value = "reporting_strategy", havingValue = "first-and-last")
-public class FirstAndLastTransportActivityManager extends AbstractActivityManager<UUID, TransportActivityState> {
+@ConditionalOnProperty(prefix = "transport.activity", value = "reporting_strategy", havingValue = "first")
+public class OnlyFirstEventTransportActivityManager extends AbstractActivityManager<UUID, TransportActivityState> {
 
     private final ConcurrentMap<UUID, ActivityStateWrapper> states = new ConcurrentHashMap<>();
 
@@ -129,6 +131,7 @@ public class FirstAndLastTransportActivityManager extends AbstractActivityManage
 
     @Override
     protected void doOnReportingPeriodEnd() {
+        Set<UUID> statesToRemove = new HashSet<>();
         for (Map.Entry<UUID, ActivityStateWrapper> entry : states.entrySet()) {
             var sessionId = entry.getKey();
             var activityStateWrapper = entry.getValue();
@@ -138,8 +141,8 @@ public class FirstAndLastTransportActivityManager extends AbstractActivityManage
             if (sessionMetaData != null) {
                 activityState.setSessionInfoProto(sessionMetaData.getSessionInfo());
             } else {
-                log.debug("[{}] Session with id: [{}] is not present. Removing it's activity state.", name, sessionId);
-                states.remove(sessionId);
+                log.debug("[{}] Session with id: [{}] is not present. Marking it's activity state for removal.", name, sessionId);
+                statesToRemove.add(sessionId);
             }
 
             long lastActivityTime = activityState.getLastRecordedTime();
@@ -160,14 +163,15 @@ public class FirstAndLastTransportActivityManager extends AbstractActivityManage
             long expirationTime = System.currentTimeMillis() - sessionInactivityTimeout;
             boolean hasExpired = sessionMetaData != null && lastActivityTime < expirationTime;
             if (hasExpired) {
-                log.debug("[{}] Session with id: [{}] has expired due to last activity time: [{}]. Removing it's activity state.", name, sessionId, lastActivityTime);
-                states.remove(sessionId);
+                log.debug("[{}] Session with id: [{}] has expired due to last activity time: [{}]. Marking it's activity state for removal.", name, sessionId, lastActivityTime);
                 transportService.deregisterSession(sessionInfo);
+                statesToRemove.add(sessionId);
                 transportService.process(sessionInfo, SESSION_EVENT_MSG_CLOSED, null);
                 sessionMetaData.getListener().onRemoteSessionCloseCommand(sessionId, SESSION_EXPIRED_NOTIFICATION_PROTO);
             }
-            if (activityState.getLastReportedTime() < lastActivityTime) {
-                log.debug("[{}] Going to report last activity event for session with id: [{}].", name, sessionId);
+            boolean shouldReportLeftoverEvents = sessionMetaData == null || hasExpired;
+            if (shouldReportLeftoverEvents && activityState.getLastReportedTime() < lastActivityTime) {
+                log.debug("[{}] Going to report leftover activity event for session with id: [{}].", name, sessionId);
                 reporter.report(sessionId, lastActivityTime, activityState, new ActivityReportCallback<>() {
                     @Override
                     public void onSuccess(UUID key, long reportedTime) {
@@ -176,12 +180,13 @@ public class FirstAndLastTransportActivityManager extends AbstractActivityManage
 
                     @Override
                     public void onFailure(UUID key, Throwable t) {
-                        log.debug("[{}] Failed to report last activity event for session with id: [{}].", name, sessionId);
+                        log.debug("[{}] Failed to report leftover activity event for session with id: [{}].", name, sessionId);
                     }
                 });
             }
             activityStateWrapper.setAlreadyBeenReported(false);
         }
+        statesToRemove.forEach(states::remove);
     }
 
     private void updateLastReportedTime(UUID key, long newLastReportedTime) {
