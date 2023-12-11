@@ -95,9 +95,9 @@ export class RuleTableConfigResolver implements Resolve<EntityTableConfig<Notifi
       name: '',
       nameFunction: (entity) =>
         this.translate.instant(entity.enabled ? 'notification.rule-disable' : 'notification.rule-enable'),
-      mdiIcon: 'mdi:toggle-switch',
+      icon: 'mdi:toggle-switch',
       isEnabled: () => true,
-      mdiIconFunction: (entity) => entity.enabled ? 'mdi:toggle-switch' : 'mdi:toggle-switch-off-outline',
+      iconFunction: (entity) => entity.enabled ? 'mdi:toggle-switch' : 'mdi:toggle-switch-off-outline',
       onAction: ($event, entity) => this.toggleEnableMode($event, entity)
     },
     {

@@ -26,8 +26,8 @@ import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.EntityDataProto;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
-@Component
 @Slf4j
+@Component
 @TbCoreComponent
 public class TelemetryEdgeProcessor extends BaseTelemetryProcessor {
 

@@ -110,7 +110,7 @@ public class JacksonUtil {
         }
     }
 
-    public static <T> T fromStringIgnoreUnknownProperties(String string, Class<T> clazz) {
+    public static <T> T fromString(String string, Class<T> clazz, boolean ignoreUnknownFields) {
         try {
             return string != null ? IGNORE_UNKNOWN_PROPERTIES_JSON_MAPPER.readValue(string, clazz) : null;
         } catch (IOException e) {

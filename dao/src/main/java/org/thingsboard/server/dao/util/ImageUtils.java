@@ -34,6 +34,7 @@ import org.apache.batik.transcoder.TranscoderInput;
 import org.apache.batik.transcoder.TranscoderOutput;
 import org.apache.batik.transcoder.image.PNGTranscoder;
 import org.apache.batik.util.XMLResourceDescriptor;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
 import org.thingsboard.server.common.data.StringUtils;
@@ -69,13 +70,17 @@ public class ImageUtils {
 
     public static ProcessedImage processImage(byte[] data, String mediaType, int thumbnailMaxDimension) throws Exception {
         if (mediaTypeToFileExtension(mediaType).equals("svg")) {
-            return processSvgImage(data, mediaType, thumbnailMaxDimension);
+            try {
+                return processSvgImage(data, mediaType, thumbnailMaxDimension);
+            } catch (Exception e) {
+                if (log.isDebugEnabled()) { // printing stacktrace
+                    log.warn("Couldn't process SVG image, leaving preview as original image", e);
+                } else {
+                    log.warn("Couldn't process SVG image, leaving preview as original image: {}", ExceptionUtils.getMessage(e));
+                }
+                return previewAsOriginalImage(data, mediaType);
+            }
         }
-        ProcessedImage image = new ProcessedImage();
-        image.setMediaType(mediaType);
-        image.setData(data);
-        image.setSize(data.length);
-
         BufferedImage bufferedImage = null;
         try {
             bufferedImage = ImageIO.read(new ByteArrayInputStream(data));
@@ -83,6 +88,8 @@ public class ImageUtils {
         }
         if (bufferedImage == null) { // means that media type is not supported by ImageIO; extracting width and height from metadata and leaving preview as original image
             Metadata metadata = ImageMetadataReader.readMetadata(new ByteArrayInputStream(data));
+            ProcessedImage image = previewAsOriginalImage(data, mediaType);
+            String dirName = "Unknown";
             for (Directory dir : metadata.getDirectories()) {
                 Tag widthTag = dir.getTags().stream()
                         .filter(tag -> tag.getTagName().toLowerCase().contains("width"))
@@ -94,24 +101,22 @@ public class ImageUtils {
                     continue;
                 }
                 int width = Integer.parseInt(dir.getObject(widthTag.getTagType()).toString());
-                int height = Integer.parseInt(dir.getObject(widthTag.getTagType()).toString());
+                int height = Integer.parseInt(dir.getObject(heightTag.getTagType()).toString());
                 image.setWidth(width);
                 image.setHeight(height);
-
-                ProcessedImage preview = new ProcessedImage();
-                preview.setWidth(image.getWidth());
-                preview.setHeight(image.getHeight());
-                preview.setMediaType(mediaType);
-                preview.setData(null);
-                preview.setSize(data.length);
-                image.setPreview(preview);
-                log.warn("Couldn't process {} ({}) with ImageIO, leaving preview as original image", mediaType, dir.getName());
-                return image;
+                image.getPreview().setWidth(width);
+                image.getPreview().setHeight(height);
+                dirName = dir.getName();
+                break;
             }
-            log.warn("Image media type {} not supported", mediaType);
-            throw new IllegalArgumentException("Media type " + mediaType + " not supported");
+            log.warn("Couldn't process {} ({}) with ImageIO, leaving preview as original image", mediaType, dirName);
+            return image;
         }
 
+        ProcessedImage image = new ProcessedImage();
+        image.setMediaType(mediaType);
+        image.setData(data);
+        image.setSize(data.length);
         image.setWidth(bufferedImage.getWidth());
         image.setHeight(bufferedImage.getHeight());
 
@@ -130,7 +135,7 @@ public class ImageUtils {
             }
         }
 
-        BufferedImage thumbnail = new BufferedImage(preview.getWidth(), preview.getHeight(), BufferedImage.TYPE_INT_RGB);
+        BufferedImage thumbnail = new BufferedImage(preview.getWidth(), preview.getHeight(), BufferedImage.TYPE_INT_ARGB);
         thumbnail.getGraphics().drawImage(bufferedImage, 0, 0, preview.getWidth(), preview.getHeight(), null);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ImageIO.write(thumbnail, "png", out);
@@ -198,6 +203,23 @@ public class ImageUtils {
         preview.setMediaType("image/png");
         preview.setData(pngThumbnail);
         preview.setSize(pngThumbnail.length);
+        image.setPreview(preview);
+        return image;
+    }
+
+    private static ProcessedImage previewAsOriginalImage(byte[] data, String mediaType) {
+        ProcessedImage image = new ProcessedImage();
+        image.setMediaType(mediaType);
+        image.setData(data);
+        image.setSize(data.length);
+        image.setWidth(0);
+        image.setHeight(0);
+        ProcessedImage preview = new ProcessedImage();
+        preview.setMediaType(mediaType);
+        preview.setData(null);
+        preview.setSize(data.length);
+        preview.setWidth(0);
+        preview.setHeight(0);
         image.setPreview(preview);
         return image;
     }

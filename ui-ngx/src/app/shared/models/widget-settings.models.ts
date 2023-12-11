@@ -332,7 +332,7 @@ export const customDateFormat = (format: string): DateFormatSettings => ({
 });
 
 export const dateFormats = ['MMM dd yyyy HH:mm', 'dd MMM yyyy HH:mm', 'yyyy MMM dd HH:mm',
-  'MM/dd/yyyy HH:mm', 'dd/MM/yyyy HH:mm', 'yyyy/MM/dd HH:mm:ss']
+  'MM/dd/yyyy HH:mm', 'dd/MM/yyyy HH:mm', 'yyyy/MM/dd HH:mm:ss', 'yyyy-MM-dd HH:mm:ss', 'yyyy-MM-dd HH:mm:ss.SSS']
   .map(f => simpleDateFormat(f)).concat([lastUpdateAgoDateFormat(), customDateFormat('EEE, MMMM dd, yyyy')]);
 
 export const compareDateFormats = (df1: DateFormatSettings, df2: DateFormatSettings): boolean => {

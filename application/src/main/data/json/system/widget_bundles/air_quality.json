@@ -66,6 +66,14 @@
     "volatile_organic_compounds_chart_card",
     "volatile_organic_compounds_chart_card_with_background",
     "simple_volatile_organic_compounds_chart_card",
-    "simple_volatile_organic_compounds_chart_card_with_background"
+    "simple_volatile_organic_compounds_chart_card_with_background",
+    "individual_allergy_index_card",
+    "individual_allergy_index_card_with_background",
+    "horizontal_individual_allergy_index_iai_card",
+    "horizontal_individual_allergy_index_iai_card_with_background",
+    "individual_allergy_index_iai_chart_card",
+    "individual_allergy_index_iai_chart_card_with_background",
+    "simple_individual_allergy_index_iai_chart_card",
+    "simple_individual_allergy_index_iai_chart_card_with_background2"
   ]
 }

@@ -17,7 +17,7 @@
 import { Inject, Injectable } from '@angular/core';
 import { DashboardService } from '@core/http/dashboard.service';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '@ngrx/store';
+import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { Dashboard, DashboardLayoutId } from '@shared/models/dashboard.models';
@@ -35,10 +35,10 @@ import {
 import { MatDialog } from '@angular/material/dialog';
 import { ImportDialogComponent, ImportDialogData } from '@shared/import-export/import-dialog.component';
 import { forkJoin, Observable, of, Subject } from 'rxjs';
-import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
+import { catchError, map, mergeMap, switchMap, take, tap } from 'rxjs/operators';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityService } from '@core/http/entity.service';
-import { Widget, WidgetSize, WidgetType, WidgetTypeDetails } from '@shared/models/widget.models';
+import { Widget, WidgetSize, WidgetTypeDetails } from '@shared/models/widget.models';
 import { ItemBufferService, WidgetItem } from '@core/services/item-buffer.service';
 import {
   BulkImportRequest,
@@ -77,6 +77,8 @@ import {
 } from '@shared/import-export/export-widgets-bundle-dialog.component';
 import { ImageService } from '@core/http/image.service';
 import { ImageExportData, ImageResourceInfo, ImageResourceType } from '@shared/models/resource.models';
+import { selectUserSettingsProperty } from '@core/auth/auth.selectors';
+import { ActionPreferencesPutUserSettings } from '@core/auth/auth.actions';
 
 export type editMissingAliasesFunction = (widgets: Array<Widget>, isSingleWidget: boolean,
                                           customTitle: string, missingEntityAliases: EntityAliases) => Observable<EntityAliases>;
@@ -347,18 +349,27 @@ export class ImportExportService {
   }
 
   public exportWidgetsBundle(widgetsBundleId: string) {
-    this.widgetService.exportWidgetsBundle(widgetsBundleId).subscribe(
-      (widgetsBundle) => {
+    const tasks = {
+      includeBundleWidgetsInExport: this.store.pipe(select(selectUserSettingsProperty( 'includeBundleWidgetsInExport'))).pipe(take(1)),
+      widgetsBundle: this.widgetService.exportWidgetsBundle(widgetsBundleId)
+    };
+
+    forkJoin(tasks).subscribe({
+      next: ({includeBundleWidgetsInExport, widgetsBundle}) => {
         this.dialog.open<ExportWidgetsBundleDialogComponent, ExportWidgetsBundleDialogData,
           ExportWidgetsBundleDialogResult>(ExportWidgetsBundleDialogComponent, {
           disableClose: true,
           panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
           data: {
-            widgetsBundle
+            widgetsBundle,
+            includeBundleWidgetsInExport
           }
         }).afterClosed().subscribe(
           (result) => {
             if (result) {
+              if (includeBundleWidgetsInExport !== result.exportWidgets) {
+                this.store.dispatch(new ActionPreferencesPutUserSettings({includeBundleWidgetsInExport: result.exportWidgets}));
+              }
               if (result.exportWidgets) {
                 this.exportWidgetsBundleWithWidgetTypes(widgetsBundle);
               } else {
@@ -368,10 +379,10 @@ export class ImportExportService {
           }
         );
       },
-      (e) => {
+      error: (e) => {
         this.handleExportError(e, 'widgets-bundle.export-failed-error');
       }
-    );
+    });
   }
 
   private exportWidgetsBundleWithWidgetTypes(widgetsBundle: WidgetsBundle) {

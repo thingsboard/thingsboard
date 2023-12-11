@@ -596,7 +596,11 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
   importImage(): void {
     this.importExportService.importImage().subscribe((image) => {
       if (image) {
-        this.updateData();
+        if (this.selectionMode) {
+          this.imageSelected.next(image);
+        } else {
+          this.updateData();
+        }
       }
     });
   }
@@ -612,7 +616,9 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
     if (this.selectionMode) {
       this.selectImage($event, image);
     } else {
-      this.dataSource.selection.toggle(image);
+      if (this.deleteEnabled(image)) {
+        this.dataSource.selection.toggle(image);
+      }
     }
   }
 
