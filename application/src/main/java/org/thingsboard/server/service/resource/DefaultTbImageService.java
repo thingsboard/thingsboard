@@ -145,6 +145,15 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
             TbImageDeleteResult result = imageService.deleteImage(imageInfo, force);
             if (result.isSuccess()) {
                 notificationEntityService.logEntityAction(tenantId, imageId, imageInfo, ActionType.DELETED, user, imageId.toString());
+                evictETag(new ImageCacheKey(tenantId, imageInfo.getResourceKey(), false));
+                evictETag(new ImageCacheKey(tenantId, imageInfo.getResourceKey(), true));
+                clusterService.broadcastToCore(TransportProtos.ToCoreNotificationMsg.newBuilder()
+                        .setResourceCacheInvalidateMsg(TransportProtos.ResourceCacheInvalidateMsg.newBuilder()
+                                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                                .setResourceKey(imageInfo.getResourceKey())
+                                .build())
+                        .build());
             }
             return result;
         } catch (Exception e) {
