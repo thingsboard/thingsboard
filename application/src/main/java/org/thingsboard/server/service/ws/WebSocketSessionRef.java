@@ -54,11 +54,13 @@ public class WebSocketSessionRef {
 
     @Override
     public String toString() {
-        return "WebSocketSessionRef{" +
-                "sessionId='" + sessionId + '\'' +
-                ", localAddress=" + localAddress +
-                ", remoteAddress=" + remoteAddress +
-                ", sessionType=" + sessionType +
-                '}';
+        String info = "";
+        if (securityCtx != null) {
+            info += "[" + securityCtx.getTenantId() + "]";
+            info += "[" + securityCtx.getId() + "]";
+        }
+        info += "[" + sessionId + "]";
+        return info;
     }
+
 }
