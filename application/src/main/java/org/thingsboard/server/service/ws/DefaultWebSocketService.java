@@ -86,6 +86,7 @@ import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -147,7 +148,7 @@ public class DefaultWebSocketService implements WebSocketService {
     private ScheduledExecutorService pingExecutor;
     private String serviceId;
 
-    private List<WsCmdHandler<? extends WsCmd>> cmdsHandlers;
+    private Map<WsCmdType, WsCmdHandler<? extends WsCmd>> cmdsHandlers;
 
     @PostConstruct
     public void init() {
@@ -157,24 +158,23 @@ public class DefaultWebSocketService implements WebSocketService {
         pingExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("telemetry-web-socket-ping"));
         pingExecutor.scheduleWithFixedDelay(this::sendPing, pingTimeout / NUMBER_OF_PING_ATTEMPTS, pingTimeout / NUMBER_OF_PING_ATTEMPTS, TimeUnit.MILLISECONDS);
 
-        cmdsHandlers = List.of(
-                newCmdHandler(WsCmdType.ATTRIBUTES, this::handleWsAttributesSubscriptionCmd),
-                newCmdHandler(WsCmdType.TIMESERIES, this::handleWsTimeseriesSubscriptionCmd),
-                newCmdHandler(WsCmdType.TIMESERIES_HISTORY, this::handleWsHistoryCmd),
-                newCmdHandler(WsCmdType.ENTITY_DATA, this::handleWsEntityDataCmd),
-                newCmdHandler(WsCmdType.ALARM_DATA, this::handleWsAlarmDataCmd),
-                newCmdHandler(WsCmdType.ENTITY_COUNT, this::handleWsEntityCountCmd),
-                newCmdHandler(WsCmdType.ALARM_COUNT, this::handleWsAlarmCountCmd),
-                newCmdHandler(WsCmdType.ENTITY_DATA_UNSUBSCRIBE, this::handleWsDataUnsubscribeCmd),
-                newCmdHandler(WsCmdType.ALARM_DATA_UNSUBSCRIBE, this::handleWsDataUnsubscribeCmd),
-                newCmdHandler(WsCmdType.ENTITY_COUNT_UNSUBSCRIBE, this::handleWsDataUnsubscribeCmd),
-                newCmdHandler(WsCmdType.ALARM_COUNT_UNSUBSCRIBE, this::handleWsDataUnsubscribeCmd),
-                newCmdHandler(WsCmdType.NOTIFICATIONS, notificationCmdsHandler::handleUnreadNotificationsSubCmd),
-                newCmdHandler(WsCmdType.NOTIFICATIONS_COUNT, notificationCmdsHandler::handleUnreadNotificationsCountSubCmd),
-                newCmdHandler(WsCmdType.MARK_NOTIFICATIONS_AS_READ, notificationCmdsHandler::handleMarkAsReadCmd),
-                newCmdHandler(WsCmdType.MARK_ALL_NOTIFICATIONS_AS_READ, notificationCmdsHandler::handleMarkAllAsReadCmd),
-                newCmdHandler(WsCmdType.NOTIFICATIONS_UNSUBSCRIBE, notificationCmdsHandler::handleUnsubCmd)
-        );
+        cmdsHandlers = new EnumMap<>(WsCmdType.class);
+        cmdsHandlers.put(WsCmdType.ATTRIBUTES, newCmdHandler(this::handleWsAttributesSubscriptionCmd));
+        cmdsHandlers.put(WsCmdType.TIMESERIES, newCmdHandler(this::handleWsTimeseriesSubscriptionCmd));
+        cmdsHandlers.put(WsCmdType.TIMESERIES_HISTORY, newCmdHandler(this::handleWsHistoryCmd));
+        cmdsHandlers.put(WsCmdType.ENTITY_DATA, newCmdHandler(this::handleWsEntityDataCmd));
+        cmdsHandlers.put(WsCmdType.ALARM_DATA, newCmdHandler(this::handleWsAlarmDataCmd));
+        cmdsHandlers.put(WsCmdType.ENTITY_COUNT, newCmdHandler(this::handleWsEntityCountCmd));
+        cmdsHandlers.put(WsCmdType.ALARM_COUNT, newCmdHandler(this::handleWsAlarmCountCmd));
+        cmdsHandlers.put(WsCmdType.ENTITY_DATA_UNSUBSCRIBE, newCmdHandler(this::handleWsDataUnsubscribeCmd));
+        cmdsHandlers.put(WsCmdType.ALARM_DATA_UNSUBSCRIBE, newCmdHandler(this::handleWsDataUnsubscribeCmd));
+        cmdsHandlers.put(WsCmdType.ENTITY_COUNT_UNSUBSCRIBE, newCmdHandler(this::handleWsDataUnsubscribeCmd));
+        cmdsHandlers.put(WsCmdType.ALARM_COUNT_UNSUBSCRIBE, newCmdHandler(this::handleWsDataUnsubscribeCmd));
+        cmdsHandlers.put(WsCmdType.NOTIFICATIONS, newCmdHandler(notificationCmdsHandler::handleUnreadNotificationsSubCmd));
+        cmdsHandlers.put(WsCmdType.NOTIFICATIONS_COUNT, newCmdHandler(notificationCmdsHandler::handleUnreadNotificationsCountSubCmd));
+        cmdsHandlers.put(WsCmdType.MARK_NOTIFICATIONS_AS_READ, newCmdHandler(notificationCmdsHandler::handleMarkAsReadCmd));
+        cmdsHandlers.put(WsCmdType.MARK_ALL_NOTIFICATIONS_AS_READ, newCmdHandler(notificationCmdsHandler::handleMarkAllAsReadCmd));
+        cmdsHandlers.put(WsCmdType.NOTIFICATIONS_UNSUBSCRIBE, newCmdHandler(notificationCmdsHandler::handleUnsubCmd));
     }
 
     @PreDestroy
@@ -221,7 +221,7 @@ public class DefaultWebSocketService implements WebSocketService {
         for (WsCmd cmd : commandsWrapper.getCmds()) {
             log.debug("[{}][{}][{}] Processing cmd: {}", sessionId, cmd.getType(), cmd.getCmdId(), cmd);
             try {
-                Optional.ofNullable(getCmdHandler(cmd.getType()))
+                Optional.ofNullable(cmdsHandlers.get(cmd.getType()))
                         .ifPresent(cmdHandler -> cmdHandler.handle(sessionRef, cmd));
             } catch (Exception e) {
                 log.error("[sessionId: {}, tenantId: {}, userId: {}] Failed to handle WS cmd: {}", sessionId,
@@ -963,24 +963,14 @@ public class DefaultWebSocketService implements WebSocketService {
                 .map(TenantProfile::getDefaultProfileConfiguration).orElse(null);
     }
 
-    public WsCmdHandler<? extends WsCmd> getCmdHandler(WsCmdType cmdType) {
-        for (WsCmdHandler<? extends WsCmd> cmdHandler : cmdsHandlers) {
-            if (cmdHandler.getCmdType() == cmdType) {
-                return cmdHandler;
-            }
-        }
-        return null;
-    }
-
-    public static <C extends WsCmd> WsCmdHandler<C> newCmdHandler(WsCmdType cmdType, BiConsumer<WebSocketSessionRef, C> handler) {
-        return new WsCmdHandler<>(cmdType, handler);
+    public static <C extends WsCmd> WsCmdHandler<C> newCmdHandler(BiConsumer<WebSocketSessionRef, C> handler) {
+        return new WsCmdHandler<>(handler);
     }
 
     @RequiredArgsConstructor
     @Getter
     @SuppressWarnings("unchecked")
     public static class WsCmdHandler<C extends WsCmd> {
-        private final WsCmdType cmdType;
         protected final BiConsumer<WebSocketSessionRef, C> handler;
 
         public void handle(WebSocketSessionRef sessionRef, WsCmd cmd) {
