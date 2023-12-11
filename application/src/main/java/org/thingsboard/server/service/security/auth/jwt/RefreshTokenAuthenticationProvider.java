@@ -57,7 +57,7 @@ public class RefreshTokenAuthenticationProvider implements AuthenticationProvide
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         Assert.notNull(authentication, "No authentication data provided");
         RawAccessJwtToken rawAccessToken = (RawAccessJwtToken) authentication.getCredentials();
-        SecurityUser unsafeUser = tokenFactory.parseRefreshToken(rawAccessToken);
+        SecurityUser unsafeUser = tokenFactory.parseRefreshToken(rawAccessToken.getToken());
         UserPrincipal principal = unsafeUser.getUserPrincipal();
 
         SecurityUser securityUser;
@@ -67,7 +67,7 @@ public class RefreshTokenAuthenticationProvider implements AuthenticationProvide
             securityUser = authenticateByPublicId(principal.getValue());
         }
         securityUser.setSessionId(unsafeUser.getSessionId());
-        if (tokenOutdatingService.isOutdated(rawAccessToken, securityUser.getId())) {
+        if (tokenOutdatingService.isOutdated(rawAccessToken.getToken(), securityUser.getId())) {
             throw new CredentialsExpiredException("Token is outdated");
         }
 

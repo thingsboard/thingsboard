@@ -336,7 +336,7 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
     public void sendWsMsg(CmdUpdate update) {
         wsLock.lock();
         try {
-            wsService.sendWsMsg(sessionRef.getSessionId(), update);
+            wsService.sendUpdate(sessionRef.getSessionId(), update);
         } finally {
             wsLock.unlock();
         }

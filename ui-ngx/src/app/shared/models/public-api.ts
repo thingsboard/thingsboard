@@ -41,7 +41,6 @@ export * from './limited-api.models';
 export * from './login.models';
 export * from './material.models';
 export * from './notification.models';
-export * from './websocket/notification-ws.models';
 export * from './websocket/websocket.models';
 export * from './oauth2.models';
 export * from './ota-package.models';
