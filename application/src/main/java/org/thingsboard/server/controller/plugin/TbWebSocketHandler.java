@@ -188,6 +188,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
             sessionRef.setSecurityCtx(securityCtx);
             pendingSessions.invalidate(sessionMd.session.getId());
             establishSession(sessionMd.session, sessionRef, sessionMd);
+            webSocketService.handleCommands(sessionRef, cmdsWrapper);
         }
     }
 

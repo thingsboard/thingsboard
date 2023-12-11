@@ -348,6 +348,7 @@ export class TelemetryPluginCmdsWrapper implements CmdWrapper {
   }
 
   cmds: Array<WebsocketCmd>;
+  authCmd: AuthCmd;
 
   private static popCmds<T>(cmds: Array<T>, leftCount: number): Array<T> {
     const toPublish = Math.min(cmds.length, leftCount);
@@ -356,6 +357,10 @@ export class TelemetryPluginCmdsWrapper implements CmdWrapper {
     } else {
       return [];
     }
+  }
+
+  public setAuth(token: string) {
+    this.authCmd = new AuthCmd(token);
   }
 
   public hasCommands(): boolean {
@@ -368,6 +373,10 @@ export class TelemetryPluginCmdsWrapper implements CmdWrapper {
 
   public preparePublishCommands(maxCommands: number): TelemetryPluginCmdsWrapper {
     const preparedWrapper = new TelemetryPluginCmdsWrapper();
+    if (this.authCmd) {
+      preparedWrapper.authCmd = this.authCmd;
+      this.authCmd = null;
+    }
     preparedWrapper.cmds = TelemetryPluginCmdsWrapper.popCmds(this.cmds, maxCommands);
     return preparedWrapper;
   }

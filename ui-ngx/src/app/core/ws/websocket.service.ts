@@ -22,7 +22,6 @@ import { NgZone } from '@angular/core';
 import { selectIsAuthenticated } from '@core/auth/auth.selectors';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import {
-  AuthCmd,
   AuthWsCmd,
   CmdUpdateMsg,
   NotificationSubscriber,
@@ -196,7 +195,7 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
   private onOpen(token: string) {
     this.isOpening = false;
     this.isOpened = true;
-    this.dataStream.next(this.createdAuthMsg(token));
+    this.cmdWrapper.setAuth(token);
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
@@ -265,11 +264,5 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
       {
         message, type: 'error'
       }));
-  }
-
-  private createdAuthMsg(token: string): AuthWsCmd {
-    return {
-      authCmd: new AuthCmd(token)
-    };
   }
 }
