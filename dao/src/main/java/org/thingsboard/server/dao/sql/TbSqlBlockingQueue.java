@@ -84,7 +84,6 @@ public class TbSqlBlockingQueue<E> implements TbSqlQueue<E> {
                         }
                     }
                 } catch (Throwable t) {
-                    log.error("[{}] Failed to save {} entities", logName, entities.size(), t);
                     try {
                         stats.incrementFailed(entities.size());
                         entities.forEach(entityFutureWrapper -> entityFutureWrapper.getFuture().setException(t));
@@ -94,6 +93,8 @@ public class TbSqlBlockingQueue<E> implements TbSqlQueue<E> {
                     if (t instanceof InterruptedException) {
                         log.info("[{}] Queue polling was interrupted", logName);
                         break;
+                    } else {
+                        log.error("[{}] Failed to save {} entities", logName, entities.size(), t);
                     }
                 } finally {
                     entities.clear();
