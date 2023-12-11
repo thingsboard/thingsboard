@@ -79,6 +79,7 @@ import java.util.regex.Pattern;
 public class BaseImageService extends BaseResourceService implements ImageService {
 
     private static final int MAX_ENTITIES_TO_FIND = 10;
+    private static final String DEFAULT_CONFIG_TAG = "defaultConfig";
 
     public static Map<String, String> DASHBOARD_BASE64_MAPPING = new HashMap<>();
     public static Map<String, String> WIDGET_TYPE_BASE64_MAPPING = new HashMap<>();
@@ -302,12 +303,12 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         boolean updated = result.isUpdated();
         if (entity.getDescriptor().isObject()) {
             ObjectNode descriptor = (ObjectNode) entity.getDescriptor();
-            JsonNode defaultConfig = Optional.ofNullable(descriptor.get("defaultConfig"))
+            JsonNode defaultConfig = Optional.ofNullable(descriptor.get(DEFAULT_CONFIG_TAG))
                     .filter(JsonNode::isTextual).map(JsonNode::asText)
                     .map(JacksonUtil::toJsonNode).orElse(null);
             if (defaultConfig != null) {
                 updated |= base64ToImageUrlUsingMapping(entity.getTenantId(), WIDGET_TYPE_BASE64_MAPPING, Collections.singletonMap("prefix", prefix), defaultConfig);
-                descriptor.put("defaultConfig", defaultConfig.toString());
+                descriptor.put(DEFAULT_CONFIG_TAG, defaultConfig.toString());
             }
         }
         updated |= base64ToImageUrlRecursively(entity.getTenantId(), prefix, entity.getDescriptor());
@@ -517,14 +518,24 @@ public class BaseImageService extends BaseResourceService implements ImageServic
     public void inlineImages(Dashboard dashboard) {
         log.trace("Executing inlineImage [{}] [Dashboard] [{}]", dashboard.getTenantId(), dashboard.getId());
         inlineImage(dashboard);
-        inlineIntoJson(dashboard.getTenantId(), dashboard.getConfiguration(), true);
+        inlineIntoJson(dashboard.getTenantId(), dashboard.getConfiguration());
     }
 
     @Override
     public void inlineImages(WidgetTypeDetails widgetTypeDetails) {
         log.trace("Executing inlineImage [{}] [WidgetTypeDetails] [{}]", widgetTypeDetails.getTenantId(), widgetTypeDetails.getId());
         inlineImage(widgetTypeDetails);
-        inlineIntoJson(widgetTypeDetails.getTenantId(), widgetTypeDetails.getDescriptor(), true);
+        ObjectNode descriptor = (ObjectNode) widgetTypeDetails.getDescriptor();
+        inlineIntoJson(widgetTypeDetails.getTenantId(), descriptor);
+        if (descriptor.has(DEFAULT_CONFIG_TAG) && descriptor.get(DEFAULT_CONFIG_TAG).isTextual()) {
+            try {
+                var defaultConfig = JacksonUtil.toJsonNode(descriptor.get(DEFAULT_CONFIG_TAG).asText());
+                inlineIntoJson(widgetTypeDetails.getTenantId(), defaultConfig);
+                descriptor.put(DEFAULT_CONFIG_TAG, JacksonUtil.toString(defaultConfig));
+            } catch (Exception e) {
+                log.debug("[{}][{}] Failed to process default config: ", widgetTypeDetails.getTenantId(), widgetTypeDetails.getId(), e);
+            }
+        }
     }
 
     @Override
@@ -545,6 +556,10 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         log.trace("Executing inlineImage [{}] [WidgetTypeDetails] [{}]", widgetTypeDetails.getTenantId(), widgetTypeDetails.getId());
         inlineImageForEdge(widgetTypeDetails);
         inlineIntoJson(widgetTypeDetails.getTenantId(), widgetTypeDetails.getDescriptor(), false);
+    }
+
+    private void inlineIntoJson(TenantId tenantId, JsonNode root) {
+        inlineIntoJson(tenantId, root, true);
     }
 
     private void inlineIntoJson(TenantId tenantId, JsonNode root, boolean addTbImagePrefix) {

@@ -1,4 +1,4 @@
-Here is the list of commands, that can be used to quickly install ThingsBoard Edge on Ubuntu Server and connect to the cloud.
+Here is the list of commands, that can be used to quickly install ThingsBoard Edge on Ubuntu Server and connect to the server.
 
 #### Install Java 11 (OpenJDK)
 ThingsBoard service is running on Java 11. Follow these instructions to install OpenJDK 11:
@@ -49,7 +49,7 @@ echo "deb http://apt.postgresql.org/pub/repos/apt/ ${RELEASE}"-pgdg main | sudo 
 
 # install and launch the postgresql service:
 sudo apt update
-sudo apt -y install postgresql-12
+sudo apt -y install postgresql-15
 sudo service postgresql start
 {:copy-code}
 ```

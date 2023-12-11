@@ -16,13 +16,14 @@
 package org.thingsboard.server.service.edge.instructions;
 
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.edge.EdgeInstallInstructions;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.edge.EdgeInstructions;
+import org.thingsboard.server.dao.util.DeviceConnectivityUtil;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.install.InstallScripts;
 
@@ -37,11 +38,11 @@ import java.nio.file.Paths;
 @RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "edges", value = "enabled", havingValue = "true")
 @TbCoreComponent
-public class DefaultEdgeInstallService implements EdgeInstallService {
+public class DefaultEdgeInstallInstructionsService implements EdgeInstallInstructionsService {
 
     private static final String EDGE_DIR = "edge";
-
-    private static final String EDGE_INSTALL_INSTRUCTIONS_DIR = "install_instructions";
+    private static final String INSTRUCTIONS_DIR = "instructions";
+    private static final String INSTALL_DIR = "install";
 
     private final InstallScripts installScripts;
 
@@ -52,10 +53,11 @@ public class DefaultEdgeInstallService implements EdgeInstallService {
     private boolean sslEnabled;
 
     @Value("${app.version:unknown}")
+    @Setter
     private String appVersion;
 
     @Override
-    public EdgeInstallInstructions getInstallInstructions(TenantId tenantId, Edge edge, String installationMethod, HttpServletRequest request) {
+    public EdgeInstructions getInstallInstructions(Edge edge, String installationMethod, HttpServletRequest request) {
         switch (installationMethod.toLowerCase()) {
             case "docker":
                 return getDockerInstallInstructions(edge, request);
@@ -68,41 +70,41 @@ public class DefaultEdgeInstallService implements EdgeInstallService {
         }
     }
 
-    private EdgeInstallInstructions getDockerInstallInstructions(Edge edge, HttpServletRequest request) {
+    private EdgeInstructions getDockerInstallInstructions(Edge edge, HttpServletRequest request) {
         String dockerInstallInstructions = readFile(resolveFile("docker", "instructions.md"));
         String baseUrl = request.getServerName();
-        if (baseUrl.contains("localhost") || baseUrl.contains("127.0.0.1")) {
-            String localhostWarning = readFile(resolveFile("docker", "localhost_warning.md"));
-            dockerInstallInstructions = dockerInstallInstructions.replace("${LOCALHOST_WARNING}", localhostWarning);
-            dockerInstallInstructions = dockerInstallInstructions.replace("${BASE_URL}", "!!!REPLACE_ME_TO_HOST_IP_ADDRESS!!!");
+
+        if (DeviceConnectivityUtil.isLocalhost(baseUrl)) {
+            dockerInstallInstructions = dockerInstallInstructions.replace("${EXTRA_HOSTS}", "extra_hosts:\n      - \"host.docker.internal:host-gateway\"\n");
+            dockerInstallInstructions = dockerInstallInstructions.replace("${BASE_URL}", "host.docker.internal");
         } else {
-            dockerInstallInstructions = dockerInstallInstructions.replace("${LOCALHOST_WARNING}", "");
+            dockerInstallInstructions = dockerInstallInstructions.replace("${EXTRA_HOSTS}", "");
             dockerInstallInstructions = dockerInstallInstructions.replace("${BASE_URL}", baseUrl);
         }
         String edgeVersion = appVersion + "EDGE";
         edgeVersion = edgeVersion.replace("-SNAPSHOT", "");
         dockerInstallInstructions = dockerInstallInstructions.replace("${TB_EDGE_VERSION}", edgeVersion);
         dockerInstallInstructions = replacePlaceholders(dockerInstallInstructions, edge);
-        return new EdgeInstallInstructions(dockerInstallInstructions);
+        return new EdgeInstructions(dockerInstallInstructions);
     }
 
-    private EdgeInstallInstructions getUbuntuInstallInstructions(Edge edge, HttpServletRequest request) {
+    private EdgeInstructions getUbuntuInstallInstructions(Edge edge, HttpServletRequest request) {
         String ubuntuInstallInstructions = readFile(resolveFile("ubuntu", "instructions.md"));
         ubuntuInstallInstructions = replacePlaceholders(ubuntuInstallInstructions, edge);
         ubuntuInstallInstructions = ubuntuInstallInstructions.replace("${BASE_URL}", request.getServerName());
         String edgeVersion = appVersion.replace("-SNAPSHOT", "");
         ubuntuInstallInstructions = ubuntuInstallInstructions.replace("${TB_EDGE_VERSION}", edgeVersion);
-        return new EdgeInstallInstructions(ubuntuInstallInstructions);
+        return new EdgeInstructions(ubuntuInstallInstructions);
     }
 
 
-    private EdgeInstallInstructions getCentosInstallInstructions(Edge edge, HttpServletRequest request) {
+    private EdgeInstructions getCentosInstallInstructions(Edge edge, HttpServletRequest request) {
         String centosInstallInstructions = readFile(resolveFile("centos", "instructions.md"));
         centosInstallInstructions = replacePlaceholders(centosInstallInstructions, edge);
         centosInstallInstructions = centosInstallInstructions.replace("${BASE_URL}", request.getServerName());
         String edgeVersion = appVersion.replace("-SNAPSHOT", "");
         centosInstallInstructions = centosInstallInstructions.replace("${TB_EDGE_VERSION}", edgeVersion);
-        return new EdgeInstallInstructions(centosInstallInstructions);
+        return new EdgeInstructions(centosInstallInstructions);
     }
 
     private String replacePlaceholders(String instructions, Edge edge) {
@@ -127,6 +129,6 @@ public class DefaultEdgeInstallService implements EdgeInstallService {
     }
 
     private Path getEdgeInstallInstructionsDir() {
-        return Paths.get(installScripts.getDataDir(), InstallScripts.JSON_DIR, EDGE_DIR, EDGE_INSTALL_INSTRUCTIONS_DIR);
+        return Paths.get(installScripts.getDataDir(), InstallScripts.JSON_DIR, EDGE_DIR, INSTRUCTIONS_DIR, INSTALL_DIR);
     }
 }
