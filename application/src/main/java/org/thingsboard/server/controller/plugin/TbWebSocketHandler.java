@@ -166,7 +166,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                     return;
             }
         } catch (Exception e) {
-            log.debug("{} Failed to decode subscription cmd: {}", sessionRef.toString(), e.getMessage(), e);
+            log.debug("{} Failed to decode subscription cmd: {}", sessionRef, e.getMessage(), e);
             if (sessionRef.getSecurityCtx() != null) {
                 webSocketService.sendError(sessionRef, 1, SubscriptionErrorCode.BAD_REQUEST, "Failed to parse the payload");
             } else {
@@ -176,7 +176,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
         }
 
         if (sessionRef.getSecurityCtx() != null) {
-            log.trace("{} Processing {}", sessionRef.toString(), msg);
+            log.trace("{} Processing {}", sessionRef, msg);
             webSocketService.handleCommands(sessionRef, cmdsWrapper);
         } else {
             AuthCmd authCmd = cmdsWrapper.getAuthCmd();
@@ -184,7 +184,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                 close(sessionRef, CloseStatus.POLICY_VIOLATION.withReason("Auth cmd is missing"));
                 return;
             }
-            log.trace("{} Authenticating session", sessionRef.toString());
+            log.trace("{} Authenticating session", sessionRef);
             SecurityUser securityCtx;
             try {
                 securityCtx = authenticationProvider.authenticate(authCmd.getToken());
@@ -205,7 +205,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
         try {
             SessionMetaData sessionMd = getSessionMd(session.getId());
             if (sessionMd != null) {
-                log.trace("{} Processing pong response {}", sessionMd.sessionRef.toString(), message.getPayload());
+                log.trace("{} Processing pong response {}", sessionMd.sessionRef, message.getPayload());
                 sessionMd.processPongMessage(System.currentTimeMillis());
             } else {
                 log.trace("[{}] Failed to find session", session.getId());
@@ -289,7 +289,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                 cleanupLimits(session, sessionMd.sessionRef);
                 processInWebSocketService(sessionMd.sessionRef, SessionEvent.onClosed());
             }
-            log.info("{} Session is closed", sessionMd.sessionRef.toString());
+            log.info("{} Session is closed", sessionMd.sessionRef);
         } else {
             log.info("[{}] Session is closed", session.getId());
         }
@@ -302,7 +302,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
         try {
             webSocketService.handleSessionEvent(sessionRef, event);
         } catch (BeanCreationNotAllowedException e) {
-            log.warn("{} Failed to close session due to possible shutdown state", sessionRef.toString());
+            log.warn("{} Failed to close session due to possible shutdown state", sessionRef);
         }
     }
 
@@ -368,13 +368,13 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
             try {
                 long timeSinceLastActivity = currentTime - lastActivityTime;
                 if (timeSinceLastActivity >= pingTimeout) {
-                    log.warn("{} Closing session due to ping timeout", sessionRef.toString());
+                    log.warn("{} Closing session due to ping timeout", sessionRef);
                     closeSession(CloseStatus.SESSION_NOT_RELIABLE);
                 } else if (timeSinceLastActivity >= pingTimeout / NUMBER_OF_PING_ATTEMPTS) {
                     sendMsg(TbWebSocketPingMsg.INSTANCE);
                 }
             } catch (Exception e) {
-                log.trace("{} Failed to send ping msg", sessionRef.toString(), e);
+                log.trace("{} Failed to send ping msg", sessionRef, e);
                 closeSession(CloseStatus.SESSION_NOT_RELIABLE);
             }
         }
@@ -383,7 +383,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
             try {
                 close(this.sessionRef, reason);
             } catch (IOException ioe) {
-                log.trace("{} Session transport error", sessionRef.toString(), ioe);
+                log.trace("{} Session transport error", sessionRef, ioe);
             } finally {
                 outboundMsgQueue.clear();
             }
@@ -403,7 +403,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                 outboundMsgQueueSize.incrementAndGet();
                 processNextMsg();
             } else {
-                log.info("{} Session closed due to updates queue size exceeded", sessionRef.toString());
+                log.info("{} Session closed due to updates queue size exceeded", sessionRef);
                 closeSession(CloseStatus.POLICY_VIOLATION.withReason("Max pending updates limit reached!"));
             }
         }
@@ -421,7 +421,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                     processNextMsg();
                 }
             } catch (Exception e) {
-                log.trace("{} Failed to send msg", sessionRef.toString(), e);
+                log.trace("{} Failed to send msg", sessionRef, e);
                 closeSession(CloseStatus.SESSION_NOT_RELIABLE);
             }
         }
@@ -429,7 +429,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
         @Override
         public void onResult(SendResult result) {
             if (!result.isOK()) {
-                log.trace("{} Failed to send msg", sessionRef.toString(), result.getException());
+                log.trace("{} Failed to send msg", sessionRef, result.getException());
                 closeSession(CloseStatus.SESSION_NOT_RELIABLE);
                 return;
             }
@@ -476,7 +476,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
 
     @Override
     public void send(WebSocketSessionRef sessionRef, int subscriptionId, String msg) throws IOException {
-        log.debug("{} Sending {}", sessionRef.toString(), msg);
+        log.debug("{} Sending {}", sessionRef, msg);
         String externalId = sessionRef.getSessionId();
         String internalId = externalSessionMap.get(externalId);
         if (internalId != null) {
@@ -485,12 +485,12 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                 TenantId tenantId = sessionRef.getSecurityCtx().getTenantId();
                 if (!rateLimitService.checkRateLimit(LimitedApi.WS_UPDATES_PER_SESSION, tenantId, (Object) sessionRef.getSessionId())) {
                     if (blacklistedSessions.putIfAbsent(externalId, sessionRef) == null) {
-                        log.info("{} Failed to process session update. Max session updates limit reached", sessionRef.toString());
+                        log.info("{} Failed to process session update. Max session updates limit reached", sessionRef);
                         sessionMd.sendMsg("{\"subscriptionId\":" + subscriptionId + ", \"errorCode\":" + ThingsboardErrorCode.TOO_MANY_UPDATES.getErrorCode() + ", \"errorMsg\":\"Too many updates!\"}");
                     }
                     return;
                 } else {
-                    log.debug("{} Session is no longer blacklisted.", sessionRef.toString());
+                    log.debug("{} Session is no longer blacklisted.", sessionRef);
                     blacklistedSessions.remove(externalId);
                 }
                 sessionMd.sendMsg(msg);
