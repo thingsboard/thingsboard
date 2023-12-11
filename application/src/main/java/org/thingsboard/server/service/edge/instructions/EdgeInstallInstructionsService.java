@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.edge;
+package org.thingsboard.server.service.edge.instructions;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeInstructions;
 
-@ApiModel
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class EdgeInstallInstructions {
+import javax.servlet.http.HttpServletRequest;
 
-    @ApiModelProperty(position = 1, value = "Markdown with install instructions")
-    private String installInstructions;
+public interface EdgeInstallInstructionsService {
+
+    EdgeInstructions getInstallInstructions(Edge edge, String installationMethod, HttpServletRequest request);
+
+    void setAppVersion(String version);
 }
