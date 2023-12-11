@@ -17,7 +17,7 @@
 
 import { EntityType } from '@shared/models/entity-type.models';
 import { AggregationType } from '../time/time.models';
-import { Observable, ReplaySubject } from 'rxjs';
+import { BehaviorSubject, Observable, ReplaySubject } from 'rxjs';
 import { EntityId } from '@shared/models/id/entity-id';
 import { map } from 'rxjs/operators';
 import { NgZone } from '@angular/core';
@@ -35,11 +35,11 @@ import {
 import { PageData } from '@shared/models/page/page-data';
 import { alarmFields } from '@shared/models/alarm.models';
 import { entityFields } from '@shared/models/entity.models';
-import { isUndefined } from '@core/utils';
-import { CmdWrapper, WsSubscriber } from '@shared/models/websocket/websocket.models';
+import { isDefinedAndNotNull, isUndefined } from '@core/utils';
+import { CmdWrapper, WsService, WsSubscriber } from '@shared/models/websocket/websocket.models';
 import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
-import { NotificationCountUpdateMsg, NotificationsUpdateMsg } from '@shared/models/websocket/notification-ws.models';
 import { Notification } from '@shared/models/notification.models';
+import { WebsocketService } from '@core/ws/websocket.service';
 
 export const NOT_SUPPORTED = 'Not supported!';
 
@@ -275,6 +275,37 @@ export class AlarmCountCmd implements WebsocketCmd {
   type = WsCmdType.ALARM_COUNT;
 }
 
+export class UnreadCountSubCmd implements WebsocketCmd {
+  cmdId: number;
+  type = WsCmdType.NOTIFICATIONS_COUNT;
+}
+
+export class UnreadSubCmd implements WebsocketCmd {
+  limit: number;
+  cmdId: number;
+  type = WsCmdType.NOTIFICATIONS;
+
+  constructor(limit = 10) {
+    this.limit = limit;
+  }
+}
+
+export class MarkAsReadCmd implements WebsocketCmd {
+
+  cmdId: number;
+  notifications: string[];
+  type = WsCmdType.MARK_NOTIFICATIONS_AS_READ;
+
+  constructor(ids: string[]) {
+    this.notifications = ids;
+  }
+}
+
+export class MarkAllAsReadCmd implements WebsocketCmd {
+  cmdId: number;
+  type = WsCmdType.MARK_ALL_NOTIFICATIONS_AS_READ;
+}
+
 export class EntityDataUnsubscribeCmd implements WebsocketCmd {
   cmdId: number;
   type = WsCmdType.ENTITY_DATA_UNSUBSCRIBE;
@@ -293,6 +324,11 @@ export class AlarmDataUnsubscribeCmd implements WebsocketCmd {
 export class AlarmCountUnsubscribeCmd implements WebsocketCmd {
   cmdId: number;
   type = WsCmdType.ALARM_COUNT_UNSUBSCRIBE;
+}
+
+export class UnsubscribeCmd implements WebsocketCmd {
+  cmdId: number;
+  type = WsCmdType.NOTIFICATIONS_UNSUBSCRIBE;
 }
 
 export class AuthCmd implements WebsocketCmd {
@@ -396,6 +432,20 @@ export interface AlarmCountUpdateMsg extends CmdUpdateMsg {
   count: number;
 }
 
+export interface NotificationCountUpdateMsg extends CmdUpdateMsg {
+  cmdUpdateType: CmdUpdateType.NOTIFICATIONS_COUNT;
+  totalUnreadCount: number;
+  sequenceNumber: number;
+}
+
+export interface NotificationsUpdateMsg extends CmdUpdateMsg {
+  cmdUpdateType: CmdUpdateType.NOTIFICATIONS;
+  update?: Notification;
+  notifications?: Notification[];
+  totalUnreadCount: number;
+  sequenceNumber: number;
+}
+
 export type WebsocketDataMsg = AlarmDataUpdateMsg | AlarmCountUpdateMsg |
   EntityDataUpdateMsg | EntityCountUpdateMsg | SubscriptionUpdateMsg | NotificationCountUpdateMsg | NotificationsUpdateMsg;
 
@@ -417,6 +467,16 @@ export const isEntityCountUpdateMsg = (message: WebsocketDataMsg): message is En
 export const isAlarmCountUpdateMsg = (message: WebsocketDataMsg): message is AlarmCountUpdateMsg => {
   const updateMsg = (message as CmdUpdateMsg);
   return updateMsg.cmdId !== undefined && updateMsg.cmdUpdateType === CmdUpdateType.ALARM_COUNT_DATA;
+};
+
+export const isNotificationCountUpdateMsg = (message: WebsocketDataMsg): message is NotificationCountUpdateMsg => {
+  const updateMsg = (message as CmdUpdateMsg);
+  return updateMsg.cmdId !== undefined && updateMsg.cmdUpdateType === CmdUpdateType.NOTIFICATIONS_COUNT;
+};
+
+export const isNotificationsUpdateMsg = (message: WebsocketDataMsg): message is NotificationsUpdateMsg => {
+  const updateMsg = (message as CmdUpdateMsg);
+  return updateMsg.cmdId !== undefined && updateMsg.cmdUpdateType === CmdUpdateType.NOTIFICATIONS;
 };
 
 export class SubscriptionUpdate implements SubscriptionUpdateMsg {
@@ -794,5 +854,115 @@ export class TelemetrySubscriber extends WsSubscriber {
     return this.data$.pipe(
       map((message) => message.updateAttributeData(attributeData))
     );
+  }
+}
+
+export class NotificationSubscriber extends WsSubscriber {
+  private notificationCountSubject = new BehaviorSubject<NotificationCountUpdate>({
+    cmdId: 0,
+    cmdUpdateType: undefined,
+    errorCode: 0,
+    errorMsg: '',
+    totalUnreadCount: 0,
+    sequenceNumber: 0
+  });
+  private notificationsSubject = new BehaviorSubject<NotificationsUpdate>({
+    cmdId: 0,
+    cmdUpdateType: undefined,
+    errorCode: 0,
+    errorMsg: '',
+    notifications: null,
+    totalUnreadCount: 0,
+    sequenceNumber: 0
+  });
+
+  public messageLimit = 10;
+
+  public notificationCount$ = this.notificationCountSubject.asObservable().pipe(map(msg => msg.totalUnreadCount));
+  public notifications$ = this.notificationsSubject.asObservable().pipe(map(msg => msg.notifications ));
+
+  public static createNotificationCountSubscription(websocketService: WebsocketService<WsSubscriber>,
+                                                    zone: NgZone): NotificationSubscriber {
+    const subscriptionCommand = new UnreadCountSubCmd();
+    const subscriber = new NotificationSubscriber(websocketService, zone);
+    subscriber.subscriptionCommands.push(subscriptionCommand);
+    return subscriber;
+  }
+
+  public static createNotificationsSubscription(websocketService: WebsocketService<WsSubscriber>,
+                                                zone: NgZone, limit = 10): NotificationSubscriber {
+    const subscriptionCommand = new UnreadSubCmd(limit);
+    const subscriber = new NotificationSubscriber(websocketService, zone);
+    subscriber.messageLimit = limit;
+    subscriber.subscriptionCommands.push(subscriptionCommand);
+    return subscriber;
+  }
+
+  public static createMarkAsReadCommand(websocketService: WebsocketService<WsSubscriber>,
+                                        ids: string[]): NotificationSubscriber {
+    const subscriptionCommand = new MarkAsReadCmd(ids);
+    const subscriber = new NotificationSubscriber(websocketService);
+    subscriber.subscriptionCommands.push(subscriptionCommand);
+    return subscriber;
+  }
+
+  public static createMarkAllAsReadCommand(websocketService: WebsocketService<WsSubscriber>): NotificationSubscriber {
+    const subscriptionCommand = new MarkAllAsReadCmd();
+    const subscriber = new NotificationSubscriber(websocketService);
+    subscriber.subscriptionCommands.push(subscriptionCommand);
+    return subscriber;
+  }
+
+  constructor(private websocketService: WsService<any>, protected zone?: NgZone) {
+    super(websocketService, zone);
+  }
+
+  onNotificationCountUpdate(message: NotificationCountUpdate) {
+    const currentNotificationCount = this.notificationCountSubject.value;
+    if (message.sequenceNumber <= currentNotificationCount.sequenceNumber) {
+      return;
+    }
+    if (this.zone) {
+      this.zone.run(
+        () => {
+          this.notificationCountSubject.next(message);
+        }
+      );
+    } else {
+      this.notificationCountSubject.next(message);
+    }
+  }
+
+  public complete() {
+    this.notificationCountSubject.complete();
+    this.notificationsSubject.complete();
+    super.complete();
+  }
+
+  onNotificationsUpdate(message: NotificationsUpdate) {
+    const currentNotifications = this.notificationsSubject.value;
+    if (message.sequenceNumber <= currentNotifications.sequenceNumber) {
+      message.totalUnreadCount = currentNotifications.totalUnreadCount;
+    }
+    let processMessage = message;
+    if (isDefinedAndNotNull(currentNotifications) && message.update) {
+      currentNotifications.notifications.unshift(message.update);
+      if (currentNotifications.notifications.length > this.messageLimit) {
+        currentNotifications.notifications.pop();
+      }
+      processMessage = currentNotifications;
+      processMessage.totalUnreadCount = message.totalUnreadCount;
+    }
+    if (this.zone) {
+      this.zone.run(
+        () => {
+          this.notificationsSubject.next(processMessage);
+          this.notificationCountSubject.next(processMessage);
+        }
+      );
+    } else {
+      this.notificationsSubject.next(processMessage);
+      this.notificationCountSubject.next(processMessage);
+    }
   }
 }

@@ -32,12 +32,20 @@ import {
   isAlarmDataUpdateMsg,
   isEntityCountUpdateMsg,
   isEntityDataUpdateMsg,
+  isNotificationCountUpdateMsg,
+  isNotificationsUpdateMsg,
+  MarkAllAsReadCmd,
+  MarkAsReadCmd,
   NotificationCountUpdate,
+  NotificationSubscriber,
   NotificationsUpdate,
   SubscriptionCmd,
   SubscriptionUpdate,
   TelemetryPluginCmdsWrapper,
   TelemetrySubscriber,
+  UnreadCountSubCmd,
+  UnreadSubCmd,
+  UnsubscribeCmd,
   WebsocketDataMsg
 } from '@app/shared/models/telemetry/telemetry.models';
 import { Store } from '@ngrx/store';
@@ -45,16 +53,6 @@ import { AppState } from '@core/core.state';
 import { AuthService } from '@core/auth/auth.service';
 import { WINDOW } from '@core/services/window.service';
 import { WebsocketService } from '@core/ws/websocket.service';
-import {
-  isNotificationCountUpdateMsg,
-  isNotificationsUpdateMsg,
-  MarkAllAsReadCmd,
-  MarkAsReadCmd,
-  NotificationSubscriber,
-  UnreadCountSubCmd,
-  UnreadSubCmd,
-  UnsubscribeCmd
-} from '@shared/models/websocket/notification-ws.models';
 
 // @dynamic
 @Injectable({
@@ -145,19 +143,19 @@ export class TelemetryWebsocketService extends WebsocketService<TelemetrySubscri
     if ('cmdId' in message && message.cmdId) {
       subscriber = this.subscribersMap.get(message.cmdId);
       if (subscriber instanceof NotificationSubscriber) {
-        if (isNotificationCountUpdateMsg(message) && subscriber) {
+        if (isNotificationCountUpdateMsg(message)) {
           subscriber.onNotificationCountUpdate(new NotificationCountUpdate(message));
-        } else if (isNotificationsUpdateMsg(message) && subscriber) {
+        } else if (isNotificationsUpdateMsg(message)) {
           subscriber.onNotificationsUpdate(new NotificationsUpdate(message));
         }
       } else if (subscriber instanceof TelemetrySubscriber) {
-        if (isEntityDataUpdateMsg(message) && subscriber) {
+        if (isEntityDataUpdateMsg(message)) {
           subscriber.onEntityData(new EntityDataUpdate(message));
-        } else if (isAlarmDataUpdateMsg(message) && subscriber) {
+        } else if (isAlarmDataUpdateMsg(message)) {
           subscriber.onAlarmData(new AlarmDataUpdate(message));
-        } else if (isEntityCountUpdateMsg(message) && subscriber) {
+        } else if (isEntityCountUpdateMsg(message)) {
           subscriber.onEntityCount(new EntityCountUpdate(message));
-        } else if (isAlarmCountUpdateMsg(message) && subscriber) {
+        } else if (isAlarmCountUpdateMsg(message)) {
           subscriber.onAlarmCount(new AlarmCountUpdate(message));
         }
       }

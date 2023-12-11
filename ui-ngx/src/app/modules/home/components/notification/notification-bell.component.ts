@@ -29,7 +29,7 @@ import { distinctUntilChanged, map, share, skip, tap } from 'rxjs/operators';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { ShowNotificationPopoverComponent } from '@home/components/notification/show-notification-popover.component';
-import { NotificationSubscriber } from '@shared/models/websocket/notification-ws.models';
+import { NotificationSubscriber } from '@shared/models/telemetry/telemetry.models';
 import { select, Store } from '@ngrx/store';
 import { selectIsAuthenticated } from '@core/auth/auth.selectors';
 import { AppState } from '@core/core.state';

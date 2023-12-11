@@ -24,7 +24,7 @@ import { NotificationWebsocketService } from '@core/ws/notification-websocket.se
 import { BehaviorSubject, Observable, ReplaySubject, Subscription } from 'rxjs';
 import { map, share, skip, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
-import { NotificationSubscriber } from '@shared/models/websocket/notification-ws.models';
+import { NotificationSubscriber } from '@shared/models/telemetry/telemetry.models';
 
 @Component({
   selector: 'tb-show-notification-popover',

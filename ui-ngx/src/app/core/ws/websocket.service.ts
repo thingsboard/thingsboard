@@ -25,11 +25,11 @@ import {
   AuthCmd,
   AuthWsCmd,
   CmdUpdateMsg,
+  NotificationSubscriber,
   TelemetrySubscriber,
   WebsocketDataMsg
 } from '@shared/models/telemetry/telemetry.models';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
-import { NotificationSubscriber } from '@shared/models/websocket/notification-ws.models';
 import Timeout = NodeJS.Timeout;
 
 const RECONNECT_INTERVAL = 2000;
