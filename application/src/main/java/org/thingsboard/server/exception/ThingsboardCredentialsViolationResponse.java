@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.ws.telemetry.cmd.v2;
+package org.thingsboard.server.exception;
 
-import lombok.Data;
-import org.thingsboard.server.service.ws.WsCmdType;
+import io.swagger.annotations.ApiModel;
+import org.springframework.http.HttpStatus;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 
-@Data
-public class AlarmCountUnsubscribeCmd implements UnsubscribeCmd {
+@ApiModel
+public class ThingsboardCredentialsViolationResponse extends ThingsboardErrorResponse {
 
-    private final int cmdId;
-
-    @Override
-    public WsCmdType getType() {
-        return WsCmdType.ALARM_COUNT_UNSUBSCRIBE;
+    protected ThingsboardCredentialsViolationResponse(String message) {
+        super(message, ThingsboardErrorCode.PASSWORD_VIOLATION, HttpStatus.UNAUTHORIZED);
     }
+
+    public static ThingsboardCredentialsViolationResponse of(final String message) {
+        return new ThingsboardCredentialsViolationResponse(message);
+    }
+
 }

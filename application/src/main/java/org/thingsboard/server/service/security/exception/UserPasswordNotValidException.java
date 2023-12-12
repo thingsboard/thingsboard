@@ -13,18 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.ws.telemetry.cmd.v2;
+package org.thingsboard.server.service.security.exception;
 
-import lombok.Data;
-import org.thingsboard.server.service.ws.WsCmdType;
+import org.springframework.security.core.AuthenticationException;
 
-@Data
-public class AlarmCountUnsubscribeCmd implements UnsubscribeCmd {
+public class UserPasswordNotValidException extends AuthenticationException {
 
-    private final int cmdId;
-
-    @Override
-    public WsCmdType getType() {
-        return WsCmdType.ALARM_COUNT_UNSUBSCRIBE;
+    public UserPasswordNotValidException(String msg) {
+        super(msg);
     }
+
 }

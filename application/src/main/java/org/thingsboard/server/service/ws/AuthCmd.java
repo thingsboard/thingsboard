@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.ws.telemetry.cmd.v2;
+package org.thingsboard.server.service.ws;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.thingsboard.server.service.ws.WsCmdType;
+import lombok.NoArgsConstructor;
 
 @Data
-public class AlarmCountUnsubscribeCmd implements UnsubscribeCmd {
-
-    private final int cmdId;
+@NoArgsConstructor
+@AllArgsConstructor
+public class AuthCmd implements WsCmd {
+    private int cmdId;
+    private String token;
 
     @Override
     public WsCmdType getType() {
-        return WsCmdType.ALARM_COUNT_UNSUBSCRIBE;
+        return WsCmdType.AUTH;
     }
 }

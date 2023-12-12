@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.ws.telemetry.cmd.v2;
+package org.thingsboard.server.dao.util;
 
-import lombok.Data;
-import org.thingsboard.server.service.ws.WsCmdType;
+import org.junit.jupiter.api.Test;
 
-@Data
-public class AlarmCountUnsubscribeCmd implements UnsubscribeCmd {
+import static org.assertj.core.api.Assertions.assertThat;
 
-    private final int cmdId;
+class DeviceConnectivityUtilTest {
 
-    @Override
-    public WsCmdType getType() {
-        return WsCmdType.ALARM_COUNT_UNSUBSCRIBE;
+    @Test
+    void testRootCaPemNaming() {
+        assertThat(DeviceConnectivityUtil.CA_ROOT_CERT_PEM).contains("root");
+        assertThat(DeviceConnectivityUtil.CA_ROOT_CERT_PEM).contains("ca");
+        assertThat(DeviceConnectivityUtil.CA_ROOT_CERT_PEM).endsWith(".pem");
+        assertThat(DeviceConnectivityUtil.CA_ROOT_CERT_PEM).doesNotContainAnyWhitespaces();
     }
+
 }

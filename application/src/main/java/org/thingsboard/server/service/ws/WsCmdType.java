@@ -13,18 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.ws.telemetry.cmd.v2;
+package org.thingsboard.server.service.ws;
 
-import lombok.Data;
-import org.thingsboard.server.service.ws.WsCmdType;
+public enum WsCmdType {
+    AUTH,
 
-@Data
-public class AlarmCountUnsubscribeCmd implements UnsubscribeCmd {
+    ATTRIBUTES,
+    TIMESERIES,
+    TIMESERIES_HISTORY,
+    ENTITY_DATA,
+    ENTITY_COUNT,
+    ALARM_DATA,
+    ALARM_COUNT,
 
-    private final int cmdId;
+    NOTIFICATIONS,
+    NOTIFICATIONS_COUNT,
+    MARK_NOTIFICATIONS_AS_READ,
+    MARK_ALL_NOTIFICATIONS_AS_READ,
 
-    @Override
-    public WsCmdType getType() {
-        return WsCmdType.ALARM_COUNT_UNSUBSCRIBE;
-    }
+    ALARM_DATA_UNSUBSCRIBE,
+    ALARM_COUNT_UNSUBSCRIBE,
+    ENTITY_DATA_UNSUBSCRIBE,
+    ENTITY_COUNT_UNSUBSCRIBE,
+    NOTIFICATIONS_UNSUBSCRIBE
 }

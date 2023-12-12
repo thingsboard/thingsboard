@@ -38,7 +38,6 @@ public class DashboardInfo extends BaseData<DashboardId> implements HasName, Has
     @NoXss
     @Length(fieldName = "title")
     private String title;
-    @Length(fieldName = "image", max = 1000000)
     private String image;
     @Valid
     private Set<ShortCustomerInfo> assignedCustomers;

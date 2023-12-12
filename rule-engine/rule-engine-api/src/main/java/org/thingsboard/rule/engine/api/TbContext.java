@@ -57,6 +57,7 @@ import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.dao.nosql.TbResultSetFuture;
@@ -393,4 +394,6 @@ public interface TbContext {
     WidgetTypeService getWidgetTypeService();
 
     RuleEngineApiUsageStateService getRuleEngineApiUsageStateService();
+
+    EntityService getEntityService();
 }
