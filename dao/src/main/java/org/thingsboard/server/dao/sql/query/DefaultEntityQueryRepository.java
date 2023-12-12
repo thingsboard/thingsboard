@@ -711,7 +711,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                         .append(whereFilter).append(")");
             } else if (entityFilter.isNegate()) {
                 whereFilter = new StringBuilder()
-                        .append(" NOT ")
+                        .append(" NOT (")
                         .append(whereFilter).append(")");
             }
         }
