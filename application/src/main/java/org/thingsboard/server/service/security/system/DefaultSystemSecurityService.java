@@ -133,19 +133,9 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
 
     @Override
     public void validateUserCredentials(TenantId tenantId, UserCredentials userCredentials, String username, String password) throws AuthenticationException {
-        SecuritySettings securitySettings = self.getSecuritySettings(tenantId);
-        UserPasswordPolicy passwordPolicy = securitySettings.getPasswordPolicy();
-
-        if (!tenantId.isSysTenantId() && Boolean.TRUE.equals(passwordPolicy.getForceUserToResetPasswordIfNotValid())) {
-            try {
-                validatePasswordByPolicy(password, passwordPolicy);
-            } catch (DataValidationException e) {
-                throw new UserPasswordNotValidException("The entered password violates our policies. If this is your real password, please reset it.");
-
-            }
-        }
         if (!encoder.matches(password, userCredentials.getPassword())) {
             int failedLoginAttempts = userService.increaseFailedLoginAttempts(tenantId, userCredentials.getUserId());
+            SecuritySettings securitySettings = self.getSecuritySettings(tenantId);
             if (securitySettings.getMaxFailedLoginAttempts() != null && securitySettings.getMaxFailedLoginAttempts() > 0) {
                 if (failedLoginAttempts > securitySettings.getMaxFailedLoginAttempts() && userCredentials.isEnabled()) {
                     lockAccount(userCredentials.getUserId(), username, securitySettings.getUserLockoutNotificationEmail(), securitySettings.getMaxFailedLoginAttempts());
@@ -161,6 +151,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
 
         userService.resetFailedLoginAttempts(tenantId, userCredentials.getUserId());
 
+        SecuritySettings securitySettings = self.getSecuritySettings(tenantId);
         if (isPositiveInteger(securitySettings.getPasswordPolicy().getPasswordExpirationPeriodDays())) {
             if ((userCredentials.getCreatedTime()
                     + TimeUnit.DAYS.toMillis(securitySettings.getPasswordPolicy().getPasswordExpirationPeriodDays()))
@@ -227,7 +218,8 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
         }
     }
 
-    private void validatePasswordByPolicy(String password, UserPasswordPolicy passwordPolicy) {
+    @Override
+    public void validatePasswordByPolicy(String password, UserPasswordPolicy passwordPolicy) {
         List<Rule> passwordRules = new ArrayList<>();
 
         Integer maximumLength = passwordPolicy.getMaximumLength();
