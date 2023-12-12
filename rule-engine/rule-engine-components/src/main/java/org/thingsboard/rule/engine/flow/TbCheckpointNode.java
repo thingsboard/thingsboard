@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.flow;
 
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -30,11 +31,12 @@ import org.thingsboard.server.common.msg.TbMsg;
 @RuleNode(
         type = ComponentType.FLOW,
         name = "checkpoint",
-        configClazz = TbCheckpointNodeConfiguration.class,
+        configClazz = EmptyNodeConfiguration.class,
+        hasQueueName = true,
         nodeDescription = "transfers the message to another queue",
         nodeDetails = "After successful transfer incoming message is automatically acknowledged. Queue name is configurable.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbActionNodeCheckPointConfig"
+        configDirective = "tbNodeEmptyConfig"
 )
 public class TbCheckpointNode implements TbNode {
 
@@ -42,8 +44,7 @@ public class TbCheckpointNode implements TbNode {
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        TbCheckpointNodeConfiguration config = TbNodeUtils.convert(configuration, TbCheckpointNodeConfiguration.class);
-        this.queueName = config.getQueueName();
+        this.queueName = ctx.getSelf().getQueueName();
     }
 
     @Override

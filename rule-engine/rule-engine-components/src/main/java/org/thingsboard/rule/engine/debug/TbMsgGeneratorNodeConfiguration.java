@@ -36,7 +36,6 @@ public class TbMsgGeneratorNodeConfiguration implements NodeConfiguration<TbMsgG
     private ScriptLanguage scriptLang;
     private String jsScript;
     private String tbelScript;
-    private String queueName;
 
     @Override
     public TbMsgGeneratorNodeConfiguration defaultConfiguration() {

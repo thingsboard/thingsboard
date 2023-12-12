@@ -47,6 +47,7 @@ import java.util.concurrent.TimeUnit;
         type = ComponentType.TRANSFORMATION,
         name = "deduplication",
         configClazz = TbMsgDeduplicationNodeConfiguration.class,
+        hasQueueName = true,
         nodeDescription = "Deduplicate messages within the same originator entity for a configurable period " +
                 "based on a specified deduplication strategy.",
         nodeDetails = "Deduplication strategies: <ul><li><strong>FIRST</strong> - return first message that arrived during deduplication period.</li>" +
@@ -66,6 +67,7 @@ public class TbMsgDeduplicationNode implements TbNode {
 
     private final Map<EntityId, DeduplicationData> deduplicationMap;
     private long deduplicationInterval;
+    private String queueName;
 
     public TbMsgDeduplicationNode() {
         this.deduplicationMap = new HashMap<>();
@@ -75,6 +77,7 @@ public class TbMsgDeduplicationNode implements TbNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgDeduplicationNodeConfiguration.class);
         this.deduplicationInterval = TimeUnit.SECONDS.toMillis(config.getInterval());
+        this.queueName = ctx.getSelf().getQueueName();
     }
 
     @Override
@@ -132,7 +135,7 @@ public class TbMsgDeduplicationNode implements TbNode {
                         }
                     }
                     deduplicationResults.add(TbMsg.newMsg(
-                            config.getQueueName(),
+                            queueName,
                             config.getOutMsgType(),
                             deduplicationId,
                             getMetadata(),

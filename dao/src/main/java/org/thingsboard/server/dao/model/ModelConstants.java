@@ -354,6 +354,7 @@ public class ModelConstants {
     public static final String COMPONENT_DESCRIPTOR_CONFIGURATION_DESCRIPTOR_PROPERTY = "configuration_descriptor";
     public static final String COMPONENT_DESCRIPTOR_CONFIGURATION_VERSION_PROPERTY = "configuration_version";
     public static final String COMPONENT_DESCRIPTOR_ACTIONS_PROPERTY = "actions";
+    public static final String COMPONENT_DESCRIPTOR_HAS_QUEUE_NAME_PROPERTY = "has_queue_name";
 
     /**
      * Event constants.
@@ -389,6 +390,7 @@ public class ModelConstants {
 
     public static final String DEBUG_MODE = "debug_mode";
     public static final String SINGLETON_MODE = "singleton_mode";
+    public static final String QUEUE_NAME = "queue_name";
 
     /**
      * Rule chain constants.

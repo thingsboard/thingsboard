@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
+import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -241,7 +242,7 @@ public class TbMsgDeduplicationNodeTest {
         config.setInterval(deduplicationInterval);
         config.setStrategy(DeduplicationStrategy.ALL);
         config.setOutMsgType(TbMsgType.POST_ATTRIBUTES_REQUEST.name());
-        config.setQueueName(DataConstants.HP_QUEUE_NAME);
+        setQueueName(DataConstants.HP_QUEUE_NAME);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
 
@@ -268,7 +269,7 @@ public class TbMsgDeduplicationNodeTest {
         Assertions.assertEquals(getMergedData(inputMsgs), outMessage.getData());
         Assertions.assertEquals(deviceId, outMessage.getOriginator());
         Assertions.assertEquals(config.getOutMsgType(), outMessage.getType());
-        Assertions.assertEquals(config.getQueueName(), outMessage.getQueueName());
+        Assertions.assertEquals(DataConstants.HP_QUEUE_NAME, outMessage.getQueueName());
     }
 
     @Test
@@ -281,7 +282,7 @@ public class TbMsgDeduplicationNodeTest {
         config.setInterval(deduplicationInterval);
         config.setStrategy(DeduplicationStrategy.ALL);
         config.setOutMsgType(TbMsgType.POST_ATTRIBUTES_REQUEST.name());
-        config.setQueueName(DataConstants.HP_QUEUE_NAME);
+        setQueueName(DataConstants.HP_QUEUE_NAME);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
 
@@ -316,13 +317,13 @@ public class TbMsgDeduplicationNodeTest {
         Assertions.assertEquals(getMergedData(firstMsgPack), firstMsg.getData());
         Assertions.assertEquals(deviceId, firstMsg.getOriginator());
         Assertions.assertEquals(config.getOutMsgType(), firstMsg.getType());
-        Assertions.assertEquals(config.getQueueName(), firstMsg.getQueueName());
+        Assertions.assertEquals(DataConstants.HP_QUEUE_NAME, firstMsg.getQueueName());
 
         TbMsg secondMsg = resultMsgs.get(1);
         Assertions.assertEquals(getMergedData(secondMsgPack), secondMsg.getData());
         Assertions.assertEquals(deviceId, secondMsg.getOriginator());
         Assertions.assertEquals(config.getOutMsgType(), secondMsg.getType());
-        Assertions.assertEquals(config.getQueueName(), secondMsg.getQueueName());
+        Assertions.assertEquals(DataConstants.HP_QUEUE_NAME, secondMsg.getQueueName());
     }
 
     @Test
@@ -427,6 +428,12 @@ public class TbMsgDeduplicationNodeTest {
             mergedData.add(msgNode);
         });
         return JacksonUtil.toString(mergedData);
+    }
+
+    private void setQueueName(String queueName) {
+        RuleNode ruleNode = new RuleNode();
+        ruleNode.setQueueName(queueName);
+        when(ctx.getSelf()).thenReturn(ruleNode);
     }
 
 }
