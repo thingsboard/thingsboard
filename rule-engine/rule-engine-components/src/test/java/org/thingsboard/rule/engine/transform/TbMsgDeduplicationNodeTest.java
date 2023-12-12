@@ -94,6 +94,7 @@ public class TbMsgDeduplicationNodeTest {
 
         when(ctx.getSelfId()).thenReturn(ruleNodeId);
         when(ctx.getTenantId()).thenReturn(tenantId);
+        when(ctx.getSelf()).thenReturn(new RuleNode());
 
         doAnswer((Answer<TbMsg>) invocationOnMock -> {
             TbMsgType type = (TbMsgType) (invocationOnMock.getArguments())[1];
