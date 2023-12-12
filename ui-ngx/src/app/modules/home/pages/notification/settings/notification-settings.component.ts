@@ -78,6 +78,13 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
     if (settings.prefs) {
       preparedSettings = this.prepareNotificationSettings(settings.prefs);
       preparedSettings.forEach((setting) => {
+        if (!setting.enabled && Object.values(setting.enabledDeliveryMethods).some(deliveryMethod => deliveryMethod === true)) {
+          const enabledDeliveryMethod = deepClone(setting.enabledDeliveryMethods);
+          Object.keys(enabledDeliveryMethod).forEach(key => {
+            enabledDeliveryMethod[key] = false;
+          });
+          setting.enabledDeliveryMethods = enabledDeliveryMethod;
+        }
         setting.enabledDeliveryMethods = Object.assign(
           this.notificationDeliveryMethods.reduce((a, v) => ({ ...a, [v]: true}), {}),
           setting.enabledDeliveryMethods
