@@ -15,6 +15,8 @@
  */
 package org.thingsboard.rule.engine.debug;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -35,6 +37,7 @@ import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
@@ -44,12 +47,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
+import static org.thingsboard.rule.engine.api.util.TbNodeUtils.QUEUE_NAME;
 
 @Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
         name = "generator",
         configClazz = TbMsgGeneratorNodeConfiguration.class,
+        version = 1,
         hasQueueName = true,
         nodeDescription = "Periodically generates messages",
         nodeDetails = "Generates messages with configurable period. Javascript function used for message generation.",
@@ -176,5 +181,21 @@ public class TbMsgGeneratorNode implements TbNode {
             scriptEngine.destroy();
             scriptEngine = null;
         }
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0:
+                if (oldConfiguration.has(QUEUE_NAME)) {
+                    hasChanges = true;
+                    ((ObjectNode) oldConfiguration).remove(QUEUE_NAME);
+                }
+                break;
+            default:
+                break;
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
     }
 }

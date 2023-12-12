@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
  */
 public class TbNodeUtils {
 
+    public static final String QUEUE_NAME = "queueName";
 
     private static final Pattern DATA_PATTERN = Pattern.compile("(\\$\\[)(.*?)(])");
 

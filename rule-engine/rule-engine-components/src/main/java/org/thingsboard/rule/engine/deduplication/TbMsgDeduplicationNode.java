@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.deduplication;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
@@ -43,10 +44,13 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import static org.thingsboard.rule.engine.api.util.TbNodeUtils.QUEUE_NAME;
+
 @RuleNode(
         type = ComponentType.TRANSFORMATION,
         name = "deduplication",
         configClazz = TbMsgDeduplicationNodeConfiguration.class,
+        version = 1,
         hasQueueName = true,
         nodeDescription = "Deduplicate messages within the same originator entity for a configurable period " +
                 "based on a specified deduplication strategy.",
@@ -92,6 +96,22 @@ public class TbMsgDeduplicationNode implements TbNode {
     @Override
     public void destroy() {
         deduplicationMap.clear();
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0:
+                if (oldConfiguration.has(QUEUE_NAME)) {
+                    hasChanges = true;
+                    ((ObjectNode) oldConfiguration).remove(QUEUE_NAME);
+                }
+                break;
+            default:
+                break;
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
     }
 
     private void processOnRegularMsg(TbContext ctx, TbMsg msg) {

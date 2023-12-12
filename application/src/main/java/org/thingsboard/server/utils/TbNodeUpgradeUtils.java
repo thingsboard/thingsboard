@@ -25,6 +25,8 @@ import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.service.component.RuleNodeClassInfo;
 
+import static org.thingsboard.rule.engine.api.util.TbNodeUtils.QUEUE_NAME;
+
 @Slf4j
 public class TbNodeUpgradeUtils {
 
@@ -44,9 +46,13 @@ public class TbNodeUpgradeUtils {
         } else {
             var tbVersionedNode = getTbVersionedNode(nodeInfo);
             try {
+                JsonNode queueName = oldConfiguration.get(QUEUE_NAME);
                 TbPair<Boolean, JsonNode> upgradeResult = tbVersionedNode.upgrade(configurationVersion, oldConfiguration);
                 if (upgradeResult.getFirst()) {
                     node.setConfiguration(upgradeResult.getSecond());
+                    if (nodeInfo.getAnnotation().hasQueueName() && queueName != null && queueName.isTextual()) {
+                        node.setQueueName(queueName.asText());
+                    }
                 }
             } catch (Exception e) {
                 try {

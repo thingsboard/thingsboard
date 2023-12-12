@@ -227,22 +227,8 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 log.info("Updating data from version 3.6.0 to 3.6.1 ...");
                 migrateDeviceConnectivity();
                 break;
-            case "3.6.2":
-                updateRuleNodesQueueName();
-                break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
-        }
-    }
-
-    private void updateRuleNodesQueueName() {
-        String[] ruleNodeTypes = {
-                "org.thingsboard.rule.engine.debug.TbMsgGeneratorNode",
-                "org.thingsboard.rule.engine.flow.TbCheckpointNode",
-                "org.thingsboard.rule.engine.deduplication.TbMsgDeduplicationNode"
-        };
-        for (String ruleNodeType : ruleNodeTypes) {
-            ruleNodeQueueNameUpdater.updateEntities(ruleNodeType);
         }
     }
 
@@ -805,40 +791,5 @@ public class DefaultDataUpdateService implements DataUpdateService {
             return Boolean.parseBoolean(env);
         }
     }
-
-    private final PaginatedUpdater<String, RuleNode> ruleNodeQueueNameUpdater =
-            new PaginatedUpdater<>() {
-
-                @Override
-                protected String getName() {
-                    return "RuleNode queue name updater";
-                }
-
-                @Override
-                protected boolean forceReportTotal() {
-                    return true;
-                }
-
-                @Override
-                protected PageData<RuleNode> findEntities(String type, PageLink pageLink) {
-                    return ruleChainService.findAllRuleNodesByType(type, pageLink);
-                }
-
-                @Override
-                protected void updateEntity(RuleNode ruleNode) {
-                    try {
-                        ObjectNode configuration = (ObjectNode) ruleNode.getConfiguration();
-                        JsonNode queueName = configuration.remove("queueName");
-                        if (queueName != null) {
-                            if (!queueName.isNull()) {
-                                ruleNode.setQueueName(queueName.asText());
-                            }
-                            ruleChainService.saveRuleNode(null, ruleNode);
-                        }
-                    } catch (Exception e) {
-                        log.error("Unable to update RuleNode", e);
-                    }
-                }
-            };
 
 }

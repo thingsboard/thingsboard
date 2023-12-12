@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.service.sync.ie.importing.impl;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -85,14 +83,12 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
                 node.setRuleChainId(old.getId());
                 node.setExternalId(node.getId());
                 node.setId((RuleNodeId) ctx.getInternalId(node.getId()));
-                setQueueName(node);
             });
         } else {
             ruleNodes.forEach(node -> {
                 node.setRuleChainId(null);
                 node.setExternalId(node.getId());
                 node.setId(null);
-                setQueueName(node);
             });
         }
 
@@ -106,22 +102,6 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
             ruleChain.setFirstRuleNodeId((RuleNodeId) ctx.getInternalId(ruleChain.getFirstRuleNodeId()));
         }
         return ruleChain;
-    }
-
-    private void setQueueName(RuleNode ruleNode) {
-        try {
-            Class<?> clazz = Class.forName(ruleNode.getType());
-            org.thingsboard.rule.engine.api.RuleNode ruleNodeAnnotation = clazz.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class);
-            if (ruleNodeAnnotation.hasQueueName()) {
-                ObjectNode configuration = (ObjectNode) ruleNode.getConfiguration();
-                JsonNode queueName = configuration.remove("queueName");
-                if (queueName != null && !queueName.isNull()) {
-                    ruleNode.setQueueName(queueName.asText());
-                }
-            }
-        } catch (ClassNotFoundException e) {
-            log.warn("[{}] RuleNode class not found [{}]", ruleNode.getName(), ruleNode.getType());
-        }
     }
 
     @Override
