@@ -27,7 +27,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Base64Utils;
 import org.thingsboard.common.util.JacksonUtil;
@@ -274,7 +273,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         return resourceInfoDao.findSystemOrTenantImageByEtag(tenantId, ResourceType.IMAGE, etag);
     }
 
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)// we don't want transaction to rollback in case of an image processing failure
+    @Transactional(noRollbackFor = Exception.class) // we don't want transaction to rollback in case of an image processing failure
     @Override
     public boolean replaceBase64WithImageUrl(HasImage entity, String type) {
         log.trace("Executing replaceBase64WithImageUrl [{}] [{}] [{}]", entity.getTenantId(), type, entity.getName());
@@ -289,7 +288,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         return result.isUpdated();
     }
 
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)// we don't want transaction to rollback in case of an image processing failure
+    @Transactional(noRollbackFor = Exception.class) // we don't want transaction to rollback in case of an image processing failure
     @Override
     public boolean replaceBase64WithImageUrl(WidgetTypeDetails entity) {
         log.trace("Executing replaceBase64WithImageUrl [{}] [WidgetTypeDetails] [{}]", entity.getTenantId(), entity.getId());
@@ -315,7 +314,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         return updated;
     }
 
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)// we don't want transaction to rollback in case of an image processing failure
+    @Transactional(noRollbackFor = Exception.class) // we don't want transaction to rollback in case of an image processing failure
     @Override
     public boolean replaceBase64WithImageUrl(Dashboard entity) {
         log.trace("Executing replaceBase64WithImageUrl [{}] [Dashboard] [{}]", entity.getTenantId(), entity.getId());
@@ -463,6 +462,8 @@ public class BaseImageService extends BaseResourceService implements ImageServic
                 }
                 return UpdateResult.of(false, data);
             }
+        } else {
+            log.debug("[{}] Using existing image {} ({} - '{}') for '{}'", tenantId, imageInfo.getResourceKey(), imageInfo.getTenantId(), imageInfo.getName(), name);
         }
         return UpdateResult.of(true, DataConstants.TB_IMAGE_PREFIX + imageInfo.getLink());
     }
