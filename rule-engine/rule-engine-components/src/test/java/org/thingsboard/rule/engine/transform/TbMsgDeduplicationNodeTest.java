@@ -94,7 +94,6 @@ public class TbMsgDeduplicationNodeTest {
 
         when(ctx.getSelfId()).thenReturn(ruleNodeId);
         when(ctx.getTenantId()).thenReturn(tenantId);
-        when(ctx.getSelf()).thenReturn(new RuleNode());
 
         doAnswer((Answer<TbMsg>) invocationOnMock -> {
             TbMsgType type = (TbMsgType) (invocationOnMock.getArguments())[1];
@@ -240,10 +239,10 @@ public class TbMsgDeduplicationNodeTest {
         awaitTellSelfLatch = new CountDownLatch(wantedNumberOfTellSelfInvocation);
         invokeTellSelf(wantedNumberOfTellSelfInvocation);
 
+        when(ctx.getQueueName()).thenReturn(DataConstants.HP_QUEUE_NAME);
         config.setInterval(deduplicationInterval);
         config.setStrategy(DeduplicationStrategy.ALL);
         config.setOutMsgType(TbMsgType.POST_ATTRIBUTES_REQUEST.name());
-        setQueueName(DataConstants.HP_QUEUE_NAME);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
 
@@ -280,10 +279,10 @@ public class TbMsgDeduplicationNodeTest {
         awaitTellSelfLatch = new CountDownLatch(wantedNumberOfTellSelfInvocation);
         invokeTellSelf(wantedNumberOfTellSelfInvocation, true, 3);
 
+        when(ctx.getQueueName()).thenReturn(DataConstants.HP_QUEUE_NAME);
         config.setInterval(deduplicationInterval);
         config.setStrategy(DeduplicationStrategy.ALL);
         config.setOutMsgType(TbMsgType.POST_ATTRIBUTES_REQUEST.name());
-        setQueueName(DataConstants.HP_QUEUE_NAME);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
 
@@ -429,12 +428,6 @@ public class TbMsgDeduplicationNodeTest {
             mergedData.add(msgNode);
         });
         return JacksonUtil.toString(mergedData);
-    }
-
-    private void setQueueName(String queueName) {
-        RuleNode ruleNode = new RuleNode();
-        ruleNode.setQueueName(queueName);
-        when(ctx.getSelf()).thenReturn(ruleNode);
     }
 
 }

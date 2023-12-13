@@ -81,7 +81,7 @@ public class TbMsgDeduplicationNode implements TbNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgDeduplicationNodeConfiguration.class);
         this.deduplicationInterval = TimeUnit.SECONDS.toMillis(config.getInterval());
-        this.queueName = ctx.getSelf().getQueueName();
+        this.queueName = ctx.getQueueName();
     }
 
     @Override

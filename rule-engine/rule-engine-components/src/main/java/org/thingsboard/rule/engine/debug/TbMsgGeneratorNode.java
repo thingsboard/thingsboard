@@ -83,7 +83,7 @@ public class TbMsgGeneratorNode implements TbNode {
         this.config = TbNodeUtils.convert(configuration, TbMsgGeneratorNodeConfiguration.class);
         this.delay = TimeUnit.SECONDS.toMillis(config.getPeriodInSeconds());
         this.currentMsgCount = 0;
-        this.queueName = ctx.getSelf().getQueueName();
+        this.queueName = ctx.getQueueName();
         if (!StringUtils.isEmpty(config.getOriginatorId())) {
             originatorId = EntityIdFactory.getByTypeAndUuid(config.getOriginatorType(), config.getOriginatorId());
             ctx.checkTenantEntity(originatorId);
