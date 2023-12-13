@@ -70,8 +70,20 @@ Apply a similar update for the PostgreSQL service. Find the section:
 And replace it with:
 ```text
     volumes:
-      - tb-edge-postgres-data/:/var/lib/postgresql/data
+      - tb-edge-postgres-data:/var/lib/postgresql/data
 ...
+```
+
+Finally, please add next volumes section at the end of the file:
+```text
+...
+volumes:
+  tb-edge-data:
+    name: tb-edge-data
+  tb-edge-logs:
+    name: tb-edge-logs
+  tb-edge-postgres-data:
+    name: tb-edge-postgres-data
 ```
 
 ##### Backup Database
