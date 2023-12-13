@@ -56,7 +56,7 @@
         <cassandra-all.version>3.11.14</cassandra-all.version>
         <guava.version>31.1-jre</guava.version>
         <caffeine.version>2.6.1</caffeine.version>
-        <commons-lang3.version>3.4</commons-lang3.version>
+        <commons-lang3.version>3.12.0</commons-lang3.version>
         <commons-codec.version>1.15</commons-codec.version>
         <commons-io.version>2.11.0</commons-io.version>
         <commons-logging.version>1.2</commons-logging.version>
