@@ -48,4 +48,13 @@ public class TestProperties {
         }
         return System.getProperty("tb.wsUrl", "ws://localhost:8080");
     }
+
+    public static String getMqttBrokerUrl() {
+        if (instance.isActive()) {
+            String host = instance.getTestContainer().getServiceHost("broker", 1883);
+            Integer port = instance.getTestContainer().getServicePort("broker", 1883);
+            return "tcp://" + host + ":" + port;
+        }
+        return System.getProperty("mqtt.broker", "tcp://localhost:1883");
+    }
 }
