@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.util;
 
-import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -62,7 +61,7 @@ public class DeviceConnectivityUtil {
         if (MQTTS.equals(protocol)) {
             command.append(" --cafile ").append(CA_ROOT_CERT_PEM);
         }
-        command.append(" -h ").append(host).append(port == null ? "" : " -p " + port);
+        command.append(" -h ").append(host).append(port.isBlank() ? "" : " -p " + port);
         command.append(" -t ").append(deviceTelemetryTopic);
 
         switch (deviceCredentials.getCredentialsType()) {
@@ -193,7 +192,7 @@ public class DeviceConnectivityUtil {
     }
 
     public static String getHost(String baseUrl, DeviceConnectivityInfo properties, String protocol) throws URISyntaxException {
-        String initialHost = properties.getHost().isEmpty() ? baseUrl : properties.getHost();
+        String initialHost = properties.getHost() == null || properties.getHost().isBlank() ? baseUrl : properties.getHost();
         InetAddress inetAddress;
         String host = null;
         if (VALID_URL_PATTERN.matcher(initialHost).matches()) {
@@ -215,6 +214,10 @@ public class DeviceConnectivityUtil {
             }
         }
         return host;
+    }
+
+    public static String getPort(DeviceConnectivityInfo properties) {
+        return properties.getPort() == null || properties.getPort().isBlank() ? "" : properties.getPort();
     }
 
     public static boolean isLocalhost(String host) {
