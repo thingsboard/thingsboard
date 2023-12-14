@@ -15,8 +15,9 @@
  */
 package org.thingsboard.server.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.annotations.ApiParam;
+import lombok.Builder;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -50,6 +51,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.util.ThrowingSupplier;
 import org.thingsboard.server.dao.resource.ImageCacheKey;
 import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.service.validator.ResourceDataValidator;
@@ -92,7 +94,8 @@ public class ImageController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @PostMapping("/api/image")
     public TbResourceInfo uploadImage(@RequestPart MultipartFile file,
-                                      @RequestPart(required = false) String title) throws Exception {
+                                      @RequestPart(required = false) String title,
+                                      @RequestPart(required = false) Boolean isPublic) throws Exception {
         SecurityUser user = getCurrentUser();
         TbResource image = new TbResource();
         image.setTenantId(user.getTenantId());
@@ -105,6 +108,7 @@ public class ImageController extends BaseController {
         } else {
             image.setTitle(file.getOriginalFilename());
         }
+        image.setPublic(isPublic != null ? isPublic : true);
         image.setResourceType(ResourceType.IMAGE);
         ImageDescriptor descriptor = new ImageDescriptor();
         descriptor.setMediaType(file.getContentType());
@@ -138,6 +142,7 @@ public class ImageController extends BaseController {
                                           @RequestBody TbResourceInfo newImageInfo) throws ThingsboardException {
         TbResourceInfo imageInfo = checkImageInfo(type, key, Operation.WRITE);
         imageInfo.setTitle(newImageInfo.getTitle());
+        imageInfo.setPublic(newImageInfo.isPublic());
         return tbImageService.save(imageInfo, getCurrentUser());
     }
 
@@ -149,13 +154,28 @@ public class ImageController extends BaseController {
         return downloadIfChanged(type, key, etag, false);
     }
 
+    @GetMapping(value = "/api/images/public/{publicKey}", produces = "image/*")
+    public ResponseEntity<ByteArrayResource> downloadPublicImage(@PathVariable String publicKey,
+                                                                 @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws Exception {
+        ImageCacheKey cacheKey = ImageCacheKey.forPublicImage(publicKey);
+        return downloadIfChanged(cacheKey, etag, () -> imageService.getPublicImageInfoByPublicKey(publicKey));
+    }
+
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = IMAGE_URL + "/export")
     public ImageExportData exportImage(@PathVariable String type, @PathVariable String key) throws Exception {
         TbResourceInfo imageInfo = checkImageInfo(type, key, Operation.READ);
         ImageDescriptor descriptor = imageInfo.getDescriptor(ImageDescriptor.class);
         byte[] data = imageService.getImageData(imageInfo.getTenantId(), imageInfo.getId());
-        return new ImageExportData(descriptor.getMediaType(), imageInfo.getFileName(), imageInfo.getTitle(), imageInfo.getResourceKey(), Base64Utils.encodeToString(data));
+        return ImageExportData.builder()
+                .mediaType(descriptor.getMediaType())
+                .fileName(imageInfo.getFileName())
+                .title(imageInfo.getTitle())
+                .resourceKey(imageInfo.getResourceKey())
+                .isPublic(imageInfo.isPublic())
+                .publicKey(imageInfo.getPublicKey())
+                .data(Base64Utils.encodeToString(data))
+                .build();
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
@@ -172,14 +192,15 @@ public class ImageController extends BaseController {
         } else {
             image.setTitle(imageData.getFileName());
         }
-        image.setResourceKey(imageData.getResourceKey());
         image.setResourceType(ResourceType.IMAGE);
+        image.setResourceKey(imageData.getResourceKey());
+        image.setPublic(imageData.isPublic());
+        image.setPublicKey(imageData.getPublicKey());
         ImageDescriptor descriptor = new ImageDescriptor();
         descriptor.setMediaType(imageData.getMediaType());
         image.setDescriptorValue(descriptor);
         image.setData(Base64Utils.decodeFromString(imageData.getData()));
         return tbImageService.save(image, user);
-
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -231,24 +252,28 @@ public class ImageController extends BaseController {
         return (result.isSuccess() ? ResponseEntity.ok() : ResponseEntity.badRequest()).body(result);
     }
 
-    private ResponseEntity<ByteArrayResource> downloadIfChanged(String type, String key, String etag, boolean preview) throws ThingsboardException, JsonProcessingException {
-        ImageCacheKey cacheKey = new ImageCacheKey(getTenantId(type), key, preview);
+    private ResponseEntity<ByteArrayResource> downloadIfChanged(String type, String key, String etag, boolean preview) throws Exception {
+        ImageCacheKey cacheKey = ImageCacheKey.forImage(getTenantId(type), key, preview);
+        return downloadIfChanged(cacheKey, etag, () -> checkImageInfo(type, key, Operation.READ));
+    }
+
+    private ResponseEntity<ByteArrayResource> downloadIfChanged(ImageCacheKey cacheKey, String etag, ThrowingSupplier<TbResourceInfo> imageInfoSupplier) throws Exception {
         if (StringUtils.isNotEmpty(etag)) {
             etag = StringUtils.remove(etag, '\"'); // etag is wrapped in double quotes due to HTTP specification
             if (etag.equals(tbImageService.getETag(cacheKey))) {
                 return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
             }
         }
-        TenantId tenantId = getTenantId();
-        TbResourceInfo imageInfo = checkImageInfo(type, key, Operation.READ);
+
+        TbResourceInfo imageInfo = imageInfoSupplier.get();
         String fileName = imageInfo.getFileName();
         ImageDescriptor descriptor = imageInfo.getDescriptor(ImageDescriptor.class);
         byte[] data;
-        if (preview) {
+        if (cacheKey.isPreview()) {
             descriptor = descriptor.getPreviewDescriptor();
-            data = imageService.getImagePreview(tenantId, imageInfo.getId());
+            data = imageService.getImagePreview(imageInfo.getTenantId(), imageInfo.getId());
         } else {
-            data = imageService.getImageData(tenantId, imageInfo.getId());
+            data = imageService.getImageData(imageInfo.getTenantId(), imageInfo.getId());
         }
         tbImageService.putETag(cacheKey, descriptor.getEtag());
         var result = ResponseEntity.ok()

@@ -125,3 +125,7 @@ CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_created_time ON notific
 CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_unread ON notification(recipient_id) WHERE status <> 'READ';
 
 CREATE INDEX IF NOT EXISTS idx_resource_etag ON resource(tenant_id, etag);
+
+CREATE INDEX IF NOT EXISTS idx_resource_etag ON resource(tenant_id, etag);
+
+CREATE INDEX IF NOT EXISTS idx_resource_image_public_key ON resource(public_key) WHERE resource_type = 'IMAGE';

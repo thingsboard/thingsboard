@@ -33,6 +33,6 @@ public interface TbImageService {
 
     void putETag(ImageCacheKey imageCacheKey, String etag);
 
-    void evictETag(ImageCacheKey imageCacheKey);
+    void evictETags(ImageCacheKey imageCacheKey);
 
 }

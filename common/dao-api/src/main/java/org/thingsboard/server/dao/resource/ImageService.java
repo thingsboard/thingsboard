@@ -34,6 +34,8 @@ public interface ImageService {
 
     TbResourceInfo getImageInfoByTenantIdAndKey(TenantId tenantId, String key);
 
+    TbResourceInfo getPublicImageInfoByPublicKey(String publicKey);
+
     PageData<TbResourceInfo> getImagesByTenantId(TenantId tenantId, PageLink pageLink);
 
     PageData<TbResourceInfo> getAllImagesByTenantId(TenantId tenantId, PageLink pageLink);

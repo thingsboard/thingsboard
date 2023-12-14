@@ -501,6 +501,8 @@ public class ModelConstants {
     public static final String RESOURCE_ETAG_COLUMN = "etag";
     public static final String RESOURCE_DESCRIPTOR_COLUMN = "descriptor";
     public static final String RESOURCE_PREVIEW_COLUMN = "preview";
+    public static final String RESOURCE_IS_PUBLIC_COLUMN = "is_public";
+    public static final String RESOURCE_PUBLIC_KEY_COLUMN = "public_key";
 
     /**
      * Ota Package constants.
