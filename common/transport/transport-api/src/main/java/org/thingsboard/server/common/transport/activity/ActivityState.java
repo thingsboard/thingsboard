@@ -31,11 +31,14 @@
 package org.thingsboard.server.common.transport.activity;
 
 import lombok.Data;
+import org.thingsboard.server.common.transport.activity.strategy.ActivityStrategy;
 
 @Data
-public class ActivityState {
+public class ActivityState<Metadata> {
 
     private volatile long lastRecordedTime;
     private volatile long lastReportedTime;
+    private volatile ActivityStrategy strategy;
+    private volatile Metadata metadata;
 
 }
