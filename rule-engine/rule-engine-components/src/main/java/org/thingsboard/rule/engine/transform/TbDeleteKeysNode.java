@@ -104,8 +104,13 @@ public class TbDeleteKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
     }
 
     @Override
-    protected String getKeyToUpgradeFromVersionZero() {
+    protected String getNewKeyForUpgradeFromVersionZero() {
         return "deleteFrom";
+    }
+
+    @Override
+    protected String getKeyToUpgradeFromVersionOne() {
+        return "dataToFetch";
     }
 
     boolean matches(String key) {

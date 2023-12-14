@@ -24,9 +24,11 @@ import org.thingsboard.server.common.data.util.TbPair;
 
 public abstract class TbAbstractTransformNodeWithTbMsgSource implements TbNode {
 
-    private static final String FROM_METADATA_PROPERTY = "fromMetadata";
+    protected static final String FROM_METADATA_PROPERTY = "fromMetadata";
 
-    protected abstract String getKeyToUpgradeFromVersionZero();
+    protected abstract String getNewKeyForUpgradeFromVersionZero();
+
+    protected abstract String getKeyToUpgradeFromVersionOne();
 
     @Override
     public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
@@ -48,12 +50,12 @@ public abstract class TbAbstractTransformNodeWithTbMsgSource implements TbNode {
         var value = configToUpdate.get(FROM_METADATA_PROPERTY).asText();
         if ("true".equals(value)) {
             configToUpdate.remove(FROM_METADATA_PROPERTY);
-            configToUpdate.put(getKeyToUpgradeFromVersionZero(), TbMsgSource.METADATA.name());
+            configToUpdate.put(getNewKeyForUpgradeFromVersionZero(), TbMsgSource.METADATA.name());
             return new TbPair<>(true, configToUpdate);
         }
         if ("false".equals(value)) {
             configToUpdate.remove(FROM_METADATA_PROPERTY);
-            configToUpdate.put(getKeyToUpgradeFromVersionZero(), TbMsgSource.DATA.name());
+            configToUpdate.put(getNewKeyForUpgradeFromVersionZero(), TbMsgSource.DATA.name());
             return new TbPair<>(true, configToUpdate);
         }
         throw new TbNodeException("property to update: '" + FROM_METADATA_PROPERTY + "' has unexpected value: "
@@ -61,10 +63,29 @@ public abstract class TbAbstractTransformNodeWithTbMsgSource implements TbNode {
     }
 
     private TbPair<Boolean, JsonNode> upgradeNodesWithVersionOneToUseTbMsgSource(ObjectNode configToUpdate) throws TbNodeException {
-        if (configToUpdate.has(getKeyToUpgradeFromVersionZero())) {
+        if (configToUpdate.has(getNewKeyForUpgradeFromVersionZero())) {
             return new TbPair<>(false, configToUpdate);
         }
-        return upgradeToUseTbMsgSource(configToUpdate);
+        return upgradeTbMsgSourceKey(configToUpdate, getKeyToUpgradeFromVersionOne());
+    }
+
+    private TbPair<Boolean, JsonNode> upgradeTbMsgSourceKey(ObjectNode configToUpdate, String oldPropertyKey) throws TbNodeException {
+        if (!configToUpdate.has(oldPropertyKey)) {
+            throw new TbNodeException("property to update: '" + oldPropertyKey + "' doesn't exists in configuration!");
+        }
+        var value = configToUpdate.get(oldPropertyKey).asText();
+        if (TbMsgSource.METADATA.name().equals(value)) {
+            configToUpdate.remove(oldPropertyKey);
+            configToUpdate.put(getNewKeyForUpgradeFromVersionZero(), TbMsgSource.METADATA.name());
+            return new TbPair<>(true, configToUpdate);
+        }
+        if (TbMsgSource.DATA.name().equals(value)) {
+            configToUpdate.remove(oldPropertyKey);
+            configToUpdate.put(getNewKeyForUpgradeFromVersionZero(), TbMsgSource.DATA.name());
+            return new TbPair<>(true, configToUpdate);
+        }
+        throw new TbNodeException("property to update: '" + oldPropertyKey + "' has unexpected value: "
+                + value + ". Allowed values: true or false!");
     }
 
 }

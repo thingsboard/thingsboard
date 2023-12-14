@@ -165,8 +165,10 @@ public class TbCopyKeysNodeTest {
         return Stream.of(
                 Arguments.of(0, "{\"fromMetadata\":false,\"keys\":[\"temperature\"]}", true, "{\"copyFrom\":\"DATA\",\"keys\":[\"temperature\"]}"),
                 Arguments.of(0, "{\"fromMetadata\":true,\"keys\":[\"temperature\"]}", true, "{\"copyFrom\":\"METADATA\",\"keys\":[\"temperature\"]}"),
-                Arguments.of(1, "{\"fromMetadata\":true,\"keys\":[\"temperature\"]}", true, "{\"copyFrom\":\"METADATA\",\"keys\":[\"temperature\"]}"),
-                Arguments.of(1, "{\"copyFrom\":\"METADATA\",\"keys\":[\"temperature\"]}", false, "{\"copyFrom\":\"METADATA\",\"keys\":[\"temperature\"]}")
+                Arguments.of(1, "{\"fromMetadata\":\"METADATA\",\"keys\":[\"temperature\"]}", true, "{\"copyFrom\":\"METADATA\",\"keys\":[\"temperature\"]}"),
+                Arguments.of(1, "{\"fromMetadata\":\"DATA\",\"keys\":[\"temperature\"]}", true, "{\"copyFrom\":\"DATA\",\"keys\":[\"temperature\"]}"),
+                Arguments.of(1, "{\"copyFrom\":\"METADATA\",\"keys\":[\"temperature\"]}", false, "{\"copyFrom\":\"METADATA\",\"keys\":[\"temperature\"]}"),
+                Arguments.of(1, "{\"copyFrom\":\"DATA\",\"keys\":[\"temperature\"]}", false, "{\"copyFrom\":\"DATA\",\"keys\":[\"temperature\"]}")
         );
     }
 

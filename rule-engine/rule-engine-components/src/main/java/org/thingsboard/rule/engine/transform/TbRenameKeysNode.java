@@ -110,8 +110,13 @@ public class TbRenameKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
     }
 
     @Override
-    protected String getKeyToUpgradeFromVersionZero() {
+    protected String getNewKeyForUpgradeFromVersionZero() {
         return "renameIn";
+    }
+
+    @Override
+    protected String getKeyToUpgradeFromVersionOne() {
+        return FROM_METADATA_PROPERTY;
     }
 
 }
