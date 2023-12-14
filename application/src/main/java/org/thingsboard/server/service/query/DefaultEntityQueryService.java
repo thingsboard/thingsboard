@@ -251,14 +251,13 @@ public class DefaultEntityQueryService implements EntityQueryService {
         }
 
         if (isAttributes) {
-            Map<EntityType, List<EntityId>> typesMap = ids.stream().collect(Collectors.groupingBy(EntityId::getEntityType));
-            List<ListenableFuture<List<String>>> futures = new ArrayList<>(typesMap.size());
-            typesMap.forEach((type, entityIds) -> futures.add(dbCallbackExecutor.submit(() -> attributesService.findAllKeysByEntityIds(tenantId, type, entityIds))));
-            attributesKeysFuture = Futures.transform(Futures.allAsList(futures), lists -> {
-                if (CollectionUtils.isEmpty(lists)) {
+            ListenableFuture<List<String>> future;
+            future = dbCallbackExecutor.submit(() -> attributesService.findAllKeysByEntityIds(tenantId, ids));
+            attributesKeysFuture = Futures.transform(future, list -> {
+                if (CollectionUtils.isEmpty(list)) {
                     return Collections.emptyList();
                 }
-                return lists.stream().flatMap(List::stream).distinct().sorted().collect(Collectors.toList());
+                return list.stream().distinct().sorted().collect(Collectors.toList());
             }, dbCallbackExecutor);
         } else {
             attributesKeysFuture = null;

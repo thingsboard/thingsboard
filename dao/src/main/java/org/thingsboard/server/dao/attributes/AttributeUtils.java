@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.attributes;
 
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -27,7 +28,7 @@ public class AttributeUtils {
 
     public static void validate(EntityId id, String scope) {
         Validator.validateId(id.getId(), "Incorrect id " + id);
-        Validator.validateString(scope, "Incorrect scope " + scope);
+        Validator.validateEnum(AttributeScope.class, scope, "Incorrect scope " + scope);
     }
 
     public static void validate(List<AttributeKvEntry> kvEntries,  boolean valueNoXssValidation) {

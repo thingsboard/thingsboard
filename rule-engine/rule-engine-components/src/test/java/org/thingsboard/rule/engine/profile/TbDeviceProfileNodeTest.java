@@ -29,6 +29,7 @@ import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -321,12 +322,13 @@ public class TbDeviceProfileNodeTest {
         device.setCustomerId(customerId);
 
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "alarmEnabled"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         AttributeKvEntity attributeKvEntity = new AttributeKvEntity();
         attributeKvEntity.setId(compositeKey);
         attributeKvEntity.setBooleanValue(Boolean.TRUE);
+        attributeKvEntity.setStrKey("alarmEnabled");
         attributeKvEntity.setLastUpdateTs(System.currentTimeMillis());
 
         AttributeKvEntry entry = attributeKvEntity.toData();
@@ -403,11 +405,12 @@ public class TbDeviceProfileNodeTest {
         device.setCustomerId(customerId);
 
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, tenantId.getId(), "SERVER_SCOPE", "alarmEnabled"
+                tenantId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         AttributeKvEntity attributeKvEntity = new AttributeKvEntity();
         attributeKvEntity.setId(compositeKey);
+        attributeKvEntity.setStrKey("alarmEnabled");
         attributeKvEntity.setBooleanValue(Boolean.TRUE);
         attributeKvEntity.setLastUpdateTs(System.currentTimeMillis());
 
@@ -486,11 +489,12 @@ public class TbDeviceProfileNodeTest {
         DeviceProfileData deviceProfileData = new DeviceProfileData();
 
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "greaterAttribute"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         AttributeKvEntity attributeKvEntity = new AttributeKvEntity();
         attributeKvEntity.setId(compositeKey);
+        attributeKvEntity.setStrKey("greaterAttribute");
         attributeKvEntity.setLongValue(30L);
         attributeKvEntity.setLastUpdateTs(0L);
 
@@ -555,20 +559,22 @@ public class TbDeviceProfileNodeTest {
         DeviceProfileData deviceProfileData = new DeviceProfileData();
 
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "greaterAttribute"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         AttributeKvEntity attributeKvEntity = new AttributeKvEntity();
         attributeKvEntity.setId(compositeKey);
+        attributeKvEntity.setStrKey("greaterAttribute");
         attributeKvEntity.setLongValue(30L);
         attributeKvEntity.setLastUpdateTs(0L);
 
         AttributeKvCompositeKey alarmDelayCompositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "alarm_delay"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 11
         );
 
         AttributeKvEntity alarmDelayAttributeKvEntity = new AttributeKvEntity();
         alarmDelayAttributeKvEntity.setId(alarmDelayCompositeKey);
+        alarmDelayAttributeKvEntity.setStrKey("alarm_delay");
         long alarmDelayInSeconds = 5L;
         alarmDelayAttributeKvEntity.setLongValue(alarmDelayInSeconds);
         alarmDelayAttributeKvEntity.setLastUpdateTs(0L);
@@ -669,20 +675,22 @@ public class TbDeviceProfileNodeTest {
 
 
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "greaterAttribute"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         AttributeKvEntity attributeKvEntity = new AttributeKvEntity();
         attributeKvEntity.setId(compositeKey);
+        attributeKvEntity.setStrKey("greaterAttribute");
         attributeKvEntity.setLongValue(30L);
         attributeKvEntity.setLastUpdateTs(0L);
 
         AttributeKvCompositeKey alarmDelayCompositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "alarm_delay"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 11
         );
 
         AttributeKvEntity alarmDelayAttributeKvEntity = new AttributeKvEntity();
         alarmDelayAttributeKvEntity.setId(alarmDelayCompositeKey);
+        alarmDelayAttributeKvEntity.setStrKey("alarm_delay");
         long alarmDelayInSeconds = 5L;
         alarmDelayAttributeKvEntity.setLongValue(alarmDelayInSeconds);
         alarmDelayAttributeKvEntity.setLastUpdateTs(0L);
@@ -788,20 +796,22 @@ public class TbDeviceProfileNodeTest {
         DeviceProfileData deviceProfileData = new DeviceProfileData();
 
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "greaterAttribute"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         AttributeKvEntity attributeKvEntity = new AttributeKvEntity();
         attributeKvEntity.setId(compositeKey);
+        attributeKvEntity.setStrKey("greaterAttribute");
         attributeKvEntity.setLongValue(30L);
         attributeKvEntity.setLastUpdateTs(0L);
 
         AttributeKvCompositeKey alarmDelayCompositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "alarm_delay"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 11
         );
 
         AttributeKvEntity alarmDelayAttributeKvEntity = new AttributeKvEntity();
         alarmDelayAttributeKvEntity.setId(alarmDelayCompositeKey);
+        alarmDelayAttributeKvEntity.setStrKey("alarm_delay");
         long alarmRepeating = 2;
         alarmDelayAttributeKvEntity.setLongValue(alarmRepeating);
         alarmDelayAttributeKvEntity.setLastUpdateTs(0L);
@@ -891,7 +901,7 @@ public class TbDeviceProfileNodeTest {
         DeviceProfileData deviceProfileData = new DeviceProfileData();
 
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "greaterAttribute"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         Device device = new Device();
@@ -900,15 +910,17 @@ public class TbDeviceProfileNodeTest {
 
         AttributeKvEntity attributeKvEntity = new AttributeKvEntity();
         attributeKvEntity.setId(compositeKey);
+        attributeKvEntity.setStrKey("greaterAttribute");
         attributeKvEntity.setLongValue(30L);
         attributeKvEntity.setLastUpdateTs(0L);
 
         AttributeKvCompositeKey alarmDelayCompositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "alarm_delay"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 11
         );
 
         AttributeKvEntity alarmDelayAttributeKvEntity = new AttributeKvEntity();
         alarmDelayAttributeKvEntity.setId(alarmDelayCompositeKey);
+        alarmDelayAttributeKvEntity.setStrKey("alarm_delay");
         long repeatingCondition = 2;
         alarmDelayAttributeKvEntity.setLongValue(repeatingCondition);
         alarmDelayAttributeKvEntity.setLastUpdateTs(0L);
@@ -1012,11 +1024,12 @@ public class TbDeviceProfileNodeTest {
         device.setCustomerId(customerId);
 
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "greaterAttribute"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         AttributeKvEntity attributeKvEntity = new AttributeKvEntity();
         attributeKvEntity.setId(compositeKey);
+        attributeKvEntity.setStrKey("greaterAttribute");
         attributeKvEntity.setLongValue(30L);
         attributeKvEntity.setLastUpdateTs(0L);
 
@@ -1113,11 +1126,12 @@ public class TbDeviceProfileNodeTest {
         device.setCustomerId(customerId);
 
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "greaterAttribute"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         AttributeKvEntity attributeKvEntity = new AttributeKvEntity();
         attributeKvEntity.setId(compositeKey);
+        attributeKvEntity.setStrKey("greaterAttribute");
         attributeKvEntity.setLongValue(30L);
         attributeKvEntity.setLastUpdateTs(0L);
 
@@ -1196,11 +1210,12 @@ public class TbDeviceProfileNodeTest {
         device.setCustomerId(customerId);
 
         AttributeKvCompositeKey compositeKeyActiveSchedule = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "dynamicValueActiveSchedule"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         AttributeKvEntity attributeKvEntityActiveSchedule = new AttributeKvEntity();
         attributeKvEntityActiveSchedule.setId(compositeKeyActiveSchedule);
+        attributeKvEntityActiveSchedule.setStrKey("dynamicValueActiveSchedule");
         attributeKvEntityActiveSchedule.setJsonValue(
                 "{\"timezone\":\"Europe/Kiev\",\"items\":[{\"enabled\":true,\"dayOfWeek\":1,\"startsOn\":0,\"endsOn\":8.64e+7},{\"enabled\":true,\"dayOfWeek\":2,\"startsOn\":0,\"endsOn\":8.64e+7},{\"enabled\":true,\"dayOfWeek\":3,\"startsOn\":0,\"endsOn\":8.64e+7},{\"enabled\":true,\"dayOfWeek\":4,\"startsOn\":0,\"endsOn\":8.64e+7},{\"enabled\":true,\"dayOfWeek\":5,\"startsOn\":0,\"endsOn\":8.64e+7},{\"enabled\":true,\"dayOfWeek\":6,\"startsOn\":0,\"endsOn\":8.64e+7},{\"enabled\":true,\"dayOfWeek\":7,\"startsOn\":0,\"endsOn\":8.64e+7}],\"dynamicValue\":null}"
         );
@@ -1280,11 +1295,12 @@ public class TbDeviceProfileNodeTest {
         device.setCustomerId(customerId);
 
         AttributeKvCompositeKey compositeKeyInactiveSchedule = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "dynamicValueInactiveSchedule"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         AttributeKvEntity attributeKvEntityInactiveSchedule = new AttributeKvEntity();
         attributeKvEntityInactiveSchedule.setId(compositeKeyInactiveSchedule);
+        attributeKvEntityInactiveSchedule.setStrKey("dynamicValueInactiveSchedule");
         attributeKvEntityInactiveSchedule.setJsonValue(
                 "{\"timezone\":\"Europe/Kiev\",\"items\":[{\"enabled\":false,\"dayOfWeek\":1,\"startsOn\":0,\"endsOn\":0},{\"enabled\":false,\"dayOfWeek\":2,\"startsOn\":0,\"endsOn\":0},{\"enabled\":false,\"dayOfWeek\":3,\"startsOn\":0,\"endsOn\":0},{\"enabled\":false,\"dayOfWeek\":4,\"startsOn\":0,\"endsOn\":0},{\"enabled\":false,\"dayOfWeek\":5,\"startsOn\":0,\"endsOn\":0},{\"enabled\":false,\"dayOfWeek\":6,\"startsOn\":0,\"endsOn\":0},{\"enabled\":false,\"dayOfWeek\":7,\"startsOn\":0,\"endsOn\":0}],\"dynamicValue\":null}"
         );
@@ -1372,11 +1388,12 @@ public class TbDeviceProfileNodeTest {
         device.setCustomerId(customerId);
 
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
-                EntityType.CUSTOMER, deviceId.getId(), "SERVER_SCOPE", "lessAttribute"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         AttributeKvEntity attributeKvEntity = new AttributeKvEntity();
         attributeKvEntity.setId(compositeKey);
+        attributeKvEntity.setStrKey("lessAttribute");
         attributeKvEntity.setLongValue(30L);
         attributeKvEntity.setLastUpdateTs(0L);
 
@@ -1447,11 +1464,12 @@ public class TbDeviceProfileNodeTest {
         DeviceProfileData deviceProfileData = new DeviceProfileData();
 
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "lessAttribute"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         AttributeKvEntity attributeKvEntity = new AttributeKvEntity();
         attributeKvEntity.setId(compositeKey);
+        attributeKvEntity.setStrKey("lessAttribute");
         attributeKvEntity.setLongValue(50L);
         attributeKvEntity.setLastUpdateTs(0L);
 
@@ -1520,7 +1538,7 @@ public class TbDeviceProfileNodeTest {
         DeviceProfileData deviceProfileData = new DeviceProfileData();
 
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "tenantAttribute"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         Device device = new Device();
@@ -1529,6 +1547,7 @@ public class TbDeviceProfileNodeTest {
 
         AttributeKvEntity attributeKvEntity = new AttributeKvEntity();
         attributeKvEntity.setId(compositeKey);
+        attributeKvEntity.setStrKey("tenantAttribute");
         attributeKvEntity.setLongValue(100L);
         attributeKvEntity.setLastUpdateTs(0L);
 
@@ -1605,7 +1624,7 @@ public class TbDeviceProfileNodeTest {
         DeviceProfileData deviceProfileData = new DeviceProfileData();
 
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
-                EntityType.DEVICE, deviceId.getId(), EntityKeyType.SERVER_ATTRIBUTE.name(), "tenantAttribute"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         Device device = new Device();
@@ -1614,6 +1633,7 @@ public class TbDeviceProfileNodeTest {
 
         AttributeKvEntity attributeKvEntity = new AttributeKvEntity();
         attributeKvEntity.setId(compositeKey);
+        attributeKvEntity.setStrKey("tenantAttribute");
         attributeKvEntity.setLongValue(100L);
         attributeKvEntity.setLastUpdateTs(0L);
 

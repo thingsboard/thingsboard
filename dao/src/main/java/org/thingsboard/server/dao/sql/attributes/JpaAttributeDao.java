@@ -22,10 +22,12 @@ import com.google.common.util.concurrent.MoreExecutors;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -34,6 +36,7 @@ import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.attributes.AttributesDao;
 import org.thingsboard.server.dao.model.sql.AttributeKvCompositeKey;
+import org.thingsboard.server.dao.model.sql.AttributeKvDictionary;
 import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
 import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
@@ -46,6 +49,9 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -56,6 +62,9 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
 
     @Autowired
     ScheduledLogExecutorComponent logExecutor;
+
+    @Autowired
+    private AttributeKvDictionaryRepository dictionaryRepository;
 
     @Autowired
     private AttributeKvRepository attributeKvRepository;
@@ -81,6 +90,9 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     @Value("${sql.batch_sort:true}")
     private boolean batchSortEnabled;
 
+    private final ConcurrentMap<String, Integer> attributeDictionaryMap = new ConcurrentHashMap<>();
+    private static final ReentrantLock attributeCreationLock = new ReentrantLock();
+
     private TbSqlBlockingQueueWrapper<AttributeKvEntity> queue;
 
     @PostConstruct
@@ -98,7 +110,6 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
         queue = new TbSqlBlockingQueueWrapper<>(params, hashcodeFunction, batchThreads, statsFactory);
         queue.init(logExecutor, v -> attributeKvInsertRepository.saveOrUpdate(v),
                 Comparator.comparing((AttributeKvEntity attributeKvEntity) -> attributeKvEntity.getId().getEntityId())
-                        .thenComparing(attributeKvEntity -> attributeKvEntity.getId().getEntityType().name())
                         .thenComparing(attributeKvEntity -> attributeKvEntity.getId().getAttributeType())
                         .thenComparing(attributeKvEntity -> attributeKvEntity.getId().getAttributeKey())
         );
@@ -112,81 +123,131 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     }
 
     @Override
-    public Optional<AttributeKvEntry> find(TenantId tenantId, EntityId entityId, String attributeType, String attributeKey) {
+    public Optional<AttributeKvEntry> find(TenantId tenantId, EntityId entityId, AttributeScope attributeScope, String attributeKey) {
         AttributeKvCompositeKey compositeKey =
-                getAttributeKvCompositeKey(entityId, attributeType, attributeKey);
-        return Optional.ofNullable(DaoUtil.getData(attributeKvRepository.findById(compositeKey)));
+                getAttributeKvCompositeKey(entityId, attributeScope.getId(), getOrSaveKeyId(attributeKey));
+        Optional<AttributeKvEntity> attributeKvEntityOptional = attributeKvRepository.findById(compositeKey);
+        if (attributeKvEntityOptional.isPresent()) {
+            AttributeKvEntity attributeKvEntity = attributeKvEntityOptional.get();
+            attributeKvEntity.setStrKey(attributeKey);
+            return Optional.ofNullable(DaoUtil.getData(attributeKvEntity));
+        }
+        return Optional.ofNullable(DaoUtil.getData(attributeKvEntityOptional));
     }
 
     @Override
-    public List<AttributeKvEntry> find(TenantId tenantId, EntityId entityId, String attributeType, Collection<String> attributeKeys) {
+    public List<AttributeKvEntry> find(TenantId tenantId, EntityId entityId, AttributeScope attributeScope, Collection<String> attributeKeys) {
         List<AttributeKvCompositeKey> compositeKeys =
                 attributeKeys
                         .stream()
                         .map(attributeKey ->
-                                getAttributeKvCompositeKey(entityId, attributeType, attributeKey))
+                                getAttributeKvCompositeKey(entityId, attributeScope.getId(), getOrSaveKeyId(attributeKey)))
                         .collect(Collectors.toList());
-        return DaoUtil.convertDataList(Lists.newArrayList(attributeKvRepository.findAllById(compositeKeys)));
+        List<AttributeKvEntity> attributes = attributeKvRepository.findAllById(compositeKeys);
+        attributes.forEach(attributeKvEntity -> attributeKvEntity.setStrKey(getKey(attributeKvEntity.getId().getAttributeKey())));
+        return DaoUtil.convertDataList(Lists.newArrayList(attributes));
     }
 
     @Override
-    public List<AttributeKvEntry> findAll(TenantId tenantId, EntityId entityId, String attributeType) {
+    public List<AttributeKvEntry> findAll(TenantId tenantId, EntityId entityId, AttributeScope attributeScope) {
+        List<AttributeKvEntity> attributes = attributeKvRepository.findAllEntityIdAndAttributeType(
+                entityId.getId(),
+                attributeScope.getId());
+        attributes.forEach(attributeKvEntity -> attributeKvEntity.setStrKey(getKey(attributeKvEntity.getId().getAttributeKey())));
         return DaoUtil.convertDataList(Lists.newArrayList(
-                attributeKvRepository.findAllByEntityTypeAndEntityIdAndAttributeType(
-                        entityId.getEntityType(),
-                        entityId.getId(),
-                        attributeType)));
+                attributes));
     }
 
     @Override
     public List<String> findAllKeysByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId) {
         if (deviceProfileId != null) {
-            return attributeKvRepository.findAllKeysByDeviceProfileId(tenantId.getId(), deviceProfileId.getId());
+            return attributeKvRepository.findAllKeysByDeviceProfileId(tenantId.getId(), deviceProfileId.getId())
+                    .stream().map(this::getKey).collect(Collectors.toList());
         } else {
-            return attributeKvRepository.findAllKeysByTenantId(tenantId.getId());
+            return attributeKvRepository.findAllKeysByTenantId(tenantId.getId())
+                    .stream().map(this::getKey).collect(Collectors.toList());
         }
     }
 
     @Override
-    public List<String> findAllKeysByEntityIds(TenantId tenantId, EntityType entityType, List<EntityId> entityIds) {
+    public List<String> findAllKeysByEntityIds(TenantId tenantId, List<EntityId> entityIds) {
         return attributeKvRepository
-                .findAllKeysByEntityIds(entityType.name(), entityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
+                .findAllKeysByEntityIds(entityIds.stream().map(EntityId::getId).collect(Collectors.toList()))
+                .stream().map(this::getKey).collect(Collectors.toList());
     }
 
     @Override
-    public ListenableFuture<String> save(TenantId tenantId, EntityId entityId, String attributeType, AttributeKvEntry attribute) {
+    public ListenableFuture<String> save(TenantId tenantId, EntityId entityId, AttributeScope attributeScope, AttributeKvEntry attribute) {
         AttributeKvEntity entity = new AttributeKvEntity();
-        entity.setId(new AttributeKvCompositeKey(entityId.getEntityType(), entityId.getId(), attributeType, attribute.getKey()));
+        entity.setId(new AttributeKvCompositeKey(entityId.getId(), attributeScope.getId(), getOrSaveKeyId(attribute.getKey())));
         entity.setLastUpdateTs(attribute.getLastUpdateTs());
         entity.setStrValue(attribute.getStrValue().orElse(null));
         entity.setDoubleValue(attribute.getDoubleValue().orElse(null));
         entity.setLongValue(attribute.getLongValue().orElse(null));
         entity.setBooleanValue(attribute.getBooleanValue().orElse(null));
         entity.setJsonValue(attribute.getJsonValue().orElse(null));
-        return addToQueue(entity);
+        return addToQueue(entity, attribute.getKey());
     }
 
-    private ListenableFuture<String> addToQueue(AttributeKvEntity entity) {
-        return Futures.transform(queue.add(entity), v -> entity.getId().getAttributeKey(), MoreExecutors.directExecutor());
+    private ListenableFuture<String> addToQueue(AttributeKvEntity entity, String key) {
+        return Futures.transform(queue.add(entity), v -> key, MoreExecutors.directExecutor());
     }
 
     @Override
-    public List<ListenableFuture<String>> removeAll(TenantId tenantId, EntityId entityId, String attributeType, List<String> keys) {
+    public List<ListenableFuture<String>> removeAll(TenantId tenantId, EntityId entityId, AttributeScope attributeScope, List<String> keys) {
         List<ListenableFuture<String>> futuresList = new ArrayList<>(keys.size());
         for (String key : keys) {
             futuresList.add(service.submit(() -> {
-                attributeKvRepository.delete(entityId.getEntityType(), entityId.getId(), attributeType, key);
+                attributeKvRepository.delete(entityId.getId(), attributeScope.getId(), getOrSaveKeyId(key));
                 return key;
             }));
         }
         return futuresList;
     }
 
-    private AttributeKvCompositeKey getAttributeKvCompositeKey(EntityId entityId, String attributeType, String attributeKey) {
+    private AttributeKvCompositeKey getAttributeKvCompositeKey(EntityId entityId, Integer attributeType, Integer attributeKey) {
         return new AttributeKvCompositeKey(
-                entityId.getEntityType(),
                 entityId.getId(),
                 attributeType,
                 attributeKey);
+    }
+
+    private Integer getOrSaveKeyId(String attributeKey) {
+        Integer keyId = attributeDictionaryMap.get(attributeKey);
+        if (keyId == null) {
+            Optional<AttributeKvDictionary> byIdOptional = dictionaryRepository.findById(attributeKey);
+            if (byIdOptional.isEmpty()) {
+                attributeCreationLock.lock();
+                try {
+                    byIdOptional = dictionaryRepository.findById(attributeKey);
+                    if (byIdOptional.isEmpty()) {
+                        AttributeKvDictionary attributeKvDictionary = new AttributeKvDictionary();
+                        attributeKvDictionary.setKey(attributeKey);
+                        try {
+                            AttributeKvDictionary saved = dictionaryRepository.save(attributeKvDictionary);
+                            attributeDictionaryMap.put(saved.getKey(), saved.getKeyId());
+                            keyId = saved.getKeyId();
+                        } catch (DataIntegrityViolationException | ConstraintViolationException e) {
+                            byIdOptional = dictionaryRepository.findById(attributeKey);
+                            AttributeKvDictionary dictionary = byIdOptional.orElseThrow(() -> new RuntimeException("Failed to get AttributeKvDictionary entity from DB!"));
+                            attributeDictionaryMap.put(dictionary.getKey(), dictionary.getKeyId());
+                            keyId = dictionary.getKeyId();
+                        }
+                    } else {
+                        keyId = byIdOptional.get().getKeyId();
+                    }
+                } finally {
+                    attributeCreationLock.unlock();
+                }
+            } else {
+                keyId = byIdOptional.get().getKeyId();
+                attributeDictionaryMap.put(attributeKey, keyId);
+            }
+        }
+        return keyId;
+    }
+    private String getKey(Integer attributeKey) {
+        Optional<AttributeKvDictionary> byKeyId = dictionaryRepository.findByKeyId(attributeKey);
+        return byKeyId.map(AttributeKvDictionary::getKey).orElse(null);
     }
 }

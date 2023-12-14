@@ -103,17 +103,22 @@ CREATE TABLE IF NOT EXISTS audit_log (
 ) PARTITION BY RANGE (created_time);
 
 CREATE TABLE IF NOT EXISTS attribute_kv (
-  entity_type varchar(255),
   entity_id uuid,
-  attribute_type varchar(255),
-  attribute_key varchar(255),
+  attribute_type int,
+  attribute_key int,
   bool_v boolean,
   str_v varchar(10000000),
   long_v bigint,
   dbl_v double precision,
   json_v json,
   last_update_ts bigint,
-  CONSTRAINT attribute_kv_pkey PRIMARY KEY (entity_type, entity_id, attribute_type, attribute_key)
+  CONSTRAINT attribute_kv_pkey PRIMARY KEY (entity_id, attribute_type, attribute_key)
+);
+
+CREATE TABLE IF NOT EXISTS attribute_kv_dictionary (
+    key    varchar(255) NOT NULL,
+    key_id serial UNIQUE,
+    CONSTRAINT attribute_key_id_pkey PRIMARY KEY (key)
 );
 
 CREATE TABLE IF NOT EXISTS component_descriptor (

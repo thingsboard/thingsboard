@@ -184,6 +184,11 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
                 break;
             case "3.2.2":
                 break;
+            case "3.6.2":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    loadSql(conn, LOAD_TTL_FUNCTIONS_SQL, "3.6.2");
+                }
+                break;
             default:
                 throw new RuntimeException("Unable to upgrade SQL database, unsupported fromVersion: " + fromVersion);
         }
