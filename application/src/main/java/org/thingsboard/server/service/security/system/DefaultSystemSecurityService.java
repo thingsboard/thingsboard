@@ -95,9 +95,9 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
 
     @Cacheable(cacheNames = SECURITY_SETTINGS_CACHE, key = "'securitySettings'")
     @Override
-    public SecuritySettings getSecuritySettings(TenantId tenantId) {
+    public SecuritySettings getSecuritySettings() {
         SecuritySettings securitySettings = null;
-        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey(tenantId, "securitySettings");
+        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "securitySettings");
         if (adminSettings != null) {
             try {
                 securitySettings = JacksonUtil.convertValue(adminSettings.getJsonValue(), SecuritySettings.class);
@@ -115,15 +115,15 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
 
     @CacheEvict(cacheNames = SECURITY_SETTINGS_CACHE, key = "'securitySettings'")
     @Override
-    public SecuritySettings saveSecuritySettings(TenantId tenantId, SecuritySettings securitySettings) {
-        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey(tenantId, "securitySettings");
+    public SecuritySettings saveSecuritySettings(SecuritySettings securitySettings) {
+        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "securitySettings");
         if (adminSettings == null) {
             adminSettings = new AdminSettings();
-            adminSettings.setTenantId(tenantId);
+            adminSettings.setTenantId(TenantId.SYS_TENANT_ID);
             adminSettings.setKey("securitySettings");
         }
         adminSettings.setJsonValue(JacksonUtil.valueToTree(securitySettings));
-        AdminSettings savedAdminSettings = adminSettingsService.saveAdminSettings(tenantId, adminSettings);
+        AdminSettings savedAdminSettings = adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminSettings);
         try {
             return JacksonUtil.convertValue(savedAdminSettings.getJsonValue(), SecuritySettings.class);
         } catch (Exception e) {
@@ -135,7 +135,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
     public void validateUserCredentials(TenantId tenantId, UserCredentials userCredentials, String username, String password) throws AuthenticationException {
         if (!encoder.matches(password, userCredentials.getPassword())) {
             int failedLoginAttempts = userService.increaseFailedLoginAttempts(tenantId, userCredentials.getUserId());
-            SecuritySettings securitySettings = self.getSecuritySettings(tenantId);
+            SecuritySettings securitySettings = self.getSecuritySettings();
             if (securitySettings.getMaxFailedLoginAttempts() != null && securitySettings.getMaxFailedLoginAttempts() > 0) {
                 if (failedLoginAttempts > securitySettings.getMaxFailedLoginAttempts() && userCredentials.isEnabled()) {
                     lockAccount(userCredentials.getUserId(), username, securitySettings.getUserLockoutNotificationEmail(), securitySettings.getMaxFailedLoginAttempts());
@@ -151,7 +151,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
 
         userService.resetFailedLoginAttempts(tenantId, userCredentials.getUserId());
 
-        SecuritySettings securitySettings = self.getSecuritySettings(tenantId);
+        SecuritySettings securitySettings = self.getSecuritySettings();
         if (isPositiveInteger(securitySettings.getPasswordPolicy().getPasswordExpirationPeriodDays())) {
             if ((userCredentials.getCreatedTime()
                     + TimeUnit.DAYS.toMillis(securitySettings.getPasswordPolicy().getPasswordExpirationPeriodDays()))
@@ -179,7 +179,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
         if (maxVerificationFailures != null && maxVerificationFailures > 0
                 && failedVerificationAttempts >= maxVerificationFailures) {
             userService.setUserCredentialsEnabled(TenantId.SYS_TENANT_ID, userId, false);
-            SecuritySettings securitySettings = self.getSecuritySettings(tenantId);
+            SecuritySettings securitySettings = self.getSecuritySettings();
             lockAccount(userId, securityUser.getEmail(), securitySettings.getUserLockoutNotificationEmail(), maxVerificationFailures);
             throw new LockedException("User account was locked due to exceeded 2FA verification attempts");
         }
@@ -197,8 +197,8 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
     }
 
     @Override
-    public void validatePassword(TenantId tenantId, String password, UserCredentials userCredentials) throws DataValidationException {
-        SecuritySettings securitySettings = self.getSecuritySettings(tenantId);
+    public void validatePassword(String password, UserCredentials userCredentials) throws DataValidationException {
+        SecuritySettings securitySettings = self.getSecuritySettings();
         UserPasswordPolicy passwordPolicy = securitySettings.getPasswordPolicy();
 
         validatePasswordByPolicy(password, passwordPolicy);

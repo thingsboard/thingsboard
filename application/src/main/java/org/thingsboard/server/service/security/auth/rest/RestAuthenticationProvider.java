@@ -88,7 +88,7 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
             String username = userPrincipal.getValue();
             String password = (String) authentication.getCredentials();
 
-            SecuritySettings securitySettings = systemSecurityService.getSecuritySettings(null);
+            SecuritySettings securitySettings = systemSecurityService.getSecuritySettings();
             UserPasswordPolicy passwordPolicy = securitySettings.getPasswordPolicy();
             if (Boolean.TRUE.equals(passwordPolicy.getForceUserToResetPasswordIfNotValid())) {
                 try {

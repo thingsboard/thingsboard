@@ -31,9 +31,9 @@ import javax.servlet.http.HttpServletRequest;
 
 public interface SystemSecurityService {
 
-    SecuritySettings getSecuritySettings(TenantId tenantId);
+    SecuritySettings getSecuritySettings();
 
-    SecuritySettings saveSecuritySettings(TenantId tenantId, SecuritySettings securitySettings);
+    SecuritySettings saveSecuritySettings(SecuritySettings securitySettings);
 
     void validatePasswordByPolicy(String password, UserPasswordPolicy passwordPolicy);
 
@@ -41,7 +41,7 @@ public interface SystemSecurityService {
 
     void validateTwoFaVerification(SecurityUser securityUser, boolean verificationSuccess, PlatformTwoFaSettings twoFaSettings);
 
-    void validatePassword(TenantId tenantId, String password, UserCredentials userCredentials) throws DataValidationException;
+    void validatePassword(String password, UserCredentials userCredentials) throws DataValidationException;
 
     String getBaseUrl(TenantId tenantId, CustomerId customerId, HttpServletRequest httpServletRequest);
 
