@@ -15,9 +15,16 @@
 ///
 
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { ConnectorType, RPCTemplate } from '@home/components/widget/lib/gateway/gateway-widget.models';
-import { TranslateService } from '@ngx-translate/core';
+import {
+  ConnectorType,
+  RPCTemplate
+} from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { KeyValue } from '@angular/common';
+import { EntityType } from '@shared/models/entity-type.models';
+import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
+import { AttributeService } from '@core/http/attribute.service';
+import { WidgetContext } from '@home/models/widget-component.models';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'tb-gateway-service-rpc-connector-templates',
@@ -29,52 +36,52 @@ export class GatewayServiceRPCConnectorTemplatesComponent implements OnInit {
   @Input()
   connectorType: ConnectorType;
 
+  @Input()
+  ctx: WidgetContext;
+
   @Output()
   saveTemplate: EventEmitter<any> = new EventEmitter();
 
-  rpcTemplates: Array<RPCTemplate> = [];
+  @Output()
+  useTemplate: EventEmitter<any> = new EventEmitter();
 
-  constructor(private translate: TranslateService) {
-    this.rpcTemplates.push(
-      {
-        name: 'Test Template',
-        config: {
-          fieldString: 'string',
-          fieldNumber: 666,
-          fieldBool: true,
-          fieldArray: [111, 222, 333, "String", "444"],
-          fieldObj: {
-            subKey1: 'dasd',
-            subKey2: 666,
-          }
-        }
-      }
-    )
+  @Input()
+  rpcTemplates: Array<RPCTemplate>;
+
+  constructor(private attributeService: AttributeService) {
   }
-
 
   ngOnInit() {
-
   }
 
-  public useTemplate($event: Event): void {
+  public applyTemplate($event: Event, template: RPCTemplate): void {
     $event.stopPropagation();
-    console.log("useTemplate")
+    this.useTemplate.emit(template);
   }
 
-  public copyTemplate($event: Event): void {
+  public deleteTemplate($event: Event, template: RPCTemplate): void {
     $event.stopPropagation();
-    console.log("copyTemplate")
+    const index = this.rpcTemplates.findIndex(data => {
+      return data.name == template.name;
+    })
+    this.rpcTemplates.splice(index, 1);
+    const key = `${this.connectorType}_template`;
+    this.attributeService.saveEntityAttributes(
+      {
+        id: this.ctx.defaultSubscription.targetDeviceId,
+        entityType: EntityType.DEVICE
+      }
+      , AttributeScope.SERVER_SCOPE, [{
+        key,
+        value: this.rpcTemplates
+      }]).subscribe(() => {
+    })
   }
 
-  public deleteTemplate($event: Event): void {
-    $event.stopPropagation();
-    console.log("deleteTemplate")
-  }
-
-  public originalOrder = (a: KeyValue<string, any>, b: KeyValue<string, any>): number => {
+  public originalOrder = (a, b): number => {
     return 0;
   }
+
   public isObject(value: any) {
     return value !== null && typeof value === 'object' && !Array.isArray(value);
   }

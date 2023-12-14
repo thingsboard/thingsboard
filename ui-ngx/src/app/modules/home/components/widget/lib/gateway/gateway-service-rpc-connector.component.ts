@@ -14,33 +14,66 @@
 /// limitations under the License.
 ///
 
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
 import {
-  BACnetObjectTypes, BACnetObjectTypesTranslates,
-  BACnetRequestTypes, BACnetRequestTypesTranslates, BLEMethods, BLEMethodsTranslates,
+  ControlValueAccessor,
+  FormArray,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  NG_VALUE_ACCESSOR,
+  Validators
+} from '@angular/forms';
+import {
+  BACnetObjectTypes,
+  BACnetObjectTypesTranslates,
+  BACnetRequestTypes,
+  BACnetRequestTypesTranslates,
+  BLEMethods,
+  BLEMethodsTranslates,
   CANByteOrders,
-  ConnectorType, GatewayConnectorDefaultTypesTranslates, HTTPMethods,
+  ConnectorType,
+  GatewayConnectorDefaultTypesTranslates,
+  HTTPMethods,
   ModbusCommandTypes,
   RPCCommand,
-  SNMPMethods, SNMPMethodsTranslations,
+  RPCTemplateConfig,
+  SNMPMethods,
+  SNMPMethodsTranslations,
   SocketEncodings,
-  SocketMethodProcessings, SocketMethodProcessingsTranslates
+  SocketMethodProcessings,
+  SocketMethodProcessingsTranslates
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
-import { TranslateService } from "@ngx-translate/core";
+import { MatDialog } from '@angular/material/dialog';
+import {
+  JsonObjectEditDialogComponent,
+  JsonObjectEditDialogData
+} from '@shared/components/dialog/json-object-edit-dialog.component';
+import { jsonRequired } from '@shared/components/json-object-edit.component';
+import { deepClone } from '@core/utils';
 
 @Component({
   selector: 'tb-gateway-service-rpc-connector',
   templateUrl: './gateway-service-rpc-connector.component.html',
-  styleUrls: ['./gateway-service-rpc-connector.component.scss']
+  styleUrls: ['./gateway-service-rpc-connector.component.scss'],
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => GatewayServiceRPCConnectorComponent),
+      multi: true
+    }
+  ]
 })
-export class GatewayServiceRPCConnectorComponent implements OnInit {
+export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValueAccessor {
 
   @Input()
   connectorType: ConnectorType;
 
   @Output()
   sendCommand: EventEmitter<RPCCommand> = new EventEmitter();
+
+  @Output()
+  saveTemplate: EventEmitter<RPCTemplateConfig> = new EventEmitter();
 
   commandForm: FormGroup;
 
@@ -74,14 +107,41 @@ export class GatewayServiceRPCConnectorComponent implements OnInit {
     '(\\#[-a-z\\d_]*)?$', // fragment locator
     'i'
   );
+  private propagateChange = (v: any) => {
+  }
 
   constructor(private fb: FormBuilder,
-              private translate: TranslateService) {
+              private dialog: MatDialog,) {
   }
 
 
   ngOnInit() {
-    this.commandForm = this.connectorParamsFormGroupByType(this.connectorType)
+    this.commandForm = this.connectorParamsFormGroupByType(this.connectorType);
+    this.commandForm.valueChanges.subscribe(value => {
+      const httpHeaders = {};
+      const security = {};
+      switch (this.connectorType) {
+        case ConnectorType.REST:
+          value.httpHeaders.forEach(data => {
+            httpHeaders[data.headerName] = data.value;
+          })
+          value.httpHeaders = httpHeaders;
+          value.security.forEach(data => {
+            security[data.securityName] = data.value;
+          })
+          value.security = security;
+          break;
+        case ConnectorType.REQUEST:
+          value.httpHeaders.forEach(data => {
+            httpHeaders[data.headerName] = data.value;
+          })
+          value.httpHeaders = httpHeaders;
+          break;
+      }
+      if (this.commandForm.valid) {
+        this.propagateChange({...this.commandForm.value,...value});
+      }
+    })
   }
 
   connectorParamsFormGroupByType(type: ConnectorType): FormGroup {
@@ -206,6 +266,13 @@ export class GatewayServiceRPCConnectorComponent implements OnInit {
           method: [null, [Validators.required]],
           arguments: this.fb.array([]),
         })
+        break;
+      default:
+        formGroup = this.fb.group({
+          command: [null, [Validators.required]],
+          params: ['{}', [jsonRequired]],
+        })
+
     }
     return formGroup;
   }
@@ -213,7 +280,7 @@ export class GatewayServiceRPCConnectorComponent implements OnInit {
   addSNMPoid(value: string = null) {
     const oidsFA = this.commandForm.get('oid') as FormArray;
     if (oidsFA) {
-      oidsFA.push(this.fb.control(value, [Validators.required]));
+      oidsFA.push(this.fb.control(value, [Validators.required]), {emitEvent: false});
     }
   }
 
@@ -229,7 +296,7 @@ export class GatewayServiceRPCConnectorComponent implements OnInit {
       value: [value.value, [Validators.required]]
     })
     if (headerFA) {
-      headerFA.push(formGroup);
+      headerFA.push(formGroup, {emitEvent: false});
     }
   }
 
@@ -245,7 +312,7 @@ export class GatewayServiceRPCConnectorComponent implements OnInit {
       value: [value.value, [Validators.required]]
     })
     if (securityFA) {
-      securityFA.push(formGroup);
+      securityFA.push(formGroup, {emitEvent: false});
     }
   }
 
@@ -261,7 +328,7 @@ export class GatewayServiceRPCConnectorComponent implements OnInit {
   addOCPUAArguments(value: string = null) {
     const oidsFA = this.commandForm.get('arguments') as FormArray;
     if (oidsFA) {
-      oidsFA.push(this.fb.control(value));
+      oidsFA.push(this.fb.control(value), {emitEvent: false});
     }
   }
 
@@ -269,4 +336,86 @@ export class GatewayServiceRPCConnectorComponent implements OnInit {
     const oidsFA = this.commandForm.get('arguments') as FormArray;
     oidsFA.removeAt(index);
   }
+
+  openEditJSONDialog($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialog.open<JsonObjectEditDialogComponent, JsonObjectEditDialogData, object>(JsonObjectEditDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        jsonValue: JSON.parse(this.commandForm.get('params').value),
+        required: true
+      }
+    }).afterClosed().subscribe(
+      (res) => {
+        if (res) {
+          this.commandForm.get('params').setValue(JSON.stringify(res));
+        }
+      }
+    );
+  }
+
+  save() {
+    this.saveTemplate.emit();
+  }
+
+  registerOnChange(fn: any): void {
+    this.propagateChange = fn;
+  }
+
+  registerOnTouched(fn: any): void {
+  }
+
+  clearFromArrayByName(name: string) {
+    const formArray = this.commandForm.get(name) as FormArray;
+    while (formArray.length !== 0) {
+      formArray.removeAt(0)
+    }
+  }
+
+  writeValue(value: RPCTemplateConfig): void {
+    if (typeof value == "object") {
+      value = deepClone(value);
+      switch (this.connectorType) {
+        case ConnectorType.SNMP:
+          this.clearFromArrayByName("oids");
+          value.oids.forEach(value => {
+            this.addSNMPoid(value)
+          })
+          delete value.oids;
+          break;
+        case ConnectorType.REQUEST:
+          this.clearFromArrayByName("httpHeaders");
+          value.httpHeaders && Object.entries(value.httpHeaders).forEach(httpHeader => {
+            this.addHTTPHeader({headerName: httpHeader[0], value: httpHeader[1] as string})
+          })
+          delete value.httpHeaders;
+          break;
+        case ConnectorType.REST:
+          this.clearFromArrayByName("httpHeaders");
+          this.clearFromArrayByName("security");
+          value.security && Object.entries(value.security).forEach(securityHeader => {
+            this.addHTTPSecurity({securityName: securityHeader[0], value: securityHeader[1] as string})
+          })
+          delete value.security;
+          value.httpHeaders && Object.entries(value.httpHeaders).forEach(httpHeader => {
+            this.addHTTPHeader({headerName: httpHeader[0], value: httpHeader[1] as string})
+          })
+          delete value.httpHeaders;
+          break;
+        case ConnectorType.OPCUA:
+        case ConnectorType.OPCUA_ASYNCIO:
+          this.clearFromArrayByName("arguments");
+          value.arguments.forEach(value => {
+            this.addOCPUAArguments(value)
+          })
+          delete value.arguments;
+          break;
+      }
+      this.commandForm.patchValue(value, {onlySelf: false});
+    }
+  }
+
 }

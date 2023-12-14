@@ -50,6 +50,11 @@
     background-color: rgba(25, 128, 56, 0.08);
   }
 
+  mat-expansion-panel {
+    margin-top: 10px;
+    overflow: visible;
+  }
+
   .mat-expansion-panel-header-description {
     flex-direction: row-reverse;
     align-items: center;

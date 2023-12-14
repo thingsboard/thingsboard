@@ -41,7 +41,8 @@
       </button>
     </ng-container>
     <ng-template #connectorForm>
-      <tb-gateway-service-rpc-connector [connectorType]="connectorType" (sendCommand)="sendCommand()"/>
+      <tb-gateway-service-rpc-connector formControlName="params" [connectorType]="connectorType"
+                                        (sendCommand)="sendCommand()" (saveTemplate)="saveTemplate()"/>
     </ng-template>
   </div>
   <section class="result-block" [formGroup]="commandForm">
@@ -52,4 +53,6 @@
     <tb-json-content [contentType]="contentTypes.JSON" readonly="true" formControlName="result"></tb-json-content>
   </section>
 </div>
-<tb-gateway-service-rpc-connector-templates fxFlex="30" *ngIf="isConnector" class="border"></tb-gateway-service-rpc-connector-templates>
+<tb-gateway-service-rpc-connector-templates fxFlex="30" *ngIf="isConnector" class="border" [rpcTemplates]="templates"
+                                            [ctx]="ctx" [connectorType]="connectorType" (useTemplate)="useTemplate($event)">
+</tb-gateway-service-rpc-connector-templates>

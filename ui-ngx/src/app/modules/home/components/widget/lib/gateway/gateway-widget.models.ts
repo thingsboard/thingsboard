@@ -261,10 +261,17 @@ export enum SocketEncodings {
 }
 
 export interface RPCTemplate {
-  name: string;
-  config: {
-    [key: string]: any;
-  };
+  name?: string;
+  config: RPCTemplateConfig;
+}
+
+export interface RPCTemplateConfig {
+  [key: string]: any;
+}
+
+export interface SaveRPCTemplateData {
+  config: RPCTemplateConfig,
+  templates: Array<RPCTemplate>
 }
 
 export interface LogLink {

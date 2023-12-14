@@ -16,7 +16,8 @@
 
 -->
 <div fxLayout="column" class="command-form" [formGroup]="commandForm">
-  <div class="mat-subtitle-1 title">{{ 'gateway.rpc.title' | translate: {type: gatewayConnectorDefaultTypesTranslates.get(connectorType)} }}</div>
+  <div
+    class="mat-subtitle-1 title">{{ 'gateway.rpc.title' | translate: {type: gatewayConnectorDefaultTypesTranslates.get(connectorType)} }}</div>
   <ng-template [ngIf]="connectorType">
     <ng-container [ngSwitch]="connectorType">
       <ng-template [ngSwitchCase]="ConnectorType.MQTT">
@@ -26,27 +27,26 @@
                  placeholder="echo"/>
         </mat-form-field>
         <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.request-topic-expression' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.requestTopicExpression' | translate }}</mat-label>
           <input matInput formControlName="requestTopicExpression"
                  placeholder="sensor/${deviceName}/request/${methodName}/${requestId}"/>
         </mat-form-field>
         <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.response-topic-expression' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.responseTopicExpression' | translate }}</mat-label>
           <input matInput formControlName="responseTopicExpression"
                  placeholder="sensor/${deviceName}/response/${methodName}/${requestId}"/>
         </mat-form-field>
         <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.response-timeout' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.responseTimeout' | translate }}</mat-label>
           <input matInput formControlName="responseTimeout" type="number"
                  placeholder="10000" min="10" step="1"/>
         </mat-form-field>
         <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.value-expression' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.valueExpression' | translate }}</mat-label>
           <input matInput formControlName="valueExpression"
                  placeholder="${params}"/>
         </mat-form-field>
       </ng-template>
-
       <ng-template [ngSwitchCase]="ConnectorType.MODBUS">
         <mat-form-field>
           <mat-label>{{ 'gateway.rpc.tag' | translate }}</mat-label>
@@ -62,7 +62,7 @@
             </mat-select>
           </mat-form-field>
           <mat-form-field fxFlex="50" class="mat-block">
-            <mat-label>{{ 'gateway.rpc.function-code' | translate }}</mat-label>
+            <mat-label>{{ 'gateway.rpc.functionCode' | translate }}</mat-label>
             <mat-select formControlName="functionCode">
               <mat-option *ngFor="let code of codesArray" [value]="code">
                 {{ code }}
@@ -77,20 +77,19 @@
                    placeholder="1" step="1"/>
           </mat-form-field>
           <mat-form-field fxFlex="50">
-            <mat-label>{{ 'gateway.rpc.objects-count' | translate }}</mat-label>
+            <mat-label>{{ 'gateway.rpc.objectsCount' | translate }}</mat-label>
             <input matInput formControlName="objectsCount" type="number" min="0"
                    placeholder="31" step="1"/>
           </mat-form-field>
         </div>
       </ng-template>
-
       <ng-template [ngSwitchCase]="ConnectorType.BACNET">
         <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.method-rpc' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.methodRPC' | translate }}</mat-label>
           <input matInput formControlName="method" placeholder="set_state"/>
         </mat-form-field>
         <mat-form-field class="mat-block">
-          <mat-label>{{ 'gateway.rpc.request-type' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.requestType' | translate }}</mat-label>
           <mat-select formControlName="requestType">
             <mat-option *ngFor="let type of bACnetRequestTypes" [value]="type">
               {{bACnetRequestTypesTranslates.get(type) | translate}}
@@ -98,13 +97,13 @@
           </mat-select>
         </mat-form-field>
         <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.request-timeout' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.requestTimeout' | translate }}</mat-label>
           <input matInput formControlName="requestTimeout" type="number"
                  min="10" step="1" placeholder="1000"/>
         </mat-form-field>
         <div fxFlex fxLayout="row" fxLayoutGap="10px">
           <mat-form-field fxFlex="50" class="mat-block">
-            <mat-label>{{ 'gateway.rpc.object-type' | translate }}</mat-label>
+            <mat-label>{{ 'gateway.rpc.objectType' | translate }}</mat-label>
             <mat-select formControlName="objectType">
               <mat-option *ngFor="let type of bACnetObjectTypes" [value]="type">
                 {{bACnetObjectTypesTranslates.get(type) | translate}}
@@ -118,22 +117,21 @@
           </mat-form-field>
         </div>
         <mat-form-field class="mat-block">
-          <mat-label>{{ 'gateway.rpc.property-id' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.propertyId' | translate }}</mat-label>
           <input matInput formControlName="propertyId" placeholder="presentValue"/>
         </mat-form-field>
       </ng-template>
-
       <ng-template [ngSwitchCase]="ConnectorType.BLE">
         <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.method-rpc' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.methodRPC' | translate }}</mat-label>
           <input matInput formControlName="methodRPC" placeholder="rpcMethod1"/>
         </mat-form-field>
         <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.characteristic-uuid' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.characteristicUUID' | translate }}</mat-label>
           <input matInput formControlName="characteristicUUID" placeholder="00002A00-0000-1000-8000-00805F9B34FB"/>
         </mat-form-field>
         <mat-form-field class="mat-block">
-          <mat-label>{{ 'gateway.rpc.method-processing' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.methodProcessing' | translate }}</mat-label>
           <mat-select formControlName="methodProcessing">
             <mat-option *ngFor="let type of bLEMethods" [value]="type">
               {{bLEMethodsTranslates.get(type) | translate}}
@@ -141,35 +139,34 @@
           </mat-select>
         </mat-form-field>
         <mat-slide-toggle class="mat-slide" formControlName="withResponse">
-          {{ 'gateway.rpc.with-response' | translate }}
+          {{ 'gateway.rpc.withResponse' | translate }}
         </mat-slide-toggle>
       </ng-template>
-
       <ng-template [ngSwitchCase]="ConnectorType.CAN">
         <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.method-rpc' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.methodRPC' | translate }}</mat-label>
           <input matInput formControlName="method" placeholder="sendSameData"/>
         </mat-form-field>
         <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.node-id' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.nodeID' | translate }}</mat-label>
           <input matInput formControlName="nodeID" type="number" placeholder="4" min="0" step="1"/>
         </mat-form-field>
         <mat-slide-toggle class="mat-slide margin" formControlName="isExtendedID">
-          {{ 'gateway.rpc.is-extended-id' | translate }}
+          {{ 'gateway.rpc.isExtendedID' | translate }}
         </mat-slide-toggle>
         <mat-slide-toggle class="mat-slide margin" formControlName="isFD">
-          {{ 'gateway.rpc.is-fd' | translate }}
+          {{ 'gateway.rpc.isFD' | translate }}
         </mat-slide-toggle>
         <mat-slide-toggle class="mat-slide margin" formControlName="bitrateSwitch">
-          {{ 'gateway.rpc.bitrate-switch' | translate }}
+          {{ 'gateway.rpc.bitrateSwitch' | translate }}
         </mat-slide-toggle>
         <div fxFlex fxLayout="row" fxLayoutGap="10px">
           <mat-form-field fxFlex="50">
-            <mat-label>{{ 'gateway.rpc.data-length' | translate }}</mat-label>
+            <mat-label>{{ 'gateway.rpc.dataLength' | translate }}</mat-label>
             <input matInput formControlName="dataLength" type="number" placeholder="2" min="1" step="1"/>
           </mat-form-field>
           <mat-form-field class="mat-block" fxFlex="50">
-            <mat-label>{{ 'gateway.rpc.data-byte-order' | translate }}</mat-label>
+            <mat-label>{{ 'gateway.rpc.dataByteorder' | translate }}</mat-label>
             <mat-select formControlName="dataByteorder">
               <mat-option *ngFor="let order of cANByteOrders" [value]="order">
                 {{ order | translate }}
@@ -179,59 +176,55 @@
         </div>
         <div fxFlex fxLayout="row" fxLayoutGap="10px">
           <mat-form-field fxFlex="50">
-            <mat-label>{{ 'gateway.rpc.data-before' | translate }}</mat-label>
+            <mat-label>{{ 'gateway.rpc.dataBefore' | translate }}</mat-label>
             <input matInput formControlName="dataBefore" placeholder="00AA"/>
           </mat-form-field>
           <mat-form-field fxFlex="50">
-            <mat-label>{{ 'gateway.rpc.data-after' | translate }}</mat-label>
+            <mat-label>{{ 'gateway.rpc.dataAfter' | translate }}</mat-label>
             <input matInput formControlName="dataAfter" placeholder="0102"/>
           </mat-form-field>
         </div>
         <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.data-in-hex' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.dataInHEX' | translate }}</mat-label>
           <input matInput formControlName="dataInHEX"
                  placeholder="aa bb cc dd ee ff   aa bb aa bb cc d ee ff"/>
         </mat-form-field>
         <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.data-expression' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.dataExpression' | translate }}</mat-label>
           <input matInput formControlName="dataExpression"
                  placeholder="userSpeed if maxAllowedSpeed > userSpeed else maxAllowedSpeed"/>
         </mat-form-field>
       </ng-template>
-
-
       <ng-template [ngSwitchCase]="ConnectorType.FTP">
         <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.method-filter' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.methodFilter' | translate }}</mat-label>
           <input matInput formControlName="methodFilter" placeholder="read"/>
         </mat-form-field>
         <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.value-expression' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.valueExpression' | translate }}</mat-label>
           <input matInput formControlName="valueExpression" placeholder="${params}"/>
         </mat-form-field>
       </ng-template>
-
       <ng-template [ngSwitchCase]="ConnectorType.OCPP">
         <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.method-rpc' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.methodRPC' | translate }}</mat-label>
           <input matInput formControlName="methodRPC" placeholder="rpc1"/>
         </mat-form-field>
         <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.value-expression' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.valueExpression' | translate }}</mat-label>
           <input matInput formControlName="valueExpression" placeholder="${params}"/>
         </mat-form-field>
         <mat-slide-toggle class="mat-slide margin" formControlName="withResponse">
-          {{ 'gateway.rpc.with-response' | translate }}
+          {{ 'gateway.rpc.withResponse' | translate }}
         </mat-slide-toggle>
       </ng-template>
-
       <ng-template [ngSwitchCase]="ConnectorType.SOCKET">
         <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.method-rpc' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.methodRPC' | translate }}</mat-label>
           <input matInput formControlName="methodRPC" placeholder="rpcMethod1"/>
         </mat-form-field>
         <mat-form-field class="mat-block">
-          <mat-label>{{ 'gateway.rpc.method-processing' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.methodProcessing' | translate }}</mat-label>
           <mat-select formControlName="methodProcessing">
             <mat-option *ngFor="let method of socketMethodProcessings" [value]="method">
               {{ SocketMethodProcessingsTranslates.get(method) | translate }}
@@ -247,27 +240,25 @@
           </mat-select>
         </mat-form-field>
         <mat-slide-toggle class="mat-slide margin" formControlName="withResponse">
-          {{ 'gateway.rpc.with-response' | translate }}
+          {{ 'gateway.rpc.withResponse' | translate }}
         </mat-slide-toggle>
       </ng-template>
-
       <ng-template [ngSwitchCase]="ConnectorType.XMPP">
         <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.method-rpc' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.methodRPC' | translate }}</mat-label>
           <input matInput formControlName="methodRPC" placeholder="rpc1"/>
         </mat-form-field>
         <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.value-expression' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.valueExpression' | translate }}</mat-label>
           <input matInput formControlName="valueExpression" placeholder="${params}"/>
         </mat-form-field>
         <mat-slide-toggle class="mat-slide margin" formControlName="withResponse">
-          {{ 'gateway.rpc.with-response' | translate }}
+          {{ 'gateway.rpc.withResponse' | translate }}
         </mat-slide-toggle>
       </ng-template>
-
       <ng-template [ngSwitchCase]="ConnectorType.SNMP">
         <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.request-filter' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.requestFilter' | translate }}</mat-label>
           <input matInput formControlName="requestFilter" placeholder="setData"/>
         </mat-form-field>
         <mat-form-field class="mat-block">
@@ -298,15 +289,14 @@
           </button>
         </fieldset>
       </ng-template>
-
       <ng-template [ngSwitchCase]="ConnectorType.REST">
         <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.method-filter' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.methodFilter' | translate }}</mat-label>
           <input matInput formControlName="methodFilter" placeholder="post_attributes"/>
         </mat-form-field>
         <div fxFlex fxLayout="row" fxLayoutGap="10px">
           <mat-form-field class="mat-block" fxFlex="33">
-            <mat-label>{{ 'gateway.rpc.http-method' | translate }}</mat-label>
+            <mat-label>{{ 'gateway.rpc.HTTPMethod' | translate }}</mat-label>
             <mat-select formControlName="HTTPMethod">
               <mat-option *ngFor="let method of hTTPMethods" [value]="method">
                 {{ method }}
@@ -314,14 +304,14 @@
             </mat-select>
           </mat-form-field>
           <mat-form-field fxFlex>
-            <mat-label>{{ 'gateway.rpc.request-url' | translate }}</mat-label>
+            <mat-label>{{ 'gateway.rpc.requestUrlExpression' | translate }}</mat-label>
             <input matInput formControlName="requestUrlExpression"
                    placeholder="http://127.0.0.1:5000/my_devices"/>
           </mat-form-field>
         </div>
         <div fxFlex fxLayout="row" fxLayoutGap="10px">
           <mat-form-field fxFlex="33">
-            <mat-label>{{ 'gateway.rpc.response-timeout' | translate }}</mat-label>
+            <mat-label>{{ 'gateway.rpc.responseTimeout' | translate }}</mat-label>
             <input matInput formControlName="responseTimeout" type="number"
                    step="1" min="10" placeholder="10"/>
           </mat-form-field>
@@ -337,11 +327,11 @@
           </mat-form-field>
         </div>
         <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.value-expression' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.valueExpression' | translate }}</mat-label>
           <input matInput formControlName="valueExpression" placeholder="${params}"/>
         </mat-form-field>
         <fieldset class="fields border" fxLayout="column" fxLayoutGap="10px" formArrayName="httpHeaders">
-          <span class="fields-label">{{ 'gateway.rpc.http-headers' | translate }}</span>
+          <span class="fields-label">{{ 'gateway.rpc.httpHeaders' | translate }}</span>
           <div class="border" fxLayout="column" fxLayoutGap="10px" *ngIf="getFormArrayControls('httpHeaders').length">
             <div fxLayout="row" fxLayoutGap="10px" fxLayoutAlign="center center">
               <span fxFlex class="title">{{ 'gateway.rpc.header-name' | translate }}</span>
@@ -405,15 +395,14 @@
           </button>
         </fieldset>
       </ng-template>
-
       <ng-template [ngSwitchCase]="ConnectorType.REQUEST">
         <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.method-filter' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.methodFilter' | translate }}</mat-label>
           <input matInput formControlName="methodFilter" placeholder="echo"/>
         </mat-form-field>
         <div fxFlex fxLayout="row" fxLayoutGap="10px">
           <mat-form-field class="mat-block" fxFlex="33">
-            <mat-label>{{ 'gateway.rpc.method' | translate }}</mat-label>
+            <mat-label>{{ 'gateway.rpc.httpMethod' | translate }}</mat-label>
             <mat-select formControlName="httpMethod">
               <mat-option *ngFor="let method of hTTPMethods" [value]="method">
                 {{ method }}
@@ -421,13 +410,13 @@
             </mat-select>
           </mat-form-field>
           <mat-form-field fxFlex>
-            <mat-label>{{ 'gateway.rpc.request-url' | translate }}</mat-label>
+            <mat-label>{{ 'gateway.rpc.requestUrlExpression' | translate }}</mat-label>
             <input matInput formControlName="requestUrlExpression" placeholder="http://127.0.0.1:5000/my_devices"/>
           </mat-form-field>
         </div>
         <div fxFlex fxLayout="row" fxLayoutGap="10px">
           <mat-form-field fxFlex="33">
-            <mat-label>{{ 'gateway.rpc.response-timeout' | translate }}</mat-label>
+            <mat-label>{{ 'gateway.rpc.responseTimeout' | translate }}</mat-label>
             <input matInput formControlName="responseTimeout" type="number"
                    step="1" min="10" placeholder="10"/>
           </mat-form-field>
@@ -443,15 +432,15 @@
           </mat-form-field>
         </div>
         <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.request-value-expression' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.requestValueExpression' | translate }}</mat-label>
           <input matInput formControlName="requestValueExpression" placeholder="${params}"/>
         </mat-form-field>
         <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.response-value-expression' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.responseValueExpression' | translate }}</mat-label>
           <input matInput formControlName="responseValueExpression" placeholder="${temp}"/>
         </mat-form-field>
         <fieldset class="fields border" fxLayout="column" fxLayoutGap="10px" formArrayName="httpHeaders">
-          <span class="fields-label">{{ 'gateway.rpc.http-headers' | translate }}</span>
+          <span class="fields-label">{{ 'gateway.rpc.httpHeaders' | translate }}</span>
           <div class="border" fxLayout="column" fxLayoutGap="10px" *ngIf="getFormArrayControls('httpHeaders').length">
             <div fxLayout="row" fxLayoutGap="10px" fxLayoutAlign="center center">
               <span fxFlex class="title">{{ 'gateway.rpc.header-name' | translate }}</span>
@@ -483,7 +472,6 @@
           </button>
         </fieldset>
       </ng-template>
-
       <ng-template [ngSwitchCase]="ConnectorType.OPCUA_ASYNCIO">
         <ng-container *ngTemplateOutlet="OPCUAForm"></ng-container>
       </ng-template>
@@ -513,11 +501,27 @@
           </button>
         </fieldset>
       </ng-template>
+      <ng-template ngSwitchDefault>
+        {{'dsadas'}}
+        <mat-form-field>
+          <mat-label>{{ 'gateway.statistics.command' | translate }}</mat-label>
+          <input matInput formControlName="command"/>
+        </mat-form-field>
+        <mat-form-field fxFlex>
+          <mat-label>{{ 'widget-config.datasource-parameters' | translate }}</mat-label>
+          <input matInput formControlName="params" type="JSON"/>
+          <mat-icon class="material-icons-outlined" aria-hidden="false" aria-label="help-icon"
+                    matIconSuffix style="cursor:pointer;"
+                    (click)="openEditJSONDialog($event)"
+                    matTooltip="{{ 'gateway.rpc-command-edit-params' | translate }}">edit
+          </mat-icon>
+        </mat-form-field>
+      </ng-template>
     </ng-container>
   </ng-template>
   <div class="template-actions" fxFlex fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="10px">
     <button mat-raised-button
-            (click)="sendCommand.emit()"
+            (click)="save()"
             [disabled]="commandForm.invalid">
       {{ 'gateway.rpc-command-save-template' | translate }}
     </button>

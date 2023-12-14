@@ -74,6 +74,9 @@ import { ValueChartCardWidgetComponent } from '@home/components/widget/lib/cards
 import { ProgressBarWidgetComponent } from '@home/components/widget/lib/cards/progress-bar-widget.component';
 import { LiquidLevelWidgetComponent } from '@home/components/widget/lib/indicator/liquid-level-widget.component';
 import { DoughnutWidgetComponent } from '@home/components/widget/lib/chart/doughnut-widget.component';
+import {
+  GatewayServiceRPCConnectorTemplateDialogComponent
+} from '@home/components/widget/lib/gateway/gateway-service-rpc-connector-template-dialog';
 
 @NgModule({
   declarations:
@@ -107,6 +110,7 @@ import { DoughnutWidgetComponent } from '@home/components/widget/lib/chart/dough
       DeviceGatewayCommandComponent,
       GatewayConfigurationComponent,
       GatewayRemoteConfigurationDialogComponent,
+      GatewayServiceRPCConnectorTemplateDialogComponent,
       ValueCardWidgetComponent,
       AggregatedValueCardWidgetComponent,
       CountWidgetComponent,
@@ -154,6 +158,7 @@ import { DoughnutWidgetComponent } from '@home/components/widget/lib/chart/dough
     DeviceGatewayCommandComponent,
     GatewayConfigurationComponent,
     GatewayRemoteConfigurationDialogComponent,
+    GatewayServiceRPCConnectorTemplateDialogComponent,
     ValueCardWidgetComponent,
     AggregatedValueCardWidgetComponent,
     CountWidgetComponent,
