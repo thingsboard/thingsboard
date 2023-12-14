@@ -44,7 +44,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import static org.thingsboard.rule.engine.api.util.TbNodeUtils.QUEUE_NAME;
+import static org.thingsboard.server.common.data.DataConstants.QUEUE_NAME;
 
 @RuleNode(
         type = ComponentType.TRANSFORMATION,
@@ -177,7 +177,7 @@ public class TbMsgDeduplicationNode implements TbNode {
                     }
                     if (resultMsg != null) {
                         deduplicationResults.add(TbMsg.newMsg(
-                                resultMsg.getQueueName(),
+                                queueName,
                                 resultMsg.getType(),
                                 resultMsg.getOriginator(),
                                 resultMsg.getCustomerId(),

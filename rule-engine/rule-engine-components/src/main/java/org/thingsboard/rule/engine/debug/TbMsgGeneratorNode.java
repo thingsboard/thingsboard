@@ -47,7 +47,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
-import static org.thingsboard.rule.engine.api.util.TbNodeUtils.QUEUE_NAME;
+import static org.thingsboard.server.common.data.DataConstants.QUEUE_NAME;
 
 @Slf4j
 @RuleNode(

@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.service.component.RuleNodeClassInfo;
 
-import static org.thingsboard.rule.engine.api.util.TbNodeUtils.QUEUE_NAME;
+import static org.thingsboard.server.common.data.DataConstants.QUEUE_NAME;
 
 @Slf4j
 public class TbNodeUpgradeUtils {

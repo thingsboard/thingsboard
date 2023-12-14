@@ -53,7 +53,7 @@
         "layoutY": 151
       },
       "type": "org.thingsboard.rule.engine.filter.TbMsgTypeSwitchNode",
-      "name": "swatch",
+      "name": "switch",
       "debugMode": false,
       "singletonMode": false,
       "configurationVersion": 0,

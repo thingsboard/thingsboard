@@ -277,7 +277,6 @@ public class ThingsboardInstallService {
                             } else {
                                 log.info("Skipping images migration. Run the upgrade with fromVersion as '3.6.2-images' to migrate");
                             }
-                            break;
                         case "3.6.2":
                             log.info("Upgrading ThingsBoard from version 3.6.2 to 3.6.3 ...");
                             databaseEntitiesUpgradeService.upgradeDatabase("3.6.2");

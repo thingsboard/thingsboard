@@ -55,7 +55,7 @@ public class ComponentDescriptor extends BaseData<ComponentDescriptorId> {
     @Length(fieldName = "actions")
     @ApiModelProperty(position = 10, value = "Rule Node Actions. Deprecated. Always null.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     @Getter @Setter private String actions;
-    @ApiModelProperty(position = 11, value = "Indicates that the RuleNode is support queue name.", accessMode = ApiModelProperty.AccessMode.READ_ONLY, example = "true")
+    @ApiModelProperty(position = 11, value = "Indicates that the RuleNode supports queue name configuration.", accessMode = ApiModelProperty.AccessMode.READ_ONLY, example = "true")
     @Getter @Setter private boolean hasQueueName;
 
     public ComponentDescriptor() {

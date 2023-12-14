@@ -30,7 +30,7 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import static org.thingsboard.rule.engine.api.util.TbNodeUtils.QUEUE_NAME;
+import static org.thingsboard.server.common.data.DataConstants.QUEUE_NAME;
 
 @Slf4j
 @RuleNode(
