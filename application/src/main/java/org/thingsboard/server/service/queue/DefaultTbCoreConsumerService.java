@@ -564,7 +564,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             if (cacheKeyProto.hasResourceKey()) {
                 return ImageCacheKey.forImage(tenantId, cacheKeyProto.getResourceKey());
             } else {
-                return ImageCacheKey.forPublicImage(cacheKeyProto.getPublicKey());
+                return ImageCacheKey.forPublicImage(cacheKeyProto.getPublicResourceKey());
             }
         }).forEach(imageService::evictETags);
         callback.onSuccess();

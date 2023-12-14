@@ -31,7 +31,7 @@ public class ImageExportData {
     private final String title;
     private final String resourceKey;
     private final boolean isPublic;
-    private final String publicKey;
+    private final String publicResourceKey;
     private final String data;
 
 }

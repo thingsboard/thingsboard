@@ -31,7 +31,7 @@ public class ImageCacheKey {
     @With
     private final boolean preview;
 
-    private final String publicKey;
+    private final String publicResourceKey;
 
     public static ImageCacheKey forImage(TenantId tenantId, String key, boolean preview) {
         return new ImageCacheKey(tenantId, key, preview, null);
@@ -50,7 +50,7 @@ public class ImageCacheKey {
         if (resourceKey != null) {
             msg.setResourceKey(resourceKey);
         } else {
-            msg.setPublicKey(publicKey);
+            msg.setPublicResourceKey(publicResourceKey);
         }
         return msg.build();
     }

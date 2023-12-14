@@ -20,10 +20,10 @@ ALTER TABLE resource ADD COLUMN IF NOT EXISTS descriptor varchar;
 ALTER TABLE resource ADD COLUMN IF NOT EXISTS preview bytea;
 ALTER TABLE resource ADD COLUMN IF NOT EXISTS external_id uuid;
 ALTER TABLE resource ADD COLUMN IF NOT EXISTS is_public boolean default true;
-ALTER TABLE resource ADD COLUMN IF NOT EXISTS public_key varchar(35) unique;
+ALTER TABLE resource ADD COLUMN IF NOT EXISTS public_resource_key varchar(32) unique;
 
 CREATE INDEX IF NOT EXISTS idx_resource_etag ON resource(tenant_id, etag);
-CREATE INDEX IF NOT EXISTS idx_resource_image_public_key ON resource(public_key) WHERE resource_type = 'IMAGE';
+CREATE INDEX IF NOT EXISTS idx_resource_type_public_resource_key ON resource(resource_type, public_resource_key);
 
 CREATE OR REPLACE FUNCTION generate_resource_public_key()
 RETURNS text AS $$
@@ -31,7 +31,7 @@ DECLARE
   chars text := 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   result text := '';
 BEGIN
-  FOR i IN 1..35 LOOP
+  FOR i IN 1..32 LOOP
     result := result || substr(chars, floor(random()*62)::int + 1, 1);
   END LOOP;
   RETURN result;
@@ -47,7 +47,7 @@ $$
             UPDATE resource SET data = decode(base64_data, 'base64') WHERE base64_data IS NOT NULL;
             ALTER TABLE resource DROP COLUMN base64_data;
         ELSE
-            UPDATE resource SET public_key = generate_resource_public_key() WHERE resource_type = 'IMAGE' AND public_key IS NULL;
+            UPDATE resource SET public_resource_key = generate_resource_public_key() WHERE resource_type = 'IMAGE' AND public_resource_key IS NULL;
         END IF;
     END;
 $$;

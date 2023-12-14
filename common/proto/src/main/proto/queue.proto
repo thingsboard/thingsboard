@@ -314,7 +314,7 @@ message ResourceCacheInvalidateMsg {
 
 message ImageCacheKeyProto {
   optional string resourceKey = 1;
-  optional string publicKey = 2;
+  optional string publicResourceKey = 2;
 }
 
 message LwM2MRegistrationRequestMsg {

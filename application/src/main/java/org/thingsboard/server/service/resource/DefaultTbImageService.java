@@ -77,7 +77,7 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
     @Override
     public void evictETags(ImageCacheKey imageCacheKey) {
         etagCache.invalidate(imageCacheKey);
-        if (imageCacheKey.getPublicKey() == null) {
+        if (imageCacheKey.getPublicResourceKey() == null) {
             etagCache.invalidate(imageCacheKey.withPreview(true));
         }
     }
@@ -104,12 +104,12 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
                 if (newEtag.isPresent() && !oldEtag.get().equals(newEtag.get())) {
                     toEvict.add(ImageCacheKey.forImage(tenantId, image.getResourceKey()));
                     if (image.isPublic()) {
-                        toEvict.add(ImageCacheKey.forPublicImage(savedImage.getPublicKey()));
+                        toEvict.add(ImageCacheKey.forPublicImage(savedImage.getPublicResourceKey()));
                     }
                 }
             }
             if (existingImage != null && image.isPublic() != existingImage.isPublic()) {
-                toEvict.add(ImageCacheKey.forPublicImage(image.getPublicKey()));
+                toEvict.add(ImageCacheKey.forPublicImage(image.getPublicResourceKey()));
             }
             if (!toEvict.isEmpty()) {
                 evictFromCache(tenantId, toEvict);
@@ -159,7 +159,7 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
                 List<ImageCacheKey> toEvict = new ArrayList<>();
                 toEvict.add(ImageCacheKey.forImage(tenantId, imageInfo.getResourceKey()));
                 if (imageInfo.isPublic()) {
-                    toEvict.add(ImageCacheKey.forPublicImage(imageInfo.getPublicKey()));
+                    toEvict.add(ImageCacheKey.forPublicImage(imageInfo.getPublicResourceKey()));
                 }
                 evictFromCache(tenantId, toEvict);
             }

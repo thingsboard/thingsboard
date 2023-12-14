@@ -151,11 +151,11 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         image.setPreview(result.getRight());
 
         if (image.getId() == null) {
-            if (StringUtils.isEmpty(image.getPublicKey())) {
-                image.setPublicKey(generatePublicKey());
+            if (StringUtils.isEmpty(image.getPublicResourceKey())) {
+                image.setPublicResourceKey(generatePublicResourceKey());
             } else {
-                if (resourceInfoDao.existsByPublicKey(ResourceType.IMAGE, image.getPublicKey())) {
-                    image.setPublicKey(generatePublicKey());
+                if (resourceInfoDao.existsByPublicResourceKey(ResourceType.IMAGE, image.getPublicResourceKey())) {
+                    image.setPublicResourceKey(generatePublicResourceKey());
                 }
             }
         }
@@ -204,7 +204,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         return resourceKey;
     }
 
-    private String generatePublicKey() {
+    private String generatePublicResourceKey() {
         return RandomStringUtils.randomAlphanumeric(35);
     }
 
@@ -222,7 +222,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
 
     @Override
     public TbResourceInfo getPublicImageInfoByPublicKey(String publicKey) {
-        return resourceInfoDao.findPublicResourceByPublicKey(ResourceType.IMAGE, publicKey);
+        return resourceInfoDao.findPublicResourceByKey(ResourceType.IMAGE, publicKey);
     }
 
     @Override

@@ -111,12 +111,12 @@ public class JpaTbResourceInfoDao extends JpaAbstractDao<TbResourceInfoEntity, T
     }
 
     @Override
-    public boolean existsByPublicKey(ResourceType resourceType, String publicKey) {
-        return resourceInfoRepository.existsByResourceTypeAndPublicKey(resourceType.name(), publicKey);
+    public boolean existsByPublicResourceKey(ResourceType resourceType, String publicResourceKey) {
+        return resourceInfoRepository.existsByResourceTypeAndPublicResourceKey(resourceType.name(), publicResourceKey);
     }
 
     @Override
-    public TbResourceInfo findPublicResourceByPublicKey(ResourceType resourceType, String publicKey) {
-        return DaoUtil.getData(resourceInfoRepository.findByResourceTypeAndPublicKeyAndIsPublicTrue(resourceType.name(), publicKey));
+    public TbResourceInfo findPublicResourceByKey(ResourceType resourceType, String publicResourceKey) {
+        return DaoUtil.getData(resourceInfoRepository.findByResourceTypeAndPublicResourceKeyAndIsPublicTrue(resourceType.name(), publicResourceKey));
     }
 }

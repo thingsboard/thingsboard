@@ -719,7 +719,7 @@ CREATE TABLE IF NOT EXISTS resource (
     descriptor varchar,
     preview bytea,
     is_public boolean default true,
-    public_key varchar(35) unique,
+    public_resource_key varchar(32) unique,
     external_id uuid,
     CONSTRAINT resource_unq_key UNIQUE (tenant_id, resource_type, resource_key)
 );

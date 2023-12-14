@@ -52,7 +52,7 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
     @ApiModelProperty(position = 6, value = "Resource key.", example = "19_1.0", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String resourceKey;
     private boolean isPublic;
-    private String publicKey;
+    private String publicResourceKey;
     @ApiModelProperty(position = 7, value = "Resource search text.", example = "19_1.0:binaryappdatacontainer", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String searchText;
 
@@ -82,7 +82,7 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
         this.resourceKey = resourceInfo.resourceKey;
         this.searchText = resourceInfo.searchText;
         this.isPublic = resourceInfo.isPublic;
-        this.publicKey = resourceInfo.publicKey;
+        this.publicResourceKey = resourceInfo.publicResourceKey;
         this.etag = resourceInfo.etag;
         this.fileName = resourceInfo.fileName;
         this.descriptor = resourceInfo.descriptor != null ? resourceInfo.descriptor.deepCopy() : null;
@@ -114,7 +114,7 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
     public String getLink() {
         if (resourceType == ResourceType.IMAGE) {
             if (isPublic) {
-                return "/api/images/public/" + getPublicKey();
+                return "/api/images/public/" + getPublicResourceKey();
             } else {
                 String type = (tenantId != null && tenantId.isSysTenantId()) ? "system" : "tenant"; // tenantId is null in case of export to git
                 return "/api/images/" + type + "/" + resourceKey;

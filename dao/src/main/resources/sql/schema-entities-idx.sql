@@ -128,4 +128,4 @@ CREATE INDEX IF NOT EXISTS idx_resource_etag ON resource(tenant_id, etag);
 
 CREATE INDEX IF NOT EXISTS idx_resource_etag ON resource(tenant_id, etag);
 
-CREATE INDEX IF NOT EXISTS idx_resource_image_public_key ON resource(public_key) WHERE resource_type = 'IMAGE';
+CREATE INDEX IF NOT EXISTS idx_resource_type_public_resource_key ON resource(resource_type, public_resource_key);

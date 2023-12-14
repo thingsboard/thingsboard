@@ -42,8 +42,8 @@ public interface TbResourceInfoDao extends Dao<TbResourceInfo> {
 
     TbResourceInfo findSystemOrTenantImageByEtag(TenantId tenantId, ResourceType resourceType, String etag);
 
-    boolean existsByPublicKey(ResourceType resourceType, String publicKey);
+    boolean existsByPublicResourceKey(ResourceType resourceType, String publicResourceKey);
 
-    TbResourceInfo findPublicResourceByPublicKey(ResourceType resourceType, String publicKey);
+    TbResourceInfo findPublicResourceByKey(ResourceType resourceType, String publicResourceKey);
 
 }

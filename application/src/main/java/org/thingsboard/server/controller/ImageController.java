@@ -173,7 +173,7 @@ public class ImageController extends BaseController {
                 .title(imageInfo.getTitle())
                 .resourceKey(imageInfo.getResourceKey())
                 .isPublic(imageInfo.isPublic())
-                .publicKey(imageInfo.getPublicKey())
+                .publicResourceKey(imageInfo.getPublicResourceKey())
                 .data(Base64Utils.encodeToString(data))
                 .build();
     }
@@ -195,7 +195,7 @@ public class ImageController extends BaseController {
         image.setResourceType(ResourceType.IMAGE);
         image.setResourceKey(imageData.getResourceKey());
         image.setPublic(imageData.isPublic());
-        image.setPublicKey(imageData.getPublicKey());
+        image.setPublicResourceKey(imageData.getPublicResourceKey());
         ImageDescriptor descriptor = new ImageDescriptor();
         descriptor.setMediaType(imageData.getMediaType());
         image.setDescriptorValue(descriptor);
