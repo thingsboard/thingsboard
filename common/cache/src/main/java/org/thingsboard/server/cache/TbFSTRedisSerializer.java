@@ -18,6 +18,7 @@ package org.thingsboard.server.cache;
 import org.springframework.data.redis.serializer.SerializationException;
 import org.thingsboard.server.common.data.FSTUtils;
 
+@Deprecated(forRemoval = true, since = "3.6.3")
 public class TbFSTRedisSerializer<K, V> implements TbRedisSerializer<K, V> {
 
     @Override

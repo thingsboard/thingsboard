@@ -183,6 +183,28 @@ message DeviceInfoProto {
   int64 pagingTransmissionWindow = 15;
 }
 
+message DeviceProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  string deviceName = 5;
+  string deviceLabel = 6;
+  string deviceType = 7;
+  string additionalInfo = 8;
+  int64 deviceProfileIdMSB = 9;
+  int64 deviceProfileIdLSB = 10;
+  int64 customerIdMSB = 11;
+  int64 customerIdLSB = 12;
+  bytes deviceData = 13;
+  int64 firmwareIdMSB = 14;
+  int64 firmwareIdLSB = 15;
+  int64 softwareIdMSB = 16;
+  int64 softwareIdLSB = 17;
+  int64 externalIdMSB = 18;
+  int64 externalIdLSB = 19;
+}
+
 /**
  * Transport Service Messages;
  */
