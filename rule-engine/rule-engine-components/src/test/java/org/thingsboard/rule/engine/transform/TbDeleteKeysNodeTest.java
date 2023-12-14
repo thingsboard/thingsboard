@@ -141,7 +141,9 @@ public class TbDeleteKeysNodeTest {
     private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyUpgradeResultAndConfig() {
         return Stream.of(
                 Arguments.of(0, "{\"fromMetadata\":false,\"keys\":[\"temperature\"]}", true, "{\"deleteFrom\":\"DATA\",\"keys\":[\"temperature\"]}"),
-                Arguments.of(0, "{\"fromMetadata\":true,\"keys\":[\"temperature\"]}", true, "{\"deleteFrom\":\"METADATA\",\"keys\":[\"temperature\"]}")
+                Arguments.of(0, "{\"fromMetadata\":true,\"keys\":[\"temperature\"]}", true, "{\"deleteFrom\":\"METADATA\",\"keys\":[\"temperature\"]}"),
+                Arguments.of(1, "{\"fromMetadata\":true,\"keys\":[\"temperature\"]}", true, "{\"deleteFrom\":\"METADATA\",\"keys\":[\"temperature\"]}"),
+                Arguments.of(1, "{\"deleteFrom\":\"METADATA\",\"keys\":[\"temperature\"]}", false, "{\"deleteFrom\":\"METADATA\",\"keys\":[\"temperature\"]}")
         );
     }
 

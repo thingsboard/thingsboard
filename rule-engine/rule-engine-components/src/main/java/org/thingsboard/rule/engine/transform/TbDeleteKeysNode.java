@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 @RuleNode(
         type = ComponentType.TRANSFORMATION,
         name = "delete key-value pairs",
-        version = 1,
+        version = 2,
         configClazz = TbDeleteKeysNodeConfiguration.class,
         nodeDescription = "Deletes key-value pairs from message or message metadata.",
         nodeDetails = "Deletes key-value pairs from the message or message metadata according to the configured " +

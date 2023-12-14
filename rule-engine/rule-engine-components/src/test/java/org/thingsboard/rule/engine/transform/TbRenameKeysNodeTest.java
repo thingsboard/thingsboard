@@ -157,7 +157,9 @@ public class TbRenameKeysNodeTest {
     private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyUpgradeResultAndConfig() {
         return Stream.of(
                 Arguments.of(0, "{\"fromMetadata\":false,\"renameKeysMapping\":{\"temp\":\"temperature\"}}", true, "{\"renameIn\":\"DATA\",\"renameKeysMapping\":{\"temp\":\"temperature\"}}"),
-                Arguments.of(0, "{\"fromMetadata\":true,\"renameKeysMapping\":{\"temp\":\"temperature\"}}", true, "{\"renameIn\":\"METADATA\",\"renameKeysMapping\":{\"temp\":\"temperature\"}}")
+                Arguments.of(0, "{\"fromMetadata\":true,\"renameKeysMapping\":{\"temp\":\"temperature\"}}", true, "{\"renameIn\":\"METADATA\",\"renameKeysMapping\":{\"temp\":\"temperature\"}}"),
+                Arguments.of(1, "{\"fromMetadata\":true,\"renameKeysMapping\":{\"temp\":\"temperature\"}}", true, "{\"renameIn\":\"METADATA\",\"renameKeysMapping\":{\"temp\":\"temperature\"}}"),
+                Arguments.of(1, "{\"renameIn\":\"METADATA\",\"renameKeysMapping\":{\"temp\":\"temperature\"}}", false, "{\"renameIn\":\"METADATA\",\"renameKeysMapping\":{\"temp\":\"temperature\"}}")
         );
     }
 
