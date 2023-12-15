@@ -82,6 +82,14 @@
     "ozone_o3_chart_card_with_background",
     "ozone_o3_chart_card_with_background2",
     "simple_ozone_o3_chart_card",
-    "simple_ozone_o3_chart_card_with_background"
+    "simple_ozone_o3_chart_card_with_background",
+    "nitrogen_dioxide_no2_card",
+    "nitrogen_dioxide_no2_card_with_background",
+    "horizontal_nitrogen_dioxide_no2_card",
+    "horizontal_nitrogen_dioxide_no2_card_with_background",
+    "nitrogen_dioxide_no2_chart_card",
+    "nitrogen_dioxide_no2_chart_card_with_background",
+    "simple_nitrogen_dioxide_no2_chart_card",
+    "simple_nitrogen_dioxide_no2_chart_card_with_background"
   ]
 }
