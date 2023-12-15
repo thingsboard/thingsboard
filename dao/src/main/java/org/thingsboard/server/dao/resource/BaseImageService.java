@@ -205,7 +205,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
     }
 
     private String generatePublicResourceKey() {
-        return RandomStringUtils.randomAlphanumeric(35);
+        return RandomStringUtils.randomAlphanumeric(32);
     }
 
     @Override
