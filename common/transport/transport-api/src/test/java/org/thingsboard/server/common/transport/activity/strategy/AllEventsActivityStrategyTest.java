@@ -30,23 +30,28 @@
  */
 package org.thingsboard.server.common.transport.activity.strategy;
 
-public class FirstEventActivityStrategy implements ActivityStrategy {
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-    private boolean firstEventReceived;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-    @Override
-    public synchronized boolean onActivity() {
-        if (!firstEventReceived) {
-            firstEventReceived = true;
-            return true;
-        }
-        return false;
+public class AllEventsActivityStrategyTest {
+
+    private AllEventsActivityStrategy strategy;
+
+    @BeforeEach
+    public void setUp() {
+        strategy = new AllEventsActivityStrategy();
     }
 
-    @Override
-    public synchronized boolean onReportingPeriodEnd() {
-        firstEventReceived = false;
-        return false;
+    @Test
+    public void testOnActivity() {
+        assertTrue(strategy.onActivity(), "onActivity() should always return true.");
+    }
+
+    @Test
+    public void testOnReportingPeriodEnd() {
+        assertTrue(strategy.onReportingPeriodEnd(), "onReportingPeriodEnd() should always return true.");
     }
 
 }

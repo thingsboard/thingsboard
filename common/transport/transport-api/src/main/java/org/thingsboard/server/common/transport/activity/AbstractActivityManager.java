@@ -167,6 +167,7 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
             if (hasExpired) {
                 states.remove(key);
                 onStateExpire(key, metadata);
+                shouldReport = true;
             }
 
             if (shouldReport && lastReportedTime < lastRecordedTime) {

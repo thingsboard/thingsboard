@@ -30,23 +30,41 @@
  */
 package org.thingsboard.server.common.transport.activity.strategy;
 
-public class FirstEventActivityStrategy implements ActivityStrategy {
+import org.junit.jupiter.api.Test;
 
-    private boolean firstEventReceived;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-    @Override
-    public synchronized boolean onActivity() {
-        if (!firstEventReceived) {
-            firstEventReceived = true;
-            return true;
-        }
-        return false;
+public class ActivityStrategyFactoryTest {
+
+    @Test
+    public void testCreateAllEventsStrategy() {
+        ActivityStrategy strategy = ActivityStrategyFactory.createStrategy("ALL");
+        assertInstanceOf(AllEventsActivityStrategy.class, strategy, "Should return an instance of AllEventsActivityStrategy.");
     }
 
-    @Override
-    public synchronized boolean onReportingPeriodEnd() {
-        firstEventReceived = false;
-        return false;
+    @Test
+    public void testCreateFirstEventStrategy() {
+        ActivityStrategy strategy = ActivityStrategyFactory.createStrategy("FIRST");
+        assertInstanceOf(FirstEventActivityStrategy.class, strategy, "Should return an instance of FirstEventActivityStrategy.");
+    }
+
+    @Test
+    public void testCreateLastEventStrategy() {
+        ActivityStrategy strategy = ActivityStrategyFactory.createStrategy("LAST");
+        assertInstanceOf(LastEventActivityStrategy.class, strategy, "Should return an instance of LastEventActivityStrategy.");
+    }
+
+    @Test
+    public void testCreateFirstAndLastEventStrategy() {
+        ActivityStrategy strategy = ActivityStrategyFactory.createStrategy("FIRST_AND_LAST");
+        assertInstanceOf(FirstAndLastEventActivityStrategy.class, strategy, "Should return an instance of FirstAndLastEventActivityStrategy.");
+    }
+
+    @Test
+    public void testCreateUnknownStrategy() {
+        assertThrows(IllegalArgumentException.class, () -> ActivityStrategyFactory.createStrategy("UNKNOWN"),
+                "Should throw IllegalArgumentException for unknown strategy names.");
     }
 
 }
