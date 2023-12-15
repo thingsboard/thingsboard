@@ -82,30 +82,6 @@ public class TransportActivityManagerTest {
         ReflectionTestUtils.setField(transportServiceMock, "sessions", sessions);
     }
 
-//    @Override
-//    protected void reportActivity(UUID sessionId, TransportProtos.SessionInfoProto currentSessionInfo, long timeToReport, ActivityReportCallback<UUID> callback) {
-//        log.debug("[{}] Reporting activity state for session with id: [{}]. Time to report: [{}].", name, sessionId, timeToReport);
-//        SessionMetaData session = sessions.get(sessionId);
-//        TransportProtos.SubscriptionInfoProto subscriptionInfo = TransportProtos.SubscriptionInfoProto.newBuilder()
-//                .setAttributeSubscription(session != null && session.isSubscribedToAttributes())
-//                .setRpcSubscription(session != null && session.isSubscribedToRPC())
-//                .setLastActivityTime(timeToReport)
-//                .build();
-//        TransportProtos.SessionInfoProto sessionInfo = session != null ? session.getSessionInfo() : currentSessionInfo;
-//        process(sessionInfo, subscriptionInfo, new TransportServiceCallback<>() {
-//            @Override
-//            public void onSuccess(Void msgAcknowledged) {
-//                callback.onSuccess(sessionId, timeToReport);
-//
-//            }
-//
-//            @Override
-//            public void onError(Throwable e) {
-//                callback.onFailure(sessionId, e);
-//            }
-//        });
-//    }
-
     @Test
     void givenKeyAndTimeToReportAndSessionExists_whenReportingActivity_thenShouldReportActivityWithSubscriptionsAndSessionInfoFromSession() {
         // GIVEN
