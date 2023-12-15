@@ -16,8 +16,6 @@
 package org.thingsboard.server.controller;
 
 import io.swagger.annotations.ApiParam;
-import lombok.Builder;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -142,7 +140,16 @@ public class ImageController extends BaseController {
                                           @RequestBody TbResourceInfo newImageInfo) throws ThingsboardException {
         TbResourceInfo imageInfo = checkImageInfo(type, key, Operation.WRITE);
         imageInfo.setTitle(newImageInfo.getTitle());
-        imageInfo.setPublic(newImageInfo.isPublic());
+        return tbImageService.save(imageInfo, getCurrentUser());
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PutMapping(IMAGE_URL + "/public/{isPublic}")
+    public TbResourceInfo updateImagePublicStatus(@PathVariable String type,
+                                                  @PathVariable String key,
+                                                  @PathVariable boolean isPublic) throws ThingsboardException {
+        TbResourceInfo imageInfo = checkImageInfo(type, key, Operation.WRITE);
+        imageInfo.setPublic(isPublic);
         return tbImageService.save(imageInfo, getCurrentUser());
     }
 
@@ -154,11 +161,11 @@ public class ImageController extends BaseController {
         return downloadIfChanged(type, key, etag, false);
     }
 
-    @GetMapping(value = "/api/images/public/{publicKey}", produces = "image/*")
-    public ResponseEntity<ByteArrayResource> downloadPublicImage(@PathVariable String publicKey,
+    @GetMapping(value = "/api/images/public/{publicResourceKey}", produces = "image/*")
+    public ResponseEntity<ByteArrayResource> downloadPublicImage(@PathVariable String publicResourceKey,
                                                                  @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws Exception {
-        ImageCacheKey cacheKey = ImageCacheKey.forPublicImage(publicKey);
-        return downloadIfChanged(cacheKey, etag, () -> imageService.getPublicImageInfoByPublicKey(publicKey));
+        ImageCacheKey cacheKey = ImageCacheKey.forPublicImage(publicResourceKey);
+        return downloadIfChanged(cacheKey, etag, () -> imageService.getPublicImageInfoByKey(publicResourceKey));
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")

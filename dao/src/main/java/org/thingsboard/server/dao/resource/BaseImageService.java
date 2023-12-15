@@ -205,7 +205,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
     }
 
     private String generatePublicResourceKey() {
-        return RandomStringUtils.randomAlphanumeric(35);
+        return RandomStringUtils.randomAlphanumeric(32);
     }
 
     @Override
@@ -221,8 +221,8 @@ public class BaseImageService extends BaseResourceService implements ImageServic
     }
 
     @Override
-    public TbResourceInfo getPublicImageInfoByPublicKey(String publicKey) {
-        return resourceInfoDao.findPublicResourceByKey(ResourceType.IMAGE, publicKey);
+    public TbResourceInfo getPublicImageInfoByKey(String publicResourceKey) {
+        return resourceInfoDao.findPublicResourceByKey(ResourceType.IMAGE, publicResourceKey);
     }
 
     @Override
