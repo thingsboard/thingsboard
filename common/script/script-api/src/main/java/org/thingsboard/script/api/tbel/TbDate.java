@@ -488,41 +488,11 @@ public class TbDate implements Serializable, Cloneable {
     }
 
     private static Instant parseInstant(String s) {
-        DateTimeFormatter formatter;
         boolean isIsoFormat = s.length() > 0 && Character.isDigit(s.charAt(0));
         if (isIsoFormat) {
-            // assuming  "2007-12-03T10:15:30.00Z"  UTC instant
-            // assuming  "2007-12-03T10:15:30.00"  ZoneId.systemDefault() instant
-            // assuming  "2007-12-03T10:15:30.00-04:00"  TZ instant
-            // assuming  "2007-12-03T10:15:30.00+04:00"  TZ instant
-            formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+            return getInstant_ISO_OFFSET_DATE_TIME(s);
         } else {
-            // assuming RFC-1123 value "Tue, 3 Jun 2008 11:05:30 GMT"
-            // assuming RFC-1123 value "Tue, 3 Jun 2008 11:05:30 GMT-02:00"
-            // assuming RFC-1123 value "Tue, 3 Jun 2008 11:05:30 -0200"
-            formatter = DateTimeFormatter.RFC_1123_DATE_TIME;
-        }
-        try{
-            return Instant.from(formatter.parse(s));
-        } catch (Exception ex) {
-            try {
-                if (isIsoFormat) {
-                    long timeMS = parse(s);
-                    if (timeMS != -1) {
-                        return Instant.ofEpochMilli(timeMS);
-                    } else {
-                        final ConversionException exception = new ConversionException("Cannot parse value [" + s + "] as instant", ex);
-                        throw exception;
-                    }
-                } else {
-                    // assuming RFC-1123 value "Tue, 3 Jun 2008 11:05:30 -0200"
-                    // The offset ID without colons or seconds.
-                    return getInstantWithLocalZoneOffsetId_RFC_1123(s);
-                }
-            } catch (final DateTimeParseException e) {
-                final ConversionException exception = new ConversionException("Cannot parse value [" + s + "] as instant", e);
-                throw exception;
-            }
+            return getInstant_RFC_1123(s);
         }
     }
 
@@ -552,6 +522,42 @@ public class TbDate implements Serializable, Cloneable {
         return zonedDateTime.toInstant();
     }
 
+    private static Instant getInstant_ISO_OFFSET_DATE_TIME(String s) {
+        // assuming  "2007-12-03T10:15:30.00Z"  UTC instant
+        // assuming  "2007-12-03T10:15:30.00"  ZoneId.systemDefault() instant
+        // assuming  "2007-12-03T10:15:30.00-04:00"  TZ instant
+        // assuming  "2007-12-03T10:15:30.00+04:00"  TZ instant
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+        try {
+            return Instant.from(formatter.parse(s));
+        } catch (DateTimeParseException ex) {
+            try {
+                long timeMS = parse(s);
+                if (timeMS != -1) {
+                    return Instant.ofEpochMilli(timeMS);
+                } else {
+                    throw new ConversionException("Cannot parse value [" + s + "] as instant");
+                }
+            } catch (final DateTimeParseException e) {
+                throw new ConversionException("Cannot parse value [" + s + "] as instant");
+            }
+        }
+    }
+    private static Instant getInstant_RFC_1123(String s) {
+            // assuming RFC-1123 value "Tue, 3 Jun 2008 11:05:30 GMT"
+            // assuming RFC-1123 value "Tue, 3 Jun 2008 11:05:30 GMT-02:00"
+            // assuming RFC-1123 value "Tue, 3 Jun 2008 11:05:30 -0200"
+        DateTimeFormatter formatter = DateTimeFormatter.RFC_1123_DATE_TIME;
+        try {
+            return Instant.from(formatter.parse(s));
+        } catch (DateTimeParseException ex) {
+            try {
+                return getInstantWithLocalZoneOffsetId_RFC_1123(s);
+            } catch (final DateTimeParseException e) {
+                throw new ConversionException("Cannot parse value [" + s + "] as instant");
+            }
+        }
+    }
     private static Instant getInstantWithLocalZoneOffsetId_RFC_1123(String value) {
         String s = value.trim() + " GMT";
         Instant instant = Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(s));
