@@ -145,10 +145,11 @@ public class ImageController extends BaseController {
                                           @PathVariable String type,
                                           @ApiParam(value = IMAGE_KEY_PARAM_DESCRIPTION, required = true)
                                           @PathVariable String key,
-                                          @RequestBody TbResourceInfo newImageInfo) throws ThingsboardException {
+                                          @RequestBody TbResourceInfo request) throws ThingsboardException {
         TbResourceInfo imageInfo = checkImageInfo(type, key, Operation.WRITE);
-        imageInfo.setTitle(newImageInfo.getTitle());
-        return tbImageService.save(imageInfo, getCurrentUser());
+        TbResourceInfo newImageInfo = new TbResourceInfo(imageInfo);
+        newImageInfo.setTitle(request.getTitle());
+        return tbImageService.save(newImageInfo, imageInfo, getCurrentUser());
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
@@ -159,8 +160,9 @@ public class ImageController extends BaseController {
                                                   @PathVariable String key,
                                                   @PathVariable boolean isPublic) throws ThingsboardException {
         TbResourceInfo imageInfo = checkImageInfo(type, key, Operation.WRITE);
-        imageInfo.setPublic(isPublic);
-        return tbImageService.save(imageInfo, getCurrentUser());
+        TbResourceInfo newImageInfo = new TbResourceInfo(imageInfo);
+        newImageInfo.setPublic(isPublic);
+        return tbImageService.save(newImageInfo, imageInfo, getCurrentUser());
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -310,8 +312,8 @@ public class ImageController extends BaseController {
                 .eTag(descriptor.getEtag());
         if (!cacheKey.isPublic()) {
             result
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + fileName)
-                .header("x-filename", fileName);
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + fileName)
+                    .header("x-filename", fileName);
         }
         if (systemImagesBrowserTtlInMinutes > 0 && imageInfo.getTenantId().isSysTenantId()) {
             result.cacheControl(CacheControl.maxAge(systemImagesBrowserTtlInMinutes, TimeUnit.MINUTES));

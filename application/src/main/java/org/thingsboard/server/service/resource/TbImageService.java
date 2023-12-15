@@ -25,7 +25,7 @@ public interface TbImageService {
 
     TbResourceInfo save(TbResource image, User user) throws Exception;
 
-    TbResourceInfo save(TbResourceInfo imageInfo, User user);
+    TbResourceInfo save(TbResourceInfo imageInfo, TbResourceInfo oldImageInfo, User user);
 
     TbImageDeleteResult delete(TbResourceInfo imageInfo, User user, boolean force);
 

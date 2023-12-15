@@ -134,12 +134,16 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public TbResourceInfo save(TbResourceInfo imageInfo, User user) {
+    public TbResourceInfo save(TbResourceInfo imageInfo, TbResourceInfo oldImageInfo, User user) {
         TenantId tenantId = imageInfo.getTenantId();
         TbResourceId imageId = imageInfo.getId();
         try {
             imageInfo = imageService.saveImageInfo(imageInfo);
             notificationEntityService.logEntityAction(tenantId, imageId, imageInfo, ActionType.UPDATED, user);
+
+            if (imageInfo.isPublic() != oldImageInfo.isPublic()) {
+                evictFromCache(tenantId, List.of(ImageCacheKey.forPublicImage(imageInfo.getPublicResourceKey())));
+            }
             return imageInfo;
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, imageId, imageInfo, ActionType.UPDATED, user, e);
