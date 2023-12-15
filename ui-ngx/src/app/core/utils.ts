@@ -26,6 +26,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { serverErrorCodesTranslations } from '@shared/models/constants';
 
 const varsRegex = /\${([^}]*)}/g;
+export const noLeadTrailSpacesRegex: RegExp = /^(?! )[A-Za-z0-9 ]*(?<! )$/;
 
 export function onParentScrollOrWindowResize(el: Node): Observable<Event> {
   const scrollSubject = new Subject<Event>();

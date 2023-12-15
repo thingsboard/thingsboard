@@ -170,29 +170,32 @@ export class GatewayServiceRPCComponent implements OnInit {
       data: {config: this.commandForm.value.params, templates: this.templates}
     }).afterClosed().subscribe(
       (res) => {
-        const templateAttribute: RPCTemplate = {
-          name: res,
-          config: this.commandForm.value.params
-        }
-        const templatesArray = this.templates;
-        const existingIndex = templatesArray.findIndex(template=>{
-          return template.name == templateAttribute.name;
-        })
-        if (existingIndex > -1 ){
-          templatesArray.splice(existingIndex, 1)
-        }
-        templatesArray.push(templateAttribute)
-        const key = `${this.connectorType}_template`;
-        this.attributeService.saveEntityAttributes(
-          {
-            id: this.ctx.defaultSubscription.targetDeviceId,
-            entityType: EntityType.DEVICE
+        if (res) {
+          console.log(res);
+          const templateAttribute: RPCTemplate = {
+            name: res,
+            config: this.commandForm.value.params
           }
-          , AttributeScope.SERVER_SCOPE, [{
-            key,
-            value: templatesArray
-          }]).subscribe(() => {
-        })
+          const templatesArray = this.templates;
+          const existingIndex = templatesArray.findIndex(template => {
+            return template.name == templateAttribute.name;
+          })
+          if (existingIndex > -1) {
+            templatesArray.splice(existingIndex, 1)
+          }
+          templatesArray.push(templateAttribute)
+          const key = `${this.connectorType}_template`;
+          this.attributeService.saveEntityAttributes(
+            {
+              id: this.ctx.defaultSubscription.targetDeviceId,
+              entityType: EntityType.DEVICE
+            }
+            , AttributeScope.SERVER_SCOPE, [{
+              key,
+              value: templatesArray
+            }]).subscribe(() => {
+          })
+        }
       }
     );
   }

@@ -34,7 +34,7 @@ import {
   CANByteOrders,
   ConnectorType,
   GatewayConnectorDefaultTypesTranslates,
-  HTTPMethods,
+  HTTPMethods, ModbusCodesTranslate,
   ModbusCommandTypes,
   RPCCommand,
   RPCTemplateConfig,
@@ -50,7 +50,7 @@ import {
   JsonObjectEditDialogData
 } from '@shared/components/dialog/json-object-edit-dialog.component';
 import { jsonRequired } from '@shared/components/json-object-edit.component';
-import { deepClone } from '@core/utils';
+import { deepClone, noLeadTrailSpacesRegex } from '@core/utils';
 
 @Component({
   selector: 'tb-gateway-service-rpc-connector',
@@ -97,6 +97,7 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
   SocketMethodProcessingsTranslates = SocketMethodProcessingsTranslates;
   SNMPMethodsTranslations = SNMPMethodsTranslations;
   gatewayConnectorDefaultTypesTranslates = GatewayConnectorDefaultTypesTranslates;
+  modbusCodesTranslate = ModbusCodesTranslate;
 
   urlPattern = new RegExp(
     '^(https?:\\/\\/)?' + // protocol
@@ -139,7 +140,7 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
           break;
       }
       if (this.commandForm.valid) {
-        this.propagateChange({...this.commandForm.value,...value});
+        this.propagateChange({...this.commandForm.value, ...value});
       }
     })
   }
@@ -150,126 +151,138 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
     switch (type) {
       case ConnectorType.MQTT:
         formGroup = this.fb.group({
-          methodFilter: [null, [Validators.required]],
-          requestTopicExpression: [null, [Validators.required]],
-          responseTopicExpression: [null, []],
+          methodFilter: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+          requestTopicExpression: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+          responseTopicExpression: [null, [Validators.pattern(noLeadTrailSpacesRegex)]],
           responseTimeout: [null, [Validators.min(10), Validators.pattern("^[0-9]*$")]],
-          valueExpression: [null, [Validators.required]],
+          valueExpression: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
         })
         break;
       case ConnectorType.MODBUS:
         formGroup = this.fb.group({
-          tag: [null, [Validators.required]],
+          tag: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           type: [null, [Validators.required]],
           functionCode: [null, [Validators.required]],
+          value: [null, []],
           address: [null, [Validators.required, Validators.min(0), Validators.pattern("^[0-9]*$")]],
           objectsCount: [null, [Validators.required, Validators.min(0), Validators.pattern("^[0-9]*$")]]
+        })
+        const valueForm = formGroup.get('value');
+        formGroup.get('functionCode').valueChanges.subscribe(value => {
+          if (value > 4) {
+            valueForm.addValidators([Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]);
+          } else {
+            valueForm.clearValidators();
+            valueForm.setValue(null);
+          }
+          valueForm.updateValueAndValidity();
         })
         break;
       case ConnectorType.BACNET:
         formGroup = this.fb.group({
-          method: [null, [Validators.required]],
-          requestType: [null, [Validators.required]],
+          method: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+          requestType: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           requestTimeout: [null, [Validators.required, Validators.min(10), Validators.pattern("^[0-9]*$")]],
           objectType: [null, []],
           identifier: [null, [Validators.required, Validators.min(1), Validators.pattern("^[0-9]*$")]],
-          propertyId: [null, [Validators.required]]
+          propertyId: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]]
         })
         break;
       case ConnectorType.BLE:
         formGroup = this.fb.group({
-          methodRPC: [null, [Validators.required]],
-          characteristicUUID: [null, [Validators.required]],
+          methodRPC: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+          characteristicUUID: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           methodProcessing: [null, [Validators.required]],
           withResponse: [false, []]
         })
         break;
       case ConnectorType.CAN:
         formGroup = this.fb.group({
-          method: [null, [Validators.required]],
+          method: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           nodeID: [null, [Validators.required, Validators.min(0), Validators.pattern("^[0-9]*$")]],
           isExtendedID: [false, []],
           isFD: [false, []],
           bitrateSwitch: [false, []],
           dataLength: [null, [Validators.min(1), Validators.pattern("^[0-9]*$")]],
           dataByteorder: [null, []],
-          dataBefore: [null, []],
-          dataAfter: [null, []],
-          dataInHEX: [null, []],
-          dataExpression: [null, []]
+          dataBefore: [null, [Validators.pattern(noLeadTrailSpacesRegex), Validators.pattern(/^[0-9A-Fa-f]+$/)]],
+          dataAfter: [null, [Validators.pattern(noLeadTrailSpacesRegex), Validators.pattern(/^[0-9A-Fa-f]+$/)]],
+          dataInHEX: [null, [Validators.pattern(noLeadTrailSpacesRegex), Validators.pattern(/^[0-9A-Fa-f]+$/)]],
+          dataExpression: [null, [Validators.pattern(noLeadTrailSpacesRegex)]]
         })
         break;
       case ConnectorType.FTP:
         formGroup = this.fb.group({
-          methodFilter: [null, [Validators.required]],
-          valueExpression: [null, [Validators.required]]
+          methodFilter: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+          valueExpression: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]]
         })
         break;
       case ConnectorType.OCPP:
         formGroup = this.fb.group({
-          methodRPC: [null, [Validators.required]],
-          valueExpression: [null, [Validators.required]],
+          methodRPC: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+          valueExpression: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           withResponse: [false, []]
         })
         break;
       case ConnectorType.SOCKET:
         formGroup = this.fb.group({
-          methodRPC: [null, [Validators.required]],
+          methodRPC: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           methodProcessing: [null, [Validators.required]],
-          encoding: [null, [Validators.required]],
+          encoding: [SocketEncodings.UTF_8, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           withResponse: [false, []]
         })
         break;
       case ConnectorType.XMPP:
         formGroup = this.fb.group({
-          methodRPC: [null, [Validators.required]],
-          valueExpression: [null, [Validators.required]],
+          methodRPC: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+          valueExpression: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           withResponse: [false, []]
         })
         break;
       case ConnectorType.SNMP:
         formGroup = this.fb.group({
-          requestFilter: [null, [Validators.required]],
+          requestFilter: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           method: [null, [Validators.required]],
+          withResponse: [false, []],
           oid: this.fb.array([], [Validators.required])
         })
         break;
       case ConnectorType.REST:
         formGroup = this.fb.group({
-          methodFilter: [null, [Validators.required]],
-          HTTPMethod: [null, [Validators.required]],
+          methodFilter: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+          httpMethod: [null, [Validators.required]],
           requestUrlExpression: [null, [Validators.required, Validators.pattern(this.urlPattern)]],
           responseTimeout: [null, [Validators.required, Validators.min(10), Validators.pattern("^[0-9]*$")]],
           timeout: [null, [Validators.required, Validators.min(10), Validators.pattern("^[0-9]*$")]],
           tries: [null, [Validators.required, Validators.min(1), Validators.pattern("^[0-9]*$")]],
-          valueExpression: [null, [Validators.required]],
+          valueExpression: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           httpHeaders: this.fb.array([]),
           security: this.fb.array([])
         })
         break;
       case ConnectorType.REQUEST:
         formGroup = this.fb.group({
-          methodFilter: [null, [Validators.required]],
+          methodFilter: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           httpMethod: [null, [Validators.required]],
           requestUrlExpression: [null, [Validators.required, Validators.pattern(this.urlPattern)]],
           responseTimeout: [null, [Validators.required, Validators.min(10), Validators.pattern("^[0-9]*$")]],
           timeout: [null, [Validators.required, Validators.min(10), Validators.pattern("^[0-9]*$")]],
           tries: [null, [Validators.required, Validators.min(1), Validators.pattern("^[0-9]*$")]],
-          requestValueExpression: [null, [Validators.required]],
-          responseValueExpression: [null, []],
+          requestValueExpression: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+          responseValueExpression: [null, [Validators.pattern(noLeadTrailSpacesRegex)]],
           httpHeaders: this.fb.array([]),
         })
         break;
       case ConnectorType.OPCUA:
       case ConnectorType.OPCUA_ASYNCIO:
         formGroup = this.fb.group({
-          method: [null, [Validators.required]],
+          method: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           arguments: this.fb.array([]),
         })
         break;
       default:
         formGroup = this.fb.group({
-          command: [null, [Validators.required]],
+          command: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           params: ['{}', [jsonRequired]],
         })
 
@@ -280,7 +293,7 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
   addSNMPoid(value: string = null) {
     const oidsFA = this.commandForm.get('oid') as FormArray;
     if (oidsFA) {
-      oidsFA.push(this.fb.control(value, [Validators.required]), {emitEvent: false});
+      oidsFA.push(this.fb.control(value, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]), {emitEvent: false});
     }
   }
 
@@ -292,8 +305,8 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
   addHTTPHeader(value: { headerName: string, value: string } = {headerName: null, value: null}) {
     const headerFA = this.commandForm.get('httpHeaders') as FormArray;
     const formGroup = this.fb.group({
-      headerName: [value.headerName, [Validators.required]],
-      value: [value.value, [Validators.required]]
+      headerName: [value.headerName, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+      value: [value.value, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]]
     })
     if (headerFA) {
       headerFA.push(formGroup, {emitEvent: false});
@@ -308,8 +321,8 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
   addHTTPSecurity(value: { securityName: string, value: string } = {securityName: null, value: null}) {
     const securityFA = this.commandForm.get('security') as FormArray;
     const formGroup = this.fb.group({
-      securityName: [value.securityName, [Validators.required]],
-      value: [value.value, [Validators.required]]
+      securityName: [value.securityName, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+      value: [value.value, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]]
     })
     if (securityFA) {
       securityFA.push(formGroup, {emitEvent: false});
@@ -328,7 +341,7 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
   addOCPUAArguments(value: string = null) {
     const oidsFA = this.commandForm.get('arguments') as FormArray;
     if (oidsFA) {
-      oidsFA.push(this.fb.control(value), {emitEvent: false});
+      oidsFA.push(this.fb.control(value, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]), {emitEvent: false});
     }
   }
 

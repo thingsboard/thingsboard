@@ -44,7 +44,7 @@ export class GatewayServiceRPCConnectorTemplateDialogComponent extends DialogCom
     super(store, router, dialogRef);
     this.config = this.data.config;
     this.templates = this.data.templates;
-    this.templateNameCtrl = this.fb.control('', [Validators.required])
+    this.templateNameCtrl = this.fb.control('', [Validators.required]);
   }
 
   validateDuplicateName(c: UntypedFormControl) {
@@ -57,6 +57,7 @@ export class GatewayServiceRPCConnectorTemplateDialogComponent extends DialogCom
   }
 
   save(): void {
-    this.dialogRef.close(this.templateNameCtrl.value);
+    this.templateNameCtrl.setValue(this.templateNameCtrl.value.trim());
+    if (this.templateNameCtrl.valid) this.dialogRef.close(this.templateNameCtrl.value);
   }
 }

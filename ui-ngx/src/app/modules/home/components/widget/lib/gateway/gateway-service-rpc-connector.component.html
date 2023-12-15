@@ -22,7 +22,7 @@
     <ng-container [ngSwitch]="connectorType">
       <ng-template [ngSwitchCase]="ConnectorType.MQTT">
         <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.method-filter' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.methodFilter' | translate }}</mat-label>
           <input matInput formControlName="methodFilter"
                  placeholder="echo"/>
         </mat-form-field>
@@ -65,11 +65,15 @@
             <mat-label>{{ 'gateway.rpc.functionCode' | translate }}</mat-label>
             <mat-select formControlName="functionCode">
               <mat-option *ngFor="let code of codesArray" [value]="code">
-                {{ code }}
+                {{ modbusCodesTranslate.get(code) | translate}}
               </mat-option>
             </mat-select>
           </mat-form-field>
         </div>
+        <mat-form-field *ngIf="commandForm.get('functionCode').value>4">
+          <mat-label>{{ 'gateway.rpc.value' | translate }}</mat-label>
+          <input matInput formControlName="value" placeholder="value"/>
+        </mat-form-field>
         <div fxFlex fxLayout="row" fxLayoutGap="10px">
           <mat-form-field fxFlex="50">
             <mat-label>{{ 'gateway.rpc.address' | translate }}</mat-label>
@@ -233,11 +237,7 @@
         </mat-form-field>
         <mat-form-field class="mat-block">
           <mat-label>{{ 'gateway.rpc.encoding' | translate }}</mat-label>
-          <mat-select formControlName="encoding">
-            <mat-option *ngFor="let encoding of socketEncodings" [value]="encoding">
-              {{ encoding }}
-            </mat-option>
-          </mat-select>
+          <input matInput formControlName="encoding" placeholder="{{socketEncodings[0]}}"/>
         </mat-form-field>
         <mat-slide-toggle class="mat-slide margin" formControlName="withResponse">
           {{ 'gateway.rpc.withResponse' | translate }}
@@ -269,12 +269,15 @@
             </mat-option>
           </mat-select>
         </mat-form-field>
+        <mat-slide-toggle class="mat-slide margin" formControlName="withResponse">
+          {{ 'gateway.rpc.withResponse' | translate }}
+        </mat-slide-toggle>
         <fieldset class="fields border" fxLayout="column" fxLayoutGap="10px" formArrayName="oid">
           <span class="fields-label">{{ 'gateway.rpc.oids' | translate }}*</span>
           <div fxFlex fxLayout="row" fxLayoutGap="10px" fxLayoutAlign="center center"
                *ngFor="let control of getFormArrayControls('oid'); let i = index">
             <mat-form-field appearance="outline" fxFlex>
-              <input matInput [formControl]="control"/>
+              <input matInput [formControl]="control" required/>
             </mat-form-field>
             <mat-icon style="cursor:pointer;"
                       fxFlex="30px"
@@ -296,8 +299,8 @@
         </mat-form-field>
         <div fxFlex fxLayout="row" fxLayoutGap="10px">
           <mat-form-field class="mat-block" fxFlex="33">
-            <mat-label>{{ 'gateway.rpc.HTTPMethod' | translate }}</mat-label>
-            <mat-select formControlName="HTTPMethod">
+            <mat-label>{{ 'gateway.rpc.httpMethod' | translate }}</mat-label>
+            <mat-select formControlName="httpMethod">
               <mat-option *ngFor="let method of hTTPMethods" [value]="method">
                 {{ method }}
               </mat-option>
@@ -476,7 +479,7 @@
         <ng-container *ngTemplateOutlet="OPCUAForm"></ng-container>
       </ng-template>
       <ng-template [ngSwitchCase]="ConnectorType.OPCUA" #OPCUAForm>
-        <mat-form-field>
+        <mat-form-field >
           <mat-label>{{ 'gateway.rpc.method' | translate }}</mat-label>
           <input matInput formControlName="method" placeholder="multiply"/>
         </mat-form-field>
@@ -485,9 +488,8 @@
           <div fxFlex fxLayout="row" fxLayoutGap="10px" fxLayoutAlign="center center"
                *ngFor="let control of getFormArrayControls('arguments'); let i = index">
             <mat-form-field appearance="outline" fxFlex>
-              <input matInput [formControl]="control"/>
+              <input matInput [formControl]="control" required/>
             </mat-form-field>
-
             <mat-icon style="cursor:pointer;"
                       fxFlex="30px"
                       (click)="removeOCPUAArguments(i)"
@@ -502,7 +504,6 @@
         </fieldset>
       </ng-template>
       <ng-template ngSwitchDefault>
-        {{'dsadas'}}
         <mat-form-field>
           <mat-label>{{ 'gateway.statistics.command' | translate }}</mat-label>
           <input matInput formControlName="command"/>

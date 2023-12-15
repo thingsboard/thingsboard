@@ -172,6 +172,17 @@ export enum ModbusCommandTypes {
   Float64 = '64float'
 }
 
+export const ModbusCodesTranslate = new Map<number, string>([
+  [1, 'gateway.rpc.read-coils'],
+  [2, 'gateway.rpc.read-discrete-inputs'],
+  [3, 'gateway.rpc.read-multiple-holding-registers'],
+  [4, 'gateway.rpc.read-input-registers'],
+  [5, 'gateway.rpc.write-single-coil'],
+  [6, 'gateway.rpc.write-single-holding-register'],
+  [15, 'gateway.rpc.write-multiple-coils'],
+  [16, 'gateway.rpc.write-multiple-holding-registers']
+])
+
 export enum BACnetRequestTypes {
   WriteProperty = 'writeProperty',
   ReadProperty = 'readProperty'
