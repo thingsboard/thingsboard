@@ -39,8 +39,6 @@ export function sortEntitiesByIds<I extends HasId, T extends BaseData<I>>(entiti
 }
 
 export interface ExportableEntity<T extends EntityId> {
-  createdTime?: number;
-  id?: T;
   externalId?: T;
 }
 
