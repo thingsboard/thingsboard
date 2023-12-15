@@ -90,6 +90,14 @@
     "nitrogen_dioxide_no2_chart_card",
     "nitrogen_dioxide_no2_chart_card_with_background",
     "simple_nitrogen_dioxide_no2_chart_card",
-    "simple_nitrogen_dioxide_no2_chart_card_with_background"
+    "simple_nitrogen_dioxide_no2_chart_card_with_background",
+    "sulfur_dioxide_so2_card",
+    "sulfur_dioxide_so2_card_with_background",
+    "horizontal_sulfur_dioxide_so2_card",
+    "horizontal_sulfur_dioxide_so2_card_with_background",
+    "sulfur_dioxide_so2_chart_card",
+    "sulfur_dioxide_so2_chart_card_with_background",
+    "simple_sulfur_dioxide_so2_chart_card",
+    "simple_sulfur_dioxide_so2_chart_card_with_background"
   ]
 }
