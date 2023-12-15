@@ -22,38 +22,69 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.util.TbPair;
 
-import java.util.List;
-import java.util.regex.Pattern;
-
 public abstract class TbAbstractTransformNodeWithTbMsgSource implements TbNode {
 
-    private static final String FROM_METADATA_PROPERTY = "fromMetadata";
+    protected static final String FROM_METADATA_PROPERTY = "fromMetadata";
 
-    protected abstract String getKeyToUpgradeFromVersionZero();
+    protected abstract String getNewKeyForUpgradeFromVersionZero();
+
+    protected abstract String getKeyToUpgradeFromVersionOne();
 
     @Override
     public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
-        return fromVersion == 0 ?
-                upgradeToUseTbMsgSource((ObjectNode) oldConfiguration, getKeyToUpgradeFromVersionZero()) :
-                new TbPair<>(false, oldConfiguration);
+        ObjectNode configToUpdate = (ObjectNode) oldConfiguration;
+        switch (fromVersion) {
+            case 0:
+                return upgradeToUseTbMsgSource(configToUpdate);
+            case 1:
+                return upgradeNodesWithVersionOneToUseTbMsgSource(configToUpdate);
+            default:
+                return new TbPair<>(false, oldConfiguration);
+        }
     }
 
-    private TbPair<Boolean, JsonNode> upgradeToUseTbMsgSource(ObjectNode configToUpdate, String newProperty) throws TbNodeException {
+    private TbPair<Boolean, JsonNode> upgradeToUseTbMsgSource(ObjectNode configToUpdate) throws TbNodeException {
         if (!configToUpdate.has(FROM_METADATA_PROPERTY)) {
             throw new TbNodeException("property to update: '" + FROM_METADATA_PROPERTY + "' doesn't exists in configuration!");
         }
         var value = configToUpdate.get(FROM_METADATA_PROPERTY).asText();
         if ("true".equals(value)) {
             configToUpdate.remove(FROM_METADATA_PROPERTY);
-            configToUpdate.put(newProperty, TbMsgSource.METADATA.name());
+            configToUpdate.put(getNewKeyForUpgradeFromVersionZero(), TbMsgSource.METADATA.name());
             return new TbPair<>(true, configToUpdate);
         }
         if ("false".equals(value)) {
             configToUpdate.remove(FROM_METADATA_PROPERTY);
-            configToUpdate.put(newProperty, TbMsgSource.DATA.name());
+            configToUpdate.put(getNewKeyForUpgradeFromVersionZero(), TbMsgSource.DATA.name());
             return new TbPair<>(true, configToUpdate);
         }
         throw new TbNodeException("property to update: '" + FROM_METADATA_PROPERTY + "' has unexpected value: "
+                + value + ". Allowed values: true or false!");
+    }
+
+    private TbPair<Boolean, JsonNode> upgradeNodesWithVersionOneToUseTbMsgSource(ObjectNode configToUpdate) throws TbNodeException {
+        if (configToUpdate.has(getNewKeyForUpgradeFromVersionZero())) {
+            return new TbPair<>(false, configToUpdate);
+        }
+        return upgradeTbMsgSourceKey(configToUpdate, getKeyToUpgradeFromVersionOne());
+    }
+
+    private TbPair<Boolean, JsonNode> upgradeTbMsgSourceKey(ObjectNode configToUpdate, String oldPropertyKey) throws TbNodeException {
+        if (!configToUpdate.has(oldPropertyKey)) {
+            throw new TbNodeException("property to update: '" + oldPropertyKey + "' doesn't exists in configuration!");
+        }
+        var value = configToUpdate.get(oldPropertyKey).asText();
+        if (TbMsgSource.METADATA.name().equals(value)) {
+            configToUpdate.remove(oldPropertyKey);
+            configToUpdate.put(getNewKeyForUpgradeFromVersionZero(), TbMsgSource.METADATA.name());
+            return new TbPair<>(true, configToUpdate);
+        }
+        if (TbMsgSource.DATA.name().equals(value)) {
+            configToUpdate.remove(oldPropertyKey);
+            configToUpdate.put(getNewKeyForUpgradeFromVersionZero(), TbMsgSource.DATA.name());
+            return new TbPair<>(true, configToUpdate);
+        }
+        throw new TbNodeException("property to update: '" + oldPropertyKey + "' has unexpected value: "
                 + value + ". Allowed values: true or false!");
     }
 
