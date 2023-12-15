@@ -98,6 +98,14 @@
     "sulfur_dioxide_so2_chart_card",
     "sulfur_dioxide_so2_chart_card_with_background",
     "simple_sulfur_dioxide_so2_chart_card",
-    "simple_sulfur_dioxide_so2_chart_card_with_background"
+    "simple_sulfur_dioxide_so2_chart_card_with_background",
+    "carbon_monoxide_co_card",
+    "carbon_monoxide_co_card_with_background",
+    "horizontal_carbon_monoxide_co_card",
+    "horizontal_carbon_monoxide_co_card_with_background",
+    "carbon_monoxide_co_chart_card",
+    "carbon_monoxide_co_chart_card_with_background",
+    "simple_carbon_monoxide_co_chart_card",
+    "simple_carbon_monoxide_co_chart_card_with_background"
   ]
 }
