@@ -23,7 +23,6 @@ import com.google.gson.JsonObject;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
@@ -72,8 +71,11 @@ import org.thingsboard.server.common.transport.TransportResourceCache;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.TransportTenantProfileCache;
-import org.thingsboard.server.common.transport.activity.ActivityManager;
-import org.thingsboard.server.common.transport.activity.ActivityStateReporter;
+import org.thingsboard.server.common.transport.activity.AbstractActivityManager;
+import org.thingsboard.server.common.transport.activity.ActivityReportCallback;
+import org.thingsboard.server.common.transport.activity.ActivityState;
+import org.thingsboard.server.common.transport.activity.strategy.ActivityStrategy;
+import org.thingsboard.server.common.transport.activity.strategy.ActivityStrategyFactory;
 import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
@@ -132,7 +134,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @TbTransportComponent
-public class DefaultTransportService implements TransportService {
+public class DefaultTransportService extends AbstractActivityManager<UUID, TransportProtos.SessionInfoProto> implements TransportService {
 
     public static final String OVERWRITE_ACTIVITY_TIME = "overwriteActivityTime";
     public static final String SESSION_EXPIRED_MESSAGE = "Session has expired due to last activity time!";
@@ -156,6 +158,8 @@ public class DefaultTransportService implements TransportService {
     private long sessionInactivityTimeout;
     @Value("${transport.sessions.report_timeout}")
     private long sessionReportTimeout;
+    @Value("${transport.activity.reporting_strategy:LAST}")
+    private String reportingStrategyName;
     @Value("${transport.client_side_rpc.timeout:60000}")
     private long clientSideRpcTimeout;
     @Value("${queue.transport.poll_interval}")
@@ -187,7 +191,6 @@ public class DefaultTransportService implements TransportService {
     private final TransportResourceCache transportResourceCache;
     private final NotificationRuleProcessor notificationRuleProcessor;
     private final EntityLimitsCache entityLimitsCache;
-    private ActivityManager<UUID, TransportActivityState> activityManager;
 
     protected TbQueueRequestTemplate<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> transportApiRequestTemplate;
     protected TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> ruleEngineMsgProducer;
@@ -235,13 +238,9 @@ public class DefaultTransportService implements TransportService {
         this.entityLimitsCache = entityLimitsCache;
     }
 
-    @Autowired
-    public void setActivityManager(ActivityManager<UUID, TransportActivityState> activityManager) {
-        this.activityManager = activityManager;
-    }
-
     @PostConstruct
     public void init() {
+        super.init(ACTIVITY_MANAGER_NAME, sessionReportTimeout);
         this.ruleEngineProducerStats = statsFactory.createMessagesStats(StatsType.RULE_ENGINE.getName() + ".producer");
         this.tbCoreProducerStats = statsFactory.createMessagesStats(StatsType.CORE.getName() + ".producer");
         this.transportApiStats = statsFactory.createMessagesStats(StatsType.TRANSPORT.getName() + ".producer");
@@ -256,30 +255,7 @@ public class DefaultTransportService implements TransportService {
         transportNotificationsConsumer.subscribe(Collections.singleton(tpi));
         transportApiRequestTemplate.init();
         mainConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("transport-consumer"));
-        activityManager.init(ACTIVITY_MANAGER_NAME, sessionReportTimeout, activityReporter);
     }
-
-    private final ActivityStateReporter<UUID, TransportActivityState> activityReporter = (sessionId, timeToReport, state, reportCallback) -> {
-        log.debug("[{}] Reporting activity state for session with id: [{}]. Time to report: [{}].", ACTIVITY_MANAGER_NAME, sessionId, timeToReport);
-        SessionMetaData sessionMetaData = sessions.get(sessionId);
-        TransportProtos.SubscriptionInfoProto subscriptionInfo = TransportProtos.SubscriptionInfoProto.newBuilder()
-                .setAttributeSubscription(sessionMetaData != null && sessionMetaData.isSubscribedToAttributes())
-                .setRpcSubscription(sessionMetaData != null && sessionMetaData.isSubscribedToRPC())
-                .setLastActivityTime(timeToReport)
-                .build();
-        process(state.getSessionInfoProto(), subscriptionInfo, new TransportServiceCallback<>() {
-            @Override
-            public void onSuccess(Void msgAcknowledged) {
-                reportCallback.onSuccess(sessionId, timeToReport);
-
-            }
-
-            @Override
-            public void onError(Throwable e) {
-                reportCallback.onFailure(sessionId, e);
-            }
-        });
-    };
 
     @AfterStartUp(order = AfterStartUp.TRANSPORT_SERVICE)
     public void start() {
@@ -319,6 +295,7 @@ public class DefaultTransportService implements TransportService {
     @PreDestroy
     public void destroy() {
         stopped = true;
+        super.destroy();
 
         if (transportNotificationsConsumer != null) {
             transportNotificationsConsumer.unsubscribe();
@@ -331,9 +308,6 @@ public class DefaultTransportService implements TransportService {
         }
         if (transportApiRequestTemplate != null) {
             transportApiRequestTemplate.stop();
-        }
-        if (activityManager != null) {
-            activityManager.destroy();
         }
     }
 
@@ -814,10 +788,91 @@ public class DefaultTransportService implements TransportService {
     }
 
     private void reportActivityInternal(TransportProtos.SessionInfoProto sessionInfo) {
-        activityManager.onActivity(toSessionId(sessionInfo), () -> {
-            var activityState = new TransportActivityState();
-            activityState.setSessionInfoProto(sessionInfo);
-            return activityState;
+        onActivity(toSessionId(sessionInfo));
+    }
+
+    @Override
+    protected ActivityState<TransportProtos.SessionInfoProto> createNewState(UUID sessionId) {
+        SessionMetaData session = sessions.get(sessionId);
+        if (session == null) {
+            return null;
+        }
+        ActivityState<TransportProtos.SessionInfoProto> state = new ActivityState<>();
+        state.setMetadata(session.getSessionInfo());
+        return state;
+    }
+
+    @Override
+    protected ActivityStrategy getStrategy() {
+        return ActivityStrategyFactory.createStrategy(reportingStrategyName);
+    }
+
+    @Override
+    protected ActivityState<TransportProtos.SessionInfoProto> updateState(UUID sessionId, ActivityState<TransportProtos.SessionInfoProto> state) {
+        SessionMetaData session = sessions.get(sessionId);
+        if (session == null) {
+            return null;
+        }
+
+        state.setMetadata(session.getSessionInfo());
+        var sessionInfo = state.getMetadata();
+
+        if (sessionInfo.getGwSessionIdMSB() == 0L || sessionInfo.getCustomerIdLSB() == 0L) {
+            return state;
+        }
+
+        var gwSessionId = new UUID(sessionInfo.getGwSessionIdMSB(), sessionInfo.getGwSessionIdLSB());
+        SessionMetaData gwSession = sessions.get(gwSessionId);
+        if (gwSession == null || !gwSession.isOverwriteActivityTime()) {
+            return state;
+        }
+
+        long lastRecordedTime = state.getLastRecordedTime();
+        long gwLastRecordedTime = getLastRecordedTime(gwSessionId);
+        log.debug("[{}] Session with id: [{}] has gateway session with id: [{}] with overwrite activity time enabled. " +
+                        "Updating last activity time. Session last recorded time: [{}], gateway session last recorded time: [{}].",
+                name, sessionId, gwSessionId, lastRecordedTime, gwLastRecordedTime);
+        state.setLastRecordedTime(Math.max(lastRecordedTime, gwLastRecordedTime));
+        return state;
+    }
+
+    @Override
+    protected boolean hasExpired(UUID uuid, ActivityState<TransportProtos.SessionInfoProto> state) {
+        return (System.currentTimeMillis() - sessionInactivityTimeout) < state.getLastReportedTime();
+    }
+
+    @Override
+    protected void onStateExpire(UUID sessionId, TransportProtos.SessionInfoProto sessionInfo) {
+        log.debug("[{}] Session with id: [{}] has expired due to last activity time.", name, sessionId);
+        SessionMetaData expiredSession = sessions.remove(sessionId);
+        if (expiredSession != null) {
+            deregisterSession(sessionInfo);
+            process(sessionInfo, SESSION_EVENT_MSG_CLOSED, null);
+            expiredSession.getListener().onRemoteSessionCloseCommand(sessionId, SESSION_EXPIRED_NOTIFICATION_PROTO);
+        }
+    }
+
+    @Override
+    protected void reportActivity(UUID sessionId, TransportProtos.SessionInfoProto currentSessionInfo, long timeToReport, ActivityReportCallback<UUID> callback) {
+        log.debug("[{}] Reporting activity state for session with id: [{}]. Time to report: [{}].", name, sessionId, timeToReport);
+        SessionMetaData session = sessions.get(sessionId);
+        TransportProtos.SubscriptionInfoProto subscriptionInfo = TransportProtos.SubscriptionInfoProto.newBuilder()
+                .setAttributeSubscription(session != null && session.isSubscribedToAttributes())
+                .setRpcSubscription(session != null && session.isSubscribedToRPC())
+                .setLastActivityTime(timeToReport)
+                .build();
+        TransportProtos.SessionInfoProto sessionInfo = session != null ? session.getSessionInfo() : currentSessionInfo;
+        process(sessionInfo, subscriptionInfo, new TransportServiceCallback<>() {
+            @Override
+            public void onSuccess(Void msgAcknowledged) {
+                callback.onSuccess(sessionId, timeToReport);
+
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                callback.onFailure(sessionId, e);
+            }
         });
     }
 

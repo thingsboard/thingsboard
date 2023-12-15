@@ -30,10 +30,29 @@
  */
 package org.thingsboard.server.common.transport.activity.strategy;
 
-public interface ActivityStrategy {
+public final class ActivityStrategyFactory {
 
-    boolean onActivity();
+    private static final String ALL_EVENTS_STRATEGY_NAME = "ALL";
+    private static final String FIRST_EVENT_STRATEGY_NAME = "FIRST";
+    private static final String LAST_EVENT_STRATEGY_NAME = "LAST";
+    private static final String FIRST_AND_LAST_STRATEGY_NAME = "FIRST_AND_LAST";
 
-    boolean onReportingPeriodEnd();
+    private ActivityStrategyFactory() {
+    }
+
+    public static ActivityStrategy createStrategy(String strategyName) {
+        switch (strategyName) {
+            case ALL_EVENTS_STRATEGY_NAME:
+                return new AllEventsActivityStrategy();
+            case FIRST_EVENT_STRATEGY_NAME:
+                return new FirstEventActivityStrategy();
+            case LAST_EVENT_STRATEGY_NAME:
+                return new LastEventActivityStrategy();
+            case FIRST_AND_LAST_STRATEGY_NAME:
+                return new FirstAndLastEventActivityStrategy();
+            default:
+                throw new IllegalArgumentException("Unknown activity strategy name: [" + strategyName + ".");
+        }
+    }
 
 }

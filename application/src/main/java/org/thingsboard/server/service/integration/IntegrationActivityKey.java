@@ -28,11 +28,17 @@
  * DOES NOT CONVEY OR IMPLY ANY RIGHTS TO REPRODUCE, DISCLOSE OR DISTRIBUTE ITS CONTENTS,
  * OR TO MANUFACTURE, USE, OR SELL ANYTHING THAT IT  MAY DESCRIBE, IN WHOLE OR IN PART.
  */
-package org.thingsboard.server.common.transport.activity;
+package org.thingsboard.server.service.integration;
 
-@FunctionalInterface
-public interface ActivityStateReporter<Key, State extends ActivityState> {
+import lombok.NonNull;
+import lombok.Value;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.TenantId;
 
-    void report(Key key, long timeToReport, State activityState, ActivityReportCallback<Key> callback);
+@Value
+public class IntegrationActivityKey {
+
+    @NonNull TenantId tenantId;
+    @NonNull DeviceId deviceId;
 
 }
