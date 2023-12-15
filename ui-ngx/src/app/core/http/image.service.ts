@@ -41,13 +41,14 @@ export class ImageService {
   ) {
   }
 
-  public uploadImage(file: File, title: string, config?: RequestConfig): Observable<ImageResourceInfo> {
+  public uploadImage(file: File, title: string, isPublic = true, config?: RequestConfig): Observable<ImageResourceInfo> {
     if (!config) {
       config = {};
     }
     const formData = new FormData();
     formData.append('file', file);
     formData.append('title', title);
+    formData.append('isPublic', isPublic ? 'true' : 'false');
     return this.http.post<ImageResourceInfo>('/api/image', formData,
       defaultHttpUploadOptions(config.ignoreLoading, config.ignoreErrors, config.resendRequest));
   }
@@ -66,6 +67,13 @@ export class ImageService {
     const type = imageResourceType(imageInfo);
     const key = encodeURIComponent(imageInfo.resourceKey);
     return this.http.put<ImageResourceInfo>(`${IMAGES_URL_PREFIX}/${type}/${key}/info`,
+      imageInfo, defaultHttpOptionsFromConfig(config));
+  }
+
+  public updateImagePublicStatus(imageInfo: ImageResourceInfo, isPublic: boolean, config?: RequestConfig): Observable<ImageResourceInfo> {
+    const type = imageResourceType(imageInfo);
+    const key = encodeURIComponent(imageInfo.resourceKey);
+    return this.http.put<ImageResourceInfo>(`${IMAGES_URL_PREFIX}/${type}/${key}/public/${isPublic}`,
       imageInfo, defaultHttpOptionsFromConfig(config));
   }
 

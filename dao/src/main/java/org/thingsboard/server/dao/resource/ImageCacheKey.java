@@ -55,4 +55,8 @@ public class ImageCacheKey {
         return msg.build();
     }
 
+    public boolean isPublic() {
+        return this.publicResourceKey != null;
+    }
+
 }

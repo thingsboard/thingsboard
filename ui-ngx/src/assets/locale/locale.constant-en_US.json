@@ -2963,8 +2963,8 @@
         "size": "Size",
         "system": "System",
         "download-image": "Download image",
-        "export-image": "Export image",
-        "import-image": "Import image",
+        "export-image": "Export image to JSON",
+        "import-image": "Import image from JSON",
         "upload-image": "Upload image",
         "edit-image": "Edit image",
         "image-details": "Image details",
@@ -2997,7 +2997,13 @@
         "set-link": "Set link",
         "image-link": "Image link",
         "link": "Link",
-        "copy-image-link": "Copy image link"
+        "copy-image-link": "Copy image link",
+        "embed-image": "Embed image",
+        "embed-to-html": "Embed to HTML",
+        "embed-to-html-hint": "This feature will make link available to any unauthorized user.",
+        "embed-to-html-text": "Using the following code snippet, you may embed an image into the components based on the plain HTML.<br/>Such components include HTML card widgets, cell content functions, etc.",
+        "embed-to-angular-template": "Embed to Angular HTML template",
+        "embed-to-angular-template-text": "Using the following code snippet, you may embed an image into the Angular HTML template.<br/>Such components include the Markdown widget, HTML section in the widget editor, custom actions, etc."
     },
     "image-input": {
         "drop-images-or": "Drag and drop an images or",
