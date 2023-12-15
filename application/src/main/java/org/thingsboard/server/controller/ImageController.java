@@ -272,7 +272,7 @@ public class ImageController extends BaseController {
             }
         }
 
-        TbResourceInfo imageInfo = imageInfoSupplier.get();
+        TbResourceInfo imageInfo = checkNotNull(imageInfoSupplier.get());
         String fileName = imageInfo.getFileName();
         ImageDescriptor descriptor = imageInfo.getDescriptor(ImageDescriptor.class);
         byte[] data;
