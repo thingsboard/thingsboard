@@ -29,7 +29,7 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
-  ElementRef, EventEmitter,
+  ElementRef, EventEmitter, HostBinding,
   Input,
   OnDestroy,
   OnInit, Output,
@@ -106,6 +106,9 @@ const popoverGridColumns: ScrollGridColumns = {
   encapsulation: ViewEncapsulation.None
 })
 export class ImageGalleryComponent extends PageComponent implements OnInit, OnDestroy, AfterViewInit {
+
+  @HostBinding('style.display')
+  private display = 'block';
 
   @Input()
   @coerceBoolean()
