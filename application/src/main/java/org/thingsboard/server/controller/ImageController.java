@@ -277,11 +277,14 @@ public class ImageController extends BaseController {
         }
         tbImageService.putETag(cacheKey, descriptor.getEtag());
         var result = ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + fileName)
-                .header("x-filename", fileName)
                 .header("Content-Type", descriptor.getMediaType())
                 .contentLength(data.length)
                 .eTag(descriptor.getEtag());
+        if (!cacheKey.isPublic()) {
+            result
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + fileName)
+                .header("x-filename", fileName);
+        }
         if (systemImagesBrowserTtlInMinutes > 0 && imageInfo.getTenantId().isSysTenantId()) {
             result.cacheControl(CacheControl.maxAge(systemImagesBrowserTtlInMinutes, TimeUnit.MINUTES));
         } else if (tenantImagesBrowserTtlInMinutes > 0 && !imageInfo.getTenantId().isSysTenantId()) {
