@@ -89,6 +89,10 @@ public class ImageController extends BaseController {
     private static final String SYSTEM_IMAGE = "system";
     private static final String TENANT_IMAGE = "tenant";
 
+    private static final String IMAGE_TYPE_PARAM_DESCRIPTION = "Type of the image: tenant or system";
+    private static final String IMAGE_TYPE_PARAM_ALLOWABLE_VALUES = "tenant, system";
+    private static final String IMAGE_KEY_PARAM_DESCRIPTION = "Image resource key, for example thermostats_dashboard_background.jpeg";
+
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @PostMapping("/api/image")
     public TbResourceInfo uploadImage(@RequestPart MultipartFile file,
@@ -117,7 +121,9 @@ public class ImageController extends BaseController {
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @PutMapping(IMAGE_URL)
-    public TbResourceInfo updateImage(@PathVariable String type,
+    public TbResourceInfo updateImage(@ApiParam(value = IMAGE_TYPE_PARAM_DESCRIPTION, allowableValues = IMAGE_TYPE_PARAM_ALLOWABLE_VALUES, required = true)
+                                      @PathVariable String type,
+                                      @ApiParam(value = IMAGE_KEY_PARAM_DESCRIPTION, required = true)
                                       @PathVariable String key,
                                       @RequestPart MultipartFile file) throws Exception {
         TbResourceInfo imageInfo = checkImageInfo(type, key, Operation.WRITE);
@@ -135,7 +141,9 @@ public class ImageController extends BaseController {
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @PutMapping(IMAGE_URL + "/info")
-    public TbResourceInfo updateImageInfo(@PathVariable String type,
+    public TbResourceInfo updateImageInfo(@ApiParam(value = IMAGE_TYPE_PARAM_DESCRIPTION, allowableValues = IMAGE_TYPE_PARAM_ALLOWABLE_VALUES, required = true)
+                                          @PathVariable String type,
+                                          @ApiParam(value = IMAGE_KEY_PARAM_DESCRIPTION, required = true)
                                           @PathVariable String key,
                                           @RequestBody TbResourceInfo newImageInfo) throws ThingsboardException {
         TbResourceInfo imageInfo = checkImageInfo(type, key, Operation.WRITE);
@@ -145,7 +153,9 @@ public class ImageController extends BaseController {
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @PutMapping(IMAGE_URL + "/public/{isPublic}")
-    public TbResourceInfo updateImagePublicStatus(@PathVariable String type,
+    public TbResourceInfo updateImagePublicStatus(@ApiParam(value = IMAGE_TYPE_PARAM_DESCRIPTION, allowableValues = IMAGE_TYPE_PARAM_ALLOWABLE_VALUES, required = true)
+                                                  @PathVariable String type,
+                                                  @ApiParam(value = IMAGE_KEY_PARAM_DESCRIPTION, required = true)
                                                   @PathVariable String key,
                                                   @PathVariable boolean isPublic) throws ThingsboardException {
         TbResourceInfo imageInfo = checkImageInfo(type, key, Operation.WRITE);
@@ -155,7 +165,9 @@ public class ImageController extends BaseController {
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = IMAGE_URL, produces = "image/*")
-    public ResponseEntity<ByteArrayResource> downloadImage(@PathVariable String type,
+    public ResponseEntity<ByteArrayResource> downloadImage(@ApiParam(value = IMAGE_TYPE_PARAM_DESCRIPTION, allowableValues = IMAGE_TYPE_PARAM_ALLOWABLE_VALUES, required = true)
+                                                           @PathVariable String type,
+                                                           @ApiParam(value = IMAGE_KEY_PARAM_DESCRIPTION, required = true)
                                                            @PathVariable String key,
                                                            @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws Exception {
         return downloadIfChanged(type, key, etag, false);
@@ -170,7 +182,10 @@ public class ImageController extends BaseController {
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = IMAGE_URL + "/export")
-    public ImageExportData exportImage(@PathVariable String type, @PathVariable String key) throws Exception {
+    public ImageExportData exportImage(@ApiParam(value = IMAGE_TYPE_PARAM_DESCRIPTION, allowableValues = IMAGE_TYPE_PARAM_ALLOWABLE_VALUES, required = true)
+                                       @PathVariable String type,
+                                       @ApiParam(value = IMAGE_KEY_PARAM_DESCRIPTION, required = true)
+                                       @PathVariable String key) throws Exception {
         TbResourceInfo imageInfo = checkImageInfo(type, key, Operation.READ);
         ImageDescriptor descriptor = imageInfo.getDescriptor(ImageDescriptor.class);
         byte[] data = imageService.getImageData(imageInfo.getTenantId(), imageInfo.getId());
@@ -212,7 +227,9 @@ public class ImageController extends BaseController {
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = IMAGE_URL + "/preview", produces = "image/png")
-    public ResponseEntity<ByteArrayResource> downloadImagePreview(@PathVariable String type,
+    public ResponseEntity<ByteArrayResource> downloadImagePreview(@ApiParam(value = IMAGE_TYPE_PARAM_DESCRIPTION, allowableValues = IMAGE_TYPE_PARAM_ALLOWABLE_VALUES, required = true)
+                                                                  @PathVariable String type,
+                                                                  @ApiParam(value = IMAGE_KEY_PARAM_DESCRIPTION, required = true)
                                                                   @PathVariable String key,
                                                                   @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws Exception {
         return downloadIfChanged(type, key, etag, true);
@@ -220,7 +237,9 @@ public class ImageController extends BaseController {
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(IMAGE_URL + "/info")
-    public TbResourceInfo getImageInfo(@PathVariable String type,
+    public TbResourceInfo getImageInfo(@ApiParam(value = IMAGE_TYPE_PARAM_DESCRIPTION, allowableValues = IMAGE_TYPE_PARAM_ALLOWABLE_VALUES, required = true)
+                                       @PathVariable String type,
+                                       @ApiParam(value = IMAGE_KEY_PARAM_DESCRIPTION, required = true)
                                        @PathVariable String key) throws ThingsboardException {
         return checkImageInfo(type, key, Operation.READ);
     }
@@ -251,7 +270,9 @@ public class ImageController extends BaseController {
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @DeleteMapping(IMAGE_URL)
-    public ResponseEntity<TbImageDeleteResult> deleteImage(@PathVariable String type,
+    public ResponseEntity<TbImageDeleteResult> deleteImage(@ApiParam(value = IMAGE_TYPE_PARAM_DESCRIPTION, allowableValues = IMAGE_TYPE_PARAM_ALLOWABLE_VALUES, required = true)
+                                                           @PathVariable String type,
+                                                           @ApiParam(value = IMAGE_KEY_PARAM_DESCRIPTION, required = true)
                                                            @PathVariable String key,
                                                            @RequestParam(name = "force", required = false) boolean force) throws ThingsboardException {
         TbResourceInfo imageInfo = checkImageInfo(type, key, Operation.DELETE);
@@ -272,7 +293,7 @@ public class ImageController extends BaseController {
             }
         }
 
-        TbResourceInfo imageInfo = imageInfoSupplier.get();
+        TbResourceInfo imageInfo = checkNotNull(imageInfoSupplier.get());
         String fileName = imageInfo.getFileName();
         ImageDescriptor descriptor = imageInfo.getDescriptor(ImageDescriptor.class);
         byte[] data;
