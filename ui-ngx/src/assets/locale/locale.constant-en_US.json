@@ -672,7 +672,7 @@
         "asset-type": "Asset type",
         "asset-type-required": "Asset type is required.",
         "select-asset-type": "Select asset type",
-        "enter-asset-type": "Enter asset type",
+        "enter-asset-type": "Enter asset profile",
         "any-asset": "Any asset",
         "no-asset-types-matching": "No asset types matching '{{entitySubtype}}' were found.",
         "asset-type-list-empty": "No asset types selected.",
