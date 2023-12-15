@@ -74,7 +74,6 @@ import org.thingsboard.server.common.transport.TransportTenantProfileCache;
 import org.thingsboard.server.common.transport.activity.AbstractActivityManager;
 import org.thingsboard.server.common.transport.activity.ActivityReportCallback;
 import org.thingsboard.server.common.transport.activity.ActivityState;
-import org.thingsboard.server.common.transport.activity.strategy.ActivityStrategy;
 import org.thingsboard.server.common.transport.activity.strategy.ActivityStrategyFactory;
 import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
@@ -797,12 +796,8 @@ public class DefaultTransportService extends AbstractActivityManager<UUID, Trans
         }
         ActivityState<TransportProtos.SessionInfoProto> state = new ActivityState<>();
         state.setMetadata(session.getSessionInfo());
+        state.setStrategy(ActivityStrategyFactory.createStrategy(reportingStrategyName));
         return state;
-    }
-
-    @Override
-    protected ActivityStrategy getStrategy() {
-        return ActivityStrategyFactory.createStrategy(reportingStrategyName);
     }
 
     @Override
@@ -835,12 +830,12 @@ public class DefaultTransportService extends AbstractActivityManager<UUID, Trans
     }
 
     @Override
-    protected boolean hasExpired(UUID uuid, ActivityState<TransportProtos.SessionInfoProto> state) {
-        return (System.currentTimeMillis() - sessionInactivityTimeout) > state.getLastRecordedTime();
+    protected boolean hasExpired(long lastRecordedTime) {
+        return (System.currentTimeMillis() - sessionInactivityTimeout) > lastRecordedTime;
     }
 
     @Override
-    protected void onStateExpire(UUID sessionId, TransportProtos.SessionInfoProto sessionInfo) {
+    protected void onStateExpiry(UUID sessionId, TransportProtos.SessionInfoProto sessionInfo) {
         log.debug("[{}] Session with id: [{}] has expired due to last activity time.", name, sessionId);
         SessionMetaData expiredSession = sessions.remove(sessionId);
         if (expiredSession != null) {

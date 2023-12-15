@@ -33,7 +33,6 @@ package org.thingsboard.server.common.transport.activity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.transport.activity.strategy.ActivityStrategy;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 
 import java.util.Map;
@@ -71,13 +70,11 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
 
     protected abstract ActivityState<Metadata> createNewState(Key key);
 
-    protected abstract ActivityStrategy getStrategy();
-
     protected abstract ActivityState<Metadata> updateState(Key key, ActivityState<Metadata> state);
 
-    protected abstract boolean hasExpired(Key key, ActivityState<Metadata> state);
+    protected abstract boolean hasExpired(long lastRecordedTime);
 
-    protected abstract void onStateExpire(Key key, Metadata metadata);
+    protected abstract void onStateExpiry(Key key, Metadata metadata);
 
     protected abstract void reportActivity(Key key, Metadata metadata, long timeToReport, ActivityReportCallback<Key> callback);
 
@@ -102,7 +99,6 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
                     return null;
                 }
                 state = newState;
-                state.setStrategy(getStrategy());
             }
             if (state.getLastRecordedTime() < newLastRecordedTime) {
                 state.setLastRecordedTime(newLastRecordedTime);
@@ -156,7 +152,7 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
                 lastRecordedTime = updatedState.getLastRecordedTime();
                 lastReportedTime = updatedState.getLastReportedTime();
                 metadata = updatedState.getMetadata();
-                hasExpired = hasExpired(key, updatedState);
+                hasExpired = hasExpired(lastRecordedTime);
                 shouldReport = updatedState.getStrategy().onReportingPeriodEnd();
             } else {
                 states.remove(key);
@@ -166,7 +162,7 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
 
             if (hasExpired) {
                 states.remove(key);
-                onStateExpire(key, metadata);
+                onStateExpiry(key, metadata);
                 shouldReport = true;
             }
 
