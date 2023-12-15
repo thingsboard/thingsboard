@@ -36,4 +36,6 @@ public interface ActivityManager<Key> {
 
     void onActivity(Key key);
 
+    long getLastRecordedTime(Key key);
+
 }

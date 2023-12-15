@@ -558,7 +558,7 @@ public class DefaultTransportService extends AbstractActivityManager<UUID, Trans
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SessionEventMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
-            reportActivityInternal(sessionInfo);
+            recordActivityInternal(sessionInfo);
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
                     .setSessionEvent(msg).build(), callback);
         }
@@ -578,7 +578,7 @@ public class DefaultTransportService extends AbstractActivityManager<UUID, Trans
                 }
             }
 
-            reportActivityInternal(sessionInfo);
+            recordActivityInternal(sessionInfo);
             sendToDeviceActor(sessionInfo, msg, callback);
         }
     }
@@ -595,7 +595,7 @@ public class DefaultTransportService extends AbstractActivityManager<UUID, Trans
             dataPoints += tsKv.getKvCount();
         }
         if (checkLimits(sessionInfo, msg, callback, dataPoints)) {
-            reportActivityInternal(sessionInfo);
+            recordActivityInternal(sessionInfo);
             TenantId tenantId = getTenantId(sessionInfo);
             DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
             CustomerId customerId = getCustomerId(sessionInfo);
@@ -619,7 +619,7 @@ public class DefaultTransportService extends AbstractActivityManager<UUID, Trans
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.PostAttributeMsg msg, TbMsgMetaData md, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback, msg.getKvCount())) {
-            reportActivityInternal(sessionInfo);
+            recordActivityInternal(sessionInfo);
             TenantId tenantId = getTenantId(sessionInfo);
             DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
             JsonObject json = JsonUtils.getJsonObject(msg.getKvList());
@@ -639,7 +639,7 @@ public class DefaultTransportService extends AbstractActivityManager<UUID, Trans
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.GetAttributeRequestMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
-            reportActivityInternal(sessionInfo);
+            recordActivityInternal(sessionInfo);
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
                     .setGetAttributes(msg).build(), new ApiStatsProxyCallback<>(getTenantId(sessionInfo), getCustomerId(sessionInfo), 1, callback));
         }
@@ -652,7 +652,7 @@ public class DefaultTransportService extends AbstractActivityManager<UUID, Trans
             if (sessionMetaData != null) {
                 sessionMetaData.setSubscribedToAttributes(!msg.getUnsubscribe());
             }
-            reportActivityInternal(sessionInfo);
+            recordActivityInternal(sessionInfo);
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo).setSubscribeToAttributes(msg).build(),
                     new ApiStatsProxyCallback<>(getTenantId(sessionInfo), getCustomerId(sessionInfo), 1, callback));
         }
@@ -665,7 +665,7 @@ public class DefaultTransportService extends AbstractActivityManager<UUID, Trans
             if (sessionMetaData != null) {
                 sessionMetaData.setSubscribedToRPC(!msg.getUnsubscribe());
             }
-            reportActivityInternal(sessionInfo);
+            recordActivityInternal(sessionInfo);
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo).setSubscribeToRPC(msg).build(),
                     new ApiStatsProxyCallback<>(getTenantId(sessionInfo), getCustomerId(sessionInfo), 1, callback));
         }
@@ -674,7 +674,7 @@ public class DefaultTransportService extends AbstractActivityManager<UUID, Trans
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToDeviceRpcResponseMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
-            reportActivityInternal(sessionInfo);
+            recordActivityInternal(sessionInfo);
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo).setToDeviceRPCCallResponse(msg).build(),
                     new ApiStatsProxyCallback<>(getTenantId(sessionInfo), getCustomerId(sessionInfo), 1, callback));
         }
@@ -683,7 +683,7 @@ public class DefaultTransportService extends AbstractActivityManager<UUID, Trans
     @Override
     public void notifyAboutUplink(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.UplinkNotificationMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
-            reportActivityInternal(sessionInfo);
+            recordActivityInternal(sessionInfo);
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo).setUplinkNotificationMsg(msg).build(), callback);
         }
     }
@@ -704,7 +704,7 @@ public class DefaultTransportService extends AbstractActivityManager<UUID, Trans
 
         if (checkLimits(sessionInfo, responseMsg, callback)) {
             if (reportActivity) {
-                reportActivityInternal(sessionInfo);
+                recordActivityInternal(sessionInfo);
             }
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo).setRpcResponseStatusMsg(responseMsg).build(),
                     new ApiStatsProxyCallback<>(getTenantId(sessionInfo), getCustomerId(sessionInfo), 1, TransportServiceCallback.EMPTY));
@@ -736,7 +736,7 @@ public class DefaultTransportService extends AbstractActivityManager<UUID, Trans
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToServerRpcRequestMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
-            reportActivityInternal(sessionInfo);
+            recordActivityInternal(sessionInfo);
             UUID sessionId = toSessionId(sessionInfo);
             TenantId tenantId = getTenantId(sessionInfo);
             DeviceId deviceId = getDeviceId(sessionInfo);
@@ -761,7 +761,7 @@ public class DefaultTransportService extends AbstractActivityManager<UUID, Trans
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ClaimDeviceMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
-            reportActivityInternal(sessionInfo);
+            recordActivityInternal(sessionInfo);
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
                     .setClaimDevice(msg).build(), callback);
         }
@@ -780,11 +780,11 @@ public class DefaultTransportService extends AbstractActivityManager<UUID, Trans
     }
 
     @Override
-    public void reportActivity(TransportProtos.SessionInfoProto sessionInfo) {
-        reportActivityInternal(sessionInfo);
+    public void recordActivity(TransportProtos.SessionInfoProto sessionInfo) {
+        recordActivityInternal(sessionInfo);
     }
 
-    private void reportActivityInternal(TransportProtos.SessionInfoProto sessionInfo) {
+    private void recordActivityInternal(TransportProtos.SessionInfoProto sessionInfo) {
         onActivity(toSessionId(sessionInfo));
     }
 
@@ -810,7 +810,7 @@ public class DefaultTransportService extends AbstractActivityManager<UUID, Trans
         state.setMetadata(session.getSessionInfo());
         var sessionInfo = state.getMetadata();
 
-        if (sessionInfo.getGwSessionIdMSB() == 0L || sessionInfo.getCustomerIdLSB() == 0L) {
+        if (sessionInfo.getGwSessionIdMSB() == 0L || sessionInfo.getGwSessionIdLSB() == 0L) {
             return state;
         }
 
@@ -831,7 +831,11 @@ public class DefaultTransportService extends AbstractActivityManager<UUID, Trans
 
     @Override
     protected boolean hasExpired(long lastRecordedTime) {
-        return (System.currentTimeMillis() - sessionInactivityTimeout) > lastRecordedTime;
+        return (getCurrentTimeMillis() - sessionInactivityTimeout) > lastRecordedTime;
+    }
+
+    long getCurrentTimeMillis() {
+        return System.currentTimeMillis();
     }
 
     @Override
@@ -937,7 +941,7 @@ public class DefaultTransportService extends AbstractActivityManager<UUID, Trans
         }
         TransportProtos.PostTelemetryMsg.Builder request = TransportProtos.PostTelemetryMsg.newBuilder();
         TransportProtos.TsKvListProto.Builder builder = TransportProtos.TsKvListProto.newBuilder();
-        builder.setTs(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) * 1000L + (atomicTs.getAndIncrement() % 1000));
+        builder.setTs(TimeUnit.MILLISECONDS.toSeconds(getCurrentTimeMillis()) * 1000L + (atomicTs.getAndIncrement() % 1000));
         builder.addKv(TransportProtos.KeyValueProto.newBuilder()
                 .setKey("transportLog")
                 .setType(TransportProtos.KeyValueType.STRING_V)

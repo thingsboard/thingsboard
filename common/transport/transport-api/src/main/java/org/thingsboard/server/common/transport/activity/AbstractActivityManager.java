@@ -129,7 +129,8 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
         }
     }
 
-    protected long getLastRecordedTime(Key key) {
+    @Override
+    public long getLastRecordedTime(Key key) {
         ActivityState<Metadata> state = states.get(key);
         return state == null ? 0L : state.getLastRecordedTime();
     }

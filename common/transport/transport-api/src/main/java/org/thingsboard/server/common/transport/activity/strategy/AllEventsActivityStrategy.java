@@ -30,6 +30,9 @@
  */
 package org.thingsboard.server.common.transport.activity.strategy;
 
+import lombok.EqualsAndHashCode;
+
+@EqualsAndHashCode
 public class AllEventsActivityStrategy implements ActivityStrategy {
 
     @Override

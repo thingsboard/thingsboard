@@ -81,7 +81,7 @@ public class IntegrationActivityManagerTest {
     private DefaultPlatformIntegrationService integrationServiceMock;
 
     @Test
-    void testReportActivity() {
+    void givenKeyAndTimeToReport_whenReportingActivity_thenShouldCorrectlyReportActivity() {
         // GIVEN
         var key = new IntegrationActivityKey(TENANT_ID, DEVICE_ID);
 
@@ -184,58 +184,54 @@ public class IntegrationActivityManagerTest {
     @ParameterizedTest
     @MethodSource("provideTestParamsForCreateNewState")
     void givenDifferentReportingStrategies_whenCreatingNewState_thenShouldCreateEmptyStateWithCorrectStrategy(
-            String reportingStrategyName, Class<ActivityStrategy> reportingStrategyClass
+            String reportingStrategyName, ActivityStrategy reportingStrategy
     ) {
         // GIVEN
         var key = new IntegrationActivityKey(TENANT_ID, DEVICE_ID);
         when(integrationServiceMock.createNewState(key)).thenCallRealMethod();
         ReflectionTestUtils.setField(integrationServiceMock, "reportingStrategyName", reportingStrategyName);
 
+        ActivityState<Void> expectedState = new ActivityState<>();
+        expectedState.setStrategy(reportingStrategy);
+
         // WHEN
-        ActivityState<Void> newState = integrationServiceMock.createNewState(key);
+        ActivityState<Void> actualState = integrationServiceMock.createNewState(key);
 
         // THEN
-        assertThat(newState).isNotNull();
-        assertThat(newState.getLastRecordedTime()).isEqualTo(0L);
-        assertThat(newState.getLastReportedTime()).isEqualTo(0L);
-        assertThat(newState.getStrategy()).isInstanceOf(reportingStrategyClass);
+        assertThat(actualState).isEqualTo(expectedState);
     }
 
     private static Stream<Arguments> provideTestParamsForCreateNewState() {
         return Stream.of(
-                Arguments.of("ALL", AllEventsActivityStrategy.class),
-                Arguments.of("FIRST", FirstEventActivityStrategy.class),
-                Arguments.of("LAST", LastEventActivityStrategy.class),
-                Arguments.of("FIRST_AND_LAST", FirstAndLastEventActivityStrategy.class)
+                Arguments.of("ALL", new AllEventsActivityStrategy()),
+                Arguments.of("FIRST", new FirstEventActivityStrategy()),
+                Arguments.of("LAST", new LastEventActivityStrategy()),
+                Arguments.of("FIRST_AND_LAST", new FirstAndLastEventActivityStrategy())
         );
     }
 
     @Test
-    void givenActivityState_whenUpdatingActivityState_thenShouldReturnSameInstanceWithNoChanges() {
+    void givenActivityState_whenUpdatingActivityState_thenShouldReturnSameInstanceWithNoInteractions() {
         // GIVEN
         var key = new IntegrationActivityKey(TENANT_ID, DEVICE_ID);
 
-        long expectedLastRecordedTime = 123L;
-        long expectedLastReportedTime = 312L;
-        ActivityStrategy expectedStrategy = spy(new FirstEventActivityStrategy());
+        ActivityStrategy strategySpy = spy(new FirstEventActivityStrategy());
 
-        ActivityState<Void> expectedState = new ActivityState<>();
-        expectedState.setLastRecordedTime(expectedLastRecordedTime);
-        expectedState.setLastReportedTime(expectedLastReportedTime);
-        expectedState.setStrategy(expectedStrategy);
+        ActivityState<Void> state = new ActivityState<>();
+        state.setLastRecordedTime(123L);
+        state.setLastReportedTime(312L);
+        state.setStrategy(strategySpy);
+        ActivityState<Void> stateSpy = spy(state);
 
-        when(integrationServiceMock.updateState(key, expectedState)).thenCallRealMethod();
+        when(integrationServiceMock.updateState(key, state)).thenCallRealMethod();
 
         // WHEN
-        ActivityState<Void> actualNewState = integrationServiceMock.updateState(key, expectedState);
+        ActivityState<Void> updatedState = integrationServiceMock.updateState(key, state);
 
         // THEN
-        assertThat(actualNewState).isSameAs(expectedState);
-        assertThat(actualNewState.getLastRecordedTime()).isEqualTo(expectedLastRecordedTime);
-        assertThat(actualNewState.getLastReportedTime()).isEqualTo(expectedLastReportedTime);
-        assertThat(actualNewState.getStrategy()).isSameAs(expectedStrategy);
-        verifyNoInteractions(expectedStrategy);
-        assertThat(actualNewState.getMetadata()).isNull();
+        assertThat(updatedState).isSameAs(state);
+        verifyNoInteractions(stateSpy);
+        verifyNoInteractions(strategySpy);
     }
 
     @ParameterizedTest
@@ -258,7 +254,8 @@ public class IntegrationActivityManagerTest {
         return Stream.of(
                 Arguments.of(10L, 0L, 9L),
                 Arguments.of(10L, 7L, 2L),
-                Arguments.of(10L, 8L, 1L)
+                Arguments.of(10L, 8L, 1L),
+                Arguments.of(10000L, 5000L, 3000L)
         );
     }
 
@@ -282,12 +279,13 @@ public class IntegrationActivityManagerTest {
         return Stream.of(
                 Arguments.of(10L, 9L, 2L),
                 Arguments.of(10L, 0L, 11L),
-                Arguments.of(10L, 8L, 3L)
+                Arguments.of(10L, 8L, 3L),
+                Arguments.of(10000L, 8000L, 3000L)
         );
     }
 
     @Test
-    void givenKeyAndVoidMetadata_whenOnStateExpiryCalled_thenShouldDoNothing() {
+    void givenKeyAndMetadata_whenOnStateExpiryCalled_thenShouldDoNothing() {
         // GIVEN
         var key = new IntegrationActivityKey(TENANT_ID, DEVICE_ID);
         doCallRealMethod().when(integrationServiceMock).onStateExpiry(key, null);
