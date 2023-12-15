@@ -36,6 +36,4 @@ public interface ActivityManager<Key> {
 
     void onActivity(Key key);
 
-    void destroy();
-
 }

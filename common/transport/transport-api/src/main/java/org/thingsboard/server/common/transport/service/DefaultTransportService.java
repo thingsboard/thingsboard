@@ -186,7 +186,6 @@ public class DefaultTransportService extends AbstractActivityManager<UUID, Trans
 
     private final TransportRateLimitService rateLimitService;
     private final DataDecodingEncodingService dataDecodingEncodingService;
-    private final SchedulerComponent scheduler;
     private final ApplicationEventPublisher eventPublisher;
     private final TransportResourceCache transportResourceCache;
     private final NotificationRuleProcessor notificationRuleProcessor;
@@ -295,7 +294,6 @@ public class DefaultTransportService extends AbstractActivityManager<UUID, Trans
     @PreDestroy
     public void destroy() {
         stopped = true;
-        super.destroy();
 
         if (transportNotificationsConsumer != null) {
             transportNotificationsConsumer.unsubscribe();
@@ -838,7 +836,7 @@ public class DefaultTransportService extends AbstractActivityManager<UUID, Trans
 
     @Override
     protected boolean hasExpired(UUID uuid, ActivityState<TransportProtos.SessionInfoProto> state) {
-        return (System.currentTimeMillis() - sessionInactivityTimeout) < state.getLastReportedTime();
+        return (System.currentTimeMillis() - sessionInactivityTimeout) > state.getLastRecordedTime();
     }
 
     @Override
@@ -1349,11 +1347,6 @@ public class DefaultTransportService extends AbstractActivityManager<UUID, Trans
     @Override
     public boolean hasSession(TransportProtos.SessionInfoProto sessionInfo) {
         return sessions.containsKey(toSessionId(sessionInfo));
-    }
-
-    @Override
-    public SessionMetaData getSession(UUID sessionId) {
-        return sessions.get(sessionId);
     }
 
     @Override

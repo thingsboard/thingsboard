@@ -31,16 +31,15 @@
 package org.thingsboard.server.common.transport.activity;
 
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.transport.activity.strategy.ActivityStrategy;
+import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -48,9 +47,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class AbstractActivityManager<Key, Metadata> implements ActivityManager<Key> {
 
     private final ConcurrentMap<Key, ActivityState<Metadata>> states = new ConcurrentHashMap<>();
+
+    @Autowired
+    protected SchedulerComponent scheduler;
+
     protected String name;
-    private long reportingPeriodMillis;
-    private ScheduledExecutorService scheduler;
     private boolean initialized;
 
     @Override
@@ -62,8 +63,6 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
                 reportingPeriodMillis = 3000;
                 log.error("[{}] Negative or zero reporting period millisecond was provided. Going to use reporting period value of 3 seconds.", this.name);
             }
-            this.reportingPeriodMillis = reportingPeriodMillis;
-            scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName(this.name)); // TODO: use scheduler component
             scheduler.scheduleAtFixedRate(this::onReportingPeriodEnd, new Random().nextInt((int) reportingPeriodMillis), reportingPeriodMillis, TimeUnit.MILLISECONDS);
             initialized = true;
             log.info("Activity manager with name [{}] is initialized.", this.name);
@@ -172,7 +171,7 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
 
             if (shouldReport && lastReportedTime < lastRecordedTime) {
                 log.debug("[{}] Going to report last activity event for key: [{}].", name, key);
-                reportActivity(key, metadata, currentState.getLastRecordedTime(), new ActivityReportCallback<>() {
+                reportActivity(key, metadata, lastRecordedTime, new ActivityReportCallback<>() {
                     @Override
                     public void onSuccess(Key key, long reportedTime) {
                         updateLastReportedTime(key, reportedTime);
@@ -192,24 +191,6 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
             state.setLastReportedTime(Math.max(state.getLastReportedTime(), newLastReportedTime));
             return state;
         });
-    }
-
-    @Override
-    public synchronized void destroy() {
-        if (initialized) {
-            initialized = false;
-            if (scheduler != null) {
-                scheduler.shutdown();
-                try {
-                    if (scheduler.awaitTermination(10L, TimeUnit.SECONDS)) {
-                        scheduler.shutdownNow();
-                    }
-                } catch (InterruptedException e) {
-                    scheduler.shutdownNow();
-                    Thread.currentThread().interrupt();
-                }
-            }
-        }
     }
 
 }

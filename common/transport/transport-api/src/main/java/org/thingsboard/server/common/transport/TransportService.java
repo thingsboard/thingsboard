@@ -63,7 +63,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509Ce
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateOrCreateDeviceX509CertRequestMsg;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -161,8 +160,6 @@ public interface TransportService {
     ExecutorService getCallbackExecutor();
 
     boolean hasSession(SessionInfoProto sessionInfo);
-
-    SessionMetaData getSession(UUID sessionId);
 
     void createGaugeStats(String openConnections, AtomicInteger connectionsCounter);
 }
