@@ -26,6 +26,8 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 
+import java.io.OutputStream;
+
 public interface ImageService {
 
     TbResourceInfo saveImage(TbResource image);
@@ -42,7 +44,11 @@ public interface ImageService {
 
     byte[] getImageData(TenantId tenantId, TbResourceId imageId);
 
+    void downloadImage(TenantId tenantId, TbResourceId imageId, OutputStream outputStream);
+
     byte[] getImagePreview(TenantId tenantId, TbResourceId imageId);
+
+    void downloadImagePreview(TenantId tenantId, TbResourceId imageId, OutputStream outputStream);
 
     TbImageDeleteResult deleteImage(TbResourceInfo imageInfo, boolean force);
 

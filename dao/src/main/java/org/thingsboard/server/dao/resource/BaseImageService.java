@@ -23,6 +23,7 @@ import com.google.common.base.Strings;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -61,6 +62,8 @@ import org.thingsboard.server.dao.widget.WidgetTypeDao;
 import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 
 import javax.annotation.PostConstruct;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Collections;
@@ -245,16 +248,40 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         return findAllTenantResourcesByTenantId(filter, pageLink);
     }
 
+    @Transactional(readOnly = true)
+    @SneakyThrows
     @Override
     public byte[] getImageData(TenantId tenantId, TbResourceId imageId) {
         log.trace("Executing getImageData [{}] [{}]", tenantId, imageId);
-        return resourceDao.getResourceData(tenantId, imageId);
+        return resourceDao.getResourceData(tenantId, imageId).readAllBytes();
     }
 
+    @Transactional(readOnly = true)
+    @SneakyThrows
+    @Override
+    public void downloadImage(TenantId tenantId, TbResourceId imageId, OutputStream outputStream) {
+        log.trace("Executing downloadImage [{}] [{}]", tenantId, imageId);
+        try (InputStream dataStream = resourceDao.getResourceData(tenantId, imageId)) {
+            IOUtils.copy(dataStream, outputStream);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    @SneakyThrows
     @Override
     public byte[] getImagePreview(TenantId tenantId, TbResourceId imageId) {
         log.trace("Executing getImagePreview [{}] [{}]", tenantId, imageId);
-        return resourceDao.getResourcePreview(tenantId, imageId);
+        return resourceDao.getResourcePreview(tenantId, imageId).readAllBytes();
+    }
+
+    @Transactional(readOnly = true)
+    @SneakyThrows
+    @Override
+    public void downloadImagePreview(TenantId tenantId, TbResourceId imageId, OutputStream outputStream) {
+        log.trace("Executing downloadImagePreview [{}] [{}]", tenantId, imageId);
+        try (InputStream dataStream = resourceDao.getResourcePreview(tenantId, imageId)) {
+            IOUtils.copy(dataStream, outputStream);
+        }
     }
 
     @Override

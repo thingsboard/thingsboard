@@ -25,26 +25,30 @@ import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.ExportableEntityDao;
 import org.thingsboard.server.dao.TenantEntityWithDataDao;
 
+import java.io.InputStream;
 import java.util.List;
 
 public interface TbResourceDao extends Dao<TbResource>, TenantEntityWithDataDao, ExportableEntityDao<TbResourceId, TbResource> {
 
     TbResource findResourceByTenantIdAndKey(TenantId tenantId, ResourceType resourceType, String resourceId);
 
+    @Deprecated
     PageData<TbResource> findAllByTenantId(TenantId tenantId, PageLink pageLink);
 
+    @Deprecated
     PageData<TbResource> findResourcesByTenantIdAndResourceType(TenantId tenantId,
                                                                 ResourceType resourceType,
                                                                 PageLink pageLink);
 
+    @Deprecated
     List<TbResource> findResourcesByTenantIdAndResourceType(TenantId tenantId,
                                                             ResourceType resourceType,
                                                             String[] objectIds,
                                                             String searchText);
 
-    byte[] getResourceData(TenantId tenantId, TbResourceId resourceId);
+    InputStream getResourceData(TenantId tenantId, TbResourceId resourceId);
 
-    byte[] getResourcePreview(TenantId tenantId, TbResourceId resourceId);
+    InputStream getResourcePreview(TenantId tenantId, TbResourceId resourceId);
 
     long getResourceSize(TenantId tenantId, TbResourceId resourceId);
 

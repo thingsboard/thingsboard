@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.model.sql;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.SneakyThrows;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.ResourceType;
@@ -29,10 +30,15 @@ import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Lob;
 import javax.persistence.Table;
+import javax.sql.rowset.serial.SerialBlob;
+import java.sql.Blob;
+import java.sql.SQLException;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.EXTERNAL_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.PUBLIC_RESOURCE_KEY_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_DATA_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_DESCRIPTOR_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_ETAG_COLUMN;
@@ -40,7 +46,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_FILE_NAME
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_IS_PUBLIC_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_KEY_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_PREVIEW_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.PUBLIC_RESOURCE_KEY_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TABLE_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TENANT_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TITLE_COLUMN;
@@ -72,8 +77,9 @@ public class TbResourceEntity extends BaseSqlEntity<TbResource> {
     @Column(name = RESOURCE_FILE_NAME_COLUMN)
     private String fileName;
 
+    @Lob
     @Column(name = RESOURCE_DATA_COLUMN)
-    private byte[] data;
+    private Blob data;
 
     @Column(name = RESOURCE_ETAG_COLUMN)
     private String etag;
@@ -82,8 +88,9 @@ public class TbResourceEntity extends BaseSqlEntity<TbResource> {
     @Column(name = RESOURCE_DESCRIPTOR_COLUMN)
     private JsonNode descriptor;
 
+    @Lob
     @Column(name = RESOURCE_PREVIEW_COLUMN)
-    private byte[] preview;
+    private Blob preview;
 
     @Column(name = RESOURCE_IS_PUBLIC_COLUMN)
     private Boolean isPublic;
@@ -97,6 +104,7 @@ public class TbResourceEntity extends BaseSqlEntity<TbResource> {
     public TbResourceEntity() {
     }
 
+    @SneakyThrows
     public TbResourceEntity(TbResource resource) {
         if (resource.getId() != null) {
             this.id = resource.getId().getId();
@@ -110,15 +118,17 @@ public class TbResourceEntity extends BaseSqlEntity<TbResource> {
         this.resourceKey = resource.getResourceKey();
         this.searchText = resource.getSearchText();
         this.fileName = resource.getFileName();
-        this.data = resource.getData();
+        this.data = toBlob(resource.getData());
         this.etag = resource.getEtag();
         this.descriptor = resource.getDescriptor();
-        this.preview = resource.getPreview();
+        this.preview = toBlob(resource.getPreview());
         this.isPublic = resource.isPublic();
         this.publicResourceKey = resource.getPublicResourceKey();
         this.externalId = getUuid(resource.getExternalId());
     }
 
+
+    @SneakyThrows
     @Override
     public TbResource toData() {
         TbResource resource = new TbResource(new TbResourceId(id));
@@ -129,14 +139,22 @@ public class TbResourceEntity extends BaseSqlEntity<TbResource> {
         resource.setResourceKey(resourceKey);
         resource.setSearchText(searchText);
         resource.setFileName(fileName);
-        resource.setData(data);
+        resource.setData(getBlobData(data));
         resource.setEtag(etag);
         resource.setDescriptor(descriptor);
-        resource.setPreview(preview);
+        resource.setPreview(getBlobData(preview));
         resource.setPublic(isPublic == null || isPublic);
         resource.setPublicResourceKey(publicResourceKey);
         resource.setExternalId(getEntityId(externalId, TbResourceId::new));
         return resource;
+    }
+
+    private byte[] getBlobData(Blob blob) throws SQLException {
+        return blob != null ? blob.getBytes(1, (int) blob.length()) : null;
+    }
+
+    private Blob toBlob(byte[] data) throws SQLException {
+        return data != null ? new SerialBlob(data) : null;
     }
 
 }

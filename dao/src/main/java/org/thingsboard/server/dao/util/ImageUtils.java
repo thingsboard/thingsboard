@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.util;
 
 import com.drew.imaging.ImageMetadataReader;
+import com.drew.imaging.ImageProcessingException;
 import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.Tag;
@@ -89,7 +90,12 @@ public class ImageUtils {
         } catch (Exception ignored) {
         }
         if (bufferedImage == null) { // means that media type is not supported by ImageIO; extracting width and height from metadata and leaving preview as original image
-            Metadata metadata = ImageMetadataReader.readMetadata(new ByteArrayInputStream(data));
+            Metadata metadata;
+            try {
+                metadata = ImageMetadataReader.readMetadata(new ByteArrayInputStream(data));
+            } catch (ImageProcessingException e) {
+                throw new IllegalArgumentException("Image format not supported");
+            }
             ProcessedImage image = previewAsOriginalImage(data, mediaType);
             String dirName = "Unknown";
             for (Directory dir : metadata.getDirectories()) {

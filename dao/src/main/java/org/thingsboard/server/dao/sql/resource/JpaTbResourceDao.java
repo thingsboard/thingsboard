@@ -15,9 +15,11 @@
  */
 package org.thingsboard.server.dao.sql.resource;
 
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
@@ -31,6 +33,8 @@ import org.thingsboard.server.dao.resource.TbResourceDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import java.io.InputStream;
+import java.sql.Blob;
 import java.util.List;
 import java.util.UUID;
 
@@ -55,16 +59,25 @@ public class JpaTbResourceDao extends JpaAbstractDao<TbResourceEntity, TbResourc
         return resourceRepository;
     }
 
+    @Transactional(readOnly = true)
+    @Override
+    public TbResource findById(TenantId tenantId, UUID key) {
+        return super.findById(tenantId, key);
+    }
+
+    @Transactional(readOnly = true)
     @Override
     public TbResource findResourceByTenantIdAndKey(TenantId tenantId, ResourceType resourceType, String resourceKey) {
         return DaoUtil.getData(resourceRepository.findByTenantIdAndResourceTypeAndResourceKey(tenantId.getId(), resourceType.name(), resourceKey));
     }
 
+    @Transactional(readOnly = true)
     @Override
     public PageData<TbResource> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(resourceRepository.findAllByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
     }
 
+    @Transactional(readOnly = true)
     @Override
     public PageData<TbResource> findResourcesByTenantIdAndResourceType(TenantId tenantId,
                                                                        ResourceType resourceType,
@@ -78,6 +91,7 @@ public class JpaTbResourceDao extends JpaAbstractDao<TbResourceEntity, TbResourc
         ));
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<TbResource> findResourcesByTenantIdAndResourceType(TenantId tenantId, ResourceType resourceType,
                                                                    String[] objectIds,
@@ -94,14 +108,28 @@ public class JpaTbResourceDao extends JpaAbstractDao<TbResourceEntity, TbResourc
                         resourceType.name(), objectIds));
     }
 
+    @Transactional(readOnly = true)
+    @SneakyThrows
     @Override
-    public byte[] getResourceData(TenantId tenantId, TbResourceId resourceId) {
-        return resourceRepository.getDataById(resourceId.getId());
+    public InputStream getResourceData(TenantId tenantId, TbResourceId resourceId) {
+        Blob data = resourceRepository.getDataById(resourceId.getId());
+        if (data != null) {
+            return data.getBinaryStream();
+        } else {
+            throw new IllegalArgumentException("Couldn't find resource data");
+        }
     }
 
+    @Transactional(readOnly = true)
+    @SneakyThrows
     @Override
-    public byte[] getResourcePreview(TenantId tenantId, TbResourceId resourceId) {
-        return resourceRepository.getPreviewById(resourceId.getId());
+    public InputStream getResourcePreview(TenantId tenantId, TbResourceId resourceId) {
+        Blob preview = resourceRepository.getPreviewById(resourceId.getId());
+        if (preview != null) {
+            return preview.getBinaryStream();
+        } else {
+            return getResourceData(tenantId, resourceId);
+        }
     }
 
     @Override
@@ -119,6 +147,7 @@ public class JpaTbResourceDao extends JpaAbstractDao<TbResourceEntity, TbResourc
         return DaoUtil.getData(resourceRepository.findByTenantIdAndExternalId(tenantId, externalId));
     }
 
+    @Deprecated
     @Override
     public PageData<TbResource> findByTenantId(UUID tenantId, PageLink pageLink) {
         return findAllByTenantId(TenantId.fromUUID(tenantId), pageLink);

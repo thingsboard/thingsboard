@@ -20,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -38,6 +37,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import org.thingsboard.server.common.data.ImageDescriptor;
 import org.thingsboard.server.common.data.ImageExportData;
 import org.thingsboard.server.common.data.ResourceType;
@@ -166,17 +166,17 @@ public class ImageController extends BaseController {
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = IMAGE_URL, produces = "image/*")
-    public ResponseEntity<ByteArrayResource> downloadImage(@ApiParam(value = IMAGE_TYPE_PARAM_DESCRIPTION, allowableValues = IMAGE_TYPE_PARAM_ALLOWABLE_VALUES, required = true)
-                                                           @PathVariable String type,
-                                                           @ApiParam(value = IMAGE_KEY_PARAM_DESCRIPTION, required = true)
-                                                           @PathVariable String key,
-                                                           @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws Exception {
+    public ResponseEntity<StreamingResponseBody> downloadImage(@ApiParam(value = IMAGE_TYPE_PARAM_DESCRIPTION, allowableValues = IMAGE_TYPE_PARAM_ALLOWABLE_VALUES, required = true)
+                                                               @PathVariable String type,
+                                                               @ApiParam(value = IMAGE_KEY_PARAM_DESCRIPTION, required = true)
+                                                               @PathVariable String key,
+                                                               @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws Exception {
         return downloadIfChanged(type, key, etag, false);
     }
 
     @GetMapping(value = "/api/images/public/{publicResourceKey}", produces = "image/*")
-    public ResponseEntity<ByteArrayResource> downloadPublicImage(@PathVariable String publicResourceKey,
-                                                                 @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws Exception {
+    public ResponseEntity<StreamingResponseBody> downloadPublicImage(@PathVariable String publicResourceKey,
+                                                                     @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws Exception {
         ImageCacheKey cacheKey = ImageCacheKey.forPublicImage(publicResourceKey);
         return downloadIfChanged(cacheKey, etag, () -> imageService.getPublicImageInfoByKey(publicResourceKey));
     }
@@ -228,11 +228,11 @@ public class ImageController extends BaseController {
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = IMAGE_URL + "/preview", produces = "image/png")
-    public ResponseEntity<ByteArrayResource> downloadImagePreview(@ApiParam(value = IMAGE_TYPE_PARAM_DESCRIPTION, allowableValues = IMAGE_TYPE_PARAM_ALLOWABLE_VALUES, required = true)
-                                                                  @PathVariable String type,
-                                                                  @ApiParam(value = IMAGE_KEY_PARAM_DESCRIPTION, required = true)
-                                                                  @PathVariable String key,
-                                                                  @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws Exception {
+    public ResponseEntity<StreamingResponseBody> downloadImagePreview(@ApiParam(value = IMAGE_TYPE_PARAM_DESCRIPTION, allowableValues = IMAGE_TYPE_PARAM_ALLOWABLE_VALUES, required = true)
+                                                                      @PathVariable String type,
+                                                                      @ApiParam(value = IMAGE_KEY_PARAM_DESCRIPTION, required = true)
+                                                                      @PathVariable String key,
+                                                                      @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws Exception {
         return downloadIfChanged(type, key, etag, true);
     }
 
@@ -281,12 +281,12 @@ public class ImageController extends BaseController {
         return (result.isSuccess() ? ResponseEntity.ok() : ResponseEntity.badRequest()).body(result);
     }
 
-    private ResponseEntity<ByteArrayResource> downloadIfChanged(String type, String key, String etag, boolean preview) throws Exception {
+    private ResponseEntity<StreamingResponseBody> downloadIfChanged(String type, String key, String etag, boolean preview) throws Exception {
         ImageCacheKey cacheKey = ImageCacheKey.forImage(getTenantId(type), key, preview);
         return downloadIfChanged(cacheKey, etag, () -> checkImageInfo(type, key, Operation.READ));
     }
 
-    private ResponseEntity<ByteArrayResource> downloadIfChanged(ImageCacheKey cacheKey, String etag, ThrowingSupplier<TbResourceInfo> imageInfoSupplier) throws Exception {
+    private ResponseEntity<StreamingResponseBody> downloadIfChanged(ImageCacheKey cacheKey, String etag, ThrowingSupplier<TbResourceInfo> imageInfoSupplier) throws Exception {
         if (StringUtils.isNotEmpty(etag)) {
             etag = StringUtils.remove(etag, '\"'); // etag is wrapped in double quotes due to HTTP specification
             if (etag.equals(tbImageService.getETag(cacheKey))) {
@@ -297,17 +297,13 @@ public class ImageController extends BaseController {
         TbResourceInfo imageInfo = checkNotNull(imageInfoSupplier.get());
         String fileName = imageInfo.getFileName();
         ImageDescriptor descriptor = imageInfo.getDescriptor(ImageDescriptor.class);
-        byte[] data;
         if (cacheKey.isPreview()) {
             descriptor = descriptor.getPreviewDescriptor();
-            data = imageService.getImagePreview(imageInfo.getTenantId(), imageInfo.getId());
-        } else {
-            data = imageService.getImageData(imageInfo.getTenantId(), imageInfo.getId());
         }
         tbImageService.putETag(cacheKey, descriptor.getEtag());
         var result = ResponseEntity.ok()
                 .header("Content-Type", descriptor.getMediaType())
-                .contentLength(data.length)
+                .contentLength(descriptor.getSize())
                 .eTag(descriptor.getEtag());
         if (!cacheKey.isPublic()) {
             result
@@ -321,7 +317,13 @@ public class ImageController extends BaseController {
         } else {
             result.cacheControl(CacheControl.noCache());
         }
-        return result.body(new ByteArrayResource(data));
+        return result.body(outputStream -> {
+            if (cacheKey.isPreview()) {
+                imageService.downloadImagePreview(imageInfo.getTenantId(), imageInfo.getId(), outputStream);
+            } else {
+                imageService.downloadImage(imageInfo.getTenantId(), imageInfo.getId(), outputStream);
+            }
+        });
     }
 
     private TbResourceInfo checkImageInfo(String imageType, String key, Operation operation) throws ThingsboardException {

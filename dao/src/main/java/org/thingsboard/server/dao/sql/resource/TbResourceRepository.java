@@ -23,6 +23,7 @@ import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.TbResourceEntity;
 
+import java.sql.Blob;
 import java.util.List;
 import java.util.UUID;
 
@@ -79,16 +80,18 @@ public interface TbResourceRepository extends JpaRepository<TbResourceEntity, UU
                                               @Param("resourceType") String resourceType,
                                               @Param("resourceIds") String[] objectIds);
 
-    @Query(value = "SELECT COALESCE(SUM(LENGTH(r.data)), 0) FROM resource r WHERE r.tenant_id = :tenantId", nativeQuery = true)
+    @Query(value = "SELECT coalesce(sum(length(lo.data)), 0) FROM resource r " +
+            "JOIN pg_largeobject lo ON r.data = lo.loid WHERE r.tenant_id = :tenantId", nativeQuery = true)
     Long sumDataSizeByTenantId(@Param("tenantId") UUID tenantId);
 
     @Query("SELECT r.data FROM TbResourceEntity r WHERE r.id = :id")
-    byte[] getDataById(@Param("id") UUID id);
+    Blob getDataById(@Param("id") UUID id);
 
-    @Query(value = "SELECT COALESCE(preview, data) FROM resource WHERE id = :id", nativeQuery = true)
-    byte[] getPreviewById(@Param("id") UUID id);
+    @Query("SELECT r.preview FROM TbResourceEntity r WHERE r.id = :id")
+    Blob getPreviewById(@Param("id") UUID id);
 
-    @Query(value = "SELECT length(r.data) FROM resource r WHERE r.id = :id", nativeQuery = true)
+    @Query(value = "SELECT (SELECT sum(length(lo.data)) from pg_largeobject lo where lo.loid = r.data) " +
+            "FROM resource r WHERE r.id = :id", nativeQuery = true)
     long getDataSizeById(@Param("id") UUID id);
 
     @Query("SELECT externalId FROM TbResourceInfoEntity WHERE id = :id")

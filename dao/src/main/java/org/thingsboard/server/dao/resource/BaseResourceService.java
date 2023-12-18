@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.cache.resourceInfo.ResourceInfoCacheKey;
 import org.thingsboard.server.cache.resourceInfo.ResourceInfoEvictEvent;
@@ -227,17 +228,17 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         return Hashing.sha256().hashBytes(data).toString();
     }
 
-    private final PaginatedRemover<TenantId, TbResource> tenantResourcesRemover =
+    private final PaginatedRemover<TenantId, TbResourceId> tenantResourcesRemover =
             new PaginatedRemover<>() {
 
                 @Override
-                protected PageData<TbResource> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-                    return resourceDao.findAllByTenantId(id, pageLink);
+                protected PageData<TbResourceId> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+                    return resourceDao.findIdsByTenantId(tenantId.getId(), pageLink);
                 }
 
                 @Override
-                protected void removeEntity(TenantId tenantId, TbResource entity) {
-                    deleteResource(tenantId, new TbResourceId(entity.getUuidId()));
+                protected void removeEntity(TenantId tenantId, TbResourceId resourceId) {
+                    deleteResource(tenantId, resourceId, true);
                 }
             };
 
