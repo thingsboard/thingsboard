@@ -14,11 +14,8 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
-import { DeviceService } from '@core/http/device.service';
-import { helpBaseUrl } from '@shared/models/constants';
-import { getOS } from '@core/utils';
-import { PublishLaunchCommand } from '@shared/models/device.models';
+import { Component, Inject, Input, OnInit } from '@angular/core';
+import { WINDOW } from '@core/services/window.service';
 
 @Component({
   selector: 'tb-gateway-command',
@@ -29,44 +26,17 @@ import { PublishLaunchCommand } from '@shared/models/device.models';
 export class DeviceGatewayCommandComponent implements OnInit {
 
   @Input()
-  token: string;
-
-  @Input()
   deviceId: string;
 
-  commands: PublishLaunchCommand;
+  downloadUrl: string;
 
-  helpLink: string = helpBaseUrl + '/docs/iot-gateway/install/docker-installation/';
-
-  tabIndex = 0;
-
-  constructor(private cd: ChangeDetectorRef,
-              private deviceService: DeviceService) {
+  constructor(@Inject(WINDOW) private window: Window) {
   }
 
 
   ngOnInit(): void {
     if (this.deviceId) {
-      this.deviceService.getDevicePublishLaunchCommands(this.deviceId).subscribe(commands => {
-        this.commands = commands;
-        this.cd.detectChanges();
-      });
-    }
-    const currentOS = getOS();
-    switch (currentOS) {
-      case 'linux':
-      case 'android':
-        this.tabIndex = 1;
-        break;
-      case 'macos':
-      case 'ios':
-        this.tabIndex = 2;
-        break;
-      case 'windows':
-        this.tabIndex = 0;
-        break;
-      default:
-        this.tabIndex = 1;
+      this.downloadUrl = `${this.window.location.origin}/api/device-connectivity/gateway-launch/${this.deviceId}/docker-compose/download`;
     }
   }
 }
