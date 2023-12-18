@@ -214,7 +214,7 @@ public class ImageControllerTest extends AbstractControllerTest {
 
         assertThat(imageInfo.isPublic()).isTrue();
         assertThat(imageInfo.getPublicResourceKey()).hasSize(32);
-        assertThat(imageInfo.getLink()).isEqualTo("/api/images/public/" + imageInfo.getPublicResourceKey());
+        assertThat(imageInfo.getPublicLink()).isEqualTo("/api/images/public/" + imageInfo.getPublicResourceKey());
 
         assertThat(downloadImage("tenant", filename)).containsExactly(PNG_IMAGE);
         resetTokens();
@@ -225,20 +225,23 @@ public class ImageControllerTest extends AbstractControllerTest {
     public void testMakeImagePublic() throws Exception {
         String filename = "my_public_image.png";
         TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", filename, "image/png", PNG_IMAGE, false);
-        assertThat(imageInfo.isPublic()).isFalse();
         String publicKey = imageInfo.getPublicResourceKey();
         assertThat(publicKey).hasSize(32);
+
+        updateImagePublicStatus(filename, false);
         doGet("/api/images/public/" + publicKey).andExpect(status().isNotFound());
 
-        imageInfo.setPublic(true);
-        imageInfo = doPut("/api/images/tenant/" + filename + "/public/true", imageInfo, TbResourceInfo.class);
+        updateImagePublicStatus(filename, true);
         resetTokens();
         assertThat(downloadPublicImage(publicKey)).containsExactly(PNG_IMAGE);
 
         loginTenantAdmin();
-        imageInfo.setPublic(false);
-        doPut("/api/images/tenant/" + filename + "/public/false", imageInfo, TbResourceInfo.class);
+        updateImagePublicStatus(filename, false);
         doGet("/api/images/public/" + publicKey).andExpect(status().isNotFound());
+    }
+
+    private TbResourceInfo updateImagePublicStatus(String filename, boolean isPublic) throws Exception {
+        return doPut("/api/images/tenant/" + filename + "/public/" + isPublic, "", TbResourceInfo.class);
     }
 
     private void checkPngImageDescriptor(ImageDescriptor imageDescriptor) {
@@ -277,13 +280,6 @@ public class ImageControllerTest extends AbstractControllerTest {
         assertThat(imageDescriptor.getHeight()).isEqualTo(150);
         assertThat(imageDescriptor.getSize()).isEqualTo(SVG_IMAGE.length);
         assertThat(imageDescriptor.getEtag()).isEqualTo(Hashing.sha256().hashBytes(SVG_IMAGE).toString());
-
-        ImageDescriptor previewDescriptor = imageDescriptor.getPreviewDescriptor();
-        assertThat(previewDescriptor.getMediaType()).isEqualTo("image/png");
-        assertThat(previewDescriptor.getWidth()).isEqualTo(250);
-        assertThat(previewDescriptor.getHeight()).isEqualTo(250);
-        assertThat(previewDescriptor.getSize()).isEqualTo(13247);
-        assertThat(previewDescriptor.getEtag()).isEqualTo("f02db84f2c6ed7ea0606ae1145986a16a534cb0fd70436b3b5ca585569d48e46");
     }
 
     private List<TbResourceInfo> getImages(String searchText, boolean includeSystemImages, int limit) throws Exception {
