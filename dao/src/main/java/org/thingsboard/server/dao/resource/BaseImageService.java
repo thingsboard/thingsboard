@@ -471,6 +471,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
             image.setFileName(fileName);
             image.setDescriptor(JacksonUtil.newObjectNode().put("mediaType", mdMediaType));
             image.setData(imageData);
+            image.setPublic(true);
             try {
                 imageInfo = saveImage(image);
             } catch (Exception e) {
