@@ -205,9 +205,9 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
           bitrateSwitch: [false, []],
           dataLength: [null, [Validators.min(1), Validators.pattern("^[0-9]*$")]],
           dataByteorder: [null, []],
-          dataBefore: [null, [Validators.pattern(noLeadTrailSpacesRegex), Validators.pattern(/^[0-9A-Fa-f]+$/)]],
-          dataAfter: [null, [Validators.pattern(noLeadTrailSpacesRegex), Validators.pattern(/^[0-9A-Fa-f]+$/)]],
-          dataInHEX: [null, [Validators.pattern(noLeadTrailSpacesRegex), Validators.pattern(/^[0-9A-Fa-f]+$/)]],
+          dataBefore: [null, [Validators.pattern(noLeadTrailSpacesRegex), Validators.pattern(/^[0-9A-Fa-f ]+$/)]],
+          dataAfter: [null, [Validators.pattern(noLeadTrailSpacesRegex), Validators.pattern(/^[0-9A-Fa-f ]+$/)]],
+          dataInHEX: [null, [Validators.pattern(noLeadTrailSpacesRegex), Validators.pattern(/^[0-9A-Fa-f ]+$/)]],
           dataExpression: [null, [Validators.pattern(noLeadTrailSpacesRegex)]]
         })
         break;
