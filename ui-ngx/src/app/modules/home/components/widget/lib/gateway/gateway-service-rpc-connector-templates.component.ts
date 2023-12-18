@@ -19,12 +19,10 @@ import {
   ConnectorType,
   RPCTemplate
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
-import { KeyValue } from '@angular/common';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { AttributeService } from '@core/http/attribute.service';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'tb-gateway-service-rpc-connector-templates',

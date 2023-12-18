@@ -34,7 +34,8 @@ import {
   CANByteOrders,
   ConnectorType,
   GatewayConnectorDefaultTypesTranslates,
-  HTTPMethods, ModbusCodesTranslate,
+  HTTPMethods,
+  ModbusCodesTranslate,
   ModbusCommandTypes,
   RPCCommand,
   RPCTemplateConfig,
@@ -76,11 +77,8 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
   saveTemplate: EventEmitter<RPCTemplateConfig> = new EventEmitter();
 
   commandForm: FormGroup;
-
   codesArray: Array<number> = [1, 2, 3, 4, 5, 6, 15, 16];
-
-  readonly ConnectorType = ConnectorType;
-
+  ConnectorType = ConnectorType;
   modbusCommandTypes = Object.values(ModbusCommandTypes) as ModbusCommandTypes[];
   bACnetRequestTypes = Object.values(BACnetRequestTypes) as BACnetRequestTypes[];
   bACnetObjectTypes = Object.values(BACnetObjectTypes) as BACnetObjectTypes[];
@@ -99,22 +97,16 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
   gatewayConnectorDefaultTypesTranslates = GatewayConnectorDefaultTypesTranslates;
   modbusCodesTranslate = ModbusCodesTranslate;
 
-  urlPattern = new RegExp(
-    '^(https?:\\/\\/)?' + // protocol
-    '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|' + // domain name
-    '((\\d{1,3}\\.){3}\\d{1,3}))' + // OR IP (v4) address
-    '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' + // port and path
-    '(\\?[;&a-z\\d%_.~+=-]*)?' + // query string
-    '(\\#[-a-z\\d_]*)?$', // fragment locator
-    'i'
-  );
+  urlPattern = /^[-a-zA-Zd_$:{}?~+=\/.0-9-]*$/;
+  numbersOnlyPattern = /^[0-9]*$/;
+  hexOnlyPattern = /^[0-9A-Fa-f ]+$/;
+
   private propagateChange = (v: any) => {
   }
 
   constructor(private fb: FormBuilder,
               private dialog: MatDialog,) {
   }
-
 
   ngOnInit() {
     this.commandForm = this.connectorParamsFormGroupByType(this.connectorType);
@@ -154,7 +146,7 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
           methodFilter: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           requestTopicExpression: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           responseTopicExpression: [null, [Validators.pattern(noLeadTrailSpacesRegex)]],
-          responseTimeout: [null, [Validators.min(10), Validators.pattern("^[0-9]*$")]],
+          responseTimeout: [null, [Validators.min(10), Validators.pattern(this.numbersOnlyPattern)]],
           valueExpression: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
         })
         break;
@@ -164,8 +156,8 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
           type: [null, [Validators.required]],
           functionCode: [null, [Validators.required]],
           value: [null, []],
-          address: [null, [Validators.required, Validators.min(0), Validators.pattern("^[0-9]*$")]],
-          objectsCount: [null, [Validators.required, Validators.min(0), Validators.pattern("^[0-9]*$")]]
+          address: [null, [Validators.required, Validators.min(0), Validators.pattern(this.numbersOnlyPattern)]],
+          objectsCount: [null, [Validators.required, Validators.min(0), Validators.pattern(this.numbersOnlyPattern)]]
         })
         const valueForm = formGroup.get('value');
         formGroup.get('functionCode').valueChanges.subscribe(value => {
@@ -182,16 +174,16 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
         formGroup = this.fb.group({
           method: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           requestType: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          requestTimeout: [null, [Validators.required, Validators.min(10), Validators.pattern("^[0-9]*$")]],
+          requestTimeout: [null, [Validators.required, Validators.min(10), Validators.pattern(this.numbersOnlyPattern)]],
           objectType: [null, []],
-          identifier: [null, [Validators.required, Validators.min(1), Validators.pattern("^[0-9]*$")]],
+          identifier: [null, [Validators.required, Validators.min(1), Validators.pattern(this.numbersOnlyPattern)]],
           propertyId: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]]
         })
         break;
       case ConnectorType.BLE:
         formGroup = this.fb.group({
           methodRPC: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          characteristicUUID: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+          characteristicUUID: ["00002A00-0000-1000-8000-00805F9B34FB", [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           methodProcessing: [null, [Validators.required]],
           withResponse: [false, []]
         })
@@ -199,15 +191,15 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
       case ConnectorType.CAN:
         formGroup = this.fb.group({
           method: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          nodeID: [null, [Validators.required, Validators.min(0), Validators.pattern("^[0-9]*$")]],
+          nodeID: [null, [Validators.required, Validators.min(0), Validators.pattern(this.numbersOnlyPattern)]],
           isExtendedID: [false, []],
           isFD: [false, []],
           bitrateSwitch: [false, []],
-          dataLength: [null, [Validators.min(1), Validators.pattern("^[0-9]*$")]],
+          dataLength: [null, [Validators.min(1), Validators.pattern(this.numbersOnlyPattern)]],
           dataByteorder: [null, []],
-          dataBefore: [null, [Validators.pattern(noLeadTrailSpacesRegex), Validators.pattern(/^[0-9A-Fa-f ]+$/)]],
-          dataAfter: [null, [Validators.pattern(noLeadTrailSpacesRegex), Validators.pattern(/^[0-9A-Fa-f ]+$/)]],
-          dataInHEX: [null, [Validators.pattern(noLeadTrailSpacesRegex), Validators.pattern(/^[0-9A-Fa-f ]+$/)]],
+          dataBefore: [null, [Validators.pattern(noLeadTrailSpacesRegex), Validators.pattern(this.hexOnlyPattern)]],
+          dataAfter: [null, [Validators.pattern(noLeadTrailSpacesRegex), Validators.pattern(this.hexOnlyPattern)]],
+          dataInHEX: [null, [Validators.pattern(noLeadTrailSpacesRegex), Validators.pattern(this.hexOnlyPattern)]],
           dataExpression: [null, [Validators.pattern(noLeadTrailSpacesRegex)]]
         })
         break;
@@ -252,9 +244,9 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
           methodFilter: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           httpMethod: [null, [Validators.required]],
           requestUrlExpression: [null, [Validators.required, Validators.pattern(this.urlPattern)]],
-          responseTimeout: [null, [Validators.required, Validators.min(10), Validators.pattern("^[0-9]*$")]],
-          timeout: [null, [Validators.required, Validators.min(10), Validators.pattern("^[0-9]*$")]],
-          tries: [null, [Validators.required, Validators.min(1), Validators.pattern("^[0-9]*$")]],
+          responseTimeout: [null, [Validators.required, Validators.min(10), Validators.pattern(this.numbersOnlyPattern)]],
+          timeout: [null, [Validators.required, Validators.min(10), Validators.pattern(this.numbersOnlyPattern)]],
+          tries: [null, [Validators.required, Validators.min(1), Validators.pattern(this.numbersOnlyPattern)]],
           valueExpression: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           httpHeaders: this.fb.array([]),
           security: this.fb.array([])
@@ -265,9 +257,9 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
           methodFilter: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           httpMethod: [null, [Validators.required]],
           requestUrlExpression: [null, [Validators.required, Validators.pattern(this.urlPattern)]],
-          responseTimeout: [null, [Validators.required, Validators.min(10), Validators.pattern("^[0-9]*$")]],
-          timeout: [null, [Validators.required, Validators.min(10), Validators.pattern("^[0-9]*$")]],
-          tries: [null, [Validators.required, Validators.min(1), Validators.pattern("^[0-9]*$")]],
+          responseTimeout: [null, [Validators.required, Validators.min(10), Validators.pattern(this.numbersOnlyPattern)]],
+          timeout: [null, [Validators.required, Validators.min(10), Validators.pattern(this.numbersOnlyPattern)]],
+          tries: [null, [Validators.required, Validators.min(1), Validators.pattern(this.numbersOnlyPattern)]],
           requestValueExpression: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           responseValueExpression: [null, [Validators.pattern(noLeadTrailSpacesRegex)]],
           httpHeaders: this.fb.array([]),
@@ -285,7 +277,6 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
           command: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           params: ['{}', [jsonRequired]],
         })
-
     }
     return formGroup;
   }
@@ -430,5 +421,4 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
       this.commandForm.patchValue(value, {onlySelf: false});
     }
   }
-
 }

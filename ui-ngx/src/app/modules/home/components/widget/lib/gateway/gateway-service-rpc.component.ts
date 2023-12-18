@@ -171,7 +171,6 @@ export class GatewayServiceRPCComponent implements OnInit {
     }).afterClosed().subscribe(
       (res) => {
         if (res) {
-          console.log(res);
           const templateAttribute: RPCTemplate = {
             name: res,
             config: this.commandForm.value.params
