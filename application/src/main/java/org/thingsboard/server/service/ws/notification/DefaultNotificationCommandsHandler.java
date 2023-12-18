@@ -245,7 +245,7 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
 
     private void sendUpdate(String sessionId, CmdUpdate update) {
         log.trace("[{}, cmdId: {}] Sending WS update: {}", sessionId, update.getCmdId(), update);
-        wsService.sendWsMsg(sessionId, update);
+        wsService.sendUpdate(sessionId, update);
     }
 
 }

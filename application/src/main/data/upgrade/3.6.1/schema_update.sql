@@ -35,3 +35,5 @@ ALTER TABLE resource ADD COLUMN IF NOT EXISTS external_id uuid;
 CREATE INDEX IF NOT EXISTS idx_resource_etag ON resource(tenant_id, etag);
 
 -- RESOURCES UPDATE END
+
+CREATE INDEX IF NOT EXISTS idx_edge_event_tenant_id_edge_id_created_time ON edge_event(tenant_id, edge_id, created_time DESC);

@@ -33,6 +33,7 @@ public class UnreadNotificationsUpdate extends CmdUpdate {
     private final Collection<Notification> notifications;
     private final Notification update;
     private final int totalUnreadCount;
+    private final int sequenceNumber;
 
     @Builder
     @JsonCreator
@@ -40,11 +41,13 @@ public class UnreadNotificationsUpdate extends CmdUpdate {
                                      @JsonProperty("errorMsg") String errorMsg,
                                      @JsonProperty("notifications") Collection<Notification> notifications,
                                      @JsonProperty("update") Notification update,
-                                     @JsonProperty("totalUnreadCount") int totalUnreadCount) {
+                                     @JsonProperty("totalUnreadCount") int totalUnreadCount,
+                                     @JsonProperty("sequenceNumber") int sequenceNumber) {
         super(cmdId, errorCode, errorMsg);
         this.notifications = notifications;
         this.update = update;
         this.totalUnreadCount = totalUnreadCount;
+        this.sequenceNumber = sequenceNumber;
     }
 
     @Override

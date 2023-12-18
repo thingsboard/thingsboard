@@ -41,9 +41,10 @@
           {{ 'widget-config.action-source-required' | translate }}
         </mat-error>
       </mat-form-field>
-      <mat-form-field class="mat-block">
+      <mat-form-field class="mat-block" subscriptSizing="dynamic">
         <mat-label translate>widget-config.action-name</mat-label>
         <input required matInput formControlName="name">
+        <mat-hint></mat-hint>
         <mat-error *ngIf="widgetActionFormGroup.get('name').hasError('required')">
           {{ 'widget-config.action-name-required' | translate }}
         </mat-error>

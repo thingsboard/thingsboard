@@ -16,6 +16,8 @@
 package org.thingsboard.server.service.install;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -113,6 +115,8 @@ public class InstallScripts {
 
     @Autowired
     private ImagesUpdater imagesUpdater;
+    @Getter @Setter
+    private boolean updateImages = false;
 
     Path getTenantRuleChainsDir() {
         return Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, RULE_CHAINS_DIR);

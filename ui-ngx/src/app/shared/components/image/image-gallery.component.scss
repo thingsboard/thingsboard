@@ -275,8 +275,12 @@ $tb-button-selected-color: rgb(255, 110, 64) !default;
         width: 50px;
         height: 50px;
         padding: 2px 12px;
-        display: block;
       }
+    }
+
+    .tb-image-preview-cell {
+      width: 50px;
+      height: 50px;
     }
 
     .tb-image-preview {

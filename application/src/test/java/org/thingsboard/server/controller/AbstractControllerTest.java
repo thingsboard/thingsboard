@@ -52,8 +52,8 @@ public abstract class AbstractControllerTest extends AbstractNotifyEntityTest {
     @LocalServerPort
     protected int wsPort;
 
-    private volatile TbTestWebSocketClient wsClient; // lazy
-    private volatile TbTestWebSocketClient anotherWsClient; // lazy
+    protected volatile TbTestWebSocketClient wsClient; // lazy
+    protected volatile TbTestWebSocketClient anotherWsClient; // lazy
 
     public TbTestWebSocketClient getWsClient() {
         if (wsClient == null) {
@@ -101,8 +101,15 @@ public abstract class AbstractControllerTest extends AbstractNotifyEntityTest {
     }
 
     protected TbTestWebSocketClient buildAndConnectWebSocketClient() throws URISyntaxException, InterruptedException {
-        TbTestWebSocketClient wsClient = new TbTestWebSocketClient(new URI(WS_URL + wsPort + "/api/ws/plugins/telemetry?token=" + token));
+        return buildAndConnectWebSocketClient("/api/ws");
+    }
+
+    protected TbTestWebSocketClient buildAndConnectWebSocketClient(String path) throws URISyntaxException, InterruptedException {
+        TbTestWebSocketClient wsClient = new TbTestWebSocketClient(new URI(WS_URL + wsPort + path));
         assertThat(wsClient.connectBlocking(TIMEOUT, TimeUnit.SECONDS)).isTrue();
+        if (!path.contains("token=")) {
+            wsClient.authenticate(token);
+        }
         return wsClient;
     }
 

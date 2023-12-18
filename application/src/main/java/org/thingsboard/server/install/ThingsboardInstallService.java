@@ -271,9 +271,8 @@ public class ThingsboardInstallService {
                         case "3.6.1":
                             log.info("Upgrading ThingsBoard from version 3.6.1 to 3.6.2 ...");
                             databaseEntitiesUpgradeService.upgradeDatabase("3.6.1");
-                            installScripts.loadSystemImages();
                             if (!getEnv("SKIP_IMAGES_MIGRATION", false)) {
-                                installScripts.updateImages();
+                                installScripts.setUpdateImages(true);
                             } else {
                                 log.info("Skipping images migration. Run the upgrade with fromVersion as '3.6.2-images' to migrate");
                             }
@@ -288,6 +287,10 @@ public class ThingsboardInstallService {
                     dataUpdateService.upgradeRuleNodes();
                     systemDataLoaderService.loadSystemWidgets();
                     installScripts.loadSystemLwm2mResources();
+                    installScripts.loadSystemImages();
+                    if (installScripts.isUpdateImages()) {
+                        installScripts.updateImages();
+                    }
                 }
                 log.info("Upgrade finished successfully!");
 

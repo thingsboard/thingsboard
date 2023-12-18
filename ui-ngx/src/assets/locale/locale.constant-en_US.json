@@ -182,7 +182,10 @@
         "password-policy": "Password policy",
         "minimum-password-length": "Minimum password length",
         "minimum-password-length-required": "Minimum password length is required",
-        "minimum-password-length-range": "Minimum password length should be in a range from 5 to 50",
+        "minimum-password-length-range": "Minimum password length should be in a range from 6 to 50",
+        "maximum-password-length": "Maximum password length",
+        "maximum-password-length-min": "Maximum password length should be at least 6",
+        "maximum-password-length-less-min": "Maximum password length should be greater than minimum length",
         "minimum-uppercase-letters": "Minimum number of uppercase letters",
         "minimum-uppercase-letters-range": "Minimum number of uppercase letters can't be negative",
         "minimum-lowercase-letters": "Minimum number of lowercase letters",
@@ -196,6 +199,8 @@
         "password-reuse-frequency-days": "Password reuse frequency in days",
         "password-reuse-frequency-days-range": "Password reuse frequency in days can't be negative",
         "allow-whitespace": "Allow whitespace",
+        "force-reset-password-if-no-valid": "Force to reset password if not valid",
+        "force-reset-password-if-no-valid-hint": "Please be careful when enabling this feature: it will require users with not valid password to reset their password via email.",
         "general-policy": "General policy",
         "max-failed-login-attempts": "Maximum number of failed login attempts, before account is locked",
         "minimum-max-failed-login-attempts-range": "Maximum number of failed login attempts can't be negative",
@@ -667,7 +672,7 @@
         "asset-type": "Asset type",
         "asset-type-required": "Asset type is required.",
         "select-asset-type": "Select asset type",
-        "enter-asset-type": "Enter asset type",
+        "enter-asset-type": "Enter asset profile",
         "any-asset": "Any asset",
         "no-asset-types-matching": "No asset types matching '{{entitySubtype}}' were found.",
         "asset-type-list-empty": "No asset types selected.",
@@ -3610,7 +3615,8 @@
             "password-requirements": "Password requirements",
             "password-should-difference": "New password should be different from current",
             "special-character": "{ count, plural, =1 {1 special character} other {# special characters} }",
-            "uppercase-letter": "{ count, plural, =1 {1 uppercase letter} other {# uppercase letters} }"
+            "uppercase-letter": "{ count, plural, =1 {1 uppercase letter} other {# uppercase letters} }",
+            "at-most": "At most:"
         }
     },
     "relation": {
