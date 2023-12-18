@@ -183,12 +183,14 @@ public class TransportActivityManagerTest {
                 .build();
         doCallRealMethod().when(transportServiceMock).recordActivity(sessionInfo);
         when(transportServiceMock.toSessionId(sessionInfo)).thenReturn(SESSION_ID);
+        long expectedTime = 123L;
+        when(transportServiceMock.getCurrentTimeMillis()).thenReturn(expectedTime);
 
         // WHEN
         transportServiceMock.recordActivity(sessionInfo);
 
         // THEN
-        verify(transportServiceMock).onActivity(SESSION_ID);
+        verify(transportServiceMock).onActivity(SESSION_ID, expectedTime);
     }
 
     @Test

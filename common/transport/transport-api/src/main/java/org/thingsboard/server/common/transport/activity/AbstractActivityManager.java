@@ -42,6 +42,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 public abstract class AbstractActivityManager<Key, Metadata> implements ActivityManager<Key> {
@@ -80,15 +81,17 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
     protected abstract void reportActivity(Key key, Metadata metadata, long timeToReport, ActivityReportCallback<Key> callback);
 
     @Override
-    public void onActivity(Key key) {
+    public void onActivity(Key key, long newLastRecordedTime) {
         if (key == null) {
             log.error("Failed to process activity event: provided activity key is null.");
             return;
         }
         log.debug("Received activity event for key: [{}]", key);
 
-        long newLastRecordedTime = System.currentTimeMillis();
         var shouldReport = new AtomicBoolean(false);
+        var lastRecordedTime = new AtomicLong();
+        var lastReportedTime = new AtomicLong();
+
         var activityStateWrapper = states.compute(key, (__, stateWrapper) -> {
             if (stateWrapper == null) {
                 var newState = createNewState(key);
@@ -104,6 +107,8 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
                 state.setLastRecordedTime(newLastRecordedTime);
             }
             shouldReport.set(stateWrapper.getStrategy().onActivity());
+            lastRecordedTime.set(state.getLastRecordedTime());
+            lastReportedTime.set(stateWrapper.getLastReportedTime());
             return stateWrapper;
         });
 
@@ -111,12 +116,9 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
             return;
         }
 
-        var activityState = activityStateWrapper.getState();
-        long lastRecordedTime = activityState.getLastRecordedTime();
-        long lastReportedTime = activityStateWrapper.getLastReportedTime();
-        if (shouldReport.get() && lastReportedTime < lastRecordedTime) {
+        if (shouldReport.get() && lastReportedTime.get() < lastRecordedTime.get()) {
             log.debug("Going to report first activity event for key: [{}].", key);
-            reportActivity(key, activityState.getMetadata(), lastRecordedTime, new ActivityReportCallback<>() {
+            reportActivity(key, activityStateWrapper.getState().getMetadata(), lastRecordedTime.get(), new ActivityReportCallback<>() {
                 @Override
                 public void onSuccess(Key key, long reportedTime) {
                     updateLastReportedTime(key, reportedTime);
@@ -131,12 +133,7 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
     }
 
     @Override
-    public long getLastRecordedTime(Key key) {
-        ActivityStateWrapper stateWrapper = states.get(key);
-        return stateWrapper == null ? 0L : stateWrapper.getState().getLastRecordedTime();
-    }
-
-    private void onReportingPeriodEnd() {
+    public void onReportingPeriodEnd() {
         log.debug("Going to end reporting period.");
         for (Map.Entry<Key, ActivityStateWrapper> entry : states.entrySet()) {
             var key = entry.getKey();
@@ -183,6 +180,12 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
                 });
             }
         }
+    }
+
+    @Override
+    public long getLastRecordedTime(Key key) {
+        ActivityStateWrapper stateWrapper = states.get(key);
+        return stateWrapper == null ? 0L : stateWrapper.getState().getLastRecordedTime();
     }
 
     private void updateLastReportedTime(Key key, long newLastReportedTime) {

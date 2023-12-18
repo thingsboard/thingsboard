@@ -55,15 +55,20 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -77,6 +82,182 @@ public class IntegrationActivityManagerTest {
 
     @Mock
     private DefaultPlatformIntegrationService integrationServiceMock;
+
+    @Test
+    void givenKeyIsNull_whenOnActivity_thenShouldNotRecordAndShouldNotReport() {
+        // GIVEN
+        ConcurrentMap<IntegrationActivityKey, Object> states = new ConcurrentHashMap<>();
+        ReflectionTestUtils.setField(integrationServiceMock, "states", states);
+
+        IntegrationActivityKey key = null;
+
+        doCallRealMethod().when(integrationServiceMock).onActivity(eq(key), anyLong());
+
+        // WHEN
+        integrationServiceMock.onActivity(key, 123L);
+
+        // THEN
+        assertThat(states.isEmpty()).isTrue();
+        verify(integrationServiceMock, never()).createNewState(any());
+        verify(integrationServiceMock, never()).getStrategy();
+        verify(integrationServiceMock, never()).reportActivity(any(), any(), anyLong(), any());
+    }
+
+    @Test
+    void givenNewActivity_whenOnActivity_thenShouldCreateNewStateAndRecord() {
+        // GIVEN
+        ConcurrentMap<IntegrationActivityKey, Object> states = new ConcurrentHashMap<>();
+        ReflectionTestUtils.setField(integrationServiceMock, "states", states);
+
+        ActivityStrategy strategyMock = mock(ActivityStrategy.class);
+        when(integrationServiceMock.getStrategy()).thenReturn(strategyMock);
+
+        var key = new IntegrationActivityKey(TENANT_ID, DEVICE_ID);
+        when(integrationServiceMock.createNewState(key)).thenReturn(new ActivityState<>());
+
+        long activityTime = 123L;
+        doCallRealMethod().when(integrationServiceMock).onActivity(key, activityTime);
+
+        when(integrationServiceMock.getLastRecordedTime(key)).thenCallRealMethod();
+
+        // WHEN
+        integrationServiceMock.onActivity(key, activityTime);
+
+        // THEN
+        assertThat(integrationServiceMock.getLastRecordedTime(key)).isEqualTo(activityTime);
+        verify(integrationServiceMock).createNewState(key);
+        verify(integrationServiceMock).getStrategy();
+    }
+
+    @Test
+    void givenSubsequentActivities_whenOnActivity_thenShouldRecordBoth() {
+        // GIVEN
+        ConcurrentMap<IntegrationActivityKey, Object> states = new ConcurrentHashMap<>();
+        ReflectionTestUtils.setField(integrationServiceMock, "states", states);
+
+        ActivityStrategy strategyMock = mock(ActivityStrategy.class);
+        when(integrationServiceMock.getStrategy()).thenReturn(strategyMock);
+
+        var key = new IntegrationActivityKey(TENANT_ID, DEVICE_ID);
+        when(integrationServiceMock.createNewState(key)).thenReturn(new ActivityState<>());
+
+        when(integrationServiceMock.getLastRecordedTime(key)).thenCallRealMethod();
+
+        // WHEN-THEN
+        long firstActivityTime = 100L;
+        doCallRealMethod().when(integrationServiceMock).onActivity(key, firstActivityTime);
+        integrationServiceMock.onActivity(key, firstActivityTime);
+        assertThat(integrationServiceMock.getLastRecordedTime(key)).isEqualTo(firstActivityTime);
+
+        long secondActivityTime = 123L;
+        doCallRealMethod().when(integrationServiceMock).onActivity(key, secondActivityTime);
+        integrationServiceMock.onActivity(key, secondActivityTime);
+        assertThat(integrationServiceMock.getLastRecordedTime(key)).isEqualTo(secondActivityTime);
+    }
+
+    @Test
+    void givenActivityAndStrategySaysThatShouldNotReport_whenOnActivity_thenShouldNotReport() {
+        // GIVEN
+        ConcurrentMap<IntegrationActivityKey, Object> states = new ConcurrentHashMap<>();
+        ReflectionTestUtils.setField(integrationServiceMock, "states", states);
+
+        ActivityStrategy strategyMock = mock(ActivityStrategy.class);
+        when(strategyMock.onActivity()).thenReturn(false);
+
+        var key = new IntegrationActivityKey(TENANT_ID, DEVICE_ID);
+        when(integrationServiceMock.createNewState(key)).thenReturn(new ActivityState<>());
+        when(integrationServiceMock.getStrategy()).thenReturn(strategyMock);
+
+        long activityTime = 123L;
+        doCallRealMethod().when(integrationServiceMock).onActivity(key, activityTime);
+
+        // WHEN
+        integrationServiceMock.onActivity(key, activityTime);
+
+        // THEN
+        verify(integrationServiceMock, never()).reportActivity(any(), any(), anyLong(), any());
+    }
+
+    @Test
+    void givenActivityAndStrategySaysThatShouldReport_whenOnActivity_thenShouldReport() {
+        // GIVEN
+        ConcurrentMap<IntegrationActivityKey, Object> states = new ConcurrentHashMap<>();
+        ReflectionTestUtils.setField(integrationServiceMock, "states", states);
+
+        ActivityStrategy strategyMock = mock(ActivityStrategy.class);
+        when(strategyMock.onActivity()).thenReturn(true);
+
+        var key = new IntegrationActivityKey(TENANT_ID, DEVICE_ID);
+        when(integrationServiceMock.createNewState(key)).thenReturn(new ActivityState<>());
+        when(integrationServiceMock.getStrategy()).thenReturn(strategyMock);
+
+        long activityTime = 123L;
+        doCallRealMethod().when(integrationServiceMock).onActivity(key, activityTime);
+
+        // WHEN
+        integrationServiceMock.onActivity(key, activityTime);
+
+        // THEN
+        verify(integrationServiceMock).reportActivity(eq(key), isNull(), eq(activityTime), any());
+    }
+
+    @Test
+    void givenActivityAndStrategySaysThatShouldReportButLastRecordedTimeIsEqualToLastReportedTime_whenOnActivity_thenShouldNotReport() {
+        // GIVEN
+        ConcurrentMap<IntegrationActivityKey, Object> states = new ConcurrentHashMap<>();
+        ReflectionTestUtils.setField(integrationServiceMock, "states", states);
+
+        ActivityStrategy strategyMock = mock(ActivityStrategy.class);
+        when(strategyMock.onActivity()).thenReturn(true);
+
+        var key = new IntegrationActivityKey(TENANT_ID, DEVICE_ID);
+        when(integrationServiceMock.createNewState(key)).thenReturn(new ActivityState<>());
+        when(integrationServiceMock.getStrategy()).thenReturn(strategyMock);
+
+        // WHEN-THEN
+        long firstActivityTime = 123L;
+        doCallRealMethod().when(integrationServiceMock).onActivity(key, firstActivityTime);
+        integrationServiceMock.onActivity(key, firstActivityTime);
+
+        ArgumentCaptor<ActivityReportCallback<IntegrationActivityKey>> firstCallbackCaptor = ArgumentCaptor.forClass(ActivityReportCallback.class);
+        verify(integrationServiceMock).reportActivity(eq(key), isNull(), eq(firstActivityTime), firstCallbackCaptor.capture());
+        firstCallbackCaptor.getValue().onSuccess(key, firstActivityTime);
+
+        long secondActivityTime = 100L;
+        doCallRealMethod().when(integrationServiceMock).onActivity(key, secondActivityTime);
+        integrationServiceMock.onActivity(key, secondActivityTime);
+
+        verify(integrationServiceMock, never()).reportActivity(eq(key), any(), eq(secondActivityTime), any());
+    }
+
+    @Test
+    void givenActivityAndStrategySaysThatShouldReportAndLastRecordedTimeIsGreaterThanLastReportedTime_whenOnActivity_thenShouldReport() {
+        // GIVEN
+        ConcurrentMap<IntegrationActivityKey, Object> states = new ConcurrentHashMap<>();
+        ReflectionTestUtils.setField(integrationServiceMock, "states", states);
+
+        ActivityStrategy strategyMock = mock(ActivityStrategy.class);
+        when(strategyMock.onActivity()).thenReturn(true);
+
+        var key = new IntegrationActivityKey(TENANT_ID, DEVICE_ID);
+        when(integrationServiceMock.createNewState(key)).thenReturn(new ActivityState<>());
+        when(integrationServiceMock.getStrategy()).thenReturn(strategyMock);
+
+        // WHEN-THEN
+        long firstActivityTime = 123L;
+        doCallRealMethod().when(integrationServiceMock).onActivity(key, firstActivityTime);
+        integrationServiceMock.onActivity(key, firstActivityTime);
+
+        ArgumentCaptor<ActivityReportCallback<IntegrationActivityKey>> firstCallbackCaptor = ArgumentCaptor.forClass(ActivityReportCallback.class);
+        verify(integrationServiceMock).reportActivity(eq(key), isNull(), eq(firstActivityTime), firstCallbackCaptor.capture());
+        firstCallbackCaptor.getValue().onSuccess(key, firstActivityTime);
+
+        long secondActivityTime = 456L;
+        doCallRealMethod().when(integrationServiceMock).onActivity(key, secondActivityTime);
+        integrationServiceMock.onActivity(key, secondActivityTime);
+
+        verify(integrationServiceMock).reportActivity(eq(key), isNull(), eq(secondActivityTime), any());
+    }
 
     @Test
     void givenKeyAndTimeToReport_whenReportingActivity_thenShouldCorrectlyReportActivity() {
@@ -148,12 +329,14 @@ public class IntegrationActivityManagerTest {
                 .build();
         TransportProtos.PostTelemetryMsg postTelemetryMsg = TransportProtos.PostTelemetryMsg.getDefaultInstance();
         doCallRealMethod().when(integrationServiceMock).process(sessionInfo, postTelemetryMsg, null);
+        long expectedTime = 123L;
+        when(integrationServiceMock.getCurrentTimeMillis()).thenReturn(expectedTime);
 
         // WHEN
         integrationServiceMock.process(sessionInfo, postTelemetryMsg, null);
 
         // THEN
-        verify(integrationServiceMock).onActivity(key);
+        verify(integrationServiceMock).onActivity(key, expectedTime);
     }
 
     @Test
@@ -172,11 +355,14 @@ public class IntegrationActivityManagerTest {
         doCallRealMethod().when(integrationServiceMock).process(sessionInfo, postAttributeMsg, null);
         doNothing().when(integrationServiceMock).sendToRuleEngine(any(), any(), any(), any(), any(), any(), any());
 
+        long activityTime = 123L;
+        when(integrationServiceMock.getCurrentTimeMillis()).thenReturn(activityTime);
+
         // WHEN
         integrationServiceMock.process(sessionInfo, postAttributeMsg, null);
 
         // THEN
-        verify(integrationServiceMock).onActivity(key);
+        verify(integrationServiceMock).onActivity(key, activityTime);
     }
 
     @Test

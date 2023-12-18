@@ -32,7 +32,9 @@ package org.thingsboard.server.common.transport.activity;
 
 public interface ActivityManager<Key> {
 
-    void onActivity(Key key);
+    void onActivity(Key key, long activityTimeMillis);
+
+    void onReportingPeriodEnd();
 
     long getLastRecordedTime(Key key);
 
