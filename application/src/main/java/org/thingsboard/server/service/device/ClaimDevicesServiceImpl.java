@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -100,7 +101,7 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
             return Futures.immediateFailedFuture(new IllegalArgumentException());
         } else {
             ListenableFuture<List<AttributeKvEntry>> claimingAllowedFuture = attributesService.find(tenantId, device.getId(),
-                    DataConstants.SERVER_SCOPE, Collections.singletonList(CLAIM_ATTRIBUTE_NAME));
+                    AttributeScope.SERVER_SCOPE, Collections.singletonList(CLAIM_ATTRIBUTE_NAME));
             return Futures.transform(claimingAllowedFuture, list -> {
                 if (list != null && !list.isEmpty()) {
                     Optional<Boolean> claimingAllowedOptional = list.get(0).getBooleanValue();
@@ -123,7 +124,7 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
             return Futures.immediateFuture(new ClaimDataInfo(true, key, claimDataFromCache));
         } else {
             ListenableFuture<Optional<AttributeKvEntry>> claimDataAttrFuture = attributesService.find(device.getTenantId(), device.getId(),
-                    DataConstants.SERVER_SCOPE, CLAIM_DATA_ATTRIBUTE_NAME);
+                    AttributeScope.SERVER_SCOPE, CLAIM_DATA_ATTRIBUTE_NAME);
 
             return Futures.transform(claimDataAttrFuture, claimDataAttr -> {
                 if (claimDataAttr.isPresent()) {

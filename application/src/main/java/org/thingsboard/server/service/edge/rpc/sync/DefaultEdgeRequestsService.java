@@ -28,6 +28,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
@@ -136,7 +137,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
             return Futures.immediateFuture(null);
         }
         String scope = attributesRequestMsg.getScope();
-        ListenableFuture<List<AttributeKvEntry>> findAttrFuture = attributesService.findAll(tenantId, entityId, scope);
+        ListenableFuture<List<AttributeKvEntry>> findAttrFuture = attributesService.findAll(tenantId, entityId, AttributeScope.valueOf(scope));
         return Futures.transformAsync(findAttrFuture, ssAttributes
                         -> processEntityAttributesAndAddToEdgeQueue(tenantId, entityId, edge, entityType, scope, ssAttributes, attributesRequestMsg),
                 dbCallbackExecutorService);

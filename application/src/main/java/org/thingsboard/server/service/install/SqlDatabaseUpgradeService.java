@@ -826,11 +826,9 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         executeQuery(conn, "CREATE INDEX IF NOT EXISTS idx_attribute_kv_by_key_and_last_update_ts ON attribute_kv(entity_id, attribute_key, last_update_ts desc);");
 
                         // remove temp files
-                        if (pathToTempAttributeKvFile.toFile().exists()) {
-                            boolean deleteTsKvFile = pathToTempAttributeKvFile.toFile().delete();
-                            if (deleteTsKvFile) {
-                                log.info("Successfully deleted the temp file for attribute_kv table upgrade!");
-                            }
+                        boolean deleteTsKvFile = Files.deleteIfExists(pathToTempAttributeKvFile);
+                        if (deleteTsKvFile) {
+                            log.info("Successfully deleted the temp file for attribute_kv table upgrade!");
                         }
 
                         executeQuery(conn, "UPDATE tb_schema_settings SET schema_version = 3007000;");
@@ -900,9 +898,8 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
             Statement statement = conn.createStatement();
             statement.execute(query); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
             printWarnings(statement);
-            Thread.sleep(2000);
             log.info("Successfully executed query: {}", query);
-        } catch (InterruptedException | SQLException e) {
+        } catch (SQLException e) {
             log.error("Failed to execute query: {} due to: {}", query, e.getMessage());
             throw new RuntimeException("Failed to execute query:" + query + " due to: ", e);
         }

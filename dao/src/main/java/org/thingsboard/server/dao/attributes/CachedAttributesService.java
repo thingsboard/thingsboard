@@ -105,7 +105,7 @@ public class CachedAttributesService implements AttributesService {
 
 
     @Override
-    public ListenableFuture<Optional<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String scope, String attributeKey) {
+    public ListenableFuture<Optional<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, AttributeScope scope, String attributeKey) {
         validate(entityId, scope);
         Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey);
 
@@ -120,7 +120,7 @@ public class CachedAttributesService implements AttributesService {
             return cacheExecutor.submit(() -> {
                 var cacheTransaction = cache.newTransactionForKey(attributeCacheKey);
                 try {
-                    Optional<AttributeKvEntry> result = attributesDao.find(tenantId, entityId, AttributeScope.valueOf(scope), attributeKey);
+                    Optional<AttributeKvEntry> result = attributesDao.find(tenantId, entityId, scope, attributeKey);
                     cacheTransaction.putIfAbsent(attributeCacheKey, result.orElse(null));
                     cacheTransaction.commit();
                     return result;
@@ -134,7 +134,7 @@ public class CachedAttributesService implements AttributesService {
     }
 
     @Override
-    public ListenableFuture<List<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String scope, Collection<String> attributeKeys) {
+    public ListenableFuture<List<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, AttributeScope scope, Collection<String> attributeKeys) {
         validate(entityId, scope);
         attributeKeys = new LinkedHashSet<>(attributeKeys); // deduplicate the attributes
         attributeKeys.forEach(attributeKey -> Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey));
@@ -159,7 +159,7 @@ public class CachedAttributesService implements AttributesService {
             var cacheTransaction = cache.newTransactionForKeys(notFoundKeys);
             try {
                 log.trace("[{}][{}] Lookup attributes from db: {}", entityId, scope, notFoundAttributeKeys);
-                List<AttributeKvEntry> result = attributesDao.find(tenantId, entityId, AttributeScope.valueOf(scope), notFoundAttributeKeys);
+                List<AttributeKvEntry> result = attributesDao.find(tenantId, entityId, scope, notFoundAttributeKeys);
                 for (AttributeKvEntry foundInDbAttribute : result) {
                     AttributeCacheKey attributeCacheKey = new AttributeCacheKey(scope, entityId, foundInDbAttribute.getKey());
                     cacheTransaction.putIfAbsent(attributeCacheKey, foundInDbAttribute);
@@ -181,7 +181,7 @@ public class CachedAttributesService implements AttributesService {
         });
     }
 
-    private Map<String, TbCacheValueWrapper<AttributeKvEntry>> findCachedAttributes(EntityId entityId, String scope, Collection<String> attributeKeys) {
+    private Map<String, TbCacheValueWrapper<AttributeKvEntry>> findCachedAttributes(EntityId entityId, AttributeScope scope, Collection<String> attributeKeys) {
         Map<String, TbCacheValueWrapper<AttributeKvEntry>> cachedAttributes = new HashMap<>();
         for (String attributeKey : attributeKeys) {
             var cachedAttributeValue = cache.get(new AttributeCacheKey(scope, entityId, attributeKey));
@@ -196,9 +196,9 @@ public class CachedAttributesService implements AttributesService {
     }
 
     @Override
-    public ListenableFuture<List<AttributeKvEntry>> findAll(TenantId tenantId, EntityId entityId, String scope) {
+    public ListenableFuture<List<AttributeKvEntry>> findAll(TenantId tenantId, EntityId entityId, AttributeScope scope) {
         validate(entityId, scope);
-        return Futures.immediateFuture(attributesDao.findAll(tenantId, entityId, AttributeScope.valueOf(scope)));
+        return Futures.immediateFuture(attributesDao.findAll(tenantId, entityId, scope));
     }
 
     @Override
@@ -212,28 +212,28 @@ public class CachedAttributesService implements AttributesService {
     }
 
     @Override
-    public ListenableFuture<String> save(TenantId tenantId, EntityId entityId, String scope, AttributeKvEntry attribute) {
+    public ListenableFuture<String> save(TenantId tenantId, EntityId entityId, AttributeScope scope, AttributeKvEntry attribute) {
         validate(entityId, scope);
         AttributeUtils.validate(attribute, valueNoXssValidation);
-        ListenableFuture<String> future = attributesDao.save(tenantId, entityId, AttributeScope.valueOf(scope), attribute);
+        ListenableFuture<String> future = attributesDao.save(tenantId, entityId, scope, attribute);
         return Futures.transform(future, key -> evict(entityId, scope, attribute, key), cacheExecutor);
     }
 
     @Override
-    public ListenableFuture<List<String>> save(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
+    public ListenableFuture<List<String>> save(TenantId tenantId, EntityId entityId, AttributeScope scope, List<AttributeKvEntry> attributes) {
         validate(entityId, scope);
         AttributeUtils.validate(attributes, valueNoXssValidation);
 
         List<ListenableFuture<String>> futures = new ArrayList<>(attributes.size());
         for (var attribute : attributes) {
-            ListenableFuture<String> future = attributesDao.save(tenantId, entityId, AttributeScope.valueOf(scope), attribute);
+            ListenableFuture<String> future = attributesDao.save(tenantId, entityId, scope, attribute);
             futures.add(Futures.transform(future, key -> evict(entityId, scope, attribute, key), cacheExecutor));
         }
 
         return Futures.allAsList(futures);
     }
 
-    private String evict(EntityId entityId, String scope, AttributeKvEntry attribute, String key) {
+    private String evict(EntityId entityId, AttributeScope scope, AttributeKvEntry attribute, String key) {
         log.trace("[{}][{}][{}] Before cache evict: {}", entityId, scope, key, attribute);
         cache.evictOrPut(new AttributeCacheKey(scope, entityId, key), attribute);
         log.trace("[{}][{}][{}] after cache evict.", entityId, scope, key);
@@ -241,9 +241,9 @@ public class CachedAttributesService implements AttributesService {
     }
 
     @Override
-    public ListenableFuture<List<String>> removeAll(TenantId tenantId, EntityId entityId, String scope, List<String> attributeKeys) {
+    public ListenableFuture<List<String>> removeAll(TenantId tenantId, EntityId entityId, AttributeScope scope, List<String> attributeKeys) {
         validate(entityId, scope);
-        List<ListenableFuture<String>> futures = attributesDao.removeAll(tenantId, entityId, AttributeScope.valueOf(scope), attributeKeys);
+        List<ListenableFuture<String>> futures = attributesDao.removeAll(tenantId, entityId, scope, attributeKeys);
         return Futures.allAsList(futures.stream().map(future -> Futures.transform(future, key -> {
             cache.evict(new AttributeCacheKey(scope, entityId, key));
             return key;

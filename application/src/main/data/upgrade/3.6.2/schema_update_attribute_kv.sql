@@ -136,32 +136,6 @@ EXCEPTION
 END
 $$;
 
-CREATE OR REPLACE PROCEDURE recreate_device_info_active_attribute_view()
-    LANGUAGE plpgsql AS
-$$
-BEGIN
-    DROP VIEW IF EXISTS device_info_active_attribute_view CASCADE;
-    CREATE OR REPLACE VIEW device_info_active_attribute_view AS
-    SELECT d.*
-         , c.title as customer_title
-         , COALESCE((c.additional_info::json->>'isPublic')::bool, FALSE) as customer_is_public
-         , d.type as device_profile_name
-         , COALESCE(da.bool_v, FALSE) as active
-    FROM device d
-             LEFT JOIN customer c ON c.id = d.customer_id
-             LEFT JOIN attribute_kv da ON da.entity_id = d.id AND da.attribute_type = 2 AND da.attribute_key = (select key_id from attribute_kv_dictionary where key = 'active');
-END;
-$$;
-
-CREATE OR REPLACE PROCEDURE recreate_device_info_view()
-    LANGUAGE plpgsql AS
-$$
-BEGIN
-    DROP VIEW IF EXISTS device_info_view CASCADE;
-    CREATE OR REPLACE VIEW device_info_view AS SELECT * FROM device_info_active_attribute_view;
-END;
-$$;
-
 CREATE OR REPLACE PROCEDURE drop_attribute_kv_old_table()
     LANGUAGE plpgsql AS
 $$

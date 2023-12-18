@@ -26,9 +26,9 @@ import java.util.List;
 
 public class AttributeUtils {
 
-    public static void validate(EntityId id, String scope) {
+    public static void validate(EntityId id, AttributeScope scope) {
         Validator.validateId(id.getId(), "Incorrect id " + id);
-        Validator.validateEnum(AttributeScope.class, scope, "Incorrect scope " + scope);
+        Validator.checkNotNull(scope, "Incorrect scope " + scope);
     }
 
     public static void validate(List<AttributeKvEntry> kvEntries,  boolean valueNoXssValidation) {

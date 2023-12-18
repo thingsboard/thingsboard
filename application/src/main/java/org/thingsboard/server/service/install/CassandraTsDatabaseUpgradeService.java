@@ -52,7 +52,6 @@ public class CassandraTsDatabaseUpgradeService extends AbstractCassandraDatabase
             case "3.1.1":
             case "3.2.1":
             case "3.2.2":
-            case "3.6.2":
                 break;
             default:
                 throw new RuntimeException("Unable to upgrade Cassandra database, unsupported fromVersion: " + fromVersion);

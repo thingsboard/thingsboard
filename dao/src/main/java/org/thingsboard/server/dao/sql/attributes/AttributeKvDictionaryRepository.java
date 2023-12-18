@@ -16,14 +16,12 @@
 package org.thingsboard.server.dao.sql.attributes;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.thingsboard.server.dao.model.sql.AttributeKvDictionary;
-import org.thingsboard.server.dao.util.SqlTsOrTsLatestAnyDao;
+import org.thingsboard.server.dao.model.sql.AttributeKvDictionaryEntry;
 
 import java.util.Optional;
 
-@SqlTsOrTsLatestAnyDao
-public interface AttributeKvDictionaryRepository extends JpaRepository<AttributeKvDictionary, String> {
+public interface AttributeKvDictionaryRepository extends JpaRepository<AttributeKvDictionaryEntry, String> {
 
-    Optional<AttributeKvDictionary> findByKeyId(int keyId);
+    Optional<AttributeKvDictionaryEntry> findByKeyId(int keyId);
 
 }

@@ -24,6 +24,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ConcurrentReferenceHashMap;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
@@ -99,9 +100,9 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
 
         if (oldEntityView != null) {
             if (oldEntityView.getKeys() != null && oldEntityView.getKeys().getAttributes() != null) {
-                futures.add(deleteAttributesFromEntityView(oldEntityView, DataConstants.CLIENT_SCOPE, oldEntityView.getKeys().getAttributes().getCs(), user));
-                futures.add(deleteAttributesFromEntityView(oldEntityView, DataConstants.SERVER_SCOPE, oldEntityView.getKeys().getAttributes().getSs(), user));
-                futures.add(deleteAttributesFromEntityView(oldEntityView, DataConstants.SHARED_SCOPE, oldEntityView.getKeys().getAttributes().getSh(), user));
+                futures.add(deleteAttributesFromEntityView(oldEntityView, AttributeScope.CLIENT_SCOPE, oldEntityView.getKeys().getAttributes().getCs(), user));
+                futures.add(deleteAttributesFromEntityView(oldEntityView, AttributeScope.SERVER_SCOPE, oldEntityView.getKeys().getAttributes().getSs(), user));
+                futures.add(deleteAttributesFromEntityView(oldEntityView, AttributeScope.SHARED_SCOPE, oldEntityView.getKeys().getAttributes().getSh(), user));
             }
             List<String> tsKeys = oldEntityView.getKeys() != null && oldEntityView.getKeys().getTimeseries() != null ?
                     oldEntityView.getKeys().getTimeseries() : Collections.emptyList();
@@ -109,9 +110,9 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         }
         if (savedEntityView.getKeys() != null) {
             if (savedEntityView.getKeys().getAttributes() != null) {
-                futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.CLIENT_SCOPE, savedEntityView.getKeys().getAttributes().getCs(), user));
-                futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SERVER_SCOPE, savedEntityView.getKeys().getAttributes().getSs(), user));
-                futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SHARED_SCOPE, savedEntityView.getKeys().getAttributes().getSh(), user));
+                futures.add(copyAttributesFromEntityToEntityView(savedEntityView, AttributeScope.CLIENT_SCOPE, savedEntityView.getKeys().getAttributes().getCs(), user));
+                futures.add(copyAttributesFromEntityToEntityView(savedEntityView, AttributeScope.SERVER_SCOPE, savedEntityView.getKeys().getAttributes().getSs(), user));
+                futures.add(copyAttributesFromEntityToEntityView(savedEntityView, AttributeScope.SHARED_SCOPE, savedEntityView.getKeys().getAttributes().getSh(), user));
             }
             futures.add(copyLatestFromEntityToEntityView(tenantId, savedEntityView));
         }
@@ -269,7 +270,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         }
     }
 
-    private ListenableFuture<List<Void>> copyAttributesFromEntityToEntityView(EntityView entityView, String scope, Collection<String> keys, User user) throws ThingsboardException {
+    private ListenableFuture<List<Void>> copyAttributesFromEntityToEntityView(EntityView entityView, AttributeScope scope, Collection<String> keys, User user) throws ThingsboardException {
         EntityViewId entityId = entityView.getId();
         if (keys != null && !keys.isEmpty()) {
             ListenableFuture<List<AttributeKvEntry>> getAttrFuture = attributesService.find(entityView.getTenantId(), entityView.getEntityId(), scope, keys);
@@ -287,7 +288,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
                                                 (startTime == 0 && endTime > lastUpdateTs) ||
                                                 (startTime < lastUpdateTs && endTime > lastUpdateTs);
                                     }).collect(Collectors.toList());
-                    tsSubService.saveAndNotify(entityView.getTenantId(), entityId, scope, attributes, new FutureCallback<Void>() {
+                    tsSubService.saveAndNotify(entityView.getTenantId(), entityId, scope.name(), attributes, new FutureCallback<Void>() {
                         @Override
                         public void onSuccess(@Nullable Void tmp) {
                             try {
@@ -351,11 +352,11 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         }, MoreExecutors.directExecutor());
     }
 
-    private ListenableFuture<Void> deleteAttributesFromEntityView(EntityView entityView, String scope, List<String> keys, User user) {
+    private ListenableFuture<Void> deleteAttributesFromEntityView(EntityView entityView, AttributeScope scope, List<String> keys, User user) {
         EntityViewId entityId = entityView.getId();
         SettableFuture<Void> resultFuture = SettableFuture.create();
         if (keys != null && !keys.isEmpty()) {
-            tsSubService.deleteAndNotify(entityView.getTenantId(), entityId, scope, keys, new FutureCallback<Void>() {
+            tsSubService.deleteAndNotify(entityView.getTenantId(), entityId, scope.name(), keys, new FutureCallback<Void>() {
                 @Override
                 public void onSuccess(@Nullable Void tmp) {
                     try {
@@ -433,11 +434,11 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         return resultFuture;
     }
 
-    private void logAttributesUpdated(TenantId tenantId, User user, EntityId entityId, String scope, List<AttributeKvEntry> attributes, Throwable e) throws ThingsboardException {
+    private void logAttributesUpdated(TenantId tenantId, User user, EntityId entityId, AttributeScope scope, List<AttributeKvEntry> attributes, Throwable e) throws ThingsboardException {
         notificationEntityService.logEntityAction(tenantId, entityId, ActionType.ATTRIBUTES_UPDATED, user, toException(e), scope, attributes);
     }
 
-    private void logAttributesDeleted(TenantId tenantId, User user, EntityId entityId, String scope, List<String> keys, Throwable e) throws ThingsboardException {
+    private void logAttributesDeleted(TenantId tenantId, User user, EntityId entityId, AttributeScope scope, List<String> keys, Throwable e) throws ThingsboardException {
         notificationEntityService.logEntityAction(tenantId, entityId, ActionType.ATTRIBUTES_DELETED, user, toException(e), scope, keys);
     }
 

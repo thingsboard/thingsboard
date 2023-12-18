@@ -28,6 +28,7 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
@@ -96,7 +97,7 @@ public class TbMsgAttributesNode implements TbNode {
         }
 
         List<String> keys = newAttributes.stream().map(KvEntry::getKey).collect(Collectors.toList());
-        ListenableFuture<List<AttributeKvEntry>> findFuture = ctx.getAttributesService().find(ctx.getTenantId(), msg.getOriginator(), scope, keys);
+        ListenableFuture<List<AttributeKvEntry>> findFuture = ctx.getAttributesService().find(ctx.getTenantId(), msg.getOriginator(), AttributeScope.valueOf(scope), keys);
 
         DonAsynchron.withCallback(findFuture,
                 currentAttributes -> {

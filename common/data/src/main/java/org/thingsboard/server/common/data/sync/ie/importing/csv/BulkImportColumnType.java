@@ -16,7 +16,7 @@
 package org.thingsboard.server.common.data.sync.ie.importing.csv;
 
 import lombok.Getter;
-import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
 
 @Getter
@@ -24,8 +24,8 @@ public enum BulkImportColumnType {
     NAME,
     TYPE,
     LABEL,
-    SHARED_ATTRIBUTE(DataConstants.SHARED_SCOPE, true),
-    SERVER_ATTRIBUTE(DataConstants.SERVER_SCOPE, true),
+    SHARED_ATTRIBUTE(AttributeScope.SHARED_SCOPE.name(), true),
+    SERVER_ATTRIBUTE(AttributeScope.SERVER_SCOPE.name(), true),
     TIMESERIES(true),
     ACCESS_TOKEN,
     X509,

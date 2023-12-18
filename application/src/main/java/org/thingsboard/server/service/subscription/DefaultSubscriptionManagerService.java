@@ -23,6 +23,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
@@ -496,7 +497,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
                 serviceId, subscription.getSessionId(), subscription.getSubscriptionId(), subscription.getEntityId());
 
         final Map<String, Long> keyStates = subscription.getKeyStates();
-        DonAsynchron.withCallback(attrService.find(subscription.getTenantId(), subscription.getEntityId(), DataConstants.CLIENT_SCOPE, keyStates.keySet()), values -> {
+        DonAsynchron.withCallback(attrService.find(subscription.getTenantId(), subscription.getEntityId(), AttributeScope.CLIENT_SCOPE, keyStates.keySet()), values -> {
                     List<TsKvEntry> missedUpdates = new ArrayList<>();
                     values.forEach(latestEntry -> {
                         if (latestEntry.getLastUpdateTs() > keyStates.get(latestEntry.getKey())) {

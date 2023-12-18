@@ -267,9 +267,6 @@ public class ThingsboardInstallService {
                             databaseEntitiesUpgradeService.upgradeDatabase("3.6.0");
                         case "3.6.2":
                             log.info("Upgrading ThingsBoard from version 3.6.2 to 3.7.0 ...");
-                            if (databaseTsUpgradeService != null) {
-                                databaseTsUpgradeService.upgradeDatabase("3.6.2");
-                            }
                             databaseEntitiesUpgradeService.upgradeDatabase("3.6.2");
                             //TODO DON'T FORGET to update switch statement in the CacheCleanupService if you need to clear the cache
                             break;

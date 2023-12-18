@@ -33,6 +33,7 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -208,15 +209,15 @@ public class TbMathNode implements TbNode {
     }
 
     private ListenableFuture<Void> saveAttribute(TbContext ctx, TbMsg msg, double result, TbMathResult mathResultDef) {
-        String attributeScope = getAttributeScope(mathResultDef.getAttributeScope());
+        AttributeScope attributeScope = getAttributeScope(mathResultDef.getAttributeScope());
         if (isIntegerResult(mathResultDef, config.getOperation())) {
             var value = toIntValue(result);
             return ctx.getTelemetryService().saveAttrAndNotify(
-                    ctx.getTenantId(), msg.getOriginator(), attributeScope, mathResultDef.getKey(), value);
+                    ctx.getTenantId(), msg.getOriginator(), attributeScope.name(), mathResultDef.getKey(), value);
         } else {
             var value = toDoubleValue(mathResultDef, result);
             return ctx.getTelemetryService().saveAttrAndNotify(
-                    ctx.getTenantId(), msg.getOriginator(), attributeScope, mathResultDef.getKey(), value);
+                    ctx.getTenantId(), msg.getOriginator(), attributeScope.name(), mathResultDef.getKey(), value);
         }
     }
 
@@ -384,7 +385,7 @@ public class TbMathNode implements TbNode {
             case MESSAGE_METADATA:
                 return Futures.immediateFuture(TbMathArgumentValue.fromMessageMetadata(arg, argKey, msg.getMetaData()));
             case ATTRIBUTE:
-                String scope = getAttributeScope(arg.getAttributeScope());
+                AttributeScope scope = getAttributeScope(arg.getAttributeScope());
                 return Futures.transform(ctx.getAttributesService().find(ctx.getTenantId(), msg.getOriginator(), scope, argKey),
                         opt -> getTbMathArgumentValue(arg, opt, "Attribute: " + argKey + " with scope: " + scope + " not found for entity: " + msg.getOriginator())
                         , MoreExecutors.directExecutor());
@@ -402,8 +403,8 @@ public class TbMathNode implements TbNode {
         return CONSTANT.equals(type) ? keyPattern : TbNodeUtils.processPattern(keyPattern, msg);
     }
 
-    private String getAttributeScope(String attrScope) {
-        return StringUtils.isEmpty(attrScope) ? DataConstants.SERVER_SCOPE : attrScope;
+    private AttributeScope getAttributeScope(String attrScope) {
+        return StringUtils.isEmpty(attrScope) ? AttributeScope.SERVER_SCOPE : AttributeScope.valueOf(attrScope);
     }
 
     private TbMathArgumentValue getTbMathArgumentValue(TbMathArgument arg, Optional<? extends KvEntry> kvOpt, String error) {

@@ -17,7 +17,7 @@ package org.thingsboard.rule.engine.edge;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
-import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.AttributeScope;
 
 @Data
 public class BaseTbMsgPushNodeConfiguration implements NodeConfiguration<BaseTbMsgPushNodeConfiguration> {
@@ -27,7 +27,7 @@ public class BaseTbMsgPushNodeConfiguration implements NodeConfiguration<BaseTbM
     @Override
     public BaseTbMsgPushNodeConfiguration defaultConfiguration() {
         BaseTbMsgPushNodeConfiguration configuration = new BaseTbMsgPushNodeConfiguration();
-        configuration.setScope(DataConstants.SERVER_SCOPE);
+        configuration.setScope(AttributeScope.SERVER_SCOPE.name());
         return configuration;
     }
 }

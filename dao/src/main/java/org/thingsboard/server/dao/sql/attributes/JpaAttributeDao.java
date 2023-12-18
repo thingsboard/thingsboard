@@ -36,7 +36,7 @@ import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.attributes.AttributesDao;
 import org.thingsboard.server.dao.model.sql.AttributeKvCompositeKey;
-import org.thingsboard.server.dao.model.sql.AttributeKvDictionary;
+import org.thingsboard.server.dao.model.sql.AttributeKvDictionaryEntry;
 import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
 import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
@@ -215,21 +215,21 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     private Integer getOrSaveKeyId(String attributeKey) {
         Integer keyId = attributeDictionaryMap.get(attributeKey);
         if (keyId == null) {
-            Optional<AttributeKvDictionary> byIdOptional = dictionaryRepository.findById(attributeKey);
+            Optional<AttributeKvDictionaryEntry> byIdOptional = dictionaryRepository.findById(attributeKey);
             if (byIdOptional.isEmpty()) {
                 attributeCreationLock.lock();
                 try {
                     byIdOptional = dictionaryRepository.findById(attributeKey);
                     if (byIdOptional.isEmpty()) {
-                        AttributeKvDictionary attributeKvDictionary = new AttributeKvDictionary();
-                        attributeKvDictionary.setKey(attributeKey);
+                        AttributeKvDictionaryEntry attributeKvDictionaryEntry = new AttributeKvDictionaryEntry();
+                        attributeKvDictionaryEntry.setKey(attributeKey);
                         try {
-                            AttributeKvDictionary saved = dictionaryRepository.save(attributeKvDictionary);
+                            AttributeKvDictionaryEntry saved = dictionaryRepository.save(attributeKvDictionaryEntry);
                             attributeDictionaryMap.put(saved.getKey(), saved.getKeyId());
                             keyId = saved.getKeyId();
                         } catch (DataIntegrityViolationException | ConstraintViolationException e) {
                             byIdOptional = dictionaryRepository.findById(attributeKey);
-                            AttributeKvDictionary dictionary = byIdOptional.orElseThrow(() -> new RuntimeException("Failed to get AttributeKvDictionary entity from DB!"));
+                            AttributeKvDictionaryEntry dictionary = byIdOptional.orElseThrow(() -> new RuntimeException("Failed to get AttributeKvDictionary entity from DB!"));
                             attributeDictionaryMap.put(dictionary.getKey(), dictionary.getKeyId());
                             keyId = dictionary.getKeyId();
                         }
@@ -247,7 +247,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
         return keyId;
     }
     private String getKey(Integer attributeKey) {
-        Optional<AttributeKvDictionary> byKeyId = dictionaryRepository.findByKeyId(attributeKey);
-        return byKeyId.map(AttributeKvDictionary::getKey).orElse(null);
+        Optional<AttributeKvDictionaryEntry> byKeyId = dictionaryRepository.findByKeyId(attributeKey);
+        return byKeyId.map(AttributeKvDictionaryEntry::getKey).orElse(null);
     }
 }

@@ -374,7 +374,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(attrListListenableFuture);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
@@ -458,11 +458,11 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(Futures.immediateFuture(Collections.emptyList()));
-        Mockito.when(attributesService.find(eq(tenantId), eq(customerId), Mockito.anyString(), Mockito.anyString()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(customerId), Mockito.any(AttributeScope.class), Mockito.anyString()))
                 .thenReturn(Futures.immediateFuture(Optional.empty()));
-        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), Mockito.anyString(), Mockito.anyString()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), Mockito.any(AttributeScope.class), Mockito.anyString()))
                 .thenReturn(attrListListenableFuture);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
@@ -532,7 +532,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFutureWithLess);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
@@ -628,7 +628,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFuture);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
@@ -748,13 +748,13 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
-        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), Mockito.anyString(), Mockito.anyString()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), Mockito.any(AttributeScope.class), Mockito.anyString()))
                 .thenReturn(optionalDurationAttribute);
         Mockito.when(ctx.getDeviceService().findDeviceById(tenantId, deviceId))
                 .thenReturn(device);
-        Mockito.when(attributesService.find(eq(tenantId), eq(customerId), eq(DataConstants.SERVER_SCOPE), Mockito.anyString()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(customerId), eq(AttributeScope.SERVER_SCOPE), Mockito.anyString()))
                 .thenReturn(emptyOptional);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listNoDurationAttribute);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
@@ -865,7 +865,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFuture);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
@@ -977,13 +977,13 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
-        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), Mockito.anyString(), Mockito.anyString()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), Mockito.any(AttributeScope.class), Mockito.anyString()))
                 .thenReturn(optionalDurationAttribute);
         Mockito.when(ctx.getDeviceService().findDeviceById(tenantId, deviceId))
                 .thenReturn(device);
-        Mockito.when(attributesService.find(eq(tenantId), eq(customerId), eq(DataConstants.SERVER_SCOPE), Mockito.anyString()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(customerId), eq(AttributeScope.SERVER_SCOPE), Mockito.anyString()))
                 .thenReturn(emptyOptional);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listNoDurationAttribute);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
@@ -1080,7 +1080,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFuture);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
@@ -1179,7 +1179,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFuture);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
@@ -1262,7 +1262,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFutureActiveSchedule);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
@@ -1359,7 +1359,7 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
                 .thenReturn(null);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFutureInactiveSchedule);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
@@ -1434,11 +1434,11 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFutureWithLess);
         Mockito.when(ctx.getDeviceService().findDeviceById(tenantId, deviceId))
                 .thenReturn(device);
-        Mockito.when(attributesService.find(eq(tenantId), eq(customerId), eq(DataConstants.SERVER_SCOPE), Mockito.anyString()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(customerId), eq(AttributeScope.SERVER_SCOPE), Mockito.anyString()))
                 .thenReturn(optionalListenableFutureWithLess);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
@@ -1510,9 +1510,9 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFutureWithLess);
-        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), eq(DataConstants.SERVER_SCOPE), Mockito.anyString()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), eq(AttributeScope.SERVER_SCOPE), Mockito.anyString()))
                 .thenReturn(optionalListenableFutureWithLess);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
@@ -1592,11 +1592,11 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
         Mockito.when(ctx.getDeviceService().findDeviceById(tenantId, deviceId))
                 .thenReturn(device);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFutureWithLess);
-        Mockito.when(attributesService.find(eq(tenantId), eq(customerId), Mockito.anyString(), Mockito.anyString()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(customerId),  Mockito.any(AttributeScope.class), Mockito.anyString()))
                 .thenReturn(emptyOptionalFuture);
-        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), eq(DataConstants.SERVER_SCOPE), Mockito.anyString()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), eq(AttributeScope.SERVER_SCOPE), Mockito.anyString()))
                 .thenReturn(optionalListenableFutureWithLess);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
@@ -1678,11 +1678,11 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
         Mockito.when(ctx.getDeviceService().findDeviceById(tenantId, deviceId))
                 .thenReturn(device);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFutureWithLess);
-        Mockito.when(attributesService.find(eq(tenantId), eq(customerId), Mockito.anyString(), Mockito.anyString()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(customerId), Mockito.any(AttributeScope.class), Mockito.anyString()))
                 .thenReturn(emptyOptionalFuture);
-        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), eq(DataConstants.SERVER_SCOPE), Mockito.anyString()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), eq(AttributeScope.SERVER_SCOPE), Mockito.anyString()))
                 .thenReturn(optionalListenableFutureWithLess);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);

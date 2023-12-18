@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.service;
 
-import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.common.util.RegexUtils;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -56,19 +55,6 @@ public class Validator {
      */
     public static void validateString(String val, String errorMessage) {
         if (val == null || val.isEmpty()) {
-            throw new IncorrectParameterException(errorMessage);
-        }
-    }
-
-    /**
-     * This method validate <code>String</code> string. If string is null or can not be cast to enum than throw
-     * <code>IncorrectParameterException</code> exception
-     *
-     * @param val          the val
-     * @param errorMessage the error message for exception
-     */
-    public static <E extends Enum<E>> void validateEnum(Class<E> enumClass, String val, String errorMessage) {
-        if (val == null || !EnumUtils.isValidEnum(enumClass, val)) {
             throw new IncorrectParameterException(errorMessage);
         }
     }

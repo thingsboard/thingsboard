@@ -54,23 +54,23 @@ public class BaseAttributesService implements AttributesService {
     }
 
     @Override
-    public ListenableFuture<Optional<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String scope, String attributeKey) {
+    public ListenableFuture<Optional<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, AttributeScope scope, String attributeKey) {
         validate(entityId, scope);
         Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey);
-        return Futures.immediateFuture(attributesDao.find(tenantId, entityId, AttributeScope.valueOf(scope), attributeKey));
+        return Futures.immediateFuture(attributesDao.find(tenantId, entityId, scope, attributeKey));
     }
 
     @Override
-    public ListenableFuture<List<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String scope, Collection<String> attributeKeys) {
+    public ListenableFuture<List<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, AttributeScope scope, Collection<String> attributeKeys) {
         validate(entityId, scope);
         attributeKeys.forEach(attributeKey -> Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey));
-        return Futures.immediateFuture(attributesDao.find(tenantId, entityId,  AttributeScope.valueOf(scope), attributeKeys));
+        return Futures.immediateFuture(attributesDao.find(tenantId, entityId,  scope, attributeKeys));
     }
 
     @Override
-    public ListenableFuture<List<AttributeKvEntry>> findAll(TenantId tenantId, EntityId entityId, String scope) {
+    public ListenableFuture<List<AttributeKvEntry>> findAll(TenantId tenantId, EntityId entityId, AttributeScope scope) {
         validate(entityId, scope);
-        return Futures.immediateFuture(attributesDao.findAll(tenantId, entityId,  AttributeScope.valueOf(scope)));
+        return Futures.immediateFuture(attributesDao.findAll(tenantId, entityId,  scope));
     }
 
     @Override
@@ -84,23 +84,23 @@ public class BaseAttributesService implements AttributesService {
     }
 
     @Override
-    public ListenableFuture<String> save(TenantId tenantId, EntityId entityId, String scope, AttributeKvEntry attribute) {
+    public ListenableFuture<String> save(TenantId tenantId, EntityId entityId, AttributeScope scope, AttributeKvEntry attribute) {
         validate(entityId, scope);
         AttributeUtils.validate(attribute, valueNoXssValidation);
-        return attributesDao.save(tenantId, entityId,  AttributeScope.valueOf(scope), attribute);
+        return attributesDao.save(tenantId, entityId,  scope, attribute);
     }
 
     @Override
-    public ListenableFuture<List<String>> save(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
+    public ListenableFuture<List<String>> save(TenantId tenantId, EntityId entityId, AttributeScope scope, List<AttributeKvEntry> attributes) {
         validate(entityId, scope);
         AttributeUtils.validate(attributes, valueNoXssValidation);
-        List<ListenableFuture<String>> saveFutures = attributes.stream().map(attribute -> attributesDao.save(tenantId, entityId,  AttributeScope.valueOf(scope), attribute)).collect(Collectors.toList());
+        List<ListenableFuture<String>> saveFutures = attributes.stream().map(attribute -> attributesDao.save(tenantId, entityId,  scope, attribute)).collect(Collectors.toList());
         return Futures.allAsList(saveFutures);
     }
 
     @Override
-    public ListenableFuture<List<String>> removeAll(TenantId tenantId, EntityId entityId, String scope, List<String> attributeKeys) {
+    public ListenableFuture<List<String>> removeAll(TenantId tenantId, EntityId entityId, AttributeScope scope, List<String> attributeKeys) {
         validate(entityId, scope);
-        return Futures.allAsList(attributesDao.removeAll(tenantId, entityId,  AttributeScope.valueOf(scope), attributeKeys));
+        return Futures.allAsList(attributesDao.removeAll(tenantId, entityId,  scope, attributeKeys));
     }
 }

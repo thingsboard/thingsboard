@@ -28,7 +28,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.KEY_ID_COLUMN;
 @Data
 @Entity
 @Table(name = "attribute_kv_dictionary")
-public final class AttributeKvDictionary {
+public final class AttributeKvDictionaryEntry {
 
     @Id
     @Column(name = KEY_COLUMN)
