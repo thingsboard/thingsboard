@@ -54,10 +54,8 @@ import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.COAPS;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.DOCKER;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.HTTP;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.HTTPS;
-import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.LINUX;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.MQTT;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.MQTTS;
-import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.WINDOWS;
 
 @TestPropertySource(properties = {
         "device.connectivity.mqtts.pem_cert_file=/tmp/" + CA_ROOT_CERT_PEM
@@ -278,7 +276,7 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testFetchGatewayLaunchCommands() throws Exception {
+    public void testFetchGatewayDockerComposeFile() throws Exception {
         String deviceName = "My device";
         Device device = new Device();
         device.setName(deviceName);
@@ -290,19 +288,50 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
         DeviceCredentials credentials =
                 doGet("/api/device/" + savedDevice.getId().getId() + "/credentials", DeviceCredentials.class);
 
-        JsonNode commands =
-                doGetTyped("/api/device-connectivity/gateway-launch/" + savedDevice.getId().getId(), new TypeReference<>() {
-                });
+        String commands =
+                doGet("/api/device-connectivity/gateway-launch/" + savedDevice.getId().getId() + "/docker-compose/download", String.class);
 
-        String expectedContainerName = deviceName.replaceAll("[^A-Za-z0-9_.-]", "");
-
-        JsonNode dockerMqttCommands = commands.get(MQTT);
-        assertThat(dockerMqttCommands.get(LINUX).asText()).isEqualTo(String.format("docker run -it -v ~/.tb-gateway/logs:/thingsboard_gateway/logs -v ~/.tb-gateway/extensions:/thingsboard_gateway/extensions -v ~/.tb-gateway/config:/thingsboard_gateway/config --name " + expectedContainerName + " --add-host=host.docker.internal:host-gateway -p 60000-61000:60000-61000 -e host=host.docker.internal -e port=1883 -e accessToken=%s --restart always thingsboard/tb-gateway", credentials.getCredentialsId()));
-        assertThat(dockerMqttCommands.get(WINDOWS).asText()).isEqualTo("docker run -it -v %HOMEDRIVE%%HOMEPATH%\\tb-gateway\\logs:/thingsboard_gateway/logs -v %HOMEDRIVE%%HOMEPATH%\\tb-gateway\\extensions:/thingsboard_gateway/extensions -v %HOMEDRIVE%%HOMEPATH%\\tb-gateway\\config:/thingsboard_gateway/config --name " + expectedContainerName + " --add-host=host.docker.internal:host-gateway -p 60000-61000:60000-61000 -e host=host.docker.internal -e port=1883 -e accessToken=" + credentials.getCredentialsId() + " --restart always thingsboard/tb-gateway");
-
-        JsonNode dockerMqttsCommands = commands.get(MQTTS);
-        assertThat(dockerMqttsCommands.get(LINUX).asText()).isEqualTo(String.format("docker run -it -v ~/.tb-gateway/logs:/thingsboard_gateway/logs -v ~/.tb-gateway/extensions:/thingsboard_gateway/extensions -v ~/.tb-gateway/config:/thingsboard_gateway/config --name " + expectedContainerName + " --add-host=host.docker.internal:host-gateway -p 60000-61000:60000-61000 -e host=host.docker.internal -e port=8883 -e accessToken=%s --restart always thingsboard/tb-gateway", credentials.getCredentialsId()));
-        assertThat(dockerMqttsCommands.get(WINDOWS).asText()).isEqualTo("docker run -it -v %HOMEDRIVE%%HOMEPATH%\\tb-gateway\\logs:/thingsboard_gateway/logs -v %HOMEDRIVE%%HOMEPATH%\\tb-gateway\\extensions:/thingsboard_gateway/extensions -v %HOMEDRIVE%%HOMEPATH%\\tb-gateway\\config:/thingsboard_gateway/config --name " + expectedContainerName + " --add-host=host.docker.internal:host-gateway -p 60000-61000:60000-61000 -e host=host.docker.internal -e port=8883 -e accessToken=" + credentials.getCredentialsId() + " --restart always thingsboard/tb-gateway");
+        assertThat(commands).isEqualTo(String.format("version: '3.4'\n" +
+                "services:\n" +
+                "  # ThingsBoard IoT Gateway Service Configuration\n" +
+                "  tb-gateway:\n" +
+                "    image: thingsboard/tb-gateway\n" +
+                "    container_name: tb-gateway\n" +
+                "    restart: always\n" +
+                "\n" +
+                "    # Ports bindings - required by some connectors\n" +
+                "    ports:\n" +
+                "        - \"5000:5000\" # Comment if you don't use REST connector and change if you use another port\n" +
+                "        # Uncomment and modify the following ports based on connector usage:\n" +
+                "#        - \"1052:1052\" # BACnet connector\n" +
+                "#        - \"5026:5026\" # Modbus TCP connector (Modbus Slave)\n" +
+                "#        - \"50000:50000/tcp\" # Socket connector with type TCP\n" +
+                "#        - \"50000:50000/udp\" # Socket connector with type UDP\n" +
+                "\n" +
+                "    # Necessary mapping for Linux\n" +
+                "    extra_hosts:\n" +
+                "      - \"host.docker.internal:host-gateway\"\n" +
+                "\n" +
+                "    # Environment variables\n" +
+                "    environment:\n" +
+                "      - host=host.docker.internal\n" +
+                "      - port=1883\n" +
+                "      - accessToken=" + credentials.getCredentialsId() + "\n" +
+                "\n" +
+                "    # Volumes bind\n" +
+                "    volumes:\n" +
+                "      - tb-gw-config:/thingsboard_gateway/config\n" +
+                "      - tb-gw-logs:/thingsboard_gateway/logs\n" +
+                "      - tb-gw-extensions:/thingsboard_gateway/extensions\n" +
+                "\n" +
+                "# Volumes declaration for configurations, extensions and configuration\n" +
+                "volumes:\n" +
+                "  tb-gw-config:\n" +
+                "    name: tb-gw-config\n" +
+                "  tb-gw-logs:\n" +
+                "    name: tb-gw-logs\n" +
+                "  tb-gw-extensions:\n" +
+                "    name: tb-gw-extensions\n"));
     }
 
     @Test

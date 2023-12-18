@@ -151,7 +151,9 @@
           <ng-container matColumnDef="preview">
             <mat-header-cell *matHeaderCellDef style="width: 50px; min-width: 50px;"></mat-header-cell>
             <mat-cell *matCellDef="let image">
-              <img class="tb-image-preview" [src]="image.link | image: {preview: true} | async" alt="{{ image.title }}">
+              <div class="tb-image-preview-cell">
+                <img class="tb-image-preview" [src]="image.link | image: {preview: true} | async" alt="{{ image.title }}">
+              </div>
             </mat-cell>
           </ng-container>
           <ng-container matColumnDef="title">
@@ -259,7 +261,8 @@
             </mat-cell>
           </ng-container>
           <mat-header-row [ngClass]="{'mat-row-select': true}" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
-          <mat-row [ngClass]="{'mat-row-select': true,
+          <mat-row [fxShow]="!dataSource.dataLoading"
+                   [ngClass]="{'mat-row-select': true,
                                'mat-selected': dataSource.selection.isSelected(image)}"
                    *matRowDef="let image; columns: displayedColumns;" (click)="rowClick($event, image)"></mat-row>
         </table>

@@ -15,7 +15,8 @@
  */
 package org.thingsboard.server.dao.util;
 
-import org.apache.commons.lang3.StringUtils;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -26,6 +27,7 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
 public class DeviceConnectivityUtil {
@@ -35,17 +37,16 @@ public class DeviceConnectivityUtil {
     public static final String MQTT = "mqtt";
     public static final String LINUX = "linux";
     public static final String WINDOWS = "windows";
+    public static final String MACOS = "macos";
     public static final String DOCKER = "docker";
     public static final String MQTTS = "mqtts";
     public static final String COAP = "coap";
     public static final String COAPS = "coaps";
     public static final String CA_ROOT_CERT_PEM = "ca-root.pem";
+    public static final String DOCKER_COMPOSE_YML = "docker-compose.yml";
     public static final String CHECK_DOCUMENTATION = "Check documentation";
     public static final String JSON_EXAMPLE_PAYLOAD = "\"{temperature:25}\"";
     public static final String DOCKER_RUN = "docker run --rm -it ";
-    public static final String GATEWAY_DOCKER_RUN = "docker run -it ";
-
-    public static final String NETWORK_HOST_PARAM = "--network=host ";
     public static final String HOST_DOCKER_INTERNAL = "host.docker.internal";
     public static final String ADD_DOCKER_INTERNAL_HOST = "--add-host=" + HOST_DOCKER_INTERNAL + ":host-gateway ";
     public static final String MQTT_IMAGE = "thingsboard/mosquitto-clients ";
@@ -93,53 +94,74 @@ public class DeviceConnectivityUtil {
         return command.toString();
     }
 
-    public static String getGatewayLaunchCommand(String os, String deviceName, String host, String port, DeviceCredentials deviceCredentials) {
-        String gatewayVolumePathPrefix = "~/.tb-gateway/";
-        if (WINDOWS.equals(os)) {
-            gatewayVolumePathPrefix = "%HOMEDRIVE%%HOMEPATH%\\tb-gateway\\";
+    public static Resource getGatewayDockerComposeFile(String baseUrl, DeviceConnectivityInfo properties, DeviceCredentials deviceCredentials, String mqttType) throws URISyntaxException {
+        String host = getHost(baseUrl, properties, mqttType);
+
+        StringBuilder dockerComposeBuilder = new StringBuilder();
+        dockerComposeBuilder.append("version: '3.4'\n");
+        dockerComposeBuilder.append("services:\n");
+        dockerComposeBuilder.append("  # ThingsBoard IoT Gateway Service Configuration\n");
+        dockerComposeBuilder.append("  tb-gateway:\n");
+        dockerComposeBuilder.append("    image: thingsboard/tb-gateway\n");
+        dockerComposeBuilder.append("    container_name: tb-gateway\n");
+        dockerComposeBuilder.append("    restart: always\n");
+        dockerComposeBuilder.append("\n");
+        dockerComposeBuilder.append("    # Ports bindings - required by some connectors\n");
+        dockerComposeBuilder.append("    ports:\n");
+        dockerComposeBuilder.append("        - \"5000:5000\" # Comment if you don't use REST connector and change if you use another port\n");
+        dockerComposeBuilder.append("        # Uncomment and modify the following ports based on connector usage:\n");
+        dockerComposeBuilder.append("#        - \"1052:1052\" # BACnet connector\n");
+        dockerComposeBuilder.append("#        - \"5026:5026\" # Modbus TCP connector (Modbus Slave)\n");
+        dockerComposeBuilder.append("#        - \"50000:50000/tcp\" # Socket connector with type TCP\n");
+        dockerComposeBuilder.append("#        - \"50000:50000/udp\" # Socket connector with type UDP\n");
+        if (isLocalhost(host)) {
+            dockerComposeBuilder.append("\n");
+            dockerComposeBuilder.append("    # Necessary mapping for Linux\n");
+            dockerComposeBuilder.append("    extra_hosts:\n");
+            dockerComposeBuilder.append("      - \"host.docker.internal:host-gateway\"\n");
         }
-
-        String gatewayContainerName = deviceName.replaceAll("[^A-Za-z0-9_.-]", "");
-
-        StringBuilder command = new StringBuilder(GATEWAY_DOCKER_RUN);
-        command.append("-v {gatewayVolumePathPrefix}logs:/thingsboard_gateway/logs ".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
-        command.append("-v {gatewayVolumePathPrefix}extensions:/thingsboard_gateway/extensions ".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
-        command.append("-v {gatewayVolumePathPrefix}config:/thingsboard_gateway/config ".replace("{gatewayVolumePathPrefix}", gatewayVolumePathPrefix));
-        command.append("--name ").append(gatewayContainerName).append(" ");
-        command.append(isLocalhost(host) ? ADD_DOCKER_INTERNAL_HOST : "");
-        command.append("-p 60000-61000:60000-61000 ");
-        command.append("-e host=").append(isLocalhost(host) ? HOST_DOCKER_INTERNAL : host).append(" ");
-        command.append("-e port=").append(port);
-
+        dockerComposeBuilder.append("\n");
+        dockerComposeBuilder.append("    # Environment variables\n");
+        dockerComposeBuilder.append("    environment:\n");
+        dockerComposeBuilder.append("      - host=").append(isLocalhost(host) ? HOST_DOCKER_INTERNAL : host).append("\n");
+        dockerComposeBuilder.append("      - port=1883\n");
         switch (deviceCredentials.getCredentialsType()) {
             case ACCESS_TOKEN:
-                command.append(" -e accessToken=").append(deviceCredentials.getCredentialsId());
+                dockerComposeBuilder.append("      - accessToken=").append(deviceCredentials.getCredentialsId()).append("\n");
                 break;
             case MQTT_BASIC:
                 BasicMqttCredentials credentials = JacksonUtil.fromString(deviceCredentials.getCredentialsValue(),
                         BasicMqttCredentials.class);
                 if (credentials != null) {
                     if (credentials.getClientId() != null) {
-                        command.append(" -e clientId=").append(credentials.getClientId());
+                        dockerComposeBuilder.append("      - clientId=").append(credentials.getClientId()).append("\n");
                     }
                     if (credentials.getUserName() != null) {
-                        command.append(" -e username=").append(credentials.getUserName());
+                        dockerComposeBuilder.append("      - username=").append(credentials.getUserName()).append("\n");
                     }
                     if (credentials.getPassword() != null) {
-                        command.append(" -e password=").append(credentials.getPassword());
+                        dockerComposeBuilder.append("      - password=").append(credentials.getPassword()).append("\n");
                     }
-                } else {
-                    return null;
                 }
                 break;
-            default:
-                return null;
         }
+        dockerComposeBuilder.append("\n");
+        dockerComposeBuilder.append("    # Volumes bind\n");
+        dockerComposeBuilder.append("    volumes:\n");
+        dockerComposeBuilder.append("      - tb-gw-config:/thingsboard_gateway/config\n");
+        dockerComposeBuilder.append("      - tb-gw-logs:/thingsboard_gateway/logs\n");
+        dockerComposeBuilder.append("      - tb-gw-extensions:/thingsboard_gateway/extensions\n");
+        dockerComposeBuilder.append("\n");
+        dockerComposeBuilder.append("# Volumes declaration for configurations, extensions and configuration\n");
+        dockerComposeBuilder.append("volumes:\n");
+        dockerComposeBuilder.append("  tb-gw-config:\n");
+        dockerComposeBuilder.append("    name: tb-gw-config\n");
+        dockerComposeBuilder.append("  tb-gw-logs:\n");
+        dockerComposeBuilder.append("    name: tb-gw-logs\n");
+        dockerComposeBuilder.append("  tb-gw-extensions:\n");
+        dockerComposeBuilder.append("    name: tb-gw-extensions\n");
 
-        command.append(" --restart always");
-        command.append(" thingsboard/tb-gateway");
-
-        return command.toString();
+        return new ByteArrayResource(dockerComposeBuilder.toString().getBytes(StandardCharsets.UTF_8));
     }
 
     public static String getDockerMqttPublishCommand(String protocol, String baseUrl, String host, String port, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) {
@@ -152,7 +174,7 @@ public class DeviceConnectivityUtil {
         StringBuilder mqttDockerCommand = new StringBuilder();
         mqttDockerCommand.append(DOCKER_RUN).append(isLocalhost(host) ? ADD_DOCKER_INTERNAL_HOST : "").append(MQTT_IMAGE);
 
-        if (isLocalhost(host)){
+        if (isLocalhost(host)) {
             mqttCommand = mqttCommand.replace(host, HOST_DOCKER_INTERNAL);
         }
 
@@ -170,7 +192,11 @@ public class DeviceConnectivityUtil {
     }
 
     public static String getCurlPemCertCommand(String baseUrl, String protocol) {
-        return String.format("curl -f -S -o %s %s/api/device-connectivity/%s/certificate/download", CA_ROOT_CERT_PEM, baseUrl, protocol);
+        return getCurlPemCertCommand(baseUrl, protocol, CA_ROOT_CERT_PEM);
+    }
+
+    public static String getCurlPemCertCommand(String baseUrl, String protocol, String caCertFilePath) {
+        return String.format("curl -f -S -o %s %s/api/device-connectivity/%s/certificate/download", caCertFilePath, baseUrl, protocol);
     }
 
     public static String getCoapPublishCommand(String protocol, String host, String port, DeviceCredentials deviceCredentials) {

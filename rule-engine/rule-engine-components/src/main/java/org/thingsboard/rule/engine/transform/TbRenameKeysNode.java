@@ -37,7 +37,7 @@ import java.util.concurrent.ExecutionException;
 @RuleNode(
         type = ComponentType.TRANSFORMATION,
         name = "rename keys",
-        version = 1,
+        version = 2,
         configClazz = TbRenameKeysNodeConfiguration.class,
         nodeDescription = "Renames message or message metadata keys.",
         nodeDetails = "Renames keys in the message or message metadata according to the provided mapping. " +
@@ -110,8 +110,13 @@ public class TbRenameKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
     }
 
     @Override
-    protected String getKeyToUpgradeFromVersionZero() {
+    protected String getNewKeyForUpgradeFromVersionZero() {
         return "renameIn";
+    }
+
+    @Override
+    protected String getKeyToUpgradeFromVersionOne() {
+        return FROM_METADATA_PROPERTY;
     }
 
 }
