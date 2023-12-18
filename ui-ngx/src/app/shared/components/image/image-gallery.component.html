@@ -187,9 +187,9 @@
             </mat-cell>
           </ng-container>
           <ng-container matColumnDef="actions" stickyEnd>
-            <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: '192px', maxWidth: '192px', width: '192px' }">
+            <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: '240px', maxWidth: '240px', width: '240px' }">
             </mat-header-cell>
-            <mat-cell *matCellDef="let image" [ngStyle.gt-md]="{ minWidth: '192px', maxWidth: '192px', width: '192px' }">
+            <mat-cell *matCellDef="let image" [ngStyle.gt-md]="{ minWidth: '240px', maxWidth: '240px', width: '240px' }">
               <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
                 <button mat-icon-button [disabled]="isLoading$ | async"
                         matTooltip="{{ 'image.download-image' | translate }}"
@@ -202,6 +202,12 @@
                         matTooltipPosition="above"
                         (click)="exportImage($event, image)">
                   <tb-icon>mdi:file-export</tb-icon>
+                </button>
+                <button mat-icon-button [disabled]="isLoading$ | async"
+                        matTooltip="{{ 'image.embed-image' | translate }}"
+                        matTooltipPosition="above"
+                        (click)="embedImage($event, image)">
+                  <mat-icon>code</mat-icon>
                 </button>
                 <button mat-icon-button [disabled]="isLoading$ | async"
                         matTooltip="{{ (readonly(image) ? 'image.image-details' : 'image.edit-image') | translate }}"
@@ -234,6 +240,12 @@
                           (click)="exportImage($event, image)">
                     <tb-icon matMenuItemIcon>mdi:file-export</tb-icon>
                     <span translate>image.export-image</span>
+                  </button>
+                  <button mat-menu-item
+                          [disabled]="isLoading$ | async"
+                          (click)="embedImage($event, image)">
+                    <mat-icon>code</mat-icon>
+                    <span>{{ 'image.embed-image' | translate }}</span>
                   </button>
                   <button mat-menu-item
                           [disabled]="isLoading$ | async"
@@ -325,6 +337,12 @@
                 matTooltipPosition="above"
                 (click)="exportImage($event, item)">
           <tb-icon>mdi:file-export</tb-icon>
+        </button>
+        <button mat-icon-button [disabled]="isLoading$ | async"
+                matTooltip="{{ 'image.embed-image' | translate }}"
+                matTooltipPosition="above"
+                (click)="embedImage($event, item, itemIndex)">
+          <mat-icon>code</mat-icon>
         </button>
         <button *ngIf="deleteEnabled(item)"
                 mat-icon-button [disabled]="(isLoading$ | async)"

@@ -13,25 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.common.data.util;
 
-import io.swagger.annotations.ApiModel;
-import lombok.Builder;
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
+@FunctionalInterface
+public interface ThrowingSupplier<T> {
 
-@ApiModel
-@Slf4j
-@Data
-@Builder
-public class ImageExportData {
-
-    private final String mediaType;
-    private final String fileName;
-    private final String title;
-    private final String resourceKey;
-    private final boolean isPublic;
-    private final String publicResourceKey;
-    private final String data;
+    T get() throws Exception;
 
 }

@@ -56,18 +56,6 @@
           <mat-icon>check</mat-icon>
         </button>
       </mat-form-field>
-      <mat-form-field>
-        <mat-label translate>image.link</mat-label>
-        <input matInput formControlName="link">
-        <tb-copy-button
-          matSuffix
-          miniButton="false"
-          [copyText]="imageFormGroup.get('link').value"
-          tooltipText="{{ 'image.copy-image-link' | translate }}"
-          tooltipPosition="above"
-          icon="content_copy">
-        </tb-copy-button>
-      </mat-form-field>
       <div class="tb-image-container tb-primary-fill">
         <div class="tb-image-content">
           <div class="tb-image-actions">
@@ -85,6 +73,13 @@
                       matTooltipPosition="above"
                       (click)="exportImage($event)">
                 <tb-icon>mdi:file-export</tb-icon>
+              </button>
+              <button type="button"
+                      mat-icon-button [disabled]="isLoading$ | async"
+                      matTooltip="{{ 'image.embed-image' | translate }}"
+                      matTooltipPosition="above"
+                      (click)="embedImage($event)">
+                <mat-icon>code</mat-icon>
               </button>
             </div>
             <button *ngIf="!readonly"

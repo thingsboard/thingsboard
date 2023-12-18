@@ -69,6 +69,13 @@ export class ImageService {
       imageInfo, defaultHttpOptionsFromConfig(config));
   }
 
+  public updateImagePublicStatus(imageInfo: ImageResourceInfo, isPublic: boolean, config?: RequestConfig): Observable<ImageResourceInfo> {
+    const type = imageResourceType(imageInfo);
+    const key = encodeURIComponent(imageInfo.resourceKey);
+    return this.http.put<ImageResourceInfo>(`${IMAGES_URL_PREFIX}/${type}/${key}/public/${isPublic}`,
+      imageInfo, defaultHttpOptionsFromConfig(config));
+  }
+
   public getImages(pageLink: PageLink, includeSystemImages = false, config?: RequestConfig): Observable<PageData<ImageResourceInfo>> {
     return this.http.get<PageData<ImageResourceInfo>>(
       `${IMAGES_URL_PREFIX}${pageLink.toQuery()}&includeSystemImages=${includeSystemImages}`,
