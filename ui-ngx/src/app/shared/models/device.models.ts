@@ -869,6 +869,7 @@ export interface PublishLaunchCommand {
   mqtt: {
     linux: string;
     windows: string;
+    macos: string;
   };
 }
 

@@ -2685,7 +2685,6 @@
         "rpc-command-result": "结果",
         "rpc-command-edit-params": "编辑参数",
         "gateway-configuration": "通用配置",
-        "docker-label": "要在 Docker 中使用此设备的凭据运行 ThingsBoard IoT 网关，您可以使用以下命令。",
         "create-new-gateway": "创建网关",
         "create-new-gateway-text": "确定要创建名为 '{{gatewayName}}' 的新网关？",
         "created-time": "创建时间",

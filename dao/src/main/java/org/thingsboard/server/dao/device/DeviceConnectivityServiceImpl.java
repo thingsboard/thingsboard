@@ -59,10 +59,8 @@ import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.COAPS;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.DOCKER;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.HTTP;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.HTTPS;
-import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.LINUX;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.MQTT;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.MQTTS;
-import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.WINDOWS;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.getHost;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.getPort;
 
@@ -132,27 +130,6 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     }
 
     @Override
-    public JsonNode findGatewayLaunchCommands(String baseUrl, Device device) throws URISyntaxException {
-        DeviceId deviceId = device.getId();
-        log.trace("Executing findDevicePublishTelemetryCommands [{}]", deviceId);
-        validateId(deviceId, INCORRECT_DEVICE_ID + deviceId);
-
-        DeviceCredentials creds = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), deviceId);
-        String deviceName = device.getName();
-
-        ObjectNode commands = JacksonUtil.newObjectNode();
-        if (isEnabled(MQTT)) {
-            Optional.ofNullable(getGatewayDockerCommands(baseUrl, deviceName, creds, MQTT))
-                    .ifPresent(v -> commands.set(MQTT, v));
-        }
-        if (isEnabled(MQTTS)) {
-            Optional.ofNullable(getGatewayDockerCommands(baseUrl, deviceName, creds, MQTTS))
-                    .ifPresent(v -> commands.set(MQTTS, v));
-        }
-        return commands;
-    }
-
-    @Override
     public Resource getPemCertFile(String protocol) {
         return certs.computeIfAbsent(protocol, key -> {
             DeviceConnectivityInfo connectivity = getConnectivity(protocol);
@@ -173,6 +150,14 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
                 return null;
             }
         });
+    }
+
+    @Override
+    public Resource createGatewayDockerComposeFile(String baseUrl, Device device) throws URISyntaxException {
+        String mqttType = isEnabled(MQTTS) ? MQTTS : MQTT;
+        DeviceConnectivityInfo properties = getConnectivity(mqttType);
+        DeviceCredentials creds = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), device.getId());
+        return DeviceConnectivityUtil.getGatewayDockerComposeFile(baseUrl, properties, creds, mqttType);
     }
 
     private DeviceConnectivityInfo getConnectivity(String protocol) {
@@ -298,18 +283,6 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
             return commands;
         }
         return null;
-    }
-
-    private JsonNode getGatewayDockerCommands(String baseUrl, String deviceName, DeviceCredentials deviceCredentials, String mqttType) throws URISyntaxException {
-        ObjectNode dockerLaunchCommands = JacksonUtil.newObjectNode();
-        DeviceConnectivityInfo properties = getConnectivity(mqttType);
-        String mqttHost = getHost(baseUrl, properties, mqttType);
-        String mqttPort = getPort(properties);
-        Optional.ofNullable(DeviceConnectivityUtil.getGatewayLaunchCommand(LINUX, deviceName, mqttHost, mqttPort, deviceCredentials))
-                .ifPresent(v -> dockerLaunchCommands.put(LINUX, v));
-        Optional.ofNullable(DeviceConnectivityUtil.getGatewayLaunchCommand(WINDOWS,  deviceName, mqttHost, mqttPort, deviceCredentials))
-                .ifPresent(v -> dockerLaunchCommands.put(WINDOWS, v));
-        return dockerLaunchCommands.isEmpty() ? null : dockerLaunchCommands;
     }
 
     private String getDockerMqttPublishCommand(String protocol, String baseUrl, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) throws URISyntaxException {
