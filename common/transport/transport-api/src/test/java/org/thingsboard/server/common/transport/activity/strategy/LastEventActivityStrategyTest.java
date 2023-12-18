@@ -42,7 +42,7 @@ public class LastEventActivityStrategyTest {
 
     @BeforeEach
     public void setUp() {
-        strategy = new LastEventActivityStrategy();
+        strategy = LastEventActivityStrategy.getInstance();
     }
 
     @Test

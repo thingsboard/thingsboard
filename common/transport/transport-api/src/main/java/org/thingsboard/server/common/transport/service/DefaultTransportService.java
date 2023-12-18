@@ -74,7 +74,8 @@ import org.thingsboard.server.common.transport.TransportTenantProfileCache;
 import org.thingsboard.server.common.transport.activity.AbstractActivityManager;
 import org.thingsboard.server.common.transport.activity.ActivityReportCallback;
 import org.thingsboard.server.common.transport.activity.ActivityState;
-import org.thingsboard.server.common.transport.activity.strategy.ActivityStrategyFactory;
+import org.thingsboard.server.common.transport.activity.strategy.ActivityStrategy;
+import org.thingsboard.server.common.transport.activity.strategy.ActivityStrategyType;
 import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
@@ -158,7 +159,7 @@ public class DefaultTransportService extends AbstractActivityManager<UUID, Trans
     @Value("${transport.sessions.report_timeout}")
     private long sessionReportTimeout;
     @Value("${transport.activity.reporting_strategy:LAST}")
-    private String reportingStrategyName;
+    private ActivityStrategyType reportingStrategyType;
     @Value("${transport.client_side_rpc.timeout:60000}")
     private long clientSideRpcTimeout;
     @Value("${queue.transport.poll_interval}")
@@ -796,8 +797,12 @@ public class DefaultTransportService extends AbstractActivityManager<UUID, Trans
         }
         ActivityState<TransportProtos.SessionInfoProto> state = new ActivityState<>();
         state.setMetadata(session.getSessionInfo());
-        state.setStrategy(ActivityStrategyFactory.createStrategy(reportingStrategyName));
         return state;
+    }
+
+    @Override
+    protected ActivityStrategy getStrategy() {
+        return reportingStrategyType.toStrategy();
     }
 
     @Override

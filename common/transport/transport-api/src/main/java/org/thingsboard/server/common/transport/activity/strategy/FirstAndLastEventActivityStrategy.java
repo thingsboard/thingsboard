@@ -33,7 +33,7 @@ package org.thingsboard.server.common.transport.activity.strategy;
 import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode
-public class FirstAndLastEventActivityStrategy implements ActivityStrategy {
+public final class FirstAndLastEventActivityStrategy implements ActivityStrategy {
 
     private boolean firstEventReceived;
 

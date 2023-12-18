@@ -30,10 +30,16 @@
  */
 package org.thingsboard.server.common.transport.activity.strategy;
 
-import lombok.EqualsAndHashCode;
+public final class LastEventActivityStrategy implements ActivityStrategy {
 
-@EqualsAndHashCode
-public class LastEventActivityStrategy implements ActivityStrategy {
+    private static final LastEventActivityStrategy INSTANCE = new LastEventActivityStrategy();
+
+    private LastEventActivityStrategy() {
+    }
+
+    public static LastEventActivityStrategy getInstance() {
+        return INSTANCE;
+    }
 
     @Override
     public boolean onActivity() {

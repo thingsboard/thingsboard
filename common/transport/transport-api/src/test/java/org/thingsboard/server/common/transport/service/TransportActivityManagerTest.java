@@ -35,6 +35,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -45,10 +46,7 @@ import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.activity.ActivityReportCallback;
 import org.thingsboard.server.common.transport.activity.ActivityState;
 import org.thingsboard.server.common.transport.activity.strategy.ActivityStrategy;
-import org.thingsboard.server.common.transport.activity.strategy.AllEventsActivityStrategy;
-import org.thingsboard.server.common.transport.activity.strategy.FirstAndLastEventActivityStrategy;
-import org.thingsboard.server.common.transport.activity.strategy.FirstEventActivityStrategy;
-import org.thingsboard.server.common.transport.activity.strategy.LastEventActivityStrategy;
+import org.thingsboard.server.common.transport.activity.strategy.ActivityStrategyType;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.UUID;
@@ -60,9 +58,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SESSION_EVENT_MSG_CLOSED;
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SESSION_EXPIRED_NOTIFICATION_PROTO;
@@ -195,25 +191,18 @@ public class TransportActivityManagerTest {
         verify(transportServiceMock).onActivity(SESSION_ID);
     }
 
-    @ParameterizedTest
-    @MethodSource("provideTestParamsForCreateNewState")
-    void givenDifferentReportingStrategies_whenCreatingNewState_thenShouldCreateEmptyStateWithCorrectStrategy(
-            String reportingStrategyName, ActivityStrategy reportingStrategy
-    ) {
+    @Test
+    void givenKey_whenCreatingNewState_thenShouldCorrectlyCreateNewEmptyState() {
         // GIVEN
         TransportProtos.SessionInfoProto sessionInfo = TransportProtos.SessionInfoProto.newBuilder()
                 .setSessionIdMSB(SESSION_ID.getMostSignificantBits())
                 .setSessionIdLSB(SESSION_ID.getLeastSignificantBits())
                 .build();
-        SessionMsgListener listenerMock = mock(SessionMsgListener.class);
-        sessions.put(SESSION_ID, new SessionMetaData(sessionInfo, TransportProtos.SessionType.ASYNC, listenerMock));
-
-        ReflectionTestUtils.setField(transportServiceMock, "reportingStrategyName", reportingStrategyName);
+        sessions.put(SESSION_ID, new SessionMetaData(sessionInfo, TransportProtos.SessionType.ASYNC, null));
 
         when(transportServiceMock.createNewState(SESSION_ID)).thenCallRealMethod();
 
         ActivityState<TransportProtos.SessionInfoProto> expectedState = new ActivityState<>();
-        expectedState.setStrategy(reportingStrategy);
         expectedState.setMetadata(sessionInfo);
 
         // WHEN
@@ -223,13 +212,18 @@ public class TransportActivityManagerTest {
         assertThat(actualState).isEqualTo(expectedState);
     }
 
-    private static Stream<Arguments> provideTestParamsForCreateNewState() {
-        return Stream.of(
-                Arguments.of("ALL", new AllEventsActivityStrategy()),
-                Arguments.of("FIRST", new FirstEventActivityStrategy()),
-                Arguments.of("LAST", new LastEventActivityStrategy()),
-                Arguments.of("FIRST_AND_LAST", new FirstAndLastEventActivityStrategy())
-        );
+    @ParameterizedTest
+    @EnumSource(ActivityStrategyType.class)
+    void givenDifferentReportingStrategies_whenGettingStrategy_thenShouldReturnCorrectStrategy(ActivityStrategyType reportingStrategyType) {
+        // GIVEN
+        doCallRealMethod().when(transportServiceMock).getStrategy();
+        ReflectionTestUtils.setField(transportServiceMock, "reportingStrategyType", reportingStrategyType);
+
+        // WHEN
+        ActivityStrategy actualStrategy = transportServiceMock.getStrategy();
+
+        // THEN
+        assertThat(actualStrategy).isEqualTo(reportingStrategyType.toStrategy());
     }
 
     @Test
@@ -242,9 +236,7 @@ public class TransportActivityManagerTest {
 
         ActivityState<TransportProtos.SessionInfoProto> state = new ActivityState<>();
         state.setLastRecordedTime(123L);
-        state.setLastReportedTime(312L);
         state.setMetadata(sessionInfo);
-        state.setStrategy(new FirstEventActivityStrategy());
 
         when(transportServiceMock.updateState(SESSION_ID, state)).thenCallRealMethod();
 
@@ -266,14 +258,10 @@ public class TransportActivityManagerTest {
         sessions.put(SESSION_ID, new SessionMetaData(sessionInfo, TransportProtos.SessionType.ASYNC, listenerMock));
 
         long lastRecordedTime = 123L;
-        long lastReportedTime = 312L;
-        ActivityStrategy strategySpy = spy(new FirstEventActivityStrategy());
 
         ActivityState<TransportProtos.SessionInfoProto> state = new ActivityState<>();
         state.setLastRecordedTime(lastRecordedTime);
-        state.setLastReportedTime(lastReportedTime);
         state.setMetadata(TransportProtos.SessionInfoProto.getDefaultInstance());
-        state.setStrategy(strategySpy);
 
         when(transportServiceMock.updateState(SESSION_ID, state)).thenCallRealMethod();
 
@@ -283,10 +271,7 @@ public class TransportActivityManagerTest {
         // THEN
         assertThat(updatedState).isSameAs(state);
         assertThat(updatedState.getLastRecordedTime()).isEqualTo(lastRecordedTime);
-        assertThat(updatedState.getLastReportedTime()).isEqualTo(lastReportedTime);
         assertThat(updatedState.getMetadata()).isEqualTo(sessionInfo);
-        assertThat(updatedState.getStrategy()).isEqualTo(strategySpy);
-        verifyNoInteractions(strategySpy);
     }
 
     @Test
@@ -303,14 +288,10 @@ public class TransportActivityManagerTest {
         sessions.put(SESSION_ID, new SessionMetaData(sessionInfo, TransportProtos.SessionType.ASYNC, listenerMock));
 
         long lastRecordedTime = 123L;
-        long lastReportedTime = 312L;
-        ActivityStrategy strategySpy = spy(new FirstEventActivityStrategy());
 
         ActivityState<TransportProtos.SessionInfoProto> state = new ActivityState<>();
         state.setLastRecordedTime(lastRecordedTime);
-        state.setLastReportedTime(lastReportedTime);
         state.setMetadata(TransportProtos.SessionInfoProto.getDefaultInstance());
-        state.setStrategy(strategySpy);
 
         when(transportServiceMock.updateState(SESSION_ID, state)).thenCallRealMethod();
 
@@ -320,10 +301,7 @@ public class TransportActivityManagerTest {
         // THEN
         assertThat(updatedState).isSameAs(state);
         assertThat(updatedState.getLastRecordedTime()).isEqualTo(lastRecordedTime);
-        assertThat(updatedState.getLastReportedTime()).isEqualTo(lastReportedTime);
         assertThat(updatedState.getMetadata()).isEqualTo(sessionInfo);
-        assertThat(updatedState.getStrategy()).isEqualTo(strategySpy);
-        verifyNoInteractions(strategySpy);
 
         verify(transportServiceMock, never()).getLastRecordedTime(gwSessionId);
     }
@@ -349,14 +327,10 @@ public class TransportActivityManagerTest {
         sessions.put(SESSION_ID, new SessionMetaData(sessionInfo, TransportProtos.SessionType.ASYNC, listenerMock));
 
         long lastRecordedTime = 123L;
-        long lastReportedTime = 312L;
-        ActivityStrategy strategySpy = spy(new FirstEventActivityStrategy());
 
         ActivityState<TransportProtos.SessionInfoProto> state = new ActivityState<>();
         state.setLastRecordedTime(lastRecordedTime);
-        state.setLastReportedTime(lastReportedTime);
         state.setMetadata(TransportProtos.SessionInfoProto.getDefaultInstance());
-        state.setStrategy(strategySpy);
 
         when(transportServiceMock.updateState(SESSION_ID, state)).thenCallRealMethod();
 
@@ -366,10 +340,7 @@ public class TransportActivityManagerTest {
         // THEN
         assertThat(updatedState).isSameAs(state);
         assertThat(updatedState.getLastRecordedTime()).isEqualTo(lastRecordedTime);
-        assertThat(updatedState.getLastReportedTime()).isEqualTo(lastReportedTime);
         assertThat(updatedState.getMetadata()).isEqualTo(sessionInfo);
-        assertThat(updatedState.getStrategy()).isEqualTo(strategySpy);
-        verifyNoInteractions(strategySpy);
 
         verify(transportServiceMock, never()).getLastRecordedTime(gwSessionId);
     }
@@ -400,14 +371,10 @@ public class TransportActivityManagerTest {
         sessions.put(SESSION_ID, new SessionMetaData(sessionInfo, TransportProtos.SessionType.ASYNC, listenerMock));
 
         long lastRecordedTime = 123L;
-        long lastReportedTime = 312L;
-        ActivityStrategy strategySpy = spy(new FirstEventActivityStrategy());
 
         ActivityState<TransportProtos.SessionInfoProto> state = new ActivityState<>();
         state.setLastRecordedTime(lastRecordedTime);
-        state.setLastReportedTime(lastReportedTime);
         state.setMetadata(TransportProtos.SessionInfoProto.getDefaultInstance());
-        state.setStrategy(strategySpy);
 
         when(transportServiceMock.updateState(SESSION_ID, state)).thenCallRealMethod();
 
@@ -417,10 +384,7 @@ public class TransportActivityManagerTest {
         // THEN
         assertThat(updatedState).isSameAs(state);
         assertThat(updatedState.getLastRecordedTime()).isEqualTo(gwLastRecordedTime);
-        assertThat(updatedState.getLastReportedTime()).isEqualTo(lastReportedTime);
         assertThat(updatedState.getMetadata()).isEqualTo(sessionInfo);
-        assertThat(updatedState.getStrategy()).isEqualTo(strategySpy);
-        verifyNoInteractions(strategySpy);
     }
 
     @Test
@@ -449,14 +413,10 @@ public class TransportActivityManagerTest {
         sessions.put(SESSION_ID, new SessionMetaData(sessionInfo, TransportProtos.SessionType.ASYNC, listenerMock));
 
         long lastRecordedTime = 123L;
-        long lastReportedTime = 312L;
-        ActivityStrategy strategySpy = spy(new FirstEventActivityStrategy());
 
         ActivityState<TransportProtos.SessionInfoProto> state = new ActivityState<>();
         state.setLastRecordedTime(lastRecordedTime);
-        state.setLastReportedTime(lastReportedTime);
         state.setMetadata(TransportProtos.SessionInfoProto.getDefaultInstance());
-        state.setStrategy(strategySpy);
 
         when(transportServiceMock.updateState(SESSION_ID, state)).thenCallRealMethod();
 
@@ -466,10 +426,7 @@ public class TransportActivityManagerTest {
         // THEN
         assertThat(updatedState).isSameAs(state);
         assertThat(updatedState.getLastRecordedTime()).isEqualTo(lastRecordedTime);
-        assertThat(updatedState.getLastReportedTime()).isEqualTo(lastReportedTime);
         assertThat(updatedState.getMetadata()).isEqualTo(sessionInfo);
-        assertThat(updatedState.getStrategy()).isEqualTo(strategySpy);
-        verifyNoInteractions(strategySpy);
     }
 
     @ParameterizedTest

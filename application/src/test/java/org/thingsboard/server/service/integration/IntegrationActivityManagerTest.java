@@ -34,6 +34,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -46,10 +47,7 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.transport.activity.ActivityReportCallback;
 import org.thingsboard.server.common.transport.activity.ActivityState;
 import org.thingsboard.server.common.transport.activity.strategy.ActivityStrategy;
-import org.thingsboard.server.common.transport.activity.strategy.AllEventsActivityStrategy;
-import org.thingsboard.server.common.transport.activity.strategy.FirstAndLastEventActivityStrategy;
-import org.thingsboard.server.common.transport.activity.strategy.FirstEventActivityStrategy;
-import org.thingsboard.server.common.transport.activity.strategy.LastEventActivityStrategy;
+import org.thingsboard.server.common.transport.activity.strategy.ActivityStrategyType;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueProducer;
@@ -181,33 +179,32 @@ public class IntegrationActivityManagerTest {
         verify(integrationServiceMock).onActivity(key);
     }
 
-    @ParameterizedTest
-    @MethodSource("provideTestParamsForCreateNewState")
-    void givenDifferentReportingStrategies_whenCreatingNewState_thenShouldCreateEmptyStateWithCorrectStrategy(
-            String reportingStrategyName, ActivityStrategy reportingStrategy
-    ) {
+    @Test
+    void givenKey_whenCreatingNewState_thenShouldCorrectlyCreateNewEmptyState() {
         // GIVEN
         var key = new IntegrationActivityKey(TENANT_ID, DEVICE_ID);
         when(integrationServiceMock.createNewState(key)).thenCallRealMethod();
-        ReflectionTestUtils.setField(integrationServiceMock, "reportingStrategyName", reportingStrategyName);
-
-        ActivityState<Void> expectedState = new ActivityState<>();
-        expectedState.setStrategy(reportingStrategy);
 
         // WHEN
-        ActivityState<Void> actualState = integrationServiceMock.createNewState(key);
+        ActivityState<Void> actualNewState = integrationServiceMock.createNewState(key);
 
         // THEN
-        assertThat(actualState).isEqualTo(expectedState);
+        ActivityState<Void> expectedNewState = new ActivityState<>();
+        assertThat(actualNewState).isEqualTo(expectedNewState);
     }
 
-    private static Stream<Arguments> provideTestParamsForCreateNewState() {
-        return Stream.of(
-                Arguments.of("ALL", new AllEventsActivityStrategy()),
-                Arguments.of("FIRST", new FirstEventActivityStrategy()),
-                Arguments.of("LAST", new LastEventActivityStrategy()),
-                Arguments.of("FIRST_AND_LAST", new FirstAndLastEventActivityStrategy())
-        );
+    @ParameterizedTest
+    @EnumSource(ActivityStrategyType.class)
+    void givenDifferentReportingStrategies_whenGettingStrategy_thenShouldReturnCorrectStrategy(ActivityStrategyType reportingStrategyType) {
+        // GIVEN
+        doCallRealMethod().when(integrationServiceMock).getStrategy();
+        ReflectionTestUtils.setField(integrationServiceMock, "reportingStrategyType", reportingStrategyType);
+
+        // WHEN
+        ActivityStrategy actualStrategy = integrationServiceMock.getStrategy();
+
+        // THEN
+        assertThat(actualStrategy).isEqualTo(reportingStrategyType.toStrategy());
     }
 
     @Test
@@ -215,12 +212,8 @@ public class IntegrationActivityManagerTest {
         // GIVEN
         var key = new IntegrationActivityKey(TENANT_ID, DEVICE_ID);
 
-        ActivityStrategy strategySpy = spy(new FirstEventActivityStrategy());
-
         ActivityState<Void> state = new ActivityState<>();
         state.setLastRecordedTime(123L);
-        state.setLastReportedTime(312L);
-        state.setStrategy(strategySpy);
         ActivityState<Void> stateSpy = spy(state);
 
         when(integrationServiceMock.updateState(key, state)).thenCallRealMethod();
@@ -231,7 +224,6 @@ public class IntegrationActivityManagerTest {
         // THEN
         assertThat(updatedState).isSameAs(state);
         verifyNoInteractions(stateSpy);
-        verifyNoInteractions(strategySpy);
     }
 
     @ParameterizedTest

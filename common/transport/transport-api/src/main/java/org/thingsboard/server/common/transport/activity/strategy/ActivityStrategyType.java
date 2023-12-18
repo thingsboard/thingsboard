@@ -30,41 +30,33 @@
  */
 package org.thingsboard.server.common.transport.activity.strategy;
 
-import org.junit.jupiter.api.Test;
+public enum ActivityStrategyType {
 
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+    ALL {
+        @Override
+        public ActivityStrategy toStrategy() {
+            return AllEventsActivityStrategy.getInstance();
+        }
+    },
+    FIRST {
+        @Override
+        public ActivityStrategy toStrategy() {
+            return new FirstEventActivityStrategy();
+        }
+    },
+    LAST {
+        @Override
+        public ActivityStrategy toStrategy() {
+            return LastEventActivityStrategy.getInstance();
+        }
+    },
+    FIRST_AND_LAST {
+        @Override
+        public ActivityStrategy toStrategy() {
+            return new FirstAndLastEventActivityStrategy();
+        }
+    };
 
-public class ActivityStrategyFactoryTest {
-
-    @Test
-    public void testCreateAllEventsStrategy() {
-        ActivityStrategy strategy = ActivityStrategyFactory.createStrategy("ALL");
-        assertInstanceOf(AllEventsActivityStrategy.class, strategy, "Should return an instance of AllEventsActivityStrategy.");
-    }
-
-    @Test
-    public void testCreateFirstEventStrategy() {
-        ActivityStrategy strategy = ActivityStrategyFactory.createStrategy("FIRST");
-        assertInstanceOf(FirstEventActivityStrategy.class, strategy, "Should return an instance of FirstEventActivityStrategy.");
-    }
-
-    @Test
-    public void testCreateLastEventStrategy() {
-        ActivityStrategy strategy = ActivityStrategyFactory.createStrategy("LAST");
-        assertInstanceOf(LastEventActivityStrategy.class, strategy, "Should return an instance of LastEventActivityStrategy.");
-    }
-
-    @Test
-    public void testCreateFirstAndLastEventStrategy() {
-        ActivityStrategy strategy = ActivityStrategyFactory.createStrategy("FIRST_AND_LAST");
-        assertInstanceOf(FirstAndLastEventActivityStrategy.class, strategy, "Should return an instance of FirstAndLastEventActivityStrategy.");
-    }
-
-    @Test
-    public void testCreateUnknownStrategy() {
-        assertThrows(IllegalArgumentException.class, () -> ActivityStrategyFactory.createStrategy("UNKNOWN"),
-                "Should throw IllegalArgumentException for unknown strategy names.");
-    }
+    public abstract ActivityStrategy toStrategy();
 
 }

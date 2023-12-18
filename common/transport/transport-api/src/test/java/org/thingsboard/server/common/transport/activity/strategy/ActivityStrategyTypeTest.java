@@ -28,17 +28,32 @@
  * DOES NOT CONVEY OR IMPLY ANY RIGHTS TO REPRODUCE, DISCLOSE OR DISTRIBUTE ITS CONTENTS,
  * OR TO MANUFACTURE, USE, OR SELL ANYTHING THAT IT  MAY DESCRIBE, IN WHOLE OR IN PART.
  */
-package org.thingsboard.server.common.transport.service;
+package org.thingsboard.server.common.transport.activity.strategy;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.transport.activity.ActivityState;
-import org.thingsboard.server.gen.transport.TransportProtos;
+import org.junit.jupiter.api.Test;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class TransportActivityState extends ActivityState {
+import static org.assertj.core.api.Assertions.assertThat;
 
-    private volatile TransportProtos.SessionInfoProto sessionInfoProto;
+public class ActivityStrategyTypeTest {
+
+    @Test
+    public void testCreateAllEventsStrategy() {
+        assertThat(ActivityStrategyType.ALL.toStrategy()).isEqualTo(AllEventsActivityStrategy.getInstance());
+    }
+
+    @Test
+    public void testCreateFirstEventStrategy() {
+        assertThat(ActivityStrategyType.FIRST.toStrategy()).isEqualTo(new FirstEventActivityStrategy());
+    }
+
+    @Test
+    public void testCreateLastEventStrategy() {
+        assertThat(ActivityStrategyType.LAST.toStrategy()).isEqualTo(LastEventActivityStrategy.getInstance());
+    }
+
+    @Test
+    public void testCreateFirstAndLastEventStrategy() {
+        assertThat(ActivityStrategyType.FIRST_AND_LAST.toStrategy()).isEqualTo(new FirstAndLastEventActivityStrategy());
+    }
 
 }
