@@ -33,7 +33,6 @@ package org.thingsboard.server.common.transport.activity;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.transport.activity.strategy.ActivityStrategy;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 
@@ -52,9 +51,6 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
     @Autowired
     protected SchedulerComponent scheduler;
 
-    protected String name;
-    private boolean initialized;
-
     @Data
     private class ActivityStateWrapper {
 
@@ -64,20 +60,12 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
 
     }
 
-    @Override
-    public synchronized void init(String name, long reportingPeriodMillis) {
-        if (!initialized) {
-            this.name = StringUtils.notBlankOrDefault(name, "activity-manager");
-            log.info("Activity manager with name [{}] is initializing.", this.name);
-            if (reportingPeriodMillis <= 0) {
-                reportingPeriodMillis = 3000;
-                log.error("[{}] Negative or zero reporting period millisecond was provided. Going to use reporting period value of 3 seconds.", this.name);
-            }
-            scheduler.scheduleAtFixedRate(this::onReportingPeriodEnd, new Random().nextInt((int) reportingPeriodMillis), reportingPeriodMillis, TimeUnit.MILLISECONDS);
-            initialized = true;
-            log.info("Activity manager with name [{}] is initialized.", this.name);
-        }
+    protected void init() {
+        var reportingPeriodMillis = getReportingPeriodMillis();
+        scheduler.scheduleAtFixedRate(this::onReportingPeriodEnd, new Random().nextInt((int) reportingPeriodMillis), reportingPeriodMillis, TimeUnit.MILLISECONDS);
     }
+
+    protected abstract long getReportingPeriodMillis();
 
     protected abstract ActivityState<Metadata> createNewState(Key key);
 
@@ -93,15 +81,11 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
 
     @Override
     public void onActivity(Key key) {
-        if (!initialized) {
-            log.error("[{}] Failed to process activity event: activity manager is not initialized.", name);
-            return;
-        }
         if (key == null) {
-            log.error("[{}] Failed to process activity event: provided activity key is null.", name);
+            log.error("Failed to process activity event: provided activity key is null.");
             return;
         }
-        log.debug("[{}] Received activity event for key: [{}]", name, key);
+        log.debug("Received activity event for key: [{}]", key);
 
         long newLastRecordedTime = System.currentTimeMillis();
         var shouldReport = new AtomicBoolean(false);
@@ -131,7 +115,7 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
         long lastRecordedTime = activityState.getLastRecordedTime();
         long lastReportedTime = activityStateWrapper.getLastReportedTime();
         if (shouldReport.get() && lastReportedTime < lastRecordedTime) {
-            log.debug("[{}] Going to report first activity event for key: [{}].", name, key);
+            log.debug("Going to report first activity event for key: [{}].", key);
             reportActivity(key, activityState.getMetadata(), lastRecordedTime, new ActivityReportCallback<>() {
                 @Override
                 public void onSuccess(Key key, long reportedTime) {
@@ -140,7 +124,7 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
 
                 @Override
                 public void onFailure(Key key, Throwable t) {
-                    log.debug("[{}] Failed to report first activity event for key: [{}].", name, key, t);
+                    log.debug("Failed to report first activity event for key: [{}].", key, t);
                 }
             });
         }
@@ -153,7 +137,7 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
     }
 
     private void onReportingPeriodEnd() {
-        log.debug("[{}] Going to end reporting period.", name);
+        log.debug("Going to end reporting period.");
         for (Map.Entry<Key, ActivityStateWrapper> entry : states.entrySet()) {
             var key = entry.getKey();
             var stateWrapper = entry.getValue();
@@ -185,7 +169,7 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
             }
 
             if (shouldReport && lastReportedTime < lastRecordedTime) {
-                log.debug("[{}] Going to report last activity event for key: [{}].", name, key);
+                log.debug("Going to report last activity event for key: [{}].", key);
                 reportActivity(key, metadata, lastRecordedTime, new ActivityReportCallback<>() {
                     @Override
                     public void onSuccess(Key key, long reportedTime) {
@@ -194,7 +178,7 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
 
                     @Override
                     public void onFailure(Key key, Throwable t) {
-                        log.debug("[{}] Failed to report last activity event for key: [{}].", name, key, t);
+                        log.debug("Failed to report last activity event for key: [{}].", key, t);
                     }
                 });
             }
