@@ -21,6 +21,8 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
@@ -78,6 +80,8 @@ public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName,
     @Valid
     private transient DeviceProfileData profileData;
     @JsonIgnore
+    @Getter
+    @Setter
     private byte[] profileDataBytes;
     @NoXss
     @ApiModelProperty(position = 13, value = "Unique provisioning key used by 'Device Provisioning' feature.")

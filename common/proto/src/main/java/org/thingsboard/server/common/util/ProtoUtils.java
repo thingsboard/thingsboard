@@ -19,18 +19,25 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.protobuf.ByteString;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileProvisionType;
+import org.thingsboard.server.common.data.DeviceProfileType;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.data.CoapDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.PowerMode;
 import org.thingsboard.server.common.data.device.data.PowerSavingConfiguration;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.OtaPackageId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKey;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -68,6 +75,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ProtoUtils {
@@ -517,7 +525,9 @@ public class ProtoUtils {
                 .setCustomerIdLSB(getLsb(device.getCustomerId()))
                 .setDeviceIdMSB(device.getId().getId().getMostSignificantBits())
                 .setDeviceIdLSB(device.getId().getId().getLeastSignificantBits())
+                .setCreatedTime(device.getCreatedTime())
                 .setDeviceName(device.getName())
+                .setDeviceLabel(toProtoString(device.getLabel()))
                 .setDeviceType(device.getType())
                 .setDeviceProfileIdMSB(device.getDeviceProfileId().getId().getMostSignificantBits())
                 .setDeviceProfileIdLSB(device.getDeviceProfileId().getId().getLeastSignificantBits())
@@ -529,10 +539,6 @@ public class ProtoUtils {
                 .setExternalIdMSB(getMsb(device.getExternalId()))
                 .setExternalIdLSB(getLsb(device.getExternalId()));
 
-        if (device.getLabel() != null) {
-            builder.setDeviceLabel(device.getLabel());
-        }
-
         if (device.getDeviceDataBytes() != null) {
             builder.setDeviceData(ByteString.copyFrom(device.getDeviceDataBytes()));
         }
@@ -540,34 +546,76 @@ public class ProtoUtils {
         return builder.build();
     }
 
-    public static Device fromDeviceProto(TransportProtos.DeviceProto deviceProto) {
-        Device device = new Device(new DeviceId(new UUID(deviceProto.getDeviceIdMSB(), deviceProto.getDeviceIdLSB())));
-        device.setTenantId(new TenantId(new UUID(deviceProto.getTenantIdMSB(), deviceProto.getTenantIdLSB())));
-        device.setCustomerId(new CustomerId(new UUID(deviceProto.getCustomerIdMSB(), deviceProto.getCustomerIdLSB())));
-        device.setName(deviceProto.getDeviceName());
-        device.setLabel(deviceProto.getDeviceLabel());
-        device.setType(deviceProto.getDeviceType());
-        device.setDeviceProfileId(new DeviceProfileId(new UUID(deviceProto.getDeviceProfileIdMSB(), deviceProto.getDeviceProfileIdLSB())));
-        device.setAdditionalInfo(JacksonUtil.toJsonNode(deviceProto.getAdditionalInfo()));
-        device.setFirmwareId(createOtaPackageId(deviceProto.getFirmwareIdMSB(), deviceProto.getFirmwareIdLSB()));
-        device.setSoftwareId(createOtaPackageId(deviceProto.getSoftwareIdMSB(), deviceProto.getSoftwareIdLSB()));
-        device.setExternalId(createDeviceId(deviceProto.getExternalIdMSB(), deviceProto.getExternalIdLSB()));
-        device.setDeviceDataBytes(deviceProto.getDeviceData().toByteArray());
+    public static Device fromDeviceProto(TransportProtos.DeviceProto proto) {
+        Device device = new Device(getEntityId(proto.getDeviceIdMSB(), proto.getDeviceIdLSB(), DeviceId::new));
+        device.setCreatedTime(proto.getCreatedTime());
+        device.setTenantId(getEntityId(proto.getTenantIdMSB(), proto.getTenantIdLSB(), TenantId::new));
+        device.setCustomerId(getEntityId(proto.getCustomerIdMSB(), proto.getCustomerIdLSB(), CustomerId::new));
+        device.setName(proto.getDeviceName());
+        device.setLabel(fromProtoString(proto.getDeviceLabel()));
+        device.setType(proto.getDeviceType());
+        device.setDeviceProfileId(getEntityId(proto.getDeviceProfileIdMSB(), proto.getDeviceProfileIdLSB(), DeviceProfileId::new));
+        device.setAdditionalInfo(JacksonUtil.toJsonNode(proto.getAdditionalInfo()));
+        device.setFirmwareId(getEntityId(proto.getFirmwareIdMSB(), proto.getFirmwareIdLSB(), OtaPackageId::new));
+        device.setSoftwareId(getEntityId(proto.getSoftwareIdMSB(), proto.getSoftwareIdLSB(), OtaPackageId::new));
+        device.setExternalId(getEntityId(proto.getExternalIdMSB(), proto.getExternalIdLSB(), DeviceId::new));
+        device.setDeviceDataBytes(proto.getDeviceData().toByteArray());
         return device;
     }
 
-    private static OtaPackageId createOtaPackageId(long msb, long lsb) {
-        if (msb != 0 || lsb != 0) {
-            return new OtaPackageId(new UUID(msb, lsb));
-        }
-        return null;
+    public static TransportProtos.DeviceProfileProto toDeviceProfileProto(DeviceProfile deviceProfile) {
+        return TransportProtos.DeviceProfileProto.newBuilder()
+                .setTenantIdMSB(getMsb(deviceProfile.getTenantId()))
+                .setTenantIdLSB(getLsb(deviceProfile.getTenantId()))
+                .setDeviceProfileIdMSB(getMsb(deviceProfile.getId()))
+                .setDeviceProfileIdLSB(getLsb(deviceProfile.getId()))
+                .setCreatedTime(deviceProfile.getCreatedTime())
+                .setName(deviceProfile.getName())
+                .setIsDefault(deviceProfile.isDefault())
+                .setType(deviceProfile.getType().name())
+                .setTransportType(deviceProfile.getTransportType().name())
+                .setProvisionType(deviceProfile.getProvisionType().name())
+                .setDeviceProfileData(ByteString.copyFrom(deviceProfile.getProfileDataBytes()))
+                .setDescription(toProtoString(deviceProfile.getDescription()))
+                .setImage(toProtoString(deviceProfile.getImage()))
+                .setDefaultRuleChainIdMSB(getMsb(deviceProfile.getDefaultRuleChainId()))
+                .setDefaultRuleChainIdLSB(getMsb(deviceProfile.getDefaultRuleChainId()))
+                .setDefaultDashboardIdMSB(getMsb(deviceProfile.getDefaultDashboardId()))
+                .setDefaultDashboardIdLSB(getLsb(deviceProfile.getDefaultDashboardId()))
+                .setDefaultQueueName(toProtoString(deviceProfile.getDefaultQueueName()))
+                .setProvisionDeviceKey(toProtoString(deviceProfile.getProvisionDeviceKey()))
+                .setFirmwareIdMSB(getMsb(deviceProfile.getFirmwareId()))
+                .setFirmwareIdLSB(getLsb(deviceProfile.getFirmwareId()))
+                .setSoftwareIdMSB(getMsb(deviceProfile.getSoftwareId()))
+                .setSoftwareIdLSB(getLsb(deviceProfile.getSoftwareId()))
+                .setDefaultEdgeRuleChainIdMSB(getMsb(deviceProfile.getDefaultEdgeRuleChainId()))
+                .setDefaultEdgeRuleChainIdLSB(getLsb(deviceProfile.getDefaultEdgeRuleChainId()))
+                .setExternalIdMSB(getMsb(deviceProfile.getExternalId()))
+                .setExternalIdLSB(getLsb(deviceProfile.getExternalId())).build();
     }
 
-    private static DeviceId createDeviceId(long msb, long lsb) {
-        if (msb != 0 || lsb != 0) {
-            return new DeviceId(new UUID(msb, lsb));
-        }
-        return null;
+    public static DeviceProfile fromDeviceProfileProto(TransportProtos.DeviceProfileProto proto) {
+        DeviceProfile deviceProfile = new DeviceProfile(getEntityId(proto.getDeviceProfileIdMSB(), proto.getDeviceProfileIdLSB(), DeviceProfileId::new));
+        deviceProfile.setCreatedTime(proto.getCreatedTime());
+        deviceProfile.setTenantId(getEntityId(proto.getTenantIdMSB(), proto.getTenantIdLSB(), TenantId::new));
+        deviceProfile.setName(proto.getName());
+        deviceProfile.setDefault(proto.getIsDefault());
+        deviceProfile.setType(DeviceProfileType.valueOf(proto.getType()));
+        deviceProfile.setTransportType(DeviceTransportType.valueOf(proto.getTransportType()));
+        deviceProfile.setProvisionType(DeviceProfileProvisionType.valueOf(proto.getProvisionType()));
+        deviceProfile.setProfileDataBytes(proto.getDeviceProfileData().toByteArray());
+        deviceProfile.setDescription(fromProtoString(proto.getDescription()));
+        deviceProfile.setImage(fromProtoString(proto.getImage()));
+        deviceProfile.setDefaultRuleChainId(getEntityId(proto.getDefaultRuleChainIdMSB(), proto.getDefaultRuleChainIdLSB(), RuleChainId::new));
+        deviceProfile.setDefaultDashboardId(getEntityId(proto.getDefaultDashboardIdMSB(), proto.getDefaultDashboardIdLSB(), DashboardId::new));
+        deviceProfile.setDefaultQueueName(fromProtoString(proto.getDefaultQueueName()));
+        deviceProfile.setProvisionDeviceKey(fromProtoString(proto.getProvisionDeviceKey()));
+        deviceProfile.setFirmwareId(getEntityId(proto.getFirmwareIdMSB(), proto.getFirmwareIdLSB(), OtaPackageId::new));
+        deviceProfile.setSoftwareId(getEntityId(proto.getSoftwareIdMSB(), proto.getSoftwareIdLSB(), OtaPackageId::new));
+        deviceProfile.setDefaultEdgeRuleChainId(getEntityId(proto.getDefaultEdgeRuleChainIdMSB(), proto.getDefaultEdgeRuleChainIdLSB(), RuleChainId::new));
+        deviceProfile.setExternalId(getEntityId(proto.getExternalIdMSB(), proto.getExternalIdLSB(), DeviceProfileId::new));
+
+        return deviceProfile;
     }
 
     public static TransportProtos.DeviceInfoProto toDeviceInfoProto(Device device) throws JsonProcessingException {
@@ -609,14 +657,29 @@ public class ProtoUtils {
         return builder.build();
     }
 
-    public static Long getMsb(EntityId entityId) {
+    private static <T extends EntityId> T getEntityId(long msb, long lsb, Function<UUID, T> entityId) {
+        if (msb != 0 || lsb != 0) {
+            return entityId.apply(new UUID(msb, lsb));
+        }
+        return null;
+    }
+
+    private static String toProtoString(String str) {
+        return str != null ? str : "";
+    }
+
+    private static String fromProtoString(String str) {
+        return StringUtils.isNotEmpty(str) ? str : null;
+    }
+
+    private static Long getMsb(EntityId entityId) {
         if (entityId != null) {
             return entityId.getId().getMostSignificantBits();
         }
         return 0L;
     }
 
-    public static Long getLsb(EntityId entityId) {
+    private static Long getLsb(EntityId entityId) {
         if (entityId != null) {
             return entityId.getId().getLeastSignificantBits();
         }

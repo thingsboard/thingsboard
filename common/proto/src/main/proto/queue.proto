@@ -188,21 +188,52 @@ message DeviceProto {
   int64 tenantIdLSB = 2;
   int64 deviceIdMSB = 3;
   int64 deviceIdLSB = 4;
-  string deviceName = 5;
-  string deviceLabel = 6;
-  string deviceType = 7;
-  string additionalInfo = 8;
-  int64 deviceProfileIdMSB = 9;
-  int64 deviceProfileIdLSB = 10;
-  int64 customerIdMSB = 11;
-  int64 customerIdLSB = 12;
-  bytes deviceData = 13;
-  int64 firmwareIdMSB = 14;
-  int64 firmwareIdLSB = 15;
-  int64 softwareIdMSB = 16;
-  int64 softwareIdLSB = 17;
-  int64 externalIdMSB = 18;
-  int64 externalIdLSB = 19;
+  int64 createdTime = 5;
+  string deviceName = 6;
+  string deviceLabel = 7;
+  string deviceType = 8;
+  string additionalInfo = 9;
+  int64 deviceProfileIdMSB = 10;
+  int64 deviceProfileIdLSB = 11;
+  int64 customerIdMSB = 12;
+  int64 customerIdLSB = 13;
+  bytes deviceData = 14;
+  int64 firmwareIdMSB = 15;
+  int64 firmwareIdLSB = 16;
+  int64 softwareIdMSB = 17;
+  int64 softwareIdLSB = 18;
+  int64 externalIdMSB = 19;
+  int64 externalIdLSB = 20;
+}
+
+message DeviceProfileProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceProfileIdMSB = 3;
+  int64 deviceProfileIdLSB = 4;
+  int64 createdTime = 5;
+  string name = 6;
+  string description = 7;
+  string image = 8;
+  bool isDefault = 9;
+  string type = 10;
+  string transportType = 11;
+  string provisionType = 12;
+  int64 defaultRuleChainIdMSB = 13;
+  int64 defaultRuleChainIdLSB = 14;
+  int64 defaultDashboardIdMSB = 15;
+  int64 defaultDashboardIdLSB = 16;
+  string defaultQueueName = 17;
+  bytes deviceProfileData = 18;
+  string provisionDeviceKey = 19;
+  int64 firmwareIdMSB = 20;
+  int64 firmwareIdLSB = 21;
+  int64 softwareIdMSB = 22;
+  int64 softwareIdLSB = 23;
+  int64 defaultEdgeRuleChainIdMSB = 24;
+  int64 defaultEdgeRuleChainIdLSB = 25;
+  int64 externalIdMSB = 26;
+  int64 externalIdLSB = 27;
 }
 
 /**
