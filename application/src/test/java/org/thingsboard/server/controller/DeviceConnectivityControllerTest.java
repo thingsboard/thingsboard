@@ -724,7 +724,7 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testFetchPublishTelemetryCommandsForHostSetToNullInSettings() throws Exception {
+    public void testFetchPublishTelemetryCommandsForDeviceWhenHostSetToNullInSettings() throws Exception {
         loginSysAdmin();
         ObjectNode config = JacksonUtil.newObjectNode();
 
@@ -742,26 +742,26 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
 
         ObjectNode mqtt = JacksonUtil.newObjectNode();
         mqtt.put("enabled", true);
-        mqtt.put("host", NullNode.getInstance());
-        mqtt.put("port", NullNode.getInstance());
+        mqtt.set("host", NullNode.getInstance());
+        mqtt.set("port", NullNode.getInstance());
         config.set("mqtt", mqtt);
 
         ObjectNode mqtts = JacksonUtil.newObjectNode();
         mqtts.put("enabled", true);
         mqtts.put("host", "");
-        mqtts.put("port", NullNode.getInstance());
+        mqtts.set("port", NullNode.getInstance());
         config.set("mqtts", mqtts);
 
         ObjectNode coap = JacksonUtil.newObjectNode();
         coap.put("enabled", true);
-        coap.put("host", NullNode.getInstance());
+        coap.set("host", NullNode.getInstance());
         coap.put("port", "");
         config.set("coap", coap);
 
         ObjectNode coaps = JacksonUtil.newObjectNode();
         coaps.put("enabled", true);
-        coaps.put("host", NullNode.getInstance());
-        coaps.put("port", NullNode.getInstance());
+        coaps.set("host", NullNode.getInstance());
+        coaps.set("port", NullNode.getInstance());
         config.set("coaps", coaps);
 
         AdminSettings adminSettings = doGet("/api/admin/settings/connectivity", AdminSettings.class);

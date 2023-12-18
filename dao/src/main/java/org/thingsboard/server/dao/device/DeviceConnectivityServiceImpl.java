@@ -328,14 +328,14 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     private String getCoapPublishCommand(String protocol, String baseUrl, DeviceCredentials deviceCredentials) throws URISyntaxException {
         DeviceConnectivityInfo properties = getConnectivity(protocol);
         String hostName = getHost(baseUrl, properties, protocol);
-        String port = properties.getPort() == null || properties.getPort().isEmpty() ? "" : ":" + properties.getPort();
+        String port = StringUtils.isBlank(properties.getPort()) ? "" : ":" + properties.getPort();
         return DeviceConnectivityUtil.getCoapPublishCommand(protocol, hostName, port, deviceCredentials);
     }
 
     private String getDockerCoapPublishCommand(String protocol, String baseUrl, DeviceCredentials deviceCredentials) throws URISyntaxException {
         DeviceConnectivityInfo properties = getConnectivity(protocol);
         String host = getHost(baseUrl, properties, protocol);
-        String port = properties.getPort() == null || properties.getPort().isEmpty() ? "" : ":" + properties.getPort();
+        String port = StringUtils.isBlank(properties.getPort()) ? "" : ":" + properties.getPort();
         return DeviceConnectivityUtil.getDockerCoapPublishCommand(protocol, host, port, deviceCredentials);
     }
 
