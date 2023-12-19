@@ -43,6 +43,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
 public abstract class AbstractActivityManager<Key, Metadata> implements ActivityManager<Key> {
@@ -91,6 +92,7 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
         var shouldReport = new AtomicBoolean(false);
         var lastRecordedTime = new AtomicLong();
         var lastReportedTime = new AtomicLong();
+        var metadata = new AtomicReference<Metadata>();
 
         var activityStateWrapper = states.compute(key, (__, stateWrapper) -> {
             if (stateWrapper == null) {
@@ -109,6 +111,7 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
             shouldReport.set(stateWrapper.getStrategy().onActivity());
             lastRecordedTime.set(state.getLastRecordedTime());
             lastReportedTime.set(stateWrapper.getLastReportedTime());
+            metadata.set(state.getMetadata());
             return stateWrapper;
         });
 
@@ -118,7 +121,7 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
 
         if (shouldReport.get() && lastReportedTime.get() < lastRecordedTime.get()) {
             log.debug("Going to report first activity event for key: [{}].", key);
-            reportActivity(key, activityStateWrapper.getState().getMetadata(), lastRecordedTime.get(), new ActivityReportCallback<>() {
+            reportActivity(key, metadata.get(), lastRecordedTime.get(), new ActivityReportCallback<>() {
                 @Override
                 public void onSuccess(Key key, long reportedTime) {
                     updateLastReportedTime(key, reportedTime);
@@ -149,6 +152,7 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
 
             var updatedState = updateState(key, currentState);
             if (updatedState != null) {
+                stateWrapper.setState(updatedState);
                 lastRecordedTime = updatedState.getLastRecordedTime();
                 metadata = updatedState.getMetadata();
                 hasExpired = hasExpired(lastRecordedTime);
