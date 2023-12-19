@@ -43,6 +43,9 @@ public class NotificationTargetExportService extends BaseEntityExportService<Not
                     CustomerUsersFilter customerUsersFilter = (CustomerUsersFilter) usersFilter;
                     customerUsersFilter.setCustomerId(getExternalIdOrElseInternal(ctx, new CustomerId(customerUsersFilter.getCustomerId())).getId());
                     break;
+                case USER_LIST:
+                    // users list stays as is and is replaced with current user id on import (due to user entities not being supported by VC)
+                    break;
             }
         }
     }
