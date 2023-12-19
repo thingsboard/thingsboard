@@ -1186,6 +1186,7 @@
         "hide-details": "Hide details",
         "select-state": "Select target state",
         "state-controller": "State controller",
+        "state-controller-default": "static (deprecated)",
         "search": "Search dashboards",
         "selected-dashboards": "{ count, plural, =1 {1 dashboard} other {# dashboards} } selected",
         "home-dashboard": "Home dashboard",
