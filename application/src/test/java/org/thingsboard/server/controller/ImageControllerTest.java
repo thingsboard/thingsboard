@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.controller.ImageController.ImageSpecs;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.sql.resource.TbResourceRepository;
 
@@ -238,6 +239,28 @@ public class ImageControllerTest extends AbstractControllerTest {
         loginTenantAdmin();
         updateImagePublicStatus(filename, false);
         doGet("/api/images/public/" + publicKey).andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void testGetImageUploadSpecs() throws Exception {
+        ImageSpecs specs = doGet("/api/image/specs", ImageSpecs.class);
+        assertThat(specs.getMaximumSize()).isZero();
+
+        loginSysAdmin();
+        updateDefaultTenantProfileConfig(tenantProfileConfig -> {
+            tenantProfileConfig.setMaxResourceSize(100);
+        });
+        loginTenantAdmin();
+        specs = doGet("/api/image/specs", ImageSpecs.class);
+        assertThat(specs.getMaximumSize()).isEqualTo(100);
+
+        loginSysAdmin();
+        updateDefaultTenantProfileConfig(tenantProfileConfig -> {
+            tenantProfileConfig.setMaxResourceSize(0);
+        });
+        loginTenantAdmin();
+        specs = doGet("/api/image/specs", ImageSpecs.class);
+        assertThat(specs.getMaximumSize()).isEqualTo(0);
     }
 
     private TbResourceInfo updateImagePublicStatus(String filename, boolean isPublic) throws Exception {

@@ -138,8 +138,8 @@ public class BaseImageService extends BaseResourceService implements ImageServic
     @Override
     @SneakyThrows
     public TbResourceInfo saveImage(TbResource image) {
-        if (image.getId() == null && StringUtils.isEmpty(image.getResourceKey())) {
-            image.setResourceKey(getUniqueKey(image.getTenantId(), image.getFileName()));
+        if (image.getId() == null) {
+            image.setResourceKey(getUniqueKey(image.getTenantId(), StringUtils.defaultIfEmpty(image.getResourceKey(), image.getFileName())));
         }
         resourceValidator.validate(image, TbResourceInfo::getTenantId);
 
