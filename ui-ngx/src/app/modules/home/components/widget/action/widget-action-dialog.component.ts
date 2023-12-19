@@ -225,7 +225,7 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
               this.fb.control(action ? action.targetDashboardId : null,
                 [Validators.required])
             );
-            this.setupSelectedDashboardStateIds(action ? action.targetDashboardId : null);
+            this.setupSelectedDashboardStateIds();
           } else {
             if (type === WidgetActionType.openDashboardState) {
               const displayType = this.getStateDisplayType(action);
@@ -339,10 +339,12 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
     return res;
   }
 
-  private setupSelectedDashboardStateIds(targetDashboardId?: string) {
+  private setupSelectedDashboardStateIds() {
+    const dashboardControl = this.actionTypeFormGroup.get('targetDashboardId');
+
     this.selectedDashboardStateIds =
-      this.actionTypeFormGroup.get('targetDashboardId').valueChanges.pipe(
-        // startWith<string>(targetDashboardId),
+      dashboardControl.valueChanges.pipe(
+        startWith(dashboardControl.value),
         tap(() => {
           this.targetDashboardStateSearchText = '';
         }),
