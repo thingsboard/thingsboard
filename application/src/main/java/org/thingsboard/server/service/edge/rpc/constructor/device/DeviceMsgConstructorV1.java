@@ -16,11 +16,13 @@
 package org.thingsboard.server.service.edge.rpc.constructor.device;
 
 import com.google.protobuf.ByteString;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
@@ -32,6 +34,9 @@ import java.nio.charset.StandardCharsets;
 @Component
 @TbCoreComponent
 public class DeviceMsgConstructorV1 extends BaseDeviceMsgConstructor {
+
+    @Autowired
+    private ImageService imageService;
 
     @Override
     public DeviceUpdateMsg constructDeviceUpdatedMsg(UpdateMsgType msgType, Device device) {
@@ -86,6 +91,7 @@ public class DeviceMsgConstructorV1 extends BaseDeviceMsgConstructor {
 
     @Override
     public DeviceProfileUpdateMsg constructDeviceProfileUpdatedMsg(UpdateMsgType msgType, DeviceProfile deviceProfile) {
+        imageService.inlineImageForEdge(deviceProfile);
         DeviceProfileUpdateMsg.Builder builder = DeviceProfileUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(deviceProfile.getId().getId().getMostSignificantBits())

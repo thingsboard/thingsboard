@@ -73,7 +73,7 @@ public class TenantMsgConstructorV1 implements TenantMsgConstructor {
 
     @Override
     public TenantProfileUpdateMsg constructTenantProfileUpdateMsg(UpdateMsgType msgType, TenantProfile tenantProfile, EdgeVersion edgeVersion) {
-        ByteString profileData = EdgeVersionUtils.isEdgeVersionOlderThan(edgeVersion, EdgeVersion.V_3_6_1) ?
+        ByteString profileData = EdgeVersionUtils.isEdgeVersionOlderThan(edgeVersion, EdgeVersion.V_3_6_2) ?
                 ByteString.empty() : ByteString.copyFrom(tenantProfile.getProfileDataBytes());
         TenantProfileUpdateMsg.Builder builder = TenantProfileUpdateMsg.newBuilder()
                 .setMsgType(msgType)

@@ -23,6 +23,7 @@ import com.google.common.base.Strings;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -137,8 +138,8 @@ public class BaseImageService extends BaseResourceService implements ImageServic
     @Override
     @SneakyThrows
     public TbResourceInfo saveImage(TbResource image) {
-        if (image.getId() == null && StringUtils.isEmpty(image.getResourceKey())) {
-            image.setResourceKey(getUniqueKey(image.getTenantId(), image.getFileName()));
+        if (image.getId() == null) {
+            image.setResourceKey(getUniqueKey(image.getTenantId(), StringUtils.defaultIfEmpty(image.getResourceKey(), image.getFileName())));
         }
         resourceValidator.validate(image, TbResourceInfo::getTenantId);
 
@@ -149,6 +150,15 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         image.setDescriptorValue(descriptor);
         image.setPreview(result.getRight());
 
+        if (image.getId() == null) {
+            if (StringUtils.isEmpty(image.getPublicResourceKey())) {
+                image.setPublicResourceKey(generatePublicResourceKey());
+            } else {
+                if (resourceInfoDao.existsByPublicResourceKey(ResourceType.IMAGE, image.getPublicResourceKey())) {
+                    image.setPublicResourceKey(generatePublicResourceKey());
+                }
+            }
+        }
         log.debug("[{}] Creating image {} ('{}')", image.getTenantId(), image.getResourceKey(), image.getName());
         return new TbResourceInfo(doSaveResource(image));
     }
@@ -194,6 +204,10 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         return resourceKey;
     }
 
+    private String generatePublicResourceKey() {
+        return RandomStringUtils.randomAlphanumeric(32);
+    }
+
     @Override
     public TbResourceInfo saveImageInfo(TbResourceInfo imageInfo) {
         log.trace("Executing saveImageInfo [{}] [{}]", imageInfo.getTenantId(), imageInfo.getId());
@@ -204,6 +218,11 @@ public class BaseImageService extends BaseResourceService implements ImageServic
     public TbResourceInfo getImageInfoByTenantIdAndKey(TenantId tenantId, String key) {
         log.trace("Executing getImageInfoByTenantIdAndKey [{}] [{}]", tenantId, key);
         return findResourceInfoByTenantIdAndKey(tenantId, ResourceType.IMAGE, key);
+    }
+
+    @Override
+    public TbResourceInfo getPublicImageInfoByKey(String publicResourceKey) {
+        return resourceInfoDao.findPublicResourceByKey(ResourceType.IMAGE, publicResourceKey);
     }
 
     @Override
@@ -452,6 +471,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
             image.setFileName(fileName);
             image.setDescriptor(JacksonUtil.newObjectNode().put("mediaType", mdMediaType));
             image.setData(imageData);
+            image.setPublic(true);
             try {
                 imageInfo = saveImage(image);
             } catch (Exception e) {
@@ -512,7 +532,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
     @Override
     public void inlineImage(HasImage entity) {
         log.trace("Executing inlineImage [{}] [{}] [{}]", entity.getTenantId(), entity.getClass().getSimpleName(), entity.getName());
-        entity.setImage(inlineImage(entity.getTenantId(), "image", entity.getImage()));
+        entity.setImage(inlineImage(entity.getTenantId(), "image", entity.getImage(), true));
     }
 
     @Override
@@ -539,7 +559,31 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         }
     }
 
+    @Override
+    public void inlineImageForEdge(HasImage entity) {
+        log.trace("Executing inlineImageForEdge [{}] [{}] [{}]", entity.getTenantId(), entity.getClass().getSimpleName(), entity.getName());
+        entity.setImage(inlineImage(entity.getTenantId(), "image", entity.getImage(), false));
+    }
+
+    @Override
+    public void inlineImagesForEdge(Dashboard dashboard) {
+        log.trace("Executing inlineImagesForEdge [{}] [Dashboard] [{}]", dashboard.getTenantId(), dashboard.getId());
+        inlineImageForEdge(dashboard);
+        inlineIntoJson(dashboard.getTenantId(), dashboard.getConfiguration(), false);
+    }
+
+    @Override
+    public void inlineImagesForEdge(WidgetTypeDetails widgetTypeDetails) {
+        log.trace("Executing inlineImage [{}] [WidgetTypeDetails] [{}]", widgetTypeDetails.getTenantId(), widgetTypeDetails.getId());
+        inlineImageForEdge(widgetTypeDetails);
+        inlineIntoJson(widgetTypeDetails.getTenantId(), widgetTypeDetails.getDescriptor(), false);
+    }
+
     private void inlineIntoJson(TenantId tenantId, JsonNode root) {
+        inlineIntoJson(tenantId, root, true);
+    }
+
+    private void inlineIntoJson(TenantId tenantId, JsonNode root, boolean addTbImagePrefix) {
         Queue<JsonNodeProcessingTask> tasks = new LinkedList<>();
         tasks.add(new JsonNodeProcessingTask("", root));
         while (!tasks.isEmpty()) {
@@ -555,7 +599,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
                     String childName = it.next();
                     JsonNode childValue = on.get(childName);
                     if (childValue.isTextual()) {
-                        on.put(childName, inlineImage(tenantId, currentPath + childName, childValue.asText()));
+                        on.put(childName, inlineImage(tenantId, currentPath + childName, childValue.asText(), addTbImagePrefix));
                     } else if (childValue.isObject() || childValue.isArray()) {
                         tasks.add(new JsonNodeProcessingTask(currentPath + childName, childValue));
                     }
@@ -567,23 +611,26 @@ public class BaseImageService extends BaseResourceService implements ImageServic
                     if (element.isObject()) {
                         tasks.add(new JsonNodeProcessingTask(currentPath + "." + i, element));
                     } else if (element.isTextual()) {
-                        childArray.set(i, inlineImage(tenantId, currentPath + "." + i, element.asText()));
+                        childArray.set(i, inlineImage(tenantId, currentPath + "." + i, element.asText(), addTbImagePrefix));
                     }
                 }
             }
         }
     }
 
-    private String inlineImage(TenantId tenantId, String path, String url) {
+    private String inlineImage(TenantId tenantId, String path, String url, boolean addTbImagePrefix) {
         try {
             ImageCacheKey key = getKeyFromUrl(tenantId, url);
             if (key != null) {
-                var imageInfo = getImageInfoByTenantIdAndKey(key.getTenantId(), key.getKey());
+                var imageInfo = getImageInfoByTenantIdAndKey(key.getTenantId(), key.getResourceKey());
                 if (imageInfo != null) {
                     byte[] data = key.isPreview() ? getImagePreview(tenantId, imageInfo.getId()) : getImageData(tenantId, imageInfo.getId());
                     ImageDescriptor descriptor = getImageDescriptor(imageInfo, key.isPreview());
-                    String tbImagePrefix = "tb-image:" + Base64Utils.encodeToString(imageInfo.getResourceKey().getBytes(StandardCharsets.UTF_8)) + ":"
-                            + Base64Utils.encodeToString(imageInfo.getName().getBytes(StandardCharsets.UTF_8)) + ";";
+                    String tbImagePrefix = "";
+                    if (addTbImagePrefix) {
+                        tbImagePrefix = "tb-image:" + Base64Utils.encodeToString(imageInfo.getResourceKey().getBytes(StandardCharsets.UTF_8)) + ":"
+                                + Base64Utils.encodeToString(imageInfo.getName().getBytes(StandardCharsets.UTF_8)) + ";";
+                    }
                     return tbImagePrefix + "data:" + descriptor.getMediaType() + ";base64," + Base64Utils.encodeToString(data);
                 }
             }
@@ -611,9 +658,9 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         if (imageTenantId != null) {
             var parts = url.split("/");
             if (parts.length == 5) {
-                return new ImageCacheKey(imageTenantId, parts[4], false);
+                return ImageCacheKey.forImage(imageTenantId, parts[4], false);
             } else if (parts.length == 6 && "preview".equals(parts[5])) {
-                return new ImageCacheKey(imageTenantId, parts[4], true);
+                return ImageCacheKey.forImage(imageTenantId, parts[4], true);
             }
         }
         return null;

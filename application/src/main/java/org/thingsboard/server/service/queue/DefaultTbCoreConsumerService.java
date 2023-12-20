@@ -532,8 +532,13 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
 
     private void forwardToResourceService(TransportProtos.ResourceCacheInvalidateMsg msg, TbCallback callback) {
         var tenantId = new TenantId(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
-        imageService.evictETag(new ImageCacheKey(tenantId, msg.getResourceKey(), false));
-        imageService.evictETag(new ImageCacheKey(tenantId, msg.getResourceKey(), true));
+        msg.getKeysList().stream().map(cacheKeyProto -> {
+            if (cacheKeyProto.hasResourceKey()) {
+                return ImageCacheKey.forImage(tenantId, cacheKeyProto.getResourceKey());
+            } else {
+                return ImageCacheKey.forPublicImage(cacheKeyProto.getPublicResourceKey());
+            }
+        }).forEach(imageService::evictETags);
         callback.onSuccess();
     }
 

@@ -74,16 +74,10 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
 
   private patchNotificationSettings(settings: NotificationUserSettings) {
     const notificationSettingsControls: Array<AbstractControl> = [];
-    let preparedSettings;
     if (settings.prefs) {
-      preparedSettings = this.prepareNotificationSettings(settings.prefs);
-      preparedSettings.forEach((setting) => {
-        setting.enabledDeliveryMethods = Object.assign(
-          this.notificationDeliveryMethods.reduce((a, v) => ({ ...a, [v]: true}), {}),
-          setting.enabledDeliveryMethods
-        );
-        notificationSettingsControls.push(this.fb.control(setting, [Validators.required]));
-      });
+      this.prepareNotificationSettings(settings.prefs).forEach(setting =>
+        notificationSettingsControls.push(this.fb.control(setting, [Validators.required]))
+      );
     }
     this.notificationSettings.setControl('prefs', this.fb.array(notificationSettingsControls), {emitEvent: false});
   }
@@ -91,6 +85,17 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
   private prepareNotificationSettings(prefs: any) {
     return Object.entries(prefs).map((value: any) => {
       value[1].name = value[0];
+      if (!value[1].enabled && Object.values(value[1].enabledDeliveryMethods).some(deliveryMethod => deliveryMethod === true)) {
+        const enabledDeliveryMethod = deepClone(value[1].enabledDeliveryMethods);
+        Object.keys(enabledDeliveryMethod).forEach(key => {
+          enabledDeliveryMethod[key] = false;
+        });
+        value[1].enabledDeliveryMethods = enabledDeliveryMethod;
+      }
+      value[1].enabledDeliveryMethods = Object.assign(
+        this.notificationDeliveryMethods.reduce((a, v) => ({ ...a, [v]: true}), {}),
+        value[1].enabledDeliveryMethods
+      );
       return value[1];
     });
   }

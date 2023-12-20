@@ -2655,7 +2655,6 @@
         "rpc-command-result": "Resultado",
         "rpc-command-edit-params": "Editar parametros",
         "gateway-configuration": "Configuración General",
-        "docker-label": "Usa los siguientes comandos para ejecutar el gateway en Docker.",
         "create-new-gateway": "Crear un gateway nuevo",
         "create-new-gateway-text": "Crear un nuevo gateway con el nombre: '{{gatewayName}}'?",
         "created-time": "Hora de creación",
