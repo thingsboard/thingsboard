@@ -117,7 +117,7 @@ public class MqttGatewayIssueTest extends AbstractContainerTest {
 
         // Update device attributes every 45 seconds during 1 hour
         long startTime = System.currentTimeMillis();
-        long durationInMillis = TimeUnit.HOURS.toMillis(1);
+        long durationInMillis = TimeUnit.HOURS.toMillis(7);
 
         do {
             updateDeviceAttributes();
