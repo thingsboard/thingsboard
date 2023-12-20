@@ -38,13 +38,13 @@ public class DeviceRedisCache extends RedisTbTransactionalCache<DeviceCacheKey, 
 
             @Override
             public byte[] serialize(Device device) throws SerializationException {
-                return ProtoUtils.toDeviceProto(device).toByteArray();
+                return ProtoUtils.toProto(device).toByteArray();
             }
 
             @Override
             public Device deserialize(DeviceCacheKey key, byte[] bytes) throws SerializationException {
                 try {
-                    return ProtoUtils.fromDeviceProto(TransportProtos.DeviceProto.parseFrom(bytes));
+                    return ProtoUtils.fromProto(TransportProtos.DeviceProto.parseFrom(bytes));
                 } catch (InvalidProtocolBufferException e) {
                     throw new SerializationException(e.getMessage());
                 }

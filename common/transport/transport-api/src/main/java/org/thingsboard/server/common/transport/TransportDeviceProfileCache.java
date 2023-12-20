@@ -15,19 +15,19 @@
  */
 package org.thingsboard.server.common.transport;
 
-import com.google.protobuf.ByteString;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.gen.transport.TransportProtos;
 
 public interface TransportDeviceProfileCache {
 
-    DeviceProfile getOrCreate(DeviceProfileId id, ByteString profileBody);
+    DeviceProfile getOrCreate(DeviceProfileId id, TransportProtos.DeviceProfileProto proto);
 
     DeviceProfile get(DeviceProfileId id);
 
     void put(DeviceProfile profile);
 
-    DeviceProfile put(ByteString profileBody);
+    DeviceProfile put(TransportProtos.DeviceProfileProto proto);
 
     void evict(DeviceProfileId id);
 

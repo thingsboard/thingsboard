@@ -36,12 +36,12 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
-import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AddMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.BranchInfoProto;
@@ -67,13 +67,12 @@ import org.thingsboard.server.gen.transport.TransportProtos.VersionedEntityInfoP
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
+import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.provider.TbVersionControlQueueFactory;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbVersionControlComponent;
 
 import javax.annotation.PostConstruct;
@@ -108,7 +107,6 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
     private final PartitionService partitionService;
     private final TbQueueProducerProvider producerProvider;
     private final TbVersionControlQueueFactory queueFactory;
-    private final DataDecodingEncodingService encodingService;
     private final GitRepositoryService vcService;
     private final TopicService topicService;
 
@@ -196,7 +194,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
                 }
                 for (TbProtoQueueMsg<ToVersionControlServiceMsg> msgWrapper : msgs) {
                     ToVersionControlServiceMsg msg = msgWrapper.getValue();
-                    var ctx = new VersionControlRequestCtx(msg, msg.hasClearRepositoryRequest() ? null : getEntitiesVersionControlSettings(msg));
+                    var ctx = new VersionControlRequestCtx(msg, msg.hasClearRepositoryRequest() ? null : ProtoUtils.fromProto(msg.getVcSettings()));
                     long startTs = System.currentTimeMillis();
                     log.trace("[{}][{}] RECEIVED task: {}", ctx.getTenantId(), ctx.getRequestId(), msg);
                     int threadIdx = Math.abs(ctx.getTenantId().hashCode() % ioPoolSize);
@@ -540,16 +538,6 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
         ToCoreNotificationMsg msg = ToCoreNotificationMsg.newBuilder().setVcResponseMsg(builder).build();
         log.trace("[{}][{}] PUSHING reply: {} to: {}", ctx.getTenantId(), ctx.getRequestId(), msg, tpi);
         producer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), null);
-    }
-
-    private RepositorySettings getEntitiesVersionControlSettings(ToVersionControlServiceMsg msg) {
-        Optional<RepositorySettings> settingsOpt = encodingService.decode(msg.getVcSettings().toByteArray());
-        if (settingsOpt.isPresent()) {
-            return settingsOpt.get();
-        } else {
-            log.warn("Failed to parse VC settings: {}", msg.getVcSettings());
-            throw new RuntimeException("Failed to parse vc settings!");
-        }
     }
 
     private String getRelativePath(EntityType entityType, String entityId) {

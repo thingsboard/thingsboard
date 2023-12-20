@@ -44,8 +44,10 @@ import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
+import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.util.ProtoUtils;
+import org.thingsboard.server.dao.resource.ImageCacheKey;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceStateServiceMsgProto;
@@ -59,6 +61,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.TbAlarmDeleteProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAlarmUpdateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAttributeDeleteProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAttributeUpdateProto;
+import org.thingsboard.server.gen.transport.TransportProtos.TbEntitySubEventProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbTimeSeriesDeleteProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbTimeSeriesUpdateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
@@ -66,14 +69,12 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMs
 import org.thingsboard.server.gen.transport.TransportProtos.ToOtaPackageStateServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.TbEntitySubEventProto;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.AfterStartUp;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.edge.EdgeNotificationService;
@@ -83,10 +84,8 @@ import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
 import org.thingsboard.server.service.queue.processing.IdMsgPair;
-import org.thingsboard.server.dao.resource.ImageCacheKey;
 import org.thingsboard.server.service.resource.TbImageService;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
-import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.subscription.SubscriptionManagerService;
@@ -154,7 +153,6 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                         DeviceStateService stateService,
                                         TbLocalSubscriptionService localSubscriptionService,
                                         SubscriptionManagerService subscriptionManagerService,
-                                        DataDecodingEncodingService encodingService,
                                         TbCoreDeviceRpcService tbCoreDeviceRpcService,
                                         StatsFactory statsFactory,
                                         TbDeviceProfileCache deviceProfileCache,
@@ -171,7 +169,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                         NotificationSchedulerService notificationSchedulerService,
                                         NotificationRuleProcessor notificationRuleProcessor,
                                         TbImageService imageService) {
-        super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, assetProfileCache, apiUsageStateService, partitionService, eventPublisher, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer(), jwtSettingsService);
+        super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, apiUsageStateService, partitionService, eventPublisher, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer(), jwtSettingsService);
         this.mainConsumer = tbCoreQueueFactory.createToCoreMsgConsumer();
         this.usageStatsConsumer = tbCoreQueueFactory.createToUsageStatsServiceMsgConsumer();
         this.firmwareStatesConsumer = tbCoreQueueFactory.createToOtaPackageStateServiceMsgConsumer();
@@ -284,19 +282,6 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                         }
                                     }
                                     callback.onSuccess();
-                                } else if (!toCoreMsg.getToDeviceActorNotificationMsg().isEmpty()) {
-                                    // will be removed in 3.6.1 in favour of hasToDeviceActorNotification()
-                                    Optional<TbActorMsg> actorMsg = encodingService.decode(toCoreMsg.getToDeviceActorNotificationMsg().toByteArray());
-                                    if (actorMsg.isPresent()) {
-                                        TbActorMsg tbActorMsg = actorMsg.get();
-                                        if (tbActorMsg.getMsgType().equals(MsgType.DEVICE_RPC_REQUEST_TO_DEVICE_ACTOR_MSG)) {
-                                            tbCoreDeviceRpcService.forwardRpcRequestToDeviceActor((ToDeviceRpcRequestActorMsg) tbActorMsg);
-                                        } else {
-                                            log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg.get());
-                                            actorContext.tell(actorMsg.get());
-                                        }
-                                    }
-                                    callback.onSuccess();
                                 } else if (toCoreMsg.hasNotificationSchedulerServiceMsg()) {
                                     TransportProtos.NotificationSchedulerServiceMsg notificationSchedulerServiceMsg = toCoreMsg.getNotificationSchedulerServiceMsg();
                                     log.trace("[{}] Forwarding message to notification scheduler service {}", id, toCoreMsg.getNotificationSchedulerServiceMsg());
@@ -373,28 +358,15 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         } else if (toCoreNotification.hasComponentLifecycle()) {
             handleComponentLifecycleMsg(id, ProtoUtils.fromProto(toCoreNotification.getComponentLifecycle()));
             callback.onSuccess();
-        } else if (!toCoreNotification.getComponentLifecycleMsg().isEmpty()) {
-            //will be removed in 3.6.1 in favour of hasComponentLifecycle()
-            handleComponentLifecycleMsg(id, toCoreNotification.getComponentLifecycleMsg());
-            callback.onSuccess();
         } else if (toCoreNotification.hasEdgeEventUpdate()) {
             forwardToAppActor(id, ProtoUtils.fromProto(toCoreNotification.getEdgeEventUpdate()));
             callback.onSuccess();
-        } else if (!toCoreNotification.getEdgeEventUpdateMsg().isEmpty()) {
-            //will be removed in 3.6.1 in favour of hasEdgeEventUpdate()
-            forwardToAppActor(id, encodingService.decode(toCoreNotification.getEdgeEventUpdateMsg().toByteArray()), callback);
         } else if (toCoreNotification.hasToEdgeSyncRequest()) {
             forwardToAppActor(id, ProtoUtils.fromProto(toCoreNotification.getToEdgeSyncRequest()));
             callback.onSuccess();
-        } else if (!toCoreNotification.getToEdgeSyncRequestMsg().isEmpty()) {
-            //will be removed in 3.6.1 in favour of hasToEdgeSyncRequest()
-            forwardToAppActor(id, encodingService.decode(toCoreNotification.getToEdgeSyncRequestMsg().toByteArray()), callback);
         } else if (toCoreNotification.hasFromEdgeSyncResponse()) {
             forwardToAppActor(id, ProtoUtils.fromProto(toCoreNotification.getFromEdgeSyncResponse()));
             callback.onSuccess();
-        } else if (!toCoreNotification.getFromEdgeSyncResponseMsg().isEmpty()) {
-            //will be removed in 3.6.1 in favour of hasFromEdgeSyncResponse()
-            forwardToAppActor(id, encodingService.decode(toCoreNotification.getFromEdgeSyncResponseMsg().toByteArray()), callback);
         } else if (toCoreNotification.hasQueueUpdateMsg()) {
             TransportProtos.QueueUpdateMsg queue = toCoreNotification.getQueueUpdateMsg();
             partitionService.updateQueue(queue);
@@ -409,9 +381,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         } else if (toCoreNotification.hasToSubscriptionMgrMsg()) {
             forwardToSubMgrService(toCoreNotification.getToSubscriptionMgrMsg(), callback);
         } else if (toCoreNotification.hasNotificationRuleProcessorMsg()) {
-            Optional<NotificationRuleTrigger> notificationRuleTrigger = encodingService.decode(toCoreNotification
-                    .getNotificationRuleProcessorMsg().getTrigger().toByteArray());
-            notificationRuleTrigger.ifPresent(notificationRuleProcessor::process);
+            NotificationRuleTrigger notificationRuleTrigger =
+                    JacksonUtil.fromBytes(toCoreNotification.getNotificationRuleProcessorMsg().getTrigger().toByteArray(), NotificationRuleTrigger.class);
+            notificationRuleProcessor.process(notificationRuleTrigger);
             callback.onSuccess();
         } else if (toCoreNotification.hasResourceCacheInvalidateMsg()) {
             forwardToResourceService(toCoreNotification.getResourceCacheInvalidateMsg(), callback);

@@ -37,13 +37,13 @@ public class DeviceProfileRedisCache extends RedisTbTransactionalCache<DevicePro
         super(CacheConstants.DEVICE_PROFILE_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbRedisSerializer<DeviceProfileCacheKey, DeviceProfile>() {
             @Override
             public byte[] serialize(DeviceProfile deviceProfile) throws SerializationException {
-                return ProtoUtils.toDeviceProfileProto(deviceProfile).toByteArray();
+                return ProtoUtils.toProto(deviceProfile).toByteArray();
             }
 
             @Override
             public DeviceProfile deserialize(DeviceProfileCacheKey key, byte[] bytes) throws SerializationException {
                 try {
-                    return ProtoUtils.fromDeviceProfileProto(TransportProtos.DeviceProfileProto.parseFrom(bytes));
+                    return ProtoUtils.fromProto(TransportProtos.DeviceProfileProto.parseFrom(bytes));
                 } catch (InvalidProtocolBufferException e) {
                     throw new SerializationException(e.getMessage());
                 }

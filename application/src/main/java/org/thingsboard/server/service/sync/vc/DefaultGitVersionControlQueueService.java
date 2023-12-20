@@ -20,7 +20,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
-import com.google.protobuf.ByteString;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,6 +45,7 @@ import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
 import org.thingsboard.server.common.data.util.CollectionsUtil;
+import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.CommitRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.EntitiesContentRequestMsg;
@@ -60,7 +60,6 @@ import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.vc.data.ClearRepositoryGitRequest;
 import org.thingsboard.server.service.sync.vc.data.CommitGitRequest;
@@ -96,7 +95,6 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
 
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TbClusterService clusterService;
-    private final DataDecodingEncodingService encodingService;
     private final DefaultEntitiesVersionControlService entitiesVersionControlService;
     private final SchedulerComponent scheduler;
 
@@ -109,12 +107,10 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
     private int msgChunkSize;
 
     public DefaultGitVersionControlQueueService(TbServiceInfoProvider serviceInfoProvider, TbClusterService clusterService,
-                                                DataDecodingEncodingService encodingService,
                                                 @Lazy DefaultEntitiesVersionControlService entitiesVersionControlService,
                                                 SchedulerComponent scheduler) {
         this.serviceInfoProvider = serviceInfoProvider;
         this.clusterService = clusterService;
-        this.encodingService = encodingService;
         this.entitiesVersionControlService = entitiesVersionControlService;
         this.scheduler = scheduler;
     }
@@ -588,7 +584,7 @@ public class DefaultGitVersionControlQueueService implements GitVersionControlQu
             vcSettings = entitiesVersionControlService.getVersionControlSettings(tenantId);
         }
         if (vcSettings != null) {
-            builder.setVcSettings(ByteString.copyFrom(encodingService.encode(vcSettings)));
+            builder.setVcSettings(ProtoUtils.toProto(vcSettings));
         } else if (request.requiresSettings()) {
             throw new RuntimeException("No entity version control settings provisioned!");
         }

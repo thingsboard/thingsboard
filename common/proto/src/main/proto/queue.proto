@@ -190,20 +190,20 @@ message DeviceProto {
   int64 deviceIdLSB = 4;
   int64 createdTime = 5;
   string deviceName = 6;
-  string deviceLabel = 7;
+  optional string deviceLabel = 7;
   string deviceType = 8;
-  string additionalInfo = 9;
+  optional string additionalInfo = 9;
   int64 deviceProfileIdMSB = 10;
   int64 deviceProfileIdLSB = 11;
-  int64 customerIdMSB = 12;
-  int64 customerIdLSB = 13;
-  bytes deviceData = 14;
-  int64 firmwareIdMSB = 15;
-  int64 firmwareIdLSB = 16;
-  int64 softwareIdMSB = 17;
-  int64 softwareIdLSB = 18;
-  int64 externalIdMSB = 19;
-  int64 externalIdLSB = 20;
+  optional int64 customerIdMSB = 12;
+  optional int64 customerIdLSB = 13;
+  optional bytes deviceData = 14;
+  optional int64 firmwareIdMSB = 15;
+  optional int64 firmwareIdLSB = 16;
+  optional int64 softwareIdMSB = 17;
+  optional int64 softwareIdLSB = 18;
+  optional int64 externalIdMSB = 19;
+  optional int64 externalIdLSB = 20;
 }
 
 message DeviceProfileProto {
@@ -213,27 +213,108 @@ message DeviceProfileProto {
   int64 deviceProfileIdLSB = 4;
   int64 createdTime = 5;
   string name = 6;
-  string description = 7;
-  string image = 8;
+  optional string description = 7;
+  optional string image = 8;
   bool isDefault = 9;
   string type = 10;
   string transportType = 11;
   string provisionType = 12;
-  int64 defaultRuleChainIdMSB = 13;
-  int64 defaultRuleChainIdLSB = 14;
-  int64 defaultDashboardIdMSB = 15;
-  int64 defaultDashboardIdLSB = 16;
-  string defaultQueueName = 17;
-  bytes deviceProfileData = 18;
-  string provisionDeviceKey = 19;
-  int64 firmwareIdMSB = 20;
-  int64 firmwareIdLSB = 21;
-  int64 softwareIdMSB = 22;
-  int64 softwareIdLSB = 23;
-  int64 defaultEdgeRuleChainIdMSB = 24;
-  int64 defaultEdgeRuleChainIdLSB = 25;
-  int64 externalIdMSB = 26;
-  int64 externalIdLSB = 27;
+  optional int64 defaultRuleChainIdMSB = 13;
+  optional int64 defaultRuleChainIdLSB = 14;
+  optional int64 defaultDashboardIdMSB = 15;
+  optional int64 defaultDashboardIdLSB = 16;
+  optional string defaultQueueName = 17;
+  optional bytes deviceProfileData = 18;
+  optional string provisionDeviceKey = 19;
+  optional int64 firmwareIdMSB = 20;
+  optional int64 firmwareIdLSB = 21;
+  optional int64 softwareIdMSB = 22;
+  optional int64 softwareIdLSB = 23;
+  optional int64 defaultEdgeRuleChainIdMSB = 24;
+  optional int64 defaultEdgeRuleChainIdLSB = 25;
+  optional int64 externalIdMSB = 26;
+  optional int64 externalIdLSB = 27;
+}
+
+message TenantProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 createdTime = 3;
+  string title = 4;
+  optional string region = 5;
+  int64 tenantProfileIdMSB = 6;
+  int64 tenantProfileIdLSB = 7;
+  optional string country = 8;
+  optional string state = 9;
+  optional string city = 10;
+  optional string address = 11;
+  optional string address2 = 12;
+  optional string zip = 13;
+  optional string phone = 14;
+  optional string email = 15;
+  optional string additionalInfo = 16;
+}
+
+message TenantProfileProto {
+  int64 tenantProfileIdMSB = 1;
+  int64 tenantProfileIdLSB = 2;
+  int64 createdTime = 3;
+  string name = 4;
+  optional string description = 5;
+  bool isDefault = 6;
+  bool isolatedTbRuleEngine = 7;
+  optional bytes profileData = 8;
+}
+
+message TbResourceProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 resourceIdMSB = 3;
+  int64 resourceIdLSB = 4;
+  int64 createdTime = 5;
+  string title = 6;
+  string resourceType = 7;
+  string resourceKey = 8;
+  string searchText = 9;
+  optional string etag = 10;
+  string fileName = 11;
+  optional string resourceDescriptor = 12;
+  optional int64 externalIdMSB = 13;
+  optional int64 externalIdLSB = 14;
+  optional bytes data = 15;
+  optional bytes preview = 16;
+}
+
+message ApiUsageStateProto {
+  int64 tenantProfileIdMSB = 1;
+  int64 tenantProfileIdLSB = 2;
+  int64 apiUsageStateIdMSB = 3;
+  int64 apiUsageStateIdLSB = 4;
+  int64 createdTime = 5;
+  EntityTypeProto entityType = 6;
+  int64 entityIdMSB = 7;
+  int64 entityIdLSB = 8;
+  string transportState = 9;
+  string dbStorageState = 10;
+  string reExecState = 11;
+  string jsExecState = 12;
+  string tbelExecState = 13;
+  string emailExecState = 14;
+  string smsExecState = 15;
+  string alarmExecState = 16;
+}
+
+message RepositorySettingsProto {
+  string repositoryUri = 1;
+  string authMethod = 2;
+  optional string username = 3;
+  optional string password = 4;
+  optional string privateKeyFileName = 5;
+  optional string privateKey = 6;
+  optional string privateKeyPassword = 7;
+  optional string defaultBranch = 8;
+  bool readOnly = 9;
+  bool showMergeCommits = 10;
 }
 
 /**
@@ -295,7 +376,7 @@ message ValidateBasicMqttCredRequestMsg {
 message ValidateDeviceCredentialsResponseMsg {
   DeviceInfoProto deviceInfo = 1;
   string credentialsBody = 2;
-  bytes profileBody = 3;
+  DeviceProfileProto deviceProfile = 3;
 }
 
 message GetOrCreateDeviceFromGatewayRequestMsg {
@@ -307,7 +388,7 @@ message GetOrCreateDeviceFromGatewayRequestMsg {
 
 message GetOrCreateDeviceFromGatewayResponseMsg {
   DeviceInfoProto deviceInfo = 1;
-  bytes profileBody = 2;
+  DeviceProfileProto deviceProfile = 2;
   TransportApiRequestErrorCode error = 3;
 }
 
@@ -390,7 +471,7 @@ message GetResourceRequestMsg {
 }
 
 message GetResourceResponseMsg {
-  bytes resource = 1;
+  TbResourceProto resource = 1;
 }
 
 message ValidateDeviceLwM2MCredentialsRequestMsg {
@@ -418,8 +499,11 @@ message GetDeviceProfileRequestMsg {
 
 message GetEntityProfileResponseMsg {
   string entityType = 1;
-  bytes data = 2;
-  bytes apiState = 3;
+  oneof data {
+    TenantProfileProto tenantProfile = 2;
+    DeviceProfileProto deviceProfile = 3;
+  }
+  ApiUsageStateProto apiState = 4;
 }
 
 message GetDeviceRequestMsg {
@@ -430,6 +514,7 @@ message GetDeviceRequestMsg {
 message GetDeviceResponseMsg {
   int64 deviceProfileIdMSB = 1;
   int64 deviceProfileIdLSB = 2;
+  //Json
   bytes deviceTransportConfiguration = 3;
 }
 
@@ -439,7 +524,7 @@ message GetDeviceCredentialsRequestMsg {
 }
 
 message GetDeviceCredentialsResponseMsg {
-  bytes deviceCredentialsData = 1;
+  DeviceCredentialsProto deviceCredentialsData = 1;
 }
 
 message GetSnmpDevicesRequestMsg {
@@ -453,8 +538,13 @@ message GetSnmpDevicesResponseMsg {
 }
 
 message EntityUpdateMsg {
-  string entityType = 1;
-  bytes data = 2;
+  oneof entityUpdate {
+    TenantProto tenant = 1;
+    TenantProfileProto tenantProfile = 2;
+    DeviceProto device = 3;
+    DeviceProfileProto deviceProfile = 4;
+    ApiUsageStateProto apiUsageState = 5;
+  }
 }
 
 message EntityDeleteMsg {
@@ -1242,7 +1332,7 @@ message ToVersionControlServiceMsg {
   int64 tenantIdLSB = 3;
   int64 requestIdMSB = 4;
   int64 requestIdLSB = 5;
-  bytes vcSettings = 6;
+  RepositorySettingsProto vcSettings = 6;
   GenericRepositoryRequestMsg initRepositoryRequest = 7;
   GenericRepositoryRequestMsg testRepositoryRequest = 8;
   GenericRepositoryRequestMsg clearRepositoryRequest = 9;
@@ -1326,21 +1416,17 @@ message ToCoreMsg {
 message ToCoreNotificationMsg {
   LocalSubscriptionServiceMsgProto toLocalSubscriptionServiceMsg = 1;
   FromDeviceRPCResponseProto fromDeviceRpcResponse = 2;
-  bytes componentLifecycleMsg = 3 [deprecated = true];
-  bytes edgeEventUpdateMsg = 4 [deprecated = true];
-  QueueUpdateMsg queueUpdateMsg = 5;
-  QueueDeleteMsg queueDeleteMsg = 6;
-  VersionControlResponseMsg vcResponseMsg = 7;
-  bytes toEdgeSyncRequestMsg = 8 [deprecated = true];
-  bytes fromEdgeSyncResponseMsg = 9 [deprecated = true];
-  SubscriptionMgrMsgProto toSubscriptionMgrMsg = 10;
-  NotificationRuleProcessorMsg notificationRuleProcessorMsg = 11;
-  ComponentLifecycleMsgProto componentLifecycle = 12;
-  CoreStartupMsg coreStartupMsg = 13;
-  EdgeEventUpdateMsgProto edgeEventUpdate = 14;
-  ToEdgeSyncRequestMsgProto toEdgeSyncRequest = 15;
-  FromEdgeSyncResponseMsgProto fromEdgeSyncResponse = 16;
-  ResourceCacheInvalidateMsg resourceCacheInvalidateMsg = 17;
+  QueueUpdateMsg queueUpdateMsg = 3;
+  QueueDeleteMsg queueDeleteMsg = 4;
+  VersionControlResponseMsg vcResponseMsg = 5;
+  SubscriptionMgrMsgProto toSubscriptionMgrMsg = 6;
+  NotificationRuleProcessorMsg notificationRuleProcessorMsg = 7;
+  ComponentLifecycleMsgProto componentLifecycle = 8;
+  CoreStartupMsg coreStartupMsg = 9;
+  EdgeEventUpdateMsgProto edgeEventUpdate = 10;
+  ToEdgeSyncRequestMsgProto toEdgeSyncRequest = 11;
+  FromEdgeSyncResponseMsgProto fromEdgeSyncResponse = 12;
+  ResourceCacheInvalidateMsg resourceCacheInvalidateMsg = 13;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */
@@ -1353,7 +1439,6 @@ message ToRuleEngineMsg {
 }
 
 message ToRuleEngineNotificationMsg {
-  bytes componentLifecycleMsg = 1 [deprecated = true];
   FromDeviceRPCResponseProto fromDeviceRpcResponse = 2;
   QueueUpdateMsg queueUpdateMsg = 3;
   QueueDeleteMsg queueDeleteMsg = 4;
@@ -1416,6 +1501,7 @@ message NotificationSchedulerServiceMsg {
 }
 
 message NotificationRuleProcessorMsg {
+  //Json
   bytes trigger = 1;
 }
 
