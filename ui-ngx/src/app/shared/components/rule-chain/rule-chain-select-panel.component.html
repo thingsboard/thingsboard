@@ -1,0 +1,42 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-form-field [formGroup]="selectRuleChainGroup" class="mat-block">
+  <input matInput type="text" placeholder="{{ 'rulechain.search' | translate }}"
+         #ruleChainInput
+         formControlName="ruleChainInput"
+         (focusin)="onFocus()"
+         [matAutocomplete]="ruleChainAutocomplete">
+  <mat-icon matSuffix>search</mat-icon>
+  <mat-autocomplete class="tb-autocomplete"
+                    #ruleChainAutocomplete="matAutocomplete"
+                    (optionSelected)="selected($event)">
+    <mat-option *ngFor="let ruleChain of filteredRuleChains | async"
+                [fxHide]="ruleChainId === ruleChain.id.id"
+                [value]="ruleChain">
+      <span [innerHTML]="ruleChain.name | highlight:searchText"></span>
+    </mat-option>
+    <mat-option *ngIf="!(filteredRuleChains | async)?.length" [value]="null" class="tb-not-found">
+      <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+        <span>
+          {{ translate.get('rulechain.no-rulechains-matching', {entity: searchText}) | async }}
+        </span>
+      </div>
+    </mat-option>
+  </mat-autocomplete>
+</mat-form-field>
+

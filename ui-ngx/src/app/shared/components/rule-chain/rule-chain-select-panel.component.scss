@@ -14,27 +14,5 @@
  * limitations under the License.
  */
 :host {
-  min-width: 52px;
   width: 100%;
-  padding: 0;
-  .tb-rule-select {
-    width: 100%;
-
-    input {
-      color: #fff;
-      cursor: pointer;
-
-      &:disabled {
-        cursor: unset;
-      }
-    }
-  }
-}
-
-.cursor-pointer {
-  cursor: pointer;
-}
-
-.disabled {
-  opacity: 0.5;
 }

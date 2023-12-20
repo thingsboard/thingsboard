@@ -215,6 +215,7 @@ import { ImagesInUseDialogComponent } from '@shared/components/image/images-in-u
 import { GalleryImageInputComponent } from '@shared/components/image/gallery-image-input.component';
 import { MultipleGalleryImageInputComponent } from '@shared/components/image/multiple-gallery-image-input.component';
 import { EmbedImageDialogComponent } from '@shared/components/image/embed-image-dialog.component';
+import { RuleChainSelectPanelComponent } from '@shared/components/rule-chain/rule-chain-select-panel.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -396,6 +397,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     StringAutocompleteComponent,
     MaterialIconsComponent,
     RuleChainSelectComponent,
+    RuleChainSelectPanelComponent,
     TbIconComponent,
     HintTooltipIconComponent,
     ImportDialogComponent,
@@ -646,6 +648,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     StringAutocompleteComponent,
     MaterialIconsComponent,
     RuleChainSelectComponent,
+    RuleChainSelectPanelComponent,
     TbIconComponent,
     HintTooltipIconComponent,
     ImportDialogComponent,
