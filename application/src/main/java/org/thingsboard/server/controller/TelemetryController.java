@@ -425,7 +425,7 @@ public class TelemetryController extends BaseController {
     public DeferredResult<ResponseEntity> saveEntityTelemetry(
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "DEVICE")) @PathVariable("entityType") String entityType,
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,
-            @Parameter(description = TELEMETRY_SCOPE_DESCRIPTION, required = true, schema = @Schema(allowableValues = "ANY")) @PathVariable("scope")AttributeScope scope,
+            @Parameter(description = TELEMETRY_SCOPE_DESCRIPTION, required = true, schema = @Schema(allowableValues = "ANY")) @PathVariable("scope")String scope,
                     @Parameter(description = TELEMETRY_JSON_REQUEST_DESCRIPTION, required = true)@RequestBody String requestBody) throws ThingsboardException {
         EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
         return saveTelemetry(getTenantId(), entityId, requestBody, 0L);
