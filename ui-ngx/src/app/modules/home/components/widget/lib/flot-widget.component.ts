@@ -30,7 +30,7 @@ import { isDefinedAndNotNull } from '@core/utils';
 @Component({
   selector: 'tb-flot-widget',
   templateUrl: './flot-widget.component.html',
-  styleUrls: []
+  styleUrls: ['./flot-widget.component.scss']
 })
 export class FlotWidgetComponent implements OnInit {
 
