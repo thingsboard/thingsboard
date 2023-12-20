@@ -822,7 +822,7 @@ public final class EdgeGrpcSession implements Closeable {
     }
 
     private void processSaveEdgeVersionAsAttribute(String edgeVersion) {
-        AttributeKvEntry attributeKvEntry = new BaseAttributeKvEntry(new StringDataEntry("edgeVersion", edgeVersion), System.currentTimeMillis());
+        AttributeKvEntry attributeKvEntry = new BaseAttributeKvEntry(new StringDataEntry(DataConstants.EDGE_VERSION_ATTR_KEY, edgeVersion), System.currentTimeMillis());
         ctx.getAttributesService().save(this.tenantId, this.edge.getId(), DataConstants.SERVER_SCOPE, attributeKvEntry);
     }
 

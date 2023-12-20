@@ -121,4 +121,8 @@ export class EdgeService {
   public getEdgeUpgradeInstructions(edgeVersion: string, method: string = 'ubuntu', config?: RequestConfig): Observable<EdgeInstructions> {
     return this.http.get<EdgeInstructions>(`/api/edge/instructions/upgrade/${edgeVersion}/${method}`, defaultHttpOptionsFromConfig(config));
   }
+
+  public isEdgeUpgradeAvailable(edgeId: string, config?: RequestConfig): Observable<boolean> {
+    return this.http.get<boolean>(`/api/edge/${edgeId}/upgrade/available`, defaultHttpOptionsFromConfig(config));
+  }
 }
