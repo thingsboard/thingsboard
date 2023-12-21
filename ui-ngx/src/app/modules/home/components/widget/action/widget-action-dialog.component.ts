@@ -28,7 +28,7 @@ import {
   ValidatorFn,
   Validators
 } from '@angular/forms';
-import { Observable, of, Subscription } from 'rxjs';
+import { Observable, of, Subject, Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import {
@@ -43,7 +43,7 @@ import {
   WidgetActionType,
   widgetActionTypeTranslationMap
 } from '@shared/models/widget.models';
-import { map, mergeMap, startWith, tap } from 'rxjs/operators';
+import { map, mergeMap, startWith, takeUntil, tap } from 'rxjs/operators';
 import { DashboardService } from '@core/http/dashboard.service';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
@@ -87,6 +87,10 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
   @ViewChild('dashboardStateInput') dashboardStateInput: ElementRef;
 
   @ViewChild('mobileActionEditor', {static: false}) mobileActionEditor: MobileActionEditorComponent;
+
+  private destroy$ = new Subject<void>();
+
+  private dashboard: Dashboard;
 
   widgetActionFormGroup: UntypedFormGroup;
   actionTypeFormGroup: UntypedFormGroup;
@@ -156,16 +160,28 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
       this.fb.control(this.action.type, [Validators.required]));
     this.updateShowWidgetActionForm();
     this.updateActionTypeFormGroup(this.action.type, this.action);
-    this.widgetActionFormGroup.get('type').valueChanges.subscribe((type: WidgetActionType) => {
+    this.widgetActionFormGroup.get('type').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((type: WidgetActionType) => {
       this.updateActionTypeFormGroup(type);
     });
-    this.widgetActionFormGroup.get('actionSourceId').valueChanges.subscribe(() => {
+    this.widgetActionFormGroup.get('actionSourceId').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
       this.widgetActionFormGroup.get('name').updateValueAndValidity();
       this.updateShowWidgetActionForm();
     });
-    this.widgetActionFormGroup.get('useShowWidgetActionFunction').valueChanges.subscribe(() => {
+    this.widgetActionFormGroup.get('useShowWidgetActionFunction').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
       this.updateShowWidgetActionForm();
     });
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+    super.ngOnDestroy();
   }
 
   displayShowWidgetActionForm(): boolean {
@@ -235,8 +251,10 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
               );
               this.updateStateDisplayTypeFormGroup(displayType, action);
               this.actionTypeFormGroupSubscriptions.push(
-                this.actionTypeFormGroup.get('stateDisplayType').valueChanges.subscribe((displayTypeValue: stateDisplayType) => {
-                    this.updateStateDisplayTypeFormGroup(displayTypeValue);
+                this.actionTypeFormGroup.get('stateDisplayType').valueChanges.pipe(
+                  takeUntil(this.destroy$)
+                ).subscribe((displayTypeValue: stateDisplayType) => {
+                  this.updateStateDisplayTypeFormGroup(displayTypeValue);
                 })
               );
             }
@@ -340,26 +358,34 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
   }
 
   private setupSelectedDashboardStateIds() {
-    const dashboardControl = this.actionTypeFormGroup.get('targetDashboardId');
-
     this.selectedDashboardStateIds =
-      dashboardControl.valueChanges.pipe(
-        startWith(dashboardControl.value),
-        tap(() => {
+      this.actionTypeFormGroup.get('targetDashboardId').valueChanges.pipe(
+        tap((dashboardId) => {
+          if (!dashboardId) {
+            this.actionTypeFormGroup.get('targetDashboardStateId')
+              .patchValue('', {emitEvent: true});
+          }
+
           this.targetDashboardStateSearchText = '';
         }),
         mergeMap((dashboardId) => {
           if (dashboardId) {
-            return this.dashboardService.getDashboard(dashboardId);
+            if (this.dashboard?.id.id === dashboardId) {
+              return of(this.dashboard);
+            } else {
+              return this.dashboardService.getDashboard(dashboardId);
+            }
           } else {
             return of(null);
           }
         }),
         map((dashboard: Dashboard) => {
           if (dashboard) {
-            dashboard = this.dashboardUtils.validateAndUpdateDashboard(dashboard);
-            const states = dashboard.configuration.states;
-            return Object.keys(states);
+            if (this.dashboard?.id.id !== dashboard.id.id) {
+              this.dashboard = this.dashboardUtils.validateAndUpdateDashboard(dashboard);
+            }
+
+            return Object.keys(this.dashboard.configuration.states);
           } else {
             return [];
           }
@@ -373,7 +399,8 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
       .pipe(
         startWith(''),
         map(value => value ? value : ''),
-        mergeMap(name => this.fetchDashboardStates(name) )
+        mergeMap(name => this.fetchDashboardStates(name)),
+        takeUntil(this.destroy$)
       );
   }
 
@@ -461,6 +488,10 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
     } else {
       return '';
     }
+  }
+
+  onFocus(): void {
+    this.actionTypeFormGroup.get('targetDashboardId').updateValueAndValidity({onlySelf: true, emitEvent: true});
   }
 
   cancel(): void {
