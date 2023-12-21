@@ -34,7 +34,7 @@
           <mat-label translate>dashboard.state-controller</mat-label>
           <mat-select required formControlName="stateControllerId">
             <mat-option *ngFor="let stateControllerId of stateControllerIds" [value]="stateControllerId">
-              {{stateControllerId}}
+              {{ getStatesControllerTranslation(stateControllerId) }}
             </mat-option>
           </mat-select>
         </mat-form-field>
