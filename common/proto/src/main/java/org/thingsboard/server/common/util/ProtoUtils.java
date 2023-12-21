@@ -877,7 +877,7 @@ public class ProtoUtils {
                 .setApiUsageStateIdMSB(getMsb(apiUsageState.getId()))
                 .setApiUsageStateIdLSB(getLsb(apiUsageState.getId()))
                 .setCreatedTime(apiUsageState.getCreatedTime())
-                .setEntityType(TransportProtos.EntityTypeProto.forNumber(apiUsageState.getEntityId().getEntityType().ordinal()))
+                .setEntityType(toProto(apiUsageState.getEntityId().getEntityType()))
                 .setEntityIdMSB(getMsb(apiUsageState.getEntityId()))
                 .setEntityIdLSB(getLsb(apiUsageState.getEntityId()))
                 .setTransportState(apiUsageState.getTransportState().name())
