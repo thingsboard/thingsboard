@@ -3646,8 +3646,7 @@
         "assign-rulechains": "Assignar cadenes de regles",
         "delete-rulechains": "Eliminar cadenes de regles",
         "unassign-rulechain": "Anul·lar assignació de cadena de regles",
-        "unassign-rulechains-from-edge-action-title": "Anul·lar assignació {count, plural, =1 {1 cadena de regles} other {# cadenes de regles} } des vores",
-        "assign-new-rulechain": "Assignar nova cadena de regles"
+        "unassign-rulechains-from-edge-action-title": "Anul·lar assignació {count, plural, =1 {1 cadena de regles} other {# cadenes de regles} } des vores"
     },
     "rulenode": {
         "details": "Detalls",

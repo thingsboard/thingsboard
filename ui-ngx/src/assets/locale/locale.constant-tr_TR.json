@@ -2430,7 +2430,6 @@
     "search": "Kural Ara",
     "selected-rulechains": "{ count, plural, =1 {1 kural} other {# kural} } seçildi",
     "open-rulechain": "Kuralı Aç",
-    "assign-new-rulechain": "Yeni kural zinciri atayın",
     "edge-template-root": "Şablon Kökü",
     "assign-to-edge": "Uca Ata",
     "edge-rulechain": "Uç kuralı zinciri",
