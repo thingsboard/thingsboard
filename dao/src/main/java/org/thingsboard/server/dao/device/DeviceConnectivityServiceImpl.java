@@ -218,7 +218,7 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
             return null;
         }
         String hostName = getHost(baseUrl, properties, protocol);
-        String propertiesPort = properties.getPort();
+        String propertiesPort = getPort(properties);
         String port = (propertiesPort.isEmpty() || HTTP_DEFAULT_PORT.equals(propertiesPort) || HTTPS_DEFAULT_PORT.equals(propertiesPort))
                 ? "" : ":" + propertiesPort;
         return DeviceConnectivityUtil.getHttpPublishCommand(protocol, hostName, port, deviceCredentials);

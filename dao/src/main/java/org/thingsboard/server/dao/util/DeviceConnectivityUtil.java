@@ -36,9 +36,6 @@ public class DeviceConnectivityUtil {
     public static final String HTTP = "http";
     public static final String HTTPS = "https";
     public static final String MQTT = "mqtt";
-    public static final String LINUX = "linux";
-    public static final String WINDOWS = "windows";
-    public static final String MACOS = "macos";
     public static final String DOCKER = "docker";
     public static final String MQTTS = "mqtts";
     public static final String COAP = "coap";
