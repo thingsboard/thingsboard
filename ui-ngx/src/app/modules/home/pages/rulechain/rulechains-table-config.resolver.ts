@@ -172,7 +172,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     if (ruleChainScope === 'edge') {
       actions.push(
         {
-          name: this.translate.instant('edge.assign-to-edge'),
+          name: this.translate.instant('rulechain.assign-to-edge'),
           icon: 'add',
           isEnabled: () => true,
           onAction: ($event) => this.assignRuleChainsToEdge($event)
