@@ -287,7 +287,15 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
     private <R> VersionLoadResult doInTemplate(EntitiesImportCtx ctx, VersionLoadRequest request, Function<EntitiesImportCtx, VersionLoadResult> function) {
         try {
-            VersionLoadResult result = transactionTemplate.execute(status -> function.apply(ctx));
+            VersionLoadResult result = transactionTemplate.execute(status -> {
+                try {
+                    return function.apply(ctx);
+                } catch (RuntimeException e) {
+                    throw e;
+                } catch (Exception e) {
+                    throw new RuntimeException(e); // to prevent UndeclaredThrowableException
+                }
+            });
             for (ThrowingRunnable throwingRunnable : ctx.getEventCallbacks()) {
                 throwingRunnable.run();
             }
@@ -355,9 +363,9 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
         sw.stop();
         for (var task : sw.getTaskInfo()) {
-            log.info("[{}] Executed: {} in {}ms", ctx.getTenantId(), task.getTaskName(), task.getTimeMillis());
+            log.debug("[{}] Executed: {} in {}ms", ctx.getTenantId(), task.getTaskName(), task.getTimeMillis());
         }
-        log.info("[{}] Total time: {}ms", ctx.getTenantId(), sw.getTotalTimeMillis());
+        log.debug("[{}] Total time: {}ms", ctx.getTenantId(), sw.getTotalTimeMillis());
         return VersionLoadResult.success(new ArrayList<>(ctx.getResults().values()));
     }
 
@@ -380,8 +388,8 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         do {
             try {
                 entityDataList = gitServiceQueue.getEntities(ctx.getTenantId(), ctx.getVersionId(), entityType, offset, limit).get();
-            } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
+            } catch (ExecutionException e) {
+                throw e.getCause();
             }
             log.debug("[{}] Loading {} entities pack ({})", ctx.getTenantId(), entityType, entityDataList.size());
             for (EntityExportData entityData : entityDataList) {
