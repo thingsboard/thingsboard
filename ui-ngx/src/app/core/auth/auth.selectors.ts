@@ -72,6 +72,11 @@ export const selectPersistDeviceStateToTelemetry = createSelector(
   (state: AuthState) => state.persistDeviceStateToTelemetry
 );
 
+export const selectMaxResourceSize = createSelector(
+  selectAuthState,
+  (state: AuthState) => state.maxResourceSize
+);
+
 export const selectUserSettings = createSelector(
   selectAuthState,
   (state: AuthState) => state.userSettings

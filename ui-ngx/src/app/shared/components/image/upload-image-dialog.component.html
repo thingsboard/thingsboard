@@ -35,6 +35,7 @@
                       label="{{'image.image-preview' | translate}}"
                       formControlName="file"
                       showFileName
+                      [maxSizeByte]="maxResourceSize"
                       [fileName]="data?.image?.fileName"
                       (fileNameChanged)="imageFileNameChanged($event)">
       </tb-image-input>
