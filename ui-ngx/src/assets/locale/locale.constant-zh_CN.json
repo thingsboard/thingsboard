@@ -3681,7 +3681,6 @@
         "search": "查找规则链",
         "selected-rulechains": "已选择 { count, plural, =1 {1 个规则链} other {# 个规则链} }",
         "open-rulechain": "打开规则链",
-        "assign-new-rulechain": "分配新的规则链",
         "edge-template-root": "模版根链",
         "assign-to-edge": "分配给边缘",
         "edge-rulechain": "边缘规则链",

@@ -3757,7 +3757,6 @@
         "search": "Search rule chains",
         "selected-rulechains": "{ count, plural, =1 {1 rule chain} other {# rule chains} } selected",
         "open-rulechain": "Open rule chain",
-        "assign-new-rulechain": "Assign new rulechain",
         "edge-template-root": "Template root",
         "assign-to-edge": "Assign to edge",
         "edge-rulechain": "Edge rule chain",
