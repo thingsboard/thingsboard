@@ -17,19 +17,16 @@ package org.thingsboard.server.service.sync.vc;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.TbStopWatch;
-import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
@@ -72,6 +69,7 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
+import org.thingsboard.server.service.executors.VersionControlExecutor;
 import org.thingsboard.server.service.sync.ie.EntitiesExportImportService;
 import org.thingsboard.server.service.sync.ie.exporting.ExportableEntitiesService;
 import org.thingsboard.server.service.sync.ie.importing.impl.MissingEntityException;
@@ -85,8 +83,6 @@ import org.thingsboard.server.service.sync.vc.data.ReimportTask;
 import org.thingsboard.server.service.sync.vc.data.SimpleEntitiesExportCtx;
 import org.thingsboard.server.service.sync.vc.repository.TbRepositorySettingsService;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -115,23 +111,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     private final TbNotificationEntityService entityNotificationService;
     private final TransactionTemplate transactionTemplate;
     private final TbTransactionalCache<UUID, VersionControlTaskCacheEntry> taskCache;
-
-    private ListeningExecutorService executor;
-
-    @Value("${vc.thread_pool_size:4}")
-    private int threadPoolSize;
-
-    @PostConstruct
-    public void init() {
-        executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(threadPoolSize, DefaultEntitiesVersionControlService.class));
-    }
-
-    @PreDestroy
-    public void shutdown() {
-        if (executor != null) {
-            executor.shutdownNow();
-        }
-    }
+    private final VersionControlExecutor executor;
 
     @SuppressWarnings("UnstableApiUsage")
     @Override
@@ -185,7 +165,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
             throw new ThingsboardException(ThingsboardErrorCode.ITEM_NOT_FOUND);
         } else {
             var entry = cacheEntry.get();
-            log.debug("[{}] Cache get: {}", requestId, entry);
+            log.trace("[{}] Cache get: {}", requestId, entry);
             var result = getter.apply(entry);
             if (result == null) {
                 throw new ThingsboardException(ThingsboardErrorCode.BAD_REQUEST_PARAMS);
@@ -631,7 +611,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     }
 
     private VersionLoadResult cachePut(UUID requestId, VersionLoadResult result) {
-        log.debug("[{}] Cache put: {}", requestId, result);
+        log.trace("[{}] Cache put: {}", requestId, result);
         taskCache.put(requestId, VersionControlTaskCacheEntry.newForImport(result));
         return result;
     }
