@@ -17,7 +17,7 @@
 import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { select, Store } from '@ngrx/store';
+import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
   FormGroupDirective,
@@ -31,8 +31,7 @@ import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 import { ImageService } from '@core/http/image.service';
 import { ImageResourceInfo, imageResourceType } from '@shared/models/resource.models';
-import { selectMaxResourceSize } from '@core/auth/auth.selectors';
-import { take } from 'rxjs/operators';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
 
 export interface UploadImageDialogData {
   image?: ImageResourceInfo;
@@ -53,7 +52,7 @@ export class UploadImageDialogComponent extends
 
   submitted = false;
 
-  maxResourceSize = 0;
+  maxResourceSize = getCurrentAuthState(this.store).maxResourceSize;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -63,11 +62,6 @@ export class UploadImageDialogComponent extends
               public dialogRef: MatDialogRef<UploadImageDialogComponent, ImageResourceInfo>,
               public fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
-    this.store.pipe(select(selectMaxResourceSize)).pipe(
-      take(1)
-    ).subscribe(maxResourceSize => {
-      this.maxResourceSize = maxResourceSize;
-    });
   }
 
   ngOnInit(): void {

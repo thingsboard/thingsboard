@@ -147,10 +147,12 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
         const readers = [];
         let showMaxSizeAlert = false;
         (event.event[0] as flowjs.FlowFile[]).forEach(file => {
-          if (!this.checkMaxSize(file)) {
-            showMaxSizeAlert = true;
-          } else if (this.filterFile(file)) {
-            readers.push(this.readerAsFile(file));
+          if (this.filterFile(file)) {
+            if (this.checkMaxSize(file)) {
+              readers.push(this.readerAsFile(file));
+            } else {
+              showMaxSizeAlert = true;
+            }
           }
         });
 
@@ -219,7 +221,7 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
   }
 
   private checkMaxSize(file: flowjs.FlowFile): boolean {
-    return !(this.maxSizeByte && this.maxSizeByte < file.size);
+    return !this.maxSizeByte || file.size <= this.maxSizeByte;
   }
 
   private filterFile(file: flowjs.FlowFile): boolean {
