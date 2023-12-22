@@ -69,7 +69,9 @@
       <tb-file-input *ngIf="isAdd || (isEdit && entityForm.get('resourceType').value === resourceType.JS_MODULE)"
         formControlName="data"
         required
+        label="{{ (entityForm.get('resourceType').value === resourceType.LWM2M_MODEL ? 'resource.resource-files' : 'resource.resource-file') | translate }}"
         [readAsBinary]="true"
+        [maxSizeByte]="maxResourceSize"
         [allowedExtensions]="getAllowedExtensions()"
         [contentConvertFunction]="convertToBase64File"
         [accept]="getAcceptType()"
