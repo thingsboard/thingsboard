@@ -16,8 +16,6 @@
 package org.thingsboard.server.controller;
 
 import io.swagger.annotations.ApiParam;
-import lombok.Builder;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -51,7 +49,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.util.ThrowingSupplier;
 import org.thingsboard.server.dao.resource.ImageCacheKey;
 import org.thingsboard.server.dao.resource.ImageService;
@@ -284,19 +281,6 @@ public class ImageController extends BaseController {
         return (result.isSuccess() ? ResponseEntity.ok() : ResponseEntity.badRequest()).body(result);
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @GetMapping("/api/image/specs")
-    public ImageSpecs getImageUploadSpecs() throws ThingsboardException {
-        SecurityUser user = getCurrentUser();
-        if (user.isSystemAdmin()) {
-            return ImageSpecs.DEFAULT;
-        }
-        DefaultTenantProfileConfiguration tenantProfileConfig = tenantProfileCache.get(user.getTenantId()).getDefaultProfileConfiguration();
-        return ImageSpecs.builder()
-                .maximumSize(tenantProfileConfig.getMaxResourceSize())
-                .build();
-    }
-
     private ResponseEntity<ByteArrayResource> downloadIfChanged(String type, String key, String etag, boolean preview) throws Exception {
         ImageCacheKey cacheKey = ImageCacheKey.forImage(getTenantId(type), key, preview);
         return downloadIfChanged(cacheKey, etag, () -> checkImageInfo(type, key, Operation.READ));
@@ -357,16 +341,6 @@ public class ImageController extends BaseController {
             throw new IllegalArgumentException("Invalid image URL");
         }
         return tenantId;
-    }
-
-    @Data
-    @Builder
-    public static class ImageSpecs {
-        private final long maximumSize;
-
-        public static final ImageSpecs DEFAULT = ImageSpecs.builder()
-                .maximumSize(0)
-                .build();
     }
 
 }
