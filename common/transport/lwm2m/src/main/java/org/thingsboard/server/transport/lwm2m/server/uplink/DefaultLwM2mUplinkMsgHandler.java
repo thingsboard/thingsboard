@@ -356,7 +356,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
      */
     @Override
     public void onUpdateValueWithSendRequest(Registration registration, SendRequest sendRequest) {
-        for(var entry : sendRequest.getNodes().entrySet()) {
+        for(var entry : sendRequest.getTimestampedNodes().getNodes().entrySet()) {
             LwM2mPath path = entry.getKey();
             LwM2mNode node = entry.getValue();
             LwM2mClient lwM2MClient = clientContext.getClientByEndpoint(registration.getEndpoint());
@@ -777,7 +777,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                 this.updateResourcesValue(client, (LwM2mResource) v, k.toString(), Mode.REPLACE, code);
             } else {
                 LwM2mResourceInstance resourceInstance = (LwM2mResourceInstance) v;
-                LwM2mMultipleResource multipleResource = new LwM2mMultipleResource(v.getId(), resourceInstance.getType(), resourceInstance);
+                LwM2mMultipleResource multipleResource = new LwM2mMultipleResource(((LwM2mResourceInstance) v).getId(), resourceInstance.getType(), resourceInstance);
                 this.updateResourcesValue(client, multipleResource, k.toString(), Mode.REPLACE, code);
             }
         });

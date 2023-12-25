@@ -16,7 +16,7 @@
 package org.thingsboard.server.transport.lwm2m.server;
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.model.DefaultDDFFileValidator;
+import org.eclipse.leshan.core.LwM2m;
 import org.eclipse.leshan.core.model.LwM2mModel;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
@@ -107,7 +107,7 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
 
         @Override
         public ObjectModel getObjectModel(int objectId) {
-            String version = registration.getSupportedVersion(objectId);
+            String version = String.valueOf(registration.getSupportedVersion(objectId));
             if (version != null) {
                 return this.getObjectModelDynamic(objectId, version);
             }
@@ -116,10 +116,10 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
 
         @Override
         public Collection<ObjectModel> getObjectModels() {
-            Map<Integer, String> supportedObjects = this.registration.getSupportedObject();
+            Map<Integer, LwM2m.Version> supportedObjects = this.registration.getSupportedObject();
             Collection<ObjectModel> result = new ArrayList<>(supportedObjects.size());
-            for (Map.Entry<Integer, String> supportedObject : supportedObjects.entrySet()) {
-                ObjectModel objectModel = this.getObjectModelDynamic(supportedObject.getKey(), supportedObject.getValue());
+            for (Map.Entry<Integer, LwM2m.Version> supportedObject : supportedObjects.entrySet()) {
+                ObjectModel objectModel = this.getObjectModelDynamic(supportedObject.getKey(), String.valueOf(supportedObject.getValue()));
                 if (objectModel != null) {
                     result.add(objectModel);
                 }

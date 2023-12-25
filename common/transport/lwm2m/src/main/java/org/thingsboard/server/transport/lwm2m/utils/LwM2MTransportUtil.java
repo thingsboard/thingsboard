@@ -15,11 +15,8 @@
  */
 package org.thingsboard.server.transport.lwm2m.utils;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.JsonElement;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.attributes.Attribute;
-import org.eclipse.leshan.core.attributes.AttributeSet;
 import org.eclipse.leshan.core.model.LwM2mModel;
 import org.eclipse.leshan.core.model.ObjectLoader;
 import org.eclipse.leshan.core.model.ObjectModel;
@@ -30,8 +27,6 @@ import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.node.codec.CodecException;
-import org.eclipse.leshan.core.request.SimpleDownlinkRequest;
-import org.eclipse.leshan.core.request.WriteAttributesRequest;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.registration.Registration;
 import org.thingsboard.common.util.JacksonUtil;
@@ -52,9 +47,7 @@ import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdate
 import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdateState;
 import org.thingsboard.server.transport.lwm2m.server.ota.software.SoftwareUpdateResult;
 import org.thingsboard.server.transport.lwm2m.server.ota.software.SoftwareUpdateState;
-import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -62,13 +55,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.eclipse.leshan.core.attributes.Attribute.DIMENSION;
-import static org.eclipse.leshan.core.attributes.Attribute.GREATER_THAN;
-import static org.eclipse.leshan.core.attributes.Attribute.LESSER_THAN;
-import static org.eclipse.leshan.core.attributes.Attribute.MAXIMUM_PERIOD;
-import static org.eclipse.leshan.core.attributes.Attribute.MINIMUM_PERIOD;
-import static org.eclipse.leshan.core.attributes.Attribute.OBJECT_VERSION;
-import static org.eclipse.leshan.core.attributes.Attribute.STEP;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.BOOLEAN;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.FLOAT;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.INTEGER;
@@ -82,6 +68,7 @@ import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaU
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_STATE_ID;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.SW_RESULT_ID;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.SW_STATE_ID;
+
 
 @Slf4j
 public class LwM2MTransportUtil {
@@ -235,7 +222,7 @@ public class LwM2MTransportUtil {
     }
 
     public static String convertObjectIdToVersionedId(String path, Registration registration) {
-        String ver = registration.getSupportedObject().get(new LwM2mPath(path).getObjectId());
+        String ver = String.valueOf(registration.getSupportedObject().get(new LwM2mPath(path).getObjectId()));
         ver = ver != null ? ver : TbLwM2mVersion.VERSION_1_0.getVersion().toString();
         try {
             String[] keyArray = path.split(LWM2M_SEPARATOR_PATH);
@@ -289,28 +276,28 @@ public class LwM2MTransportUtil {
      * Attribute pmax = new Attribute(MAXIMUM_PERIOD, "60");
      * Attribute [] attrs = {gt, st};
      */
-    public static SimpleDownlinkRequest createWriteAttributeRequest(String target, Object params, LwM2mUplinkMsgHandler serviceImpl) {
-        AttributeSet attrSet = new AttributeSet(createWriteAttributes(params, serviceImpl, target));
-        return attrSet.getAttributes().size() > 0 ? new WriteAttributesRequest(target, attrSet) : null;
-    }
+//    public static SimpleDownlinkRequest createWriteAttributeRequest(String target, Object params, LwM2mUplinkMsgHandler serviceImpl) {
+//        AttributeSet attrSet = new AttributeSet(createWriteAttributes(params, serviceImpl, target));
+//        return attrSet.getAttributes().size() > 0 ? new WriteAttributesRequest(target, attrSet) : null;
+//    }
 
-    private static Attribute[] createWriteAttributes(Object params, LwM2mUplinkMsgHandler serviceImpl, String target) {
-        List<Attribute> attributeLists = new ArrayList<>();
-        Map<String, Object> map = JacksonUtil.convertValue(params, new TypeReference<>() {
-        });
-        map.forEach((k, v) -> {
-            if (StringUtils.trimToNull(v.toString()) != null) {
-                Object attrValue = convertWriteAttributes(k, v, serviceImpl, target);
-                if (attrValue != null) {
-                    Attribute attribute = createAttribute(k, attrValue);
-                    if (attribute != null) {
-                        attributeLists.add(new Attribute(k, attrValue));
-                    }
-                }
-            }
-        });
-        return attributeLists.toArray(Attribute[]::new);
-    }
+//    private static Attribute[] createWriteAttributes(Object params, LwM2mUplinkMsgHandler serviceImpl, String target) {
+//        List<Attribute> attributeLists = new ArrayList<>();
+//        Map<String, Object> map = JacksonUtil.convertValue(params, new TypeReference<>() {
+//        });
+//        map.forEach((k, v) -> {
+//            if (StringUtils.trimToNull(v.toString()) != null) {
+//                Object attrValue = convertWriteAttributes(k, v, serviceImpl, target);
+//                if (attrValue != null) {
+//                    Attribute attribute = createAttribute(k, attrValue);
+//                    if (attribute != null) {
+//                        attributeLists.add(new Attribute(k, attrValue));
+//                    }
+//                }
+//            }
+//        });
+//        return attributeLists.toArray(Attribute[]::new);
+//    }
 
     /**
      * "UNSIGNED_INTEGER":  // Number -> Integer Example:
@@ -360,46 +347,50 @@ public class LwM2MTransportUtil {
     public static Map<Integer, Object> convertMultiResourceValuesFromJson(JsonElement newValProto, ResourceModel.Type type, String versionedId) {
         Map<Integer, Object> newValues = new HashMap<>();
         newValProto.getAsJsonObject().entrySet().forEach((obj) -> {
-            newValues.put(Integer.valueOf(obj.getKey()), LwM2mValueConverterImpl.getInstance().convertValue(obj.getValue().getAsString(),
-                    STRING, type, new LwM2mPath(fromVersionedIdToObjectId(versionedId))));
+            newValues.put(Integer.valueOf(obj.getKey()), convertValueByTypeResource (obj.getValue().getAsString(), type,  versionedId));
         });
         return newValues;
     }
 
-    public static Object convertWriteAttributes(String type, Object value, LwM2mUplinkMsgHandler serviceImpl, String target) {
-        switch (type) {
-            /** Integer [0:255]; */
-            case DIMENSION:
-                Long dim = (Long) serviceImpl.getConverter().convertValue(value, equalsResourceTypeGetSimpleName(value), INTEGER, new LwM2mPath(target));
-                return dim >= 0 && dim <= 255 ? dim : null;
-            /**String;*/
-            case OBJECT_VERSION:
-                return serviceImpl.getConverter().convertValue(value, equalsResourceTypeGetSimpleName(value), STRING, new LwM2mPath(target));
-            /**INTEGER */
-            case MINIMUM_PERIOD:
-            case MAXIMUM_PERIOD:
-                return serviceImpl.getConverter().convertValue(value, equalsResourceTypeGetSimpleName(value), INTEGER, new LwM2mPath(target));
-            /**Float; */
-            case GREATER_THAN:
-            case LESSER_THAN:
-            case STEP:
-                if (value.getClass().getSimpleName().equals("String")) {
-                    value = Double.valueOf((String) value);
-                }
-                return serviceImpl.getConverter().convertValue(value, equalsResourceTypeGetSimpleName(value), FLOAT, new LwM2mPath(target));
-            default:
-                return null;
-        }
+    public static Object convertValueByTypeResource (String value, ResourceModel.Type type,  String versionedId) {
+        return LwM2mValueConverterImpl.getInstance().convertValue(value,
+                STRING, type, new LwM2mPath(fromVersionedIdToObjectId(versionedId)));
     }
 
-    private static Attribute createAttribute(String key, Object attrValue) {
-        try {
-            return new Attribute(key, attrValue);
-        } catch (Exception e) {
-            log.error("CreateAttribute, not valid parameter key: [{}], attrValue: [{}], error: [{}]", key, attrValue, e.getMessage());
-            return null;
-        }
-    }
+//    public static Object convertWriteAttributes(String type, Object value, LwM2mUplinkMsgHandler serviceImpl, String target) {
+//        switch (type) {
+//            /** Integer [0:255]; */
+//            case DIMENSION:
+//                Long dim = (Long) serviceImpl.getConverter().convertValue(value, equalsResourceTypeGetSimpleName(value), INTEGER, new LwM2mPath(target));
+//                return dim >= 0 && dim <= 255 ? dim : null;
+//            /**String;*/
+//            case OBJECT_VERSION:
+//                return serviceImpl.getConverter().convertValue(value, equalsResourceTypeGetSimpleName(value), STRING, new LwM2mPath(target));
+//            /**INTEGER */
+//            case MINIMUM_PERIOD:
+//            case MAXIMUM_PERIOD:
+//                return serviceImpl.getConverter().convertValue(value, equalsResourceTypeGetSimpleName(value), INTEGER, new LwM2mPath(target));
+//            /**Float; */
+//            case GREATER_THAN:
+//            case LESSER_THAN:
+//            case STEP:
+//                if (value.getClass().getSimpleName().equals("String")) {
+//                    value = Double.valueOf((String) value);
+//                }
+//                return serviceImpl.getConverter().convertValue(value, equalsResourceTypeGetSimpleName(value), FLOAT, new LwM2mPath(target));
+//            default:
+//                return null;
+//        }
+//    }
+
+//    private static Attribute createAttribute(String key, Object attrValue) {
+//        try {
+//            return new Attribute(key, attrValue);
+//        } catch (Exception e) {
+//            log.error("CreateAttribute, not valid parameter key: [{}], attrValue: [{}], error: [{}]", key, attrValue, e.getMessage());
+//            return null;
+//        }
+//    }
 
     /**
      * @param lwM2MClient -

@@ -16,8 +16,8 @@
 package org.thingsboard.server.transport.lwm2m.server.store;
 
 import lombok.RequiredArgsConstructor;
-import org.eclipse.leshan.server.californium.registration.CaliforniumRegistrationStore;
-import org.eclipse.leshan.server.californium.registration.InMemoryRegistrationStore;
+import org.eclipse.leshan.server.registration.InMemoryRegistrationStore;
+import org.eclipse.leshan.server.registration.RegistrationStore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Component;
@@ -38,7 +38,7 @@ public class TbLwM2mStoreFactory {
     private final LwM2mCredentialsSecurityInfoValidator validator;
 
     @Bean
-    private CaliforniumRegistrationStore registrationStore() {
+    private RegistrationStore registrationStore() {
         return redisConfiguration.isPresent() ?
                 new TbLwM2mRedisRegistrationStore(getConnectionFactory()) : new InMemoryRegistrationStore(config.getCleanPeriodInSec());
     }

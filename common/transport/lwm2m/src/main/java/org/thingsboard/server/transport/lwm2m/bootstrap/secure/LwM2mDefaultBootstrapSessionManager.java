@@ -16,10 +16,13 @@
 package org.thingsboard.server.transport.lwm2m.bootstrap.secure;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.peer.IpPeer;
+import org.eclipse.leshan.core.peer.LwM2mPeer;
+import org.eclipse.leshan.core.peer.PskIdentity;
+import org.eclipse.leshan.core.peer.X509Identity;
 import org.eclipse.leshan.core.request.BootstrapDownlinkRequest;
 import org.eclipse.leshan.core.request.BootstrapFinishRequest;
 import org.eclipse.leshan.core.request.BootstrapRequest;
-import org.eclipse.leshan.core.request.Identity;
 import org.eclipse.leshan.core.response.LwM2mResponse;
 import org.eclipse.leshan.server.bootstrap.BootstrapConfigStore;
 import org.eclipse.leshan.server.bootstrap.BootstrapFailureCause;
@@ -39,6 +42,7 @@ import org.thingsboard.server.transport.lwm2m.bootstrap.store.LwM2MBootstrapSecu
 import org.thingsboard.server.transport.lwm2m.bootstrap.store.LwM2MBootstrapTaskProvider;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -63,7 +67,7 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
      * @param bsSecurityStore the {@link BootstrapSecurityStore} used by default {@link SecurityChecker}.
      */
     public LwM2mDefaultBootstrapSessionManager(BootstrapSecurityStore bsSecurityStore, BootstrapConfigStore configStore, TransportService transportService) {
-        this(bsSecurityStore, new SecurityChecker(), new LwM2MBootstrapConfigStoreTaskProvider(configStore),
+        this(bsSecurityStore, configStore, new SecurityChecker(), new LwM2MBootstrapConfigStoreTaskProvider(configStore),
                 new StandardBootstrapModelProvider());
         this.transportService = transportService;
     }
@@ -74,9 +78,9 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
      * @param bsSecurityStore the {@link BootstrapSecurityStore} used by {@link SecurityChecker}.
      * @param securityChecker used to accept or refuse new {@link BootstrapSession}.
      */
-    public LwM2mDefaultBootstrapSessionManager(BootstrapSecurityStore bsSecurityStore, SecurityChecker securityChecker,
+    public LwM2mDefaultBootstrapSessionManager(BootstrapSecurityStore bsSecurityStore, BootstrapConfigStore configStore, SecurityChecker securityChecker,
                                                LwM2MBootstrapTaskProvider tasksProvider, LwM2mBootstrapModelProvider modelProvider) {
-        super(bsSecurityStore, securityChecker, tasksProvider, modelProvider);
+        super(bsSecurityStore, configStore);
         this.bsSecurityStore = bsSecurityStore;
         this.securityChecker = securityChecker;
         this.tasksProvider = tasksProvider;
@@ -84,23 +88,24 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
     }
 
     @Override
-    public BootstrapSession begin(BootstrapRequest request, Identity clientIdentity) {
-        boolean authorized = true;
+    public BootstrapSession begin(BootstrapRequest request, LwM2mPeer sender, URI endpointUsed) {
+        boolean authorized = sender.getIdentity().isSecure();
         Iterator<SecurityInfo> securityInfos = null;
-        try {
+          try {
             if (bsSecurityStore != null && securityChecker != null) {
-                if (clientIdentity.isPSK()) {
-                    SecurityInfo securityInfo = bsSecurityStore.getByIdentity(clientIdentity.getPskIdentity());
+                if (((IpPeer) sender).isPSK()) {
+                    SecurityInfo securityInfo = bsSecurityStore.getByIdentity(((PskIdentity) sender.getIdentity()).getPskIdentity());
                     securityInfos = Collections.singletonList(securityInfo).iterator();
-                } else if (!clientIdentity.isX509()) {
+                }
+                else if (!((IpPeer) sender).isX509()) {
                     securityInfos = bsSecurityStore.getAllByEndpoint(request.getEndpointName());
                 }
-                authorized = this.checkSecurityInfo(request.getEndpointName(), clientIdentity, securityInfos);
+                authorized = this.checkSecurityInfo(request.getEndpointName(), sender, securityInfos);
             }
         } catch (LwM2MAuthException e) {
             authorized = false;
         }
-        DefaultBootstrapSession session = new DefaultBootstrapSession(request, clientIdentity, authorized);
+        DefaultBootstrapSession session = new DefaultBootstrapSession(request, sender, authorized, null, endpointUsed);
         if (authorized) {
             try {
                 this.tasksProvider.put(session.getEndpoint());
@@ -239,9 +244,9 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
         transportService.log(((LwM2MBootstrapSecurityStore) bsSecurityStore).getSessionByEndpoint(endpointName), logMsg);
     }
 
-    private boolean checkSecurityInfo(String endpoint, Identity clientIdentity, Iterator<SecurityInfo> securityInfos) {
-        if (clientIdentity.isX509()) {
-            return clientIdentity.getX509CommonName().equals(endpoint)
+    private boolean checkSecurityInfo(String endpoint, LwM2mPeer clientIdentity, Iterator<SecurityInfo> securityInfos) {
+        if (((IpPeer) clientIdentity).isX509()) {
+            return ((X509Identity)clientIdentity.getIdentity()).getX509CommonName().equals(endpoint)
                     & ((LwM2MBootstrapSecurityStore) bsSecurityStore).getBootstrapConfigByEndpoint(endpoint) != null;
         } else {
             return securityChecker.checkSecurityInfos(endpoint, clientIdentity, securityInfos);

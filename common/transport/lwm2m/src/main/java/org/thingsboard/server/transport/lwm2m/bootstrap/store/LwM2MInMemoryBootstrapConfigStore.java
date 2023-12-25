@@ -16,9 +16,7 @@
 package org.thingsboard.server.transport.lwm2m.bootstrap.store;
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.request.Identity;
 import org.eclipse.leshan.server.bootstrap.BootstrapConfig;
-import org.eclipse.leshan.server.bootstrap.BootstrapSession;
 import org.eclipse.leshan.server.bootstrap.ConfigurationChecker;
 import org.eclipse.leshan.server.bootstrap.InMemoryBootstrapConfigStore;
 import org.eclipse.leshan.server.bootstrap.InvalidConfigurationException;
@@ -39,8 +37,8 @@ public class LwM2MInMemoryBootstrapConfigStore extends InMemoryBootstrapConfigSt
     private final Lock writeLock = readWriteLock.writeLock();
     protected final ConfigurationChecker configChecker = new LwM2MConfigurationChecker();
 
-    @Override
-    public BootstrapConfig get(String endpoint, Identity deviceIdentity, BootstrapSession session) {
+
+    public BootstrapConfig get(String endpoint) {
         return bootstrapByEndpoint.get(endpoint);
     }
 

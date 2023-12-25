@@ -50,22 +50,28 @@ public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest
      */
     @Test
     public void testReadAllObjectsInClientById_Result_CONTENT_Value_IsLwM2mObject_IsInstances() throws Exception {
-                expectedObjectIdVers.forEach(expected -> {
-            try {
-                String actualResult  = sendRPCById((String) expected);
-                String expectedObjectId = pathIdVerToObjectId((String) expected);
-                LwM2mPath expectedPath = new LwM2mPath(expectedObjectId);
-                ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
-                assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-                String expectedObjectInstances = "LwM2mObject [id=" + expectedPath.getObjectId() + ", instances={0=LwM2mObjectInstance [id=0, resources=";
-                if (expectedPath.getObjectId() == 2) {
-                    expectedObjectInstances = "LwM2mObject [id=2, instances={}]";
+        try {
+            expectedObjectIdVers.forEach(expected -> {
+                try {
+                    String actualResult = sendRPCById((String) expected);
+                    String expectedObjectId = pathIdVerToObjectId((String) expected);
+                    LwM2mPath expectedPath = new LwM2mPath(expectedObjectId);
+                    ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+                     assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
+                    String expectedObjectInstances = "LwM2mObject [id=" + expectedPath.getObjectId() + ", instances={0=LwM2mObjectInstance [id=0, resources=";
+                    if (expectedPath.getObjectId() == 1) {
+                        expectedObjectInstances = "LwM2mObject [id=1, instances={1=";
+                    } else if (expectedPath.getObjectId() == 2) {
+                        expectedObjectInstances = "LwM2mObject [id=2, instances={}]";
+                    }
+                    assertTrue(rpcActualResult.get("value").asText().contains(expectedObjectInstances));
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-                assertTrue(rpcActualResult.get("value").asText().contains(expectedObjectInstances));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
+            });
+        } catch (Exception e2){
+            e2.printStackTrace();
+        }
     }
 
     /**

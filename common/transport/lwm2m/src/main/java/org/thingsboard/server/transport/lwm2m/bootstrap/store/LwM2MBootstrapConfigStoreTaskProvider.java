@@ -76,7 +76,8 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
 
     @Override
     public Tasks getTasks(BootstrapSession session, List<LwM2mResponse> previousResponse) {
-        BootstrapConfig config = store.get(session.getEndpoint(), session.getIdentity(), session);
+//        BootstrapConfig config = store.get(session.getEndpoint(), session.getClientTransportData().getIdentity(), session);
+        BootstrapConfig config = store.get(session);
         if (config == null) {
             return null;
         }
@@ -150,7 +151,7 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
      * The values ID:0 and ID:65535 values MUST NOT be used for identifying the LwM2M Server.
      * "Short Server ID":
      * - Link Instance (lwm2m Server) hase linkParams with key = "ssid" value = "shortId" (ver lvm2m = 1.1).
-     * - Link Instance (bootstrap Server) hase not linkParams with key = "ssid" (ver lvm2m = 1.1).
+     * - Link Instance (bootstrap Server) hase not linkParams with key = "ssid" (ver lvm2m = 1.0).
      */
     protected void findSecurityInstanceId(Link[] objectLinks, String endpoint) {
         log.info("Object after discover: [{}]", objectLinks);
@@ -159,14 +160,14 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
                 try {
                     LwM2mPath path = new LwM2mPath(link.getUriReference());
                     if (path.isObjectInstance()) {
-                        if (link.getLinkParams().containsKey("ssid")) {
-                            int serverId = Integer.parseInt(link.getLinkParams().get("ssid").getUnquoted());
+                        if (link.getAttributes().get("ssid") != null) {
+                            int serverId = Integer.parseInt(link.getAttributes().get("ssid").getCoreLinkValue());
                             if (!lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().containsKey(serverId)) {
                                 lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().put(serverId, path.getObjectInstanceId());
                             } else {
                                 log.error("Invalid lwm2mSecurityInstance by [{}]", path.getObjectInstanceId());
                             }
-                            lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().put(Integer.valueOf(link.getLinkParams().get("ssid").getUnquoted()), path.getObjectInstanceId());
+                            lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().put(serverId, path.getObjectInstanceId());
                         } else {
                             if (!this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().containsKey(0)) {
                                 this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().put(BOOTSTRAP_DEFAULT_SHORT_ID, path.getObjectInstanceId());
@@ -221,7 +222,7 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
             LwM2mPath path = new LwM2mPath(link.getUriReference());
             if (!path.isRoot() && path.getObjectId() < 3) {
                 if (path.isObject()) {
-                    String ver = link.getLinkParams().get("ver") != null ? link.getLinkParams().get("ver").getUnquoted() : "1.0";
+                    String ver = link.getAttributes().get("ver") != null ? link.getAttributes().get("ver").getCoreLinkValue() : "1.0";
                     this.supportedObjects.put(path.getObjectId(), ver);
                 }
             }

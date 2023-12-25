@@ -17,9 +17,9 @@ package org.thingsboard.server.transport.lwm2m.client;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.client.resource.BaseInstanceEnabler;
-import org.eclipse.leshan.client.servers.ServerIdentity;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.node.LwM2mResource;
+import org.eclipse.leshan.core.request.argument.Arguments;
 import org.eclipse.leshan.core.response.ExecuteResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.core.response.WriteResponse;
@@ -45,7 +45,7 @@ public class FwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
     private final AtomicInteger updateResult = new AtomicInteger(0);
 
     @Override
-    public ReadResponse read(ServerIdentity identity, int resourceId) {
+    public ReadResponse read(org.eclipse.leshan.client.servers.LwM2mServer identity, int resourceId) {
         if (!identity.isSystem())
             log.info("Read on Device resource /{}/{}/{}", getModel().id, getId(), resourceId);
         switch (resourceId) {
@@ -65,24 +65,24 @@ public class FwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
     }
 
     @Override
-    public ExecuteResponse execute(ServerIdentity identity, int resourceId, String params) {
-        String withParams = null;
-        if (params != null && params.length() != 0) {
-            withParams = " with params " + params;
-        }
-        log.info("Execute on Device resource /{}/{}/{} {}", getModel().id, getId(), resourceId, withParams != null ? withParams : "");
+    public ExecuteResponse execute(org.eclipse.leshan.client.servers.LwM2mServer identity, int resourceId, Arguments arguments) {
+        String withArguments = "";
+        if (!arguments.isEmpty())
+            withArguments = " with arguments " + arguments;
+        log.info("Execute on Device resource /{}/{}/{} {}", getModel().id, getId(), resourceId, withArguments);
+
 
         switch (resourceId) {
             case 2:
                 startUpdating();
                 return ExecuteResponse.success();
             default:
-                return super.execute(identity, resourceId, params);
+                return super.execute(identity, resourceId, arguments);
         }
     }
 
     @Override
-    public WriteResponse write(ServerIdentity identity, boolean replace, int resourceId, LwM2mResource value) {
+    public WriteResponse write(org.eclipse.leshan.client.servers.LwM2mServer identity, boolean replace, int resourceId, LwM2mResource value) {
         log.info("Write on Device resource /{}/{}/{}", getModel().id, getId(), resourceId);
 
         switch (resourceId) {

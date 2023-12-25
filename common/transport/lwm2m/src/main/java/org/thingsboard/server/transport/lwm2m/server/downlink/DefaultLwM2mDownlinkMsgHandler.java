@@ -15,12 +15,15 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.LwM2m;
-import org.eclipse.leshan.core.attributes.Attribute;
-import org.eclipse.leshan.core.attributes.AttributeSet;
 import org.eclipse.leshan.core.link.Link;
+import org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttribute;
+import org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributeModel;
+import org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributeSet;
 import org.eclipse.leshan.core.model.LwM2mModel;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
@@ -75,8 +78,6 @@ import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogServic
 import org.thingsboard.server.transport.lwm2m.server.rpc.composite.RpcWriteCompositeRequest;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -86,15 +87,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static org.eclipse.leshan.core.attributes.Attribute.GREATER_THAN;
-import static org.eclipse.leshan.core.attributes.Attribute.LESSER_THAN;
-import static org.eclipse.leshan.core.attributes.Attribute.MAXIMUM_PERIOD;
-import static org.eclipse.leshan.core.attributes.Attribute.MINIMUM_PERIOD;
-import static org.eclipse.leshan.core.attributes.Attribute.STEP;
+import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.GREATER_THAN;
+import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.LESSER_THAN;
+import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.MAXIMUM_PERIOD;
+import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.MINIMUM_PERIOD;
+import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.STEP;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OBJLNK;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertMultiResourceValuesFromRpcBody;
@@ -148,8 +150,9 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
 
     @Override
     public void sendReadCompositeRequest(LwM2mClient client, TbLwM2MReadCompositeRequest request,
-                                         DownlinkRequestCallback<ReadCompositeRequest, ReadCompositeResponse> callback, ContentFormat compositeContentFormat) {
+                                         DownlinkRequestCallback<ReadCompositeRequest, ReadCompositeResponse> callback) {
         try {
+            ContentFormat compositeContentFormat = this.findFirstContentFormatForComposite(client.getClientSupportContentFormats());
             ReadCompositeRequest downlink = new ReadCompositeRequest(compositeContentFormat, compositeContentFormat, request.getObjectIds());
             sendCompositeRequest(client, downlink, this.config.getTimeout(), callback);
         } catch (InvalidRequestException e) {
@@ -193,8 +196,8 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     }
 
     @Override
-    public void sendDiscoverAllRequest(LwM2mClient client, TbLwM2MDiscoverAllRequest request, DownlinkRequestCallback<TbLwM2MDiscoverAllRequest, List<Link>> callback) {
-        callback.onSuccess(request, Arrays.asList(client.getRegistration().getSortedObjectLinks()));
+    public void sendDiscoverAllRequest(LwM2mClient client, TbLwM2MDiscoverAllRequest request, DownlinkRequestCallback<TbLwM2MDiscoverAllRequest, List<String>> callback) {
+        callback.onSuccess(request, Arrays.stream(client.getRegistration().getSortedObjectLinks()).map(Link::toCoreLinkFormat).collect(Collectors.toList()));
     }
 
     @Override
@@ -279,13 +282,13 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                 throw new IllegalArgumentException("Attributes to write are not specified!");
             }
             ObjectAttributes params = request.getAttributes();
-            List<Attribute> attributes = new LinkedList<>();
+            List<LwM2mAttribute<?>> attributes = new LinkedList<>();
             addAttribute(attributes, MAXIMUM_PERIOD, params.getPmax());
             addAttribute(attributes, MINIMUM_PERIOD, params.getPmin());
             addAttribute(attributes, GREATER_THAN, params.getGt());
             addAttribute(attributes, LESSER_THAN, params.getLt());
             addAttribute(attributes, STEP, params.getSt());
-            AttributeSet attributeSet = new AttributeSet(attributes);
+            LwM2mAttributeSet attributeSet = new LwM2mAttributeSet(attributes);
             sendSimpleRequest(client, new WriteAttributesRequest(request.getObjectId(), attributeSet), request.getTimeout(), callback);
         } catch (InvalidRequestException e) {
             callback.onValidationError(request.toString(), e.getMessage());
@@ -338,9 +341,10 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
 
     @Override
     public void sendWriteCompositeRequest(LwM2mClient client, RpcWriteCompositeRequest rpcWriteCompositeRequest,
-                                          DownlinkRequestCallback<WriteCompositeRequest, WriteCompositeResponse> callback, ContentFormat contentFormatComposite) {
+                                          DownlinkRequestCallback<WriteCompositeRequest, WriteCompositeResponse> callback) {
         try {
-            WriteCompositeRequest downlink = new WriteCompositeRequest(contentFormatComposite, rpcWriteCompositeRequest.getNodes());
+            ContentFormat compositeContentFormat = this.findFirstContentFormatForComposite(client.getClientSupportContentFormats());
+            WriteCompositeRequest downlink = new WriteCompositeRequest(compositeContentFormat, rpcWriteCompositeRequest.getNodes());
             //TODO: replace config.getTimeout();
             sendWriteCompositeRequest(client, downlink, this.config.getTimeout(), callback);
         } catch (InvalidRequestException e) {
@@ -570,17 +574,18 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         }
     }
 
-    private static <T> void addAttribute(List<Attribute> attributes, String attributeName, T value) {
-        addAttribute(attributes, attributeName, value, null, null);
+    private static <T> void addAttribute(List<LwM2mAttribute<?>> attributes, LwM2mAttributeModel<T> attribute, T value) {
+        addAttribute(attributes, attribute, value, null, null);
     }
 
-    private static <T> void addAttribute(List<Attribute> attributes, String attributeName, T value, Function<T, ?> converter) {
-        addAttribute(attributes, attributeName, value, null, converter);
+    private static <T> void addAttribute(List<LwM2mAttribute<?>> attributes,  LwM2mAttributeModel<T> attribute, T value, Function<T, ?> converter) {
+        addAttribute(attributes, attribute, value, null, converter);
     }
 
-    private static <T> void addAttribute(List<Attribute> attributes, String attributeName, T value, Predicate<T> filter, Function<T, ?> converter) {
+    private static <T> void addAttribute(List<LwM2mAttribute<?>> attributes,  LwM2mAttributeModel<T> attributeName, T value, Predicate<T> filter, Function<T, ?> converter) {
         if (value != null && ((filter == null) || filter.test(value))) {
-            attributes.add(new Attribute(attributeName, converter != null ? converter.apply(value) : value));
+            T valueConvert = (T)  converter != null ?  (T) converter.apply(value) : value;
+            attributes.add(new LwM2mAttribute<>(attributeName, valueConvert));
         }
     }
 
@@ -620,7 +625,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                 } else if (OPAQUE.equals(resourceModel.type)) {
                     return ContentFormat.OPAQUE;
                 } else {
-                    return findFirst(client.getClientSupportContentFormats(), client.getDefaultContentFormat(), ContentFormat.CBOR, ContentFormat.SENML_CBOR, ContentFormat.SENML_JSON);
+                    return findFirstContentFormatForComp(client.getClientSupportContentFormats(), client.getDefaultContentFormat(), ContentFormat.CBOR, ContentFormat.SENML_CBOR, ContentFormat.SENML_JSON);
                 }
             } else {
                 return getContentFormatForComplex(client);
@@ -634,7 +639,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         if (LwM2m.LwM2mVersion.V1_0.equals(client.getRegistration().getLwM2mVersion())) {
             return ContentFormat.TLV;
         } else if (LwM2m.LwM2mVersion.V1_1.equals(client.getRegistration().getLwM2mVersion())) {
-            ContentFormat result = findFirst(client.getClientSupportContentFormats(), null, ContentFormat.SENML_CBOR, ContentFormat.SENML_JSON, ContentFormat.TLV, ContentFormat.JSON);
+            ContentFormat result = findFirstContentFormatForComp(client.getClientSupportContentFormats(), null, ContentFormat.SENML_CBOR, ContentFormat.SENML_JSON, ContentFormat.TLV, ContentFormat.JSON);
             if (result != null) {
                 return result;
             } else {
@@ -644,16 +649,6 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             throw new RuntimeException("The version " + client.getRegistration().getLwM2mVersion() + " is not supported!");
         }
     }
-
-    private static ContentFormat findFirst(Set<ContentFormat> supported, ContentFormat defaultValue, ContentFormat... desiredFormats) {
-        for (ContentFormat contentFormat : desiredFormats) {
-            if (supported.contains(contentFormat)) {
-                return contentFormat;
-            }
-        }
-        return defaultValue;
-    }
-
     private <R> String toString(R request) {
         try {
             return request != null ? request.toString() : "";
@@ -661,5 +656,30 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             log.debug("Failed to convert request to string", e);
             return request.getClass().getSimpleName();
         }
+    }
+
+    private ContentFormat findFirstContentFormatForComposite (Set<?> clientSupportContentFormats) {
+        ContentFormat contentFormat = findFirstContentFormatForComp(clientSupportContentFormats, null, ContentFormat.SENML_JSON, ContentFormat.SENML_CBOR);
+        if (contentFormat != null) {
+            return contentFormat;
+        } else {
+            throw new RuntimeException("This device does not support Composite Operation");
+        }
+    }
+    private static ContentFormat findFirstContentFormatForComp(Set<?> clientSupportContentFormats, ContentFormat defaultValue, ContentFormat... desiredFormats) {
+        AtomicReference<ContentFormat> compositeContentFormat = new AtomicReference<>();
+        clientSupportContentFormats.forEach(c -> {
+            if (c instanceof Collection) {
+                for (ContentFormat contentFormat : desiredFormats) {
+                    if (((Collection<?>) c).contains(contentFormat)) {
+                        compositeContentFormat.set(contentFormat);
+                        break;
+                    }
+                }
+            } else if (compositeContentFormat.get() == null && c instanceof ContentFormat) {
+                compositeContentFormat.set(Arrays.stream(desiredFormats).filter(f -> f.equals(c)).findFirst().get());
+            }
+        });
+        return compositeContentFormat.get() != null ? compositeContentFormat.get() : defaultValue;
     }
 }

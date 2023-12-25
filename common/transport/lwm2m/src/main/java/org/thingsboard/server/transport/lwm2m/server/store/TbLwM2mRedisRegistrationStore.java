@@ -16,6 +16,8 @@
 package org.thingsboard.server.transport.lwm2m.server.store;
 
 import org.eclipse.californium.core.coap.Token;
+import org.eclipse.californium.core.network.serialization.UdpDataParser;
+import org.eclipse.californium.core.network.serialization.UdpDataSerializer;
 import org.eclipse.californium.core.observe.ObservationStoreException;
 import org.eclipse.californium.elements.EndpointContext;
 import org.eclipse.leshan.core.Destroyable;
@@ -23,18 +25,18 @@ import org.eclipse.leshan.core.Startable;
 import org.eclipse.leshan.core.Stoppable;
 import org.eclipse.leshan.core.californium.ObserveUtil;
 import org.eclipse.leshan.core.observation.Observation;
+import org.eclipse.leshan.core.observation.ObservationIdentifier;
 import org.eclipse.leshan.core.observation.SingleObservation;
-import org.eclipse.leshan.core.request.Identity;
+import org.eclipse.leshan.core.peer.LwM2mIdentity;
 import org.eclipse.leshan.core.util.NamedThreadFactory;
 import org.eclipse.leshan.core.util.Validate;
-import org.eclipse.leshan.server.californium.registration.CaliforniumRegistrationStore;
+import org.eclipse.leshan.server.californium.observation.ObservationSerDes;
 import org.eclipse.leshan.server.redis.RedisRegistrationStore;
-import org.eclipse.leshan.server.redis.serialization.IdentitySerDes;
-import org.eclipse.leshan.server.redis.serialization.ObservationSerDes;
 import org.eclipse.leshan.server.redis.serialization.RegistrationSerDes;
 import org.eclipse.leshan.server.registration.Deregistration;
 import org.eclipse.leshan.server.registration.ExpirationListener;
 import org.eclipse.leshan.server.registration.Registration;
+import org.eclipse.leshan.server.registration.RegistrationStore;
 import org.eclipse.leshan.server.registration.RegistrationUpdate;
 import org.eclipse.leshan.server.registration.UpdatedRegistration;
 import org.slf4j.Logger;
@@ -63,7 +65,7 @@ import java.util.concurrent.locks.Lock;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationStore, Startable, Stoppable, Destroyable {
+public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startable, Stoppable, Destroyable {
     /** Default time in seconds between 2 cleaning tasks (used to remove expired registration). */
     public static final long DEFAULT_CLEAN_PERIOD = 60;
     public static final int DEFAULT_CLEAN_LIMIT = 500;
@@ -83,6 +85,8 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
     private static final byte[] EXP_EP = "EXP:EP".getBytes(UTF_8); // a sorted set used for registration expiration
     // (expiration date, Endpoint)
 
+    private final RegistrationSerDes registrationSerDes = new RegistrationSerDes();
+    private final ObservationSerDes observationSerDes = new ObservationSerDes(new UdpDataParser(), new UdpDataSerializer());
     private final RedisConnectionFactory connectionFactory;
 
     // Listener use to notify when a registration expires
@@ -159,7 +163,7 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
                 connection.set(regid_idx, registration.getEndpoint().getBytes(UTF_8));
                 byte[] addr_idx = toRegAddrKey(registration.getSocketAddress());
                 connection.set(addr_idx, registration.getEndpoint().getBytes(UTF_8));
-                byte[] identity_idx = toRegIdentityKey(registration.getIdentity());
+                byte[] identity_idx = toRegIdentityKey(registration.getClientTransportData().getIdentity());
                 connection.set(identity_idx, registration.getEndpoint().getBytes(UTF_8));
 
                 // Add or update expiration
@@ -173,7 +177,7 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
                     if (!oldRegistration.getSocketAddress().equals(registration.getSocketAddress())) {
                         removeAddrIndex(connection, oldRegistration);
                     }
-                    if (!oldRegistration.getIdentity().equals(registration.getIdentity())) {
+                    if (!oldRegistration.getClientTransportData().getIdentity().equals(registration.getClientTransportData().getIdentity())) {
                         removeIdentityIndex(connection, oldRegistration);
                     }
                     // remove old observation
@@ -231,7 +235,7 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
                 if (!r.getSocketAddress().equals(updatedRegistration.getSocketAddress())) {
                     removeAddrIndex(connection, r);
                 }
-                if (!r.getIdentity().equals(updatedRegistration.getIdentity())) {
+                if (!r.getClientTransportData().getIdentity().equals(updatedRegistration.getClientTransportData().getIdentity())) {
                     removeIdentityIndex(connection, r);
                 }
 
@@ -281,7 +285,7 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
     }
 
     @Override
-    public Registration getRegistrationByIdentity(Identity identity) {
+    public Registration getRegistrationByIdentity(LwM2mIdentity identity) {
         Validate.notNull(identity);
         try (var connection = connectionFactory.getConnection()) {
             byte[] ep = connection.get(toRegIdentityKey(identity));
@@ -325,6 +329,26 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
         try (var connection = connectionFactory.getConnection()) {
             return removeRegistration(connection, registrationId, false);
         }
+    }
+
+    @Override
+    public Collection<Observation> addObservation(String registrationId, Observation observation, boolean addIfAbsent) {
+        return null;
+    }
+
+    @Override
+    public Observation getObservation(String registrationId, ObservationIdentifier observationId) {
+        return null;
+    }
+
+    @Override
+    public Observation getObservation(ObservationIdentifier observationId) {
+        return null;
+    }
+
+    @Override
+    public Observation removeObservation(String registrationId, ObservationIdentifier observationId) {
+        return null;
     }
 
     private Deregistration removeRegistration(RedisConnection connection, String registrationId, boolean removeOnlyIfNotAlive) {
@@ -371,7 +395,7 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
     }
 
     private void removeIdentityIndex(RedisConnection connection, Registration r) {
-        removeSecondaryIndex(connection, toRegIdentityKey(r.getIdentity()), r.getEndpoint());
+        removeSecondaryIndex(connection, toRegIdentityKey(r.getClientTransportData().getIdentity()), r.getEndpoint());
     }
 
     //TODO: JedisCluster didn't implement Transaction, maybe should use some advanced key creation strategies
@@ -410,8 +434,8 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
         return toKey(REG_EP_ADDR_IDX, addr.getAddress().toString() + ":" + addr.getPort());
     }
 
-    private byte[] toRegIdentityKey(Identity identity) {
-        return toKey(REG_EP_IDENTITY, IdentitySerDes.serialize(identity).toString());
+    private byte[] toRegIdentityKey(LwM2mIdentity identity) {
+        return toKey(REG_EP_IDENTITY, identity.toString());
     }
 
     private byte[] toEndpointKey(String endpoint) {
@@ -423,11 +447,11 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
     }
 
     private byte[] serializeReg(Registration registration) {
-        return RegistrationSerDes.bSerialize(registration);
+        return registrationSerDes.bSerialize(registration);
     }
 
     private Registration deserializeReg(byte[] data) {
-        return RegistrationSerDes.deserialize(data);
+        return registrationSerDes.deserialize(data);
     }
 
     /* *************** Leshan Observation API **************** */
@@ -436,7 +460,7 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
      * The observation is not persisted here, it is done by the Californium layer (in the implementation of the
      * org.eclipse.californium.core.observe.ObservationStore#add method)
      */
-    @Override
+
     public Collection<Observation> addObservation(String registrationId, Observation observation) {
         List<Observation> removed = new ArrayList<>();
         try (var connection = connectionFactory.getConnection()) {
@@ -458,9 +482,9 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
                 for (Observation obs : getObservations(connection, registrationId)) {
                     //TODO: should be able to use CompositeObservation
                     if (((SingleObservation)observation).getPath().equals(((SingleObservation)obs).getPath())
-                            && !Arrays.equals(observation.getId(), obs.getId())) {
+                            && !observation.getId().equals(obs.getId())) {
                         removed.add(obs);
-                        unsafeRemoveObservation(connection, registrationId, obs.getId());
+                        unsafeRemoveObservation(connection, registrationId, obs.getId().getBytes());
                     }
                 }
 
@@ -473,7 +497,6 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
         return removed;
     }
 
-    @Override
     public Observation removeObservation(String registrationId, byte[] observationId) {
         try (var connection = connectionFactory.getConnection()) {
 
@@ -490,7 +513,8 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
                 lock = redisLock.obtain(lockKey);
                 lock.lock();
 
-                Observation observation = build(get(new Token(observationId)));
+//                Observation observation = build(get(new Token(observationId)));
+                Observation observation = build(null);
                 if (observation != null && registrationId.equals(observation.getRegistrationId())) {
                     unsafeRemoveObservation(connection, registrationId, observationId);
                     return observation;
@@ -505,9 +529,9 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
         }
     }
 
-    @Override
     public Observation getObservation(String registrationId, byte[] observationId) {
-        return build(get(new Token(observationId)));
+//        return build(get(new Token(observationId)));
+        return build(null);
     }
 
     @Override
@@ -554,13 +578,11 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
 
     /* *************** Californium ObservationStore API **************** */
 
-    @Override
     public org.eclipse.californium.core.observe.Observation putIfAbsent(Token token,
                                                                         org.eclipse.californium.core.observe.Observation obs) throws ObservationStoreException {
         return add(obs, true);
     }
 
-    @Override
     public org.eclipse.californium.core.observe.Observation put(Token token,
                                                                 org.eclipse.californium.core.observe.Observation obs) throws ObservationStoreException {
         return add(obs, false);
@@ -588,7 +610,8 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
                     if (previousValue == null || previousValue.length == 0) {
                         connection.set(key, serializeObs);
                     } else {
-                        return deserializeObs(previousValue);
+//                        return deserializeObs(previousValue);
+                        return null;
                     }
                 } else {
                     previousValue = connection.getSet(key, serializeObs);
@@ -599,7 +622,8 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
 
                 // log any collisions
                 if (previousValue != null && previousValue.length != 0) {
-                    previousObservation = deserializeObs(previousValue);
+//                    previousObservation = deserializeObs(previousValue);
+                    previousObservation = null;
                     LOG.warn(
                             "Token collision ? observation from request [{}] will be replaced by observation from request [{}] ",
                             previousObservation.getRequest(), obs.getRequest());
@@ -613,7 +637,6 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
         return previousObservation;
     }
 
-    @Override
     public void remove(Token token) {
         try (var connection = connectionFactory.getConnection()) {
             byte[] tokenKey = toKey(OBS_TKN, token.getBytes());
@@ -623,7 +646,8 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
             if (serializedObs == null)
                 return;
 
-            org.eclipse.californium.core.observe.Observation obs = deserializeObs(serializedObs);
+//            org.eclipse.californium.core.observe.Observation obs = deserializeObs(serializedObs);
+            org.eclipse.californium.core.observe.Observation obs = null;
             String registrationId = ObserveUtil.extractRegistrationId(obs);
             Registration registration = getRegistration(connection, registrationId);
             if (registration == null) {
@@ -649,14 +673,14 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
 
     }
 
-    @Override
     public org.eclipse.californium.core.observe.Observation get(Token token) {
         try (var connection = connectionFactory.getConnection()) {
             byte[] obs = connection.get(toKey(OBS_TKN, token.getBytes()));
             if (obs == null) {
                 return null;
             } else {
-                return deserializeObs(obs);
+//                return deserializeObs(obs);
+                return null;
             }
         }
     }
@@ -699,24 +723,26 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
         return removed;
     }
 
-    @Override
     public void setContext(Token token, EndpointContext correlationContext) {
         // In Leshan we always set context when we send the request, so this should not be needed to implement this.
     }
 
     private byte[] serializeObs(org.eclipse.californium.core.observe.Observation obs) {
-        return ObservationSerDes.serialize(obs);
+        return null;
+//        return observationSerDes.serialize(obs);
     }
 
-    private org.eclipse.californium.core.observe.Observation deserializeObs(byte[] data) {
-        return ObservationSerDes.deserialize(data);
+    private Observation deserializeObs(byte[] data) {
+//        return observationSerDes.deserialize(data);
+        return null;
     }
 
-    private Observation build(org.eclipse.californium.core.observe.Observation cfObs) {
+    private Observation build(Observation cfObs) {
         if (cfObs == null)
             return null;
-
-        return ObserveUtil.createLwM2mObservation(cfObs.getRequest());
+//        String serializedObservation = observationSerDes.serialize(cfObs);
+//        return ObserveUtil.createLwM2mObservation(cfObs, serializedObservation);
+        return null;
     }
 
     /* *************** Expiration handling **************** */
@@ -787,7 +813,6 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
         expirationListener = listener;
     }
 
-    @Override
     public void setExecutor(ScheduledExecutorService executor) {
         // TODO should we reuse californium executor ?
     }

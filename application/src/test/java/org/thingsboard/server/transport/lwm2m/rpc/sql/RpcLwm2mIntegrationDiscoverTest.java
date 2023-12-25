@@ -18,6 +18,8 @@ package org.thingsboard.server.transport.lwm2m.rpc.sql;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.eclipse.leshan.core.ResponseCode;
+import org.eclipse.leshan.core.link.Link;
+import org.eclipse.leshan.core.link.LinkParseException;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
@@ -52,12 +54,17 @@ public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegration
         Set actualObjects = ConcurrentHashMap.newKeySet();
         Set actualInstances = ConcurrentHashMap.newKeySet();
         rpcActualValue.forEach(node -> {
-            if (!node.get("uriReference").asText().equals("/")) {
-                LwM2mPath path = new LwM2mPath(node.get("uriReference").asText());
-                actualObjects.add("/" + path.getObjectId());
-                if (path.isObjectInstance()) {
-                    actualInstances.add("/" + path.getObjectId() + "/" + path.getObjectInstanceId());
+            try {
+                Link[] parsedLink = linkParser.parseCoreLinkFormat(node.asText().getBytes());
+                if (!parsedLink[0].getUriReference().equals("/")) {
+                    LwM2mPath path = new LwM2mPath(parsedLink[0].getUriReference());
+                    actualObjects.add("/" + path.getObjectId());
+                    if (path.isObjectInstance()) {
+                        actualInstances.add("/" + path.getObjectId() + "/" + path.getObjectInstanceId());
+                    }
                 }
+            } catch (LinkParseException e) {
+                throw new RuntimeException(e);
             }
         });
         assertEquals(expectedInstances, actualInstances);

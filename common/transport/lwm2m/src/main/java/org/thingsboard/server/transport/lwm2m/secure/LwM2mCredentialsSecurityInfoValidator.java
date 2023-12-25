@@ -67,14 +67,14 @@ public class LwM2mCredentialsSecurityInfoValidator {
                 new TransportServiceCallback<>() {
                     @Override
                     public void onSuccess(ValidateDeviceCredentialsResponse msg) {
-                        log.trace("Validated credentials: [{}] [{}]", credentialsId, msg);
+                        log.info("Validated credentials: [{}] [{}]", credentialsId, msg);
                         resultSecurityStore[0] = createSecurityInfo(credentialsId, msg, keyValue);
                         latch.countDown();
                     }
 
                     @Override
                     public void onError(Throwable e) {
-                        log.trace("[{}] [{}] Failed to process credentials ", credentialsId, e);
+                        log.info("[{}] [{}] Failed to process credentials ", credentialsId, e);
                         TbLwM2MSecurityInfo result = new TbLwM2MSecurityInfo();
                         result.setEndpoint(credentialsId);
                         resultSecurityStore[0] = result;

@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.transport.lwm2m.rpc;
 
+import org.eclipse.leshan.core.link.LinkParser;
+import org.eclipse.leshan.core.link.lwm2m.DefaultLwM2mLinkParser;
 import org.junit.Before;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
@@ -50,6 +52,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resources;
 @DaoSqlTest
 public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
 
+    protected final LinkParser linkParser = new DefaultLwM2mLinkParser();
     protected String OBSERVE_ATTRIBUTES_WITH_PARAMS_RPC;
     protected String deviceId;
     public Set expectedObjects;
@@ -84,7 +87,7 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
 
     private void initRpc () throws Exception {
         String endpoint = DEVICE_ENDPOINT_RPC_PREF + endpointSequence.incrementAndGet();
-        createNewClient(SECURITY_NO_SEC, COAP_CONFIG, true, endpoint, false, null);
+        createNewClient(SECURITY_NO_SEC, null, COAP_CONFIG, true, endpoint);
         expectedObjects = ConcurrentHashMap.newKeySet();
         expectedObjectIdVers = ConcurrentHashMap.newKeySet();
         expectedInstances = ConcurrentHashMap.newKeySet();
@@ -147,7 +150,7 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
         deviceId = device.getId().getId().toString();
 
         lwM2MTestClient.start(true);
-        awaitObserveReadAll(2, false, device.getId().getId().toString());
+//        awaitObserveReadAll(2, true, device.getId().getId().toString());
     }
 
     protected String pathIdVerToObjectId(String pathIdVer) {

@@ -168,12 +168,14 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationT
      */
     @Test
     public void testObserveReadAll_Result_CONTENT_Value_Contains_Paths_Count_ObserveReadAll() throws Exception {
+        String expectedId = objectInstanceIdVer_3 + "/" + RESOURCE_ID_14;
+        sendRpcObserve("Observe", expectedId);
         String actualResultReadAll = sendRpcObserve("ObserveReadAll", null);
         ObjectNode rpcActualResultReadAll = JacksonUtil.fromString(actualResultReadAll, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResultReadAll.get("result").asText());
         String actualValuesReadAll = rpcActualResultReadAll.get("value").asText();
         log.warn("ObserveReadAll:  [{}]", actualValuesReadAll);
-        assertEquals(2, actualValuesReadAll.split(",").length);
+        assertEquals(3, actualValuesReadAll.split(",").length);
     }
 
 
