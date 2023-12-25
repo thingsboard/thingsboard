@@ -72,8 +72,8 @@ export class EntitiesTableBasicConfigComponent extends BasicWidgetConfigComponen
     return this.entitiesTableWidgetConfigForm;
   }
 
-  protected setupDefaults(configData: WidgetConfigComponentData) {
-    this.setupDefaultDatasource(configData, [{ name: 'name', type: DataKeyType.entityField }]);
+  protected defaultDataKeys(configData: WidgetConfigComponentData): DataKey[] {
+    return [{ name: 'name', type: DataKeyType.entityField }];
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {

@@ -28,16 +28,17 @@ import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.constructor.rule.RuleChainMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 import static org.thingsboard.server.service.edge.DefaultEdgeNotificationService.EDGE_IS_ROOT_BODY_KEY;
 
-@Component
 @Slf4j
+@Component
 @TbCoreComponent
 public class RuleChainEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg convertRuleChainEventToDownlink(EdgeEvent edgeEvent) {
+    public DownlinkMsg convertRuleChainEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         RuleChainId ruleChainId = new RuleChainId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
@@ -53,8 +54,9 @@ public class RuleChainEdgeProcessor extends BaseEdgeProcessor {
                         } catch (Exception ignored) {}
                     }
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    RuleChainUpdateMsg ruleChainUpdateMsg =
-                            ruleChainMsgConstructor.constructRuleChainUpdatedMsg(msgType, ruleChain, isRoot);
+                    RuleChainUpdateMsg ruleChainUpdateMsg = ((RuleChainMsgConstructor)
+                            ruleChainMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion))
+                            .constructRuleChainUpdatedMsg(msgType, ruleChain, isRoot);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addRuleChainUpdateMsg(ruleChainUpdateMsg)
@@ -65,7 +67,8 @@ public class RuleChainEdgeProcessor extends BaseEdgeProcessor {
             case UNASSIGNED_FROM_EDGE:
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                        .addRuleChainUpdateMsg(ruleChainMsgConstructor.constructRuleChainDeleteMsg(ruleChainId))
+                        .addRuleChainUpdateMsg(((RuleChainMsgConstructor) ruleChainMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion))
+                                .constructRuleChainDeleteMsg(ruleChainId))
                         .build();
                 break;
         }
@@ -79,8 +82,9 @@ public class RuleChainEdgeProcessor extends BaseEdgeProcessor {
         if (ruleChain != null) {
             RuleChainMetaData ruleChainMetaData = ruleChainService.loadRuleChainMetaData(edgeEvent.getTenantId(), ruleChainId);
             UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-            RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg =
-                    ruleChainMsgConstructor.constructRuleChainMetadataUpdatedMsg(edgeEvent.getTenantId(), msgType, ruleChainMetaData, edgeVersion);
+            RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = ((RuleChainMsgConstructor)
+                    ruleChainMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion))
+                    .constructRuleChainMetadataUpdatedMsg(edgeEvent.getTenantId(), msgType, ruleChainMetaData, edgeVersion);
             if (ruleChainMetadataUpdateMsg != null) {
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())

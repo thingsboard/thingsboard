@@ -19,20 +19,21 @@
   <div fxLayout="row" style="height: 48px;">
     <div fxFlex="50" fxLayoutAlign="start center">
       <mat-checkbox color="primary"
-                    [checked]="notificationSettingsFormGroup.get('enabled').value"
-                    (click)="toggleEnabled()">
+                    (click)="$event.stopPropagation()"
+                    (change)="changeInstanceTypeCheckBox($event.checked)"
+                    [checked]="getChecked()"
+                    [indeterminate]="getIndeterminate()">
         <span class="notification-type"
               [ngClass]="{'notification-type-disabled': !notificationSettingsFormGroup.get('enabled').value}">
           {{notificationTemplateTypeTranslateMap.get(notificationSettingsFormGroup.get('name').value)?.name | translate}}
         </span>
       </mat-checkbox>
     </div>
-    <div fxFlex fxLayout="row" *ngFor="let deliveryMethods of deliveryMethods">
+    <div fxFlex fxLayout="row" *ngFor="let deliveryMethod of deliveryMethods">
       <div fxFlex fxLayoutAlign="start center">
         <mat-checkbox color="primary"
-                      [disabled]="!allowDeliveryMethods?.includes(deliveryMethods) || !notificationSettingsFormGroup.get('enabled').value"
-                      [checked]="getChecked(deliveryMethods)"
-                      (click)="toggleDeliviryMethod(deliveryMethods)"
+                      [checked]="getChecked(deliveryMethod)"
+                      (click)="toggleDeliviryMethod(deliveryMethod)"
         ></mat-checkbox>
       </div>
     </div>

@@ -16,7 +16,9 @@
 package org.thingsboard.server.queue.util;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.FstStatsService;
 import org.thingsboard.server.common.data.JavaSerDesUtil;
 
 import java.util.Optional;
@@ -24,13 +26,27 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class JavaDataDecodingEncodingService implements DataDecodingEncodingService {
+
+    @Autowired
+    private FstStatsService fstStatsService;
+
     @Override
     public <T> Optional<T> decode(byte[] byteArray) {
-        return Optional.ofNullable(JavaSerDesUtil.decode(byteArray));
+        long startTime = System.nanoTime();
+        Optional<T> optional = Optional.ofNullable(JavaSerDesUtil.decode(byteArray));
+        optional.ifPresent(obj -> {
+            fstStatsService.recordDecodeTime(obj.getClass(), startTime);
+            fstStatsService.incrementDecode(obj.getClass());
+        });
+        return optional;
     }
 
     @Override
     public <T> byte[] encode(T msq) {
-        return JavaSerDesUtil.encode(msq);
+        long startTime = System.nanoTime();
+        var bytes = JavaSerDesUtil.encode(msq);
+        fstStatsService.recordEncodeTime(msq.getClass(), startTime);
+        fstStatsService.incrementEncode(msq.getClass());
+        return bytes;
     }
 }

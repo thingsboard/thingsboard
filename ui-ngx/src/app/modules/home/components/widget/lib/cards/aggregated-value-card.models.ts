@@ -32,6 +32,7 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { AggregationType } from '@shared/models/time/time.models';
 
 export interface AggregatedValueCardWidgetSettings {
+  autoScale: boolean;
   showSubtitle: boolean;
   subtitle: string;
   subtitleFont: Font;
@@ -91,7 +92,7 @@ export const computeAggregatedCardValue =
       key,
       value: '',
       units: key.units,
-      style: textStyle(settings.font, '0.25px'),
+      style: textStyle(settings.font),
       color: ColorProcessor.fromSettings(settings.color),
       center: position === AggregatedValueCardKeyPosition.center,
       showArrow: settings.showArrow,
@@ -112,6 +113,7 @@ export const getTsValueByLatestDataKey = (latestData: Array<DatasourceData>, dat
 };
 
 export const aggregatedValueCardDefaultSettings: AggregatedValueCardWidgetSettings = {
+  autoScale: true,
   showSubtitle: true,
   subtitle: '${entityName}',
   subtitleFont: {
@@ -159,72 +161,3 @@ export const aggregatedValueCardDefaultKeySettings: AggregatedValueCardKeySettin
   color: constantColor('rgba(0, 0, 0, 0.87)'),
   showArrow: false
 };
-
-export const createDefaultAggregatedValueLatestDataKeys = (keyName: string, units): DataKey[] => [
-    {
-      name: keyName, label: 'Latest', type: DataKeyType.timeseries, units, decimals: 0,
-      aggregationType: AggregationType.NONE,
-      settings: {
-        position: AggregatedValueCardKeyPosition.center,
-        font: {
-          family: 'Roboto',
-          size: 52,
-          sizeUnit: 'px',
-          style: 'normal',
-          weight: '500',
-          lineHeight: '1'
-        },
-        color: constantColor('rgba(0, 0, 0, 0.87)'),
-        showArrow: false
-      } as AggregatedValueCardKeySettings
-    },
-    {
-      name: keyName, label: 'Delta percent', type: DataKeyType.timeseries, units: '%', decimals: 0,
-      aggregationType: AggregationType.AVG,
-      comparisonEnabled: true,
-      timeForComparison: 'previousInterval',
-      comparisonResultType: ComparisonResultType.DELTA_PERCENT,
-      settings: {
-        position: AggregatedValueCardKeyPosition.rightTop,
-        font: {
-          family: 'Roboto',
-          size: 14,
-          sizeUnit: 'px',
-          style: 'normal',
-          weight: '500',
-          lineHeight: '1'
-        },
-        color: {
-          color: 'rgba(0, 0, 0, 0.87)',
-          type: ColorType.range,
-          rangeList: [
-            {to: 0, color: '#198038'},
-            {from: 0, to: 0, color: 'rgba(0, 0, 0, 0.87)'},
-            {from: 0, color: '#D12730'}
-          ],
-          colorFunction: ''
-        },
-        showArrow: true
-      } as AggregatedValueCardKeySettings
-    },
-    {
-      name: keyName, label: 'Delta absolute', type: DataKeyType.timeseries, units, decimals: 1,
-      aggregationType: AggregationType.AVG,
-      comparisonEnabled: true,
-      timeForComparison: 'previousInterval',
-      comparisonResultType: ComparisonResultType.DELTA_ABSOLUTE,
-      settings: {
-        position: AggregatedValueCardKeyPosition.rightBottom,
-        font: {
-          family: 'Roboto',
-          size: 11,
-          sizeUnit: 'px',
-          style: 'normal',
-          weight: '400',
-          lineHeight: '1'
-        },
-        color: constantColor('rgba(0, 0, 0, 0.38)'),
-        showArrow: false
-      } as AggregatedValueCardKeySettings
-    }
-  ];

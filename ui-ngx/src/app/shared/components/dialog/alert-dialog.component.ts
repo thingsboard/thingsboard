@@ -21,6 +21,7 @@ export interface AlertDialogData {
   title: string;
   message: string;
   ok: string;
+  textMode?: boolean;
 }
 
 @Component({

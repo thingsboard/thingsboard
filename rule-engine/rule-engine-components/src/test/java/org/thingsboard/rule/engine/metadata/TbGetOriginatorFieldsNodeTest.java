@@ -40,6 +40,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.device.DeviceService;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
@@ -86,7 +87,7 @@ public class TbGetOriginatorFieldsNodeTest {
         var exception = assertThrows(TbNodeException.class, () -> node.init(ctxMock, nodeConfiguration));
 
         // THEN
-        assertThat(exception.getMessage()).isEqualTo("FetchTo cannot be null!");
+        assertThat(exception.getMessage()).isEqualTo("FetchTo option can't be null! Allowed values: " + Arrays.toString(TbMsgSource.values()));
         verify(ctxMock, never()).tellSuccess(any());
     }
 

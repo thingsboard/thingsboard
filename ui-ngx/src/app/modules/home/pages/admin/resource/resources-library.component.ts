@@ -32,6 +32,7 @@ import {
 import { filter, startWith, takeUntil } from 'rxjs/operators';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { isDefinedAndNotNull } from '@core/utils';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
 
 @Component({
   selector: 'tb-resources-library',
@@ -42,6 +43,8 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
   readonly resourceType = ResourceType;
   readonly resourceTypes: ResourceType[] = Object.values(this.resourceType);
   readonly resourceTypesTranslationMap = ResourceTypeTranslationMap;
+
+  maxResourceSize = getCurrentAuthState(this.store).maxResourceSize;
 
   private destroy$ = new Subject<void>();
 

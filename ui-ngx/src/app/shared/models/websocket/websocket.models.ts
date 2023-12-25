@@ -25,6 +25,7 @@ export interface WsService<T extends WsSubscriber> {
 }
 
 export abstract class CmdWrapper {
+  abstract setAuth(token: string);
   abstract hasCommands(): boolean;
   abstract clear(): void;
   abstract preparePublishCommands(maxCommands: number): CmdWrapper;
