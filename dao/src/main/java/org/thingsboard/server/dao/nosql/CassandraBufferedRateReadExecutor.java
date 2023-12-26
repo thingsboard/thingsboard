@@ -20,15 +20,16 @@ import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.stats.StatsFactory;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.util.AbstractBufferedRateExecutor;
 import org.thingsboard.server.dao.util.AsyncTaskContext;
 import org.thingsboard.server.dao.util.NoSqlAnyDao;
 import org.thingsboard.server.dao.util.limits.RateLimitService;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 /**
@@ -50,14 +51,20 @@ public class CassandraBufferedRateReadExecutor extends AbstractBufferedRateExecu
             @Value("${cassandra.query.poll_ms:50}") long pollMs,
             @Value("${cassandra.query.tenant_rate_limits.print_tenant_names}") boolean printTenantNames,
             @Value("${cassandra.query.print_queries_freq:0}") int printQueriesFreq,
+            @Value("${cassandra.query.rate_limit_print_interval_ms}") long printInterval,
             @Autowired StatsFactory statsFactory,
             @Autowired EntityService entityService,
-            @Autowired RateLimitService rateLimitService) {
-        super(queueLimit, concurrencyLimit, maxWaitTime, dispatcherThreads, callbackThreads, pollMs, printQueriesFreq, statsFactory,
-                entityService, rateLimitService, printTenantNames);
+            @Autowired RateLimitService rateLimitService,
+            @Autowired TbPrintStatsExecutorService tbPrintStatsExecutorService) {
+        super(queueLimit, concurrencyLimit, maxWaitTime, dispatcherThreads, callbackThreads, pollMs, printQueriesFreq, printInterval,
+                statsFactory, entityService, rateLimitService, tbPrintStatsExecutorService, printTenantNames);
     }
 
-    @Scheduled(fixedDelayString = "${cassandra.query.rate_limit_print_interval_ms}")
+    @PostConstruct
+    public void init() {
+        schedulePrintStats();
+    }
+
     @Override
     public void printStats() {
         super.printStats();

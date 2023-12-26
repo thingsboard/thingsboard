@@ -21,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.ApiUsageState;
@@ -72,13 +71,16 @@ import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 
+import javax.annotation.PostConstruct;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.thingsboard.server.common.util.ProtoUtils.toProto;
@@ -92,6 +94,9 @@ public class DefaultTbClusterService implements TbClusterService {
     private boolean statsEnabled;
     @Value("${edges.enabled:true}")
     protected boolean edgesEnabled;
+    @Value("${cluster.stats.print_interval_ms}")
+    private long statsPrintInterval;
+
 
     private final AtomicInteger toCoreMsgs = new AtomicInteger(0);
     private final AtomicInteger toCoreNfs = new AtomicInteger(0);
@@ -116,6 +121,14 @@ public class DefaultTbClusterService implements TbClusterService {
     private final TbDeviceProfileCache deviceProfileCache;
     private final TbAssetProfileCache assetProfileCache;
     private final GatewayNotificationsService gatewayNotificationsService;
+    private final TbPrintStatsExecutorService tbPrintStatsExecutorService;
+
+    @PostConstruct
+    public void init() {
+        if (statsEnabled) {
+            tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, statsPrintInterval, statsPrintInterval, TimeUnit.MILLISECONDS);
+        }
+    }
 
     @Override
     public void pushMsgToCore(TenantId tenantId, EntityId entityId, ToCoreMsg msg, TbQueueCallback callback) {
@@ -446,18 +459,15 @@ public class DefaultTbClusterService implements TbClusterService {
         }
     }
 
-    @Scheduled(fixedDelayString = "${cluster.stats.print_interval_ms}")
     public void printStats() {
-        if (statsEnabled) {
-            int toCoreMsgCnt = toCoreMsgs.getAndSet(0);
-            int toCoreNfsCnt = toCoreNfs.getAndSet(0);
-            int toRuleEngineMsgsCnt = toRuleEngineMsgs.getAndSet(0);
-            int toRuleEngineNfsCnt = toRuleEngineNfs.getAndSet(0);
-            int toTransportNfsCnt = toTransportNfs.getAndSet(0);
-            if (toCoreMsgCnt > 0 || toCoreNfsCnt > 0 || toRuleEngineMsgsCnt > 0 || toRuleEngineNfsCnt > 0 || toTransportNfsCnt > 0) {
-                log.info("To TbCore: [{}] messages [{}] notifications; To TbRuleEngine: [{}] messages [{}] notifications; To Transport: [{}] notifications",
-                        toCoreMsgCnt, toCoreNfsCnt, toRuleEngineMsgsCnt, toRuleEngineNfsCnt, toTransportNfsCnt);
-            }
+        int toCoreMsgCnt = toCoreMsgs.getAndSet(0);
+        int toCoreNfsCnt = toCoreNfs.getAndSet(0);
+        int toRuleEngineMsgsCnt = toRuleEngineMsgs.getAndSet(0);
+        int toRuleEngineNfsCnt = toRuleEngineNfs.getAndSet(0);
+        int toTransportNfsCnt = toTransportNfs.getAndSet(0);
+        if (toCoreMsgCnt > 0 || toCoreNfsCnt > 0 || toRuleEngineMsgsCnt > 0 || toRuleEngineNfsCnt > 0 || toTransportNfsCnt > 0) {
+            log.info("To TbCore: [{}] messages [{}] notifications; To TbRuleEngine: [{}] messages [{}] notifications; To Transport: [{}] notifications",
+                    toCoreMsgCnt, toCoreNfsCnt, toRuleEngineMsgsCnt, toRuleEngineNfsCnt, toTransportNfsCnt);
         }
     }
 

@@ -208,8 +208,7 @@ class DeviceState {
 
     private void processAlarmDeleteNotification(TbContext ctx, TbMsg msg) {
         Alarm alarm = JacksonUtil.fromString(msg.getData(), Alarm.class);
-        alarmStates.values().removeIf(alarmState -> alarmState.getCurrentAlarm() != null
-                && alarmState.getCurrentAlarm().getId().equals(alarm.getId()));
+        alarmStates.values().removeIf(alarmState -> alarmState.getCurrentAlarm().getId().equals(alarm.getId()));
         ctx.tellSuccess(msg);
     }
 
@@ -231,15 +230,11 @@ class DeviceState {
         }
         if (!keys.isEmpty()) {
             EntityKeyType keyType = getKeyTypeFromScope(scope);
-            Set<AlarmConditionFilterKey> removedKeys = keys.stream().map(key -> new EntityKey(keyType, key))
-                    .peek(latestValues::removeValue)
-                    .map(DataSnapshot::toConditionKey).collect(Collectors.toSet());
-            SnapshotUpdate update = new SnapshotUpdate(AlarmConditionKeyType.ATTRIBUTE, removedKeys);
-
+            keys.forEach(key -> latestValues.removeValue(new EntityKey(keyType, key)));
             for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
                 AlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
                         a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
-                stateChanged |= alarmState.process(ctx, msg, latestValues, update);
+                stateChanged |= alarmState.process(ctx, msg, latestValues, null);
             }
         }
         ctx.tellSuccess(msg);

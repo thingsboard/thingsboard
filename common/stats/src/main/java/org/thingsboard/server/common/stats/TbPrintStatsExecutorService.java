@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql;
+package org.thingsboard.server.common.stats;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
+import java.util.concurrent.TimeUnit;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.function.Consumer;
-
-public interface TbSqlQueue<E> {
-
-    void init(TbPrintStatsExecutorService tbPrintStatsExecutorService, Consumer<List<E>> saveFunction, Comparator<E> batchUpdateComparator, int queueIndex);
-
-    void destroy();
-
-    ListenableFuture<Void> add(E element);
+public interface TbPrintStatsExecutorService {
+    void scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit);
 }

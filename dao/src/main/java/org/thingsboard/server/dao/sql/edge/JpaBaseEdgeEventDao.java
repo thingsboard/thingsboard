@@ -31,12 +31,12 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.stats.StatsFactory;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.edge.EdgeEventDao;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.sql.EdgeEventEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
-import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
@@ -47,7 +47,6 @@ import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -62,7 +61,7 @@ public class JpaBaseEdgeEventDao extends JpaAbstractDao<EdgeEventEntity, EdgeEve
 
     private final UUID systemTenantId = NULL_UUID;
 
-    private final ScheduledLogExecutorComponent logExecutor;
+    private final TbPrintStatsExecutorService tbPrintStatsExecutorService;
 
     private final StatsFactory statsFactory;
 
@@ -121,7 +120,7 @@ public class JpaBaseEdgeEventDao extends JpaAbstractDao<EdgeEventEntity, EdgeEve
             }
         };
         queue = new TbSqlBlockingQueueWrapper<>(params, hashcodeFunction, 1, statsFactory);
-        queue.init(logExecutor, edgeEventInsertRepository::save,
+        queue.init(tbPrintStatsExecutorService, edgeEventInsertRepository::save,
                 Comparator.comparing(EdgeEventEntity::getTs)
         );
     }

@@ -18,7 +18,7 @@ package org.thingsboard.server.service.queue;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.id.QueueId;
@@ -43,6 +43,7 @@ import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
 import org.thingsboard.server.service.queue.ruleengine.TbRuleEngineConsumerContext;
@@ -56,13 +57,15 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @TbRuleEngineComponent
 @Slf4j
 public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<ToRuleEngineNotificationMsg> implements TbRuleEngineConsumerService {
-
     private final TbRuleEngineConsumerContext ctx;
+    @Value("${queue.rule-engine.stats.print-interval-ms}")
+    private long statsPrintInterval;
     private final QueueService queueService;
     private final TbRuleEngineDeviceRpcService tbDeviceRpcService;
 
@@ -78,9 +81,10 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                                               TbAssetProfileCache assetProfileCache,
                                               TbTenantProfileCache tenantProfileCache,
                                               TbApiUsageStateService apiUsageStateService,
-                                              PartitionService partitionService, ApplicationEventPublisher eventPublisher) {
+                                              PartitionService partitionService, ApplicationEventPublisher eventPublisher,
+                                              TbPrintStatsExecutorService tbPrintStatsExecutorService) {
         super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, assetProfileCache, apiUsageStateService, partitionService,
-                eventPublisher, tbRuleEngineQueueFactory.createToRuleEngineNotificationsMsgConsumer(), Optional.empty());
+                eventPublisher, tbRuleEngineQueueFactory.createToRuleEngineNotificationsMsgConsumer(), Optional.empty(), tbPrintStatsExecutorService);
         this.ctx = ctx;
         this.tbDeviceRpcService = tbDeviceRpcService;
         this.queueService = queueService;
@@ -99,6 +103,9 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
 
     private void initConsumer(Queue configuration) {
         getOrCreateConsumer(new QueueKey(ServiceType.TB_RULE_ENGINE, configuration)).init(configuration);
+        if (ctx.isStatsEnabled()) {
+            tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, statsPrintInterval, statsPrintInterval, TimeUnit.MILLISECONDS);
+        }
     }
 
     @Override
@@ -215,7 +222,6 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
         return consumers.computeIfAbsent(queueKey, key -> new TbRuleEngineQueueConsumerManager(ctx, key));
     }
 
-    @Scheduled(fixedDelayString = "${queue.rule-engine.stats.print-interval-ms}")
     public void printStats() {
         if (ctx.isStatsEnabled()) {
             long ts = System.currentTimeMillis();

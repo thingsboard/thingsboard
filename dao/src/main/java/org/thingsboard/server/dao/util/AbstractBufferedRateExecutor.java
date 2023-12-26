@@ -35,6 +35,7 @@ import org.thingsboard.server.common.stats.DefaultCounter;
 import org.thingsboard.server.common.stats.StatsCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.stats.StatsType;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.common.data.limit.LimitedApi;
@@ -75,6 +76,9 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
 
     protected final AtomicInteger concurrencyLevel;
     protected final BufferedRateExecutorStats stats;
+    protected final TbPrintStatsExecutorService tbPrintStatsExecutorService;
+
+    protected final long printInterval;
 
     private final EntityService entityService;
     private final RateLimitService rateLimitService;
@@ -83,8 +87,9 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
     private final Map<TenantId, String> tenantNamesCache = new HashMap<>();
 
     public AbstractBufferedRateExecutor(int queueLimit, int concurrencyLimit, long maxWaitTime, int dispatcherThreads,
-                                        int callbackThreads, long pollMs, int printQueriesFreq, StatsFactory statsFactory,
-                                        EntityService entityService, RateLimitService rateLimitService, boolean printTenantNames) {
+                                        int callbackThreads, long pollMs, int printQueriesFreq, long printInterval,
+                                        StatsFactory statsFactory, EntityService entityService, RateLimitService rateLimitService,
+                                        TbPrintStatsExecutorService tbPrintStatsExecutorService, boolean printTenantNames) {
         this.maxWaitTime = maxWaitTime;
         this.pollMs = pollMs;
         this.concurrencyLimit = concurrencyLimit;
@@ -92,11 +97,12 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
         this.queue = new LinkedBlockingDeque<>(queueLimit);
         this.dispatcherExecutor = Executors.newFixedThreadPool(dispatcherThreads, ThingsBoardThreadFactory.forName("nosql-" + getBufferName() + "-dispatcher"));
         this.callbackExecutor = ThingsBoardExecutors.newWorkStealingPool(callbackThreads, "nosql-" + getBufferName() + "-callback");
+        this.printInterval = printInterval;
+        this.tbPrintStatsExecutorService = tbPrintStatsExecutorService;
         this.timeoutExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("nosql-" + getBufferName() + "-timeout"));
         this.stats = new BufferedRateExecutorStats(statsFactory);
         String concurrencyLevelKey = StatsType.RATE_EXECUTOR.getName() + "." + CONCURRENCY_LEVEL + getBufferName(); //metric name may change with buffer name suffix
         this.concurrencyLevel = statsFactory.createGauge(concurrencyLevelKey, new AtomicInteger(0));
-
         this.entityService = entityService;
         this.rateLimitService = rateLimitService;
         this.printTenantNames = printTenantNames;
@@ -275,6 +281,10 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
 
     protected int getQueueSize() {
         return queue.size();
+    }
+
+    protected void schedulePrintStats() {
+        tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, printInterval, printInterval, TimeUnit.MILLISECONDS);
     }
 
     public void printStats() {

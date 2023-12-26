@@ -22,7 +22,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.JacksonUtil;
@@ -48,6 +47,8 @@ import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.resource.ImageCacheKey;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
+import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceStateServiceMsgProto;
@@ -128,6 +129,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private long firmwarePackInterval;
     @Value("${queue.core.ota.pack-size:100}")
     private int firmwarePackSize;
+    @Value("${queue.core.stats.print-interval-ms}")
+    private long statsPrintInterval;
 
     private final TbQueueConsumer<TbProtoQueueMsg<ToCoreMsg>> mainConsumer;
     private final DeviceStateService stateService;
@@ -170,8 +173,11 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                         Optional<JwtSettingsService> jwtSettingsService,
                                         NotificationSchedulerService notificationSchedulerService,
                                         NotificationRuleProcessor notificationRuleProcessor,
-                                        TbImageService imageService) {
-        super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, assetProfileCache, apiUsageStateService, partitionService, eventPublisher, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer(), jwtSettingsService);
+                                        TbImageService imageService,
+                                        TbPrintStatsExecutorService tbPrintStatsExecutorService,) {
+        super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, assetProfileCache, apiUsageStateService,
+                partitionService, eventPublisher, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer(),
+                jwtSettingsService, tbPrintStatsExecutorService);
         this.mainConsumer = tbCoreQueueFactory.createToCoreMsgConsumer();
         this.usageStatsConsumer = tbCoreQueueFactory.createToUsageStatsServiceMsgConsumer();
         this.firmwareStatesConsumer = tbCoreQueueFactory.createToOtaPackageStateServiceMsgConsumer();
@@ -195,6 +201,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         this.consumersExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("tb-core-consumer"));
         this.usageStatsExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-core-usage-stats-consumer"));
         this.firmwareStatesExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-core-firmware-notifications-consumer"));
+        if (statsEnabled) {
+            this.tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, statsPrintInterval, statsPrintInterval, TimeUnit.MILLISECONDS);
+        }
     }
 
     @PreDestroy
@@ -525,12 +534,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         callback.onSuccess();
     }
 
-    @Scheduled(fixedDelayString = "${queue.core.stats.print-interval-ms}")
     public void printStats() {
-        if (statsEnabled) {
-            stats.printStats();
-            stats.reset();
-        }
+        stats.printStats();
+        stats.reset();
     }
 
     private void forwardToLocalSubMgrService(LocalSubscriptionServiceMsgProto msg, TbCallback callback) {

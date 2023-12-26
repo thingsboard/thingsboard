@@ -27,7 +27,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -105,6 +104,7 @@ import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbTransportComponent;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -162,6 +162,8 @@ public class DefaultTransportService implements TransportService {
     private int notificationsPollDuration;
     @Value("${transport.stats.enabled:false}")
     private boolean statsEnabled;
+    @Value("${transport.stats.print-interval-ms:60000}")
+    private long statsPrintInterval;
 
 
     @Autowired
@@ -188,6 +190,7 @@ public class DefaultTransportService implements TransportService {
     private final NotificationRuleProcessor notificationRuleProcessor;
 
     private final EntityLimitsCache entityLimitsCache;
+    private final TbPrintStatsExecutorService tbPrintStatsExecutorService;
 
     protected TbQueueRequestTemplate<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> transportApiRequestTemplate;
     protected TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> ruleEngineMsgProducer;
@@ -218,7 +221,7 @@ public class DefaultTransportService implements TransportService {
                                    TransportRateLimitService rateLimitService,
                                    DataDecodingEncodingService dataDecodingEncodingService, SchedulerComponent scheduler, TransportResourceCache transportResourceCache,
                                    ApplicationEventPublisher eventPublisher, NotificationRuleProcessor notificationRuleProcessor,
-                                   EntityLimitsCache entityLimitsCache) {
+                                   EntityLimitsCache entityLimitsCache, TbPrintStatsExecutorService tbPrintStatsExecutorService) {
         this.partitionService = partitionService;
         this.serviceInfoProvider = serviceInfoProvider;
         this.queueProvider = queueProvider;
@@ -234,6 +237,7 @@ public class DefaultTransportService implements TransportService {
         this.eventPublisher = eventPublisher;
         this.notificationRuleProcessor = notificationRuleProcessor;
         this.entityLimitsCache = entityLimitsCache;
+        this.tbPrintStatsExecutorService = tbPrintStatsExecutorService;
     }
 
     @PostConstruct
@@ -253,6 +257,9 @@ public class DefaultTransportService implements TransportService {
         transportNotificationsConsumer.subscribe(Collections.singleton(tpi));
         transportApiRequestTemplate.init();
         mainConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("transport-consumer"));
+        if (statsEnabled) {
+            tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, statsPrintInterval, statsPrintInterval, TimeUnit.MILLISECONDS);
+        }
     }
 
     @AfterStartUp(order = AfterStartUp.TRANSPORT_SERVICE)
@@ -1326,9 +1333,8 @@ public class DefaultTransportService implements TransportService {
         statsMap.put(statsName, number);
     }
 
-    @Scheduled(fixedDelayString = "${transport.stats.print-interval-ms:60000}")
     public void printStats() {
-        if (statsEnabled && !statsMap.isEmpty()) {
+        if (!statsMap.isEmpty()) {
             String values = statsMap.entrySet().stream()
                     .map(kv -> kv.getKey() + " [" + kv.getValue() + "]").collect(Collectors.joining(", "));
             log.info("Transport Stats: {}", values);
