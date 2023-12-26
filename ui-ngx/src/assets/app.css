@@ -204,7 +204,7 @@ gridster.fit {
 
 /* Help button */
 .mat-mdc-card-header .mat-mdc-icon-button,
-.mat-toolbar-tools > .details-buttons,
+.mat-toolbar-tools > .details-buttons div > button,
 .mat-toolbar-tools > .tb-help {
   display: none !important;
 }
