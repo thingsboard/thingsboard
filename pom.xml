@@ -1973,11 +1973,6 @@
             </dependency>
             <dependency>
                 <groupId>io.hypersistence</groupId>
-                <artifactId>hypersistence-utils-hibernate-55</artifactId>
-                <version>${hypersistence-utils.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.hypersistence</groupId>
                 <artifactId>hypersistence-utils-hibernate-62</artifactId>
                 <version>${hypersistence-utils.version}</version>
             </dependency>
