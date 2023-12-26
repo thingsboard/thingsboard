@@ -614,7 +614,7 @@
         "filter-type-asset-type-and-name-description": "Assets of type '{{assetTypes}}' and with name starting with '{{prefix}}'",
         "filter-type-device-type": "Device type",
         "filter-type-device-type-description": "Devices of type '{{deviceTypes}}'",
-        "filter-type-device-type-and-name-description": "Devices of types '{{deviceTypes}}' and with name starting with '{{prefix}}'",
+        "filter-type-device-type-and-name-description": "Devices of type '{{deviceTypes}}' and with name starting with '{{prefix}}'",
         "filter-type-entity-view-type": "Entity View type",
         "filter-type-entity-view-type-description": "Entity Views of type '{{entityViewTypes}}'",
         "filter-type-entity-view-type-and-name-description": "Entity Views of type '{{entityViewTypes}}' and with name starting with '{{prefix}}'",
@@ -3009,7 +3009,7 @@
         "embed-to-html-hint": "This feature will make link available to any unauthorized user.",
         "embed-to-html-text": "Using the following code snippet, you may embed an image into the components based on the plain HTML.<br/>Such components include HTML card widgets, cell content functions, etc.",
         "embed-to-angular-template": "Embed to Angular HTML template",
-        "embed-to-angular-template-text": "Using the following code snippet, you may embed an image into the Angular HTML template.<br/>Such components include the Markdown widget, HTML section in the widget editor, custom actions, etc."
+        "embed-to-angular-template-text": "Using the following code snippet, you may embed an image into the Angular HTML template that will be used for components.<br/>Such components include the Markdown widget, HTML section in the widget editor, custom actions, etc."
     },
     "image-input": {
         "drop-images-or": "Drag and drop an images or",
@@ -3812,7 +3812,7 @@
         "custom-link-label": "Custom link label",
         "custom-link-label-required": "Custom link label is required.",
         "link-labels": "Link labels",
-        "link-labels-required": "Link labels is required.",
+        "link-labels-required": "Link labels are required.",
         "no-link-labels-found": "No link labels found",
         "no-link-label-matching": "'{{label}}' not found.",
         "create-new-link-label": "Create a new one!",
