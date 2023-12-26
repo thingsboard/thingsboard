@@ -17,7 +17,6 @@ package org.thingsboard.server.transport.lwm2m.rpc.sql;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.eclipse.leshan.core.ResponseCode;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationTest;
@@ -30,28 +29,58 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID
 
 public class RpcLwm2mIntegrationWriteAttributesTest extends AbstractRpcLwM2MIntegrationTest {
 
-    @Ignore
     /**
      * WriteAttributes {"id":"/3/0/14","attributes":{"pmax":100, "pmin":10}}
      * if not implemented:
-     * {"result":"BAD_REQUEST","error":"Content Format is mandatory"}
+     * {"result":"INTERNAL_SERVER_ERROR","error":"not implemented"}
      * if implemented:
      * {"result":"CHANGED"}
      */
     @Test
     public void testWriteAttributesResourceWithParametersById_Result_INTERNAL_SERVER_ERROR() throws Exception {
         String expectedPath = objectInstanceIdVer_3 + "/" + RESOURCE_ID_14;
+        sendRPCReadById(expectedPath);
         String expectedValue = "{\"pmax\":100, \"pmin\":10}";
         String actualResult = sendRPCExecuteWithValueById(expectedPath, expectedValue);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.INTERNAL_SERVER_ERROR.getName(), rpcActualResult.get("result").asText());
+        String expected = "not implemented";
+        String actual = rpcActualResult.get("error").asText();
+        assertTrue(actual.equals(expected));
+    }
+    @Test
+    public void testWriteAttributesResourceVerWithParametersById_Result_BAD_REQUEST() throws Exception {
+        String expectedPath = objectIdVer_3;
+        String actualResult = sendRPCReadById(expectedPath);
+        String expectedValue = "{\"ver\":1.3}";
+        actualResult = sendRPCExecuteWithValueById(expectedPath, expectedValue);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.BAD_REQUEST.getName(), rpcActualResult.get("result").asText());
-        String expected = "Content Format is mandatory";
+        String expected = "Attribute ver is of class PROPERTIES but only NOTIFICATION attribute can be used in WRITE ATTRIBUTE request.";
+        String actual = rpcActualResult.get("error").asText();
+        assertTrue(actual.equals(expected));
+    }
+
+    @Test
+    public void testWriteAttributesResourceServerUriWithParametersById_Result_BAD_REQUEST() throws Exception {
+        String expectedPath =  objectInstanceIdVer_1;
+        String actualResult = sendRPCReadById(expectedPath);
+        String expectedValue = "{\"uri\":\"coaps://localhost:5690\"}";
+        actualResult = sendRPCExecuteWithValueById(expectedPath, expectedValue);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.BAD_REQUEST.getName(), rpcActualResult.get("result").asText());
+        String expected = "Attribute uri is of class PROPERTIES but only NOTIFICATION attribute can be used in WRITE ATTRIBUTE request.";
         String actual = rpcActualResult.get("error").asText();
         assertTrue(actual.equals(expected));
     }
 
     private String sendRPCExecuteWithValueById(String path, String value) throws Exception {
         String setRpcRequest = "{\"method\": \"WriteAttributes\", \"params\": {\"id\": \"" + path + "\", \"attributes\": " + value + " }}";
+        return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
+    }
+
+    private String sendRPCReadById(String path) throws Exception {
+        String setRpcRequest = "{\"method\": \"Read\", \"params\": {\"id\": \"" + path + "\"}}";
         return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
     }
 

@@ -92,10 +92,17 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.DIMENSION;
+import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.ENABLER_VERSION;
+import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.EVALUATE_MAXIMUM_PERIOD;
+import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.EVALUATE_MINIMUM_PERIOD;
 import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.GREATER_THAN;
 import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.LESSER_THAN;
 import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.MAXIMUM_PERIOD;
 import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.MINIMUM_PERIOD;
+import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.OBJECT_VERSION;
+import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.SERVER_URI;
+import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.SHORT_SERVER_ID;
 import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.STEP;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OBJLNK;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
@@ -281,18 +288,38 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             if (request.getAttributes() == null) {
                 throw new IllegalArgumentException("Attributes to write are not specified!");
             }
-            ObjectAttributes params = request.getAttributes();
-            List<LwM2mAttribute<?>> attributes = new LinkedList<>();
-            addAttribute(attributes, MAXIMUM_PERIOD, params.getPmax());
-            addAttribute(attributes, MINIMUM_PERIOD, params.getPmin());
-            addAttribute(attributes, GREATER_THAN, params.getGt());
-            addAttribute(attributes, LESSER_THAN, params.getLt());
-            addAttribute(attributes, STEP, params.getSt());
-            LwM2mAttributeSet attributeSet = new LwM2mAttributeSet(attributes);
-            sendSimpleRequest(client, new WriteAttributesRequest(request.getObjectId(), attributeSet), request.getTimeout(), callback);
+            sendSimpleRequest(client, new WriteAttributesRequest(request.getObjectId(), getAttributesSet(request.getAttributes())), request.getTimeout(), callback);
         } catch (InvalidRequestException e) {
             callback.onValidationError(request.toString(), e.getMessage());
         }
+    }
+
+    private LwM2mAttributeSet getAttributesSet(ObjectAttributes params) {
+        List<LwM2mAttribute<?>> attributes = new LinkedList<>();
+        /**
+         * Only: AttributeClass.NOTIFICATION -> RW
+         */
+        addAttribute(attributes, MAXIMUM_PERIOD, params.getPmax());
+        addAttribute(attributes, MINIMUM_PERIOD, params.getPmin());
+        addAttribute(attributes, GREATER_THAN, params.getGt());
+        addAttribute(attributes, LESSER_THAN, params.getLt());
+        addAttribute(attributes, STEP, params.getSt());
+        addAttribute(attributes, EVALUATE_MAXIMUM_PERIOD, params.getEpmax());
+        addAttribute(attributes, EVALUATE_MINIMUM_PERIOD, params.getEpmin());
+        /**
+         * Only:  AttributeClass.PROPERTIES -> R
+         */
+        addAttribute(attributes, DIMENSION, params.getDim());                        // Attachment.RESOURCE
+        addAttribute(attributes, SHORT_SERVER_ID, params.getSsid());              // Attachment.OBJECT_INSTANCE
+        addAttribute(attributes, SERVER_URI, params.getUri());                          // Attachment.OBJECT_INSTANCE
+        if (params.getLwm2m() != null) {
+            addAttribute(attributes, ENABLER_VERSION, params.getLwm2m());   // attachment.ROOT
+        }
+        if (params.getVer() != null) {
+            addAttribute(attributes, OBJECT_VERSION, params.getVer());          // Attachment.OBJECT
+        }
+
+       return  new LwM2mAttributeSet(attributes);
     }
 
     @Override
