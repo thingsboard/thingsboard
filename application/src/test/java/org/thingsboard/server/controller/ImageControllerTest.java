@@ -22,9 +22,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.mock.web.MockPart;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.ImageDescriptor;
@@ -66,7 +64,7 @@ public class ImageControllerTest extends AbstractControllerTest {
     @Test
     public void testUploadPngImage() throws Exception {
         String filename = "my_png_image.png";
-        TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", filename, "image/png", PNG_IMAGE, false);
+        TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", filename, "image/png", PNG_IMAGE);
 
         assertThat(imageInfo.getTitle()).isEqualTo(filename);
         assertThat(imageInfo.getResourceType()).isEqualTo(ResourceType.IMAGE);
@@ -85,7 +83,7 @@ public class ImageControllerTest extends AbstractControllerTest {
     @Test
     public void testUploadJpegImage() throws Exception {
         String filename = "my_jpeg_image.jpg";
-        TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", filename, "image/jpeg", JPEG_IMAGE, false);
+        TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", filename, "image/jpeg", JPEG_IMAGE);
 
         ImageDescriptor imageDescriptor = imageInfo.getDescriptor(ImageDescriptor.class);
         checkJpegImageDescriptor(imageDescriptor);
@@ -97,7 +95,7 @@ public class ImageControllerTest extends AbstractControllerTest {
     @Test
     public void testUploadSvgImage() throws Exception {
         String filename = "my_svg_image.svg";
-        TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", filename, "image/svg+xml", SVG_IMAGE, false);
+        TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", filename, "image/svg+xml", SVG_IMAGE);
 
         ImageDescriptor imageDescriptor = imageInfo.getDescriptor(ImageDescriptor.class);
         checkSvgImageDescriptor(imageDescriptor);
@@ -109,17 +107,17 @@ public class ImageControllerTest extends AbstractControllerTest {
     @Test
     public void testUploadImageWithSameFilename() throws Exception {
         String filename = "my_jpeg_image.jpg";
-        TbResourceInfo imageInfo1 = uploadImage(HttpMethod.POST, "/api/image", filename, "image/jpeg", JPEG_IMAGE, false);
+        TbResourceInfo imageInfo1 = uploadImage(HttpMethod.POST, "/api/image", filename, "image/jpeg", JPEG_IMAGE);
         assertThat(imageInfo1.getTitle()).isEqualTo(filename);
         assertThat(imageInfo1.getFileName()).isEqualTo(filename);
         assertThat(imageInfo1.getResourceKey()).isEqualTo(filename);
 
-        TbResourceInfo imageInfo2 = uploadImage(HttpMethod.POST, "/api/image", filename, "image/jpeg", JPEG_IMAGE, false);
+        TbResourceInfo imageInfo2 = uploadImage(HttpMethod.POST, "/api/image", filename, "image/jpeg", JPEG_IMAGE);
         assertThat(imageInfo2.getTitle()).isEqualTo(filename);
         assertThat(imageInfo2.getFileName()).isEqualTo(filename);
         assertThat(imageInfo2.getResourceKey()).isEqualTo("my_jpeg_image_(1).jpg");
 
-        TbResourceInfo imageInfo3 = uploadImage(HttpMethod.POST, "/api/image", filename, "image/jpeg", JPEG_IMAGE, false);
+        TbResourceInfo imageInfo3 = uploadImage(HttpMethod.POST, "/api/image", filename, "image/jpeg", JPEG_IMAGE);
         assertThat(imageInfo3.getTitle()).isEqualTo(filename);
         assertThat(imageInfo3.getFileName()).isEqualTo(filename);
         assertThat(imageInfo3.getResourceKey()).isEqualTo("my_jpeg_image_(2).jpg");
@@ -128,11 +126,11 @@ public class ImageControllerTest extends AbstractControllerTest {
     @Test
     public void testUpdateImage() throws Exception {
         String filename = "my_png_image.png";
-        TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", filename, "image/png", PNG_IMAGE, false);
+        TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", filename, "image/png", PNG_IMAGE);
         checkPngImageDescriptor(imageInfo.getDescriptor(ImageDescriptor.class));
 
         String newFilename = "my_jpeg_image.png";
-        imageInfo = uploadImage(HttpMethod.PUT, "/api/images/tenant/" + filename, newFilename, "image/jpeg", JPEG_IMAGE, false);
+        imageInfo = uploadImage(HttpMethod.PUT, "/api/images/tenant/" + filename, newFilename, "image/jpeg", JPEG_IMAGE);
 
         assertThat(imageInfo.getTitle()).isEqualTo(filename);
         assertThat(imageInfo.getResourceKey()).isEqualTo(filename);
@@ -148,7 +146,7 @@ public class ImageControllerTest extends AbstractControllerTest {
     @Test
     public void testUpdateImageInfo() throws Exception {
         String filename = "my_png_image.png";
-        TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", filename, "image/png", PNG_IMAGE, false);
+        TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", filename, "image/png", PNG_IMAGE);
         ImageDescriptor imageDescriptor = imageInfo.getDescriptor(ImageDescriptor.class);
 
         assertThat(imageInfo.getTitle()).isEqualTo(filename);
@@ -167,7 +165,7 @@ public class ImageControllerTest extends AbstractControllerTest {
     @Test
     public void testExportImportImage() throws Exception {
         String filename = "my_png_image.png";
-        uploadImage(HttpMethod.POST, "/api/image", filename, "image/png", PNG_IMAGE, false);
+        uploadImage(HttpMethod.POST, "/api/image", filename, "image/png", PNG_IMAGE);
 
         ImageExportData exportData = doGet("/api/images/tenant/" + filename + "/export", ImageExportData.class);
         assertThat(exportData.getMediaType()).isEqualTo("image/png");
@@ -175,6 +173,8 @@ public class ImageControllerTest extends AbstractControllerTest {
         assertThat(exportData.getTitle()).isEqualTo(filename);
         assertThat(exportData.getResourceKey()).isEqualTo(filename);
         assertThat(exportData.getData()).isEqualTo(Base64.getEncoder().encodeToString(PNG_IMAGE));
+        assertThat(exportData.isPublic()).isTrue();
+        assertThat(exportData.getPublicResourceKey()).isNotEmpty();
 
         doDelete("/api/images/tenant/" + filename).andExpect(status().isOk());
 
@@ -182,6 +182,8 @@ public class ImageControllerTest extends AbstractControllerTest {
         assertThat(importedImageInfo.getTitle()).isEqualTo(filename);
         assertThat(importedImageInfo.getResourceKey()).isEqualTo(filename);
         assertThat(importedImageInfo.getFileName()).isEqualTo(filename);
+        assertThat(importedImageInfo.isPublic()).isTrue();
+        assertThat(importedImageInfo.getPublicResourceKey()).isEqualTo(exportData.getPublicResourceKey());
         checkPngImageDescriptor(importedImageInfo.getDescriptor(ImageDescriptor.class));
         assertThat(downloadImage("tenant", filename)).containsExactly(PNG_IMAGE);
     }
@@ -190,11 +192,11 @@ public class ImageControllerTest extends AbstractControllerTest {
     public void testGetImages() throws Exception {
         loginSysAdmin();
         String systemImageName = "my_system_png_image.png";
-        TbResourceInfo systemImage = uploadImage(HttpMethod.POST, "/api/image", systemImageName, "image/png", PNG_IMAGE, false);
+        TbResourceInfo systemImage = uploadImage(HttpMethod.POST, "/api/image", systemImageName, "image/png", PNG_IMAGE);
 
         loginTenantAdmin();
         String tenantImageName = "my_jpeg_image.jpg";
-        TbResourceInfo tenantImage = uploadImage(HttpMethod.POST, "/api/image", tenantImageName, "image/jpeg", JPEG_IMAGE, false);
+        TbResourceInfo tenantImage = uploadImage(HttpMethod.POST, "/api/image", tenantImageName, "image/jpeg", JPEG_IMAGE);
 
         List<TbResourceInfo> tenantImages = getImages(null, false, 10);
         assertThat(tenantImages).containsOnly(tenantImage);
@@ -211,7 +213,7 @@ public class ImageControllerTest extends AbstractControllerTest {
     @Test
     public void testUploadPublicImage() throws Exception {
         String filename = "my_public_image.png";
-        TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", filename, "image/png", PNG_IMAGE, true);
+        TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", filename, "image/png", PNG_IMAGE);
 
         assertThat(imageInfo.isPublic()).isTrue();
         assertThat(imageInfo.getPublicResourceKey()).hasSize(32);
@@ -225,7 +227,7 @@ public class ImageControllerTest extends AbstractControllerTest {
     @Test
     public void testMakeImagePublic() throws Exception {
         String filename = "my_public_image.png";
-        TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", filename, "image/png", PNG_IMAGE, false);
+        TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", filename, "image/png", PNG_IMAGE);
         String publicKey = imageInfo.getPublicResourceKey();
         assertThat(publicKey).hasSize(32);
 
@@ -325,13 +327,9 @@ public class ImageControllerTest extends AbstractControllerTest {
                 .andReturn().getResponse().getContentAsByteArray();
     }
 
-    private <R> TbResourceInfo uploadImage(HttpMethod httpMethod, String url, String filename, String mediaType, byte[] content, boolean isPublic) throws Exception {
+    private <R> TbResourceInfo uploadImage(HttpMethod httpMethod, String url, String filename, String mediaType, byte[] content) throws Exception {
         MockMultipartFile file = new MockMultipartFile("file", filename, mediaType, content);
-        MockPart publicPart = new MockPart("isPublic", String.valueOf(isPublic).getBytes());
-        publicPart.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-        var request = MockMvcRequestBuilders.multipart(httpMethod, url)
-                .file(file)
-                .part(publicPart);
+        var request = MockMvcRequestBuilders.multipart(httpMethod, url).file(file);
         setJwtToken(request);
         return readResponse(mockMvc.perform(request).andExpect(status().isOk()), TbResourceInfo.class);
     }
