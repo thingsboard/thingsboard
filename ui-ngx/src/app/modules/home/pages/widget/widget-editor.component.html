@@ -22,7 +22,7 @@
       <mat-form-field class="tb-widget-title tb-appearance-transparent">
         <input [disabled]="isReadOnly" matInput required maxlength="255"
                [(ngModel)]="widget.widgetName" (ngModelChange)="isDirty = true"
-               placeholder="{{ 'widget.title' | translate }}"/>
+               placeholder="{{ 'widget.widget-title' | translate }}"/>
       </mat-form-field>
       <mat-form-field class="tb-appearance-transparent">
         <mat-select [disabled]="isReadOnly" matInput placeholder="{{ 'widget.type' | translate }}"
@@ -63,7 +63,7 @@
               [tb-circular-progress]="saveWidgetAsPending"
               matTooltip="{{ 'widget.saveAs' | translate }} (Shift + CTRL + S)"
               matTooltipPosition="below">
-        <mat-icon>save</mat-icon>
+        <mat-icon>save_as</mat-icon>
         <span translate>action.saveAs</span>
       </button>
       <button mat-button
@@ -106,7 +106,7 @@
         <button mat-menu-item
                 [disabled]="(isLoading$ | async) || saveAsDisabled()"
                 (click)="saveWidgetAs()">
-          <mat-icon>save</mat-icon>
+          <mat-icon>save_as</mat-icon>
           <span translate>action.saveAs</span>
         </button>
       </mat-menu>
@@ -240,11 +240,10 @@
               <mat-tab label="{{ 'widget.widget-settings' | translate }}">
                 <div class="tb-resize-container" style="background-color: #fff;">
                   <div class="mat-padding">
-                    <tb-image-input fxFlex label="{{'widget.image-preview' | translate}}"
-                                    maxSizeByte="524288"
+                    <tb-gallery-image-input fxFlex label="{{'widget.image-preview' | translate}}"
                                     [(ngModel)]="widget.image"
                                     (ngModelChange)="isDirty = true" >
-                    </tb-image-input>
+                    </tb-gallery-image-input>
                     <mat-form-field class="mat-block">
                       <mat-label translate>widget.description</mat-label>
                       <textarea matInput #descriptionInput
@@ -253,6 +252,16 @@
                                 rows="2" maxlength="255"></textarea>
                       <mat-hint align="end">{{descriptionInput.value?.length || 0}}/255</mat-hint>
                     </mat-form-field>
+                    <tb-string-items-list
+                      label="{{ 'widget.tags' | translate }}"
+                      [(ngModel)]="widget.tags"
+                      (ngModelChange)="isDirty = true">
+                    </tb-string-items-list>
+                    <mat-slide-toggle class="mat-block" style="padding-bottom: 16px;"
+                                      [(ngModel)]="widget.deprecated"
+                                      (ngModelChange)="isDirty = true">
+                      {{ 'widget.deprecated' | translate }}
+                    </mat-slide-toggle>
                     <mat-form-field class="mat-block">
                       <mat-label translate>widget.settings-form-selector</mat-label>
                       <input matInput

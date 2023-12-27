@@ -18,13 +18,14 @@ package org.thingsboard.server.dao.alarm;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Function;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.util.CollectionUtils;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
@@ -39,6 +40,7 @@ import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
 import org.thingsboard.server.common.data.alarm.EntityAlarm;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ApiUsageLimitsExceededException;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -47,6 +49,8 @@ import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
@@ -54,8 +58,11 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
-import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.entity.EntityService;
+import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.ConstraintValidator;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -78,19 +85,33 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 @Service("AlarmDaoService")
 @Slf4j
 @RequiredArgsConstructor
-public class BaseAlarmService extends AbstractEntityService implements AlarmService {
+public class BaseAlarmService extends AbstractCachedEntityService<TenantId, PageData<EntitySubtype>, AlarmTypesCacheEvictEvent> implements AlarmService {
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
+
+    private static final PageLink DEFAULT_ALARM_TYPES_PAGE_LINK = new PageLink(25, 0, null, new SortOrder("type"));
 
     private final TenantService tenantService;
     private final AlarmDao alarmDao;
     private final EntityService entityService;
     private final DataValidator<Alarm> alarmDataValidator;
 
+    @TransactionalEventListener(classes = AlarmTypesCacheEvictEvent.class)
+    @Override
+    public void handleEvictEvent(AlarmTypesCacheEvictEvent event) {
+        TenantId tenantId = event.getTenantId();
+        cache.evict(tenantId);
+    }
+
     @Override
     public AlarmApiCallResult updateAlarm(AlarmUpdateRequest request) {
         validateAlarmRequest(request);
-        return withPropagated(alarmDao.updateAlarm(request));
+        AlarmApiCallResult result = withPropagated(alarmDao.updateAlarm(request));
+        if (result.getAlarm() != null) {
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(result.getAlarm().getTenantId()).entity(result)
+                    .entityId(result.getAlarm().getId()).build());
+        }
+        return result;
     }
 
     @Override
@@ -112,62 +133,37 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         if (!result.isSuccessful() && !alarmCreationEnabled) {
             throw new ApiUsageLimitsExceededException("Alarms creation is disabled");
         }
+        if (result.getAlarm() != null) {
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(result.getAlarm().getTenantId())
+                    .entityId(result.getAlarm().getId()).added(true).build());
+            publishEvictEvent(new AlarmTypesCacheEvictEvent(request.getTenantId()));
+        }
         return withPropagated(result);
     }
 
     @Override
     public AlarmApiCallResult acknowledgeAlarm(TenantId tenantId, AlarmId alarmId, long ackTs) {
-        return withPropagated(alarmDao.acknowledgeAlarm(tenantId, alarmId, ackTs));
+        var result = withPropagated(alarmDao.acknowledgeAlarm(tenantId, alarmId, ackTs));
+        if (result.getAlarm() != null) {
+            eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(result.getAlarm().getId())
+                    .actionType(ActionType.ALARM_ACK).build());
+        }
+        return result;
     }
 
     @Override
     public AlarmApiCallResult clearAlarm(TenantId tenantId, AlarmId alarmId, long clearTs, JsonNode details) {
-        return withPropagated(alarmDao.clearAlarm(tenantId, alarmId, clearTs, details));
-    }
-
-    @Override
-    public AlarmOperationResult createOrUpdateAlarm(Alarm alarm) {
-        return createOrUpdateAlarm(alarm, true);
-    }
-
-    @Override
-    public AlarmOperationResult createOrUpdateAlarm(Alarm alarm, boolean alarmCreationEnabled) {
-        alarmDataValidator.validate(alarm, Alarm::getTenantId);
-        try {
-            if (alarm.getStartTs() == 0L) {
-                alarm.setStartTs(System.currentTimeMillis());
-            }
-            if (alarm.getEndTs() == 0L) {
-                alarm.setEndTs(alarm.getStartTs());
-            }
-            alarm.setCustomerId(entityService.fetchEntityCustomerId(alarm.getTenantId(), alarm.getOriginator()).orElse(null));
-            if (alarm.getId() == null) {
-                // Atomic update and return alarm + assignee.
-                Alarm existing = alarmDao.findLatestByOriginatorAndType(alarm.getTenantId(), alarm.getOriginator(), alarm.getType());
-                if (existing == null || existing.getStatus().isCleared()) {
-                    if (!alarmCreationEnabled) {
-                        throw new ApiUsageLimitsExceededException("Alarms creation is disabled");
-                    }
-                    return createAlarm(alarm);
-                } else {
-                    return updateAlarm(existing, alarm);
-                }
-            } else {
-                return updateAlarm(alarm);
-            }
-        } catch (ExecutionException | InterruptedException e) {
-            throw new RuntimeException(e);
+        var result = withPropagated(alarmDao.clearAlarm(tenantId, alarmId, clearTs, details));
+        if (result.getAlarm() != null) {
+            eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(result.getAlarm().getId())
+                    .actionType(ActionType.ALARM_CLEAR).build());
         }
+        return result;
     }
 
     @Override
     public Alarm findLatestActiveByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
         return alarmDao.findLatestActiveByOriginatorAndType(tenantId, originator, type);
-    }
-
-    @Override
-    public ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
-        return alarmDao.findLatestByOriginatorAndTypeAsync(tenantId, originator, type);
     }
 
     @Override
@@ -181,36 +177,35 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     @Override
     @Transactional
     public AlarmApiCallResult delAlarm(TenantId tenantId, AlarmId alarmId) {
+        return delAlarm(tenantId, alarmId, true);
+    }
+
+    @Override
+    @Transactional
+    public AlarmApiCallResult delAlarm(TenantId tenantId, AlarmId alarmId, boolean checkAndDeleteAlarmType) {
         log.debug("Deleting Alarm Id: {}", alarmId);
         AlarmInfo alarm = alarmDao.findAlarmInfoById(tenantId, alarmId.getId());
         if (alarm == null) {
             return AlarmApiCallResult.builder().successful(false).build();
         } else {
+            var propagationIds = getPropagationEntityIdsList(alarm);
             deleteEntityRelations(tenantId, alarm.getId());
             alarmDao.removeById(tenantId, alarm.getUuidId());
-            return AlarmApiCallResult.builder().alarm(alarm).deleted(true).successful(true).build();
+            eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId)
+                    .entityId(alarmId).entity(alarm).build());
+            if (checkAndDeleteAlarmType) {
+                delAlarmTypes(tenantId, Collections.singleton(alarm.getType()));
+            }
+            return AlarmApiCallResult.builder().alarm(alarm).deleted(true).successful(true).propagatedEntitiesList(propagationIds).build();
         }
     }
 
     @Override
     @Transactional
-    public AlarmOperationResult deleteAlarm(TenantId tenantId, AlarmId alarmId) {
-        log.debug("Deleting Alarm Id: {}", alarmId);
-        Alarm alarm = alarmDao.findAlarmById(tenantId, alarmId.getId());
-        if (alarm == null) {
-            return new AlarmOperationResult(alarm, false);
+    public void delAlarmTypes(TenantId tenantId, Set<String> types) {
+        if (!types.isEmpty() && alarmDao.removeAlarmTypesIfNoAlarmsPresent(tenantId.getId(), types)) {
+            publishEvictEvent(new AlarmTypesCacheEvictEvent(tenantId));
         }
-        AlarmOperationResult result = new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm)));
-        deleteEntityRelations(tenantId, alarm.getId());
-        alarmDao.removeById(tenantId, alarm.getUuidId());
-        return result;
-    }
-
-    private AlarmOperationResult createAlarm(Alarm alarm) throws InterruptedException, ExecutionException {
-        log.debug("New Alarm : {}", alarm);
-        Alarm saved = alarmDao.save(alarm.getTenantId(), alarm);
-        List<EntityId> propagatedEntitiesList = createEntityAlarmRecords(saved);
-        return new AlarmOperationResult(saved, true, true, propagatedEntitiesList);
     }
 
     private List<EntityId> createEntityAlarmRecords(Alarm alarm) throws ExecutionException, InterruptedException {
@@ -243,69 +238,24 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         return relations.map(EntityRelation::getFrom).collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
-    private AlarmOperationResult updateAlarm(Alarm update) {
-        alarmDataValidator.validate(update, Alarm::getTenantId);
-        return getAndUpdate(update.getTenantId(), update.getId(),
-                (alarm) -> alarm == null ? null : updateAlarm(alarm, update));
-    }
-
-    private AlarmOperationResult updateAlarm(Alarm oldAlarm, Alarm newAlarm) {
-        boolean propagationEnabled = !oldAlarm.isPropagate() && newAlarm.isPropagate();
-        boolean propagationToOwnerEnabled = !oldAlarm.isPropagateToOwner() && newAlarm.isPropagateToOwner();
-        boolean propagationToTenantEnabled = !oldAlarm.isPropagateToTenant() && newAlarm.isPropagateToTenant();
-        AlarmSeverity oldAlarmSeverity = oldAlarm.getSeverity();
-        Alarm result = alarmDao.save(newAlarm.getTenantId(), merge(oldAlarm, newAlarm));
-        List<EntityId> propagatedEntitiesList;
-        if (propagationEnabled || propagationToOwnerEnabled || propagationToTenantEnabled) {
-            try {
-                propagatedEntitiesList = createEntityAlarmRecords(result);
-            } catch (InterruptedException | ExecutionException e) {
-                log.warn("Failed to update alarm relations [{}]", result, e);
-                throw new RuntimeException(e);
-            }
-        } else {
-            propagatedEntitiesList = new ArrayList<>(getPropagationEntityIds(result));
-        }
-        return new AlarmOperationResult(result, true, false, oldAlarmSeverity, propagatedEntitiesList);
-    }
-
-    @Override
-    public ListenableFuture<AlarmOperationResult> ackAlarm(TenantId tenantId, AlarmId alarmId, long ackTime) {
-        Alarm alarm = alarmDao.findAlarmById(tenantId, alarmId.getId());
-        if (alarm == null || alarm.getStatus().isAck()) {
-            return Futures.immediateFuture(new AlarmOperationResult(alarm, false));
-        } else {
-            alarm.setAcknowledged(true);
-            alarm.setAckTs(ackTime);
-            alarm = alarmDao.save(alarm.getTenantId(), alarm);
-            return Futures.immediateFuture(new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm))));
-        }
-    }
-
-    @Override
-    public ListenableFuture<AlarmOperationResult> clearAlarm(TenantId tenantId, AlarmId alarmId, JsonNode details, long clearTime) {
-        Alarm alarm = alarmDao.findAlarmById(tenantId, alarmId.getId());
-        if (alarm == null || alarm.getStatus().isCleared()) {
-            return Futures.immediateFuture(new AlarmOperationResult(alarm, false));
-        } else {
-            alarm.setCleared(true);
-            alarm.setClearTs(clearTime);
-            if (details != null) {
-                alarm.setDetails(details);
-            }
-            alarm = alarmDao.save(alarm.getTenantId(), alarm);
-            return Futures.immediateFuture(new AlarmOperationResult(alarm, true, new ArrayList<>(getPropagationEntityIds(alarm))));
-        }
-    }
-
     @Override
     public AlarmApiCallResult assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long assignTime) {
-        return withPropagated(alarmDao.assignAlarm(tenantId, alarmId, assigneeId, assignTime));
+        var result = withPropagated(alarmDao.assignAlarm(tenantId, alarmId, assigneeId, assignTime));
+        if (result.getAlarm() != null) {
+            eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(result.getAlarm().getId())
+                    .actionType(ActionType.ALARM_ASSIGNED).build());
+        }
+        return result;
     }
 
     @Override
     public AlarmApiCallResult unassignAlarm(TenantId tenantId, AlarmId alarmId, long unassignTime) {
-        return withPropagated(alarmDao.unassignAlarm(tenantId, alarmId, unassignTime));
+        var result = withPropagated(alarmDao.unassignAlarm(tenantId, alarmId, unassignTime));
+        if (result.getAlarm() != null) {
+            eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(result.getAlarm().getId())
+                    .actionType(ActionType.ALARM_UNASSIGNED).build());
+        }
+        return result;
     }
 
     @Override
@@ -330,23 +280,30 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     @Override
-    public ListenableFuture<PageData<AlarmInfo>> findAlarms(TenantId tenantId, AlarmQuery query) {
-        return Futures.immediateFuture(alarmDao.findAlarms(tenantId, query));
+    public PageData<AlarmInfo> findAlarms(TenantId tenantId, AlarmQuery query) {
+        return alarmDao.findAlarms(tenantId, query);
     }
 
     @Override
-    public ListenableFuture<PageData<AlarmInfo>> findCustomerAlarms(TenantId tenantId, CustomerId customerId, AlarmQuery query) {
-        return Futures.immediateFuture(alarmDao.findCustomerAlarms(tenantId, customerId, query));
+    public PageData<AlarmInfo> findCustomerAlarms(TenantId tenantId, CustomerId customerId, AlarmQuery query) {
+        return alarmDao.findCustomerAlarms(tenantId, customerId, query);
     }
 
     @Override
-    public ListenableFuture<PageData<AlarmInfo>> findAlarmsV2(TenantId tenantId, AlarmQueryV2 query) {
-        return Futures.immediateFuture(alarmDao.findAlarmsV2(tenantId, query));
+    public PageData<AlarmInfo> findAlarmsV2(TenantId tenantId, AlarmQueryV2 query) {
+        return alarmDao.findAlarmsV2(tenantId, query);
     }
 
     @Override
-    public ListenableFuture<PageData<AlarmInfo>> findCustomerAlarmsV2(TenantId tenantId, CustomerId customerId, AlarmQueryV2 query) {
-        return Futures.immediateFuture(alarmDao.findCustomerAlarmsV2(tenantId, customerId, query));
+    public PageData<AlarmInfo> findCustomerAlarmsV2(TenantId tenantId, CustomerId customerId, AlarmQueryV2 query) {
+        return alarmDao.findCustomerAlarmsV2(tenantId, customerId, query);
+    }
+
+    @Override
+    public PageData<AlarmId> findAlarmIdsByAssigneeId(TenantId tenantId, UserId userId, PageLink pageLink) {
+        log.trace("[{}] Executing findAlarmIdsByAssigneeId [{}]", tenantId, userId);
+        validateId(userId, "Incorrect userId " + userId);
+        return alarmDao.findAlarmIdsByAssigneeId(tenantId, userId.getId(), pageLink);
     }
 
     @Override
@@ -367,13 +324,31 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     @Override
     public void deleteEntityAlarmRelations(TenantId tenantId, EntityId entityId) {
+        log.trace("Executing deleteEntityAlarms [{}]", entityId);
         alarmDao.deleteEntityAlarmRecords(tenantId, entityId);
+    }
+
+    @Override
+    public void deleteEntityAlarmRecordsByTenantId(TenantId tenantId) {
+        log.trace("Executing deleteEntityAlarmRecordsByTenantId [{}]", tenantId);
+        alarmDao.deleteEntityAlarmRecordsByTenantId(tenantId);
     }
 
     @Override
     public long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, AlarmCountQuery query) {
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         return alarmDao.countAlarmsByQuery(tenantId, customerId, query);
+    }
+
+    @Override
+    public PageData<EntitySubtype> findAlarmTypesByTenantId(TenantId tenantId, PageLink pageLink) {
+        log.trace("Executing findAlarmTypesByTenantId, tenantId [{}]", tenantId);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        if (DEFAULT_ALARM_TYPES_PAGE_LINK.equals(pageLink)) {
+            return cache.getAndPutInTransaction(tenantId, () ->
+                    alarmDao.findTenantAlarmTypes(tenantId.getId(), pageLink), false);
+        }
+        return alarmDao.findTenantAlarmTypes(tenantId.getId(), pageLink);
     }
 
     private Alarm merge(Alarm existing, Alarm alarm) {
@@ -487,5 +462,4 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
             request.setEndTs(request.getStartTs());
         }
     }
-
 }

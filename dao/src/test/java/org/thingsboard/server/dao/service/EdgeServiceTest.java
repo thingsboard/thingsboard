@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
@@ -639,7 +640,7 @@ public class EdgeServiceTest extends AbstractServiceTest {
         ruleChainMetaData3.setNodes(Arrays.asList(ruleNode1, ruleNode2));
         ruleChainMetaData3.setFirstNodeIndex(0);
         ruleChainMetaData3.setRuleChainId(ruleChain3.getId());
-        ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData3);
+        ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData3, Function.identity());
 
         ruleChainService.assignRuleChainToEdge(tenantId, ruleChain3.getId(), savedEdge.getId());
 
@@ -649,4 +650,23 @@ public class EdgeServiceTest extends AbstractServiceTest {
         Assert.assertEquals("{\"Rule Chain #3\":[\"Rule Chain #1\",\"Rule Chain #2\"]}", missingToRelatedRuleChains);
     }
 
+    @Test
+    public void testFindEdgesByTenantProfileId() {
+        Tenant tenant1 = createTenant();
+        Tenant tenant2 = createTenant();
+        Assert.assertNotNull(tenant1);
+        Assert.assertNotNull(tenant2);
+
+        Edge edge1 = constructEdge(tenant1.getId(), "Tenant1 edge", "default");
+        Edge edge2 = constructEdge(tenant2.getId(), "Tenant2 edge", "default");
+        Edge savedEdge1 = edgeService.saveEdge(edge1);
+        Edge savedEdge2 = edgeService.saveEdge(edge2);
+        Assert.assertNotNull(savedEdge1);
+        Assert.assertNotNull(savedEdge2);
+        Assert.assertEquals(tenant1.getTenantProfileId(), tenant2.getTenantProfileId());
+
+        PageData<Edge> edgesPageData = edgeService.findEdgesByTenantProfileId(tenant2.getTenantProfileId(),
+                new PageLink(1000));
+        Assert.assertEquals(2, edgesPageData.getTotalElements());
+    }
 }

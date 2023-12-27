@@ -302,18 +302,33 @@ public class ModelConstants {
     public static final String WIDGETS_BUNDLE_TITLE_PROPERTY = TITLE_PROPERTY;
     public static final String WIDGETS_BUNDLE_IMAGE_PROPERTY = "image";
     public static final String WIDGETS_BUNDLE_DESCRIPTION = "description";
+    public static final String WIDGETS_BUNDLE_ORDER = "widgets_bundle_order";
 
     /**
      * Widget_type constants.
      */
     public static final String WIDGET_TYPE_TABLE_NAME = "widget_type";
     public static final String WIDGET_TYPE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
-    public static final String WIDGET_TYPE_BUNDLE_ALIAS_PROPERTY = "bundle_alias";
-    public static final String WIDGET_TYPE_ALIAS_PROPERTY = ALIAS_PROPERTY;
+
+    public static final String WIDGET_TYPE_FQN_PROPERTY = "fqn";
     public static final String WIDGET_TYPE_NAME_PROPERTY = "name";
     public static final String WIDGET_TYPE_IMAGE_PROPERTY = "image";
     public static final String WIDGET_TYPE_DESCRIPTION_PROPERTY = "description";
+    public static final String WIDGET_TYPE_TAGS_PROPERTY = "tags";
     public static final String WIDGET_TYPE_DESCRIPTOR_PROPERTY = "descriptor";
+
+    public static final String WIDGET_TYPE_DEPRECATED_PROPERTY = "deprecated";
+
+    public static final String WIDGET_TYPE_WIDGET_TYPE_PROPERTY = "widget_type";
+
+    public static final String WIDGET_TYPE_INFO_VIEW_TABLE_NAME = "widget_type_info_view";
+
+    /**
+     * Widgets bundle widget constants.
+     */
+    public static final String WIDGETS_BUNDLE_WIDGET_TABLE_NAME = "widgets_bundle_widget";
+
+    public static final String WIDGET_TYPE_ORDER_PROPERTY = "widget_type_order";
 
     /**
      * Dashboard constants.
@@ -337,6 +352,7 @@ public class ModelConstants {
     public static final String COMPONENT_DESCRIPTOR_NAME_PROPERTY = "name";
     public static final String COMPONENT_DESCRIPTOR_CLASS_PROPERTY = "clazz";
     public static final String COMPONENT_DESCRIPTOR_CONFIGURATION_DESCRIPTOR_PROPERTY = "configuration_descriptor";
+    public static final String COMPONENT_DESCRIPTOR_CONFIGURATION_VERSION_PROPERTY = "configuration_version";
     public static final String COMPONENT_DESCRIPTOR_ACTIONS_PROPERTY = "actions";
 
     /**
@@ -392,6 +408,7 @@ public class ModelConstants {
     public static final String RULE_NODE_CHAIN_ID_PROPERTY = "rule_chain_id";
     public static final String RULE_NODE_TYPE_PROPERTY = "type";
     public static final String RULE_NODE_NAME_PROPERTY = "name";
+    public static final String RULE_NODE_VERSION_PROPERTY = "configuration_version";
     public static final String RULE_NODE_CONFIGURATION_PROPERTY = "configuration";
 
     /**
@@ -466,6 +483,7 @@ public class ModelConstants {
     public static final String API_USAGE_STATE_DB_STORAGE_COLUMN = "db_storage";
     public static final String API_USAGE_STATE_RE_EXEC_COLUMN = "re_exec";
     public static final String API_USAGE_STATE_JS_EXEC_COLUMN = "js_exec";
+    public static final String API_USAGE_STATE_TBEL_EXEC_COLUMN = "tbel_exec";
     public static final String API_USAGE_STATE_EMAIL_EXEC_COLUMN = "email_exec";
     public static final String API_USAGE_STATE_SMS_EXEC_COLUMN = "sms_exec";
     public static final String API_USAGE_STATE_ALARM_EXEC_COLUMN = "alarm_exec";
@@ -481,6 +499,10 @@ public class ModelConstants {
     public static final String RESOURCE_FILE_NAME_COLUMN = "file_name";
     public static final String RESOURCE_DATA_COLUMN = "data";
     public static final String RESOURCE_ETAG_COLUMN = "etag";
+    public static final String RESOURCE_DESCRIPTOR_COLUMN = "descriptor";
+    public static final String RESOURCE_PREVIEW_COLUMN = "preview";
+    public static final String RESOURCE_IS_PUBLIC_COLUMN = "is_public";
+    public static final String PUBLIC_RESOURCE_KEY_COLUMN = "public_resource_key";
 
     /**
      * Ota Package constants.
@@ -533,6 +555,7 @@ public class ModelConstants {
      */
     public static final String EDGE_EVENT_TABLE_NAME = "edge_event";
     public static final String EDGE_EVENT_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String EDGE_EVENT_SEQUENTIAL_ID_PROPERTY = "seq_id";
     public static final String EDGE_EVENT_EDGE_ID_PROPERTY = "edge_id";
     public static final String EDGE_EVENT_TYPE_PROPERTY = "edge_event_type";
     public static final String EDGE_EVENT_ACTION_PROPERTY = "edge_event_action";

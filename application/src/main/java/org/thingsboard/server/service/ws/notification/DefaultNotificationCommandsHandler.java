@@ -32,6 +32,7 @@ import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.subscription.TbLocalSubscriptionService;
+import org.thingsboard.server.service.subscription.TbSubscription;
 import org.thingsboard.server.service.ws.WebSocketService;
 import org.thingsboard.server.service.ws.WebSocketSessionRef;
 import org.thingsboard.server.service.ws.notification.cmd.MarkAllNotificationsAsReadCmd;
@@ -119,7 +120,8 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
 
 
     /* Notifications subscription update handling */
-    private void handleNotificationsSubscriptionUpdate(NotificationsSubscription subscription, NotificationsSubscriptionUpdate subscriptionUpdate) {
+    private void handleNotificationsSubscriptionUpdate(TbSubscription<NotificationsSubscriptionUpdate> sub, NotificationsSubscriptionUpdate subscriptionUpdate) {
+        NotificationsSubscription subscription = (NotificationsSubscription) sub;
         try {
             if (subscriptionUpdate.getNotificationUpdate() != null) {
                 handleNotificationUpdate(subscription, subscriptionUpdate.getNotificationUpdate());
@@ -178,7 +180,8 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
 
 
     /* Notifications count subscription update handling */
-    private void handleNotificationsCountSubscriptionUpdate(NotificationsCountSubscription subscription, NotificationsSubscriptionUpdate subscriptionUpdate) {
+    private void handleNotificationsCountSubscriptionUpdate(TbSubscription<NotificationsSubscriptionUpdate> sub, NotificationsSubscriptionUpdate subscriptionUpdate) {
+        NotificationsCountSubscription subscription = (NotificationsCountSubscription) sub;
         try {
             if (subscriptionUpdate.getNotificationUpdate() != null) {
                 handleNotificationUpdate(subscription, subscriptionUpdate.getNotificationUpdate());
@@ -242,7 +245,7 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
 
     private void sendUpdate(String sessionId, CmdUpdate update) {
         log.trace("[{}, cmdId: {}] Sending WS update: {}", sessionId, update.getCmdId(), update);
-        wsService.sendWsMsg(sessionId, update);
+        wsService.sendUpdate(sessionId, update);
     }
 
 }

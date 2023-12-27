@@ -23,9 +23,8 @@ import java.util.List;
 @Data
 public abstract class TransportMonitoringConfig implements MonitoringConfig<TransportMonitoringTarget> {
 
-    private int requestTimeoutMs;
-
     private List<TransportMonitoringTarget> targets;
+    private int requestTimeoutMs;
 
     public abstract TransportType getTransportType();
 

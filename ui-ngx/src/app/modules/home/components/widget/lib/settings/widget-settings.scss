@@ -16,6 +16,13 @@
 @import '../../../../../../../scss/constants';
 
 :host {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  @media #{$mat-xs} {
+    gap: 8px;
+  }
+
   .tb-widget-settings {
     .fields-group {
       padding: 0 16px 8px;

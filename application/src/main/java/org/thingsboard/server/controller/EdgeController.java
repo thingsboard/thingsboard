@@ -39,7 +39,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
-import org.thingsboard.server.common.data.edge.EdgeInstallInstructions;
+import org.thingsboard.server.common.data.edge.EdgeInstructions;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -59,6 +59,9 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeBulkImportService;
+import org.thingsboard.server.service.edge.instructions.EdgeInstallInstructionsService;
+import org.thingsboard.server.service.edge.instructions.EdgeUpgradeInstructionsService;
+import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
 import org.thingsboard.server.service.entitiy.edge.TbEdgeService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -67,6 +70,7 @@ import org.thingsboard.server.service.security.permission.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -94,8 +98,12 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 @RequestMapping("/api")
 @RequiredArgsConstructor
 public class EdgeController extends BaseController {
+
     private final EdgeBulkImportService edgeBulkImportService;
     private final TbEdgeService tbEdgeService;
+    private final Optional<EdgeRpcService> edgeRpcServiceOpt;
+    private final Optional<EdgeInstallInstructionsService> edgeInstallServiceOpt;
+    private final Optional<EdgeUpgradeInstructionsService> edgeUpgradeServiceOpt;
 
     public static final String EDGE_ID = "edgeId";
     public static final String EDGE_SECURITY_CHECK = "If the user has the authority of 'Tenant Administrator', the server checks that the edge is owned by the same tenant. " +
@@ -497,13 +505,13 @@ public class EdgeController extends BaseController {
                          @PathVariable("edgeId") String strEdgeId) throws ThingsboardException {
         checkParameter("edgeId", strEdgeId);
         final DeferredResult<ResponseEntity> response = new DeferredResult<>();
-        if (isEdgesEnabled()) {
+        if (isEdgesEnabled() && edgeRpcServiceOpt.isPresent()) {
             EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
             edgeId = checkNotNull(edgeId);
             SecurityUser user = getCurrentUser();
             TenantId tenantId = user.getTenantId();
             ToEdgeSyncRequest request = new ToEdgeSyncRequest(UUID.randomUUID(), tenantId, edgeId);
-            edgeRpcService.processSyncRequest(request, fromEdgeSyncResponse -> reply(response, fromEdgeSyncResponse));
+            edgeRpcServiceOpt.get().processSyncRequest(request, fromEdgeSyncResponse -> reply(response, fromEdgeSyncResponse));
         } else {
             throw new ThingsboardException("Edges support disabled", ThingsboardErrorCode.GENERAL);
         }
@@ -547,19 +555,61 @@ public class EdgeController extends BaseController {
         return edgeBulkImportService.processBulkImport(request, user);
     }
 
-    @ApiOperation(value = "Get Edge Docker Install Instructions (getEdgeDockerInstallInstructions)",
-            notes = "Get a docker install instructions for provided edge id." + TENANT_AUTHORITY_PARAGRAPH,
+    @ApiOperation(value = "Get Edge Install Instructions (getEdgeInstallInstructions)",
+            notes = "Get an install instructions for provided edge id." + TENANT_AUTHORITY_PARAGRAPH,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/edge/instructions/{edgeId}", method = RequestMethod.GET)
+    @RequestMapping(value = "/edge/instructions/install/{edgeId}/{method}", method = RequestMethod.GET)
     @ResponseBody
-    public EdgeInstallInstructions getEdgeDockerInstallInstructions(
+    public EdgeInstructions getEdgeInstallInstructions(
             @ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable("edgeId") String strEdgeId,
+            @ApiParam(value = "Installation method ('docker', 'ubuntu' or 'centos')", allowableValues = "docker, ubuntu, centos")
+            @PathVariable("method") String installationMethod,
             HttpServletRequest request) throws ThingsboardException {
-        EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-        edgeId = checkNotNull(edgeId);
-        Edge edge = checkEdgeId(edgeId, Operation.READ);
-        return checkNotNull(edgeInstallService.getDockerInstallInstructions(getTenantId(), edge, request));
+        if (isEdgesEnabled() && edgeInstallServiceOpt.isPresent()) {
+            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+            edgeId = checkNotNull(edgeId);
+            Edge edge = checkEdgeId(edgeId, Operation.READ);
+            return checkNotNull(edgeInstallServiceOpt.get().getInstallInstructions(edge, installationMethod, request));
+        } else {
+            throw new ThingsboardException("Edges support disabled", ThingsboardErrorCode.GENERAL);
+        }
+    }
+
+    @ApiOperation(value = "Get Edge Upgrade Instructions (getEdgeUpgradeInstructions)",
+            notes = "Get an upgrade instructions for provided edge version." + TENANT_AUTHORITY_PARAGRAPH,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/edge/instructions/upgrade/{edgeVersion}/{method}", method = RequestMethod.GET)
+    @ResponseBody
+    public EdgeInstructions getEdgeUpgradeInstructions(
+            @ApiParam(value = "Edge version", required = true)
+            @PathVariable("edgeVersion") String edgeVersion,
+            @ApiParam(value = "Upgrade method ('docker', 'ubuntu' or 'centos')", allowableValues = "docker, ubuntu, centos")
+            @PathVariable("method") String method) throws Exception {
+        if (isEdgesEnabled() && edgeUpgradeServiceOpt.isPresent()) {
+            return checkNotNull(edgeUpgradeServiceOpt.get().getUpgradeInstructions(edgeVersion, method));
+        } else {
+            throw new ThingsboardException("Edges support disabled", ThingsboardErrorCode.GENERAL);
+        }
+    }
+
+    @ApiOperation(value = "Is edge upgrade enabled (isEdgeUpgradeAvailable)",
+            notes = "Returns 'true' if upgrade available for connected edge, 'false' - otherwise.")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/edge/{edgeId}/upgrade/available", method = RequestMethod.GET)
+    @ResponseBody
+    public boolean isEdgeUpgradeAvailable(
+            @ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable("edgeId") String strEdgeId) throws Exception {
+        if (isEdgesEnabled() && edgeUpgradeServiceOpt.isPresent()) {
+            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+            edgeId = checkNotNull(edgeId);
+            Edge edge = checkEdgeId(edgeId, Operation.READ);
+            return edgeUpgradeServiceOpt.get().isUpgradeAvailable(edge.getTenantId(), edge.getId());
+        } else {
+            throw new ThingsboardException("Edges support disabled", ThingsboardErrorCode.GENERAL);
+        }
     }
 }

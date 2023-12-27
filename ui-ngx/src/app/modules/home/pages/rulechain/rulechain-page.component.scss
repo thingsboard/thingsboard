@@ -117,7 +117,7 @@
             min-height: 32px;
             padding: 6px;
             line-height: 20px;
-            mat-icon {
+            .mat-icon {
               width: 20px;
               min-width: 20px;
               height: 20px;
@@ -173,6 +173,7 @@
   }
   .mat-drawer-content.tb-rulechain-graph-content {
     overflow: hidden;
+    z-index: 0;
     .tb-rulechain-graph {
       z-index: 0;
       overflow: auto;
@@ -182,6 +183,7 @@
     .fc-node {
       border-radius: 8px;
       &.fc-selected {
+        z-index: 2;
         &:not(.fc-edit) {
           margin: -3px;
           border: solid 3px #f00;
@@ -215,7 +217,7 @@
       cursor: pointer;
       box-sizing: border-box;
 
-      mat-icon{
+      .mat-icon{
         width: 16px;
         min-width: 16px;
         height: 16px;

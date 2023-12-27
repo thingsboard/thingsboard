@@ -25,8 +25,9 @@
          (keydown)="deviceProfileEnter($event)"
          (keypress)="deviceProfileEnter($event)"
          [matAutocomplete]="deviceProfileAutocomplete"
-         [fxShow]="!showDetailsPageLink || !disabled || !selectDeviceProfileFormGroup.get('deviceProfile').value">
-  <a *ngIf="showDetailsPageLink && selectDeviceProfileFormGroup.get('deviceProfile').value && disabled" aria-label="Open device profile" [routerLink]=deviceProfileURL>
+         [fxShow]="!showDetailsPageLink || !useDeviceProfileLink || !disabled || !selectDeviceProfileFormGroup.get('deviceProfile').value">
+  <a *ngIf="showDetailsPageLink && useDeviceProfileLink && selectDeviceProfileFormGroup.get('deviceProfile').value && disabled"
+     aria-label="Open device profile" [routerLink]=deviceProfileURL>
     {{ displayDeviceProfileFn(selectDeviceProfileFormGroup.get('deviceProfile').value) }}
   </a>
   <button *ngIf="selectDeviceProfileFormGroup.get('deviceProfile').value && !disabled"
@@ -35,13 +36,18 @@
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
-  <button *ngIf="selectDeviceProfileFormGroup.get('deviceProfile').value && !disabled && editProfileEnabled"
+  <button *ngIf="selectDeviceProfileFormGroup.get('deviceProfile').value?.id && !disabled && editProfileEnabled"
           type="button"
           matSuffix mat-icon-button aria-label="Edit"
           matTooltip="{{ 'device-profile.edit' | translate }}"
           matTooltipPosition="above"
           (click)="editDeviceProfile($event)">
     <mat-icon class="material-icons">edit</mat-icon>
+  </button>
+  <button mat-button color="primary" matSuffix
+          (click)="createDeviceProfile($event, '')"
+          *ngIf="!selectDeviceProfileFormGroup.get('deviceProfile').value && !disabled && addNewProfile">
+    <span style="white-space: nowrap">{{ 'notification.create-new' | translate }}</span>
   </button>
   <mat-autocomplete
     class="tb-autocomplete"

@@ -21,12 +21,6 @@
 @include mat.all-component-typographies();
 @include mat.core();
 
-$tb-primary-color: #305680;
-$tb-secondary-color: #527dad;
-$tb-hue3-color: #a7c1de;
-
-$tb-dark-primary-color: #9fa8da;
-
 $tb-mat-indigo: (
   50: #e8eaf6,
   100: #c5cae9,
@@ -212,7 +206,7 @@ $tb-dark-theme: map_merge($tb-dark-theme, $color);
       &.mat-primary {
         @include _mat-toolbar-inverse-color($primary);
         button.mat-mdc-icon-button {
-          mat-icon {
+          .mat-icon {
             color: mat.get-color-from-palette($primary);
           }
         }

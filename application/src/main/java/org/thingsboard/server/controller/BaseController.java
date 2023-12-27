@@ -21,7 +21,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -31,6 +31,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 import org.springframework.web.context.request.async.DeferredResult;
+import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -60,8 +61,6 @@ import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
-import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -126,6 +125,7 @@ import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rpc.RpcService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.ConstraintValidator;
@@ -142,14 +142,11 @@ import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
-import org.thingsboard.server.service.edge.instructions.EdgeInstallService;
-import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
 import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
 import org.thingsboard.server.service.entitiy.user.TbUserSettingsService;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-import org.thingsboard.server.service.resource.TbResourceService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -178,9 +175,10 @@ import static org.thingsboard.server.common.data.query.EntityKeyType.ENTITY_FIEL
 import static org.thingsboard.server.controller.UserController.YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
-@Slf4j
 @TbCoreComponent
 public abstract class BaseController {
+
+    private final Logger log = org.slf4j.LoggerFactory.getLogger(getClass());
 
     /*Swagger UI description*/
 
@@ -275,7 +273,7 @@ public abstract class BaseController {
     protected PartitionService partitionService;
 
     @Autowired
-    protected TbResourceService resourceService;
+    protected ResourceService resourceService;
 
     @Autowired
     protected OtaPackageService otaPackageService;
@@ -300,12 +298,6 @@ public abstract class BaseController {
 
     @Autowired(required = false)
     protected EdgeService edgeService;
-
-    @Autowired(required = false)
-    protected EdgeRpcService edgeRpcService;
-
-    @Autowired(required = false)
-    protected EdgeInstallService edgeInstallService;
 
     @Autowired
     protected TbNotificationEntityService notificationEntityService;
@@ -596,7 +588,7 @@ public abstract class BaseController {
                     checkWidgetTypeId(new WidgetTypeId(entityId.getId()), operation);
                     return;
                 case TB_RESOURCE:
-                    checkResourceId(new TbResourceId(entityId.getId()), operation);
+                    checkResourceInfoId(new TbResourceId(entityId.getId()), operation);
                     return;
                 case OTA_PACKAGE:
                     checkOtaPackageId(new OtaPackageId(entityId.getId()), operation);
@@ -824,18 +816,6 @@ public abstract class BaseController {
         }
     }
 
-    protected void sendEntityNotificationMsg(TenantId tenantId, EntityId entityId, EdgeEventActionType action) {
-        sendNotificationMsgToEdge(tenantId, null, entityId, null, null, action);
-    }
-
-    protected void sendEntityAssignToEdgeNotificationMsg(TenantId tenantId, EdgeId edgeId, EntityId entityId, EdgeEventActionType action) {
-        sendNotificationMsgToEdge(tenantId, edgeId, entityId, null, null, action);
-    }
-
-    private void sendNotificationMsgToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, EdgeEventActionType action) {
-        tbClusterService.sendNotificationMsgToEdge(tenantId, edgeId, entityId, body, type, action);
-    }
-
     protected void processDashboardIdFromAdditionalInfo(ObjectNode additionalInfo, String requiredFields) throws ThingsboardException {
         String dashboardId = additionalInfo.has(requiredFields) ? additionalInfo.get(requiredFields).asText() : null;
         if (dashboardId != null && !dashboardId.equals("null")) {
@@ -854,18 +834,14 @@ public abstract class BaseController {
     }
 
     protected <T> DeferredResult<T> wrapFuture(ListenableFuture<T> future) {
-        final DeferredResult<T> deferredResult = new DeferredResult<>();
-        Futures.addCallback(future, new FutureCallback<>() {
-            @Override
-            public void onSuccess(T result) {
-                deferredResult.setResult(result);
-            }
+        DeferredResult<T> deferredResult = new DeferredResult<>(); // Timeout of spring.mvc.async.request-timeout is used
+        DonAsynchron.withCallback(future, deferredResult::setResult, deferredResult::setErrorResult);
+        return deferredResult;
+    }
 
-            @Override
-            public void onFailure(Throwable t) {
-                deferredResult.setErrorResult(t);
-            }
-        }, MoreExecutors.directExecutor());
+    protected <T> DeferredResult<T> wrapFuture(ListenableFuture<T> future, long timeoutMs) {
+        DeferredResult<T> deferredResult = new DeferredResult<>(timeoutMs);
+        DonAsynchron.withCallback(future, deferredResult::setResult, deferredResult::setErrorResult);
         return deferredResult;
     }
 

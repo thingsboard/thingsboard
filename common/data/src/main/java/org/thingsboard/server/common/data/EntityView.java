@@ -40,7 +40,7 @@ public class EntityView extends BaseDataWithAdditionalInfo<EntityViewId>
 
     private static final long serialVersionUID = 5582010124562018986L;
 
-    @ApiModelProperty(position = 7, required = true, value = "JSON object with the referenced Entity Id (Device or Asset).")
+    @ApiModelProperty(position = 7, value = "JSON object with the referenced Entity Id (Device or Asset).")
     private EntityId entityId;
     private TenantId tenantId;
     private CustomerId customerId;
@@ -52,7 +52,7 @@ public class EntityView extends BaseDataWithAdditionalInfo<EntityViewId>
     @Length(fieldName = "type")
     @ApiModelProperty(position = 6, required = true, value = "Device Profile Name", example = "Temperature Sensor")
     private String type;
-    @ApiModelProperty(position = 8, required = true, value = "Set of telemetry and attribute keys to expose via Entity View.")
+    @ApiModelProperty(position = 8, value = "Set of telemetry and attribute keys to expose via Entity View.")
     private TelemetryEntityView keys;
     @ApiModelProperty(position = 9, value = "Represents the start time of the interval that is used to limit access to target device telemetry. Customer will not be able to see entity telemetry that is outside the specified interval;")
     private long startTimeMs;

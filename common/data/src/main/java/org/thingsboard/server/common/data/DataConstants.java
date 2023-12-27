@@ -43,11 +43,14 @@ public class DataConstants {
     public static final String RETRIES = "retries";
     public static final String EDGE_ID = "edgeId";
     public static final String DEVICE_ID = "deviceId";
+    public static final String GATEWAY_PARAMETER = "gateway";
     public static final String COAP_TRANSPORT_NAME = "COAP";
     public static final String LWM2M_TRANSPORT_NAME = "LWM2M";
     public static final String MQTT_TRANSPORT_NAME = "MQTT";
     public static final String HTTP_TRANSPORT_NAME = "HTTP";
     public static final String SNMP_TRANSPORT_NAME = "SNMP";
+    public static final String MAXIMUM_NUMBER_OF_DEVICES_REACHED = "Maximum number of devices reached!";
+    public static final String TB_IMAGE_PREFIX = "tb-image;";
 
 
     public static final String[] allScopes() {
@@ -109,6 +112,7 @@ public class DataConstants {
     public static final String PROVISION_KEY = "provisionDeviceKey";
     public static final String PROVISION_SECRET = "provisionDeviceSecret";
 
+    public static final String DEFAULT_DEVICE_TYPE = "default";
     public static final String DEVICE_NAME = "deviceName";
     public static final String DEVICE_TYPE = "deviceType";
     public static final String CERT_PUB_KEY = "x509CertPubKey";
@@ -120,8 +124,11 @@ public class DataConstants {
     public static final String PASSWORD = "password";
     public static final String EDGE_MSG_SOURCE = "edge";
     public static final String MSG_SOURCE_KEY = "source";
+    public static final String EDGE_VERSION_ATTR_KEY = "edgeVersion";
 
     public static final String LAST_CONNECTED_GATEWAY = "lastConnectedGateway";
+
+    public static final String MQTT_TOPIC = "mqttTopic";
 
     public static final String MAIN_QUEUE_NAME = "Main";
     public static final String MAIN_QUEUE_TOPIC = "tb_rule_engine.main";

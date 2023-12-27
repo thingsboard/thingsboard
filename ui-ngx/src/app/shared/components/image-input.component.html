@@ -20,38 +20,14 @@
   <ng-container #flow="flow"
                 [flowConfig]="{singleFile: true, allowDuplicateUploads: true}">
     <div class="tb-image-select-container">
-      <div class="image-container" *ngIf="showPreview">
-        <div class="image-content-container" [ngClass]="{'no-padding': disabled}">
-          <div class="tb-image-preview-container">
-            <div *ngIf="!safeImageUrl; else elseBlock">{{ (disabled ? 'dashboard.empty-image' : 'dashboard.no-image') | translate }}</div>
-            <ng-template #elseBlock><img class="tb-image-preview" [src]="safeImageUrl" /></ng-template>
-          </div>
-          <div *ngIf="showClearButton && !disabled" class="tb-image-clear-container">
-            <button mat-icon-button color="primary"
-                    type="button"
-                    (click)="clearImage()"
-                    matTooltip="{{ 'action.remove' | translate }}"
-                    matTooltipPosition="above">
-              <mat-icon>close</mat-icon>
-            </button>
-          </div>
+      <div class="image-container" *ngIf="showPreview && (safeImageUrl || disabled)" [class]="{'disabled': disabled}">
+        <div class="tb-image-preview-container">
+          <div class="tb-image-preview-text" *ngIf="!safeImageUrl && disabled; else elseBlock">{{ 'dashboard.empty-image' | translate }}</div>
+          <ng-template #elseBlock><img class="tb-image-preview" [src]="safeImageUrl" /></ng-template>
         </div>
-      </div>
-      <div *ngIf="!disabled" class="drop-area tb-flow-drop"
-           [ngClass]="{'float-left': !showPreview && showClearButton}"
-           flowDrop
-           [flow]="flow.flowJs">
-        <div class="upload-label">
-          <mat-icon>cloud_upload</mat-icon>
-          <span translate>image-input.drop-image-or</span>
-          <button type="button" mat-button color="primary" class="browse-file">
-            <label for="{{inputId}}">{{'file-input.browse-file' | translate}}</label>
-          </button>
-          <input class="file-input" flowButton type="file" [flow]="flow.flowJs" [flowAttributes]="{accept: 'image/*'}" id="{{inputId}}">
-        </div>
-      </div>
-      <div *ngIf="!showPreview && showClearButton && !disabled" class="tb-image-clear-container full-height">
-        <button mat-icon-button color="primary"
+        <button *ngIf="safeImageUrl && showClearButton && !disabled"
+                mat-icon-button color="primary"
+                class="tb-mat-24"
                 type="button"
                 (click)="clearImage()"
                 matTooltip="{{ 'action.remove' | translate }}"
@@ -59,7 +35,36 @@
           <mat-icon>close</mat-icon>
         </button>
       </div>
-    </div>
+      <div *ngIf="!disabled" class="drop-area tb-flow-drop"
+           flowDrop
+           [flow]="flow.flowJs">
+        <div class="upload-label">
+          <mat-icon class="tb-mat-32">cloud_upload</mat-icon>
+          <div class="upload-text-area">
+            <span class="hide-xs" translate>image-input.drag-and-drop</span>
+            <div class="upload-button-area">
+              <span class="hide-xs" translate>image-input.or</span>
+              <button type="button" mat-button color="primary" class="browse-file">
+                <label for="{{inputId}}">{{'image-input.browse' | translate}}</label>
+              </button>
+              <input class="file-input" flowButton type="file" [flow]="flow.flowJs" [flowAttributes]="{accept: 'image/*'}" id="{{inputId}}">
+            </div>
+          </div>
+        </div>
+      </div>
+      <button *ngIf="!showPreview && safeImageUrl && showClearButton && !disabled"
+              mat-icon-button color="primary"
+              class="tb-mat-24"
+              type="button"
+              (click)="clearImage()"
+              matTooltip="{{ 'action.remove' | translate }}"
+              matTooltipPosition="above">
+        <mat-icon>close</mat-icon>
+      </button>
+  </div>
   </ng-container>
-  <div class="tb-hint" *ngIf="maxSizeByte && !disabled" translate [translateParams]="{ size: maxSizeByte | fileSize}">dashboard.maximum-upload-file-size</div>
+  <div *ngIf="(showFileName && fileName) || (maxSizeByte && !disabled)" class="tb-image-info-container">
+    <div *ngIf="showFileName && fileName" class="tb-image-file-name" [title]="fileName">{{ fileName }}</div>
+    <div *ngIf="maxSizeByte && !disabled" class="tb-image-file-hint" translate [translateParams]="{ size: maxSizeByte | fileSize}">dashboard.maximum-upload-file-size</div>
+  </div>
 </div>

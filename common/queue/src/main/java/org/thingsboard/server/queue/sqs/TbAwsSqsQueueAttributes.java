@@ -76,6 +76,12 @@ public class TbAwsSqsQueueAttributes {
 
     private Map<String, String> getConfigs(String properties) {
         Map<String, String> configs = new HashMap<>(defaultAttributes);
+       configs.putAll(toConfigs(properties));
+        return configs;
+    }
+
+    public static Map<String, String> toConfigs(String properties) {
+        Map<String, String> configs = new HashMap<>();
         if (StringUtils.isNotEmpty(properties)) {
             for (String property : properties.split(";")) {
                 int delimiterPosition = property.indexOf(":");
@@ -88,7 +94,7 @@ public class TbAwsSqsQueueAttributes {
         return configs;
     }
 
-    private void validateAttributeName(String key) {
+    private static void validateAttributeName(String key) {
         QueueAttributeName.fromValue(key);
     }
 }

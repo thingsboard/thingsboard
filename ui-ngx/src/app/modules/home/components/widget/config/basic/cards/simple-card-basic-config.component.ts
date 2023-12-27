@@ -21,12 +21,19 @@ import { AppState } from '@core/core.state';
 import { BasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 import {
-  Datasource,
+  DataKey,
   datasourcesHasAggregation,
   datasourcesHasOnlyComparisonAggregation,
+  WidgetConfig,
 } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import {
+  getTimewindowConfig,
+  setTimewindowConfig
+} from '@home/components/widget/config/timewindow-config-panel.component';
+import { isUndefined } from '@core/utils';
+import { getLabel, setLabel } from '@shared/models/widget-settings.models';
 
 @Component({
   selector: 'tb-simple-card-basic-config',
@@ -57,22 +64,19 @@ export class SimpleCardBasicConfigComponent extends BasicWidgetConfigComponent {
     return this.simpleCardWidgetConfigForm;
   }
 
-  protected setupDefaults(configData: WidgetConfigComponentData) {
-    this.setupDefaultDatasource(configData, [{ name: 'temperature', label: 'Temperature', type: DataKeyType.timeseries }]);
+  protected defaultDataKeys(configData: WidgetConfigComponentData): DataKey[] {
+    return [{ name: 'temperature', label: 'Temperature', type: DataKeyType.timeseries }];
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {
     this.simpleCardWidgetConfigForm = this.fb.group({
-      timewindowConfig: [{
-        useDashboardTimewindow: configData.config.useDashboardTimewindow,
-        displayTimewindow: configData.config.useDashboardTimewindow,
-        timewindow: configData.config.timewindow
-      }, []],
+      timewindowConfig: [getTimewindowConfig(configData.config), []],
       datasources: [configData.config.datasources, []],
-      label: [this.getDataKeyLabel(configData.config.datasources), []],
+      label: [getLabel(configData.config.datasources), []],
       labelPosition: [configData.config.settings?.labelPosition, []],
       units: [configData.config.units, []],
       decimals: [configData.config.decimals, []],
+      cardButtons: [this.getCardButtons(configData.config), []],
       color: [configData.config.color, []],
       backgroundColor: [configData.config.backgroundColor, []],
       actions: [configData.config.actions || {}, []]
@@ -80,38 +84,30 @@ export class SimpleCardBasicConfigComponent extends BasicWidgetConfigComponent {
   }
 
   protected prepareOutputConfig(config: any): WidgetConfigComponentData {
-    this.widgetConfig.config.useDashboardTimewindow = config.timewindowConfig.useDashboardTimewindow;
-    this.widgetConfig.config.displayTimewindow = config.timewindowConfig.displayTimewindow;
-    this.widgetConfig.config.timewindow = config.timewindowConfig.timewindow;
+    setTimewindowConfig(this.widgetConfig.config, config.timewindowConfig);
     this.widgetConfig.config.datasources = config.datasources;
-    this.setDataKeyLabel(config.label, this.widgetConfig.config.datasources);
+    setLabel(config.label, this.widgetConfig.config.datasources);
     this.widgetConfig.config.actions = config.actions;
     this.widgetConfig.config.units = config.units;
     this.widgetConfig.config.decimals = config.decimals;
+    this.widgetConfig.config.settings = this.widgetConfig.config.settings || {};
+    this.setCardButtons(config.cardButtons, this.widgetConfig.config);
     this.widgetConfig.config.color = config.color;
     this.widgetConfig.config.backgroundColor = config.backgroundColor;
-    this.widgetConfig.config.settings = this.widgetConfig.config.settings || {};
     this.widgetConfig.config.settings.labelPosition = config.labelPosition;
     return this.widgetConfig;
   }
 
-  private getDataKeyLabel(datasources?: Datasource[]): string {
-    if (datasources && datasources.length) {
-      const dataKeys = datasources[0].dataKeys;
-      if (dataKeys && dataKeys.length) {
-        return dataKeys[0].label;
-      }
+  private getCardButtons(config: WidgetConfig): string[] {
+    const buttons: string[] = [];
+    if (isUndefined(config.enableFullscreen) || config.enableFullscreen) {
+      buttons.push('fullscreen');
     }
-    return '';
+    return buttons;
   }
 
-  private setDataKeyLabel(label: string, datasources?: Datasource[]) {
-    if (datasources && datasources.length) {
-      const dataKeys = datasources[0].dataKeys;
-      if (dataKeys && dataKeys.length) {
-        dataKeys[0].label = label;
-      }
-    }
+  private setCardButtons(buttons: string[], config: WidgetConfig) {
+    config.enableFullscreen = buttons.includes('fullscreen');
   }
 
 }

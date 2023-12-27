@@ -41,7 +41,7 @@ import java.io.IOException;
 @ToString(exclude = {"image", "profileDataBytes"})
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName, HasTenantId, HasOtaPackage, HasRuleEngineProfile, ExportableEntity<DeviceProfileId> {
+public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName, HasTenantId, HasOtaPackage, HasRuleEngineProfile, ExportableEntity<DeviceProfileId>, HasImage {
 
     private static final long serialVersionUID = 6998485460273302018L;
 
@@ -54,7 +54,6 @@ public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName,
     @NoXss
     @ApiModelProperty(position = 11, value = "Device Profile description. ")
     private String description;
-    @Length(fieldName = "image", max = 1000000)
     @ApiModelProperty(position = 12, value = "Either URL or Base64 data of the icon. Used in the mobile application to visualize set of device profiles in the grid view. ")
     private String image;
     private boolean isDefault;

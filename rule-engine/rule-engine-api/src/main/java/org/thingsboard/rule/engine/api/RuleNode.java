@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.api;
 
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentClusteringMode;
 import org.thingsboard.server.common.data.plugin.ComponentScope;
 import org.thingsboard.server.common.data.plugin.ComponentType;
@@ -47,7 +48,7 @@ public @interface RuleNode {
 
     ComponentScope scope() default ComponentScope.TENANT;
 
-    String[] relationTypes() default {"Success", "Failure"};
+    String[] relationTypes() default {TbNodeConnectionType.SUCCESS, TbNodeConnectionType.FAILURE};
 
     String[] uiResources() default {};
 
@@ -64,5 +65,7 @@ public @interface RuleNode {
     boolean ruleChainNode() default false;
 
     RuleChainType[] ruleChainTypes() default {RuleChainType.CORE, RuleChainType.EDGE};
+
+    int version() default 0;
 
 }

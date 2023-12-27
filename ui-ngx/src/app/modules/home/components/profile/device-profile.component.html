@@ -108,11 +108,10 @@
           {{ 'device-profile.type-required' | translate }}
         </mat-error>
       </mat-form-field>
-      <tb-image-input fxFlex
+      <tb-gallery-image-input fxFlex
                       label="{{'device-profile.image' | translate}}"
-                      maxSizeByte="524288"
                       formControlName="image">
-      </tb-image-input>
+      </tb-gallery-image-input>
       <mat-form-field class="mat-block">
         <mat-label translate>device-profile.description</mat-label>
         <textarea matInput formControlName="description" rows="2"></textarea>

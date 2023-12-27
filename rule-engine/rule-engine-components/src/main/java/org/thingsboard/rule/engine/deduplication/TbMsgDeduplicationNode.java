@@ -24,9 +24,10 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -48,11 +49,10 @@ import java.util.concurrent.TimeUnit;
         configClazz = TbMsgDeduplicationNodeConfiguration.class,
         nodeDescription = "Deduplicate messages within the same originator entity for a configurable period " +
                 "based on a specified deduplication strategy.",
-        nodeDetails = "Rule node allows you to select one of the following strategy to deduplicate messages: <br></br>" +
-                "<b>FIRST</b> - return first message that arrived during deduplication period.<br></br>" +
-                "<b>LAST</b> - return last message that arrived during deduplication period.<br></br>" +
-                "<b>ALL</b> - return all messages as a single JSON array message. " +
-                "Where each element represents object with <b>msg</b> and <b>metadata</b> inner properties.<br></br>",
+        nodeDetails = "Deduplication strategies: <ul><li><strong>FIRST</strong> - return first message that arrived during deduplication period.</li>" +
+                "<li><strong>LAST</strong> - return last message that arrived during deduplication period.</li>" +
+                "<li><strong>ALL</strong> - return all messages as a single JSON array message. " +
+                "Where each element represents object with <strong><i>msg</i></strong> and <strong><i>metadata</i></strong> inner properties.</li></ul>",
         icon = "content_copy",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeMsgDeduplicationConfig"
@@ -60,10 +60,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class TbMsgDeduplicationNode implements TbNode {
 
-    private static final String TB_MSG_DEDUPLICATION_TIMEOUT_MSG = "TbMsgDeduplicationNodeMsg";
     public static final int TB_MSG_DEDUPLICATION_RETRY_DELAY = 10;
-    private static final String EMPTY_DATA = "";
-    private static final TbMsgMetaData EMPTY_META_DATA = new TbMsgMetaData();
 
     private TbMsgDeduplicationNodeConfiguration config;
 
@@ -82,7 +79,7 @@ public class TbMsgDeduplicationNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        if (TB_MSG_DEDUPLICATION_TIMEOUT_MSG.equals(msg.getType())) {
+        if (msg.isTypeOf(TbMsgType.DEDUPLICATION_TIMEOUT_SELF_MSG)) {
             processDeduplication(ctx, msg.getOriginator());
         } else {
             processOnRegularMsg(ctx, msg);
@@ -196,7 +193,7 @@ public class TbMsgDeduplicationNode implements TbNode {
 
     private void enqueueForTellNextWithRetry(TbContext ctx, TbMsg msg, int retryAttempt) {
         if (config.getMaxRetries() > retryAttempt) {
-            ctx.enqueueForTellNext(msg, TbRelationTypes.SUCCESS,
+            ctx.enqueueForTellNext(msg, TbNodeConnectionType.SUCCESS,
                     () -> {
                         log.trace("[{}][{}][{}] Successfully enqueue deduplication result message!", ctx.getSelfId(), msg.getOriginator(), retryAttempt);
                     },
@@ -210,7 +207,7 @@ public class TbMsgDeduplicationNode implements TbNode {
     }
 
     private void scheduleTickMsg(TbContext ctx, EntityId deduplicationId) {
-        ctx.tellSelf(ctx.newMsg(null, TB_MSG_DEDUPLICATION_TIMEOUT_MSG, deduplicationId, EMPTY_META_DATA, EMPTY_DATA), deduplicationInterval + 1);
+        ctx.tellSelf(ctx.newMsg(null, TbMsgType.DEDUPLICATION_TIMEOUT_SELF_MSG, deduplicationId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING), deduplicationInterval + 1);
     }
 
     private String getMergedData(List<TbMsg> msgs) {

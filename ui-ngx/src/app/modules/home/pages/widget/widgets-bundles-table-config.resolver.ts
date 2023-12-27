@@ -36,9 +36,8 @@ import { AppState } from '@core/core.state';
 import { getCurrentAuthState, getCurrentAuthUser } from '@app/core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { DialogService } from '@core/services/dialog.service';
-import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { ImportExportService } from '@shared/import-export/import-export.service';
 import { Direction } from '@shared/models/page/sort-order';
-import { map } from 'rxjs/operators';
 import { WidgetsBundleTabsComponent } from '@home/pages/widget/widgets-bundle-tabs.component';
 
 @Injectable()
@@ -115,7 +114,7 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
     this.config.loadEntity = id => this.widgetsService.getWidgetsBundle(id.id);
     this.config.saveEntity = widgetsBundle => this.widgetsService.saveWidgetsBundle(widgetsBundle);
     this.config.deleteEntity = id => this.widgetsService.deleteWidgetsBundle(id.id);
-    this.config.onEntityAction = action => this.onWidgetsBundleAction(action);
+    this.config.onEntityAction = action => this.onWidgetsBundleAction(action, this.config);
 
     this.config.handleRowClick = ($event, widgetsBundle) => {
       if (this.config.isDetailsOpen()) {
@@ -124,6 +123,10 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
         this.openWidgetsBundle($event, widgetsBundle);
       }
       return true;
+    };
+
+    this.config.entityAdded = widgetsBundle => {
+      this.openWidgetsBundle(null, widgetsBundle);
     };
   }
 
@@ -163,6 +166,14 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
     this.router.navigateByUrl(`resources/widgets-bundles/${widgetsBundle.id.id}/widgetTypes`);
   }
 
+  private openWidgetsBundleDetails($event: Event, widgetsBundle: WidgetsBundle, config: EntityTableConfig<WidgetsBundle>) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const url = this.router.createUrlTree(['details', widgetsBundle.id.id], {relativeTo: config.getActivatedRoute()});
+    this.router.navigateByUrl(url);
+  }
+
   exportWidgetsBundle($event: Event, widgetsBundle: WidgetsBundle) {
     if ($event) {
       $event.stopPropagation();
@@ -170,10 +181,13 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
     this.importExport.exportWidgetsBundle(widgetsBundle.id.id);
   }
 
-  onWidgetsBundleAction(action: EntityAction<WidgetsBundle>): boolean {
+  onWidgetsBundleAction(action: EntityAction<WidgetsBundle>, config: EntityTableConfig<WidgetsBundle>): boolean {
     switch (action.action) {
       case 'open':
         this.openWidgetsBundle(action.event, action.entity);
+        return true;
+      case 'openDetails':
+        this.openWidgetsBundleDetails(action.event, action.entity, config);
         return true;
       case 'export':
         this.exportWidgetsBundle(action.event, action.entity);

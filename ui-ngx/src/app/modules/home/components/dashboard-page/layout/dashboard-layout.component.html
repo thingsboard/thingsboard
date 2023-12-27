@@ -23,7 +23,7 @@
 <div class="mat-content"
           style="position: relative; width: 100%; height: 100%;" tb-hotkeys [hotkeys]="hotKeys"
           [cheatSheet]="dashboardCheatSheet"
-          [style.backgroundImage]="backgroundImage"
+          [style.backgroundImage]="backgroundImage$ | async"
           [ngStyle]="dashboardStyle">
   <section *ngIf="layoutCtx.widgets.isEmpty()" fxLayoutAlign="center center"
            style="display: flex; z-index: 1; pointer-events: none;"
@@ -38,7 +38,7 @@
     </button>
   </section>
   <tb-dashboard #dashboard [dashboardStyle]="dashboardStyle"
-                [backgroundImage]="backgroundImage"
+                [backgroundImage]="backgroundImage$ | async"
                 [widgets]="layoutCtx.widgets"
                 [widgetLayouts]="layoutCtx.widgetLayouts"
                 [columns]="layoutCtx.gridSettings.columns"

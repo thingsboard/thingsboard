@@ -33,17 +33,16 @@ public class BaseWidgetType extends BaseData<WidgetTypeId> implements HasName, H
     @ApiModelProperty(position = 3, value = "JSON object with Tenant Id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private TenantId tenantId;
     @NoXss
-    @Length(fieldName = "bundleAlias")
-    @ApiModelProperty(position = 4, value = "Reference to widget bundle", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
-    private String bundleAlias;
-    @NoXss
-    @Length(fieldName = "alias")
-    @ApiModelProperty(position = 5, value = "Unique alias that is used in dashboards as a reference widget type", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
-    private String alias;
+    @Length(fieldName = "fqn")
+    @ApiModelProperty(position = 5, value = "Unique FQN that is used in dashboards as a reference widget type", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    private String fqn;
     @NoXss
     @Length(fieldName = "name")
-    @ApiModelProperty(position = 6, value = "Widget name used in search and UI", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @ApiModelProperty(position = 6, value = "Widget name used in search and UI")
     private String name;
+
+    @ApiModelProperty(position = 7, value = "Whether widget type is deprecated.", example = "true")
+    private boolean deprecated;
 
     public BaseWidgetType() {
         super();
@@ -56,9 +55,9 @@ public class BaseWidgetType extends BaseData<WidgetTypeId> implements HasName, H
     public BaseWidgetType(BaseWidgetType widgetType) {
         super(widgetType);
         this.tenantId = widgetType.getTenantId();
-        this.bundleAlias = widgetType.getBundleAlias();
-        this.alias = widgetType.getAlias();
+        this.fqn = widgetType.getFqn();
         this.name = widgetType.getName();
+        this.deprecated = widgetType.isDeprecated();
     }
 
     @ApiModelProperty(position = 1, value = "JSON object with the Widget Type Id. " +

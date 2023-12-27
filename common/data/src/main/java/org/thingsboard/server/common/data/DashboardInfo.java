@@ -30,13 +30,14 @@ import java.util.Objects;
 import java.util.Set;
 
 @ApiModel
-public class DashboardInfo extends BaseData<DashboardId> implements HasName, HasTenantId, HasTitle {
+public class DashboardInfo extends BaseData<DashboardId> implements HasName, HasTenantId, HasTitle, HasImage {
+
+    private static final long serialVersionUID = -9080404114760433799L;
 
     private TenantId tenantId;
     @NoXss
     @Length(fieldName = "title")
     private String title;
-    @Length(fieldName = "image", max = 1000000)
     private String image;
     @Valid
     private Set<ShortCustomerInfo> assignedCustomers;
@@ -85,7 +86,7 @@ public class DashboardInfo extends BaseData<DashboardId> implements HasName, Has
         this.tenantId = tenantId;
     }
 
-    @ApiModelProperty(position = 4, value = "Title of the dashboard.")
+    @ApiModelProperty(position = 4, required = true, value = "Title of the dashboard.")
     public String getTitle() {
         return title;
     }

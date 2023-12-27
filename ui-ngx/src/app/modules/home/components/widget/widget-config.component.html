@@ -17,11 +17,13 @@
 -->
 <div class="tb-widget-config tb-absolute-fill">
   <div class="tb-widget-config-header" *ngIf="!hideHeader">
-    <tb-toggle-header *ngIf="!hideToggleHeader && widgetConfigMode === widgetConfigModes.advanced" (valueChange)="selectedOption = $event" ignoreMdLgSize="true"
-                      appearance="fill" [options]="headerOptions" [value]="selectedOption" name="widgetConfigHeader" useSelectOnMdLg="false">
-    </tb-toggle-header>
-    <ng-content select=".tb-widget-config-header-prefix"></ng-content>
-    <ng-content select=".tb-widget-config-header-suffix"></ng-content>
+    <tb-toggle-select *ngIf="!hideToggleHeader && widgetConfigMode === widgetConfigModes.advanced"
+                      appearance="fill" [options]="headerOptions" [(ngModel)]="selectedOption">
+    </tb-toggle-select>
+    <div class="tb-widget-config-header-components">
+      <ng-content select=".tb-widget-config-header-prefix"></ng-content>
+      <ng-content select=".tb-widget-config-header-suffix"></ng-content>
+    </div>
   </div>
   <div *ngIf="widgetConfigMode === widgetConfigModes.advanced; else basicMode" class="tb-widget-config-content">
     <div *ngIf="widgetType !== widgetTypes.static" [fxShow]="selectedOption === 'data'" class="mat-content">
@@ -31,35 +33,49 @@
       <ng-container *ngTemplateOutlet="appearance"></ng-container>
     </div>
     <div [fxShow]="selectedOption === 'card'" [formGroup]="widgetSettings" class="mat-content">
-      <div class="tb-widget-config-panel">
-        <div class="tb-widget-config-panel-title" translate>widget-config.card-title</div>
+      <div class="tb-form-panel">
+        <div class="tb-form-panel-title" translate>widget-config.card-title</div>
         <mat-slide-toggle class="mat-slide" formControlName="showTitle">
           {{ 'widget-config.display-title' | translate }}
         </mat-slide-toggle>
-        <div fxLayout.xs="column" fxLayout="row" fxLayoutGap.gt-xs="8px">
-          <mat-form-field fxFlex>
-            <mat-label translate>widget-config.title</mat-label>
-            <input matInput formControlName="title">
-          </mat-form-field>
-          <mat-form-field fxFlex>
-            <mat-label translate>widget-config.title-tooltip</mat-label>
-            <input matInput formControlName="titleTooltip">
+        <div class="tb-form-row">
+          <div class="fixed-title-width" translate>widget-config.title</div>
+          <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+              <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
+            </mat-form-field>
+            <tb-font-settings formControlName="titleFont"
+                              clearButton
+                              [previewText]="widgetSettings.get('title').value"
+                              [initialPreviewStyle]="widgetSettings.get('titleStyle').value">
+            </tb-font-settings>
+            <tb-color-input asBoxInput
+                            colorClearButton
+                            formControlName="titleColor">
+            </tb-color-input>
+          </div>
+        </div>
+        <div class="tb-form-row">
+          <div class="fixed-title-width" translate>widget-config.title-tooltip</div>
+          <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="titleTooltip" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
         </div>
-        <div class="tb-widget-config-row space-between same-padding">
+        <div class="tb-form-row space-between column-xs">
           <mat-slide-toggle class="mat-slide"  formControlName="showTitleIcon">
             {{ 'widget-config.display-icon' | translate }}
           </mat-slide-toggle>
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
+          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <input matInput formControlName="iconSize">
+            </mat-form-field>
             <tb-material-icon-select asBoxInput
+                                     iconClearButton
                                      [color]="widgetSettings.get('iconColor').value"
               formControlName="titleIcon">
             </tb-material-icon-select>
-            <mat-form-field appearance="outline" subscriptSizing="dynamic" style="width: 60px;">
-              <input matInput formControlName="iconSize">
-            </mat-form-field>
-            <mat-divider vertical></mat-divider>
             <tb-color-input asBoxInput
+                            colorClearButton
                             formControlName="iconColor">
             </tb-color-input>
           </div>
@@ -73,43 +89,44 @@
           <ng-template matExpansionPanelContent>
             <tb-json-object-edit
               [editorStyle]="{minHeight: '100px'}"
-              required
               label="{{ 'widget-config.title-style' | translate }}"
               formControlName="titleStyle"
             ></tb-json-object-edit>
           </ng-template>
         </mat-expansion-panel>
       </div>
-      <div class="tb-widget-config-panel">
-        <div class="tb-widget-config-panel-title" translate>widget-config.card-style</div>
-        <div class="tb-widget-config-row space-between same-padding">
-          <div>{{ 'widget-config.text' | translate }}</div>
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
-            <mat-divider vertical></mat-divider>
-            <tb-color-input asBoxInput
-                            formControlName="color">
-            </tb-color-input>
-          </div>
+      <div class="tb-form-panel">
+        <div class="tb-form-panel-title" translate>widget-config.card-style</div>
+        <div class="tb-form-row space-between">
+          <div>{{ 'widget-config.text-color' | translate }}</div>
+          <tb-color-input asBoxInput
+                          colorClearButton
+                          formControlName="color">
+          </tb-color-input>
         </div>
-        <div class="tb-widget-config-row space-between same-padding">
-          <div>{{ 'widget-config.background' | translate }}</div>
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
-            <mat-divider vertical></mat-divider>
-            <tb-color-input asBoxInput
-                            formControlName="backgroundColor">
-            </tb-color-input>
-          </div>
+        <div class="tb-form-row space-between">
+          <div>{{ 'widget-config.background-color' | translate }}</div>
+          <tb-color-input asBoxInput
+                          colorClearButton
+                          formControlName="backgroundColor">
+          </tb-color-input>
         </div>
-        <div class="tb-widget-config-row space-between">
+        <div class="tb-form-row space-between">
           <div>{{ 'widget-config.padding' | translate }}</div>
-          <mat-form-field appearance="outline" class="center" subscriptSizing="dynamic">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <input matInput formControlName="padding" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
         </div>
-        <div class="tb-widget-config-row space-between">
+        <div class="tb-form-row space-between">
           <div>{{ 'widget-config.margin' | translate }}</div>
-          <mat-form-field appearance="outline" class="center" subscriptSizing="dynamic">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <input matInput formControlName="margin" placeholder="{{ 'widget-config.set' | translate }}">
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row space-between">
+          <div>{{ 'widget-config.border-radius' | translate }}</div>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="borderRadius" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
         </div>
         <mat-slide-toggle class="mat-slide slide-block" formControlName="dropShadow">
@@ -124,7 +141,6 @@
           <ng-template matExpansionPanelContent>
             <tb-json-object-edit
               [editorStyle]="{minHeight: '100px'}"
-              required
               label="{{ 'widget-config.widget-style' | translate }}"
               formControlName="widgetStyle"
             ></tb-json-object-edit>
@@ -135,15 +151,15 @@
           </ng-template>
         </mat-expansion-panel>
       </div>
-      <div class="tb-widget-config-panel">
-        <div class="tb-widget-config-panel-title" translate>widget-config.card-buttons</div>
+      <div class="tb-form-panel">
+        <div class="tb-form-panel-title" translate>widget-config.card-buttons</div>
         <mat-slide-toggle class="mat-slide slide-block" formControlName="enableFullscreen">
           {{ 'widget-config.enable-fullscreen' | translate }}
         </mat-slide-toggle>
       </div>
     </div>
     <div [fxShow]="selectedOption === 'actions'" [formGroup]="actionsSettings" class="mat-content" style="height: 100%;">
-      <div class="tb-widget-config-panel" style="height: 100%;">
+      <div class="tb-form-panel" style="height: 100%;">
         <tb-manage-widget-actions
           [callbacks]="widgetConfigCallbacks"
           [widgetType] = "modelValue.widgetType"
@@ -153,26 +169,26 @@
       </div>
     </div>
     <div [fxShow]="selectedOption === 'mobile'" [formGroup]="layoutSettings" class="mat-content">
-      <div class="tb-widget-config-panel">
+      <div class="tb-form-panel">
         <mat-slide-toggle class="mat-slide" formControlName="mobileHide">
           {{ 'widget-config.mobile-hide' | translate }}
         </mat-slide-toggle>
       </div>
-      <div class="tb-widget-config-panel">
+      <div class="tb-form-panel">
         <mat-slide-toggle class="mat-slide" formControlName="desktopHide">
           {{ 'widget-config.desktop-hide' | translate }}
         </mat-slide-toggle>
       </div>
-      <div class="tb-widget-config-panel">
-        <div class="tb-widget-config-row space-between">
+      <div class="tb-form-panel">
+        <div class="tb-form-row space-between">
           <div translate>widget-config.order</div>
-          <mat-form-field appearance="outline" class="number center" subscriptSizing="dynamic">
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="mobileOrder" type="number" step="1" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
         </div>
-        <div class="tb-widget-config-row space-between">
+        <div class="tb-form-row space-between">
           <div translate>widget-config.height</div>
-          <mat-form-field appearance="outline" class="number center" subscriptSizing="dynamic">
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="mobileHeight" type="number" min="1" step="1" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
         </div>
@@ -205,8 +221,16 @@
         formControlName="timewindowConfig">
       </tb-timewindow-config-panel>
     </ng-container>
-    <div *ngIf="widgetType === widgetTypes.alarm" [formGroup]="dataSettings" class="tb-widget-config-panel" fxLayout="column" fxLayoutAlign="center">
-      <tb-alarm-filter-config buttonMode="false" formControlName="alarmFilterConfig"></tb-alarm-filter-config>
+    <div *ngIf="widgetType === widgetTypes.alarm" [formGroup]="dataSettings" class="tb-form-panel">
+      <div fxLayout="row" fxLayoutAlign="space-between center">
+        <div class="tb-form-panel-title" translate>alarm.filter</div>
+        <button mat-button color="primary"
+                (click)="alarmFilterConfig.reset()">
+          {{ 'action.reset' | translate }}
+        </button>
+      </div>
+      <tb-alarm-filter-config #alarmFilterConfig buttonMode="false"
+                              formControlName="alarmFilterConfig" [initialAlarmFilterConfig]="{}"></tb-alarm-filter-config>
     </div>
     <div *ngIf="widgetType !== widgetTypes.rpc &&
                 widgetType !== widgetTypes.alarm &&
@@ -217,9 +241,9 @@
         formControlName="datasources">
       </tb-datasources>
     </div>
-    <div class="tb-widget-config-panel" *ngIf="widgetType === widgetTypes.rpc &&
+    <div class="tb-form-panel" *ngIf="widgetType === widgetTypes.rpc &&
                                                   modelValue?.isDataEnabled">
-      <div class="tb-widget-config-panel-title" translate>widget-config.target-device</div>
+      <div class="tb-form-panel-title" translate>widget-config.target-device</div>
       <div [formGroup]="targetDeviceSettings">
         <tb-entity-alias-select fxFlex
                                 [tbRequired]="!widgetEditMode"
@@ -231,39 +255,39 @@
       </div>
     </div>
     <div *ngIf="widgetType === widgetTypes.alarm && modelValue?.isDataEnabled"
-         [formGroup]="dataSettings" class="tb-widget-config-panel" >
-      <div class="tb-widget-config-panel-title" translate>widget-config.alarm-source</div>
+         [formGroup]="dataSettings" class="tb-form-panel" >
+      <div class="tb-form-panel-title" translate>widget-config.alarm-source</div>
       <tb-datasource
         formControlName="alarmSource">
       </tb-datasource>
     </div>
-    <div *ngIf="displayLimits" class="tb-widget-config-panel" [formGroup]="widgetSettings">
-      <div class="tb-widget-config-panel-title" translate>widget-config.limits</div>
-      <div class="tb-widget-config-row space-between">
+    <div *ngIf="displayLimits" class="tb-form-panel" [formGroup]="widgetSettings">
+      <div class="tb-form-panel-title" translate>widget-config.limits</div>
+      <div class="tb-form-row space-between column-xs">
         <div translate>widget-config.data-page-size</div>
-        <mat-form-field appearance="outline" class="center number" subscriptSizing="dynamic">
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput formControlName="pageSize" type="number" min="1" step="1">
         </mat-form-field>
       </div>
     </div>
   </ng-template>
   <ng-template #appearance>
-    <div *ngIf="displayAppearanceDataSettings" class="tb-widget-config-panel" [formGroup]="widgetSettings">
-      <div class="tb-widget-config-panel-title" translate>widget-config.data-settings</div>
-      <div *ngIf="displayUnitsConfig" class="tb-widget-config-row space-between">
-        <div translate>widget-config.units</div>
-        <tb-widget-units
+    <div *ngIf="displayAppearanceDataSettings" class="tb-form-panel" [formGroup]="widgetSettings">
+      <div class="tb-form-panel-title" translate>widget-config.data-settings</div>
+      <div *ngIf="displayUnitsConfig" class="tb-form-row space-between">
+        <div tb-hint-tooltip-icon="{{'widget-config.default-data-key-parameter-hint' | translate}}" translate>widget-config.units-by-default</div>
+        <tb-unit-input
           formControlName="units">
-        </tb-widget-units>
+        </tb-unit-input>
       </div>
-      <div *ngIf="displayUnitsConfig" class="tb-widget-config-row space-between">
-        <div translate>widget-config.decimals</div>
-        <mat-form-field appearance="outline" class="center number" subscriptSizing="dynamic">
+      <div *ngIf="displayUnitsConfig" class="tb-form-row space-between">
+        <div tb-hint-tooltip-icon="{{'widget-config.default-data-key-parameter-hint' | translate}}" translate>widget-config.decimals-by-default</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
       </div>
-      <div *ngIf="displayNoDataDisplayMessageConfig" class="tb-widget-config-row">
-        <div translate>widget-config.no-data-display-message</div>
+      <div *ngIf="displayNoDataDisplayMessageConfig" class="tb-form-row column-xs">
+        <div class="fixed-title-width" translate>widget-config.no-data-display-message</div>
         <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
           <input matInput formControlName="noDataDisplayMessage" placeholder="{{ 'widget-config.set-message' | translate }}">
         </mat-form-field>
@@ -274,6 +298,7 @@
         [aliasController]="aliasController"
         [dashboard]="dashboard"
         [widget]="widget"
+        [widgetConfig]="modelValue"
         formControlName="settings">
       </tb-widget-settings>
     </div>

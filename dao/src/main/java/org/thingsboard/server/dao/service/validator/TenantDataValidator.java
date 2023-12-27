@@ -32,9 +32,7 @@ public class TenantDataValidator extends DataValidator<Tenant> {
 
     @Override
     protected void validateDataImpl(TenantId tenantId, Tenant tenant) {
-        if (StringUtils.isEmpty(tenant.getTitle())) {
-            throw new DataValidationException("Tenant title should be specified!");
-        }
+        validateString("Tenant title", tenant.getTitle());
         if (!StringUtils.isEmpty(tenant.getEmail())) {
             validateEmail(tenant.getEmail());
         }

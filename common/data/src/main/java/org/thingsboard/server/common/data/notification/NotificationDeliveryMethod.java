@@ -25,6 +25,7 @@ public enum NotificationDeliveryMethod {
     EMAIL("email"),
     SMS("SMS"),
     SLACK("Slack"),
+    MICROSOFT_TEAMS("Microsoft Teams"),
     MOBILE("mobile");
 
     @Getter

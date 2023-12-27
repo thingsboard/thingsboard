@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.service.validator;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -35,9 +34,7 @@ public class WidgetsBundleDataValidator extends DataValidator<WidgetsBundle> {
 
     @Override
     protected void validateDataImpl(TenantId tenantId, WidgetsBundle widgetsBundle) {
-        if (StringUtils.isEmpty(widgetsBundle.getTitle())) {
-            throw new DataValidationException("Widgets bundle title should be specified!");
-        }
+        validateString("Widgets bundle title", widgetsBundle.getTitle());
         if (widgetsBundle.getTenantId() == null) {
             widgetsBundle.setTenantId(TenantId.fromUUID(ModelConstants.NULL_UUID));
         }

@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.entity;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.StringUtils;
@@ -42,6 +43,9 @@ public abstract class AbstractEntityService {
 
     public static final String INCORRECT_EDGE_ID = "Incorrect edgeId ";
     public static final String INCORRECT_PAGE_LINK = "Incorrect page link ";
+
+    @Autowired
+    protected ApplicationEventPublisher eventPublisher;
 
     @Lazy
     @Autowired
@@ -70,9 +74,7 @@ public abstract class AbstractEntityService {
     }
 
     protected void deleteEntityRelations(TenantId tenantId, EntityId entityId) {
-        log.trace("Executing deleteEntityRelations [{}]", entityId);
         relationService.deleteEntityRelations(tenantId, entityId);
-        log.trace("Executing deleteEntityAlarms [{}]", entityId);
         alarmService.deleteEntityAlarmRelations(tenantId, entityId);
     }
 
@@ -113,7 +115,7 @@ public abstract class AbstractEntityService {
         List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityId(tenantId, entityId);
         if (entityViews != null && !entityViews.isEmpty()) {
             EntityView entityView = entityViews.get(0);
-            Boolean relationExists = relationService.checkRelation(
+            boolean relationExists = relationService.checkRelation(
                     tenantId, edgeId, entityView.getId(),
                     EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE
             );
@@ -122,5 +124,4 @@ public abstract class AbstractEntityService {
             }
         }
     }
-
 }

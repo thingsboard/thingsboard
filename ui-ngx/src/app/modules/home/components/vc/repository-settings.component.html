@@ -80,8 +80,7 @@
               </mat-form-field>
             </section>
             <section [fxShow]="repositorySettingsForm.get('authMethod').value === repositoryAuthMethod.PRIVATE_KEY" fxLayout="column">
-              <tb-file-input style="margin-bottom: 16px;"
-                             [existingFileName]="repositorySettingsForm.get('privateKeyFileName').value"
+              <tb-file-input [existingFileName]="repositorySettingsForm.get('privateKeyFileName').value"
                              required
                              formControlName="privateKey"
                              dropLabel="{{ 'admin.drop-private-key-file-or' | translate }}"

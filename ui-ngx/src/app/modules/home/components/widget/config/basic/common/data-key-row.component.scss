@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.tb-data-key-row {
-  height: 38px;
-  display: flex;
-  flex-direction: row;
-  gap: 12px;
-  padding-left: 12px;
 
+@import '../../../../../../../../scss/constants';
+
+.tb-data-key-row {
   .mat-mdc-form-field.tb-inline-field.tb-key-field {
     .mat-mdc-text-field-wrapper:not(.mdc-text-field--outlined) {
+      padding-left: 8px;
+      padding-right: 0;
       .mat-mdc-form-field-infix {
         padding-top: 0;
         padding-bottom: 6px;
@@ -43,11 +42,75 @@
     }
   }
 
+  .tb-source-field {
+    width: 108px;
+    min-width: 108px;
+  }
+
+  .tb-key-field {
+    flex: 1;
+    min-width: 150px;
+    @media #{$mat-gt-sm} {
+      flex: 1 1 60%;
+    }
+  }
+
+  .tb-label-field {
+    flex: 1 1 40%;
+    min-width: 100px;
+  }
+
   .tb-color-field, .tb-units-field, .tb-decimals-field {
-    width: 60px;
     display: flex;
     flex-direction: row;
     place-content: center;
     align-items: center;
+  }
+
+  .tb-units-field {
+    width: 80px;
+    min-width: 80px;
+  }
+
+  .tb-color-field {
+    width: 40px;
+    min-width: 40px;
+  }
+
+  .tb-decimals-field {
+    width: 60px;
+    min-width: 60px;
+  }
+
+  .tb-label-field, .tb-units-field, .tb-color-field, .tb-decimals-field {
+    display: none;
+    @media #{$mat-gt-sm} {
+      display: block;
+    }
+  }
+
+  .tb-settings-button {
+    width: 40px;
+    min-width: 40px;
+  }
+
+  &.tb-single-row {
+    padding: 0;
+    .tb-units-field, .tb-decimals-field {
+      min-width: 0;
+      width: auto;
+    }
+    .tb-units-field {
+      tb-unit-input {
+        width: auto;
+        max-width: 140px;
+      }
+    }
+    .tb-decimals-field {
+      .mat-mdc-form-field {
+        width: auto;
+        max-width: 140px;
+      }
+    }
   }
 }

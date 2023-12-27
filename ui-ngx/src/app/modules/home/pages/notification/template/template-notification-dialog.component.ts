@@ -54,7 +54,6 @@ export class TemplateNotificationDialogComponent
   @ViewChild('notificationTemplateStepper', {static: true}) notificationTemplateStepper: MatStepper;
 
   stepperOrientation: Observable<StepperOrientation>;
-  stepperLabelPosition: Observable<'bottom' | 'end'>;
 
   dialogTitle = 'notification.edit-notification-template';
 
@@ -81,9 +80,6 @@ export class TemplateNotificationDialogComponent
 
     this.stepperOrientation = this.breakpointObserver.observe(MediaBreakpoints['gt-sm'])
       .pipe(map(({matches}) => matches ? 'horizontal' : 'vertical'));
-
-    this.stepperLabelPosition = this.breakpointObserver.observe(MediaBreakpoints['gt-md'])
-      .pipe(map(({matches}) => matches ? 'end' : 'bottom'));
 
     if (isDefinedAndNotNull(this.data?.predefinedType)) {
       this.hideSelectType = true;
@@ -181,6 +177,7 @@ export class TemplateNotificationDialogComponent
       NotificationType.ENTITIES_LIMIT,
       NotificationType.API_USAGE_LIMIT,
       NotificationType.NEW_PLATFORM_VERSION,
+      NotificationType.RATE_LIMITS
     ]);
 
     if (this.isSysAdmin()) {

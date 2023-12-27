@@ -18,12 +18,14 @@ package org.thingsboard.server.service.queue;
 import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.common.stats.StatsCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.stats.StatsType;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingResult;
 
 import java.util.ArrayList;
@@ -63,9 +65,11 @@ public class TbRuleEngineConsumerStats {
     private final ConcurrentMap<TenantId, RuleEngineException> tenantExceptions = new ConcurrentHashMap<>();
 
     private final String queueName;
+    private final TenantId tenantId;
 
-    public TbRuleEngineConsumerStats(String queueName, StatsFactory statsFactory) {
-        this.queueName = queueName;
+    public TbRuleEngineConsumerStats(QueueKey queueKey, StatsFactory statsFactory) {
+        this.queueName = queueKey.getQueueName();
+        this.tenantId = queueKey.getTenantId();
         this.statsFactory = statsFactory;
 
         String statsKey = StatsType.RULE_ENGINE.getName() + "." + queueName;
@@ -156,7 +160,11 @@ public class TbRuleEngineConsumerStats {
             counters.forEach(counter -> {
                 stats.append(counter.getName()).append(" = [").append(counter.get()).append("] ");
             });
-            log.info("[{}] Stats: {}", queueName, stats);
+            if (tenantId.isSysTenantId()) {
+                log.info("[{}] Stats: {}", queueName, stats);
+            } else {
+                log.info("[{}][{}] Stats: {}", queueName, tenantId, stats);
+            }
         }
     }
 

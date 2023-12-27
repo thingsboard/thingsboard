@@ -46,6 +46,7 @@ public class AssetProfileImportService extends BaseEntityImportService<AssetProf
     protected AssetProfile prepare(EntitiesImportCtx ctx, AssetProfile assetProfile, AssetProfile old, EntityExportData<AssetProfile> exportData, IdProvider idProvider) {
         assetProfile.setDefaultRuleChainId(idProvider.getInternalId(assetProfile.getDefaultRuleChainId()));
         assetProfile.setDefaultDashboardId(idProvider.getInternalId(assetProfile.getDefaultDashboardId()));
+        assetProfile.setDefaultEdgeRuleChainId(idProvider.getInternalId(assetProfile.getDefaultEdgeRuleChainId()));
         return assetProfile;
     }
 
@@ -58,8 +59,8 @@ public class AssetProfileImportService extends BaseEntityImportService<AssetProf
     protected void onEntitySaved(User user, AssetProfile savedAssetProfile, AssetProfile oldAssetProfile) throws ThingsboardException {
         clusterService.broadcastEntityStateChangeEvent(user.getTenantId(), savedAssetProfile.getId(),
                 oldAssetProfile == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
-        entityNotificationService.notifyCreateOrUpdateOrDelete(savedAssetProfile.getTenantId(), null,
-                savedAssetProfile.getId(), savedAssetProfile, user, oldAssetProfile == null ? ActionType.ADDED : ActionType.UPDATED, true, null);
+        entityNotificationService.logEntityAction(savedAssetProfile.getTenantId(), savedAssetProfile.getId(),
+                savedAssetProfile, null, oldAssetProfile == null ? ActionType.ADDED : ActionType.UPDATED, user);
     }
 
     @Override

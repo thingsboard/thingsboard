@@ -46,7 +46,6 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
@@ -154,7 +153,7 @@ public class DashboardControllerTest extends AbstractControllerTest {
 
         doDelete("/api/dashboard/" + savedDashboard.getId().getId().toString()).andExpect(status().isOk());
 
-        testNotifyEntityOneTimeMsgToEdgeServiceNever(savedDashboard, savedDashboard.getId(), savedDashboard.getId(),
+        testNotifyEntityAllOneTime(savedDashboard, savedDashboard.getId(), savedDashboard.getId(),
                 savedDashboard.getTenantId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.DELETED,
                 savedDashboard.getId().getId().toString());
 
@@ -198,7 +197,7 @@ public class DashboardControllerTest extends AbstractControllerTest {
 
         testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(assignedDashboard, assignedDashboard.getId(), assignedDashboard.getId(),
                 savedTenant.getId(),  savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ASSIGNED_TO_CUSTOMER,
-                assignedDashboard .getId().getId().toString(), savedCustomer.getId().getId().toString(), savedCustomer.getTitle());
+                ActionType.UPDATED, assignedDashboard.getId().getId().toString(), savedCustomer.getId().getId().toString(), savedCustomer.getTitle());
 
         Dashboard foundDashboard = doGet("/api/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
         Assert.assertTrue(foundDashboard.getAssignedCustomers().contains(savedCustomer.toShortCustomerInfo()));
@@ -210,7 +209,7 @@ public class DashboardControllerTest extends AbstractControllerTest {
 
         testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(assignedDashboard, assignedDashboard.getId(), assignedDashboard.getId(),
                 savedTenant.getId(), savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UNASSIGNED_FROM_CUSTOMER,
-                unassignedDashboard.getId().getId().toString(), savedCustomer.getId().getId().toString(), savedCustomer.getTitle());
+                ActionType.UPDATED, unassignedDashboard.getId().getId().toString(), savedCustomer.getId().getId().toString(), savedCustomer.getTitle());
 
         Assert.assertTrue(unassignedDashboard.getAssignedCustomers() == null || unassignedDashboard.getAssignedCustomers().isEmpty());
 
@@ -241,7 +240,7 @@ public class DashboardControllerTest extends AbstractControllerTest {
 
         testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(assignedDashboard, assignedDashboard.getId(), assignedDashboard.getId(),
                 savedTenant.getId(),  publicCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ASSIGNED_TO_CUSTOMER,
-                assignedDashboard .getId().getId().toString(), publicCustomer.getId().getId().toString(), publicCustomer.getTitle());
+                ActionType.UPDATED, assignedDashboard .getId().getId().toString(), publicCustomer.getId().getId().toString(), publicCustomer.getTitle());
 
         Dashboard foundDashboard = doGet("/api/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
         Assert.assertTrue(foundDashboard.getAssignedCustomers().contains(publicCustomer.toShortCustomerInfo()));
@@ -253,7 +252,7 @@ public class DashboardControllerTest extends AbstractControllerTest {
 
         testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(assignedDashboard, assignedDashboard.getId(), assignedDashboard.getId(),
                 savedTenant.getId(), publicCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UNASSIGNED_FROM_CUSTOMER,
-                unassignedDashboard.getId().getId().toString(), publicCustomer.getId().getId().toString(), publicCustomer.getTitle());
+                ActionType.UPDATED, unassignedDashboard.getId().getId().toString(), publicCustomer.getId().getId().toString(), publicCustomer.getTitle());
 
         Assert.assertTrue(unassignedDashboard.getAssignedCustomers() == null || unassignedDashboard.getAssignedCustomers().isEmpty());
 
@@ -328,7 +327,18 @@ public class DashboardControllerTest extends AbstractControllerTest {
 
     @Test
     public void testFindTenantDashboards() throws Exception {
-        List<DashboardInfo> dashboards = new ArrayList<>();
+        List<DashboardInfo> expectedDashboards = new ArrayList<>();
+        PageLink pageLink = new PageLink(24);
+        PageData<DashboardInfo> pageData = null;
+        do {
+            pageData = doGetTypedWithPageLink("/api/tenant/dashboards?",
+                    new TypeReference<PageData<DashboardInfo>>() {
+                    }, pageLink);
+            expectedDashboards.addAll(pageData.getData());
+            if (pageData.hasNext()) {
+                pageLink = pageLink.nextPageLink();
+            }
+        } while (pageData.hasNext());
 
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -336,16 +346,14 @@ public class DashboardControllerTest extends AbstractControllerTest {
         for (int i = 0; i < cntEntity; i++) {
             Dashboard dashboard = new Dashboard();
             dashboard.setTitle("Dashboard" + i);
-            dashboards.add(new DashboardInfo(doPost("/api/dashboard", dashboard, Dashboard.class)));
+            expectedDashboards.add(new DashboardInfo(doPost("/api/dashboard", dashboard, Dashboard.class)));
         }
 
-        testNotifyManyEntityManyTimeMsgToEdgeServiceNever(new Dashboard(), new Dashboard(),
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new Dashboard(), new Dashboard(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ADDED, cntEntity);
+                ActionType.ADDED, cntEntity, cntEntity, cntEntity);
 
         List<DashboardInfo> loadedDashboards = new ArrayList<>();
-        PageLink pageLink = new PageLink(24);
-        PageData<DashboardInfo> pageData = null;
         do {
             pageData = doGetTypedWithPageLink("/api/tenant/dashboards?",
                     new TypeReference<PageData<DashboardInfo>>() {
@@ -356,10 +364,10 @@ public class DashboardControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(dashboards, idComparator);
-        Collections.sort(loadedDashboards, idComparator);
+        expectedDashboards.sort(idComparator);
+        loadedDashboards.sort(idComparator);
 
-        Assert.assertEquals(dashboards, loadedDashboards);
+        Assert.assertEquals(expectedDashboards, loadedDashboards);
     }
 
     @Test
@@ -400,8 +408,8 @@ public class DashboardControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(dashboardsTitle1, idComparator);
-        Collections.sort(loadedDashboardsTitle1, idComparator);
+        dashboardsTitle1.sort(idComparator);
+        loadedDashboardsTitle1.sort(idComparator);
 
         Assert.assertEquals(dashboardsTitle1, loadedDashboardsTitle1);
 
@@ -417,8 +425,8 @@ public class DashboardControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(dashboardsTitle2, idComparator);
-        Collections.sort(loadedDashboardsTitle2, idComparator);
+        dashboardsTitle2.sort(idComparator);
+        loadedDashboardsTitle2.sort(idComparator);
 
         Assert.assertEquals(dashboardsTitle2, loadedDashboardsTitle2);
 
@@ -429,9 +437,9 @@ public class DashboardControllerTest extends AbstractControllerTest {
                     .andExpect(status().isOk());
         }
 
-        testNotifyManyEntityManyTimeMsgToEdgeServiceNeverAdditionalInfoAny(new Dashboard(), new Dashboard(),
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAnyAdditionalInfoAny(new Dashboard(), new Dashboard(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.DELETED, cntEntity, 1);
+                ActionType.DELETED, ActionType.DELETED, cntEntity, cntEntity, 1);
 
         pageLink = new PageLink(4, 0, title1);
         pageData = doGetTypedWithPageLink("/api/tenant/dashboards?",
@@ -474,7 +482,7 @@ public class DashboardControllerTest extends AbstractControllerTest {
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new Dashboard(), new Dashboard(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ADDED, ActionType.ASSIGNED_TO_CUSTOMER, cntEntity, cntEntity, cntEntity*2);
+                ActionType.ADDED, cntEntity, cntEntity, cntEntity*2);
 
         List<DashboardInfo> loadedDashboards = new ArrayList<>();
         PageLink pageLink = new PageLink(21);
@@ -489,8 +497,8 @@ public class DashboardControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(dashboards, idComparator);
-        Collections.sort(loadedDashboards, idComparator);
+        dashboards.sort(idComparator);
+        loadedDashboards.sort(idComparator);
 
         Assert.assertEquals(dashboards, loadedDashboards);
     }

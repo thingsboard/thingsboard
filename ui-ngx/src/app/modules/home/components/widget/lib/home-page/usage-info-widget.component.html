@@ -19,16 +19,9 @@
   <ng-container *ngIf="hasUsageInfoAccess; else noDataAvailable">
     <div class="tb-card-header">
       <a class="tb-title-link" routerLink="/usage">{{ 'widgets.usage-info.title' | translate }}</a>
-      <tb-toggle-header #usageToggle [value]="toggleValue" name="usageToggle" [options]="[
-        {
-          name: ctx.translate.instant('widgets.usage-info.entities'),
-          value: 'entities'
-        },
-        {
-          name: ctx.translate.instant('widgets.usage-info.api-calls'),
-          value: 'apiCalls'
-        }
-      ]">
+      <tb-toggle-header #usageToggle [value]="toggleValue" name="usageToggle">
+        <tb-toggle-option value="entities">{{ 'widgets.usage-info.entities' | translate }}</tb-toggle-option>
+        <tb-toggle-option value="apiCalls">{{ 'widgets.usage-info.api-calls' | translate }}</tb-toggle-option>
       </tb-toggle-header>
     </div>
     <ng-container [ngSwitch]="usageToggle.value">

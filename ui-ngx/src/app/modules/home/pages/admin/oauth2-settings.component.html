@@ -37,7 +37,7 @@
             <ng-container formArrayName="oauth2ParamsInfos">
               <div class="container">
                 <mat-accordion multi>
-                  <ng-container *ngFor="let oauth2ParamsInfo of oauth2ParamsInfos.controls; let i = index; trackBy: trackByParams">
+                  <ng-container *ngFor="let oauth2ParamsInfo of oauth2ParamsInfos.controls; let i = index; trackBy: trackByItem">
                     <mat-expansion-panel [formGroupName]="i">
                       <mat-expansion-panel-header>
                         <mat-panel-title fxLayoutAlign="start center">
@@ -59,7 +59,7 @@
                           <mat-tab label="{{ 'admin.oauth2.domains' | translate }}">
                             <ng-container formArrayName="domainInfos">
                               <div style="padding-top: 16px;"></div>
-                              <section *ngFor="let domainInfo of domainInfos(oauth2ParamsInfo).controls; let n = index; trackBy: trackByParams"
+                              <section *ngFor="let domainInfo of domainInfos(oauth2ParamsInfo).controls; let n = index; trackBy: trackByItem"
                                        class="domains-list">
                                 <div [formGroupName]="n" fxLayout="row" fxLayoutGap="8px">
                                   <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px">
@@ -100,7 +100,7 @@
                                           [copyText]="redirectURI(domainInfo)"
                                           tooltipText="{{ 'admin.oauth2.copy-redirect-uri' | translate }}"
                                           tooltipPosition="above"
-                                          mdiIcon="mdi:clipboard-arrow-left">
+                                          icon="mdi:clipboard-arrow-left">
                                         </tb-copy-button>
                                       </mat-form-field>
                                       <mat-form-field fxFlex *ngIf="domainInfo.get('scheme').value === 'MIXED'" class="mat-block">
@@ -112,7 +112,7 @@
                                           [copyText]="redirectURIMixed(domainInfo)"
                                           tooltipText="{{ 'admin.oauth2.copy-redirect-uri' | translate }}"
                                           tooltipPosition="above"
-                                          mdiIcon="mdi:clipboard-arrow-left">
+                                          icon="mdi:clipboard-arrow-left">
                                         </tb-copy-button>
                                       </mat-form-field>
                                     </div>
@@ -146,7 +146,7 @@
                                   <span fxLayoutAlign="center center"
                                           class="tb-prompt" translate>admin.oauth2.no-mobile-apps</span>
                               </div>
-                              <section *ngFor="let mobileInfo of mobileInfos(oauth2ParamsInfo).controls; let n = index; trackBy: trackByParams"
+                              <section *ngFor="let mobileInfo of mobileInfos(oauth2ParamsInfo).controls; let n = index; trackBy: trackByItem"
                                        class="apps-list">
                                 <div [formGroupName]="n" fxLayout="row" fxLayoutGap="8px">
                                   <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px">
@@ -171,7 +171,7 @@
                                           [copyText]="mobileInfo.get('appSecret').value"
                                           tooltipText="{{ 'admin.oauth2.copy-mobile-app-secret' | translate }}"
                                           tooltipPosition="above"
-                                          mdiIcon="mdi:clipboard-arrow-left">
+                                          icon="mdi:clipboard-arrow-left">
                                         </tb-copy-button>
                                         <mat-error *ngIf="mobileInfo.get('appSecret').invalid">
                                           {{ 'admin.oauth2.invalid-mobile-app-secret' | translate }}
@@ -203,7 +203,7 @@
                         <div class="mat-h3" translate>admin.oauth2.providers</div>
                         <ng-container formArrayName="clientRegistrations">
                           <div class="container">
-                            <mat-expansion-panel *ngFor="let registration of clientRegistrations(oauth2ParamsInfo).controls; let j = index; trackBy: trackByParams"
+                            <mat-expansion-panel *ngFor="let registration of clientRegistrations(oauth2ParamsInfo).controls; let j = index; trackBy: trackByItem"
                               class="registration-card mat-elevation-z0">
                               <mat-expansion-panel-header>
                                 <mat-panel-title fxLayoutAlign="start center">

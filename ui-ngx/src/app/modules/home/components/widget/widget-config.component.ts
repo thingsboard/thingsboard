@@ -21,10 +21,8 @@ import {
   ComponentRef,
   forwardRef,
   Input,
-  OnChanges,
   OnDestroy,
   OnInit,
-  SimpleChanges,
   ViewChild,
   ViewContainerRef
 } from '@angular/core';
@@ -43,13 +41,14 @@ import {
   widgetType
 } from '@shared/models/widget.models';
 import {
+  AsyncValidator,
   ControlValueAccessor,
-  NG_VALIDATORS,
+  NG_ASYNC_VALIDATORS,
   NG_VALUE_ACCESSOR,
   UntypedFormBuilder,
   UntypedFormControl,
   UntypedFormGroup,
-  Validator,
+  ValidationErrors,
   Validators
 } from '@angular/forms';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
@@ -61,7 +60,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType } from '@shared/models/entity-type.models';
-import { Observable, of, Subscription } from 'rxjs';
+import { Observable, of, Subject, Subscription } from 'rxjs';
 import {
   IBasicWidgetConfigComponent,
   WidgetConfigCallbacks
@@ -70,7 +69,7 @@ import {
   EntityAliasDialogComponent,
   EntityAliasDialogData
 } from '@home/components/alias/entity-alias-dialog.component';
-import { catchError, mergeMap, tap } from 'rxjs/operators';
+import { catchError, map, mergeMap, tap } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
 import { EntityService } from '@core/http/entity.service';
 import { JsonFormComponentData } from '@shared/components/json-form/json-form-component.models';
@@ -104,13 +103,13 @@ const defaultSettingsForm = [
       multi: true
     },
     {
-      provide: NG_VALIDATORS,
+      provide: NG_ASYNC_VALIDATORS,
       useExisting: forwardRef(() => WidgetConfigComponent),
       multi: true,
     }
   ]
 })
-export class WidgetConfigComponent extends PageComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator, OnChanges {
+export class WidgetConfigComponent extends PageComponent implements OnInit, OnDestroy, ControlValueAccessor, AsyncValidator {
 
   @ViewChild('basicModeContainer', {read: ViewContainerRef, static: false}) basicModeContainer: ViewContainerRef;
 
@@ -149,7 +148,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
 
   @Input() disabled: boolean;
 
-  @Input()
   widgetConfigMode = WidgetConfigMode.advanced;
 
   widgetType: widgetType;
@@ -184,6 +182,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   private createBasicModeComponentTimeout: Timeout;
   private basicModeComponentRef: ComponentRef<IBasicWidgetConfigComponent>;
   private basicModeComponent: IBasicWidgetConfigComponent;
+  private basicModeComponent$: Subject<IBasicWidgetConfigComponent> = null;
   private basicModeComponentChangeSubscription: Subscription;
 
   private dataSettingsChangesSubscription: Subscription;
@@ -212,6 +211,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     this.advancedSettings = this.fb.group({});
     this.widgetSettings = this.fb.group({
       title: [null, []],
+      titleFont: [null, []],
+      titleColor: [null, []],
       showTitleIcon: [null, []],
       titleIcon: [null, []],
       iconColor: [null, []],
@@ -224,6 +225,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       color: [null, []],
       padding: [null, []],
       margin: [null, []],
+      borderRadius: [null, []],
       widgetStyle: [null, []],
       widgetCss: [null, []],
       titleStyle: [null, []],
@@ -249,19 +251,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     this.actionsSettings = this.fb.group({
       actions: [null, []]
     });
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    for (const propName of Object.keys(changes)) {
-      const change = changes[propName];
-      if (!change.firstChange && change.currentValue !== change.previousValue) {
-        if (propName === 'widgetConfigMode') {
-          if (this.hasBasicModeDirective) {
-            this.setupConfig();
-          }
-        }
-      }
-    }
   }
 
   ngOnDestroy(): void {
@@ -366,7 +355,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       this.dataSettings.addControl('timewindowConfig', this.fb.control({
         useDashboardTimewindow: true,
         displayTimewindow: true,
-        timewindow: null
+        timewindow: null,
+        timewindowStyle: null
       }));
       if (this.widgetType === widgetType.alarm) {
         this.dataSettings.addControl('alarmFilterConfig', this.fb.control(null));
@@ -403,7 +393,20 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   writeValue(value: WidgetConfigComponentData): void {
     this.modelValue = value;
     this.widgetType = this.modelValue?.widgetType;
+    this.widgetConfigMode = this.modelValue?.hasBasicMode ?
+      (this.modelValue?.config?.configMode || WidgetConfigMode.advanced) : WidgetConfigMode.advanced;
     this.setupConfig(this.isAdd);
+  }
+
+  setWidgetConfigMode(widgetConfigMode: WidgetConfigMode) {
+    if (this.modelValue?.hasBasicMode && this.widgetConfigMode !== widgetConfigMode) {
+      this.widgetConfigMode = widgetConfigMode;
+      this.modelValue.config.configMode = widgetConfigMode;
+      if (this.hasBasicModeDirective) {
+        this.setupConfig();
+      }
+      this.propagateChange(this.modelValue);
+    }
   }
 
   private setupConfig(isAdd = false) {
@@ -434,7 +437,13 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
         this.basicModeComponentChangeSubscription = this.basicModeComponent.widgetConfigChanged.subscribe((data) => {
           this.modelValue = data;
           this.propagateChange(this.modelValue);
+          this.cd.markForCheck();
         });
+        if (this.basicModeComponent$) {
+          this.basicModeComponent$.next(this.basicModeComponent);
+          this.basicModeComponent$.complete();
+          this.basicModeComponent$ = null;
+        }
         this.cd.markForCheck();
       }, 0);
     }
@@ -472,6 +481,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       const displayWidgetTitle = isDefined(config.showTitle) ? config.showTitle : false;
       this.widgetSettings.patchValue({
           title: config.title,
+          titleFont: config.titleFont,
+          titleColor: config.titleColor,
           showTitleIcon: isDefined(config.showTitleIcon) && displayWidgetTitle ? config.showTitleIcon : false,
           titleIcon: isDefined(config.titleIcon) ? config.titleIcon : '',
           iconColor: isDefined(config.iconColor) ? config.iconColor : 'rgba(0, 0, 0, 0.87)',
@@ -484,6 +495,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
           color: config.color,
           padding: config.padding,
           margin: config.margin,
+          borderRadius: config.borderRadius,
           widgetStyle: isDefined(config.widgetStyle) ? config.widgetStyle : {},
           widgetCss: isDefined(config.widgetCss) ? config.widgetCss : '',
           titleStyle: isDefined(config.titleStyle) ? config.titleStyle : {
@@ -511,7 +523,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
           useDashboardTimewindow,
           displayTimewindow: isDefined(config.displayTimewindow) ?
             config.displayTimewindow : true,
-          timewindow: config.timewindow
+          timewindow: config.timewindow,
+          timewindowStyle: config.timewindowStyle
         }, {emitEvent: false});
       }
       if (this.modelValue.isDataEnabled) {
@@ -578,11 +591,15 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     const showTitleIcon: boolean = this.widgetSettings.get('showTitleIcon').value;
     if (showTitle) {
       this.widgetSettings.get('title').enable({emitEvent: false});
+      this.widgetSettings.get('titleFont').enable({emitEvent: false});
+      this.widgetSettings.get('titleColor').enable({emitEvent: false});
       this.widgetSettings.get('titleTooltip').enable({emitEvent: false});
       this.widgetSettings.get('titleStyle').enable({emitEvent: false});
       this.widgetSettings.get('showTitleIcon').enable({emitEvent: false});
     } else {
       this.widgetSettings.get('title').disable({emitEvent: false});
+      this.widgetSettings.get('titleFont').disable({emitEvent: false});
+      this.widgetSettings.get('titleColor').disable({emitEvent: false});
       this.widgetSettings.get('titleTooltip').disable({emitEvent: false});
       this.widgetSettings.get('titleStyle').disable({emitEvent: false});
       this.widgetSettings.get('showTitleIcon').disable({emitEvent: false});
@@ -712,7 +729,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   }
 
   public get displayAppearanceDataSettings(): boolean {
-    return this.displayUnitsConfig || this.displayNoDataDisplayMessageConfig;
+    return !this.modelValue?.typeParameters?.hideDataSettings && (this.displayUnitsConfig || this.displayNoDataDisplayMessageConfig);
   }
 
   public get displayUnitsConfig(): boolean {
@@ -866,40 +883,65 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     return stateId => stateId.toLowerCase().indexOf(lowercaseQuery) === 0;
   }
 
-  public validate(c: UntypedFormControl) {
-    if (this.basicModeComponent) {
-      if (!this.basicModeComponent.validateConfig()) {
+  public validate(c: UntypedFormControl): Observable<ValidationErrors | null> {
+    const basicComponentMode = this.hasBasicModeDirective && this.widgetConfigMode === WidgetConfigMode.basic;
+    let comp$: Observable<IBasicWidgetConfigComponent>;
+    if (basicComponentMode) {
+      if (this.basicModeComponent) {
+        comp$ = of(this.basicModeComponent);
+      } else {
+        if (this.useDefinedBasicModeDirective) {
+          this.basicModeComponent$ = new Subject();
+          comp$ = this.basicModeComponent$;
+        } else {
+          comp$ = of(null);
+        }
+      }
+    } else {
+      comp$ = of(null);
+    }
+    return comp$.pipe(
+      map((comp) => this.doValidate(basicComponentMode, comp))
+    );
+  }
+
+  private doValidate(basicComponentMode: boolean, basicModeComponent?: IBasicWidgetConfigComponent): ValidationErrors | null {
+    if (basicComponentMode) {
+      if (!basicModeComponent || !basicModeComponent.validateConfig()) {
         return {
           basicWidgetConfig: {
             valid: false
           }
         };
       }
-    } else if (!this.dataSettings.valid) {
-      return {
-        dataSettings: {
-          valid: false
-        }
-      };
-    } else if (!this.widgetSettings.valid) {
-      return {
-        widgetSettings: {
-          valid: false
-        }
-      };
-    } else if (!this.layoutSettings.valid) {
-      return {
-        widgetSettings: {
-          valid: false
-        }
-      };
-    } else if (!this.advancedSettings.valid || (this.displayAdvancedAppearance && !this.modelValue.config.settings)) {
-      return {
-        advancedSettings: {
-          valid: false
-        }
-      };
-    } else if (this.modelValue) {
+    } else {
+      if (!this.dataSettings.valid) {
+        return {
+          dataSettings: {
+            valid: false
+          }
+        };
+      } else if (!this.widgetSettings.valid) {
+        return {
+          widgetSettings: {
+            valid: false
+          }
+        };
+      } else if (!this.layoutSettings.valid) {
+        return {
+          widgetSettings: {
+            valid: false
+          }
+        };
+      } else if (!this.advancedSettings.valid) {
+        return {
+          advancedSettings: {
+            valid: false
+          }
+        };
+      }
+    }
+    if (this.modelValue) {
       const config = this.modelValue.config;
       if (this.widgetType === widgetType.rpc && this.modelValue.isDataEnabled) {
         if (!this.widgetEditMode && (!config.targetDeviceAliasIds || !config.targetDeviceAliasIds.length)) {
@@ -913,4 +955,5 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     }
     return null;
   }
+
 }

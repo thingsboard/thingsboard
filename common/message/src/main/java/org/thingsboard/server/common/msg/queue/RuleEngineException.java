@@ -19,25 +19,36 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.StringUtils;
 
 @Slf4j
 public class RuleEngineException extends Exception {
     protected static final ObjectMapper mapper = new ObjectMapper();
 
     @Getter
-    private long ts;
+    private final long ts;
 
     public RuleEngineException(String message) {
-        super(message != null ? message : "Unknown");
+        this(message, null);
+    }
+
+    public RuleEngineException(String message, Throwable t) {
+        super(message != null ? message : "Unknown", t);
         ts = System.currentTimeMillis();
     }
 
-    public String toJsonString() {
+    public String toJsonString(int maxMessageLength) {
         try {
-            return mapper.writeValueAsString(mapper.createObjectNode().put("message", getMessage()));
+            return mapper.writeValueAsString(mapper.createObjectNode()
+                    .put("message", truncateIfNecessary(getMessage(), maxMessageLength)));
         } catch (JsonProcessingException e) {
             log.warn("Failed to serialize exception ", e);
             throw new RuntimeException(e);
         }
     }
+
+    protected String truncateIfNecessary(String message, int maxMessageLength) {
+        return StringUtils.truncate(message, maxMessageLength);
+    }
+
 }

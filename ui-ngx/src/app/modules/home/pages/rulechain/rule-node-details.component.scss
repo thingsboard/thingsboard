@@ -27,16 +27,21 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
-      margin-bottom: 5px;
+      margin-bottom: 22px;
     }
 
     @media #{$mat-gt-sm} {
       flex-direction: row;
       gap: 8px;
+      align-items: center;
 
       .node-setting {
         margin-top: 5px;
       }
     }
+  }
+
+  .description-block {
+    margin-top: 22px;
   }
 }

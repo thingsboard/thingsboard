@@ -53,6 +53,7 @@ import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.sync.ie.DeviceExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
@@ -65,9 +66,12 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -253,6 +257,7 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
         Asset asset1 = createAsset(tenantId1, null, assetProfile.getId(), "Asset 1");
         Asset asset2 = createAsset(tenantId1, null, assetProfile.getId(), "Asset 2");
         Dashboard dashboard = createDashboard(tenantId1, null, "Dashboard 1");
+        Dashboard otherDashboard = createDashboard(tenantId1, null, "Dashboard 2");
         DeviceProfile existingDeviceProfile = createDeviceProfile(tenantId2, null, null, "Existing");
 
         String aliasId = "23c4185d-1497-9457-30b2-6d91e69a5b2c";
@@ -261,20 +266,43 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
                 "\"" + aliasId + "\": {\n" +
                 "\"alias\": \"assets\",\n" +
                 "\"filter\": {\n" +
-                "\"entityList\": [\n" +
-                "\"" + asset1.getId().toString() + "\",\n" +
-                "\"" + asset2.getId().toString() + "\",\n" +
-                "\"" + tenantId1.getId().toString() + "\",\n" +
-                "\"" + existingDeviceProfile.getId().toString() + "\",\n" +
-                "\"" + unknownUuid + "\"\n" +
-                "],\n" +
-                "\"resolveMultiple\": true\n" +
+                "   \"entityList\": [\n" +
+                "   \"" + asset1.getId() + "\",\n" +
+                "   \"" + asset2.getId() + "\",\n" +
+                "   \"" + tenantId1.getId() + "\",\n" +
+                "   \"" + existingDeviceProfile.getId() + "\",\n" +
+                "   \"" + unknownUuid + "\"\n" +
+                "   ],\n" +
+                "   \"id\":\"" + asset1.getId() + "\",\n" +
+                "   \"resolveMultiple\": true\n" +
                 "},\n" +
                 "\"id\": \"" + aliasId + "\"\n" +
                 "}\n" +
                 "}";
+        String widgetId = "ea8f34a0-264a-f11f-cde3-05201bb4ff4b";
+        String actionId = "4a8e6efa-3e68-fa59-7feb-d83366130cae";
+        String widgets = "{\n" +
+                "  \"" + widgetId + "\": {\n" +
+                "    \"config\": {\n" +
+                "      \"actions\": {\n" +
+                "        \"rowClick\": [\n" +
+                "          {\n" +
+                "            \"name\": \"go to dashboard\",\n" +
+                "            \"targetDashboardId\": \"" + otherDashboard.getId() + "\",\n" +
+                "            \"id\": \"" + actionId + "\"\n" +
+                "          }\n" +
+                "        ]\n" +
+                "      }\n" +
+                "    },\n" +
+                "    \"row\": 0,\n" +
+                "    \"col\": 0,\n" +
+                "    \"id\": \"" + widgetId + "\"\n" +
+                "  }\n" +
+                "}";
+
         ObjectNode dashboardConfiguration = JacksonUtil.newObjectNode();
         dashboardConfiguration.set("entityAliases", JacksonUtil.toJsonNode(entityAliases));
+        dashboardConfiguration.set("widgets", JacksonUtil.toJsonNode(widgets));
         dashboardConfiguration.set("description", new TextNode("hallo"));
         dashboard.setConfiguration(dashboardConfiguration);
         dashboard = dashboardService.saveDashboard(dashboard);
@@ -284,10 +312,12 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
         EntityExportData<Asset> asset1ExportData = exportEntity(tenantAdmin1, asset1.getId());
         EntityExportData<Asset> asset2ExportData = exportEntity(tenantAdmin1, asset2.getId());
         EntityExportData<Dashboard> dashboardExportData = exportEntity(tenantAdmin1, dashboard.getId());
+        EntityExportData<Dashboard> otherDashboardExportData = exportEntity(tenantAdmin1, otherDashboard.getId());
 
         AssetProfile importedProfile = importEntity(tenantAdmin2, profileExportData).getSavedEntity();
         Asset importedAsset1 = importEntity(tenantAdmin2, asset1ExportData).getSavedEntity();
         Asset importedAsset2 = importEntity(tenantAdmin2, asset2ExportData).getSavedEntity();
+        Dashboard importedOtherDashboard = importEntity(tenantAdmin2, otherDashboardExportData).getSavedEntity();
         Dashboard importedDashboard = importEntity(tenantAdmin2, dashboardExportData).getSavedEntity();
 
         Map.Entry<String, JsonNode> entityAlias = importedDashboard.getConfiguration().get("entityAliases").fields().next();
@@ -307,6 +337,17 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
                 .isEqualTo(existingDeviceProfile.getId().toString());
         assertThat(aliasEntitiesIds).element(4).as("unresolved uuid was replaced with tenant id")
                 .isEqualTo(tenantId2.toString());
+        assertThat(entityAlias.getValue().get("filter").get("id").asText()).as("external asset 1 was replaced with imported one")
+                .isEqualTo(importedAsset1.getId().toString());
+
+        ObjectNode widgetConfig = importedDashboard.getWidgetsConfig().get(0);
+        assertThat(widgetConfig.get("id").asText()).as("widget id is not replaced")
+                .isEqualTo(widgetId);
+        JsonNode actionConfig = widgetConfig.get("config").get("actions").get("rowClick").get(0);
+        assertThat(actionConfig.get("id").asText()).as("action id is not replaced")
+                .isEqualTo(actionId);
+        assertThat(actionConfig.get("targetDashboardId").asText()).as("dashboard id is replaced with imported one")
+                .isEqualTo(importedOtherDashboard.getId().toString());
     }
 
 
@@ -336,6 +377,47 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
 
         checkImportedEntity(tenantId1, ruleChain, tenantId1, importResult.getSavedEntity());
         checkImportedRuleChainData(ruleChain, metaData, importedRuleChain, importedMetaData);
+    }
+
+    @Test
+    public void testImportRuleChain_ruleNodesConfigs() throws Exception {
+        Customer customer = createCustomer(tenantId1, "Customer 1");
+        RuleChain ruleChain = createRuleChain(tenantId1, "Rule chain 1");
+        RuleChainMetaData metaData = ruleChainService.loadRuleChainMetaData(tenantId1, ruleChain.getId());
+
+        List<RuleNode> nodes = new ArrayList<>(metaData.getNodes());
+        RuleNode generatorNode = new RuleNode();
+        generatorNode.setName("Generator");
+        generatorNode.setType(TbMsgGeneratorNode.class.getName());
+        TbMsgGeneratorNodeConfiguration generatorNodeConfig = new TbMsgGeneratorNodeConfiguration();
+        generatorNodeConfig.setOriginatorType(EntityType.ASSET_PROFILE);
+        generatorNodeConfig.setOriginatorId(customer.getId().toString());
+        generatorNodeConfig.setPeriodInSeconds(5);
+        generatorNodeConfig.setMsgCount(1);
+        generatorNodeConfig.setScriptLang(ScriptLanguage.JS);
+        UUID someUuid = UUID.randomUUID();
+        generatorNodeConfig.setJsScript("var msg = { temp: 42, humidity: 77 };\n" +
+                "var metadata = { data: 40 };\n" +
+                "var msgType = \"POST_TELEMETRY_REQUEST\";\n" +
+                "var someUuid = \"" + someUuid + "\";\n" +
+                "return { msg: msg, metadata: metadata, msgType: msgType };");
+        generatorNode.setConfiguration(JacksonUtil.valueToTree(generatorNodeConfig));
+        nodes.add(generatorNode);
+        metaData.setNodes(nodes);
+        ruleChainService.saveRuleChainMetaData(tenantId1, metaData, Function.identity());
+
+        EntityExportData<RuleChain> ruleChainExportData = exportEntity(tenantAdmin1, ruleChain.getId());
+        EntityExportData<Customer> customerExportData = exportEntity(tenantAdmin1, customer.getId());
+
+        Customer importedCustomer = importEntity(tenantAdmin2, customerExportData).getSavedEntity();
+        RuleChain importedRuleChain = importEntity(tenantAdmin2, ruleChainExportData).getSavedEntity();
+        RuleChainMetaData importedMetaData = ruleChainService.loadRuleChainMetaData(tenantId2, importedRuleChain.getId());
+
+        TbMsgGeneratorNodeConfiguration importedGeneratorNodeConfig = JacksonUtil.treeToValue(importedMetaData.getNodes().stream()
+                .filter(node -> node.getName().equals(generatorNode.getName()))
+                .findFirst().get().getConfiguration(), TbMsgGeneratorNodeConfiguration.class);
+        assertThat(importedGeneratorNodeConfig.getOriginatorId()).isEqualTo(importedCustomer.getId().toString());
+        assertThat(importedGeneratorNodeConfig.getJsScript()).contains("var someUuid = \"" + someUuid + "\";");
     }
 
 
@@ -510,7 +592,7 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
         Customer updatedCustomer = importEntity(tenantAdmin2, updatedCustomerEntity).getSavedEntity();
         verify(entityActionService).logEntityAction(any(), eq(importedCustomer.getId()), eq(updatedCustomer),
                 any(), eq(ActionType.UPDATED), isNull());
-        verify(tbClusterService).sendNotificationMsgToEdge(any(), any(), eq(importedCustomer.getId()), any(), any(), eq(EdgeEventActionType.UPDATED));
+        verify(tbClusterService).sendNotificationMsgToEdge(any(), any(), eq(importedCustomer.getId()), any(), any(), eq(EdgeEventActionType.UPDATED), any());
 
         Mockito.reset(entityActionService);
 
@@ -527,7 +609,7 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
         verify(entityActionService).logEntityAction(any(), eq(importedAssetProfile.getId()), eq(importedAssetProfile),
                 any(), eq(ActionType.ADDED), isNull());
         verify(tbClusterService).broadcastEntityStateChangeEvent(any(), eq(importedAssetProfile.getId()), eq(ComponentLifecycleEvent.CREATED));
-        verify(tbClusterService).sendNotificationMsgToEdge(any(), any(), eq(importedAssetProfile.getId()), any(), any(), eq(EdgeEventActionType.ADDED));
+        verify(tbClusterService).sendNotificationMsgToEdge(any(), any(), eq(importedAssetProfile.getId()), any(), any(), eq(EdgeEventActionType.ADDED), any());
 
         Asset importedAsset = (Asset) importEntity(tenantAdmin2, getAndClone(entitiesExportData, EntityType.ASSET)).getSavedEntity();
         verify(entityActionService).logEntityAction(any(), eq(importedAsset.getId()), eq(importedAsset),
@@ -543,14 +625,14 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
 
         verify(entityActionService).logEntityAction(any(), eq(importedAsset.getId()), eq(updatedAsset),
                 any(), eq(ActionType.UPDATED), isNull());
-        verify(tbClusterService).sendNotificationMsgToEdge(any(), any(), eq(importedAsset.getId()), any(), any(), eq(EdgeEventActionType.UPDATED));
+        verify(tbClusterService).sendNotificationMsgToEdge(any(), any(), eq(importedAsset.getId()), any(), any(), eq(EdgeEventActionType.UPDATED), any());
 
         DeviceProfile importedDeviceProfile = (DeviceProfile) importEntity(tenantAdmin2, getAndClone(entitiesExportData, EntityType.DEVICE_PROFILE)).getSavedEntity();
         verify(entityActionService).logEntityAction(any(), eq(importedDeviceProfile.getId()), eq(importedDeviceProfile),
                 any(), eq(ActionType.ADDED), isNull());
         verify(tbClusterService).onDeviceProfileChange(eq(importedDeviceProfile), any());
         verify(tbClusterService).broadcastEntityStateChangeEvent(any(), eq(importedDeviceProfile.getId()), eq(ComponentLifecycleEvent.CREATED));
-        verify(tbClusterService).sendNotificationMsgToEdge(any(), any(), eq(importedDeviceProfile.getId()), any(), any(), eq(EdgeEventActionType.ADDED));
+        verify(tbClusterService).sendNotificationMsgToEdge(any(), any(), eq(importedDeviceProfile.getId()), any(), any(), eq(EdgeEventActionType.ADDED), any());
         verify(otaPackageStateService).update(eq(importedDeviceProfile), eq(false), eq(false));
 
         Device importedDevice = (Device) importEntity(tenantAdmin2, getAndClone(entitiesExportData, EntityType.DEVICE)).getSavedEntity();

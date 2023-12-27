@@ -15,19 +15,18 @@
  */
 package org.thingsboard.server.service.edge.rpc.processor.ota;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.OtaPackageId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.OtaPackageUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.constructor.ota.OtaPackageMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 @Component
@@ -35,7 +34,7 @@ import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 @TbCoreComponent
 public class OtaPackageEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg convertOtaPackageEventToDownlink(EdgeEvent edgeEvent) {
+    public DownlinkMsg convertOtaPackageEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         OtaPackageId otaPackageId = new OtaPackageId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
@@ -44,8 +43,8 @@ public class OtaPackageEdgeProcessor extends BaseEdgeProcessor {
                 OtaPackage otaPackage = otaPackageService.findOtaPackageById(edgeEvent.getTenantId(), otaPackageId);
                 if (otaPackage != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    OtaPackageUpdateMsg otaPackageUpdateMsg =
-                            otaPackageMsgConstructor.constructOtaPackageUpdatedMsg(msgType, otaPackage);
+                    OtaPackageUpdateMsg otaPackageUpdateMsg = ((OtaPackageMsgConstructor)
+                            otaPackageMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructOtaPackageUpdatedMsg(msgType, otaPackage);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addOtaPackageUpdateMsg(otaPackageUpdateMsg)
@@ -53,8 +52,8 @@ public class OtaPackageEdgeProcessor extends BaseEdgeProcessor {
                 }
                 break;
             case DELETED:
-                OtaPackageUpdateMsg otaPackageUpdateMsg =
-                        otaPackageMsgConstructor.constructOtaPackageDeleteMsg(otaPackageId);
+                OtaPackageUpdateMsg otaPackageUpdateMsg = ((OtaPackageMsgConstructor)
+                        otaPackageMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructOtaPackageDeleteMsg(otaPackageId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addOtaPackageUpdateMsg(otaPackageUpdateMsg)
@@ -62,9 +61,5 @@ public class OtaPackageEdgeProcessor extends BaseEdgeProcessor {
                 break;
         }
         return downlinkMsg;
-    }
-
-    public ListenableFuture<Void> processOtaPackageNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
-        return processEntityNotificationForAllEdges(tenantId, edgeNotificationMsg);
     }
 }

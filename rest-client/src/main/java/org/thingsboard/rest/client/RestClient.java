@@ -84,7 +84,7 @@ import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
-import org.thingsboard.server.common.data.edge.EdgeInstallInstructions;
+import org.thingsboard.server.common.data.edge.EdgeInstructions;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
@@ -499,6 +499,15 @@ public class RestClient implements Closeable {
         return restTemplate.postForEntity(baseURL + "/api/alarm", alarm, Alarm.class).getBody();
     }
 
+    public List<EntitySubtype> getAlarmTypes(PageLink pageLink) {
+        return restTemplate.exchange(
+                baseURL + "/api/alarm/types?" + getUrlParams(pageLink),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<EntitySubtype>>() {
+                }).getBody();
+    }
+
     public AlarmComment saveAlarmComment(AlarmId alarmId, AlarmComment alarmComment) {
         return restTemplate.postForEntity(baseURL + "/api/alarm/{alarmId}/comment", alarmComment, AlarmComment.class, alarmId.getId()).getBody();
     }
@@ -694,6 +703,7 @@ public class RestClient implements Closeable {
                 }).getBody();
     }
 
+    @Deprecated(since = "3.6.2")
     public List<EntitySubtype> getAssetTypes() {
         return restTemplate.exchange(URI.create(
                         baseURL + "/api/asset/types"),
@@ -701,6 +711,15 @@ public class RestClient implements Closeable {
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<List<EntitySubtype>>() {
                 }).getBody();
+    }
+
+    public List<EntitySubtype> getAssetProfileNames(boolean activeOnly) {
+        return restTemplate.exchange(
+                baseURL + "/api/assetProfile/names?activeOnly={activeOnly}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<EntitySubtype>>() {
+                }, activeOnly).getBody();
     }
 
     public BulkImportResult<Asset> processAssetsBulkImport(BulkImportRequest request) {
@@ -1385,6 +1404,7 @@ public class RestClient implements Closeable {
                 }).getBody();
     }
 
+    @Deprecated(since = "3.6.2")
     public List<EntitySubtype> getDeviceTypes() {
         return restTemplate.exchange(
                 baseURL + "/api/device/types",
@@ -1392,6 +1412,15 @@ public class RestClient implements Closeable {
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<List<EntitySubtype>>() {
                 }).getBody();
+    }
+
+    public List<EntitySubtype> getDeviceProfileNames(boolean activeOnly) {
+        return restTemplate.exchange(
+                baseURL + "/api/deviceProfile/names?activeOnly={activeOnly}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<EntitySubtype>>() {
+                }, activeOnly).getBody();
     }
 
     public JsonNode claimDevice(String deviceName, ClaimRequest claimRequest) {
@@ -2364,7 +2393,8 @@ public class RestClient implements Closeable {
                                           boolean deleteAllDataForKeys,
                                           Long startTs,
                                           Long endTs,
-                                          boolean rewriteLatestIfDeleted) {
+                                          boolean rewriteLatestIfDeleted,
+                                          boolean deleteLatest) {
         Map<String, String> params = new HashMap<>();
         params.put("entityType", entityId.getEntityType().name());
         params.put("entityId", entityId.getId().toString());
@@ -2373,17 +2403,34 @@ public class RestClient implements Closeable {
         params.put("startTs", startTs.toString());
         params.put("endTs", endTs.toString());
         params.put("rewriteLatestIfDeleted", String.valueOf(rewriteLatestIfDeleted));
+        params.put("deleteLatest", String.valueOf(deleteLatest));
 
         return restTemplate
                 .exchange(
-                        baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/timeseries/delete?keys={keys}&deleteAllDataForKeys={deleteAllDataForKeys}&startTs={startTs}&endTs={endTs}&rewriteLatestIfDeleted={rewriteLatestIfDeleted}",
+                        baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/timeseries/delete?keys={keys}&deleteAllDataForKeys={deleteAllDataForKeys}&startTs={startTs}&endTs={endTs}&rewriteLatestIfDeleted={rewriteLatestIfDeleted}&deleteLatest={deleteLatest}",
                         HttpMethod.DELETE,
                         HttpEntity.EMPTY,
                         Object.class,
                         params)
                 .getStatusCode()
                 .is2xxSuccessful();
+    }
 
+    public boolean deleteEntityLatestTimeseries(EntityId entityId, List<String> keys) {
+        Map<String, String> params = new HashMap<>();
+        params.put("entityType", entityId.getEntityType().name());
+        params.put("entityId", entityId.getId().toString());
+        params.put("keys", listToString(keys));
+
+        return restTemplate
+                .exchange(
+                        baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/timeseries/latest/delete?keys={keys}",
+                        HttpMethod.DELETE,
+                        HttpEntity.EMPTY,
+                        Object.class,
+                        params)
+                .getStatusCode()
+                .is2xxSuccessful();
     }
 
     public boolean deleteEntityAttributes(DeviceId deviceId, String scope, List<String> keys) {
@@ -3214,10 +3261,16 @@ public class RestClient implements Closeable {
                 }).getBody();
     }
 
-    public Optional<EdgeInstallInstructions> getEdgeDockerInstallInstructions(EdgeId edgeId) {
-        ResponseEntity<EdgeInstallInstructions> edgeInstallInstructionsResult =
-                restTemplate.getForEntity(baseURL + "/api/edge/instructions/{edgeId}", EdgeInstallInstructions.class, edgeId.getId());
+    public Optional<EdgeInstructions> getEdgeInstallInstructions(EdgeId edgeId, String method) {
+        ResponseEntity<EdgeInstructions> edgeInstallInstructionsResult =
+                restTemplate.getForEntity(baseURL + "/api/edge/instructions/install/{edgeId}/{method}", EdgeInstructions.class, edgeId.getId(), method);
         return Optional.ofNullable(edgeInstallInstructionsResult.getBody());
+    }
+
+    public Optional<EdgeInstructions> getEdgeUpgradeInstructions(String edgeVersion, String method) {
+        ResponseEntity<EdgeInstructions> edgeUpgradeInstructionsResult =
+                restTemplate.getForEntity(baseURL + "/api/edge/instructions/upgrade/{edgeVersion}/{method}", EdgeInstructions.class, edgeVersion, method);
+        return Optional.ofNullable(edgeUpgradeInstructionsResult.getBody());
     }
 
     public UUID saveEntitiesVersion(VersionCreateRequest request) {

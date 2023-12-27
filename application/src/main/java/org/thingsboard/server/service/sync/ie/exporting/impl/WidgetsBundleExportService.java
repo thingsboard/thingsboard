@@ -41,9 +41,10 @@ public class WidgetsBundleExportService extends BaseEntityExportService<WidgetsB
         if (widgetsBundle.getTenantId() == null || widgetsBundle.getTenantId().isNullUid()) {
             throw new IllegalArgumentException("Export of system Widget Bundles is not allowed");
         }
+        imageService.inlineImage(widgetsBundle);
 
-        List<WidgetTypeDetails> widgets = widgetTypeService.findWidgetTypesDetailsByTenantIdAndBundleAlias(ctx.getTenantId(), widgetsBundle.getAlias());
-        exportData.setWidgets(widgets);
+        List<String> fqns = widgetTypeService.findWidgetFqnsByWidgetsBundleId(ctx.getTenantId(), widgetsBundle.getId());
+        exportData.setFqns(fqns);
     }
 
     @Override

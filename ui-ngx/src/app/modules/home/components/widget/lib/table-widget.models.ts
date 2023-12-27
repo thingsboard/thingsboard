@@ -19,7 +19,8 @@ import { DataKey, FormattedData, WidgetActionDescriptor, WidgetConfig } from '@s
 import { getDescendantProp, isDefined, isNotEmptyStr } from '@core/utils';
 import { AlarmDataInfo, alarmFields } from '@shared/models/alarm.models';
 import tinycolor from 'tinycolor2';
-import { Direction, EntityDataSortOrder, EntityKey } from '@shared/models/query/query.models';
+import { Direction } from '@shared/models/page/sort-order';
+import { EntityDataSortOrder, EntityKey } from '@shared/models/query/query.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { UtilsService } from '@core/services/utils.service';
@@ -33,6 +34,7 @@ export interface TableWidgetSettings {
   enableSearch: boolean;
   enableSelectColumnDisplay: boolean;
   enableStickyAction: boolean;
+  showCellActionsMenu: boolean;
   enableStickyHeader: boolean;
   displayPagination: boolean;
   defaultPageSize: number;
@@ -451,7 +453,7 @@ export function constructTableCssString(widgetConfig: WidgetConfig): string {
     '.mat-mdc-table .mat-mdc-row .mat-mdc-cell.mat-mdc-table-sticky, .mat-mdc-table .mat-mdc-header-cell.mat-mdc-table-sticky {\n' +
     'background-color: ' + origBackgroundColor + ';\n' +
     '}\n' +
-    '.mat-mdc-table .mat-mdc-cell {\n' +
+    '.mat-mdc-table .mat-mdc-row {\n' +
     'color: ' + mdDark + ';\n' +
     'background-color: rgba(0, 0, 0, 0);\n' +
     '}\n' +

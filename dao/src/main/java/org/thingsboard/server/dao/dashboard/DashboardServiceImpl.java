@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
@@ -45,7 +46,11 @@ import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.edge.EdgeDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityCountService;
+import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
@@ -73,6 +78,9 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
 
     @Autowired
     private EdgeDao edgeDao;
+
+    @Autowired
+    private ImageService imageService;
 
     @Autowired
     private DataValidator<Dashboard> dashboardValidator;
@@ -134,12 +142,26 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     }
 
     @Override
+    public Dashboard saveDashboard(Dashboard dashboard, boolean doValidate) {
+        return doSaveDashboard(dashboard, doValidate);
+    }
+
+    @Override
     public Dashboard saveDashboard(Dashboard dashboard) {
+        return doSaveDashboard(dashboard, true);
+    }
+
+    private Dashboard doSaveDashboard(Dashboard dashboard, boolean doValidate) {
         log.trace("Executing saveDashboard [{}]", dashboard);
-        dashboardValidator.validate(dashboard, DashboardInfo::getTenantId);
+        if (doValidate) {
+            dashboardValidator.validate(dashboard, DashboardInfo::getTenantId);
+        }
         try {
+            imageService.replaceBase64WithImageUrl(dashboard);
             var saved = dashboardDao.save(dashboard.getTenantId(), dashboard);
             publishEvictEvent(new DashboardTitleEvictEvent(saved.getId()));
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(saved.getTenantId())
+                    .entityId(saved.getId()).added(dashboard.getId() == null).build());
             if (dashboard.getId() == null) {
                 countService.publishCountEntityEvictEvent(saved.getTenantId(), EntityType.DASHBOARD);
             }
@@ -152,6 +174,8 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             throw e;
         }
     }
+
+
 
     @Override
     public Dashboard assignDashboardToCustomer(TenantId tenantId, DashboardId dashboardId, CustomerId customerId) {
@@ -215,6 +239,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             dashboardDao.removeById(tenantId, dashboardId.getId());
             publishEvictEvent(new DashboardTitleEvictEvent(dashboardId));
             countService.publishCountEntityEvictEvent(tenantId, EntityType.DASHBOARD);
+            eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(dashboardId).build());
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_default_dashboard_device_profile")) {
@@ -304,6 +329,8 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             log.warn("[{}] Failed to create dashboard relation. Edge Id: [{}]", dashboardId, edgeId);
             throw new RuntimeException(e);
         }
+        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(dashboardId)
+                .actionType(ActionType.ASSIGNED_TO_EDGE).build());
         return dashboard;
     }
 
@@ -320,6 +347,8 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             log.warn("[{}] Failed to delete dashboard relation. Edge Id: [{}]", dashboardId, edgeId);
             throw new RuntimeException(e);
         }
+        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(dashboardId)
+                .actionType(ActionType.UNASSIGNED_FROM_EDGE).build());
         return dashboard;
     }
 
@@ -342,19 +371,18 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         return dashboardDao.findByTenantIdAndTitle(tenantId.getId(), title);
     }
 
-    private PaginatedRemover<TenantId, DashboardInfo> tenantDashboardsRemover =
-            new PaginatedRemover<TenantId, DashboardInfo>() {
+    private final PaginatedRemover<TenantId, DashboardId> tenantDashboardsRemover = new PaginatedRemover<>() {
 
-                @Override
-                protected PageData<DashboardInfo> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-                    return dashboardInfoDao.findDashboardsByTenantId(id.getId(), pageLink);
-                }
+        @Override
+        protected PageData<DashboardId> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+            return dashboardDao.findIdsByTenantId(id, pageLink);
+        }
 
-                @Override
-                protected void removeEntity(TenantId tenantId, DashboardInfo entity) {
-                    deleteDashboard(tenantId, new DashboardId(entity.getUuidId()));
-                }
-            };
+        @Override
+        protected void removeEntity(TenantId tenantId, DashboardId dashboardId) {
+            deleteDashboard(tenantId, dashboardId);
+        }
+    };
 
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {

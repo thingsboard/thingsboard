@@ -69,11 +69,11 @@ export abstract class BasicWidgetConfigComponent extends PageComponent implement
   ngOnInit() {}
 
   ngAfterViewInit(): void {
-    setTimeout(() => {
-      if (!this.validateConfig()) {
-        this.onConfigChanged(this.prepareOutputConfig(this.configForm().getRawValue()));
-      }
-    }, 0);
+    if (!this.validateConfig()) {
+      setTimeout(() => {
+          this.onConfigChanged(this.prepareOutputConfig(this.configForm().getRawValue()));
+      }, 0);
+    }
   }
 
   protected setupConfig(widgetConfig: WidgetConfigComponentData) {
@@ -97,7 +97,34 @@ export abstract class BasicWidgetConfigComponent extends PageComponent implement
     });
   }
 
-  protected setupDefaults(configData: WidgetConfigComponentData) {}
+  protected setupDefaults(configData: WidgetConfigComponentData) {
+    const params = configData.typeParameters;
+    let dataKeys: DataKey[];
+    let latestDataKeys: DataKey[];
+    if (params.defaultDataKeysFunction) {
+      dataKeys = params.defaultDataKeysFunction(this, configData);
+    }
+    if (params.defaultLatestDataKeysFunction) {
+      latestDataKeys = params.defaultLatestDataKeysFunction(this, configData);
+    }
+    if (!dataKeys) {
+      dataKeys = this.defaultDataKeys(configData);
+    }
+    if (!latestDataKeys) {
+      latestDataKeys = this.defaultLatestDataKeys(configData);
+    }
+    if (dataKeys || latestDataKeys) {
+      this.setupDefaultDatasource(configData, dataKeys, latestDataKeys);
+    }
+  }
+
+  protected defaultDataKeys(configData: WidgetConfigComponentData): DataKey[] {
+    return null;
+  }
+
+  protected defaultLatestDataKeys(configData: WidgetConfigComponentData): DataKey[] {
+    return null;
+  }
 
   protected updateValidators(emitEvent: boolean, trigger?: string) {
   }
@@ -119,7 +146,7 @@ export abstract class BasicWidgetConfigComponent extends PageComponent implement
     return this.configForm().valid;
   }
 
-  protected setupDefaultDatasource(configData: WidgetConfigComponentData, keys?: DataKey[]) {
+  protected setupDefaultDatasource(configData: WidgetConfigComponentData, keys?: DataKey[], latestKeys?: DataKey[]) {
     let datasources = configData.config.datasources;
     if (!datasources || !datasources.length) {
       datasources = [
@@ -135,23 +162,61 @@ export abstract class BasicWidgetConfigComponent extends PageComponent implement
       dataKeys = [];
       datasources[0].dataKeys = dataKeys;
     }
+    let latestDataKeys = datasources[0].latestDataKeys;
+    if (!latestDataKeys) {
+      latestDataKeys = [];
+      datasources[0].latestDataKeys = latestDataKeys;
+    }
     if (keys && keys.length) {
       dataKeys.length = 0;
       keys.forEach(key => {
-        const dataKey =
-          this.widgetConfigComponent.widgetConfigCallbacks.generateDataKey(key.name, key.type, configData.dataKeySettingsSchema);
-        if (key.label) {
-          dataKey.label = key.label;
-        }
-        if (key.units) {
-          dataKey.units = key.units;
-        }
-        if (isDefinedAndNotNull(key.decimals)) {
-          dataKey.decimals = key.decimals;
-        }
+        const dataKey = this.constructDataKey(configData, key);
         dataKeys.push(dataKey);
       });
     }
+    if (latestKeys && latestKeys.length) {
+      latestDataKeys.length = 0;
+      latestKeys.forEach(key => {
+        const dataKey = this.constructDataKey(configData, key);
+        latestDataKeys.push(dataKey);
+      });
+    }
+  }
+
+  protected constructDataKey(configData: WidgetConfigComponentData, key: DataKey): DataKey {
+    const dataKey =
+      this.widgetConfigComponent.widgetConfigCallbacks.generateDataKey(key.name, key.type, configData.dataKeySettingsSchema);
+    if (key.label) {
+      dataKey.label = key.label;
+    }
+    if (key.units) {
+      dataKey.units = key.units;
+    }
+    if (isDefinedAndNotNull(key.decimals)) {
+      dataKey.decimals = key.decimals;
+    }
+    if (key.color) {
+      dataKey.color = key.color;
+    }
+    if (isDefinedAndNotNull(key.settings)) {
+      dataKey.settings = key.settings;
+    }
+    if (isDefinedAndNotNull(key.aggregationType)) {
+      dataKey.aggregationType = key.aggregationType;
+    }
+    if (isDefinedAndNotNull(key.comparisonEnabled)) {
+      dataKey.comparisonEnabled = key.comparisonEnabled;
+    }
+    if (isDefinedAndNotNull(key.timeForComparison)) {
+      dataKey.timeForComparison = key.timeForComparison;
+    }
+    if (isDefinedAndNotNull(key.comparisonCustomIntervalValue)) {
+      dataKey.comparisonCustomIntervalValue = key.comparisonCustomIntervalValue;
+    }
+    if (isDefinedAndNotNull(key.comparisonResultType)) {
+      dataKey.comparisonResultType = key.comparisonResultType;
+    }
+    return dataKey;
   }
 
   protected abstract configForm(): UntypedFormGroup;

@@ -15,7 +15,7 @@
 ///
 
 import { PageComponent } from '@shared/components/page.component';
-import { Directive, Injector, OnDestroy, OnInit } from '@angular/core';
+import { Directive, Injector, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { IDynamicWidgetComponent, WidgetContext } from '@home/models/widget-component.models';
@@ -48,6 +48,7 @@ import { Router } from '@angular/router';
 import { TbInject } from '@shared/decorators/tb-inject';
 import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-string.pipe';
 import { UserSettingsService } from '@core/http/user-settings.service';
+import { ImagePipe } from '@shared/pipe/image.pipe';
 
 @Directive()
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
@@ -67,7 +68,8 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
               @TbInject(UntypedFormBuilder) public fb: UntypedFormBuilder,
               @TbInject(Injector) public readonly $injector: Injector,
               @TbInject('widgetContext') public readonly ctx: WidgetContext,
-              @TbInject('errorMessages') public readonly errorMessages: string[]) {
+              @TbInject('errorMessages') public readonly errorMessages: string[],
+              @TbInject('widgetTitlePanel') public readonly widgetTitlePanel: TemplateRef<any>) {
     super(store);
     this.ctx.$injector = $injector;
     this.ctx.deviceService = $injector.get(DeviceService);
@@ -86,6 +88,7 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
     this.ctx.userSettingsService = $injector.get(UserSettingsService);
     this.ctx.telemetryWsService = $injector.get(TelemetryWebsocketService);
     this.ctx.date = $injector.get(DatePipe);
+    this.ctx.imagePipe = $injector.get(ImagePipe);
     this.ctx.milliSecondsToTimeString = $injector.get(MillisecondsToTimeStringPipe);
     this.ctx.translate = $injector.get(TranslateService);
     this.ctx.http = $injector.get(HttpClient);

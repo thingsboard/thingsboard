@@ -21,7 +21,7 @@
       <div class="mat-toolbar-tools tb-details-title-header" fxFlex fxLayout="column" fxLayoutAlign="start start" [fxHide]="showSearchPane">
         <div class="tb-details-title" fxLayout="row" fxLayoutAlign="start center">
           <ng-content select=".prefix-title-buttons"></ng-content>
-          <span>{{ headerTitle }}</span>
+          <span class="tb-details-title-text">{{ headerTitle }}</span>
         </div>
         <span class="tb-details-subtitle">{{ headerSubtitle }}</span>
         <span style="width: 100%;">
@@ -56,7 +56,7 @@
       </button>
       <button [disabled]="(isLoading$ | async) || (isAlwaysEdit && !theForm?.dirty)"
               mat-fab
-              matTooltip="{{ (isAlwaysEdit ? 'action.decline-changes' : 'details.toggle-edit-mode') | translate }}"
+              matTooltip="{{ (isAlwaysEdit ? 'action.decline-changes' : (isEdit ? 'action.decline-changes' : 'details.toggle-edit-mode')) | translate }}"
               matTooltipPosition="above"
               color="accent" class="tb-btn-header mat-fab-bottom-right"
               (click)="onToggleDetailsEditMode()">

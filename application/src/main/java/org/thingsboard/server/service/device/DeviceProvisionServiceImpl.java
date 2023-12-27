@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -162,7 +163,7 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
                 if (targetProfile.getProfileData().getProvisionConfiguration().getProvisionDeviceSecret().equals(provisionRequestSecret)) {
                     if (targetDevice != null) {
                         log.warn("[{}] The device is present and could not be provisioned once more!", targetDevice.getName());
-                        notify(targetDevice, provisionRequest, DataConstants.PROVISION_FAILURE, false);
+                        notify(targetDevice, provisionRequest, TbMsgType.PROVISION_FAILURE, false);
                         throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
                     } else {
                         return createDevice(provisionRequest, targetProfile);
@@ -190,11 +191,11 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
             Optional<AttributeKvEntry> provisionState = attributesService.find(device.getTenantId(), device.getId(),
                     DataConstants.SERVER_SCOPE, DEVICE_PROVISION_STATE).get();
             if (provisionState != null && provisionState.isPresent() && !provisionState.get().getValueAsString().equals(PROVISIONED_STATE)) {
-                notify(device, provisionRequest, DataConstants.PROVISION_FAILURE, false);
+                notify(device, provisionRequest, TbMsgType.PROVISION_FAILURE, false);
                 throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
             } else {
                 saveProvisionStateAttribute(device).get();
-                notify(device, provisionRequest, DataConstants.PROVISION_SUCCESS, true);
+                notify(device, provisionRequest, TbMsgType.PROVISION_SUCCESS, true);
             }
         } catch (InterruptedException | ExecutionException e) {
             throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
@@ -206,7 +207,7 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
         return processCreateDevice(provisionRequest, profile);
     }
 
-    private void notify(Device device, ProvisionRequest provisionRequest, String type, boolean success) {
+    private void notify(Device device, ProvisionRequest provisionRequest, TbMsgType type, boolean success) {
         pushProvisionEventToRuleEngine(provisionRequest, device, type);
         logAction(device.getTenantId(), device.getCustomerId(), device, success, provisionRequest);
     }
@@ -222,14 +223,14 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
             clusterService.onDeviceUpdated(savedDevice, null);
             saveProvisionStateAttribute(savedDevice).get();
             pushDeviceCreatedEventToRuleEngine(savedDevice);
-            notify(savedDevice, provisionRequest, DataConstants.PROVISION_SUCCESS, true);
+            notify(savedDevice, provisionRequest, TbMsgType.PROVISION_SUCCESS, true);
 
             return new ProvisionResponse(getDeviceCredentials(savedDevice), ProvisionResponseStatus.SUCCESS);
         } catch (Exception e) {
             log.warn("[{}] Error during device creation from provision request: [{}]", provisionRequest.getDeviceName(), provisionRequest, e);
             Device device = deviceService.findDeviceByTenantIdAndName(profile.getTenantId(), provisionRequest.getDeviceName());
             if (device != null) {
-                notify(device, provisionRequest, DataConstants.PROVISION_FAILURE, false);
+                notify(device, provisionRequest, TbMsgType.PROVISION_FAILURE, false);
             }
             throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
         }
@@ -253,7 +254,7 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
         return deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), device.getId());
     }
 
-    private void pushProvisionEventToRuleEngine(ProvisionRequest request, Device device, String type) {
+    private void pushProvisionEventToRuleEngine(ProvisionRequest request, Device device, TbMsgType type) {
         try {
             JsonNode entityNode = JacksonUtil.valueToTree(request);
             TbMsg msg = TbMsg.newMsg(type, device.getId(), device.getCustomerId(), createTbMsgMetaData(device), JacksonUtil.toString(entityNode));
@@ -266,10 +267,10 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
     private void pushDeviceCreatedEventToRuleEngine(Device device) {
         try {
             ObjectNode entityNode = JacksonUtil.OBJECT_MAPPER.valueToTree(device);
-            TbMsg msg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, device.getId(), device.getCustomerId(), createTbMsgMetaData(device), JacksonUtil.OBJECT_MAPPER.writeValueAsString(entityNode));
+            TbMsg msg = TbMsg.newMsg(TbMsgType.ENTITY_CREATED, device.getId(), device.getCustomerId(), createTbMsgMetaData(device), JacksonUtil.OBJECT_MAPPER.writeValueAsString(entityNode));
             sendToRuleEngine(device.getTenantId(), msg, null);
         } catch (JsonProcessingException | IllegalArgumentException e) {
-            log.warn("[{}] Failed to push device action to rule engine: {}", device.getId(), DataConstants.ENTITY_CREATED, e);
+            log.warn("[{}] Failed to push device action to rule engine: {}", device.getId(), TbMsgType.ENTITY_CREATED.name(), e);
         }
     }
 

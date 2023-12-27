@@ -16,6 +16,6 @@
 
 -->
 <a mat-raised-button color="primary" class="tb-nav-button" href="{{settings.path}}" (click)="navigate($event, settings.path)">
-  <mat-icon class="material-icons tb-mat-96">{{settings.icon}}</mat-icon>
+  <tb-icon matButtonIcon class="tb-mat-96">{{settings.icon}}</tb-icon>
   <span>{{translatedName}}</span>
 </a>

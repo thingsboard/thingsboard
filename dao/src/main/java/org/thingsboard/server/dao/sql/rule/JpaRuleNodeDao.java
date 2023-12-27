@@ -56,8 +56,8 @@ public class JpaRuleNodeDao extends JpaAbstractDao<RuleNodeEntity, RuleNode> imp
     }
 
     @Override
-    public List<RuleNode> findRuleNodesByTenantIdAndType(TenantId tenantId, String type, String search) {
-        return DaoUtil.convertDataList(ruleNodeRepository.findRuleNodesByTenantIdAndType(tenantId.getId(), type, search));
+    public List<RuleNode> findRuleNodesByTenantIdAndType(TenantId tenantId, String type, String configurationSearch) {
+        return DaoUtil.convertDataList(ruleNodeRepository.findRuleNodesByTenantIdAndType(tenantId.getId(), type, configurationSearch));
     }
 
     @Override
@@ -67,6 +67,32 @@ public class JpaRuleNodeDao extends JpaAbstractDao<RuleNodeEntity, RuleNode> imp
                         type,
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<RuleNode> findAllRuleNodesByTypeAndVersionLessThan(String type, int version, PageLink pageLink) {
+        return DaoUtil.toPageData(ruleNodeRepository
+                .findAllRuleNodesByTypeAndVersionLessThan(
+                        type,
+                        version,
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<RuleNodeId> findAllRuleNodeIdsByTypeAndVersionLessThan(String type, int version, PageLink pageLink) {
+        return DaoUtil.pageToPageData(ruleNodeRepository
+                        .findAllRuleNodeIdsByTypeAndVersionLessThan(
+                                type,
+                                version,
+                                DaoUtil.toPageable(pageLink)))
+                .mapData(RuleNodeId::new);
+    }
+
+    @Override
+    public List<RuleNode> findAllRuleNodeByIds(List<RuleNodeId> ruleNodeIds) {
+        return DaoUtil.convertDataList(ruleNodeRepository.findAllById(
+                ruleNodeIds.stream().map(RuleNodeId::getId).collect(Collectors.toList())));
     }
 
     @Override

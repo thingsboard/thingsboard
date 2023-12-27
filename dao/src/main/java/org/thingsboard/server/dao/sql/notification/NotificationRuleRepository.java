@@ -18,11 +18,12 @@ package org.thingsboard.server.dao.sql.notification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.NotificationRuleEntity;
 import org.thingsboard.server.dao.model.sql.NotificationRuleInfoEntity;
@@ -37,7 +38,7 @@ public interface NotificationRuleRepository extends JpaRepository<NotificationRu
             "FROM NotificationRuleEntity r INNER JOIN NotificationTemplateEntity t ON r.templateId = t.id";
 
     @Query("SELECT r FROM NotificationRuleEntity r WHERE r.tenantId = :tenantId " +
-            "AND (:searchText = '' OR lower(r.name) LIKE lower(concat('%', :searchText, '%')))")
+            "AND (:searchText is NULL OR ilike(r.name, concat('%', :searchText, '%')) = true)")
     Page<NotificationRuleEntity> findByTenantIdAndSearchText(@Param("tenantId") UUID tenantId,
                                                              @Param("searchText") String searchText,
                                                              Pageable pageable);
@@ -52,13 +53,15 @@ public interface NotificationRuleRepository extends JpaRepository<NotificationRu
     @Query(RULE_INFO_QUERY + " WHERE r.id = :id")
     NotificationRuleInfoEntity findInfoById(@Param("id") UUID id);
 
-    @Query(RULE_INFO_QUERY + " WHERE r.tenantId = :tenantId AND (:searchText = '' OR lower(r.name) LIKE lower(concat('%', :searchText, '%')))")
+    @Query(RULE_INFO_QUERY + " WHERE r.tenantId = :tenantId AND (:searchText IS NULL OR ilike(r.name, concat('%', :searchText, '%')) = true)")
     Page<NotificationRuleInfoEntity> findInfosByTenantIdAndSearchText(@Param("tenantId") UUID tenantId,
                                                                       @Param("searchText") String searchText,
                                                                       Pageable pageable);
 
     @Transactional
-    void deleteByTenantId(UUID tenantId);
+    @Modifying
+    @Query("DELETE FROM NotificationRuleEntity r WHERE r.tenantId = :tenantId")
+    void deleteByTenantId(@Param("tenantId") UUID tenantId);
 
     NotificationRuleEntity findByTenantIdAndName(UUID tenantId, String name);
 

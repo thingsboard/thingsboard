@@ -25,8 +25,9 @@
          (keydown)="assetProfileEnter($event)"
          (keypress)="assetProfileEnter($event)"
          [matAutocomplete]="assetProfileAutocomplete"
-         [fxShow]="!showDetailsPageLink || !disabled || !selectAssetProfileFormGroup.get('assetProfile').value">
-  <a *ngIf="showDetailsPageLink && selectAssetProfileFormGroup.get('assetProfile').value && disabled" aria-label="Open asset profile" [routerLink]=assetProfileURL>
+         [fxShow]="!showDetailsPageLink || !useAssetProfileLink || !disabled || !selectAssetProfileFormGroup.get('assetProfile').value">
+  <a *ngIf="showDetailsPageLink && useAssetProfileLink && selectAssetProfileFormGroup.get('assetProfile').value && disabled"
+     aria-label="Open asset profile" [routerLink]=assetProfileURL>
     {{ displayAssetProfileFn(selectAssetProfileFormGroup.get('assetProfile').value) }}
   </a>
   <button *ngIf="selectAssetProfileFormGroup.get('assetProfile').value && !disabled"
@@ -35,13 +36,18 @@
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
-  <button *ngIf="selectAssetProfileFormGroup.get('assetProfile').value && !disabled && editProfileEnabled"
+  <button *ngIf="selectAssetProfileFormGroup.get('assetProfile').value?.id && !disabled && editProfileEnabled"
           type="button"
           matSuffix mat-icon-button aria-label="Edit"
           matTooltip="{{ 'asset-profile.edit' | translate }}"
           matTooltipPosition="above"
           (click)="editAssetProfile($event)">
     <mat-icon class="material-icons">edit</mat-icon>
+  </button>
+  <button mat-button color="primary" matSuffix
+          (click)="createAssetProfile($event, '')"
+          *ngIf="!selectAssetProfileFormGroup.get('assetProfile').value && !disabled && addNewProfile">
+    <span style="white-space: nowrap">{{ 'notification.create-new' | translate }}</span>
   </button>
   <mat-autocomplete
     class="tb-autocomplete"

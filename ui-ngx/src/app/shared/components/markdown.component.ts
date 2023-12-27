@@ -17,7 +17,6 @@
 import {
   ChangeDetectorRef,
   Component,
-  ComponentFactory,
   ComponentRef,
   ElementRef,
   EventEmitter,
@@ -91,7 +90,7 @@ export class TbMarkdownComponent implements OnChanges {
   error = null;
 
   private tbMarkdownInstanceComponentRef: ComponentRef<any>;
-  private tbMarkdownInstanceComponentFactory: ComponentFactory<any>;
+  private tbMarkdownInstanceComponentType: Type<any>;
 
   constructor(private help: HelpService,
               private cd: ChangeDetectorRef,
@@ -153,7 +152,7 @@ export class TbMarkdownComponent implements OnChanges {
       if (this.additionalCompileModules) {
         compileModules = compileModules.concat(this.additionalCompileModules);
       }
-      this.dynamicComponentFactoryService.createDynamicComponentFactory(
+      this.dynamicComponentFactoryService.createDynamicComponent(
         class TbMarkdownInstance {
           ngOnDestroy(): void {
             parent.destroyMarkdownInstanceResources();
@@ -162,12 +161,13 @@ export class TbMarkdownComponent implements OnChanges {
         template,
         compileModules,
         true, 1, styles
-      ).subscribe((factory) => {
-          this.tbMarkdownInstanceComponentFactory = factory;
+      ).subscribe((componentData) => {
+          this.tbMarkdownInstanceComponentType = componentData.componentType;
           const injector: Injector = Injector.create({providers: [], parent: this.markdownContainer.injector});
           try {
             this.tbMarkdownInstanceComponentRef =
-              this.markdownContainer.createComponent(this.tbMarkdownInstanceComponentFactory, 0, injector);
+              this.markdownContainer.createComponent(this.tbMarkdownInstanceComponentType,
+                {index: 0, injector, ngModuleRef: componentData.componentModuleRef});
             if (this.context) {
               for (const propName of Object.keys(this.context)) {
                 this.tbMarkdownInstanceComponentRef.instance[propName] = this.context[propName];
@@ -179,6 +179,7 @@ export class TbMarkdownComponent implements OnChanges {
             this.error = null;
           } catch (error) {
             readyObservable = this.handleError(template, error, styles);
+            this.cd.detectChanges();
           }
           readyObservable.subscribe(() => {
             this.ready.emit();
@@ -261,9 +262,9 @@ export class TbMarkdownComponent implements OnChanges {
   }
 
   private destroyMarkdownInstanceResources() {
-    if (this.tbMarkdownInstanceComponentFactory) {
-      this.dynamicComponentFactoryService.destroyDynamicComponentFactory(this.tbMarkdownInstanceComponentFactory);
-      this.tbMarkdownInstanceComponentFactory = null;
+    if (this.tbMarkdownInstanceComponentType) {
+      this.dynamicComponentFactoryService.destroyDynamicComponent(this.tbMarkdownInstanceComponentType);
+      this.tbMarkdownInstanceComponentType = null;
     }
     this.tbMarkdownInstanceComponentRef = null;
   }

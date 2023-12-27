@@ -89,8 +89,8 @@ public class DefaultTbEdgeService extends AbstractTbEntityService implements TbE
         CustomerId customerId = customer.getId();
         try {
             Edge savedEdge = checkNotNull(edgeService.assignEdgeToCustomer(tenantId, edgeId, customerId));
-            notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, edgeId, customerId, savedEdge,
-                    actionType, user, edgeId.toString(), customerId.toString(), customer.getName());
+            notificationEntityService.logEntityAction(tenantId, edgeId, savedEdge, customerId, actionType,
+                    user, edgeId.toString(), customerId.toString(), customer.getName());
 
             return savedEdge;
         } catch (Exception e) {
@@ -108,8 +108,8 @@ public class DefaultTbEdgeService extends AbstractTbEntityService implements TbE
         CustomerId customerId = customer.getId();
         try {
             Edge savedEdge = checkNotNull(edgeService.unassignEdgeFromCustomer(tenantId, edgeId));
-            notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, edgeId, customerId, savedEdge,
-                    actionType, user, edgeId.toString(), customerId.toString(), customer.getName());
+            notificationEntityService.logEntityAction(tenantId, edgeId, savedEdge, customerId, actionType,
+                    user, edgeId.toString(), customerId.toString(), customer.getName());
             return savedEdge;
         } catch (Exception e) {
             notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.EDGE),

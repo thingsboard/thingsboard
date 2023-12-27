@@ -27,18 +27,19 @@ import {
   SimpleChanges,
   SkipSelf,
   ViewChild,
+  ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
-  FormGroupDirective,
+  FormGroupDirective, NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   NgForm,
   UntypedFormBuilder,
   UntypedFormControl,
   UntypedFormGroup,
-  ValidationErrors
+  ValidationErrors, Validator
 } from '@angular/forms';
 import { Observable, of } from 'rxjs';
 import { filter, map, mergeMap, publishReplay, refCount, share, tap } from 'rxjs/operators';
@@ -56,19 +57,20 @@ import { alarmFields } from '@shared/models/alarm.models';
 import { UtilsService } from '@core/services/utils.service';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
-import { DialogService } from '@core/services/dialog.service';
 import { MatDialog } from '@angular/material/dialog';
 import {
   DataKeyConfigDialogComponent,
   DataKeyConfigDialogData
 } from '@home/components/widget/config/data-key-config-dialog.component';
-import { deepClone, guid, isDefinedAndNotNull, isUndefined } from '@core/utils';
+import { deepClone, guid, isDefinedAndNotNull, isObject, isUndefined } from '@core/utils';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { AggregationType } from '@shared/models/time/time.models';
 import { DndDropEvent } from 'ngx-drag-drop/lib/dnd-dropzone.directive';
 import { moveItemInArray } from '@angular/cdk/drag-drop';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { DatasourceComponent } from '@home/components/widget/config/datasource.component';
+import { ColorPickerPanelComponent } from '@shared/components/color-picker/color-picker-panel.component';
+import { TbPopoverService } from '@shared/components/popover.service';
 
 @Component({
   selector: 'tb-data-keys',
@@ -79,15 +81,20 @@ import { DatasourceComponent } from '@home/components/widget/config/datasource.c
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => DataKeysComponent),
       multi: true
-    } /*,
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => DataKeysComponent),
+      multi: true,
+    },
     {
       provide: ErrorStateMatcher,
       useExisting: DataKeysComponent
-    } */
+    }
   ],
   encapsulation: ViewEncapsulation.None
 })
-export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChanges, ErrorStateMatcher {
+export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChanges, ErrorStateMatcher, Validator {
 
   public get hideDataKeyLabel(): boolean {
     return this.datasourceComponent.hideDataKeyLabel;
@@ -203,26 +210,34 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
 
   private propagateChange = (v: any) => { };
 
+  private keysRequired = this._keysRequired.bind(this);
+  private keysValidator = this._keysValidator.bind(this);
+
   constructor(private store: Store<AppState>,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               private datasourceComponent: DatasourceComponent,
               public translate: TranslateService,
               private utils: UtilsService,
-              private dialogs: DialogService,
               private dialog: MatDialog,
               private fb: UntypedFormBuilder,
               private cd: ChangeDetectorRef,
+              private popoverService: TbPopoverService,
+              private viewContainerRef: ViewContainerRef,
               private renderer: Renderer2,
               public truncate: TruncatePipe) {
   }
 
   updateValidators() {
-    this.keysListFormGroup.get('keys').setValidators(this.required ? [this.keysRequired] : []);
+    if (this.required) {
+      this.keysListFormGroup.get('keys').addValidators(this.keysRequired);
+    } else {
+      this.keysListFormGroup.get('keys').removeValidators(this.keysRequired);
+    }
     this.keysListFormGroup.get('keys').updateValueAndValidity();
   }
 
-  keysRequired(control: AbstractControl): ValidationErrors | null {
-    const value = control.value;
+  private _keysRequired(control: AbstractControl): ValidationErrors | null {
+    const value = this.modelValue;
     if (value && Array.isArray(value) && value.length) {
       return null;
     } else {
@@ -230,8 +245,23 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
     }
   }
 
+  private _keysValidator(control: AbstractControl): ValidationErrors | null {
+    const value = this.modelValue;
+    if (value && Array.isArray(value)) {
+      if (value.some(v => isObject(v) && (!v.type || !v.name))) {
+        return {
+          dataKey: true
+        };
+      }
+    }
+    return null;
+  }
+
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
+    if (!this.keysListFormGroup.valid) {
+      this.propagateChange(this.modelValue);
+    }
   }
 
   registerOnTouched(fn: any): void {
@@ -239,9 +269,12 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
 
   ngOnInit() {
     this.keysListFormGroup = this.fb.group({
-        keys: [null, this.required ? [this.keysRequired] : []],
+        keys: [null, [this.keysValidator]],
         key: [null]
     });
+    if (this.required) {
+      this.keysListFormGroup.get('keys').addValidators(this.keysRequired);
+    }
     this.alarmKeys = [];
     for (const name of Object.keys(alarmFields)) {
       this.alarmKeys.push({
@@ -332,8 +365,8 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
     } else {
       this.keys = [];
     }
-    this.keysListFormGroup.get('keys').setValue(this.keys);
     this.modelValue = this.keys.length ? [...this.keys] : null;
+    this.keysListFormGroup.get('keys').setValue(this.keys);
     if (this.keyInput) {
       this.keyInput.nativeElement.value = '';
     }
@@ -371,7 +404,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
 
   isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
-    const customErrorState = this.required && (!this.modelValue || !this.modelValue.length);
+    const customErrorState = this.keysListFormGroup.get('keys').hasError('dataKey');
     return originalErrorState || customErrorState;
   }
 
@@ -392,10 +425,18 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
       this.keysListFormGroup.get('keys').setValue(this.keys);
     } else {
       this.keys = [];
-      this.keysListFormGroup.get('keys').setValue(this.keys);
       this.modelValue = null;
+      this.keysListFormGroup.get('keys').setValue(this.keys);
     }
     this.dirty = true;
+  }
+
+  validate(c: UntypedFormControl) {
+    return (this.keysListFormGroup.get('keys').hasError('dataKey')) ? {
+      dataKeys: {
+        valid: false,
+      },
+    } : null;
   }
 
   onFocus() {
@@ -438,8 +479,8 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
     const index = this.keys.indexOf(key);
     if (index >= 0) {
       this.keys.splice(index, 1);
-      this.keysListFormGroup.get('keys').setValue(this.keys);
       this.modelValue.splice(index, 1);
+      this.keysListFormGroup.get('keys').setValue(this.keys);
       if (!this.modelValue.length) {
         this.modelValue = null;
       }
@@ -465,21 +506,36 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
       index = this.keys.length;
     }
     moveItemInArray(this.keys, this.dragIndex, index);
-    this.keysListFormGroup.get('keys').setValue(this.keys);
     moveItemInArray(this.modelValue, this.dragIndex, index);
+    this.keysListFormGroup.get('keys').setValue(this.keys);
     this.dragIndex = -1;
     this.propagateChange(this.modelValue);
   }
 
-  showColorPicker(key: DataKey) {
-    this.dialogs.colorPicker(key.color).subscribe(
-      (color) => {
+  openColorPickerPopup(key: DataKey, $event: Event, keyColorButton: HTMLDivElement) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const trigger = keyColorButton;
+    if (this.popoverService.hasPopover(trigger)) {
+      this.popoverService.hidePopover(trigger);
+    } else {
+      const colorPickerPopover = this.popoverService.displayPopover(trigger, this.renderer,
+        this.viewContainerRef, ColorPickerPanelComponent, 'left', true, null,
+        {
+          color: key.color
+        },
+        {},
+        {}, {}, true);
+      colorPickerPopover.tbComponentRef.instance.popover = colorPickerPopover;
+      colorPickerPopover.tbComponentRef.instance.colorSelected.subscribe((color) => {
+        colorPickerPopover.hide();
         if (color && key.color !== color) {
           key.color = color;
           this.propagateChange(this.modelValue);
         }
-      }
-    );
+      });
+    }
   }
 
   editDataKey(key: DataKey, index: number) {
@@ -507,8 +563,8 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
       }).afterClosed().subscribe((updatedDataKey) => {
         if (updatedDataKey) {
           this.keys[index] = updatedDataKey;
-          this.keysListFormGroup.get('keys').setValue(this.keys);
           this.modelValue[index] = updatedDataKey;
+          this.keysListFormGroup.get('keys').setValue(this.keys);
           this.propagateChange(this.modelValue);
         }
     });

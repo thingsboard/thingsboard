@@ -25,6 +25,7 @@ import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpStatus;
 import org.awaitility.Awaitility;
 import org.hamcrest.Matcher;
 import org.hibernate.exception.ConstraintViolationException;
@@ -65,6 +66,7 @@ import org.thingsboard.server.actors.TbEntityActorId;
 import org.thingsboard.server.actors.device.DeviceActor;
 import org.thingsboard.server.actors.device.DeviceActorMessageProcessor;
 import org.thingsboard.server.actors.device.SessionInfo;
+import org.thingsboard.server.actors.device.ToDeviceRpcRequestMetadata;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
@@ -95,6 +97,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -175,6 +178,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
      * and {@link org.springframework.mock.web.MockAsyncContext#getTimeout()}
      */
     private static final long DEFAULT_TIMEOUT = -1L;
+    private static final int CLEANUP_TENANT_RETRIES_COUNT = 3;
 
     protected MediaType contentType = MediaType.APPLICATION_JSON;
 
@@ -188,7 +192,9 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected String username;
 
     protected TenantId tenantId;
+    protected TenantProfileId tenantProfileId;
     protected UserId tenantAdminUserId;
+    protected User tenantAdminUser;
     protected CustomerId tenantAdminCustomerId;
     protected CustomerId customerId;
     protected TenantId differentTenantId;
@@ -269,15 +275,16 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         Tenant savedTenant = doPost("/api/tenant", tenant, Tenant.class);
         Assert.assertNotNull(savedTenant);
         tenantId = savedTenant.getId();
+        tenantProfileId = savedTenant.getTenantProfileId();
 
-        User tenantAdmin = new User();
-        tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
-        tenantAdmin.setTenantId(tenantId);
-        tenantAdmin.setEmail(TENANT_ADMIN_EMAIL);
+        tenantAdminUser = new User();
+        tenantAdminUser.setAuthority(Authority.TENANT_ADMIN);
+        tenantAdminUser.setTenantId(tenantId);
+        tenantAdminUser.setEmail(TENANT_ADMIN_EMAIL);
 
-        tenantAdmin = createUserAndLogin(tenantAdmin, TENANT_ADMIN_PASSWORD);
-        tenantAdminUserId = tenantAdmin.getId();
-        tenantAdminCustomerId = tenantAdmin.getCustomerId();
+        tenantAdminUser = createUserAndLogin(tenantAdminUser, TENANT_ADMIN_PASSWORD);
+        tenantAdminUserId = tenantAdminUser.getId();
+        tenantAdminCustomerId = tenantAdminUser.getCustomerId();
 
         Customer customer = new Customer();
         customer.setTitle("Customer");
@@ -325,10 +332,8 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         log.debug("Executing web test teardown");
 
         loginSysAdmin();
-        doDelete("/api/tenant/" + tenantId.getId().toString())
-                .andExpect(status().isOk());
+        deleteTenant(tenantId);
         deleteDifferentTenant();
-
         verifyNoTenantsLeft();
 
         tenantProfileService.deleteTenantProfiles(TenantId.SYS_TENANT_ID);
@@ -336,7 +341,34 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         log.info("Executed web test teardown");
     }
 
-    void verifyNoTenantsLeft() throws Exception {
+    private void verifyNoTenantsLeft() throws Exception {
+        List<Tenant> loadedTenants = getAllTenants();
+        if (!loadedTenants.isEmpty()) {
+            loadedTenants.forEach(tenant -> deleteTenant(tenant.getId()));
+            loadedTenants = getAllTenants();
+        }
+        assertThat(loadedTenants).as("All tenants expected to be deleted, but some tenants left in the database").isEmpty();
+    }
+
+    private void deleteTenant(TenantId tenantId) {
+        int status = 0;
+        int retries = 0;
+        while (status != HttpStatus.SC_OK && retries < CLEANUP_TENANT_RETRIES_COUNT) {
+            retries++;
+            try {
+                status = doDelete("/api/tenant/" + tenantId.getId().toString())
+                        .andReturn().getResponse().getStatus();
+                if (status != HttpStatus.SC_OK) {
+                    log.warn("Tenant deletion failed, tenantId: {}", tenantId.getId().toString());
+                    Thread.sleep(1000L);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    private List<Tenant> getAllTenants() throws Exception {
         List<Tenant> loadedTenants = new ArrayList<>();
         PageLink pageLink = new PageLink(10);
         PageData<Tenant> pageData;
@@ -348,8 +380,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
                 pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
-
-        assertThat(loadedTenants).as("All tenants expected to be deleted, but some tenants left in the database").isEmpty();
+        return loadedTenants;
     }
 
     protected void loginSysAdmin() throws Exception {
@@ -460,8 +491,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected void deleteDifferentTenant() throws Exception {
         if (savedDifferentTenant != null) {
             loginSysAdmin();
-            doDelete("/api/tenant/" + savedDifferentTenant.getId().getId().toString())
-                    .andExpect(status().isOk());
+            deleteTenant(savedDifferentTenant.getId());
             savedDifferentTenant = null;
         }
     }
@@ -772,7 +802,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return readResponse(doPostAsync(urlTemplate, content, DEFAULT_TIMEOUT, params).andExpect(resultMatcher), responseClass);
     }
 
-    protected <T> T doPut(String urlTemplate, T content, Class<T> responseClass, String... params) {
+    protected <T> T doPut(String urlTemplate, Object content, Class<T> responseClass, String... params) {
         try {
             return readResponse(doPut(urlTemplate, content, params).andExpect(status().isOk()), responseClass);
         } catch (Exception e) {
@@ -790,6 +820,10 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected <T> T doDelete(String urlTemplate, Class<T> responseClass, String... params) throws Exception {
         return readResponse(doDelete(urlTemplate, params).andExpect(status().isOk()), responseClass);
+    }
+
+    protected <T> T doDeleteAsync(String urlTemplate, Class<T> responseClass, String... params) throws Exception {
+        return readResponse(doDeleteAsync(urlTemplate, DEFAULT_TIMEOUT, params).andExpect(status().isOk()), responseClass);
     }
 
     protected ResultActions doPost(String urlTemplate, String... params) throws Exception {
@@ -822,6 +856,15 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         setJwtToken(deleteRequest);
         populateParams(deleteRequest, params);
         return mockMvc.perform(deleteRequest);
+    }
+
+    protected ResultActions doDeleteAsync(String urlTemplate, Long timeout, String... params) throws Exception {
+        MockHttpServletRequestBuilder deleteRequest = delete(urlTemplate, params);
+        setJwtToken(deleteRequest);
+//        populateParams(deleteRequest, params);
+        MvcResult result = mockMvc.perform(deleteRequest).andReturn();
+        result.getAsyncResult(timeout);
+        return mockMvc.perform(asyncDispatch(result));
     }
 
     protected void populateParams(MockHttpServletRequestBuilder request, String... params) {
@@ -991,6 +1034,15 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         });
     }
 
+    protected void awaitForDeviceActorToProcessAllRpcResponses(DeviceId deviceId) {
+        DeviceActorMessageProcessor processor = getDeviceActorProcessor(deviceId);
+        Map<Integer, ToDeviceRpcRequestMetadata> toDeviceRpcPendingMap = (Map<Integer, ToDeviceRpcRequestMetadata>) ReflectionTestUtils.getField(processor, "toDeviceRpcPendingMap");
+        Awaitility.await("Device actor pending map is empty").atMost(5, TimeUnit.SECONDS).until(() -> {
+            log.warn("device {}, toDeviceRpcPendingMap.size() == {}", deviceId, toDeviceRpcPendingMap.size());
+            return toDeviceRpcPendingMap.isEmpty();
+        });
+    }
+
     protected static String getMapName(FeatureType featureType) {
         switch (featureType) {
             case ATTRIBUTES:
@@ -1012,13 +1064,20 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return (DeviceActorMessageProcessor) ReflectionTestUtils.getField(actor, "processor");
     }
 
-    protected void updateDefaultTenantProfile(Consumer<DefaultTenantProfileConfiguration> updater) throws ThingsboardException {
-        TenantProfile tenantProfile = tenantProfileService.findDefaultTenantProfile(TenantId.SYS_TENANT_ID);
-        TenantProfileData profileData = tenantProfile.getProfileData();
-        DefaultTenantProfileConfiguration profileConfiguration = (DefaultTenantProfileConfiguration) profileData.getConfiguration();
-        updater.accept(profileConfiguration);
-        tenantProfile.setProfileData(profileData);
-        tbTenantProfileService.save(TenantId.SYS_TENANT_ID, tenantProfile, null);
+    protected void updateDefaultTenantProfileConfig(Consumer<DefaultTenantProfileConfiguration> updater) throws ThingsboardException {
+        updateDefaultTenantProfile(tenantProfile -> {
+            TenantProfileData profileData = tenantProfile.getProfileData();
+            DefaultTenantProfileConfiguration profileConfiguration = (DefaultTenantProfileConfiguration) profileData.getConfiguration();
+            updater.accept(profileConfiguration);
+            tenantProfile.setProfileData(profileData);
+        });
+    }
+
+    protected void updateDefaultTenantProfile(Consumer<TenantProfile> updater) throws ThingsboardException {
+        TenantProfile oldTenantProfile = tenantProfileService.findDefaultTenantProfile(TenantId.SYS_TENANT_ID);
+        TenantProfile tenantProfile = JacksonUtil.clone(oldTenantProfile);
+        updater.accept(tenantProfile);
+        tbTenantProfileService.save(TenantId.SYS_TENANT_ID, tenantProfile, oldTenantProfile);
     }
 
 }

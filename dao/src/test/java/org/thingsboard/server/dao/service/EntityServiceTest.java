@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -70,6 +71,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -79,6 +81,7 @@ import org.thingsboard.server.dao.model.sqlts.ts.TsKvEntity;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.sql.relation.RelationRepository;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
+import org.thingsboard.server.dao.user.UserService;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -104,6 +107,8 @@ public class EntityServiceTest extends AbstractServiceTest {
 
     @Autowired
     AssetService assetService;
+    @Autowired
+    UserService userService;
     @Autowired
     AttributesService attributesService;
     @Autowired
@@ -226,6 +231,41 @@ public class EntityServiceTest extends AbstractServiceTest {
         count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
         Assert.assertEquals(0, count);
     }
+
+    @Test
+    public void testCountHierarchicalUserEntitiesByQuery() throws InterruptedException {
+        List<User> users = new ArrayList<>();
+        createTestUserRelations(tenantId, users);
+
+        RelationsQueryFilter filter = new RelationsQueryFilter();
+        filter.setRootEntity(tenantId);
+        filter.setDirection(EntitySearchDirection.FROM);
+
+        EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, null);
+        List<EntityKey> entityFields = Arrays.asList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"), new EntityKey(EntityKeyType.ENTITY_FIELD, "phone"));
+
+        EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, null, null);
+
+        PageData<EntityData> entityDataByQuery = entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), query);
+        List<EntityData> data = entityDataByQuery.getData();
+        Assert.assertEquals(data.size(), 5);
+        data.forEach(entityData -> Assert.assertNotNull(entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("phone")));
+
+    }
+
+    private void createTestUserRelations(TenantId tenantId, List<User> users) {
+        for (int i = 0; i < ENTITY_COUNT; i++) {
+            User user = new User();
+            user.setTenantId(tenantId);
+            user.setAuthority(Authority.TENANT_ADMIN);
+            user.setEmail(StringUtils.randomAlphabetic(10) + "@gmail.com");
+            user.setPhone(StringUtils.randomNumeric(10));
+            user = userService.saveUser(tenantId, user);
+            users.add(user);
+            createRelation(tenantId, "Contains", tenantId, user.getId());
+        }
+    }
+
 
     @Test
     public void testCountEdgeEntitiesByQuery() throws InterruptedException {

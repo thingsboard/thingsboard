@@ -107,9 +107,15 @@ export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePa
     this.columns.push(
       new DateEntityTableColumn<EdgeEvent>('createdTime', 'event.event-time', this.datePipe, '120px'),
       new EntityTableColumn<EdgeEvent>('type', 'event.type', '25%',
-        entity => this.translate.instant(edgeEventTypeTranslations.get(entity.type)), entity => ({}), false),
+        entity => {
+          let key = edgeEventTypeTranslations.get(entity.type);
+          return key ? this.translate.instant(key) : entity.type;
+        }, entity => ({}), false),
       new EntityTableColumn<EdgeEvent>('action', 'edge.event-action', '25%',
-        entity => this.translate.instant(edgeEventActionTypeTranslations.get(entity.action)), entity => ({}), false),
+        entity => {
+          let key = edgeEventActionTypeTranslations.get(entity.action);
+          return key ? this.translate.instant(key) : entity.action;
+        }, entity => ({}), false),
       new EntityTableColumn<EdgeEvent>('entityId', 'edge.entity-id', '40%',
         (entity) => entity.entityId ? entity.entityId : '', () => ({}), false),
       new EntityTableColumn<EdgeEvent>('status', 'event.status', '10%',

@@ -18,6 +18,11 @@ package org.thingsboard.server.dao;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.util.CollectionUtils;
+import org.thingsboard.server.common.data.EntityInfo;
+import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -27,12 +32,14 @@ import org.thingsboard.server.dao.model.ToData;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public abstract class DaoUtil {
 
@@ -109,6 +116,10 @@ public abstract class DaoUtil {
         return ids;
     }
 
+    public static <I> List<I> fromUUIDs(List<UUID> uuids, Function<UUID, I> mapper) {
+        return uuids.stream().map(mapper).collect(Collectors.toList());
+    }
+
     public static <I> I toEntityId(UUID uuid, Function<UUID, I> creator) {
         if (uuid != null) {
             return creator.apply(uuid);
@@ -142,4 +153,27 @@ public abstract class DaoUtil {
             return null;
         }
     }
+
+    public static List<EntitySubtype> convertTenantEntityTypesToDto(UUID tenantUUID, EntityType entityType, List<String> types) {
+        if (CollectionUtils.isEmpty(types)) {
+            return Collections.emptyList();
+        }
+        TenantId tenantId = TenantId.fromUUID(tenantUUID);
+        return types.stream()
+                .map(type -> new EntitySubtype(tenantId, entityType, type))
+                .collect(Collectors.toList());
+    }
+
+    @Deprecated // used only in deprecated DAO api
+    public static List<EntitySubtype> convertTenantEntityInfosToDto(UUID tenantUUID, EntityType entityType, List<EntityInfo> entityInfos) {
+        if (CollectionUtils.isEmpty(entityInfos)) {
+            return Collections.emptyList();
+        }
+        var tenantId = TenantId.fromUUID(tenantUUID);
+        return entityInfos.stream()
+                .map(info -> new EntitySubtype(tenantId, entityType, info.getName()))
+                .sorted(Comparator.comparing(EntitySubtype::getType))
+                .collect(Collectors.toList());
+    }
+
 }

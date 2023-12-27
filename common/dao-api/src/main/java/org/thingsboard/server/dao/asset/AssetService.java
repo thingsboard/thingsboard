@@ -41,6 +41,8 @@ public interface AssetService extends EntityDaoService {
 
     Asset findAssetByTenantIdAndName(TenantId tenantId, String name);
 
+    Asset saveAsset(Asset asset, boolean doValidate);
+
     Asset saveAsset(Asset asset);
 
     Asset assignAssetToCustomer(TenantId tenantId, AssetId assetId, CustomerId customerId);
@@ -79,6 +81,7 @@ public interface AssetService extends EntityDaoService {
 
     ListenableFuture<List<Asset>> findAssetsByQuery(TenantId tenantId, AssetSearchQuery query);
 
+    @Deprecated(since = "3.6.2", forRemoval = true)
     ListenableFuture<List<EntitySubtype>> findAssetTypesByTenantId(TenantId tenantId);
 
     Asset assignAssetToEdge(TenantId tenantId, AssetId assetId, EdgeId edgeId);

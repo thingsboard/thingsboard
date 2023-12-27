@@ -57,8 +57,7 @@ export interface CellActionDescriptor<T extends BaseData<HasId>> {
   name: string;
   nameFunction?: (entity: T) => string;
   icon?: string;
-  mdiIcon?: string;
-  mdiIconFunction?: (entity: T) => string;
+  iconFunction?: (entity: T) => string;
   style?: any;
   isEnabled: (entity: T) => boolean;
   onAction: ($event: MouseEvent, entity: T) => any;
@@ -75,12 +74,11 @@ export interface GroupActionDescriptor<T extends BaseData<HasId>> {
 export interface HeaderActionDescriptor {
   name: string;
   icon: string;
-  isMdiIcon?: boolean;
   isEnabled: () => boolean;
   onAction: ($event: MouseEvent) => void;
 }
 
-export type EntityTableColumnType = 'content' | 'action';
+export type EntityTableColumnType = 'content' | 'action' | 'link';
 
 export class BaseEntityTableColumn<T extends BaseData<HasId>> {
   constructor(public type: EntityTableColumnType,
@@ -117,6 +115,16 @@ export class EntityActionTableColumn<T extends BaseData<HasId>> extends BaseEnti
   }
 }
 
+export class EntityLinkTableColumn<T extends BaseData<HasId>> extends BaseEntityTableColumn<T> {
+  constructor(public key: string,
+              public title: string,
+              public width: string = '0px',
+              public cellContentFunction: CellContentFunction<T> = (entity, property) => entity[property] ? entity[property] : '',
+              public entityURL: (entity) => string) {
+    super('link', key, title, width, false);
+  }
+}
+
 export class DateEntityTableColumn<T extends BaseData<HasId>> extends EntityTableColumn<T> {
   constructor(key: string,
               title: string,
@@ -132,7 +140,7 @@ export class DateEntityTableColumn<T extends BaseData<HasId>> extends EntityTabl
   }
 }
 
-export type EntityColumn<T extends BaseData<HasId>> = EntityTableColumn<T> | EntityActionTableColumn<T>;
+export type EntityColumn<T extends BaseData<HasId>> = EntityTableColumn<T> | EntityActionTableColumn<T> | EntityLinkTableColumn<T>;
 
 export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = PageLink, L extends BaseData<HasId> = T> {
 

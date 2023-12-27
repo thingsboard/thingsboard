@@ -339,7 +339,7 @@ public class OtaPackageControllerTest extends AbstractControllerTest {
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new OtaPackageInfo(), new OtaPackageInfo(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ADDED, ActionType.ADDED, cntEntity, 0, (cntEntity*2 - startIndexSaveData));
+                ActionType.ADDED, cntEntity, 0, (cntEntity*2 - startIndexSaveData));
 
         List<OtaPackageInfo> loadedFirmwares = new ArrayList<>();
         PageLink pageLink = new PageLink(24);

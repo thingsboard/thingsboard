@@ -26,7 +26,7 @@ import {
   ViewChild
 } from '@angular/core';
 import { MatFormFieldAppearance } from '@angular/material/form-field';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { merge, Observable, of, Subject } from 'rxjs';
 import { catchError, debounceTime, map, share, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
@@ -38,7 +38,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { EntityService } from '@core/http/entity.service';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
-import { isDefinedAndNotNull, isEqual } from '@core/utils';
+import { getEntityDetailsPageURL, isDefinedAndNotNull, isEqual } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
@@ -55,7 +55,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
 
   selectEntityFormGroup: UntypedFormGroup;
 
-  modelValue: string | null;
+  modelValue: string | EntityId | null;
 
   entityTypeValue: EntityType | AliasEntityType;
 
@@ -70,6 +70,8 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   filteredEntities: Observable<Array<BaseData<EntityId>>>;
 
   searchText = '';
+
+  entityURL: string;
 
   private dirty = false;
 
@@ -112,6 +114,10 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
 
   @Input()
   requiredText: string;
+
+  @Input()
+  @coerceBoolean()
+  useFullEntityId: boolean;
 
   @Input()
   appearance: MatFormFieldAppearance = 'fill';
@@ -171,7 +177,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
             if (typeof value === 'string' || !value) {
               modelValue = null;
             } else {
-              modelValue = value.id.id;
+              modelValue = this.useFullEntityId ? value.id : value.id.id;
             }
             this.updateView(modelValue, value);
             if (value === null) {
@@ -307,7 +313,8 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
       } catch (e) {
         this.propagateChange(null);
       }
-      this.modelValue = entity !== null ? entity.id.id : null;
+      this.modelValue = entity !== null ? (this.useFullEntityId ? entity.id : entity.id.id) : null;
+      this.entityURL = getEntityDetailsPageURL(this.modelValue as string, targetEntityType);
       this.selectEntityFormGroup.get('entity').patchValue(entity !== null ? entity : '', {emitEvent: false});
       this.entityChanged.emit(entity);
     } else {

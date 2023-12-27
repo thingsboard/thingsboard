@@ -170,4 +170,12 @@ public interface EdgeDao extends Dao<Edge> {
      */
     PageData<Edge> findEdgesByTenantIdAndEntityId(UUID tenantId, UUID entityId, EntityType entityType, PageLink pageLink);
 
+    /**
+     * Find edges by tenantProfileId.
+     *
+     * @param tenantProfileId the tenantProfileId
+     * @return the list of edge objects
+     */
+    PageData<Edge> findEdgesByTenantProfileId(UUID tenantProfileId, PageLink pageLink);
+
 }

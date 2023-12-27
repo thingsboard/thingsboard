@@ -44,9 +44,10 @@ export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsCompon
       enableSelectColumnDisplay: true,
       enableStickyHeader: true,
       enableStickyAction: true,
+      showCellActionsMenu: true,
       reserveSpaceForHiddenAction: 'true',
       showTimestamp: true,
-      showMilliseconds: false,
+      dateFormat: {format: 'yyyy-MM-dd HH:mm:ss'},
       displayPagination: true,
       useEntityLabel: false,
       defaultPageSize: 10,
@@ -58,14 +59,21 @@ export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsCompon
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
+    // For backward compatibility
+    const dateFormat = settings.dateFormat;
+    if (settings?.showMilliseconds) {
+      dateFormat.format = 'yyyy-MM-dd HH:mm:ss.SSS';
+    }
+
     this.timeseriesTableWidgetSettingsForm = this.fb.group({
       enableSearch: [settings.enableSearch, []],
       enableSelectColumnDisplay: [settings.enableSelectColumnDisplay, []],
       enableStickyHeader: [settings.enableStickyHeader, []],
       enableStickyAction: [settings.enableStickyAction, []],
+      showCellActionsMenu: [settings.showCellActionsMenu, []],
       reserveSpaceForHiddenAction: [settings.reserveSpaceForHiddenAction, []],
       showTimestamp: [settings.showTimestamp, []],
-      showMilliseconds: [settings.showMilliseconds, []],
+      dateFormat: [dateFormat, []],
       displayPagination: [settings.displayPagination, []],
       useEntityLabel: [settings.useEntityLabel, []],
       defaultPageSize: [settings.defaultPageSize, [Validators.min(1)]],

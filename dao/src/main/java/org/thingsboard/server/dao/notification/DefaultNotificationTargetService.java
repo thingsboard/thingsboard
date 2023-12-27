@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.notification.targets.platform.Platform
 import org.thingsboard.server.common.data.notification.targets.platform.TenantAdministratorsFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.UserListFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.UsersFilter;
+import org.thingsboard.server.common.data.notification.targets.platform.UsersFilterType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
@@ -94,6 +95,11 @@ public class DefaultNotificationTargetService extends AbstractEntityService impl
     }
 
     @Override
+    public List<NotificationTarget> findNotificationTargetsByTenantIdAndUsersFilterType(TenantId tenantId, UsersFilterType filterType) {
+        return notificationTargetDao.findByTenantIdAndUsersFilterType(tenantId, filterType);
+    }
+
+    @Override
     public PageData<User> findRecipientsForNotificationTarget(TenantId tenantId, CustomerId customerId, NotificationTargetId targetId, PageLink pageLink) {
         NotificationTarget notificationTarget = findNotificationTargetById(tenantId, targetId);
         Objects.requireNonNull(notificationTarget, "Notification target [" + targetId + "] not found");
@@ -144,8 +150,9 @@ public class DefaultNotificationTargetService extends AbstractEntityService impl
                     return userService.findAllUsers(pageLink);
                 }
             }
+            default:
+                throw new IllegalArgumentException("Recipient type not supported");
         }
-        return new PageData<>();
     }
 
     @Override
@@ -172,6 +179,8 @@ public class DefaultNotificationTargetService extends AbstractEntityService impl
                     return userService.findTenantAdmins(affectedTenantId, pageLink);
                 }
                 break;
+            default:
+                throw new IllegalArgumentException("Recipient type not supported");
         }
         return new PageData<>();
     }

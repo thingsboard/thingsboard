@@ -111,7 +111,7 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                 .setConnectRequestMsg(ConnectRequestMsg.newBuilder()
                         .setEdgeRoutingKey(edgeKey)
                         .setEdgeSecret(edgeSecret)
-                        .setEdgeVersion(EdgeVersion.V_3_4_0)
+                        .setEdgeVersion(EdgeVersion.V_3_6_2)
                         .setMaxInboundMessageSize(maxInboundMessageSize)
                         .build())
                 .build());
@@ -221,17 +221,11 @@ public class EdgeGrpcClient implements EdgeRpcClient {
     }
 
     @Override
-    public void sendSyncRequestMsg(boolean syncRequired) {
-        sendSyncRequestMsg(syncRequired, true);
-    }
-
-    @Override
-    public void sendSyncRequestMsg(boolean syncRequired, boolean fullSync) {
+    public void sendSyncRequestMsg(boolean fullSyncRequired) {
         uplinkMsgLock.lock();
         try {
             SyncRequestMsg syncRequestMsg = SyncRequestMsg.newBuilder()
-                    .setSyncRequired(syncRequired)
-                    .setFullSync(fullSync)
+                    .setFullSync(fullSyncRequired)
                     .build();
             this.inputStream.onNext(RequestMsg.newBuilder()
                     .setMsgType(RequestMsgType.SYNC_REQUEST_RPC_MESSAGE)

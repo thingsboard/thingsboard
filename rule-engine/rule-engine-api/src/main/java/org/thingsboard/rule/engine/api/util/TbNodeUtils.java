@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.api.util;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.common.util.JacksonUtil;
@@ -44,7 +43,7 @@ public class TbNodeUtils {
         try {
             return JacksonUtil.treeToValue(configuration.getData(), clazz);
         } catch (IllegalArgumentException e) {
-            throw new TbNodeException(e);
+            throw new TbNodeException(e, true);
         }
     }
 
@@ -85,6 +84,7 @@ public class TbNodeUtils {
         }
     }
 
+    @Deprecated(since = "3.6.1", forRemoval = true)
     public static List<String> processPatterns(List<String> patterns, TbMsgMetaData metaData) {
         if (!CollectionUtils.isEmpty(patterns)) {
             return patterns.stream().map(p -> processPattern(p, metaData)).collect(Collectors.toList());
