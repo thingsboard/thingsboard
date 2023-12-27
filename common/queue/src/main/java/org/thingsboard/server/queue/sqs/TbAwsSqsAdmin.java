@@ -43,7 +43,7 @@ public class TbAwsSqsAdmin implements TbQueueAdmin {
     private final AmazonSQS sqsClient;
     private final Map<String, String> queues;
     @Getter
-    private ExecutorService producerExecutor;
+    private final ExecutorService producerExecutor;
 
     public TbAwsSqsAdmin(TbAwsSqsSettings sqsSettings, Map<String, String> attributes) {
         this.attributes = attributes;
@@ -55,11 +55,7 @@ public class TbAwsSqsAdmin implements TbQueueAdmin {
             AWSCredentials awsCredentials = new BasicAWSCredentials(sqsSettings.getAccessKeyId(), sqsSettings.getSecretAccessKey());
             credentialsProvider = new AWSStaticCredentialsProvider(awsCredentials);
         }
-        int threadPoolSize = sqsSettings.getThreadPoolSize();
-        if (threadPoolSize == 0) {
-            threadPoolSize = 50; //AmazonSQSAsyncClient.DEFAULT_THREAD_POOL_SIZE = 50;
-        }
-        producerExecutor = Executors.newFixedThreadPool(threadPoolSize, ThingsBoardThreadFactory.forName("aws-sqs-queue-executor"));
+        producerExecutor = Executors.newFixedThreadPool(sqsSettings.getThreadPoolSize(), ThingsBoardThreadFactory.forName("aws-sqs-queue-executor"));
 
         sqsClient = AmazonSQSClientBuilder.standard()
                 .withCredentials(credentialsProvider)
