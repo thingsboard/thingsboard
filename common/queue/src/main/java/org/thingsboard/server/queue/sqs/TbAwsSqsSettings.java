@@ -20,6 +20,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
+
+import javax.annotation.PostConstruct;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Slf4j
 @ConditionalOnExpression("'${queue.type:null}'=='aws-sqs'")
@@ -41,5 +46,18 @@ public class TbAwsSqsSettings {
 
     @Value("${queue.aws_sqs.threads_per_topic}")
     private int threadsPerTopic;
+
+    @Value("${queue.aws_sqs.producer_thread_pool_size:0}")
+    private int threadPoolSize;
+
+    private ExecutorService producerExecutor;
+
+    @PostConstruct
+    private void init() {
+        if (threadPoolSize == 0) {
+            threadPoolSize = 50; //AmazonSQSAsyncClient.DEFAULT_THREAD_POOL_SIZE = 50;
+        }
+        producerExecutor = Executors.newFixedThreadPool(threadPoolSize, ThingsBoardThreadFactory.forName("aws-sqs-queue-executor"));
+    }
 
 }
