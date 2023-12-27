@@ -19,10 +19,10 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 
 import javax.validation.constraints.NotEmpty;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -32,6 +32,11 @@ public class MobileDeliveryMethodNotificationTemplate extends DeliveryMethodNoti
 
     @NotEmpty
     private String subject;
+
+    private final List<TemplatableValue> templatableValues = List.of(
+            TemplatableValue.of(this::getBody, this::setBody),
+            TemplatableValue.of(this::getSubject, this::setSubject)
+    );
 
     public MobileDeliveryMethodNotificationTemplate(MobileDeliveryMethodNotificationTemplate other) {
         super(other);
@@ -49,8 +54,8 @@ public class MobileDeliveryMethodNotificationTemplate extends DeliveryMethodNoti
     }
 
     @Override
-    public boolean containsAny(String... params) {
-        return super.containsAny(params) || StringUtils.containsAny(subject, params);
+    public List<TemplatableValue> getTemplatableValues() {
+        return templatableValues;
     }
 
 }
