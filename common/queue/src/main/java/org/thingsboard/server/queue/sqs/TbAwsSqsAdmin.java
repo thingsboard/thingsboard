@@ -115,5 +115,8 @@ public class TbAwsSqsAdmin implements TbQueueAdmin {
         if (sqsClient != null) {
             sqsClient.shutdown();
         }
+        if (producerExecutor != null) {
+            producerExecutor.shutdownNow();
+        }
     }
 }
