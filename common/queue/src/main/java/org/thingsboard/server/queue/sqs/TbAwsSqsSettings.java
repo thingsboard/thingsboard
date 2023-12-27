@@ -50,14 +50,4 @@ public class TbAwsSqsSettings {
     @Value("${queue.aws_sqs.producer_thread_pool_size:0}")
     private int threadPoolSize;
 
-    private ExecutorService producerExecutor;
-
-    @PostConstruct
-    private void init() {
-        if (threadPoolSize == 0) {
-            threadPoolSize = 50; //AmazonSQSAsyncClient.DEFAULT_THREAD_POOL_SIZE = 50;
-        }
-        producerExecutor = Executors.newFixedThreadPool(threadPoolSize, ThingsBoardThreadFactory.forName("aws-sqs-queue-executor"));
-    }
-
 }

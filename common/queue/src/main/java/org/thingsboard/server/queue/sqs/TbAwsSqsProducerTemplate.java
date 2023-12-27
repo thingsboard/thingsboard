@@ -44,10 +44,10 @@ public class TbAwsSqsProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
     private final AmazonSQSAsync sqsClient;
     private final Gson gson = new Gson();
     private final Map<String, String> queueUrlMap = new ConcurrentHashMap<>();
-    private final TbQueueAdmin admin;
+    private final TbAwsSqsAdmin admin;
 
     public TbAwsSqsProducerTemplate(TbQueueAdmin admin, TbAwsSqsSettings sqsSettings, String defaultTopic) {
-        this.admin = admin;
+        this.admin = (TbAwsSqsAdmin) admin;
         this.defaultTopic = defaultTopic;
 
         AWSCredentialsProvider credentialsProvider;
@@ -61,7 +61,7 @@ public class TbAwsSqsProducerTemplate<T extends TbQueueMsg> implements TbQueuePr
         sqsClient = AmazonSQSAsyncClientBuilder.standard()
                 .withCredentials(credentialsProvider)
                 .withRegion(sqsSettings.getRegion())
-                .withExecutorFactory(sqsSettings::getProducerExecutor)
+                .withExecutorFactory(this.admin::getProducerExecutor)
                 .build();
     }
 
