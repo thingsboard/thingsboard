@@ -324,7 +324,7 @@
 <ng-template #imageCard let-item="item" let-itemIndex="itemIndex">
   <div class="tb-image-card tb-primary-fill">
     <div class="tb-image-card-overlay">
-      <div class="tb-image-card-overlay-buttons">
+      <div *ngIf="!selectionMode" class="tb-image-card-overlay-buttons">
         <button mat-icon-button [disabled]="isLoading$ | async"
                 matTooltip="{{ 'image.download-image' | translate }}"
                 matTooltipPosition="above"
