@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/* Color */
+.tb-default .mat-toolbar.mat-primary {
+  background: #000e4a !important;
+  color: #fff !important;
+}
+
 /* Login page */
 tb-login {
   background-image: url(login_bg.jpg) !important;
@@ -130,7 +136,7 @@ tb-login {
 }
 
 /* Side menu */
-.mat-toolbar.tb-side-menu-toolbar {
+.mat-toolbar.tb-side-menu-toolbar.mat-primary {
   background-color: white !important;
 }
 tb-side-menu {
@@ -220,10 +226,6 @@ gridster.fit {
 }
 .tb-loading-spinner > div {
   display: none !important;
-}
-
-.tb-rulechain-library .mat-toolbar-tools {
-  background-color: #000e4a !important;
 }
 
 .version-control-button {
