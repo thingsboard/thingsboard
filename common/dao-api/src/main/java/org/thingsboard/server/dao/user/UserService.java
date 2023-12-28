@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.user;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.UserMobileInfo;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
@@ -88,5 +89,9 @@ public interface UserService extends EntityDaoService {
     int increaseFailedLoginAttempts(TenantId tenantId, UserId userId);
 
     void setLastLoginTs(TenantId tenantId, UserId userId);
+
+    void saveMobileInfo(TenantId tenantId, UserId userId, UserMobileInfo mobileInfo);
+
+    UserMobileInfo findMobileInfo(TenantId tenantId, UserId userId);
 
 }

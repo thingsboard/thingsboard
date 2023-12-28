@@ -117,7 +117,7 @@ export class SmsProviderComponent extends PageComponent implements HasConfirmFor
         SLACK: this.fb.group({
           botToken: ['']
         }),
-        MOBILE: this.fb.group({
+        MOBILE_APP: this.fb.group({
           firebaseServiceAccountCredentialsFileName: [''],
           firebaseServiceAccountCredentials: ['']
         })

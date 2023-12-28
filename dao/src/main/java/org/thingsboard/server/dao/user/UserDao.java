@@ -101,4 +101,6 @@ public interface UserDao extends Dao<User>, TenantEntityDao {
 
     PageData<User> findByAuthorityAndTenantProfilesIds(Authority authority, List<TenantProfileId> tenantProfilesIds, PageLink pageLink);
 
+    void unassignFcmToken(TenantId tenantId, String fcmToken);
+
 }

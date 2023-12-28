@@ -58,7 +58,7 @@ public class NotificationProcessingContext {
 
     @Builder
     public NotificationProcessingContext(TenantId tenantId, NotificationRequest request, Set<NotificationDeliveryMethod> deliveryMethods,
-                                           NotificationTemplate template, NotificationSettings settings) {
+                                         NotificationTemplate template, NotificationSettings settings) {
         this.tenantId = tenantId;
         this.request = request;
         this.deliveryMethods = deliveryMethods;

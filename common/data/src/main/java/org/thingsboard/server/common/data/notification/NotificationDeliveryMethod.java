@@ -26,9 +26,10 @@ public enum NotificationDeliveryMethod {
     SMS("SMS"),
     SLACK("Slack"),
     MICROSOFT_TEAMS("Microsoft Teams"),
-    MOBILE("mobile");
+    MOBILE_APP("mobile app");
 
     @Getter
     private final String name;
+    // TODO:   private final boolean allowUseSystemSettings;
 
 }

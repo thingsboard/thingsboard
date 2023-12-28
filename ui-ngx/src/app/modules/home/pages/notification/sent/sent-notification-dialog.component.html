@@ -446,9 +446,9 @@
       </form>
     </mat-step>
     <mat-step *ngIf="!notificationRequestForm.get('useTemplate').value &&
-                     notificationRequestForm.get('template.configuration.deliveryMethodsTemplates.MOBILE.enabled').value"
+                     notificationRequestForm.get('template.configuration.deliveryMethodsTemplates.MOBILE_APP.enabled').value"
               [stepControl]="mobileTemplateForm">
-      <ng-template matStepLabel>{{ 'notification.delivery-method.mobile' | translate }}</ng-template>
+      <ng-template matStepLabel>{{ 'notification.delivery-method.mobile-app' | translate }}</ng-template>
       <div class="tb-hint-available-params mat-body-2">
         <span class="content">{{ 'notification.input-field-support-templatization' | translate}}</span>
         <span tb-help-popup="{{ notificationTemplateTypeTranslateMap.get(notificationType.GENERAL).helpId }}"
@@ -523,14 +523,14 @@
             {{ preview.processedTemplates.SLACK.body }}
           </div>
         </section>
-        <section class="preview-group notification" *ngIf="preview.processedTemplates.MOBILE?.enabled">
+        <section class="preview-group notification" *ngIf="preview.processedTemplates.MOBILE_APP?.enabled">
           <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
             <mat-icon class="tb-mat-18" svgIcon="mdi:cellphone-text"></mat-icon>
-            <div class="group-title" translate>notification.delivery-method.mobile-preview</div>
+            <div class="group-title" translate>notification.delivery-method.mobile-app-preview</div>
           </div>
           <div class="notification-content">
-            <div class="subject">{{ preview.processedTemplates.MOBILE.subject }}</div>
-            <div>{{ preview.processedTemplates.MOBILE.body }}</div>
+            <div class="subject">{{ preview.processedTemplates.MOBILE_APP.subject }}</div>
+            <div>{{ preview.processedTemplates.MOBILE_APP.body }}</div>
           </div>
         </section>
         <section class="preview-group notification" *ngIf="preview.processedTemplates.MICROSOFT_TEAMS?.enabled">

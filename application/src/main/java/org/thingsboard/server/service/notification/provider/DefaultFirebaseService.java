@@ -48,7 +48,7 @@ public class DefaultFirebaseService implements FirebaseService {
             .build();
 
     @Override
-    public void sendMessage(TenantId tenantId, String credentials, String fcmToken, String title, String body) {
+    public void sendMessage(TenantId tenantId, String credentials, String fcmToken, String title, String body) throws FirebaseMessagingException {
         FirebaseContext firebaseContext = contexts.asMap().compute(tenantId.toString(), (key, context) -> {
             if (context == null) {
                 return new FirebaseContext(key, credentials);
@@ -65,11 +65,7 @@ public class DefaultFirebaseService implements FirebaseService {
                         .build())
                 .setToken(fcmToken)
                 .build();
-        try {
-            firebaseContext.getMessaging().send(message);
-        } catch (FirebaseMessagingException e) {
-            throw new RuntimeException("Failed to send message via FCM: " + e.getMessage(), e);
-        }
+        firebaseContext.getMessaging().send(message);
     }
 
     public static class FirebaseContext {

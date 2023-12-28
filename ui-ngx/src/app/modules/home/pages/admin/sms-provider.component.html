@@ -75,14 +75,14 @@
         <!--    <div tb-help="mobileSettings"></div>-->
       </mat-card-header>
       <mat-card-content>
-        <section formGroupName="MOBILE" style="margin-bottom: 16px;">
+        <section formGroupName="MOBILE_APP" style="margin-bottom: 16px;">
           <tb-file-input formControlName="firebaseServiceAccountCredentials"
                          dropLabel="{{ 'admin.select-firebase-service-account-file' | translate }}"
                          label="{{ 'admin.firebase-service-account-file' | translate }}"
                          accept=".json,application/json"
                          allowedExtensions="json"
-                         [existingFileName]="notificationSettingsForm.get('deliveryMethodsConfigs.MOBILE.firebaseServiceAccountCredentialsFileName')?.value"
-                         (fileNameChanged)="notificationSettingsForm?.get('deliveryMethodsConfigs.MOBILE.firebaseServiceAccountCredentialsFileName').patchValue($event)">
+                         [existingFileName]="notificationSettingsForm.get('deliveryMethodsConfigs.MOBILE_APP.firebaseServiceAccountCredentialsFileName')?.value"
+                         (fileNameChanged)="notificationSettingsForm?.get('deliveryMethodsConfigs.MOBILE_APP.firebaseServiceAccountCredentialsFileName').patchValue($event)">
           </tb-file-input>
         </section>
         <div fxLayout="row" fxLayoutAlign="end center" fxLayout.xs="column" fxLayoutAlign.xs="end">

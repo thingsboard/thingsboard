@@ -19,6 +19,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 
 public interface FirebaseService {
 
-    void sendMessage(TenantId tenantId, String credentials, String fcmToken, String title, String body);
+    void sendMessage(TenantId tenantId, String credentials, String fcmToken, String title, String body) throws Exception;
 
 }

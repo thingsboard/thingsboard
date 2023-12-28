@@ -364,9 +364,9 @@
         </div>
       </form>
     </mat-step>
-    <mat-step *ngIf="templateNotificationForm.get('configuration.deliveryMethodsTemplates.MOBILE.enabled').value"
+    <mat-step *ngIf="templateNotificationForm.get('configuration.deliveryMethodsTemplates.MOBILE_APP.enabled').value"
               [stepControl]="mobileTemplateForm">
-      <ng-template matStepLabel>{{ 'notification.delivery-method.mobile' | translate }}</ng-template>
+      <ng-template matStepLabel>{{ 'notification.delivery-method.mobile-app' | translate }}</ng-template>
       <div class="tb-hint-available-params mat-body-2">
         <span class="content">{{ 'notification.input-field-support-templatization' | translate}}</span>
         <span tb-help-popup="{{ notificationTemplateTypeTranslateMap.get(templateNotificationForm.get('notificationType').value).helpId }}"

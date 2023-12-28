@@ -148,7 +148,7 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
       [NotificationDeliveryMethod.SMS, this.smsTemplateForm],
       [NotificationDeliveryMethod.SLACK, this.slackTemplateForm],
       [NotificationDeliveryMethod.MICROSOFT_TEAMS, this.microsoftTeamsTemplateForm],
-      [NotificationDeliveryMethod.MOBILE, this.mobileTemplateForm]
+      [NotificationDeliveryMethod.MOBILE_APP, this.mobileTemplateForm]
     ]);
   }
 

@@ -21,7 +21,7 @@ import org.thingsboard.server.common.data.notification.NotificationDeliveryMetho
 import javax.validation.constraints.NotEmpty;
 
 @Data
-public class MobileNotificationDeliveryMethodConfig implements NotificationDeliveryMethodConfig {
+public class MobileAppNotificationDeliveryMethodConfig implements NotificationDeliveryMethodConfig {
 
     private String firebaseServiceAccountCredentialsFileName;
     @NotEmpty
@@ -29,7 +29,7 @@ public class MobileNotificationDeliveryMethodConfig implements NotificationDeliv
 
     @Override
     public NotificationDeliveryMethod getMethod() {
-        return NotificationDeliveryMethod.MOBILE;
+        return NotificationDeliveryMethod.MOBILE_APP;
     }
 
 }

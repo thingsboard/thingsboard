@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -41,6 +42,7 @@ import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.UserEmailInfo;
+import org.thingsboard.server.common.data.UserMobileInfo;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -81,6 +83,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.thingsboard.server.common.data.query.EntityKeyType.ENTITY_FIELD;
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_ID_PARAM_DESCRIPTION;
@@ -582,6 +585,20 @@ public class UserController extends BaseController {
         checkDashboardInfoId(dashboardId, Operation.READ);
         SecurityUser currentUser = getCurrentUser();
         return userSettingsService.reportUserDashboardAction(currentUser.getTenantId(), currentUser.getId(), dashboardId, action);
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping("/user/mobile/info")
+    public UserMobileInfo getMobileInfo(@AuthenticationPrincipal SecurityUser securityUser) {
+        return Optional.ofNullable(userService.findMobileInfo(securityUser.getTenantId(), securityUser.getId()))
+                .orElseGet(UserMobileInfo::new);
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PostMapping("/user/mobile/info")
+    public void saveMobileInfo(@RequestBody UserMobileInfo mobileInfo,
+                               @AuthenticationPrincipal SecurityUser securityUser) {
+        userService.saveMobileInfo(securityUser.getTenantId(), securityUser.getId(), mobileInfo);
     }
 
     private void checkNotReserved(String strType, UserSettingsType type) throws ThingsboardException {

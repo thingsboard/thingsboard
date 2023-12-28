@@ -13,23 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.settings;
+package org.thingsboard.server.common.data;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import java.io.Serializable;
-import java.util.Map;
 
 @Data
-public class NotificationSettings implements Serializable {
-
-    @NotNull
-    @Valid
-    private Map<NotificationDeliveryMethod, NotificationDeliveryMethodConfig> deliveryMethodsConfigs;
-
-    // TODO: disable option, location on the screen, shown notifications count, timings of displaying
-
+public class UserMobileInfo {
+    private String fcmToken;
+    private long fcmTokenTimestamp;
 }

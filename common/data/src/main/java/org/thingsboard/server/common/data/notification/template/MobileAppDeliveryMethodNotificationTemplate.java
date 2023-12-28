@@ -28,7 +28,7 @@ import java.util.List;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
-public class MobileDeliveryMethodNotificationTemplate extends DeliveryMethodNotificationTemplate implements HasSubject {
+public class MobileAppDeliveryMethodNotificationTemplate extends DeliveryMethodNotificationTemplate implements HasSubject {
 
     @NotEmpty
     private String subject;
@@ -38,19 +38,19 @@ public class MobileDeliveryMethodNotificationTemplate extends DeliveryMethodNoti
             TemplatableValue.of(this::getSubject, this::setSubject)
     );
 
-    public MobileDeliveryMethodNotificationTemplate(MobileDeliveryMethodNotificationTemplate other) {
+    public MobileAppDeliveryMethodNotificationTemplate(MobileAppDeliveryMethodNotificationTemplate other) {
         super(other);
         this.subject = other.subject;
     }
 
     @Override
     public NotificationDeliveryMethod getMethod() {
-        return NotificationDeliveryMethod.MOBILE;
+        return NotificationDeliveryMethod.MOBILE_APP;
     }
 
     @Override
-    public MobileDeliveryMethodNotificationTemplate copy() {
-        return new MobileDeliveryMethodNotificationTemplate(this);
+    public MobileAppDeliveryMethodNotificationTemplate copy() {
+        return new MobileAppDeliveryMethodNotificationTemplate(this);
     }
 
     @Override
