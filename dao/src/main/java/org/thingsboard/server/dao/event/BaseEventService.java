@@ -31,9 +31,12 @@ import org.thingsboard.server.common.data.event.LifecycleEvent;
 import org.thingsboard.server.common.data.event.RuleChainDebugEvent;
 import org.thingsboard.server.common.data.event.RuleNodeDebugEvent;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.dao.rule.RuleNodeDao;
 import org.thingsboard.server.dao.service.DataValidator;
 
 import java.util.List;
@@ -55,6 +58,9 @@ public class BaseEventService implements EventService {
 
     @Autowired
     public EventDao eventDao;
+
+    @Autowired
+    public RuleNodeDao ruleNodeDao;
 
     @Autowired
     private DataValidator<Event> eventValidator;
@@ -118,6 +124,12 @@ public class BaseEventService implements EventService {
 
     @Override
     public void removeEvents(TenantId tenantId, EntityId entityId, EventFilter eventFilter, Long startTime, Long endTime) {
+        if (EntityType.RULE_CHAIN == entityId.getEntityType() && eventFilter != null && EventType.DEBUG_RULE_NODE.equals(eventFilter.getEventType())) {
+            List<RuleNode> byRuleChainId = ruleNodeDao.findByRuleChainId((RuleChainId) entityId);
+            for (RuleNode ruleNode : byRuleChainId) {
+                eventDao.removeEvents(tenantId.getId(), ruleNode.getId().getId(), eventFilter, startTime, endTime);
+            }
+        }
         if (eventFilter == null) {
             eventDao.removeEvents(tenantId.getId(), entityId.getId(), startTime, endTime);
         } else {

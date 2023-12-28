@@ -102,6 +102,11 @@ public class JpaRuleNodeDao extends JpaAbstractDao<RuleNodeEntity, RuleNode> imp
     }
 
     @Override
+    public List<RuleNode> findByRuleChainId(RuleChainId ruleChainId) {
+        return DaoUtil.convertDataList(ruleNodeRepository.findRuleNodesByRuleChainId(ruleChainId.getId()));
+    }
+
+    @Override
     public void deleteByIdIn(List<RuleNodeId> ruleNodeIds) {
         ruleNodeRepository.deleteAllById(ruleNodeIds.stream().map(RuleNodeId::getId).collect(Collectors.toList()));
     }
