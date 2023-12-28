@@ -17,7 +17,7 @@
 import { Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { merge, Observable, of, Subject } from 'rxjs';
-import { catchError, debounceTime, map, share, switchMap, tap } from 'rxjs/operators';
+import { catchError, debounceTime, map, share, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
@@ -61,7 +61,7 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
   @Input()
   set type(value ) {
     this.otaUpdateType = value ? value : OtaUpdateType.FIRMWARE;
-    this.reset();
+    this.cleanFilteredPackages.next([]);
   }
 
   private deviceProfile: string;
@@ -73,7 +73,7 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
   @Input()
   set deviceProfileId(value: string) {
     this.deviceProfile = value;
-    this.reset();
+    this.cleanFilteredPackages.next([]);
   }
 
   @Input()
@@ -115,6 +115,8 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
 
   private dirty = false;
   private cleanFilteredPackages: Subject<Array<OtaPackageInfo>> = new Subject();
+
+  private destroy$ = new Subject<void>();
 
   private propagateChange = (v: any) => { };
 
@@ -158,7 +160,8 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
         }),
         map(value => value ? (typeof value === 'string' ? value : value.title) : ''),
         switchMap(name => this.fetchPackages(name)),
-        share()
+        share(),
+        takeUntil(this.destroy$)
       );
 
     this.filteredPackages = merge(this.cleanFilteredPackages, getPackages);
@@ -167,6 +170,8 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
   ngOnDestroy() {
     this.cleanFilteredPackages.complete();
     this.cleanFilteredPackages = null;
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   getCurrentEntity(): OtaPackageInfo | null {
