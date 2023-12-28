@@ -333,12 +333,50 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
 
     @Override
     public Collection<Observation> addObservation(String registrationId, Observation observation, boolean addIfAbsent) {
-        return null;
+        List<Observation> removed = new ArrayList<>();
+        try (var connection = connectionFactory.getConnection()) {
+
+            // fetch the client ep by registration ID index
+            byte[] ep = connection.get(toRegIdKey(registrationId));
+            if (ep == null) {
+                return null;
+            }
+
+            Lock lock = null;
+            String lockKey = toLockKey(ep);
+
+            try {
+                lock = redisLock.obtain(lockKey);
+                lock.lock();
+
+                // cancel existing observations for the same path and registration id.
+                for (Observation obs : getObservations(connection, registrationId)) {
+                    //TODO: should be able to use CompositeObservation
+                    if (((SingleObservation)observation).getPath().equals(((SingleObservation)obs).getPath())
+                            && !observation.getId().equals(obs.getId())) {
+                        removed.add(obs);
+                        unsafeRemoveObservation(connection, registrationId, obs.getId().getBytes());
+                    }
+                }
+
+            } finally {
+                if (lock != null) {
+                    lock.unlock();
+                }
+            }
+        }
+        return removed;
     }
 
     @Override
+    public Collection<Observation> getObservations(String registrationId) {
+        try (var connection = connectionFactory.getConnection()) {
+            return getObservations(connection, registrationId);
+        }
+    }
+    @Override
     public Observation getObservation(String registrationId, ObservationIdentifier observationId) {
-        return null;
+        return getObservations(registrationId).stream().filter(o -> o.getId()==observationId).findFirst().get();
     }
 
     @Override
@@ -348,7 +386,7 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
 
     @Override
     public Observation removeObservation(String registrationId, ObservationIdentifier observationId) {
-        return null;
+        return removeObservation(registrationId, observationId.getBytes());
     }
 
     private Deregistration removeRegistration(RedisConnection connection, String registrationId, boolean removeOnlyIfNotAlive) {
@@ -461,42 +499,6 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
      * org.eclipse.californium.core.observe.ObservationStore#add method)
      */
 
-    public Collection<Observation> addObservation(String registrationId, Observation observation) {
-        List<Observation> removed = new ArrayList<>();
-        try (var connection = connectionFactory.getConnection()) {
-
-            // fetch the client ep by registration ID index
-            byte[] ep = connection.get(toRegIdKey(registrationId));
-            if (ep == null) {
-                return null;
-            }
-
-            Lock lock = null;
-            String lockKey = toLockKey(ep);
-
-            try {
-                lock = redisLock.obtain(lockKey);
-                lock.lock();
-
-                // cancel existing observations for the same path and registration id.
-                for (Observation obs : getObservations(connection, registrationId)) {
-                    //TODO: should be able to use CompositeObservation
-                    if (((SingleObservation)observation).getPath().equals(((SingleObservation)obs).getPath())
-                            && !observation.getId().equals(obs.getId())) {
-                        removed.add(obs);
-                        unsafeRemoveObservation(connection, registrationId, obs.getId().getBytes());
-                    }
-                }
-
-            } finally {
-                if (lock != null) {
-                    lock.unlock();
-                }
-            }
-        }
-        return removed;
-    }
-
     public Observation removeObservation(String registrationId, byte[] observationId) {
         try (var connection = connectionFactory.getConnection()) {
 
@@ -526,18 +528,6 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
                     lock.unlock();
                 }
             }
-        }
-    }
-
-    public Observation getObservation(String registrationId, byte[] observationId) {
-//        return build(get(new Token(observationId)));
-        return build(null);
-    }
-
-    @Override
-    public Collection<Observation> getObservations(String registrationId) {
-        try (var connection = connectionFactory.getConnection()) {
-            return getObservations(connection, registrationId);
         }
     }
 
