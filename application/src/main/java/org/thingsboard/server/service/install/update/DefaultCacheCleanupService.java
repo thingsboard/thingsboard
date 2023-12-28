@@ -94,6 +94,10 @@ public class DefaultCacheCleanupService implements CacheCleanupService {
                 clearCacheByName(SECURITY_SETTINGS_CACHE);
                 clearCacheByName(RESOURCE_INFO_CACHE);
                 break;
+            case "3.6.3":
+                log.info("Clearing cache to upgrade from version 3.6.3 to 3.7.0");
+                clearAll();
+                break;
             default:
                 //Do nothing, since cache cleanup is optional.
         }
