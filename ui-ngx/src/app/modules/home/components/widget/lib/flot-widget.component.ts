@@ -60,7 +60,9 @@ export class FlotWidgetComponent implements OnInit {
     this.settings = this.ctx.settings;
     this.chartType = this.chartType || 'line';
     this.configureLegend();
-    this.flot = new TbFlot(this.ctx, this.chartType, $(this.flotElement.nativeElement));
+    if (this.ctx.datasources?.length) {
+      this.flot = new TbFlot(this.ctx, this.chartType, $(this.flotElement.nativeElement));
+    }
   }
 
   private configureLegend(): void {

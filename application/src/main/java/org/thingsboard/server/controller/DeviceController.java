@@ -195,14 +195,14 @@ public class DeviceController extends BaseController {
                     "Requires to provide the Device Credentials object as well as an existing device profile ID or use \"default\".\n" +
                     "You may find the example of device with different type of credentials below: \n\n" +
                     "- Credentials type: <b>\"Access token\"</b> with <b>device profile ID</b> below: \n\n" +
-                    DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_ACCESS_TOKEN_DESCRIPTION_MARKDOWN  + "\n\n" +
+                    DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_ACCESS_TOKEN_DESCRIPTION_MARKDOWN + "\n\n" +
                     "- Credentials type: <b>\"Access token\"</b> with  <b>device profile default</b> below: \n\n" +
-                    DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_ACCESS_TOKEN_DEFAULT_DESCRIPTION_MARKDOWN  + "\n\n" +
+                    DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_ACCESS_TOKEN_DEFAULT_DESCRIPTION_MARKDOWN + "\n\n" +
                     "- Credentials type: <b>\"X509\"</b> with <b>device profile ID</b> below: \n\n" +
                     "Note: <b>credentialsId</b> -  format <b>Sha3Hash</b>, <b>certificateValue</b> - format <b>PEM</b> (with \"--BEGIN CERTIFICATE----\" and  -\"----END CERTIFICATE-\").\n\n" +
-                    DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_X509_CERTIFICATE_DESCRIPTION_MARKDOWN  + "\n\n" +
+                    DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_X509_CERTIFICATE_DESCRIPTION_MARKDOWN + "\n\n" +
                     "- Credentials type: <b>\"MQTT_BASIC\"</b> with <b>device profile ID</b> below: \n\n" +
-                    DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_MQTT_BASIC_DESCRIPTION_MARKDOWN  + "\n\n" +
+                    DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_MQTT_BASIC_DESCRIPTION_MARKDOWN + "\n\n" +
                     "- You may find the example of <b>LwM2M</b> device and <b>RPK</b> credentials below: \n\n" +
                     "Note: LwM2M device - only existing device profile ID (Transport configuration -> Transport type: \"LWM2M\".\n\n" +
                     DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION_MARKDOWN + "\n\n" +
@@ -230,7 +230,7 @@ public class DeviceController extends BaseController {
         checkParameter(DEVICE_ID, strDeviceId);
         DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
         Device device = checkDeviceId(deviceId, Operation.DELETE);
-        tbDeviceService.delete(device, getCurrentUser()).get();
+        tbDeviceService.delete(device, getCurrentUser());
     }
 
     @ApiOperation(value = "Assign device to customer (assignDeviceToCustomer)",
@@ -305,12 +305,12 @@ public class DeviceController extends BaseController {
                     "The structure of device credentials id and value is simple for the 'ACCESS_TOKEN' but is much more complex for the 'MQTT_BASIC' or 'LWM2M_CREDENTIALS'.\n" +
                     "You may find the example of device with different type of credentials below: \n\n" +
                     "- Credentials type: <b>\"Access token\"</b> with <b>device ID</b> and with <b>device ID</b> below: \n\n" +
-                    DEVICE_UPDATE_CREDENTIALS_PARAM_ACCESS_TOKEN_DESCRIPTION_MARKDOWN  + "\n\n" +
+                    DEVICE_UPDATE_CREDENTIALS_PARAM_ACCESS_TOKEN_DESCRIPTION_MARKDOWN + "\n\n" +
                     "- Credentials type: <b>\"X509\"</b> with <b>device profile ID</b> below: \n\n" +
                     "Note: <b>credentialsId</b> -  format <b>Sha3Hash</b>, <b>certificateValue</b> - format <b>PEM</b> (with \"--BEGIN CERTIFICATE----\" and  -\"----END CERTIFICATE-\").\n\n" +
-                    DEVICE_UPDATE_CREDENTIALS_PARAM_X509_CERTIFICATE_DESCRIPTION_MARKDOWN  + "\n\n" +
+                    DEVICE_UPDATE_CREDENTIALS_PARAM_X509_CERTIFICATE_DESCRIPTION_MARKDOWN + "\n\n" +
                     "- Credentials type: <b>\"MQTT_BASIC\"</b> with <b>device profile ID</b> below: \n\n" +
-                    DEVICE_UPDATE_CREDENTIALS_PARAM_MQTT_BASIC_DESCRIPTION_MARKDOWN  + "\n\n" +
+                    DEVICE_UPDATE_CREDENTIALS_PARAM_MQTT_BASIC_DESCRIPTION_MARKDOWN + "\n\n" +
                     "- You may find the example of <b>LwM2M</b> device and <b>RPK</b> credentials below: \n\n" +
                     "Note: LwM2M device - only existing device profile ID (Transport configuration -> Transport type: \"LWM2M\".\n\n" +
                     DEVICE_UPDATE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION_MARKDOWN + "\n\n" +
@@ -535,11 +535,12 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Get Device Types (getDeviceTypes)",
-            notes = "Returns a set of unique device profile names based on devices that are either owned by the tenant or assigned to the customer which user is performing the request."
-                    + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+            notes = "Deprecated. See 'getDeviceProfileNames' API from Device Profile Controller instead." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
+            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device/types", method = RequestMethod.GET)
     @ResponseBody
+    @Deprecated(since = "3.6.2")
     public List<EntitySubtype> getDeviceTypes() throws ThingsboardException, ExecutionException, InterruptedException {
         SecurityUser user = getCurrentUser();
         TenantId tenantId = user.getTenantId();

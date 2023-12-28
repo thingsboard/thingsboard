@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div [formGroup]="keyRowFormGroup" class="tb-form-table-row tb-data-key-row">
+<div [formGroup]="keyRowFormGroup" class="tb-form-table-row tb-data-key-row" [class]="{'tb-single-row': singleRow}">
   <mat-form-field *ngIf="hasAdditionalLatestDataKeys" class="tb-inline-field tb-source-field" appearance="outline" subscriptSizing="dynamic">
     <mat-select formControlName="latest">
       <mat-option [value]="false">{{ 'datakey.timeseries' | translate }}</mat-option>
@@ -23,8 +23,8 @@
     </mat-select>
   </mat-form-field>
   <mat-form-field class="tb-inline-field tb-key-field" subscriptSizing="dynamic">
-    <mat-chip-grid #chipList>
-      <mat-chip-row class="tb-datakey-chip" *ngIf="modelValue.type"
+    <mat-chip-grid #chipList [formControl]="keysFormControl">
+      <mat-chip-row class="tb-datakey-chip" *ngIf="modelValue?.type"
                     (removed)="removeKey()">
         <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="4px" class="tb-attribute-chip">
           <div class="tb-chip-labels">
@@ -67,8 +67,8 @@
              #keyInput
              [formControl]="keyFormControl"
              matAutocompleteOrigin
-             [fxHide]="!!modelValue.type"
-             [readonly]="!!modelValue.type"
+             [fxHide]="!!modelValue?.type"
+             [readonly]="!!modelValue?.type"
              #origin="matAutocompleteOrigin"
              [matAutocompleteConnectedTo]="origin"
              (focusin)="onKeyInputFocus()"
@@ -139,7 +139,7 @@
       </mat-option>
     </mat-autocomplete>
   </mat-form-field>
-  <mat-form-field class="tb-inline-field tb-label-field" appearance="outline" subscriptSizing="dynamic">
+  <mat-form-field *ngIf="!hideDataKeyLabel" class="tb-inline-field tb-label-field" appearance="outline" subscriptSizing="dynamic">
     <input matInput formControlName="label" placeholder="{{ 'widget-config.set' | translate }}">
   </mat-form-field>
   <div *ngIf="!hideDataKeyColor" class="tb-color-field">
@@ -147,25 +147,28 @@
                     formControlName="color">
     </tb-color-input>
   </div>
-  <div *ngIf="!hideUnits" class="tb-units-field">
+  <div *ngIf="!hideUnits && !hideDataKeyUnits && (!singleRow || displayUnitsOrDigits)" class="tb-units-field">
     <tb-unit-input *ngIf="displayUnitsOrDigits"
       formControlName="units">
     </tb-unit-input>
   </div>
-  <div *ngIf="!hideDecimals" class="tb-decimals-field">
+  <div *ngIf="!hideDecimals && !hideDataKeyDecimals && (!singleRow || displayUnitsOrDigits)" class="tb-decimals-field">
     <mat-form-field *ngIf="displayUnitsOrDigits" appearance="outline" class="tb-inline-field number" subscriptSizing="dynamic">
       <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+      <div *ngIf="singleRow" matSuffix fxHide.lt-md translate>widget-config.decimals-suffix</div>
     </mat-form-field>
   </div>
-  <div class="tb-form-table-row-cell-buttons">
-    <button fxHide.lt-lg
-            type="button"
-            mat-icon-button
-            (click)="editKey(true)"
-            [matTooltip]="keySettingsTitle"
-            matTooltipPosition="above">
-      <mat-icon>settings</mat-icon>
-    </button>
+  <div *ngIf="!singleRow" class="tb-form-table-row-cell-buttons">
+    <div fxHide.lt-lg class="tb-settings-button">
+      <button *ngIf="modelValue"
+              type="button"
+              mat-icon-button
+              (click)="editKey(true)"
+              [matTooltip]="keySettingsTitle"
+              matTooltipPosition="above">
+        <mat-icon>settings</mat-icon>
+      </button>
+    </div>
     <button type="button"
             mat-icon-button
             (click)="keyRemoved.emit()"

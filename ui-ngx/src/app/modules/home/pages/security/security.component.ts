@@ -213,6 +213,10 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
         errors.minLength = true;
       }
 
+      if (!value.length || this.passwordPolicy.maximumLength > 0 && value.length > this.passwordPolicy.maximumLength) {
+        errors.maxLength = true;
+      }
+
       return isEqual(errors, {}) ? null : errors;
     };
   }

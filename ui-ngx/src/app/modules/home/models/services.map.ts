@@ -33,7 +33,7 @@ import { UserService } from '@core/http/user.service';
 import { AlarmService } from '@core/http/alarm.service';
 import { Router } from '@angular/router';
 import { BroadcastService } from '@core/services/broadcast.service';
-import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { ImportExportService } from '@shared/import-export/import-export.service';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { AssetProfileService } from '@core/http/asset-profile.service';
 import { OtaPackageService } from '@core/http/ota-package.service';

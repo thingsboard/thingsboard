@@ -92,7 +92,7 @@ export class TimewindowConfigPanelComponent implements ControlValueAccessor, OnI
       timewindowStyle: [null, []]
     });
     this.timewindowConfig.valueChanges.subscribe(
-      (val) => this.propagateChange(val)
+      () => this.propagateChange(this.timewindowConfig.getRawValue())
     );
     this.timewindowConfig.get('useDashboardTimewindow').valueChanges.subscribe(() => {
       this.updateTimewindowConfigEnabledState();

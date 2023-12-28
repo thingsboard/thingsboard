@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.settings.UserSettings;
 import org.thingsboard.server.common.data.settings.UserSettingsType;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
@@ -130,6 +131,10 @@ public class SystemInfoController extends BaseController {
         }
         systemParams.setUserSettings(userSettingsNode);
         systemParams.setMaxDatapointsLimit(maxDatapointsLimit);
+        if (!currentUser.isSystemAdmin()) {
+            DefaultTenantProfileConfiguration tenantProfileConfiguration = tenantProfileCache.get(tenantId).getDefaultProfileConfiguration();
+            systemParams.setMaxResourceSize(tenantProfileConfiguration.getMaxResourceSize());
+        }
         return systemParams;
     }
 

@@ -98,7 +98,7 @@ public interface TransportService {
     void process(ValidateDeviceLwM2MCredentialsRequestMsg msg,
                  TransportServiceCallback<ValidateDeviceCredentialsResponse> callback);
 
-    void process(GetOrCreateDeviceFromGatewayRequestMsg msg,
+    void process(TenantId tenantId, GetOrCreateDeviceFromGatewayRequestMsg msg,
                  TransportServiceCallback<GetOrCreateDeviceFromGatewayResponse> callback);
 
     void process(ProvisionDeviceRequestMsg msg,

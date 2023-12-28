@@ -268,7 +268,7 @@ pre.tb-highlight {
   letter-spacing: normal;
 }
 
-.tb-timewindow-panel, .tb-legend-config-panel, .tb-filter-panel {
+.tb-timewindow-panel, .tb-legend-config-panel, .tb-filter-panel, .tb-panel-container {
   overflow: hidden;
   background: #fff;
   border-radius: 4px;
@@ -342,6 +342,12 @@ mat-label {
   }
 }
 
+mat-icon {
+  &.tb-error {
+    color: rgb(221, 44, 0);
+  }
+}
+
 .tb-error-messages {
   height: 24px; //30px
   margin-top: -6px;
@@ -354,6 +360,13 @@ mat-label {
   font-size: 12px;
   line-height: 14px;
   color: rgb(221, 44, 0);
+}
+
+.mat-mdc-tooltip.tb-error-tooltip {
+  .mdc-tooltip__surface {
+    background-color: rgba(209, 39, 48, 0.12);
+    color: rgba(209, 39, 48, 1);
+  }
 }
 
 .tb-autocomplete {

@@ -31,6 +31,8 @@ import java.util.UUID;
 @ToString(callSuper = true)
 public class EdgeEvent extends BaseData<EdgeEventId> {
 
+    private static final long serialVersionUID = 5548866356798094088L;
+
     private long seqId;
     private TenantId tenantId;
     private EdgeId edgeId;

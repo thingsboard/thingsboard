@@ -111,7 +111,7 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                 .setConnectRequestMsg(ConnectRequestMsg.newBuilder()
                         .setEdgeRoutingKey(edgeKey)
                         .setEdgeSecret(edgeSecret)
-                        .setEdgeVersion(EdgeVersion.V_3_6_0)
+                        .setEdgeVersion(EdgeVersion.V_3_6_2)
                         .setMaxInboundMessageSize(maxInboundMessageSize)
                         .build())
                 .build());

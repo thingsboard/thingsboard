@@ -119,6 +119,16 @@ public class DefaultExportableEntitiesService implements ExportableEntitiesServi
     }
 
     @Override
+    public <I extends EntityId> PageData<I> findEntitiesIdsByTenantId(TenantId tenantId, EntityType entityType, PageLink pageLink) {
+        ExportableEntityDao<I, ?> dao = getExportableEntityDao(entityType);
+        if (dao != null) {
+            return dao.findIdsByTenantId(tenantId.getId(), pageLink);
+        } else {
+            return new PageData<>();
+        }
+    }
+
+    @Override
     public <I extends EntityId> I getExternalIdByInternal(I internalId) {
         ExportableEntityDao<I, ?> dao = getExportableEntityDao(internalId.getEntityType());
         if (dao != null) {

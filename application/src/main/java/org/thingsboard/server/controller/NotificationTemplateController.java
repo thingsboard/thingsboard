@@ -150,7 +150,7 @@ public class NotificationTemplateController extends BaseController {
                                                                    @Parameter(description = "Comma-separated list of notification types to filter the templates")
                                                                    @RequestParam(required = false) NotificationType[] notificationTypes,
                                                                    @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
-        // generic permission
+        // PE: generic permission
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         if (notificationTypes == null || notificationTypes.length == 0) {
             notificationTypes = NotificationType.values();
@@ -180,7 +180,7 @@ public class NotificationTemplateController extends BaseController {
                                                           @Parameter(description = "Slack bot token. If absent - system Slack settings will be used")
                                                           @RequestParam(required = false) String token,
                                                           @AuthenticationPrincipal SecurityUser user) {
-        // generic permission
+        // PE: generic permission
         if (StringUtils.isEmpty(token)) {
             NotificationSettings settings = notificationSettingsService.findNotificationSettings(user.getTenantId());
             SlackNotificationDeliveryMethodConfig slackConfig = (SlackNotificationDeliveryMethodConfig)

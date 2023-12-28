@@ -102,7 +102,7 @@ public class OtaPackageServiceTest extends AbstractServiceTest {
 
         assertThatThrownBy(() -> createAndSaveFirmware(tenantId, "2"))
                 .isInstanceOf(DataValidationException.class)
-                .hasMessageContaining("Failed to create the ota package, files size limit is exhausted %d bytes!", DATA_SIZE);
+                .hasMessageContaining("Ota packages total size exceeds the maximum of %d bytes", DATA_SIZE);
     }
 
     @Test

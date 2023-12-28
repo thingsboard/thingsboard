@@ -19,7 +19,8 @@ import { DataKey, FormattedData, WidgetActionDescriptor, WidgetConfig } from '@s
 import { getDescendantProp, isDefined, isNotEmptyStr } from '@core/utils';
 import { AlarmDataInfo, alarmFields } from '@shared/models/alarm.models';
 import tinycolor from 'tinycolor2';
-import { Direction, EntityDataSortOrder, EntityKey } from '@shared/models/query/query.models';
+import { Direction } from '@shared/models/page/sort-order';
+import { EntityDataSortOrder, EntityKey } from '@shared/models/query/query.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { UtilsService } from '@core/services/utils.service';

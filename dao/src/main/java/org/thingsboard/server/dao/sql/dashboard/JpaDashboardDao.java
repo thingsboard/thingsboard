@@ -81,6 +81,16 @@ public class JpaDashboardDao extends JpaAbstractDao<DashboardEntity, Dashboard> 
     }
 
     @Override
+    public PageData<DashboardId> findIdsByTenantId(TenantId tenantId, PageLink pageLink) {
+        return DaoUtil.pageToPageData(dashboardRepository.findIdsByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)).map(DashboardId::new));
+    }
+
+    @Override
+    public PageData<DashboardId> findAllIds(PageLink pageLink) {
+        return DaoUtil.pageToPageData(dashboardRepository.findAllIds(DaoUtil.toPageable(pageLink)).map(DashboardId::new));
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.DASHBOARD;
     }

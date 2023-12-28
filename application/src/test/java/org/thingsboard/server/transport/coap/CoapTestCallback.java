@@ -25,9 +25,9 @@ import org.eclipse.californium.core.coap.CoAP;
 @Data
 public class CoapTestCallback implements CoapHandler {
 
-    protected Integer observe;
-    protected byte[] payloadBytes;
-    protected CoAP.ResponseCode responseCode;
+    protected volatile Integer observe;
+    protected volatile byte[] payloadBytes;
+    protected volatile CoAP.ResponseCode responseCode;
 
     public Integer getObserve() {
         return observe;

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.notification;
 
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.data.Offset;
@@ -25,9 +26,11 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.rule.engine.api.NotificationCenter;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -62,6 +65,7 @@ import org.thingsboard.server.common.data.notification.template.NotificationTemp
 import org.thingsboard.server.common.data.notification.template.SlackDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.SmsDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.WebDeliveryMethodNotificationTemplate;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.notification.DefaultNotifications;
 import org.thingsboard.server.dao.notification.NotificationDao;
@@ -74,6 +78,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -109,14 +114,12 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
     @Test
     public void testSubscribingToUnreadNotificationsCount() {
+        wsClient.subscribeForUnreadNotificationsCount().waitForReply(true);
         NotificationTarget notificationTarget = createNotificationTarget(customerUserId);
         String notificationText1 = "Notification 1";
         submitNotificationRequest(notificationTarget.getId(), notificationText1);
         String notificationText2 = "Notification 2";
         submitNotificationRequest(notificationTarget.getId(), notificationText2);
-
-        wsClient.subscribeForUnreadNotificationsCount();
-        wsClient.waitForReply(true);
 
         await().atMost(2, TimeUnit.SECONDS)
                 .until(() -> wsClient.getLastCountUpdate().getTotalUnreadCount() == 2);
@@ -277,6 +280,25 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         assertThat(wsClient.getUnreadCount()).isZero();
         loginCustomerUser();
         assertThat(getMyNotifications(false, 10)).size().isZero();
+    }
+
+    @Test
+    public void whenTenantIsDeleted_thenDeleteNotificationRequests() throws Exception {
+        createDifferentTenant();
+        TenantId tenantId = differentTenantId;
+        NotificationTarget target = createNotificationTarget(savedDifferentTenantUser.getId());
+        int notificationsCount = 20;
+        for (int i = 0; i < notificationsCount; i++) {
+            NotificationRequest request = submitNotificationRequest(target.getId(), "Test " + i, NotificationDeliveryMethod.WEB);
+            awaitNotificationRequest(request.getId());
+        }
+        List<NotificationRequest> requests = notificationRequestService.findNotificationRequestsByTenantIdAndOriginatorType(tenantId, EntityType.USER, new PageLink(100)).getData();
+        assertThat(requests).size().isEqualTo(notificationsCount);
+
+        deleteDifferentTenant();
+
+        assertThat(notificationRequestService.findNotificationRequestsByTenantIdAndOriginatorType(tenantId, EntityType.USER, new PageLink(1)).getTotalElements())
+                .isZero();
     }
 
     @Test
@@ -688,8 +710,23 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
     private NotificationRequestStats submitNotificationRequestAndWait(NotificationRequest notificationRequest) throws Exception {
         SettableFuture<NotificationRequestStats> future = SettableFuture.create();
-        notificationCenter.processNotificationRequest(notificationRequest.getTenantId(), notificationRequest, future::set);
+        notificationCenter.processNotificationRequest(notificationRequest.getTenantId(), notificationRequest, new FutureCallback<>() {
+            @Override
+            public void onSuccess(NotificationRequestStats result) {
+                future.set(result);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                future.setException(t);
+            }
+        });
         return future.get(30, TimeUnit.SECONDS);
+    }
+
+    private NotificationRequestStats awaitNotificationRequest(NotificationRequestId requestId) {
+        return await().atMost(30, TimeUnit.SECONDS)
+                .until(() -> getStats(requestId), Objects::nonNull);
     }
 
     private void checkFullNotificationsUpdate(UnreadNotificationsUpdate notificationsUpdate, String... expectedNotifications) {

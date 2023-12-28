@@ -16,7 +16,7 @@
 
 import { SubscriptionTimewindow } from '@shared/models/time/time.models';
 import { Datasource, DatasourceType } from '@shared/models/widget.models';
-import { PageData } from '@shared/models/page/page-data';
+import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { AlarmData, AlarmDataPageLink, KeyFilter } from '@shared/models/query/query.models';
 import { Injectable } from '@angular/core';
 import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
@@ -26,6 +26,7 @@ import {
   AlarmSubscriptionDataKey
 } from '@core/api/alarm-data-subscription';
 import { deepClone } from '@core/utils';
+import { of } from 'rxjs';
 
 export interface AlarmDataListener {
   subscriptionTimewindow?: SubscriptionTimewindow;
@@ -50,6 +51,7 @@ export class AlarmDataService {
     const alarmSource = listener.alarmSource;
     listener.alarmDataSubscriptionOptions = this.createAlarmSubscriptionOptions(listener, pageLink, keyFilters);
     if (alarmSource.type === DatasourceType.entity && (!alarmSource.entityFilter || !pageLink)) {
+      listener.alarmsLoaded(emptyPageData<AlarmData>(), 0, 0);
       return;
     }
     listener.subscription = new AlarmDataSubscription(listener, this.telemetryService);

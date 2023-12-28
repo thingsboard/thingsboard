@@ -36,7 +36,7 @@
                 (click)="changeSortDirection()"
                 [matTooltip]="getSortDirectionTooltipText()"
                 matTooltipPosition="above">
-          <mat-icon class="material-icons" [svgIcon]="getSortDirectionIcon()"></mat-icon>
+          <tb-icon class="material-icons">{{ getSortDirectionIcon() }}</tb-icon>
         </button>
         <button mat-icon-button
                 type="button"
