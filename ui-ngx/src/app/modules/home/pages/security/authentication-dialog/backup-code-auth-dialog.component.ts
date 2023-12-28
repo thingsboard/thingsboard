@@ -28,7 +28,7 @@ import {
   TwoFactorAuthProviderType
 } from '@shared/models/two-factor-auth.models';
 import { mergeMap, tap } from 'rxjs/operators';
-import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { ImportExportService } from '@shared/import-export/import-export.service';
 import { deepClone } from '@core/utils';
 
 import printTemplate from '!raw-loader!./backup-code-print-template.raw';

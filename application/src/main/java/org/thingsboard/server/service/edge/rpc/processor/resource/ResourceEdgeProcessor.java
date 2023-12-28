@@ -18,7 +18,6 @@ package org.thingsboard.server.service.edge.rpc.processor.resource;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -29,17 +28,17 @@ import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.ResourceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
-import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.constructor.resource.ResourceMsgConstructor;
 
 import java.util.UUID;
 
-@Component
 @Slf4j
-@TbCoreComponent
-public class ResourceEdgeProcessor extends BaseResourceProcessor {
+public abstract class ResourceEdgeProcessor extends BaseResourceProcessor implements ResourceProcessor {
 
+    @Override
     public ListenableFuture<Void> processResourceMsgFromEdge(TenantId tenantId, Edge edge, ResourceUpdateMsg resourceUpdateMsg) {
         TbResourceId tbResourceId = new TbResourceId(new UUID(resourceUpdateMsg.getIdMSB(), resourceUpdateMsg.getIdLSB()));
         try {
@@ -58,7 +57,7 @@ public class ResourceEdgeProcessor extends BaseResourceProcessor {
                     return handleUnsupportedMsgType(resourceUpdateMsg.getMsgType());
             }
         } catch (DataValidationException e) {
-            if (e.getMessage().contains("files size limit is exhausted")) {
+            if (e.getMessage().contains("exceeds the maximum")) {
                 log.warn("[{}] Resource data size has been exhausted {}", tenantId, resourceUpdateMsg, e);
                 return Futures.immediateFuture(null);
             } else {
@@ -70,7 +69,8 @@ public class ResourceEdgeProcessor extends BaseResourceProcessor {
         return Futures.immediateFuture(null);
     }
 
-    public DownlinkMsg convertResourceEventToDownlink(EdgeEvent edgeEvent) {
+    @Override
+    public DownlinkMsg convertResourceEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         TbResourceId tbResourceId = new TbResourceId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
@@ -79,17 +79,17 @@ public class ResourceEdgeProcessor extends BaseResourceProcessor {
                 TbResource tbResource = resourceService.findResourceById(edgeEvent.getTenantId(), tbResourceId);
                 if (tbResource != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    ResourceUpdateMsg resourceUpdateMsg =
-                            resourceMsgConstructor.constructResourceUpdatedMsg(msgType, tbResource);
-                    downlinkMsg = DownlinkMsg.newBuilder()
+                    ResourceUpdateMsg resourceUpdateMsg = ((ResourceMsgConstructor)
+                            resourceMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructResourceUpdatedMsg(msgType, tbResource);
+                    downlinkMsg = resourceUpdateMsg != null ? DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addResourceUpdateMsg(resourceUpdateMsg)
-                            .build();
+                            .build() : null;
                 }
                 break;
             case DELETED:
-                ResourceUpdateMsg resourceUpdateMsg =
-                        resourceMsgConstructor.constructResourceDeleteMsg(tbResourceId);
+                ResourceUpdateMsg resourceUpdateMsg = ((ResourceMsgConstructor)
+                        resourceMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructResourceDeleteMsg(tbResourceId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addResourceUpdateMsg(resourceUpdateMsg)

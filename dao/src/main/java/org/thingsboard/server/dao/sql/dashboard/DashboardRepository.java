@@ -43,4 +43,7 @@ public interface DashboardRepository extends JpaRepository<DashboardEntity, UUID
     @Query("SELECT d.id FROM DashboardEntity d WHERE d.tenantId = :tenantId")
     Page<UUID> findIdsByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
 
+    @Query("SELECT d.id FROM DashboardEntity d")
+    Page<UUID> findAllIds(Pageable pageable);
+
 }

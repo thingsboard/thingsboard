@@ -240,11 +240,10 @@
               <mat-tab label="{{ 'widget.widget-settings' | translate }}">
                 <div class="tb-resize-container" style="background-color: #fff;">
                   <div class="mat-padding">
-                    <tb-image-input fxFlex label="{{'widget.image-preview' | translate}}"
-                                    maxSizeByte="524288"
+                    <tb-gallery-image-input fxFlex label="{{'widget.image-preview' | translate}}"
                                     [(ngModel)]="widget.image"
                                     (ngModelChange)="isDirty = true" >
-                    </tb-image-input>
+                    </tb-gallery-image-input>
                     <mat-form-field class="mat-block">
                       <mat-label translate>widget.description</mat-label>
                       <textarea matInput #descriptionInput

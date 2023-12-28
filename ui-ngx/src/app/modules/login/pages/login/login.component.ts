@@ -32,6 +32,8 @@ import { OAuth2ClientInfo } from '@shared/models/oauth2.models';
 })
 export class LoginComponent extends PageComponent implements OnInit {
 
+  passwordViolation = false;
+
   loginFormGroup = this.fb.group({
     username: '',
     password: ''
@@ -57,6 +59,8 @@ export class LoginComponent extends PageComponent implements OnInit {
           if (error && error.error && error.error.errorCode) {
             if (error.error.errorCode === Constants.serverErrorCode.credentialsExpired) {
               this.router.navigateByUrl(`login/resetExpiredPassword?resetToken=${error.error.resetToken}`);
+            } else if (error.error.errorCode === Constants.serverErrorCode.passwordViolation) {
+              this.passwordViolation = true;
             }
           }
         }

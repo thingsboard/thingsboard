@@ -1058,7 +1058,9 @@ export class TbFlot {
       const series = this.subscription.data[i] as TbFlotSeries;
       this.substituteLabelPatterns(series, i);
     }
-    this.updateData();
+    if (this.plot) {
+      this.updateData();
+    }
     this.ctx.detectChanges();
   }
 
