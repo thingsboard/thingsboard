@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.settings.UserNotificationSettings;
@@ -70,6 +71,9 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
     @CacheEvict(cacheNames = CacheConstants.NOTIFICATION_SETTINGS_CACHE, key = "#tenantId")
     @Override
     public void saveNotificationSettings(TenantId tenantId, NotificationSettings settings) {
+        if (!tenantId.isSysTenantId() && settings.getDeliveryMethodsConfigs().containsKey(NotificationDeliveryMethod.MOBILE_APP)) {
+            throw new IllegalArgumentException("Mobile settings can only be configured by system administrator");
+        }
         AdminSettings adminSettings = Optional.ofNullable(adminSettingsService.findAdminSettingsByTenantIdAndKey(tenantId, SETTINGS_KEY))
                 .orElseGet(() -> {
                     AdminSettings newAdminSettings = new AdminSettings();

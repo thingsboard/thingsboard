@@ -66,8 +66,8 @@ public class MobileAppNotificationChannel implements NotificationChannel<User, M
 
     @Override
     public void check(TenantId tenantId) throws Exception {
-        NotificationSettings settings = notificationSettingsService.findNotificationSettings(tenantId);
-        if (!settings.getDeliveryMethodsConfigs().containsKey(NotificationDeliveryMethod.MOBILE_APP)) {
+        NotificationSettings systemSettings = notificationSettingsService.findNotificationSettings(TenantId.SYS_TENANT_ID);
+        if (!systemSettings.getDeliveryMethodsConfigs().containsKey(NotificationDeliveryMethod.MOBILE_APP)) {
             throw new RuntimeException("Push-notifications to mobile are not configured");
         }
     }

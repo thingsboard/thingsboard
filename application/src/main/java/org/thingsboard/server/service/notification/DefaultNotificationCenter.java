@@ -154,6 +154,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
             }
         }
         NotificationSettings settings = notificationSettingsService.findNotificationSettings(tenantId);
+        NotificationSettings systemSettings = tenantId.isSysTenantId() ? settings : notificationSettingsService.findNotificationSettings(TenantId.SYS_TENANT_ID);
 
         log.debug("Processing notification request (tenantId: {}, targets: {})", tenantId, request.getTargets());
         request.setStatus(NotificationRequestStatus.PROCESSING);
@@ -165,6 +166,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                 .deliveryMethods(deliveryMethods)
                 .template(notificationTemplate)
                 .settings(settings)
+                .systemSettings(systemSettings)
                 .build();
 
         processNotificationRequestAsync(ctx, targets, callback);
