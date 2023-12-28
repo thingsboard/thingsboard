@@ -263,7 +263,7 @@ export class DatasourceComponent implements ControlValueAccessor, OnInit, Valida
   }
 
   public isDataKeysOptional(type?: DatasourceType): boolean {
-    if (this.hasAdditionalLatestDataKeys) {
+    if (this.hasAdditionalLatestDataKeys || this.hideDataKeys) {
       return true;
     } else {
       return this.dataKeysOptional

@@ -39,7 +39,8 @@ public enum EdgeEventType {
     WIDGET_TYPE(true, EntityType.WIDGET_TYPE),
     ADMIN_SETTINGS(true, null),
     OTA_PACKAGE(true, EntityType.OTA_PACKAGE),
-    QUEUE(true, EntityType.QUEUE);
+    QUEUE(true, EntityType.QUEUE),
+    TB_RESOURCE(true, EntityType.TB_RESOURCE);
 
     private final boolean allEdgesRelated;
 

@@ -154,7 +154,7 @@ public class AssetController extends BaseController {
         checkParameter(ASSET_ID, strAssetId);
         AssetId assetId = new AssetId(toUUID(strAssetId));
         Asset asset = checkAssetId(assetId, Operation.DELETE);
-        tbAssetService.delete(asset, getCurrentUser()).get();
+        tbAssetService.delete(asset, getCurrentUser());
     }
 
     @ApiOperation(value = "Assign asset to customer (assignAssetToCustomer)",
@@ -398,10 +398,12 @@ public class AssetController extends BaseController {
     }
 
     @ApiOperation(value = "Get Asset Types (getAssetTypes)",
-            notes = "Returns a set of unique asset types based on assets that are either owned by the tenant or assigned to the customer which user is performing the request.", responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+            notes = "Deprecated. See 'getAssetProfileNames' API from Asset Profile Controller instead." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
+            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/asset/types", method = RequestMethod.GET)
     @ResponseBody
+    @Deprecated(since = "3.6.2")
     public List<EntitySubtype> getAssetTypes() throws ThingsboardException, ExecutionException, InterruptedException {
         SecurityUser user = getCurrentUser();
         TenantId tenantId = user.getTenantId();

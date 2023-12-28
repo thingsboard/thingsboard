@@ -18,6 +18,7 @@ package org.thingsboard.server.service.ws.telemetry.cmd.v1;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.thingsboard.server.service.ws.WsCmdType;
 
 /**
  * @author Andrew Shvayka
@@ -37,4 +38,8 @@ public class GetHistoryCmd implements TelemetryPluginCmd {
     private int limit;
     private String agg;
 
+    @Override
+    public WsCmdType getType() {
+        return WsCmdType.TIMESERIES_HISTORY;
+    }
 }

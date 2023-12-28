@@ -28,6 +28,7 @@ public class TenantWidgetsBundlesEdgeEventFetcher extends BaseWidgetsBundlesEdge
     public TenantWidgetsBundlesEdgeEventFetcher(WidgetsBundleService widgetsBundleService) {
         super(widgetsBundleService);
     }
+
     @Override
     protected PageData<WidgetsBundle> findWidgetsBundles(TenantId tenantId, PageLink pageLink) {
         return widgetsBundleService.findTenantWidgetsBundlesByTenantId(tenantId, pageLink);

@@ -71,6 +71,7 @@ public class HashPartitionService implements PartitionService {
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TenantRoutingInfoService tenantRoutingInfoService;
     private final QueueRoutingInfoService queueRoutingInfoService;
+    private final TopicService topicService;
 
     protected volatile ConcurrentMap<QueueKey, List<Integer>> myPartitions = new ConcurrentHashMap<>();
 
@@ -88,11 +89,13 @@ public class HashPartitionService implements PartitionService {
     public HashPartitionService(TbServiceInfoProvider serviceInfoProvider,
                                 TenantRoutingInfoService tenantRoutingInfoService,
                                 ApplicationEventPublisher applicationEventPublisher,
-                                QueueRoutingInfoService queueRoutingInfoService) {
+                                QueueRoutingInfoService queueRoutingInfoService,
+                                TopicService topicService) {
         this.serviceInfoProvider = serviceInfoProvider;
         this.tenantRoutingInfoService = tenantRoutingInfoService;
         this.applicationEventPublisher = applicationEventPublisher;
         this.queueRoutingInfoService = queueRoutingInfoService;
+        this.topicService = topicService;
     }
 
     @PostConstruct
@@ -116,6 +119,11 @@ public class HashPartitionService implements PartitionService {
         if (isTransport(serviceInfoProvider.getServiceType())) {
             doInitRuleEnginePartitions();
         }
+    }
+
+    @Override
+    public List<Integer> getMyPartitions(QueueKey queueKey) {
+        return myPartitions.get(queueKey);
     }
 
     private void doInitRuleEnginePartitions() {
@@ -420,7 +428,7 @@ public class HashPartitionService implements PartitionService {
 
     private TopicPartitionInfo buildTopicPartitionInfo(QueueKey queueKey, int partition) {
         TopicPartitionInfo.TopicPartitionInfoBuilder tpi = TopicPartitionInfo.builder();
-        tpi.topic(partitionTopicsMap.get(queueKey));
+        tpi.topic(topicService.buildTopicName(partitionTopicsMap.get(queueKey)));
         tpi.partition(partition);
         tpi.tenantId(queueKey.getTenantId());
 
@@ -526,11 +534,7 @@ public class HashPartitionService implements PartitionService {
                 servers = responsible;
             }
 
-            int hash = hashFunction.newHasher()
-                    .putLong(tenantId.getId().getMostSignificantBits())
-                    .putLong(tenantId.getId().getLeastSignificantBits())
-                    .putString(queueKey.getQueueName(), StandardCharsets.UTF_8)
-                    .hash().asInt();
+            int hash = hash(tenantId.getId());
             return servers.get(Math.abs((hash + partition) % servers.size()));
         } else {
             return servers.get(partition % servers.size());

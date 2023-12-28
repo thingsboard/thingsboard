@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.device.DeviceConnectivityService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 import java.io.IOException;
@@ -50,7 +51,8 @@ import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID_PA
 import static org.thingsboard.server.controller.ControllerConstants.PROTOCOL;
 import static org.thingsboard.server.controller.ControllerConstants.PROTOCOL_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
-import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.PEM_CERT_FILE_NAME;
+import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.CA_ROOT_CERT_PEM;
+import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.DOCKER_COMPOSE_YML;
 
 @RestController
 @TbCoreComponent
@@ -103,45 +105,6 @@ public class DeviceConnectivityController extends BaseController {
         return deviceConnectivityService.findDevicePublishTelemetryCommands(baseUrl, device);
     }
 
-    @ApiOperation(value = "Get commands to launch gateway (getGatewayLaunchCommands)",
-            notes = "Fetch the list of commands for different operation systems to launch a gateway using docker." +
-                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "OK",
-                            content = @Content(
-                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
-                                    examples = {
-                                            @ExampleObject(
-                                                    name = "mqtt-linux",
-                                                    value = "docker run --rm -it -v ~/.tb-gateway/logs:/thingsboard_gateway/logs -v ~/.tb-gateway/extensions:/thingsboard_gateway/extensions -v ~/.tb-gateway/config:/thingsboard_gateway/config --name tbGateway127001 -e host=localhost -e port=1883 -e accessToken=qTe5oDBHPJf0KCSKO8J3 --restart always thingsboard/tb-gateway"
-                                            ),
-                                            @ExampleObject(
-                                                    name = "mqtt-windows",
-                                                    value = "docker run --rm -it -v %HOMEPATH%/tb-gateway/logs:/thingsboard_gateway/logs -v %HOMEPATH%/tb-gateway/extensions:/thingsboard_gateway/extensions -v %HOMEPATH%/tb-gateway/config:/thingsboard_gateway/config --name tbGateway127001 -e host=localhost -e port=1883 -e accessToken=qTe5oDBHPJf0KCSKO8J3 --restart always thingsboard/tb-gateway"
-                                            )
-                                    }
-                            )
-                    )
-            })
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/device-connectivity/gateway-launch/{deviceId}", method = RequestMethod.GET)
-    @ResponseBody
-    public JsonNode getGatewayLaunchCommands(@Parameter(description = DEVICE_ID_PARAM_DESCRIPTION)
-                                             @PathVariable(DEVICE_ID) String strDeviceId, HttpServletRequest request) throws ThingsboardException, URISyntaxException {
-        checkParameter(DEVICE_ID, strDeviceId);
-        DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
-        Device device = checkDeviceId(deviceId, org.thingsboard.server.service.security.permission.Operation.READ_CREDENTIALS);
-
-        if (!checkIsGateway(device)) {
-            throw new ThingsboardException("The device must be a gateway!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-        }
-
-        String baseUrl = systemSecurityService.getBaseUrl(getTenantId(), getCurrentUser().getCustomerId(), request);
-        return deviceConnectivityService.findGatewayLaunchCommands(baseUrl, device);
-    }
-
     @ApiOperation(value = "Download server certificate using file path defined in device.connectivity properties (downloadServerCertificate)", notes = "Download server certificate.")
     @RequestMapping(value = "/device-connectivity/{protocol}/certificate/download", method = RequestMethod.GET)
     @ResponseBody
@@ -152,11 +115,35 @@ public class DeviceConnectivityController extends BaseController {
                 checkNotNull(deviceConnectivityService.getPemCertFile(protocol), protocol + " pem cert file is not found!");
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + PEM_CERT_FILE_NAME)
-                .header("x-filename", PEM_CERT_FILE_NAME)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + CA_ROOT_CERT_PEM)
+                .header("x-filename", CA_ROOT_CERT_PEM)
                 .contentLength(pemCert.contentLength())
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(pemCert);
+    }
+
+    @ApiOperation(value = "Download generated docker-compose.yml file for gateway (downloadGatewayDockerCompose)", notes = "Download generated docker-compose.yml for gateway.")
+    @RequestMapping(value = "/device-connectivity/gateway-launch/{deviceId}/docker-compose/download", method = RequestMethod.GET)
+    @ResponseBody
+    public ResponseEntity<org.springframework.core.io.Resource> downloadGatewayDockerCompose(@Parameter(description = DEVICE_ID_PARAM_DESCRIPTION)
+                                                                                             @PathVariable(DEVICE_ID) String strDeviceId, HttpServletRequest request) throws ThingsboardException, URISyntaxException, IOException {
+        checkParameter(DEVICE_ID, strDeviceId);
+        DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
+        Device device = checkDeviceId(deviceId, Operation.READ_CREDENTIALS);
+
+        if (!checkIsGateway(device)) {
+            throw new ThingsboardException("The device must be a gateway!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
+
+        String baseUrl = systemSecurityService.getBaseUrl(getTenantId(), getCurrentUser().getCustomerId(), request);
+        var dockerCompose = checkNotNull(deviceConnectivityService.createGatewayDockerComposeFile(baseUrl, device), "Failed to create docker-compose.yml file!");
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + DOCKER_COMPOSE_YML)
+                .header("x-filename", DOCKER_COMPOSE_YML)
+                .contentLength(dockerCompose.contentLength())
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(dockerCompose);
     }
 
     private static boolean checkIsGateway(Device device) {

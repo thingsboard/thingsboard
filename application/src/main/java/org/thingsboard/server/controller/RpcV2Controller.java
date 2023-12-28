@@ -49,7 +49,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.exception.ToErrorResponseEntity;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.rpc.RemoveRpcActorMsg;
+import org.thingsboard.server.common.msg.rpc.RemoveRpcActorMsg;
 import org.thingsboard.server.service.security.permission.Operation;
 
 import java.util.UUID;

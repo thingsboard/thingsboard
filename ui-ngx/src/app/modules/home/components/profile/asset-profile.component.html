@@ -83,11 +83,10 @@
         [ruleChainType]="edgeRuleChainType">
         <span tb-hint>{{'asset-profile.default-edge-rule-chain-hint' | translate}}</span>
       </tb-rule-chain-autocomplete>
-      <tb-image-input fxFlex
+      <tb-gallery-image-input fxFlex
                       label="{{'asset-profile.image' | translate}}"
-                      maxSizeByte="524288"
                       formControlName="image">
-      </tb-image-input>
+      </tb-gallery-image-input>
       <mat-form-field class="mat-block">
         <mat-label translate>asset-profile.description</mat-label>
         <textarea matInput formControlName="description" rows="2"></textarea>

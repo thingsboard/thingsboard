@@ -77,18 +77,17 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
     public void process(NotificationRuleTrigger trigger) {
         NotificationRuleTriggerType triggerType = trigger.getType();
         TenantId tenantId = triggerType.isTenantLevel() ? trigger.getTenantId() : TenantId.SYS_TENANT_ID;
-
-        try {
-            List<NotificationRule> enabledRules = notificationRulesCache.getEnabled(tenantId, triggerType);
-            if (enabledRules.isEmpty()) {
-                return;
-            }
-            if (trigger.deduplicate()) {
-                enabledRules = new ArrayList<>(enabledRules);
-                enabledRules.removeIf(rule -> deduplicationService.alreadyProcessed(trigger, rule));
-            }
-            final List<NotificationRule> rules = enabledRules;
-            notificationExecutor.submit(() -> {
+        notificationExecutor.submit(() -> {
+            try {
+                List<NotificationRule> enabledRules = notificationRulesCache.getEnabled(tenantId, triggerType);
+                if (enabledRules.isEmpty()) {
+                    return;
+                }
+                if (trigger.deduplicate()) {
+                    enabledRules = new ArrayList<>(enabledRules);
+                    enabledRules.removeIf(rule -> deduplicationService.alreadyProcessed(trigger, rule));
+                }
+                final List<NotificationRule> rules = enabledRules;
                 for (NotificationRule rule : rules) {
                     try {
                         processNotificationRule(rule, trigger);
@@ -96,10 +95,10 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
                         log.error("Failed to process notification rule {} for trigger type {} with trigger object {}", rule.getId(), rule.getTriggerType(), trigger, e);
                     }
                 }
-            });
-        } catch (Throwable e) {
-            log.error("Failed to process notification rules for trigger: {}", trigger, e);
-        }
+            } catch (Throwable e) {
+                log.error("Failed to process notification rules for trigger: {}", trigger, e);
+            }
+        });
     }
 
     private void processNotificationRule(NotificationRule rule, NotificationRuleTrigger trigger) {

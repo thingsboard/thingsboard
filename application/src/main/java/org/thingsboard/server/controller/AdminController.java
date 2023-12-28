@@ -169,7 +169,7 @@ public class AdminController extends BaseController {
     @ResponseBody
     public SecuritySettings getSecuritySettings() throws ThingsboardException {
         accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
-        return checkNotNull(systemSecurityService.getSecuritySettings(TenantId.SYS_TENANT_ID));
+        return checkNotNull(systemSecurityService.getSecuritySettings());
     }
 
     @ApiOperation(value = "Update Security Settings (saveSecuritySettings)",
@@ -181,7 +181,7 @@ public class AdminController extends BaseController {
             @Parameter(description = "A JSON value representing the Security Settings.")
             @RequestBody SecuritySettings securitySettings) throws ThingsboardException {
         accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.WRITE);
-        securitySettings = checkNotNull(systemSecurityService.saveSecuritySettings(TenantId.SYS_TENANT_ID, securitySettings));
+        securitySettings = checkNotNull(systemSecurityService.saveSecuritySettings(securitySettings));
         return securitySettings;
     }
 

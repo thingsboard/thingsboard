@@ -80,6 +80,22 @@ public class JpaRuleNodeDao extends JpaAbstractDao<RuleNodeEntity, RuleNode> imp
     }
 
     @Override
+    public PageData<RuleNodeId> findAllRuleNodeIdsByTypeAndVersionLessThan(String type, int version, PageLink pageLink) {
+        return DaoUtil.pageToPageData(ruleNodeRepository
+                        .findAllRuleNodeIdsByTypeAndVersionLessThan(
+                                type,
+                                version,
+                                DaoUtil.toPageable(pageLink)))
+                .mapData(RuleNodeId::new);
+    }
+
+    @Override
+    public List<RuleNode> findAllRuleNodeByIds(List<RuleNodeId> ruleNodeIds) {
+        return DaoUtil.convertDataList(ruleNodeRepository.findAllById(
+                ruleNodeIds.stream().map(RuleNodeId::getId).collect(Collectors.toList())));
+    }
+
+    @Override
     public List<RuleNode> findByExternalIds(RuleChainId ruleChainId, List<RuleNodeId> externalIds) {
         return DaoUtil.convertDataList(ruleNodeRepository.findRuleNodesByRuleChainIdAndExternalIdIn(ruleChainId.getId(),
                 externalIds.stream().map(RuleNodeId::getId).collect(Collectors.toList())));

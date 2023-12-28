@@ -36,7 +36,12 @@ public interface RuleNodeDao extends Dao<RuleNode> {
 
     PageData<RuleNode> findAllRuleNodesByTypeAndVersionLessThan(String type, int version, PageLink pageLink);
 
+    PageData<RuleNodeId> findAllRuleNodeIdsByTypeAndVersionLessThan(String type, int version, PageLink pageLink);
+
+    List<RuleNode> findAllRuleNodeByIds(List<RuleNodeId> ruleNodeIds);
+
     List<RuleNode> findByExternalIds(RuleChainId ruleChainId, List<RuleNodeId> externalIds);
 
     void deleteByIdIn(List<RuleNodeId> ruleNodeIds);
+
 }

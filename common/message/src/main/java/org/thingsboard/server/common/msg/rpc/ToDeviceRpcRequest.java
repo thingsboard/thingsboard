@@ -29,6 +29,9 @@ import java.util.UUID;
  */
 @Data
 public class ToDeviceRpcRequest implements Serializable {
+
+    private static final long serialVersionUID = -7089247105087346214L;
+
     private final UUID id;
     private final TenantId tenantId;
     private final DeviceId deviceId;
@@ -40,4 +43,3 @@ public class ToDeviceRpcRequest implements Serializable {
     @JsonIgnore
     private final String additionalInfo;
 }
-

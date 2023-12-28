@@ -24,7 +24,11 @@
          formControlName="dashboard"
          (focusin)="onFocus()"
          [required]="required"
-         [matAutocomplete]="dashboardAutocomplete">
+         [matAutocomplete]="dashboardAutocomplete"
+         [fxShow]="!useDashboardLink || !disabled || !selectDashboardFormGroup.get('dashboard').value">
+  <a *ngIf="useDashboardLink && selectDashboardFormGroup.get('dashboard').value && disabled" aria-label="Open device profile" [routerLink]=dashboardURL>
+    {{ displayDashboardFn(selectDashboardFormGroup.get('dashboard').value) }}
+  </a>
   <button *ngIf="selectDashboardFormGroup.get('dashboard').value && !disabled"
           type="button"
           matSuffix mat-icon-button aria-label="Clear"
