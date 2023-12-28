@@ -250,28 +250,6 @@ public class EventController extends BaseController {
         eventService.removeEvents(getTenantId(), entityId, eventFilter, startTime, endTime);
     }
 
-    @ApiOperation(value = "Clear Events (clearEvents)", notes = "Clears events by filter for specified entity.")
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/events/{entityType}/{entityId}/clear", method = RequestMethod.POST)
-    @ResponseStatus(HttpStatus.OK)
-    public void clearRuleChainDebugEvents(@ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
-                            @PathVariable(ENTITY_TYPE) String strEntityType,
-                            @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true)
-                            @PathVariable(ENTITY_ID) String strEntityId,
-                            @ApiParam(value = EVENT_START_TIME_DESCRIPTION)
-                            @RequestParam(required = false) Long startTime,
-                            @ApiParam(value = EVENT_END_TIME_DESCRIPTION)
-                            @RequestParam(required = false) Long endTime,
-                            @ApiParam(value = EVENT_FILTER_DEFINITION)
-                            @RequestBody EventFilter eventFilter) throws ThingsboardException {
-        checkParameter("EntityId", strEntityId);
-        checkParameter("EntityType", strEntityType);
-        EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
-        checkEntityId(entityId, Operation.WRITE);
-
-        eventService.removeEvents(getTenantId(), entityId, eventFilter, startTime, endTime);
-    }
-
     private static EventType resolveEventType(String eventType) throws ThingsboardException {
         for (var et : EventType.values()) {
             if (et.name().equalsIgnoreCase(eventType) || et.getOldName().equalsIgnoreCase(eventType)) {

@@ -21,29 +21,39 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.EventInfo;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.event.Event;
 import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.event.RuleNodeDebugEvent;
+import org.thingsboard.server.common.data.event.RuleNodeDebugEventFilter;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EventId;
+import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.event.EventService;
+import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
 
 import java.text.ParseException;
 import java.util.List;
 
 import static org.apache.commons.lang3.time.DateFormatUtils.ISO_DATETIME_TIME_ZONE_FORMAT;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class BaseEventServiceTest extends AbstractServiceTest {
 
     @Autowired
     EventService eventService;
+    @Autowired
+    RuleChainService ruleChainService;
 
     long timeBeforeStartTime;
     long startTime;
@@ -130,6 +140,44 @@ public abstract class BaseEventServiceTest extends AbstractServiceTest {
         Assert.assertFalse(events.hasNext());
 
         eventService.cleanupEvents(timeBeforeStartTime - 1, timeAfterEndTime + 1, true);
+    }
+
+    @Test
+    public void removeEventsByRuleChainId() throws Exception {
+        var ruleChain = new RuleChain();
+        ruleChain.setTenantId(tenantId);
+        ruleChain.setName(StringUtils.randomAlphabetic(8));
+        RuleChainId ruleChainId = ruleChainService.saveRuleChain(ruleChain).getId();
+
+        RuleNodeId ruleNodeId = ruleChainService.saveRuleNode(tenantId, createRuleNode(ruleChainId)).getId();
+        RuleNodeId ruleNodeId2 = ruleChainService.saveRuleNode(tenantId, createRuleNode(ruleChainId)).getId();
+
+        saveEventWithProvidedTime(timeBeforeStartTime, ruleNodeId, tenantId);
+        saveEventWithProvidedTime(eventTime, ruleNodeId, tenantId);
+        saveEventWithProvidedTime(eventTime + 1, ruleNodeId2, tenantId);
+
+        eventService.removeEvents(tenantId, ruleChainId, new RuleNodeDebugEventFilter(), startTime, endTime);
+
+        TimePageLink timePageLink = new TimePageLink(2, 0, "", new SortOrder("ts", SortOrder.Direction.DESC), startTime, endTime);
+        PageData<EventInfo> events = eventService.findEvents(tenantId, ruleNodeId, EventType.DEBUG_RULE_NODE, timePageLink);
+        assertThat(events.getData()).isEmpty();
+        PageData<EventInfo> events2 = eventService.findEvents(tenantId, ruleNodeId2, EventType.DEBUG_RULE_NODE, timePageLink);
+        assertThat(events2.getData()).isEmpty();
+
+        TimePageLink timePageLink2 = new TimePageLink(2, 0, "", new SortOrder("ts", SortOrder.Direction.DESC), timeBeforeStartTime, endTime);
+        PageData<EventInfo> events3 = eventService.findEvents(tenantId, ruleNodeId, EventType.DEBUG_RULE_NODE, timePageLink2);
+        assertThat(events3.getData()).hasSize(1);
+
+        eventService.cleanupEvents(timeBeforeStartTime - 1, timeAfterEndTime + 1, true);
+    }
+
+    private RuleNode createRuleNode(RuleChainId ruleChainId) {
+        RuleNode ruleNode = new RuleNode();
+        ruleNode.setRuleChainId(ruleChainId);
+        ruleNode.setName("suffix");
+        ruleNode.setType("T");
+        ruleNode.setConfigurationVersion(0);
+        return ruleNode;
     }
 
     private Event saveEventWithProvidedTime(long time, EntityId entityId, TenantId tenantId) throws Exception {
