@@ -55,6 +55,8 @@ server:
 
 # Spring common parameters
 spring.main.allow-circular-references: "true" # Spring Boot configuration property that controls whether circular dependencies between beans are allowed.
+spring.servlet.multipart.max-file-size: "${SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE:50MB}" # Total file size cannot exceed 50MB when configuring file uploads
+spring.servlet.multipart.max-request-size: "${SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE:50MB}" # Total request size for a multipart/form-data cannot exceed 50MB
 
 # Zookeeper connection parameters. Used for service discovery.
 zk:

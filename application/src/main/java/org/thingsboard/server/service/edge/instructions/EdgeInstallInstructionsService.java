@@ -18,7 +18,7 @@ package org.thingsboard.server.service.edge.instructions;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInstructions;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 public interface EdgeInstallInstructionsService {
 

@@ -30,10 +30,10 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.ImageDescriptor;
 import org.thingsboard.server.common.data.ImageExportData;
 import org.thingsboard.server.common.data.ResourceType;
+import org.thingsboard.server.common.data.SystemParams;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.controller.ImageController.ImageSpecs;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.sql.resource.TbResourceRepository;
 
@@ -243,24 +243,24 @@ public class ImageControllerTest extends AbstractControllerTest {
 
     @Test
     public void testGetImageUploadSpecs() throws Exception {
-        ImageSpecs specs = doGet("/api/image/specs", ImageSpecs.class);
-        assertThat(specs.getMaximumSize()).isZero();
+        SystemParams systemParams = doGet("/api/system/params", SystemParams.class);
+        assertThat(systemParams.getMaxResourceSize()).isZero();
 
         loginSysAdmin();
         updateDefaultTenantProfileConfig(tenantProfileConfig -> {
             tenantProfileConfig.setMaxResourceSize(100);
         });
         loginTenantAdmin();
-        specs = doGet("/api/image/specs", ImageSpecs.class);
-        assertThat(specs.getMaximumSize()).isEqualTo(100);
+        systemParams = doGet("/api/system/params", SystemParams.class);
+        assertThat(systemParams.getMaxResourceSize()).isEqualTo(100);
 
         loginSysAdmin();
         updateDefaultTenantProfileConfig(tenantProfileConfig -> {
             tenantProfileConfig.setMaxResourceSize(0);
         });
         loginTenantAdmin();
-        specs = doGet("/api/image/specs", ImageSpecs.class);
-        assertThat(specs.getMaximumSize()).isEqualTo(0);
+        systemParams = doGet("/api/system/params", SystemParams.class);
+        assertThat(systemParams.getMaxResourceSize()).isEqualTo(0);
     }
 
     private TbResourceInfo updateImagePublicStatus(String filename, boolean isPublic) throws Exception {

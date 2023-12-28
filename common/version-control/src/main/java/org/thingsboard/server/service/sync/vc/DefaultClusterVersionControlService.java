@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.eclipse.jgit.errors.LargeObjectException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
@@ -75,8 +76,8 @@ import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.provider.TbVersionControlQueueFactory;
 import org.thingsboard.server.queue.util.TbVersionControlComponent;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -124,7 +125,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
     private long packProcessingTimeout;
     @Value("${vc.git.io_pool_size:3}")
     private int ioPoolSize;
-    @Value("${queue.vc.msg-chunk-size:500000}")
+    @Value("${queue.vc.msg-chunk-size:250000}")
     private int msgChunkSize;
 
     //We need to manually manage the threads since tasks for particular tenant need to be processed sequentially.
@@ -259,7 +260,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
                 }
             }
         } catch (Exception e) {
-            reply(ctx, Optional.of(e));
+            reply(ctx, Optional.of(handleError(e)));
         } finally {
             lock.unlock();
         }
@@ -301,6 +302,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
 
     private void handleEntityContentRequest(VersionControlRequestCtx ctx, EntityContentRequestMsg request) throws IOException {
         String path = getRelativePath(EntityType.valueOf(request.getEntityType()), new UUID(request.getEntityIdMSB(), request.getEntityIdLSB()).toString());
+        log.debug("Executing handleEntityContentRequest [{}][{}]", ctx.getTenantId(), path);
         String data = vcService.getFileContentAtCommit(ctx.getTenantId(), path, request.getVersionId());
 
         Iterable<String> dataChunks = StringUtils.split(data, msgChunkSize);
@@ -391,6 +393,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
     }
 
     private void handleCommitRequest(VersionControlRequestCtx ctx, CommitRequestMsg request) throws Exception {
+        log.debug("Executing handleCommitRequest [{}][{}]", ctx.getTenantId(), ctx.getRequestId());
         var tenantId = ctx.getTenantId();
         UUID txId = UUID.fromString(request.getTxId());
         if (request.hasPrepareMsg()) {
@@ -441,6 +444,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
     }
 
     private void addToCommit(VersionControlRequestCtx ctx, PendingCommit commit, AddMsg addMsg) throws IOException {
+        log.debug("Executing addToCommit [{}][{}]", ctx.getTenantId(), ctx.getRequestId());
         log.trace("[{}] received chunk {} for 'addToCommit'", addMsg.getChunkedMsgId(), addMsg.getChunkIndex());
         Map<String, String[]> chunkedMsgs = commit.getChunkedMsgs();
         String[] msgChunks = chunkedMsgs.computeIfAbsent(addMsg.getChunkedMsgId(), id -> new String[addMsg.getChunksCount()]);
@@ -492,6 +496,13 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
             log.debug("[{}] Failed to connect to the repository: ", ctx, e);
             reply(ctx, Optional.of(e));
         }
+    }
+
+    private Exception handleError(Exception e) {
+        if (e instanceof LargeObjectException) {
+            return new RuntimeException("Version is too big");
+        }
+        return e;
     }
 
     private void reply(VersionControlRequestCtx ctx, VersionCreationResult result) {

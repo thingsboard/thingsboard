@@ -15,8 +15,7 @@
  */
 package org.thingsboard.server.common.data.oauth2;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -32,10 +31,10 @@ import java.util.List;
 @Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
-@ApiModel
+@Schema
 public class OAuth2Info {
-    @ApiModelProperty("Whether OAuth2 settings are enabled or not")
+    @Schema(description = "Whether OAuth2 settings are enabled or not")
     private boolean enabled;
-    @ApiModelProperty(value = "List of configured OAuth2 clients. Cannot contain null values", required = true)
+    @Schema(description = "List of configured OAuth2 clients. Cannot contain null values", required = true)
     private List<OAuth2ParamsInfo> oauth2ParamsInfos;
 }

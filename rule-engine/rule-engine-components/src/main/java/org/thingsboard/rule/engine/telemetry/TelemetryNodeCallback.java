@@ -20,7 +20,7 @@ import lombok.Data;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 /**
  * Created by ashvayka on 02.04.18.

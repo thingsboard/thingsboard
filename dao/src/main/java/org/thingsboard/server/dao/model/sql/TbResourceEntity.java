@@ -16,20 +16,21 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.persistence.Convert;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
-import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import org.thingsboard.server.dao.util.mapping.JsonConverter;
+
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.EXTERNAL_ID_PROPERTY;
@@ -50,7 +51,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPER
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = RESOURCE_TABLE_NAME)
 public class TbResourceEntity extends BaseSqlEntity<TbResource> {
 
@@ -78,7 +78,7 @@ public class TbResourceEntity extends BaseSqlEntity<TbResource> {
     @Column(name = RESOURCE_ETAG_COLUMN)
     private String etag;
 
-    @Type(type = "json")
+    @Convert(converter = JsonConverter.class)
     @Column(name = RESOURCE_DESCRIPTOR_COLUMN)
     private JsonNode descriptor;
 

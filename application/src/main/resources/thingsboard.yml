@@ -699,8 +699,8 @@ spring.resources.chain:
     content:
       enabled: "true" # This property enables or disables the content Version Strategy. This strategy allows Spring to generate a unique version for static resources, which is based on the content of the resource
 
-spring.servlet.multipart.max-file-size: "50MB" # Total file size cannot exceed 50MB when configuring file uploads
-spring.servlet.multipart.max-request-size: "50MB" # Total request size for a multipart/form-data cannot exceed 50MB
+spring.servlet.multipart.max-file-size: "${SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE:50MB}" # Total file size cannot exceed 50MB when configuring file uploads
+spring.servlet.multipart.max-request-size: "${SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE:50MB}" # Total request size for a multipart/form-data cannot exceed 50MB
 
 spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation: "true" #Fix Postgres JPA Error (Method org.postgresql.jdbc.PgConnection.createClob() is not yet implemented)
 spring.jpa.properties.hibernate.order_by.default_null_ordering: "${SPRING_JPA_PROPERTIES_HIBERNATE_ORDER_BY_DEFAULT_NULL_ORDERING:last}" # Note: as for current Spring JPA version, custom NullHandling for the Sort.Order is ignored and this parameter is used
@@ -714,7 +714,7 @@ spring:
         enabled: "true" # Enable/Disable the Spring Data JPA repositories support
   jpa:
     properties:
-      javax.persistence.query.timeout: "${JAVAX_PERSISTENCE_QUERY_TIMEOUT:30000}" # General timeout for JDBC queries
+      jakarta.persistence.query.timeout: "${JAVAX_PERSISTENCE_QUERY_TIMEOUT:30000}" # General timeout for JDBC queries
     open-in-view: "false" # Enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
     hibernate:
       # You can set a Hibernate feature that controls the DDL behavior in a more fine-grained way. The standard Hibernate property values are none, validate, update, create-drop. Spring Boot chooses a default value for you based on whether it thinks your database is embedded (default create-drop) or not (default none)
@@ -1250,14 +1250,17 @@ edges:
     # Persist state of edge (active, last connect, last disconnect) into timeseries or attributes tables. 'false' means to store edge state into attributes table
     persistToTelemetry: "${EDGES_PERSIST_STATE_TO_TELEMETRY:false}"
 
+# Spring doc common parameters
+springdoc:
+  # If false swagger API docs will be unavailable
+  api-docs.enabled: "${SWAGGER_ENABLED:true}"
+  # Swagger default produces media-type
+  default-produces-media-type: "${SWAGGER_DEFAULT_PRODUCES_MEDIA_TYPE:application/json}"
+
 # Swagger common parameters
 swagger:
-  # If false swagger API docs will be unavailable
-  enabled: "${SWAGGER_ENABLED:true}"
   # General swagger match pattern of swagger UI links
-  api_path_regex: "${SWAGGER_API_PATH_REGEX:/api/.*}"
-  # General swagger match pattern path of swagger UI links
-  security_path_regex: "${SWAGGER_SECURITY_PATH_REGEX:/api/.*}"
+  api_path: "${SWAGGER_API_PATH:/api/**}"
   # Nonsecurity API path match pattern of swagger UI links
   non_security_path_regex: "${SWAGGER_NON_SECURITY_PATH_REGEX:/api/(?:noauth|v1)/.*}"
   # The title on the API doc UI page
@@ -1379,7 +1382,7 @@ queue:
       # Kafka properties for OTA updates topic
       ota-updates: "${TB_QUEUE_KAFKA_OTA_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
       # Kafka properties for Version Control topic
-      version-control: "${TB_QUEUE_KAFKA_VC_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
+      version-control: "${TB_QUEUE_KAFKA_VC_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
     consumer-stats:
       # Prints lag between consumer group offset and last messages offset in Kafka topics
       enabled: "${TB_QUEUE_KAFKA_CONSUMER_STATS_ENABLED:true}"
@@ -1672,7 +1675,7 @@ metrics:
 # Version control parameters
 vc:
   # Pool size for handling export tasks
-  thread_pool_size: "${TB_VC_POOL_SIZE:2}"
+  thread_pool_size: "${TB_VC_POOL_SIZE:6}"
   git:
     # Pool size for handling the git IO operations
     io_pool_size: "${TB_VC_GIT_POOL_SIZE:3}"

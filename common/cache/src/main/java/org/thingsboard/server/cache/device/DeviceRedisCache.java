@@ -34,7 +34,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 public class DeviceRedisCache extends RedisTbTransactionalCache<DeviceCacheKey, Device> {
 
     public DeviceRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
-        super(CacheConstants.DEVICE_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbRedisSerializer<>(){
+        super(CacheConstants.DEVICE_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbRedisSerializer<>() {
 
             @Override
             public byte[] serialize(Device device) throws SerializationException {

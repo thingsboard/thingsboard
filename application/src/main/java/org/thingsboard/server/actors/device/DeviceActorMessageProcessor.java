@@ -63,6 +63,7 @@ import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.common.msg.timeout.DeviceActorServerSideRpcTimeoutMsg;
+import org.thingsboard.server.common.util.KvProtoUtil;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
@@ -93,7 +94,7 @@ import org.thingsboard.server.service.rpc.RpcSubmitStrategy;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -506,7 +507,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
                     GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
                             .setRequestId(requestId)
                             .setSharedStateMsg(true)
-                            .addAllSharedAttributeList(toTsKvProtos(result))
+                            .addAllSharedAttributeList(KvProtoUtil.attrToTsKvProtos(result))
                             .setIsMultipleAttributesRequest(request.getSharedAttributeNamesCount() > 1)
                             .build();
                     sendToTransport(responseMsg, sessionInfo);
@@ -527,8 +528,8 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
                 public void onSuccess(@Nullable List<List<AttributeKvEntry>> result) {
                     GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
                             .setRequestId(requestId)
-                            .addAllClientAttributeList(toTsKvProtos(result.get(0)))
-                            .addAllSharedAttributeList(toTsKvProtos(result.get(1)))
+                            .addAllClientAttributeList(KvProtoUtil.attrToTsKvProtos(result.get(0)))
+                            .addAllSharedAttributeList(KvProtoUtil.attrToTsKvProtos(result.get(1)))
                             .setIsMultipleAttributesRequest(
                                     request.getSharedAttributeNamesCount() + request.getClientAttributeNamesCount() > 1)
                             .build();
@@ -598,7 +599,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
                 if (DataConstants.SHARED_SCOPE.equals(msg.getScope())) {
                     List<AttributeKvEntry> attributes = new ArrayList<>(msg.getValues());
                     if (attributes.size() > 0) {
-                        List<TsKvProto> sharedUpdated = msg.getValues().stream().map(this::toTsKvProto)
+                        List<TsKvProto> sharedUpdated = msg.getValues().stream().map(t -> KvProtoUtil.toTsKvProto(t.getLastUpdateTs(), t))
                                 .collect(Collectors.toList());
                         if (!sharedUpdated.isEmpty()) {
                             notification.addAllSharedUpdated(sharedUpdated);
@@ -922,24 +923,6 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
             systemContext.getClusterService().onEdgeEventUpdate(tenantId, edgeId);
             return null;
         }, systemContext.getDbCallbackExecutor());
-    }
-
-    private List<TsKvProto> toTsKvProtos(@Nullable List<AttributeKvEntry> result) {
-        List<TsKvProto> clientAttributes;
-        if (result == null || result.isEmpty()) {
-            clientAttributes = Collections.emptyList();
-        } else {
-            clientAttributes = new ArrayList<>(result.size());
-            for (AttributeKvEntry attrEntry : result) {
-                clientAttributes.add(toTsKvProto(attrEntry));
-            }
-        }
-        return clientAttributes;
-    }
-
-    private TsKvProto toTsKvProto(AttributeKvEntry attrEntry) {
-        return TsKvProto.newBuilder().setTs(attrEntry.getLastUpdateTs())
-                .setKv(toKeyValueProto(attrEntry)).build();
     }
 
     private KeyValueProto toKeyValueProto(KvEntry kvEntry) {

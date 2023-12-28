@@ -15,36 +15,35 @@
  */
 package org.thingsboard.server.common.data.security.model;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.io.Serializable;
 
-@ApiModel
+@Schema
 @Data
 public class UserPasswordPolicy implements Serializable {
 
-    @ApiModelProperty(position = 1, value = "Minimum number of symbols in the password." )
+    @Schema(description = "Minimum number of symbols in the password." )
     private Integer minimumLength;
-    @ApiModelProperty(position = 1, value = "Maximum number of symbols in the password." )
+    @Schema(description = "Maximum number of symbols in the password." )
     private Integer maximumLength;
-    @ApiModelProperty(position = 1, value = "Minimum number of uppercase letters in the password." )
+    @Schema(description = "Minimum number of uppercase letters in the password." )
     private Integer minimumUppercaseLetters;
-    @ApiModelProperty(position = 1, value = "Minimum number of lowercase letters in the password." )
+    @Schema(description = "Minimum number of lowercase letters in the password." )
     private Integer minimumLowercaseLetters;
-    @ApiModelProperty(position = 1, value = "Minimum number of digits in the password." )
+    @Schema(description = "Minimum number of digits in the password." )
     private Integer minimumDigits;
-    @ApiModelProperty(position = 1, value = "Minimum number of special in the password." )
+    @Schema(description = "Minimum number of special in the password." )
     private Integer minimumSpecialCharacters;
-    @ApiModelProperty(position = 1, value = "Allow whitespaces")
+    @Schema(description = "Allow whitespaces")
     private Boolean allowWhitespaces = true;
-    @ApiModelProperty(position = 1, value = "Force user to update password if existing one does not pass validation")
+    @Schema(description = "Force user to update password if existing one does not pass validation")
     private Boolean forceUserToResetPasswordIfNotValid = false;
 
-    @ApiModelProperty(position = 1, value = "Password expiration period (days). Force expiration of the password." )
+    @Schema(description = "Password expiration period (days). Force expiration of the password." )
     private Integer passwordExpirationPeriodDays;
-    @ApiModelProperty(position = 1, value = "Password reuse frequency (days). Disallow to use the same password for the defined number of days" )
+    @Schema(description = "Password reuse frequency (days). Disallow to use the same password for the defined number of days" )
     private Integer passwordReuseFrequencyDays;
 
 }

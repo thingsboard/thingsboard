@@ -13,21 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.cache;
+package org.thingsboard.server.service.executors;
 
-import org.springframework.data.redis.serializer.SerializationException;
-import org.thingsboard.server.common.data.FSTUtils;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.AbstractListeningExecutor;
 
-@Deprecated(forRemoval = true, since = "3.6.3")
-public class TbFSTRedisSerializer<K, V> implements TbRedisSerializer<K, V> {
+@Component
+public class VersionControlExecutor extends AbstractListeningExecutor {
+
+    @Value("${vc.thread_pool_size:6}")
+    private int threadPoolSize;
 
     @Override
-    public byte[] serialize(V value) throws SerializationException {
-        return FSTUtils.encode(value);
-    }
-
-    @Override
-    public V deserialize(K key, byte[] bytes) throws SerializationException {
-        return FSTUtils.decode(bytes);
+    protected int getThreadPollSize() {
+        return threadPoolSize;
     }
 }

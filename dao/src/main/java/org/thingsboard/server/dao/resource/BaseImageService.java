@@ -60,7 +60,7 @@ import org.thingsboard.server.dao.util.JsonPathProcessingTask;
 import org.thingsboard.server.dao.widget.WidgetTypeDao;
 import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Collections;
@@ -150,13 +150,11 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         image.setDescriptorValue(descriptor);
         image.setPreview(result.getRight());
 
-        if (image.getId() == null) {
-            if (StringUtils.isEmpty(image.getPublicResourceKey())) {
+        if (StringUtils.isEmpty(image.getPublicResourceKey())) {
+            image.setPublicResourceKey(generatePublicResourceKey());
+        } else {
+            if (resourceInfoDao.existsByPublicResourceKey(ResourceType.IMAGE, image.getPublicResourceKey())) {
                 image.setPublicResourceKey(generatePublicResourceKey());
-            } else {
-                if (resourceInfoDao.existsByPublicResourceKey(ResourceType.IMAGE, image.getPublicResourceKey())) {
-                    image.setPublicResourceKey(generatePublicResourceKey());
-                }
             }
         }
         log.debug("[{}] Creating image {} ('{}')", image.getTenantId(), image.getResourceKey(), image.getName());
