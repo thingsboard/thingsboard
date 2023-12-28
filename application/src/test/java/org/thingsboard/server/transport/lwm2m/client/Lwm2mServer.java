@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.lwm2m.client;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.client.resource.BaseInstanceEnabler;
 import org.eclipse.leshan.client.resource.LwM2mInstanceEnabler;
+import org.eclipse.leshan.client.servers.LwM2mServer;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel.Type;
 import org.eclipse.leshan.core.node.LwM2mResource;
@@ -70,7 +71,7 @@ public class Lwm2mServer extends BaseInstanceEnabler {
     }
 
     @Override
-    public ReadResponse read(org.eclipse.leshan.client.servers.LwM2mServer identity, int resourceid) {
+    public ReadResponse read(LwM2mServer identity, int resourceid) {
         if (!identity.isSystem())
             LOG.debug("Read on Server resource /{}/{}/{}", getModel().id, getId(), resourceid);
 
@@ -108,7 +109,7 @@ public class Lwm2mServer extends BaseInstanceEnabler {
     }
 
     @Override
-    public WriteResponse write(org.eclipse.leshan.client.servers.LwM2mServer identity, boolean replace, int resourceid, LwM2mResource value) {
+    public WriteResponse write(LwM2mServer identity, boolean replace, int resourceid, LwM2mResource value) {
         if (!identity.isSystem())
             log.debug("Write on Server resource /{}/{}/{}", getModel().id, getId(), resourceid);
 
@@ -195,7 +196,7 @@ public class Lwm2mServer extends BaseInstanceEnabler {
         }
     }
 
-    public ExecuteResponse execute(org.eclipse.leshan.client.servers.LwM2mServer identity, int resourceid, Arguments arguments) {
+    public ExecuteResponse execute(LwM2mServer identity, int resourceid, Arguments arguments) {
         log.info("Execute on Server resource /{}/{}/{}", getModel().id, getId(), resourceid);
         if (resourceid == 8) {
             getLwM2mClient().triggerRegistrationUpdate(identity);

@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.lwm2m.client;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.client.resource.BaseInstanceEnabler;
+import org.eclipse.leshan.client.servers.LwM2mServer;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.request.argument.Arguments;
 import org.eclipse.leshan.core.response.ExecuteResponse;
@@ -56,7 +57,7 @@ public class LwM2mTemperatureSensor extends BaseInstanceEnabler implements Destr
     }
 
     @Override
-    public synchronized ReadResponse read(org.eclipse.leshan.client.servers.LwM2mServer identity, int resourceId) {
+    public synchronized ReadResponse read(LwM2mServer identity, int resourceId) {
         log.info("Read on Temperature resource /[{}]/[{}]/[{}]", getModel().id, getId(), resourceId);
         switch (resourceId) {
             case 5601:
@@ -73,7 +74,7 @@ public class LwM2mTemperatureSensor extends BaseInstanceEnabler implements Destr
     }
 
     @Override
-    public synchronized ExecuteResponse execute(org.eclipse.leshan.client.servers.LwM2mServer identity, int resourceId, Arguments arguments) {
+    public synchronized ExecuteResponse execute(LwM2mServer identity, int resourceId, Arguments arguments) {
         log.info("Execute on Temperature resource /[{}]/[{}]/[{}]", getModel().id, getId(), resourceId);
         switch (resourceId) {
             case 5605:

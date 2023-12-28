@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.lwm2m.client;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.client.resource.BaseInstanceEnabler;
+import org.eclipse.leshan.client.servers.LwM2mServer;
 import org.eclipse.leshan.core.Destroyable;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
@@ -66,7 +67,7 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
 
 
     @Override
-    public ReadResponse read(org.eclipse.leshan.client.servers.LwM2mServer identity, int resourceId) {
+    public ReadResponse read(LwM2mServer identity, int resourceId) {
         if (!identity.isSystem())
             log.info("Read on Device resource /{}/{}/{}", getModel().id, getId(), resourceId);
         switch (resourceId) {
@@ -108,7 +109,7 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
     }
 
     @Override
-    public ExecuteResponse execute(org.eclipse.leshan.client.servers.LwM2mServer identity, int resourceId, Arguments arguments) {
+    public ExecuteResponse execute(LwM2mServer identity, int resourceId, Arguments arguments) {
         String withArguments = "";
         if (!arguments.isEmpty())
             withArguments = " with arguments " + arguments;
@@ -117,7 +118,7 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
     }
 
     @Override
-    public WriteResponse write(org.eclipse.leshan.client.servers.LwM2mServer identity, boolean replace, int resourceId, LwM2mResource value) {
+    public WriteResponse write(LwM2mServer identity, boolean replace, int resourceId, LwM2mResource value) {
         log.info("Write on Device resource /{}/{}/{}", getModel().id, getId(), resourceId);
 
         switch (resourceId) {
