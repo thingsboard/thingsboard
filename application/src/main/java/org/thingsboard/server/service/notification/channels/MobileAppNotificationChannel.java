@@ -53,7 +53,8 @@ public class MobileAppNotificationChannel implements NotificationChannel<User, M
             firebaseService.sendMessage(ctx.getTenantId(), config.getFirebaseServiceAccountCredentials(),
                     fcmToken, processedTemplate.getSubject(), processedTemplate.getBody());
         } catch (FirebaseMessagingException e) {
-            if (e.getMessagingErrorCode() == MessagingErrorCode.UNREGISTERED) {
+            MessagingErrorCode errorCode = e.getMessagingErrorCode();
+            if (errorCode == MessagingErrorCode.UNREGISTERED || errorCode == MessagingErrorCode.INVALID_ARGUMENT) {
                 // the token is no longer valid
                 mobileInfo.setFcmToken(null);
                 userService.saveMobileInfo(recipient.getTenantId(), recipient.getId(), mobileInfo);

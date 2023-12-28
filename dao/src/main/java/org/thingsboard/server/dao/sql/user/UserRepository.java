@@ -73,7 +73,8 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
 
     Long countByTenantId(UUID tenantId);
 
-    @Query(value = "UPDATE user_settings SET settings = (settings::jsonb - 'fcmToken')::text WHERE type = 'MOBILE'", nativeQuery = true)
+    @Query(value = "UPDATE user_settings SET settings = settings - 'fcmToken' " +
+            "WHERE type = 'MOBILE' AND (settings ->> 'fcmToken') = :fcmToken", nativeQuery = true)
     @Modifying
     @Transactional
     void unassignFcmToken(@Param("fcmToken") String fcmToken);
