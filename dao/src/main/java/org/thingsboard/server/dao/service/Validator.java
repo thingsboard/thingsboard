@@ -61,7 +61,7 @@ public class Validator {
 
 
     /**
-     * This method validate <code>long</code> value. If value isn't possitive than throw
+     * This method validate <code>long</code> value. If value isn't positive than throw
      * <code>IncorrectParameterException</code> exception
      *
      * @param val          the val
@@ -69,6 +69,19 @@ public class Validator {
      */
     public static void validatePositiveNumber(long val, String errorMessage) {
         if (val <= 0) {
+            throw new IncorrectParameterException(errorMessage);
+        }
+    }
+
+    /**
+     * This method validate <code>long</code> value. If value is negative than throw
+     * <code>IncorrectParameterException</code> exception
+     *
+     * @param val          the val
+     * @param errorMessage the error message for exception
+     */
+    public static void validateNonNegativeNumber(long val, String errorMessage) {
+        if (val < 0) {
             throw new IncorrectParameterException(errorMessage);
         }
     }

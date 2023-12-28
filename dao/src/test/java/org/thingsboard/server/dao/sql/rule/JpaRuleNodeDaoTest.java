@@ -145,6 +145,25 @@ public class JpaRuleNodeDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
+    public void testFindRuleNodeIdsByTypeAndVersion() {
+        PageData<RuleNodeId> ruleNodeIds = ruleNodeDao.findAllRuleNodeIdsByTypeAndVersion( "A", 0, new PageLink(10, 0, PREFIX_FOR_RULE_NODE_NAME));
+        assertEquals(20, ruleNodeIds.getTotalElements());
+        assertEquals(2, ruleNodeIds.getTotalPages());
+        assertEquals(10, ruleNodeIds.getData().size());
+
+        ruleNodeIds = ruleNodeDao.findAllRuleNodeIdsByTypeAndVersion( "A", 0, new PageLink(10, 0));
+        assertEquals(20, ruleNodeIds.getTotalElements());
+        assertEquals(2, ruleNodeIds.getTotalPages());
+        assertEquals(10, ruleNodeIds.getData().size());
+
+        // test - search text ignored
+        ruleNodeIds = ruleNodeDao.findAllRuleNodeIdsByTypeAndVersion( "A", 0, new PageLink(10, 0, StringUtils.randomAlphabetic(5)));
+        assertEquals(20, ruleNodeIds.getTotalElements());
+        assertEquals(2, ruleNodeIds.getTotalPages());
+        assertEquals(10, ruleNodeIds.getData().size());
+    }
+
+    @Test
     public void testFindAllRuleNodeByIds() {
         var fromUUIDs = ruleNodeIds.stream().map(RuleNodeId::new).collect(Collectors.toList());
         var ruleNodes = ruleNodeDao.findAllRuleNodeByIds(fromUUIDs);

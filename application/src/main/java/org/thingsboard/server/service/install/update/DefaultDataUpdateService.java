@@ -314,8 +314,16 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
     private List<RuleNodeId> getRuleNodesIdsWithTypeAndVersionLessThan(String type, int toVersion) {
         var ruleNodeIds = new ArrayList<RuleNodeId>();
+        for (int v = toVersion - 1; v >= 0; v--) {
+            ruleNodeIds.addAll(getRuleNodesIdsWithTypeAndVersion(type, v));
+        }
+        return ruleNodeIds;
+    }
+
+    private List<RuleNodeId> getRuleNodesIdsWithTypeAndVersion(String type, int version) {
+        var ruleNodeIds = new ArrayList<RuleNodeId>();
         new PageDataIterable<>(pageLink ->
-                ruleChainService.findAllRuleNodeIdsByTypeAndVersionLessThan(type, toVersion, pageLink), DEFAULT_PAGE_SIZE
+                ruleChainService.findAllRuleNodeIdsByTypeAndVersion(type, version, pageLink), DEFAULT_PAGE_SIZE
         ).forEach(ruleNodeIds::add);
         return ruleNodeIds;
     }
