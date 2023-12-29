@@ -314,7 +314,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
     private List<RuleNodeId> getRuleNodesIdsWithTypeAndVersionLessThan(String type, int toVersion) {
         var ruleNodeIds = new ArrayList<RuleNodeId>();
-        for (int v = toVersion - 1; v >= 0; v--) {
+        for (int v = 0; v < toVersion; v++) {
             ruleNodeIds.addAll(getRuleNodesIdsWithTypeAndVersion(type, v));
         }
         return ruleNodeIds;
