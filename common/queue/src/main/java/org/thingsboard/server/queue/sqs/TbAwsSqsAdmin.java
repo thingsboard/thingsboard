@@ -26,6 +26,8 @@ import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.GetQueueUrlResult;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.ExecutorProvider;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.util.PropertyUtils;
@@ -55,7 +57,7 @@ public class TbAwsSqsAdmin implements TbQueueAdmin {
             AWSCredentials awsCredentials = new BasicAWSCredentials(sqsSettings.getAccessKeyId(), sqsSettings.getSecretAccessKey());
             credentialsProvider = new AWSStaticCredentialsProvider(awsCredentials);
         }
-        producerExecutor = Executors.newFixedThreadPool(sqsSettings.getThreadPoolSize(), ThingsBoardThreadFactory.forName("aws-sqs-queue-executor"));
+        producerExecutor = ThingsBoardExecutors.newWorkStealingPool(sqsSettings.getThreadPoolSize(), "aws-sqs-queue-executor");
 
         sqsClient = AmazonSQSClientBuilder.standard()
                 .withCredentials(credentialsProvider)
