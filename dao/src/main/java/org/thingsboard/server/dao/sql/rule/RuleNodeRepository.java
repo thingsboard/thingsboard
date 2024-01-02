@@ -43,7 +43,7 @@ public interface RuleNodeRepository extends JpaRepository<RuleNodeEntity, UUID> 
                                                 Pageable pageable);
 
     @Query(nativeQuery = true, value = "SELECT * FROM rule_node r WHERE r.type = :ruleType " +
-            " AND r.configuration_version < :version " +
+            " AND configuration_version < :version " +
             " AND (:searchText IS NULL OR r.configuration ILIKE CONCAT('%', :searchText, '%'))")
     Page<RuleNodeEntity> findAllRuleNodesByTypeAndVersionLessThan(@Param("ruleType") String ruleType,
                                                                   @Param("version") int version,
@@ -54,11 +54,6 @@ public interface RuleNodeRepository extends JpaRepository<RuleNodeEntity, UUID> 
     Page<UUID> findAllRuleNodeIdsByTypeAndVersionLessThan(@Param("ruleType") String ruleType,
                                                           @Param("version") int version,
                                                           Pageable pageable);
-
-    @Query("SELECT r.id FROM RuleNodeEntity r WHERE r.type = :ruleType AND r.configurationVersion = :version")
-    Page<UUID> findAllRuleNodeIdsByTypeAndVersion(@Param("ruleType") String ruleType,
-                                                  @Param("version") int version,
-                                                  Pageable pageable);
 
     List<RuleNodeEntity> findRuleNodesByRuleChainIdAndExternalIdIn(UUID ruleChainId, List<UUID> externalIds);
 
