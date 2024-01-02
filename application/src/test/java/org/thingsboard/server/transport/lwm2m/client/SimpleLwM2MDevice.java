@@ -47,7 +47,7 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
     private static final int min = 5;
     private static final int max = 50;
     private static final  PrimitiveIterator.OfInt randomIterator = new Random().ints(min,max + 1).iterator();
-    private static final List<Integer> supportedResources = Arrays.asList(0, 1, 2, 3, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21);
+    private static final List<Integer> supportedResources = Arrays.asList(0, 1, 2, 3, 6, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21);
 
 
     public SimpleLwM2MDevice() {
@@ -79,6 +79,8 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
                 return ReadResponse.success(resourceId, getSerialNumber());
             case 3:
                 return ReadResponse.success(resourceId, getFirmwareVersion());
+            case 6:
+                return ReadResponse.success(resourceId, getAvailablePowerSources(), ResourceModel.Type.INTEGER);
             case 9:
                 return ReadResponse.success(resourceId, getBatteryLevel());
             case 10:
@@ -155,6 +157,14 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
 
     private long getErrorCode() {
         return 0;
+    }
+
+    private Map<Integer, Long> getAvailablePowerSources() {
+        Map<Integer, Long> availablePowerSources = new HashMap<>();
+        availablePowerSources.put(0, 1L);
+        availablePowerSources.put(1, 2L);
+        availablePowerSources.put(2, 5L);
+        return availablePowerSources;
     }
 
     private int getBatteryLevel() {

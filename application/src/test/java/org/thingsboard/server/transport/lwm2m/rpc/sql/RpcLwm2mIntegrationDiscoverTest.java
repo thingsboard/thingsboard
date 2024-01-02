@@ -99,8 +99,8 @@ public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegration
      * {"result":"CONTENT","value":"</3/0>,</3/0/0>,</3/0/1>,</3/0/2>,</3/0/3>,</3/0/4>,</3/0/5>,</3/0/6>,</3/0/7>,</3/0/8>,</3/0/9>,</3/0/10>,</3/0/11>,</3/0/12>,</3/0/13>,</3/0/14>,</3/0/15>,</3/0/16>,</3/0/1
      * 7>,</3/0/18>,</3/0/19>,</3/0/20>,</3/0/21>,</3/0/22>"}
      * If WriteAttributes implemented and WriteAttributes saved
-     * Discover {"id":"19/0"}
-     * {"result":"CONTENT","value":"[</19/0>;dim=2;pmin=10;pmax=60;gt=50;lt=42.2,</19/0/0>;pmax=120, </19/0/1>, </19/0/2>, </19/0/3>, </19/0/4>, </19/0/5>;lt=45]"}
+     * Discover {"id":"19"}
+     * {"result":"CONTENT","value":"[</19>;ver=1.1,</19/0>;dim=2;pmin=10;pmax=60;gt=50;lt=42.2,</19/0/0>;pmax=120, </19/0/1>, </19/0/2>, </19/0/3>, </19/0/4>, </19/0/5>;lt=45]"}
      */
     @Test
     public void testDiscoverInstance_Return_CONTENT_LinksResourcesOnLyExpectedInstance() throws Exception {
@@ -117,12 +117,12 @@ public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegration
     /**
      * Discover {"id":"3/0/14"}
      * If WriteAttributes implemented:
-     * {"result":"CONTENT","value":"</3/0/14>;pmax=100, "pmin":10, "ver"=1.0"}
+     * {"result":"CONTENT","value":"</3/0/14>;pmax=100, "pmin":10}
      * If WriteAttributes not implemented:
      * {"result":"CONTENT","value":"</3/0/14>"}
      * Discover {"id":"19_1.1/0/0"}
      * If WriteAttributes implemented:
-     * {"result":"CONTENT","value":"</19/0/0>;pmax=100, "pmin":10, "ver"=1.1"}
+     * {"result":"CONTENT","value":"</19/0/0>;pmax=100, "pmin":10}
      * If WriteAttributes not implemented:
      * {"result":"CONTENT","value":"</19/0/0>"}
      */

@@ -62,7 +62,6 @@ import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.service.ws.telemetry.cmd.TelemetryCmdsWrapper;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.LatestValueCmd;
@@ -75,7 +74,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -148,13 +146,13 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
 
             "    {\n" +
                     "    \"keyName\": {\n" +
-                    "      \"/3_1.0/0/9\": \"batteryLevel\"\n" +
+                    "      \"/3_1.2/0/9\": \"batteryLevel\"\n" +
                     "    },\n" +
                     "    \"observe\": [],\n" +
                     "    \"attribute\": [\n" +
                     "    ],\n" +
                     "    \"telemetry\": [\n" +
-                    "      \"/3_1.0/0/9\"\n" +
+                    "      \"/3_1.2/0/9\"\n" +
                     "    ],\n" +
                     "    \"attributeLwm2m\": {}\n" +
                     "  }";

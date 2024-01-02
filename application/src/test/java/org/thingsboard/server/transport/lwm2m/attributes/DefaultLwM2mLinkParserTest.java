@@ -34,7 +34,7 @@ public class DefaultLwM2mLinkParserTest {
 
     @Test
     public void check_invalid_values() throws LinkParseException {
-        // first check it's OK with valid value
+        // first check it's OK with valid value (3/0/11 - "errorCodes")
         LwM2mLink[] parsed = parser.parseLwM2mLinkFromCoreLinkFormat("</3/0/11>;dim=255".getBytes(), null);
         assertEquals(new LwM2mPath(3, 0, 11), parsed[0].getPath());
         AttributeSet attResult = new LwM2mAttributeSet(LwM2mAttributes.create(LwM2mAttributes.DIMENSION, 255l));
@@ -69,7 +69,7 @@ public class DefaultLwM2mLinkParserTest {
 
         // then check an invalid one
         assertThrowsExactly(LinkParseException.class, () -> {
-            // dim should be between 0-255
+            // pmin should be with value
             parser.parseLwM2mLinkFromCoreLinkFormat("</3/0/11>;pmin".getBytes(), null);
         });
     }

@@ -24,7 +24,8 @@ import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationTes
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_14;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_15;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_6;
 
 
 public class RpcLwm2mIntegrationWriteAttributesTest extends AbstractRpcLwM2MIntegrationTest {
@@ -38,7 +39,7 @@ public class RpcLwm2mIntegrationWriteAttributesTest extends AbstractRpcLwM2MInte
      */
     @Test
     public void testWriteAttributesResourceWithParametersById_Result_INTERNAL_SERVER_ERROR() throws Exception {
-        String expectedPath = objectInstanceIdVer_3 + "/" + RESOURCE_ID_14;
+        String expectedPath = objectInstanceIdVer_3 + "/" + RESOURCE_ID_15;
         sendRPCReadById(expectedPath);
         String expectedValue = "{\"pmax\":100, \"pmin\":10}";
         String actualResult = sendRPCExecuteWithValueById(expectedPath, expectedValue);
@@ -74,6 +75,46 @@ public class RpcLwm2mIntegrationWriteAttributesTest extends AbstractRpcLwM2MInte
         assertTrue(actual.equals(expected));
     }
 
+    /**
+     * <PROPERTIES> Class Attributes
+     * Dimension 	dim Integer [0:255]
+     * Number of instances existing for a Multiple-Instance Resource
+     * <ObjectID>3</ObjectID>
+     * 			<Item ID="6">
+     * 				<Name>Available Power Sources</Name>
+     *         <Operations>R</Operations>
+     *         <MultipleInstances>Multiple</MultipleInstances>
+     * 				<Type>Integer</Type>
+     * 				<RangeEnumeration>0..7</RangeEnumeration>
+     * WriteAttributes  implemented:	Discover {"id":"3/0/6"} ->  'dim' = 3
+     * "ver" only for objectId
+     */
+    @Test
+    public void testDIM_3_0_6_Only_R () throws Exception {
+        String path = objectInstanceIdVer_3 + "/" + RESOURCE_ID_6;
+        String actualResult = sendDiscover(path);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
+        String expected = "</3/0/6>;dim=3";
+        assertTrue(rpcActualResult.get("value").asText().equals(expected));
+
+    }
+    /**
+     * <NOTIFICATION> Class Attributes
+     * Minimum/Maximum Period
+     * Notes: The Minimum Period Attribute:
+     * -- indicates the minimum time in seconds the LwM2M Client MUST wait between two notifications. If a notification of an observed Resource is supposed to be generated but it is before pmin expiry, notification MUST be sent as soon as pmin expires. In the absence of this parameter, the Minimum Period is defined by the Default Minimum Period set in the LwM2M Server Account.
+     * Notes: The Maximum Period Attribute:
+     * -- indicates the maximum time in seconds the LwM2M Client MAY wait between two notifications. When this "Maximum Period" expires after the last notification, a new notification MUST be sent. In the absence of this parameter, the "Maximum Period" is defined by the Default Maximum Period when set in the LwM2M Server Account or considered as 0 otherwise. The value of 0, means pmax MUST be ignored. The maximum period parameter MUST be greater than the minimum period parameter otherwise pmax will be ignored for the Resource to which such inconsistent timing conditions are applied.
+     * Object Id = 1
+     * Default Minimum Period 	Id = 2 		300
+     * Default Maximum Period 	Id = 3 		6000
+     */
+    @Test
+    public void testPeriod () {
+
+    }
+
     private String sendRPCExecuteWithValueById(String path, String value) throws Exception {
         String setRpcRequest = "{\"method\": \"WriteAttributes\", \"params\": {\"id\": \"" + path + "\", \"attributes\": " + value + " }}";
         return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
@@ -81,6 +122,11 @@ public class RpcLwm2mIntegrationWriteAttributesTest extends AbstractRpcLwM2MInte
 
     private String sendRPCReadById(String path) throws Exception {
         String setRpcRequest = "{\"method\": \"Read\", \"params\": {\"id\": \"" + path + "\"}}";
+        return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
+    }
+
+    private String sendDiscover(String path) throws Exception {
+        String setRpcRequest = "{\"method\": \"Discover\", \"params\": {\"id\": \"" + path + "\"}}";
         return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
     }
 
