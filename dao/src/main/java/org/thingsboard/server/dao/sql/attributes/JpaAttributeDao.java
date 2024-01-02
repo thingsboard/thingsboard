@@ -36,12 +36,14 @@ import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.attributes.AttributesDao;
 import org.thingsboard.server.dao.model.sql.AttributeKvCompositeKey;
-import org.thingsboard.server.dao.model.sql.AttributeKvDictionaryEntry;
 import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
+import org.thingsboard.server.dao.model.sqlts.dictionary.KeyDictionaryCompositeKey;
+import org.thingsboard.server.dao.model.sqlts.dictionary.KeyDictionaryEntry;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
 import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
+import org.thingsboard.server.dao.sqlts.dictionary.KeyDictionaryRepository;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.ArrayList;
@@ -64,7 +66,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     ScheduledLogExecutorComponent logExecutor;
 
     @Autowired
-    private AttributeKvDictionaryRepository dictionaryRepository;
+    private KeyDictionaryRepository keyDictionaryRepository;
 
     @Autowired
     private AttributeKvRepository attributeKvRepository;
@@ -215,21 +217,21 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     private Integer getOrSaveKeyId(String attributeKey) {
         Integer keyId = attributeDictionaryMap.get(attributeKey);
         if (keyId == null) {
-            Optional<AttributeKvDictionaryEntry> byIdOptional = dictionaryRepository.findById(attributeKey);
+            Optional<KeyDictionaryEntry> byIdOptional = keyDictionaryRepository.findById(new KeyDictionaryCompositeKey(attributeKey));
             if (byIdOptional.isEmpty()) {
                 attributeCreationLock.lock();
                 try {
-                    byIdOptional = dictionaryRepository.findById(attributeKey);
+                    byIdOptional = keyDictionaryRepository.findById(new KeyDictionaryCompositeKey(attributeKey));
                     if (byIdOptional.isEmpty()) {
-                        AttributeKvDictionaryEntry attributeKvDictionaryEntry = new AttributeKvDictionaryEntry();
+                        KeyDictionaryEntry attributeKvDictionaryEntry = new KeyDictionaryEntry();
                         attributeKvDictionaryEntry.setKey(attributeKey);
                         try {
-                            AttributeKvDictionaryEntry saved = dictionaryRepository.save(attributeKvDictionaryEntry);
+                            KeyDictionaryEntry saved = keyDictionaryRepository.save(attributeKvDictionaryEntry);
                             attributeDictionaryMap.put(saved.getKey(), saved.getKeyId());
                             keyId = saved.getKeyId();
                         } catch (DataIntegrityViolationException | ConstraintViolationException e) {
-                            byIdOptional = dictionaryRepository.findById(attributeKey);
-                            AttributeKvDictionaryEntry dictionary = byIdOptional.orElseThrow(() -> new RuntimeException("Failed to get AttributeKvDictionary entity from DB!"));
+                            byIdOptional = keyDictionaryRepository.findById(new KeyDictionaryCompositeKey(attributeKey));
+                            KeyDictionaryEntry dictionary = byIdOptional.orElseThrow(() -> new RuntimeException("Failed to get AttributeKvDictionary entity from DB!"));
                             attributeDictionaryMap.put(dictionary.getKey(), dictionary.getKeyId());
                             keyId = dictionary.getKeyId();
                         }
@@ -247,7 +249,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
         return keyId;
     }
     private String getKey(Integer attributeKey) {
-        Optional<AttributeKvDictionaryEntry> byKeyId = dictionaryRepository.findByKeyId(attributeKey);
-        return byKeyId.map(AttributeKvDictionaryEntry::getKey).orElse(null);
+        Optional<KeyDictionaryEntry> byKeyId = keyDictionaryRepository.findByKeyId(attributeKey);
+        return byKeyId.map(KeyDictionaryEntry::getKey).orElse(null);
     }
 }

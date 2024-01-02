@@ -23,7 +23,7 @@ SELECT d.*
        , COALESCE(da.bool_v, FALSE) as active
 FROM device d
          LEFT JOIN customer c ON c.id = d.customer_id
-         LEFT JOIN attribute_kv da ON da.entity_id = d.id AND da.attribute_type = 2 AND da.attribute_key = (select key_id from attribute_kv_dictionary  where key = 'active');
+         LEFT JOIN attribute_kv da ON da.entity_id = d.id AND da.attribute_type = 2 AND da.attribute_key = (select key_id from key_dictionary  where key = 'active');
 
 DROP VIEW IF EXISTS device_info_active_ts_view CASCADE;
 CREATE OR REPLACE VIEW device_info_active_ts_view AS
@@ -34,7 +34,7 @@ SELECT d.*
        , COALESCE(dt.bool_v, FALSE) as active
 FROM device d
          LEFT JOIN customer c ON c.id = d.customer_id
-         LEFT JOIN ts_kv_latest dt ON dt.entity_id = d.id and dt.key = (select key_id from ts_kv_dictionary where key = 'active');
+         LEFT JOIN ts_kv_latest dt ON dt.entity_id = d.id and dt.key = (select key_id from key_dictionary where key = 'active');
 
 DROP VIEW IF EXISTS device_info_view CASCADE;
 CREATE OR REPLACE VIEW device_info_view AS SELECT * FROM device_info_active_attribute_view;
@@ -312,7 +312,7 @@ BEGIN
     WHILE FOUND
         LOOP
             EXECUTE format(
-                    'select attribute_kv.long_v from attribute_kv where attribute_kv.entity_id = %L and attribute_kv.attribute_key = (select key_id from attribute_kv_dictionary where key = %L)',
+                    'select attribute_kv.long_v from attribute_kv where attribute_kv.entity_id = %L and attribute_kv.attribute_key = (select key_id from key_dictionary where key = %L)',
                     tenant_id_record, 'TTL') INTO tenant_ttl;
             if tenant_ttl IS NULL THEN
                 tenant_ttl := system_ttl;
@@ -330,7 +330,7 @@ BEGIN
                 SELECT customer.id AS customer_id FROM customer WHERE customer.tenant_id = tenant_id_record
                 LOOP
                     EXECUTE format(
-                            'select attribute_kv.long_v from attribute_kv where attribute_kv.entity_id = %L and attribute_kv.attribute_key = (select key_id from attribute_kv_dictionary where key = %L)',
+                            'select attribute_kv.long_v from attribute_kv where attribute_kv.entity_id = %L and attribute_kv.attribute_key = (select key_id from key_dictionary where key = %L)',
                             customer_id_record, 'TTL') INTO customer_ttl;
                     IF customer_ttl IS NULL THEN
                         customer_ttl_ts := tenant_ttl_ts;

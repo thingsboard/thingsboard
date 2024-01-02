@@ -26,10 +26,10 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
-import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionary;
-import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionaryCompositeKey;
+import org.thingsboard.server.dao.model.sqlts.dictionary.KeyDictionaryEntry;
+import org.thingsboard.server.dao.model.sqlts.dictionary.KeyDictionaryCompositeKey;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
-import org.thingsboard.server.dao.sqlts.dictionary.TsKvDictionaryRepository;
+import org.thingsboard.server.dao.sqlts.dictionary.KeyDictionaryRepository;
 
 import jakarta.annotation.Nullable;
 import java.util.List;
@@ -46,13 +46,13 @@ public abstract class BaseAbstractSqlTimeseriesDao extends JpaAbstractDaoListeni
     private final ConcurrentMap<String, Integer> tsKvDictionaryMap = new ConcurrentHashMap<>();
     protected static final ReentrantLock tsCreationLock = new ReentrantLock();
     @Autowired
-    protected TsKvDictionaryRepository dictionaryRepository;
+    protected KeyDictionaryRepository dictionaryRepository;
 
     protected Integer getOrSaveKeyId(String strKey) {
         Integer keyId = tsKvDictionaryMap.get(strKey);
         if (keyId == null) {
-            Optional<TsKvDictionary> tsKvDictionaryOptional;
-            tsKvDictionaryOptional = dictionaryRepository.findById(new TsKvDictionaryCompositeKey(strKey));
+            Optional<KeyDictionaryEntry> tsKvDictionaryOptional;
+            tsKvDictionaryOptional = dictionaryRepository.findById(new KeyDictionaryCompositeKey(strKey));
             if (tsKvDictionaryOptional.isEmpty()) {
                 tsCreationLock.lock();
                 try {
@@ -60,17 +60,17 @@ public abstract class BaseAbstractSqlTimeseriesDao extends JpaAbstractDaoListeni
                     if (keyId != null) {
                         return keyId;
                     }
-                    tsKvDictionaryOptional = dictionaryRepository.findById(new TsKvDictionaryCompositeKey(strKey));
+                    tsKvDictionaryOptional = dictionaryRepository.findById(new KeyDictionaryCompositeKey(strKey));
                     if (tsKvDictionaryOptional.isEmpty()) {
-                        TsKvDictionary tsKvDictionary = new TsKvDictionary();
-                        tsKvDictionary.setKey(strKey);
+                        KeyDictionaryEntry keyDictionaryEntry = new KeyDictionaryEntry();
+                        keyDictionaryEntry.setKey(strKey);
                         try {
-                            TsKvDictionary saved = dictionaryRepository.save(tsKvDictionary);
+                            KeyDictionaryEntry saved = dictionaryRepository.save(keyDictionaryEntry);
                             tsKvDictionaryMap.put(saved.getKey(), saved.getKeyId());
                             keyId = saved.getKeyId();
                         } catch (DataIntegrityViolationException | ConstraintViolationException e) {
-                            tsKvDictionaryOptional = dictionaryRepository.findById(new TsKvDictionaryCompositeKey(strKey));
-                            TsKvDictionary dictionary = tsKvDictionaryOptional.orElseThrow(() -> new RuntimeException("Failed to get TsKvDictionary entity from DB!"));
+                            tsKvDictionaryOptional = dictionaryRepository.findById(new KeyDictionaryCompositeKey(strKey));
+                            KeyDictionaryEntry dictionary = tsKvDictionaryOptional.orElseThrow(() -> new RuntimeException("Failed to get TsKvDictionary entity from DB!"));
                             tsKvDictionaryMap.put(dictionary.getKey(), dictionary.getKeyId());
                             keyId = dictionary.getKeyId();
                         }

@@ -256,13 +256,13 @@ public class EntityKeyMapping {
         }
         if (entityKey.getType().equals(EntityKeyType.TIME_SERIES)) {
             String join = (hasFilter() && hasFilterValues(ctx)) ? "inner join" : "left join";
-            return String.format("%s ts_kv_latest %s ON %s.entity_id=entities.id AND %s.key = (select key_id from ts_kv_dictionary where key = :%s_key_id) %s",
+            return String.format("%s ts_kv_latest %s ON %s.entity_id=entities.id AND %s.key = (select key_id from key_dictionary where key = :%s_key_id) %s",
                     join, alias, alias, alias, alias, filterQuery);
         } else {
             String query;
             if (!entityKey.getType().equals(EntityKeyType.ATTRIBUTE)) {
                 String join = (hasFilter() && hasFilterValues(ctx)) ? "inner join" : "left join";
-                query = String.format("%s attribute_kv %s ON %s.entity_id=entities.id AND %s.attribute_key=(select key_id from attribute_kv_dictionary where key = :%s_key_id) ",
+                query = String.format("%s attribute_kv %s ON %s.entity_id=entities.id AND %s.attribute_key=(select key_id from key_dictionary where key = :%s_key_id) ",
                         join, alias, alias, alias, alias);
                 int scope;
                 if (entityKey.getType().equals(EntityKeyType.CLIENT_ATTRIBUTE)) {
@@ -275,7 +275,7 @@ public class EntityKeyMapping {
                 query = String.format("%s AND %s.attribute_type=%s %s", query, alias, scope, filterQuery);
             } else {
                 String join = (hasFilter() && hasFilterValues(ctx)) ? "join LATERAL" : "left join LATERAL";
-                query = String.format("%s (select * from attribute_kv %s WHERE %s.entity_id=entities.id  AND %s.attribute_key=(select key_id from attribute_kv_dictionary where key = :%s_key_id) %s " +
+                query = String.format("%s (select * from attribute_kv %s WHERE %s.entity_id=entities.id  AND %s.attribute_key=(select key_id from key_dictionary where key = :%s_key_id) %s " +
                                 "ORDER BY %s.last_update_ts DESC limit 1) as %s ON true",
                         join, alias, alias, alias, alias, filterQuery, alias, alias);
             }

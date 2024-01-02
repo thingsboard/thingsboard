@@ -46,13 +46,18 @@ $$
     END;
 $$;
 
--- create attribute_kv_dictionary table
-CREATE TABLE IF NOT EXISTS attribute_kv_dictionary
-(
-    key    varchar(255) NOT NULL,
-    key_id serial UNIQUE,
-    CONSTRAINT attribute_key_id_pkey PRIMARY KEY (key)
-);
+-- rename ts_kv_dictionary table to key_dictionary
+DO
+$$
+    BEGIN
+        IF EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = 'ts_kv_dictionary') THEN
+            ALTER TABLE ts_kv_dictionary
+                RENAME CONSTRAINT ts_key_id_pkey TO key_id_pkey;
+            ALTER TABLE ts_kv_dictionary
+                RENAME TO key_dictionary;
+        END IF;
+    END;
+$$;
 
 -- create to_attribute_type_id
 CREATE OR REPLACE FUNCTION to_attribute_type_id(IN attribute_type varchar, OUT attribute_type_id int) AS
@@ -70,7 +75,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 
--- insert keys into attribute_kv_dictionary
+-- insert keys into key_dictionary
 DO
 $$
 DECLARE
@@ -84,8 +89,8 @@ BEGIN
         LOOP
             FETCH key_cursor INTO insert_record;
             EXIT WHEN NOT FOUND;
-            IF NOT EXISTS(SELECT key FROM attribute_kv_dictionary WHERE key = insert_record.attribute_key) THEN
-                INSERT INTO attribute_kv_dictionary(key) VALUES (insert_record.attribute_key);
+            IF NOT EXISTS(SELECT key FROM key_dictionary WHERE key = insert_record.attribute_key) THEN
+                INSERT INTO key_dictionary(key) VALUES (insert_record.attribute_key);
             END IF;
         END LOOP;
         CLOSE key_cursor;
@@ -122,7 +127,7 @@ BEGIN
                                dbl_v,
                                json_v,
                                last_update_ts
-                        FROM attribute_kv_old INNER JOIN attribute_kv_dictionary ON (attribute_kv_old.attribute_key = attribute_kv_dictionary.key)
+                        FROM attribute_kv_old INNER JOIN key_dictionary ON (attribute_kv_old.attribute_key = key_dictionary.key)
                         WHERE attribute_type= ANY(%L)) AS records) TO %L;', attribute_scope_array, path_to_file);
         EXECUTE format('COPY attribute_kv FROM %L', path_to_file);
         SELECT COUNT(*) INTO row_num_old FROM attribute_kv_old;

@@ -799,11 +799,11 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     log.error("Failed updating schema!!!", e);
                 }
                 break;
-            case "3.6.2":
+            case "3.6.3":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
-                    if (isOldSchema(conn, 3006002)) {
+                    if (isOldSchema(conn, 3006003)) {
                         log.info("Updating schema ...");
-                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.6.2", LOAD_ATTRIBUTE_KV_FUNCTIONS_SQL);
+                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.6.3", LOAD_ATTRIBUTE_KV_FUNCTIONS_SQL);
                         loadSql(schemaUpdateFile, conn);
 
                         Path pathToTempAttributeKvFile;

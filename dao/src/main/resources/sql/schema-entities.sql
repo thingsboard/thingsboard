@@ -115,12 +115,6 @@ CREATE TABLE IF NOT EXISTS attribute_kv (
   CONSTRAINT attribute_kv_pkey PRIMARY KEY (entity_id, attribute_type, attribute_key)
 );
 
-CREATE TABLE IF NOT EXISTS attribute_kv_dictionary (
-    key    varchar(255) NOT NULL,
-    key_id serial UNIQUE,
-    CONSTRAINT attribute_key_id_pkey PRIMARY KEY (key)
-);
-
 CREATE TABLE IF NOT EXISTS component_descriptor (
     id uuid NOT NULL CONSTRAINT component_descriptor_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
@@ -552,11 +546,11 @@ CREATE TABLE IF NOT EXISTS ts_kv_latest
     CONSTRAINT ts_kv_latest_pkey PRIMARY KEY (entity_id, key)
 );
 
-CREATE TABLE IF NOT EXISTS ts_kv_dictionary
+CREATE TABLE IF NOT EXISTS key_dictionary
 (
     key    varchar(255) NOT NULL,
     key_id serial UNIQUE,
-    CONSTRAINT ts_key_id_pkey PRIMARY KEY (key)
+    CONSTRAINT key_id_pkey PRIMARY KEY (key)
 );
 
 CREATE TABLE IF NOT EXISTS oauth2_params (
