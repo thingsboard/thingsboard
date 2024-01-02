@@ -61,6 +61,12 @@ import { BatteryLevelWidgetComponent } from '@home/components/widget/lib/indicat
 import {
   WindSpeedDirectionWidgetComponent
 } from '@home/components/widget/lib/weather/wind-speed-direction-widget.component';
+import { SignalStrengthWidgetComponent } from '@home/components/widget/lib/indicator/signal-strength-widget.component';
+import { ValueChartCardWidgetComponent } from '@home/components/widget/lib/cards/value-chart-card-widget.component';
+import { ProgressBarWidgetComponent } from '@home/components/widget/lib/cards/progress-bar-widget.component';
+import { LiquidLevelWidgetComponent } from '@home/components/widget/lib/indicator/liquid-level-widget.component';
+import { DoughnutWidgetComponent } from '@home/components/widget/lib/chart/doughnut-widget.component';
+import { RangeChartWidgetComponent } from '@home/components/widget/lib/chart/range-chart-widget.component';
 
 @NgModule({
   declarations:
@@ -96,7 +102,13 @@ import {
       AggregatedValueCardWidgetComponent,
       CountWidgetComponent,
       BatteryLevelWidgetComponent,
-      WindSpeedDirectionWidgetComponent
+      WindSpeedDirectionWidgetComponent,
+      SignalStrengthWidgetComponent,
+      ValueChartCardWidgetComponent,
+      ProgressBarWidgetComponent,
+      LiquidLevelWidgetComponent,
+      DoughnutWidgetComponent,
+      RangeChartWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -136,7 +148,13 @@ import {
         AggregatedValueCardWidgetComponent,
         CountWidgetComponent,
         BatteryLevelWidgetComponent,
-        WindSpeedDirectionWidgetComponent
+        WindSpeedDirectionWidgetComponent,
+        SignalStrengthWidgetComponent,
+        ValueChartCardWidgetComponent,
+        ProgressBarWidgetComponent,
+        LiquidLevelWidgetComponent,
+        DoughnutWidgetComponent,
+        RangeChartWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }

@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.service.edge;
 
+import com.fasterxml.jackson.databind.node.NullNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,6 +27,7 @@ import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -39,6 +42,7 @@ import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.RelationActionEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
+import org.thingsboard.server.dao.user.UserServiceImpl;
 
 import javax.annotation.PostConstruct;
 
@@ -71,45 +75,37 @@ public class EdgeEventSourcingListener {
 
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(SaveEntityEvent<?> event) {
-        if (edgeSynchronizationManager.isSync()) {
-            return;
-        }
         try {
-            if (!isValidEdgeEventEntity(event)) {
+            if (!isValidSaveEntityEventForEdgeProcessing(event)) {
                 return;
             }
             log.trace("[{}] SaveEntityEvent called: {}", event.getTenantId(), event);
             EdgeEventActionType action = Boolean.TRUE.equals(event.getAdded()) ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED;
             tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, event.getEntityId(),
-                    null, null, action);
+                    null, null, action, edgeSynchronizationManager.getEdgeId().get());
         } catch (Exception e) {
-            log.error("[{}] failed to process SaveEntityEvent: {}", event.getTenantId(), event);
+            log.error("[{}] failed to process SaveEntityEvent: {}", event.getTenantId(), event, e);
         }
     }
 
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(DeleteEntityEvent<?> event) {
-        if (edgeSynchronizationManager.isSync()) {
-            return;
-        }
         EntityType entityType = event.getEntityId().getEntityType();
         try {
             if (EntityType.EDGE.equals(entityType) || EntityType.TENANT.equals(entityType) || EntityType.TB_RESOURCE.equals(entityType)) {
                 return;
             }
             log.trace("[{}] DeleteEntityEvent called: {}", event.getTenantId(), event);
-            tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), event.getEdgeId(), event.getEntityId(),
-                    JacksonUtil.toString(event.getEntity()), null, EdgeEventActionType.DELETED);
+            tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, event.getEntityId(),
+                    JacksonUtil.toString(event.getEntity()), null, EdgeEventActionType.DELETED,
+                    edgeSynchronizationManager.getEdgeId().get());
         } catch (Exception e) {
-            log.error("[{}] failed to process DeleteEntityEvent: {}", event.getTenantId(), event);
+            log.error("[{}] failed to process DeleteEntityEvent: {}", event.getTenantId(), event, e);
         }
     }
 
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(ActionEntityEvent<?> event) {
-        if (edgeSynchronizationManager.isSync()) {
-            return;
-        }
         if (EntityType.DEVICE.equals(event.getEntityId().getEntityType())
                 && ActionType.ASSIGNED_TO_TENANT.equals(event.getActionType())) {
             return;
@@ -117,17 +113,15 @@ public class EdgeEventSourcingListener {
         try {
             log.trace("[{}] ActionEntityEvent called: {}", event.getTenantId(), event);
             tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), event.getEdgeId(), event.getEntityId(),
-                    event.getBody(), null, EdgeUtils.getEdgeEventActionTypeByActionType(event.getActionType()));
+                    event.getBody(), null, EdgeUtils.getEdgeEventActionTypeByActionType(event.getActionType()),
+                    edgeSynchronizationManager.getEdgeId().get());
         } catch (Exception e) {
-            log.error("[{}] failed to process ActionEntityEvent: {}", event.getTenantId(), event);
+            log.error("[{}] failed to process ActionEntityEvent: {}", event.getTenantId(), event, e);
         }
     }
 
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(RelationActionEvent event) {
-        if (edgeSynchronizationManager.isSync()) {
-            return;
-        }
         try {
             EntityRelation relation = event.getRelation();
             if (relation == null) {
@@ -140,30 +134,46 @@ public class EdgeEventSourcingListener {
             }
             log.trace("[{}] RelationActionEvent called: {}", event.getTenantId(), event);
             tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, null,
-                    JacksonUtil.toString(relation), EdgeEventType.RELATION, EdgeUtils.getEdgeEventActionTypeByActionType(event.getActionType()));
+                    JacksonUtil.toString(relation), EdgeEventType.RELATION, EdgeUtils.getEdgeEventActionTypeByActionType(event.getActionType()),
+                    edgeSynchronizationManager.getEdgeId().get());
         } catch (Exception e) {
-            log.error("[{}] failed to process RelationActionEvent: {}", event.getTenantId(), event);
+            log.error("[{}] failed to process RelationActionEvent: {}", event.getTenantId(), event, e);
         }
     }
 
-    private boolean isValidEdgeEventEntity(SaveEntityEvent<?> event) {
+    private boolean isValidSaveEntityEventForEdgeProcessing(SaveEntityEvent<?> event) {
+        Object entity = event.getEntity();
+        Object oldEntity = event.getOldEntity();
         switch (event.getEntityId().getEntityType()) {
             case RULE_CHAIN:
-                RuleChain ruleChain = (RuleChain) event.getEntity();
-                return RuleChainType.EDGE.equals(ruleChain.getType());
+                if (entity instanceof RuleChain) {
+                    RuleChain ruleChain = (RuleChain) entity;
+                    return RuleChainType.EDGE.equals(ruleChain.getType());
+                }
+                break;
             case USER:
-                User user = (User) event.getEntity();
-                return !Authority.SYS_ADMIN.equals(user.getAuthority());
+                if (entity instanceof User) {
+                    User user = (User) entity;
+                    if (Authority.SYS_ADMIN.equals(user.getAuthority())) {
+                        return false;
+                    }
+                    if (oldEntity != null) {
+                        User oldUser = (User) oldEntity;
+                        cleanUpUserAdditionalInfo(oldUser);
+                        cleanUpUserAdditionalInfo(user);
+                        return !user.equals(oldUser);
+                    }
+                }
+                break;
             case OTA_PACKAGE:
-                if (event.getEntity() instanceof OtaPackageInfo) {
-                    OtaPackageInfo otaPackageInfo = (OtaPackageInfo) event.getEntity();
+                if (entity instanceof OtaPackageInfo) {
+                    OtaPackageInfo otaPackageInfo = (OtaPackageInfo) entity;
                     return otaPackageInfo.hasUrl() || otaPackageInfo.isHasData();
                 }
                 break;
             case ALARM:
-                if (event.getEntity() instanceof AlarmApiCallResult) {
-                    AlarmApiCallResult alarmApiCallResult = (AlarmApiCallResult) event.getEntity();
-                    return alarmApiCallResult.isModified();
+                if (entity instanceof AlarmApiCallResult || entity instanceof Alarm) {
+                    return false;
                 }
                 break;
             case TENANT:
@@ -175,5 +185,22 @@ public class EdgeEventSourcingListener {
         }
         // Default: If the entity doesn't match any of the conditions, consider it as valid.
         return true;
+    }
+
+    private void cleanUpUserAdditionalInfo(User user) {
+        // reset FAILED_LOGIN_ATTEMPTS and LAST_LOGIN_TS - edge is not interested in this information
+        if (user.getAdditionalInfo() instanceof NullNode) {
+            user.setAdditionalInfo(null);
+        }
+        if (user.getAdditionalInfo() instanceof ObjectNode) {
+            ObjectNode additionalInfo = ((ObjectNode) user.getAdditionalInfo());
+            additionalInfo.remove(UserServiceImpl.FAILED_LOGIN_ATTEMPTS);
+            additionalInfo.remove(UserServiceImpl.LAST_LOGIN_TS);
+            if (additionalInfo.isEmpty()) {
+                user.setAdditionalInfo(null);
+            } else {
+                user.setAdditionalInfo(additionalInfo);
+            }
+        }
     }
 }

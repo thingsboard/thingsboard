@@ -17,13 +17,14 @@
 import sys
 import re
 
+
 def extract_properties_with_comments(yaml_file_path):
     properties = {}
 
     with open(yaml_file_path, 'r') as file:
         lines = file.readlines()
         index = 0
-        key_level_map = {0 : ''}
+        key_level_map = {0: ''}
         parse_line('', '', key_level_map, 0, index, lines, properties)
 
     return properties
@@ -42,7 +43,7 @@ def parse_line(table_name, comment, key_level_map, parent_line_level, index, lin
     # if line is a comment - save comment and parse next line
     else:
         if line_level == 0:
-            key_level_map = {0 : ''}
+            key_level_map = {0: ''}
         if line.startswith('#'):
             if line_level == 0:
                 table_name = line.lstrip('#')
@@ -100,11 +101,7 @@ def check_descriptions(properties):
     return variables_without_description
 
 
-if __name__ == '__main__':
-    sys. setrecursionlimit(10000)
-    # path to the YAML file
-    input_yaml_file = "application/src/main/resources/thingsboard.yml"
-
+def check_yml(total_list, input_yaml_file):
     # Parse yml file to map where key is property key path with '.' separator
     # and value is an object (env_name_with_default_value, comment, table_name)
     properties = extract_properties_with_comments(input_yaml_file)
@@ -112,11 +109,26 @@ if __name__ == '__main__':
     # Extract property information (extract env name, default value and comment nearby property)
     property_info = extract_property_info(properties)
 
-    # Check all properies have descriptions
-    variables_without_desc = check_descriptions(property_info)
+    # Check all properties have descriptions
+    variables_without_description = check_descriptions(property_info)
+    total_list.extend(variables_without_description)
+    if len(variables_without_description) > 0:
+        print(f"Check {input_yaml_file}. There are some yml properties without valid description: (total {len(variables_without_description)}) {variables_without_description}.")
 
-    if len(variables_without_desc) > 0:
-        print(f"There are some yml properties without valid description: (total {len(variables_without_desc)}) {variables_without_desc}.")
+if __name__ == '__main__':
+    sys.setrecursionlimit(10000)
+    files_to_check = ["application/src/main/resources/thingsboard.yml",
+                      "transport/http/src/main/resources/tb-http-transport.yml",
+                      "transport/mqtt/src/main/resources/tb-mqtt-transport.yml",
+                      "transport/coap/src/main/resources/tb-coap-transport.yml",
+                      "transport/lwm2m/src/main/resources/tb-lwm2m-transport.yml",
+                      "transport/snmp/src/main/resources/tb-snmp-transport.yml",
+                      "msa/vc-executor/src/main/resources/tb-vc-executor.yml"]
+
+    total_list = []
+    for file in files_to_check:
+        check_yml(total_list, file)
+    if len(total_list) > 0:
         exit(1)
     else:
         print("All yml properties have valid description.")

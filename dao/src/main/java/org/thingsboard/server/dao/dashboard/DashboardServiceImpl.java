@@ -50,6 +50,7 @@ import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
@@ -77,6 +78,9 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
 
     @Autowired
     private EdgeDao edgeDao;
+
+    @Autowired
+    private ImageService imageService;
 
     @Autowired
     private DataValidator<Dashboard> dashboardValidator;
@@ -149,7 +153,8 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             dashboardValidator.validate(dashboard, DashboardInfo::getTenantId);
         }
         try {
-            Dashboard saved = dashboardDao.save(dashboard.getTenantId(), dashboard);
+            imageService.replaceBase64WithImageUrl(dashboard);
+            var saved = dashboardDao.save(dashboard.getTenantId(), dashboard);
             publishEvictEvent(new DashboardTitleEvictEvent(saved.getId()));
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(saved.getTenantId())
                     .entityId(saved.getId()).added(dashboard.getId() == null).build());
@@ -165,6 +170,8 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             throw e;
         }
     }
+
+
 
     @Override
     public Dashboard assignDashboardToCustomer(TenantId tenantId, DashboardId dashboardId, CustomerId customerId) {

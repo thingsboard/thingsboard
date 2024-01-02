@@ -15,8 +15,7 @@
  */
 package org.thingsboard.server.common.msg.plugin;
 
-import lombok.Getter;
-import lombok.ToString;
+import lombok.Data;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -31,20 +30,13 @@ import java.util.Optional;
 /**
  * @author Andrew Shvayka
  */
-@ToString
+@Data
 public class ComponentLifecycleMsg implements TenantAwareMsg, ToAllNodesMsg {
-    @Getter
-    private final TenantId tenantId;
-    @Getter
-    private final EntityId entityId;
-    @Getter
-    private final ComponentLifecycleEvent event;
+    private static final long serialVersionUID = -5303421482781273062L;
 
-    public ComponentLifecycleMsg(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent event) {
-        this.tenantId = tenantId;
-        this.entityId = entityId;
-        this.event = event;
-    }
+    private final TenantId tenantId;
+    private final EntityId entityId;
+    private final ComponentLifecycleEvent event;
 
     public Optional<RuleChainId> getRuleChainId() {
         return entityId.getEntityType() == EntityType.RULE_CHAIN ? Optional.of((RuleChainId) entityId) : Optional.empty();

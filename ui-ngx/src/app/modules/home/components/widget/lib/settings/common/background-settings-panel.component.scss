@@ -31,6 +31,12 @@
     letter-spacing: 0.25px;
     color: rgba(0, 0, 0, 0.87);
   }
+  .tb-background-form-panel {
+    height: 192px;
+    .tb-background-color-field {
+      height: auto;
+    }
+  }
   .tb-background-settings-preview {
     flex: 1;
     background: rgba(0, 0, 0, 0.04);

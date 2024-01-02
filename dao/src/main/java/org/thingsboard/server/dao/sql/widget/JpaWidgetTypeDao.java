@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.common.data.widget.WidgetsBundleWidget;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.WidgetTypeDetailsEntity;
+import org.thingsboard.server.dao.model.sql.WidgetTypeInfoEntity;
 import org.thingsboard.server.dao.model.sql.WidgetsBundleWidgetCompositeKey;
 import org.thingsboard.server.dao.model.sql.WidgetsBundleWidgetEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
@@ -91,13 +92,13 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
                 widgetTypeInfoRepository
                         .findSystemWidgetTypes(
                                 NULL_UUID,
-                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getTextSearch(),
                                 fullSearch,
                                 deprecatedFilterEnabled,
                                 deprecatedFilterBool,
                                 widgetTypesEmpty,
                                 widgetTypes == null ? Collections.emptyList() : widgetTypes,
-                                DaoUtil.toPageable(pageLink)));
+                                DaoUtil.toPageable(pageLink, WidgetTypeInfoEntity.SEARCH_COLUMNS_MAP)));
     }
 
     @Override
@@ -110,17 +111,17 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
                         .findAllTenantWidgetTypesByTenantId(
                                 tenantId,
                                 NULL_UUID,
-                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getTextSearch(),
                                 fullSearch,
                                 deprecatedFilterEnabled,
                                 deprecatedFilterBool,
                                 widgetTypesEmpty,
                                 widgetTypes == null ? Collections.emptyList() : widgetTypes,
-                                DaoUtil.toPageable(pageLink)));
+                                DaoUtil.toPageable(pageLink, WidgetTypeInfoEntity.SEARCH_COLUMNS_MAP)));
     }
 
     @Override
-    public PageData<WidgetTypeInfo> findTenantWidgetTypesByTenantId(UUID tenantId, boolean fullSearch, DeprecatedFilter deprecatedFilter, List<String> widgetTypes,  PageLink pageLink) {
+    public PageData<WidgetTypeInfo> findTenantWidgetTypesByTenantId(UUID tenantId, boolean fullSearch, DeprecatedFilter deprecatedFilter, List<String> widgetTypes, PageLink pageLink) {
         boolean deprecatedFilterEnabled = !DeprecatedFilter.ALL.equals(deprecatedFilter);
         boolean deprecatedFilterBool = DeprecatedFilter.DEPRECATED.equals(deprecatedFilter);
         boolean widgetTypesEmpty = widgetTypes == null || widgetTypes.isEmpty();
@@ -128,13 +129,13 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
                 widgetTypeInfoRepository
                         .findTenantWidgetTypesByTenantId(
                                 tenantId,
-                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getTextSearch(),
                                 fullSearch,
                                 deprecatedFilterEnabled,
                                 deprecatedFilterBool,
                                 widgetTypesEmpty,
                                 widgetTypes == null ? Collections.emptyList() : widgetTypes,
-                                DaoUtil.toPageable(pageLink)));
+                                DaoUtil.toPageable(pageLink, WidgetTypeInfoEntity.SEARCH_COLUMNS_MAP)));
     }
 
     @Override
@@ -162,7 +163,7 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
                                 deprecatedFilterBool,
                                 widgetTypesEmpty,
                                 widgetTypes == null ? Collections.emptyList() : widgetTypes,
-                                DaoUtil.toPageable(pageLink)));
+                                DaoUtil.toPageable(pageLink, WidgetTypeInfoEntity.SEARCH_COLUMNS_MAP)));
     }
 
     @Override
@@ -199,8 +200,14 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
                 widgetTypeRepository
                         .findTenantWidgetTypeDetailsByTenantId(
                                 tenantId,
-                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getTextSearch(),
                                 DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<WidgetTypeId> findIdsByTenantId(UUID tenantId, PageLink pageLink) {
+        return DaoUtil.pageToPageData(widgetTypeRepository.findIdsByTenantId(tenantId, DaoUtil.toPageable(pageLink))
+                .map(WidgetTypeId::new));
     }
 
     @Override
@@ -222,6 +229,21 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
     @Override
     public void removeWidgetTypeFromWidgetsBundle(UUID widgetsBundleId, UUID widgetTypeId) {
         widgetsBundleWidgetRepository.deleteById(new WidgetsBundleWidgetCompositeKey(widgetsBundleId, widgetTypeId));
+    }
+
+    @Override
+    public PageData<WidgetTypeId> findAllWidgetTypesIds(PageLink pageLink) {
+        return DaoUtil.pageToPageData(widgetTypeRepository.findAllIds(DaoUtil.toPageable(pageLink)).map(WidgetTypeId::new));
+    }
+
+    @Override
+    public List<WidgetTypeInfo> findByTenantAndImageLink(TenantId tenantId, String imageUrl, int limit) {
+        return DaoUtil.convertDataList(widgetTypeInfoRepository.findByTenantAndImageUrl(tenantId.getId(), imageUrl, limit));
+    }
+
+    @Override
+    public List<WidgetTypeInfo> findByImageLink(String imageUrl, int limit) {
+        return DaoUtil.convertDataList(widgetTypeInfoRepository.findByImageUrl(imageUrl, limit));
     }
 
     @Override

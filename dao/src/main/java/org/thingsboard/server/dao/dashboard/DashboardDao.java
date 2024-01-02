@@ -44,4 +44,6 @@ public interface DashboardDao extends Dao<Dashboard>, TenantEntityDao, Exportabl
 
     PageData<DashboardId> findIdsByTenantId(TenantId tenantId, PageLink pageLink);
 
+    PageData<DashboardId> findAllIds(PageLink pageLink);
+
 }

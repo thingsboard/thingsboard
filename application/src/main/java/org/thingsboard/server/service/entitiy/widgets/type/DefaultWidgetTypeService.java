@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.entitiy.widgets.type;
 
 import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
@@ -24,6 +25,7 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
@@ -32,6 +34,7 @@ import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 @TbCoreComponent
 @AllArgsConstructor
 public class DefaultWidgetTypeService extends AbstractTbEntityService implements TbWidgetTypeService {
+
 
     private final WidgetTypeService widgetTypeService;
 

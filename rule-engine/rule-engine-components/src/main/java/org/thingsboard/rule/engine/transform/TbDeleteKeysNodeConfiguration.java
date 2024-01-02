@@ -17,6 +17,7 @@ package org.thingsboard.rule.engine.transform;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 
 import java.util.Collections;
 import java.util.Set;
@@ -24,14 +25,14 @@ import java.util.Set;
 @Data
 public class TbDeleteKeysNodeConfiguration implements NodeConfiguration<TbDeleteKeysNodeConfiguration> {
 
-    private boolean fromMetadata;
+    private TbMsgSource deleteFrom;
     private Set<String> keys;
 
     @Override
     public TbDeleteKeysNodeConfiguration defaultConfiguration() {
         TbDeleteKeysNodeConfiguration configuration = new TbDeleteKeysNodeConfiguration();
         configuration.setKeys(Collections.emptySet());
-        configuration.setFromMetadata(false);
+        configuration.setDeleteFrom(TbMsgSource.DATA);
         return configuration;
     }
 

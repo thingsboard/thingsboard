@@ -22,8 +22,9 @@ import { EntitySearchQuery } from '@shared/models/relation.models';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { BaseEventBody } from '@shared/models/event.models';
 import { EventId } from '@shared/models/id/event-id';
+import { HasTenantId } from '@shared/models/entity.models';
 
-export interface Edge extends BaseData<EdgeId> {
+export interface Edge extends BaseData<EdgeId>, HasTenantId {
   tenantId?: TenantId;
   customerId?: CustomerId;
   name: string;
@@ -178,8 +179,8 @@ export interface EdgeEvent extends BaseData<EventId> {
   body: string;
 }
 
-export interface EdgeInstallInstructions {
-  installInstructions: string;
+export interface EdgeInstructions {
+  instructions: string;
 }
 
 export enum EdgeInstructionsMethod {
@@ -187,3 +188,5 @@ export enum EdgeInstructionsMethod {
   centos,
   docker
 }
+
+export const edgeVersionAttributeKey = 'edgeVersion';

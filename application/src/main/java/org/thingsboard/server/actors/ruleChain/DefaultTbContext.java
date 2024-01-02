@@ -83,6 +83,7 @@ import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.dao.nosql.TbResultSetFuture;
@@ -103,6 +104,7 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
+import org.thingsboard.server.service.executors.PubSubRuleNodeExecutorProvider;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import org.thingsboard.server.service.script.RuleNodeTbelScriptEngine;
 
@@ -533,6 +535,11 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public PubSubRuleNodeExecutorProvider getPubSubRuleNodeExecutorProvider() {
+        return mainCtx.getPubSubRuleNodeExecutorProvider();
+    }
+
+    @Override
     @Deprecated
     public ScriptEngine createJsScriptEngine(String script, String... argNames) {
         return new RuleNodeJsScriptEngine(getTenantId(), mainCtx.getJsInvokeService(), script, argNames);
@@ -882,6 +889,11 @@ class DefaultTbContext implements TbContext {
     @Override
     public RuleEngineApiUsageStateService getRuleEngineApiUsageStateService() {
         return mainCtx.getApiUsageStateService();
+    }
+
+    @Override
+    public EntityService getEntityService() {
+        return mainCtx.getEntityService();
     }
 
     private TbMsgMetaData getActionMetaData(RuleNodeId ruleNodeId) {

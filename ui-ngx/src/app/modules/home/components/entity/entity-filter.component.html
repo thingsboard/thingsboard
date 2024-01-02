@@ -41,6 +41,7 @@
                              formControlName="entityType">
       </tb-entity-type-select>
       <tb-entity-list required
+                      labelText="{{'entity.entity-list' | translate}}"
                       [entityType]="filterFormGroup.get('entityType').value"
                       formControlName="entityList">
       </tb-entity-list>

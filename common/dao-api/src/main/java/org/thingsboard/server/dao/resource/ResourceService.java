@@ -32,11 +32,17 @@ public interface ResourceService extends EntityDaoService {
 
     TbResource saveResource(TbResource resource);
 
-    TbResource getResource(TenantId tenantId, ResourceType resourceType, String resourceId);
+    TbResource saveResource(TbResource resource, boolean doValidate);
+
+    TbResource findResourceByTenantIdAndKey(TenantId tenantId, ResourceType resourceType, String resourceKey);
 
     TbResource findResourceById(TenantId tenantId, TbResourceId resourceId);
 
     TbResourceInfo findResourceInfoById(TenantId tenantId, TbResourceId resourceId);
+
+    TbResourceInfo findResourceInfoByTenantIdAndKey(TenantId tenantId, ResourceType resourceType, String resourceKey);
+
+    PageData<TbResource> findAllTenantResources(TenantId tenantId, PageLink pageLink);
 
     ListenableFuture<TbResourceInfo> findResourceInfoByIdAsync(TenantId tenantId, TbResourceId resourceId);
 
@@ -48,9 +54,12 @@ public interface ResourceService extends EntityDaoService {
 
     PageData<TbResource> findTenantResourcesByResourceTypeAndPageLink(TenantId tenantId, ResourceType lwm2mModel, PageLink pageLink);
 
-    void deleteResource(TenantId tenantId, TbResource resource);
+    void deleteResource(TenantId tenantId, TbResourceId resource);
+
+    void deleteResource(TenantId tenantId, TbResourceId resource, boolean force);
 
     void deleteResourcesByTenantId(TenantId tenantId);
 
     long sumDataSizeByTenantId(TenantId tenantId);
+
 }

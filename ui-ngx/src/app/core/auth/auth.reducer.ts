@@ -29,6 +29,7 @@ const emptyUserAuthState: AuthPayload = {
   hasRepository: false,
   tbelEnabled: false,
   persistDeviceStateToTelemetry: false,
+  maxResourceSize: 0,
   userSettings: initialUserSettings
 };
 

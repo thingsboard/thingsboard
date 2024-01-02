@@ -641,7 +641,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
 
     private void handleLatestCmd(TbEntityDataSubCtx ctx, LatestValueCmd latestCmd) {
         log.trace("[{}][{}] Going to process latest command: {}", ctx.getSessionId(), ctx.getCmdId(), latestCmd);
-        //Fetch the latest values for telemetry keys (in case they are not copied from NoSQL to SQL DB in hybrid mode.
+        //Fetch the latest values for telemetry keys in case they are not copied from NoSQL to SQL DB in hybrid mode.
         if (!tsInSqlDB) {
             log.trace("[{}][{}] Going to fetch missing latest values: {}", ctx.getSessionId(), ctx.getCmdId(), latestCmd);
             List<String> allTsKeys = latestCmd.getKeys().stream()

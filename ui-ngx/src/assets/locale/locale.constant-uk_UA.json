@@ -6,13 +6,20 @@
         "access-forbidden": "Доступ заборонено",
         "access-forbidden-text": "Недостатньо прав для доступу! <br/> Спробуйте увійти як інший користувач, якщо ви все ще хочете отримати доступ до цього ресурсу.",
         "refresh-token-expired": "Дані про сесію застарілі",
-        "refresh-token-failed": "Не вдається відновити сеанс"
+        "refresh-token-failed": "Не вдається відновити сеанс",
+        "permission-denied": "У дозволі відмовлено",
+        "permission-denied-text": "Ви не маєте дозволу на виконання цієї операції!"
+    },
+    "account": {
+        "account": "Обліковий запис",
+        "notification-settings": "Налаштування сповіщень"
     },
     "action": {
         "activate": "Активувати",
         "suspend": "Призупинити",
         "save": "Зберегти",
         "saveAs": "Зберегти як",
+        "move": "Перемістити",
         "cancel": "Скасувати",
         "ok": "OK",
         "delete": "Видалити",
@@ -21,6 +28,7 @@
         "no": "Ні",
         "update": "Оновити",
         "remove": "Видалити",
+        "select": "Вибрати",
         "search": "Пошук",
         "clear-search": "Очистити пошук",
         "assign": "Надати",
@@ -32,6 +40,7 @@
         "edit-mode": "Режим редагування",
         "enter-edit-mode": "Ввійти в режим редагування",
         "decline-changes": "Відхилити зміни",
+        "decline": "Відхилити",
         "close": "Закрити",
         "back": "Назад",
         "run": "Запустити",
@@ -51,9 +60,27 @@
         "share-via": "Поділитися через {{provider}}",
         "continue": "Продовжити",
         "discard-changes": "Скасувати зміни",
-        "move": "Перемістити",
-        "select": "Вибрати",
-        "done": "Завершено"
+        "download": "Завантажити",
+        "next": "Наступний",
+        "next-with-label": "Наступний: {{label}}",
+        "read-more": "Прочитати більше",
+        "hide": "Приховати",
+        "done": "Завершено",
+        "print": "Друкувати",
+        "restore": "Відновити",
+        "confirm": "Підтвердити",
+        "more": "Більше",
+        "less": "Менше",
+        "skip": "Пропустити",
+        "send": "Надіслати",
+        "reset": "Скидання",
+        "show-more": "Показати більше",
+        "dont-show-again": "Більше не показувати",
+        "see-documentation": "Див. документацію",
+        "clear": "Очистити",
+        "upload": "Надіслати",
+        "delete-anyway": "Все одно видалити",
+        "delete-selected": "Видалити вибране"
     },
     "aggregation": {
         "aggregation": "Агрегація",
@@ -68,6 +95,7 @@
         "none": "Відсутня"
     },
     "admin": {
+        "settings": "Налаштування",
         "general": "Загальне",
         "general-settings": "Загальні налаштування",
         "outgoing-mail": "Поштовий сервер",
@@ -126,15 +154,15 @@
         "minimum-max-failed-login-attempts-range": "Максимальна кількість невдалих спроб входу не може бути негативною",
         "user-lockout-notification-email": "У разі блокування облікового запису користувача, надішліть сповіщення на електронну пошту",
         "smpp-provider": {
-          "smpp-version": "SMPP верія",
+          "smpp-version": "SMPP верcія",
           "smpp-host": "SMPP хост",
           "smpp-host-required": "Хост SMPP обов'язковий.",
           "smpp-port": "SMPP порт",
           "smpp-port-required": "Порт SMPP обов'язковий.",
           "system-id": "Id системи",
-          "system-id-required": "Id системи обязателен.",
+          "system-id-required": "ID системи обов'язковий.",
           "password": "Пароль",
-          "password-required": "Пароль обязателен.",
+          "password-required": "Пароль обов'язковий.",
           "type-settings": "Налаштування типів",
           "source-settings": "Налаштування джерела",
           "destination-settings": "Налаштування призначення",
@@ -144,12 +172,13 @@
           "service-type": "Тип обслуговування",
           "source-address": "Адреса джерела",
           "source-ton": "Тип номера джерела",
-          "source-npi": "Идентификация плана нумерации джерела",
+          "source-npi": "Ідентифікація плану нумерації джерела",
           "destination-ton": "Тип номера призначення",
           "destination-npi": "Ідентифікація плану нумерації призначення",
           "address-range": "Діапазон адрес",
           "coding-scheme": "Схема кодування"
-        }
+        },
+        "resources": "Ресурси"
     },
     "alarm": {
         "alarm": "Сигнал тривоги",
@@ -249,8 +278,8 @@
         "filter-type": "Тип фільтра",
         "filter-type-required": "Необхідно вказати тип фільтра.",
         "entity-filter-no-entity-matched": "Не знайдено жодних сутностей, які відповідають вказаному фільтру.",
-        "no-entity-filter-specified": "Фільтр обїектів не вказано",
-        "root-state-entity": "Використовувати сутінсть стану як кореневу",
+        "no-entity-filter-specified": "Фільтр сутностей не вказано",
+        "root-state-entity": "Використовувати сутність стану як кореневу",
         "last-level-relation": "Використовувати лише відношення останнього рівня",
         "group-state-entity": "Використовувати групу сутностей стану як кореневу",
         "root-entity": "Коренева сутність",
@@ -323,7 +352,7 @@
         "copyId": "Копіювати Id активу",
         "idCopiedMessage": "Id активу був скопійований у буфер обміну",
         "select-asset": "Виберіть актив",
-        "no-assets-matching": "Не знайдено жодних активів, що відповідають'{{entity}}'.",
+        "no-assets-matching": "Не знайдено жодних активів, що відповідають '{{entity}}'.",
         "asset-required": "Необхідно задати актив",
         "name-starts-with": "Назва активу починається з",
         "selected-assets": "{ count, plural, =1 {1 актив} other {# активи} } selected",
@@ -366,6 +395,9 @@
         "add-widget-to-dashboard": "Додати віджет до інформаційної панелі",
         "selected-attributes": "{ count, plural, =1 {1 attribute} other {# attributes} } selected ...вибрані вибрати",
         "selected-telemetry": "{ count, plural, =1 {1 telemetry unit} other {# telemetry units} } selected"
+    },
+    "api-usage": {
+    "api-usage": "Використання API"
     },
     "audit-log": {
         "audit": "Операція",
@@ -476,14 +508,14 @@
         "test": "Тест",
         "metadata": "Метадані",
         "metadata-required": "Записи метаданих не можуть бути порожніми.",
-        "integration-metadata": "Метедані інтеграції",
+        "integration-metadata": "Метадані інтеграції",
         "integration-metadata-required": "Параметри метаданих інтеграції не можуть бути порожніми.",
         "output": "Вихідні дані",
         "import": "Імпорт перетворювача даних",
         "export": "Експорт перетворювача даних",
         "export-failed-error": "Неможливо експортувати перетворювач даних: {{помилка}}",
         "create-new-converter": "Створити новий перетворювач даних",
-        "converter-file": "Файл перетворювача даних(конвектер файл)",
+        "converter-file": "Файл перетворювача даних",
         "invalid-converter-file-error": "Неможливо імпортувати перетворювач даних: недійсна структура даних перетворювача.",
         "type": "Тип",
         "type-required": "Необхідно задати тип.",
@@ -620,7 +652,7 @@
         "unassign-dashboard-text": "Після підтвердження, клієнт буде позбавлений панелі приладів. Панель приладів і пов'язані з нею дані будуть недоступні клієнтові.",
         "unassign-dashboard": "Позбавити панелі приладів",
         "unassign-dashboards-title": "Ви впевнені, що хочете позбавити { count, plural, =1 {1 панелі приладів} other {# панелей приладів} }?",
-        "unassign-dashboards-text": "Після підтвердження, клієтн буде позбавлений усіх вибраних панелей приладів і даних, які з ними пов'язані.",
+        "unassign-dashboards-text": "Після підтвердження, клієнт буде позбавлений усіх вибраних панелей приладів і даних, які з ними пов'язані.",
         "public-dashboard-title": "Панель приладів тепер публічна",
         "public-dashboard-text": "Ваша панель приладів <b>{{dashboardTitle}}</b> тепер публічна і доступна іншим <a href='{{publicLink}}' target='_blank'>link</a>:",
         "public-dashboard-notice": "<b>Note:</b> Не забудьте зробити спільні пристрої загальнодоступними, щоб отримати доступ до їхніх даних.",
@@ -645,7 +677,7 @@
         "settings": "Налаштування",
         "columns-count": "Кількість стовпців",
         "columns-count-required": "Необхідно вказати кількість стовпців.",
-        "min-columns-count-message": "Дозволений мінімум -10 стовпців.",
+        "min-columns-count-message": "Дозволений мінімум - 10 стовпців.",
         "max-columns-count-message": "Дозволений максимум - 1000 стовпців.",
         "widgets-margins": "Відступ між віджетами",
         "horizontal-margin": "Горизонтальний відступ",
@@ -686,8 +718,8 @@
         "widget-file": "Файл віджета",
         "invalid-widget-file-error": "Неможливо імпортувати віджет: неправильна структура даних віджета.",
         "widget-import-missing-aliases-title": "Налаштувати псевдоніми, що використовуються імпортованим віджетом",
-        "open-toolbar": "Відкрити панель інструменів ",
-        "close-toolbar": "Закрити панель інструменів",
+        "open-toolbar": "Відкрити панель інструментів",
+        "close-toolbar": "Закрити панель інструментів",
         "configuration-error": "Помилка конфігурації",
         "alias-resolution-error-title": "Помилка конфігурації псевдонімів панелі візуалізації",
         "invalid-aliases-config": "Неможливо знайти пристрої, які відповідають певному фільтру псевдонімів. <br/> Зверніться до свого адміністратора, щоб вирішити цю проблему.",
@@ -717,7 +749,7 @@
         "show-details": "Показати деталі",
         "hide-details": "Приховати деталі",
         "select-state": "Виберіть цільовий стан",
-        "state-controller": "Контроллер стану"
+        "state-controller": "Контролер стану"
     },
     "datakey": {
         "settings": "Налаштування",
@@ -732,11 +764,11 @@
         "timeseries": "Телеметрія",
         "attributes": "Атрибути",
         "entity-field": "Поле сутності",
-        "alarm": "Поля сигнала тривоги",
+        "alarm": "Поля сигналу тривоги",
         "timeseries-required": "Необхідно вказати Телеметрія.",
         "timeseries-or-attributes-required": "Необхідно вказати телеметрію/атрибути.",
         "maximum-timeseries-or-attributes": "Максимальні { count, plural, =1 {1 телеметрія/атрибут дозволені.} other {# телеметрія/атрибути дозволені} }",
-        "alarm-fields-required": "Необхідно вказати поля сигнала тривоги.",
+        "alarm-fields-required": "Необхідно вказати поля сигналу тривоги.",
         "function-types": "Типи функцій",
         "function-types-required": "Необхідно вказати типи функцій.",
         "maximum-function-types": "Maximum { count, plural, =1 {1 function type is allowed.} other {# function types are allowed} }",
@@ -771,7 +803,7 @@
         "no-keys-found": "Ключі не знайдено.",
         "create-new-alias": "Створити новий!",
         "create-new-key": "Створити новий!",
-        "duplicate-alias-error": "Псевдонім з таким іменем '{{alias}}' вже існює.<br>Псевдоніми пристроїв повинні бути унікальними на панелі візуалізації.",
+        "duplicate-alias-error": "Псевдонім з таким іменем '{{alias}}' вже існує.<br>Псевдоніми пристроїв повинні бути унікальними на панелі візуалізації.",
         "configure-alias": "Налаштувати псевдонім '{{alias}}'",
         "no-devices-matching": "Не знайдено жодних пристроїв, які відповідають '{{entity}}'.",
         "alias": "Псевдонім",
@@ -861,12 +893,25 @@
         "list-of-groups": "{ count, plural, =1 {Одна група пристроїв} other {Список # груп пристроїв} }",
         "group-name-starts-with": "Групи пристроїв, імена яких починаються з '{{prefix}}'"
     },
+    "asset-profile": {
+        "asset-profile": "Профіль активу",
+        "asset-profiles": "Профілі активів"
+    },
+    "device-profile": {
+        "device-profile": "Профіль пристрою",
+        "device-profiles": "Профілі пристроїв"
+    },
     "dialog": {
         "close": "Закрити діалогове вікно"
     },
     "direction": {
         "column": "Колонка",
         "row": "Рядок"
+    },
+    "edge": {
+        "management": "Керування Edge",
+        "instances": "Інстанси",
+        "rulechain-templates": "Шаблони ланцюжків правил"
     },
     "error": {
         "unable-to-connect": "Неможливо підключитися до сервера! Перевірте підключення до Інтернету.",
@@ -879,7 +924,7 @@
         "aliases": "Псевдоніми сутності",
         "entity-alias": "Псевдонім сутності",
         "unable-delete-entity-alias-title": "Неможливо видалити псевдонім сутності",
-        "unable-delete-entity-alias-text": "Псевдонім сутності'{{entityAlias}}' неможливо видалити, так як це використовується наступним віджетом(s):<br/>{{widgetsList}}",
+        "unable-delete-entity-alias-text": "Псевдонім сутності '{{entityAlias}}' неможливо видалити, оскільки він використовується наступним віджетом(s):<br/>{{widgetsList}}",
         "duplicate-alias-error": "Знайдено повторюваний псевдонім '{{alias}}'.<br> Псевдоніми сутностей повинні бути унікальними на панелі візуалізації.",
         "missing-entity-filter-error": "Відсутній фільтр для псевдоніма '{{alias}}'.",
         "configure-alias": "Налаштувати '{{alias}}' псевдонім",
@@ -1118,9 +1163,9 @@
         "view-entity-views": "Переглянути представлення сутностей",
         "entity-view-alias": "Псевдонім представлення сутності",
         "aliases": "Псевдоніми представлення сутності",
-        "no-alias-matching": "Псевдонім'{{alias}}' не знайдено.",
+        "no-alias-matching": "Псевдонім '{{alias}}' не знайдено.",
         "no-aliases-found": "Псевдоніми не знайдено.",
-        "no-key-matching": "'Ключ {{key}}' не знайдено.",
+        "no-key-matching": "Ключ '{{key}}' не знайдено.",
         "no-keys-found": "Ключі не знайдено.",
         "create-new-alias": "Створити новий!",
         "create-new-key": "Створити новий!",
@@ -1135,7 +1180,7 @@
         "entity-view-list": "Список представленнь сутності",
         "use-entity-view-name-filter": "Використати фільтр",
         "entity-view-list-empty": "Не вибрано жодного представлення сутності.",
-        "entity-view-name-filter-required": "Необхідно вказвти фільтр назв представлення сутності.",
+        "entity-view-name-filter-required": "Необхідно вказати фільтр назв представлення сутності.",
         "entity-view-name-filter-no-entity-view-matched": "Представлення сутностей, назви яких починаються з '{{entityView}}' не знайдено.",
         "add": "Додати представлення сутності",
         "assign-to-customer": "Призначити клієнту",
@@ -1398,8 +1443,11 @@
         "import-extension": "Імпортувати розширення",
         "export-extension": "Експортувати розширення",
         "file": "Файл розширень",
-        "invalid-file-error": "Не правильний формат файла"
+        "invalid-file-error": "Неправильний формат файлу"
     },
+    "feature": {
+    "advanced-features": "Додаткові можливості"
+  },
     "fullscreen": {
         "expand": "Відкрити у повноекранному режимі",
         "exit": "Вийти з повноекранного режиму",
@@ -1410,7 +1458,7 @@
         "function": "Функція"
     },
     "grid": {
-        "delete-item-title": "Ви впенені, що хочете видалити цей елемент?",
+        "delete-item-title": "Ви впевнені, що хочете видалити цей елемент?",
         "delete-item-text": "Будьте обережні, після підтвердження, цей елемент і всі пов'язані з ним дані, стануть недоступними.",
         "delete-items-title": "Ви впенені, що хочете видалити { count, plural, =1 {1 елемент} other {# елементи} }?",
         "delete-items-action-title": "Видалити{ count, plural, =1 {1 елемент} other {# елементи} }",
@@ -1695,6 +1743,12 @@
         "login-with": "Увійти через {{name}}",
         "or": "або"
     },
+    "notification": {
+        "notification-center": "Центр сповіщень"
+    },
+    "ota-update": {
+        "ota-updates": "Оновлення OTA"
+    },
     "position": {
         "top": "Угорі",
         "bottom": "Знизу",
@@ -1709,6 +1763,12 @@
         "copy-jwt-token": "Копіювати JWT токен",
         "tokenCopiedMessage": "JWT токен скопійовано в буфер обміну",
         "tokenCopiedWarnMessage": "JWT токен не є дійсним! Перезавантажте сторінку."
+    },
+    "profiles": {
+        "profiles": "Профілі"
+    },
+    "security": {
+        "security": "Безпека"
     },
     "relation": {
         "relations": "Відношення",
@@ -1752,41 +1812,44 @@
         "additional-info": "Додаткова інформація (JSON)",
         "invalid-additional-info": "Не вдалося розібрати JSON з додатковою інформацією ."
     },
+    "resource": {
+        "resources-library": "Бібліотека ресурсів"
+    },
     "rulechain": {
-        "rulechain": "Ланцюг правил",
-        "rulechains": "Ланцюги правил",
+        "rulechain": "Ланцюжок правил",
+        "rulechains": "Ланцюжки правил",
         "root": "Основний",
-        "delete": "Видалити ланцюг правил",
+        "delete": "Видалити ланцюжок правил",
         "name": "Ім'я",
         "name-required": "Необхідно вказати ім'я.",
         "description": "Опис",
-        "add": "Додати ланцюг правил",
-        "set-root": "Зробити ланцюг правил основним",
-        "set-root-rulechain-title": "Ви впевнені, що хочете зробити ланцюг правил '{{ruleChainName}}' основним?",
-        "set-root-rulechain-text": "Після підтвердження ланцюг правил стане основним і буде обробляти всі вхідні транспортні повідомлення.",
-        "delete-rulechain-title": "Ви впевнені, що хочете видалити ланцюг правил '{{ruleChainName}}'?",
-        "delete-rulechain-text": "Будьте обережні, після підтвердження ланцюг правил і всі пов'язані з ним дані стануть недоступними.",
+        "add": "Додати ланцюжок правил",
+        "set-root": "Зробити ланцюжок правил основним",
+        "set-root-rulechain-title": "Ви впевнені, що хочете зробити ланцюжок правил '{{ruleChainName}}' основним?",
+        "set-root-rulechain-text": "Після підтвердження ланцюжок правил стане основним і буде обробляти всі вхідні транспортні повідомлення.",
+        "delete-rulechain-title": "Ви впевнені, що хочете видалити ланцюжок правил '{{ruleChainName}}'?",
+        "delete-rulechain-text": "Будьте обережні, після підтвердження ланцюжок правил і всі пов'язані з ним дані стануть недоступними.",
         "delete-rulechains-title": "Ви впевнені, що хочете видалити { count, plural, =1 {1 ланцюг правил} other {# ланцюги правил} }?",
         "delete-rulechains-action-title": "Видалити{ count, plural, =1 {1 ланцюг правил} other {# ланцюги правил} }",
-        "delete-rulechains-text": "Будьте обережні, після підтвердження, вибрані ланцюги правил і всі пов'язані з ними дані стануть недоступними.",
-        "add-rulechain-text": "Додати новий ланцюг правил",
-        "no-rulechains-text": "Ланцюг правил не знайдено",
-        "rulechain-details": "Деталі ланцюга правил",
+        "delete-rulechains-text": "Будьте обережні, після підтвердження, вибрані ланцюжки правил і всі пов'язані з ними дані стануть недоступними.",
+        "add-rulechain-text": "Додати новий ланцюжок правил",
+        "no-rulechains-text": "Ланцюжок правил не знайдено",
+        "rulechain-details": "Деталі ланцюжка правил",
         "details": "Деталі",
         "events": "Події",
         "system": "Система",
-        "import": "Імпортувати ланцюг правил",
-        "export": "Експортувати ланцюг правил",
-        "export-failed-error": "Не вдалося експортувати ланцюг правил: {{error}}",
-        "create-new-rulechain": "Створити новий ланцюг правил",
-        "rulechain-file": "Файл ланцюга правил",
-        "invalid-rulechain-file-error": "Неможливо імпортувати ланцюг правил: недійсна структуру даних ланцюга правил.",
-        "copyId": "Копіювати Id ланцюга правил",
-        "idCopiedMessage": "Id ланцюга правил скопійовано в буфер обміну",
-        "select-rulechain": "Вибрати ланцюг правил",
-        "no-rulechains-matching": "Не знайдено жодних ланцюгів правил, які відповідають '{{entity}}'.",
-        "rulechain-required": "Необхідно вказати ланцюг правил",
-        "management": "Управління ланцюгами правил",
+        "import": "Імпортувати ланцюжок правил",
+        "export": "Експортувати ланцюжок правил",
+        "export-failed-error": "Не вдалося експортувати ланцюжок правил: {{error}}",
+        "create-new-rulechain": "Створити новий ланцюжок правил",
+        "rulechain-file": "Файл ланцюжка правил",
+        "invalid-rulechain-file-error": "Неможливо імпортувати ланцюжок правил: недійсна структуру даних ланцюжка правил.",
+        "copyId": "Копіювати Id ланцюжка правил",
+        "idCopiedMessage": "Id ланцюжка правил скопійовано в буфер обміну",
+        "select-rulechain": "Вибрати ланцюжок правил",
+        "no-rulechains-matching": "Не знайдено жодних ланцюжків правил, які відповідають '{{entity}}'.",
+        "rulechain-required": "Необхідно вказати ланцюжок правил",
+        "management": "Управління ланцюжками правил",
         "debug-mode": "Режим налагодження"
     },
     "rulenode": {
@@ -1820,7 +1883,7 @@
         "link-labels": "Мітки посилання",
         "link-labels-required": "Необхідно вказати мітки посилання.",
         "no-link-labels-found": "Не знайдено жодних міток посилання",
-        "no-link-label-matching": "Мітка'{{label}}' не знайдена.",
+        "no-link-label-matching": "Мітку '{{label}}' не знайдено.",
         "create-new-link-label": "Створити нову!",
         "type-filter": "Фільтр",
         "type-filter-details": "Фільтрувати вхідні повідомлення з заданими умовами",
@@ -1834,15 +1897,15 @@
         "type-analytics-details": "Виконує аналіз потокових або збережених даних",
         "type-external": "Зовнішній",
         "type-external-details": "Взаємодіє з зовнішньою системою",
-        "type-rule-chain": "Ланцюг правил",
-        "type-rule-chain-details": "Перенаправити вхідне повідомлення на вказаний ланцюг правил",
+        "type-rule-chain": "Ланцюжок правил",
+        "type-rule-chain-details": "Перенаправити вхідне повідомлення на вказаний ланцюжок правил",
         "type-input": "Вхід",
-        "type-input-details": "Логічний вхід ланцюга правил, перенаправляє вхідні повідомлення на наступний пов'язаний вузол правил",
+        "type-input-details": "Логічний вхід ланцюжка правил, перенаправляє вхідні повідомлення на наступний пов'язаний вузол правил",
         "type-unknown": "Невідомий",
         "type-unknown-details": "Невизначений вузол правил",
         "directive-is-not-loaded": "Вказана директива конфігурації '{{directiveName}}' недоступна.",
         "ui-resources-load-error": "Не вдалося завантажити UI ресурси.",
-        "invalid-target-rulechain": "Не вдається визначити цільовий ланцюг правил!",
+        "invalid-target-rulechain": "Не вдається визначити цільовий ланцюжок правил!",
         "test-script-function": "Протестувати скрипт",
         "message": "Повідомлення",
         "message-type": "Тип повідомлення",
@@ -1860,7 +1923,7 @@
         "scheduler-event": "Подія планувальника",
         "select-scheduler-event": "Вибрати подію",
         "no-scheduler-events-matching": "Не знайдено жодних подій, які відповідають '{{entity}}'.",
-        "scheduler-event-required": "Необхвдно вказати заплановану подію",
+        "scheduler-event-required": "Необхідно вказати заплановану подію",
         "management": "Управління планувальником",
         "scheduler-events": "Планування подій",
         "add-scheduler-event": "Додати подію",
@@ -1902,7 +1965,7 @@
         "repeat-on-monday": "Повторити в понеділок",
         "repeat-on-tuesday": "Повторити у вівторок",
         "repeat-on-wednesday": "Повторити в середу",
-        "repeat-on-thursday": "Повторити в червер",
+        "repeat-on-thursday": "Повторити в четвер",
         "repeat-on-friday": "Повторити в п'ятницю",
         "repeat-on-saturday": "Повторити в суботу",
         "event-type": "Тип події",
@@ -1915,7 +1978,7 @@
         "week": "Тиждень",
         "day": "День",
         "agenda-week": "Порядок тижня",
-        "agenda-day": "Порялок дня",
+        "agenda-day": "Порядок дня",
         "list-year": "Список року",
         "list-month": "Список місяця",
         "list-week": "Список тижня",
@@ -1994,7 +2057,7 @@
         "download-blob-entity": "Завантажити файл",
         "delete-blob-entity": "Видалити файл",
         "delete-blob-entity-title": "Ви впевнені, що хочете видалити файл '{{blobEntityName}}'?",
-        "delete-blob-entity-text": "Будьте обережні, після підствердження, дані файлу стануть недоступними."
+        "delete-blob-entity-text": "Будьте обережні, після підтвердження, дані з файлу стануть недоступними для відновлення."
     },
     "timezone": {
         "timezone": "Часовий пояс",
@@ -2018,7 +2081,7 @@
         "add-tenant-text": "Додати нового власника",
         "no-tenants-text": "Не знайдено жодного власника",
         "tenant-details": "Подробиці про власника",
-        "delete-tenant-title": "Ви впевнені, що хочете видалити власника'{{tenantTitle}}'?",
+        "delete-tenant-title": "Ви впевнені, що хочете видалити власника '{{tenantTitle}}'?",
         "delete-tenant-text": "Будьте обережні, після підтвердження власник і всі пов'язані з ним дані стануть недоступними.",
         "delete-tenants-title": "Ви впевнені, що хочете видалити { count, plural, =1 {1 власник} other {# власники} }?",
         "delete-tenants-action-title": "Видалити { count, plural, =1 {1 власник} other {# власники} }",
@@ -2076,7 +2139,7 @@
         "add-user-text": "Додати нового користувача",
         "no-users-text": "Не знайдено жодного користувача",
         "user-details": "Подробиці про користувача",
-        "delete-user-title": "Ви впевнені, що хочете видалити користувача'{{userEmail}}'?",
+        "delete-user-title": "Ви впевнені, що хочете видалити користувача '{{userEmail}}'?",
         "delete-user-text": "Будьте обережні, після підтвердження, користувач і всі пов'язані з ним дані стануть недоступними.",
         "delete-users-title": "Ви впевнені, що хочете видалити { count, plural, =1 {1 користувача} other {# користувачів} }?",
         "delete-users-action-title": "Видалити { count, plural, =1 {1 користувача} other {# користувачів} }",
@@ -2128,6 +2191,9 @@
         "true": "Правдиве",
         "long": "Довге"
     },
+    "version-control": {
+        "version-control": "Керування версіями"
+    },
     "widget": {
         "widget-library": "Бібліотека віджетів",
         "widget-bundle": "Пакет віджетів",
@@ -2145,7 +2211,7 @@
         "no-data-found": "Даних не знайдено",
         "latest": "Останні значення",
         "rpc": "Керуючий віджет",
-        "alarm": "Віджет сигнала тривоги",
+        "alarm": "Віджет сигналу тривоги",
         "static": "Статичний віджет",
         "select-widget-type": "Вибрати тип віджета",
         "missing-widget-title-error": "Необхідно вказати назву віджета!",
@@ -2170,11 +2236,7 @@
         "settings-schema": "Схема налаштувань",
         "datakey-settings-schema": "Схема налаштувань ключів даних",
         "javascript": "Javascript",
-        "remove-widget-type-title": "Ви впевнені, що хочете видалити тип віджета '{{widgetName}}'?",
-        "remove-widget-type-text": "Будьте обережні, після підтвердження, тип віджета і всі пов'язані з ним дані стануть недоступними.",
-        "remove-widget-type": "Видалити тип віджета",
         "add-widget-type": "Додати новий тип віджета",
-        "widget-type-load-failed-error": "Не вдалося завантажити тип віджета!",
         "widget-template-load-failed-error": "Не вдалося завантажити шаблон віджета!",
         "add": "Додати віджет",
         "undo": "Скасувати зміни віджета",
@@ -2256,7 +2318,7 @@
         "remove-datasource": "Видалити джерело даних",
         "add-datasource": "Додати джерело даних",
         "target-device": "Цільовий пристрій",
-        "alarm-source": "Джерело сигнала тривоги",
+        "alarm-source": "Джерело сигналу тривоги",
         "actions": "Дії",
         "action": "Дія",
         "add-action": "Додати дію",
@@ -2371,7 +2433,7 @@
             "no-coordinate-specified": "Ключ для широти/довготи не вказаний",
             "no-support-geolocation": "Ваш браузер не підтримує геолокацію",
             "no-image": "Немає зображення",
-            "no-support-web-camera": "Нет поддерживаемой веб-камеры",
+            "no-support-web-camera": "Немає підтримуваної веб-камери",
             "no-timeseries-selected": "Параметр телеметрії не вибрано",
             "secret-key": "Секретний ключ",
             "secret-key-required": "Необхідно вказати секретний ключ",
@@ -2416,10 +2478,10 @@
             "rpc-status": {
                 "QUEUED": "В ЧЕРЗІ",
                 "SENT": "ВІДПРАВЛЕНО",
-                "DELIVERED": "ДОСТАВЛЕННО",
+                "DELIVERED": "ДОСТАВЛЕНО",
                 "SUCCESSFUL": "УСПІШНО",
                 "TIMEOUT": "ЧАС МИНУВ",
-                "EXPIRED": "ПРОСРОЧЕНО",
+                "EXPIRED": "ПРОТЕРМІНОВАНО",
                 "FAILED": "НЕ ВДАЛО"
             },
             "rpc-search-status-all": "ВСІ",
@@ -2430,7 +2492,7 @@
         }
     },
     "white-labeling": {
-        "white-labeling": "Білий маркування",
+        "white-labeling": "Біле маркування",
         "login-white-labeling": "Login White Labeling",
         "preview": "Попередній перегляд",
         "app-title": "Назва програми",
@@ -2445,7 +2507,7 @@
         "logo-size-error": "Зображення логотипу занадто велике. Максимально дозволений розмір зображення логотипу{{kbSize}} KBytes.",
         "logo-type-error": "Недійсний формат файлу логотипу. Приймаються тільки зображення.",
         "drop-logo-image": "Зніміть зображення логотипу або клацніть, щоб вибрати файл для завантаження.",
-        "no-logo-image": "Не вибрано жожного логотипу",
+        "no-logo-image": "Не вибрано жодного логотипу",
         "logo-height": "Висота логотипу, px",
         "primary-palette": "Основна палітра",
         "accent-palette": "Палітра акцент",
