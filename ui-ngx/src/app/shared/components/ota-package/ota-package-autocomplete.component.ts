@@ -31,7 +31,7 @@ import { OtaPackageService } from '@core/http/ota-package.service';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 import { emptyPageData } from '@shared/models/page/page-data';
-import { getEntityDetailsPageURL } from '@core/utils';
+import { getEntityDetailsPageURL, isNotEmptyStr } from '@core/utils';
 import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
@@ -73,7 +73,10 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
   @Input()
   set deviceProfileId(value: string) {
     this.deviceProfile = value;
-    this.reset();
+    const packageId = this.otaPackageFormGroup.get('packageId').value;
+    if (packageId && isNotEmptyStr(packageId)) {
+      this.reset();
+    }
   }
 
   @Input()
