@@ -19,10 +19,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.notification.info.EntitiesLimitNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
+import org.thingsboard.server.common.data.notification.rule.trigger.EntitiesLimitTrigger;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.EntitiesLimitNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
-import org.thingsboard.server.common.data.notification.rule.trigger.EntitiesLimitTrigger;
 import org.thingsboard.server.dao.entity.EntityCountService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -48,6 +48,9 @@ public class EntitiesLimitTriggerProcessor implements NotificationRuleTriggerPro
             return false;
         }
         long currentCount = entityCountService.countByTenantIdAndEntityType(trigger.getTenantId(), trigger.getEntityType());
+        if (currentCount == 0) {
+            return false;
+        }
         trigger.setLimit(limit);
         trigger.setCurrentCount(currentCount);
         return (int) (limit * triggerConfig.getThreshold()) == currentCount; // strict comparing not to send notification on each new entity
@@ -59,7 +62,7 @@ public class EntitiesLimitTriggerProcessor implements NotificationRuleTriggerPro
                 .entityType(trigger.getEntityType())
                 .currentCount(trigger.getCurrentCount())
                 .limit(trigger.getLimit())
-                .percents((int) (((float)trigger.getCurrentCount() / trigger.getLimit()) * 100))
+                .percents((int) (((float) trigger.getCurrentCount() / trigger.getLimit()) * 100))
                 .tenantId(trigger.getTenantId())
                 .tenantName(tenantService.findTenantById(trigger.getTenantId()).getName())
                 .build();
