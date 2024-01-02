@@ -77,7 +77,10 @@
         "show-more": "显示更多",
         "dont-show-again": "不再显示",
         "see-documentation": "查看文档",
-        "clear": "清除"
+        "clear": "清除",
+        "upload": "上传",
+        "delete-anyway": "仍要删除",
+        "delete-selected": "删除所选"
     },
     "aggregation": {
         "aggregation": "聚合",
@@ -470,7 +473,12 @@
         "notifications-settings": "通知设置",
         "slack-api-token": "Slack API令牌",
         "slack": "Slack",
-        "slack-settings": "Slack 设置"
+        "slack-settings": "Slack 设置",
+        "maximum-password-length": "密码最大长度",
+        "maximum-password-length-min": "密码最大长度应至少为6个字符",
+        "maximum-password-length-less-min": "密码最大长度应大于最小长度",
+        "force-reset-password-if-no-valid": "如果密码不可用则强制重置密码",
+        "force-reset-password-if-no-valid-hint": "启用此功能时请小心：它会要求使用不可用密码的用户通过电子邮件重置其密码。"
     },
     "alarm": {
         "alarm": "告警",
@@ -1188,7 +1196,9 @@
         "assign-dashboard-to-edge": "将仪表板分配给边缘",
         "assign-dashboard-to-edge-text": "请选择要分配给边缘的仪表板",
         "non-existent-dashboard-state-error": "找不到ID为 '{{ stateId }}' 的仪表板状态。",
-        "edit-mode": "编辑模式"
+        "edit-mode": "编辑模式",
+        "state-controller-default": "静态（已弃用）",
+        "duplicate-state-action": "复制状态"
     },
     "datakey": {
         "settings": "设置",
@@ -2017,7 +2027,8 @@
         "sync-process-started-successfully": "同步处理开始成功！",
         "missing-related-rule-chains-title": "边缘缺少关联规则链",
         "missing-related-rule-chains-text": "分配给边缘的规则链使用规则节点将消息转发给未分配给当前边缘的规则链。 <br><br> 缺少的规则链列表: <br> {{missingRuleChains}}",
-        "widget-datasource-error": "组件只支持边缘实体数据源"
+        "widget-datasource-error": "组件只支持边缘实体数据源",
+        "upgrade-instructions": "升级说明"
     },
     "edge-event": {
         "type-dashboard": "仪表板",
@@ -2211,7 +2222,9 @@
         "type-notification-request": "通知请求",
         "type-notification-template": "通知模板",
         "type-notification-templates": "通知模板",
-        "list-of-notification-templates": "{ count, plural, =1 {1 个通知模板} other {# 个通知模板} }"
+        "list-of-notification-templates": "{ count, plural, =1 {1 个通知模板} other {# 个通知模板} }",
+        "type-tb-resources": "资源",
+        "list-of-tb-resources": "{ count, plural, =1 {1 个资源} other {# 个资源} }"
     },
     "entity-field": {
         "created-time": "创建时间",
@@ -2908,7 +2921,13 @@
             "grpc-max-pings-without-data": "在没有接收到任何数据之前，服务器可以发送的keepalive ping消息的最大数量，然后将连接视为死亡",
             "grpc-min-ping-interval-without-data": "在没有发送或接收数据时，服务器在发送keepalive ping消息之间应等待的最小时间量",
             "permit-without-calls": "允许服务器在没有活动RPC调用时保持GRPC连接活动"
-        }
+        },
+        "docker-label": "使用以下指令在 Docker compose 中运行 IoT 网关，并为选定的设备提供凭据",
+        "install-docker-compose": "使用以下说明下载、安装和设置 Docker Compose",
+        "download-configuration-file": "下载配置文件",
+        "download-docker-compose": "下载您的网关的 docker-compose.yml 文件",
+        "launch-gateway": "启动网关",
+        "launch-docker-compose": "在包含 docker-compose.yml 文件的文件夹中，使用以下命令在终端中启动网关"
     },
     "grid": {
         "delete-item-title": "确定要删除此项吗？",
@@ -2938,6 +2957,59 @@
     "file-input": {
         "browse-file": "浏览文件",
         "browse-files": "浏览文件"
+    },
+    "image": {
+        "gallery": "图像库",
+        "search": "搜索图像",
+        "selected-images": "{count, plural, =1 {已选择 1 个图像} other {已选择 # 个图像}}",
+        "created-time": "创建时间",
+        "name": "名称",
+        "name-required": "名称不能为空。",
+        "resolution": "分辨率",
+        "size": "大小",
+        "system": "系统",
+        "download-image": "下载图像",
+        "export-image": "导出图像为JSON",
+        "import-image": "从JSON导入图像",
+        "upload-image": "上传图像",
+        "edit-image": "编辑图像",
+        "image-details": "图像详情",
+        "no-images": "未找到图像",
+        "delete-image": "删除图像",
+        "delete-image-title": "确定要删除图像“{{imageTitle}}”吗？",
+        "delete-image-text": "请注意，确认后图像将无法恢复。",
+        "delete-images-title": "确定要删除{count, plural, =1 {1 个图像} other {# 个图像}}吗？",
+        "delete-images-text": "请注意，确认后所有选定的图像都将被删除，并且所有相关数据将无法恢复。",
+        "list-mode": "列表视图",
+        "grid-mode": "网格视图",
+        "image-preview": "图像预览",
+        "update-image": "更新图像",
+        "export-failed-error": "无法导出图像：{{error}}",
+        "image-json-file": "图像JSON文件",
+        "invalid-image-json-file-error": "无法从JSON导入图像：无效的图像JSON数据结构。",
+        "image-is-in-use": "图像被其他实体使用",
+        "images-are-in-use": "图像被其他实体使用",
+        "image-is-in-use-text": "无法删除图像<b>'{{title}}'</b>，因为它被以下实体使用：",
+        "images-are-in-use-text": "由于图像被其他实体使用，无法删除所有图像。</br>您可以通过单击相应图像行上的<b>引用</b>按钮查看引用的实体。</br>如果仍然要删除这些图像，请在下方的表格中选择它们，然后点击<b>删除所选</b>按钮。",
+        "delete-image-in-use-text": "如果仍然要删除该图像，请点击<b>无论如何删除</b>按钮。",
+        "system-entities": "系统实体：",
+        "entities": "实体：",
+        "references": "引用",
+        "include-system-images": "包含系统图像",
+        "clear-image": "清除图像",
+        "no-image": "无图像",
+        "no-image-selected": "未选择图像",
+        "browse-from-gallery": "从图像库浏览",
+        "set-link": "设置链接",
+        "image-link": "图像链接",
+        "link": "链接",
+        "copy-image-link": "复制图像链接",
+        "embed-image": "嵌入图像",
+        "embed-to-html": "嵌入到HTML",
+        "embed-to-html-hint": "此功能将使链接对任何未经授权的用户可用。",
+        "embed-to-html-text": "使用以下代码片段，您可以将图像嵌入到基于纯HTML的组件中。<br/>此类组件包括HTML卡片小部件、单元格内容函数等。",
+        "embed-to-angular-template": "嵌入到Angular HTML模板",
+        "embed-to-angular-template-text": "使用以下代码片段，您可以将图像嵌入到Angular HTML模板中。<br/>此类组件包括Markdown小部件、小部件编辑器中的HTML部分、自定义操作等。"
     },
     "image-input": {
         "drop-images-or": "拖放一张或多张图片",
@@ -3190,8 +3262,8 @@
             "email-preview": "Email 通知预览",
             "slack": "Slack",
             "slack-preview": "Slack 通知预览",
-            "microsoft-teams" : "Microsoft Teams",
-            "microsoft-teams-preview" : "Microsoft Teams 通知预览",
+            "microsoft-teams": "Microsoft Teams",
+            "microsoft-teams-preview": "Microsoft Teams 通知预览",
             "sms": "SMS",
             "sms-preview": "SMS 通知预览",
             "web": "Web",
@@ -3457,7 +3529,8 @@
         "version-tag": "版本标签",
         "version-tag-hint": "自定义标签应与您设备报告的软件包版本相匹配。",
         "version-max-length": "版本长度应该少于256个字符",
-        "warning-after-save-no-edit": "上传包后，您将无法修改标题、版本、设备配置和包类型。"
+        "warning-after-save-no-edit": "上传包后，您将无法修改标题、版本、设备配置和包类型。",
+        "package-file": "包文件"
     },
     "position": {
         "top": "顶部",
@@ -3555,7 +3628,8 @@
             "password-requirements": "密码要求",
             "password-should-difference": "新密码应与当前密码不同",
             "special-character": "{ count, plural, =1 {1 位特殊字符} other {# 位特殊字符} }",
-            "uppercase-letter": "{ count, plural, =1 {1 位大写字母} other {# 位大写字母} }"
+            "uppercase-letter": "{ count, plural, =1 {1 位大写字母} other {# 位大写字母} }",
+            "at-most": "最多："
         }
     },
     "relation": {
@@ -3638,7 +3712,9 @@
             "js-module": "JS 模块",
             "lwm2m-model": "LWM2M 模型",
             "pkcs-12": "PKCS #12"
-        }
+        },
+        "resource-file": "资源文件",
+        "resource-files": "资源文件"
     },
     "rulechain": {
         "rulechain": "规则链",
@@ -4102,7 +4178,10 @@
             "transport-device-telemetry-msg": "传输设备遥测消息",
             "transport-device-telemetry-data-points": "传输设备遥测数据点",
             "sec": "秒"
-        }
+        },
+        "maximum-resource-size": "最大资源文件大小（字节）",
+        "maximum-resource-size-required": "最大资源文件大小是必需的",
+        "maximum-resource-size-range": "最大资源文件大小不能为负数"
     },
     "timeinterval": {
         "seconds-interval": "{ seconds, plural, =1 {1 秒} other {# 秒} }",
@@ -4598,7 +4677,24 @@
         "deg-per-second": "deg/s",
         "degrees-brix": "°Bx",
         "katal": "kat",
-        "katal-per-cubic-metre": "kat/m^3"
+        "katal-per-cubic-metre": "kat/m^3",
+        "milliampere-hour-tags": "mAh",
+        "ampere-hours-tags": "Ah",
+        "kiloampere-hours-tags": "kAh",
+        "nanoampere-tags": "nA",
+        "picoampere-tags": "pA",
+        "microampere-tags": "μA",
+        "milliampere-tags": "mA",
+        "ampere-tags": "A",
+        "kiloamperes-tags": "kA",
+        "microampere-per-square-centimeter-tags": "µA/cm²",
+        "ampere-per-square-meter-tags": "A/m²",
+        "ampere-per-meter-tags": "A/m",
+        "oersted-tags": "Oe",
+        "bohr-magneton-tags": "μB",
+        "ampere-meter-squared-tags": "A·m²",
+        "ampere-meter-tags": "A·m",
+        "milligram-per-cubic-meter": "mg/m³"
     },
     "user": {
         "user": "用户",
@@ -6600,6 +6696,30 @@
         "items-per-page-separator": "of"
     },
     "language": {
-        "language": "语言"
+        "language": "语言",
+        "locales": {
+            "ca_ES": "Catalan",
+            "cs_CZ": "Česky",
+            "da_DK": "Dansk",
+            "de_DE": "Deutsch",
+            "el_GR": "Ελληνικά",
+            "en_US": "English",
+            "es_ES": "Español",
+            "fa_IR": "فارسي",
+            "fr_FR": "Français",
+            "it_IT": "Italiano",
+            "ja_JP": "日本語",
+            "ka_GE": "ქართული",
+            "ko_KR": "한국어",
+            "lv_LV": "Latviešu",
+            "nl_BE": "Koninkrijk België",
+            "pt_BR": "Português do Brasil",
+            "ro_RO": "Română",
+            "sl_SI": "Slovenščina",
+            "tr_TR": "Türkçe",
+            "uk_UA": "Українська",
+            "zh_CN": "简体中文",
+            "zh_TW": "繁體中文"
+        }
     }
 }
