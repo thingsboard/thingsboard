@@ -93,7 +93,7 @@ CREATE INDEX IF NOT EXISTS idx_rule_node_external_id ON rule_node(rule_chain_id,
 
 CREATE INDEX IF NOT EXISTS idx_rule_node_type ON rule_node(type);
 
-CREATE INDEX IF NOT EXISTS idx_rule_node_type_configuration_version ON rule_node(type, configuration_version);
+CREATE INDEX IF NOT EXISTS idx_rule_node_id_type_configuration_version ON rule_node(id, type, configuration_version);
 
 CREATE INDEX IF NOT EXISTS idx_api_usage_state_entity_id ON api_usage_state(entity_id);
 

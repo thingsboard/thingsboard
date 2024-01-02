@@ -61,7 +61,7 @@ public class Validator {
 
 
     /**
-     * This method validate <code>long</code> value. If value isn't possitive than throw
+     * This method validate <code>long</code> value. If value isn't positive than throw
      * <code>IncorrectParameterException</code> exception
      *
      * @param val          the val
