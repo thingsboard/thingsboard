@@ -67,6 +67,9 @@ import { ProgressBarWidgetComponent } from '@home/components/widget/lib/cards/pr
 import { LiquidLevelWidgetComponent } from '@home/components/widget/lib/indicator/liquid-level-widget.component';
 import { DoughnutWidgetComponent } from '@home/components/widget/lib/chart/doughnut-widget.component';
 import { RangeChartWidgetComponent } from '@home/components/widget/lib/chart/range-chart-widget.component';
+import {
+  BarChartWithLabelsWidgetComponent
+} from '@home/components/widget/lib/chart/bar-chart-with-labels-widget.component';
 
 @NgModule({
   declarations:
@@ -108,7 +111,8 @@ import { RangeChartWidgetComponent } from '@home/components/widget/lib/chart/ran
       ProgressBarWidgetComponent,
       LiquidLevelWidgetComponent,
       DoughnutWidgetComponent,
-      RangeChartWidgetComponent
+      RangeChartWidgetComponent,
+      BarChartWithLabelsWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -154,7 +158,8 @@ import { RangeChartWidgetComponent } from '@home/components/widget/lib/chart/ran
         ProgressBarWidgetComponent,
         LiquidLevelWidgetComponent,
         DoughnutWidgetComponent,
-        RangeChartWidgetComponent
+        RangeChartWidgetComponent,
+        BarChartWithLabelsWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }
