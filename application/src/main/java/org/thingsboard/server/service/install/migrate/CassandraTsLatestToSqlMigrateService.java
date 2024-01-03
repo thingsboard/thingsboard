@@ -71,7 +71,7 @@ public class CassandraTsLatestToSqlMigrateService implements TsLatestMigrateServ
     protected CassandraCluster cluster;
 
     @Autowired
-    protected KeyDictionaryRepository dictionaryRepository;
+    protected KeyDictionaryRepository keyDictionaryRepository;
 
     @Autowired
     private InstallScripts installScripts;
@@ -193,20 +193,20 @@ public class CassandraTsLatestToSqlMigrateService implements TsLatestMigrateServ
         Integer keyId = tsKvDictionaryMap.get(strKey);
         if (keyId == null) {
             Optional<KeyDictionaryEntry> tsKvDictionaryOptional;
-            tsKvDictionaryOptional = dictionaryRepository.findById(new KeyDictionaryCompositeKey(strKey));
+            tsKvDictionaryOptional = keyDictionaryRepository.findById(new KeyDictionaryCompositeKey(strKey));
             if (!tsKvDictionaryOptional.isPresent()) {
                 tsCreationLock.lock();
                 try {
-                    tsKvDictionaryOptional = dictionaryRepository.findById(new KeyDictionaryCompositeKey(strKey));
+                    tsKvDictionaryOptional = keyDictionaryRepository.findById(new KeyDictionaryCompositeKey(strKey));
                     if (!tsKvDictionaryOptional.isPresent()) {
                         KeyDictionaryEntry keyDictionaryEntry = new KeyDictionaryEntry();
                         keyDictionaryEntry.setKey(strKey);
                         try {
-                            KeyDictionaryEntry saved = dictionaryRepository.save(keyDictionaryEntry);
+                            KeyDictionaryEntry saved = keyDictionaryRepository.save(keyDictionaryEntry);
                             tsKvDictionaryMap.put(saved.getKey(), saved.getKeyId());
                             keyId = saved.getKeyId();
                         } catch (ConstraintViolationException e) {
-                            tsKvDictionaryOptional = dictionaryRepository.findById(new KeyDictionaryCompositeKey(strKey));
+                            tsKvDictionaryOptional = keyDictionaryRepository.findById(new KeyDictionaryCompositeKey(strKey));
                             KeyDictionaryEntry dictionary = tsKvDictionaryOptional.orElseThrow(() -> new RuntimeException("Failed to get TsKvDictionary entity from DB!"));
                             tsKvDictionaryMap.put(dictionary.getKey(), dictionary.getKeyId());
                             keyId = dictionary.getKeyId();

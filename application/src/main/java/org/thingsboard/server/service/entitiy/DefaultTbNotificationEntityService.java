@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.api.msg.DeviceCredentialsUpdateNotificationMsg;
+import org.thingsboard.server.common.msg.rule.engine.DeviceCredentialsUpdateNotificationMsg;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.HasName;
@@ -112,7 +112,7 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
     public void notifyDeleteDevice(TenantId tenantId, DeviceId deviceId, CustomerId customerId, Device device,
                                    User user, Object... additionalInfo) {
         gatewayNotificationsService.onDeviceDeleted(device);
-        tbClusterService.onDeviceDeleted(device, null);
+        tbClusterService.onDeviceDeleted(tenantId, device, null);
         logEntityAction(tenantId, deviceId, device, customerId, ActionType.DELETED, user, additionalInfo);
     }
 
@@ -126,6 +126,7 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
     @Override
     public void notifyAssignDeviceToTenant(TenantId tenantId, TenantId newTenantId, DeviceId deviceId, CustomerId customerId,
                                            Device device, Tenant tenant, User user, Object... additionalInfo) {
+        tbClusterService.onDeviceAssignedToTenant(tenantId, device);
         logEntityAction(tenantId, deviceId, device, customerId, ActionType.ASSIGNED_TO_TENANT, user, additionalInfo);
         pushAssignedFromNotification(tenant, newTenantId, device);
     }

@@ -74,9 +74,7 @@ public abstract class AbstractEntityService {
     }
 
     protected void deleteEntityRelations(TenantId tenantId, EntityId entityId) {
-        log.trace("Executing deleteEntityRelations [{}]", entityId);
         relationService.deleteEntityRelations(tenantId, entityId);
-        log.trace("Executing deleteEntityAlarms [{}]", entityId);
         alarmService.deleteEntityAlarmRelations(tenantId, entityId);
     }
 

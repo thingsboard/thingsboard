@@ -177,7 +177,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                 if (attributes.size() > 0) {
                     entityData.put("kv", attributes);
                     entityData.put("scope", scope);
-                    JsonNode body = JacksonUtil.OBJECT_MAPPER.valueToTree(entityData);
+                    JsonNode body = JacksonUtil.valueToTree(entityData);
                     log.debug("[{}] Sending attributes data msg, entityId [{}], attributes [{}]", tenantId, entityId, body);
                     future = saveEdgeEvent(tenantId, edge.getId(), entityType, EdgeEventActionType.ATTRIBUTES_UPDATED, entityId, body);
                 } else {
@@ -250,7 +250,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                                                 EdgeEventType.RELATION,
                                                 EdgeEventActionType.ADDED,
                                                 null,
-                                                JacksonUtil.OBJECT_MAPPER.valueToTree(relation)));
+                                                JacksonUtil.valueToTree(relation)));
                                     }
                                 } catch (Exception e) {
                                     String errMsg = String.format("[%s][%s] Exception during loading relation [%s] to edge on sync!", tenantId, edge.getId(), relation);
@@ -295,7 +295,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
     private ListenableFuture<List<EntityRelation>> findRelationByQuery(TenantId tenantId, Edge edge,
                                                                        EntityId entityId, EntitySearchDirection direction) {
         EntityRelationsQuery query = new EntityRelationsQuery();
-        query.setParameters(new RelationsSearchParameters(entityId, direction, -1, false));
+        query.setParameters(new RelationsSearchParameters(entityId, direction, 1, false));
         return relationService.findByQuery(tenantId, query);
     }
 

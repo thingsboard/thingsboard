@@ -185,8 +185,8 @@ public class TbHttpClient {
 
             if (HttpMethod.POST.equals(method) || HttpMethod.PUT.equals(method) ||
                     HttpMethod.PATCH.equals(method) || HttpMethod.DELETE.equals(method) ||
-                    config.isIgnoreRequestBody()) {
-                request.body(BodyInserters.fromValue(getData(msg)));
+                    !config.isIgnoreRequestBody()) {
+                request.body(BodyInserters.fromValue(getData(msg, config.isIgnoreRequestBody(), config.isParseToPlainText())));
             }
 
             request
@@ -236,12 +236,19 @@ public class TbHttpClient {
         return uri;
     }
 
-    private String getData(TbMsg msg) {
-        String data = msg.getData();
+    private String getData(TbMsg tbMsg, boolean ignoreBody, boolean parseToPlainText) {
+        if (!ignoreBody && parseToPlainText) {
+            return parseJsonStringToPlainText(tbMsg.getData());
+        }
+        return tbMsg.getData();
+    }
 
-        if (config.isTrimDoubleQuotes()) {
+    protected String parseJsonStringToPlainText(String data) {
+        if (data.startsWith("\"") && data.endsWith("\"") && data.length() >= 2) {
             final String dataBefore = data;
-            data = data.replaceAll("^\"|\"$", "");
+            try {
+                data = JacksonUtil.fromString(data, String.class);
+            } catch (Exception ignored) {}
             log.trace("Trimming double quotes. Before trim: [{}], after trim: [{}]", dataBefore, data);
         }
 

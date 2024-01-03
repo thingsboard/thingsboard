@@ -1,0 +1,135 @@
+///
+/// Copyright © 2016-2023 The Thingsboard Authors
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///     http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { PageLink } from '@shared/models/page/page-link';
+import { defaultHttpOptionsFromConfig, defaultHttpUploadOptions, RequestConfig } from '@core/http/http-utils';
+import { Observable, of } from 'rxjs';
+import { PageData } from '@shared/models/page/page-data';
+import {
+  NO_IMAGE_DATA_URI,
+  ImageResourceInfo,
+  imageResourceType,
+  ImageResourceType,
+  IMAGES_URL_PREFIX, isImageResourceUrl, ImageExportData, removeTbImagePrefix
+} from '@shared/models/resource.models';
+import { catchError, map, switchMap } from 'rxjs/operators';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { blobToBase64 } from '@core/utils';
+import { ResourcesService } from '@core/services/resources.service';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ImageService {
+  constructor(
+    private http: HttpClient,
+    private sanitizer: DomSanitizer,
+    private resourcesService: ResourcesService
+  ) {
+  }
+
+  public uploadImage(file: File, title: string, config?: RequestConfig): Observable<ImageResourceInfo> {
+    if (!config) {
+      config = {};
+    }
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('title', title);
+    return this.http.post<ImageResourceInfo>('/api/image', formData,
+      defaultHttpUploadOptions(config.ignoreLoading, config.ignoreErrors, config.resendRequest));
+  }
+
+  public updateImage(type: ImageResourceType, key: string, file: File, config?: RequestConfig): Observable<ImageResourceInfo> {
+    if (!config) {
+      config = {};
+    }
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.put<ImageResourceInfo>(`${IMAGES_URL_PREFIX}/${type}/${encodeURIComponent(key)}`, formData,
+      defaultHttpUploadOptions(config.ignoreLoading, config.ignoreErrors, config.resendRequest));
+  }
+
+  public updateImageInfo(imageInfo: ImageResourceInfo, config?: RequestConfig): Observable<ImageResourceInfo> {
+    const type = imageResourceType(imageInfo);
+    const key = encodeURIComponent(imageInfo.resourceKey);
+    return this.http.put<ImageResourceInfo>(`${IMAGES_URL_PREFIX}/${type}/${key}/info`,
+      imageInfo, defaultHttpOptionsFromConfig(config));
+  }
+
+  public updateImagePublicStatus(imageInfo: ImageResourceInfo, isPublic: boolean, config?: RequestConfig): Observable<ImageResourceInfo> {
+    const type = imageResourceType(imageInfo);
+    const key = encodeURIComponent(imageInfo.resourceKey);
+    return this.http.put<ImageResourceInfo>(`${IMAGES_URL_PREFIX}/${type}/${key}/public/${isPublic}`,
+      imageInfo, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getImages(pageLink: PageLink, includeSystemImages = false, config?: RequestConfig): Observable<PageData<ImageResourceInfo>> {
+    return this.http.get<PageData<ImageResourceInfo>>(
+      `${IMAGES_URL_PREFIX}${pageLink.toQuery()}&includeSystemImages=${includeSystemImages}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public getImageInfo(type: ImageResourceType, key: string, config?: RequestConfig): Observable<ImageResourceInfo> {
+    return this.http.get<ImageResourceInfo>(`${IMAGES_URL_PREFIX}/${type}/${encodeURIComponent(key)}/info`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public getImageDataUrl(imageUrl: string, preview = false, asString = false, emptyUrl = NO_IMAGE_DATA_URI): Observable<SafeUrl | string> {
+    const parts = imageUrl.split('/');
+    const key = parts[parts.length - 1];
+    parts[parts.length - 1] = encodeURIComponent(key);
+    const encodedUrl = parts.join('/');
+    const imageLink = preview ? (encodedUrl + '/preview') : encodedUrl;
+    const options = defaultHttpOptionsFromConfig({ignoreLoading: true, ignoreErrors: true});
+    return this.http
+    .get(imageLink, {...options, ...{ responseType: 'blob' } }).pipe(
+      switchMap(val => blobToBase64(val).pipe(
+          map((dataUrl) => asString ? dataUrl : this.sanitizer.bypassSecurityTrustUrl(dataUrl))
+        )),
+      catchError(() => of(asString ? emptyUrl : this.sanitizer.bypassSecurityTrustUrl(emptyUrl)))
+    );
+  }
+
+  public resolveImageUrl(imageUrl: string, preview = false, asString = false, emptyUrl = NO_IMAGE_DATA_URI): Observable<SafeUrl | string> {
+    imageUrl = removeTbImagePrefix(imageUrl);
+    if (isImageResourceUrl(imageUrl)) {
+      return this.getImageDataUrl(imageUrl, preview, asString, emptyUrl);
+    } else {
+      return of(asString ? imageUrl : this.sanitizer.bypassSecurityTrustUrl(imageUrl));
+    }
+  }
+
+  public downloadImage(type: ImageResourceType, key: string): Observable<any> {
+    return this.resourcesService.downloadResource(`${IMAGES_URL_PREFIX}/${type}/${encodeURIComponent(key)}`);
+  }
+
+  public deleteImage(type: ImageResourceType, key: string, force = false, config?: RequestConfig) {
+    return this.http.delete(`${IMAGES_URL_PREFIX}/${type}/${encodeURIComponent(key)}?force=${force}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public exportImage(type: ImageResourceType, key: string, config?: RequestConfig): Observable<ImageExportData> {
+    return this.http.get<ImageExportData>(`${IMAGES_URL_PREFIX}/${type}/${encodeURIComponent(key)}/export`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public importImage(imageData: ImageExportData, config?: RequestConfig): Observable<ImageResourceInfo> {
+    return this.http.put<ImageResourceInfo>('/api/image/import',
+      imageData, defaultHttpOptionsFromConfig(config));
+  }
+
+}

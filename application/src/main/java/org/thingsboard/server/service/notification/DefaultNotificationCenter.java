@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.notification;
 
+import com.google.common.util.concurrent.FutureCallback;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,7 +65,7 @@ import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.util.limits.RateLimitService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.NotificationsTopicService;
+import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.service.executors.NotificationExecutorService;
 import org.thingsboard.server.service.notification.channels.NotificationChannel;
@@ -79,7 +80,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Service
@@ -94,14 +94,14 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     private final NotificationTemplateService notificationTemplateService;
     private final NotificationSettingsService notificationSettingsService;
     private final NotificationExecutorService notificationExecutor;
-    private final NotificationsTopicService notificationsTopicService;
+    private final TopicService topicService;
     private final TbQueueProducerProvider producerProvider;
     private final RateLimitService rateLimitService;
 
     private Map<NotificationDeliveryMethod, NotificationChannel> channels;
 
     @Override
-    public NotificationRequest processNotificationRequest(TenantId tenantId, NotificationRequest request, Consumer<NotificationRequestStats> callback) {
+    public NotificationRequest processNotificationRequest(TenantId tenantId, NotificationRequest request, FutureCallback<NotificationRequestStats> callback) {
         if (request.getRuleId() == null) {
             if (!rateLimitService.checkRateLimit(LimitedApi.NOTIFICATION_REQUESTS, tenantId)) {
                 throw new TbRateLimitsException(EntityType.TENANT);
@@ -200,7 +200,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         }
     }
 
-    private void processNotificationRequestAsync(NotificationProcessingContext ctx, List<NotificationTarget> targets, Consumer<NotificationRequestStats> callback) {
+    private void processNotificationRequestAsync(NotificationProcessingContext ctx, List<NotificationTarget> targets, FutureCallback<NotificationRequestStats> callback) {
         notificationExecutor.submit(() -> {
             NotificationRequestId requestId = ctx.getRequest().getId();
             for (NotificationTarget target : targets) {
@@ -208,25 +208,31 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                     processForTarget(target, ctx);
                 } catch (Exception e) {
                     log.error("[{}] Failed to process notification request for target {}", requestId, target.getId(), e);
+                    ctx.getStats().setError(e.getMessage());
+                    updateRequestStats(ctx, requestId, ctx.getStats());
+
+                    if (callback != null) {
+                        callback.onFailure(e);
+                    }
+                    return;
                 }
             }
             log.debug("[{}] Notification request processing is finished", requestId);
 
             NotificationRequestStats stats = ctx.getStats();
-            try {
-                notificationRequestService.updateNotificationRequest(ctx.getTenantId(), requestId, NotificationRequestStatus.SENT, stats);
-            } catch (Exception e) {
-                log.error("[{}] Failed to update stats for notification request", requestId, e);
-            }
-
+            updateRequestStats(ctx, requestId, stats);
             if (callback != null) {
-                try {
-                    callback.accept(stats);
-                } catch (Exception e) {
-                    log.error("Failed to process callback for notification request {}", requestId, e);
-                }
+                callback.onSuccess(stats);
             }
         });
+    }
+
+    private void updateRequestStats(NotificationProcessingContext ctx, NotificationRequestId requestId, NotificationRequestStats stats) {
+        try {
+            notificationRequestService.updateNotificationRequest(ctx.getTenantId(), requestId, NotificationRequestStatus.SENT, stats);
+        } catch (Exception e) {
+            log.error("[{}] Failed to update stats for notification request", requestId, e);
+        }
     }
 
     private void processForTarget(NotificationTarget target, NotificationProcessingContext ctx) {
@@ -234,7 +240,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         switch (target.getConfiguration().getType()) {
             case PLATFORM_USERS: {
                 PlatformUsersNotificationTargetConfig targetConfig = (PlatformUsersNotificationTargetConfig) target.getConfiguration();
-                if (targetConfig.getUsersFilter().getType().isForRules()) {
+                if (targetConfig.getUsersFilter().getType().isForRules() && ctx.getRequest().getInfo() instanceof RuleOriginatedNotificationInfo) {
                     recipients = new PageDataIterable<>(pageLink -> {
                         return notificationTargetService.findRecipientsForRuleNotificationTargetConfig(ctx.getTenantId(), targetConfig, (RuleOriginatedNotificationInfo) ctx.getRequest().getInfo(), pageLink);
                     }, 500);
@@ -431,7 +437,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
             TransportProtos.ToCoreNotificationMsg notificationRequestUpdateProto = TbSubscriptionUtils.notificationRequestUpdateToProto(tenantId, update);
             Set<String> coreServices = new HashSet<>(partitionService.getAllServiceIds(ServiceType.TB_CORE));
             for (String serviceId : coreServices) {
-                TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, serviceId);
+                TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_CORE, serviceId);
                 producerProvider.getTbCoreNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), notificationRequestUpdateProto), null);
             }
         });

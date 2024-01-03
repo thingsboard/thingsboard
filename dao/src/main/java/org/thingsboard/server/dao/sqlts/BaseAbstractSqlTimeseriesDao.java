@@ -46,13 +46,13 @@ public abstract class BaseAbstractSqlTimeseriesDao extends JpaAbstractDaoListeni
     private final ConcurrentMap<String, Integer> tsKvDictionaryMap = new ConcurrentHashMap<>();
     protected static final ReentrantLock tsCreationLock = new ReentrantLock();
     @Autowired
-    protected KeyDictionaryRepository dictionaryRepository;
+    protected KeyDictionaryRepository keyDictionaryRepository;
 
     protected Integer getOrSaveKeyId(String strKey) {
         Integer keyId = tsKvDictionaryMap.get(strKey);
         if (keyId == null) {
             Optional<KeyDictionaryEntry> tsKvDictionaryOptional;
-            tsKvDictionaryOptional = dictionaryRepository.findById(new KeyDictionaryCompositeKey(strKey));
+            tsKvDictionaryOptional = keyDictionaryRepository.findById(new KeyDictionaryCompositeKey(strKey));
             if (tsKvDictionaryOptional.isEmpty()) {
                 tsCreationLock.lock();
                 try {
@@ -60,16 +60,16 @@ public abstract class BaseAbstractSqlTimeseriesDao extends JpaAbstractDaoListeni
                     if (keyId != null) {
                         return keyId;
                     }
-                    tsKvDictionaryOptional = dictionaryRepository.findById(new KeyDictionaryCompositeKey(strKey));
+                    tsKvDictionaryOptional = keyDictionaryRepository.findById(new KeyDictionaryCompositeKey(strKey));
                     if (tsKvDictionaryOptional.isEmpty()) {
                         KeyDictionaryEntry keyDictionaryEntry = new KeyDictionaryEntry();
                         keyDictionaryEntry.setKey(strKey);
                         try {
-                            KeyDictionaryEntry saved = dictionaryRepository.save(keyDictionaryEntry);
+                            KeyDictionaryEntry saved = keyDictionaryRepository.save(keyDictionaryEntry);
                             tsKvDictionaryMap.put(saved.getKey(), saved.getKeyId());
                             keyId = saved.getKeyId();
                         } catch (DataIntegrityViolationException | ConstraintViolationException e) {
-                            tsKvDictionaryOptional = dictionaryRepository.findById(new KeyDictionaryCompositeKey(strKey));
+                            tsKvDictionaryOptional = keyDictionaryRepository.findById(new KeyDictionaryCompositeKey(strKey));
                             KeyDictionaryEntry dictionary = tsKvDictionaryOptional.orElseThrow(() -> new RuntimeException("Failed to get TsKvDictionary entity from DB!"));
                             tsKvDictionaryMap.put(dictionary.getKey(), dictionary.getKeyId());
                             keyId = dictionary.getKeyId();

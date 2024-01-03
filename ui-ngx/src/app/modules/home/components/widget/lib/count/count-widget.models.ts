@@ -53,6 +53,7 @@ export const entityCountCardLayoutImages = new Map<CountCardLayout, string>(
 
 export interface CountWidgetSettings {
   layout: CountCardLayout;
+  autoScale: boolean;
   showLabel: boolean;
   label: string;
   labelFont: Font;
@@ -76,6 +77,7 @@ export interface CountWidgetSettings {
 
 export const countDefaultSettings = (alarmElseEntity: boolean): CountWidgetSettings => ({
   layout: CountCardLayout.column,
+  autoScale: true,
   showLabel: true,
   label: alarmElseEntity ? 'Total' : 'Devices',
   labelFont: {

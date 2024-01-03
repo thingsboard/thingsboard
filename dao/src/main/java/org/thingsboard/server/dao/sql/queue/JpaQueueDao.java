@@ -84,6 +84,6 @@ public class JpaQueueDao extends JpaAbstractDao<QueueEntity, Queue> implements Q
     @Override
     public PageData<Queue> findQueuesByTenantId(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(queueRepository
-                .findByTenantId(tenantId.getId(), Objects.toString(pageLink.getTextSearch(), ""), DaoUtil.toPageable(pageLink)));
+                .findByTenantId(tenantId.getId(), pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
     }
 }

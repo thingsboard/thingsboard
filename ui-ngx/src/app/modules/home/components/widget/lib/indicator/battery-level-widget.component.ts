@@ -24,7 +24,8 @@ import {
   OnInit,
   Renderer2,
   TemplateRef,
-  ViewChild
+  ViewChild,
+  ViewEncapsulation
 } from '@angular/core';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { formatValue, isDefinedAndNotNull, isNumeric } from '@core/utils';
@@ -45,6 +46,9 @@ import {
   BatteryLevelWidgetSettings
 } from '@home/components/widget/lib/indicator/battery-level-widget.models';
 import { ResizeObserver } from '@juggle/resize-observer';
+import { Observable } from 'rxjs';
+import { ImagePipe } from '@shared/pipe/image.pipe';
+import { DomSanitizer } from '@angular/platform-browser';
 
 const verticalBatteryDimensions = {
   shapeAspectRatio: 64 / 113,
@@ -74,7 +78,8 @@ const horizontalBatteryDimensions = {
 @Component({
   selector: 'tb-battery-level-widget',
   templateUrl: './battery-level-widget.component.html',
-  styleUrls: ['./battery-level-widget.component.scss']
+  styleUrls: ['./battery-level-widget.component.scss'],
+  encapsulation: ViewEncapsulation.None
 })
 export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
 
@@ -115,13 +120,17 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
 
   value: number;
 
-  batterySections: boolean[] = [false, false, false, false];
+  batteryFillValue: number;
+
+  batterySections: boolean[];
+  dividedBorderRadius: string;
+  dividedGap: string;
 
   batteryLevelColor: ColorProcessor;
 
   batteryShapeColor: ColorProcessor;
 
-  backgroundStyle: ComponentStyle = {};
+  backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
 
   batteryBoxResize$: ResizeObserver;
@@ -132,6 +141,8 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
   private units = '';
 
   constructor(private date: DatePipe,
+              private imagePipe: ImagePipe,
+              private sanitizer: DomSanitizer,
               private widgetComponent: WidgetComponent,
               private renderer: Renderer2,
               private cd: ChangeDetectorRef) {
@@ -156,17 +167,37 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
     this.vertical = [BatteryLevelLayout.vertical_solid, BatteryLevelLayout.vertical_divided].includes(this.layout);
     this.layoutClass = this.vertical ? 'vertical' : 'horizontal';
     this.solid = [BatteryLevelLayout.vertical_solid, BatteryLevelLayout.horizontal_solid].includes(this.layout);
+    if (!this.solid) {
+      let sectionsCount = this.settings.sectionsCount;
+      if (!sectionsCount) {
+        sectionsCount = 4;
+      }
+      sectionsCount = Math.min(Math.max(sectionsCount, 2), 20);
+      this.batterySections = Array.from(Array(sectionsCount), () => false);
+      const gap = 1 + (24 - sectionsCount) / 10;
+      this.dividedGap = `${gap}%`;
+      const containerAspect = 0.5567;
+      const sectionHeight = (100 - (gap * (sectionsCount - 1))) / sectionsCount;
+      const sectionAspect = 100 * containerAspect / sectionHeight;
+      const rad1 = 8.425 - sectionsCount * 0.32125;
+      const rad2 = rad1 * sectionAspect;
+      if (this.vertical) {
+        this.dividedBorderRadius = `${rad1}% / ${rad2}%`;
+      } else {
+        this.dividedBorderRadius = `${rad2}% / ${rad1}%`;
+      }
+    }
 
     this.showValue = this.settings.showValue;
     this.autoScaleValueSize = this.showValue && this.settings.autoScaleValueSize;
-    this.valueStyle = textStyle(this.settings.valueFont,  '0.1px');
+    this.valueStyle = textStyle(this.settings.valueFont);
     this.valueColor = ColorProcessor.fromSettings(this.settings.valueColor);
 
     this.batteryLevelColor = ColorProcessor.fromSettings(this.settings.batteryLevelColor);
 
     this.batteryShapeColor = ColorProcessor.fromSettings(this.settings.batteryShapeColor);
 
-    this.backgroundStyle = backgroundStyle(this.settings.background);
+    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
 
     this.hasCardClickAction = this.ctx.actionsApi.getActionDescriptors('cardClick').length > 0;
@@ -197,10 +228,11 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
 
   public onDataUpdated() {
     const tsValue = getSingleTsValue(this.ctx.data);
-    this.value = 0;
+    this.batteryFillValue = 0;
     if (tsValue && isDefinedAndNotNull(tsValue[1]) && isNumeric(tsValue[1])) {
       this.value = tsValue[1];
-      this.valueText = formatValue(this.value, this.decimals, this.units, true);
+      this.batteryFillValue = this.parseBatteryFillValue(this.value);
+      this.valueText = formatValue(this.value, this.decimals, this.units, false);
     } else {
       this.valueText = 'N/A';
     }
@@ -214,6 +246,16 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
     this.batteryLevelColor.update(this.value);
     this.batteryShapeColor.update(this.value);
     this.cd.detectChanges();
+  }
+
+  parseBatteryFillValue(value: number) {
+    if (value < 0) {
+      return 0;
+    } else if (value > 100) {
+      return 100;
+    } else {
+      return value;
+    }
   }
 
   public trackBySection(index: number): number {
@@ -239,8 +281,11 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
         if (this.autoScaleValueSize) {
           const valueFontSize = ratios.valueFontSizeRatio * boxSize;
           const valueLineHeight = ratios.valueLineHeightRaio * boxSize;
+          this.renderer.setStyle(this.batteryLevelValue.nativeElement, 'minWidth', '0');
           this.setValueFontSize(valueFontSize, valueLineHeight, boxWidth);
         }
+        const fontSize = parseInt(window.getComputedStyle(this.batteryLevelValue.nativeElement).fontSize, 10) || 10;
+        this.renderer.setStyle(this.batteryLevelValue.nativeElement, 'minWidth', `${Math.min(fontSize*4, boxWidth)}px`);
       }
       let height = this.batteryLevelContent.nativeElement.getBoundingClientRect().height;
       const width = height * verticalBatteryDimensions.shapeAspectRatio;

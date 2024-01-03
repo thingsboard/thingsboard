@@ -41,7 +41,7 @@ import {
   AddDeviceProfileDialogComponent,
   AddDeviceProfileDialogData
 } from '@home/components/profile/add-device-profile-dialog.component';
-import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { ImportExportService } from '@shared/import-export/import-export.service';
 import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
 
 @Injectable()

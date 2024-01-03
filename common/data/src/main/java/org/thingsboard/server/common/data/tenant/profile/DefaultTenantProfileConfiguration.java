@@ -39,6 +39,7 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxRuleChains;
     private long maxResourcesInBytes;
     private long maxOtaPackagesInBytes;
+    private long maxResourceSize;
 
     private String transportTenantMsgRateLimit;
     private String transportTenantTelemetryMsgRateLimit;
@@ -83,6 +84,8 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private int defaultStorageTtlDays;
     private int alarmsTtlDays;
     private int rpcTtlDays;
+    private int queueStatsTtlDays;
+    private int ruleEngineExceptionsTtlDays;
 
     private double warnThreshold;
 

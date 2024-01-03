@@ -30,7 +30,8 @@ export const Constants = {
     badRequestParams: 31,
     itemNotFound: 32,
     tooManyRequests: 33,
-    tooManyUpdates: 34
+    tooManyUpdates: 34,
+    passwordViolation: 45
   },
   entryPoints: {
     login: '/api/auth/login',
@@ -69,6 +70,13 @@ export const MediaBreakpoints = {
   'gt-lg': 'screen and (min-width: 1920px)',
   'gt-xl': 'screen and (min-width: 5001px)',
   'md-lg': 'screen and (min-width: 960px) and (max-width: 1819px)'
+};
+
+export const resolveBreakpoint = (breakpoint: string): string => {
+  if (MediaBreakpoints[breakpoint]) {
+    return MediaBreakpoints[breakpoint];
+  }
+  return breakpoint;
 };
 
 export const helpBaseUrl = 'https://thingsboard.io';
@@ -168,6 +176,7 @@ export const HelpLinks = {
     recipientNotifications: helpBaseUrl + '/docs/user-guide/notifications/#recipients',
     ruleNotifications: helpBaseUrl + '/docs/user-guide/notifications/#rules',
     jwtSecuritySettings: helpBaseUrl + '/docs/user-guide/ui/jwt-security-settings/',
+    gatewayInstall: helpBaseUrl + '/docs/iot-gateway/install/docker-installation/',
   }
 };
 

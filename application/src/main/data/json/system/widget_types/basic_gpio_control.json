@@ -17,5 +17,19 @@
     "settingsDirective": "tb-gpio-control-widget-settings",
     "defaultConfig": "{\"targetDeviceAliases\":[],\"showTitle\":true,\"backgroundColor\":\"#fff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"parseGpioStatusFunction\":\"return body[pin] === true;\",\"gpioStatusChangeRequest\":{\"method\":\"setGpioStatus\",\"paramsBody\":\"{\\n   \\\"pin\\\": \\\"{$pin}\\\",\\n   \\\"enabled\\\": \\\"{$enabled}\\\"\\n}\"},\"requestTimeout\":500,\"switchPanelBackgroundColor\":\"#b71c1c\",\"gpioStatusRequest\":{\"method\":\"getGpioStatus\",\"paramsBody\":\"{}\"},\"gpioList\":[{\"pin\":1,\"label\":\"GPIO 1\",\"row\":0,\"col\":0,\"_uniqueKey\":0},{\"pin\":2,\"label\":\"GPIO 2\",\"row\":0,\"col\":1,\"_uniqueKey\":1},{\"pin\":3,\"label\":\"GPIO 3\",\"row\":1,\"col\":0,\"_uniqueKey\":2}]},\"title\":\"Basic GPIO Control\"}"
   },
-  "externalId": null
+  "externalId": null,
+  "tags": [
+    "pin",
+    "pins",
+    "board",
+    "circuit",
+    "digital read",
+    "digital write",
+    "analog read",
+    "analog write",
+    "microcontroller",
+    "i/o",
+    "input/output",
+    "hardware"
+  ]
 }

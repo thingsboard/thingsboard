@@ -213,7 +213,7 @@ public class SwaggerConfiguration {
         uiProperties.setDefaultModelExpandDepth(1);
         uiProperties.setDefaultModelRendering("example");
         uiProperties.setDisplayRequestDuration(false);
-        uiProperties.setDocExpansion("none");
+        uiProperties.setDocExpansion("list");
         uiProperties.setFilter("false");
         uiProperties.setMaxDisplayedTags(null);
         uiProperties.setOperationsSorter("alpha");

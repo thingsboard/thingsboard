@@ -108,10 +108,12 @@ public class ThingsboardInstallService {
                     log.info("Migrating ThingsBoard entities data from cassandra to SQL database ...");
                     entitiesMigrateService.migrate();
                     log.info("Updating system data...");
-                    systemDataLoaderService.updateSystemWidgets();
+                    systemDataLoaderService.loadSystemWidgets();
                 } else if ("3.0.1-cassandra".equals(upgradeFromVersion)) {
                     log.info("Migrating ThingsBoard latest timeseries data from cassandra to SQL database ...");
                     latestMigrateService.migrate();
+                } else if (upgradeFromVersion.equals("3.6.2-images")) {
+                    installScripts.updateImages();
                 } else {
                     switch (upgradeFromVersion) {
                         case "1.2.3": //NOSONAR, Need to execute gradual upgrade starting from upgradeFromVersion
@@ -265,6 +267,16 @@ public class ThingsboardInstallService {
                         case "3.6.0":
                             log.info("Upgrading ThingsBoard from version 3.6.0 to 3.6.1 ...");
                             databaseEntitiesUpgradeService.upgradeDatabase("3.6.0");
+                            dataUpdateService.updateData("3.6.0");
+                        case "3.6.1":
+                            log.info("Upgrading ThingsBoard from version 3.6.1 to 3.6.2 ...");
+                            databaseEntitiesUpgradeService.upgradeDatabase("3.6.1");
+                            if (!getEnv("SKIP_IMAGES_MIGRATION", false)) {
+                                installScripts.setUpdateImages(true);
+                            } else {
+                                log.info("Skipping images migration. Run the upgrade with fromVersion as '3.6.2-images' to migrate");
+                            }
+                            //TODO DON'T FORGET to update switch statement in the CacheCleanupService if you need to clear the cache
                         case "3.6.3":
                             log.info("Upgrading ThingsBoard from version 3.6.3 to 3.7.0 ...");
                             databaseEntitiesUpgradeService.upgradeDatabase("3.6.3");
@@ -277,8 +289,12 @@ public class ThingsboardInstallService {
                     entityDatabaseSchemaService.createOrUpdateDeviceInfoView(persistToTelemetry);
                     log.info("Updating system data...");
                     dataUpdateService.upgradeRuleNodes();
-                    systemDataLoaderService.updateSystemWidgets();
+                    systemDataLoaderService.loadSystemWidgets();
                     installScripts.loadSystemLwm2mResources();
+                    installScripts.loadSystemImages();
+                    if (installScripts.isUpdateImages()) {
+                        installScripts.updateImages();
+                    }
                 }
                 log.info("Upgrade finished successfully!");
 
@@ -321,6 +337,7 @@ public class ThingsboardInstallService {
 //                systemDataLoaderService.loadSystemPlugins();
 //                systemDataLoaderService.loadSystemRules();
                 installScripts.loadSystemLwm2mResources();
+                installScripts.loadSystemImages();
 
                 if (loadDemo) {
                     log.info("Loading demo data...");

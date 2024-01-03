@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS key_dictionary
 (
     key    varchar(255) NOT NULL,
     key_id serial UNIQUE,
-    CONSTRAINT ts_key_id_pkey PRIMARY KEY (key)
+    CONSTRAINT key_id_pkey PRIMARY KEY (key)
 );
 
 CREATE OR REPLACE PROCEDURE drop_partitions_by_system_ttl(IN partition_type varchar, IN system_ttl bigint, INOUT deleted bigint)
