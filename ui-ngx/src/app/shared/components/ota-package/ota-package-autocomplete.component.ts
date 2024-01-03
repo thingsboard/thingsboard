@@ -76,6 +76,8 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
     const packageId = this.otaPackageFormGroup.get('packageId').value;
     if (packageId && isNotEmptyStr(packageId)) {
       this.reset();
+    } else {
+      this.cleanFilteredPackages.next([]);
     }
   }
 
