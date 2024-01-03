@@ -16,7 +16,8 @@
 
 -- RULE NODE INDEXES UPDATE START
 
+DROP INDEX IF EXISTS idx_rule_node_type;
 DROP INDEX IF EXISTS idx_rule_node_type_configuration_version;
-CREATE INDEX IF NOT EXISTS idx_rule_node_id_type_configuration_version ON rule_node(id, type, configuration_version);
+CREATE INDEX IF NOT EXISTS idx_rule_node_type_id_configuration_version ON rule_node(type, id, configuration_version);
 
 -- RULE NODE INDEXES UPDATE END
