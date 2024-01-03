@@ -180,13 +180,18 @@ public class EntityStateSourcingListener {
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(ActionEntityEvent<?> event) {
         log.trace("[{}] ActionEntityEvent called: {}", event.getTenantId(), event);
-        if (ActionType.CREDENTIALS_UPDATED.equals(event.getActionType()) && EntityType.DEVICE.equals(event.getEntityId().getEntityType())
+        if (ActionType.CREDENTIALS_UPDATED.equals(event.getActionType()) &&
+                EntityType.DEVICE.equals(event.getEntityId().getEntityType())
                 && event.getEntity() instanceof DeviceCredentials) {
             tbClusterService.pushMsgToCore(new DeviceCredentialsUpdateNotificationMsg(event.getTenantId(),
                     (DeviceId) event.getEntityId(), (DeviceCredentials) event.getEntity()), null);
         } else if (ActionType.ASSIGNED_TO_TENANT.equals(event.getActionType()) && event.getEntity() instanceof Device) {
+            Device device = (Device) event.getEntity();
             Tenant tenant = JacksonUtil.fromString(event.getBody(), Tenant.class);
-            pushAssignedFromNotification(tenant, event.getTenantId(), (Device) event.getEntity());
+            if (tenant != null) {
+                tbClusterService.onDeviceAssignedToTenant(tenant.getId(), device);
+            }
+            pushAssignedFromNotification(tenant, event.getTenantId(), device);
         }
     }
 

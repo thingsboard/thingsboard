@@ -92,7 +92,7 @@ public class EdgeEventSourcingListener {
     public void handleEvent(DeleteEntityEvent<?> event) {
         EntityType entityType = event.getEntityId().getEntityType();
         try {
-            if (EntityType.EDGE.equals(entityType) || EntityType.TENANT.equals(entityType) || EntityType.TB_RESOURCE.equals(entityType)) {
+            if (EntityType.EDGE.equals(entityType) || EntityType.TENANT.equals(entityType)) {
                 return;
             }
             log.trace("[{}] DeleteEntityEvent called: {}", event.getTenantId(), event);
@@ -179,7 +179,6 @@ public class EdgeEventSourcingListener {
             case TENANT:
                 return !event.getAdded();
             case API_USAGE_STATE:
-            case TB_RESOURCE:
             case EDGE:
                 return false;
         }
