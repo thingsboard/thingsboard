@@ -405,7 +405,7 @@ export class TbCanvasDigitalGauge {
         }
         const value = parseFloat(tvPair[1]);
         if (value !== this.gauge.value) {
-          if (!this.gauge.options.animation) {
+          if (!this.gauge.options.animation && !isNaN(value)) {
             this.gauge._value = value;
           }
           this.gauge.value = value;
