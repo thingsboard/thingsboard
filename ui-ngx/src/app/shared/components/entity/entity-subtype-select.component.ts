@@ -21,13 +21,14 @@ import { map, mergeMap, publishReplay, refCount, startWith, tap } from 'rxjs/ope
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
-import { DeviceService } from '@core/http/device.service';
+import { DeviceProfileService } from '@core/http/device-profile.service';
 import { EntitySubtype, EntityType } from '@app/shared/models/entity-type.models';
 import { BroadcastService } from '@app/core/services/broadcast.service';
-import { AssetService } from '@core/http/asset.service';
+import { AssetProfileService } from '@core/http/asset-profile.service';
 import { EdgeService } from '@core/http/edge.service';
 import { EntityViewService } from '@core/http/entity-view.service';
 import { SubscriptSizing } from '@angular/material/form-field';
+import { EntityInfoData } from '@shared/models/entity.models';
 
 @Component({
   selector: 'tb-entity-subtype-select',
@@ -66,11 +67,11 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
   entitySubtypeTitle: string;
   entitySubtypeRequiredText: string;
 
-  subTypesOptions: Observable<Array<EntitySubtype | string>>;
+  subTypesOptions: Observable<Array<EntitySubtype | string | EntityInfoData>>;
 
   private subTypesOptionsSubject: Subject<string> = new Subject();
 
-  subTypes: Observable<Array<EntitySubtype | string>>;
+  subTypes: Observable<Array<EntitySubtype | string | EntityInfoData>>;
 
   subTypesLoaded = false;
 
@@ -81,8 +82,8 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
   constructor(private store: Store<AppState>,
               private broadcast: BroadcastService,
               public translate: TranslateService,
-              private deviceService: DeviceService,
-              private assetService: AssetService,
+              private deviceProfileService: DeviceProfileService,
+              private assetProfileService: AssetProfileService,
               private edgeService: EdgeService,
               private entityViewService: EntityViewService,
               private fb: UntypedFormBuilder) {
@@ -136,7 +137,7 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
     }
 
     this.subTypesOptions = this.subTypesOptionsSubject.asObservable().pipe(
-      startWith<string | EntitySubtype>(''),
+      startWith<string | EntitySubtype | EntityInfoData>(''),
       mergeMap(() => this.getSubTypes())
     );
 
@@ -193,34 +194,39 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
     }
   }
 
-  displaySubTypeFn(subType?: EntitySubtype | string): string | undefined {
+  displaySubTypeFn(subType?: EntitySubtype | string | EntityInfoData): string | undefined {
     if (subType && typeof subType !== 'string') {
+      const typeName = this.isEntitySubType(subType) ? subType.type : subType.name;
       if (this.typeTranslatePrefix) {
-        return this.translate.instant(this.typeTranslatePrefix + '.' + subType.type);
+        return this.translate.instant(this.typeTranslatePrefix + '.' + typeName);
       } else {
-        return subType.type;
+        return typeName;
       }
     } else {
       return this.translate.instant('entity.all-subtypes');
     }
   }
 
-  findSubTypes(searchText?: string): Observable<Array<EntitySubtype | string>> {
+  findSubTypes(searchText: string): Observable<Array<EntitySubtype | string | EntityInfoData>> {
     return this.getSubTypes().pipe(
       map(subTypes => subTypes.filter( subType => {
-          return searchText ? (typeof subType === 'string' ? false : subType.type === searchText) : false;
+        if (typeof subType === 'string') {
+          return false;
+        } else {
+          return this.isEntitySubType(subType) ? subType.type : subType.name === searchText;
+        }
       }))
     );
   }
 
-  getSubTypes(): Observable<Array<EntitySubtype | string>> {
+  getSubTypes(): Observable<Array<EntitySubtype | string | EntityInfoData>> {
     if (!this.subTypes) {
       switch (this.entityType) {
         case EntityType.ASSET:
-          this.subTypes = this.assetService.getAssetTypes({ignoreLoading: true});
+          this.subTypes = this.assetProfileService.getAssetProfileNames(false, {ignoreLoading: true});
           break;
         case EntityType.DEVICE:
-          this.subTypes = this.deviceService.getDeviceTypes({ignoreLoading: true});
+          this.subTypes = this.deviceProfileService.getDeviceProfileNames(false, {ignoreLoading: true});
           break;
         case EntityType.EDGE:
           this.subTypes = this.edgeService.getEdgeTypes({ignoreLoading: true});
@@ -243,7 +249,7 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
               if (typeof subType === 'string') {
                 return subType === type;
               } else {
-                return subType.type === strType;
+                return this.isEntitySubType(subType) ? subType.type : subType.name === strType;
               }
             });
             if (found) {
@@ -258,5 +264,9 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
       }
     }
     return this.subTypes;
+  }
+
+  private isEntitySubType(object: EntitySubtype | EntityInfoData): object is EntitySubtype {
+    return 'type' in object;
   }
 }

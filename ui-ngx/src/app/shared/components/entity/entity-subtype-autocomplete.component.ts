@@ -30,14 +30,15 @@ import {
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
-import { DeviceService } from '@core/http/device.service';
+import { DeviceProfileService } from '@core/http/device-profile.service';
 import { EntitySubtype, EntityType } from '@app/shared/models/entity-type.models';
 import { BroadcastService } from '@app/core/services/broadcast.service';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { AssetService } from '@core/http/asset.service';
+import { AssetProfileService } from '@core/http/asset-profile.service';
 import { EntityViewService } from '@core/http/entity-view.service';
 import { EdgeService } from '@core/http/edge.service';
 import { MatFormFieldAppearance } from '@angular/material/form-field';
+import { EntityInfoData } from '@shared/models/entity.models';
 
 @Component({
   selector: 'tb-entity-subtype-autocomplete',
@@ -100,8 +101,8 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
   constructor(private store: Store<AppState>,
               private broadcast: BroadcastService,
               public translate: TranslateService,
-              private deviceService: DeviceService,
-              private assetService: AssetService,
+              private deviceProfileService: DeviceProfileService,
+              private assetProfileService: AssetProfileService,
               private edgeService: EdgeService,
               private entityViewService: EntityViewService,
               private fb: UntypedFormBuilder) {
@@ -229,13 +230,13 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
 
   getSubTypes(): Observable<Array<string>> {
     if (!this.subTypes) {
-      let subTypesObservable: Observable<Array<EntitySubtype>>;
+      let subTypesObservable: Observable<Array<EntitySubtype | EntityInfoData>>;
       switch (this.entityType) {
         case EntityType.ASSET:
-          subTypesObservable = this.assetService.getAssetTypes({ignoreLoading: true});
+          subTypesObservable = this.assetProfileService.getAssetProfileNames(false, {ignoreLoading: true});
           break;
         case EntityType.DEVICE:
-          subTypesObservable = this.deviceService.getDeviceTypes({ignoreLoading: true});
+          subTypesObservable = this.deviceProfileService.getDeviceProfileNames(false,{ignoreLoading: true});
           break;
         case EntityType.EDGE:
           subTypesObservable = this.edgeService.getEdgeTypes({ignoreLoading: true});
@@ -247,10 +248,13 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
       if (subTypesObservable) {
         const excludeSubTypesSet = new Set(this.excludeSubTypes);
         this.subTypes = subTypesObservable.pipe(
-          catchError(() => of([] as Array<EntitySubtype>)),
+          catchError(() => of([] as Array<EntitySubtype | EntityInfoData>)),
           map(subTypes => {
             const filteredSubTypes: Array<string> = [];
-            subTypes.forEach(subType => !excludeSubTypesSet.has(subType.type) && filteredSubTypes.push(subType.type));
+            subTypes.forEach(subType => {
+              const typeName = this.isEntitySubType(subType) ? subType.type : subType.name;
+              return !excludeSubTypesSet.has(typeName) && filteredSubTypes.push(typeName);
+            });
             return filteredSubTypes;
           }),
           publishReplay(1),
@@ -261,6 +265,10 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
       }
     }
     return this.subTypes;
+  }
+
+  private isEntitySubType(object: EntitySubtype | EntityInfoData): object is EntitySubtype {
+    return 'type' in object;
   }
 
   clear() {

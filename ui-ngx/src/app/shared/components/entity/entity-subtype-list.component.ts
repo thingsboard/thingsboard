@@ -22,8 +22,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { EntitySubtype, EntityType } from '@shared/models/entity-type.models';
 import { MatAutocomplete, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatChipGrid, MatChipInputEvent } from '@angular/material/chips';
-import { AssetService } from '@core/http/asset.service';
-import { DeviceService } from '@core/http/device.service';
+import { AssetProfileService } from '@core/http/asset-profile.service';
+import { DeviceProfileService } from '@core/http/device-profile.service';
 import { EdgeService } from '@core/http/edge.service';
 import { EntityViewService } from '@core/http/entity-view.service';
 import { BroadcastService } from '@core/services/broadcast.service';
@@ -34,6 +34,7 @@ import { coerceArray, coerceBoolean } from '@shared/decorators/coercion';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
 import { UtilsService } from '@core/services/utils.service';
+import { EntityInfoData } from '@shared/models/entity.models';
 
 @Component({
   selector: 'tb-entity-subtype-list',
@@ -125,8 +126,8 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
 
   constructor(private broadcast: BroadcastService,
               public translate: TranslateService,
-              private assetService: AssetService,
-              private deviceService: DeviceService,
+              private assetProfileService: AssetProfileService,
+              private deviceProfileService: DeviceProfileService,
               private edgeService: EdgeService,
               private entityViewService: EntityViewService,
               private alarmService: AlarmService,
@@ -326,13 +327,13 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
       }
     }
     if (!this.entitySubtypes) {
-      let subTypesObservable: Observable<Array<EntitySubtype>>;
+      let subTypesObservable: Observable<Array<EntitySubtype | EntityInfoData>>;
       switch (this.entityType) {
         case EntityType.ASSET:
-          subTypesObservable = this.assetService.getAssetTypes({ignoreLoading: true});
+          subTypesObservable = this.assetProfileService.getAssetProfileNames(false, {ignoreLoading: true});
           break;
         case EntityType.DEVICE:
-          subTypesObservable = this.deviceService.getDeviceTypes({ignoreLoading: true});
+          subTypesObservable = this.deviceProfileService.getDeviceProfileNames(false,{ignoreLoading: true});
           break;
         case EntityType.EDGE:
           subTypesObservable = this.edgeService.getEdgeTypes({ignoreLoading: true});
@@ -343,7 +344,7 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
       }
       if (subTypesObservable) {
         this.entitySubtypes = subTypesObservable.pipe(
-          map(subTypes => subTypes.map(subType => subType.type)),
+          map(subTypes => subTypes.map(subType => this.isEntitySubType(subType) ? subType.type : subType.name)),
           share({
             connector: () => new ReplaySubject(1),
             resetOnError: false,
@@ -356,6 +357,10 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
       }
     }
     return this.entitySubtypes;
+  }
+
+  private isEntitySubType(object: EntitySubtype | EntityInfoData): object is EntitySubtype {
+    return 'type' in object;
   }
 
   onFocus() {
