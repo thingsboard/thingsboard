@@ -97,7 +97,8 @@ monitoring:
         # To add more targets, use following environment variables:
         # monitoring.transports.lwm2m.targets[1].base_url, monitoring.transports.lwm2m.targets[2].base_url, etc.
 
-  notification_channels:
+  notifications:
+    message_prefix: '${NOTIFICATION_MESSAGE_PREFIX:}'
     slack:
       # Enable notifying via Slack
       enabled: '${SLACK_NOTIFICATION_CHANNEL_ENABLED:false}'
