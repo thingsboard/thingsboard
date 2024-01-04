@@ -16,28 +16,16 @@
 package org.thingsboard.server.dao.sql;
 
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.thingsboard.server.dao.model.sqlts.dictionary.KeyDictionaryCompositeKey;
-import org.thingsboard.server.dao.model.sqlts.dictionary.KeyDictionaryEntry;
-import org.thingsboard.server.dao.sqlts.dictionary.KeyDictionaryRepository;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 public abstract class JpaAbstractDaoListeningExecutorService {
-
-    private final ConcurrentMap<String, Integer> keyDictionaryMap = new ConcurrentHashMap<>();
-    protected static final ReentrantLock creationLock = new ReentrantLock();
 
     @Autowired
     protected JpaExecutorService service;
@@ -47,49 +35,6 @@ public abstract class JpaAbstractDaoListeningExecutorService {
 
     @Autowired
     protected JdbcTemplate jdbcTemplate;
-
-    @Autowired
-    protected KeyDictionaryRepository keyDictionaryRepository;
-
-    protected Integer getOrSaveKeyId(String strKey) {
-        Integer keyId = keyDictionaryMap.get(strKey);
-        if (keyId == null) {
-            Optional<KeyDictionaryEntry> tsKvDictionaryOptional;
-            tsKvDictionaryOptional = keyDictionaryRepository.findById(new KeyDictionaryCompositeKey(strKey));
-            if (tsKvDictionaryOptional.isEmpty()) {
-                creationLock.lock();
-                try {
-                    keyId = keyDictionaryMap.get(strKey);
-                    if (keyId != null) {
-                        return keyId;
-                    }
-                    tsKvDictionaryOptional = keyDictionaryRepository.findById(new KeyDictionaryCompositeKey(strKey));
-                    if (tsKvDictionaryOptional.isEmpty()) {
-                        KeyDictionaryEntry keyDictionaryEntry = new KeyDictionaryEntry();
-                        keyDictionaryEntry.setKey(strKey);
-                        try {
-                            KeyDictionaryEntry saved = keyDictionaryRepository.save(keyDictionaryEntry);
-                            keyDictionaryMap.put(saved.getKey(), saved.getKeyId());
-                            keyId = saved.getKeyId();
-                        } catch (DataIntegrityViolationException | ConstraintViolationException e) {
-                            tsKvDictionaryOptional = keyDictionaryRepository.findById(new KeyDictionaryCompositeKey(strKey));
-                            KeyDictionaryEntry dictionary = tsKvDictionaryOptional.orElseThrow(() -> new RuntimeException("Failed to get KeyDictionaryEntry entity from DB!"));
-                            keyDictionaryMap.put(dictionary.getKey(), dictionary.getKeyId());
-                            keyId = dictionary.getKeyId();
-                        }
-                    } else {
-                        keyId = tsKvDictionaryOptional.get().getKeyId();
-                    }
-                } finally {
-                    creationLock.unlock();
-                }
-            } else {
-                keyId = tsKvDictionaryOptional.get().getKeyId();
-                keyDictionaryMap.put(strKey, keyId);
-            }
-        }
-        return keyId;
-    }
 
     protected void printWarnings(Statement statement) throws SQLException {
         SQLWarning warnings = statement.getWarnings();
