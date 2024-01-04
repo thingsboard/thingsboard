@@ -14,18 +14,10 @@
 /// limitations under the License.
 ///
 
-import {
-  AfterViewInit,
-  Component,
-  ElementRef,
-  Inject,
-  InjectionToken,
-  OnDestroy,
-  ViewChild
-} from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Inject, InjectionToken, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { Observable, of, Subject } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, map, switchMap, takeUntil, startWith, share } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, map, share, startWith, switchMap } from 'rxjs/operators';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
@@ -33,7 +25,6 @@ import { OverlayRef } from '@angular/cdk/overlay';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { RuleChain, RuleChainType } from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
-import { TranslateService } from '@ngx-translate/core';
 
 export const RULE_CHAIN_SELECT_PANEL_DATA = new InjectionToken<any>('RuleChainSelectPanelData');
 
@@ -47,10 +38,10 @@ export interface RuleChainSelectPanelData {
   templateUrl: './rule-chain-select-panel.component.html',
   styleUrls: ['./rule-chain-select-panel.component.scss']
 })
-export class RuleChainSelectPanelComponent implements AfterViewInit, OnDestroy {
+export class RuleChainSelectPanelComponent implements AfterViewInit {
 
   ruleChainId: string;
-  ruleChainType: RuleChainType;
+  private readonly ruleChainType: RuleChainType;
 
   selectRuleChainGroup: FormGroup;
 
@@ -65,11 +56,9 @@ export class RuleChainSelectPanelComponent implements AfterViewInit, OnDestroy {
   result?: RuleChain;
 
   private dirty = false;
-  private destroy$ = new Subject<void>();
 
   constructor(@Inject(RULE_CHAIN_SELECT_PANEL_DATA) public data: RuleChainSelectPanelData,
-              public overlayRef: OverlayRef,
-              public translate: TranslateService,
+              private overlayRef: OverlayRef,
               private fb: FormBuilder,
               private ruleChainService: RuleChainService) {
     this.ruleChainId = data.ruleChainId;
@@ -83,8 +72,7 @@ export class RuleChainSelectPanelComponent implements AfterViewInit, OnDestroy {
         startWith(''),
         distinctUntilChanged((a: string, b: string) => a.trim() === b.trim()),
         switchMap(name => this.fetchRuleChains(name)),
-        share(),
-        takeUntil(this.destroy$)
+        share()
       );
   }
 
@@ -92,11 +80,6 @@ export class RuleChainSelectPanelComponent implements AfterViewInit, OnDestroy {
     setTimeout(() => {
       this.userInput.nativeElement.focus();
     }, 0);
-  }
-
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   selected(event: MatAutocompleteSelectedEvent): void {
@@ -108,7 +91,7 @@ export class RuleChainSelectPanelComponent implements AfterViewInit, OnDestroy {
     this.overlayRef.dispose();
   }
 
-  fetchRuleChains(searchText?: string): Observable<Array<RuleChain>> {
+  private fetchRuleChains(searchText?: string): Observable<Array<RuleChain>> {
     this.searchText = searchText;
     const pageLink = new PageLink(50, 0, searchText, {
       property: 'name',

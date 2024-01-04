@@ -33,7 +33,7 @@
     <mat-option *ngIf="!(filteredRuleChains | async)?.length" [value]="null" class="tb-not-found">
       <div class="tb-not-found-content" (click)="$event.stopPropagation()">
         <span>
-          {{ translate.get('rulechain.no-rulechains-matching', {entity: searchText}) | async }}
+          {{ 'rulechain.no-rulechains-matching' | translate : {entity: searchText} }}
         </span>
       </div>
     </mat-option>

@@ -18,7 +18,6 @@ import { Component, forwardRef, Injector, Input, StaticProvider, ViewContainerRe
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TooltipPosition } from '@angular/material/tooltip';
 import { RuleChain, RuleChainType } from '@shared/models/rule-chain.models';
-import { RuleChainService } from '@core/http/rule-chain.service';
 import { isDefinedAndNotNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
@@ -61,8 +60,7 @@ export class RuleChainSelectComponent implements ControlValueAccessor {
 
   private propagateChange = (v: any) => { };
 
-  constructor(private ruleChainService: RuleChainService,
-              private overlay: Overlay,
+  constructor(private overlay: Overlay,
               private viewContainerRef: ViewContainerRef) {
   }
 
