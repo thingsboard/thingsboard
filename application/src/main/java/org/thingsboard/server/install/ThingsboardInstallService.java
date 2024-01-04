@@ -30,7 +30,6 @@ import org.thingsboard.server.service.install.NoSqlKeyspaceService;
 import org.thingsboard.server.service.install.SystemDataLoaderService;
 import org.thingsboard.server.service.install.TsDatabaseSchemaService;
 import org.thingsboard.server.service.install.TsLatestDatabaseSchemaService;
-import org.thingsboard.server.service.install.migrate.EntitiesMigrateService;
 import org.thingsboard.server.service.install.migrate.TsLatestMigrateService;
 import org.thingsboard.server.service.install.update.CacheCleanupService;
 import org.thingsboard.server.service.install.update.DataUpdateService;
@@ -97,10 +96,10 @@ public class ThingsboardInstallService {
 
                 cacheCleanupService.clearCache(upgradeFromVersion);
 
-                if ("3.0.1-cassandra".equals(upgradeFromVersion)) {
+                if (upgradeFromVersion.equals("latest-kv-ca-to-psql")) {
                     log.info("Migrating ThingsBoard latest timeseries data from cassandra to SQL database ...");
                     latestMigrateService.migrate();
-                } else if (upgradeFromVersion.equals("3.6.2-images")) {
+                } else if (upgradeFromVersion.equals("image-gallery")) {
                     installScripts.updateImages();
                 } else {
                     switch (upgradeFromVersion) {
@@ -122,7 +121,7 @@ public class ThingsboardInstallService {
                             if (!getEnv("SKIP_IMAGES_MIGRATION", false)) {
                                 installScripts.setUpdateImages(true);
                             } else {
-                                log.info("Skipping images migration. Run the upgrade with fromVersion as '3.6.2-images' to migrate");
+                                log.info("Skipping images migration. Run the upgrade with fromVersion as 'image-gallery' to migrate");
                             }
                         case "3.6.2":
                             log.info("Upgrading ThingsBoard from version 3.6.2 to 3.6.3 ...");

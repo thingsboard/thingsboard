@@ -91,9 +91,8 @@ public class CassandraTsLatestToSqlMigrateService implements TsLatestMigrateServ
 
     @Override
     public void migrate() throws Exception {
-        log.info("Performing migration of latest timeseries data from cassandra to SQL database ...");
         try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
-            Path schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.0.1", "schema_ts_latest.sql");
+            Path schemaUpdateFile = Paths.get(installScripts.getDataDir(), "sql", "schema-latest-ts-psql.sql");
             loadSql(schemaUpdateFile, conn);
             conn.setAutoCommit(false);
             for (CassandraToSqlTable table : tables) {
