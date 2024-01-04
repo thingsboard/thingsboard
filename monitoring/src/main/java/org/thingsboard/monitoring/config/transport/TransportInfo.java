@@ -25,7 +25,7 @@ public class TransportInfo {
 
     @Override
     public String toString() {
-        return String.format("%s (%s)", transportType.getName(), baseUrl);
+        return String.format("*%s* (%s)", transportType.getName(), baseUrl);
     }
 
 }

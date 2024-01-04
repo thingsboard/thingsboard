@@ -38,7 +38,7 @@ monitoring:
   check_timeout_ms: '${CHECK_TIMEOUT_MS:5000}'
 
   # Failures threshold for notifying
-  failures_threshold: '${FAILURES_THRESHOLD:2}'
+  failures_threshold: '${FAILURES_THRESHOLD:1}'
   # Notify after each REPEATED_FAILURE_NOTIFICATION subsequent failures, 0 to notify only once on first failure
   repeated_failure_notification: '${REPEATED_FAILURE_NOTIFICATION:4}'
 
