@@ -22,10 +22,8 @@ import com.google.common.util.concurrent.MoreExecutors;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -37,13 +35,11 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.attributes.AttributesDao;
 import org.thingsboard.server.dao.model.sql.AttributeKvCompositeKey;
 import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
-import org.thingsboard.server.dao.model.sqlts.dictionary.KeyDictionaryCompositeKey;
 import org.thingsboard.server.dao.model.sqlts.dictionary.KeyDictionaryEntry;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
 import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
-import org.thingsboard.server.dao.sqlts.dictionary.KeyDictionaryRepository;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.ArrayList;
@@ -51,9 +47,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -64,9 +57,6 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
 
     @Autowired
     ScheduledLogExecutorComponent logExecutor;
-
-    @Autowired
-    private KeyDictionaryRepository keyDictionaryRepository;
 
     @Autowired
     private AttributeKvRepository attributeKvRepository;
@@ -91,9 +81,6 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
 
     @Value("${sql.batch_sort:true}")
     private boolean batchSortEnabled;
-
-    private final ConcurrentMap<String, Integer> attributeDictionaryMap = new ConcurrentHashMap<>();
-    private static final ReentrantLock attributeCreationLock = new ReentrantLock();
 
     private TbSqlBlockingQueueWrapper<AttributeKvEntity> queue;
 
@@ -214,40 +201,6 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
                 attributeKey);
     }
 
-    private Integer getOrSaveKeyId(String attributeKey) {
-        Integer keyId = attributeDictionaryMap.get(attributeKey);
-        if (keyId == null) {
-            Optional<KeyDictionaryEntry> byIdOptional = keyDictionaryRepository.findById(new KeyDictionaryCompositeKey(attributeKey));
-            if (byIdOptional.isEmpty()) {
-                attributeCreationLock.lock();
-                try {
-                    byIdOptional = keyDictionaryRepository.findById(new KeyDictionaryCompositeKey(attributeKey));
-                    if (byIdOptional.isEmpty()) {
-                        KeyDictionaryEntry attributeKvDictionaryEntry = new KeyDictionaryEntry();
-                        attributeKvDictionaryEntry.setKey(attributeKey);
-                        try {
-                            KeyDictionaryEntry saved = keyDictionaryRepository.save(attributeKvDictionaryEntry);
-                            attributeDictionaryMap.put(saved.getKey(), saved.getKeyId());
-                            keyId = saved.getKeyId();
-                        } catch (DataIntegrityViolationException | ConstraintViolationException e) {
-                            byIdOptional = keyDictionaryRepository.findById(new KeyDictionaryCompositeKey(attributeKey));
-                            KeyDictionaryEntry dictionary = byIdOptional.orElseThrow(() -> new RuntimeException("Failed to get AttributeKvDictionary entity from DB!"));
-                            attributeDictionaryMap.put(dictionary.getKey(), dictionary.getKeyId());
-                            keyId = dictionary.getKeyId();
-                        }
-                    } else {
-                        keyId = byIdOptional.get().getKeyId();
-                    }
-                } finally {
-                    attributeCreationLock.unlock();
-                }
-            } else {
-                keyId = byIdOptional.get().getKeyId();
-                attributeDictionaryMap.put(attributeKey, keyId);
-            }
-        }
-        return keyId;
-    }
     private String getKey(Integer attributeKey) {
         Optional<KeyDictionaryEntry> byKeyId = keyDictionaryRepository.findByKeyId(attributeKey);
         return byKeyId.map(KeyDictionaryEntry::getKey).orElse(null);

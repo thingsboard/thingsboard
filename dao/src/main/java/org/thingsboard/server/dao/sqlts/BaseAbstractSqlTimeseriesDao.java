@@ -19,74 +19,20 @@ import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.exception.ConstraintViolationException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
-import org.thingsboard.server.dao.model.sqlts.dictionary.KeyDictionaryEntry;
-import org.thingsboard.server.dao.model.sqlts.dictionary.KeyDictionaryCompositeKey;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
-import org.thingsboard.server.dao.sqlts.dictionary.KeyDictionaryRepository;
 
 import jakarta.annotation.Nullable;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 @Slf4j
 public abstract class BaseAbstractSqlTimeseriesDao extends JpaAbstractDaoListeningExecutorService {
-
-    private final ConcurrentMap<String, Integer> tsKvDictionaryMap = new ConcurrentHashMap<>();
-    protected static final ReentrantLock tsCreationLock = new ReentrantLock();
-    @Autowired
-    protected KeyDictionaryRepository keyDictionaryRepository;
-
-    protected Integer getOrSaveKeyId(String strKey) {
-        Integer keyId = tsKvDictionaryMap.get(strKey);
-        if (keyId == null) {
-            Optional<KeyDictionaryEntry> tsKvDictionaryOptional;
-            tsKvDictionaryOptional = keyDictionaryRepository.findById(new KeyDictionaryCompositeKey(strKey));
-            if (tsKvDictionaryOptional.isEmpty()) {
-                tsCreationLock.lock();
-                try {
-                    keyId = tsKvDictionaryMap.get(strKey);
-                    if (keyId != null) {
-                        return keyId;
-                    }
-                    tsKvDictionaryOptional = keyDictionaryRepository.findById(new KeyDictionaryCompositeKey(strKey));
-                    if (tsKvDictionaryOptional.isEmpty()) {
-                        KeyDictionaryEntry keyDictionaryEntry = new KeyDictionaryEntry();
-                        keyDictionaryEntry.setKey(strKey);
-                        try {
-                            KeyDictionaryEntry saved = keyDictionaryRepository.save(keyDictionaryEntry);
-                            tsKvDictionaryMap.put(saved.getKey(), saved.getKeyId());
-                            keyId = saved.getKeyId();
-                        } catch (DataIntegrityViolationException | ConstraintViolationException e) {
-                            tsKvDictionaryOptional = keyDictionaryRepository.findById(new KeyDictionaryCompositeKey(strKey));
-                            KeyDictionaryEntry dictionary = tsKvDictionaryOptional.orElseThrow(() -> new RuntimeException("Failed to get TsKvDictionary entity from DB!"));
-                            tsKvDictionaryMap.put(dictionary.getKey(), dictionary.getKeyId());
-                            keyId = dictionary.getKeyId();
-                        }
-                    } else {
-                        keyId = tsKvDictionaryOptional.get().getKeyId();
-                    }
-                } finally {
-                    tsCreationLock.unlock();
-                }
-            } else {
-                keyId = tsKvDictionaryOptional.get().getKeyId();
-                tsKvDictionaryMap.put(strKey, keyId);
-            }
-        }
-        return keyId;
-    }
 
     protected ListenableFuture<ReadTsKvQueryResult> getReadTsKvQueryResultFuture(ReadTsKvQuery query, ListenableFuture<List<Optional<? extends AbstractTsKvEntity>>> future) {
         return Futures.transform(future, new Function<>() {

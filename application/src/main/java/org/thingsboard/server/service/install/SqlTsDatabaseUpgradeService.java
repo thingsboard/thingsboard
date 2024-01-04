@@ -213,8 +213,6 @@ public class SqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeSer
                     loadSql(conn, LOAD_DROP_PARTITIONS_FUNCTIONS_SQL, "2.4.3");
                 }
                 break;
-            case "3.6.2":
-                break;
             default:
                 throw new RuntimeException("Unable to upgrade SQL database, unsupported fromVersion: " + fromVersion);
         }
