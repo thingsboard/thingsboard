@@ -68,12 +68,10 @@ import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.alarm.AlarmDao;
-import org.thingsboard.server.dao.audit.AuditLogDao;
 import org.thingsboard.server.dao.device.DeviceConnectivityConfiguration;
 import org.thingsboard.server.dao.edge.EdgeEventDao;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
-import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.model.sql.DeviceProfileEntity;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -87,7 +85,6 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.component.RuleNodeClassInfo;
 import org.thingsboard.server.service.install.InstallScripts;
-import org.thingsboard.server.service.install.SystemDataLoaderService;
 import org.thingsboard.server.utils.TbNodeUpgradeUtils;
 
 import java.util.ArrayList;
@@ -136,9 +133,6 @@ public class DefaultDataUpdateService implements DataUpdateService {
     private DeviceProfileRepository deviceProfileRepository;
 
     @Autowired
-    private RateLimitsUpdater rateLimitsUpdater;
-
-    @Autowired
     private TenantProfileService tenantProfileService;
 
     @Lazy
@@ -147,15 +141,6 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
     @Autowired
     private ComponentDiscoveryService componentDiscoveryService;
-
-    @Autowired
-    private SystemDataLoaderService systemDataLoaderService;
-
-    @Autowired
-    private EventService eventService;
-
-    @Autowired
-    private AuditLogDao auditLogDao;
 
     @Autowired
     private EdgeEventDao edgeEventDao;
@@ -172,53 +157,6 @@ public class DefaultDataUpdateService implements DataUpdateService {
     @Override
     public void updateData(String fromVersion) throws Exception {
         switch (fromVersion) {
-            case "1.4.0":
-                log.info("Updating data from version 1.4.0 to 2.0.0 ...");
-                tenantsDefaultRuleChainUpdater.updateEntities(null);
-                break;
-            case "3.0.1":
-                log.info("Updating data from version 3.0.1 to 3.1.0 ...");
-                tenantsEntityViewsUpdater.updateEntities(null);
-                break;
-            case "3.1.1":
-                log.info("Updating data from version 3.1.1 to 3.2.0 ...");
-                tenantsRootRuleChainUpdater.updateEntities(null);
-                break;
-            case "3.2.2":
-                log.info("Updating data from version 3.2.2 to 3.3.0 ...");
-                tenantsDefaultEdgeRuleChainUpdater.updateEntities(null);
-                tenantsAlarmsCustomerUpdater.updateEntities(null);
-                deviceProfileEntityDynamicConditionsUpdater.updateEntities(null);
-                updateOAuth2Params();
-                break;
-            case "3.3.2":
-                log.info("Updating data from version 3.3.2 to 3.3.3 ...");
-                updateNestedRuleChains();
-                break;
-            case "3.3.4":
-                log.info("Updating data from version 3.3.4 to 3.4.0 ...");
-                tenantsProfileQueueConfigurationUpdater.updateEntities();
-                rateLimitsUpdater.updateEntities();
-                break;
-            case "3.4.0":
-                boolean skipEventsMigration = getEnv("TB_SKIP_EVENTS_MIGRATION", false);
-                if (!skipEventsMigration) {
-                    log.info("Updating data from version 3.4.0 to 3.4.1 ...");
-                    eventService.migrateEvents();
-                }
-                break;
-            case "3.4.1":
-                log.info("Updating data from version 3.4.1 to 3.4.2 ...");
-                systemDataLoaderService.saveLegacyYmlSettings();
-                boolean skipAuditLogsMigration = getEnv("TB_SKIP_AUDIT_LOGS_MIGRATION", false);
-                if (!skipAuditLogsMigration) {
-                    log.info("Starting audit logs migration. Can be skipped with TB_SKIP_AUDIT_LOGS_MIGRATION env variable set to true");
-                    auditLogDao.migrateAuditLogs();
-                } else {
-                    log.info("Skipping audit logs migration");
-                }
-                migrateEdgeEvents("Starting edge events migration. ");
-                break;
             case "3.5.1":
                 log.info("Updating data from version 3.5.1 to 3.6.0 ...");
                 migrateEdgeEvents("Starting edge events migration - adding seq_id column. ");
