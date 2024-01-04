@@ -66,7 +66,7 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationT
      */
     @Test
     public void testObserveSingleResourceWithout_IdVer_1_0_Result_CONTENT_Value_SingleResource() throws Exception {
-        String expectedId = objectInstanceIdVer_3 + "/" + RESOURCE_ID_0;
+        String expectedId = objectInstanceIdVer_9 + "/" + RESOURCE_ID_0;
         String actualResult = sendRpcObserve("Observe", fromVersionedIdToObjectId(expectedId));
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
@@ -147,16 +147,17 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationT
 
     /**
      * Repeated request on Observe
-     * Observe {"id":"/3/0/9"}
+     * Observe {"id":"/3_1.2/0/9"}
      * @throws Exception
      */
     @Test
     public void testObserveRepeatedRequestObserveOnDevice_Result_BAD_REQUEST_ErrorMsg_AlreadyRegistered() throws Exception {
         String idVer_3_0_0 = objectInstanceIdVer_3 + "/" + RESOURCE_ID_0;
-        sendRpcObserve("Observe", fromVersionedIdToObjectId(idVer_3_0_0));
-        sendRpcObserve("ObserveReadAll", null);
         String actualResult = sendRpcObserve("Observe", idVer_3_0_0);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
+        actualResult = sendRpcObserve("Observe", idVer_3_0_0);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.BAD_REQUEST.getName(), rpcActualResult.get("result").asText());
         String expected = "Observation is already registered!";
         assertEquals(expected, rpcActualResult.get("error").asText());

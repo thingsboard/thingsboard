@@ -1,3 +1,18 @@
+/**
+ * Copyright © 2016-2023 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.thingsboard.server.transport.lwm2m.client;
 
 import org.eclipse.leshan.client.LwM2mClient;
@@ -5,7 +20,6 @@ import org.eclipse.leshan.client.resource.BaseObjectEnabler;
 import org.eclipse.leshan.client.resource.DummyInstanceEnabler;
 import org.eclipse.leshan.client.resource.LwM2mInstanceEnabler;
 import org.eclipse.leshan.client.resource.LwM2mInstanceEnablerFactory;
-import org.eclipse.leshan.client.resource.LwM2mObjectEnabler;
 import org.eclipse.leshan.client.resource.listener.ResourceListener;
 import org.eclipse.leshan.client.servers.LwM2mServer;
 import org.eclipse.leshan.client.servers.ServersInfoExtractor;
@@ -16,6 +30,7 @@ import org.eclipse.leshan.core.Startable;
 import org.eclipse.leshan.core.Stoppable;
 import org.eclipse.leshan.core.link.lwm2m.LwM2mLink;
 import org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttribute;
+import org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributeSet;
 import org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
@@ -54,6 +69,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -66,21 +82,24 @@ public class TbLwm2mObjectEnabler extends BaseObjectEnabler implements Destroyab
     private static Logger LOG = LoggerFactory.getLogger(DummyInstanceEnabler.class);
 
     protected Map<Integer, LwM2mInstanceEnabler> instances;
+
     protected LwM2mInstanceEnablerFactory instanceFactory;
     protected ContentFormat defaultContentFormat;
 
     private LinkFormatHelper tbLinkFormatHelper;
-
+    protected Map<LwM2mPath, LwM2mAttributeSet> lwM2mAttributes;
     public TbLwm2mObjectEnabler(int id, ObjectModel objectModel, Map<Integer, LwM2mInstanceEnabler> instances,
                                 LwM2mInstanceEnablerFactory instanceFactory, ContentFormat defaultContentFormat) {
         super(id, objectModel);
         this.instances = new HashMap<>(instances);
+        ;
         this.instanceFactory = instanceFactory;
         this.defaultContentFormat = defaultContentFormat;
         for (Entry<Integer, LwM2mInstanceEnabler> entry : this.instances.entrySet()) {
             instances.put(entry.getKey(), entry.getValue());
             listenInstance(entry.getValue(), entry.getKey());
         }
+        this.lwM2mAttributes = new HashMap<>();
     }
 
     public TbLwm2mObjectEnabler(int id, ObjectModel objectModel) {
@@ -555,11 +574,55 @@ public class TbLwm2mObjectEnabler extends BaseObjectEnabler implements Destroyab
         if (server.isLwm2mBootstrapServer()) {
             return WriteAttributesResponse.methodNotAllowed();
         }
-        // TODO should be implemented here to be available for all object enabler
-        // This should be a not implemented error, but this is not defined in the spec.
-        return WriteAttributesResponse.internalServerError("not implemented");
+//        return WriteAttributesResponse.internalServerError("not implemented");
+        return doWriteAttributes(server, request);
     }
 
+    /**
+     *  <NOTIFICATION> Class Attributes
+     * - pmin             (def = 0(sec)) Integer Resource/Object Instance/Object Readable Resource
+     * - pmax             (def = -- )    Integer Resource/Object Instance/Object Readable Resource
+     * - Greater Than  gt (def = -- )    Float   Resource                        Numerical&Readable Resource
+     * - Less Than     lt (def = -- )    Float   Resource                        Numerical&Readable Resource
+     * - Step          st (def = -- )    Float   Resource                        Numerical&Readable Resource
+     */
+    public  WriteAttributesResponse doWriteAttributes(LwM2mServer server, WriteAttributesRequest request) {
+        LwM2mPath lwM2mPath = request.getPath();
+        LwM2mAttributeSet attributeSet = lwM2mAttributes.get(lwM2mPath);
+        Map <String, LwM2mAttribute<?>> attributes = new HashMap<>();
+
+        for (LwM2mAttribute attr : request.getAttributes().getLwM2mAttributes()) {
+            if (attr.getName().equals("pmax") || attr.getName().equals("pmin")) {
+                if (lwM2mPath.isObject() || lwM2mPath.isObjectInstance() || lwM2mPath.isResource()) {
+                    attributes.put(attr.getName(), attr);
+                } else {
+                    return WriteAttributesResponse.badRequest("Attribute " + attr.getName() + " can be used for only Resource/Object Instance/Object.");
+                }
+            } else if (attr.getName().equals("gt") || attr.getName().equals("lt") || attr.getName().equals("st")) {
+                if (lwM2mPath.isResource()) {
+                    attributes.put(attr.getName(), attr);
+                } else {
+                    return WriteAttributesResponse.badRequest("Attribute " + attr.getName() + " can be used for only Resource.");
+                }
+            }
+        }
+        if (attributes.size()>0){
+            if (attributeSet == null) {
+                attributeSet = new LwM2mAttributeSet(attributes.values());
+            } else {
+                Iterable<LwM2mAttribute<?>> lwM2mAttributeIterable = attributeSet.getLwM2mAttributes();
+              Map <String, LwM2mAttribute<?>> attributesOld = new HashMap<>();
+                for (LwM2mAttribute<?> attr : lwM2mAttributeIterable) {
+                    attributesOld.put(attr.getName(), attr);
+                }
+                attributesOld.putAll(attributes);
+                attributeSet = new LwM2mAttributeSet(attributesOld.values());
+            }
+            lwM2mAttributes.put(lwM2mPath, attributeSet);
+            return WriteAttributesResponse.success();
+        }
+        return WriteAttributesResponse.internalServerError("not implemented");
+    }
 
     @Override
     public synchronized DiscoverResponse discover(LwM2mServer server, DiscoverRequest request) {
@@ -580,8 +643,7 @@ public class TbLwm2mObjectEnabler extends BaseObjectEnabler implements Destroyab
 
         LwM2mPath path = request.getPath();
         if (path.isObject()) {
-            // Manage discover on object
-            LwM2mLink[] ObjectLinks = this.tbLinkFormatHelper.getObjectDescription(this, null);
+            LwM2mLink[] ObjectLinks = linkUpdateAttributes(this.tbLinkFormatHelper.getObjectDescription(this, null), server);
             return DiscoverResponse.success(ObjectLinks);
 
         } else if (path.isObjectInstance()) {
@@ -589,7 +651,7 @@ public class TbLwm2mObjectEnabler extends BaseObjectEnabler implements Destroyab
             if (!getAvailableInstanceIds().contains(path.getObjectInstanceId()))
                 return DiscoverResponse.notFound();
 
-            LwM2mLink[] instanceLink = this.tbLinkFormatHelper.getInstanceDescription(this, path.getObjectInstanceId(), null);
+            LwM2mLink[] instanceLink =  linkUpdateAttributes(this.tbLinkFormatHelper.getInstanceDescription(this, path.getObjectInstanceId(), null), server);
             return DiscoverResponse.success(instanceLink);
 
         } else if (path.isResource()) {
@@ -603,23 +665,52 @@ public class TbLwm2mObjectEnabler extends BaseObjectEnabler implements Destroyab
 
             if (!getAvailableResourceIds(path.getObjectInstanceId()).contains(path.getResourceId()))
                 return DiscoverResponse.notFound();
-            LwM2mLink resourceLink = this.getResourceAttributes(server, path, resourceModel, this);
-            if (resourceLink == null) {
-                resourceLink = this.tbLinkFormatHelper.getResourceDescription(this, path.getObjectInstanceId(), path.getResourceId(), null);
-            }
+
+            LwM2mLink resourceLink  = linkAddAttribute(
+                    this.tbLinkFormatHelper.getResourceDescription(this, path.getObjectInstanceId(), path.getResourceId(), null),
+                    server);
             return DiscoverResponse.success(new LwM2mLink[] { resourceLink });
         }
         return DiscoverResponse.badRequest(null);
     }
 
-    protected LwM2mLink getResourceAttributes (LwM2mServer server, LwM2mPath path, ResourceModel resourceModel, LwM2mObjectEnabler objectEnabler)    {
-        LwM2mAttribute attrResource = null;
-        if (resourceModel.multiple) {
-             attrResource = getResourceAttributeDim(path, server);
+    private LwM2mLink[] linkUpdateAttributes(LwM2mLink[] links, LwM2mServer server) {
+        return  Arrays.stream(links)
+                .map(link -> linkAddAttribute(link, server))
+                .toArray(LwM2mLink[]::new);
+    }
 
+    private LwM2mLink linkAddAttribute(LwM2mLink link, LwM2mServer server) {
+
+        LwM2mAttributeSet lwM2mAttributeSetDop = null;
+        if (this.lwM2mAttributes.get(link.getPath())!= null){
+            lwM2mAttributeSetDop = this.lwM2mAttributes.get(link.getPath());
         }
+        LwM2mAttribute resourceAttributeDim = getResourceAttributes (server, link.getPath());
 
-        return attrResource != null ? new LwM2mLink(null, new LwM2mPath(objectEnabler.getId(), path.getObjectInstanceId(), path.getResourceId()), attrResource) : null;
+        Map <String, LwM2mAttribute<?>> attributes = new HashMap<>();
+        if (link.getAttributes() != null) {
+            for (LwM2mAttribute attr : link.getAttributes().getLwM2mAttributes()) {
+                attributes.put(attr.getName(), attr);
+            }
+        }
+        if (lwM2mAttributeSetDop != null) {
+            for (LwM2mAttribute attr : lwM2mAttributeSetDop.getLwM2mAttributes()) {
+                attributes.put(attr.getName(), attr);
+            }
+        }
+        if (resourceAttributeDim != null) {
+            attributes.put(resourceAttributeDim.getName(), resourceAttributeDim);
+        }
+        return new LwM2mLink(link.getRootPath(), link.getPath(), attributes.values());
+    }
+
+    protected LwM2mAttribute getResourceAttributes (LwM2mServer server, LwM2mPath path)    {
+        ResourceModel resourceModel = getObjectModel().resources.get(path.getResourceId());
+        if (path.isResource() && resourceModel.multiple) {
+            return getResourceAttributeDim(path, server);
+        }
+        return null;
     }
 
     protected LwM2mAttribute getResourceAttributeDim(LwM2mPath path, LwM2mServer server) {
@@ -635,7 +726,6 @@ public class TbLwm2mObjectEnabler extends BaseObjectEnabler implements Destroyab
         } catch (Exception e ){
             return null;
         }
-
     }
 
 }

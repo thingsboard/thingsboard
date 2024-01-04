@@ -47,7 +47,7 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
     private static final int min = 5;
     private static final int max = 50;
     private static final  PrimitiveIterator.OfInt randomIterator = new Random().ints(min,max + 1).iterator();
-    private static final List<Integer> supportedResources = Arrays.asList(0, 1, 2, 3, 6, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21);
+    private static final List<Integer> supportedResources = Arrays.asList(0, 1, 2, 3, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21);
 
 
     public SimpleLwM2MDevice() {
