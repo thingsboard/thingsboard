@@ -71,14 +71,13 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
     private final ScheduledExecutorService timeoutExecutor;
     private final int concurrencyLimit;
     private final int printQueriesFreq;
+    private final long printInterval;
 
     private final AtomicInteger printQueriesIdx = new AtomicInteger(0);
 
     protected final AtomicInteger concurrencyLevel;
     protected final BufferedRateExecutorStats stats;
     protected final TbPrintStatsExecutorService tbPrintStatsExecutorService;
-
-    protected final long printInterval;
 
     private final EntityService entityService;
     private final RateLimitService rateLimitService;

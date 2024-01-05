@@ -34,7 +34,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 
+import javax.annotation.PostConstruct;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -44,6 +46,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -60,12 +63,22 @@ public class SqlDaoCallsAspect {
 
     @Value("${sql.batch_sort:true}")
     private boolean batchSortEnabled;
+    @Value("${sql.log_tenant_stats_interval_ms:60000}")
+    private long statsPrintInterval;
 
     private static final String DEADLOCK_DETECTED_ERROR = "deadlock detected";
 
+    private final TbPrintStatsExecutorService tbPrintStatsExecutorService;
 
-    @Scheduled(initialDelayString = "${sql.log_tenant_stats_interval_ms:60000}",
-            fixedDelayString = "${sql.log_tenant_stats_interval_ms:60000}")
+    public SqlDaoCallsAspect(TbPrintStatsExecutorService tbPrintStatsExecutorService) {
+        this.tbPrintStatsExecutorService = tbPrintStatsExecutorService;
+    }
+
+    @PostConstruct
+    public void init() {
+        tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, statsPrintInterval, statsPrintInterval, TimeUnit.MILLISECONDS);
+    }
+
     public void printStats() {
         List<DbCallStatsSnapshot> snapshots = snapshot();
         if (snapshots.isEmpty()) return;

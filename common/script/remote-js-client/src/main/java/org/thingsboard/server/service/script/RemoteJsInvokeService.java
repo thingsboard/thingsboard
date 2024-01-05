@@ -23,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StopWatch;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -79,6 +78,10 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     @Value("${js.remote.stats.enabled:false}")
     private boolean statsEnabled;
 
+    @Getter
+    @Value("${js.remote.stats.print_interval_ms}")
+    private long statsPrintInterval;
+
     private final ExecutorService callbackExecutor = Executors.newFixedThreadPool(
             Runtime.getRuntime().availableProcessors(), ThingsBoardThreadFactory.forName("js-executor-remote-callback"));
 
@@ -96,7 +99,6 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
         return "Queue JS Invoke Stats";
     }
 
-    @Scheduled(fixedDelayString = "${js.remote.stats.print_interval_ms}")
     public void printStats() {
         super.printStats();
     }

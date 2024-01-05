@@ -47,9 +47,10 @@ import java.util.concurrent.TimeUnit;
 @Component
 @ConditionalOnExpression("'${queue.type:null}'=='in-memory' && '${service.type:null}'=='monolith'")
 public class InMemoryMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngineQueueFactory, TbVersionControlQueueFactory {
-    private final TopicService topicService;
+
     @Value("${queue.in_memory.stats.print-interval-ms:60000}")
     private long statsPrintInterval;
+    private final TopicService topicService;
     private final TbQueueCoreSettings coreSettings;
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TbQueueRuleEngineSettings ruleEngineSettings;

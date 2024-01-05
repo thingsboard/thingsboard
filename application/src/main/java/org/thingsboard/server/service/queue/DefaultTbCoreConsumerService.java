@@ -124,13 +124,12 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private long packProcessingTimeout;
     @Value("${queue.core.stats.enabled:false}")
     private boolean statsEnabled;
-
+    @Value("${queue.core.stats.print-interval-ms}")
+    private long statsPrintInterval;
     @Value("${queue.core.ota.pack-interval-ms:60000}")
     private long firmwarePackInterval;
     @Value("${queue.core.ota.pack-size:100}")
     private int firmwarePackSize;
-    @Value("${queue.core.stats.print-interval-ms}")
-    private long statsPrintInterval;
 
     private final TbQueueConsumer<TbProtoQueueMsg<ToCoreMsg>> mainConsumer;
     private final DeviceStateService stateService;
@@ -174,7 +173,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                         NotificationSchedulerService notificationSchedulerService,
                                         NotificationRuleProcessor notificationRuleProcessor,
                                         TbImageService imageService,
-                                        TbPrintStatsExecutorService tbPrintStatsExecutorService,) {
+                                        TbPrintStatsExecutorService tbPrintStatsExecutorService) {
         super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, assetProfileCache, apiUsageStateService,
                 partitionService, eventPublisher, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer(),
                 jwtSettingsService, tbPrintStatsExecutorService);

@@ -92,10 +92,10 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @Value("${cluster.stats.enabled:false}")
     private boolean statsEnabled;
-    @Value("${edges.enabled:true}")
-    protected boolean edgesEnabled;
     @Value("${cluster.stats.print_interval_ms}")
     private long statsPrintInterval;
+    @Value("${edges.enabled:true}")
+    protected boolean edgesEnabled;
 
 
     private final AtomicInteger toCoreMsgs = new AtomicInteger(0);

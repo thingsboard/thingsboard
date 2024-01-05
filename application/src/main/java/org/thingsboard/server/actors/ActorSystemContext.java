@@ -119,6 +119,7 @@ import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
@@ -485,6 +486,9 @@ public class ActorSystemContext {
     @Getter
     private boolean statisticsEnabled;
 
+    @Value("${actors.statistics.js_print_interval_ms}")
+    private long statisticsPrintInterval;
+
     @Value("${actors.statistics.persist_frequency:3600000}")
     @Getter
     private long statisticsPersistFrequency;
@@ -499,9 +503,6 @@ public class ActorSystemContext {
 
     @Getter
     private boolean localCacheType;
-
-    @Value("${actors.statistics.js_print_interval_ms}")
-    private long statisticsPrintInterval;
 
     @PostConstruct
     public void init() {

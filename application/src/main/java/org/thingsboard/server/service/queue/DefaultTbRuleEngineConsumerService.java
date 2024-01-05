@@ -63,9 +63,10 @@ import java.util.concurrent.TimeUnit;
 @TbRuleEngineComponent
 @Slf4j
 public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<ToRuleEngineNotificationMsg> implements TbRuleEngineConsumerService {
-    private final TbRuleEngineConsumerContext ctx;
+
     @Value("${queue.rule-engine.stats.print-interval-ms}")
     private long statsPrintInterval;
+    private final TbRuleEngineConsumerContext ctx;
     private final QueueService queueService;
     private final TbRuleEngineDeviceRpcService tbDeviceRpcService;
 
@@ -99,13 +100,13 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                 initConsumer(configuration);
             }
         }
+        if (ctx.isStatsEnabled()) {
+            tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, statsPrintInterval, statsPrintInterval, TimeUnit.MILLISECONDS);
+        }
     }
 
     private void initConsumer(Queue configuration) {
         getOrCreateConsumer(new QueueKey(ServiceType.TB_RULE_ENGINE, configuration)).init(configuration);
-        if (ctx.isStatsEnabled()) {
-            tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, statsPrintInterval, statsPrintInterval, TimeUnit.MILLISECONDS);
-        }
     }
 
     @Override
@@ -223,10 +224,8 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     }
 
     public void printStats() {
-        if (ctx.isStatsEnabled()) {
-            long ts = System.currentTimeMillis();
-            consumers.values().forEach(manager -> manager.printStats(ts));
-        }
+        long ts = System.currentTimeMillis();
+        consumers.values().forEach(manager -> manager.printStats(ts));
     }
 
 }

@@ -24,7 +24,6 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.script.api.TbScriptException;
@@ -81,6 +80,10 @@ public class NashornJsInvokeService extends AbstractJsInvokeService {
     @Value("${js.local.stats.enabled:false}")
     private boolean statsEnabled;
 
+    @Getter
+    @Value("${js.local.stats.print_interval_ms:10000}")
+    private long statsPrintInterval;
+
     @Value("${js.local.js_thread_pool_size:50}")
     private int jsExecutorThreadPoolSize;
 
@@ -98,7 +101,6 @@ public class NashornJsInvokeService extends AbstractJsInvokeService {
         return MoreExecutors.directExecutor();
     }
 
-    @Scheduled(fixedDelayString = "${js.local.stats.print_interval_ms:10000}")
     public void printStats() {
         super.printStats();
     }
