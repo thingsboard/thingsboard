@@ -117,6 +117,7 @@ import { DoughnutWidgetComponent } from '@home/components/widget/lib/chart/dough
   ],
     exports: [
         EntitiesTableWidgetComponent,
+        SelectEntityDialogComponent,
         AlarmsTableWidgetComponent,
         TimeseriesTableWidgetComponent,
         EntitiesHierarchyWidgetComponent,
