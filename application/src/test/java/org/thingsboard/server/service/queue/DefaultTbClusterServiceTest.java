@@ -29,11 +29,12 @@ import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
@@ -72,6 +73,8 @@ public class DefaultTbClusterServiceTest {
     protected TbAssetProfileCache assetProfileCache;
     @MockBean
     protected GatewayNotificationsService gatewayNotificationsService;
+    @MockBean
+    protected EdgeService edgeService;
     @MockBean
     protected PartitionService partitionService;
     @MockBean
