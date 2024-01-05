@@ -35,7 +35,7 @@ import org.thingsboard.server.common.msg.TbMsg;
         configClazz = TbRestApiCallNodeConfiguration.class,
         version = 1,
         nodeDescription = "Invoke REST API calls to external REST server",
-        nodeDetails = "Will invoke REST API call <code>GET | POST | PUT | DELETE</code> to external REST server. " +
+        nodeDetails = "Will invoke REST API call <code>GET | POST | PUT | PATCH | DELETE</code> to external REST server. " +
                 "Message payload added into Request body. Configured attributes can be added into Headers from Message Metadata." +
                 " Outbound message will contain response fields " +
                 "(<code>status</code>, <code>statusCode</code>, <code>statusReason</code> and response <code>headers</code>) in the Message Metadata." +
