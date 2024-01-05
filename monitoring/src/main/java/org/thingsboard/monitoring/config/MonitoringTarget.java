@@ -23,6 +23,10 @@ public interface MonitoringTarget {
 
     String getBaseUrl();
 
+    default String getQueue() {
+        return "Main";
+    }
+
     boolean isCheckDomainIps();
 
 }
