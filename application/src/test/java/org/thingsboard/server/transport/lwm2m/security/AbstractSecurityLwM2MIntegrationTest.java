@@ -196,7 +196,6 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
                                        boolean isStartLw) throws Exception {
         createDeviceProfile(transportConfiguration);
         final Device device = createDevice(deviceCredentials, endpoint);
-        device.getId().getId().toString();
         createNewClient(security, securityBs, coapConfig, true, endpoint);
         lwM2MTestClient.start(isStartLw);
         if (isAwaitObserveReadAll) {

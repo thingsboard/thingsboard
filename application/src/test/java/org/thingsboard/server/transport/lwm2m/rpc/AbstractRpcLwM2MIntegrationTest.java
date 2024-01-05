@@ -55,7 +55,6 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
 
     protected final LinkParser linkParser = new DefaultLwM2mLinkParser();
     protected String OBSERVE_ATTRIBUTES_WITH_PARAMS_RPC;
-    protected String deviceId;
     public Set expectedObjects;
     public Set expectedObjectIdVers;
     public Set expectedInstances;
@@ -84,6 +83,9 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
 
     @Before
     public void startInitRPC() throws Exception {
+        if (this.getClass().getSimpleName().equals("RpcLwm2mIntegrationDiscoverWriteAttributesTest")){
+            isWriteAttribute = true;
+        }
         initRpc();
     }
 
@@ -154,7 +156,6 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
         deviceId = device.getId().getId().toString();
 
         lwM2MTestClient.start(true);
-//        awaitObserveReadAll(2, true, device.getId().getId().toString());
     }
 
     protected String pathIdVerToObjectId(String pathIdVer) {

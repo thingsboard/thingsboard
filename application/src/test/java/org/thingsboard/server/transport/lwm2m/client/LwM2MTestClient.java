@@ -36,6 +36,7 @@ import org.eclipse.leshan.client.observer.LwM2mClientObserver;
 import org.eclipse.leshan.client.resource.DummyInstanceEnabler;
 import org.eclipse.leshan.client.resource.LwM2mInstanceEnabler;
 import org.eclipse.leshan.client.resource.LwM2mObjectEnabler;
+import org.eclipse.leshan.client.resource.ObjectsInitializer;
 import org.eclipse.leshan.client.resource.listener.ObjectsListenerAdapter;
 import org.eclipse.leshan.client.send.ManualDataSender;
 import org.eclipse.leshan.client.servers.LwM2mServer;
@@ -123,7 +124,7 @@ public class LwM2MTestClient {
 
     public void init(Security security, Security securityBs,Configuration coapConfig, int port, boolean isRpc,
                      LwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandler,
-                     LwM2mClientContext clientContext) throws InvalidDDFFileException, IOException {
+                     LwM2mClientContext clientContext, boolean isWriteAttribute) throws InvalidDDFFileException, IOException {
         Assert.assertNull("client already initialized", leshanClient);
         this.defaultLwM2mUplinkMsgHandlerTest = defaultLwM2mUplinkMsgHandler;
         this.clientContext = clientContext;
@@ -132,8 +133,7 @@ public class LwM2MTestClient {
             models.addAll(ObjectLoader.loadDdfFile(LwM2MTestClient.class.getClassLoader().getResourceAsStream("lwm2m/" + resourceName), resourceName));
         }
         LwM2mModel model = new StaticModel(models);
-        TbObjectsInitializer initializer = new TbObjectsInitializer(model);
-
+        ObjectsInitializer initializer = isWriteAttribute ? new TbObjectsInitializer(model) : new ObjectsInitializer(model);
         if (securityBs != null && security != null) {
             // SECURITY
             security.setId(serverId);

@@ -36,28 +36,24 @@ import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.fr
 public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationTest {
 
     /**
-     * ObserveReadAll&ObserveReadAll
+     * ObserveReadAll&ObserveCancelAll
      * @throws Exception
      */
     @Test
     public void testObserveReadAllNothingObservation_Result_CONTENT_Value_Count_0() throws Exception {
+        awaitObserveReadAll(2, deviceId);
         String idVer_3_0_0 = objectInstanceIdVer_3 + "/" + RESOURCE_ID_0;
-        sendRpcObserve("Observe", fromVersionedIdToObjectId(idVer_3_0_0));
-        String actualResultBefore = sendRpcObserve("ObserveReadAll", null);
-        ObjectNode rpcActualResultBefore = JacksonUtil.fromString(actualResultBefore, ObjectNode.class);
-        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResultBefore.get("result").asText());
-        int cntObserveBefore = rpcActualResultBefore.get("value").asText().split(",").length;
-        assertTrue(cntObserveBefore > 0);
-        String actualResult = sendRpcObserve("ObserveCancelAll", null);
+        String actualResult = sendRpcObserve("Observe", idVer_3_0_0);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
+        assertTrue(rpcActualResult.get("value").asText().contains("LwM2mSingleResource"));
+        assertEquals(3, getCntObserveAll(deviceId));
+        actualResult = sendRpcObserve("ObserveCancelAll", null);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
         int cntObserveCancelAll = Integer.parseInt(rpcActualResult.get("value").asText());
         assertTrue(cntObserveCancelAll > 0);
-        String actualResultAfter = sendRpcObserve("ObserveReadAll", null);
-        ObjectNode rpcActualResultAfter = JacksonUtil.fromString(actualResultAfter, ObjectNode.class);
-        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResultAfter.get("result").asText());
-        String expectResultAfter = "[]";
-        assertEquals( expectResultAfter, rpcActualResultAfter.get("value").asText());
+        assertEquals(0, getCntObserveAll(deviceId));
     }
 
     /**

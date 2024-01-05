@@ -17,6 +17,8 @@ package org.thingsboard.server.transport.lwm2m;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.californium.elements.config.Configuration;
@@ -61,6 +63,7 @@ import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
@@ -87,6 +90,7 @@ import static org.eclipse.californium.core.config.CoapConfig.COAP_PORT;
 import static org.eclipse.californium.core.config.CoapConfig.COAP_SECURE_PORT;
 import static org.eclipse.leshan.client.object.Security.noSec;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
+import static org.junit.Assert.assertEquals;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_STARTED;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_SUCCESS;
@@ -177,6 +181,8 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     protected ScheduledExecutorService executor;
     protected LwM2MTestClient lwM2MTestClient;
     private String[] resources;
+    protected String deviceId;
+    protected boolean isWriteAttribute = false;
 
     @Before
     public void startInit() throws Exception {
@@ -232,7 +238,8 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
 
         getWsClient().registerWaitForUpdate();
         createNewClient(security, null, coapConfig, false, endpoint);
-        awaitObserveReadAll(0, device.getId().getId().toString());
+        deviceId = device.getId().getId().toString();
+        awaitObserveReadAll(0, deviceId);
         String msg = getWsClient().waitForUpdate();
 
         EntityDataUpdate update = JacksonUtil.fromString(msg, EntityDataUpdate.class);
@@ -305,7 +312,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         try (ServerSocket socket = new ServerSocket(0)) {
             int clientPort = socket.getLocalPort();
             lwM2MTestClient.init(security, securityBs, coapConfig, clientPort, isRpc,
-                    this.defaultLwM2mUplinkMsgHandlerTest, this.clientContextTest);
+                    this.defaultLwM2mUplinkMsgHandlerTest, this.clientContextTest, isWriteAttribute);
         }
     }
 
@@ -398,15 +405,15 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     protected  void awaitObserveReadAll(int cntObserve, String deviceIdStr) throws Exception {
         await("ObserveReadAll after start client: countObserve " + cntObserve)
                 .atMost(40, TimeUnit.SECONDS)
-                .until(() -> {
-                    String actualResultReadAll = sendObserve("ObserveReadAll", null, deviceIdStr);
-                    ObjectNode rpcActualResultReadAll = JacksonUtil.fromString(actualResultReadAll, ObjectNode.class);
-                    Assert.assertEquals(ResponseCode.CONTENT.getName(), rpcActualResultReadAll.get("result").asText());
-                    String actualValuesReadAll = rpcActualResultReadAll.get("value").asText();
-                    log.warn("ObserveReadAll:  [{}]", actualValuesReadAll);
-                    int actualCntObserve = "[]".equals(actualValuesReadAll) ? 0 : actualValuesReadAll.split(",").length;
-                    return cntObserve == actualCntObserve;
-                });
+                .until(() -> cntObserve == getCntObserveAll(deviceIdStr));
+    }
+
+    protected int getCntObserveAll(String deviceIdStr) throws Exception {
+        String actualResultBefore = sendObserve("ObserveReadAll", null, deviceIdStr);
+        ObjectNode rpcActualResultBefore = JacksonUtil.fromString(actualResultBefore, ObjectNode.class);
+        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResultBefore.get("result").asText());
+        JsonElement element = JsonUtils.parse(rpcActualResultBefore.get("value").asText());
+        return element.isJsonArray() ? ((JsonArray)element).size() : 0;
     }
 
     protected String sendObserve(String method, String params, String deviceIdStr) throws Exception {
