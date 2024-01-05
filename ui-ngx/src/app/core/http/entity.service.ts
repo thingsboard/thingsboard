@@ -1519,4 +1519,31 @@ export class EntityService {
     }
     return entityObservable;
   }
+
+  public getEntitySubtypesObservable(entityType: EntityType): Observable<Array<string>> {
+    let observable: Observable<Array<string>>;
+    switch (entityType) {
+      case EntityType.ASSET:
+        observable = this.assetProfileService.getAssetProfileNames(false, {ignoreLoading: true}).pipe(
+          map(subTypes => subTypes.map(subType => subType.name))
+        );
+        break;
+      case EntityType.DEVICE:
+        observable = this.deviceProfileService.getDeviceProfileNames(false,{ignoreLoading: true}).pipe(
+          map(subTypes => subTypes.map(subType => subType.name))
+        );
+        break;
+      case EntityType.EDGE:
+        observable = this.edgeService.getEdgeTypes({ignoreLoading: true}).pipe(
+          map(subTypes => subTypes.map(subType => subType.type))
+        );
+        break;
+      case EntityType.ENTITY_VIEW:
+        observable = this.entityViewService.getEntityViewTypes({ignoreLoading: true}).pipe(
+          map(subTypes => subTypes.map(subType => subType.type))
+        );
+        break;
+    }
+    return observable;
+  }
 }

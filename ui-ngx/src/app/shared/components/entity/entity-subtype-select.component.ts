@@ -17,18 +17,19 @@
 import { AfterViewInit, Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, Subject, Subscription, throwError } from 'rxjs';
-import { map, mergeMap, publishReplay, refCount, startWith, tap } from 'rxjs/operators';
+import { map, mergeMap, startWith, tap, share } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { DeviceProfileService } from '@core/http/device-profile.service';
-import { EntitySubtype, EntityType } from '@app/shared/models/entity-type.models';
+import { EntityType } from '@app/shared/models/entity-type.models';
 import { BroadcastService } from '@app/core/services/broadcast.service';
 import { AssetProfileService } from '@core/http/asset-profile.service';
 import { EdgeService } from '@core/http/edge.service';
 import { EntityViewService } from '@core/http/entity-view.service';
 import { SubscriptSizing } from '@angular/material/form-field';
-import { EntityInfoData } from '@shared/models/entity.models';
+import { isNotEmptyStr } from '@core/utils';
+import { EntityService } from '@core/http/entity.service';
 
 @Component({
   selector: 'tb-entity-subtype-select',
@@ -67,11 +68,11 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
   entitySubtypeTitle: string;
   entitySubtypeRequiredText: string;
 
-  subTypesOptions: Observable<Array<EntitySubtype | string | EntityInfoData>>;
+  subTypesOptions: Observable<Array<string>>;
 
   private subTypesOptionsSubject: Subject<string> = new Subject();
 
-  subTypes: Observable<Array<EntitySubtype | string | EntityInfoData>>;
+  private subTypes: Observable<Array<string>>;
 
   subTypesLoaded = false;
 
@@ -86,7 +87,8 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
               private assetProfileService: AssetProfileService,
               private edgeService: EdgeService,
               private entityViewService: EntityViewService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private entityService: EntityService) {
     this.subTypeFormGroup = this.fb.group({
       subType: ['']
     });
@@ -137,7 +139,7 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
     }
 
     this.subTypesOptions = this.subTypesOptionsSubject.asObservable().pipe(
-      startWith<string | EntitySubtype | EntityInfoData>(''),
+      startWith<string>(''),
       mergeMap(() => this.getSubTypes())
     );
 
@@ -147,7 +149,7 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
         if (!value || value === '') {
           modelValue = '';
         } else {
-          modelValue = value.type;
+          modelValue = value;
         }
         this.updateView(modelValue);
       }
@@ -194,79 +196,46 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
     }
   }
 
-  displaySubTypeFn(subType?: EntitySubtype | string | EntityInfoData): string | undefined {
-    if (subType && typeof subType !== 'string') {
-      const typeName = this.isEntitySubType(subType) ? subType.type : subType.name;
+  displaySubTypeFn(subType?: string): string | undefined {
+    if (isNotEmptyStr(subType)) {
       if (this.typeTranslatePrefix) {
-        return this.translate.instant(this.typeTranslatePrefix + '.' + typeName);
+        return this.translate.instant(this.typeTranslatePrefix + '.' + subType);
       } else {
-        return typeName;
+        return subType;
       }
     } else {
       return this.translate.instant('entity.all-subtypes');
     }
   }
 
-  findSubTypes(searchText: string): Observable<Array<EntitySubtype | string | EntityInfoData>> {
+  findSubTypes(searchText: string): Observable<Array<string>> {
     return this.getSubTypes().pipe(
-      map(subTypes => subTypes.filter( subType => {
-        if (typeof subType === 'string') {
-          return false;
-        } else {
-          return this.isEntitySubType(subType) ? subType.type : subType.name === searchText;
-        }
-      }))
+      map(subTypes => subTypes.filter( subType => subType === searchText))
     );
   }
 
-  getSubTypes(): Observable<Array<EntitySubtype | string | EntityInfoData>> {
+  getSubTypes(): Observable<Array<string>> {
     if (!this.subTypes) {
-      switch (this.entityType) {
-        case EntityType.ASSET:
-          this.subTypes = this.assetProfileService.getAssetProfileNames(false, {ignoreLoading: true});
-          break;
-        case EntityType.DEVICE:
-          this.subTypes = this.deviceProfileService.getDeviceProfileNames(false, {ignoreLoading: true});
-          break;
-        case EntityType.EDGE:
-          this.subTypes = this.edgeService.getEdgeTypes({ignoreLoading: true});
-          break;
-        case EntityType.ENTITY_VIEW:
-          this.subTypes = this.entityViewService.getEntityViewTypes({ignoreLoading: true});
-          break;
-      }
-      if (this.subTypes) {
-        this.subTypes = this.subTypes.pipe(
-          map((allSubtypes) => {
-              allSubtypes.unshift('');
-              this.subTypesLoaded = true;
-              return allSubtypes;
+      const subTypesObservable = this.entityService.getEntitySubtypesObservable(this.entityType);
+      if (subTypesObservable) {
+        this.subTypes = subTypesObservable.pipe(
+          map((subTypes) => {
+            this.subTypesLoaded = true;
+            subTypes.unshift('');
+            return subTypes;
           }),
           tap((subTypes) => {
-            const type: EntitySubtype | string = this.subTypeFormGroup.get('subType').value;
-            const strType = typeof type === 'string' ? type : type.type;
-            const found = subTypes.find((subType) => {
-              if (typeof subType === 'string') {
-                return subType === type;
-              } else {
-                return this.isEntitySubType(subType) ? subType.type : subType.name === strType;
-              }
-            });
+            const found = subTypes.find(subType => subType === this.subTypeFormGroup.get('subType').value);
             if (found) {
               this.subTypeFormGroup.get('subType').patchValue(found);
             }
           }),
-          publishReplay(1),
-          refCount()
+          share()
         );
       } else {
         return throwError(null);
       }
     }
     return this.subTypes;
-  }
-
-  private isEntitySubType(object: EntitySubtype | EntityInfoData): object is EntitySubtype {
-    return 'type' in object;
   }
 }

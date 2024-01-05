@@ -34,7 +34,7 @@ import { coerceArray, coerceBoolean } from '@shared/decorators/coercion';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
 import { UtilsService } from '@core/services/utils.service';
-import { EntityInfoData } from '@shared/models/entity.models';
+import { EntityService } from '@core/http/entity.service';
 
 @Component({
   selector: 'tb-entity-subtype-list',
@@ -132,7 +132,8 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
               private entityViewService: EntityViewService,
               private alarmService: AlarmService,
               private utils: UtilsService,
-              private fb: FormBuilder) {
+              private fb: FormBuilder,
+              private entityService: EntityService) {
     this.entitySubtypeListFormGroup = this.fb.group({
       entitySubtypeList: [this.entitySubtypeList, this.required ? [Validators.required] : []],
       entitySubtype: [null]
@@ -327,24 +328,9 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
       }
     }
     if (!this.entitySubtypes) {
-      let subTypesObservable: Observable<Array<EntitySubtype | EntityInfoData>>;
-      switch (this.entityType) {
-        case EntityType.ASSET:
-          subTypesObservable = this.assetProfileService.getAssetProfileNames(false, {ignoreLoading: true});
-          break;
-        case EntityType.DEVICE:
-          subTypesObservable = this.deviceProfileService.getDeviceProfileNames(false,{ignoreLoading: true});
-          break;
-        case EntityType.EDGE:
-          subTypesObservable = this.edgeService.getEdgeTypes({ignoreLoading: true});
-          break;
-        case EntityType.ENTITY_VIEW:
-          subTypesObservable = this.entityViewService.getEntityViewTypes({ignoreLoading: true});
-          break;
-      }
+      const subTypesObservable = this.entityService.getEntitySubtypesObservable(this.entityType);
       if (subTypesObservable) {
         this.entitySubtypes = subTypesObservable.pipe(
-          map(subTypes => subTypes.map(subType => this.isEntitySubType(subType) ? subType.type : subType.name)),
           share({
             connector: () => new ReplaySubject(1),
             resetOnError: false,
@@ -357,10 +343,6 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
       }
     }
     return this.entitySubtypes;
-  }
-
-  private isEntitySubType(object: EntitySubtype | EntityInfoData): object is EntitySubtype {
-    return 'type' in object;
   }
 
   onFocus() {

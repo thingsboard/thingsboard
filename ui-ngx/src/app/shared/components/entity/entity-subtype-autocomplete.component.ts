@@ -16,29 +16,28 @@
 
 import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
-import { Observable, of, Subscription, throwError } from 'rxjs';
+import { Observable, of, ReplaySubject, Subscription, throwError } from 'rxjs';
 import {
   catchError,
   debounceTime,
   distinctUntilChanged,
   map,
-  publishReplay,
-  refCount,
   switchMap,
-  tap
+  tap,
+  share,
 } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { DeviceProfileService } from '@core/http/device-profile.service';
-import { EntitySubtype, EntityType } from '@app/shared/models/entity-type.models';
+import { EntityType } from '@app/shared/models/entity-type.models';
 import { BroadcastService } from '@app/core/services/broadcast.service';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { AssetProfileService } from '@core/http/asset-profile.service';
 import { EntityViewService } from '@core/http/entity-view.service';
 import { EdgeService } from '@core/http/edge.service';
 import { MatFormFieldAppearance } from '@angular/material/form-field';
-import { EntityInfoData } from '@shared/models/entity.models';
+import { EntityService } from '@core/http/entity.service';
 
 @Component({
   selector: 'tb-entity-subtype-autocomplete',
@@ -105,7 +104,8 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
               private assetProfileService: AssetProfileService,
               private edgeService: EdgeService,
               private entityViewService: EntityViewService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private entityService: EntityService) {
     this.subTypeFormGroup = this.fb.group({
       subType: [null, Validators.maxLength(255)]
     });
@@ -230,45 +230,28 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
 
   getSubTypes(): Observable<Array<string>> {
     if (!this.subTypes) {
-      let subTypesObservable: Observable<Array<EntitySubtype | EntityInfoData>>;
-      switch (this.entityType) {
-        case EntityType.ASSET:
-          subTypesObservable = this.assetProfileService.getAssetProfileNames(false, {ignoreLoading: true});
-          break;
-        case EntityType.DEVICE:
-          subTypesObservable = this.deviceProfileService.getDeviceProfileNames(false,{ignoreLoading: true});
-          break;
-        case EntityType.EDGE:
-          subTypesObservable = this.edgeService.getEdgeTypes({ignoreLoading: true});
-          break;
-        case EntityType.ENTITY_VIEW:
-          subTypesObservable = this.entityViewService.getEntityViewTypes({ignoreLoading: true});
-          break;
-      }
+      const subTypesObservable = this.entityService.getEntitySubtypesObservable(this.entityType);
       if (subTypesObservable) {
         const excludeSubTypesSet = new Set(this.excludeSubTypes);
         this.subTypes = subTypesObservable.pipe(
-          catchError(() => of([] as Array<EntitySubtype | EntityInfoData>)),
+          catchError(() => of([] as Array<string>)),
           map(subTypes => {
             const filteredSubTypes: Array<string> = [];
-            subTypes.forEach(subType => {
-              const typeName = this.isEntitySubType(subType) ? subType.type : subType.name;
-              return !excludeSubTypesSet.has(typeName) && filteredSubTypes.push(typeName);
-            });
+            subTypes.forEach(subType => !excludeSubTypesSet.has(subType) && filteredSubTypes.push(subType));
             return filteredSubTypes;
           }),
-          publishReplay(1),
-          refCount()
+          share({
+            connector: () => new ReplaySubject(1),
+            resetOnError: false,
+            resetOnComplete: false,
+            resetOnRefCountZero: false,
+          })
         );
       } else {
         return throwError(null);
       }
     }
     return this.subTypes;
-  }
-
-  private isEntitySubType(object: EntitySubtype | EntityInfoData): object is EntitySubtype {
-    return 'type' in object;
   }
 
   clear() {
