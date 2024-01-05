@@ -84,8 +84,8 @@ public class JpaKeyDictionaryDao extends JpaAbstractDaoListeningExecutorService 
     }
 
     @Override
-    public String getKey(Integer attributeKey) {
-        Optional<KeyDictionaryEntry> byKeyId = keyDictionaryRepository.findByKeyId(attributeKey);
+    public String getKey(Integer keyId) {
+        Optional<KeyDictionaryEntry> byKeyId = keyDictionaryRepository.findByKeyId(keyId);
         return byKeyId.map(KeyDictionaryEntry::getKey).orElse(null);
     }
 

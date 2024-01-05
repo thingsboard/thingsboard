@@ -42,12 +42,12 @@ public interface AttributeKvRepository extends JpaRepository<AttributeKvEntity, 
                 @Param("attributeType") int attributeType,
                 @Param("attributeKey") int attributeKey);
 
-    @Query(value = "SELECT DISTINCT attribute_key FROM attribute_kv WHERE entity_type = 'DEVICE' " +
+    @Query(value = "SELECT DISTINCT attribute_key FROM attribute_kv WHERE " +
             "AND entity_id in (SELECT id FROM device WHERE tenant_id = :tenantId and device_profile_id = :deviceProfileId limit 100) ORDER BY attribute_key", nativeQuery = true)
     List<Integer> findAllKeysByDeviceProfileId(@Param("tenantId") UUID tenantId,
                                               @Param("deviceProfileId") UUID deviceProfileId);
 
-    @Query(value = "SELECT DISTINCT attribute_key FROM attribute_kv WHERE entity_type = 'DEVICE' " +
+    @Query(value = "SELECT DISTINCT attribute_key FROM attribute_kv WHERE " +
             "AND entity_id in (SELECT id FROM device WHERE tenant_id = :tenantId limit 100) ORDER BY attribute_key", nativeQuery = true)
     List<Integer> findAllKeysByTenantId(@Param("tenantId") UUID tenantId);
 
