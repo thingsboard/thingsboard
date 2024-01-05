@@ -26,6 +26,7 @@ import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.notification.FirebaseService;
@@ -36,6 +37,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 @Service
+@Slf4j
 public class DefaultFirebaseService implements FirebaseService {
 
     private final Cache<String, FirebaseContext> contexts = Caffeine.newBuilder()
@@ -66,6 +68,7 @@ public class DefaultFirebaseService implements FirebaseService {
                 .setToken(fcmToken)
                 .build();
         firebaseContext.getMessaging().send(message);
+        log.trace("[{}] Sent message for FCM token {}", tenantId, fcmToken);
     }
 
     public static class FirebaseContext {
@@ -100,13 +103,16 @@ public class DefaultFirebaseService implements FirebaseService {
             } catch (IllegalStateException alreadyExists) { // should never normally happen
                 messaging = FirebaseMessaging.getInstance(app);
             }
+            log.debug("[{}] Initialized new FirebaseContext", key);
         }
 
         public void check(String credentials) {
             if (!this.credentials.equals(credentials)) {
-                app.delete();
+                destroy();
                 this.credentials = credentials;
                 init();
+            } else if (app == null || messaging == null) {
+                throw new IllegalStateException("Firebase app couldn't be initialized");
             }
         }
 
@@ -114,6 +120,7 @@ public class DefaultFirebaseService implements FirebaseService {
             app.delete();
             app = null;
             messaging = null;
+            log.debug("[{}] Destroyed FirebaseContext", key);
         }
     }
 

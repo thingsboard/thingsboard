@@ -280,9 +280,6 @@ public class ThingsboardInstallService {
                             log.info("Upgrading ThingsBoard from version 3.6.2 to 3.6.3 ...");
                             databaseEntitiesUpgradeService.upgradeDatabase("3.6.2");
                             //TODO DON'T FORGET to update switch statement in the CacheCleanupService if you need to clear the cache
-                        case "3.6.2":
-                            log.info("Upgrading ThingsBoard from version 3.6.2 to 3.6.3 ...");
-                            databaseEntitiesUpgradeService.upgradeDatabase("3.6.2");
                             break;
                         default:
                             throw new RuntimeException("Unable to upgrade ThingsBoard, unsupported fromVersion: " + upgradeFromVersion);

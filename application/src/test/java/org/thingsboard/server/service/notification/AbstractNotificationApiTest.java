@@ -41,6 +41,7 @@ import org.thingsboard.server.common.data.notification.rule.DefaultNotificationR
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.rule.NotificationRuleInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.settings.NotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
@@ -48,6 +49,8 @@ import org.thingsboard.server.common.data.notification.targets.platform.UserList
 import org.thingsboard.server.common.data.notification.targets.platform.UsersFilter;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.EmailDeliveryMethodNotificationTemplate;
+import org.thingsboard.server.common.data.notification.template.HasSubject;
+import org.thingsboard.server.common.data.notification.template.MobileAppDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
 import org.thingsboard.server.common.data.notification.template.SmsDeliveryMethodNotificationTemplate;
@@ -168,26 +171,28 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
             DeliveryMethodNotificationTemplate deliveryMethodNotificationTemplate;
             switch (deliveryMethod) {
                 case WEB: {
-                    WebDeliveryMethodNotificationTemplate template = new WebDeliveryMethodNotificationTemplate();
-                    template.setSubject(subject);
-                    deliveryMethodNotificationTemplate = template;
+                    deliveryMethodNotificationTemplate = new WebDeliveryMethodNotificationTemplate();
                     break;
                 }
                 case EMAIL: {
-                    EmailDeliveryMethodNotificationTemplate template = new EmailDeliveryMethodNotificationTemplate();
-                    template.setSubject(subject);
-                    deliveryMethodNotificationTemplate = template;
+                    deliveryMethodNotificationTemplate = new EmailDeliveryMethodNotificationTemplate();
                     break;
                 }
                 case SMS: {
                     deliveryMethodNotificationTemplate = new SmsDeliveryMethodNotificationTemplate();
                     break;
                 }
+                case MOBILE_APP:
+                    deliveryMethodNotificationTemplate = new MobileAppDeliveryMethodNotificationTemplate();
+                    break;
                 default:
                     throw new IllegalArgumentException("Unsupported delivery method " + deliveryMethod);
             }
             deliveryMethodNotificationTemplate.setEnabled(true);
             deliveryMethodNotificationTemplate.setBody(text);
+            if (deliveryMethodNotificationTemplate instanceof HasSubject) {
+                ((HasSubject) deliveryMethodNotificationTemplate).setSubject(subject);
+            }
             config.getDeliveryMethodsTemplates().put(deliveryMethod, deliveryMethodNotificationTemplate);
         }
         notificationTemplate.setConfiguration(config);
@@ -200,6 +205,15 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
 
     protected void saveNotificationSettings(NotificationSettings notificationSettings) throws Exception {
         doPost("/api/notification/settings", notificationSettings).andExpect(status().isOk());
+    }
+
+    protected void saveNotificationSettings(NotificationDeliveryMethodConfig... configs) throws Exception {
+        NotificationSettings settings = new NotificationSettings();
+        settings.setDeliveryMethodsConfigs(Arrays.stream(configs)
+                .collect(Collectors.toMap(
+                        NotificationDeliveryMethodConfig::getMethod, config -> config
+                )));
+        saveNotificationSettings(settings);
     }
 
     protected Pair<User, NotificationApiWsClient> createUserAndConnectWsClient(Authority authority) throws Exception {

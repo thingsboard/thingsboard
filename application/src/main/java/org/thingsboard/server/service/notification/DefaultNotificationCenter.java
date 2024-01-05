@@ -245,11 +245,11 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                 if (targetConfig.getUsersFilter().getType().isForRules() && ctx.getRequest().getInfo() instanceof RuleOriginatedNotificationInfo) {
                     recipients = new PageDataIterable<>(pageLink -> {
                         return notificationTargetService.findRecipientsForRuleNotificationTargetConfig(ctx.getTenantId(), targetConfig, (RuleOriginatedNotificationInfo) ctx.getRequest().getInfo(), pageLink);
-                    }, 500);
+                    }, 256);
                 } else {
                     recipients = new PageDataIterable<>(pageLink -> {
                         return notificationTargetService.findRecipientsForNotificationTargetConfig(ctx.getTenantId(), targetConfig, pageLink);
-                    }, 500);
+                    }, 256);
                 }
                 break;
             }
