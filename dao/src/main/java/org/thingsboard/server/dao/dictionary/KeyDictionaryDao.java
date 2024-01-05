@@ -20,6 +20,6 @@ public interface KeyDictionaryDao {
 
     Integer getOrSaveKeyId(String strKey);
 
-    String getKey(Integer attributeKey);
+    String getKey(Integer keyId);
 
 }
