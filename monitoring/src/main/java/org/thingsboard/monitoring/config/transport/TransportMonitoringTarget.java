@@ -16,6 +16,7 @@
 package org.thingsboard.monitoring.config.transport;
 
 import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.monitoring.config.MonitoringTarget;
 
 import java.util.UUID;
@@ -31,6 +32,10 @@ public class TransportMonitoringTarget implements MonitoringTarget {
     @Override
     public UUID getDeviceId() {
         return device.getId();
+    }
+
+    public String getQueue() {
+        return StringUtils.defaultIfEmpty(queue, "Main");
     }
 
 }
