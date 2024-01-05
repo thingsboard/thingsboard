@@ -79,6 +79,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -804,7 +805,16 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
                 String.class,
                 status().isOk());
 
-        PageData<EdgeEvent> result = edgeEventService.findEdgeEvents(tenantId, tmpEdge.getId(), 0L, null, new TimePageLink(1));
+        final AtomicReference<PageData<EdgeEvent>> resultRef = new AtomicReference<>();
+        Awaitility.await()
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> {
+                    PageData<EdgeEvent> result = edgeEventService.findEdgeEvents(tenantId, tmpEdge.getId(), 0L, null, new TimePageLink(1));
+                    resultRef.set(result);
+                    return result != null && result.getData().size() == 1;
+                });
+
+        PageData<EdgeEvent> result = resultRef.get();
         EdgeEvent edgeEvent = result.getData().get(0);
         Assert.assertEquals(EdgeEventActionType.RPC_CALL, edgeEvent.getAction());
         Assert.assertEquals(EdgeEventType.DEVICE, edgeEvent.getType());
