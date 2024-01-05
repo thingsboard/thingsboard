@@ -551,13 +551,13 @@ public class DefaultTbClusterService implements TbClusterService {
                 pushMsgToCore(new DeviceEdgeUpdateMsg(tenantId, new DeviceId(entityId.getId()), edgeId), null);
                 break;
             case UNASSIGNED_FROM_EDGE:
-                EdgeId relatedEdgeId = findRelatedEdgeEdgeIdIfAny(tenantId, entityId);
+                EdgeId relatedEdgeId = findRelatedEdgeIdIfAny(tenantId, entityId);
                 pushMsgToCore(new DeviceEdgeUpdateMsg(tenantId, new DeviceId(entityId.getId()), relatedEdgeId), null);
                 break;
         }
     }
 
-    private EdgeId findRelatedEdgeEdgeIdIfAny(TenantId tenantId, EntityId entityId) {
+    private EdgeId findRelatedEdgeIdIfAny(TenantId tenantId, EntityId entityId) {
         PageData<EdgeId> pageData = edgeService.findRelatedEdgeIdsByEntityId(tenantId, entityId, new PageLink(1));
         return Optional.ofNullable(pageData).filter(pd -> pd.getTotalElements() == 1).map(pd -> pd.getData().get(0)).orElse(null);
     }
