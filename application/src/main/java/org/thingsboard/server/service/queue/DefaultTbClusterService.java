@@ -559,7 +559,7 @@ public class DefaultTbClusterService implements TbClusterService {
 
     private EdgeId findRelatedEdgeIdIfAny(TenantId tenantId, EntityId entityId) {
         PageData<EdgeId> pageData = edgeService.findRelatedEdgeIdsByEntityId(tenantId, entityId, new PageLink(1));
-        return Optional.ofNullable(pageData).filter(pd -> pd.getTotalElements() == 1).map(pd -> pd.getData().get(0)).orElse(null);
+        return Optional.ofNullable(pageData).filter(pd -> pd.getTotalElements() > 0).map(pd -> pd.getData().get(0)).orElse(null);
     }
 
     @Override
