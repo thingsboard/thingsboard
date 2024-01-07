@@ -439,7 +439,7 @@ public class DefaultWebSocketService implements WebSocketService {
         SecurityUser currentUser = sessionRef.getSecurityCtx();
         TenantId tenantId = currentUser.getTenantId();
         DeviceId deviceId = DeviceId.fromString(cmd.getEntityId());
-        boolean oneWay = true;
+        boolean oneWay = cmd.isOneway();
         long timeout = cmd.getTimeout() > 0 ? cmd.getTimeout() : defaultTimeout;
         long expTime = cmd.getExpTime() > 0 ? cmd.getExpTime() : System.currentTimeMillis() + Math.max(minTimeout, timeout);
         JsonNode rpcRequestBody = JacksonUtil.toJsonNode(cmd.getRpcjson());
@@ -499,16 +499,11 @@ public class DefaultWebSocketService implements WebSocketService {
             Optional<String> responseData = response.getResponse();
             if (responseData.isPresent() && !StringUtils.isEmpty(responseData.get())) {
                 String data = responseData.get();
-                try {
-                    logRpcCall(currentUser, rpcRequest, rpcError, null);
-                    sendUpdate(sessionRef, new TelemetrySubscriptionUpdate(cmdId, SubscriptionErrorCode.NO_ERROR, data));
-                } catch (IllegalArgumentException e) {
-                    log.debug("Failed to decode device response: {}", data, e);
-                    logRpcCall(currentUser, rpcRequest, rpcError, e);
-                }
+                logRpcCall(currentUser, rpcRequest, rpcError, null);
+                sendUpdate(sessionRef, cmdId, "{'msg' : '"+data+"'}");
             } else {
                 logRpcCall(currentUser, rpcRequest, rpcError, null);
-                sendUpdate(sessionRef, new TelemetrySubscriptionUpdate(cmdId, SubscriptionErrorCode.NO_ERROR, "RPC SUCCESS!"));
+                // sendUpdate(sessionRef, cmdId, "{'msg' : 'RPC Success!'}");
             }
         }
     }

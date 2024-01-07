@@ -30,14 +30,15 @@ import org.thingsboard.server.service.ws.WsCmdType;
 @Data
 public class RpcCmd implements WsCmd {
 
-    private int cmdId;
-    private String entityType;
-    private String entityId;
-    private String rpcjson;
+    private int cmdId;  //required
+    private String entityType;  //required
+    private String entityId;  //required
+    private String rpcjson;  //required
     private long timeout;
     private long expTime;
     private boolean persisted;
     private int retries;
+    private boolean oneway;  //default: false
 
     @Override
     public WsCmdType getType() {
