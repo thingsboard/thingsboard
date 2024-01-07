@@ -26,6 +26,7 @@ import org.thingsboard.server.service.ws.notification.cmd.MarkNotificationsAsRea
 import org.thingsboard.server.service.ws.notification.cmd.NotificationsCountSubCmd;
 import org.thingsboard.server.service.ws.notification.cmd.NotificationsSubCmd;
 import org.thingsboard.server.service.ws.notification.cmd.NotificationsUnsubCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v1.RpcCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.AttributesSubscriptionCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.GetHistoryCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.TimeseriesSubscriptionCmd;
@@ -49,6 +50,7 @@ public class WsCommandsWrapper {
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
     @JsonSubTypes({
+            @Type(name = "RPC", value = RpcCmd.class),
             @Type(name = "ATTRIBUTES", value = AttributesSubscriptionCmd.class),
             @Type(name = "TIMESERIES", value = TimeseriesSubscriptionCmd.class),
             @Type(name = "TIMESERIES_HISTORY", value = GetHistoryCmd.class),

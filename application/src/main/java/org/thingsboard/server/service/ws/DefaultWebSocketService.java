@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.ws;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -25,6 +26,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.CloseStatus;
@@ -34,10 +36,13 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -45,18 +50,26 @@ import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.rpc.RpcError;
+import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
+import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
+import org.thingsboard.server.controller.BaseController;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.util.TenantRateLimitException;
 import org.thingsboard.server.exception.UnauthorizedException;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.ValidationCallback;
 import org.thingsboard.server.service.security.ValidationResult;
 import org.thingsboard.server.service.security.ValidationResultCode;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.subscription.SubscriptionErrorCode;
@@ -66,6 +79,7 @@ import org.thingsboard.server.service.subscription.TbEntityDataSubscriptionServi
 import org.thingsboard.server.service.subscription.TbLocalSubscriptionService;
 import org.thingsboard.server.service.subscription.TbTimeSeriesSubscription;
 import org.thingsboard.server.service.ws.notification.NotificationCommandsHandler;
+import org.thingsboard.server.service.ws.telemetry.cmd.v1.RpcCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.AttributesSubscriptionCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.GetHistoryCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.SubscriptionCmd;
@@ -93,6 +107,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
@@ -159,6 +174,7 @@ public class DefaultWebSocketService implements WebSocketService {
         pingExecutor.scheduleWithFixedDelay(this::sendPing, pingTimeout / NUMBER_OF_PING_ATTEMPTS, pingTimeout / NUMBER_OF_PING_ATTEMPTS, TimeUnit.MILLISECONDS);
 
         cmdsHandlers = new EnumMap<>(WsCmdType.class);
+        cmdsHandlers.put(WsCmdType.RPC, newCmdHandler(this::handleWsRpcCmd));
         cmdsHandlers.put(WsCmdType.ATTRIBUTES, newCmdHandler(this::handleWsAttributesSubscriptionCmd));
         cmdsHandlers.put(WsCmdType.TIMESERIES, newCmdHandler(this::handleWsTimeseriesSubscriptionCmd));
         cmdsHandlers.put(WsCmdType.TIMESERIES_HISTORY, newCmdHandler(this::handleWsHistoryCmd));
@@ -397,6 +413,133 @@ public class DefaultWebSocketService implements WebSocketService {
             return false;
         }
         return true;
+    }
+
+    @Autowired
+    protected TbCoreDeviceRpcService deviceRpcService;
+
+    @Value("${server.rest.server_side_rpc.min_timeout:5000}")
+    protected long minTimeout;
+
+    @Value("${server.rest.server_side_rpc.default_timeout:10000}")
+    protected long defaultTimeout;
+
+    private void handleWsRpcCmd(WebSocketSessionRef sessionRef, RpcCmd cmd) {
+        if (!validateCmd(sessionRef, cmd, () -> {
+            if (cmd.getEntityId() == null || cmd.getEntityId().isEmpty() || cmd.getEntityType() == null || cmd.getEntityType().isEmpty()) {
+                throw new IllegalArgumentException("Device id is empty!");
+            }
+            if (cmd.getRpcjson() == null || cmd.getRpcjson().isEmpty()) {
+                throw new IllegalArgumentException("RPC JSON is empty!");
+            }
+        })) return;
+
+        UUID rpcRequestUUID = UUID.randomUUID();
+        EntityId entityId = EntityIdFactory.getByTypeAndId(cmd.getEntityType(), cmd.getEntityId());
+        SecurityUser currentUser = sessionRef.getSecurityCtx();
+        TenantId tenantId = currentUser.getTenantId();
+        DeviceId deviceId = DeviceId.fromString(cmd.getEntityId());
+        boolean oneWay = true;
+        long timeout = cmd.getTimeout() > 0 ? cmd.getTimeout() : defaultTimeout;
+        long expTime = cmd.getExpTime() > 0 ? cmd.getExpTime() : System.currentTimeMillis() + Math.max(minTimeout, timeout);
+        JsonNode rpcRequestBody = JacksonUtil.toJsonNode(cmd.getRpcjson());
+        ToDeviceRpcRequestBody body = new ToDeviceRpcRequestBody(rpcRequestBody.get("method").asText(), JacksonUtil.toString(rpcRequestBody.get("params")));
+        boolean persisted = cmd.isPersisted();
+        int retries = Math.max(cmd.getRetries(), 0);
+
+        FutureCallback<ValidationResult> callback = new FutureCallback<>() {
+            @Override
+            public void onSuccess(@Nullable ValidationResult result) {
+                ToDeviceRpcRequest rpcRequest = new ToDeviceRpcRequest(rpcRequestUUID,
+                        tenantId,
+                        deviceId,
+                        oneWay,
+                        expTime,
+                        body,
+                        persisted,
+                        retries,
+                        null
+                );
+                deviceRpcService.processRestApiRpcRequest(rpcRequest, fromDeviceRpcResponse -> reply(rpcRequest, currentUser, fromDeviceRpcResponse, sessionRef, cmd.getCmdId()), currentUser);
+            }
+
+            @Override
+            public void onFailure(Throwable e) {
+                TelemetrySubscriptionUpdate update;
+                if (UnauthorizedException.class.isInstance(e)) {
+                    update = new TelemetrySubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.UNAUTHORIZED,
+                            SubscriptionErrorCode.UNAUTHORIZED.getDefaultMsg());
+                } else {
+                    update = new TelemetrySubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR,
+                            FAILED_TO_FETCH_DATA);
+                }
+                sendUpdate(sessionRef, update);
+            }
+        };
+        accessValidator.validate(sessionRef.getSecurityCtx(), Operation.RPC_CALL, entityId, callback);
+    }
+
+    public void reply(ToDeviceRpcRequest rpcRequest, SecurityUser currentUser, FromDeviceRpcResponse response, WebSocketSessionRef sessionRef, int cmdId) {
+        Optional<RpcError> rpcError = response.getError();
+        if (rpcError.isPresent()) {
+            logRpcCall(currentUser, rpcRequest, rpcError, null);
+            RpcError error = rpcError.get();
+            switch (error) {
+                case TIMEOUT:
+                    sendUpdate(sessionRef, new TelemetrySubscriptionUpdate(cmdId, SubscriptionErrorCode.INTERNAL_ERROR, "TIMEOUT"));
+                    break;
+                case NO_ACTIVE_CONNECTION:
+                    sendUpdate(sessionRef, new TelemetrySubscriptionUpdate(cmdId, SubscriptionErrorCode.INTERNAL_ERROR, "NO_ACTIVE_CONNECTION"));
+                    break;
+                default:
+                    sendUpdate(sessionRef, new TelemetrySubscriptionUpdate(cmdId, SubscriptionErrorCode.INTERNAL_ERROR, error.toString()));
+                    break;
+            }
+        } else {
+            Optional<String> responseData = response.getResponse();
+            if (responseData.isPresent() && !StringUtils.isEmpty(responseData.get())) {
+                String data = responseData.get();
+                try {
+                    logRpcCall(currentUser, rpcRequest, rpcError, null);
+                    sendUpdate(sessionRef, new TelemetrySubscriptionUpdate(cmdId, SubscriptionErrorCode.NO_ERROR, data));
+                } catch (IllegalArgumentException e) {
+                    log.debug("Failed to decode device response: {}", data, e);
+                    logRpcCall(currentUser, rpcRequest, rpcError, e);
+                }
+            } else {
+                logRpcCall(currentUser, rpcRequest, rpcError, null);
+                sendUpdate(sessionRef, new TelemetrySubscriptionUpdate(cmdId, SubscriptionErrorCode.NO_ERROR, "RPC SUCCESS!"));
+            }
+        }
+    }
+
+    private void logRpcCall(SecurityUser currentUser, ToDeviceRpcRequest rpcRequest, Optional<RpcError> rpcError, Throwable e) {
+        logRpcCall(currentUser, rpcRequest.getDeviceId(), rpcRequest.getBody(), rpcRequest.isOneway(), rpcError, null);
+    }
+
+    @Autowired
+    protected AuditLogService auditLogService;
+    private void logRpcCall(SecurityUser user, EntityId entityId, ToDeviceRpcRequestBody body, boolean oneWay, Optional<RpcError> rpcError, Throwable e) {
+        String rpcErrorStr = "";
+        if (rpcError.isPresent()) {
+            rpcErrorStr = "RPC Error: " + rpcError.get().name();
+        }
+        String method = body.getMethod();
+        String params = body.getParams();
+
+        auditLogService.logEntityAction(
+                user.getTenantId(),
+                user.getCustomerId(),
+                user.getId(),
+                user.getName(),
+                (UUIDBased & EntityId) entityId,
+                null,
+                ActionType.RPC_CALL,
+                BaseController.toException(e),
+                rpcErrorStr,
+                oneWay,
+                method,
+                params);
     }
 
     private void handleWsAttributesSubscriptionCmd(WebSocketSessionRef sessionRef, AttributesSubscriptionCmd cmd) {

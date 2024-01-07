@@ -18,6 +18,7 @@ package org.thingsboard.server.service.ws.telemetry.cmd;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import org.thingsboard.server.service.ws.WsCommandsWrapper;
+import org.thingsboard.server.service.ws.telemetry.cmd.v1.RpcCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.AttributesSubscriptionCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.GetHistoryCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.TimeseriesSubscriptionCmd;
@@ -42,6 +43,8 @@ import java.util.stream.Stream;
 @Data
 @Deprecated
 public class TelemetryCmdsWrapper {
+
+    private List<RpcCmd> rpcCmds;
 
     private List<AttributesSubscriptionCmd> attrSubCmds;
 
@@ -68,6 +71,7 @@ public class TelemetryCmdsWrapper {
     @JsonIgnore
     public WsCommandsWrapper toCommonCmdsWrapper() {
         return new WsCommandsWrapper(null, Stream.of(
+                        rpcCmds,
                         attrSubCmds, tsSubCmds, historyCmds, entityDataCmds,
                         entityDataUnsubscribeCmds, alarmDataCmds, alarmDataUnsubscribeCmds,
                         entityCountCmds, entityCountUnsubscribeCmds,
