@@ -97,6 +97,12 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
                 });
     }
 
+    @CacheEvict(cacheNames = CacheConstants.NOTIFICATION_SETTINGS_CACHE, key = "#tenantId")
+    @Override
+    public void deleteNotificationSettings(TenantId tenantId) {
+        adminSettingsService.deleteAdminSettingsByTenantIdAndKey(tenantId, SETTINGS_KEY);
+    }
+
     @Override
     public UserNotificationSettings saveUserNotificationSettings(TenantId tenantId, UserId userId, UserNotificationSettings settings) {
         UserSettings userSettings = new UserSettings();
