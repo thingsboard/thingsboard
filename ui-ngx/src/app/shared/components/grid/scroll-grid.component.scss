@@ -18,6 +18,7 @@
   .cdk-virtual-scroll-content-wrapper {
     display: flex;
     flex-direction: column;
+    width: 100%;
   }
   .cdk-virtual-scroll-spacer {
     height: auto !important;

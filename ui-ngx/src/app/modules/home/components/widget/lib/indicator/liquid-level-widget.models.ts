@@ -418,7 +418,7 @@ export const createAbsoluteLayout = (values?: {inputValue: number | string; volu
 
 export const createPercentLayout = (value: number | string = 50, valueTextStyle: string = valueTextStyleDefaults): string =>
   `<div xmlns="http://www.w3.org/1999/xhtml" style="${valueContainerStyleDefaults}">
-    <label style="${valueTextStyle}">${value} ${CapacityUnits.percent}</label>
+    <label style="${valueTextStyle}">${value} ${value !== 'N/A' ? CapacityUnits.percent : ''}</label>
   </div>`;
 
 export const optionsFilter = (searchText: string): ((key: DataKey) => boolean) =>

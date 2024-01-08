@@ -18,12 +18,14 @@ package org.thingsboard.server.service.sync.ie.importing.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
@@ -34,6 +36,7 @@ import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 public class ResourceImportService extends BaseEntityImportService<TbResourceId, TbResource, EntityExportData<TbResource>> {
 
     private final ResourceService resourceService;
+    private final ImageService imageService;
 
     @Override
     protected void setOwner(TenantId tenantId, TbResource resource, IdProvider idProvider) {
@@ -66,7 +69,14 @@ public class ResourceImportService extends BaseEntityImportService<TbResourceId,
 
     @Override
     protected TbResource saveOrUpdate(EntitiesImportCtx ctx, TbResource resource, EntityExportData<TbResource> exportData, IdProvider idProvider) {
-        return resourceService.saveResource(resource);
+        if (resource.getResourceType() == ResourceType.IMAGE) {
+            return new TbResource(imageService.saveImage(resource));
+        } else {
+            resource = resourceService.saveResource(resource);
+            resource.setData(null);
+            resource.setPreview(null);
+            return resource;
+        }
     }
 
     @Override

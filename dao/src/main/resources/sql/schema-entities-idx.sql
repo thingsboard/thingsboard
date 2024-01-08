@@ -67,6 +67,8 @@ CREATE INDEX IF NOT EXISTS idx_audit_log_id ON audit_log(id);
 
 CREATE INDEX IF NOT EXISTS idx_edge_event_tenant_id_and_created_time ON edge_event(tenant_id, created_time DESC);
 
+CREATE INDEX IF NOT EXISTS idx_edge_event_tenant_id_edge_id_created_time ON edge_event(tenant_id, edge_id, created_time DESC);
+
 CREATE INDEX IF NOT EXISTS idx_edge_event_id ON edge_event(id);
 
 CREATE INDEX IF NOT EXISTS idx_rpc_tenant_id_device_id ON rpc(tenant_id, device_id);
@@ -123,3 +125,7 @@ CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_created_time ON notific
 CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_unread ON notification(recipient_id) WHERE status <> 'READ';
 
 CREATE INDEX IF NOT EXISTS idx_resource_etag ON resource(tenant_id, etag);
+
+CREATE INDEX IF NOT EXISTS idx_resource_etag ON resource(tenant_id, etag);
+
+CREATE INDEX IF NOT EXISTS idx_resource_type_public_resource_key ON resource(resource_type, public_resource_key);

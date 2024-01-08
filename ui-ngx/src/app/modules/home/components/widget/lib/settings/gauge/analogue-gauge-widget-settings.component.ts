@@ -114,7 +114,7 @@ export class AnalogueGaugeWidgetSettingsComponent extends WidgetSettingsComponen
       maxValue: [settings.maxValue, []],
       majorTicksCount: [settings.majorTicksCount, [Validators.min(0)]],
       colorMajorTicks: [settings.colorMajorTicks, []],
-      minorTicks: [settings.majorTicksCount, [Validators.min(0)]],
+      minorTicks: [settings.minorTicks, [Validators.min(0)]],
       colorMinorTicks: [settings.colorMinorTicks, []],
       numbersFont: [settings.numbersFont, []],
       numbersColor: [settings.numbersFont.color, []],

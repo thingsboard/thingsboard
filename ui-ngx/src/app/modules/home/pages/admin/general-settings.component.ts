@@ -112,7 +112,7 @@ export class GeneralSettingsComponent extends PageComponent implements HasConfir
   saveDeviceConnectivitySettings(): void {
     this.deviceConnectivitySettings.jsonValue = {
       ...this.deviceConnectivitySettings.jsonValue,
-      ...this.deviceConnectivitySettingsForm.value
+      ...this.deviceConnectivitySettingsForm.getRawValue()
     };
     this.adminService.saveAdminSettings<DeviceConnectivitySettings>(this.deviceConnectivitySettings)
       .subscribe(deviceConnectivitySettings => this.processDeviceConnectivitySettings(deviceConnectivitySettings));

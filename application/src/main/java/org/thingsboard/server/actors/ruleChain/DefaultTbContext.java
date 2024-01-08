@@ -84,6 +84,7 @@ import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.dao.nosql.TbResultSetFuture;
@@ -899,6 +900,11 @@ class DefaultTbContext implements TbContext {
     @Override
     public RuleEngineApiUsageStateService getRuleEngineApiUsageStateService() {
         return mainCtx.getApiUsageStateService();
+    }
+
+    @Override
+    public EntityService getEntityService() {
+        return mainCtx.getEntityService();
     }
 
     private TbMsgMetaData getActionMetaData(RuleNodeId ruleNodeId) {

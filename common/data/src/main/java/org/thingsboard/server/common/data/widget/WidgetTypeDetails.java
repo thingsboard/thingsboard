@@ -32,7 +32,6 @@ import org.thingsboard.server.common.data.validation.NoXss;
 @JsonPropertyOrder({ "fqn", "name", "deprecated", "image", "description", "descriptor", "externalId" })
 public class WidgetTypeDetails extends WidgetType implements HasName, HasTenantId, HasImage, ExportableEntity<WidgetTypeId> {
 
-    @Length(fieldName = "image", max = 1000000)
     @ApiModelProperty(position = 9, value = "Relative or external image URL. Replaced with image data URL (Base64) in case of relative URL and 'inlineImages' option enabled.")
     private String image;
     @NoXss

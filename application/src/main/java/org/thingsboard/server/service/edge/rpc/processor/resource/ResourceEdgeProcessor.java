@@ -81,10 +81,10 @@ public abstract class ResourceEdgeProcessor extends BaseResourceProcessor implem
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     ResourceUpdateMsg resourceUpdateMsg = ((ResourceMsgConstructor)
                             resourceMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructResourceUpdatedMsg(msgType, tbResource);
-                    downlinkMsg = DownlinkMsg.newBuilder()
+                    downlinkMsg = resourceUpdateMsg != null ? DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addResourceUpdateMsg(resourceUpdateMsg)
-                            .build();
+                            .build() : null;
                 }
                 break;
             case DELETED:
