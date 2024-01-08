@@ -48,6 +48,7 @@ import { Router } from '@angular/router';
 import { TbInject } from '@shared/decorators/tb-inject';
 import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-string.pipe';
 import { UserSettingsService } from '@core/http/user-settings.service';
+import { ImagePipe } from '@shared/pipe/image.pipe';
 
 @Directive()
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
@@ -87,6 +88,7 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
     this.ctx.userSettingsService = $injector.get(UserSettingsService);
     this.ctx.telemetryWsService = $injector.get(TelemetryWebsocketService);
     this.ctx.date = $injector.get(DatePipe);
+    this.ctx.imagePipe = $injector.get(ImagePipe);
     this.ctx.milliSecondsToTimeString = $injector.get(MillisecondsToTimeStringPipe);
     this.ctx.translate = $injector.get(TranslateService);
     this.ctx.http = $injector.get(HttpClient);

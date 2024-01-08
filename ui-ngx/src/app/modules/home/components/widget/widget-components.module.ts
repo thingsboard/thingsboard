@@ -66,6 +66,7 @@ import { ValueChartCardWidgetComponent } from '@home/components/widget/lib/cards
 import { ProgressBarWidgetComponent } from '@home/components/widget/lib/cards/progress-bar-widget.component';
 import { LiquidLevelWidgetComponent } from '@home/components/widget/lib/indicator/liquid-level-widget.component';
 import { DoughnutWidgetComponent } from '@home/components/widget/lib/chart/doughnut-widget.component';
+import { RangeChartWidgetComponent } from '@home/components/widget/lib/chart/range-chart-widget.component';
 
 @NgModule({
   declarations:
@@ -106,7 +107,8 @@ import { DoughnutWidgetComponent } from '@home/components/widget/lib/chart/dough
       ValueChartCardWidgetComponent,
       ProgressBarWidgetComponent,
       LiquidLevelWidgetComponent,
-      DoughnutWidgetComponent
+      DoughnutWidgetComponent,
+      RangeChartWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -152,7 +154,8 @@ import { DoughnutWidgetComponent } from '@home/components/widget/lib/chart/dough
         ValueChartCardWidgetComponent,
         ProgressBarWidgetComponent,
         LiquidLevelWidgetComponent,
-        DoughnutWidgetComponent
+        DoughnutWidgetComponent,
+        RangeChartWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }

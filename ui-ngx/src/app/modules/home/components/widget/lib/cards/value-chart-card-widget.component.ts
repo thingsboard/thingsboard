@@ -48,6 +48,9 @@ import { TbFlot } from '@home/components/widget/lib/flot-widget';
 import { DataKey } from '@shared/models/widget.models';
 import { TbFlotKeySettings, TbFlotSettings } from '@home/components/widget/lib/flot-widget.models';
 import { getTsValueByLatestDataKey } from '@home/components/widget/lib/cards/aggregated-value-card.models';
+import { Observable } from 'rxjs';
+import { ImagePipe } from '@shared/pipe/image.pipe';
+import { DomSanitizer } from '@angular/platform-browser';
 
 const layoutHeight = 56;
 const valueRelativeMaxWidth = 0.5;
@@ -84,7 +87,7 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
   valueStyle: ComponentStyle = {};
   valueColor: ColorProcessor;
 
-  backgroundStyle: ComponentStyle = {};
+  backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
 
   private flot: TbFlot;
@@ -98,7 +101,9 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
 
   private valueFontSize: number;
 
-  constructor(private renderer: Renderer2,
+  constructor(private imagePipe: ImagePipe,
+              private sanitizer: DomSanitizer,
+              private renderer: Renderer2,
               private widgetComponent: WidgetComponent,
               private cd: ChangeDetectorRef) {
   }
@@ -129,7 +134,7 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
     this.valueStyle = textStyle(this.settings.valueFont);
     this.valueColor = ColorProcessor.fromSettings(this.settings.valueColor);
 
-    this.backgroundStyle = backgroundStyle(this.settings.background);
+    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
 
     if (this.ctx.defaultSubscription.firstDatasource?.dataKeys?.length) {

@@ -44,8 +44,7 @@ public class EntitiesCustomerIdAsyncLoader {
     }
 
     private static <T extends HasCustomerId> ListenableFuture<CustomerId> toCustomerIdAsync(TbContext ctx, ListenableFuture<T> future) {
-        return Futures.transformAsync(future, in -> in != null ? Futures.immediateFuture(in.getCustomerId())
-                : Futures.immediateFuture(null), ctx.getDbCallbackExecutor());
+        return Futures.transform(future, in -> in != null ? in.getCustomerId() : null, ctx.getDbCallbackExecutor());
     }
 
 }

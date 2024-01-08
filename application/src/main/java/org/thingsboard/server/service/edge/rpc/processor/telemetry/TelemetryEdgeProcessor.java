@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.edge.rpc.processor.telemetry;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.DataConstants;
@@ -27,8 +26,8 @@ import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.EntityDataProto;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
-@Component
 @Slf4j
+@Component
 @TbCoreComponent
 public class TelemetryEdgeProcessor extends BaseTelemetryProcessor {
 
@@ -37,7 +36,7 @@ public class TelemetryEdgeProcessor extends BaseTelemetryProcessor {
         return DataConstants.EDGE_MSG_SOURCE;
     }
 
-    public DownlinkMsg convertTelemetryEventToDownlink(EdgeEvent edgeEvent) throws JsonProcessingException {
+    public DownlinkMsg convertTelemetryEventToDownlink(EdgeEvent edgeEvent) {
         if (edgeEvent.getBody() != null) {
             String bodyStr = edgeEvent.getBody().toString();
             if (bodyStr.length() > 1000) {

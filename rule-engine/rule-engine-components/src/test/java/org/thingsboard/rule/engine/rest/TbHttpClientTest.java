@@ -18,7 +18,6 @@ package org.thingsboard.rule.engine.rest;
 
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,6 +40,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -169,20 +169,19 @@ public class TbHttpClientTest {
                 capturedData.capture()
         )).thenReturn(successMsg);
 
-        httpClient.processMessage(ctx, msg,
-                m -> ctx.tellSuccess(msg),
-                ctx::tellFailure);
+        CountDownLatch latch = new CountDownLatch(1);
 
-        Awaitility.await()
-                .atMost(30, TimeUnit.SECONDS)
-                .until(() -> {
-                    try {
-                        verify(ctx, times(1)).tellSuccess(any());
-                        return true;
-                    } catch (Exception e) {
-                        return false;
-                    }
+        httpClient.processMessage(ctx, msg,
+                m -> {
+                    ctx.tellSuccess(msg);
+                    latch.countDown();
+                },
+                (m, t) -> {
+                    ctx.tellFailure(m, t);
+                    latch.countDown();
                 });
+
+        latch.await(5, TimeUnit.SECONDS);
 
         verify(ctx, times(1)).tellSuccess(any());
         verify(ctx, times(0)).tellFailure(any(), any());

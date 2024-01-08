@@ -31,16 +31,15 @@ import { WidgetService } from '@app/core/http/widget.service';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { getCurrentAuthState, getCurrentAuthUser } from '@app/core/auth/auth.selectors';
+import { getCurrentAuthUser } from '@app/core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
-import { DialogService } from '@core/services/dialog.service';
-import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { ImportExportService } from '@shared/import-export/import-export.service';
 import { Direction } from '@shared/models/page/sort-order';
 import {
   BaseWidgetType,
+  widgetType as WidgetDataType,
   WidgetTypeDetails,
   WidgetTypeInfo,
-  widgetType as WidgetDataType,
   widgetTypesData
 } from '@shared/models/widget.models';
 import { WidgetTypeComponent } from '@home/pages/widget/widget-type.component';
@@ -134,7 +133,7 @@ export class WidgetTypesTableConfigResolver implements Resolve<EntityTableConfig
     this.config.loadEntity = id => this.widgetsService.getWidgetTypeById(id.id);
     this.config.saveEntity = widgetType => this.widgetsService.saveWidgetType(widgetType as WidgetTypeDetails);
     this.config.deleteEntity = id => this.widgetsService.deleteWidgetType(id.id);
-    this.config.onEntityAction = action => this.onWidgetTypeAction(action);
+    this.config.onEntityAction = action => this.onWidgetTypeAction(action, this.config);
 
     this.config.handleRowClick = ($event, widgetType) => {
       if (this.config.isDetailsOpen()) {
@@ -198,6 +197,14 @@ export class WidgetTypesTableConfigResolver implements Resolve<EntityTableConfig
     this.router.navigateByUrl(`resources/widgets-library/widget-types/${widgetType.id.id}`);
   }
 
+  private openWidgetTypeDetails($event: Event, widgetType: BaseWidgetType, config: EntityTableConfig<BaseWidgetType>) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const url = this.router.createUrlTree(['details', widgetType.id.id], {relativeTo: config.getActivatedRoute()});
+    this.router.navigateByUrl(url);
+  }
+
   exportWidgetType($event: Event, widgetType: BaseWidgetType) {
     if ($event) {
       $event.stopPropagation();
@@ -216,10 +223,13 @@ export class WidgetTypesTableConfigResolver implements Resolve<EntityTableConfig
     );
   }
 
-  onWidgetTypeAction(action: EntityAction<BaseWidgetType>): boolean {
+  onWidgetTypeAction(action: EntityAction<BaseWidgetType>, config: EntityTableConfig<BaseWidgetType>): boolean {
     switch (action.action) {
       case 'edit':
         this.openWidgetEditor(action.event, action.entity);
+        return true;
+      case 'openDetails':
+        this.openWidgetTypeDetails(action.event, action.entity, config);
         return true;
       case 'export':
         this.exportWidgetType(action.event, action.entity);

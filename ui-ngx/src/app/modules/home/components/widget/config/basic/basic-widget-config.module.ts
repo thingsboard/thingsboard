@@ -80,6 +80,9 @@ import {
 import {
   DoughnutBasicConfigComponent
 } from '@home/components/widget/config/basic/chart/doughnut-basic-config.component';
+import {
+  RangeChartBasicConfigComponent
+} from '@home/components/widget/config/basic/chart/range-chart-basic-config.component';
 
 @NgModule({
   declarations: [
@@ -103,7 +106,8 @@ import {
     ThermometerScaleGaugeBasicConfigComponent,
     CompassGaugeBasicConfigComponent,
     LiquidLevelCardBasicConfigComponent,
-    DoughnutBasicConfigComponent
+    DoughnutBasicConfigComponent,
+    RangeChartBasicConfigComponent
   ],
   imports: [
     CommonModule,
@@ -131,7 +135,8 @@ import {
     ThermometerScaleGaugeBasicConfigComponent,
     CompassGaugeBasicConfigComponent,
     LiquidLevelCardBasicConfigComponent,
-    DoughnutBasicConfigComponent
+    DoughnutBasicConfigComponent,
+    RangeChartBasicConfigComponent
   ]
 })
 export class BasicWidgetConfigModule {
@@ -156,5 +161,6 @@ export const basicWidgetConfigComponentsMap: {[key: string]: Type<IBasicWidgetCo
   'tb-thermometer-scale-gauge-basic-config': ThermometerScaleGaugeBasicConfigComponent,
   'tb-compass-gauge-basic-config': CompassGaugeBasicConfigComponent,
   'tb-liquid-level-card-basic-config': LiquidLevelCardBasicConfigComponent,
-  'tb-doughnut-basic-config': DoughnutBasicConfigComponent
+  'tb-doughnut-basic-config': DoughnutBasicConfigComponent,
+  'tb-range-chart-basic-config': RangeChartBasicConfigComponent
 };

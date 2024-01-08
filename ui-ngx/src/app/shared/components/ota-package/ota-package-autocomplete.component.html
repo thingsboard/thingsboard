@@ -24,8 +24,9 @@
          [required]="required"
          [matAutocomplete]="packageAutocomplete"
          [matAutocompleteDisabled]="disabled"
-         [fxShow]="!showDetailsPageLink || !disabled || !otaPackageFormGroup.get('packageId').value">
-  <a *ngIf="showDetailsPageLink && otaPackageFormGroup.get('packageId').value && disabled" aria-label="Open ota package" [routerLink]=packageURL>
+         [fxShow]="!showDetailsPageLink || !usePackageLink || !disabled || !otaPackageFormGroup.get('packageId').value">
+  <a *ngIf="showDetailsPageLink && usePackageLink && otaPackageFormGroup.get('packageId').value && disabled"
+     aria-label="Open ota package" [routerLink]=packageURL>
     {{ displayPackageFn(otaPackageFormGroup.get('packageId').value) }}
   </a>
   <button *ngIf="otaPackageFormGroup.get('packageId').value && !disabled"

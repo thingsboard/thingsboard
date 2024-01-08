@@ -35,13 +35,14 @@ import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ConcurrentReferenceHashMap;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
-import org.thingsboard.server.common.transport.adaptor.AdaptorException;
-import org.thingsboard.server.common.transport.adaptor.JsonConverter;
-import org.thingsboard.server.common.transport.adaptor.ProtoConverter;
+import org.thingsboard.server.common.adaptor.AdaptorException;
+import org.thingsboard.server.common.adaptor.JsonConverter;
+import org.thingsboard.server.common.adaptor.ProtoConverter;
 import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
@@ -215,8 +216,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
 
             @Override
             public void onFailure(Throwable t) {
-                log.warn("[{}][{}][{}] Failed to process device connect command: [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName, t);
-
+                logDeviceCreationError(t, deviceName);
             }
         }, context.getExecutor());
     }
@@ -248,7 +248,8 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
             return future;
         }
         try {
-            transportService.process(GetOrCreateDeviceFromGatewayRequestMsg.newBuilder()
+            transportService.process(gateway.getTenantId(),
+                    GetOrCreateDeviceFromGatewayRequestMsg.newBuilder()
                             .setDeviceName(deviceName)
                             .setDeviceType(deviceType)
                             .setGatewayIdMSB(gateway.getDeviceId().getId().getMostSignificantBits())
@@ -274,9 +275,9 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
                         }
 
                         @Override
-                        public void onError(Throwable e) {
-                            log.warn("[{}][{}][{}] Failed to process device connect command at getDeviceCreationFuture: [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName, e);
-                            futureToSet.setException(e);
+                        public void onError(Throwable t) {
+                            logDeviceCreationError(t, deviceName);
+                            futureToSet.setException(t);
                             deviceFutures.remove(deviceName);
                         }
                     });
@@ -284,6 +285,15 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         } catch (Throwable e) {
             deviceFutures.remove(deviceName);
             throw e;
+        }
+    }
+
+    private void logDeviceCreationError(Throwable t, String deviceName) {
+        if (DataConstants.MAXIMUM_NUMBER_OF_DEVICES_REACHED.equals(t.getMessage())) {
+            log.info("[{}][{}][{}] Failed to process device connect command: [{}] due to [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName,
+                    DataConstants.MAXIMUM_NUMBER_OF_DEVICES_REACHED);
+        } else {
+            log.warn("[{}][{}][{}] Failed to process device connect command: [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName, t);
         }
     }
 

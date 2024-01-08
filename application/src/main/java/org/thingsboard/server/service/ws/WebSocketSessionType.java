@@ -15,23 +15,25 @@
  */
 package org.thingsboard.server.service.ws;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
 import java.util.Optional;
 
-@RequiredArgsConstructor
-@Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public enum WebSocketSessionType {
-    TELEMETRY("telemetry"),
-    NOTIFICATIONS("notifications");
+    GENERAL(),
+    TELEMETRY("telemetry"), // deprecated
+    NOTIFICATIONS("notifications"); // deprecated
 
-    private final String name;
+    private String name;
 
     public static Optional<WebSocketSessionType> forName(String name) {
         return Arrays.stream(values())
-                .filter(sessionType -> sessionType.getName().equals(name))
+                .filter(sessionType -> StringUtils.equals(sessionType.name, name))
                 .findFirst();
     }
 

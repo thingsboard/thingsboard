@@ -64,6 +64,9 @@ public class DeviceActor extends ContextAwareActor {
             case DEVICE_ATTRIBUTES_UPDATE_TO_DEVICE_ACTOR_MSG:
                 processor.processAttributesUpdate((DeviceAttributesEventNotificationMsg) msg);
                 break;
+            case DEVICE_DELETE_TO_DEVICE_ACTOR_MSG:
+                ctx.stop(ctx.getSelf());
+                break;
             case DEVICE_CREDENTIALS_UPDATE_TO_DEVICE_ACTOR_MSG:
                 processor.processCredentialsUpdate(msg);
                 break;

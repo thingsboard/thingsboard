@@ -802,7 +802,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return readResponse(doPostAsync(urlTemplate, content, DEFAULT_TIMEOUT, params).andExpect(resultMatcher), responseClass);
     }
 
-    protected <T> T doPut(String urlTemplate, T content, Class<T> responseClass, String... params) {
+    protected <T> T doPut(String urlTemplate, Object content, Class<T> responseClass, String... params) {
         try {
             return readResponse(doPut(urlTemplate, content, params).andExpect(status().isOk()), responseClass);
         } catch (Exception e) {
