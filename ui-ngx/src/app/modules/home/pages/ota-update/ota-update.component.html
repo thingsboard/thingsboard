@@ -120,6 +120,7 @@
           <tb-file-input
             formControlName="file"
             workFromFileObj="true"
+            label="{{ 'ota-update.package-file' | translate }}"
             [required]="!entityForm.get('isURL').value"
             dropLabel="{{'ota-update.drop-package-file-or' | translate}}">
           </tb-file-input>

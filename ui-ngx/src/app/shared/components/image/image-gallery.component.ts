@@ -68,6 +68,7 @@ import {
   ImagesInUseDialogData
 } from '@shared/components/image/images-in-use-dialog.component';
 import { ImagesDatasource } from '@shared/components/image/images-datasource';
+import { EmbedImageDialogComponent, EmbedImageDialogData } from '@shared/components/image/embed-image-dialog.component';
 
 interface GridImagesFilter {
   search: string;
@@ -648,6 +649,25 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
     }
     this.dialog.open<ImageDialogComponent, ImageDialogData,
       ImageResourceInfo>(ImageDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        image,
+        readonly: this.readonly(image)
+      }
+    }).afterClosed().subscribe((result) => {
+      if (result) {
+        this.imageUpdated(result, itemIndex);
+      }
+    });
+  }
+
+  embedImage($event: Event, image: ImageResourceInfo, itemIndex = -1) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialog.open<EmbedImageDialogComponent, EmbedImageDialogData,
+      ImageResourceInfo>(EmbedImageDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {

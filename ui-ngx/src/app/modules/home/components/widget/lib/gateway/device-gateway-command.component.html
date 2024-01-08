@@ -32,10 +32,10 @@
     <div class="tb-form-panel-title" translate>gateway.download-configuration-file</div>
     <div class="tb-form-row no-border no-padding space-between">
       <div class="tb-no-data-text tb-commands-hint" translate>gateway.download-docker-compose</div>
-      <a mat-stroked-button color="primary" href="{{downloadUrl}}" target="_blank">
+      <button mat-stroked-button color="primary" (click)="download($event)">
         <mat-icon>download</mat-icon>
         {{ 'action.download' | translate }}
-      </a>
+      </button>
     </div>
   </div>
 

@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.util;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.device.DeviceConnectivityInfo;
@@ -35,9 +36,6 @@ public class DeviceConnectivityUtil {
     public static final String HTTP = "http";
     public static final String HTTPS = "https";
     public static final String MQTT = "mqtt";
-    public static final String LINUX = "linux";
-    public static final String WINDOWS = "windows";
-    public static final String MACOS = "macos";
     public static final String DOCKER = "docker";
     public static final String MQTTS = "mqtts";
     public static final String COAP = "coap";
@@ -63,7 +61,7 @@ public class DeviceConnectivityUtil {
         if (MQTTS.equals(protocol)) {
             command.append(" --cafile ").append(CA_ROOT_CERT_PEM);
         }
-        command.append(" -h ").append(host).append(port == null ? "" : " -p " + port);
+        command.append(" -h ").append(host).append(StringUtils.isBlank(port) ? "" : " -p " + port);
         command.append(" -t ").append(deviceTelemetryTopic);
 
         switch (deviceCredentials.getCredentialsType()) {
@@ -219,7 +217,7 @@ public class DeviceConnectivityUtil {
     }
 
     public static String getHost(String baseUrl, DeviceConnectivityInfo properties, String protocol) throws URISyntaxException {
-        String initialHost = properties.getHost().isEmpty() ? baseUrl : properties.getHost();
+        String initialHost = StringUtils.isBlank(properties.getHost()) ? baseUrl : properties.getHost();
         InetAddress inetAddress;
         String host = null;
         if (VALID_URL_PATTERN.matcher(initialHost).matches()) {
@@ -241,6 +239,10 @@ public class DeviceConnectivityUtil {
             }
         }
         return host;
+    }
+
+    public static String getPort(DeviceConnectivityInfo properties) {
+        return StringUtils.isBlank(properties.getPort()) ? "" : properties.getPort();
     }
 
     public static boolean isLocalhost(String host) {

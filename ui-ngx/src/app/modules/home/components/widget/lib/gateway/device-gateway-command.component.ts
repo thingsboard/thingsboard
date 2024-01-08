@@ -14,8 +14,8 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, Input, OnInit } from '@angular/core';
-import { WINDOW } from '@core/services/window.service';
+import { Component, Input } from '@angular/core';
+import { DeviceService } from '@core/http/device.service';
 
 @Component({
   selector: 'tb-gateway-command',
@@ -23,20 +23,20 @@ import { WINDOW } from '@core/services/window.service';
   styleUrls: ['./device-gateway-command.component.scss']
 })
 
-export class DeviceGatewayCommandComponent implements OnInit {
+export class DeviceGatewayCommandComponent {
 
   @Input()
   deviceId: string;
 
-  downloadUrl: string;
-
-  constructor(@Inject(WINDOW) private window: Window) {
+  constructor(private deviceService: DeviceService) {
   }
 
-
-  ngOnInit(): void {
+  download($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
     if (this.deviceId) {
-      this.downloadUrl = `${this.window.location.origin}/api/device-connectivity/gateway-launch/${this.deviceId}/docker-compose/download`;
+      this.deviceService.downloadGatewayDockerComposeFile(this.deviceId).subscribe(() => {});
     }
   }
 }

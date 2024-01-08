@@ -70,4 +70,9 @@ public interface TbResourceInfoRepository extends JpaRepository<TbResourceInfoEn
     TbResourceInfoEntity findSystemOrTenantImageByEtag(@Param("tenantId") UUID tenantId,
                                                        @Param("resourceType") String resourceType,
                                                        @Param("etag") String etag);
+
+    boolean existsByResourceTypeAndPublicResourceKey(String resourceType, String publicResourceKey);
+
+    TbResourceInfoEntity findByResourceTypeAndPublicResourceKeyAndIsPublicTrue(String resourceType, String publicResourceKey);
+
 }

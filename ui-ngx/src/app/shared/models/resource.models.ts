@@ -60,6 +60,8 @@ export interface TbResourceInfo<D> extends Omit<BaseData<TbResourceId>, 'name' |
   title?: string;
   resourceType: ResourceType;
   fileName: string;
+  public: boolean;
+  publicResourceKey?: string;
   descriptor?: D;
 }
 
@@ -81,6 +83,7 @@ export interface ImageDescriptor {
 
 export interface ImageResourceInfo extends TbResourceInfo<ImageDescriptor> {
   link?: string;
+  publicLink?: string;
 }
 
 export interface ImageExportData {
@@ -88,6 +91,8 @@ export interface ImageExportData {
   fileName: string;
   title: string;
   resourceKey: string;
+  public: boolean;
+  publicResourceKey: string;
   data: string;
 }
 
@@ -128,6 +133,8 @@ export const TB_IMAGE_PREFIX = 'tb-image;';
 
 export const IMAGES_URL_REGEXP = /\/api\/images\/(tenant|system)\/(.*)/;
 export const IMAGES_URL_PREFIX = '/api/images';
+
+export const PUBLIC_IMAGES_URL_PREFIX = '/api/images/public';
 
 export const IMAGE_BASE64_URL_PREFIX = 'data:image/';
 

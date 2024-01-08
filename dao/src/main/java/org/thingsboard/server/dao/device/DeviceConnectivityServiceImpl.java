@@ -62,6 +62,7 @@ import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.HTTPS;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.MQTT;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.MQTTS;
 import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.getHost;
+import static org.thingsboard.server.dao.util.DeviceConnectivityUtil.getPort;
 
 @Service("DeviceConnectivityDaoService")
 @Slf4j
@@ -217,7 +218,7 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
             return null;
         }
         String hostName = getHost(baseUrl, properties, protocol);
-        String propertiesPort = properties.getPort();
+        String propertiesPort = getPort(properties);
         String port = (propertiesPort.isEmpty() || HTTP_DEFAULT_PORT.equals(propertiesPort) || HTTPS_DEFAULT_PORT.equals(propertiesPort))
                 ? "" : ":" + propertiesPort;
         return DeviceConnectivityUtil.getHttpPublishCommand(protocol, hostName, port, deviceCredentials);
@@ -265,14 +266,14 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     private String getMqttPublishCommand(String baseUrl, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) throws URISyntaxException {
         DeviceConnectivityInfo properties = getConnectivity(MQTT);
         String mqttHost = getHost(baseUrl, properties, MQTT);
-        String mqttPort = properties.getPort().isEmpty() ? null : properties.getPort();
+        String mqttPort = getPort(properties);
         return DeviceConnectivityUtil.getMqttPublishCommand(MQTT, mqttHost, mqttPort, deviceTelemetryTopic, deviceCredentials);
     }
 
     private List<String> getMqttsPublishCommand(String baseUrl, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) throws URISyntaxException {
         DeviceConnectivityInfo properties = getConnectivity(MQTTS);
         String mqttHost = getHost(baseUrl, properties, MQTTS);
-        String mqttPort = properties.getPort().isEmpty() ? null : properties.getPort();
+        String mqttPort = getPort(properties);
         String pubCommand = DeviceConnectivityUtil.getMqttPublishCommand(MQTTS, mqttHost, mqttPort, deviceTelemetryTopic, deviceCredentials);
 
         ArrayList<String> commands = new ArrayList<>();
@@ -287,7 +288,7 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     private String getDockerMqttPublishCommand(String protocol, String baseUrl, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) throws URISyntaxException {
         DeviceConnectivityInfo properties = getConnectivity(protocol);
         String mqttHost = getHost(baseUrl, properties, protocol);
-        String mqttPort = properties.getPort().isEmpty() ? null : properties.getPort();
+        String mqttPort = getPort(properties);
         return DeviceConnectivityUtil.getDockerMqttPublishCommand(protocol, baseUrl, mqttHost, mqttPort, deviceTelemetryTopic, deviceCredentials);
     }
 
@@ -327,14 +328,14 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     private String getCoapPublishCommand(String protocol, String baseUrl, DeviceCredentials deviceCredentials) throws URISyntaxException {
         DeviceConnectivityInfo properties = getConnectivity(protocol);
         String hostName = getHost(baseUrl, properties, protocol);
-        String port = properties.getPort().isEmpty() ? "" : ":" + properties.getPort();
+        String port = StringUtils.isBlank(properties.getPort()) ? "" : ":" + properties.getPort();
         return DeviceConnectivityUtil.getCoapPublishCommand(protocol, hostName, port, deviceCredentials);
     }
 
     private String getDockerCoapPublishCommand(String protocol, String baseUrl, DeviceCredentials deviceCredentials) throws URISyntaxException {
         DeviceConnectivityInfo properties = getConnectivity(protocol);
         String host = getHost(baseUrl, properties, protocol);
-        String port = properties.getPort().isEmpty() ? "" : ":" + properties.getPort();
+        String port = StringUtils.isBlank(properties.getPort()) ? "" : ":" + properties.getPort();
         return DeviceConnectivityUtil.getDockerCoapPublishCommand(protocol, host, port, deviceCredentials);
     }
 
