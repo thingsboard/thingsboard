@@ -182,29 +182,6 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
 
         /* Create DTLS Config */
         this.setServerWithCredentials(builder);
-
-
-//        DtlsConnectorConfig dtlsConfig;
-//        try {
-//            dtlsConfig = dtlsConfigBuilder.build();
-//        } catch (IllegalStateException e) {
-//            log.warn("Unable to create DTLS config for endpont {}.", endpointUri.toString(), e);
-//            return null;
-//        }
-//
-//        Connector dTLSConnector =  new DTLSConnector(dtlsConfig);
-
-//        endpointsBuilder.setConnector(dTLSConnector);
-//        endpointsBuilder.setConfiguration(serverCoapConfig);
-
-//        endpointsBuilder.setLoggingTag(String.format("[%s]",  "/" + "options.getUriPathString()"));
-//        endpointsBuilder.setEndpointContextMatcher(new Lwm2mEndpointContextMatcher());
-
-        /*  Create credentials */
-
-
-
-
         // Set Californium Configuration
         endpointsBuilder.setConfiguration(serverCoapConfig);
 
@@ -220,13 +197,6 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
 
         builder.setDecoder(new DefaultLwM2mDecoder(true));
         builder.setEncoder(new DefaultLwM2mEncoder(true));
-//        builder.setDecoder(new DefaultLwM2mDecoder());
-//        /* Use a magic converter to support bad type send by the UI. */
-//        builder.setEncoder(new DefaultLwM2mEncoder(LwM2mValueConverterImpl.getInstance()));
-
-        /* Create CoAP Config */
-//        builder.setCoapConfig(getCoapConfig(config.getPort(), config.getSecurePort(), config));
-
 
         // Create LWM2M server
         builder.setEndpointsProviders(endpointsBuilder.build());

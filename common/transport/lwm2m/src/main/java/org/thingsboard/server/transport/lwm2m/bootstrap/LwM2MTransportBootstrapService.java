@@ -128,26 +128,6 @@ public class LwM2MTransportBootstrapService {
         /* Create DTLS Config */
 
         this.setServerWithCredentials(builder);
-//        DtlsConnectorConfig dtlsConfig;
-//        try {
-//            dtlsConfig = dtlsConfigBuilder.build();
-//        } catch (IllegalStateException e) {
-//            log.warn("Unable to create DTLS config for endpont {}.", endpointUri.toString(), e);
-//            return null;
-//        }
-//
-//        Connector dTLSConnector =  new DTLSConnector(dtlsConfig);
-
-//        endpointsBuilder.setConnector(dTLSConnector);
-//        endpointsBuilder.setConfiguration(serverCoapConfig);
-
-//        endpointsBuilder.setLoggingTag(String.format("[%s]",  "/" + "options.getUriPathString()"));
-//        endpointsBuilder.setEndpointContextMatcher(new Lwm2mEndpointContextMatcher());
-
-        /*  Create credentials */
-
-
-
 
         // Set Californium Configuration
         endpointsBuilder.setConfiguration(serverCoapConfig);
@@ -160,46 +140,6 @@ public class LwM2MTransportBootstrapService {
         // Create CoAP over DTLS endpoint
         InetSocketAddress coapsAddr = new InetSocketAddress(bootstrapConfig.getSecureHost(), bootstrapConfig.getSecurePort());
         endpointsBuilder.addEndpoint(coapsAddr, Protocol.COAPS);
-
-
-//        builder.setLocalAddress(config.getHost(), config.getPort());
-//        builder.setLocalSecureAddress(config.getSecureHost(), config.getSecurePort());
-//        builder.setDecoder(new DefaultLwM2mDecoder());
-        /* Use a magic converter to support bad type send by the UI. */
-//        builder.setEncoder(new DefaultLwM2mEncoder(LwM2mValueConverterImpl.getInstance()));
-
-        /* Create CoAP Config */
-//        builder.setCoapConfig(getCoapConfig(config.getPort(), config.getSecurePort(), config));
-
-//
-//        /* Set securityStore with new registrationStore */
-//        builder.setSecurityStore(securityStore);
-//        builder.setRegistrationStore(registrationStore);
-//
-//
-//        // Create LWM2M server
-//        builder.setEndpointsProviders(endpointsBuilder.build());
-//
-//
-//
-//        builder.setLocalAddress(bootstrapConfig.getHost(), bootstrapConfig.getPort());
-//        builder.setLocalSecureAddress(bootstrapConfig.getSecureHost(), bootstrapConfig.getSecurePort());
-//
-//        /* Create CoAP Config */
-//        builder.setCoapConfig(getCoapConfig(bootstrapConfig.getPort(), bootstrapConfig.getSecurePort(), serverConfig));
-//
-//
-//        /* Create and Set DTLS Config */
-//        DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder(getCoapConfig(bootstrapConfig.getPort(), bootstrapConfig.getSecurePort(), serverConfig));
-//
-//        dtlsConfig.set(DTLS_RECOMMENDED_CURVES_ONLY, serverConfig.isRecommendedSupportedGroups());
-//        dtlsConfig.set(DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, serverConfig.isRecommendedCiphers());
-//        dtlsConfig.set(DTLS_RETRANSMISSION_TIMEOUT, serverConfig.getDtlsRetransmissionTimeout(), MILLISECONDS);
-//        dtlsConfig.set(DTLS_ROLE, SERVER_ONLY);
-//        setServerWithCredentials(builder, dtlsConfig);
-//
-//        /* Set DTLS Config */
-//        builder.setDtlsConfig(dtlsConfig);
 
         /* Set securityStore with new ConfigStore */
         builder.setConfigStore(lwM2MInMemoryBootstrapConfigStore);

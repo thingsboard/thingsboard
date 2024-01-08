@@ -255,7 +255,6 @@ public class LwM2MTestClient {
          */
         boolean reconnectOnUpdate = false;
         engineFactory.setReconnectOnUpdate(reconnectOnUpdate);
-//        engineFactory.setReconnectOnUpdate(false);  // old
         engineFactory.setResumeOnConnect(true);
             // new
         /**
