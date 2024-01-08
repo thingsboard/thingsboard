@@ -21,6 +21,7 @@ import {
   constantColor,
   Font
 } from '@shared/models/widget-settings.models';
+import { LegendPosition } from '@shared/models/widget.models';
 
 export enum DoughnutLayout {
   default = 'default',
@@ -50,24 +51,6 @@ export const horizontalDoughnutLayoutImages = new Map<DoughnutLayout, string>(
   ]
 );
 
-export enum DoughnutLegendPosition {
-  top = 'top',
-  bottom = 'bottom',
-  left = 'left',
-  right = 'right'
-}
-
-export const doughnutLegendPositions = Object.keys(DoughnutLegendPosition) as DoughnutLegendPosition[];
-
-export const doughnutLegendPositionTranslations = new Map<DoughnutLegendPosition, string>(
-  [
-    [DoughnutLegendPosition.top, 'widgets.doughnut.legend-position-top'],
-    [DoughnutLegendPosition.bottom, 'widgets.doughnut.legend-position-bottom'],
-    [DoughnutLegendPosition.left, 'widgets.doughnut.legend-position-left'],
-    [DoughnutLegendPosition.right, 'widgets.doughnut.legend-position-right']
-  ]
-);
-
 export enum DoughnutTooltipValueType {
   absolute = 'absolute',
   percentage = 'percentage'
@@ -90,7 +73,7 @@ export interface DoughnutWidgetSettings {
   totalValueFont: Font;
   totalValueColor: ColorSettings;
   showLegend: boolean;
-  legendPosition: DoughnutLegendPosition;
+  legendPosition: LegendPosition;
   legendLabelFont: Font;
   legendLabelColor: string;
   legendValueFont: Font;
@@ -120,7 +103,7 @@ export const doughnutDefaultSettings = (horizontal: boolean): DoughnutWidgetSett
   },
   totalValueColor: constantColor('rgba(0, 0, 0, 0.87)'),
   showLegend: true,
-  legendPosition: horizontal ? DoughnutLegendPosition.right : DoughnutLegendPosition.bottom,
+  legendPosition: horizontal ? LegendPosition.right : LegendPosition.bottom,
   legendLabelFont: {
     family: 'Roboto',
     size: 12,

@@ -15,17 +15,33 @@
     limitations under the License.
 
 -->
-<ng-container [formGroup]="rangeChartWidgetConfigForm">
+<ng-container [formGroup]="barChartWidgetConfigForm">
   <tb-timewindow-config-panel formControlName="timewindowConfig">
   </tb-timewindow-config-panel>
   <tb-datasources
     [configMode]="basicMode"
     hideDatasourceLabel
-    hideDataKeyColor
-    hideDataKeyUnits
-    hideDataKeyDecimals
+    hideDataKeys
+    forceSingleDatasource
     formControlName="datasources">
   </tb-datasources>
+  <tb-data-keys-panel
+    panelTitle="{{ 'widgets.chart.series' | translate }}"
+    addKeyTitle="{{ 'widgets.chart.add-series' | translate }}"
+    keySettingsTitle="{{ 'widgets.chart.series-settings' | translate }}"
+    removeKeyTitle="{{ 'widgets.chart.remove-series' | translate }}"
+    noKeysText="{{ 'widgets.chart.no-series' | translate }}"
+    requiredKeysText="{{ 'widgets.chart.no-series-error' | translate }}"
+    hideSourceSelection
+    hideUnits
+    hideDecimals
+    hideDataKeyUnits
+    hideDataKeyDecimals
+    [datasourceType]="datasource?.type"
+    [deviceId]="datasource?.deviceId"
+    [entityAliasId]="datasource?.entityAliasId"
+    formControlName="series">
+  </tb-data-keys-panel>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widget-config.appearance</div>
     <div class="tb-form-row column-xs">
@@ -38,7 +54,7 @@
         </mat-form-field>
         <tb-font-settings formControlName="titleFont"
                           clearButton
-                          [previewText]="rangeChartWidgetConfigForm.get('title').value"
+                          [previewText]="barChartWidgetConfigForm.get('title').value"
                           [initialPreviewStyle]="widgetConfig.config.titleStyle">
         </tb-font-settings>
         <tb-color-input asBoxInput
@@ -58,7 +74,7 @@
         <tb-css-unit-select fxFlex formControlName="iconSizeUnit"></tb-css-unit-select>
         <tb-material-icon-select asBoxInput
                                  iconClearButton
-                                 [color]="rangeChartWidgetConfigForm.get('iconColor').value"
+                                 [color]="barChartWidgetConfigForm.get('iconColor').value"
                                  formControlName="icon">
         </tb-material-icon-select>
         <tb-color-input asBoxInput
@@ -69,28 +85,38 @@
     </div>
   </div>
   <div class="tb-form-panel">
-    <div class="tb-form-panel-title" translate>widgets.range-chart.chart</div>
-    <div class="tb-form-row">
-      <mat-slide-toggle class="mat-slide" formControlName="dataZoom">
-        {{ 'widgets.range-chart.data-zoom' | translate }}
+    <div class="tb-form-panel-title" translate>widgets.bar-chart.bar-appearance</div>
+    <div class="tb-form-row space-between">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showBarLabel">
+        {{ 'widgets.bar-chart.label-on-bar' | translate }}
       </mat-slide-toggle>
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <tb-font-settings formControlName="barLabelFont"
+                          disabledLineHeight
+                          forceSizeUnit="px"
+                          previewText="Humidity">
+        </tb-font-settings>
+        <tb-color-input asBoxInput
+                        colorClearButton
+                        formControlName="barLabelColor">
+        </tb-color-input>
+      </div>
     </div>
     <div class="tb-form-row space-between">
-      <div>{{ 'widgets.range-chart.range-colors' | translate }}</div>
-      <tb-color-range-settings formControlName="rangeColors">
-      </tb-color-range-settings>
-    </div>
-    <div class="tb-form-row space-between">
-      <div>{{ 'widgets.range-chart.out-of-range-color' | translate }}</div>
-      <tb-color-input asBoxInput
-                      colorClearButton
-                      formControlName="outOfRangeColor">
-      </tb-color-input>
-    </div>
-    <div class="tb-form-row">
-      <mat-slide-toggle class="mat-slide" formControlName="fillArea">
-        {{ 'widgets.range-chart.fill-area' | translate }}
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showBarValue">
+        {{ 'widgets.bar-chart.value-on-bar' | translate }}
       </mat-slide-toggle>
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <tb-font-settings formControlName="barValueFont"
+                          disabledLineHeight
+                          forceSizeUnit="px"
+                          previewText="45">
+        </tb-font-settings>
+        <tb-color-input asBoxInput
+                        colorClearButton
+                        formControlName="barValueColor">
+        </tb-color-input>
+      </div>
     </div>
     <div class="tb-form-row space-between">
       <div translate>widget-config.units-short</div>
@@ -103,10 +129,10 @@
       <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
         <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
-      </div>
+    </div>
   </div>
   <div class="tb-form-panel tb-slide-toggle">
-    <mat-expansion-panel class="tb-settings" [expanded]="rangeChartWidgetConfigForm.get('showLegend').value" [disabled]="!rangeChartWidgetConfigForm.get('showLegend').value">
+    <mat-expansion-panel class="tb-settings" [expanded]="barChartWidgetConfigForm.get('showLegend').value" [disabled]="!barChartWidgetConfigForm.get('showLegend').value">
       <mat-expansion-panel-header fxLayout="row wrap">
         <mat-panel-title>
           <mat-slide-toggle class="mat-slide" formControlName="showLegend" (click)="$event.stopPropagation()"
@@ -130,7 +156,7 @@
           <div>{{ 'legend.label' | translate }}</div>
           <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
             <tb-font-settings formControlName="legendLabelFont"
-                              previewText="20 - 30">
+                              previewText="Humidity">
             </tb-font-settings>
             <tb-color-input asBoxInput
                             colorClearButton
@@ -142,7 +168,7 @@
     </mat-expansion-panel>
   </div>
   <div class="tb-form-panel tb-slide-toggle">
-    <mat-expansion-panel class="tb-settings" [expanded]="rangeChartWidgetConfigForm.get('showTooltip').value" [disabled]="!rangeChartWidgetConfigForm.get('showTooltip').value">
+    <mat-expansion-panel class="tb-settings" [expanded]="barChartWidgetConfigForm.get('showTooltip').value" [disabled]="!barChartWidgetConfigForm.get('showTooltip').value">
       <mat-expansion-panel-header fxLayout="row wrap">
         <mat-panel-title>
           <mat-slide-toggle class="mat-slide" formControlName="showTooltip" (click)="$event.stopPropagation()"

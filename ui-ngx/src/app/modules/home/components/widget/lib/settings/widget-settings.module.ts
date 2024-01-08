@@ -308,6 +308,9 @@ import {
 import {
   RangeChartWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/chart/range-chart-widget-settings.component';
+import {
+  BarChartWithLabelsWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/chart/bar-chart-with-labels-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -420,7 +423,8 @@ import {
     ProgressBarWidgetSettingsComponent,
     LiquidLevelCardWidgetSettingsComponent,
     DoughnutWidgetSettingsComponent,
-    RangeChartWidgetSettingsComponent
+    RangeChartWidgetSettingsComponent,
+    BarChartWithLabelsWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -538,7 +542,8 @@ import {
     ProgressBarWidgetSettingsComponent,
     LiquidLevelCardWidgetSettingsComponent,
     DoughnutWidgetSettingsComponent,
-    RangeChartWidgetSettingsComponent
+    RangeChartWidgetSettingsComponent,
+    BarChartWithLabelsWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -622,5 +627,6 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-progress-bar-widget-settings': ProgressBarWidgetSettingsComponent,
   'tb-liquid-level-card-widget-settings': LiquidLevelCardWidgetSettingsComponent,
   'tb-doughnut-widget-settings': DoughnutWidgetSettingsComponent,
-  'tb-range-chart-widget-settings': RangeChartWidgetSettingsComponent
+  'tb-range-chart-widget-settings': RangeChartWidgetSettingsComponent,
+  'tb-bar-chart-with-labels-widget-settings': BarChartWithLabelsWidgetSettingsComponent
 };

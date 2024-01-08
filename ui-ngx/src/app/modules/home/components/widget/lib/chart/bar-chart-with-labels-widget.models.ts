@@ -14,15 +14,11 @@
 /// limitations under the License.
 ///
 
-import {
-  BackgroundSettings,
-  BackgroundType, customDateFormat,
-  DateFormatSettings,
-  Font
-} from '@shared/models/widget-settings.models';
+import { BackgroundSettings, BackgroundType, customDateFormat, Font } from '@shared/models/widget-settings.models';
 import { LegendPosition } from '@shared/models/widget.models';
+import { EChartsTooltipWidgetSettings } from '@home/components/widget/lib/chart/echarts-widget.models';
 
-export interface BarChartWithLabelsWidgetSettings {
+export interface BarChartWithLabelsWidgetSettings extends EChartsTooltipWidgetSettings {
   showBarLabel: boolean;
   barLabelFont: Font;
   barLabelColor: string;
@@ -33,15 +29,6 @@ export interface BarChartWithLabelsWidgetSettings {
   legendPosition: LegendPosition;
   legendLabelFont: Font;
   legendLabelColor: string;
-  showTooltip: boolean;
-  tooltipValueFont: Font;
-  tooltipValueColor: string;
-  tooltipShowDate: boolean;
-  tooltipDateFormat: DateFormatSettings;
-  tooltipDateFont: Font;
-  tooltipDateColor: string;
-  tooltipBackgroundColor: string;
-  tooltipBackgroundBlur: number;
   background: BackgroundSettings;
 }
 

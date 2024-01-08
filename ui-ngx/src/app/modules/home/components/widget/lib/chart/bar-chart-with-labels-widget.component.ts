@@ -36,14 +36,8 @@ import {
   textStyle
 } from '@shared/models/widget-settings.models';
 import { ResizeObserver } from '@juggle/resize-observer';
-import * as echarts from 'echarts/core';
-import { Axis } from 'echarts';
 import { formatValue } from '@core/utils';
-import { GridComponent, GridComponentOption, TooltipComponent, TooltipComponentOption } from 'echarts/components';
-import { LabelLayout } from 'echarts/features';
-import { BarChart, BarSeriesOption} from 'echarts/charts';
-import { CanvasRenderer } from 'echarts/renderers';
-import { DataKey, DataSet } from '@shared/models/widget.models';
+import { DataKey } from '@shared/models/widget.models';
 import { Observable } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -51,40 +45,19 @@ import {
   barChartWithLabelsDefaultSettings,
   BarChartWithLabelsWidgetSettings
 } from '@home/components/widget/lib/chart/bar-chart-with-labels-widget.models';
-import { LabelLayoutOptionCallback } from 'echarts/types/dist/shared';
-import BarSeriesModel from 'echarts/types/src/chart/bar/BarSeries';
 
-const axisGetBandWidth = Axis.prototype.getBandWidth;
+import * as echarts from 'echarts/core';
+import { CustomSeriesOption } from 'echarts/charts';
+import { CallbackDataParams, CustomSeriesRenderItem, LabelLayoutOptionCallback } from 'echarts/types/dist/shared';
 
-Axis.prototype.getBandWidth = function(){
-  const series: any[] = this.model?.parentModel?.getSeries();
-  if (this.scale.type === 'time' && series?.length && series[0].type === 'series.bar') {
-    const barWidth = (series[0] as BarSeriesModel).getData().getLayout('size');
-    return barWidth * (series.length + 1);
-  } else {
-    return axisGetBandWidth.call(this);
-  }
-};
-
-echarts.use([
-  TooltipComponent,
-  GridComponent,
-  BarChart,
-  LabelLayout,
-  CanvasRenderer
-]);
-
-type EChartsOption = echarts.ComposeOption<
-  | TooltipComponentOption
-  | GridComponentOption
-  | BarSeriesOption
->;
-
-type ECharts = echarts.ECharts;
-
-type NamedDataSet = {name: string; value: [number, any]}[];
-
-type BarLabelOption = NonNullable<BarSeriesOption['label']>;
+import {
+  ECharts,
+  echartsModule,
+  EChartsOption,
+  echartsTooltipFormatter,
+  NamedDataSet,
+  toNamedData
+} from '@home/components/widget/lib/chart/echarts-widget.models';
 
 interface BarChartDataItem {
   id: string;
@@ -99,17 +72,6 @@ interface BarChartLegendItem {
   label: string;
   enabled: boolean;
 }
-
-const toNamedData = (data: DataSet): NamedDataSet => {
-  if (!data?.length) {
-    return [];
-  } else {
-    return data.map(d => ({
-      name: d[0] + '',
-      value: d
-    }));
-  }
-};
 
 @Component({
   selector: 'tb-bar-chart-with-labels-widget',
@@ -153,7 +115,7 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
 
   private tooltipDateFormat: DateFormatProcessor;
 
-  private barLabelOptions: BarLabelOption;
+  private barRenderItem: CustomSeriesRenderItem;
   private barLabelLayoutCallback: LabelLayoutOptionCallback;
 
   constructor(private imagePipe: ImagePipe,
@@ -216,41 +178,85 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
     const barValueStyle: ComponentStyle = textStyle(this.settings.barValueFont);
     delete barValueStyle.lineHeight;
     barValueStyle.fontSize = this.settings.barValueFont.size;
-    barValueStyle.color = this.settings.barValueColor;
+    barValueStyle.fill = this.settings.barValueColor;
 
     const barLabelStyle: ComponentStyle = textStyle(this.settings.barLabelFont);
     delete barLabelStyle.lineHeight;
     barLabelStyle.fontSize = this.settings.barLabelFont.size;
-    barLabelStyle.color = this.settings.barLabelColor;
+    barLabelStyle.fill = this.settings.barLabelColor;
 
-    this.barLabelOptions = {
-      show: this.settings.showBarLabel || this.settings.showBarValue,
-      position: 'insideBottom',
-      distance: 15,
-      align: 'left',
-      verticalAlign: 'middle',
-      rotate: 90,
-      formatter: (params) => {
-        const parts: string[] = [];
-        if (this.settings.showBarValue) {
-          const value = formatValue(params.value[1], this.decimals, '', false);
-          parts.push(`{value|${value}}`);
-        }
-        if (this.settings.showBarLabel) {
-          parts.push(`{label|${params.seriesName}}`);
-        }
-        return parts.join(' ');
-      },
-      rich: {
-        value: barValueStyle,
-        label: barLabelStyle
+    this.barRenderItem = (params, api) => {
+
+      const interval = this.ctx.defaultSubscription.timeWindow.interval;
+      const enabledDataItems = this.dataItems.filter(d => d.enabled);
+      const barInterval = interval / (enabledDataItems.length + 1);
+      const intervalGap = barInterval / 2;
+
+      const index = enabledDataItems.findIndex(d => d.id === params.seriesId);
+      const time = api.value(0) as number;
+      const value = api.value(1);
+      const start = time - interval / 2;
+      const startTime = start + intervalGap + barInterval * index;
+      const delta = barInterval;
+      const lowerLeft = api.coord([startTime, value]);
+      const height = api.size([delta, value])[1];
+      const width = api.size([delta, 10])[0];
+
+      const coordSys: {x: number; y: number; width: number; height: number} = params.coordSys as any;
+
+      const rectShape = echarts.graphic.clipRectByRect({
+        x: lowerLeft[0],
+        y: lowerLeft[1],
+        width,
+        height
+      }, {
+        x: coordSys.x,
+        y: coordSys.y,
+        width: coordSys.width,
+        height: coordSys.height
+      });
+
+      const zeroPos = api.coord([0, 0]);
+      const labelParts: string[] = [];
+      if (this.settings.showBarValue) {
+        const labelValue = formatValue(value, this.decimals, '', false);
+        labelParts.push(`{value|${labelValue}}`);
       }
+      if (this.settings.showBarLabel) {
+        labelParts.push(`{label|${params.seriesName}}`);
+      }
+      const barLabel = labelParts.join(' ');
+      return rectShape && {
+        type: 'rect',
+        id: time + '',
+        shape: rectShape,
+        style: {
+          fill: api.visual('color'),
+          text: barLabel,
+          textPosition: 'insideBottom',
+          textRotation: Math.PI / 2,
+          textDistance: 15,
+          textStrokeWidth: 0,
+          textAlign: 'left',
+          textVerticalAlign: 'middle',
+          rich: {
+            value: barValueStyle,
+            label: barLabelStyle
+          }
+        },
+        focus: 'series',
+        transition: 'all',
+        enterFrom: {
+          style: { opacity: 0 },
+          shape: { height: 0, y: zeroPos[1] }
+        }
+      };
     };
 
     this.barLabelLayoutCallback = (params) => {
       if (params.rect.width - params.labelRect.width < 2) {
         return {
-          y: '-100%'
+          y: '1000%',
         };
       } else {
         return {
@@ -288,38 +294,44 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
 
   public onDataUpdated() {
     let minTime = this.ctx.defaultSubscription.timeWindow.minTime;
+    let maxTime = this.ctx.defaultSubscription.timeWindow.maxTime;
+    let dataMin = Number.MAX_VALUE;
+    let dataMax = Number.MIN_VALUE;
     for (const item of this.dataItems) {
       const datasourceData = this.ctx.data ? this.ctx.data.find(d => d.dataKey === item.dataKey) : null;
-      const namedData = datasourceData?.data ? toNamedData(datasourceData.data) : [];
-      item.data = namedData;
+      item.data = datasourceData?.data ? toNamedData(datasourceData.data) : [];
       if (datasourceData.data.length) {
-        minTime = Math.min(datasourceData.data[0][0], minTime);
+        dataMin = Math.min(datasourceData.data[0][0], dataMin);
+        dataMax = Math.max(datasourceData.data[datasourceData.data.length-1][0], dataMax);
       }
+    }
+    if (dataMin !== Number.MAX_VALUE) {
+      minTime = dataMin - this.ctx.defaultSubscription.timeWindow.interval / 2;
+    }
+    if (dataMax !== Number.MIN_VALUE) {
+      dataMax = dataMax + this.ctx.defaultSubscription.timeWindow.interval / 2;
+      maxTime = Math.max(dataMax, maxTime);
     }
     if (this.barChart) {
       (this.barChartOptions.xAxis as any).min = minTime;
-      (this.barChartOptions.xAxis as any).max = this.ctx.defaultSubscription.timeWindow.maxTime;
+      (this.barChartOptions.xAxis as any).max = maxTime;
+      (this.barChartOptions.xAxis as any).tbTimewindowInterval = this.ctx.defaultSubscription.timeWindow.interval;
       this.barChartOptions.series = this.updateSeries();
       this.barChart.setOption(this.barChartOptions);
     }
   }
 
-  private updateSeries(): Array<BarSeriesOption> {
-    const series: Array<BarSeriesOption> = [];
+  private updateSeries(): Array<CustomSeriesOption> {
+    const series: Array<CustomSeriesOption> = [];
     for (const item of this.dataItems) {
       if (item.enabled) {
-        const seriesOption: BarSeriesOption = {
-          type: 'bar',
-          barGap: 0,
-          barMaxWidth: 40,
+        const seriesOption: CustomSeriesOption = {
+          type: 'custom',
           id: item.id,
           name: item.dataKey.label,
-          label: this.barLabelOptions,
           color: item.dataKey.color,
           data: item.data,
-          emphasis: {
-            focus: 'series'
-          },
+          renderItem: this.barRenderItem,
           labelLayout: this.barLabelLayoutCallback
         };
         series.push(seriesOption);
@@ -327,6 +339,7 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
     }
     return series;
   }
+
 
   public onLegendItemEnter(item: BarChartLegendItem) {
     this.barChart.dispatchAction({
@@ -347,26 +360,26 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
     const dataItem = this.dataItems.find(d => d.id === item.id);
     if (dataItem) {
       dataItem.enabled = enable;
+      if (!enable) {
+        this.barChart.dispatchAction({
+          type: 'downplay',
+          seriesId: item.id
+        });
+      }
       this.barChartOptions.series = this.updateSeries();
-      this.barChart.setOption(this.barChartOptions, true);
+      this.barChart.setOption(this.barChartOptions, {replaceMerge: ['series']});
       item.enabled = enable;
       if (enable) {
         this.barChart.dispatchAction({
           type: 'highlight',
           seriesId: item.id
         });
-      } else {
-        for (const otherItem of this.legendItems.filter(i => i.id !== item.id)) {
-          this.barChart.dispatchAction({
-            type: 'highlight',
-            seriesId: otherItem.id
-          });
-        }
       }
     }
   }
 
   private drawChart() {
+    echartsModule.init();
     this.barChart = echarts.init(this.chartShape.nativeElement, null, {
       renderer: 'canvas',
     });
@@ -383,6 +396,7 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
       },
       xAxis: {
         type: 'time',
+        scale: true,
         axisTick: {
           show: false
         },
@@ -393,16 +407,18 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
         axisLine: {
           onZero: false
         },
-        min: this.ctx.defaultSubscription.timeWindow.minTime,
-        max: this.ctx.defaultSubscription.timeWindow.maxTime
+        min: this.ctx.defaultSubscription.timeWindow.minTime - this.ctx.defaultSubscription.timeWindow.interval / 2,
+        max: this.ctx.defaultSubscription.timeWindow.maxTime + this.ctx.defaultSubscription.timeWindow.interval / 2
       },
       yAxis: {
         type: 'value',
         axisLabel: {
-          formatter: value => formatValue(value, this.decimals, this.units, false)
+          formatter: (value: any) => formatValue(value, this.decimals, this.units, false)
         }
       }
     };
+
+    (this.barChartOptions.xAxis as any).tbTimewindowInterval = this.ctx.defaultSubscription.timeWindow.interval;
 
     this.barChartOptions.series = this.updateSeries();
 
@@ -412,44 +428,14 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
         axisPointer: {
           type: 'shadow'
         },
-        formatter: (params: any[]) => {
-          if (!params.length || !params[0]) {
-            return null;
-          }
-          const tooltipElement: HTMLElement = this.renderer.createElement('div');
-          this.renderer.setStyle(tooltipElement, 'display', 'flex');
-          this.renderer.setStyle(tooltipElement, 'flex-direction', 'column');
-          this.renderer.setStyle(tooltipElement, 'align-items', 'flex-start');
-          this.renderer.setStyle(tooltipElement, 'gap', '4px');
-          if (this.settings.tooltipShowDate) {
-            const dateElement: HTMLElement = this.renderer.createElement('div');
-            const ts = params[0].value[0];
-            this.tooltipDateFormat.update(ts);
-            this.renderer.appendChild(dateElement, this.renderer.createText(this.tooltipDateFormat.formatted));
-            this.renderer.setStyle(dateElement, 'font-family', this.settings.tooltipDateFont.family);
-            this.renderer.setStyle(dateElement, 'font-size', this.settings.tooltipDateFont.size + this.settings.tooltipDateFont.sizeUnit);
-            this.renderer.setStyle(dateElement, 'font-style', this.settings.tooltipDateFont.style);
-            this.renderer.setStyle(dateElement, 'font-weight', this.settings.tooltipDateFont.weight);
-            this.renderer.setStyle(dateElement, 'line-height', this.settings.tooltipDateFont.lineHeight);
-            this.renderer.setStyle(dateElement, 'color', this.settings.tooltipDateColor);
-            this.renderer.appendChild(tooltipElement, dateElement);
-          }
-          let seriesParams = null;
+        formatter: (params: CallbackDataParams[]) => {
           const focusedSeriesIndex = this.focusedSeriesIndex();
-          if (focusedSeriesIndex > -1) {
-            seriesParams = params.find(param => param.seriesIndex === focusedSeriesIndex);
-          }
-          if (seriesParams) {
-            this.renderer.appendChild(tooltipElement, this.constructTooltipSeriesElement(seriesParams));
-          } else {
-            for (seriesParams of params) {
-              this.renderer.appendChild(tooltipElement, this.constructTooltipSeriesElement(seriesParams));
-            }
-          }
-          return tooltipElement;
+          return echartsTooltipFormatter(this.renderer, this.tooltipDateFormat,
+            this.settings, params, this.decimals, this.units, focusedSeriesIndex);
         },
         padding: [8, 12],
         backgroundColor: this.settings.tooltipBackgroundColor,
+        borderWidth: 0,
         extraCssText: `line-height: 1; backdrop-filter: blur(${this.settings.tooltipBackgroundBlur}px);`
       };
     }
@@ -463,65 +449,22 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
     this.onResize();
   }
 
-  private constructTooltipSeriesElement(seriesParams): HTMLElement {
-    const labelValueElement: HTMLElement = this.renderer.createElement('div');
-    this.renderer.setStyle(labelValueElement, 'display', 'flex');
-    this.renderer.setStyle(labelValueElement, 'flex-direction', 'row');
-    this.renderer.setStyle(labelValueElement, 'align-items', 'center');
-    this.renderer.setStyle(labelValueElement, 'align-self', 'stretch');
-    this.renderer.setStyle(labelValueElement, 'gap', '12px');
-    const labelElement: HTMLElement = this.renderer.createElement('div');
-    this.renderer.setStyle(labelElement, 'display', 'flex');
-    this.renderer.setStyle(labelElement, 'align-items', 'center');
-    this.renderer.setStyle(labelElement, 'gap', '8px');
-    this.renderer.appendChild(labelValueElement, labelElement);
-    const circleElement: HTMLElement = this.renderer.createElement('div');
-    this.renderer.setStyle(circleElement, 'width', '8px');
-    this.renderer.setStyle(circleElement, 'height', '8px');
-    this.renderer.setStyle(circleElement, 'border-radius', '50%');
-    this.renderer.setStyle(circleElement, 'background', seriesParams.color);
-    this.renderer.appendChild(labelElement, circleElement);
-    const labelTextElement: HTMLElement = this.renderer.createElement('div');
-    this.renderer.appendChild(labelTextElement, this.renderer.createText(seriesParams.seriesName));
-    this.renderer.setStyle(labelTextElement, 'font-family', 'Roboto');
-    this.renderer.setStyle(labelTextElement, 'font-size', '12px');
-    this.renderer.setStyle(labelTextElement, 'font-style', 'normal');
-    this.renderer.setStyle(labelTextElement, 'font-weight', '400');
-    this.renderer.setStyle(labelTextElement, 'line-height', '16px');
-    this.renderer.setStyle(labelTextElement, 'letter-spacing', '0.4px');
-    this.renderer.setStyle(labelTextElement, 'color', 'rgba(0, 0, 0, 0.76)');
-    this.renderer.appendChild(labelElement, labelTextElement);
-    const valueElement: HTMLElement = this.renderer.createElement('div');
-    const value = formatValue(seriesParams.value[1], this.decimals, this.units, false);
-    this.renderer.appendChild(valueElement, this.renderer.createText(value));
-    this.renderer.setStyle(valueElement, 'flex', '1');
-    this.renderer.setStyle(valueElement, 'text-align', 'end');
-    this.renderer.setStyle(valueElement, 'font-family', this.settings.tooltipValueFont.family);
-    this.renderer.setStyle(valueElement, 'font-size', this.settings.tooltipValueFont.size + this.settings.tooltipValueFont.sizeUnit);
-    this.renderer.setStyle(valueElement, 'font-style', this.settings.tooltipValueFont.style);
-    this.renderer.setStyle(valueElement, 'font-weight', this.settings.tooltipValueFont.weight);
-    this.renderer.setStyle(valueElement, 'line-height', this.settings.tooltipValueFont.lineHeight);
-    this.renderer.setStyle(valueElement, 'color', this.settings.tooltipValueColor);
-    this.renderer.appendChild(labelValueElement, valueElement);
-    return labelValueElement;
-  }
-
   private focusedSeriesIndex(): number {
     let index = - 1;
-    // @ts-ignore
-    const views: any[] = this.barChart._chartsViews;
+    const views: any[] = (this.barChart as any)._chartsViews;
     if (views) {
       const hasBlurredView = !!views.find(view => {
         const graphicEls: any[] = view._data._graphicEls;
-        return !!graphicEls.find(el => el.currentStates.includes('blur'));
+        return !!graphicEls.find(el => el?.currentStates.includes('blur'));
       });
       if (hasBlurredView) {
         const focusedView = views.find(view => {
           const graphicEls: any[] = view._data._graphicEls;
-          return !!graphicEls.find(el => !el.currentStates.includes('blur'));
+          return !!graphicEls.find(el => !el?.currentStates.includes('blur'));
         });
         if (focusedView) {
-          index = focusedView._model.seriesIndex;
+          index = !!focusedView._model ?
+            focusedView._model.seriesIndex : (!!focusedView.__model ? focusedView.__model.seriesIndex : -1);
         }
       }
     }
