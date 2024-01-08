@@ -23,8 +23,6 @@ import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType } from '@app/shared/models/entity-type.models';
 import { BroadcastService } from '@app/core/services/broadcast.service';
-import { EdgeService } from '@core/http/edge.service';
-import { EntityViewService } from '@core/http/entity-view.service';
 import { SubscriptSizing } from '@angular/material/form-field';
 import { isNotEmptyStr } from '@core/utils';
 import { EntityService } from '@core/http/entity.service';
@@ -81,8 +79,6 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
   constructor(private store: Store<AppState>,
               private broadcast: BroadcastService,
               public translate: TranslateService,
-              private edgeService: EdgeService,
-              private entityViewService: EntityViewService,
               private fb: UntypedFormBuilder,
               private entityService: EntityService) {
     this.subTypeFormGroup = this.fb.group({

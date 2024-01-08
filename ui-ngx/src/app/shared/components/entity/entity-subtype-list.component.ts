@@ -22,8 +22,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { EntitySubtype, EntityType } from '@shared/models/entity-type.models';
 import { MatAutocomplete, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatChipGrid, MatChipInputEvent } from '@angular/material/chips';
-import { EdgeService } from '@core/http/edge.service';
-import { EntityViewService } from '@core/http/entity-view.service';
 import { BroadcastService } from '@core/services/broadcast.service';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { AlarmService } from '@core/http/alarm.service';
@@ -124,8 +122,6 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
 
   constructor(private broadcast: BroadcastService,
               public translate: TranslateService,
-              private edgeService: EdgeService,
-              private entityViewService: EntityViewService,
               private alarmService: AlarmService,
               private utils: UtilsService,
               private fb: FormBuilder,
