@@ -29,11 +29,9 @@ import {
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
-import { DeviceProfileService } from '@core/http/device-profile.service';
 import { EntityType } from '@app/shared/models/entity-type.models';
 import { BroadcastService } from '@app/core/services/broadcast.service';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { AssetProfileService } from '@core/http/asset-profile.service';
 import { EntityViewService } from '@core/http/entity-view.service';
 import { EdgeService } from '@core/http/edge.service';
 import { MatFormFieldAppearance } from '@angular/material/form-field';
@@ -100,8 +98,6 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
   constructor(private store: Store<AppState>,
               private broadcast: BroadcastService,
               public translate: TranslateService,
-              private deviceProfileService: DeviceProfileService,
-              private assetProfileService: AssetProfileService,
               private edgeService: EdgeService,
               private entityViewService: EntityViewService,
               private fb: UntypedFormBuilder,
