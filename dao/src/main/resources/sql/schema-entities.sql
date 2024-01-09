@@ -551,7 +551,7 @@ CREATE TABLE IF NOT EXISTS key_dictionary
 (
     key    varchar(255) NOT NULL,
     key_id serial UNIQUE,
-    CONSTRAINT key_id_pkey PRIMARY KEY (key)
+    CONSTRAINT key_dictionary_id_pkey PRIMARY KEY (key)
 );
 
 CREATE TABLE IF NOT EXISTS oauth2_params (

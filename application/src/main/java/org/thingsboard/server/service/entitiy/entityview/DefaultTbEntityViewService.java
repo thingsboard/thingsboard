@@ -26,7 +26,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.User;
@@ -288,7 +287,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
                                                 (startTime == 0 && endTime > lastUpdateTs) ||
                                                 (startTime < lastUpdateTs && endTime > lastUpdateTs);
                                     }).collect(Collectors.toList());
-                    tsSubService.saveAndNotify(entityView.getTenantId(), entityId, scope.name(), attributes, new FutureCallback<Void>() {
+                    tsSubService.saveAndNotify(entityView.getTenantId(), entityId, scope, attributes, new FutureCallback<Void>() {
                         @Override
                         public void onSuccess(@Nullable Void tmp) {
                             try {
@@ -356,7 +355,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         EntityViewId entityId = entityView.getId();
         SettableFuture<Void> resultFuture = SettableFuture.create();
         if (keys != null && !keys.isEmpty()) {
-            tsSubService.deleteAndNotify(entityView.getTenantId(), entityId, scope.name(), keys, new FutureCallback<Void>() {
+            tsSubService.deleteAndNotify(entityView.getTenantId(), entityId, scope, keys, new FutureCallback<Void>() {
                 @Override
                 public void onSuccess(@Nullable Void tmp) {
                     try {

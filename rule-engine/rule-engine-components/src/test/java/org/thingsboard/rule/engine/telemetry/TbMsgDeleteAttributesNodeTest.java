@@ -25,6 +25,7 @@ import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -81,7 +82,7 @@ public class TbMsgDeleteAttributesNodeTest {
             callBack.onSuccess(null);
             return null;
         }).given(telemetryService).deleteAndNotify(
-                any(), any(), anyString(), anyList(), anyBoolean(), any());
+                any(), any(), any(AttributeScope.class), anyList(), anyBoolean(), any());
     }
 
     @AfterEach

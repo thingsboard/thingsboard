@@ -779,31 +779,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                 });
                 break;
             case "3.6.3":
-                updateSchema("3.6.3", 3006003, "3.7.0", 3007000, connection -> {
-                    try {
-                        Path pathToTempAttributeKvFile;
-                        if (SystemUtils.IS_OS_WINDOWS) {
-                            pathToTempAttributeKvFile = createTempFileWindows("attribute_kv_temp",".sql");
-                        } else {
-                            pathToTempAttributeKvFile = createTempFile("attribute_kv", "attribute_kv_temp.sql");
-                        }
-                        executeQuery(connection, "call insert_into_attribute_kv('" + pathToTempAttributeKvFile + "')");
-
-                        // remove attribute_kv_old
-                        executeQuery(connection, "call drop_attribute_kv_old_table()");
-
-                        //create index for new table attribute_kv
-                        executeQuery(connection, "CREATE INDEX IF NOT EXISTS idx_attribute_kv_by_key_and_last_update_ts ON attribute_kv(entity_id, attribute_key, last_update_ts desc);");
-
-                        // remove temp files
-                        boolean deleteTsKvFile = Files.deleteIfExists(pathToTempAttributeKvFile);
-                        if (deleteTsKvFile) {
-                            log.info("Successfully deleted the temp file for attribute_kv table upgrade!");
-                        }
-                    } catch (Exception e) {
-                        log.error("Failed updating schema!!!", e);
-                    }
-                });
+                updateSchema("3.6.3", 3006003, "3.7.0", 3007000, null);
                 break;
             default:
                 throw new RuntimeException("Unable to upgrade SQL database, unsupported fromVersion: " + fromVersion);
@@ -827,40 +803,6 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
         } catch (Exception e) {
             log.error("Failed updating schema!!!", e);
         }
-    }
-
-    private static Path createTempFile(String tempDirectoryName, String tempFileName) throws IOException {
-        Path pathToTempAttributeKvFile;
-        Path tempDirPath = Files.createTempDirectory(tempDirectoryName);
-        File tempDirAsFile = tempDirPath.toFile();
-        boolean writable = tempDirAsFile.setWritable(true, false);
-        boolean readable = tempDirAsFile.setReadable(true, false);
-        boolean executable = tempDirAsFile.setExecutable(true, false);
-        pathToTempAttributeKvFile = tempDirPath.resolve(tempFileName).toAbsolutePath();
-
-        if (!(writable && readable && executable)) {
-            throw new RuntimeException("Failed to grant write permissions for the: " + tempDirPath + "folder!");
-        }
-        return pathToTempAttributeKvFile;
-    }
-
-    private static Path createTempFileWindows(String prefix, String suffix) throws IOException {
-        Path pathToTempAttributeKvFile;
-        log.info("Lookup for environment variable: {} ...", THINGSBOARD_WINDOWS_UPGRADE_DIR);
-        Path pathToDir;
-        String thingsboardWindowsUpgradeDir = System.getenv("THINGSBOARD_WINDOWS_UPGRADE_DIR");
-        if (StringUtils.isNotEmpty(thingsboardWindowsUpgradeDir)) {
-            log.info("Environment variable: {} was found!", THINGSBOARD_WINDOWS_UPGRADE_DIR);
-            pathToDir = Paths.get(thingsboardWindowsUpgradeDir);
-        } else {
-            log.info("Failed to lookup environment variable: {}", THINGSBOARD_WINDOWS_UPGRADE_DIR);
-            pathToDir = Paths.get(PATH_TO_USERS_PUBLIC_FOLDER);
-        }
-        log.info("Directory: {} will be used for creation temporary upgrade files!", pathToDir);
-
-        Path attributeKvFile = Files.createTempFile(pathToDir, prefix, suffix);
-        pathToTempAttributeKvFile = attributeKvFile.toAbsolutePath();
-        return pathToTempAttributeKvFile;
     }
 
     private void runSchemaUpdateScript(Connection connection, String version) throws Exception {

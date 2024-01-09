@@ -252,7 +252,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
         JsonObject json = JsonUtils.getJsonObject(msg.getKvList());
         List<AttributeKvEntry> attributes = new ArrayList<>(JsonConverter.convertToAttributes(json));
         String scope = metaData.getValue("scope");
-        tsSubService.saveAndNotify(tenantId, entityId, scope, attributes, new FutureCallback<Void>() {
+        tsSubService.saveAndNotify(tenantId, entityId, AttributeScope.valueOf(scope), attributes, new FutureCallback<Void>() {
             @Override
             public void onSuccess(@Nullable Void tmp) {
                 var defaultQueueAndRuleChain = getDefaultQueueNameAndRuleChainId(tenantId, entityId);

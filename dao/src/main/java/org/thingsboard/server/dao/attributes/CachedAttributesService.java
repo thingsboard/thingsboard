@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.TbCacheValueWrapper;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -109,6 +110,11 @@ public class CachedAttributesService implements AttributesService {
 
 
     @Override
+    public ListenableFuture<Optional<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String scope, String attributeKey) {
+        return find(tenantId, entityId, AttributeScope.valueOf(scope), attributeKey);
+    }
+
+    @Override
     public ListenableFuture<Optional<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, AttributeScope scope, String attributeKey) {
         validate(entityId, scope);
         Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey);
@@ -135,6 +141,11 @@ public class CachedAttributesService implements AttributesService {
                 }
             });
         }
+    }
+
+    @Override
+    public ListenableFuture<List<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String scope, Collection<String> attributeKeys) {
+        return find(tenantId, entityId, AttributeScope.valueOf(scope), attributeKeys);
     }
 
     @Override
@@ -205,6 +216,11 @@ public class CachedAttributesService implements AttributesService {
     }
 
     @Override
+    public ListenableFuture<List<AttributeKvEntry>> findAll(TenantId tenantId, EntityId entityId, String scope) {
+        return findAll(tenantId, entityId, AttributeScope.valueOf(scope));
+    }
+
+    @Override
     public ListenableFuture<List<AttributeKvEntry>> findAll(TenantId tenantId, EntityId entityId, AttributeScope scope) {
         validate(entityId, scope);
         return Futures.immediateFuture(attributesDao.findAll(tenantId, entityId, scope));
@@ -216,8 +232,18 @@ public class CachedAttributesService implements AttributesService {
     }
 
     @Override
+    public List<String> findAllKeysByEntityIds(TenantId tenantId, EntityType entityType, List<EntityId> entityIds) {
+        return findAllKeysByEntityIds(tenantId, entityIds);
+    }
+
+    @Override
     public List<String> findAllKeysByEntityIds(TenantId tenantId, List<EntityId> entityIds) {
         return attributesDao.findAllKeysByEntityIds(tenantId, entityIds);
+    }
+
+    @Override
+    public ListenableFuture<String> save(TenantId tenantId, EntityId entityId, String scope, AttributeKvEntry attribute) {
+        return save(tenantId, entityId, AttributeScope.valueOf(scope), attribute);
     }
 
     @Override
@@ -226,6 +252,11 @@ public class CachedAttributesService implements AttributesService {
         AttributeUtils.validate(attribute, valueNoXssValidation);
         ListenableFuture<String> future = attributesDao.save(tenantId, entityId, scope, attribute);
         return Futures.transform(future, key -> evict(entityId, scope, attribute, key), cacheExecutor);
+    }
+
+    @Override
+    public ListenableFuture<List<String>> save(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
+        return save(tenantId, entityId, scope, attributes);
     }
 
     @Override
@@ -247,6 +278,11 @@ public class CachedAttributesService implements AttributesService {
         cache.evictOrPut(new AttributeCacheKey(scope, entityId, key), attribute);
         log.trace("[{}][{}][{}] after cache evict.", entityId, scope, key);
         return key;
+    }
+
+    @Override
+    public ListenableFuture<List<String>> removeAll(TenantId tenantId, EntityId entityId, String scope, List<String> attributeKeys) {
+        return removeAll(tenantId, entityId, AttributeScope.valueOf(scope), attributeKeys);
     }
 
     @Override

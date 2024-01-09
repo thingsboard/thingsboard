@@ -243,16 +243,35 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     @Override
+
+    public void saveAndNotify(TenantId tenantId, EntityId entityId, AttributeScope scope, List<AttributeKvEntry> attributes, FutureCallback<Void> callback) {
+        saveAndNotify(tenantId, entityId, scope, attributes, true, callback);
+    }
+
+    @Override
     public void saveAndNotify(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, boolean notifyDevice, FutureCallback<Void> callback) {
         checkInternalEntity(entityId);
         saveAndNotifyInternal(tenantId, entityId, scope, attributes, notifyDevice, callback);
     }
 
     @Override
+    public void saveAndNotify(TenantId tenantId, EntityId entityId, AttributeScope scope, List<AttributeKvEntry> attributes, boolean notifyDevice, FutureCallback<Void> callback) {
+        checkInternalEntity(entityId);
+        saveAndNotifyInternal(tenantId, entityId, scope, attributes, notifyDevice, callback);
+    }
+
+    @Override
     public void saveAndNotifyInternal(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, boolean notifyDevice, FutureCallback<Void> callback) {
-        ListenableFuture<List<String>> saveFuture = attrService.save(tenantId, entityId, AttributeScope.valueOf(scope), attributes);
+        ListenableFuture<List<String>> saveFuture = attrService.save(tenantId, entityId, scope, attributes);
         addVoidCallback(saveFuture, callback);
         addWsCallback(saveFuture, success -> onAttributesUpdate(tenantId, entityId, scope, attributes, notifyDevice));
+    }
+
+    @Override
+    public void saveAndNotifyInternal(TenantId tenantId, EntityId entityId, AttributeScope scope, List<AttributeKvEntry> attributes, boolean notifyDevice, FutureCallback<Void> callback) {
+        ListenableFuture<List<String>> saveFuture = attrService.save(tenantId, entityId, scope, attributes);
+        addVoidCallback(saveFuture, callback);
+        addWsCallback(saveFuture, success -> onAttributesUpdate(tenantId, entityId, scope.name(), attributes, notifyDevice));
     }
 
     @Override
@@ -275,16 +294,35 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     @Override
+    public void deleteAndNotify(TenantId tenantId, EntityId entityId, AttributeScope scope, List<String> keys, FutureCallback<Void> callback) {
+        checkInternalEntity(entityId);
+        deleteAndNotifyInternal(tenantId, entityId, scope, keys, false, callback);
+    }
+
+    @Override
     public void deleteAndNotify(TenantId tenantId, EntityId entityId, String scope, List<String> keys, boolean notifyDevice, FutureCallback<Void> callback) {
         checkInternalEntity(entityId);
         deleteAndNotifyInternal(tenantId, entityId, scope, keys, notifyDevice, callback);
     }
 
     @Override
+    public void deleteAndNotify(TenantId tenantId, EntityId entityId, AttributeScope scope, List<String> keys, boolean notifyDevice, FutureCallback<Void> callback) {
+        checkInternalEntity(entityId);
+        deleteAndNotifyInternal(tenantId, entityId, scope, keys, notifyDevice, callback);
+    }
+
+    @Override
     public void deleteAndNotifyInternal(TenantId tenantId, EntityId entityId, String scope, List<String> keys, boolean notifyDevice, FutureCallback<Void> callback) {
-        ListenableFuture<List<String>> deleteFuture = attrService.removeAll(tenantId, entityId, AttributeScope.valueOf(scope), keys);
+        ListenableFuture<List<String>> deleteFuture = attrService.removeAll(tenantId, entityId, scope, keys);
         addVoidCallback(deleteFuture, callback);
         addWsCallback(deleteFuture, success -> onAttributesDelete(tenantId, entityId, scope, keys, notifyDevice));
+    }
+
+    @Override
+    public void deleteAndNotifyInternal(TenantId tenantId, EntityId entityId, AttributeScope scope, List<String> keys, boolean notifyDevice, FutureCallback<Void> callback) {
+        ListenableFuture<List<String>> deleteFuture = attrService.removeAll(tenantId, entityId, scope, keys);
+        addVoidCallback(deleteFuture, callback);
+        addWsCallback(deleteFuture, success -> onAttributesDelete(tenantId, entityId, scope.name(), keys, notifyDevice));
     }
 
     @Override
@@ -328,8 +366,21 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                 , System.currentTimeMillis())), callback);
     }
 
+
+    @Override
+    public void saveAttrAndNotify(TenantId tenantId, EntityId entityId, AttributeScope scope, String key, long value, FutureCallback<Void> callback) {
+        saveAndNotify(tenantId, entityId, scope, Collections.singletonList(new BaseAttributeKvEntry(new LongDataEntry(key, value)
+                , System.currentTimeMillis())), callback);
+    }
+
     @Override
     public void saveAttrAndNotify(TenantId tenantId, EntityId entityId, String scope, String key, String value, FutureCallback<Void> callback) {
+        saveAndNotify(tenantId, entityId, scope, Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry(key, value)
+                , System.currentTimeMillis())), callback);
+    }
+
+    @Override
+    public void saveAttrAndNotify(TenantId tenantId, EntityId entityId, AttributeScope scope, String key, String value, FutureCallback<Void> callback) {
         saveAndNotify(tenantId, entityId, scope, Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry(key, value)
                 , System.currentTimeMillis())), callback);
     }
@@ -341,13 +392,32 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     @Override
+    public void saveAttrAndNotify(TenantId tenantId, EntityId entityId, AttributeScope scope, String key, double value, FutureCallback<Void> callback) {
+        saveAndNotify(tenantId, entityId, scope, Collections.singletonList(new BaseAttributeKvEntry(new DoubleDataEntry(key, value)
+                , System.currentTimeMillis())), callback);
+    }
+
+    @Override
     public void saveAttrAndNotify(TenantId tenantId, EntityId entityId, String scope, String key, boolean value, FutureCallback<Void> callback) {
         saveAndNotify(tenantId, entityId, scope, Collections.singletonList(new BaseAttributeKvEntry(new BooleanDataEntry(key, value)
                 , System.currentTimeMillis())), callback);
     }
 
     @Override
+    public void saveAttrAndNotify(TenantId tenantId, EntityId entityId, AttributeScope scope, String key, boolean value, FutureCallback<Void> callback) {
+        saveAndNotify(tenantId, entityId, scope, Collections.singletonList(new BaseAttributeKvEntry(new BooleanDataEntry(key, value)
+                , System.currentTimeMillis())), callback);
+    }
+
+    @Override
     public ListenableFuture<Void> saveAttrAndNotify(TenantId tenantId, EntityId entityId, String scope, String key, long value) {
+        SettableFuture<Void> future = SettableFuture.create();
+        saveAttrAndNotify(tenantId, entityId, scope, key, value, new VoidFutureCallback(future));
+        return future;
+    }
+
+    @Override
+    public ListenableFuture<Void> saveAttrAndNotify(TenantId tenantId, EntityId entityId, AttributeScope scope, String key, long value) {
         SettableFuture<Void> future = SettableFuture.create();
         saveAttrAndNotify(tenantId, entityId, scope, key, value, new VoidFutureCallback(future));
         return future;
@@ -361,6 +431,13 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     @Override
+    public ListenableFuture<Void> saveAttrAndNotify(TenantId tenantId, EntityId entityId, AttributeScope scope, String key, String value) {
+        SettableFuture<Void> future = SettableFuture.create();
+        saveAttrAndNotify(tenantId, entityId, scope, key, value, new VoidFutureCallback(future));
+        return future;
+    }
+
+    @Override
     public ListenableFuture<Void> saveAttrAndNotify(TenantId tenantId, EntityId entityId, String scope, String key, double value) {
         SettableFuture<Void> future = SettableFuture.create();
         saveAttrAndNotify(tenantId, entityId, scope, key, value, new VoidFutureCallback(future));
@@ -368,7 +445,21 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     @Override
+    public ListenableFuture<Void> saveAttrAndNotify(TenantId tenantId, EntityId entityId, AttributeScope scope, String key, double value) {
+        SettableFuture<Void> future = SettableFuture.create();
+        saveAttrAndNotify(tenantId, entityId, scope, key, value, new VoidFutureCallback(future));
+        return future;
+    }
+
+    @Override
     public ListenableFuture<Void> saveAttrAndNotify(TenantId tenantId, EntityId entityId, String scope, String key, boolean value) {
+        SettableFuture<Void> future = SettableFuture.create();
+        saveAttrAndNotify(tenantId, entityId, scope, key, value, new VoidFutureCallback(future));
+        return future;
+    }
+
+    @Override
+    public ListenableFuture<Void> saveAttrAndNotify(TenantId tenantId, EntityId entityId, AttributeScope scope, String key, boolean value) {
         SettableFuture<Void> future = SettableFuture.create();
         saveAttrAndNotify(tenantId, entityId, scope, key, value, new VoidFutureCallback(future));
         return future;

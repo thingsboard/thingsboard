@@ -21,14 +21,11 @@ $$
     BEGIN
         -- in case of running the upgrade script a second time:
         IF EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name = 'attribute_kv' and column_name='entity_type') THEN
-            IF EXISTS(SELECT 1 FROM pg_indexes WHERE indexname = 'idx_attribute_kv_by_key_and_last_update_ts') THEN
-                ALTER INDEX idx_attribute_kv_by_key_and_last_update_ts RENAME TO idx_attribute_kv_by_key_and_last_update_ts_old;
-            END IF;
+            ALTER INDEX IF EXISTS idx_attribute_kv_by_key_and_last_update_ts RENAME TO idx_attribute_kv_by_key_and_last_update_ts_old;
             IF EXISTS(SELECT 1 FROM pg_constraint WHERE conname = 'attribute_kv_pkey') THEN
                 ALTER TABLE attribute_kv RENAME CONSTRAINT attribute_kv_pkey TO attribute_kv_pkey_old;
             END IF;
-            ALTER TABLE attribute_kv
-                RENAME TO attribute_kv_old;
+            ALTER TABLE attribute_kv RENAME TO attribute_kv_old;
             CREATE TABLE IF NOT EXISTS attribute_kv
             (
                 entity_id uuid,
@@ -43,6 +40,8 @@ $$
                 CONSTRAINT attribute_kv_pkey PRIMARY KEY (entity_id, attribute_type, attribute_key)
             );
         END IF;
+        DROP VIEW IF EXISTS device_info_view;
+        DROP VIEW IF EXISTS device_info_active_attribute_view;
     END;
 $$;
 
@@ -51,14 +50,12 @@ DO
 $$
     BEGIN
         IF EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = 'ts_kv_dictionary') THEN
-            ALTER TABLE ts_kv_dictionary
-                RENAME CONSTRAINT ts_key_id_pkey TO key_id_pkey;
-            ALTER TABLE ts_kv_dictionary
-                RENAME TO key_dictionary;
+            ALTER TABLE ts_kv_dictionary RENAME CONSTRAINT ts_key_id_pkey TO key_dictionary_id_pkey;
+            ALTER TABLE ts_kv_dictionary RENAME TO key_dictionary;
         ELSE CREATE TABLE IF NOT EXISTS key_dictionary(
                 key    varchar(255) NOT NULL,
                 key_id serial UNIQUE,
-                CONSTRAINT key_id_pkey PRIMARY KEY (key)
+                CONSTRAINT key_dictionary_id_pkey PRIMARY KEY (key)
                 );
         END IF;
     END;
@@ -83,61 +80,36 @@ $$ LANGUAGE plpgsql;
 -- insert keys into key_dictionary
 DO
 $$
-DECLARE
-    insert_record RECORD;
-    key_cursor refcursor;
-BEGIN
-    IF EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = 'attribute_kv_old') THEN
-        OPEN key_cursor FOR SELECT DISTINCT attribute_key
-                          FROM attribute_kv_old
-                          ORDER BY attribute_key;
-        LOOP
-            FETCH key_cursor INTO insert_record;
-            EXIT WHEN NOT FOUND;
-            IF NOT EXISTS(SELECT key FROM key_dictionary WHERE key = insert_record.attribute_key) THEN
-                INSERT INTO key_dictionary(key) VALUES (insert_record.attribute_key);
-            END IF;
-        END LOOP;
-        CLOSE key_cursor;
-    END IF;
-END;
+    BEGIN
+        IF EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = 'attribute_kv_old') THEN
+            INSERT INTO key_dictionary(key) SELECT DISTINCT attribute_key FROM attribute_kv_old ON CONFLICT DO NOTHING;
+        END IF;
+    END;
 $$;
 
--- create procedure to migrate all rows from attribute_kv_old to attribute_kv
-CREATE OR REPLACE PROCEDURE insert_into_attribute_kv(IN path_to_file varchar)
-    LANGUAGE plpgsql AS
+-- migrate attributes from attribute_kv_old to attribute_kv
+DO
 $$
 DECLARE
     row_num_old integer;
     row_num integer;
-    attribute_scope_array text[];
 BEGIN
-    attribute_scope_array :=  ARRAY['SERVER_SCOPE', 'CLIENT_SCOPE', 'SHARED_SCOPE'];
     IF EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = 'attribute_kv_old') THEN
-        EXECUTE format('COPY (SELECT records.entity_id                           AS entity_id,
-                               to_attribute_type_id(records.attribute_type)  AS attribute_type,
-                               records.attribute_key                         AS attribute_key,
-                               records.bool_v                                AS bool_v,
-                               records.str_v                                 AS str_v,
-                               records.long_v                                AS long_v,
-                               records.dbl_v                                 AS dbl_v,
-                               records.json_v                                AS json_v,
-                               records.last_update_ts                        AS last_update_ts
-                   FROM (SELECT entity_id,
-                               attribute_type,
-                               key_id AS attribute_key,
-                               bool_v,
-                               str_v,
-                               long_v,
-                               dbl_v,
-                               json_v,
-                               last_update_ts
-                        FROM attribute_kv_old INNER JOIN key_dictionary ON (attribute_kv_old.attribute_key = key_dictionary.key)
-                        WHERE attribute_type= ANY(%L)) AS records) TO %L;', attribute_scope_array, path_to_file);
-        EXECUTE format('COPY attribute_kv FROM %L', path_to_file);
+        INSERT INTO attribute_kv(entity_id, attribute_type, attribute_key, bool_v, str_v, long_v, dbl_v, json_v, last_update_ts)
+            SELECT a.entity_id, to_attribute_type_id(a.attribute_type), k.key_id,  a.bool_v, a.str_v, a.long_v, a.dbl_v, a.json_v, a.last_update_ts
+                FROM attribute_kv_old a INNER JOIN key_dictionary k ON (a.attribute_key = k.key)
+                    WHERE a.attribute_type IN ('SERVER_SCOPE', 'CLIENT_SCOPE', 'SHARED_SCOPE');
         SELECT COUNT(*) INTO row_num_old FROM attribute_kv_old;
         SELECT COUNT(*) INTO row_num FROM attribute_kv;
         RAISE NOTICE 'Migrated % of % rows', row_num, row_num_old;
+
+        IF row_num != 0 THEN
+            DROP TABLE IF EXISTS attribute_kv_old;
+        ELSE
+           RAISE EXCEPTION 'Table attribute_kv is empty';
+        END IF;
+
+        CREATE INDEX IF NOT EXISTS idx_attribute_kv_by_key_and_last_update_ts ON attribute_kv(entity_id, attribute_key, last_update_ts desc);
     END IF;
 EXCEPTION
     WHEN others THEN
@@ -145,21 +117,3 @@ EXCEPTION
         RAISE EXCEPTION 'Error during COPY: %', SQLERRM;
 END
 $$;
-
-CREATE OR REPLACE PROCEDURE drop_attribute_kv_old_table()
-    LANGUAGE plpgsql AS
-$$
-DECLARE
-    row_num integer;
-BEGIN
-    SELECT COUNT(*) INTO row_num FROM attribute_kv;
-    IF row_num != 0 then
-        DROP TABLE IF EXISTS attribute_kv_old;
-        DROP PROCEDURE IF EXISTS insert_into_attribute_kv(IN path_to_file varchar);
-    ELSE
-        RAISE EXCEPTION 'Table attribute_kv is empty';
-    END IF;
-    RETURN;
-END;
-$$;
-

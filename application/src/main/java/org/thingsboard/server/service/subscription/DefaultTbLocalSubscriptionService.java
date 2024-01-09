@@ -449,8 +449,8 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         }
         final Map<String, Long> keyStates = subscription.getKeyStates();
         AttributeScope scope;
-        if (subscription.getScope() != null && !TbAttributeSubscriptionScope.ANY_SCOPE.equals(subscription.getScope())) {
-            scope = AttributeScope.valueOf(subscription.getScope().name());
+        if (subscription.getScope() != null && subscription.getScope().getAttributeScope() != null) {
+            scope = subscription.getScope().getAttributeScope();
         } else {
             scope = AttributeScope.CLIENT_SCOPE;
         }

@@ -438,14 +438,14 @@ public class TbMathNodeTest {
 
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, TbMsgMetaData.EMPTY, JacksonUtil.newObjectNode().put("a", 5).toString());
 
-        when(telemetryService.saveAttrAndNotify(any(), any(), anyString(), anyString(), anyDouble()))
+        when(telemetryService.saveAttrAndNotify(any(), any(), any(AttributeScope.class), anyString(), anyDouble()))
                 .thenReturn(Futures.immediateFuture(null));
 
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         verify(ctx, timeout(TIMEOUT)).tellSuccess(msgCaptor.capture());
-        verify(telemetryService, times(1)).saveAttrAndNotify(any(), any(), anyString(), anyString(), anyDouble());
+        verify(telemetryService, times(1)).saveAttrAndNotify(any(), any(), any(AttributeScope.class), anyString(), anyDouble());
 
         TbMsg resultMsg = msgCaptor.getValue();
         assertNotNull(resultMsg);
