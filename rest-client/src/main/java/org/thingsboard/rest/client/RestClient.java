@@ -2767,11 +2767,22 @@ public class RestClient implements Closeable {
     }
 
     public WidgetTypeDetails saveWidgetType(WidgetTypeDetails widgetTypeDetails) {
-        return restTemplate.postForEntity(baseURL + "/api/widgetType", widgetTypeDetails, WidgetTypeDetails.class).getBody();
+        return saveWidgetType(widgetTypeDetails, null);
+    }
+
+    public WidgetTypeDetails saveWidgetType(WidgetTypeDetails widgetTypeDetails, Boolean updateExistingByFqn) {
+        if (updateExistingByFqn == null) {
+            return restTemplate.postForEntity(baseURL + "/api/widgetType", widgetTypeDetails, WidgetTypeDetails.class).getBody();
+        }
+        return restTemplate.postForEntity(baseURL + "/api/widgetType?updateExistingByFqn={updateExistingByFqn}", widgetTypeDetails, WidgetTypeDetails.class, updateExistingByFqn).getBody();
     }
 
     public void deleteWidgetType(WidgetTypeId widgetTypeId) {
         restTemplate.delete(baseURL + "/api/widgetType/{widgetTypeId}", widgetTypeId.getId());
+    }
+
+    public PageData<WidgetTypeInfo> getWidgetTypes(PageLink pageLink) {
+        return getWidgetTypes(pageLink, null, null, null, null);
     }
 
     public PageData<WidgetTypeInfo> getWidgetTypes(PageLink pageLink, Boolean tenantOnly, Boolean fullSearch,
@@ -2854,6 +2865,10 @@ public class RestClient implements Closeable {
                 },
                 isSystem,
                 bundleAlias).getBody();
+    }
+
+    public PageData<WidgetTypeInfo> getBundleWidgetTypesInfos(WidgetsBundleId widgetsBundleId, PageLink pageLink) {
+        return getBundleWidgetTypesInfos(widgetsBundleId, pageLink, null, null, null, null);
     }
 
     public PageData<WidgetTypeInfo> getBundleWidgetTypesInfos(WidgetsBundleId widgetsBundleId, PageLink pageLink,
