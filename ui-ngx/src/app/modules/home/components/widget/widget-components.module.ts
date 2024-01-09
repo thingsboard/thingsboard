@@ -119,7 +119,6 @@ import { RangeChartWidgetComponent } from '@home/components/widget/lib/chart/ran
   ],
     exports: [
         EntitiesTableWidgetComponent,
-        SelectEntityDialogComponent,
         AlarmsTableWidgetComponent,
         TimeseriesTableWidgetComponent,
         EntitiesHierarchyWidgetComponent,

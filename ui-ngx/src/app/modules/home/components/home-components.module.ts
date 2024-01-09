@@ -323,14 +323,14 @@ import { WidgetComponentsModule } from '@home/components/widget/widget-component
     SharedModule,
     SharedHomeComponentsModule,
     WidgetConfigComponentsModule,
-    BasicWidgetConfigModule,
     Lwm2mProfileComponentsModule,
     SnmpDeviceProfileTransportModule,
     StatesControllerModule,
     DeviceCredentialsModule,
     DeviceProfileCommonModule,
     WidgetSettingsCommonModule,
-    WidgetComponentsModule
+    WidgetComponentsModule,
+    BasicWidgetConfigModule
   ],
   exports: [
     WidgetComponentsModule,
@@ -456,7 +456,8 @@ import { WidgetComponentsModule } from '@home/components/widget/widget-component
     RateLimitsComponent,
     RateLimitsTextComponent,
     RateLimitsDetailsDialogComponent,
-    SendNotificationButtonComponent
+    SendNotificationButtonComponent,
+    BasicWidgetConfigModule
   ],
   providers: [
     WidgetComponentService,

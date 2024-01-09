@@ -23,8 +23,13 @@ import {
   SimpleCardBasicConfigComponent
 } from '@home/components/widget/config/basic/cards/simple-card-basic-config.component';
 import {
+  WidgetActionsPanelComponent
+} from '@home/components/widget/config/basic/common/widget-actions-panel.component';
+import {
   EntitiesTableBasicConfigComponent
 } from '@home/components/widget/config/basic/entity/entities-table-basic-config.component';
+import { DataKeysPanelComponent } from '@home/components/widget/config/basic/common/data-keys-panel.component';
+import { DataKeyRowComponent } from '@home/components/widget/config/basic/common/data-key-row.component';
 import {
   TimeseriesTableBasicConfigComponent
 } from '@home/components/widget/config/basic/cards/timeseries-table-basic-config.component';
@@ -86,6 +91,7 @@ import {
 
 @NgModule({
   declarations: [
+    WidgetActionsPanelComponent,
     SimpleCardBasicConfigComponent,
     EntitiesTableBasicConfigComponent,
     TimeseriesTableBasicConfigComponent,
@@ -95,6 +101,8 @@ import {
     AggregatedValueCardBasicConfigComponent,
     AggregatedDataKeyRowComponent,
     AggregatedDataKeysPanelComponent,
+    DataKeyRowComponent,
+    DataKeysPanelComponent,
     AlarmCountBasicConfigComponent,
     EntityCountBasicConfigComponent,
     BatteryLevelBasicConfigComponent,
@@ -115,6 +123,7 @@ import {
     WidgetConfigComponentsModule
   ],
   exports: [
+    WidgetActionsPanelComponent,
     SimpleCardBasicConfigComponent,
     EntitiesTableBasicConfigComponent,
     TimeseriesTableBasicConfigComponent,
@@ -124,6 +133,8 @@ import {
     AggregatedValueCardBasicConfigComponent,
     AggregatedDataKeyRowComponent,
     AggregatedDataKeysPanelComponent,
+    DataKeyRowComponent,
+    DataKeysPanelComponent,
     AlarmCountBasicConfigComponent,
     EntityCountBasicConfigComponent,
     BatteryLevelBasicConfigComponent,
