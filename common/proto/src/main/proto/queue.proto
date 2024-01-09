@@ -1506,7 +1506,6 @@ message NotificationSchedulerServiceMsg {
 }
 
 message NotificationRuleProcessorMsg {
-  //Json
   bytes trigger = 1;
 }
 

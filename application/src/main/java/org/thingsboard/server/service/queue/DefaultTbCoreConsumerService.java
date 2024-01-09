@@ -28,6 +28,7 @@ import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.common.data.JavaSerDesUtil;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.event.ErrorEvent;
 import org.thingsboard.server.common.data.event.Event;
@@ -383,7 +384,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             forwardToSubMgrService(toCoreNotification.getToSubscriptionMgrMsg(), callback);
         } else if (toCoreNotification.hasNotificationRuleProcessorMsg()) {
             NotificationRuleTrigger notificationRuleTrigger =
-                    JacksonUtil.fromBytes(toCoreNotification.getNotificationRuleProcessorMsg().getTrigger().toByteArray(), NotificationRuleTrigger.class);
+                    JavaSerDesUtil.decode(toCoreNotification.getNotificationRuleProcessorMsg().getTrigger().toByteArray());
             notificationRuleProcessor.process(notificationRuleTrigger);
             callback.onSuccess();
         } else if (toCoreNotification.hasResourceCacheInvalidateMsg()) {

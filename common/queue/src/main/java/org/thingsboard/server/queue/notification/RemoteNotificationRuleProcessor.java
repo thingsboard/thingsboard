@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.JavaSerDesUtil;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTrigger;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -53,7 +53,7 @@ public class RemoteNotificationRuleProcessor implements NotificationRuleProcesso
 
             log.debug("Submitting notification rule trigger: {}", trigger);
             TransportProtos.NotificationRuleProcessorMsg.Builder msg = TransportProtos.NotificationRuleProcessorMsg.newBuilder()
-                    .setTrigger(ByteString.copyFrom(JacksonUtil.writeValueAsBytes(trigger)));
+                    .setTrigger(ByteString.copyFrom(JavaSerDesUtil.encode(trigger)));
 
             partitionService.getAllServiceIds(ServiceType.TB_CORE).stream().findAny().ifPresent(serviceId -> {
                 TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_CORE, serviceId);
