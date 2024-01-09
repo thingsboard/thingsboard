@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -215,6 +215,7 @@ import { ImagesInUseDialogComponent } from '@shared/components/image/images-in-u
 import { GalleryImageInputComponent } from '@shared/components/image/gallery-image-input.component';
 import { MultipleGalleryImageInputComponent } from '@shared/components/image/multiple-gallery-image-input.component';
 import { EmbedImageDialogComponent } from '@shared/components/image/embed-image-dialog.component';
+import { ImageGalleryDialogComponent } from '@shared/components/image/image-gallery-dialog.component';
 import { RuleChainSelectPanelComponent } from '@shared/components/rule-chain/rule-chain-select-panel.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
@@ -412,7 +413,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ImagesInUseDialogComponent,
     GalleryImageInputComponent,
     MultipleGalleryImageInputComponent,
-    EmbedImageDialogComponent
+    EmbedImageDialogComponent,
+    ImageGalleryDialogComponent
   ],
   imports: [
     CommonModule,
@@ -663,7 +665,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ImagesInUseDialogComponent,
     GalleryImageInputComponent,
     MultipleGalleryImageInputComponent,
-    EmbedImageDialogComponent
+    EmbedImageDialogComponent,
+    ImageGalleryDialogComponent
   ]
 })
 export class SharedModule { }

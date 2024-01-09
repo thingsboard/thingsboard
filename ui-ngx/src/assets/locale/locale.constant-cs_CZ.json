@@ -2411,7 +2411,6 @@
         "search": "Vyhledat řetězy pravidel",
         "selected-rulechains": "Vybráno { count, plural, =1 {1 řetězů pravidel} other {# řetězů pravidel} }",
         "open-rulechain": "Otevřít řetěz pravidel",
-        "assign-new-rulechain": "Přiřadit nový řetěz pravidel",
         "edge-template-root": "Hlavní šablona",
         "assign-to-edge": "Přiřadit k edge",
         "edge-rulechain": "Řetěz pravidel edge",

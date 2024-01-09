@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -81,8 +80,6 @@ public class DefaultUpdateService implements UpdateService {
     private final RestTemplate restClient = new RestTemplate();
 
     private UpdateMessage updateMessage;
-    private EdgeUpgradeMessage edgeUpgradeMessage;
-    private String edgeInstallVersion;
 
     private String platform;
     private String version;
@@ -94,7 +91,6 @@ public class DefaultUpdateService implements UpdateService {
         updateMessage = new UpdateMessage(false, version, "", "",
                 "https://thingsboard.io/docs/reference/releases",
                 "https://thingsboard.io/docs/reference/releases");
-        edgeUpgradeMessage = new EdgeUpgradeMessage(new HashMap<>());
         if (updatesEnabled) {
             try {
                 platform = System.getProperty("platform", "unknown");
@@ -173,5 +169,4 @@ public class DefaultUpdateService implements UpdateService {
     public UpdateMessage checkUpdates() {
         return updateMessage;
     }
-
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,6 @@ public class DeviceConnectivityUtil {
     public static final String HTTP = "http";
     public static final String HTTPS = "https";
     public static final String MQTT = "mqtt";
-    public static final String LINUX = "linux";
-    public static final String WINDOWS = "windows";
-    public static final String MACOS = "macos";
     public static final String DOCKER = "docker";
     public static final String MQTTS = "mqtts";
     public static final String COAP = "coap";

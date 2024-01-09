@@ -1866,7 +1866,6 @@
         "set-root-rulechain-title": "Voulez-vous vraiment que la chaîne de règles '{{ruleChainName}} soit racine  (root) ?",
         "system": "Système",
         "assign-rulechains": "Attribuer aux chaînes de règles",
-        "assign-new-rulechain": "Attribuer une nouvele chaînes de règles",
         "delete-rulechains": "Supprimer une chaînes de règles",
         "unassign-rulechain": "Retirer chaîne de règles",
         "unassign-rulechains": "Retirer chaînes de règles",

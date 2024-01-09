@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -172,10 +172,10 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     if (ruleChainScope === 'edge') {
       actions.push(
         {
-          name: this.translate.instant('rulechain.assign-new-rulechain'),
+          name: this.translate.instant('rulechain.assign-to-edge'),
           icon: 'add',
           isEnabled: () => true,
-          onAction: ($event) => this.addRuleChainsToEdge($event)
+          onAction: ($event) => this.assignRuleChainsToEdge($event)
         }
       );
     }
@@ -442,7 +442,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     );
   }
 
-  addRuleChainsToEdge($event: Event) {
+  assignRuleChainsToEdge($event: Event) {
     if ($event) {
       $event.stopPropagation();
     }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,12 +18,13 @@ import {
   BackgroundSettings,
   BackgroundType,
   ColorRange,
-  DateFormatSettings,
-  Font, simpleDateFormat
+  Font,
+  simpleDateFormat
 } from '@shared/models/widget-settings.models';
 import { LegendPosition } from '@shared/models/widget.models';
+import { EChartsTooltipWidgetSettings } from '@home/components/widget/lib/chart/echarts-widget.models';
 
-export interface RangeChartWidgetSettings {
+export interface RangeChartWidgetSettings extends EChartsTooltipWidgetSettings {
   dataZoom: boolean;
   rangeColors: Array<ColorRange>;
   outOfRangeColor: string;
@@ -32,15 +33,6 @@ export interface RangeChartWidgetSettings {
   legendPosition: LegendPosition;
   legendLabelFont: Font;
   legendLabelColor: string;
-  showTooltip: boolean;
-  tooltipValueFont: Font;
-  tooltipValueColor: string;
-  tooltipShowDate: boolean;
-  tooltipDateFormat: DateFormatSettings;
-  tooltipDateFont: Font;
-  tooltipDateColor: string;
-  tooltipBackgroundColor: string;
-  tooltipBackgroundBlur: number;
   background: BackgroundSettings;
 }
 

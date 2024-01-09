@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,15 +20,13 @@ import { AppState } from '@core/core.state';
 import { EntityComponent } from '@home/components/entity/entity.component';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { EntityType } from '@shared/models/entity-type.models';
-import { EdgeInfo, edgeVersionAttributeKey } from '@shared/models/edge.models';
+import { EdgeInfo } from '@shared/models/edge.models';
 import { TranslateService } from '@ngx-translate/core';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { generateSecret, guid } from '@core/utils';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
-import { environment as env } from '@env/environment';
-import { AttributeService } from '@core/http/attribute.service';
-import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
+import {EdgeService} from "@core/http/edge.service";
 
 @Component({
   selector: 'tb-edge',
@@ -44,7 +42,7 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
-              private attributeService: AttributeService,
+              private edgeService: EdgeService,
               @Inject('entity') protected entityValue: EdgeInfo,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<EdgeInfo>,
               public fb: UntypedFormBuilder,
@@ -100,7 +98,10 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
       }
     });
     this.generateRoutingKeyAndSecret(entity, this.entityForm);
-    this.checkEdgeVersion();
+    this.edgeService.isEdgeUpgradeAvailable(this.entity.id.id)
+      .subscribe(isUpgradeAvailable => {
+          this.upgradeAvailable = isUpgradeAvailable;
+      });
   }
 
   updateFormState() {
@@ -138,26 +139,5 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
       form.get('routingKey').patchValue(guid(), {emitEvent: false});
       form.get('secret').patchValue(generateSecret(20), {emitEvent: false});
     }
-  }
-
-  checkEdgeVersion() {
-    this.attributeService.getEntityAttributes(this.entity.id, AttributeScope.SERVER_SCOPE, [edgeVersionAttributeKey])
-      .subscribe(attributes => {
-        if (attributes?.length) {
-          const edgeVersion = attributes[0].value;
-          const tbVersion = 'V_' + env.tbVersion.replaceAll('.', '_');
-          this.upgradeAvailable = this.versionUpgradeSupported(edgeVersion) && (edgeVersion !== tbVersion);
-        } else {
-          this.upgradeAvailable = false;
-        }
-      }
-    );
-  }
-
-  private versionUpgradeSupported(edgeVersion: string): boolean {
-    const edgeVersionArray = edgeVersion.split('_');
-    const major = parseInt(edgeVersionArray[1]);
-    const minor = parseInt(edgeVersionArray[2]);
-    return major >= 3 && minor >= 6;
   }
 }
