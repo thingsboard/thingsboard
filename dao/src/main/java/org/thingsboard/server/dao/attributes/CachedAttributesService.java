@@ -144,8 +144,8 @@ public class CachedAttributesService implements AttributesService {
     }
 
     @Override
-    public ListenableFuture<List<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String scope, Collection<String> attributeKeys) {
-        return find(tenantId, entityId, AttributeScope.valueOf(scope), attributeKeys);
+    public ListenableFuture<List<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String scope, final Collection<String> attributeKeysNonUnique) {
+        return find(tenantId, entityId, AttributeScope.valueOf(scope), attributeKeysNonUnique);
     }
 
     @Override
