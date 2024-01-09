@@ -215,7 +215,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
 
     private void deleteAsset(TenantId tenantId, Asset asset) {
         log.trace("Executing deleteAsset [{}]", asset.getId());
-        relationService.deleteEntityRelations(tenantId, asset.getAssetProfileId());
+        relationService.deleteEntityRelations(tenantId, asset.getId());
 
         assetDao.removeById(tenantId, asset.getUuidId());
 
