@@ -130,13 +130,14 @@ public class ImageControllerTest extends AbstractControllerTest {
         checkPngImageDescriptor(imageInfo.getDescriptor(ImageDescriptor.class));
 
         String newFilename = "my_jpeg_image.png";
-        imageInfo = uploadImage(HttpMethod.PUT, "/api/images/tenant/" + filename, newFilename, "image/jpeg", JPEG_IMAGE);
+        TbResourceInfo newImageInfo = uploadImage(HttpMethod.PUT, "/api/images/tenant/" + filename, newFilename, "image/jpeg", JPEG_IMAGE);
 
-        assertThat(imageInfo.getTitle()).isEqualTo(filename);
-        assertThat(imageInfo.getResourceKey()).isEqualTo(filename);
-        assertThat(imageInfo.getFileName()).isEqualTo(newFilename);
+        assertThat(newImageInfo.getTitle()).isEqualTo(filename);
+        assertThat(newImageInfo.getResourceKey()).isEqualTo(filename);
+        assertThat(newImageInfo.getFileName()).isEqualTo(newFilename);
+        assertThat(newImageInfo.getPublicResourceKey()).isEqualTo(imageInfo.getPublicResourceKey());
 
-        ImageDescriptor imageDescriptor = imageInfo.getDescriptor(ImageDescriptor.class);
+        ImageDescriptor imageDescriptor = newImageInfo.getDescriptor(ImageDescriptor.class);
         checkJpegImageDescriptor(imageDescriptor);
 
         assertThat(downloadImage("tenant", filename)).containsExactly(JPEG_IMAGE);
@@ -154,12 +155,15 @@ public class ImageControllerTest extends AbstractControllerTest {
         assertThat(imageInfo.getFileName()).isEqualTo(filename);
 
         String newTitle = "My PNG image";
-        imageInfo.setTitle(newTitle);
-        imageInfo.setDescriptor(JacksonUtil.newObjectNode());
-        imageInfo = doPut("/api/images/tenant/" + filename + "/info", imageInfo, TbResourceInfo.class);
+        TbResourceInfo newImageInfo = new TbResourceInfo(imageInfo);
+        newImageInfo.setTitle(newTitle);
+        newImageInfo.setDescriptor(JacksonUtil.newObjectNode());
+        newImageInfo = doPut("/api/images/tenant/" + filename + "/info", newImageInfo, TbResourceInfo.class);
 
-        assertThat(imageInfo.getTitle()).isEqualTo(newTitle);
-        assertThat(imageInfo.getDescriptor(ImageDescriptor.class)).isEqualTo(imageDescriptor);
+        assertThat(newImageInfo.getTitle()).isEqualTo(newTitle);
+        assertThat(newImageInfo.getDescriptor(ImageDescriptor.class)).isEqualTo(imageDescriptor);
+        assertThat(newImageInfo.getResourceKey()).isEqualTo(imageInfo.getResourceKey());
+        assertThat(newImageInfo.getPublicResourceKey()).isEqualTo(newImageInfo.getPublicResourceKey());
     }
 
     @Test
