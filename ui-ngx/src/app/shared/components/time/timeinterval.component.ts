@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
     if (typeof maxValueData !== 'undefined' && maxValueData !== this.maxValue) {
       this.maxValue = maxValueData;
       this.minValue = Math.min(this.minValue, this.maxValue);
-      this.updateView();
+      this.updateView(true);
     }
   }
 
@@ -138,7 +138,7 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
     this.secs = intervalSeconds % 60;
   }
 
-  boundInterval() {
+  boundInterval(updateToPreferred = false) {
     const min = this.timeService.boundMinInterval(this.minValue);
     const max = this.timeService.boundMaxInterval(this.maxValue);
     this.intervals = this.timeService.getIntervals(this.minValue, this.maxValue);
@@ -146,8 +146,8 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
       let newIntervalMs = this.modelValue;
       if (newIntervalMs < min) {
         newIntervalMs = min;
-      } else if (newIntervalMs > max) {
-        newIntervalMs = max;
+      } else if (newIntervalMs >= max && updateToPreferred) {
+        newIntervalMs = this.timeService.boundMaxInterval(max / 7);
       }
       if (!this.advanced) {
         newIntervalMs = this.timeService.boundToPredefinedInterval(min, max, newIntervalMs);
@@ -159,7 +159,7 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
     }
   }
 
-  updateView() {
+  updateView(updateToPreferred = false) {
     if (!this.rendered) {
       return;
     }
@@ -178,7 +178,7 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
     }
     this.modelValue = value;
     this.propagateChange(this.modelValue);
-    this.boundInterval();
+    this.boundInterval(updateToPreferred);
   }
 
   calculateIntervalMs(): number {
