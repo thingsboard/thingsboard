@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.ws.telemetry.cmd.v2;
 
 import org.thingsboard.server.common.data.kv.Aggregation;
+import org.thingsboard.server.common.data.kv.IntervalType;
 
 import java.util.List;
 
@@ -27,7 +28,11 @@ public interface GetTsCmd {
 
     List<String> getKeys();
 
+    IntervalType getIntervalType();
+
     long getInterval();
+
+    String getTimeZoneId();
 
     int getLimit();
 
