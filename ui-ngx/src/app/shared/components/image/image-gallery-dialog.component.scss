@@ -1,0 +1,32 @@
+@import '../../../../scss/constants';
+
+:host {
+  .tb-image-gallery-dialog {
+    position: relative;
+    padding: 24px 32px 16px 32px;
+    width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+    @media #{$mat-gt-xs} {
+      width: 80vw;
+      height: 80vh;
+      max-height: 80vh;
+    }
+    @media #{$mat-gt-sm} {
+      width: 700px;
+    }
+    @media #{$mat-gt-md} {
+      width: 900px;
+    }
+    @media #{$mat-gt-xl} {
+      width: 900px;
+    }
+    .tb-image-gallery-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 1;
+      color: rgba(0, 0, 0, 0.38);
+    }
+  }
+}
