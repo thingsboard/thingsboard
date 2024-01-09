@@ -42,4 +42,7 @@ public class TbAwsSqsSettings {
     @Value("${queue.aws_sqs.threads_per_topic}")
     private int threadsPerTopic;
 
+    @Value("${queue.aws_sqs.producer_thread_pool_size:50}")
+    private int threadPoolSize;
+
 }
