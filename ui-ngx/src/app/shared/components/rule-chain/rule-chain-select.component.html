@@ -16,12 +16,11 @@
 
 -->
 <mat-form-field class="tb-rule-select" subscriptSizing="dynamic" appearance="fill"
-                [ngClass]="{'cursor-pointer': !disabled}"
+                [class.cursor-pointer]="!disabled"
                 (click)="openRuleChainSelectPanel($event)">
   <mat-icon matPrefix>settings_ethernet</mat-icon>
-  <input matInput readonly
+  <input matInput readonly disabled
          [required]="required"
-         [disabled]="disabled"
          [value]="ruleChain?.name">
-  <mat-icon [ngClass]="{'disabled': disabled || panelOpened}" matSuffix>arrow_drop_down</mat-icon>
+  <mat-icon [class.disabled]="disabled || panelOpened" matSuffix>arrow_drop_down</mat-icon>
 </mat-form-field>

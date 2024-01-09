@@ -22,13 +22,14 @@
          (focusin)="onFocus()"
          [matAutocomplete]="ruleChainAutocomplete">
   <mat-icon matSuffix>search</mat-icon>
-  <mat-autocomplete class="tb-autocomplete"
+  <mat-autocomplete class="tb-autocomplete tb-rule-chain-search"
                     #ruleChainAutocomplete="matAutocomplete"
                     (optionSelected)="selected($event)">
     <mat-option *ngFor="let ruleChain of filteredRuleChains | async"
-                [fxHide]="ruleChainId === ruleChain.id.id"
+                [class.tb-selected-option]="ruleChainId === ruleChain.id.id"
                 [value]="ruleChain">
-      <span [innerHTML]="ruleChain.name | highlight:searchText"></span>
+      <mat-icon *ngIf="ruleChainId === ruleChain.id.id">check</mat-icon>
+      <span [innerHTML]="ruleChain.name | highlight:searchText:true"></span>
     </mat-option>
     <mat-option *ngIf="!(filteredRuleChains | async)?.length" [value]="null" class="tb-not-found">
       <div class="tb-not-found-content" (click)="$event.stopPropagation()">

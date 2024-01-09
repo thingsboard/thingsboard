@@ -23,6 +23,8 @@
     input {
       color: #fff;
       cursor: pointer;
+      text-overflow: ellipsis;
+      pointer-events: none;
 
       &:disabled {
         cursor: unset;
