@@ -15,7 +15,12 @@
 ///
 
 import { Component } from '@angular/core';
-import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
+import {
+  legendPositions,
+  legendPositionTranslationMap,
+  WidgetSettings,
+  WidgetSettingsComponent
+} from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -26,8 +31,6 @@ import {
   doughnutLayoutImages,
   doughnutLayouts,
   doughnutLayoutTranslations,
-  doughnutLegendPositions,
-  doughnutLegendPositionTranslations,
   DoughnutTooltipValueType,
   doughnutTooltipValueTypes,
   doughnutTooltipValueTypeTranslations,
@@ -55,9 +58,9 @@ export class DoughnutWidgetSettingsComponent extends WidgetSettingsComponent {
 
   doughnutLayoutImageMap: Map<DoughnutLayout, string>;
 
-  doughnutLegendPositions = doughnutLegendPositions;
+  legendPositions = legendPositions;
 
-  doughnutLegendPositionTranslationMap = doughnutLegendPositionTranslations;
+  legendPositionTranslationMap = legendPositionTranslationMap;
 
   doughnutTooltipValueTypes = doughnutTooltipValueTypes;
 

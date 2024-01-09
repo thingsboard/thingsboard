@@ -14,21 +14,17 @@
 /// limitations under the License.
 ///
 
-import {
-  BackgroundSettings,
-  BackgroundType,
-  ColorRange,
-  Font,
-  simpleDateFormat
-} from '@shared/models/widget-settings.models';
+import { BackgroundSettings, BackgroundType, customDateFormat, Font } from '@shared/models/widget-settings.models';
 import { LegendPosition } from '@shared/models/widget.models';
 import { EChartsTooltipWidgetSettings } from '@home/components/widget/lib/chart/echarts-widget.models';
 
-export interface RangeChartWidgetSettings extends EChartsTooltipWidgetSettings {
-  dataZoom: boolean;
-  rangeColors: Array<ColorRange>;
-  outOfRangeColor: string;
-  fillArea: boolean;
+export interface BarChartWithLabelsWidgetSettings extends EChartsTooltipWidgetSettings {
+  showBarLabel: boolean;
+  barLabelFont: Font;
+  barLabelColor: string;
+  showBarValue: boolean;
+  barValueFont: Font;
+  barValueColor: string;
   showLegend: boolean;
   legendPosition: LegendPosition;
   legendLabelFont: Font;
@@ -36,19 +32,27 @@ export interface RangeChartWidgetSettings extends EChartsTooltipWidgetSettings {
   background: BackgroundSettings;
 }
 
-export const rangeChartDefaultSettings: RangeChartWidgetSettings = {
-  dataZoom: true,
-  rangeColors: [
-    {to: -20, color: '#234CC7'},
-    {from: -20, to: 0, color: '#305AD7'},
-    {from: 0, to: 10, color: '#7191EF'},
-    {from: 10, to: 20, color: '#FFA600'},
-    {from: 20, to: 30, color: '#F36900'},
-    {from: 30, to: 40, color: '#F04022'},
-    {from: 40, color: '#D81838'}
-  ],
-  outOfRangeColor: '#ccc',
-  fillArea: true,
+export const barChartWithLabelsDefaultSettings: BarChartWithLabelsWidgetSettings = {
+  showBarLabel: true,
+  barLabelFont: {
+    family: 'Roboto',
+    size: 12,
+    sizeUnit: 'px',
+    style: 'normal',
+    weight: '400',
+    lineHeight: '12px'
+  },
+  barLabelColor: 'rgba(0, 0, 0, 0.54)',
+  showBarValue: true,
+  barValueFont: {
+    family: 'Roboto',
+    size: 12,
+    sizeUnit: 'px',
+    style: 'normal',
+    weight: '700',
+    lineHeight: '12px'
+  },
+  barValueColor: 'rgba(0, 0, 0, 0.76)',
   showLegend: true,
   legendPosition: LegendPosition.top,
   legendLabelFont: {
@@ -71,7 +75,7 @@ export const rangeChartDefaultSettings: RangeChartWidgetSettings = {
   },
   tooltipValueColor: 'rgba(0, 0, 0, 0.76)',
   tooltipShowDate: true,
-  tooltipDateFormat: simpleDateFormat('dd MMM yyyy HH:mm'),
+  tooltipDateFormat: customDateFormat('MMMM y'),
   tooltipDateFont: {
     family: 'Roboto',
     size: 11,

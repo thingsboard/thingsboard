@@ -62,7 +62,7 @@
             </mat-form-field>
           </div>
           <div class="tb-form-row space-between">
-            <div>{{ 'widgets.range-chart.legend-label' | translate }}</div>
+            <div>{{ 'legend.label' | translate }}</div>
             <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
               <tb-font-settings formControlName="legendLabelFont"
                                 previewText="20 - 30">
@@ -82,13 +82,13 @@
           <mat-panel-title>
             <mat-slide-toggle class="mat-slide" formControlName="showTooltip" (click)="$event.stopPropagation()"
                               fxLayoutAlign="center">
-              {{ 'widgets.range-chart.tooltip' | translate }}
+              {{ 'widget-config.tooltip' | translate }}
             </mat-slide-toggle>
           </mat-panel-title>
         </mat-expansion-panel-header>
         <ng-template matExpansionPanelContent>
           <div class="tb-form-row space-between">
-            <div>{{ 'widgets.range-chart.tooltip-value' | translate }}</div>
+            <div>{{ 'tooltip.value' | translate }}</div>
             <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
               <tb-font-settings formControlName="tooltipValueFont"
                                 [previewText]="tooltipValuePreviewFn">
@@ -101,7 +101,7 @@
           </div>
           <div class="tb-form-row column-xs">
             <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="tooltipShowDate">
-              {{ 'widgets.range-chart.tooltip-date' | translate }}
+              {{ 'tooltip.date' | translate }}
             </mat-slide-toggle>
             <div fxFlex.gt-xs fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
               <tb-date-format-select fxFlex excludeLastUpdateAgo formControlName="tooltipDateFormat"></tb-date-format-select>
@@ -115,14 +115,14 @@
             </div>
           </div>
           <div class="tb-form-row space-between">
-            <div>{{ 'widgets.range-chart.tooltip-background-color' | translate }}</div>
+            <div>{{ 'tooltip.background-color' | translate }}</div>
             <tb-color-input asBoxInput
                             colorClearButton
                             formControlName="tooltipBackgroundColor">
             </tb-color-input>
           </div>
           <div class="tb-form-row space-between">
-            <div>{{ 'widgets.range-chart.tooltip-background-blur' | translate }}</div>
+            <div>{{ 'tooltip.background-blur' | translate }}</div>
             <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
               <input matInput formControlName="tooltipBackgroundBlur" type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
               <div matSuffix>px</div>
