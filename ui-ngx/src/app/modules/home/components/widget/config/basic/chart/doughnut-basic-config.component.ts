@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import {
   Datasource,
   datasourcesHasAggregation,
   datasourcesHasOnlyComparisonAggregation,
+  legendPositions,
+  legendPositionTranslationMap,
   WidgetConfig
 } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
@@ -40,8 +42,6 @@ import {
   doughnutLayoutImages,
   doughnutLayouts,
   doughnutLayoutTranslations,
-  doughnutLegendPositions,
-  doughnutLegendPositionTranslations,
   DoughnutTooltipValueType,
   doughnutTooltipValueTypes,
   doughnutTooltipValueTypeTranslations,
@@ -83,9 +83,9 @@ export class DoughnutBasicConfigComponent extends BasicWidgetConfigComponent {
 
   doughnutLayoutImageMap: Map<DoughnutLayout, string>;
 
-  doughnutLegendPositions = doughnutLegendPositions;
+  legendPositions = legendPositions;
 
-  doughnutLegendPositionTranslationMap = doughnutLegendPositionTranslations;
+  legendPositionTranslationMap = legendPositionTranslationMap;
 
   doughnutTooltipValueTypes = doughnutTooltipValueTypes;
 
