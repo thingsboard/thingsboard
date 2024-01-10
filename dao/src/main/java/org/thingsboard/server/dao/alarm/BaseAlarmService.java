@@ -135,7 +135,7 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
         }
         if (result.getAlarm() != null) {
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(result.getAlarm().getTenantId())
-                    .entityId(result.getAlarm().getId()).added(true).build());
+                    .entityId(result.getAlarm().getId()).entity(result).added(true).build());
             publishEvictEvent(new AlarmTypesCacheEvictEvent(request.getTenantId()));
         }
         return withPropagated(result);

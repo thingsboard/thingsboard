@@ -79,6 +79,11 @@ public class TbMsgPushToCloudNode extends AbstractTbMsgPushNode<TbMsgPushToCloud
     }
 
     @Override
+    Object getAlarmCommentEventType() {
+        return null;
+    }
+
+    @Override
     String getIgnoredMessageSource() {
         return null;
     }

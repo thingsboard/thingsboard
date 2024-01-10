@@ -23,6 +23,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -33,6 +34,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.gen.edge.v1.AlarmCommentUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
@@ -92,6 +94,36 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
         }
         return Futures.immediateFuture(null);
     }
+
+    public ListenableFuture<Void> processAlarmCommentMsg(TenantId tenantId, AlarmCommentUpdateMsg alarmCommentUpdateMsg) {
+        log.trace("[{}] processAlarmCommentMsg [{}]", tenantId, alarmCommentUpdateMsg);
+        AlarmComment alarmComment = JacksonUtil.fromString(alarmCommentUpdateMsg.getEntity(), AlarmComment.class, true);
+        if (alarmComment == null) {
+            throw new RuntimeException("[{" + tenantId + "}] alarmCommentUpdateMsg {" + alarmCommentUpdateMsg + "} cannot be converted to alarm comment");
+        }
+        try {
+            switch (alarmCommentUpdateMsg.getMsgType()) {
+                case ENTITY_CREATED_RPC_MESSAGE:
+                case ENTITY_UPDATED_RPC_MESSAGE:
+                    alarmCommentService.createOrUpdateAlarmComment(tenantId, alarmComment);
+                    break;
+                case ENTITY_DELETED_RPC_MESSAGE:
+                    AlarmComment alarmCommentToDelete = alarmCommentService.findAlarmCommentById(tenantId, alarmComment.getId());
+                    if (alarmCommentToDelete != null) {
+                        alarmCommentService.saveAlarmComment(tenantId, alarmCommentToDelete);
+                    }
+                    break;
+                case UNRECOGNIZED:
+                default:
+                    return handleUnsupportedMsgType(alarmCommentUpdateMsg.getMsgType());
+            }
+        } catch (Exception e) {
+            log.error("[{}] Failed to process alarm comment update msg [{}]", tenantId, alarmCommentUpdateMsg, e);
+            return Futures.immediateFailedFuture(e);
+        }
+        return Futures.immediateFuture(null);
+    }
+
 
     protected abstract EntityId getAlarmOriginatorFromMsg(TenantId tenantId, AlarmUpdateMsg alarmUpdateMsg);
 

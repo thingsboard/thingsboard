@@ -21,18 +21,20 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.PageDataIterableByTenantIdEntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -52,21 +54,13 @@ import java.util.UUID;
                 "This node used only on cloud instances to push messages from cloud to edge. " +
                 "Once message arrived into this node it’s going to be converted into edge event and saved to the database. " +
                 "Node doesn't push messages directly to edge, but stores event(s) in the edge queue. " +
-                "<br>Supports next originator types:" +
-                "<br><code>DEVICE</code>" +
-                "<br><code>ASSET</code>" +
-                "<br><code>ENTITY_VIEW</code>" +
-                "<br><code>DASHBOARD</code>" +
-                "<br><code>TENANT</code>" +
-                "<br><code>CUSTOMER</code>" +
-                "<br><code>EDGE</code><br><br>" +
-                "As well node supports next message types:" +
+                "Supports next message types:" +
                 "<br><code>POST_TELEMETRY_REQUEST</code>" +
                 "<br><code>POST_ATTRIBUTES_REQUEST</code>" +
                 "<br><code>ATTRIBUTES_UPDATED</code>" +
                 "<br><code>ATTRIBUTES_DELETED</code>" +
                 "<br><code>ALARM</code><br><br>" +
-                "Message will be routed via <b>Failure</b> route if node was not able to save edge event to database or unsupported originator type/message type arrived. " +
+                "Message will be routed via <b>Failure</b> route if node was not able to save edge event to database or unsupported message type arrived. " +
                 "In case successful storage edge event to database message will be routed via <b>Success</b> route.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodePushToEdgeConfig",
@@ -100,6 +94,11 @@ public class TbMsgPushToEdgeNode extends AbstractTbMsgPushNode<TbMsgPushToEdgeNo
     }
 
     @Override
+    EdgeEventType getAlarmCommentEventType() {
+        return EdgeEventType.ALARM_COMMENT;
+    }
+
+    @Override
     String getIgnoredMessageSource() {
         return DataConstants.EDGE_MSG_SOURCE;
     }
@@ -129,21 +128,21 @@ public class TbMsgPushToEdgeNode extends AbstractTbMsgPushNode<TbMsgPushToEdgeNo
                 };
                 Futures.addCallback(future, futureCallback, ctx.getDbCallbackExecutor());
             } else {
-                PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
-                PageData<EdgeId> pageData;
-                List<ListenableFuture<Void>> futures = new ArrayList<>();
-                do {
-                    pageData = ctx.getEdgeService().findRelatedEdgeIdsByEntityId(ctx.getTenantId(), msg.getOriginator(), pageLink);
-                    if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
-                        for (EdgeId edgeId : pageData.getData()) {
-                            EdgeEvent edgeEvent = buildEvent(msg, ctx);
-                            futures.add(notifyEdge(ctx, edgeEvent, edgeId));
-                        }
-                        if (pageData.hasNext()) {
-                            pageLink = pageLink.nextPageLink();
-                        }
+                EntityId originatorId = msg.getOriginator();
+                if (DataConstants.COMMENT_CREATED.equals(msg.getType()) || DataConstants.COMMENT_UPDATED.equals(msg.getType())) {
+                    Alarm alarm = JacksonUtil.fromString(msg.getData(), Alarm.class);
+                    if (alarm != null) {
+                        originatorId = alarm.getOriginator();
                     }
-                } while (pageData != null && pageData.hasNext());
+                }
+                List<ListenableFuture<Void>> futures = new ArrayList<>();
+                EntityId finalOriginatorId = originatorId;
+                PageDataIterableByTenantIdEntityId<EdgeId> edgeIds = new PageDataIterableByTenantIdEntityId<>(
+                        ctx.getEdgeService()::findRelatedEdgeIdsByEntityId, ctx.getTenantId(), finalOriginatorId, DEFAULT_PAGE_SIZE);
+                for (EdgeId edgeId : edgeIds) {
+                    EdgeEvent edgeEvent = buildEvent(msg, ctx);
+                    futures.add(notifyEdge(ctx, edgeEvent, edgeId));
+                }
 
                 if (futures.isEmpty()) {
                     // ack in case no edges are related to provided entity
@@ -176,5 +175,4 @@ public class TbMsgPushToEdgeNode extends AbstractTbMsgPushNode<TbMsgPushToEdgeNo
             return null;
         }, ctx.getDbCallbackExecutor());
     }
-
 }

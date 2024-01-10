@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 
 public interface AlarmCommentService {
+
     AlarmComment createOrUpdateAlarmComment(TenantId tenantId, AlarmComment alarmComment);
 
     AlarmComment saveAlarmComment(TenantId tenantId, AlarmComment alarmComment);
