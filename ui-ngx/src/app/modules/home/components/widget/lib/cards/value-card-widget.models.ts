@@ -64,6 +64,7 @@ export const valueCardLayoutImages = new Map<ValueCardLayout, string>(
 
 export interface ValueCardWidgetSettings {
   layout: ValueCardLayout;
+  autoScale: boolean;
   showLabel: boolean;
   labelFont: Font;
   labelColor: ColorSettings;
@@ -83,6 +84,7 @@ export interface ValueCardWidgetSettings {
 
 export const valueCardDefaultSettings = (horizontal: boolean): ValueCardWidgetSettings => ({
   layout: horizontal ? ValueCardLayout.horizontal : ValueCardLayout.square,
+  autoScale: true,
   showLabel: true,
   labelFont: {
     family: 'Roboto',

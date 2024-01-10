@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 public class SaveEntityEvent<T> {
     private final TenantId tenantId;
     private final T entity;
+    private final T oldEntity;
     private final EntityId entityId;
     private final Boolean added;
 }

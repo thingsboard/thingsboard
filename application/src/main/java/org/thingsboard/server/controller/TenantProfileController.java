@@ -131,6 +131,7 @@ public class TenantProfileController extends BaseController {
                     "      \"maxRuleChains\": 0,\n" +
                     "      \"maxResourcesInBytes\": 0,\n" +
                     "      \"maxOtaPackagesInBytes\": 0,\n" +
+                    "      \"maxResourceSize\": 0,\n" +
                     "      \"transportTenantMsgRateLimit\": \"1000:1,20000:60\",\n" +
                     "      \"transportTenantTelemetryMsgRateLimit\": \"1000:1,20000:60\",\n" +
                     "      \"transportTenantTelemetryDataPointsRateLimit\": \"1000:1,20000:60\",\n" +
@@ -149,6 +150,8 @@ public class TenantProfileController extends BaseController {
                     "      \"defaultStorageTtlDays\": 0,\n" +
                     "      \"alarmsTtlDays\": 0,\n" +
                     "      \"rpcTtlDays\": 0,\n" +
+                    "      \"queueStatsTtlDays\": 0,\n" +
+                    "      \"ruleEngineExceptionsTtlDays\": 0,\n" +
                     "      \"warnThreshold\": 0\n" +
                     "    }\n" +
                     "  },\n" +

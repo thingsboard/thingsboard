@@ -243,7 +243,7 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
         }
       };
     }
-    if (this.hasAdditionalLatestDataKeys) {
+    if (this.hasAdditionalLatestDataKeys && !this.basicMode) {
       let valid = datasources.filter(datasource => datasource?.dataKeys?.length).length > 0;
       if (!valid) {
         this.timeseriesKeyError = true;

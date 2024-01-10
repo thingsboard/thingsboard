@@ -21,7 +21,7 @@
                 {
                   "name": "jsExecutionApiState",
                   "type": "timeseries",
-                  "label": "apiState",
+                  "label": "jsApiState",
                   "color": "#2196f3",
                   "settings": {},
                   "_hash": 0.8830669138660703,
@@ -29,12 +29,13 @@
                   "decimals": null,
                   "funcBody": null,
                   "usePostProcessing": true,
-                  "postFuncBody": "return value ? value : 'ENABLED';"
+                  "postFuncBody": "return value ? value : 'ENABLED';",
+                  "aggregationType": "NONE"
                 },
                 {
                   "name": "jsExecutionLimit",
                   "type": "timeseries",
-                  "label": "limit",
+                  "label": "jsLimit",
                   "color": "#4caf50",
                   "settings": {},
                   "_hash": 0.5463603803546802,
@@ -42,12 +43,13 @@
                   "decimals": null,
                   "funcBody": null,
                   "usePostProcessing": null,
-                  "postFuncBody": null
+                  "postFuncBody": null,
+                  "aggregationType": "NONE"
                 },
                 {
                   "name": "jsExecutionCount",
                   "type": "timeseries",
-                  "label": "count",
+                  "label": "jsCount",
                   "color": "#f44336",
                   "settings": {},
                   "_hash": 0.5564241862015964,
@@ -55,20 +57,8 @@
                   "decimals": null,
                   "funcBody": null,
                   "usePostProcessing": null,
-                  "postFuncBody": null
-                },
-                {
-                  "name": "jsExecutionApiState",
-                  "type": "timeseries",
-                  "label": "apiStateClass",
-                  "color": "#ffc107",
-                  "settings": {},
-                  "_hash": 0.8737107059960671,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": true,
-                  "postFuncBody": "return value ? value.toLowerCase() : 'enabled';"
+                  "postFuncBody": null,
+                  "aggregationType": "NONE"
                 },
                 {
                   "name": "jsExecutionApiState",
@@ -94,12 +84,13 @@
                   "decimals": null,
                   "funcBody": null,
                   "usePostProcessing": true,
-                  "postFuncBody": "return \"{i18n:api-usage.javascript}\";"
+                  "postFuncBody": "return \"{i18n:api-usage.scripts}\";",
+                  "aggregationType": "NONE"
                 },
                 {
                   "name": "jsExecutionApiState",
                   "type": "timeseries",
-                  "label": "unit",
+                  "label": "jsUnit",
                   "color": "#8bc34a",
                   "settings": {},
                   "_hash": 0.7926918686567068,
@@ -107,7 +98,64 @@
                   "decimals": null,
                   "funcBody": null,
                   "usePostProcessing": true,
-                  "postFuncBody": "return \"{i18n:api-usage.executions}\";"
+                  "postFuncBody": "return \"{i18n:api-usage.javascript}\";",
+                  "aggregationType": "NONE"
+                },
+                {
+                  "name": "tbelExecutionApiState",
+                  "type": "timeseries",
+                  "label": "tbelApiState",
+                  "color": "#3f51b5",
+                  "settings": {},
+                  "_hash": 0.2002981454581909,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "return value ? value : 'ENABLED';"
+                },
+                {
+                  "name": "tbelExecutionLimit",
+                  "type": "timeseries",
+                  "label": "tbelLimit",
+                  "color": "#ffeb3b",
+                  "settings": {},
+                  "_hash": 0.5039854873031677,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "tbelExecutionCount",
+                  "type": "timeseries",
+                  "label": "tbelCount",
+                  "color": "#e91e63",
+                  "settings": {},
+                  "_hash": 0.9506731992087107,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "tbelExecutionApiState",
+                  "type": "timeseries",
+                  "label": "tbelUnit",
+                  "color": "#ffeb3b",
+                  "settings": {},
+                  "_hash": 0.3673530683177082,
+                  "aggregationType": "NONE",
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "return \"{i18n:api-usage.tbel}\";"
                 }
               ]
             }
@@ -141,8 +189,8 @@
           "color": "#666666",
           "padding": "0",
           "settings": {
-            "cardHtml": "<div class='card ${apiStateClass}'>\n    <img src=\"data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7\" onload=\"initializeCard_${cardId:0}(event);\">\n    <script type=\"text/javascript\">\n        function initializeCard_${cardId:0}(e) {\n            \n            function toShortNumber(number) {\n                var rounder = Math.pow(10, 1);\n                var powers = [\n                  {key: 'Q', value: Math.pow(10, 15)},\n                  {key: 'T', value: Math.pow(10, 12)},\n                  {key: 'B', value: Math.pow(10, 9)},\n                  {key: 'M', value: Math.pow(10, 6)},\n                  {key: 'K', value: 1000}\n                ];\n                \n                var key = '';\n                \n                for (var i = 0; i < powers.length; i++) {\n                    var reduced = number / powers[i].value;\n                    reduced = Math.round(reduced * rounder) / rounder;\n                    if (reduced >= 1) {\n                        number = reduced;\n                        key = powers[i].key;\n                        break;\n                    }\n                }\n                return number + key;\n            }\n            \n            var imgTag = e.target;\n            var parentTag = imgTag.parentNode;\n            var count = \"${count:0}\";\n            var limit = \"${limit:0}\";\n            count = count.length > 0 ? parseInt(count, 10) : 0;\n            limit = limit.length > 0 ? parseInt(limit, 10) : 0;\n            var percentElement = $('#api-usage-percent', parentTag);\n            var valueElement = $('#api-usage-value', parentTag);\n            var barElement = $('#api-usage-bar', parentTag);\n            if (Number.isFinite(limit) && limit > 0) {\n                var percent = Math.min(100, ((count / limit) * 100));\n                barElement.width(percent + '%');\n                percent = percent.toFixed(2);\n                percentElement.text(percent + '%');\n                valueElement.text(toShortNumber(count) + ' / ' + toShortNumber(limit));\n            } else {\n                barElement.width('0%');\n                percentElement.text('');\n                valueElement.text(toShortNumber(count) + ' / ∞');\n            }\n        }\n    </script>\n    <div class='content'>\n        <div class='column'>\n            <div class='title-row'>\n                <div class='title'>${title}</div>\n                <div class='state'>${apiState}</div>\n            </div>    \n            <div class='bar-container'>\n                <div class=\"unit\">${unit}</div>\n                <div class='bar'>\n                    <div class=\"bar-fill\" id=\"api-usage-bar\"></div>\n                </div>    \n                <div class='bar-labels'>\n                    <div id=\"api-usage-percent\"></div>\n                    <div style=\"flex: 1;\"></div>\n                    <div id=\"api-usage-value\"></div>\n                </div>\n            </div>    \n        </div>\n    </div>\n    <div role=\"separator\" class=\"mat-divider mat-divider-horizontal\" aria-orientation=\"horizontal\"></div>\n    <div class='action-row'>\n        <button id=\"javascript_functions_details\" class=\"mdc-button mat-mdc-button mat-primary mat-mdc-button-base\">\n   <span class=\"mat-mdc-button-persistent-ripple mdc-button__ripple\"></span>\n         <span class=\"mdc-button__label\">{i18n:api-usage.view-details}</span>\n            <span class=\"mat-ripple mat-mdc-button-ripple\"></span>\n       <span class=\"mat-mdc-button-touch-target\"></span>\n     <span class=\"mat-mdc-focus-indicator\"></span>\n        </button>\n    </div> \n</div>",
-            "cardCss": ".card {\n   width: 100%;\n   height: 100%;\n   box-sizing: border-box;\n   display: flex;\n   flex-direction: column;\n}\n\n.card > img {\n    height: 0;\n}\n\n.card .content {\n   flex: 1;    \n   padding: 13px 13px 0;\n   display: flex;\n   box-sizing: border-box;\n}\n\n.card .content .column {\n   display: flex;\n   flex-direction: column;    \n   justify-content: space-around;\n   flex: 1;\n}\n\n.card .content .title-row {\n    display: flex;\n    flex-direction: row;\n    padding-bottom: 10px;\n}\n\n.card .title {\n    flex: 1;\n    font-size: 20px;\n    font-weight: 400;\n    color: #666666;\n}\n\n.card .state {\n    text-transform: uppercase;\n    font-size: 20px;\n    font-weight: bold;\n}\n\n.card.enabled .state {\n    color: #00B260;\n}\n\n.card.warning .state {\n    color: #FFAD6F;\n}\n\n.card.disabled .state {\n    color: #F73243;\n}\n\n.card .bar-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    justify-content: center;\n}\n\n.card .bar {\n    flex: 1;\n    max-height: 30px;\n    margin-top: 3.5px;\n    margin-bottom: 4px;\n    background-color: #F0F0F0;\n    border: 1px solid #DADCDB;\n    border-radius: 2px;\n    box-shadow: inset 0 1px 3px rgba(0, 0, 0, .2);\n}\n\n.card.enabled .bar {\n    border-color: #00B260;\n    background-color: #F0FBF7;\n}\n\n.card.warning .bar {\n    border-color: #FFAD6F;\n    background-color: #FFFAF6;\n}\n\n.card.disabled .bar {\n    border-color: #F73243;\n    background-color: #FFF0F0;\n}\n\n.card .bar .bar-fill {\n    background-color: #F0F0F0;\n    border-radius: 2px;\n    height: 100%;\n    width: 0%;\n}\n\n.card.enabled .bar-fill {\n    background-color: #00C46C;\n}\n\n.card.warning .bar-fill {\n    background-color: #FFD099;\n}\n\n.card.disabled .bar-fill {\n    background-color: #FF9494;\n}\n\n.card .bar-labels {\n    height: 20px;\n    font-size: 16px;\n    color: #666;\n    display: flex;\n    flex-direction: row;\n}\n\n\n.card .mat-mdc-button-base {\n    text-transform: uppercase;\n    white-space: nowrap;\n    overflow: hidden;\n    text-overflow: ellipsis;\n}\n\n.card .mdc-button__label {\n    pointer-events: none;\n}\n\n.card .action-row {\n    display: flex;\n    flex-direction: row;\n    justify-content: flex-end;\n    padding: 8px 0;\n}\n\n@media screen and (min-width: 960px) and (max-width: 1279px) {\n  .card .title {\n      font-size: 12px;\n  }\n  .card .state {\n      font-size: 12px;\n  }\n  .card .unit {\n      font-size: 8px;\n  }\n  .card .bar-labels {\n      font-size: 8px;\n  }\n  .card .mat-mdc-button-base {\n      font-size: 8px;\n  }\n  .card .action-row {\n      padding: 0;\n  }\n}\n\n@media screen and (min-width: 1280px) and (max-width: 1599px) {\n  .card .title {\n      font-size: 14px;\n  }\n  .card .state {\n      font-size: 14px;\n  }\n  .card .unit {\n      font-size: 10px;\n  }\n  .card .bar-labels {\n      font-size: 10px;\n  }\n  .card .mat-mdc-button-base {\n      font-size: 10px;\n  }\n  .card .action-row {\n      padding: 0;\n  }\n}\n\n@media screen and (min-width: 1600px) and (max-width: 1919px) {\n  .card .title {\n      font-size: 16px;\n  }\n  .card .state {\n      font-size: 16px;\n  }\n  .card .unit {\n      font-size: 12px;\n  }\n  .card .bar-labels {\n      font-size: 12px;\n  }\n  .card .mat-mdc-button-base {\n      font-size: 12px;\n  }\n  .card .action-row {\n      padding: 0;\n  }\n}    \n\n\n"
+            "cardHtml": "<div class='card'>\n    <img src=\"data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7\" onload=\"initializeCard_${cardId:0}(event);\">\n    <script type=\"text/javascript\">\n        function initializeCard_${cardId:0}(e) {\n            \n            function toShortNumber(number) {\n                var rounder = Math.pow(10, 1);\n                var powers = [\n                  {key: 'Q', value: Math.pow(10, 15)},\n                  {key: 'T', value: Math.pow(10, 12)},\n                  {key: 'B', value: Math.pow(10, 9)},\n                  {key: 'M', value: Math.pow(10, 6)},\n                  {key: 'K', value: 1000}\n                ];\n                \n                var key = '';\n                \n                for (var i = 0; i < powers.length; i++) {\n                    var reduced = number / powers[i].value;\n                    reduced = Math.round(reduced * rounder) / rounder;\n                    if (reduced >= 1) {\n                        number = reduced;\n                        key = powers[i].key;\n                        break;\n                    }\n                }\n                return number + key;\n            }\n            \n            var imgTag = e.target;\n            var parentTag = imgTag.parentNode;\n            var jsCount = \"${jsCount:0}\";\n            var jsLimit = \"${jsLimit:0}\";\n            jsCount = jsCount.length > 0 ? parseInt(jsCount, 10) : 0;\n            jsLimit = jsLimit.length > 0 ? parseInt(jsLimit, 10) : 0;\n            var jsPercentElement = $('#js-api-usage-percent', parentTag);\n            var jsValueElement = $('#js-api-usage-value', parentTag);\n            var jsBarElement = $('#js-api-usage-bar', parentTag);\n            if (Number.isFinite(jsLimit) && jsLimit > 0) {\n                var jsPercent = Math.min(100, ((jsCount / jsLimit) * 100));\n                jsBarElement.width(jsPercent + '%');\n                jsPercent = jsPercent.toFixed(2);\n                jsPercentElement.text(jsPercent + '%');\n                jsValueElement.text(toShortNumber(jsCount) + ' / ' + toShortNumber(jsLimit));\n            } else {\n                jsBarElement.width('0%');\n                jsPercentElement.text('');\n                jsValueElement.text(toShortNumber(jsCount) + ' / ∞');\n            }\n            var tbelCount = \"${tbelCount:0}\";\n            var tbelLimit = \"${tbelLimit:0}\";\n            tbelCount = tbelCount.length > 0 ? parseInt(tbelCount, 10) : 0;\n            tbelLimit = tbelLimit.length > 0 ? parseInt(tbelLimit, 10) : 0;\n            var tbelPercentElement = $('#tbel-api-usage-percent', parentTag);\n            var tbelValueElement = $('#tbel-api-usage-value', parentTag);\n            var tbelBarElement = $('#tbel-api-usage-bar', parentTag);\n            if (Number.isFinite(tbelLimit) && tbelLimit > 0) {\n                var tbelPercent = Math.min(100, ((tbelCount / tbelLimit) * 100));\n                tbelBarElement.width(tbelPercent + '%');\n                tbelPercent = tbelPercent.toFixed(2);\n                tbelPercentElement.text(tbelPercent + '%');\n                tbelValueElement.text(toShortNumber(tbelCount) + ' / ' + toShortNumber(tbelLimit));\n            } else {\n                tbelBarElement.width('0%');\n                tbelPercentElement.text('');\n                tbelValueElement.text(toShortNumber(tbelCount) + ' / ∞');\n            }\n            var jsApiState = \"${jsApiState}\";\n            var tbelApiState = \"${tbelApiState}\";\n            var currentState;\n            if (jsApiState === 'DISABLED' || tbelApiState === 'DISABLED') {\n                currentState = 'DISABLED';\n            } else if (jsApiState === 'WARNING' || tbelApiState === 'WARNING') {\n                currentState = 'WARNING';\n            } else {\n                currentState = 'ENABLED';\n            }\n            var stateTitle = $('#api-state', parentTag);\n            stateTitle.text(currentState);\n            parentTag.classList.add(currentState.toLowerCase());\n        }\n    </script>\n    <div class='content'>\n        <div class='column'>\n            <div class='title-row'>\n                <div class='title'>${title}</div>\n                <div id=\"api-state\" class='state'></div>\n            </div>\n            <div class=\"bars-row\">\n                <div class=\"bar-column\" style=\"margin-right: 10px;\">\n                    <div class='bar-container'>\n                        <div class=\"unit\">${jsUnit}</div>\n                        <div class='bar'>\n                            <div class=\"bar-fill\" id=\"js-api-usage-bar\"></div>\n                        </div>    \n                        <div class='bar-labels'>\n                            <div id=\"js-api-usage-percent\"></div>\n                            <div style=\"flex: 1;\"></div>\n                            <div id=\"js-api-usage-value\"></div>\n                        </div>\n                    </div>\n                </div>\n                <div class=\"bar-column\" style=\"margin-left: 10px;\">\n                    <div class='bar-container'>\n                        <div class=\"unit\">${tbelUnit}</div>\n                        <div class='bar'>\n                            <div class=\"bar-fill\" id=\"tbel-api-usage-bar\"></div>\n                        </div>    \n                        <div class='bar-labels'>\n                            <div id=\"tbel-api-usage-percent\"></div>\n                            <div style=\"flex: 1;\"></div>\n                            <div id=\"tbel-api-usage-value\"></div>\n                        </div>\n                    </div>\n                </div>\n            </div>\n        </div>\n    </div>\n    <div role=\"separator\" class=\"mat-divider mat-divider-horizontal\" aria-orientation=\"horizontal\"></div>\n    <div class='action-row'>\n        <button id=\"script_functions_details\" class=\"mdc-button mat-mdc-button mat-primary mat-mdc-button-base\">\n   <span class=\"mat-mdc-button-persistent-ripple mdc-button__ripple\"></span>\n         <span class=\"mdc-button__label\">{i18n:api-usage.view-details}</span>\n            <span class=\"mat-ripple mat-mdc-button-ripple\"></span>\n       <span class=\"mat-mdc-button-touch-target\"></span>\n     <span class=\"mat-mdc-focus-indicator\"></span>\n        </button>\n    </div> \n</div>",
+            "cardCss": ".card {\n   width: 100%;\n   height: 100%;\n   box-sizing: border-box;\n   display: flex;\n   flex-direction: column;\n}\n\n.card > img {\n    height: 0;\n}\n\n.card .content {\n   flex: 1;    \n   padding: 13px 13px 0;\n   display: flex;\n   box-sizing: border-box;\n}\n\n.card .content .column {\n   display: flex;\n   flex-direction: column;    \n   justify-content: space-around;\n   flex: 1;\n}\n\n.card .content .title-row {\n    display: flex;\n    flex-direction: row;\n    padding-bottom: 10px;\n}\n\n.card .title {\n    flex: 1;\n    font-size: 20px;\n    font-weight: 400;\n    color: #666666;\n}\n\n.card .state {\n    text-transform: uppercase;\n    font-size: 20px;\n    font-weight: bold;\n}\n\n.card.enabled .state {\n    color: #00B260;\n}\n\n.card.warning .state {\n    color: #FFAD6F;\n}\n\n.card.disabled .state {\n    color: #F73243;\n}\n\n.card .bars-row {\n    flex: 1;\n    display: flex;\n    flex-direction: row;\n}\n\n.card .bar-column {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n}\n\n.card .bar-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    justify-content: center;\n}\n\n.card .bar {\n    flex: 1;\n    max-height: 30px;\n    margin-top: 3.5px;\n    margin-bottom: 4px;\n    background-color: #F0F0F0;\n    border: 1px solid #DADCDB;\n    border-radius: 2px;\n    box-shadow: inset 0 1px 3px rgba(0, 0, 0, .2);\n}\n\n.card.enabled .bar {\n    border-color: #00B260;\n    background-color: #F0FBF7;\n}\n\n.card.warning .bar {\n    border-color: #FFAD6F;\n    background-color: #FFFAF6;\n}\n\n.card.disabled .bar {\n    border-color: #F73243;\n    background-color: #FFF0F0;\n}\n\n.card .bar .bar-fill {\n    background-color: #F0F0F0;\n    border-radius: 2px;\n    height: 100%;\n    width: 0%;\n}\n\n.card.enabled .bar-fill {\n    background-color: #00C46C;\n}\n\n.card.warning .bar-fill {\n    background-color: #FFD099;\n}\n\n.card.disabled .bar-fill {\n    background-color: #FF9494;\n}\n\n.card .bar-labels {\n    height: 20px;\n    font-size: 16px;\n    color: #666;\n    display: flex;\n    flex-direction: row;\n}\n\n.card .mat-mdc-button-base {\n    text-transform: uppercase;\n    white-space: nowrap;\n    overflow: hidden;\n    text-overflow: ellipsis;\n}\n\n.card .mdc-button__label {\n    pointer-events: none;\n}\n\n.card .action-row {\n    display: flex;\n    flex-direction: row;\n    justify-content: flex-end;\n    padding: 8px 0;\n}\n\n\n@media screen and (min-width: 960px) and (max-width: 1279px) {\n  .card .title {\n      font-size: 12px;\n  }\n  .card .state {\n      font-size: 12px;\n  }\n  .card .unit {\n      font-size: 8px;\n  }\n  .card .bar-labels {\n      font-size: 6px;\n  }\n  .card .mat-mdc-button-base {\n      font-size: 8px;\n  }\n  .card .action-row {\n      padding: 0;\n  }\n}\n\n@media screen and (min-width: 1280px) and (max-width: 1599px) {\n  .card .title {\n      font-size: 14px;\n  }\n  .card .state {\n      font-size: 14px;\n  }\n  .card .unit {\n      font-size: 10px;\n  }\n  .card .bar-labels {\n      font-size: 8px;\n  }\n  .card .mat-mdc-button-base {\n      font-size: 10px;\n  }\n  .card .action-row {\n      padding: 0;\n  }\n}\n\n@media screen and (min-width: 1600px) and (max-width: 1919px) {\n  .card .title {\n      font-size: 16px;\n  }\n  .card .state {\n      font-size: 16px;\n  }\n  .card .unit {\n      font-size: 12px;\n  }\n  .card .bar-labels {\n      font-size: 12px;\n  }\n  .card .mat-mdc-button-base {\n      font-size: 12px;\n  }\n  .card .action-row {\n      padding: 0;\n  }\n}    "
           },
           "title": "JavaScript functions",
           "dropShadow": true,
@@ -159,13 +207,17 @@
           "actions": {
             "elementClick": [
               {
-                "name": "javascript_functions_details",
+                "name": "script_functions_details",
                 "icon": "insert_chart",
+                "useShowWidgetActionFunction": null,
+                "showWidgetActionFunction": "return true;",
                 "type": "openDashboardState",
-                "targetDashboardStateId": "javascript_functions",
+                "targetDashboardStateId": "script_functions",
                 "setEntityId": false,
                 "stateEntityParamName": null,
                 "openRightLayout": false,
+                "openInSeparateDialog": false,
+                "openInPopover": false,
                 "id": "d4961bea-84de-e1af-e50f-666b98d34cd5"
               }
             ]
@@ -173,7 +225,8 @@
           "showTitleIcon": false,
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
-          "titleTooltip": ""
+          "titleTooltip": "",
+          "displayTimewindow": true
         },
         "row": 0,
         "col": 0,
@@ -1284,6 +1337,20 @@
                   "funcBody": null,
                   "usePostProcessing": null,
                   "postFuncBody": null
+                },
+                {
+                  "name": "tbelExecutionCountHourly",
+                  "type": "timeseries",
+                  "label": "{i18n:api-usage.tbel-executions}",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.6818645685001823,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
                 }
               ]
             }
@@ -1307,36 +1374,40 @@
           "color": "rgba(0, 0, 0, 0.87)",
           "padding": "8px",
           "settings": {
-            "shadowSize": 4,
-            "fontColor": "#545454",
+            "stack": false,
+            "enableSelection": true,
             "fontSize": 10,
+            "fontColor": "#545454",
+            "showTooltip": true,
+            "tooltipIndividual": false,
+            "tooltipCumulative": false,
+            "hideZeros": false,
+            "grid": {
+              "verticalLines": true,
+              "horizontalLines": true,
+              "outlineWidth": 1,
+              "color": "#545454",
+              "backgroundColor": null,
+              "tickColor": "#DDDDDD"
+            },
             "xaxis": {
+              "title": null,
               "showLabels": true,
               "color": "#545454"
             },
             "yaxis": {
+              "min": 0,
+              "max": null,
+              "title": null,
               "showLabels": true,
               "color": "#545454",
-              "ticksFormatter": "var rounder = Math.pow(10, 1);\nvar powers = [\n  {key: 'Q', value: Math.pow(10, 15)},\n  {key: 'T', value: Math.pow(10, 12)},\n  {key: 'B', value: Math.pow(10, 9)},\n  {key: 'M', value: Math.pow(10, 6)},\n  {key: 'K', value: 1000}\n];\n\nvar key = '';\n\nfor (var i = 0; i < powers.length; i++) {\n    var reduced = value / powers[i].value;\n    reduced = Math.round(reduced * rounder) / rounder;\n    if (reduced >= 1) {\n        value = reduced;\n        key = powers[i].key;\n        break;\n    }\n}\nreturn value + key;",
-              "min": 0,
-              "tickDecimals": 0
+              "tickSize": null,
+              "tickDecimals": 0,
+              "ticksFormatter": "var rounder = Math.pow(10, 1);\nvar powers = [\n  {key: 'Q', value: Math.pow(10, 15)},\n  {key: 'T', value: Math.pow(10, 12)},\n  {key: 'B', value: Math.pow(10, 9)},\n  {key: 'M', value: Math.pow(10, 6)},\n  {key: 'K', value: 1000}\n];\n\nvar key = '';\n\nfor (var i = 0; i < powers.length; i++) {\n    var reduced = value / powers[i].value;\n    reduced = Math.round(reduced * rounder) / rounder;\n    if (reduced >= 1) {\n        value = reduced;\n        key = powers[i].key;\n        break;\n    }\n}\nreturn value + key;"
             },
-            "grid": {
-              "color": "#545454",
-              "tickColor": "#DDDDDD",
-              "verticalLines": true,
-              "horizontalLines": true,
-              "outlineWidth": 1
-            },
-            "stack": false,
-            "tooltipIndividual": false,
             "defaultBarWidth": 2400000,
             "barAlignment": "left",
-            "timeForComparison": "months",
-            "xaxisSecond": {
-              "axisPosition": "top",
-              "showLabels": true
-            },
+            "comparisonEnabled": false,
             "showLegend": true,
             "legendConfig": {
               "direction": "column",
@@ -1346,9 +1417,10 @@
               "showMax": false,
               "showAvg": false,
               "showTotal": true
-            }
+            },
+            "customLegendEnabled": false
           },
-          "title": "{i18n:api-usage.javascript-functions-hourly-activity}",
+          "title": "{i18n:api-usage.scripts-hourly-activity}",
           "dropShadow": true,
           "enableFullscreen": true,
           "titleStyle": {
@@ -1362,11 +1434,15 @@
               {
                 "name": "{i18n:api-usage.view-details}",
                 "icon": "insert_chart",
+                "useShowWidgetActionFunction": null,
+                "showWidgetActionFunction": "return true;",
                 "type": "openDashboardState",
-                "targetDashboardStateId": "javascript_functions",
+                "targetDashboardStateId": "script_functions",
                 "setEntityId": false,
                 "stateEntityParamName": null,
                 "openRightLayout": false,
+                "openInSeparateDialog": false,
+                "openInPopover": false,
                 "id": "4687d3f6-8800-a3b6-26e5-0d33f3b828a9"
               }
             ]
@@ -1375,7 +1451,11 @@
           "showTitleIcon": false,
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
-          "titleTooltip": ""
+          "titleTooltip": "",
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": "",
+          "configMode": "advanced"
         },
         "row": 0,
         "col": 0,
@@ -2169,6 +2249,20 @@
                   "funcBody": null,
                   "usePostProcessing": null,
                   "postFuncBody": null
+                },
+                {
+                  "name": "tbelExecutionCountHourly",
+                  "type": "timeseries",
+                  "label": "{i18n:api-usage.tbel-executions}",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.5212969314724616,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
                 }
               ]
             }
@@ -2234,7 +2328,7 @@
               "showTotal": true
             }
           },
-          "title": "{i18n:api-usage.javascript-functions-daily-activity}",
+          "title": "{i18n:api-usage.scripts-daily-activity}",
           "dropShadow": true,
           "enableFullscreen": true,
           "titleStyle": {
@@ -2248,7 +2342,10 @@
           "showTitleIcon": false,
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
-          "titleTooltip": ""
+          "titleTooltip": "",
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": ""
         },
         "row": 0,
         "col": 0,
@@ -2296,6 +2393,20 @@
                     }
                   },
                   "_hash": 0.0661644137210089,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "tbelExecutionCount",
+                  "type": "timeseries",
+                  "label": "{i18n:api-usage.tbel-executions}",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.49748239768082403,
+                  "aggregationType": null,
                   "units": null,
                   "decimals": null,
                   "funcBody": null,
@@ -2366,7 +2477,7 @@
               "showTotal": true
             }
           },
-          "title": "{i18n:api-usage.javascript-functions-monthly-activity}",
+          "title": "{i18n:api-usage.scripts-monthly-activity}",
           "dropShadow": true,
           "enableFullscreen": true,
           "titleStyle": {
@@ -2380,7 +2491,10 @@
           "showTitleIcon": false,
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
-          "titleTooltip": ""
+          "titleTooltip": "",
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": ""
         },
         "row": 0,
         "col": 0,
@@ -4566,40 +4680,6 @@
           }
         }
       },
-      "javascript_functions": {
-        "name": "{i18n:api-usage.javascript-functions}",
-        "root": false,
-        "layouts": {
-          "main": {
-            "widgets": {
-              "5f5ca59c-e507-5301-5910-7ad8cd34df40": {
-                "sizeX": 24,
-                "sizeY": 6,
-                "row": 0,
-                "col": 0
-              },
-              "ada32ee9-44ed-48d1-c368-fd0c94b7607f": {
-                "sizeX": 24,
-                "sizeY": 6,
-                "row": 6,
-                "col": 0
-              }
-            },
-            "gridSettings": {
-              "backgroundColor": "#eeeeee",
-              "color": "rgba(0,0,0,0.870588)",
-              "columns": 24,
-              "margin": 10,
-              "backgroundSizeMode": "100%",
-              "autoFillHeight": true,
-              "backgroundImageUrl": null,
-              "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70,
-              "outerMargin": true
-            }
-          }
-        }
-      },
       "telemetry_persistence": {
         "name": "{i18n:api-usage.telemetry-persistence}",
         "root": false,
@@ -4735,6 +4815,40 @@
                 "col": 0
               },
               "6a981580-7490-19dd-f937-b64cbf67a982": {
+                "sizeX": 24,
+                "sizeY": 6,
+                "row": 6,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "color": "rgba(0,0,0,0.870588)",
+              "columns": 24,
+              "margin": 10,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70,
+              "outerMargin": true
+            }
+          }
+        }
+      },
+      "script_functions": {
+        "name": "{i18n:api-usage.scripts}",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "5f5ca59c-e507-5301-5910-7ad8cd34df40": {
+                "sizeX": 24,
+                "sizeY": 6,
+                "row": 0,
+                "col": 0
+              },
+              "ada32ee9-44ed-48d1-c368-fd0c94b7607f": {
                 "sizeX": 24,
                 "sizeY": 6,
                 "row": 6,

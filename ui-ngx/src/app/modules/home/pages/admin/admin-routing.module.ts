@@ -39,6 +39,7 @@ import { TwoFactorAuthSettingsComponent } from '@home/pages/admin/two-factor-aut
 import { widgetsLibraryRoutes } from '@home/pages/widget/widget-library-routing.module';
 import { RouterTabsComponent } from '@home/components/router-tabs.component';
 import { auditLogsRoutes } from '@home/pages/audit-log/audit-log-routing.module';
+import { ImageGalleryComponent } from '@shared/components/image/image-gallery.component';
 
 @Injectable()
 export class OAuth2LoginProcessingUrlResolver implements Resolve<string> {
@@ -71,6 +72,25 @@ const routes: Routes = [
         }
       },
       ...widgetsLibraryRoutes,
+      {
+        path: 'images',
+        data: {
+          breadcrumb: {
+            label: 'image.gallery',
+            icon: 'filter'
+          }
+        },
+        children: [
+          {
+            path: '',
+            component: ImageGalleryComponent,
+            data: {
+              auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
+              title: 'image.gallery',
+            },
+          }
+        ]
+      },
       {
         path: 'resources-library',
         data: {

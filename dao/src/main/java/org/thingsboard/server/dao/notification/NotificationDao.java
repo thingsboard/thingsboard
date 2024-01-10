@@ -41,4 +41,8 @@ public interface NotificationDao extends Dao<Notification> {
 
     int updateStatusByRecipientId(TenantId tenantId, UserId recipientId, NotificationStatus status);
 
+    void deleteByRequestId(TenantId tenantId, NotificationRequestId requestId);
+
+    void deleteByRecipientId(TenantId tenantId, UserId recipientId);
+
 }

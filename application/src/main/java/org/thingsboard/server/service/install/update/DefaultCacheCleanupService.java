@@ -27,6 +27,9 @@ import org.springframework.stereotype.Service;
 import java.util.Objects;
 import java.util.Optional;
 
+import static org.thingsboard.server.common.data.CacheConstants.RESOURCE_INFO_CACHE;
+import static org.thingsboard.server.common.data.CacheConstants.SECURITY_SETTINGS_CACHE;
+
 @RequiredArgsConstructor
 @Service
 @Profile("install")
@@ -83,11 +86,16 @@ public class DefaultCacheCleanupService implements CacheCleanupService {
                 clearCacheByName("repositorySettings");
                 break;
             case "3.4.4":
-                log.info("Clearing cache to upgrade from version 3.4.4 to 3.5.0 ...");
+                log.info("Clearing cache to upgrade from version 3.4.4 to 3.5.0");
                 clearAll();
                 break;
-            case "3.5.2":
-                log.info("Clearing cache to upgrade from version 3.5.2 to 3.6.0 ...");
+            case "3.6.1":
+                log.info("Clearing cache to upgrade from version 3.6.1 to 3.6.2");
+                clearCacheByName(SECURITY_SETTINGS_CACHE);
+                clearCacheByName(RESOURCE_INFO_CACHE);
+                break;
+            case "3.6.3":
+                log.info("Clearing cache to upgrade from version 3.6.3 to 3.7.0 ...");
                 clearCacheByName("deviceProfiles");
                 break;
             default:

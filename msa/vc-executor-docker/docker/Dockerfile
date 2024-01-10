@@ -16,6 +16,11 @@
 
 FROM thingsboard/openjdk17:bookworm-slim
 
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update \
+    && apt-get install -yq --no-install-recommends ncdu \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY start-tb-vc-executor.sh ${pkg.name}.deb /tmp/
 
 RUN mkdir -p /home/thingsboard/.config/jgit \

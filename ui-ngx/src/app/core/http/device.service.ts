@@ -28,13 +28,13 @@ import {
   DeviceInfo,
   DeviceInfoQuery,
   DeviceSearchQuery,
-  PublishLaunchCommand,
   PublishTelemetryCommand
-} from '@app/shared/models/device.models';
-import { EntitySubtype } from '@app/shared/models/entity-type.models';
+} from '@shared/models/device.models';
+import { EntitySubtype } from '@shared/models/entity-type.models';
 import { AuthService } from '@core/auth/auth.service';
-import { BulkImportRequest, BulkImportResult } from '@home/components/import-export/import-export.models';
+import { BulkImportRequest, BulkImportResult } from '@shared/import-export/import-export.models';
 import { PersistentRpc, RpcStatus } from '@shared/models/rpc.models';
+import { ResourcesService } from '@core/services/resources.service';
 
 @Injectable({
   providedIn: 'root'
@@ -42,7 +42,8 @@ import { PersistentRpc, RpcStatus } from '@shared/models/rpc.models';
 export class DeviceService {
 
   constructor(
-    private http: HttpClient
+    private http: HttpClient,
+    private resourcesService: ResourcesService
   ) { }
 
   public getDeviceInfosByQuery(deviceInfoQuery: DeviceInfoQuery, config?: RequestConfig): Observable<PageData<DeviceInfo>> {
@@ -215,8 +216,7 @@ export class DeviceService {
     return this.http.get<PublishTelemetryCommand>(`/api/device-connectivity/${deviceId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getDevicePublishLaunchCommands(deviceId: string, config?: RequestConfig): Observable<PublishLaunchCommand> {
-    return this.http.get<PublishLaunchCommand>(`/api/device-connectivity/gateway-launch/${deviceId}`, defaultHttpOptionsFromConfig(config));
+  public downloadGatewayDockerComposeFile(deviceId: string): Observable<any> {
+    return this.resourcesService.downloadResource(`/api/device-connectivity/gateway-launch/${deviceId}/docker-compose/download`);
   }
-
 }

@@ -62,14 +62,12 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
 public abstract class AbstractConsumerService<N extends com.google.protobuf.GeneratedMessageV3> extends TbApplicationEventListener<PartitionChangeEvent> {
 
-    protected volatile ExecutorService consumersExecutor;
     protected volatile ExecutorService notificationsConsumerExecutor;
     protected volatile boolean stopped = false;
     protected volatile boolean isReady = false;
@@ -85,8 +83,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     protected final Optional<JwtSettingsService> jwtSettingsService;
     protected final Optional<TbAlarmRuleStateService> alarmRuleStateService;
 
-    public void init(String mainConsumerThreadName, String nfConsumerThreadName) {
-        this.consumersExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName(mainConsumerThreadName));
+    public void init(String nfConsumerThreadName) {
         this.notificationsConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName(nfConsumerThreadName));
     }
 
@@ -103,7 +100,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
 
     protected abstract void launchMainConsumers();
 
-    protected abstract void stopMainConsumers();
+    protected abstract void stopConsumers();
 
     protected abstract long getNotificationPollDuration();
 
@@ -117,12 +114,15 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
                     if (msgs.isEmpty()) {
                         continue;
                     }
-                    ConcurrentMap<UUID, TbProtoQueueMsg<N>> pendingMap = msgs.stream().collect(
-                            Collectors.toConcurrentMap(s -> UUID.randomUUID(), Function.identity()));
+                    List<IdMsgPair<N>> orderedMsgList = msgs.stream().map(msg -> new IdMsgPair<>(UUID.randomUUID(), msg)).collect(Collectors.toList());
+                    ConcurrentMap<UUID, TbProtoQueueMsg<N>> pendingMap = orderedMsgList.stream().collect(
+                            Collectors.toConcurrentMap(IdMsgPair::getUuid, IdMsgPair::getMsg));
                     CountDownLatch processingTimeoutLatch = new CountDownLatch(1);
                     TbPackProcessingContext<TbProtoQueueMsg<N>> ctx = new TbPackProcessingContext<>(
                             processingTimeoutLatch, pendingMap, new ConcurrentHashMap<>());
-                    pendingMap.forEach((id, msg) -> {
+                    orderedMsgList.forEach(element -> {
+                        UUID id = element.getUuid();
+                        TbProtoQueueMsg<N> msg = element.getMsg();
                         log.trace("[{}] Creating notification callback for message: {}", id, msg.getValue());
                         TbCallback callback = new TbPackCallback<>(id, ctx);
                         try {
@@ -152,24 +152,27 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
         });
     }
 
+    // To be removed in 3.6.1 in favour of handleComponentLifecycleMsg(UUID id, TbActorMsg actorMsg)
     protected void handleComponentLifecycleMsg(UUID id, ByteString nfMsg) {
         Optional<TbActorMsg> actorMsgOpt = encodingService.decode(nfMsg.toByteArray());
-        if (actorMsgOpt.isPresent()) {
-            TbActorMsg actorMsg = actorMsgOpt.get();
-            if (actorMsg instanceof ComponentLifecycleMsg) {
-                ComponentLifecycleMsg componentLifecycleMsg = (ComponentLifecycleMsg) actorMsg;
-                log.debug("[{}][{}][{}] Received Lifecycle event: {}", componentLifecycleMsg.getTenantId(), componentLifecycleMsg.getEntityId().getEntityType(),
-                        componentLifecycleMsg.getEntityId(), componentLifecycleMsg.getEvent());
-                if (EntityType.TENANT_PROFILE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
-                    TenantProfileId tenantProfileId = new TenantProfileId(componentLifecycleMsg.getEntityId().getId());
-                    tenantProfileCache.evict(tenantProfileId);
-                    if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED)) {
-                        apiUsageStateService.onTenantProfileUpdate(tenantProfileId);
-                    }
-                } else if (EntityType.TENANT.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
-                    if (TenantId.SYS_TENANT_ID.equals(componentLifecycleMsg.getTenantId())) {
-                        jwtSettingsService.ifPresent(JwtSettingsService::reloadJwtSettings);
-                        alarmRuleStateService.ifPresent(s -> s.deleteTenant(new TenantId(componentLifecycleMsg.getEntityId().getId())));
+        actorMsgOpt.ifPresent(tbActorMsg -> handleComponentLifecycleMsg(id, tbActorMsg));
+    }
+
+    protected void handleComponentLifecycleMsg(UUID id, TbActorMsg actorMsg) {
+        if (actorMsg instanceof ComponentLifecycleMsg) {
+            ComponentLifecycleMsg componentLifecycleMsg = (ComponentLifecycleMsg) actorMsg;
+            log.debug("[{}][{}][{}] Received Lifecycle event: {}", componentLifecycleMsg.getTenantId(), componentLifecycleMsg.getEntityId().getEntityType(),
+                    componentLifecycleMsg.getEntityId(), componentLifecycleMsg.getEvent());
+            if (EntityType.TENANT_PROFILE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
+                TenantProfileId tenantProfileId = new TenantProfileId(componentLifecycleMsg.getEntityId().getId());
+                tenantProfileCache.evict(tenantProfileId);
+                if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED)) {
+                    apiUsageStateService.onTenantProfileUpdate(tenantProfileId);
+                }
+            } else if (EntityType.TENANT.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
+                if (TenantId.SYS_TENANT_ID.equals(componentLifecycleMsg.getTenantId())) {
+                    jwtSettingsService.ifPresent(JwtSettingsService::reloadJwtSettings);
+                    alarmRuleStateService.ifPresent(s -> s.deleteTenant(new TenantId(componentLifecycleMsg.getEntityId().getId())));
                         return;
                     } else {
                         tenantProfileCache.evict(componentLifecycleMsg.getTenantId());
@@ -207,13 +210,12 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
                         } else if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.DELETED)) {
                             s.deleteAlarmRule(tenantId, alarmRuleId);
                         }
-                    });
-                }
-                eventPublisher.publishEvent(componentLifecycleMsg);
+                });
             }
-            log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg);
-            actorContext.tellWithHighPriority(actorMsg);
+            eventPublisher.publishEvent(componentLifecycleMsg);
         }
+        log.trace("[{}] Forwarding component lifecycle message to App Actor {}", id, actorMsg);
+        actorContext.tellWithHighPriority(actorMsg);
     }
 
     protected abstract void handleNotification(UUID id, TbProtoQueueMsg<N> msg, TbCallback callback) throws Exception;
@@ -221,12 +223,9 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     @PreDestroy
     public void destroy() {
         stopped = true;
-        stopMainConsumers();
+        stopConsumers();
         if (nfConsumer != null) {
             nfConsumer.unsubscribe();
-        }
-        if (consumersExecutor != null) {
-            consumersExecutor.shutdownNow();
         }
         if (notificationsConsumerExecutor != null) {
             notificationsConsumerExecutor.shutdownNow();

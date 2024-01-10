@@ -86,6 +86,8 @@ public interface AlarmDao extends Dao<Alarm> {
 
     void deleteEntityAlarmRecords(TenantId tenantId, EntityId entityId);
 
+    void deleteEntityAlarmRecordsByTenantId(TenantId tenantId);
+
     AlarmApiCallResult createOrUpdateActiveAlarm(AlarmCreateOrUpdateActiveRequest request, boolean alarmCreationEnabled);
 
     AlarmApiCallResult updateAlarm(AlarmUpdateRequest request);

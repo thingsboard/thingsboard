@@ -91,9 +91,10 @@
           </div>
           <div fxFlex>
             <label class="group-label" translate>queue.retries-settings</label>
-            <mat-form-field class="mat-block">
+            <mat-form-field class="mat-block" subscriptSizing="dynamic">
               <mat-label translate>queue.retries</mat-label>
               <input type="number" matInput formControlName="retries" required>
+              <mat-hint></mat-hint>
               <mat-error *ngIf="queueFormGroup.get('processingStrategy.retries').hasError('required')">
                 {{ 'queue.retries-required' | translate }}
               </mat-error>
@@ -102,9 +103,10 @@
                 {{ 'queue.retries-min-value' | translate }}
               </mat-error>
             </mat-form-field>
-            <mat-form-field class="mat-block">
+            <mat-form-field class="mat-block" subscriptSizing="dynamic">
               <mat-label translate>queue.failure-percentage</mat-label>
               <input type="number" matInput formControlName="failurePercentage" required>
+              <mat-hint></mat-hint>
               <mat-error *ngIf="queueFormGroup.get('processingStrategy.failurePercentage').hasError('required')">
                 {{ 'queue.failure-percentage-required' | translate }}
               </mat-error>
@@ -119,9 +121,10 @@
                 {{ 'queue.failure-percentage-max-value' | translate }}
               </mat-error>
             </mat-form-field>
-            <mat-form-field class="mat-block">
+            <mat-form-field class="mat-block" subscriptSizing="dynamic">
               <mat-label translate>queue.pause-between-retries</mat-label>
               <input type="number" matInput formControlName="pauseBetweenRetries" required>
+              <mat-hint></mat-hint>
               <mat-error *ngIf="queueFormGroup.get('processingStrategy.pauseBetweenRetries').hasError('required')">
                 {{ 'queue.pause-between-retries-required' | translate }}
               </mat-error>
@@ -130,9 +133,10 @@
                 {{ 'queue.pause-between-retries-min-value' | translate }}
               </mat-error>
             </mat-form-field>
-            <mat-form-field class="mat-block">
+            <mat-form-field class="mat-block" subscriptSizing="dynamic">
               <mat-label translate>queue.max-pause-between-retries</mat-label>
               <input type="number" matInput formControlName="maxPauseBetweenRetries" required>
+              <mat-hint></mat-hint>
               <mat-error *ngIf="queueFormGroup.get('processingStrategy.maxPauseBetweenRetries').hasError('required')">
                 {{ 'queue.max-pause-between-retries-required' | translate }}
               </mat-error>

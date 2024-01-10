@@ -16,8 +16,6 @@
 package org.thingsboard.server.service.alarm.rule;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.SneakyThrows;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -32,8 +30,6 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
@@ -60,10 +56,8 @@ import org.thingsboard.server.common.data.device.profile.AlarmRuleCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.device.profile.CustomTimeSchedule;
 import org.thingsboard.server.common.data.device.profile.CustomTimeScheduleItem;
-import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.DurationAlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.RepeatingAlarmConditionSpec;
-import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -73,7 +67,6 @@ import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
-import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
@@ -110,13 +103,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @DaoSqlTest
 public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
@@ -231,10 +221,10 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Updated")), any());
 
-        ListenableFuture<PageData<AlarmInfo>> future = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
+        PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
-        List<AlarmInfo> alarms = future.get().getData();
+        List<AlarmInfo> alarms = pageData.getData();
         Assert.equals(1, alarms.size());
 
         AlarmInfo alarm = alarms.get(0);
@@ -250,10 +240,10 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService, Mockito.timeout(1000)).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Cleared")), any());
 
-        future = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
+        pageData = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
-        alarms = future.get().getData();
+        alarms = pageData.getData();
         Assert.equals(1, alarms.size());
 
         alarm = alarms.get(0);
@@ -402,10 +392,10 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        ListenableFuture<PageData<AlarmInfo>> future = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
+        PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
-        List<AlarmInfo> alarms = future.get().getData();
+        List<AlarmInfo> alarms = pageData.getData();
         Assert.equals(1, alarms.size());
 
         AlarmInfo alarm = alarms.get(0);
@@ -482,10 +472,10 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        ListenableFuture<PageData<AlarmInfo>> future = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
+        PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
-        List<AlarmInfo> alarms = future.get().getData();
+        List<AlarmInfo> alarms = pageData.getData();
         Assert.equals(1, alarms.size());
 
         AlarmInfo alarm = alarms.get(0);
@@ -564,10 +554,10 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(targetEntity.getId()), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        ListenableFuture<PageData<AlarmInfo>> future = alarmService.findAlarms(tenantId, new AlarmQuery(targetEntity.getId(),
+        PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(targetEntity.getId(),
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
-        List<AlarmInfo> alarms = future.get().getData();
+        List<AlarmInfo> alarms = pageData.getData();
         Assert.equals(1, alarms.size());
 
         AlarmInfo alarm = alarms.get(0);
@@ -674,10 +664,10 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(relatedAsset1Id), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        ListenableFuture<PageData<AlarmInfo>> future = alarmService.findAlarms(tenantId, new AlarmQuery(relatedAsset1Id,
+        PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(relatedAsset1Id,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
-        List<AlarmInfo> alarms = future.get().getData();
+        List<AlarmInfo> alarms = pageData.getData();
         Assert.equals(1, alarms.size());
 
         AlarmInfo alarm = alarms.get(0);
@@ -687,10 +677,10 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(relatedAsset2Id), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        future = alarmService.findAlarms(tenantId, new AlarmQuery(relatedAsset2Id,
+        pageData = alarmService.findAlarms(tenantId, new AlarmQuery(relatedAsset2Id,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
-        alarms = future.get().getData();
+        alarms = pageData.getData();
         Assert.equals(1, alarms.size());
 
         alarm = alarms.get(0);
@@ -775,10 +765,10 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(sourceEntity.getId()), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        ListenableFuture<PageData<AlarmInfo>> future = alarmService.findAlarms(tenantId, new AlarmQuery(sourceEntity.getId(),
+        PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(sourceEntity.getId(),
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
-        List<AlarmInfo> alarms = future.get().getData();
+        List<AlarmInfo> alarms = pageData.getData();
         Assert.equals(1, alarms.size());
 
         AlarmInfo alarm = alarms.get(0);
@@ -867,10 +857,10 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(sourceEntity.getId()), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        ListenableFuture<PageData<AlarmInfo>> future = alarmService.findAlarms(tenantId, new AlarmQuery(sourceEntity.getId(),
+        PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(sourceEntity.getId(),
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
-        List<AlarmInfo> alarms = future.get().getData();
+        List<AlarmInfo> alarms = pageData.getData();
         Assert.equals(1, alarms.size());
 
         AlarmInfo alarm = alarms.get(0);
@@ -959,10 +949,10 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(sourceEntity.getId()), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        ListenableFuture<PageData<AlarmInfo>> future = alarmService.findAlarms(tenantId, new AlarmQuery(sourceEntity.getId(),
+        PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(sourceEntity.getId(),
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
-        List<AlarmInfo> alarms = future.get().getData();
+        List<AlarmInfo> alarms = pageData.getData();
         Assert.equals(1, alarms.size());
 
         AlarmInfo alarm = alarms.get(0);
@@ -1054,10 +1044,10 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        ListenableFuture<PageData<AlarmInfo>> future = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
+        PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
-        List<AlarmInfo> alarms = future.get().getData();
+        List<AlarmInfo> alarms = pageData.getData();
         Assert.equals(1, alarms.size());
 
         AlarmInfo alarm = alarms.get(0);
@@ -1149,10 +1139,10 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(assetId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        ListenableFuture<PageData<AlarmInfo>> future = alarmService.findAlarms(tenantId, new AlarmQuery(assetId,
+        PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(assetId,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
-        List<AlarmInfo> alarms = future.get().getData();
+        List<AlarmInfo> alarms = pageData.getData();
         Assert.equals(1, alarms.size());
 
         AlarmInfo alarm = alarms.get(0);
@@ -1232,10 +1222,10 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(device1Id), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        ListenableFuture<PageData<AlarmInfo>> deviceAlarmFuture = alarmService.findAlarms(tenantId, new AlarmQuery(device1Id,
+        PageData<AlarmInfo> deviceAlarmPageData = alarmService.findAlarms(tenantId, new AlarmQuery(device1Id,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
-        List<AlarmInfo> deviceAlarms = deviceAlarmFuture.get().getData();
+        List<AlarmInfo> deviceAlarms = deviceAlarmPageData.getData();
         Assert.equals(1, deviceAlarms.size());
 
         AlarmInfo deviceAlarm = deviceAlarms.get(0);
@@ -1249,10 +1239,10 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(device2Id), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        ListenableFuture<PageData<AlarmInfo>> assetFuture = alarmService.findAlarms(tenantId, new AlarmQuery(device2Id,
+        PageData<AlarmInfo> assetPageData = alarmService.findAlarms(tenantId, new AlarmQuery(device2Id,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
-        List<AlarmInfo> assetAlarms = assetFuture.get().getData();
+        List<AlarmInfo> assetAlarms = assetPageData.getData();
         Assert.equals(1, assetAlarms.size());
 
         AlarmInfo assetAlarm = assetAlarms.get(0);
@@ -1337,10 +1327,10 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        ListenableFuture<PageData<AlarmInfo>> deviceAlarmFuture = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
+        PageData<AlarmInfo> deviceAlarmPageData = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
-        List<AlarmInfo> deviceAlarms = deviceAlarmFuture.get().getData();
+        List<AlarmInfo> deviceAlarms = deviceAlarmPageData.getData();
         Assert.equals(1, deviceAlarms.size());
 
         AlarmInfo deviceAlarm = deviceAlarms.get(0);
@@ -1354,10 +1344,10 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(assetId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        ListenableFuture<PageData<AlarmInfo>> assetFuture = alarmService.findAlarms(tenantId, new AlarmQuery(assetId,
+        PageData<AlarmInfo> assetPageData = alarmService.findAlarms(tenantId, new AlarmQuery(assetId,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
-        List<AlarmInfo> assetAlarms = assetFuture.get().getData();
+        List<AlarmInfo> assetAlarms = assetPageData.getData();
         Assert.equals(1, assetAlarms.size());
 
         AlarmInfo assetAlarm = assetAlarms.get(0);
@@ -1423,10 +1413,10 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        ListenableFuture<PageData<AlarmInfo>> future = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
+        PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
-        List<AlarmInfo> alarms = future.get().getData();
+        List<AlarmInfo> alarms = pageData.getData();
         Assert.equals(1, alarms.size());
 
         AlarmInfo alarm = alarms.get(0);
@@ -1525,10 +1515,10 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        ListenableFuture<PageData<AlarmInfo>> future = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
+        PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
-        List<AlarmInfo> alarms = future.get().getData();
+        List<AlarmInfo> alarms = pageData.getData();
         Assert.equals(1, alarms.size());
 
         AlarmInfo alarm = alarms.get(0);
@@ -1627,10 +1617,10 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        ListenableFuture<PageData<AlarmInfo>> future = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
+        PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
-        List<AlarmInfo> alarms = future.get().getData();
+        List<AlarmInfo> alarms = pageData.getData();
         Assert.equals(1, alarms.size());
 
         AlarmInfo alarm = alarms.get(0);
@@ -1715,10 +1705,10 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        ListenableFuture<PageData<AlarmInfo>> future = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
+        PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
-        List<AlarmInfo> alarms = future.get().getData();
+        List<AlarmInfo> alarms = pageData.getData();
         Assert.equals(1, alarms.size());
 
         AlarmInfo alarm = alarms.get(0);
@@ -1803,10 +1793,10 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        ListenableFuture<PageData<AlarmInfo>> future = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
+        PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
-        List<AlarmInfo> alarms = future.get().getData();
+        List<AlarmInfo> alarms = pageData.getData();
         Assert.equals(1, alarms.size());
 
         AlarmInfo alarm = alarms.get(0);
@@ -1905,10 +1895,10 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        ListenableFuture<PageData<AlarmInfo>> future = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
+        PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
-        List<AlarmInfo> alarms = future.get().getData();
+        List<AlarmInfo> alarms = pageData.getData();
         Assert.equals(1, alarms.size());
 
         AlarmInfo alarm = alarms.get(0);
@@ -1993,10 +1983,10 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        ListenableFuture<PageData<AlarmInfo>> future = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
+        PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
-        List<AlarmInfo> alarms = future.get().getData();
+        List<AlarmInfo> alarms = pageData.getData();
         Assert.equals(1, alarms.size());
 
         AlarmInfo alarm = alarms.get(0);
@@ -2069,10 +2059,10 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        ListenableFuture<PageData<AlarmInfo>> future = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
+        PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
-        List<AlarmInfo> alarms = future.get().getData();
+        List<AlarmInfo> alarms = pageData.getData();
         Assert.equals(1, alarms.size());
 
         AlarmInfo alarm = alarms.get(0);
@@ -2158,10 +2148,10 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        ListenableFuture<PageData<AlarmInfo>> future = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
+        PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
-        List<AlarmInfo> alarms = future.get().getData();
+        List<AlarmInfo> alarms = pageData.getData();
         Assert.equals(1, alarms.size());
 
         AlarmInfo alarm = alarms.get(0);
@@ -2228,10 +2218,10 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        ListenableFuture<PageData<AlarmInfo>> future = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
+        PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
-        List<AlarmInfo> alarms = future.get().getData();
+        List<AlarmInfo> alarms = pageData.getData();
         Assert.equals(1, alarms.size());
 
         AlarmInfo alarm = alarms.get(0);
@@ -2298,10 +2288,10 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        ListenableFuture<PageData<AlarmInfo>> future = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
+        PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
-        List<AlarmInfo> alarms = future.get().getData();
+        List<AlarmInfo> alarms = pageData.getData();
         Assert.equals(1, alarms.size());
 
         AlarmInfo alarm = alarms.get(0);
@@ -2372,10 +2362,10 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        ListenableFuture<PageData<AlarmInfo>> future = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
+        PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
-        List<AlarmInfo> alarms = future.get().getData();
+        List<AlarmInfo> alarms = pageData.getData();
         Assert.equals(1, alarms.size());
 
         AlarmInfo alarm = alarms.get(0);
@@ -2443,10 +2433,10 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        ListenableFuture<PageData<AlarmInfo>> future = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
+        PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
-        List<AlarmInfo> alarms = future.get().getData();
+        List<AlarmInfo> alarms = pageData.getData();
         Assert.equals(1, alarms.size());
 
         AlarmInfo alarm = alarms.get(0);

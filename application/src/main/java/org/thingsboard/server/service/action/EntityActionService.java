@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -223,7 +224,8 @@ public class EntityActionService {
         }
     }
 
-    private void processNotificationRules(TenantId tenantId, EntityId entityId, HasName entity, ActionType actionType, User user, Object... additionalInfo) {
+    private void processNotificationRules(TenantId tenantId, EntityId originatorId, HasName entity, ActionType actionType, User user, Object... additionalInfo) {
+        EntityId entityId = entity instanceof HasId ? ((HasId<? extends EntityId>) entity).getId() : originatorId;
         switch (actionType) {
             case ADDED:
                 notificationRuleProcessor.process(EntitiesLimitTrigger.builder()

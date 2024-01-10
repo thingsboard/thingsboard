@@ -31,7 +31,7 @@ import java.util.UUID;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @MappedSuperclass
-public abstract class AbstractWidgetTypeEntity<T extends BaseWidgetType> extends BaseSqlEntity<T> implements BaseEntity<T> {
+public abstract class AbstractWidgetTypeEntity<T extends BaseWidgetType> extends BaseSqlEntity<T> {
 
     @Column(name = ModelConstants.WIDGET_TYPE_TENANT_ID_PROPERTY)
     private UUID tenantId;

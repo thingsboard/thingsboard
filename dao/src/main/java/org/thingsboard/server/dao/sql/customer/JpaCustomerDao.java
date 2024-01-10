@@ -58,7 +58,7 @@ public class JpaCustomerDao extends JpaAbstractDao<CustomerEntity, Customer> imp
     public PageData<Customer> findCustomersByTenantId(UUID tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(customerRepository.findByTenantId(
                 tenantId,
-                Objects.toString(pageLink.getTextSearch(), ""),
+                pageLink.getTextSearch(),
                 DaoUtil.toPageable(pageLink)));
     }
 

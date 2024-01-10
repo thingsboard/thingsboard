@@ -67,7 +67,7 @@ public class JpaTenantDao extends JpaAbstractDao<TenantEntity, Tenant> implement
     public PageData<Tenant> findTenants(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(tenantRepository
                 .findTenantsNextPage(
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 
@@ -75,7 +75,7 @@ public class JpaTenantDao extends JpaAbstractDao<TenantEntity, Tenant> implement
     public PageData<TenantInfo> findTenantInfos(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(tenantRepository
                 .findTenantInfosNextPage(
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink, TenantInfoEntity.tenantInfoColumnMap)));
     }
 
