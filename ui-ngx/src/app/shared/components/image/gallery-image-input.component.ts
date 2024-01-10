@@ -14,16 +14,7 @@
 /// limitations under the License.
 ///
 
-import {
-  ChangeDetectorRef,
-  Component,
-  forwardRef,
-  Input,
-  OnDestroy,
-  OnInit,
-  Renderer2,
-  ViewContainerRef
-} from '@angular/core';
+import { ChangeDetectorRef, Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -33,12 +24,13 @@ import {
   extractParamsFromImageResourceUrl,
   ImageResourceInfo,
   isBase64DataImageUrl,
-  isImageResourceUrl, prependTbImagePrefix, removeTbImagePrefix
+  isImageResourceUrl,
+  prependTbImagePrefix,
+  removeTbImagePrefix
 } from '@shared/models/resource.models';
 import { ImageService } from '@core/http/image.service';
-import { MatButton } from '@angular/material/button';
-import { TbPopoverService } from '@shared/components/popover.service';
-import { ImageGalleryComponent } from '@shared/components/image/image-gallery.component';
+import { MatDialog } from '@angular/material/dialog';
+import { ImageGalleryDialogComponent } from '@shared/components/image/image-gallery-dialog.component';
 
 export enum ImageLinkType {
   none = 'none',
@@ -87,10 +79,8 @@ export class GalleryImageInputComponent extends PageComponent implements OnInit,
 
   constructor(protected store: Store<AppState>,
               private imageService: ImageService,
-              private cd: ChangeDetectorRef,
-              private renderer: Renderer2,
-              private viewContainerRef: ViewContainerRef,
-              private popoverService: TbPopoverService) {
+              private dialog: MatDialog,
+              private cd: ChangeDetectorRef) {
     super(store);
   }
 
@@ -194,32 +184,22 @@ export class GalleryImageInputComponent extends PageComponent implements OnInit,
     this.linkType = ImageLinkType.external;
   }
 
-  toggleGallery($event: Event, browseGalleryButton: MatButton) {
+  openGallery($event: Event): void {
     if ($event) {
       $event.stopPropagation();
     }
-    const trigger = browseGalleryButton._elementRef.nativeElement;
-    if (this.popoverService.hasPopover(trigger)) {
-      this.popoverService.hidePopover(trigger);
-    } else {
-      const ctx: any = {
-        pageMode: false,
-        popoverMode: true,
-        mode: 'grid',
-        selectionMode: true
-      };
-      const imageGalleryPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, ImageGalleryComponent, 'top', true, null,
-        ctx,
-        {},
-        {}, {}, true);
-      imageGalleryPopover.tbComponentRef.instance.imageSelected.subscribe((image) => {
-        imageGalleryPopover.hide();
+    this.dialog.open<ImageGalleryDialogComponent, any,
+      ImageResourceInfo>(ImageGalleryDialogComponent, {
+        autoFocus: false,
+        disableClose: false,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog']
+    }).afterClosed().subscribe((image) => {
+      if (image) {
         this.linkType = ImageLinkType.resource;
         this.imageResource = image;
         this.updateModel(image.link);
-      });
-    }
+      }
+    });
   }
 
 }

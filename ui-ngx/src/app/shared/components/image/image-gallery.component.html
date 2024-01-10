@@ -15,11 +15,11 @@
     limitations under the License.
 
 -->
-<div class="tb-images tb-absolute-fill" [ngClass]="{'tb-popover-mode': popoverMode, 'mat-padding': !popoverMode}">
+<div class="tb-images tb-absolute-fill" [ngClass]="{'tb-dialog-mode': dialogMode, 'mat-padding': !dialogMode}">
   <div fxFlex fxLayout="column" class="tb-images-content" [ngClass]="{'tb-outlined-border': pageMode}">
     <mat-toolbar class="mat-mdc-table-toolbar"
-                 fxLayout.lt-md="column" fxLayoutAlign.lt-md="start stretch"
-                 [fxShow]="!textSearchMode && (mode === 'grid' || dataSource?.selection.isEmpty())" [ngClass.lt-md]="{'multi-row': !isSysAdmin}">
+                 fxLayout.lt-lg="column" fxLayoutAlign.lt-lg="start stretch"
+                 [fxShow]="!textSearchMode && (mode === 'grid' || dataSource?.selection.isEmpty())" [ngClass.lt-lg]="{'multi-row': !isSysAdmin}">
       <div fxFlex fxLayout="row" fxLayoutAlign="start center">
         <div class="mat-toolbar-tools">
           <span fxHide fxShow.gt-sm class="tb-images-title" translate>image.gallery</span>
@@ -44,11 +44,11 @@
             </div>
           </div>
           <mat-slide-toggle *ngIf="!isSysAdmin"
-                            fxHide fxShow.gt-sm
+                            fxHide fxShow.gt-md
                             [ngModel]="includeSystemImages"
                             (ngModelChange)="includeSystemImagesChanged($event)">{{ 'image.include-system-images' | translate }}</mat-slide-toggle>
         </div>
-        <section fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
+        <section fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap.gt-md="16px">
           <span fxFlex></span>
           <section fxLayout="row" fxLayoutAlign="start center">
             <button [disabled]="isLoading$ | async"
@@ -79,7 +79,7 @@
                     (click)="uploadImage()"
                     matTooltip="{{'image.upload-image' | translate }}"
                     matTooltipPosition="above">
-              <mat-icon>upload</mat-icon>
+              <mat-icon>add</mat-icon>
             </button>
           </section>
           <button fxHide fxShow.gt-md
@@ -91,7 +91,7 @@
           </button>
         </section>
       </div>
-      <mat-slide-toggle *ngIf="!isSysAdmin" fxHide fxShow.lt-md
+      <mat-slide-toggle *ngIf="!isSysAdmin" fxHide fxShow.lt-lg
                         [ngModel]="includeSystemImages"
                         (ngModelChange)="includeSystemImagesChanged($event)">{{ 'image.include-system-images' | translate }}</mat-slide-toggle>
     </mat-toolbar>
@@ -293,7 +293,7 @@
                      [hidePageSize]="hidePageSize"
                      showFirstLastButtons></mat-paginator>
     </div>
-    <div fxFlex class="mat-padding" *ngIf="mode === 'grid'" fxLayout="column">
+    <div *ngIf="mode === 'grid'" fxFlex [ngClass]="{'mat-padding': !dialogMode}" fxLayout="column">
       <tb-scroll-grid fxFlex
         [columns]="gridColumns"
         [itemSize]="gridImagesItemSizeStrategy"
