@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityView;
@@ -34,6 +35,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.alarm.AlarmCommentDao;
 import org.thingsboard.server.gen.edge.v1.AlarmCommentUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
@@ -45,6 +47,9 @@ import java.util.UUID;
 
 @Slf4j
 public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
+
+    @Autowired
+    protected AlarmCommentDao alarmCommentDao;
 
     public ListenableFuture<Void> processAlarmMsg(TenantId tenantId, AlarmUpdateMsg alarmUpdateMsg) {
         log.trace("[{}] processAlarmMsg [{}]", tenantId, alarmUpdateMsg);
@@ -104,6 +109,8 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
         try {
             switch (alarmCommentUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
+                    alarmCommentDao.createAlarmComment(tenantId, alarmComment);
+                    break;
                 case ENTITY_UPDATED_RPC_MESSAGE:
                     alarmCommentService.createOrUpdateAlarmComment(tenantId, alarmComment);
                     break;
