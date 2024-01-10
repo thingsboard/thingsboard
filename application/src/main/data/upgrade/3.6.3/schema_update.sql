@@ -21,6 +21,8 @@ $$
     BEGIN
         -- in case of running the upgrade script a second time:
         IF EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name = 'attribute_kv' and column_name='entity_type') THEN
+            DROP VIEW IF EXISTS device_info_view;
+            DROP VIEW IF EXISTS device_info_active_attribute_view;
             ALTER INDEX IF EXISTS idx_attribute_kv_by_key_and_last_update_ts RENAME TO idx_attribute_kv_by_key_and_last_update_ts_old;
             IF EXISTS(SELECT 1 FROM pg_constraint WHERE conname = 'attribute_kv_pkey') THEN
                 ALTER TABLE attribute_kv RENAME CONSTRAINT attribute_kv_pkey TO attribute_kv_pkey_old;
@@ -40,8 +42,6 @@ $$
                 CONSTRAINT attribute_kv_pkey PRIMARY KEY (entity_id, attribute_type, attribute_key)
             );
         END IF;
-        DROP VIEW IF EXISTS device_info_view;
-        DROP VIEW IF EXISTS device_info_active_attribute_view;
     END;
 $$;
 
@@ -60,22 +60,6 @@ $$
         END IF;
     END;
 $$;
-
--- create to_attribute_type_id
-CREATE OR REPLACE FUNCTION to_attribute_type_id(IN attribute_type varchar, OUT attribute_type_id int) AS
-$$
-BEGIN
-    CASE
-       WHEN attribute_type = 'CLIENT_SCOPE' THEN
-          attribute_type_id := 1;
-       WHEN attribute_type = 'SERVER_SCOPE' THEN
-          attribute_type_id := 2;
-       WHEN attribute_type = 'SHARED_SCOPE' THEN
-          attribute_type_id := 3;
-    END CASE;
-END;
-$$ LANGUAGE plpgsql;
-
 
 -- insert keys into key_dictionary
 DO
@@ -96,7 +80,13 @@ DECLARE
 BEGIN
     IF EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = 'attribute_kv_old') THEN
         INSERT INTO attribute_kv(entity_id, attribute_type, attribute_key, bool_v, str_v, long_v, dbl_v, json_v, last_update_ts)
-            SELECT a.entity_id, to_attribute_type_id(a.attribute_type), k.key_id,  a.bool_v, a.str_v, a.long_v, a.dbl_v, a.json_v, a.last_update_ts
+            SELECT a.entity_id, CASE
+                        WHEN a.attribute_type = 'CLIENT_SCOPE' THEN 1
+                        WHEN a.attribute_type = 'SERVER_SCOPE' THEN 2
+                        WHEN a.attribute_type = 'SHARED_SCOPE' THEN 3
+                        ELSE 0
+                        END,
+                k.key_id,  a.bool_v, a.str_v, a.long_v, a.dbl_v, a.json_v, a.last_update_ts
                 FROM attribute_kv_old a INNER JOIN key_dictionary k ON (a.attribute_key = k.key)
                     WHERE a.attribute_type IN ('SERVER_SCOPE', 'CLIENT_SCOPE', 'SHARED_SCOPE');
         SELECT COUNT(*) INTO row_num_old FROM attribute_kv_old;
