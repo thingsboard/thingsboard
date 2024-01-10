@@ -606,7 +606,7 @@
         "filter-type-single-entity": "单个实体",
         "filter-type-entity-list": "实体列表",
         "filter-type-entity-name": "实体名称",
-        "filter-type-entity-type": "Entity type",
+        "filter-type-entity-type": "实体类型",
         "filter-type-state-entity": "仪表板状态实体",
         "filter-type-state-entity-description": "仪表板实体令牌状态参数",
         "filter-type-asset-type": "资产类型",
