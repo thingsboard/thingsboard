@@ -4868,7 +4868,7 @@
         "rpc": "控件部件",
         "alarm": "告警部件",
         "static": "静态部件",
-        "timeseries-short": "时间序列",
+        "timeseries-short": "时序",
         "latest-short": "最新",
         "rpc-short": "控制",
         "alarm-short": "告警",
