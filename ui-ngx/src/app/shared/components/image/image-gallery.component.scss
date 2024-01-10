@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,43 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 @import "../../../../scss/constants";
 
 $tb-button-selected-color: rgb(255, 110, 64) !default;
 
 .tb-images {
 
-  &.tb-popover-mode {
-    padding-top: 8px;
+  &.tb-dialog-mode {
     position: relative;
-    width: 300px;
-    height: 500px;
-    max-width: calc(100vw - 50px);
-    max-height: calc(100vh - 100px);
-    @media #{$mat-gt-xs} {
-      width: 500px;
-      height: 600px;
-    }
-    @media #{$mat-gt-sm} {
-      width: 700px;
-      height: 600px;
-    }
-    @media #{$mat-gt-md} {
-      width: 1000px;
-      height: 700px;
-    }
-    @media #{$mat-gt-xmd} {
-      width: 1300px;
-      height: 700px;
-    }
-    @media #{$mat-gt-xl} {
-      width: 1600px;
-      height: 800px;
-    }
-    @media screen and (min-width: 2320px) {
-      width: 2000px;
-      height: 800px;
+    width: 100%;
+    height: 100%;
+    .mat-toolbar.mat-mdc-table-toolbar {
+      padding: 0;
     }
   }
 
@@ -275,8 +250,12 @@ $tb-button-selected-color: rgb(255, 110, 64) !default;
         width: 50px;
         height: 50px;
         padding: 2px 12px;
-        display: block;
       }
+    }
+
+    .tb-image-preview-cell {
+      width: 50px;
+      height: 50px;
     }
 
     .tb-image-preview {

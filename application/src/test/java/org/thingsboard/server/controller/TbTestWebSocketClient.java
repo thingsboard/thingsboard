@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.java_websocket.client.WebSocketClient;
@@ -28,11 +27,11 @@ import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityFilter;
 import org.thingsboard.server.common.data.query.EntityKey;
-import org.thingsboard.server.service.ws.telemetry.cmd.TelemetryPluginCmdsWrapper;
+import org.thingsboard.server.service.ws.AuthCmd;
+import org.thingsboard.server.service.ws.WsCmd;
+import org.thingsboard.server.service.ws.WsCommandsWrapper;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.AttributesSubscriptionCmd;
-import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountUpdate;
-import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
@@ -64,6 +63,12 @@ public class TbTestWebSocketClient extends WebSocketClient {
     @Override
     public void onOpen(ServerHandshake serverHandshake) {
 
+    }
+
+    public void authenticate(String token) {
+        WsCommandsWrapper cmdsWrapper = new WsCommandsWrapper();
+        cmdsWrapper.setAuthCmd(new AuthCmd(1, token));
+        send(JacksonUtil.toString(cmdsWrapper));
     }
 
     @Override
@@ -103,24 +108,6 @@ public class TbTestWebSocketClient extends WebSocketClient {
         log.debug("send [{}]", text);
         reply = new CountDownLatch(1);
         super.send(text);
-    }
-
-    public void send(EntityDataCmd cmd) throws NotYetConnectedException {
-        TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
-        wrapper.setEntityDataCmds(Collections.singletonList(cmd));
-        this.send(JacksonUtil.toString(wrapper));
-    }
-
-    public void send(EntityCountCmd cmd) throws NotYetConnectedException {
-        TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
-        wrapper.setEntityCountCmds(Collections.singletonList(cmd));
-        this.send(JacksonUtil.toString(wrapper));
-    }
-
-    public void send(AlarmCountCmd cmd) throws NotYetConnectedException {
-        TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
-        wrapper.setAlarmCountCmds(Collections.singletonList(cmd));
-        this.send(JacksonUtil.toString(wrapper));
     }
 
     public String waitForUpdate() {
@@ -240,11 +227,7 @@ public class TbTestWebSocketClient extends WebSocketClient {
         cmd.setEntityId(entityId.getId().toString());
         cmd.setScope(scope);
         cmd.setKeys(String.join(",", keys));
-        TelemetryPluginCmdsWrapper cmdsWrapper = new TelemetryPluginCmdsWrapper();
-        cmdsWrapper.setAttrSubCmds(List.of(cmd));
-        JsonNode msg = JacksonUtil.valueToTree(cmdsWrapper);
-        ((ObjectNode) msg.get("attrSubCmds").get(0)).remove("type");
-        send(msg.toString());
+        send(cmd);
         return JacksonUtil.toJsonNode(waitForReply());
     }
 
@@ -286,6 +269,12 @@ public class TbTestWebSocketClient extends WebSocketClient {
         EntityDataQuery edq = new EntityDataQuery(entityFilter, new EntityDataPageLink(1, 0, null, null),
                 Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
         return sendEntityDataQuery(edq);
+    }
+
+    public void send(WsCmd... cmds) {
+        WsCommandsWrapper cmdsWrapper = new WsCommandsWrapper();
+        cmdsWrapper.setCmds(List.of(cmds));
+        send(JacksonUtil.toString(cmdsWrapper));
     }
 
 }

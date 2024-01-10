@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.Objects;
 import java.util.Optional;
+
+import static org.thingsboard.server.common.data.CacheConstants.RESOURCE_INFO_CACHE;
+import static org.thingsboard.server.common.data.CacheConstants.SECURITY_SETTINGS_CACHE;
 
 @RequiredArgsConstructor
 @Service
@@ -85,6 +88,11 @@ public class DefaultCacheCleanupService implements CacheCleanupService {
             case "3.4.4":
                 log.info("Clearing cache to upgrade from version 3.4.4 to 3.5.0");
                 clearAll();
+                break;
+            case "3.6.1":
+                log.info("Clearing cache to upgrade from version 3.6.1 to 3.6.2");
+                clearCacheByName(SECURITY_SETTINGS_CACHE);
+                clearCacheByName(RESOURCE_INFO_CACHE);
                 break;
             default:
                 //Do nothing, since cache cleanup is optional.

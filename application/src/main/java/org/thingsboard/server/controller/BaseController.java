@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 import org.springframework.web.context.request.async.DeferredResult;
+import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -833,18 +834,14 @@ public abstract class BaseController {
     }
 
     protected <T> DeferredResult<T> wrapFuture(ListenableFuture<T> future) {
-        final DeferredResult<T> deferredResult = new DeferredResult<>();
-        Futures.addCallback(future, new FutureCallback<>() {
-            @Override
-            public void onSuccess(T result) {
-                deferredResult.setResult(result);
-            }
+        DeferredResult<T> deferredResult = new DeferredResult<>(); // Timeout of spring.mvc.async.request-timeout is used
+        DonAsynchron.withCallback(future, deferredResult::setResult, deferredResult::setErrorResult);
+        return deferredResult;
+    }
 
-            @Override
-            public void onFailure(Throwable t) {
-                deferredResult.setErrorResult(t);
-            }
-        }, MoreExecutors.directExecutor());
+    protected <T> DeferredResult<T> wrapFuture(ListenableFuture<T> future, long timeoutMs) {
+        DeferredResult<T> deferredResult = new DeferredResult<>(timeoutMs);
+        DonAsynchron.withCallback(future, deferredResult::setResult, deferredResult::setErrorResult);
         return deferredResult;
     }
 

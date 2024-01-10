@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -145,14 +145,14 @@
           <div>{{ 'legend.position' | translate }}</div>
           <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="legendPosition">
-              <mat-option *ngFor="let pos of doughnutLegendPositions" [value]="pos">
-                {{ doughnutLegendPositionTranslationMap.get(pos) | translate }}
+              <mat-option *ngFor="let pos of legendPositions" [value]="pos">
+                {{ legendPositionTranslationMap.get(pos) | translate }}
               </mat-option>
             </mat-select>
           </mat-form-field>
         </div>
         <div class="tb-form-row space-between">
-          <div>{{ 'widgets.doughnut.legend-label' | translate }}</div>
+          <div>{{ 'legend.label' | translate }}</div>
           <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
             <tb-font-settings formControlName="legendLabelFont"
                               previewText="Wind power">
@@ -164,7 +164,7 @@
           </div>
         </div>
         <div class="tb-form-row space-between">
-          <div>{{ 'widgets.doughnut.legend-value' | translate }}</div>
+          <div>{{ 'legend.value' | translate }}</div>
           <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
             <tb-font-settings formControlName="legendValueFont"
                               [previewText]="valuePreviewFn">
@@ -184,13 +184,13 @@
         <mat-panel-title>
           <mat-slide-toggle class="mat-slide" formControlName="showTooltip" (click)="$event.stopPropagation()"
                             fxLayoutAlign="center">
-            {{ 'widgets.doughnut.tooltip' | translate }}
+            {{ 'widget-config.tooltip' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
         <div class="tb-form-row space-between column-xs">
-          <div>{{ 'widgets.doughnut.tooltip-value' | translate }}</div>
+          <div>{{ 'tooltip.value' | translate }}</div>
           <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
             <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
               <mat-select formControlName="tooltipValueType">
@@ -213,14 +213,14 @@
           </div>
         </div>
         <div class="tb-form-row space-between">
-          <div>{{ 'widgets.doughnut.tooltip-background-color' | translate }}</div>
+          <div>{{ 'tooltip.background-color' | translate }}</div>
           <tb-color-input asBoxInput
                           colorClearButton
                           formControlName="tooltipBackgroundColor">
           </tb-color-input>
         </div>
         <div class="tb-form-row space-between">
-          <div>{{ 'widgets.doughnut.tooltip-background-blur' | translate }}</div>
+          <div>{{ 'tooltip.background-blur' | translate }}</div>
           <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="tooltipBackgroundBlur" type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
             <div matSuffix>px</div>

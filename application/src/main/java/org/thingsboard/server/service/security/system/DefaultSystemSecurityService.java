@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,7 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.user.UserServiceImpl;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
 import org.thingsboard.server.service.security.exception.UserPasswordExpiredException;
+import org.thingsboard.server.service.security.exception.UserPasswordNotValidException;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.utils.MiscUtils;
 import ua_parser.Client;
@@ -94,9 +95,9 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
 
     @Cacheable(cacheNames = SECURITY_SETTINGS_CACHE, key = "'securitySettings'")
     @Override
-    public SecuritySettings getSecuritySettings(TenantId tenantId) {
+    public SecuritySettings getSecuritySettings() {
         SecuritySettings securitySettings = null;
-        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey(tenantId, "securitySettings");
+        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "securitySettings");
         if (adminSettings != null) {
             try {
                 securitySettings = JacksonUtil.convertValue(adminSettings.getJsonValue(), SecuritySettings.class);
@@ -107,21 +108,22 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
             securitySettings = new SecuritySettings();
             securitySettings.setPasswordPolicy(new UserPasswordPolicy());
             securitySettings.getPasswordPolicy().setMinimumLength(6);
+            securitySettings.getPasswordPolicy().setMaximumLength(72);
         }
         return securitySettings;
     }
 
     @CacheEvict(cacheNames = SECURITY_SETTINGS_CACHE, key = "'securitySettings'")
     @Override
-    public SecuritySettings saveSecuritySettings(TenantId tenantId, SecuritySettings securitySettings) {
-        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey(tenantId, "securitySettings");
+    public SecuritySettings saveSecuritySettings(SecuritySettings securitySettings) {
+        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "securitySettings");
         if (adminSettings == null) {
             adminSettings = new AdminSettings();
-            adminSettings.setTenantId(tenantId);
+            adminSettings.setTenantId(TenantId.SYS_TENANT_ID);
             adminSettings.setKey("securitySettings");
         }
         adminSettings.setJsonValue(JacksonUtil.valueToTree(securitySettings));
-        AdminSettings savedAdminSettings = adminSettingsService.saveAdminSettings(tenantId, adminSettings);
+        AdminSettings savedAdminSettings = adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminSettings);
         try {
             return JacksonUtil.convertValue(savedAdminSettings.getJsonValue(), SecuritySettings.class);
         } catch (Exception e) {
@@ -133,7 +135,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
     public void validateUserCredentials(TenantId tenantId, UserCredentials userCredentials, String username, String password) throws AuthenticationException {
         if (!encoder.matches(password, userCredentials.getPassword())) {
             int failedLoginAttempts = userService.increaseFailedLoginAttempts(tenantId, userCredentials.getUserId());
-            SecuritySettings securitySettings = self.getSecuritySettings(tenantId);
+            SecuritySettings securitySettings = self.getSecuritySettings();
             if (securitySettings.getMaxFailedLoginAttempts() != null && securitySettings.getMaxFailedLoginAttempts() > 0) {
                 if (failedLoginAttempts > securitySettings.getMaxFailedLoginAttempts() && userCredentials.isEnabled()) {
                     lockAccount(userCredentials.getUserId(), username, securitySettings.getUserLockoutNotificationEmail(), securitySettings.getMaxFailedLoginAttempts());
@@ -149,7 +151,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
 
         userService.resetFailedLoginAttempts(tenantId, userCredentials.getUserId());
 
-        SecuritySettings securitySettings = self.getSecuritySettings(tenantId);
+        SecuritySettings securitySettings = self.getSecuritySettings();
         if (isPositiveInteger(securitySettings.getPasswordPolicy().getPasswordExpirationPeriodDays())) {
             if ((userCredentials.getCreatedTime()
                     + TimeUnit.DAYS.toMillis(securitySettings.getPasswordPolicy().getPasswordExpirationPeriodDays()))
@@ -177,7 +179,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
         if (maxVerificationFailures != null && maxVerificationFailures > 0
                 && failedVerificationAttempts >= maxVerificationFailures) {
             userService.setUserCredentialsEnabled(TenantId.SYS_TENANT_ID, userId, false);
-            SecuritySettings securitySettings = self.getSecuritySettings(tenantId);
+            SecuritySettings securitySettings = self.getSecuritySettings();
             lockAccount(userId, securityUser.getEmail(), securitySettings.getUserLockoutNotificationEmail(), maxVerificationFailures);
             throw new LockedException("User account was locked due to exceeded 2FA verification attempts");
         }
@@ -195,12 +197,36 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
     }
 
     @Override
-    public void validatePassword(TenantId tenantId, String password, UserCredentials userCredentials) throws DataValidationException {
-        SecuritySettings securitySettings = self.getSecuritySettings(tenantId);
+    public void validatePassword(String password, UserCredentials userCredentials) throws DataValidationException {
+        SecuritySettings securitySettings = self.getSecuritySettings();
         UserPasswordPolicy passwordPolicy = securitySettings.getPasswordPolicy();
 
+        validatePasswordByPolicy(password, passwordPolicy);
+
+        if (userCredentials != null && isPositiveInteger(passwordPolicy.getPasswordReuseFrequencyDays())) {
+            long passwordReuseFrequencyTs = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(passwordPolicy.getPasswordReuseFrequencyDays());
+            JsonNode additionalInfo = userCredentials.getAdditionalInfo();
+            if (additionalInfo instanceof ObjectNode && additionalInfo.has(UserServiceImpl.USER_PASSWORD_HISTORY)) {
+                JsonNode userPasswordHistoryJson = additionalInfo.get(UserServiceImpl.USER_PASSWORD_HISTORY);
+                Map<String, String> userPasswordHistoryMap = JacksonUtil.convertValue(userPasswordHistoryJson, new TypeReference<>() {});
+                for (Map.Entry<String, String> entry : userPasswordHistoryMap.entrySet()) {
+                    if (encoder.matches(password, entry.getValue()) && Long.parseLong(entry.getKey()) > passwordReuseFrequencyTs) {
+                        throw new DataValidationException("Password was already used for the last " + passwordPolicy.getPasswordReuseFrequencyDays() + " days");
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public void validatePasswordByPolicy(String password, UserPasswordPolicy passwordPolicy) {
         List<Rule> passwordRules = new ArrayList<>();
-        passwordRules.add(new LengthRule(passwordPolicy.getMinimumLength(), Integer.MAX_VALUE));
+
+        Integer maximumLength = passwordPolicy.getMaximumLength();
+        Integer minLengthBound = passwordPolicy.getMinimumLength();
+        int maxLengthBound = (maximumLength != null && maximumLength > passwordPolicy.getMinimumLength()) ? maximumLength : Integer.MAX_VALUE;
+
+        passwordRules.add(new LengthRule(minLengthBound, maxLengthBound));
         if (isPositiveInteger(passwordPolicy.getMinimumUppercaseLetters())) {
             passwordRules.add(new CharacterRule(EnglishCharacterData.UpperCase, passwordPolicy.getMinimumUppercaseLetters()));
         }
@@ -222,21 +248,6 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
         if (!result.isValid()) {
             String message = String.join("\n", validator.getMessages(result));
             throw new DataValidationException(message);
-        }
-
-        if (userCredentials != null && isPositiveInteger(passwordPolicy.getPasswordReuseFrequencyDays())) {
-            long passwordReuseFrequencyTs = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(passwordPolicy.getPasswordReuseFrequencyDays());
-            JsonNode additionalInfo = userCredentials.getAdditionalInfo();
-            if (additionalInfo instanceof ObjectNode && additionalInfo.has(UserServiceImpl.USER_PASSWORD_HISTORY)) {
-                JsonNode userPasswordHistoryJson = additionalInfo.get(UserServiceImpl.USER_PASSWORD_HISTORY);
-                Map<String, String> userPasswordHistoryMap = JacksonUtil.convertValue(userPasswordHistoryJson, new TypeReference<>() {});
-                for (Map.Entry<String, String> entry : userPasswordHistoryMap.entrySet()) {
-                    if (encoder.matches(password, entry.getValue()) && Long.parseLong(entry.getKey()) > passwordReuseFrequencyTs) {
-                        throw new DataValidationException("Password was already used for the last " + passwordPolicy.getPasswordReuseFrequencyDays() + " days");
-                    }
-                }
-
-            }
         }
     }
 

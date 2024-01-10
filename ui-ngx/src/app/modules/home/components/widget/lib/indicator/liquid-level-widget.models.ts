@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -418,7 +418,7 @@ export const createAbsoluteLayout = (values?: {inputValue: number | string; volu
 
 export const createPercentLayout = (value: number | string = 50, valueTextStyle: string = valueTextStyleDefaults): string =>
   `<div xmlns="http://www.w3.org/1999/xhtml" style="${valueContainerStyleDefaults}">
-    <label style="${valueTextStyle}">${value} ${CapacityUnits.percent}</label>
+    <label style="${valueTextStyle}">${value} ${value !== 'N/A' ? CapacityUnits.percent : ''}</label>
   </div>`;
 
 export const optionsFilter = (searchText: string): ((key: DataKey) => boolean) =>

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,8 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
     @Length(fieldName = "resourceKey")
     @ApiModelProperty(position = 6, value = "Resource key.", example = "19_1.0", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String resourceKey;
+    private boolean isPublic;
+    private String publicResourceKey;
     @ApiModelProperty(position = 7, value = "Resource search text.", example = "19_1.0:binaryappdatacontainer", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String searchText;
 
@@ -79,6 +81,8 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
         this.resourceType = resourceInfo.resourceType;
         this.resourceKey = resourceInfo.resourceKey;
         this.searchText = resourceInfo.searchText;
+        this.isPublic = resourceInfo.isPublic;
+        this.publicResourceKey = resourceInfo.publicResourceKey;
         this.etag = resourceInfo.etag;
         this.fileName = resourceInfo.fileName;
         this.descriptor = resourceInfo.descriptor != null ? resourceInfo.descriptor.deepCopy() : null;
@@ -109,7 +113,16 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public String getLink() {
         if (resourceType == ResourceType.IMAGE) {
-            return "/api/images/" + ((tenantId == null || !tenantId.isSysTenantId()) ? "tenant" : "system") + "/" + resourceKey; // tenantId is null in case of export to git
+            String type = (tenantId != null && tenantId.isSysTenantId()) ? "system" : "tenant"; // tenantId is null in case of export to git
+            return "/api/images/" + type + "/" + resourceKey;
+        }
+        return null;
+    }
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    public String getPublicLink() {
+        if (resourceType == ResourceType.IMAGE && isPublic) {
+            return "/api/images/public/" + getPublicResourceKey();
         }
         return null;
     }

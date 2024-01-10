@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,8 @@ public interface ImageService {
 
     TbResourceInfo getImageInfoByTenantIdAndKey(TenantId tenantId, String key);
 
+    TbResourceInfo getPublicImageInfoByKey(String publicResourceKey);
+
     PageData<TbResourceInfo> getImagesByTenantId(TenantId tenantId, PageLink pageLink);
 
     PageData<TbResourceInfo> getAllImagesByTenantId(TenantId tenantId, PageLink pageLink);
@@ -47,7 +49,9 @@ public interface ImageService {
     TbResourceInfo findSystemOrTenantImageByEtag(TenantId tenantId, String etag);
 
     boolean replaceBase64WithImageUrl(HasImage entity, String type);
+
     boolean replaceBase64WithImageUrl(Dashboard dashboard);
+
     boolean replaceBase64WithImageUrl(WidgetTypeDetails widgetType);
 
     void inlineImage(HasImage entity);
@@ -55,4 +59,10 @@ public interface ImageService {
     void inlineImages(Dashboard dashboard);
 
     void inlineImages(WidgetTypeDetails widgetTypeDetails);
+
+    void inlineImageForEdge(HasImage entity);
+
+    void inlineImagesForEdge(Dashboard dashboard);
+
+    void inlineImagesForEdge(WidgetTypeDetails widgetTypeDetails);
 }

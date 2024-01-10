@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,6 @@ public class WidgetsBundle extends BaseData<WidgetsBundleId> implements HasName,
     @ApiModelProperty(position = 5, value = "Title used in search and UI", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String title;
 
-    @Length(fieldName = "image", max = 1000000)
     @Getter
     @Setter
     @ApiModelProperty(position = 6, value = "Relative or external image URL. Replaced with image data URL (Base64) in case of relative URL and 'inlineImages' option enabled.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
@@ -66,7 +65,6 @@ public class WidgetsBundle extends BaseData<WidgetsBundleId> implements HasName,
     @NoXss
     @Length(fieldName = "description", max = 1024)
     @Getter
-
     @Setter
     @ApiModelProperty(position = 7, value = "Description", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String description;

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,7 @@
 package org.thingsboard.server.service.ws;
 
 import lombok.Builder;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.Data;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.net.InetSocketAddress;
@@ -27,15 +26,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Created by ashvayka on 27.03.18.
  */
-@RequiredArgsConstructor
 @Builder
-@Getter
+@Data
 public class WebSocketSessionRef {
 
     private static final long serialVersionUID = 1L;
 
     private final String sessionId;
-    private final SecurityUser securityCtx;
+    private SecurityUser securityCtx;
     private final InetSocketAddress localAddress;
     private final InetSocketAddress remoteAddress;
     private final WebSocketSessionType sessionType;
@@ -56,11 +54,13 @@ public class WebSocketSessionRef {
 
     @Override
     public String toString() {
-        return "WebSocketSessionRef{" +
-                "sessionId='" + sessionId + '\'' +
-                ", localAddress=" + localAddress +
-                ", remoteAddress=" + remoteAddress +
-                ", sessionType=" + sessionType +
-                '}';
+        String info = "";
+        if (securityCtx != null) {
+            info += "[" + securityCtx.getTenantId() + "]";
+            info += "[" + securityCtx.getId() + "]";
+        }
+        info += "[" + sessionId + "]";
+        return info;
     }
+
 }

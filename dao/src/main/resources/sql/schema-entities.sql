@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2023 The Thingsboard Authors
+-- Copyright © 2016-2024 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -718,6 +718,8 @@ CREATE TABLE IF NOT EXISTS resource (
     etag varchar,
     descriptor varchar,
     preview bytea,
+    is_public boolean default true,
+    public_resource_key varchar(32) unique,
     external_id uuid,
     CONSTRAINT resource_unq_key UNIQUE (tenant_id, resource_type, resource_key)
 );

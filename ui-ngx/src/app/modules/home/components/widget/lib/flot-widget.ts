@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -1058,7 +1058,9 @@ export class TbFlot {
       const series = this.subscription.data[i] as TbFlotSeries;
       this.substituteLabelPatterns(series, i);
     }
-    this.updateData();
+    if (this.plot) {
+      this.updateData();
+    }
     this.ctx.detectChanges();
   }
 

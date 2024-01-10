@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.page.PageData;
@@ -41,6 +42,7 @@ import org.thingsboard.server.dao.ota.OtaPackageService;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -370,6 +372,98 @@ public class DeviceProfileServiceTest extends AbstractServiceTest {
         pageData = deviceProfileService.findDeviceProfileInfos(tenantId, pageLink, null);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(1, pageData.getTotalElements());
+    }
+
+    @Test
+    public void testFindAllDeviceProfilesByTenantId() {
+        int deviceProfilesCount = 4; // 3 created + default
+        var deviceProfiles = new ArrayList<DeviceProfile>(4);
+
+        var profileC = deviceProfileService.saveDeviceProfile(
+                createDeviceProfile(tenantId, "profile C"));
+        deviceProfiles.add(deviceProfileService.saveDeviceProfile(profileC));
+
+
+        var profileA = deviceProfileService.saveDeviceProfile(
+                    createDeviceProfile(tenantId, "profile A"));
+        deviceProfiles.add(deviceProfileService.saveDeviceProfile(profileA));
+
+
+        var profileB = deviceProfileService.saveDeviceProfile(
+                createDeviceProfile(tenantId, "profile B"));
+        deviceProfiles.add(deviceProfileService.saveDeviceProfile(profileB));
+
+
+        deviceProfiles.add(deviceProfileService.findDefaultDeviceProfile(tenantId));
+
+        List<EntityInfo> sortedProfileInfos = deviceProfiles.stream()
+                .map(profile -> new EntityInfo(profile.getId(), profile.getName()))
+                .sorted(Comparator.comparing(EntityInfo::getName))
+                .collect(Collectors.toList());
+
+        var deviceProfileInfos = deviceProfileService
+                .findDeviceProfileNamesByTenantId(tenantId, false);
+
+        assertThat(deviceProfileInfos).isNotNull();
+        assertThat(deviceProfileInfos).hasSize(deviceProfilesCount);
+        assertThat(deviceProfileInfos).isEqualTo(sortedProfileInfos);
+    }
+
+    @Test
+    public void testFindActiveOnlyDeviceProfilesByTenantId() {
+
+        String profileCName = "profile C";
+        deviceProfileService.saveDeviceProfile(
+                createDeviceProfile(tenantId, profileCName));
+
+        String profileAName = "profile A";
+        deviceProfileService.saveDeviceProfile(
+                createDeviceProfile(tenantId, profileAName));
+
+        String profileBName = "profile B";
+        deviceProfileService.saveDeviceProfile(
+                createDeviceProfile(tenantId, profileBName));
+
+
+        var deviceProfileInfos = deviceProfileService
+                .findDeviceProfileNamesByTenantId(tenantId, true);
+
+        assertThat(deviceProfileInfos).isNotNull();
+        assertThat(deviceProfileInfos).isEmpty();
+
+        var deviceC = new Device();
+        deviceC.setName("Test Device C");
+        deviceC.setType(profileCName);
+        deviceC.setTenantId(tenantId);
+
+        deviceC = deviceService.saveDevice(deviceC);
+
+        var deviceA = new Device();
+        deviceA.setName("Test Device A");
+        deviceA.setType(profileAName);
+        deviceA.setTenantId(tenantId);
+
+        deviceA = deviceService.saveDevice(deviceA);
+
+        var deviceB = new Device();
+        deviceB.setName("Test Device B");
+        deviceB.setType(profileBName);
+        deviceB.setTenantId(tenantId);
+
+        deviceB = deviceService.saveDevice(deviceB);
+
+        deviceProfileInfos = deviceProfileService
+                .findDeviceProfileNamesByTenantId(tenantId, true);
+
+        var expected = List.of(
+                new EntityInfo(deviceA.getDeviceProfileId(), profileAName),
+                new EntityInfo(deviceB.getDeviceProfileId(), profileBName),
+                new EntityInfo(deviceC.getDeviceProfileId(), profileCName)
+        );
+
+        assertThat(deviceProfileInfos).isNotEmpty();
+        assertThat(deviceProfileInfos).hasSize(3);
+        assertThat(deviceProfileInfos).isEqualTo(expected);
     }
 
 }

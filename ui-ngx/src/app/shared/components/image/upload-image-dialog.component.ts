@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 import { ImageService } from '@core/http/image.service';
 import { ImageResourceInfo, imageResourceType } from '@shared/models/resource.models';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
 
 export interface UploadImageDialogData {
   image?: ImageResourceInfo;
@@ -50,6 +51,8 @@ export class UploadImageDialogComponent extends
   uploadImage = true;
 
   submitted = false;
+
+  maxResourceSize = getCurrentAuthState(this.store).maxResourceSize;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,

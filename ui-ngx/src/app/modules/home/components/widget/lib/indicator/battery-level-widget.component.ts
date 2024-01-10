@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -120,6 +120,8 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
 
   value: number;
 
+  batteryFillValue: number;
+
   batterySections: boolean[];
   dividedBorderRadius: string;
   dividedGap: string;
@@ -226,9 +228,10 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
 
   public onDataUpdated() {
     const tsValue = getSingleTsValue(this.ctx.data);
-    this.value = 0;
+    this.batteryFillValue = 0;
     if (tsValue && isDefinedAndNotNull(tsValue[1]) && isNumeric(tsValue[1])) {
       this.value = tsValue[1];
+      this.batteryFillValue = this.parseBatteryFillValue(this.value);
       this.valueText = formatValue(this.value, this.decimals, this.units, false);
     } else {
       this.valueText = 'N/A';
@@ -243,6 +246,16 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
     this.batteryLevelColor.update(this.value);
     this.batteryShapeColor.update(this.value);
     this.cd.detectChanges();
+  }
+
+  parseBatteryFillValue(value: number) {
+    if (value < 0) {
+      return 0;
+    } else if (value > 100) {
+      return 100;
+    } else {
+      return value;
+    }
   }
 
   public trackBySection(index: number): number {
