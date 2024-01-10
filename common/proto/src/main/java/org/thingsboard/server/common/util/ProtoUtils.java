@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.device.data.PowerSavingConfiguration;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.DeviceCredentialsId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -624,7 +625,7 @@ public class ProtoUtils {
         }
         if (isNotNull(deviceProfile.getDefaultRuleChainId())) {
             builder.setDefaultRuleChainIdMSB(getMsb(deviceProfile.getDefaultRuleChainId()))
-                    .setDefaultRuleChainIdLSB(getMsb(deviceProfile.getDefaultRuleChainId()));
+                    .setDefaultRuleChainIdLSB(getLsb(deviceProfile.getDefaultRuleChainId()));
         }
         if (isNotNull(deviceProfile.getDefaultDashboardId())) {
             builder.setDefaultDashboardIdMSB(getMsb(deviceProfile.getDefaultDashboardId()))
@@ -744,7 +745,7 @@ public class ProtoUtils {
         Tenant tenant = new Tenant(getEntityId(proto.getTenantIdMSB(), proto.getTenantIdLSB(), TenantId::new));
         tenant.setCreatedTime(proto.getCreatedTime());
         tenant.setTenantProfileId(getEntityId(proto.getTenantProfileIdMSB(), proto.getTenantProfileIdLSB(), TenantProfileId::new));
-        tenant.setTitle(tenant.getTitle());
+        tenant.setTitle(proto.getTitle());
 
         if (proto.hasRegion()) {
             tenant.setRegion(proto.getRegion());
@@ -822,8 +823,12 @@ public class ProtoUtils {
                 .setTitle(resource.getTitle())
                 .setResourceType(resource.getResourceType().name())
                 .setResourceKey(resource.getResourceKey())
+                .setIsPublic(resource.isPublic())
                 .setSearchText(resource.getSearchText())
                 .setFileName(resource.getFileName());
+        if (isNotNull(resource.getPublicResourceKey())) {
+            builder.setPublicResourceKey(resource.getPublicResourceKey());
+        }
         if (isNotNull(resource.getEtag())) {
             builder.setEtag(resource.getEtag());
         }
@@ -850,8 +855,12 @@ public class ProtoUtils {
         resource.setTitle(proto.getTitle());
         resource.setResourceType(ResourceType.valueOf(proto.getResourceType()));
         resource.setResourceKey(proto.getResourceKey());
+        resource.setPublic(proto.getIsPublic());
         resource.setSearchText(proto.getSearchText());
         resource.setFileName(proto.getFileName());
+        if (proto.hasPublicResourceKey()) {
+            resource.setPublicResourceKey(proto.getPublicResourceKey());
+        }
         if (proto.hasEtag()) {
             resource.setEtag(proto.getEtag());
         }
@@ -963,6 +972,9 @@ public class ProtoUtils {
 
     public static TransportProtos.DeviceCredentialsProto toProto(DeviceCredentials deviceCredentials) {
         TransportProtos.DeviceCredentialsProto.Builder builder = TransportProtos.DeviceCredentialsProto.newBuilder()
+                .setCredentialsIdMSB(deviceCredentials.getId().getId().getMostSignificantBits())
+                .setCredentialsIdLSB(deviceCredentials.getId().getId().getLeastSignificantBits())
+                .setCreatedTime(deviceCredentials.getCreatedTime())
                 .setDeviceIdMSB(getMsb(deviceCredentials.getDeviceId()))
                 .setDeviceIdLSB(getLsb(deviceCredentials.getDeviceId()))
                 .setCredentialsId(deviceCredentials.getCredentialsId())
@@ -975,7 +987,9 @@ public class ProtoUtils {
     }
 
     public static DeviceCredentials fromProto(TransportProtos.DeviceCredentialsProto proto) {
-        DeviceCredentials deviceCredentials = new DeviceCredentials();
+        DeviceCredentials deviceCredentials =
+                new DeviceCredentials(new DeviceCredentialsId(new UUID(proto.getCredentialsIdMSB(), proto.getCredentialsIdLSB())));
+        deviceCredentials.setCreatedTime(proto.getCreatedTime());
         deviceCredentials.setDeviceId(getEntityId(proto.getDeviceIdMSB(), proto.getDeviceIdLSB(), DeviceId::new));
         deviceCredentials.setCredentialsId(proto.getCredentialsId());
         deviceCredentials.setCredentialsType(DeviceCredentialsType.valueOf(proto.getCredentialsType().name()));

@@ -275,14 +275,16 @@ message TbResourceProto {
   string title = 6;
   string resourceType = 7;
   string resourceKey = 8;
-  string searchText = 9;
-  optional string etag = 10;
-  string fileName = 11;
-  optional string resourceDescriptor = 12;
-  optional int64 externalIdMSB = 13;
-  optional int64 externalIdLSB = 14;
-  optional bytes data = 15;
-  optional bytes preview = 16;
+  bool isPublic = 9;
+  optional string publicResourceKey = 10;
+  string searchText = 11;
+  optional string etag = 12;
+  string fileName = 13;
+  optional string resourceDescriptor = 14;
+  optional int64 externalIdMSB = 15;
+  optional int64 externalIdLSB = 16;
+  optional bytes data = 17;
+  optional bytes preview = 18;
 }
 
 message ApiUsageStateProto {
@@ -637,11 +639,14 @@ message ClaimDeviceMsg {
 }
 
 message DeviceCredentialsProto {
-  int64 deviceIdMSB = 1;
-  int64 deviceIdLSB = 2;
-  CredentialsType credentialsType = 3;
-  string credentialsId = 4;
-  optional string credentialsValue = 5;
+  int64 credentialsIdMSB = 1;
+  int64 credentialsIdLSB = 2;
+  int64 createdTime = 3;
+  int64 deviceIdMSB = 4;
+  int64 deviceIdLSB = 5;
+  CredentialsType credentialsType = 6;
+  string credentialsId = 7;
+  optional string credentialsValue = 8;
 }
 
 message CredentialsDataProto {
