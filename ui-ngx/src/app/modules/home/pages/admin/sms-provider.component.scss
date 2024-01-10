@@ -14,5 +14,11 @@
  * limitations under the License.
  */
 :host {
+  .mat-mdc-card-header {
+    align-items: center;
+  }
 
+  .mdc-card__actions {
+    padding: 16px;
+  }
 }

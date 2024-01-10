@@ -379,8 +379,8 @@ export enum NotificationDeliveryMethod {
   SMS = 'SMS',
   EMAIL = 'EMAIL',
   SLACK = 'SLACK',
-  MICROSOFT_TEAMS = 'MICROSOFT_TEAMS',
-  MOBILE_APP = 'MOBILE_APP'
+  MOBILE_APP = 'MOBILE_APP',
+  MICROSOFT_TEAMS = 'MICROSOFT_TEAMS'
 }
 
 export const NotificationDeliveryMethodTranslateMap = new Map<NotificationDeliveryMethod, string>([
@@ -388,8 +388,8 @@ export const NotificationDeliveryMethodTranslateMap = new Map<NotificationDelive
   [NotificationDeliveryMethod.SMS, 'notification.delivery-method.sms'],
   [NotificationDeliveryMethod.EMAIL, 'notification.delivery-method.email'],
   [NotificationDeliveryMethod.SLACK, 'notification.delivery-method.slack'],
-  [NotificationDeliveryMethod.MICROSOFT_TEAMS, 'notification.delivery-method.microsoft-teams'],
-  [NotificationDeliveryMethod.MOBILE_APP, 'notification.delivery-method.mobile-app']
+  [NotificationDeliveryMethod.MOBILE_APP, 'notification.delivery-method.mobile-app'],
+  [NotificationDeliveryMethod.MICROSOFT_TEAMS, 'notification.delivery-method.microsoft-teams']
 ]);
 
 export enum NotificationRequestStatus {
