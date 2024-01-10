@@ -150,12 +150,9 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         image.setDescriptorValue(descriptor);
         image.setPreview(result.getRight());
 
-        if (StringUtils.isEmpty(image.getPublicResourceKey())) {
+        if (StringUtils.isEmpty(image.getPublicResourceKey()) || (image.getId() == null &&
+                resourceInfoDao.existsByPublicResourceKey(ResourceType.IMAGE, image.getPublicResourceKey()))) {
             image.setPublicResourceKey(generatePublicResourceKey());
-        } else {
-            if (resourceInfoDao.existsByPublicResourceKey(ResourceType.IMAGE, image.getPublicResourceKey())) {
-                image.setPublicResourceKey(generatePublicResourceKey());
-            }
         }
         log.debug("[{}] Creating image {} ('{}')", image.getTenantId(), image.getResourceKey(), image.getName());
         return new TbResourceInfo(doSaveResource(image));
