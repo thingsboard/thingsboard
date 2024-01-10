@@ -21,3 +21,10 @@ DROP INDEX IF EXISTS idx_rule_node_type_configuration_version;
 CREATE INDEX IF NOT EXISTS idx_rule_node_type_id_configuration_version ON rule_node(type, id, configuration_version);
 
 -- RULE NODE INDEXES UPDATE END
+
+-- RULE NODE QUEUE UPDATE START
+
+ALTER TABLE rule_node ADD COLUMN IF NOT EXISTS queue_name varchar(255);
+ALTER TABLE component_descriptor ADD COLUMN IF NOT EXISTS has_queue_name boolean DEFAULT false;
+
+-- RULE NODE QUEUE UPDATE END
