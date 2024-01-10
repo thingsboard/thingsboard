@@ -2715,15 +2715,33 @@ public class RestClient implements Closeable {
         return restTemplate.postForEntity(baseURL + "/api/widgetsBundle", widgetsBundle, WidgetsBundle.class).getBody();
     }
 
+    public void updateWidgetsBundleWidgetTypes(WidgetsBundleId widgetsBundleId, List<WidgetTypeId> widgetTypeIds) {
+        var httpEntity = new HttpEntity<>(widgetTypeIds.stream()
+                .map(widgetTypeId -> widgetTypeId.getId().toString())
+                .collect(Collectors.toList()));
+        restTemplate.exchange(baseURL + "/api/widgetsBundle/{widgetsBundleId}/widgetTypes",
+                HttpMethod.POST, httpEntity, Void.class, widgetsBundleId.getId());
+    }
+
+    public void updateWidgetsBundleWidgetFqns(WidgetsBundleId widgetsBundleId, List<String> widgetTypeFqns) {
+        restTemplate.exchange(baseURL + "/api/widgetsBundle/{widgetsBundleId}/widgetTypeFqns",
+                HttpMethod.POST, new HttpEntity<>(widgetTypeFqns), Void.class, widgetsBundleId.getId());
+    }
+
     public void deleteWidgetsBundle(WidgetsBundleId widgetsBundleId) {
         restTemplate.delete(baseURL + "/api/widgetsBundle/{widgetsBundleId}", widgetsBundleId.getId());
     }
 
     public PageData<WidgetsBundle> getWidgetsBundles(PageLink pageLink) {
+        return getWidgetsBundles(pageLink, null, null);
+    }
+
+    public PageData<WidgetsBundle> getWidgetsBundles(PageLink pageLink, Boolean tenantOnly, Boolean fullSearch) {
         Map<String, String> params = new HashMap<>();
         addPageLinkToParam(params, pageLink);
+        addTenantOnlyAndFullSearchToParams(tenantOnly, fullSearch, params);
         return restTemplate.exchange(
-                baseURL + "/api/widgetsBundles?" + getUrlParams(pageLink),
+                baseURL + "/api/widgetsBundles?" + getUrlParams(pageLink) + getWidgetsBundlePageRequestUrlParams(tenantOnly, fullSearch),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<WidgetsBundle>>() {
@@ -3758,6 +3776,17 @@ public class RestClient implements Closeable {
         return urlParams;
     }
 
+    private String getWidgetsBundlePageRequestUrlParams(Boolean tenantOnly, Boolean fullSearch) {
+        String urlParams = "";
+        if (tenantOnly != null) {
+            urlParams = "&tenantOnly={tenantOnly}";
+        }
+        if (fullSearch != null) {
+            urlParams += "&fullSearch={fullSearch}";
+        }
+        return urlParams;
+    }
+
     private String getWidgetTypeInfoPageRequestUrlParams(Boolean tenantOnly, Boolean fullSearch,
                                                          DeprecatedFilter deprecatedFilter,
                                                          List<String> widgetTypeList) {
@@ -3801,17 +3830,21 @@ public class RestClient implements Closeable {
 
     private void addWidgetInfoFiltersToParams(Boolean tenantOnly, Boolean fullSearch, DeprecatedFilter deprecatedFilter,
                                               List<String> widgetTypeList, Map<String, String> params) {
-        if (tenantOnly != null) {
-            params.put("tenantOnly", tenantOnly.toString());
-        }
-        if (fullSearch != null) {
-            params.put("fullSearch", fullSearch.toString());
-        }
+        addTenantOnlyAndFullSearchToParams(tenantOnly, fullSearch, params);
         if (deprecatedFilter != null) {
             params.put("deprecatedFilter", deprecatedFilter.name());
         }
         if (!CollectionUtils.isEmpty(widgetTypeList)) {
             params.put("widgetTypeList", listToString(widgetTypeList));
+        }
+    }
+
+    private void addTenantOnlyAndFullSearchToParams(Boolean tenantOnly, Boolean fullSearch, Map<String, String> params) {
+        if (tenantOnly != null) {
+            params.put("tenantOnly", tenantOnly.toString());
+        }
+        if (fullSearch != null) {
+            params.put("fullSearch", fullSearch.toString());
         }
     }
 
