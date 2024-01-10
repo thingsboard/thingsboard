@@ -2741,7 +2741,7 @@ public class RestClient implements Closeable {
         addPageLinkToParam(params, pageLink);
         addTenantOnlyAndFullSearchToParams(tenantOnly, fullSearch, params);
         return restTemplate.exchange(
-                baseURL + "/api/widgetsBundles?" + getUrlParams(pageLink) + getWidgetsBundlePageRequestUrlParams(tenantOnly, fullSearch),
+                baseURL + "/api/widgetsBundles?" + getUrlParams(pageLink) + getTenantOnlyAndFullSearchUrlParams(tenantOnly, fullSearch),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<WidgetsBundle>>() {
@@ -3776,32 +3776,26 @@ public class RestClient implements Closeable {
         return urlParams;
     }
 
-    private String getWidgetsBundlePageRequestUrlParams(Boolean tenantOnly, Boolean fullSearch) {
-        String urlParams = "";
-        if (tenantOnly != null) {
-            urlParams = "&tenantOnly={tenantOnly}";
-        }
-        if (fullSearch != null) {
-            urlParams += "&fullSearch={fullSearch}";
-        }
-        return urlParams;
-    }
-
     private String getWidgetTypeInfoPageRequestUrlParams(Boolean tenantOnly, Boolean fullSearch,
                                                          DeprecatedFilter deprecatedFilter,
                                                          List<String> widgetTypeList) {
-        String urlParams = "";
-        if (tenantOnly != null) {
-            urlParams = "&tenantOnly={tenantOnly}";
-        }
-        if (fullSearch != null) {
-            urlParams += "&fullSearch={fullSearch}";
-        }
+        String urlParams = getTenantOnlyAndFullSearchUrlParams(tenantOnly, fullSearch);
         if (deprecatedFilter != null) {
             urlParams += "&deprecatedFilter={deprecatedFilter}";
         }
         if (!CollectionUtils.isEmpty(widgetTypeList)) {
             urlParams += "&widgetTypeList={widgetTypeList}";
+        }
+        return urlParams;
+    }
+
+    private String getTenantOnlyAndFullSearchUrlParams(Boolean tenantOnly, Boolean fullSearch) {
+        String urlParams = "";
+        if (tenantOnly != null) {
+            urlParams = "&tenantOnly={tenantOnly}";
+        }
+        if (fullSearch != null) {
+            urlParams += "&fullSearch={fullSearch}";
         }
         return urlParams;
     }
