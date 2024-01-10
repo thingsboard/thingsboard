@@ -107,6 +107,10 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
             throw new RuntimeException("[{" + tenantId + "}] alarmCommentUpdateMsg {" + alarmCommentUpdateMsg + "} cannot be converted to alarm comment");
         }
         try {
+            Alarm alarm = alarmService.findAlarmById(tenantId, new AlarmId(alarmComment.getAlarmId().getId()));
+            if (alarm == null) {
+                return Futures.immediateFuture(null);
+            }
             switch (alarmCommentUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
                     alarmCommentDao.createAlarmComment(tenantId, alarmComment);
