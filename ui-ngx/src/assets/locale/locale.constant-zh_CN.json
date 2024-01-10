@@ -4853,7 +4853,7 @@
         "no-widgets-text": "未找到部件",
         "management": "管理部件",
         "editor": "部件编辑器",
-        "confirm-to-exit-editor-html": "You have unsaved widget settings.<br>Are you sure you want to leave this page?",
+        "confirm-to-exit-editor-html": "有未保存的部件设置。<br>确定要离开此页面吗？",
         "widget-type-not-found": "加载部件配置出错。<br>可能关联的部件已经删除了。",
         "widget-type-load-error": "由于以下错误未加载部件：",
         "remove": "删除部件",
