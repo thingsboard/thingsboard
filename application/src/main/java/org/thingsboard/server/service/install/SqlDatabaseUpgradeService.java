@@ -819,18 +819,6 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
         Thread.sleep(5000);
     }
 
-    private void executeQuery(Connection conn, String query) {
-        try {
-            Statement statement = conn.createStatement();
-            statement.execute(query); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
-            printWarnings(statement);
-            log.info("Successfully executed query: {}", query);
-        } catch (SQLException e) {
-            log.error("Failed to execute query: {} due to: {}", query, e.getMessage());
-            throw new RuntimeException("Failed to execute query:" + query + " due to: ", e);
-        }
-    }
-
     protected void printWarnings(Statement statement) throws SQLException {
         SQLWarning warnings = statement.getWarnings();
         if (warnings != null) {
