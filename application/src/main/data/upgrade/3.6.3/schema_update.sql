@@ -87,8 +87,7 @@ BEGIN
                         ELSE 0
                         END,
                 k.key_id,  a.bool_v, a.str_v, a.long_v, a.dbl_v, a.json_v, a.last_update_ts
-                FROM attribute_kv_old a INNER JOIN key_dictionary k ON (a.attribute_key = k.key)
-                    WHERE a.attribute_type IN ('SERVER_SCOPE', 'CLIENT_SCOPE', 'SHARED_SCOPE');
+                FROM attribute_kv_old a INNER JOIN key_dictionary k ON (a.attribute_key = k.key);
         SELECT COUNT(*) INTO row_num_old FROM attribute_kv_old;
         SELECT COUNT(*) INTO row_num FROM attribute_kv;
         RAISE NOTICE 'Migrated % of % rows', row_num, row_num_old;
