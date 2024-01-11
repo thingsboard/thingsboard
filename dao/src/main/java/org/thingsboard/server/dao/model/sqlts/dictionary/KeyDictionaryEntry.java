@@ -28,9 +28,9 @@ import static org.thingsboard.server.dao.model.ModelConstants.KEY_ID_COLUMN;
 
 @Data
 @Entity
-@Table(name = "ts_kv_dictionary")
-@IdClass(TsKvDictionaryCompositeKey.class)
-public final class TsKvDictionary {
+@Table(name = "key_dictionary")
+@IdClass(KeyDictionaryCompositeKey.class)
+public final class KeyDictionaryEntry {
 
     @Id
     @Column(name = KEY_COLUMN)

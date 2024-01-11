@@ -22,6 +22,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -219,7 +220,7 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
 
     private ListenableFuture<DynamicValueKeySub> resolveEntityValue(TenantId tenantId, EntityId entityId, DynamicValueKey key) {
         ListenableFuture<Optional<AttributeKvEntry>> entry = attributesService.find(tenantId, entityId,
-                TbAttributeSubscriptionScope.SERVER_SCOPE.name(), key.getSourceAttribute());
+                AttributeScope.SERVER_SCOPE, key.getSourceAttribute());
         return Futures.transform(entry, attributeOpt -> {
             DynamicValueKeySub sub = new DynamicValueKeySub(key, entityId);
             if (attributeOpt.isPresent()) {

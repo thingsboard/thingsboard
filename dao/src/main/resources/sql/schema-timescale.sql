@@ -28,10 +28,10 @@ CREATE TABLE IF NOT EXISTS ts_kv (
     CONSTRAINT ts_kv_pkey PRIMARY KEY (entity_id, key, ts)
 );
 
-CREATE TABLE IF NOT EXISTS ts_kv_dictionary (
+CREATE TABLE IF NOT EXISTS key_dictionary (
     key varchar(255) NOT NULL,
     key_id serial UNIQUE,
-    CONSTRAINT ts_key_id_pkey PRIMARY KEY (key)
+    CONSTRAINT key_dictionary_id_pkey PRIMARY KEY (key)
 );
 
 CREATE TABLE IF NOT EXISTS ts_kv_latest (
@@ -104,7 +104,7 @@ BEGIN
     WHILE FOUND
         LOOP
             EXECUTE format(
-                    'select attribute_kv.long_v from attribute_kv where attribute_kv.entity_id = %L and attribute_kv.attribute_key = %L',
+                    'select attribute_kv.long_v from attribute_kv where attribute_kv.entity_id = %L and attribute_kv.attribute_key = (select key_id from key_dictionary where key = %L)',
                     tenant_id_record, 'TTL') INTO tenant_ttl;
             if tenant_ttl IS NULL THEN
                 tenant_ttl := system_ttl;
@@ -122,7 +122,7 @@ BEGIN
                 SELECT customer.id AS customer_id FROM customer WHERE customer.tenant_id = tenant_id_record
                 LOOP
                     EXECUTE format(
-                            'select attribute_kv.long_v from attribute_kv where attribute_kv.entity_id = %L and attribute_kv.attribute_key = %L',
+                            'select attribute_kv.long_v from attribute_kv where attribute_kv.entity_id = %L and attribute_kv.attribute_key = (select key_id from key_dictionary where key = %L)',
                             customer_id_record, 'TTL') INTO customer_ttl;
                     IF customer_ttl IS NULL THEN
                         customer_ttl_ts := tenant_ttl_ts;

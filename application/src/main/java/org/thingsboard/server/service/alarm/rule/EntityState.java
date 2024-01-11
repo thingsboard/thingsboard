@@ -19,6 +19,8 @@ import com.google.gson.JsonParser;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.adaptor.JsonConverter;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.StringUtils;
@@ -37,7 +39,6 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.dao.sql.query.EntityKeyMapping;
 import org.thingsboard.server.service.alarm.rule.state.PersistedAlarmState;
 import org.thingsboard.server.service.alarm.rule.state.PersistedEntityState;
@@ -61,8 +62,6 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM_CLEAR;
 import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM_DELETE;
 import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_DELETED;
 import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_UPDATED;
-import static org.thingsboard.server.common.data.msg.TbMsgType.ENTITY_ASSIGNED;
-import static org.thingsboard.server.common.data.msg.TbMsgType.ENTITY_UNASSIGNED;
 import static org.thingsboard.server.common.data.msg.TbMsgType.INACTIVITY_EVENT;
 import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
 import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
@@ -443,9 +442,9 @@ class EntityState {
             }
         }
         if (!attributeKeys.isEmpty()) {
-            addToSnapshot(result, ctx.getAttributesService().find(tenantId, originator, DataConstants.CLIENT_SCOPE, attributeKeys).get());
-            addToSnapshot(result, ctx.getAttributesService().find(tenantId, originator, DataConstants.SHARED_SCOPE, attributeKeys).get());
-            addToSnapshot(result, ctx.getAttributesService().find(tenantId, originator, DataConstants.SERVER_SCOPE, attributeKeys).get());
+            addToSnapshot(result, ctx.getAttributesService().find(tenantId, originator, AttributeScope.CLIENT_SCOPE, attributeKeys).get());
+            addToSnapshot(result, ctx.getAttributesService().find(tenantId, originator, AttributeScope.SHARED_SCOPE, attributeKeys).get());
+            addToSnapshot(result, ctx.getAttributesService().find(tenantId, originator, AttributeScope.SERVER_SCOPE, attributeKeys).get());
         }
     }
 

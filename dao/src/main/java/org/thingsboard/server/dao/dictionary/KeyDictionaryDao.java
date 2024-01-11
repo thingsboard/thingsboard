@@ -13,21 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.edge;
+package org.thingsboard.server.dao.dictionary;
 
-import lombok.Data;
-import org.thingsboard.rule.engine.api.NodeConfiguration;
-import org.thingsboard.server.common.data.AttributeScope;
 
-@Data
-public class BaseTbMsgPushNodeConfiguration implements NodeConfiguration<BaseTbMsgPushNodeConfiguration> {
+public interface KeyDictionaryDao {
 
-    private String scope;
+    Integer getOrSaveKeyId(String strKey);
 
-    @Override
-    public BaseTbMsgPushNodeConfiguration defaultConfiguration() {
-        BaseTbMsgPushNodeConfiguration configuration = new BaseTbMsgPushNodeConfiguration();
-        configuration.setScope(AttributeScope.SERVER_SCOPE.name());
-        return configuration;
-    }
+    String getKey(Integer keyId);
+
 }

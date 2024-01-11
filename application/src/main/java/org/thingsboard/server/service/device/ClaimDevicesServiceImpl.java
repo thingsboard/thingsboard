@@ -29,8 +29,8 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -100,7 +100,7 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
             return Futures.immediateFailedFuture(new IllegalArgumentException());
         } else {
             ListenableFuture<List<AttributeKvEntry>> claimingAllowedFuture = attributesService.find(tenantId, device.getId(),
-                    DataConstants.SERVER_SCOPE, Collections.singletonList(CLAIM_ATTRIBUTE_NAME));
+                    AttributeScope.SERVER_SCOPE, Collections.singletonList(CLAIM_ATTRIBUTE_NAME));
             return Futures.transform(claimingAllowedFuture, list -> {
                 if (list != null && !list.isEmpty()) {
                     Optional<Boolean> claimingAllowedOptional = list.get(0).getBooleanValue();
@@ -123,7 +123,7 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
             return Futures.immediateFuture(new ClaimDataInfo(true, key, claimDataFromCache));
         } else {
             ListenableFuture<Optional<AttributeKvEntry>> claimDataAttrFuture = attributesService.find(device.getTenantId(), device.getId(),
-                    DataConstants.SERVER_SCOPE, CLAIM_DATA_ATTRIBUTE_NAME);
+                    AttributeScope.SERVER_SCOPE, CLAIM_DATA_ATTRIBUTE_NAME);
 
             return Futures.transform(claimDataAttrFuture, claimDataAttr -> {
                 if (claimDataAttr.isPresent()) {
@@ -186,7 +186,7 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
             }
             SettableFuture<ReclaimResult> result = SettableFuture.create();
             telemetryService.saveAndNotify(
-                    tenantId, savedDevice.getId(), DataConstants.SERVER_SCOPE, Collections.singletonList(
+                    tenantId, savedDevice.getId(), AttributeScope.SERVER_SCOPE, Collections.singletonList(
                             new BaseAttributeKvEntry(new BooleanDataEntry(CLAIM_ATTRIBUTE_NAME, true), System.currentTimeMillis())
                     ),
                     new FutureCallback<>() {
@@ -229,7 +229,7 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
         }
         SettableFuture<Void> result = SettableFuture.create();
         telemetryService.deleteAndNotify(device.getTenantId(),
-                device.getId(), DataConstants.SERVER_SCOPE, Arrays.asList(CLAIM_ATTRIBUTE_NAME, CLAIM_DATA_ATTRIBUTE_NAME), new FutureCallback<>() {
+                device.getId(), AttributeScope.SERVER_SCOPE, Arrays.asList(CLAIM_ATTRIBUTE_NAME, CLAIM_DATA_ATTRIBUTE_NAME), new FutureCallback<>() {
                     @Override
                     public void onSuccess(@Nullable Void tmp) {
                         result.set(tmp);

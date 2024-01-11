@@ -27,6 +27,7 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbAlarmRuleStateService;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
@@ -2462,7 +2463,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
     @SneakyThrows
     private void saveAttribute(EntityId entityId, KvEntry entry) {
-        attributesService.save(tenantId, entityId, "SERVER_SCOPE", new BaseAttributeKvEntry(entry, System.currentTimeMillis())).get();
+        attributesService.save(tenantId, entityId, AttributeScope.SERVER_SCOPE, new BaseAttributeKvEntry(entry, System.currentTimeMillis())).get();
     }
 
 }

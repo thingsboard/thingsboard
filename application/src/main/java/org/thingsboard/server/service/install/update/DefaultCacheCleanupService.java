@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import java.util.Objects;
 import java.util.Optional;
 
+import static org.thingsboard.server.common.data.CacheConstants.ATTRIBUTES_CACHE;
 import static org.thingsboard.server.common.data.CacheConstants.RESOURCE_INFO_CACHE;
 import static org.thingsboard.server.common.data.CacheConstants.SECURITY_SETTINGS_CACHE;
 
@@ -96,7 +97,7 @@ public class DefaultCacheCleanupService implements CacheCleanupService {
                 break;
             case "3.6.3":
                 log.info("Clearing cache to upgrade from version 3.6.3 to 3.7.0 ...");
-                clearCacheByName("deviceProfiles");
+                clearAll();
                 break;
             default:
                 //Do nothing, since cache cleanup is optional.

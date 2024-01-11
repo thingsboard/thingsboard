@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -28,6 +29,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleOriginatorTargetEntity;
@@ -67,6 +69,8 @@ import org.thingsboard.server.service.alarm.rule.store.RedisAlarmRuleEntityState
 import org.thingsboard.server.service.install.sql.SqlDbHelper;
 import org.thingsboard.server.service.install.update.DefaultDataUpdateService;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -85,9 +89,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import static org.thingsboard.server.service.install.AbstractSqlTsDatabaseUpgradeService.PATH_TO_USERS_PUBLIC_FOLDER;
+import static org.thingsboard.server.service.install.AbstractSqlTsDatabaseUpgradeService.THINGSBOARD_WINDOWS_UPGRADE_DIR;
 import static org.thingsboard.server.service.install.DatabaseHelper.ADDITIONAL_INFO;
 import static org.thingsboard.server.service.install.DatabaseHelper.ASSIGNED_CUSTOMERS;
 import static org.thingsboard.server.service.install.DatabaseHelper.CONFIGURATION;
@@ -804,18 +811,14 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     }
                 });
                 break;
-            case "3.5.2": {
-                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
-                    log.info("Updating schema ...");
-                    schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.5.2", SCHEMA_UPDATE_SQL);
-                    loadSql(schemaUpdateFile, conn);
-
+            case "3.6.3":
+                updateSchema("3.6.3", 3006003, "3.7.0", 3007000, conn -> {
                     log.info("Alarm Rules migration ...");
 
                     PageLink pageLink = new PageLink(1000);
                     PageData<TenantId> tenantIds;
+                    List<ListenableFuture<?>> futures = new ArrayList<>();
                     do {
-                        List<ListenableFuture<?>> futures = new ArrayList<>();
                         tenantIds = tenantService.findTenantsIds(pageLink);
                         for (TenantId tenantId : tenantIds.getData()) {
                             futures.add(dbUpgradeExecutor.submit(() -> {
@@ -905,9 +908,14 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                                 }
                             }));
                         }
-                        Futures.allAsList(futures).get();
                         pageLink = pageLink.nextPageLink();
                     } while (tenantIds.hasNext());
+
+                    try {
+                        Futures.allAsList(futures).get();
+                    } catch (InterruptedException | ExecutionException e) {
+                        log.warn("Failed to await rules migration!!!", e);
+                    }
 
                     log.info("Updating device profile nodes...");
 
@@ -928,19 +936,11 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
 
                     log.info("Updating device profiles...");
                     try {
-
-                    } catch (Exception e) {
                         conn.createStatement().execute("UPDATE device_profile d SET profile_data = d.profile_data - 'alarms';");
+                    } catch (Exception e) {
                     }
-
-                    log.info("Updating schema settings...");
-                    conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3006000;");
-                    log.info("Schema updated.");
-                } catch (Exception e) {
-                    log.error("Failed updating schema!!!", e);
-                }
+                });
                 break;
-            }
             default:
                 throw new RuntimeException("Unable to upgrade SQL database, unsupported fromVersion: " + fromVersion);
         }
