@@ -187,6 +187,12 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     @Override
     @Transactional
     public Tenant saveTenant(Tenant tenant) {
+        return saveTenant(tenant, true);
+    }
+
+    @Override
+    @Transactional
+    public Tenant saveTenant(Tenant tenant, boolean publishSaveEvent) {
         log.trace("Executing saveTenant [{}]", tenant);
         tenant.setRegion(DEFAULT_TENANT_REGION);
         if (tenant.getTenantProfileId() == null) {
@@ -197,8 +203,10 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         boolean create = tenant.getId() == null;
         Tenant savedTenant = tenantDao.save(tenant.getId(), tenant);
         publishEvictEvent(new TenantEvictEvent(savedTenant.getId(), create));
-        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedTenant.getId())
-                .entityId(savedTenant.getId()).entity(savedTenant).added(create).build());
+        if (publishSaveEvent) {
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedTenant.getId())
+                    .entityId(savedTenant.getId()).entity(savedTenant).added(create).build());
+        }
         if (tenant.getId() == null) {
             deviceProfileService.createDefaultDeviceProfile(savedTenant.getId());
             assetProfileService.createDefaultAssetProfile(savedTenant.getId());

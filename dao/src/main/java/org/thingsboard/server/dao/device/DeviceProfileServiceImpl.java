@@ -161,11 +161,11 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
 
     @Override
     public DeviceProfile saveDeviceProfile(DeviceProfile deviceProfile) {
-        return saveDeviceProfile(deviceProfile, true);
+        return saveDeviceProfile(deviceProfile, true, true);
     }
 
     @Override
-    public DeviceProfile saveDeviceProfile(DeviceProfile deviceProfile, boolean doValidate) {
+    public DeviceProfile saveDeviceProfile(DeviceProfile deviceProfile, boolean doValidate, boolean publishSaveEvent) {
         log.trace("Executing saveDeviceProfile [{}]", deviceProfile);
         if (deviceProfile.getProfileData() != null && deviceProfile.getProfileData().getProvisionConfiguration() instanceof X509CertificateChainProvisionConfiguration) {
             X509CertificateChainProvisionConfiguration x509Configuration = (X509CertificateChainProvisionConfiguration) deviceProfile.getProfileData().getProvisionConfiguration();
@@ -186,8 +186,10 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
             publishEvictEvent(new DeviceProfileEvictEvent(savedDeviceProfile.getTenantId(), savedDeviceProfile.getName(),
                     oldDeviceProfile != null ? oldDeviceProfile.getName() : null, savedDeviceProfile.getId(), savedDeviceProfile.isDefault(),
                     oldDeviceProfile != null ? oldDeviceProfile.getProvisionDeviceKey() : null));
-            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedDeviceProfile.getTenantId()).entityId(savedDeviceProfile.getId())
-                    .entity(savedDeviceProfile).oldEntity(oldDeviceProfile).added(oldDeviceProfile == null).build());
+            if (publishSaveEvent) {
+                eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedDeviceProfile.getTenantId()).entityId(savedDeviceProfile.getId())
+                        .entity(savedDeviceProfile).oldEntity(oldDeviceProfile).added(oldDeviceProfile == null).build());
+            }
         } catch (Exception t) {
             handleEvictEvent(new DeviceProfileEvictEvent(deviceProfile.getTenantId(), deviceProfile.getName(),
                     oldDeviceProfile != null ? oldDeviceProfile.getName() : null, null, deviceProfile.isDefault(),
@@ -269,7 +271,7 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
         DeviceProfile deviceProfile = findDeviceProfileByName(tenantId, name, false);
         if (deviceProfile == null) {
             try {
-                deviceProfile = this.doCreateDefaultDeviceProfile(tenantId, name, name.equals("default"));
+                deviceProfile = this.doCreateDefaultDeviceProfile(tenantId, name, name.equals("default"), true);
             } catch (DataValidationException e) {
                 if (DEVICE_PROFILE_WITH_SUCH_NAME_ALREADY_EXISTS.equals(e.getMessage())) {
                     deviceProfile = findDeviceProfileByName(tenantId, name, false);
@@ -284,10 +286,10 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     @Override
     public DeviceProfile createDefaultDeviceProfile(TenantId tenantId) {
         log.trace("Executing createDefaultDeviceProfile tenantId [{}]", tenantId);
-        return doCreateDefaultDeviceProfile(tenantId, "default", true);
+        return doCreateDefaultDeviceProfile(tenantId, "default", true, false);
     }
 
-    private DeviceProfile doCreateDefaultDeviceProfile(TenantId tenantId, String profileName, boolean defaultProfile) {
+    private DeviceProfile doCreateDefaultDeviceProfile(TenantId tenantId, String profileName, boolean defaultProfile, boolean publishSaveEvent) {
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         DeviceProfile deviceProfile = new DeviceProfile();
         deviceProfile.setTenantId(tenantId);
@@ -305,7 +307,7 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
         deviceProfileData.setTransportConfiguration(transportConfiguration);
         deviceProfileData.setProvisionConfiguration(provisionConfiguration);
         deviceProfile.setProfileData(deviceProfileData);
-        return saveDeviceProfile(deviceProfile);
+        return saveDeviceProfile(deviceProfile, true, publishSaveEvent);
     }
 
     @Override
