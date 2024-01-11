@@ -461,9 +461,11 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         PowerMode powerMode = client.getPowerMode();
         OtherConfiguration profileSettings = null;
         if (powerMode == null) {
-            var clientProfile = getProfile(client.getProfileId());
-            profileSettings = clientProfile.getClientLwM2mSettings();
-            powerMode = profileSettings.getPowerMode();
+            if (client.getProfileId() != null){
+                var clientProfile = getProfile(client.getProfileId());
+                profileSettings = clientProfile.getClientLwM2mSettings();
+                powerMode = profileSettings.getPowerMode();
+            }
             if (powerMode == null) {
                 powerMode = PowerMode.DRX;
             }
