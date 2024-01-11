@@ -32,6 +32,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.util.TbMsgSource;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -106,13 +107,13 @@ public class TbGetAttributesNodeTest {
         tsKeys = List.of("temperature", "humidity", "unknown");
         ts = System.currentTimeMillis();
 
-        when(attributesServiceMock.find(TENANT_ID, ORIGINATOR, DataConstants.CLIENT_SCOPE, clientAttributes))
+        when(attributesServiceMock.find(TENANT_ID, ORIGINATOR, AttributeScope.CLIENT_SCOPE, clientAttributes))
                 .thenReturn(Futures.immediateFuture(getListAttributeKvEntry(clientAttributes, ts)));
 
-        when(attributesServiceMock.find(TENANT_ID, ORIGINATOR, DataConstants.SERVER_SCOPE, serverAttributes))
+        when(attributesServiceMock.find(TENANT_ID, ORIGINATOR, AttributeScope.SERVER_SCOPE, serverAttributes))
                 .thenReturn(Futures.immediateFuture(getListAttributeKvEntry(serverAttributes, ts)));
 
-        when(attributesServiceMock.find(TENANT_ID, ORIGINATOR, DataConstants.SHARED_SCOPE, sharedAttributes))
+        when(attributesServiceMock.find(TENANT_ID, ORIGINATOR, AttributeScope.SHARED_SCOPE, sharedAttributes))
                 .thenReturn(Futures.immediateFuture(getListAttributeKvEntry(sharedAttributes, ts)));
 
         when(timeseriesServiceMock.findLatest(TENANT_ID, ORIGINATOR, tsKeys))

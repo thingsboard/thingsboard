@@ -26,10 +26,10 @@ import org.springframework.web.socket.adapter.NativeWebSocketSession;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.service.ws.WebSocketSessionRef;
 
-import javax.websocket.RemoteEndpoint;
-import javax.websocket.SendHandler;
-import javax.websocket.SendResult;
-import javax.websocket.Session;
+import jakarta.websocket.RemoteEndpoint;
+import jakarta.websocket.SendHandler;
+import jakarta.websocket.SendResult;
+import jakarta.websocket.Session;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Deque;

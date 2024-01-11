@@ -33,6 +33,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.util.TbMsgSource;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -278,7 +279,7 @@ public class TbGetCustomerAttributeNodeTest {
         doReturn(device).when(deviceServiceMock).findDeviceById(eq(TENANT_ID), eq(device.getId()));
 
         when(ctxMock.getAttributesService()).thenReturn(attributesServiceMock);
-        when(attributesServiceMock.find(eq(TENANT_ID), eq(CUSTOMER_ID), eq(DataConstants.SERVER_SCOPE), argThat(new ListMatcher<>(expectedPatternProcessedKeysList))))
+        when(attributesServiceMock.find(eq(TENANT_ID), eq(CUSTOMER_ID), eq(AttributeScope.SERVER_SCOPE), argThat(new ListMatcher<>(expectedPatternProcessedKeysList))))
                 .thenReturn(Futures.immediateFuture(attributesList));
 
         when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
@@ -325,7 +326,7 @@ public class TbGetCustomerAttributeNodeTest {
         doReturn(Futures.immediateFuture(user)).when(userServiceMock).findUserByIdAsync(eq(TENANT_ID), eq(user.getId()));
 
         when(ctxMock.getAttributesService()).thenReturn(attributesServiceMock);
-        when(attributesServiceMock.find(eq(TENANT_ID), eq(CUSTOMER_ID), eq(DataConstants.SERVER_SCOPE), argThat(new ListMatcher<>(expectedPatternProcessedKeysList))))
+        when(attributesServiceMock.find(eq(TENANT_ID), eq(CUSTOMER_ID), eq(AttributeScope.SERVER_SCOPE), argThat(new ListMatcher<>(expectedPatternProcessedKeysList))))
                 .thenReturn(Futures.immediateFuture(attributesList));
 
         when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);

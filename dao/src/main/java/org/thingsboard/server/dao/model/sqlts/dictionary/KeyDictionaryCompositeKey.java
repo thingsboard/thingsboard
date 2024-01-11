@@ -13,18 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sqlts.dictionary;
+package org.thingsboard.server.dao.model.sqlts.dictionary;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionary;
-import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionaryCompositeKey;
-import org.thingsboard.server.dao.util.SqlTsOrTsLatestAnyDao;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.Optional;
+import jakarta.persistence.Transient;
+import java.io.Serializable;
 
-@SqlTsOrTsLatestAnyDao
-public interface TsKvDictionaryRepository extends JpaRepository<TsKvDictionary, TsKvDictionaryCompositeKey> {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class KeyDictionaryCompositeKey implements Serializable{
 
-    Optional<TsKvDictionary> findByKeyId(int keyId);
+    @Transient
+    private static final long serialVersionUID = -4089175869616037523L;
 
+    private String key;
 }

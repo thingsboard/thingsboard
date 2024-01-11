@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.cache;
+package org.thingsboard.server.dao.sqlts.dictionary;
 
-import org.springframework.data.redis.serializer.SerializationException;
-import org.thingsboard.server.common.data.FSTUtils;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.thingsboard.server.dao.model.sqlts.dictionary.KeyDictionaryEntry;
+import org.thingsboard.server.dao.model.sqlts.dictionary.KeyDictionaryCompositeKey;
 
-public class TbFSTRedisSerializer<K, V> implements TbRedisSerializer<K, V> {
+import java.util.Optional;
 
-    @Override
-    public byte[] serialize(V value) throws SerializationException {
-        return FSTUtils.encode(value);
-    }
+public interface KeyDictionaryRepository extends JpaRepository<KeyDictionaryEntry, KeyDictionaryCompositeKey> {
 
-    @Override
-    public V deserialize(K key, byte[] bytes) throws SerializationException {
-        return FSTUtils.decode(bytes);
-    }
+    Optional<KeyDictionaryEntry> findByKeyId(int keyId);
+
+
 }

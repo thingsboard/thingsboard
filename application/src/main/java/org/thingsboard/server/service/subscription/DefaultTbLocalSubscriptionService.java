@@ -23,6 +23,7 @@ import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
@@ -49,8 +50,8 @@ import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscript
 import org.thingsboard.server.service.ws.telemetry.sub.AlarmSubscriptionUpdate;
 import org.thingsboard.server.service.ws.telemetry.sub.TelemetrySubscriptionUpdate;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -447,11 +448,11 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
             return;
         }
         final Map<String, Long> keyStates = subscription.getKeyStates();
-        String scope;
-        if (subscription.getScope() != null && !TbAttributeSubscriptionScope.ANY_SCOPE.equals(subscription.getScope())) {
-            scope = subscription.getScope().name();
+        AttributeScope scope;
+        if (subscription.getScope() != null && subscription.getScope().getAttributeScope() != null) {
+            scope = subscription.getScope().getAttributeScope();
         } else {
-            scope = DataConstants.CLIENT_SCOPE;
+            scope = AttributeScope.CLIENT_SCOPE;
         }
         DonAsynchron.withCallback(attrService.find(subscription.getTenantId(), subscription.getEntityId(), scope, keyStates.keySet()), values -> {
                     List<TsKvEntry> updates = new ArrayList<>();
@@ -462,7 +463,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
                     });
                     var missedUpdates = updates.stream().filter(u -> u.getValue() != null).collect(Collectors.toList());
                     if (!missedUpdates.isEmpty()) {
-                        onAttributesUpdate(subscription.getEntityId(), scope, missedUpdates, TbCallback.EMPTY);
+                        onAttributesUpdate(subscription.getEntityId(), scope.name(), missedUpdates, TbCallback.EMPTY);
                     }
                 },
                 e -> log.error("Failed to fetch missed updates.", e), tsCallBackExecutor);

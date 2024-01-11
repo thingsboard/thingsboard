@@ -26,6 +26,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DeviceIdInfo;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -251,7 +252,7 @@ public class DefaultDeviceStateServiceTest {
         long newTimeout = System.currentTimeMillis() - deviceState.getLastActivityTime() + increase;
 
         service.onDeviceInactivityTimeoutUpdate(tenantId, deviceId, newTimeout);
-        verify(telemetrySubscriptionService, never()).saveAttrAndNotify(any(), eq(deviceId), any(), eq(ACTIVITY_STATE), any(), any());
+        verify(telemetrySubscriptionService, never()).saveAttrAndNotify(any(), eq(deviceId), any(AttributeScope.class), eq(ACTIVITY_STATE), any(), any());
         Thread.sleep(defaultTimeout + increase);
         service.checkStates();
         activityVerify(false);
@@ -290,7 +291,7 @@ public class DefaultDeviceStateServiceTest {
 
         long newTimeout = 1;
         Thread.sleep(newTimeout);
-        verify(telemetrySubscriptionService, never()).saveAttrAndNotify(any(), eq(deviceId), any(), eq(ACTIVITY_STATE), any(), any());
+        verify(telemetrySubscriptionService, never()).saveAttrAndNotify(any(), eq(deviceId), any(AttributeScope.class), eq(ACTIVITY_STATE), any(), any());
     }
 
     @Test
@@ -311,7 +312,7 @@ public class DefaultDeviceStateServiceTest {
         service.onDeviceActivity(tenantId, deviceId, System.currentTimeMillis());
         activityVerify(true);
 
-        verify(telemetrySubscriptionService, never()).saveAttrAndNotify(any(), eq(deviceId), any(), eq(ACTIVITY_STATE), any(), any());
+        verify(telemetrySubscriptionService, never()).saveAttrAndNotify(any(), eq(deviceId), any(AttributeScope.class), eq(ACTIVITY_STATE), any(), any());
 
         long newTimeout = 1;
         Thread.sleep(newTimeout);
@@ -352,11 +353,11 @@ public class DefaultDeviceStateServiceTest {
         long newTimeout = 1;
 
         service.onDeviceInactivityTimeoutUpdate(tenantId, deviceId, newTimeout);
-        verify(telemetrySubscriptionService, never()).saveAttrAndNotify(any(), eq(deviceId), any(), eq(ACTIVITY_STATE), any(), any());
+        verify(telemetrySubscriptionService, never()).saveAttrAndNotify(any(), eq(deviceId), any(AttributeScope.class), eq(ACTIVITY_STATE), any(), any());
     }
 
     private void activityVerify(boolean isActive) {
-        verify(telemetrySubscriptionService, times(1)).saveAttrAndNotify(any(), eq(deviceId), any(), eq(ACTIVITY_STATE), eq(isActive), any());
+        verify(telemetrySubscriptionService, times(1)).saveAttrAndNotify(any(), eq(deviceId), any(AttributeScope.class), eq(ACTIVITY_STATE), eq(isActive), any());
     }
 
     @Test
@@ -403,19 +404,19 @@ public class DefaultDeviceStateServiceTest {
         assertThat(deviceState.isActive()).isEqualTo(true);
         assertThat(deviceState.getLastActivityTime()).isEqualTo(lastReportedActivity);
         then(telemetrySubscriptionService).should().saveAttrAndNotify(
-                any(), eq(deviceId), any(), eq(LAST_ACTIVITY_TIME), eq(lastReportedActivity), any()
+                any(), eq(deviceId), any(AttributeScope.class), eq(LAST_ACTIVITY_TIME), eq(lastReportedActivity), any()
         );
 
         assertThat(deviceState.getLastInactivityAlarmTime()).isEqualTo(expectedInactivityAlarmTime);
         if (shouldSetInactivityAlarmTimeToZero) {
             then(telemetrySubscriptionService).should().saveAttrAndNotify(
-                    any(), eq(deviceId), any(), eq(INACTIVITY_ALARM_TIME), eq(0L), any()
+                    any(), eq(deviceId), any(AttributeScope.class), eq(INACTIVITY_ALARM_TIME), eq(0L), any()
             );
         }
 
         if (shouldUpdateActivityStateToActive) {
             then(telemetrySubscriptionService).should().saveAttrAndNotify(
-                    eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(SERVER_SCOPE), eq(ACTIVITY_STATE), eq(true), any()
+                    eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(AttributeScope.SERVER_SCOPE), eq(ACTIVITY_STATE), eq(true), any()
             );
 
             var msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
@@ -497,7 +498,7 @@ public class DefaultDeviceStateServiceTest {
         assertThat(deviceState.isActive()).isEqualTo(expectedActivityState);
         if (activityState && !expectedActivityState) {
             then(telemetrySubscriptionService).should().saveAttrAndNotify(
-                    any(), eq(deviceId), any(), eq(ACTIVITY_STATE), eq(false), any()
+                    any(), eq(deviceId), any(AttributeScope.class), eq(ACTIVITY_STATE), eq(false), any()
             );
         }
     }
@@ -594,7 +595,7 @@ public class DefaultDeviceStateServiceTest {
 
         if (shouldUpdateActivityStateToInactive) {
             then(telemetrySubscriptionService).should().saveAttrAndNotify(
-                    eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(SERVER_SCOPE), eq(ACTIVITY_STATE), eq(false), any()
+                    eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(AttributeScope.SERVER_SCOPE), eq(ACTIVITY_STATE), eq(false), any()
             );
 
             var msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
@@ -611,7 +612,7 @@ public class DefaultDeviceStateServiceTest {
             assertThat(actualNotification.isActive()).isFalse();
 
             then(telemetrySubscriptionService).should().saveAttrAndNotify(
-                    eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(SERVER_SCOPE),
+                    eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(AttributeScope.SERVER_SCOPE),
                     eq(INACTIVITY_ALARM_TIME), eq(expectedLastInactivityAlarmTime), any()
             );
         }

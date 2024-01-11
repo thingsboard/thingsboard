@@ -17,7 +17,7 @@ package org.thingsboard.server.dao.asset;
 
 import lombok.Data;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.util.List;
 
 /**

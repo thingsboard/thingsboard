@@ -26,10 +26,11 @@ import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.dao.model.ToData;
 
-import javax.persistence.Column;
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import java.io.Serializable;
 
 import static org.thingsboard.server.dao.model.ModelConstants.BOOLEAN_VALUE_COLUMN;
@@ -65,19 +66,22 @@ public class AttributeKvEntity implements ToData<AttributeKvEntry>, Serializable
     @Column(name = LAST_UPDATE_TS_COLUMN)
     private Long lastUpdateTs;
 
+    @Transient
+    protected String strKey;
+
     @Override
     public AttributeKvEntry toData() {
         KvEntry kvEntry = null;
         if (strValue != null) {
-            kvEntry = new StringDataEntry(id.getAttributeKey(), strValue);
+            kvEntry = new StringDataEntry(strKey, strValue);
         } else if (booleanValue != null) {
-            kvEntry = new BooleanDataEntry(id.getAttributeKey(), booleanValue);
+            kvEntry = new BooleanDataEntry(strKey, booleanValue);
         } else if (doubleValue != null) {
-            kvEntry = new DoubleDataEntry(id.getAttributeKey(), doubleValue);
+            kvEntry = new DoubleDataEntry(strKey, doubleValue);
         } else if (longValue != null) {
-            kvEntry = new LongDataEntry(id.getAttributeKey(), longValue);
+            kvEntry = new LongDataEntry(strKey, longValue);
         } else if (jsonValue != null) {
-            kvEntry = new JsonDataEntry(id.getAttributeKey(), jsonValue);
+            kvEntry = new JsonDataEntry(strKey, jsonValue);
         }
 
         return new BaseAttributeKvEntry(kvEntry, lastUpdateTs);

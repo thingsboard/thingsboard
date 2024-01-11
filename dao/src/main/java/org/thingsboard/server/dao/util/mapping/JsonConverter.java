@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.dao.util.mapping;
 
-import lombok.extern.slf4j.Slf4j;
-import org.nustaq.serialization.FSTConfiguration;
+import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
+import org.thingsboard.common.util.JacksonUtil;
 
-@Slf4j
-public class FSTUtils {
-
-    public static final FSTConfiguration CONFIG = FSTConfiguration.createDefaultConfiguration();
-
-    @SuppressWarnings("unchecked")
-    public static <T> T decode(byte[] byteArray) {
-        return byteArray != null && byteArray.length > 0 ? (T) CONFIG.asObject(byteArray) : null;
+@Converter
+public class JsonConverter implements AttributeConverter<JsonNode, String> {
+    @Override
+    public String convertToDatabaseColumn(JsonNode jsonNode) {
+        return JacksonUtil.toString(jsonNode);
     }
 
-    public static <T> byte[] encode(T msq) {
-        return CONFIG.asByteArray(msq);
+    @Override
+    public JsonNode convertToEntityAttribute(String s) {
+        return JacksonUtil.toJsonNode(s);
     }
-
 }

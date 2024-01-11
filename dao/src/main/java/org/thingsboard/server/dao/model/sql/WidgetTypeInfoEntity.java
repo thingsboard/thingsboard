@@ -18,22 +18,22 @@ package org.thingsboard.server.dao.model.sql;
 import io.hypersistence.utils.hibernate.type.array.StringArrayType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.Immutable;
 import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.widget.BaseWidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.dao.model.ModelConstants;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import java.util.HashMap;
 import java.util.Map;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@TypeDef(name = "string-array", typeClass = StringArrayType.class)
+@Immutable
 @Table(name = ModelConstants.WIDGET_TYPE_INFO_VIEW_TABLE_NAME)
 public class WidgetTypeInfoEntity extends AbstractWidgetTypeEntity<WidgetTypeInfo> {
 
@@ -51,7 +51,7 @@ public class WidgetTypeInfoEntity extends AbstractWidgetTypeEntity<WidgetTypeInf
     @Column(name = ModelConstants.WIDGET_TYPE_DESCRIPTION_PROPERTY)
     private String description;
 
-    @Type(type = "string-array")
+    @Type(StringArrayType.class)
     @Column(name = ModelConstants.WIDGET_TYPE_TAGS_PROPERTY, columnDefinition = "text[]")
     private String[] tags;
 

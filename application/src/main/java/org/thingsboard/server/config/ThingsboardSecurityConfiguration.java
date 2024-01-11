@@ -28,9 +28,11 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.RequestCacheConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.web.SecurityFilterChain;
@@ -61,7 +63,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true)
+@EnableMethodSecurity
 @Order(SecurityProperties.BASIC_AUTH_ORDER)
 @TbCoreComponent
 public class ThingsboardSecurityConfiguration {
@@ -81,8 +83,8 @@ public class ThingsboardSecurityConfiguration {
     public static final String MAIL_OAUTH2_PROCESSING_ENTRY_POINT = "/api/admin/mail/oauth2/code";
     public static final String DEVICE_CONNECTIVITY_CERTIFICATE_DOWNLOAD_ENTRY_POINT = "/api/device-connectivity/mqtts/certificate/download";
 
-
-    @Autowired private ThingsboardErrorResponseHandler restAccessDeniedHandler;
+    @Autowired
+    private ThingsboardErrorResponseHandler restAccessDeniedHandler;
 
     @Autowired(required = false)
     @Qualifier("oauth2AuthenticationSuccessHandler")
@@ -103,27 +105,33 @@ public class ThingsboardSecurityConfiguration {
     @Qualifier("defaultAuthenticationFailureHandler")
     private AuthenticationFailureHandler failureHandler;
 
-    @Autowired private RestAuthenticationProvider restAuthenticationProvider;
-    @Autowired private JwtAuthenticationProvider jwtAuthenticationProvider;
-    @Autowired private RefreshTokenAuthenticationProvider refreshTokenAuthenticationProvider;
+    @Autowired
+    private RestAuthenticationProvider restAuthenticationProvider;
+    @Autowired
+    private JwtAuthenticationProvider jwtAuthenticationProvider;
+    @Autowired
+    private RefreshTokenAuthenticationProvider refreshTokenAuthenticationProvider;
 
-    @Autowired(required = false) OAuth2Configuration oauth2Configuration;
+    @Autowired(required = false)
+    OAuth2Configuration oauth2Configuration;
 
     @Autowired
     @Qualifier("jwtHeaderTokenExtractor")
     private TokenExtractor jwtHeaderTokenExtractor;
 
-    @Autowired private AuthenticationManager authenticationManager;
+    @Autowired
+    private AuthenticationManager authenticationManager;
 
-    @Autowired private RateLimitProcessingFilter rateLimitProcessingFilter;
+    @Autowired
+    private RateLimitProcessingFilter rateLimitProcessingFilter;
 
     @Bean
     protected FilterRegistrationBean<ShallowEtagHeaderFilter> buildEtagFilter() throws Exception {
         ShallowEtagHeaderFilter etagFilter = new ShallowEtagHeaderFilter();
         etagFilter.setWriteWeakETag(true);
         FilterRegistrationBean<ShallowEtagHeaderFilter> filterRegistrationBean
-                = new FilterRegistrationBean<>( etagFilter);
-        filterRegistrationBean.addUrlPatterns("*.js","*.css","*.ico","/assets/*","/static/*");
+                = new FilterRegistrationBean<>(etagFilter);
+        filterRegistrationBean.addUrlPatterns("*.js", "*.css", "*.ico", "/assets/*", "/static/*");
         filterRegistrationBean.setName("etagFilter");
         return filterRegistrationBean;
     }
@@ -180,60 +188,54 @@ public class ThingsboardSecurityConfiguration {
     @Order(0)
     SecurityFilterChain resources(HttpSecurity http) throws Exception {
         http
-                .requestMatchers((matchers) -> matchers.antMatchers("/*.js","/*.css","/*.ico","/assets/**","/static/**"))
-                .headers().defaultsDisabled()
-                .addHeaderWriter(new StaticHeadersWriter(HttpHeaders.CACHE_CONTROL, "max-age=0, public"))
-                .and()
+                .securityMatchers(matchers -> matchers
+                        .requestMatchers("/*.js", "/*.css", "/*.ico", "/assets/**", "/static/**"))
+                .headers(header -> header
+                        .defaultsDisabled()
+                        .addHeaderWriter(new StaticHeadersWriter(HttpHeaders.CACHE_CONTROL, "max-age=0, public")))
                 .authorizeHttpRequests((authorize) -> authorize.anyRequest().permitAll())
-                .requestCache().disable()
-                .securityContext().disable()
-                .sessionManagement().disable();
+                .requestCache(RequestCacheConfigurer::disable)
+                .securityContext(AbstractHttpConfigurer::disable)
+                .sessionManagement(AbstractHttpConfigurer::disable);
         return http.build();
     }
 
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.headers().cacheControl().and().frameOptions().disable()
-                .and()
-                .cors()
-                .and()
-                .csrf().disable()
-                .exceptionHandling()
-                .and()
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
-                .authorizeRequests()
-                .antMatchers(WEBJARS_ENTRY_POINT).permitAll() // Webjars
-                .antMatchers(DEVICE_API_ENTRY_POINT).permitAll() // Device HTTP Transport API
-                .antMatchers(FORM_BASED_LOGIN_ENTRY_POINT).permitAll() // Login end-point
-                .antMatchers(PUBLIC_LOGIN_ENTRY_POINT).permitAll() // Public login end-point
-                .antMatchers(TOKEN_REFRESH_ENTRY_POINT).permitAll() // Token refresh end-point
-                .antMatchers(MAIL_OAUTH2_PROCESSING_ENTRY_POINT).permitAll() // Mail oauth2 code processing url
-                .antMatchers(DEVICE_CONNECTIVITY_CERTIFICATE_DOWNLOAD_ENTRY_POINT).permitAll() // Mail oauth2 code processing url
-                .antMatchers(NON_TOKEN_BASED_AUTH_ENTRY_POINTS).permitAll() // static resources, user activation and password reset end-points
-                .and()
-                .authorizeRequests()
-                .antMatchers(WS_ENTRY_POINT).permitAll() // WebSocket API End-points
-                .antMatchers(TOKEN_BASED_AUTH_ENTRY_POINT).authenticated() // Protected API End-points
-                .and()
-                .exceptionHandling().accessDeniedHandler(restAccessDeniedHandler)
-                .and()
+        http.headers(headers -> headers
+                        .cacheControl(config -> {})
+                        .frameOptions(config -> {}).disable())
+                .cors(cors -> {})
+                .csrf(AbstractHttpConfigurer::disable)
+                .exceptionHandling(config -> {})
+                .sessionManagement(config -> config.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeRequests(config -> config
+                        .requestMatchers(WEBJARS_ENTRY_POINT).permitAll() // Webjars
+                        .requestMatchers(DEVICE_API_ENTRY_POINT).permitAll() // Device HTTP Transport API
+                        .requestMatchers(FORM_BASED_LOGIN_ENTRY_POINT).permitAll() // Login end-point
+                        .requestMatchers(PUBLIC_LOGIN_ENTRY_POINT).permitAll() // Public login end-point
+                        .requestMatchers(TOKEN_REFRESH_ENTRY_POINT).permitAll() // Token refresh end-point
+                        .requestMatchers(MAIL_OAUTH2_PROCESSING_ENTRY_POINT).permitAll() // Mail oauth2 code processing url
+                        .requestMatchers(DEVICE_CONNECTIVITY_CERTIFICATE_DOWNLOAD_ENTRY_POINT).permitAll() // Device connectivity certificate (public)
+                        .requestMatchers(NON_TOKEN_BASED_AUTH_ENTRY_POINTS).permitAll()) // static resources, user activation and password reset end-points
+                .authorizeRequests(config -> config
+                        .requestMatchers(WS_ENTRY_POINT).permitAll() // Protected WebSocket API End-points
+                        .requestMatchers(TOKEN_BASED_AUTH_ENTRY_POINT).authenticated()) // Protected API End-points
+                .exceptionHandling(config -> config.accessDeniedHandler(restAccessDeniedHandler))
                 .addFilterBefore(buildRestLoginProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(buildRestPublicLoginProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(buildJwtTokenAuthenticationProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(buildRefreshTokenProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(rateLimitProcessingFilter, UsernamePasswordAuthenticationFilter.class);
         if (oauth2Configuration != null) {
-            http.oauth2Login()
-                    .authorizationEndpoint()
-                    .authorizationRequestRepository(httpCookieOAuth2AuthorizationRequestRepository)
-                    .authorizationRequestResolver(oAuth2AuthorizationRequestResolver)
-                    .and()
+            http.oauth2Login(login -> login
+                    .authorizationEndpoint(config -> config
+                            .authorizationRequestRepository(httpCookieOAuth2AuthorizationRequestRepository)
+                            .authorizationRequestResolver(oAuth2AuthorizationRequestResolver))
                     .loginPage("/oauth2Login")
                     .loginProcessingUrl(oauth2Configuration.getLoginProcessingUrl())
                     .successHandler(oauth2AuthenticationSuccessHandler)
-                    .failureHandler(oauth2AuthenticationFailureHandler);
+                    .failureHandler(oauth2AuthenticationFailureHandler));
         }
         return http.build();
     }

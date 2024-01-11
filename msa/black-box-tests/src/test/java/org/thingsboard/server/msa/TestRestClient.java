@@ -183,7 +183,7 @@ public class TestRestClient {
 
     public ValidatableResponse postAttribute(String accessToken, JsonNode attribute) {
         return given().spec(requestSpec).body(attribute)
-                .post("/api/v1/{accessToken}/attributes/", accessToken)
+                .post("/api/v1/{accessToken}/attributes", accessToken)
                 .then()
                 .statusCode(HTTP_OK);
     }

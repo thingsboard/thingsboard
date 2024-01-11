@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.common.data.widget;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasName;
@@ -30,18 +30,18 @@ public class BaseWidgetType extends BaseData<WidgetTypeId> implements HasName, H
 
     private static final long serialVersionUID = 8388684344603660756L;
 
-    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "JSON object with Tenant Id.", accessMode = Schema.AccessMode.READ_ONLY)
     private TenantId tenantId;
     @NoXss
     @Length(fieldName = "fqn")
-    @ApiModelProperty(position = 5, value = "Unique FQN that is used in dashboards as a reference widget type", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Unique FQN that is used in dashboards as a reference widget type", accessMode = Schema.AccessMode.READ_ONLY)
     private String fqn;
     @NoXss
     @Length(fieldName = "name")
-    @ApiModelProperty(position = 6, value = "Widget name used in search and UI")
+    @Schema(description = "Widget name used in search and UI", accessMode = Schema.AccessMode.READ_ONLY)
     private String name;
 
-    @ApiModelProperty(position = 7, value = "Whether widget type is deprecated.", example = "true")
+    @Schema(description = "Whether widget type is deprecated.", example = "true")
     private boolean deprecated;
 
     public BaseWidgetType() {
@@ -60,7 +60,7 @@ public class BaseWidgetType extends BaseData<WidgetTypeId> implements HasName, H
         this.deprecated = widgetType.isDeprecated();
     }
 
-    @ApiModelProperty(position = 1, value = "JSON object with the Widget Type Id. " +
+    @Schema(description = "JSON object with the Widget Type Id. " +
             "Specify this field to update the Widget Type. " +
             "Referencing non-existing Widget Type Id will cause error. " +
             "Omit this field to create new Widget Type." )
@@ -69,7 +69,7 @@ public class BaseWidgetType extends BaseData<WidgetTypeId> implements HasName, H
         return super.getId();
     }
 
-    @ApiModelProperty(position = 2, value = "Timestamp of the Widget Type creation, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Timestamp of the Widget Type creation, in milliseconds", example = "1609459200000", accessMode = Schema.AccessMode.READ_ONLY)
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();

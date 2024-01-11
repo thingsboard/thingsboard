@@ -22,6 +22,7 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -32,7 +33,6 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.DataConstants.NOTIFY_DEVICE_METADATA_KEY;
 import static org.thingsboard.server.common.data.DataConstants.SCOPE;
-import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 
 @Slf4j
 @RuleNode(
@@ -69,7 +69,7 @@ public class TbMsgDeleteAttributesNode implements TbNode {
         if (keysToDelete.isEmpty()) {
             ctx.tellSuccess(msg);
         } else {
-            String scope = getScope(msg.getMetaData().getValue(SCOPE));
+            AttributeScope scope = getScope(msg.getMetaData().getValue(SCOPE));
             ctx.getTelemetryService().deleteAndNotify(
                     ctx.getTenantId(),
                     msg.getOriginator(),
@@ -77,21 +77,21 @@ public class TbMsgDeleteAttributesNode implements TbNode {
                     keysToDelete,
                     checkNotifyDevice(msg.getMetaData().getValue(NOTIFY_DEVICE_METADATA_KEY), scope),
                     config.isSendAttributesDeletedNotification() ?
-                            new AttributesDeleteNodeCallback(ctx, msg, scope, keysToDelete) :
+                            new AttributesDeleteNodeCallback(ctx, msg, scope.name(), keysToDelete) :
                             new TelemetryNodeCallback(ctx, msg)
             );
         }
     }
 
-    private String getScope(String mdScopeValue) {
+    private AttributeScope getScope(String mdScopeValue) {
         if (StringUtils.isNotEmpty(mdScopeValue)) {
-            return mdScopeValue;
+            return AttributeScope.valueOf(mdScopeValue);
         }
-        return config.getScope();
+        return AttributeScope.valueOf(config.getScope());
     }
 
-    private boolean checkNotifyDevice(String notifyDeviceMdValue, String scope) {
-        return SHARED_SCOPE.equals(scope) && (config.isNotifyDevice() || Boolean.parseBoolean(notifyDeviceMdValue));
+    private boolean checkNotifyDevice(String notifyDeviceMdValue, AttributeScope scope) {
+        return (AttributeScope.SHARED_SCOPE == scope) && (config.isNotifyDevice() || Boolean.parseBoolean(notifyDeviceMdValue));
     }
 
 }

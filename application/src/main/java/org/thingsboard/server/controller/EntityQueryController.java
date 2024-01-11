@@ -15,8 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -38,6 +37,7 @@ import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
+import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.query.EntityQueryService;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -61,7 +61,7 @@ public class EntityQueryController extends BaseController {
     @RequestMapping(value = "/entitiesQuery/count", method = RequestMethod.POST)
     @ResponseBody
     public long countEntitiesByQuery(
-            @ApiParam(value = "A JSON value representing the entity count query. See API call notes above for more details.")
+            @Parameter(description = "A JSON value representing the entity count query. See API call notes above for more details.")
             @RequestBody EntityCountQuery query) throws ThingsboardException {
         checkNotNull(query);
         return this.entityQueryService.countEntitiesByQuery(getCurrentUser(), query);
@@ -72,7 +72,7 @@ public class EntityQueryController extends BaseController {
     @RequestMapping(value = "/entitiesQuery/find", method = RequestMethod.POST)
     @ResponseBody
     public PageData<EntityData> findEntityDataByQuery(
-            @ApiParam(value = "A JSON value representing the entity data query. See API call notes above for more details.")
+            @Parameter(description = "A JSON value representing the entity data query. See API call notes above for more details.")
             @RequestBody EntityDataQuery query) throws ThingsboardException {
         checkNotNull(query);
         return this.entityQueryService.findEntityDataByQuery(getCurrentUser(), query);
@@ -83,7 +83,7 @@ public class EntityQueryController extends BaseController {
     @RequestMapping(value = "/alarmsQuery/find", method = RequestMethod.POST)
     @ResponseBody
     public PageData<AlarmData> findAlarmDataByQuery(
-            @ApiParam(value = "A JSON value representing the alarm data query. See API call notes above for more details.")
+            @Parameter(description = "A JSON value representing the alarm data query. See API call notes above for more details.")
             @RequestBody AlarmDataQuery query) throws ThingsboardException {
         checkNotNull(query);
         checkNotNull(query.getPageLink());
@@ -98,7 +98,7 @@ public class EntityQueryController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarmsQuery/count", method = RequestMethod.POST)
     @ResponseBody
-    public long countAlarmsByQuery(@ApiParam(value = "A JSON value representing the alarm count query.")
+    public long countAlarmsByQuery(@Parameter(description = "A JSON value representing the alarm count query.")
                                    @RequestBody AlarmCountQuery query) throws ThingsboardException {
         checkNotNull(query);
         UserId assigneeId = query.getAssigneeId();
@@ -114,11 +114,11 @@ public class EntityQueryController extends BaseController {
     @RequestMapping(value = "/entitiesQuery/find/keys", method = RequestMethod.POST)
     @ResponseBody
     public DeferredResult<ResponseEntity> findEntityTimeseriesAndAttributesKeysByQuery(
-            @ApiParam(value = "A JSON value representing the entity data query. See API call notes above for more details.")
+            @Parameter(description = "A JSON value representing the entity data query. See API call notes above for more details.")
             @RequestBody EntityDataQuery query,
-            @ApiParam(value = "Include all unique time-series keys to the result.")
+            @Parameter(description = "Include all unique time-series keys to the result.")
             @RequestParam("timeseries") boolean isTimeseries,
-            @ApiParam(value = "Include all unique attribute keys to the result.")
+            @Parameter(description = "Include all unique attribute keys to the result.")
             @RequestParam("attributes") boolean isAttributes) throws ThingsboardException {
         TenantId tenantId = getTenantId();
         checkNotNull(query);

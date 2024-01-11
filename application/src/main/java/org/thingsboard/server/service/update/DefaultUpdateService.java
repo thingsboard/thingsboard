@@ -36,7 +36,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.instructions.EdgeInstallInstructionsService;
 import org.thingsboard.server.service.edge.instructions.EdgeUpgradeInstructionsService;
 
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;

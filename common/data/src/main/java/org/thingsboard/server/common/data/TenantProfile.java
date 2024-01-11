@@ -18,8 +18,7 @@ package org.thingsboard.server.common.data;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -34,7 +33,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Optional;
 
-@ApiModel
+@Schema
 @Data
 @ToString(exclude = {"profileDataBytes"})
 @EqualsAndHashCode(callSuper = true)
@@ -47,17 +46,17 @@ public class TenantProfile extends BaseData<TenantProfileId> implements HasName 
 
     @NoXss
     @Length(fieldName = "name")
-    @ApiModelProperty(position = 3, value = "Name of the tenant profile", example = "High Priority Tenants")
+    @Schema(description = "Name of the tenant profile", example = "High Priority Tenants")
     private String name;
     @NoXss
-    @ApiModelProperty(position = 4, value = "Description of the tenant profile", example = "Any text")
+    @Schema(description = "Description of the tenant profile", example = "Any text")
     private String description;
-    @ApiModelProperty(position = 5, value = "Default Tenant profile to be used.", example = "true")
+    @Schema(description = "Default Tenant profile to be used.", example = "true")
     private boolean isDefault;
-    @ApiModelProperty(position = 6, value = "If enabled, will push all messages related to this tenant and processed by the rule engine into separate queue. " +
+    @Schema(description = "If enabled, will push all messages related to this tenant and processed by the rule engine into separate queue. " +
             "Useful for complex microservices deployments, to isolate processing of the data for specific tenants", example = "true")
     private boolean isolatedTbRuleEngine;
-    @ApiModelProperty(position = 7, value = "Complex JSON object that contains profile settings: queue configs, max devices, max assets, rate limits, etc.")
+    @Schema(description = "Complex JSON object that contains profile settings: queue configs, max devices, max assets, rate limits, etc.")
     private transient TenantProfileData profileData;
     @JsonIgnore
     private byte[] profileDataBytes;
@@ -79,7 +78,7 @@ public class TenantProfile extends BaseData<TenantProfileId> implements HasName 
         this.setProfileData(tenantProfile.getProfileData());
     }
 
-    @ApiModelProperty(position = 1, value = "JSON object with the tenant profile Id. " +
+    @Schema(description = "JSON object with the tenant profile Id. " +
             "Specify this field to update the tenant profile. " +
             "Referencing non-existing tenant profile Id will cause error. " +
             "Omit this field to create new tenant profile.")
@@ -88,7 +87,7 @@ public class TenantProfile extends BaseData<TenantProfileId> implements HasName 
         return super.getId();
     }
 
-    @ApiModelProperty(position = 2, value = "Timestamp of the tenant profile creation, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Timestamp of the tenant profile creation, in milliseconds", example = "1609459200000", accessMode = Schema.AccessMode.READ_ONLY)
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();
