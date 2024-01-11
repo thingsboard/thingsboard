@@ -13,28 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.attributes;
+package org.thingsboard.server.common.data;
 
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import org.thingsboard.server.common.data.AttributeScope;
-import org.thingsboard.server.common.data.id.EntityId;
 
-import java.io.Serializable;
+public enum AttributeScope {
 
-@EqualsAndHashCode
-@Getter
-@AllArgsConstructor
-public class AttributeCacheKey implements Serializable {
-    private static final long serialVersionUID = 2013369077925351881L;
+    CLIENT_SCOPE(1),
+    SERVER_SCOPE(2),
+    SHARED_SCOPE(3);
+    @Getter
+    private final int id;
 
-    private final AttributeScope scope;
-    private final EntityId entityId;
-    private final String key;
-
-    @Override
-    public String toString() {
-        return "{" + entityId + "}" + scope + "_" + key;
+    AttributeScope(int id) {
+        this.id = id;
     }
+
 }

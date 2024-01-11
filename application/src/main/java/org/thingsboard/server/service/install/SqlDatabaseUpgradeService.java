@@ -19,12 +19,14 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -48,6 +50,8 @@ import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
 import org.thingsboard.server.service.install.sql.SqlDbHelper;
 import org.thingsboard.server.service.install.update.DefaultDataUpdateService;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -65,6 +69,8 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import static org.thingsboard.server.service.install.AbstractSqlTsDatabaseUpgradeService.PATH_TO_USERS_PUBLIC_FOLDER;
+import static org.thingsboard.server.service.install.AbstractSqlTsDatabaseUpgradeService.THINGSBOARD_WINDOWS_UPGRADE_DIR;
 import static org.thingsboard.server.service.install.DatabaseHelper.ADDITIONAL_INFO;
 import static org.thingsboard.server.service.install.DatabaseHelper.ASSIGNED_CUSTOMERS;
 import static org.thingsboard.server.service.install.DatabaseHelper.CONFIGURATION;
@@ -771,6 +777,9 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     } catch (Exception e) {
                     }
                 });
+                break;
+            case "3.6.3":
+                updateSchema("3.6.3", 3006003, "3.7.0", 3007000, null);
                 break;
             default:
                 throw new RuntimeException("Unable to upgrade SQL database, unsupported fromVersion: " + fromVersion);
