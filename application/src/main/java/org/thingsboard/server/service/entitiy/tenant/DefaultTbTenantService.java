@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.entity.EntityStateSyncManager;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
@@ -47,16 +46,11 @@ public class DefaultTbTenantService extends AbstractTbEntityService implements T
     private final TenantProfileService tenantProfileService;
     private final EntitiesVersionControlService versionControlService;
     private final ApplicationEventPublisher eventPublisher;
-    private final EntityStateSyncManager entityStateSyncManager;
 
     @Override
     public Tenant save(Tenant tenant) throws Exception {
         boolean created = tenant.getId() == null;
         Tenant oldTenant = !created ? tenantService.findTenantById(tenant.getId()) : null;
-
-        if (created) {
-            entityStateSyncManager.getSync().set(true);
-        }
 
         Tenant savedTenant = checkNotNull(tenantService.saveTenant(tenant));
         if (created) {
@@ -67,7 +61,6 @@ public class DefaultTbTenantService extends AbstractTbEntityService implements T
         tenantProfileCache.evict(savedTenant.getId());
 
         if (created) {
-            entityStateSyncManager.getSync().remove();
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(TenantId.SYS_TENANT_ID).entityId(savedTenant.getId()).entity(savedTenant).added(true).build());
         }
 

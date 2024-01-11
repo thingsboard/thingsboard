@@ -81,7 +81,6 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -465,7 +464,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         log.trace("Executing unassignCustomerDevices, tenantId [{}], customerId [{}]", tenantId, customerId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
-        customerDeviceUnasigner.removeEntities(tenantId, customerId);
+        customerDevicesRemover.removeEntities(tenantId, customerId);
     }
 
     @Override
@@ -666,7 +665,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         }
     };
 
-    private final PaginatedRemover<CustomerId, Device> customerDeviceUnasigner = new PaginatedRemover<>() {
+    private final PaginatedRemover<CustomerId, Device> customerDevicesRemover = new PaginatedRemover<>() {
 
         @Override
         protected PageData<Device> findEntities(TenantId tenantId, CustomerId id, PageLink pageLink) {

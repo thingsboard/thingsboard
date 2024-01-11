@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
@@ -47,7 +48,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.rule.engine.DeviceCredentialsUpdateNotificationMsg;
-import org.thingsboard.server.dao.entity.EntityStateSyncManager;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
@@ -61,7 +61,6 @@ import java.util.Set;
 public class EntityStateSourcingListener {
 
     private final TbClusterService tbClusterService;
-    private final EntityStateSyncManager entityStateSyncManager;
 
     @PostConstruct
     public void init() {
@@ -70,9 +69,6 @@ public class EntityStateSourcingListener {
 
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(SaveEntityEvent<?> event) {
-        if (entityStateSyncManager.isSync()) {
-            return;
-        }
         log.trace("[{}] SaveEntityEvent called: {}", event.getTenantId(), event);
         TenantId tenantId = event.getTenantId();
         EntityId entityId = event.getEntityId();
@@ -138,13 +134,18 @@ public class EntityStateSourcingListener {
             case CUSTOMER:
             case EDGE:
             case NOTIFICATION_RULE:
-            case NOTIFICATION_REQUEST:
                 tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, ComponentLifecycleEvent.DELETED);
+                break;
+            case NOTIFICATION_REQUEST:
+                NotificationRequest request = (NotificationRequest) event.getEntity();
+                if (request.isScheduled()) {
+                    tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, ComponentLifecycleEvent.DELETED);
+                }
                 break;
             case RULE_CHAIN:
                 RuleChain ruleChain = (RuleChain) event.getEntity();
-                Set<RuleChainId> referencingRuleChainIds = JacksonUtil.fromString(event.getBody(), new TypeReference<>() {});
                 if (RuleChainType.CORE.equals(ruleChain.getType())) {
+                    Set<RuleChainId> referencingRuleChainIds = JacksonUtil.fromString(event.getBody(), new TypeReference<>() {});
                     if (referencingRuleChainIds != null) {
                         referencingRuleChainIds.forEach(referencingRuleChainId ->
                                 tbClusterService.broadcastEntityStateChangeEvent(tenantId, referencingRuleChainId, ComponentLifecycleEvent.UPDATED));

@@ -193,10 +193,10 @@ public class InstallScripts {
         if (!StringUtils.isEmpty(newRuleChainName)) {
             ruleChain.setName(newRuleChainName);
         }
-        ruleChain = ruleChainService.saveRuleChain(ruleChain);
+        ruleChain = ruleChainService.saveRuleChain(ruleChain, false);
 
         ruleChainMetaData.setRuleChainId(ruleChain.getId());
-        ruleChainService.saveRuleChainMetaData(TenantId.SYS_TENANT_ID, ruleChainMetaData, Function.identity());
+        ruleChainService.saveRuleChainMetaData(TenantId.SYS_TENANT_ID, ruleChainMetaData, Function.identity(), false);
 
         return ruleChain;
     }
