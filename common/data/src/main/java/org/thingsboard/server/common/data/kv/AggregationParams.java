@@ -19,18 +19,18 @@ import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.thingsboard.server.common.data.StringUtils;
 
 import java.time.DateTimeException;
 import java.time.ZoneId;
-import java.time.zone.ZoneRulesException;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @AllArgsConstructor
 @EqualsAndHashCode
 @Slf4j
 public class AggregationParams {
+    private static final Map<String, String> TZ_LINKS = Map.of("EST", "America/New_York", "GMT+0", "GMT", "GMT-0", "GMT", "HST", "US/Hawaii", "MST", "America/Phoenix", "ROC", "Asia/Taipei");
     @Getter
     private final Aggregation aggregation;
     @Getter
@@ -83,7 +83,7 @@ public class AggregationParams {
             return ZoneId.systemDefault();
         }
         try {
-            return ZoneId.of(tzIdStr);
+            return ZoneId.of(tzIdStr, TZ_LINKS);
         } catch (DateTimeException e) {
             log.warn("[{}] Failed to convert the time zone. Fallback to default.", tzIdStr);
             return ZoneId.systemDefault();
