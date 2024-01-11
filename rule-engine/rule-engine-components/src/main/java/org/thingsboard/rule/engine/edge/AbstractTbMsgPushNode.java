@@ -27,6 +27,7 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -147,9 +148,8 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
     abstract void processMsg(TbContext ctx, TbMsg msg);
 
     protected UUID getUUIDFromMsgData(TbMsg msg) {
-        JsonNode data = JacksonUtil.toJsonNode(msg.getData()).get("id");
-        String id = JacksonUtil.convertValue(data.get("id"), String.class);
-        return UUID.fromString(id);
+        Alarm alarm = JacksonUtil.fromString(msg.getData(), Alarm.class);
+        return alarm != null ? alarm.getUuidId() : null;
     }
 
     protected UUID getUUIDFromCommentMsg(TbMsg msg) {
