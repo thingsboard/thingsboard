@@ -60,7 +60,6 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.edge.rpc.constructor.alarm.AlarmMsgConstructorFactory;
 import org.thingsboard.server.service.edge.rpc.constructor.alarm.AlarmMsgConstructorV1;
 import org.thingsboard.server.service.edge.rpc.constructor.alarm.AlarmMsgConstructorV2;
@@ -481,9 +480,6 @@ public abstract class BaseEdgeProcessorTest {
 
     @MockBean
     protected DbCallbackExecutorService dbCallbackExecutorService;
-    
-    @MockBean
-    protected DataDecodingEncodingService dataDecodingEncodingService;
 
     protected EdgeId edgeId;
     protected TenantId tenantId;

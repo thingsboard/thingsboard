@@ -20,6 +20,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
@@ -77,6 +79,8 @@ public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName,
     @Valid
     private transient DeviceProfileData profileData;
     @JsonIgnore
+    @Getter
+    @Setter
     private byte[] profileDataBytes;
     @NoXss
     @Schema(description = "Unique provisioning key used by 'Device Provisioning' feature.")
