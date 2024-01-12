@@ -44,9 +44,11 @@ import JsonFormUtils from './react/json-form-utils';
 import { JsonFormComponentData } from './json-form-component.models';
 import { GroupInfo } from '@shared/models/widget.models';
 import { Observable } from 'rxjs/internal/Observable';
-import { forkJoin, from } from 'rxjs';
+import { firstValueFrom, forkJoin, from } from 'rxjs';
 import { MouseEvent } from 'react';
 import { TbPopoverService } from '@shared/components/popover.service';
+import { ImageService } from '@app/core/http/image.service';
+import { isImageResourceUrl } from '@app/shared/models/resource.models';
 
 @Component({
   selector: 'tb-json-form',
@@ -117,6 +119,7 @@ export class JsonFormComponent implements OnInit, ControlValueAccessor, Validato
   constructor(public elementRef: ElementRef,
               private translate: TranslateService,
               private dialogs: DialogService,
+              private imageService: ImageService,
               private popoverService: TbPopoverService,
               private renderer: Renderer2,
               private viewContainerRef: ViewContainerRef,
@@ -274,10 +277,16 @@ export class JsonFormComponent implements OnInit, ControlValueAccessor, Validato
     reactSchemaFormObservables.push(from(import('react-dom')));
     reactSchemaFormObservables.push(from(import('./react/json-form-react')));
     forkJoin(reactSchemaFormObservables).subscribe(
-      (modules) => {
+      async (modules) => {
         const react =  modules[0];
         const reactDom =  modules[1];
         const jsonFormReact = modules[2].default;
+        if(this.formProps.model && this.formProps.model.backgroundImageUrl && isImageResourceUrl(this.formProps.model.backgroundImageUrl)){
+          let obsevable: Observable<Object> = this.imageService.resolveImageUrl(this.formProps.model.backgroundImageUrl);
+          let res: any = await firstValueFrom(obsevable);
+          let newImageUrl= res.changingThisBreaksApplicationSecurity
+          this.formProps.model.backgroundImageUrl = newImageUrl ? newImageUrl:this.formProps.model.backgroundImageUrl;
+        }
         reactDom.render(react.createElement(jsonFormReact, this.formProps), this.reactRootElmRef.nativeElement);
       }
     );
