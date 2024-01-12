@@ -446,23 +446,23 @@ const getSubscriptionRealtimeWindowFromTimeInterval = (interval: QuickTimeInterv
     case QuickTimeInterval.CURRENT_MONTH:
     case QuickTimeInterval.CURRENT_MONTH_SO_FAR:
       currentDate = getCurrentTime(tz);
-      return currentDate.endOf('month').add(1, 'milliseconds').diff(currentDate.clone().startOf('month'));
+      return currentDate.clone().endOf('month').add(1, 'milliseconds').diff(currentDate.clone().startOf('month'));
     case QuickTimeInterval.CURRENT_QUARTER:
     case QuickTimeInterval.CURRENT_QUARTER_SO_FAR:
       currentDate = getCurrentTime(tz);
-      return currentDate.endOf('quarter').add(1, 'milliseconds').diff(currentDate.clone().startOf('quarter'));
+      return currentDate.clone().endOf('quarter').add(1, 'milliseconds').diff(currentDate.clone().startOf('quarter'));
     case QuickTimeInterval.CURRENT_HALF_YEAR:
     case QuickTimeInterval.CURRENT_HALF_YEAR_SO_FAR:
       currentDate = getCurrentTime(tz);
       if (currentDate.get('quarter') < 3) {
-        return currentDate.clone().set('quarter', 2).endOf('quarter').add(1, 'milliseconds').diff(currentDate.startOf('year'));
+        return currentDate.clone().set('quarter', 2).endOf('quarter').add(1, 'milliseconds').diff(currentDate.clone().startOf('year'));
       } else {
-        return currentDate.endOf('year').add(1, 'milliseconds').diff(currentDate.clone().set('quarter', 3).startOf('quarter'));
+        return currentDate.clone().endOf('year').add(1, 'milliseconds').diff(currentDate.clone().set('quarter', 3).startOf('quarter'));
       }
     case QuickTimeInterval.CURRENT_YEAR:
     case QuickTimeInterval.CURRENT_YEAR_SO_FAR:
       currentDate = getCurrentTime(tz);
-      return currentDate.endOf('year').add(1, 'milliseconds').diff(currentDate.clone().startOf('year'));
+      return currentDate.clone().endOf('year').add(1, 'milliseconds').diff(currentDate.clone().startOf('year'));
   }
 };
 
