@@ -369,7 +369,7 @@ public class WidgetTypeController extends AutoCommitController {
     }
 
     @ApiOperation(value = "Get Widget Type (getWidgetType)",
-            notes = "Get the Widget Type by FQN. " + WIDGET_TYPE_DESCRIPTION + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
+            notes = "Get the Widget Type by FQN. " + WIDGET_TYPE_DESCRIPTION + AVAILABLE_FOR_ANY_AUTHORIZED_USER, hidden = true)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/widgetType", params = {"fqn"}, method = RequestMethod.GET)
     @ResponseBody
