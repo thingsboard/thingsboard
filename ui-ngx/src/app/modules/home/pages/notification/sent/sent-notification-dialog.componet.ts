@@ -328,6 +328,7 @@ export class SentNotificationDialogComponent extends
         return '/settings/outgoing-mail';
       case NotificationDeliveryMethod.SMS:
       case NotificationDeliveryMethod.SLACK:
+      case NotificationDeliveryMethod.MOBILE_APP:
         return '/settings/notifications';
     }
   }
