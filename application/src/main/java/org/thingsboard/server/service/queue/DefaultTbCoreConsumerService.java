@@ -373,10 +373,6 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         } else if (toCoreNotification.hasComponentLifecycle()) {
             handleComponentLifecycleMsg(id, ProtoUtils.fromProto(toCoreNotification.getComponentLifecycle()));
             callback.onSuccess();
-        } else if (!toCoreNotification.getComponentLifecycleMsg().isEmpty()) {
-            //will be removed in 3.6.1 in favour of hasComponentLifecycle()
-            handleComponentLifecycleMsg(id, toCoreNotification.getComponentLifecycleMsg());
-            callback.onSuccess();
         } else if (toCoreNotification.hasEdgeEventUpdate()) {
             forwardToAppActor(id, ProtoUtils.fromProto(toCoreNotification.getEdgeEventUpdate()));
             callback.onSuccess();
