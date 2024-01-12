@@ -19,7 +19,7 @@ import {
   IndexedSubscriptionData,
 } from '@app/shared/models/telemetry/telemetry.models';
 import {
-  AggregationType, calculateAggInterval,
+  AggregationType, calculateAggIntervalWithSubscriptionTimeWindow,
   calculateIntervalComparisonEndTime,
   calculateIntervalEndTime,
   calculateIntervalStartEndTime,
@@ -79,7 +79,7 @@ class AggDataMap {
   }
 
   calculateAggInterval(timestamp: number): [number, number] {
-    return calculateAggInterval(this.subsTw, this.endTs, timestamp);
+    return calculateAggIntervalWithSubscriptionTimeWindow(this.subsTw, this.endTs, timestamp);
   }
 
   updateLastInterval(endTs: number) {
@@ -88,7 +88,7 @@ class AggDataMap {
       const lastTs = this.map.maxKey();
       if (lastTs) {
         const data = this.map.get(lastTs);
-        const interval = calculateAggInterval(this.subsTw, endTs, data.ts);
+        const interval = calculateAggIntervalWithSubscriptionTimeWindow(this.subsTw, endTs, data.ts);
         data.interval = interval;
         data.ts = interval[0] + Math.floor((interval[1] - interval[0]) / 2);
       }

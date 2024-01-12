@@ -1115,25 +1115,35 @@ export const endIntervalDate = (current: moment_.Moment, interval: IntervalType)
   }
 };
 
-export const calculateAggInterval = (subsTw: SubscriptionTimewindow, endTs: number, timestamp: number): [number, number] => {
+export const calculateAggIntervalWithSubscriptionTimeWindow
+  = (subsTw: SubscriptionTimewindow, endTs: number, timestamp: number): [number, number] =>
+  calculateInterval(subsTw.startTs, endTs, subsTw.aggregation.interval, subsTw.tsOffset, subsTw.timezone, timestamp);
+
+export const calculateAggIntervalWithWidgetTimeWindow
+  = (widgetTimeWindow: WidgetTimewindow, timestamp: number): [number, number] =>
+  calculateInterval(widgetTimeWindow.minTime - widgetTimeWindow.tsOffset,
+    widgetTimeWindow.maxTime, widgetTimeWindow.interval, widgetTimeWindow.tsOffset, widgetTimeWindow.timezone, timestamp);
+
+export const calculateInterval = (startTime: number, endTime: number,
+                                  interval: Interval, tsOffset: number, timezone: string, timestamp: number): [number, number] => {
   let startIntervalTs: number;
   let endIntervalTs: number;
-  if (typeof subsTw.aggregation.interval === 'number') {
-    const startTs = subsTw.startTs + subsTw.tsOffset;
-    startIntervalTs = startTs + Math.floor((timestamp - startTs) / subsTw.aggregation.interval) * subsTw.aggregation.interval;
-    endIntervalTs = startIntervalTs + subsTw.aggregation.interval;
+  if (typeof interval === 'number') {
+    const startTs = startTime + tsOffset;
+    startIntervalTs = startTs + Math.floor((timestamp - startTs) / interval) * interval;
+    endIntervalTs = startIntervalTs + interval;
   } else {
-    const time = getTime(timestamp, subsTw.timezone);
-    let startInterval = startIntervalDate(time, subsTw.aggregation.interval);
-    const start = getTime(subsTw.startTs, subsTw.timezone);
+    const time = getTime(timestamp, timezone);
+    let startInterval = startIntervalDate(time, interval);
+    const start = getTime(startTime, timezone);
     if (start.isAfter(startInterval)) {
       startInterval = start;
     }
-    const endInterval = endIntervalDate(time, subsTw.aggregation.interval).add(1, 'milliseconds');
-    startIntervalTs = startInterval.valueOf() + subsTw.tsOffset;
-    endIntervalTs = endInterval.valueOf() + subsTw.tsOffset;
+    const endInterval = endIntervalDate(time, interval).add(1, 'milliseconds');
+    startIntervalTs = startInterval.valueOf() + tsOffset;
+    endIntervalTs = endInterval.valueOf() + tsOffset;
   }
-  endIntervalTs = Math.min(endIntervalTs, endTs);
+  endIntervalTs = Math.min(endIntervalTs, endTime);
   return [startIntervalTs, endIntervalTs];
 };
 

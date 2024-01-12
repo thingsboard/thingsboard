@@ -37,7 +37,12 @@ import {
 import { LabelLayout } from 'echarts/features';
 import { CanvasRenderer, SVGRenderer } from 'echarts/renderers';
 import { DataEntry, DataSet } from '@shared/models/widget.models';
-import { Interval, IntervalMath } from '@shared/models/time/time.models';
+import {
+  calculateAggIntervalWithWidgetTimeWindow,
+  Interval,
+  IntervalMath,
+  WidgetTimewindow
+} from '@shared/models/time/time.models';
 import { CallbackDataParams } from 'echarts/types/dist/shared';
 import { Renderer2 } from '@angular/core';
 import { DateFormatProcessor, DateFormatSettings, Font } from '@shared/models/widget-settings.models';
@@ -52,13 +57,43 @@ class EChartsModule {
       Axis.prototype.getBandWidth = function(){
         const model: AxisModel = this.model;
         const axisOption = model.option;
-        const tbTimewindowInterval: Interval = (axisOption as any).tbTimewindowInterval;
-        if (this.scale.type === 'time' && (isNumber(tbTimewindowInterval) || isString(tbTimewindowInterval))) {
-          const timeScale: TimeScale = this.scale;
-          const axisExtent: [number, number] = this._extent;
-          const dataExtent = timeScale.getExtent();
-          const size = Math.abs(axisExtent[1] - axisExtent[0]);
-          return IntervalMath.numberValue(tbTimewindowInterval) * (size / (dataExtent[1] - dataExtent[0]));
+        if (this.scale.type === 'time') {
+          let interval: number;
+          const seriesDataIndices = axisOption.axisPointer?.seriesDataIndices;
+          if (seriesDataIndices?.length) {
+            const seriesDataIndex = seriesDataIndices[0];
+            const series = model.ecModel.getSeriesByIndex(seriesDataIndex.seriesIndex);
+            if (series) {
+              const values = series.getData().getValues(seriesDataIndex.dataIndex);
+              const start = values[2];
+              const end = values[3];
+              if (typeof start === 'number' && typeof end === 'number') {
+                interval = Math.max(end - start, 1);
+              }
+            }
+          }
+          if (!interval) {
+            const tbTimeWindow: WidgetTimewindow = (axisOption as any).tbTimeWindow;
+            if (isDefinedAndNotNull(tbTimeWindow)) {
+              if (axisOption.axisPointer?.value && typeof axisOption.axisPointer?.value === 'number') {
+                const intervalArray = calculateAggIntervalWithWidgetTimeWindow(tbTimeWindow, axisOption.axisPointer.value);
+                const start = intervalArray[0];
+                const end = intervalArray[1];
+                interval = Math.max(end - start, 1);
+              } else {
+                interval = IntervalMath.numberValue(tbTimeWindow.interval);
+              }
+            }
+          }
+          if (interval) {
+            const timeScale: TimeScale = this.scale;
+            const axisExtent: [number, number] = this._extent;
+            const dataExtent = timeScale.getExtent();
+            const size = Math.abs(axisExtent[1] - axisExtent[0]);
+            return interval * (size / (dataExtent[1] - dataExtent[0]));
+          } else {
+            return axisGetBandWidth.call(this);
+          }
         } else {
           return axisGetBandWidth.call(this);
         }

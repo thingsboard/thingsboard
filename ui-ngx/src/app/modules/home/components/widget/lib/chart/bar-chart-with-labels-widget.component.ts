@@ -306,7 +306,7 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
     if (this.barChart) {
       (this.barChartOptions.xAxis as any).min = this.ctx.defaultSubscription.timeWindow.minTime;
       (this.barChartOptions.xAxis as any).max = this.ctx.defaultSubscription.timeWindow.maxTime;
-      (this.barChartOptions.xAxis as any).tbTimewindowInterval = this.ctx.defaultSubscription.timeWindow.interval;
+      (this.barChartOptions.xAxis as any).tbTimeWindow = this.ctx.defaultSubscription.timeWindow;
       this.barChartOptions.series = this.updateSeries();
       this.barChart.setOption(this.barChartOptions);
     }
@@ -417,7 +417,7 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
       }
     };
 
-    (this.barChartOptions.xAxis as any).tbTimewindowInterval = this.ctx.defaultSubscription.timeWindow.interval;
+    (this.barChartOptions.xAxis as any).tbTimeWindow = this.ctx.defaultSubscription.timeWindow;
 
     this.barChartOptions.series = this.updateSeries();
 
