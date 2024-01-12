@@ -4220,6 +4220,12 @@
           "current-half-year-so-far": "Current half year so far",
           "current-year": "Current year",
           "current-year-so-far": "Current year so far"
+        },
+        "type": {
+            "week": "Week (Sun - Sat)",
+            "week-iso": "Week (Mon - Sun)",
+            "month": "Month",
+            "quarter": "Quarter"
         }
     },
     "timeunit": {

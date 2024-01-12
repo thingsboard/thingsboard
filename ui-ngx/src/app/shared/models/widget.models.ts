@@ -461,7 +461,13 @@ export interface ReplaceInfo {
   dataKeyName: string;
 }
 
-export type DataSet = [number, any][];
+export type DataEntry = [number, any, [number, number]?];
+
+export type DataSet = DataEntry[];
+
+export interface IndexedData {
+  [id: number]: DataSet;
+}
 
 export interface DataSetHolder {
   data: DataSet;

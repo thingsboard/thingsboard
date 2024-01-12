@@ -27,7 +27,7 @@ import {
   lastUpdateAgoDateFormat,
   textStyle
 } from '@shared/models/widget-settings.models';
-import { ComparisonResultType, DataKey, DatasourceData } from '@shared/models/widget.models';
+import { ComparisonResultType, DataEntry, DataKey, DatasourceData } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { AggregationType } from '@shared/models/time/time.models';
 
@@ -102,7 +102,7 @@ export const computeAggregatedCardValue =
   }
 };
 
-export const getTsValueByLatestDataKey = (latestData: Array<DatasourceData>, dataKey: DataKey): [number, any] => {
+export const getTsValueByLatestDataKey = (latestData: Array<DatasourceData>, dataKey: DataKey): DataEntry => {
   if (latestData?.length) {
     const dsData = latestData.find(data => data.dataKey === dataKey);
     if (dsData?.data?.length) {

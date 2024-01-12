@@ -21,7 +21,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-import java.time.ZoneId;
 import java.util.Arrays;
 
 @SpringBootConfiguration
@@ -34,10 +33,7 @@ public class ThingsboardServerApplication {
     private static final String DEFAULT_SPRING_CONFIG_PARAM = SPRING_CONFIG_NAME_KEY + "=" + "thingsboard";
 
     public static void main(String[] args) {
-
-        ZoneId.getAvailableZoneIds().stream().sorted().forEach(System.out::println);
-
-//        SpringApplication.run(ThingsboardServerApplication.class, updateArguments(args));
+        SpringApplication.run(ThingsboardServerApplication.class, updateArguments(args));
     }
 
     private static String[] updateArguments(String[] args) {
