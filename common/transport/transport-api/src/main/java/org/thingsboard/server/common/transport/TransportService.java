@@ -145,7 +145,7 @@ public interface TransportService {
 
     SessionMetaData registerSyncSession(SessionInfoProto sessionInfo, SessionMsgListener listener, long timeout);
 
-    void reportActivity(SessionInfoProto sessionInfo);
+    void recordActivity(SessionInfoProto sessionInfo);
 
     void lifecycleEvent(TenantId tenantId, DeviceId deviceId, ComponentLifecycleEvent eventType, boolean success, Throwable error);
 
