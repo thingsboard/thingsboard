@@ -775,10 +775,6 @@ public class DefaultTransportService extends TransportActivityManager implements
         onActivity(toSessionId(sessionInfo), getCurrentTimeMillis());
     }
 
-    long getCurrentTimeMillis() {
-        return System.currentTimeMillis();
-    }
-
     @Override
     public void lifecycleEvent(TenantId tenantId, DeviceId deviceId, ComponentLifecycleEvent eventType, boolean success, Throwable error) {
         ToCoreMsg msg = ToCoreMsg.newBuilder()

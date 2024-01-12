@@ -142,7 +142,7 @@ public abstract class TransportActivityManager extends AbstractActivityManager<U
         });
     }
 
-    long getCurrentTimeMillis() {
+    protected long getCurrentTimeMillis() {
         return System.currentTimeMillis();
     }
 
