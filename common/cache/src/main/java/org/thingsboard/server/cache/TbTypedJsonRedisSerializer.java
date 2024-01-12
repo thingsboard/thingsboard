@@ -15,18 +15,25 @@
  */
 package org.thingsboard.server.cache;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.data.redis.serializer.SerializationException;
-import org.thingsboard.server.common.data.JavaSerDesUtil;
+import org.thingsboard.common.util.JacksonUtil;
 
-public class TbJavaRedisSerializer<K, V> implements TbRedisSerializer<K, V> {
+public class TbTypedJsonRedisSerializer<K, V> implements TbRedisSerializer<K, V> {
+
+    private final TypeReference<V> valueTypeRef;
+
+    public TbTypedJsonRedisSerializer(TypeReference<V> valueTypeRef) {
+        this.valueTypeRef = valueTypeRef;
+    }
 
     @Override
-    public byte[] serialize(V value) throws SerializationException {
-        return JavaSerDesUtil.encode(value);
+    public byte[] serialize(V v) throws SerializationException {
+        return JacksonUtil.writeValueAsBytes(v);
     }
 
     @Override
     public V deserialize(K key, byte[] bytes) throws SerializationException {
-        return JavaSerDesUtil.decode(bytes);
+        return JacksonUtil.fromBytes(bytes, valueTypeRef);
     }
 }

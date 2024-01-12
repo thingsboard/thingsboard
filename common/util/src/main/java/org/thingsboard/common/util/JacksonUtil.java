@@ -126,6 +126,14 @@ public class JacksonUtil {
         }
     }
 
+    public static <T> T fromBytes(byte[] bytes, TypeReference<T> valueTypeRef) {
+        try {
+            return bytes != null ? OBJECT_MAPPER.readValue(bytes, valueTypeRef) : null;
+        } catch (IOException e) {
+            throw new IllegalArgumentException("The given string value cannot be transformed to Json object: " + Arrays.toString(bytes), e);
+        }
+    }
+
     public static JsonNode fromBytes(byte[] bytes) {
         try {
             return OBJECT_MAPPER.readTree(bytes);

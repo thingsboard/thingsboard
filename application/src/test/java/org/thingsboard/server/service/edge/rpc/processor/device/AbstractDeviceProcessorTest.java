@@ -74,8 +74,6 @@ public abstract class AbstractDeviceProcessorTest extends BaseEdgeProcessorTest 
 
         willReturn(device).given(deviceService).findDeviceById(tenantId, deviceId);
         willReturn(deviceProfile).given(deviceProfileService).findDeviceProfileById(tenantId, deviceProfileId);
-        willReturn(new byte[]{0x00}).given(dataDecodingEncodingService).encode(deviceProfileData);
-
     }
 
     protected void updateDeviceProfileDefaultFields(long expectedDashboardIdMSB, long expectedDashboardIdLSB,
