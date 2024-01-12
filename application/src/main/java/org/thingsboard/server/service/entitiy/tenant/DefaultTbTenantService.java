@@ -52,7 +52,7 @@ public class DefaultTbTenantService extends AbstractTbEntityService implements T
         boolean created = tenant.getId() == null;
         Tenant oldTenant = !created ? tenantService.findTenantById(tenant.getId()) : null;
 
-        Tenant savedTenant = checkNotNull(tenantService.saveTenant(tenant, false));
+        Tenant savedTenant = checkNotNull(tenantService.saveTenant(tenant, !created));
         if (created) {
             installScripts.createDefaultRuleChains(savedTenant.getId());
             installScripts.createDefaultEdgeRuleChains(savedTenant.getId());
