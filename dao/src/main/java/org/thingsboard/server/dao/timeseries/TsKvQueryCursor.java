@@ -33,7 +33,7 @@ public class TsKvQueryCursor extends QueryCursor {
     @Getter
     private final List<TsKvEntry> data;
     @Getter
-    private String orderBy;
+    private final String orderBy;
 
     private int partitionIndex;
     private int currentLimit;
