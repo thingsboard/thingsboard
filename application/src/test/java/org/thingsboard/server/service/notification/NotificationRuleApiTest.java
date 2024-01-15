@@ -46,11 +46,11 @@ import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration
 import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.device.profile.AlarmCondition;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.device.profile.AlarmRuleCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
+import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionFilter;
 import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionSpec;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -103,7 +103,6 @@ import org.thingsboard.server.service.notification.rule.cache.DefaultNotificatio
 import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -855,9 +854,8 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setSpec(new SimpleAlarmConditionSpec());
-        List<AlarmConditionFilter> condition = new ArrayList<>();
 
-        AlarmConditionFilter alarmConditionFilter = new AlarmConditionFilter();
+        SimpleAlarmConditionFilter alarmConditionFilter = new SimpleAlarmConditionFilter();
         alarmConditionFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "bool"));
         BooleanFilterPredicate predicate = new BooleanFilterPredicate();
         predicate.setOperation(BooleanFilterPredicate.BooleanOperation.EQUAL);
@@ -865,8 +863,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
         alarmConditionFilter.setPredicate(predicate);
         alarmConditionFilter.setValueType(EntityKeyValueType.BOOLEAN);
-        condition.add(alarmConditionFilter);
-        alarmCondition.setCondition(condition);
+        alarmCondition.setCondition(alarmConditionFilter);
 
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);

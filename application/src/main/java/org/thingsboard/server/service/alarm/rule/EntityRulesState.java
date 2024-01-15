@@ -19,15 +19,19 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
+import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpecType;
+import org.thingsboard.server.common.data.device.profile.AlarmConditionType;
 import org.thingsboard.server.common.data.device.profile.AlarmRuleCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.device.profile.AlarmSchedule;
+import org.thingsboard.server.common.data.device.profile.ComplexAlarmConditionFilter;
 import org.thingsboard.server.common.data.device.profile.DurationAlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.RepeatingAlarmConditionSpec;
+import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionFilter;
 import org.thingsboard.server.common.data.id.AlarmRuleId;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
 import org.thingsboard.server.common.data.query.DynamicValue;
@@ -38,8 +42,10 @@ import org.thingsboard.server.common.data.query.SimpleKeyFilterPredicate;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -87,7 +93,7 @@ class EntityRulesState {
         Map<AlarmSeverity, Set<AlarmConditionFilterKey>> createAlarmKeys = alarmCreateKeys.computeIfAbsent(alarmRule.getId(), id -> new HashMap<>());
         configuration.getCreateRules().forEach(((severity, alarmRuleCondition) -> {
             var ruleKeys = createAlarmKeys.computeIfAbsent(severity, id -> new HashSet<>());
-            for (var keyFilter : alarmRuleCondition.getCondition().getCondition()) {
+            for (var keyFilter : getSimpleConditions(alarmRuleCondition.getCondition().getCondition())) {
                 entityKeys.add(keyFilter.getKey());
                 ruleKeys.add(keyFilter.getKey());
                 addDynamicValuesRecursively(keyFilter.getPredicate(), entityKeys, ruleKeys);
@@ -100,13 +106,32 @@ class EntityRulesState {
         }));
         if (configuration.getClearRule() != null) {
             var clearAlarmKeys = alarmClearKeys.computeIfAbsent(alarmRule.getId(), id -> new HashSet<>());
-            for (var keyFilter : configuration.getClearRule().getCondition().getCondition()) {
+            for (var keyFilter : getSimpleConditions(configuration.getClearRule().getCondition().getCondition())) {
                 entityKeys.add(keyFilter.getKey());
                 clearAlarmKeys.add(keyFilter.getKey());
                 addDynamicValuesRecursively(keyFilter.getPredicate(), entityKeys, clearAlarmKeys);
             }
             addEntityKeysFromAlarmConditionSpec(configuration.getClearRule());
         }
+    }
+
+    private Set<SimpleAlarmConditionFilter> getSimpleConditions(AlarmConditionFilter condition) {
+        if (condition.getType() == AlarmConditionType.SIMPLE) {
+            return Set.of((SimpleAlarmConditionFilter) condition);
+        }
+        Set<SimpleAlarmConditionFilter> simpleFilters = new HashSet<>();
+        Queue<AlarmConditionFilter> filters = new LinkedList<>(((ComplexAlarmConditionFilter) condition).getConditions());
+
+        while (!filters.isEmpty()) {
+            AlarmConditionFilter filter = filters.poll();
+            if (filter.getType() == AlarmConditionType.SIMPLE) {
+                simpleFilters.add((SimpleAlarmConditionFilter) filter);
+            } else {
+                filters.addAll(((ComplexAlarmConditionFilter) filter).getConditions());
+            }
+        }
+
+        return simpleFilters;
     }
 
     private void addScheduleDynamicValues(AlarmSchedule schedule) {

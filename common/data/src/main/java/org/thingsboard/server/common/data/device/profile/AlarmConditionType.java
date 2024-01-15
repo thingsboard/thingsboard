@@ -15,24 +15,7 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-
-import jakarta.validation.Valid;
-import java.io.Serializable;
-
-@Schema
-@Data
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class AlarmCondition implements Serializable {
-
-    private static final long serialVersionUID = -3520632174723456021L;
-
-    @Valid
-    @Schema(description = "JSON array of alarm condition filters")
-    private AlarmConditionFilter condition;
-    @Schema(description = "JSON object representing alarm condition type")
-    private AlarmConditionSpec spec;
-
+public enum AlarmConditionType {
+    SIMPLE,
+    COMPLEX;
 }

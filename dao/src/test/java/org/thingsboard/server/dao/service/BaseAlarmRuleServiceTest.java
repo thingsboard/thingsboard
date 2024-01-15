@@ -26,11 +26,12 @@ import org.thingsboard.server.common.data.alarm.rule.AlarmRuleInfo;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleOriginatorTargetEntity;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleDeviceTypeEntityFilter;
 import org.thingsboard.server.common.data.device.profile.AlarmCondition;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.device.profile.AlarmRuleCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
+import org.thingsboard.server.common.data.device.profile.ComplexAlarmConditionFilter;
+import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionFilter;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -131,7 +132,7 @@ public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
         alarmRule.setAlarmType(name + "Alarm");
         alarmRule.setName(name);
 
-        AlarmConditionFilter alarmEnabledFilter = new AlarmConditionFilter();
+        SimpleAlarmConditionFilter alarmEnabledFilter = new SimpleAlarmConditionFilter();
         alarmEnabledFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "alarmEnabled"));
         alarmEnabledFilter.setValue(Boolean.TRUE);
         alarmEnabledFilter.setValueType(EntityKeyValueType.BOOLEAN);
@@ -144,7 +145,7 @@ public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
         ));
         alarmEnabledFilter.setPredicate(alarmEnabledPredicate);
 
-        AlarmConditionFilter temperatureFilter = new AlarmConditionFilter();
+        SimpleAlarmConditionFilter temperatureFilter = new SimpleAlarmConditionFilter();
         temperatureFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
         temperatureFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate temperaturePredicate = new NumericFilterPredicate();
@@ -153,7 +154,7 @@ public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
         temperatureFilter.setPredicate(temperaturePredicate);
 
         AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setCondition(Arrays.asList(alarmEnabledFilter, temperatureFilter));
+        alarmCondition.setCondition(new ComplexAlarmConditionFilter(Arrays.asList(alarmEnabledFilter, temperatureFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();

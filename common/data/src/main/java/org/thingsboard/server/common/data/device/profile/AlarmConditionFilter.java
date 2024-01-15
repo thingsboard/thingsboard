@@ -15,31 +15,15 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import org.thingsboard.server.common.data.query.EntityKeyValueType;
-import org.thingsboard.server.common.data.query.KeyFilterPredicate;
-import org.thingsboard.server.common.data.validation.NoXss;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-import jakarta.validation.Valid;
-import java.io.Serializable;
-
-@Schema
-@Data
-public class AlarmConditionFilter implements Serializable {
-
-    private static final long serialVersionUID = 186010644723236779L;
-
-    @Valid
-    @Schema(description = "JSON object for specifying alarm condition by specific key")
-    private AlarmConditionFilterKey key;
-    @Schema(description = "String representation of the type of the value", example = "NUMERIC")
-    private EntityKeyValueType valueType;
-    @NoXss
-    @Schema(description = "Value used in Constant comparison. For other types, such as TIME_SERIES or ATTRIBUTE, the predicate condition is used")
-    private Object value;
-    @Valid
-    @Schema(description = "JSON object representing filter condition")
-    private KeyFilterPredicate predicate;
-
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        property = "type")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = SimpleAlarmConditionFilter.class, name = "SIMPLE"),
+        @JsonSubTypes.Type(value = ComplexAlarmConditionFilter.class, name = "COMPLEX")})
+public interface AlarmConditionFilter {
+    AlarmConditionType getType();
 }

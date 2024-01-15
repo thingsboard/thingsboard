@@ -29,8 +29,13 @@ import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
+import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
+import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpecType;
+import org.thingsboard.server.common.data.device.profile.AlarmConditionType;
+import org.thingsboard.server.common.data.device.profile.ComplexAlarmConditionFilter;
+import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionFilter;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -47,7 +52,11 @@ import org.thingsboard.server.service.alarm.rule.state.PersistedAlarmState;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.function.BiFunction;
 
@@ -318,10 +327,10 @@ class AlarmState {
         if (StringUtils.isNotEmpty(alarmDetailsStr) || dashboardId != null) {
             ObjectNode newDetails = JacksonUtil.newObjectNode();
             if (StringUtils.isNotEmpty(alarmDetailsStr)) {
-                for (var keyFilter : ruleState.getAlarmRule().getCondition().getCondition()) {
-                    EntityKeyValue entityKeyValue = dataSnapshot.getValue(keyFilter.getKey());
+                for (var keyFilter : getKeyFilters(ruleState.getAlarmRule().getCondition().getCondition())) {
+                    EntityKeyValue entityKeyValue = dataSnapshot.getValue(keyFilter);
                     if (entityKeyValue != null) {
-                        alarmDetailsStr = alarmDetailsStr.replaceAll(String.format("\\$\\{%s}", keyFilter.getKey().getKey()), getValueAsString(entityKeyValue));
+                        alarmDetailsStr = alarmDetailsStr.replaceAll(String.format("\\$\\{%s}", keyFilter.getKey()), getValueAsString(entityKeyValue));
                     }
                 }
                 newDetails.put("data", alarmDetailsStr);
@@ -337,6 +346,25 @@ class AlarmState {
         }
 
         return alarmDetails;
+    }
+
+    private Set<AlarmConditionFilterKey> getKeyFilters(AlarmConditionFilter condition) {
+        if (condition.getType() == AlarmConditionType.SIMPLE) {
+            return Set.of(((SimpleAlarmConditionFilter) condition).getKey());
+        }
+        Set<AlarmConditionFilterKey> keyFilters = new HashSet<>();
+        Queue<AlarmConditionFilter> filters = new LinkedList<>(((ComplexAlarmConditionFilter) condition).getConditions());
+
+        while (!filters.isEmpty()) {
+            AlarmConditionFilter filter = filters.poll();
+            if (filter.getType() == AlarmConditionType.SIMPLE) {
+                keyFilters.add(((SimpleAlarmConditionFilter) filter).getKey());
+            } else {
+                filters.addAll(((ComplexAlarmConditionFilter) filter).getConditions());
+            }
+        }
+
+        return keyFilters;
     }
 
     private static String getValueAsString(EntityKeyValue entityKeyValue) {

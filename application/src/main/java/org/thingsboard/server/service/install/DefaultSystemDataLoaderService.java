@@ -51,15 +51,16 @@ import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleOriginatorTargetEntity;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleDeviceTypeEntityFilter;
 import org.thingsboard.server.common.data.device.profile.AlarmCondition;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.device.profile.AlarmRuleCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
+import org.thingsboard.server.common.data.device.profile.ComplexAlarmConditionFilter;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
+import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionFilter;
 import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionSpec;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -430,7 +431,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         AlarmCondition temperatureCondition = new AlarmCondition();
         temperatureCondition.setSpec(new SimpleAlarmConditionSpec());
 
-        AlarmConditionFilter temperatureAlarmFlagAttributeFilter = new AlarmConditionFilter();
+        SimpleAlarmConditionFilter temperatureAlarmFlagAttributeFilter = new SimpleAlarmConditionFilter();
         temperatureAlarmFlagAttributeFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "temperatureAlarmFlag"));
         temperatureAlarmFlagAttributeFilter.setValueType(EntityKeyValueType.BOOLEAN);
         BooleanFilterPredicate temperatureAlarmFlagAttributePredicate = new BooleanFilterPredicate();
@@ -438,7 +439,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         temperatureAlarmFlagAttributePredicate.setValue(new FilterPredicateValue<>(Boolean.TRUE));
         temperatureAlarmFlagAttributeFilter.setPredicate(temperatureAlarmFlagAttributePredicate);
 
-        AlarmConditionFilter temperatureTimeseriesFilter = new AlarmConditionFilter();
+        SimpleAlarmConditionFilter temperatureTimeseriesFilter = new SimpleAlarmConditionFilter();
         temperatureTimeseriesFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
         temperatureTimeseriesFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate temperatureTimeseriesFilterPredicate = new NumericFilterPredicate();
@@ -448,7 +449,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
                         new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "temperatureAlarmThreshold"));
         temperatureTimeseriesFilterPredicate.setValue(temperatureTimeseriesPredicateValue);
         temperatureTimeseriesFilter.setPredicate(temperatureTimeseriesFilterPredicate);
-        temperatureCondition.setCondition(Arrays.asList(temperatureAlarmFlagAttributeFilter, temperatureTimeseriesFilter));
+        temperatureCondition.setCondition(new ComplexAlarmConditionFilter(Arrays.asList(temperatureAlarmFlagAttributeFilter, temperatureTimeseriesFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));
         temperatureRule.setAlarmDetails("Current temperature = ${temperature}");
         temperatureRule.setCondition(temperatureCondition);
         highTemperature.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.MAJOR, temperatureRule)));
@@ -457,7 +458,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         AlarmCondition clearTemperatureCondition = new AlarmCondition();
         clearTemperatureCondition.setSpec(new SimpleAlarmConditionSpec());
 
-        AlarmConditionFilter clearTemperatureTimeseriesFilter = new AlarmConditionFilter();
+        SimpleAlarmConditionFilter clearTemperatureTimeseriesFilter = new SimpleAlarmConditionFilter();
         clearTemperatureTimeseriesFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
         clearTemperatureTimeseriesFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate clearTemperatureTimeseriesFilterPredicate = new NumericFilterPredicate();
@@ -468,7 +469,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
         clearTemperatureTimeseriesFilterPredicate.setValue(clearTemperatureTimeseriesPredicateValue);
         clearTemperatureTimeseriesFilter.setPredicate(clearTemperatureTimeseriesFilterPredicate);
-        clearTemperatureCondition.setCondition(Collections.singletonList(clearTemperatureTimeseriesFilter));
+        clearTemperatureCondition.setCondition(clearTemperatureTimeseriesFilter);
         clearTemperatureRule.setCondition(clearTemperatureCondition);
         clearTemperatureRule.setAlarmDetails("Current temperature = ${temperature}");
         highTemperature.setClearRule(clearTemperatureRule);
@@ -492,7 +493,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         AlarmCondition humidityCondition = new AlarmCondition();
         humidityCondition.setSpec(new SimpleAlarmConditionSpec());
 
-        AlarmConditionFilter humidityAlarmFlagAttributeFilter = new AlarmConditionFilter();
+        SimpleAlarmConditionFilter humidityAlarmFlagAttributeFilter = new SimpleAlarmConditionFilter();
         humidityAlarmFlagAttributeFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "humidityAlarmFlag"));
         humidityAlarmFlagAttributeFilter.setValueType(EntityKeyValueType.BOOLEAN);
         BooleanFilterPredicate humidityAlarmFlagAttributePredicate = new BooleanFilterPredicate();
@@ -500,7 +501,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         humidityAlarmFlagAttributePredicate.setValue(new FilterPredicateValue<>(Boolean.TRUE));
         humidityAlarmFlagAttributeFilter.setPredicate(humidityAlarmFlagAttributePredicate);
 
-        AlarmConditionFilter humidityTimeseriesFilter = new AlarmConditionFilter();
+        SimpleAlarmConditionFilter humidityTimeseriesFilter = new SimpleAlarmConditionFilter();
         humidityTimeseriesFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "humidity"));
         humidityTimeseriesFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate humidityTimeseriesFilterPredicate = new NumericFilterPredicate();
@@ -510,7 +511,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
                         new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "humidityAlarmThreshold"));
         humidityTimeseriesFilterPredicate.setValue(humidityTimeseriesPredicateValue);
         humidityTimeseriesFilter.setPredicate(humidityTimeseriesFilterPredicate);
-        humidityCondition.setCondition(Arrays.asList(humidityAlarmFlagAttributeFilter, humidityTimeseriesFilter));
+        humidityCondition.setCondition(new ComplexAlarmConditionFilter(Arrays.asList(humidityAlarmFlagAttributeFilter, humidityTimeseriesFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));
 
         humidityRule.setCondition(humidityCondition);
         humidityRule.setAlarmDetails("Current humidity = ${humidity}");
@@ -520,7 +521,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         AlarmCondition clearHumidityCondition = new AlarmCondition();
         clearHumidityCondition.setSpec(new SimpleAlarmConditionSpec());
 
-        AlarmConditionFilter clearHumidityTimeseriesFilter = new AlarmConditionFilter();
+        SimpleAlarmConditionFilter clearHumidityTimeseriesFilter = new SimpleAlarmConditionFilter();
         clearHumidityTimeseriesFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "humidity"));
         clearHumidityTimeseriesFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate clearHumidityTimeseriesFilterPredicate = new NumericFilterPredicate();
@@ -531,7 +532,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
         clearHumidityTimeseriesFilterPredicate.setValue(clearHumidityTimeseriesPredicateValue);
         clearHumidityTimeseriesFilter.setPredicate(clearHumidityTimeseriesFilterPredicate);
-        clearHumidityCondition.setCondition(Collections.singletonList(clearHumidityTimeseriesFilter));
+        clearHumidityCondition.setCondition(clearHumidityTimeseriesFilter);
         clearHumidityRule.setCondition(clearHumidityCondition);
         clearHumidityRule.setAlarmDetails("Current humidity = ${humidity}");
         lowHumidity.setClearRule(clearHumidityRule);

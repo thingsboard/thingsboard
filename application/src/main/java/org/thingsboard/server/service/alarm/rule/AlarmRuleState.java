@@ -27,10 +27,12 @@ import org.thingsboard.server.common.data.device.profile.AlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpecType;
 import org.thingsboard.server.common.data.device.profile.AlarmRuleCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmSchedule;
+import org.thingsboard.server.common.data.device.profile.ComplexAlarmConditionFilter;
 import org.thingsboard.server.common.data.device.profile.CustomTimeSchedule;
 import org.thingsboard.server.common.data.device.profile.CustomTimeScheduleItem;
 import org.thingsboard.server.common.data.device.profile.DurationAlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.RepeatingAlarmConditionSpec;
+import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionFilter;
 import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.SpecificTimeSchedule;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
@@ -319,28 +321,57 @@ class AlarmRuleState {
     }
 
     private boolean eval(AlarmCondition condition, DataSnapshot data) {
-        boolean eval = true;
-        for (var filter : condition.getCondition()) {
-            EntityKeyValue value;
-            if (filter.getKey().getType().equals(AlarmConditionKeyType.CONSTANT)) {
-                try {
-                    value = getConstantValue(filter);
-                } catch (RuntimeException e) {
-                    log.warn("Failed to parse constant value from filter: {}", filter, e);
-                    value = null;
-                }
-            } else {
-                value = data.getValue(filter.getKey());
-            }
-            if (value == null) {
-                return false;
-            }
-            eval = eval && eval(data, value, filter.getPredicate(), filter);
-        }
-        return eval;
+        return eval(condition.getCondition(), data);
     }
 
-    private EntityKeyValue getConstantValue(AlarmConditionFilter filter) {
+    private boolean eval(AlarmConditionFilter filter, DataSnapshot data) {
+        return switch (filter.getType()) {
+            case SIMPLE -> eval((SimpleAlarmConditionFilter) filter, data);
+            case COMPLEX -> eval((ComplexAlarmConditionFilter) filter, data);
+        };
+    }
+
+    private boolean eval(ComplexAlarmConditionFilter complexFilter, DataSnapshot data) {
+        switch (complexFilter.getOperation()) {
+            case OR -> {
+                for (AlarmConditionFilter filter : complexFilter.getConditions()) {
+                    if (eval(filter, data)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            case AND -> {
+                for (AlarmConditionFilter filter : complexFilter.getConditions()) {
+                    if (!eval(filter, data)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            default -> throw new RuntimeException("Operation not supported: " + complexFilter.getOperation());
+        }
+    }
+
+    private boolean eval(SimpleAlarmConditionFilter filter, DataSnapshot data) {
+        EntityKeyValue value;
+        if (filter.getKey().getType().equals(AlarmConditionKeyType.CONSTANT)) {
+            try {
+                value = getConstantValue(filter);
+            } catch (RuntimeException e) {
+                log.warn("Failed to parse constant value from filter: {}", filter, e);
+                value = null;
+            }
+        } else {
+            value = data.getValue(filter.getKey());
+        }
+        if (value == null) {
+            return false;
+        }
+        return eval(data, value, filter.getPredicate(), filter);
+    }
+
+    private EntityKeyValue getConstantValue(SimpleAlarmConditionFilter filter) {
         EntityKeyValue value = new EntityKeyValue();
         String valueStr = filter.getValue().toString();
         switch (filter.getValueType()) {
@@ -360,7 +391,7 @@ class AlarmRuleState {
         return value;
     }
 
-    private boolean eval(DataSnapshot data, EntityKeyValue value, KeyFilterPredicate predicate, AlarmConditionFilter filter) {
+    private boolean eval(DataSnapshot data, EntityKeyValue value, KeyFilterPredicate predicate, SimpleAlarmConditionFilter filter) {
         switch (predicate.getType()) {
             case STRING:
                 return evalStrPredicate(data, value, (StringFilterPredicate) predicate, filter);
@@ -375,7 +406,7 @@ class AlarmRuleState {
         }
     }
 
-    private boolean evalComplexPredicate(DataSnapshot data, EntityKeyValue ekv, ComplexFilterPredicate predicate, AlarmConditionFilter filter) {
+    private boolean evalComplexPredicate(DataSnapshot data, EntityKeyValue ekv, ComplexFilterPredicate predicate, SimpleAlarmConditionFilter filter) {
         switch (predicate.getOperation()) {
             case OR:
                 for (KeyFilterPredicate kfp : predicate.getPredicates()) {
@@ -396,7 +427,7 @@ class AlarmRuleState {
         }
     }
 
-    private boolean evalBoolPredicate(DataSnapshot data, EntityKeyValue ekv, BooleanFilterPredicate predicate, AlarmConditionFilter filter) {
+    private boolean evalBoolPredicate(DataSnapshot data, EntityKeyValue ekv, BooleanFilterPredicate predicate, SimpleAlarmConditionFilter filter) {
         Boolean val = getBoolValue(ekv);
         if (val == null) {
             return false;
@@ -415,7 +446,7 @@ class AlarmRuleState {
         }
     }
 
-    private boolean evalNumPredicate(DataSnapshot data, EntityKeyValue ekv, NumericFilterPredicate predicate, AlarmConditionFilter filter) {
+    private boolean evalNumPredicate(DataSnapshot data, EntityKeyValue ekv, NumericFilterPredicate predicate, SimpleAlarmConditionFilter filter) {
         Double val = getDblValue(ekv);
         if (val == null) {
             return false;
@@ -442,7 +473,7 @@ class AlarmRuleState {
         }
     }
 
-    private boolean evalStrPredicate(DataSnapshot data, EntityKeyValue ekv, StringFilterPredicate predicate, AlarmConditionFilter filter) {
+    private boolean evalStrPredicate(DataSnapshot data, EntityKeyValue ekv, StringFilterPredicate predicate, SimpleAlarmConditionFilter filter) {
         String val = getStrValue(ekv);
         if (val == null) {
             return false;
@@ -473,7 +504,7 @@ class AlarmRuleState {
         }
     }
 
-    private <T> T getPredicateValue(DataSnapshot data, FilterPredicateValue<T> value, AlarmConditionFilter filter, Function<EntityKeyValue, T> transformFunction) {
+    private <T> T getPredicateValue(DataSnapshot data, FilterPredicateValue<T> value, SimpleAlarmConditionFilter filter, Function<EntityKeyValue, T> transformFunction) {
         EntityKeyValue ekv = getDynamicPredicateValue(data, value.getDynamicValue());
         if (ekv != null) {
             T result = transformFunction.apply(ekv);
