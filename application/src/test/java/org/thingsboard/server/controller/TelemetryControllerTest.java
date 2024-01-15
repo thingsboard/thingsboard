@@ -75,8 +75,10 @@ public class TelemetryControllerTest extends AbstractControllerTest {
 
         tsService.save(tenantId, device.getId(), new BasicTsKvEntry(1704899728000L, new LongDataEntry("t", 1L))); // Wednesday, January 10 15:15:28 GMT
         tsService.save(tenantId, device.getId(), new BasicTsKvEntry(1704899729000L, new LongDataEntry("t", 3L))); // Wednesday, January 10 15:15:29 GMT
-        tsService.save(tenantId, device.getId(), new BasicTsKvEntry(endOfWeek1Ts + 1000, new LongDataEntry("t", 7L))); // Monday, January 15, 2024 0:00:01 GMT+02:00
-        tsService.save(tenantId, device.getId(), new BasicTsKvEntry(endOfWeek2Ts + 1000, new LongDataEntry("t", 11L))); // Monday, January 22, 2024 0:00:01 GMT+02:00
+        tsService.save(tenantId, device.getId(), new BasicTsKvEntry(endOfWeek1Ts, new LongDataEntry("t", 2L))); // Monday, January 15, 2024 0:00:00 GMT+02:00
+        tsService.save(tenantId, device.getId(), new BasicTsKvEntry(endOfWeek1Ts + 1000, new LongDataEntry("t", 5L))); // Monday, January 15, 2024 0:00:01 GMT+02:00
+        tsService.save(tenantId, device.getId(), new BasicTsKvEntry(endOfWeek2Ts, new LongDataEntry("t", 9L))); // Monday, January 22, 2024 0:00:00 GMT+02:00
+        tsService.save(tenantId, device.getId(), new BasicTsKvEntry(endOfWeek2Ts + 1000, new LongDataEntry("t", 2L))); // Monday, January 22, 2024 0:00:01 GMT+02:00
 
         ObjectNode result = doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() +
                         "/values/timeseries?keys=t&startTs={startTs}&endTs={endTs}&agg={agg}&intervalType={intervalType}&timeZone={timeZone}",
