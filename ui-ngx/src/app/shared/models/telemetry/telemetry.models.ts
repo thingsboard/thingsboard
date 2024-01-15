@@ -171,6 +171,14 @@ export class AttributesSubscriptionCmd extends SubscriptionCmd {
   type = WsCmdType.ATTRIBUTES;
 }
 
+export enum IntervalType {
+  MILLISECONDS = 'MILLISECONDS',
+  WEEK = 'WEEK',
+  WEEK_ISO = 'WEEK_ISO',
+  MONTH = 'MONTH',
+  QUARTER = 'QUARTER'
+}
+
 export class TimeseriesSubscriptionCmd extends SubscriptionCmd {
   startTs: number;
   timeWindow: number;
@@ -197,7 +205,9 @@ export interface EntityHistoryCmd {
   keys: Array<string>;
   startTs: number;
   endTs: number;
+  intervalType: IntervalType;
   interval: number;
+  timeZoneId: string;
   limit: number;
   agg: AggregationType;
   fetchLatestPreviousPoint?: boolean;
@@ -211,7 +221,9 @@ export interface TimeSeriesCmd {
   keys: Array<string>;
   startTs: number;
   timeWindow: number;
+  intervalType: IntervalType;
   interval: number;
+  timeZoneId: string;
   limit: number;
   agg: AggregationType;
   fetchLatestPreviousPoint?: boolean;
@@ -382,12 +394,14 @@ export class TelemetryPluginCmdsWrapper implements CmdWrapper {
   }
 }
 
+export type SubscriptionDataEntry = [number, any, number?];
+
 export interface SubscriptionData {
-  [key: string]: [number, any, number?][];
+  [key: string]: SubscriptionDataEntry[];
 }
 
 export interface IndexedSubscriptionData {
-  [id: number]: [number, any, number?][];
+  [id: number]: SubscriptionDataEntry[];
 }
 
 export interface SubscriptionDataHolder {

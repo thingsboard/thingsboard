@@ -29,6 +29,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.support.HttpRequestWrapper;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
@@ -160,6 +161,7 @@ import org.thingsboard.server.common.data.sync.vc.VersionLoadResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
 import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadRequest;
+import org.thingsboard.server.common.data.widget.DeprecatedFilter;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
@@ -2713,15 +2715,33 @@ public class RestClient implements Closeable {
         return restTemplate.postForEntity(baseURL + "/api/widgetsBundle", widgetsBundle, WidgetsBundle.class).getBody();
     }
 
+    public void updateWidgetsBundleWidgetTypes(WidgetsBundleId widgetsBundleId, List<WidgetTypeId> widgetTypeIds) {
+        var httpEntity = new HttpEntity<>(widgetTypeIds.stream()
+                .map(widgetTypeId -> widgetTypeId.getId().toString())
+                .collect(Collectors.toList()));
+        restTemplate.exchange(baseURL + "/api/widgetsBundle/{widgetsBundleId}/widgetTypes",
+                HttpMethod.POST, httpEntity, Void.class, widgetsBundleId.getId());
+    }
+
+    public void updateWidgetsBundleWidgetFqns(WidgetsBundleId widgetsBundleId, List<String> widgetTypeFqns) {
+        restTemplate.exchange(baseURL + "/api/widgetsBundle/{widgetsBundleId}/widgetTypeFqns",
+                HttpMethod.POST, new HttpEntity<>(widgetTypeFqns), Void.class, widgetsBundleId.getId());
+    }
+
     public void deleteWidgetsBundle(WidgetsBundleId widgetsBundleId) {
         restTemplate.delete(baseURL + "/api/widgetsBundle/{widgetsBundleId}", widgetsBundleId.getId());
     }
 
     public PageData<WidgetsBundle> getWidgetsBundles(PageLink pageLink) {
+        return getWidgetsBundles(pageLink, null, null);
+    }
+
+    public PageData<WidgetsBundle> getWidgetsBundles(PageLink pageLink, Boolean tenantOnly, Boolean fullSearch) {
         Map<String, String> params = new HashMap<>();
         addPageLinkToParam(params, pageLink);
+        addTenantOnlyAndFullSearchToParams(tenantOnly, fullSearch, params);
         return restTemplate.exchange(
-                baseURL + "/api/widgetsBundles?" + getUrlParams(pageLink),
+                baseURL + "/api/widgetsBundles?" + getUrlParams(pageLink) + getTenantOnlyAndFullSearchUrlParams(tenantOnly, fullSearch),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<WidgetsBundle>>() {
@@ -2751,14 +2771,54 @@ public class RestClient implements Closeable {
         }
     }
 
+    public Optional<WidgetTypeInfo> getWidgetTypeInfoById(WidgetTypeId widgetTypeId) {
+        try {
+            ResponseEntity<WidgetTypeInfo> widgetTypeInfo =
+                    restTemplate.getForEntity(baseURL + "/api/widgetTypeInfo/{widgetTypeId}", WidgetTypeInfo.class, widgetTypeId.getId());
+            return Optional.ofNullable(widgetTypeInfo.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            }
+            throw exception;
+        }
+    }
+
     public WidgetTypeDetails saveWidgetType(WidgetTypeDetails widgetTypeDetails) {
-        return restTemplate.postForEntity(baseURL + "/api/widgetType", widgetTypeDetails, WidgetTypeDetails.class).getBody();
+        return saveWidgetType(widgetTypeDetails, null);
+    }
+
+    public WidgetTypeDetails saveWidgetType(WidgetTypeDetails widgetTypeDetails, Boolean updateExistingByFqn) {
+        if (updateExistingByFqn == null) {
+            return restTemplate.postForEntity(baseURL + "/api/widgetType", widgetTypeDetails, WidgetTypeDetails.class).getBody();
+        }
+        return restTemplate.postForEntity(baseURL + "/api/widgetType?updateExistingByFqn={updateExistingByFqn}", widgetTypeDetails, WidgetTypeDetails.class, updateExistingByFqn).getBody();
     }
 
     public void deleteWidgetType(WidgetTypeId widgetTypeId) {
         restTemplate.delete(baseURL + "/api/widgetType/{widgetTypeId}", widgetTypeId.getId());
     }
 
+    public PageData<WidgetTypeInfo> getWidgetTypes(PageLink pageLink) {
+        return getWidgetTypes(pageLink, null, null, null, null);
+    }
+
+    public PageData<WidgetTypeInfo> getWidgetTypes(PageLink pageLink, Boolean tenantOnly, Boolean fullSearch,
+                                                   DeprecatedFilter deprecatedFilter, List<String> widgetTypeList) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+        addWidgetInfoFiltersToParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList, params);
+        return restTemplate.exchange(
+                baseURL + "/api/widgetTypes?" + getUrlParams(pageLink) +
+                        getWidgetTypeInfoPageRequestUrlParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<WidgetTypeInfo>>() {
+                },
+                params).getBody();
+    }
+
+    @Deprecated // current name in the controller: getBundleWidgetTypesByBundleAlias
     public List<WidgetType> getBundleWidgetTypes(boolean isSystem, String bundleAlias) {
         return restTemplate.exchange(
                 baseURL + "/api/widgetTypes?isSystem={isSystem}&bundleAlias={bundleAlias}",
@@ -2770,6 +2830,17 @@ public class RestClient implements Closeable {
                 bundleAlias).getBody();
     }
 
+    public List<WidgetType> getBundleWidgetTypes(WidgetsBundleId widgetsBundleId) {
+        return restTemplate.exchange(
+                baseURL + "/api/widgetTypes?widgetsBundleId={widgetsBundleId}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<WidgetType>>() {
+                },
+                widgetsBundleId.getId()).getBody();
+    }
+
+    @Deprecated // current name in the controller: getBundleWidgetTypesDetailsByBundleAlias
     public List<WidgetTypeDetails> getBundleWidgetTypesDetails(boolean isSystem, String bundleAlias) {
         return restTemplate.exchange(
                 baseURL + "/api/widgetTypesDetails?isSystem={isSystem}&bundleAlias={bundleAlias}",
@@ -2781,6 +2852,28 @@ public class RestClient implements Closeable {
                 bundleAlias).getBody();
     }
 
+    public List<WidgetTypeDetails> getBundleWidgetTypesDetails(WidgetsBundleId widgetsBundleId, boolean inlineImages) {
+        return restTemplate.exchange(
+                baseURL + "/api/widgetTypesDetails?widgetsBundleId={widgetsBundleId}&inlineImages={inlineImages}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<WidgetTypeDetails>>() {
+                },
+                widgetsBundleId.getId(),
+                inlineImages).getBody();
+    }
+
+    public List<String> getBundleWidgetTypeFqns(WidgetsBundleId widgetsBundleId) {
+        return restTemplate.exchange(
+                baseURL + "/api/widgetTypeFqns?widgetsBundleId={widgetsBundleId}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<String>>() {
+                },
+                widgetsBundleId.getId()).getBody();
+    }
+
+    @Deprecated // current name in the controller: getBundleWidgetTypesInfosByBundleAlias
     public List<WidgetTypeInfo> getBundleWidgetTypesInfos(boolean isSystem, String bundleAlias) {
         return restTemplate.exchange(
                 baseURL + "/api/widgetTypesInfos?isSystem={isSystem}&bundleAlias={bundleAlias}",
@@ -2792,6 +2885,28 @@ public class RestClient implements Closeable {
                 bundleAlias).getBody();
     }
 
+    public PageData<WidgetTypeInfo> getBundleWidgetTypesInfos(WidgetsBundleId widgetsBundleId, PageLink pageLink) {
+        return getBundleWidgetTypesInfos(widgetsBundleId, pageLink, null, null, null, null);
+    }
+
+    public PageData<WidgetTypeInfo> getBundleWidgetTypesInfos(WidgetsBundleId widgetsBundleId, PageLink pageLink,
+                                                              Boolean tenantOnly, Boolean fullSearch,
+                                                              DeprecatedFilter deprecatedFilter, List<String> widgetTypeList) {
+        Map<String, String> params = new HashMap<>();
+        params.put("widgetsBundleId", widgetsBundleId.getId().toString());
+        addPageLinkToParam(params, pageLink);
+        addWidgetInfoFiltersToParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList, params);
+        return restTemplate.exchange(
+                baseURL + "/api/widgetTypesInfos?widgetsBundleId={widgetsBundleId}&" + getUrlParams(pageLink) +
+                        getWidgetTypeInfoPageRequestUrlParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<WidgetTypeInfo>>() {
+                },
+                params).getBody();
+    }
+
+    @Deprecated // current name in the controller: getWidgetTypeByBundleAliasAndTypeAlias
     public Optional<WidgetType> getWidgetType(boolean isSystem, String bundleAlias, String alias) {
         try {
             ResponseEntity<WidgetType> widgetType =
@@ -2808,6 +2923,22 @@ public class RestClient implements Closeable {
             } else {
                 throw exception;
             }
+        }
+    }
+
+    public Optional<WidgetType> getWidgetType(String fqn) {
+        try {
+            ResponseEntity<WidgetType> widgetType =
+                    restTemplate.getForEntity(
+                            baseURL + "/api/widgetType?fqn={fqn}",
+                            WidgetType.class,
+                            fqn);
+            return Optional.ofNullable(widgetType.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            }
+            throw exception;
         }
     }
 
@@ -3645,6 +3776,30 @@ public class RestClient implements Closeable {
         return urlParams;
     }
 
+    private String getWidgetTypeInfoPageRequestUrlParams(Boolean tenantOnly, Boolean fullSearch,
+                                                         DeprecatedFilter deprecatedFilter,
+                                                         List<String> widgetTypeList) {
+        String urlParams = getTenantOnlyAndFullSearchUrlParams(tenantOnly, fullSearch);
+        if (deprecatedFilter != null) {
+            urlParams += "&deprecatedFilter={deprecatedFilter}";
+        }
+        if (!CollectionUtils.isEmpty(widgetTypeList)) {
+            urlParams += "&widgetTypeList={widgetTypeList}";
+        }
+        return urlParams;
+    }
+
+    private String getTenantOnlyAndFullSearchUrlParams(Boolean tenantOnly, Boolean fullSearch) {
+        String urlParams = "";
+        if (tenantOnly != null) {
+            urlParams = "&tenantOnly={tenantOnly}";
+        }
+        if (fullSearch != null) {
+            urlParams += "&fullSearch={fullSearch}";
+        }
+        return urlParams;
+    }
+
     private void addTimePageLinkToParam(Map<String, String> params, TimePageLink pageLink) {
         this.addPageLinkToParam(params, pageLink);
         if (pageLink.getStartTime() != null) {
@@ -3664,6 +3819,26 @@ public class RestClient implements Closeable {
         if (pageLink.getSortOrder() != null) {
             params.put("sortProperty", pageLink.getSortOrder().getProperty());
             params.put("sortOrder", pageLink.getSortOrder().getDirection().name());
+        }
+    }
+
+    private void addWidgetInfoFiltersToParams(Boolean tenantOnly, Boolean fullSearch, DeprecatedFilter deprecatedFilter,
+                                              List<String> widgetTypeList, Map<String, String> params) {
+        addTenantOnlyAndFullSearchToParams(tenantOnly, fullSearch, params);
+        if (deprecatedFilter != null) {
+            params.put("deprecatedFilter", deprecatedFilter.name());
+        }
+        if (!CollectionUtils.isEmpty(widgetTypeList)) {
+            params.put("widgetTypeList", listToString(widgetTypeList));
+        }
+    }
+
+    private void addTenantOnlyAndFullSearchToParams(Boolean tenantOnly, Boolean fullSearch, Map<String, String> params) {
+        if (tenantOnly != null) {
+            params.put("tenantOnly", tenantOnly.toString());
+        }
+        if (fullSearch != null) {
+            params.put("fullSearch", fullSearch.toString());
         }
     }
 

@@ -13,27 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport.service;
+package org.thingsboard.server.common.transport.activity;
 
-import lombok.Data;
-import org.thingsboard.server.gen.transport.TransportProtos;
+public interface ActivityManager<Key> {
 
-/**
- * Created by ashvayka on 15.10.18.
- */
-@Data
-public class SessionActivityData {
+    void onActivity(Key key, long activityTimeMillis);
 
-    private volatile TransportProtos.SessionInfoProto sessionInfo;
-    private volatile long lastActivityTime;
-    private volatile long lastReportedActivityTime;
+    void onReportingPeriodEnd();
 
-    SessionActivityData(TransportProtos.SessionInfoProto sessionInfo) {
-        this.sessionInfo = sessionInfo;
-    }
-
-    void updateLastActivityTime() {
-        this.lastActivityTime = System.currentTimeMillis();
-    }
+    long getLastRecordedTime(Key key);
 
 }

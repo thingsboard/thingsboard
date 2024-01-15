@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.deduplication;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
@@ -43,10 +44,14 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import static org.thingsboard.server.common.data.DataConstants.QUEUE_NAME;
+
 @RuleNode(
         type = ComponentType.TRANSFORMATION,
         name = "deduplication",
         configClazz = TbMsgDeduplicationNodeConfiguration.class,
+        version = 1,
+        hasQueueName = true,
         nodeDescription = "Deduplicate messages within the same originator entity for a configurable period " +
                 "based on a specified deduplication strategy.",
         nodeDetails = "Deduplication strategies: <ul><li><strong>FIRST</strong> - return first message that arrived during deduplication period.</li>" +
@@ -66,6 +71,7 @@ public class TbMsgDeduplicationNode implements TbNode {
 
     private final Map<EntityId, DeduplicationData> deduplicationMap;
     private long deduplicationInterval;
+    private String queueName;
 
     public TbMsgDeduplicationNode() {
         this.deduplicationMap = new HashMap<>();
@@ -75,6 +81,7 @@ public class TbMsgDeduplicationNode implements TbNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgDeduplicationNodeConfiguration.class);
         this.deduplicationInterval = TimeUnit.SECONDS.toMillis(config.getInterval());
+        this.queueName = ctx.getQueueName();
     }
 
     @Override
@@ -89,6 +96,22 @@ public class TbMsgDeduplicationNode implements TbNode {
     @Override
     public void destroy() {
         deduplicationMap.clear();
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0:
+                if (oldConfiguration.has(QUEUE_NAME)) {
+                    hasChanges = true;
+                    ((ObjectNode) oldConfiguration).remove(QUEUE_NAME);
+                }
+                break;
+            default:
+                break;
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
     }
 
     private void processOnRegularMsg(TbContext ctx, TbMsg msg) {
@@ -132,7 +155,7 @@ public class TbMsgDeduplicationNode implements TbNode {
                         }
                     }
                     deduplicationResults.add(TbMsg.newMsg(
-                            config.getQueueName(),
+                            queueName,
                             config.getOutMsgType(),
                             deduplicationId,
                             getMetadata(),
@@ -154,7 +177,7 @@ public class TbMsgDeduplicationNode implements TbNode {
                     }
                     if (resultMsg != null) {
                         deduplicationResults.add(TbMsg.newMsg(
-                                resultMsg.getQueueName(),
+                                queueName != null ? queueName : resultMsg.getQueueName(),
                                 resultMsg.getType(),
                                 resultMsg.getOriginator(),
                                 resultMsg.getCustomerId(),

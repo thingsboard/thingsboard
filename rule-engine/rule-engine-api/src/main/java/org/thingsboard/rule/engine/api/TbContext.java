@@ -256,6 +256,8 @@ public interface TbContext {
 
     String getRuleChainName();
 
+    String getQueueName();
+
     TenantId getTenantId();
 
     AttributesService getAttributesService();

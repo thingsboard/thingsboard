@@ -13,18 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.flow;
+package org.thingsboard.server.common.data.kv;
 
-import lombok.Data;
-import org.thingsboard.rule.engine.api.NodeConfiguration;
+public enum IntervalType {
 
-@Data
-public class TbCheckpointNodeConfiguration implements NodeConfiguration<TbCheckpointNodeConfiguration> {
+    MILLISECONDS, WEEK/*Sunday-Saturday*/, WEEK_ISO/*Monday-Sunday*/, MONTH, QUARTER
 
-    private String queueName;
-
-    @Override
-    public TbCheckpointNodeConfiguration defaultConfiguration() {
-        return new TbCheckpointNodeConfiguration();
-    }
 }
