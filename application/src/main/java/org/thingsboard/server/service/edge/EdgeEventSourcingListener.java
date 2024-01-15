@@ -79,7 +79,12 @@ public class EdgeEventSourcingListener {
                 return;
             }
             log.trace("[{}] SaveEntityEvent called: {}", event.getTenantId(), event);
-            EdgeEventActionType action = Boolean.TRUE.equals(event.getAdded()) ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED;
+            boolean isAdded = Boolean.TRUE.equals(event.getAdded());
+            EdgeEventActionType action = isAdded ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED;
+            if (event.getEntity() instanceof AlarmComment) {
+                processAlarmCommentEvent(event, isAdded);
+                return;
+            }
             tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, event.getEntityId(),
                     null, null, action, edgeSynchronizationManager.getEdgeId().get());
         } catch (Exception e) {
@@ -87,20 +92,31 @@ public class EdgeEventSourcingListener {
         }
     }
 
+    private void processAlarmCommentEvent(SaveEntityEvent<?> event, boolean added) {
+        EdgeEventActionType action = added ? EdgeEventActionType.ADDED_COMMENT : EdgeEventActionType.UPDATED_COMMENT;
+        tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, event.getEntityId(),
+                JacksonUtil.toString(event.getEntity()), EdgeEventType.ALARM_COMMENT, action, edgeSynchronizationManager.getEdgeId().get());
+    }
+
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(DeleteEntityEvent<?> event) {
         try {
             log.trace("[{}] DeleteEntityEvent called: {}", event.getTenantId(), event);
-            EdgeEventType type = null;
-            if (event.getEntity() instanceof AlarmComment) {
-                type = EdgeEventType.ALARM_COMMENT;
-            }
+            EdgeEventType type = getEdgeEventTypeForEntityEvent(event.getEntity());
+            EdgeEventActionType actionType = getEdgeEventActionTypeForEntityEvent(event.getEntity());
             tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, event.getEntityId(),
-                    JacksonUtil.toString(event.getEntity()), type, EdgeEventActionType.DELETED,
+                    JacksonUtil.toString(event.getEntity()), type, actionType,
                     edgeSynchronizationManager.getEdgeId().get());
         } catch (Exception e) {
             log.error("[{}] failed to process DeleteEntityEvent: {}", event.getTenantId(), event, e);
         }
+    }
+
+    private EdgeEventActionType getEdgeEventActionTypeForEntityEvent(Object entity) {
+        if (entity instanceof AlarmComment) {
+            return EdgeEventActionType.DELETED_COMMENT;
+        }
+        return EdgeEventActionType.DELETED;
     }
 
     @TransactionalEventListener(fallbackExecution = true)
@@ -154,7 +170,7 @@ public class EdgeEventSourcingListener {
                 cleanUpUserAdditionalInfo(user);
                 return !user.equals(oldUser);
             }
-        } else if (entity instanceof AlarmApiCallResult || entity instanceof Alarm || entity instanceof AlarmComment) {
+        } else if (entity instanceof AlarmApiCallResult || entity instanceof Alarm) {
             return false;
         }
         // Default: If the entity doesn't match any of the conditions, consider it as valid.
@@ -176,5 +192,19 @@ public class EdgeEventSourcingListener {
                 user.setAdditionalInfo(additionalInfo);
             }
         }
+    }
+
+    private EdgeEventType getEdgeEventTypeForEntityEvent(Object entity) {
+        if (entity instanceof AlarmComment) {
+            return EdgeEventType.ALARM_COMMENT;
+        }
+        return null;
+    }
+
+    private String getBodyMsgForEntityEvent(Object entity) {
+        if (entity instanceof AlarmComment) {
+            return JacksonUtil.toString(entity);
+        }
+        return null;
     }
 }

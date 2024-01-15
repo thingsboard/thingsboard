@@ -28,7 +28,6 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -42,8 +41,6 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.ACTIVITY_EVENT;
 import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM;
 import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_DELETED;
 import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_UPDATED;
-import static org.thingsboard.server.common.data.msg.TbMsgType.COMMENT_CREATED;
-import static org.thingsboard.server.common.data.msg.TbMsgType.COMMENT_UPDATED;
 import static org.thingsboard.server.common.data.msg.TbMsgType.CONNECT_EVENT;
 import static org.thingsboard.server.common.data.msg.TbMsgType.DISCONNECT_EVENT;
 import static org.thingsboard.server.common.data.msg.TbMsgType.INACTIVITY_EVENT;
@@ -83,9 +80,6 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
         if (msg.isTypeOf(ALARM)) {
             EdgeEventActionType actionType = getAlarmActionType(msg);
             return buildEvent(ctx.getTenantId(), actionType, getUUIDFromMsgData(msg), getAlarmEventType(), null);
-        } else if (msg.isTypeOneOf(COMMENT_CREATED, COMMENT_UPDATED)) {
-            EdgeEventActionType actionType = getEdgeEventActionTypeByMsgType(msg);
-            return buildEvent(ctx.getTenantId(), actionType, getUUIDFromCommentMsg(msg), getAlarmCommentEventType(), null);
         } else {
             Map<String, String> metadata = msg.getMetaData().getData();
             EdgeEventActionType actionType = getEdgeEventActionTypeByMsgType(msg);
@@ -139,8 +133,6 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
 
     abstract U getAlarmEventType();
 
-    abstract U getAlarmCommentEventType();
-
     abstract String getIgnoredMessageSource();
 
     abstract protected Class<T> getConfigClazz();
@@ -150,11 +142,6 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
     protected UUID getUUIDFromMsgData(TbMsg msg) {
         Alarm alarm = JacksonUtil.fromString(msg.getData(), Alarm.class);
         return alarm != null ? alarm.getUuidId() : null;
-    }
-
-    protected UUID getUUIDFromCommentMsg(TbMsg msg) {
-        AlarmComment alarmComment = JacksonUtil.fromString(msg.getMetaData().getData().get("comment"), AlarmComment.class);
-        return alarmComment != null ? alarmComment.getUuidId() : null;
     }
 
     protected String getScope(Map<String, String> metadata) {
@@ -179,10 +166,6 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
             String scope = msg.getMetaData().getValue(SCOPE);
             actionType = StringUtils.isEmpty(scope) ?
                     EdgeEventActionType.TIMESERIES_UPDATED : EdgeEventActionType.ATTRIBUTES_UPDATED;
-        } else if (msg.isTypeOf(COMMENT_CREATED)) {
-            actionType = EdgeEventActionType.ADDED_COMMENT;
-        } else if (msg.isTypeOf(COMMENT_UPDATED)) {
-            actionType = EdgeEventActionType.UPDATED_COMMENT;
         } else {
             String type = msg.getType();
             log.warn("Unsupported msg type [{}]", type);
@@ -193,6 +176,6 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
 
     protected boolean isSupportedMsgType(TbMsg msg) {
         return msg.isTypeOneOf(POST_TELEMETRY_REQUEST, POST_ATTRIBUTES_REQUEST, ATTRIBUTES_UPDATED, ATTRIBUTES_DELETED, TIMESERIES_UPDATED,
-                ALARM, COMMENT_CREATED, COMMENT_UPDATED, CONNECT_EVENT, DISCONNECT_EVENT, ACTIVITY_EVENT, INACTIVITY_EVENT);
+                ALARM, CONNECT_EVENT, DISCONNECT_EVENT, ACTIVITY_EVENT, INACTIVITY_EVENT);
     }
 }
