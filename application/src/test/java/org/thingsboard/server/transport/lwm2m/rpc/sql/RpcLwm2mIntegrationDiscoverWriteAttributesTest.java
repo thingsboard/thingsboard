@@ -24,6 +24,7 @@ import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationTes
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_14;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_6;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_7;
 
@@ -131,6 +132,28 @@ public class RpcLwm2mIntegrationDiscoverWriteAttributesTest extends AbstractRpcL
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
         String expected = "</3>;ver=1.2";
+        assertTrue(rpcActualResult.get("value").asText().contains(expected));
+    }
+
+    /**
+     * WriteAttributes {"id":"/3/0/14","attributes":{"pmax":100, "pmin":10}}
+     * if not implemented:
+     * {"result":"INTERNAL_SERVER_ERROR","error":"not implemented"}
+     * if implemented:
+     * {"result":"CHANGED"}
+     */
+    @Test
+    public void testWriteAttributesResourceWithParametersById_Result_CHANGED() throws Exception {
+        String expectedPath = objectInstanceIdVer_3 + "/" + RESOURCE_ID_14;
+        String expectedValue = "{\"pmax\":100, \"pmin\":10}";
+        String actualResult = sendRPCExecuteWithValueById(expectedPath, expectedValue);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
+            // result changed
+        actualResult = sendDiscover(expectedPath);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
+        String expected = "</3/0/14>;pmax=100;pmin=10";
         assertTrue(rpcActualResult.get("value").asText().contains(expected));
     }
 
