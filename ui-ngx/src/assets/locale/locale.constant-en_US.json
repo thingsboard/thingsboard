@@ -2699,7 +2699,7 @@
         "rpc-command-result": "Response",
         "rpc-command-edit-params": "Edit parameters",
         "gateway-configuration": "General Configuration",
-        "docker-label": "Use the following instruction to run IoT Gateway in in Docker compose with credentials for selected device",
+        "docker-label": "Use the following instruction to run IoT Gateway in Docker compose with credentials for selected device",
         "install-docker-compose": "Use the instructions to download, install and setup docker compose",
         "download-configuration-file": "Download configuration file",
         "download-docker-compose": "Download docker-compose.yml for your gateway",
