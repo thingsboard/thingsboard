@@ -70,7 +70,6 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
                 deviceCredentials.setCredentialsId(StringUtils.randomAlphanumeric(20));
                 deviceCredentialsService.createDeviceCredentials(device.getTenantId(), deviceCredentials);
             }
-            tbClusterService.onDeviceUpdated(savedDevice, created ? null : device);
         } catch (Exception e) {
             log.error("[{}] Failed to process device update msg [{}]", tenantId, deviceUpdateMsg, e);
             throw e;

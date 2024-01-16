@@ -181,13 +181,12 @@ public class DeviceController extends BaseController {
                              @Parameter(description = "Optional value of the device credentials to be used during device creation. " +
                                      "If omitted, access token will be auto-generated.") @RequestParam(name = "accessToken", required = false) String accessToken) throws Exception {
         device.setTenantId(getCurrentUser().getTenantId());
-        Device oldDevice = null;
         if (device.getId() != null) {
-            oldDevice = checkDeviceId(device.getId(), Operation.WRITE);
+            checkDeviceId(device.getId(), Operation.WRITE);
         } else {
             checkEntity(null, device, Resource.DEVICE);
         }
-        return tbDeviceService.save(device, oldDevice, accessToken, getCurrentUser());
+        return tbDeviceService.save(device, accessToken, getCurrentUser());
     }
 
     @ApiOperation(value = "Create Device (saveDevice) with credentials ",

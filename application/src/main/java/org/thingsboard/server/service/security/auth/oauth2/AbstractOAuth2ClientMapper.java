@@ -20,11 +20,11 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.StringUtils;
@@ -38,11 +38,11 @@ import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.oauth2.OAuth2User;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -87,12 +87,12 @@ public abstract class AbstractOAuth2ClientMapper {
     protected TbTenantProfileCache tenantProfileCache;
 
     @Autowired
-    protected TbClusterService tbClusterService;
+    private ApplicationEventPublisher eventPublisher;
 
     @Value("${edges.enabled}")
     @Getter
     private boolean edgesEnabled;
-    
+
     private final Lock userCreationLock = new ReentrantLock();
 
     protected SecurityUser getOrCreateSecurityUserFromOAuth2User(OAuth2User oauth2User, OAuth2Registration registration) {
@@ -181,9 +181,8 @@ public abstract class AbstractOAuth2ClientMapper {
             installScripts.createDefaultRuleChains(tenant.getId());
             installScripts.createDefaultEdgeRuleChains(tenant.getId());
             tenantProfileCache.evict(tenant.getId());
-            tbClusterService.onTenantChange(tenant, null);
-            tbClusterService.broadcastEntityStateChangeEvent(tenant.getId(), tenant.getId(),
-                    ComponentLifecycleEvent.CREATED);
+
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(TenantId.SYS_TENANT_ID).entityId(tenant.getId()).entity(tenant).added(true).build());
         } else {
             tenant = tenants.get(0);
         }

@@ -20,6 +20,7 @@ import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
@@ -47,7 +48,6 @@ import java.util.stream.Collectors;
 
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
-import static org.thingsboard.server.service.entitiy.DefaultTbNotificationEntityService.edgeTypeByActionType;
 
 @Slf4j
 public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
@@ -91,7 +91,7 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
         int cntTime = 1;
         Mockito.verify(tbClusterService, times(cntTime)).sendNotificationMsgToEdge(Mockito.eq(tenantId),
                 Mockito.isNull(), Mockito.isNull(), Mockito.any(), Mockito.eq(EdgeEventType.RELATION),
-                Mockito.eq(edgeTypeByActionType(actionType)), Mockito.any());
+                Mockito.eq(EdgeUtils.getEdgeEventActionTypeByActionType(actionType)), Mockito.any());
         ArgumentMatcher<EntityId> matcherOriginatorId = argument -> argument.equals(relation.getTo());
         ArgumentMatcher<HasName> matcherEntityClassEquals = Objects::isNull;
         ArgumentMatcher<CustomerId> matcherCustomerId = customerId == null ?
@@ -111,7 +111,7 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
                                                    ActionType actionType, int cntTime) {
         Mockito.verify(tbClusterService, times(cntTime)).sendNotificationMsgToEdge(Mockito.eq(tenantId),
                 Mockito.isNull(), Mockito.isNull(), Mockito.any(), Mockito.eq(EdgeEventType.RELATION),
-                Mockito.eq(edgeTypeByActionType(actionType)), Mockito.any());
+                Mockito.eq(EdgeUtils.getEdgeEventActionTypeByActionType(actionType)), Mockito.any());
         ArgumentMatcher<EntityId> matcherOriginatorId = argument -> argument.getClass().equals(relation.getFrom().getClass());
         ArgumentMatcher<HasName> matcherEntityClassEquals = Objects::isNull;
         ArgumentMatcher<CustomerId> matcherCustomerId = customerId == null ?
@@ -236,15 +236,15 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
         Mockito.reset(tbClusterService, auditLogService);
     }
 
-    protected void testNotifyEntityBroadcastEntityStateChangeEventOneTimeMsgToEdgeServiceNever(HasName entity, EntityId entityId, EntityId originatorId,
-                                                                                               TenantId tenantId, CustomerId customerId, UserId userId, String userName,
-                                                                                               ActionType actionType, Object... additionalInfo) {
+    protected void testNotifyEntityBroadcastEntityStateChangeEventManyTimeMsgToEdgeServiceNever(HasName entity, EntityId entityId, EntityId originatorId,
+                                                                                                TenantId tenantId, CustomerId customerId, UserId userId, String userName,
+                                                                                                ActionType actionType, int cntTimeBroadcast, Object... additionalInfo) {
         int cntTime = 1;
         testNotificationMsgToEdgeServiceNeverWithActionType(entityId, actionType);
         testLogEntityAction(entity, originatorId, tenantId, customerId, userId, userName, actionType, cntTime, additionalInfo);
         ArgumentMatcher<EntityId> matcherOriginatorId = argument -> argument.equals(originatorId);
         testPushMsgToRuleEngineTime(matcherOriginatorId, tenantId, entity, cntTime);
-        testBroadcastEntityStateChangeEventTime(entityId, tenantId, cntTime);
+        testBroadcastEntityStateChangeEventTime(entityId, tenantId, cntTimeBroadcast);
         Mockito.reset(tbClusterService, auditLogService);
     }
 
@@ -266,7 +266,7 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
         testLogEntityActionAdditionalInfoAny(matcherEntityClassEquals, matcherOriginatorId, tenantId, matcherCustomerId, matcherUserId, userName, actionType, cntTime,
                 cntAdditionalInfo);
         testPushMsgToRuleEngineTime(matcherOriginatorId, tenantId, entity, cntTimeRuleEngine);
-        testBroadcastEntityStateChangeEventTime(entityId, tenantId, cntTime);
+        testBroadcastEntityStateChangeEventTime(entityId, tenantId, cntTime * 2);
     }
 
     protected void testNotifyEntityMsgToEdgePushMsgToCoreOneTime(HasName entity, EntityId entityId, EntityId originatorId,
@@ -317,9 +317,9 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
 
     private void testNotificationMsgToEdgeServiceNeverWithActionType(EntityId entityId, ActionType actionType) {
         EdgeEventActionType edgeEventActionType = ActionType.CREDENTIALS_UPDATED.equals(actionType) ?
-                EdgeEventActionType.CREDENTIALS_UPDATED : edgeTypeByActionType(actionType);
-        Mockito.verify(tbClusterService, never()).sendNotificationMsgToEdge(Mockito.any(), Mockito.any(),
-                Mockito.any(entityId.getClass()), Mockito.any(), Mockito.any(), Mockito.eq(edgeEventActionType), Mockito.any());
+                EdgeEventActionType.CREDENTIALS_UPDATED : EdgeUtils.getEdgeEventActionTypeByActionType(actionType);
+        Mockito.verify(tbClusterService, never()).sendNotificationMsgToEdge(Mockito.any(),
+                Mockito.any(), Mockito.any(entityId.getClass()), Mockito.any(), Mockito.any(), Mockito.eq(edgeEventActionType), Mockito.any());
     }
 
     private void testNotificationMsgToEdgeServiceNever(EntityId entityId) {
@@ -353,7 +353,7 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
 
     private void testNotificationMsgToEdgeServiceTime(EntityId entityId, TenantId tenantId, ActionType actionType, int cntTime) {
         EdgeEventActionType edgeEventActionType = ActionType.CREDENTIALS_UPDATED.equals(actionType) ?
-                EdgeEventActionType.CREDENTIALS_UPDATED : edgeTypeByActionType(actionType);
+                EdgeEventActionType.CREDENTIALS_UPDATED : EdgeUtils.getEdgeEventActionTypeByActionType(actionType);
         ArgumentMatcher<EntityId> matcherEntityId = cntTime == 1 ? argument -> argument.equals(entityId) :
                 argument -> argument.getClass().equals(entityId.getClass());
         Mockito.verify(tbClusterService, times(cntTime)).sendNotificationMsgToEdge(Mockito.eq(tenantId),
@@ -364,7 +364,7 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
     private void testSendNotificationMsgToEdgeServiceTimeEntityEqAny(TenantId tenantId, ActionType actionType, int cntTime) {
         Mockito.verify(tbClusterService, times(cntTime)).sendNotificationMsgToEdge(Mockito.eq(tenantId),
                 Mockito.any(), Mockito.any(EntityId.class), Mockito.any(), Mockito.isNull(),
-                Mockito.eq(edgeTypeByActionType(actionType)), Mockito.any());
+                Mockito.eq(EdgeUtils.getEdgeEventActionTypeByActionType(actionType)), Mockito.any());
     }
 
     protected void testBroadcastEntityStateChangeEventTime(EntityId entityId, TenantId tenantId, int cntTime) {

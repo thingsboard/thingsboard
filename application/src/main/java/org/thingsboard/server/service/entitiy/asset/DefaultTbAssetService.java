@@ -31,7 +31,6 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
@@ -60,13 +59,11 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
             }
             Asset savedAsset = checkNotNull(assetService.saveAsset(asset));
             autoCommit(user, savedAsset.getId());
-            notificationEntityService.logEntityAction(tenantId, savedAsset.getId(), savedAsset, asset.getCustomerId(),
+            logEntityActionService.logEntityAction(tenantId, savedAsset.getId(), savedAsset, asset.getCustomerId(),
                     actionType, user);
-            tbClusterService.broadcastEntityStateChangeEvent(tenantId, savedAsset.getId(),
-                    asset.getId() == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
             return savedAsset;
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ASSET), asset, actionType, user, e);
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.ASSET), asset, actionType, user, e);
             throw e;
         }
     }
@@ -80,10 +77,9 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
         try {
             removeAlarmsByEntityId(tenantId, assetId);
             assetService.deleteAsset(tenantId, assetId);
-            notificationEntityService.logEntityAction(tenantId, assetId, asset, asset.getCustomerId(), actionType, user, assetId.toString());
-            tbClusterService.broadcastEntityStateChangeEvent(tenantId, assetId, ComponentLifecycleEvent.DELETED);
+            logEntityActionService.logEntityAction(tenantId, assetId, asset, asset.getCustomerId(), actionType, user, assetId.toString());
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ASSET), actionType, user, e,
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.ASSET), actionType, user, e,
                     assetId.toString());
             throw e;
         }
@@ -95,12 +91,12 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
         CustomerId customerId = customer.getId();
         try {
             Asset savedAsset = checkNotNull(assetService.assignAssetToCustomer(tenantId, assetId, customerId));
-            notificationEntityService.logEntityAction(tenantId, assetId, savedAsset, customerId, actionType, user,
+            logEntityActionService.logEntityAction(tenantId, assetId, savedAsset, customerId, actionType, user,
                     assetId.toString(), customerId.toString(), customer.getName());
 
             return savedAsset;
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ASSET), actionType, user, e,
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.ASSET), actionType, user, e,
                     assetId.toString(), customerId.toString());
             throw e;
         }
@@ -112,12 +108,12 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
         try {
             Asset savedAsset = checkNotNull(assetService.unassignAssetFromCustomer(tenantId, assetId));
             CustomerId customerId = customer.getId();
-            notificationEntityService.logEntityAction(tenantId, assetId, savedAsset, customerId, actionType, user,
+            logEntityActionService.logEntityAction(tenantId, assetId, savedAsset, customerId, actionType, user,
                     assetId.toString(), customerId.toString(), customer.getName());
 
             return savedAsset;
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ASSET), actionType, user, e, assetId.toString());
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.ASSET), actionType, user, e, assetId.toString());
             throw e;
         }
     }
@@ -129,12 +125,12 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
             Customer publicCustomer = customerService.findOrCreatePublicCustomer(tenantId);
             Asset savedAsset = checkNotNull(assetService.assignAssetToCustomer(tenantId, assetId, publicCustomer.getId()));
             CustomerId customerId = publicCustomer.getId();
-            notificationEntityService.logEntityAction(tenantId, assetId, savedAsset, customerId, actionType, user,
+            logEntityActionService.logEntityAction(tenantId, assetId, savedAsset, customerId, actionType, user,
                     assetId.toString(), customerId.toString(), publicCustomer.getName());
 
             return savedAsset;
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ASSET), actionType, user, e, assetId.toString());
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.ASSET), actionType, user, e, assetId.toString());
             throw e;
         }
     }
@@ -145,11 +141,11 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
         EdgeId edgeId = edge.getId();
         try {
             Asset savedAsset = checkNotNull(assetService.assignAssetToEdge(tenantId, assetId, edgeId));
-            notificationEntityService.logEntityAction(tenantId, assetId, savedAsset, savedAsset.getCustomerId(),
+            logEntityActionService.logEntityAction(tenantId, assetId, savedAsset, savedAsset.getCustomerId(),
                     actionType, user, assetId.toString(), edgeId.toString(), edge.getName());
             return savedAsset;
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ASSET), actionType,
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.ASSET), actionType,
                     user, e, assetId.toString(), edgeId.toString());
             throw e;
         }
@@ -162,12 +158,12 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
         EdgeId edgeId = edge.getId();
         try {
             Asset savedAsset = checkNotNull(assetService.unassignAssetFromEdge(tenantId, assetId, edgeId));
-            notificationEntityService.logEntityAction(tenantId, assetId, asset, asset.getCustomerId(),
+            logEntityActionService.logEntityAction(tenantId, assetId, asset, asset.getCustomerId(),
                     actionType, user, assetId.toString(), edgeId.toString(), edge.getName());
 
             return savedAsset;
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ASSET), actionType,
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.ASSET), actionType,
                     user, e, assetId.toString(), edgeId.toString());
             throw e;
         }
