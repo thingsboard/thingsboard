@@ -150,7 +150,7 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
                     oldAssetProfile != null ? oldAssetProfile.getName() : null, savedAssetProfile.getId(), savedAssetProfile.isDefault()));
             if (publishSaveEvent) {
                 eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedAssetProfile.getTenantId()).entity(savedAssetProfile)
-                        .entityId(savedAssetProfile.getId()).added(oldAssetProfile == null).build());
+                        .entityId(savedAssetProfile.getId()).created(oldAssetProfile == null).build());
             }
         } catch (Exception t) {
             handleEvictEvent(new AssetProfileEvictEvent(assetProfile.getTenantId(), assetProfile.getName(),

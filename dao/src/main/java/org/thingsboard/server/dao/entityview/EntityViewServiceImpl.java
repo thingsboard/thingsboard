@@ -119,7 +119,7 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
             EntityView saved = entityViewDao.save(entityView.getTenantId(), entityView);
             publishEvictEvent(new EntityViewEvictEvent(saved.getTenantId(), saved.getId(), saved.getEntityId(), old != null ? old.getEntityId() : null, saved.getName(), old != null ? old.getName() : null));
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(saved.getTenantId())
-                    .entityId(saved.getId()).added(entityView.getId() == null).build());
+                    .entityId(saved.getId()).created(entityView.getId() == null).build());
             return saved;
         } catch (Exception t) {
             checkConstraintViolation(t,

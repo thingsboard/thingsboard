@@ -52,6 +52,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageDataIterableByTenantIdEntityId;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
@@ -60,6 +61,7 @@ import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -145,6 +147,9 @@ public abstract class BaseEdgeProcessor {
 
     @Autowired
     protected AlarmService alarmService;
+
+    @Autowired
+    protected AlarmCommentService alarmCommentService;
 
     @Autowired
     protected DeviceService deviceService;
@@ -351,10 +356,13 @@ public abstract class BaseEdgeProcessor {
             case ALARM_ASSIGNED:
             case ALARM_UNASSIGNED:
             case CREDENTIALS_REQUEST:
+            case ADDED_COMMENT:
+            case UPDATED_COMMENT:
                 return true;
         }
         switch (type) {
             case ALARM:
+            case ALARM_COMMENT:
             case RULE_CHAIN:
             case RULE_CHAIN_METADATA:
             case USER:
@@ -439,14 +447,17 @@ public abstract class BaseEdgeProcessor {
             case CREDENTIALS_UPDATED:
             case ASSIGNED_TO_CUSTOMER:
             case UNASSIGNED_FROM_CUSTOMER:
+            case UPDATED_COMMENT:
                 return UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE;
             case ADDED:
             case ASSIGNED_TO_EDGE:
             case RELATION_ADD_OR_UPDATE:
+            case ADDED_COMMENT:
                 return UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE;
             case DELETED:
             case UNASSIGNED_FROM_EDGE:
             case RELATION_DELETED:
+            case DELETED_COMMENT:
                 return UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE;
             case ALARM_ACK:
                 return UpdateMsgType.ALARM_ACK_RPC_MESSAGE;
@@ -515,22 +526,14 @@ public abstract class BaseEdgeProcessor {
 
     private ListenableFuture<Void> processNotificationToRelatedEdges(TenantId tenantId, EntityId entityId, EdgeEventType type,
                                                                      EdgeEventActionType actionType, EdgeId sourceEdgeId) {
-        PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
-        PageData<EdgeId> pageData;
         List<ListenableFuture<Void>> futures = new ArrayList<>();
-        do {
-            pageData = edgeService.findRelatedEdgeIdsByEntityId(tenantId, entityId, pageLink);
-            if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
-                for (EdgeId relatedEdgeId : pageData.getData()) {
-                    if (!relatedEdgeId.equals(sourceEdgeId)) {
-                        futures.add(saveEdgeEvent(tenantId, relatedEdgeId, type, actionType, entityId, null));
-                    }
-                }
-                if (pageData.hasNext()) {
-                    pageLink = pageLink.nextPageLink();
-                }
+        PageDataIterableByTenantIdEntityId<EdgeId> edgeIds =
+                new PageDataIterableByTenantIdEntityId<>(edgeService::findRelatedEdgeIdsByEntityId, tenantId, entityId, DEFAULT_PAGE_SIZE);
+        for (EdgeId relatedEdgeId : edgeIds) {
+            if (!relatedEdgeId.equals(sourceEdgeId)) {
+                futures.add(saveEdgeEvent(tenantId, relatedEdgeId, type, actionType, entityId, null));
             }
-        } while (pageData != null && pageData.hasNext());
+        }
         return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
     }
 
@@ -713,19 +716,13 @@ public abstract class BaseEdgeProcessor {
     }
 
     private boolean isEntityNotAssignedToEdge(TenantId tenantId, EntityId entityId, EdgeId edgeId) {
-        PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
-        PageData<EdgeId> pageData;
-        do {
-            pageData = edgeService.findRelatedEdgeIdsByEntityId(tenantId, entityId, pageLink);
-            if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
-                if (pageData.getData().contains(edgeId)) {
-                    return false;
-                }
-                if (pageData.hasNext()) {
-                    pageLink = pageLink.nextPageLink();
-                }
+        PageDataIterableByTenantIdEntityId<EdgeId> edgeIds =
+                new PageDataIterableByTenantIdEntityId<>(edgeService::findRelatedEdgeIdsByEntityId, tenantId, entityId, DEFAULT_PAGE_SIZE);
+        for (EdgeId edgeId1 : edgeIds) {
+            if (edgeId1.equals(edgeId)) {
+                return false;
             }
-        } while (pageData != null && pageData.hasNext());
+        }
         return true;
     }
 }

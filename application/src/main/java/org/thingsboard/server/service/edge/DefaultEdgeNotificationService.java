@@ -216,6 +216,9 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                         case ALARM:
                             alarmProcessor.processAlarmNotification(tenantId, edgeNotificationMsg);
                             break;
+                        case ALARM_COMMENT:
+                            alarmProcessor.processAlarmCommentNotification(tenantId, edgeNotificationMsg);
+                            break;
                         case RELATION:
                             relationProcessor.processRelationNotification(tenantId, edgeNotificationMsg);
                             break;
