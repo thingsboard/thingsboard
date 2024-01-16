@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,16 +66,10 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
             ctx.ack(msg);
             return;
         }
-        if (isSupportedOriginator(msg.getOriginator().getEntityType())) {
-            if (isSupportedMsgType(msg)) {
-                processMsg(ctx, msg);
-            } else {
-                String errMsg = String.format("Unsupported msg type %s", msg.getType());
-                log.debug(errMsg);
-                ctx.tellFailure(msg, new RuntimeException(errMsg));
-            }
+        if (isSupportedMsgType(msg)) {
+            processMsg(ctx, msg);
         } else {
-            String errMsg = String.format("Unsupported originator type %s", msg.getOriginator().getEntityType());
+            String errMsg = String.format("Unsupported msg type %s", msg.getType());
             log.debug(errMsg);
             ctx.tellFailure(msg, new RuntimeException(errMsg));
         }
@@ -182,21 +176,5 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
     protected boolean isSupportedMsgType(TbMsg msg) {
         return msg.isTypeOneOf(POST_TELEMETRY_REQUEST, POST_ATTRIBUTES_REQUEST, ATTRIBUTES_UPDATED,
                 ATTRIBUTES_DELETED, TIMESERIES_UPDATED, ALARM, CONNECT_EVENT, DISCONNECT_EVENT, ACTIVITY_EVENT, INACTIVITY_EVENT);
-    }
-
-    protected boolean isSupportedOriginator(EntityType entityType) {
-        switch (entityType) {
-            case DEVICE:
-            case ASSET:
-            case ENTITY_VIEW:
-            case DASHBOARD:
-            case TENANT:
-            case CUSTOMER:
-            case USER:
-            case EDGE:
-                return true;
-            default:
-                return false;
-        }
     }
 }

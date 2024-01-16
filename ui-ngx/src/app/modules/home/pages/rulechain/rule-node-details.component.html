@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@
       <mat-slide-toggle formControlName="debugMode">
         {{ 'rulenode.debug-mode' | translate }}
       </mat-slide-toggle>
-      <mat-slide-toggle *ngIf="isSingletonEditAllowed()" formControlName="singletonMode">
+      <mat-slide-toggle *ngIf="isSingleton()" formControlName="singletonMode">
         {{ 'rulenode.singleton-mode' | translate }}
       </mat-slide-toggle>
     </section>
@@ -52,10 +52,20 @@
                        (initRuleNode)="initRuleNode.emit($event)"
                        (changeScript)="changeScript.emit($event)">
   </tb-rule-node-config>
-  <div formGroupName="additionalInfo" fxLayout="column" class="description-block">
-    <mat-form-field class="mat-block">
-      <mat-label translate>rulenode.rule-node-description</mat-label>
-      <textarea matInput formControlName="description" rows="1"></textarea>
-    </mat-form-field>
+
+  <div class="description-block">
+    <tb-queue-autocomplete
+      *ngIf="isAddQueue()"
+      [queueType]="serviceType"
+      subscriptSizing="dynamic"
+      [autocompleteHint]="isSingleton() ? 'rulenode.queue-singleton-hint' : 'rulenode.queue-hint'"
+      formControlName="queueName">
+    </tb-queue-autocomplete>
+    <div formGroupName="additionalInfo">
+      <mat-form-field class="mat-block">
+        <mat-label translate>rulenode.rule-node-description</mat-label>
+        <textarea matInput formControlName="description" rows="1"></textarea>
+      </mat-form-field>
+    </div>
   </div>
 </form>

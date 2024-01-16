@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2023 The Thingsboard Authors
+# Copyright © 2016-2024 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -785,6 +785,10 @@ state:
   # If 'persistToTelemetry' is changed from 'false' to 'true': 'CREATE OR REPLACE VIEW device_info_view AS SELECT * FROM device_info_active_ts_view;'
   # If 'persistToTelemetry' is changed from 'true' to 'false': 'CREATE OR REPLACE VIEW device_info_view AS SELECT * FROM device_info_active_attribute_view;'
   persistToTelemetry: "${PERSIST_STATE_TO_TELEMETRY:false}"
+  # Millisecond value defining time-to-live for device state telemetry data (e.g. 'active', 'lastActivityTime').
+  # Used only when state.persistToTelemetry is set to 'true' and Cassandra is used for timeseries data.
+  # 0 means time-to-live mechanism is disabled.
+  telemetryTtl: "${STATE_TELEMETRY_TTL:0}"
 
 # Tbel parameters
 tbel:
@@ -866,6 +870,14 @@ transport:
     inactivity_timeout: "${TB_TRANSPORT_SESSIONS_INACTIVITY_TIMEOUT:300000}"
     # Interval of periodic check for expired sessions and report of the changes to session last activity time
     report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:3000}"
+  activity:
+    # This property specifies the strategy for reporting activity events within each reporting period.
+    # The accepted values are 'FIRST', 'LAST', 'FIRST_AND_LAST' and 'ALL'.
+    # - 'FIRST': Only the first activity event in each reporting period is reported.
+    # - 'LAST': Only the last activity event in the reporting period is reported.
+    # - 'FIRST_AND_LAST': Both the first and last activity events in the reporting period are reported.
+    # - 'ALL': All activity events in the reporting period are reported.
+    reporting_strategy: "${TB_TRANSPORT_ACTIVITY_REPORTING_STRATEGY:LAST}"
   json:
     # Cast String data types to Numeric if possible when processing Telemetry/Attributes JSON
     type_cast_enabled: "${JSON_TYPE_CAST_ENABLED:true}"
@@ -1401,6 +1413,8 @@ queue:
     region: "${TB_QUEUE_AWS_SQS_REGION:YOUR_REGION}"
     # Number of threads per each AWS SQS queue in consumer
     threads_per_topic: "${TB_QUEUE_AWS_SQS_THREADS_PER_TOPIC:1}"
+    # Thread pool size for aws_sqs queue producer executor provider. Default value equals to AmazonSQSAsyncClient.DEFAULT_THREAD_POOL_SIZE
+    producer_thread_pool_size: "${TB_QUEUE_AWS_SQS_EXECUTOR_THREAD_POOL_SIZE:50}"
     queue-properties:
       # AWS SQS queue properties. VisibilityTimeout in seconds;MaximumMessageSize in bytes;MessageRetentionPeriod in seconds
       rule-engine: "${TB_QUEUE_AWS_SQS_RE_QUEUE_PROPERTIES:VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800}"

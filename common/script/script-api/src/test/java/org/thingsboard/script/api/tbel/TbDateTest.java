@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.assertj.core.data.Offset;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.mvel2.ConversionException;
 import org.thingsboard.common.util.JacksonUtil;
 
 import java.time.DateTimeException;
@@ -170,9 +171,16 @@ class TbDateTest {
         Assert.assertEquals("2022-10-09T18:15:30Z", d.toISOString());
         d = new TbDate(s, pattern,"en-US", "America/New_York");
         Assert.assertEquals("2022-10-09T18:15:30Z", d.toISOString());
-        // tz = "+02:00"
-        s = "09:15:30 PM, So. 10/09/2022";
-        d = new TbDate(s, pattern, Locale.GERMAN, ZoneId.of("Europe/Berlin"));
+            // tz = "+02:00"
+        /**
+         * For Java 11:
+         * String[2] { "vorm.", "nachm." }
+         * For Java 17:
+         * `{ "AM", "PM" }`
+         */
+        String s_ver = Runtime.version().feature() == 11 ? "09:15:30 nachm., So. 10/09/2022" :
+                                                           "09:15:30 PM, So. 10/09/2022";
+        d = new TbDate(s_ver, pattern, "de","Europe/Berlin");
         Assert.assertEquals("2022-10-09T19:15:30Z", d.toISOString());
 
         s = "02:15:30 пп, середа, 4 жовтня 2023 р.";
@@ -289,7 +297,9 @@ class TbDateTest {
         Assert.assertEquals("9/5/23, 9:04:05 PM", d.toLocaleString("en-US", "America/New_York"));
         Assert.assertEquals("23. 9. 5. 오후 9:04:05", d.toLocaleString("ko-KR",  "America/New_York"));
         Assert.assertEquals("06.09.23, 04:04:05",  d.toLocaleString( "uk-UA", "Europe/Kiev"));
-        Assert.assertEquals("5\u200F/9\u200F/2023, 9:04:05 م",  d.toLocaleString( "ar-EG", "America/New_York"));
+        String expected_ver = Runtime.version().feature() == 11 ? "5\u200F/9\u200F/2023 9:04:05 م" :
+                                                                  "5\u200F/9\u200F/2023, 9:04:05 م";
+        Assert.assertEquals(expected_ver,  d.toLocaleString( "ar-EG", "America/New_York"));
 
         Assert.assertEquals("Tuesday, September 5, 2023 at 9:04:05 PM Eastern Daylight Time", d.toLocaleString("en-US", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
@@ -306,7 +316,10 @@ class TbDateTest {
                 .put("dateStyle", "full")
                 .put("timeStyle", "full")
                 .toString()));
-        Assert.assertEquals("الثلاثاء، 5 سبتمبر 2023 في 9:04:05 م التوقيت الصيفي الشرقي لأمريكا الشمالية", d.toLocaleString("ar-EG", JacksonUtil.newObjectNode()
+
+        expected_ver = Runtime.version().feature() == 11 ? "الثلاثاء، 5 سبتمبر 2023 9:04:05 م التوقيت الصيفي الشرقي لأمريكا الشمالية" :
+                                                           "الثلاثاء، 5 سبتمبر 2023 في 9:04:05 م التوقيت الصيفي الشرقي لأمريكا الشمالية";
+        Assert.assertEquals(expected_ver, d.toLocaleString("ar-EG", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
                 .put("dateStyle", "full")
                 .put("timeStyle", "full")
@@ -338,6 +351,9 @@ class TbDateTest {
         String stringDateTZ = "2023-09-06T01:04:05.00+04:00:00";
         d = new TbDate(stringDateTZ);
         Assert.assertEquals("2023-09-05T21:04:05Z", d.toISOString());
+        stringDateTZ = "2023-09-06T01:04:05.00+04";
+        d = new TbDate(stringDateTZ);
+        Assert.assertEquals("2023-09-05T21:04:05Z", d.toISOString());
         stringDateTZ = "2023-09-06T01:04:05.00-04:00";
         d = new TbDate(stringDateTZ);
         Assert.assertEquals("2023-09-06T05:04:05Z", d.toISOString());
@@ -347,7 +363,13 @@ class TbDateTest {
         stringDateTZ = "2023-09-06T01:04:05.00-02:00";
         d = new TbDate(stringDateTZ);
         Assert.assertEquals("2023-09-06T03:04:05Z", d.toISOString());
-        String stringDateRFC_1123  = "Sat, 3 Jun 2023 11:05:30 GMT";
+        // Without_TZ
+        stringDateTZ = "2023-08-06T04:04:05.123";
+        d = new TbDate(stringDateTZ);
+        Assert.assertEquals("2023-08-06 04:04:05", d.toLocaleString());
+
+        // With TZ RFC_1123
+        String stringDateRFC_1123 = "Sat, 3 Jun 2023 11:05:30 GMT";
         d = new TbDate(stringDateRFC_1123);
         Assert.assertEquals("2023-06-03T11:05:30Z", d.toISOString());
         stringDateRFC_1123  = "Sat, 3 Jun 2023 01:04:05 +043056";
@@ -359,19 +381,52 @@ class TbDateTest {
         stringDateRFC_1123  = "Thu, 29 Feb 2024 11:05:30 -03";
         d = new TbDate(stringDateRFC_1123);
         Assert.assertEquals("2024-02-29T14:05:30Z", d.toISOString());
+        // Without TZ RFC_1123
+        stringDateRFC_1123  = "Sat, 3 Jun 2023 11:05:30";
+        d = new TbDate(stringDateRFC_1123);
+        Assert.assertEquals("2023-06-03 11:05:30", d.toLocaleString());
 
-//        String stringDateZ_error  = "2023-09-06T01:04:05.00+04";
-//        Exception actual = assertThrows(ConversionException.class, () -> {
-//            new TbDate(stringDateZ_error);
-//        });
-//        String expectedMessage = "Cannot parse value";
-//        assertTrue(actual.getMessage().contains(expectedMessage));
+        // With pattern + locale - ok
+        String pattern = "hh:mm:ss a, EEE M/d/uuuu";
+        String stringDate_ver_RFC_1123 = Runtime.version().feature() == 11 ? "09:15:30 nachm., So. 10/09/2022" :
+                "09:15:30 PM, So. 10/09/2022";
+        d = new TbDate(stringDate_ver_RFC_1123 , pattern, "de");
+        Assert.assertEquals("2022-10-09 21:15:30", d.toLocaleString());
 
-//        String stringDateRFC_1123_error  = "Tue, 3 Jun 2023 11:05:30 GMT";
-//        actual = assertThrows(ConversionException.class, () -> {
-//            new TbDate(stringDateRFC_1123_error);
-//        });
-//        assertTrue(actual.getMessage().contains(expectedMessage));
+        // failed TZ
+        String expectedMessage = "Cannot parse value";
+        String finalStringDateZ_error0 = "2023-09-06T01:04:05.00+045";
+        Exception actual = assertThrows(ConversionException.class, () -> {
+            new TbDate(finalStringDateZ_error0);
+        });
+        assertTrue(actual.getMessage().contains(expectedMessage));
+        // failed TZ
+        String finalStringDateZ_error1 = "2023-08-06T04:04:05.123+04:00:00:00";
+        actual = assertThrows(ConversionException.class, () -> {
+            new TbDate(finalStringDateZ_error1);
+        });
+        assertTrue(actual.getMessage().contains(expectedMessage));
+        // failed TZ
+        String finalStringDateZ_error2 ="2023-08-06T04:04:05.123+4";
+        actual = assertThrows(ConversionException.class, () -> {
+            new TbDate(finalStringDateZ_error2);
+        });
+        assertTrue(actual.getMessage().contains(expectedMessage));
+        // The locale does not match the pattern RFC_1123
+        String finalStringDateZ_error3= "02:15:30 PM, Sun 10/09/2022";
+        pattern = "hh:mm:ss a, EEE M/d/uuuu";
+        String finalPattern = pattern;
+        actual = assertThrows(ConversionException.class, () -> {
+            new TbDate(finalStringDateZ_error3, finalPattern, "de");
+        });
+        assertTrue(actual.getMessage().contains(expectedMessage));
+
+        // failed DayOfWeek RFC_1123
+        String stringDateRFC_1123_error  = "Tue, 3 Jun 2023 11:05:30 GMT";
+        actual = assertThrows(ConversionException.class, () -> {
+            new TbDate(stringDateRFC_1123_error);
+        });
+        assertTrue(actual.getMessage().contains(expectedMessage));
     }
 
     @Test

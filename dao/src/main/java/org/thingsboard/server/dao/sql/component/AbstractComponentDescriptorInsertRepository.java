@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,8 @@ public abstract class AbstractComponentDescriptorInsertRepository implements Com
                 .setParameter("name", entity.getName())
                 .setParameter("scope", entity.getScope().name())
                 .setParameter("type", entity.getType().name())
-                .setParameter("clustering_mode", entity.getClusteringMode().name());
+                .setParameter("clustering_mode", entity.getClusteringMode().name())
+                .setParameter("has_queue_name", entity.isHasQueueName());
     }
 
     private ComponentDescriptorEntity processSaveOrUpdate(ComponentDescriptorEntity entity, String query) {

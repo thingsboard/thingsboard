@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.LinkedHashMapRemoveEldest;
-import org.thingsboard.server.common.msg.rule.engine.DeviceAttributesEventNotificationMsg;
-import org.thingsboard.server.common.msg.rule.engine.DeviceCredentialsUpdateNotificationMsg;
-import org.thingsboard.server.common.msg.rule.engine.DeviceEdgeUpdateMsg;
-import org.thingsboard.server.common.msg.rule.engine.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.shared.AbstractContextAwareMsgProcessor;
@@ -62,7 +58,14 @@ import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
+import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponseActorMsg;
+import org.thingsboard.server.common.msg.rpc.RemoveRpcActorMsg;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
+import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequestActorMsg;
+import org.thingsboard.server.common.msg.rule.engine.DeviceAttributesEventNotificationMsg;
+import org.thingsboard.server.common.msg.rule.engine.DeviceCredentialsUpdateNotificationMsg;
+import org.thingsboard.server.common.msg.rule.engine.DeviceEdgeUpdateMsg;
+import org.thingsboard.server.common.msg.rule.engine.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.common.msg.timeout.DeviceActorServerSideRpcTimeoutMsg;
 import org.thingsboard.server.common.util.KvProtoUtil;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -89,10 +92,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportUpdateCredentialsProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
-import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponseActorMsg;
-import org.thingsboard.server.common.msg.rpc.RemoveRpcActorMsg;
 import org.thingsboard.server.service.rpc.RpcSubmitStrategy;
-import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
 import jakarta.annotation.Nullable;
@@ -175,7 +175,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
 
     private EdgeId findRelatedEdgeId() {
         List<EntityRelation> result =
-                systemContext.getRelationService().findByToAndType(tenantId, deviceId, EntityRelation.EDGE_TYPE, RelationTypeGroup.COMMON);
+                systemContext.getRelationService().findByToAndType(tenantId, deviceId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON);
         if (result != null && result.size() > 0) {
             EntityRelation relationToEdge = result.get(0);
             if (relationToEdge.getFrom() != null && relationToEdge.getFrom().getId() != null) {
