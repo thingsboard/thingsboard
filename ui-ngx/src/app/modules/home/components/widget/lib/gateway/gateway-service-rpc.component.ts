@@ -193,6 +193,7 @@ export class GatewayServiceRPCComponent implements OnInit {
               key,
               value: templatesArray
             }]).subscribe(() => {
+              this.cd.detectChanges();
           })
         }
       }
