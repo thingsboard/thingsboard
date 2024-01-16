@@ -113,7 +113,7 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
                 countService.publishCountEntityEvictEvent(savedCustomer.getTenantId(), EntityType.CUSTOMER);
             }
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedCustomer.getTenantId())
-                    .entityId(savedCustomer.getId()).added(customer.getId() == null).build());
+                    .entityId(savedCustomer.getId()).created(customer.getId() == null).build());
             return savedCustomer;
         } catch (Exception e) {
             checkConstraintViolation(e, "customer_external_id_unq_key", "Customer with such external id already exists!");

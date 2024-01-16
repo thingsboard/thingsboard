@@ -205,7 +205,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         publishEvictEvent(new TenantEvictEvent(savedTenant.getId(), create));
         if (publishSaveEvent) {
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedTenant.getId())
-                    .entityId(savedTenant.getId()).entity(savedTenant).added(create).build());
+                    .entityId(savedTenant.getId()).entity(savedTenant).created(create).build());
         }
         if (tenant.getId() == null) {
             deviceProfileService.createDefaultDeviceProfile(savedTenant.getId());

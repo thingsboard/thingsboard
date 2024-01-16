@@ -73,7 +73,7 @@ public class EntityStateSourcingListener {
         TenantId tenantId = event.getTenantId();
         EntityId entityId = event.getEntityId();
         EntityType entityType = entityId.getEntityType();
-        boolean isCreated = event.getAdded() != null && event.getAdded();
+        boolean isCreated = event.getCreated() != null && event.getCreated();
         ComponentLifecycleEvent lifecycleEvent = isCreated ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED;
 
         switch (entityType) {

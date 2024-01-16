@@ -243,7 +243,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
                 countService.publishCountEntityEvictEvent(savedDevice.getTenantId(), EntityType.DEVICE);
             }
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedDevice.getTenantId()).entityId(savedDevice.getId())
-                    .entity(savedDevice).oldEntity(oldDevice).added(device.getId() == null).build());
+                    .entity(savedDevice).oldEntity(oldDevice).created(device.getId() == null).build());
             return savedDevice;
         } catch (Exception t) {
             handleEvictEvent(deviceCacheEvictEvent);

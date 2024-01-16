@@ -27,5 +27,5 @@ public class SaveEntityEvent<T> {
     private final T entity;
     private final T oldEntity;
     private final EntityId entityId;
-    private final Boolean added;
+    private final Boolean created;
 }

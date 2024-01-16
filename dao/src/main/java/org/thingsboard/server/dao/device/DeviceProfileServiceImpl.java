@@ -188,7 +188,7 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
                     oldDeviceProfile != null ? oldDeviceProfile.getProvisionDeviceKey() : null));
             if (publishSaveEvent) {
                 eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedDeviceProfile.getTenantId()).entityId(savedDeviceProfile.getId())
-                        .entity(savedDeviceProfile).oldEntity(oldDeviceProfile).added(oldDeviceProfile == null).build());
+                        .entity(savedDeviceProfile).oldEntity(oldDeviceProfile).created(oldDeviceProfile == null).build());
             }
         } catch (Exception t) {
             handleEvictEvent(new DeviceProfileEvictEvent(deviceProfile.getTenantId(), deviceProfile.getName(),

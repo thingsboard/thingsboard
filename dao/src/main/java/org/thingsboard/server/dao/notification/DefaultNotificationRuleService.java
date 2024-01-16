@@ -53,7 +53,7 @@ public class DefaultNotificationRuleService extends AbstractEntityService implem
         try {
             NotificationRule savedRule = notificationRuleDao.saveAndFlush(tenantId, notificationRule);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(savedRule.getId())
-                    .added(notificationRule.getId() == null).build());
+                    .created(notificationRule.getId() == null).build());
             return savedRule;
         } catch (Exception e) {
             checkConstraintViolation(e, Map.of(

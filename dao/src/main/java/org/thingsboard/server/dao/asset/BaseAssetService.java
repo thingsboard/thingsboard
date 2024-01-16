@@ -168,7 +168,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
             savedAsset = assetDao.saveAndFlush(asset.getTenantId(), asset);
             publishEvictEvent(evictEvent);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedAsset.getTenantId())
-                    .entityId(savedAsset.getId()).added(asset.getId() == null).build());
+                    .entityId(savedAsset.getId()).created(asset.getId() == null).build());
             if (asset.getId() == null) {
                 countService.publishCountEntityEvictEvent(savedAsset.getTenantId(), EntityType.ASSET);
             }

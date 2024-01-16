@@ -24,7 +24,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 
 @Component
 @TbCoreComponent
-public class AlarmMsgConstructorV1 implements AlarmMsgConstructor {
+public class AlarmMsgConstructorV1 extends BaseAlarmMsgConstructor {
 
     @Override
     public AlarmUpdateMsg constructAlarmUpdatedMsg(UpdateMsgType msgType, Alarm alarm, String entityName) {
