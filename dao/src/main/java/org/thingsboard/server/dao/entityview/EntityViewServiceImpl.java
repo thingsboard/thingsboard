@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,16 +102,12 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
     }
 
     @Override
-    public EntityView saveEntityView(EntityView entityView, boolean doValidate) {
-        return doSaveEntityView(entityView, doValidate);
+    public EntityView saveEntityView(EntityView entityView) {
+        return saveEntityView(entityView, true);
     }
 
     @Override
-    public EntityView saveEntityView(EntityView entityView) {
-        return doSaveEntityView(entityView, true);
-    }
-
-    private EntityView doSaveEntityView(EntityView entityView, boolean doValidate) {
+    public EntityView saveEntityView(EntityView entityView, boolean doValidate) {
         log.trace("Executing save entity view [{}]", entityView);
         EntityView old = null;
         if (doValidate) {
@@ -123,7 +119,7 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
             EntityView saved = entityViewDao.save(entityView.getTenantId(), entityView);
             publishEvictEvent(new EntityViewEvictEvent(saved.getTenantId(), saved.getId(), saved.getEntityId(), old != null ? old.getEntityId() : null, saved.getName(), old != null ? old.getName() : null));
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(saved.getTenantId())
-                    .entityId(saved.getId()).added(entityView.getId() == null).build());
+                    .entityId(saved.getId()).created(entityView.getId() == null).build());
             return saved;
         } catch (Exception t) {
             checkConstraintViolation(t,

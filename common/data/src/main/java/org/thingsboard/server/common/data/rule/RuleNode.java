@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,8 @@ public class RuleNode extends BaseDataWithAdditionalInfo<RuleNodeId> implements 
     private boolean debugMode;
     @Schema(description = "Enable/disable singleton mode. ", example = "false")
     private boolean singletonMode;
+    @Schema(description = "Queue name. ", example = "Main")
+    private String queueName;
     @Schema(description = "Version of rule node configuration. ", example = "0")
     private int configurationVersion;
     @Schema(description = "JSON with the rule node configuration. Structure depends on the rule node implementation.", implementation = com.fasterxml.jackson.databind.JsonNode.class)

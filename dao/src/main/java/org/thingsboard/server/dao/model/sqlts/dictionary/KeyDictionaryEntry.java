@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,9 @@ import static org.thingsboard.server.dao.model.ModelConstants.KEY_ID_COLUMN;
 
 @Data
 @Entity
-@Table(name = "ts_kv_dictionary")
-@IdClass(TsKvDictionaryCompositeKey.class)
-public final class TsKvDictionary {
+@Table(name = "key_dictionary")
+@IdClass(KeyDictionaryCompositeKey.class)
+public final class KeyDictionaryEntry {
 
     @Id
     @Column(name = KEY_COLUMN)

@@ -3159,7 +3159,9 @@
             "weeks": "(week ago)",
             "months": "(month ago)",
             "years": "(year ago)"
-        }
+        },
+        "label": "Label",
+        "value": "Value"
     },
     "login": {
         "login": "Login",
@@ -3850,7 +3852,9 @@
         "test": "Test",
         "help": "Help",
         "reset-debug-mode": "Reset debug mode in all nodes",
-        "test-with-this-message": "{{test}} with this message"
+        "test-with-this-message": "{{test}} with this message",
+        "queue-hint": "Select a queue for message forwarding to another queue.  'Main' queue is used by default.",
+        "queue-singleton-hint": "Select a queue for message forwarding in multi-instance environments. 'Main' queue is used by default."
     },
     "timezone": {
       "timezone": "Timezone",
@@ -4218,6 +4222,12 @@
           "current-half-year-so-far": "Current half year so far",
           "current-year": "Current year",
           "current-year-so-far": "Current year so far"
+        },
+        "type": {
+            "week": "Week (Sun - Sat)",
+            "week-iso": "Week (Mon - Sun)",
+            "month": "Month",
+            "quarter": "Quarter"
         }
     },
     "timeunit": {
@@ -4275,6 +4285,12 @@
         "color": "Color",
         "displayTypePrefix": "Display Realtime/History prefix",
         "preview": "Preview"
+    },
+    "tooltip": {
+        "value": "Value",
+        "date": "Date",
+        "background-color": "Background color",
+        "background-blur": "Background blur"
     },
     "unit": {
         "millimeter": "Millimeter",
@@ -5152,6 +5168,12 @@
             "blur": "Blur",
             "preview": "Preview"
         },
+        "bar-chart": {
+            "bar-appearance": "Bar appearance",
+            "label-on-bar": "Label on bar",
+            "value-on-bar": "Value on bar",
+            "bar-chart-card-style": "Bar chart card style"
+        },
         "battery-level": {
             "layout": "Layout",
             "layout-vertical-solid": "Vertical. Solid",
@@ -5177,9 +5199,6 @@
             "date": "Date",
             "active-bars-color": "Active signal bars color",
             "inactive-bars-color": "Inactive signal bars color",
-            "tooltip": "Tooltip",
-            "background-color": "Background color",
-            "background-blur": "Background blur",
             "signal-strength-card-style": "Signal strength card style"
         },
         "chart": {
@@ -5422,18 +5441,8 @@
             "clockwise-layout": "Clockwise layout",
             "sort-series": "Sort series by label",
             "central-total-value": "Central total value",
-            "legend-position-top": "Top",
-            "legend-position-bottom": "Bottom",
-            "legend-position-left": "Left",
-            "legend-position-right": "Right",
-            "legend-label": "Label",
-            "legend-value": "Value",
-            "tooltip": "Tooltip",
-            "tooltip-value": "Value",
             "tooltip-value-type-absolute": "Absolute",
             "tooltip-value-type-percentage": "Percentage",
-            "tooltip-background-color": "Background color",
-            "tooltip-background-blur": "Background blur",
             "doughnut-card-style": "Doughnut card style"
         },
         "entities-hierarchy": {
@@ -5915,12 +5924,6 @@
             "range-colors": "Range colors",
             "out-of-range-color": "Out of range color",
             "fill-area": "Fill area",
-            "legend-label": "Label",
-            "tooltip": "Tooltip",
-            "tooltip-value": "Value",
-            "tooltip-date": "Date",
-            "tooltip-background-color": "Background color",
-            "tooltip-background-blur": "Background blur",
             "range-chart-card-style": "Range chart card style"
         },
         "rpc": {

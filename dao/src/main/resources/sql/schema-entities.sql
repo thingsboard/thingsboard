@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2023 The Thingsboard Authors
+-- Copyright © 2016-2024 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -103,17 +103,16 @@ CREATE TABLE IF NOT EXISTS audit_log (
 ) PARTITION BY RANGE (created_time);
 
 CREATE TABLE IF NOT EXISTS attribute_kv (
-  entity_type varchar(255),
   entity_id uuid,
-  attribute_type varchar(255),
-  attribute_key varchar(255),
+  attribute_type int,
+  attribute_key int,
   bool_v boolean,
   str_v varchar(10000000),
   long_v bigint,
   dbl_v double precision,
   json_v json,
   last_update_ts bigint,
-  CONSTRAINT attribute_kv_pkey PRIMARY KEY (entity_type, entity_id, attribute_type, attribute_key)
+  CONSTRAINT attribute_kv_pkey PRIMARY KEY (entity_id, attribute_type, attribute_key)
 );
 
 CREATE TABLE IF NOT EXISTS component_descriptor (
@@ -126,7 +125,8 @@ CREATE TABLE IF NOT EXISTS component_descriptor (
     name varchar(255),
     scope varchar(255),
     type varchar(255),
-    clustering_mode varchar(255)
+    clustering_mode varchar(255),
+    has_queue_name boolean DEFAULT false
 );
 
 CREATE TABLE IF NOT EXISTS customer (
@@ -187,6 +187,7 @@ CREATE TABLE IF NOT EXISTS rule_node (
     name varchar(255),
     debug_mode boolean,
     singleton_mode boolean,
+    queue_name varchar(255),
     external_id uuid
 );
 
@@ -548,11 +549,11 @@ CREATE TABLE IF NOT EXISTS ts_kv_latest
     CONSTRAINT ts_kv_latest_pkey PRIMARY KEY (entity_id, key)
 );
 
-CREATE TABLE IF NOT EXISTS ts_kv_dictionary
+CREATE TABLE IF NOT EXISTS key_dictionary
 (
     key    varchar(255) NOT NULL,
     key_id serial UNIQUE,
-    CONSTRAINT ts_key_id_pkey PRIMARY KEY (key)
+    CONSTRAINT key_dictionary_id_pkey PRIMARY KEY (key)
 );
 
 CREATE TABLE IF NOT EXISTS oauth2_params (

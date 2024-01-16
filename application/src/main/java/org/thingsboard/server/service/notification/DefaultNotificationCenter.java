@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,6 @@ import org.thingsboard.server.common.data.notification.template.DeliveryMethodNo
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.WebDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.page.PageDataIterable;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -397,7 +396,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     public void deleteNotificationRequest(TenantId tenantId, NotificationRequestId notificationRequestId) {
         log.debug("Deleting notification request {}", notificationRequestId);
         NotificationRequest notificationRequest = notificationRequestService.findNotificationRequestById(tenantId, notificationRequestId);
-        notificationRequestService.deleteNotificationRequest(tenantId, notificationRequestId);
+        notificationRequestService.deleteNotificationRequest(tenantId, notificationRequest);
 
         if (notificationRequest.isSent()) {
             // TODO: no need to send request update for other than PLATFORM_USERS target type
@@ -405,9 +404,6 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                     .notificationRequestId(notificationRequestId)
                     .deleted(true)
                     .build());
-        } else if (notificationRequest.isScheduled()) {
-            // TODO: just forward to scheduler service
-            clusterService.broadcastEntityStateChangeEvent(tenantId, notificationRequestId, ComponentLifecycleEvent.DELETED);
         }
     }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.cache;
+package org.thingsboard.server.common.transport.activity.strategy;
 
-import org.springframework.data.redis.serializer.SerializationException;
-import org.thingsboard.server.common.data.JavaSerDesUtil;
+import lombok.EqualsAndHashCode;
 
-public class TbJavaRedisSerializer<K, V> implements TbRedisSerializer<K, V> {
+@EqualsAndHashCode
+public final class FirstEventActivityStrategy implements ActivityStrategy {
+
+    private boolean firstEventReceived;
 
     @Override
-    public byte[] serialize(V value) throws SerializationException {
-        return JavaSerDesUtil.encode(value);
+    public synchronized boolean onActivity() {
+        if (!firstEventReceived) {
+            firstEventReceived = true;
+            return true;
+        }
+        return false;
     }
 
     @Override
-    public V deserialize(K key, byte[] bytes) throws SerializationException {
-        return JavaSerDesUtil.decode(bytes);
+    public synchronized boolean onReportingPeriodEnd() {
+        firstEventReceived = false;
+        return false;
     }
+
 }

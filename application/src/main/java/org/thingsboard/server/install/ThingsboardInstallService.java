@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -276,6 +276,12 @@ public class ThingsboardInstallService {
                             } else {
                                 log.info("Skipping images migration. Run the upgrade with fromVersion as '3.6.2-images' to migrate");
                             }
+                        case "3.6.2":
+                            log.info("Upgrading ThingsBoard from version 3.6.2 to 3.6.3 ...");
+                            databaseEntitiesUpgradeService.upgradeDatabase("3.6.2");
+                        case "3.6.3":
+                            log.info("Upgrading ThingsBoard from version 3.6.3 to 3.7.0 ...");
+                            databaseEntitiesUpgradeService.upgradeDatabase("3.6.3");
                             //TODO DON'T FORGET to update switch statement in the CacheCleanupService if you need to clear the cache
                             break;
                         default:

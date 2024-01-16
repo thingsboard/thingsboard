@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,11 +65,10 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
                 resource.setResourceKey(resource.getFileName());
             }
             TbResource savedResource = resourceService.saveResource(resource);
-            tbClusterService.onResourceChange(savedResource, null);
-            notificationEntityService.logEntityAction(tenantId, savedResource.getId(), savedResource, actionType, user);
+            logEntityActionService.logEntityAction(tenantId, savedResource.getId(), savedResource, actionType, user);
             return savedResource;
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE),
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE),
                     resource, actionType, user, e);
             throw e;
         }
@@ -80,15 +79,15 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
         if (tbResource.getResourceType() == ResourceType.IMAGE) {
             throw new IllegalArgumentException("Image resource type is not supported");
         }
+        ActionType actionType = ActionType.DELETED;
         TbResourceId resourceId = tbResource.getId();
         TenantId tenantId = tbResource.getTenantId();
         try {
             resourceService.deleteResource(tenantId, resourceId);
-            tbClusterService.onResourceDeleted(tbResource, null);
-            notificationEntityService.logEntityAction(tenantId, resourceId, tbResource, ActionType.DELETED, user, resourceId.toString());
+            logEntityActionService.logEntityAction(tenantId, resourceId, tbResource, actionType, user, resourceId.toString());
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE),
-                    ActionType.DELETED, user, e, resourceId.toString());
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE),
+                    actionType, user, e, resourceId.toString());
             throw e;
         }
     }

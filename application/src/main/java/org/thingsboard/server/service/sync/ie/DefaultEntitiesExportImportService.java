@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.util.limits.RateLimitService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
+import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
 import org.thingsboard.server.service.sync.ie.exporting.EntityExportService;
 import org.thingsboard.server.service.sync.ie.exporting.impl.BaseEntityExportService;
 import org.thingsboard.server.service.sync.ie.exporting.impl.DefaultEntityExportService;
@@ -62,7 +62,7 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
 
     private final RelationService relationService;
     private final RateLimitService rateLimitService;
-    private final TbNotificationEntityService entityNotificationService;
+    private final TbLogEntityActionService logEntityActionService;
 
     protected static final List<EntityType> SUPPORTED_ENTITY_TYPES = List.of(
             EntityType.CUSTOMER, EntityType.RULE_CHAIN, EntityType.TB_RESOURCE,
@@ -120,7 +120,7 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
         relationService.saveRelations(ctx.getTenantId(), new ArrayList<>(ctx.getRelations()));
 
         for (EntityRelation relation : ctx.getRelations()) {
-            entityNotificationService.logEntityRelationAction(ctx.getTenantId(), null,
+            logEntityActionService.logEntityRelationAction(ctx.getTenantId(), null,
                     relation, ctx.getUser(), ActionType.RELATION_ADD_OR_UPDATE, null, relation);
         }
     }
