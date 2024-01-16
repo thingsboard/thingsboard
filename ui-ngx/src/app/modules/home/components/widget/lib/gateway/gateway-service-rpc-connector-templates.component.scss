@@ -78,6 +78,17 @@
     }
   }
 
+  .rpc-params-row {
+    overflow: hidden;
+    white-space: nowrap;
+
+    & :not(:first-child) {
+      white-space: pre;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+  }
 
 }
 
