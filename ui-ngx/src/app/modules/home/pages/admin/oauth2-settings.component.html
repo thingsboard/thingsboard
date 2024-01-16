@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -100,7 +100,7 @@
                                           [copyText]="redirectURI(domainInfo)"
                                           tooltipText="{{ 'admin.oauth2.copy-redirect-uri' | translate }}"
                                           tooltipPosition="above"
-                                          mdiIcon="mdi:clipboard-arrow-left">
+                                          icon="mdi:clipboard-arrow-left">
                                         </tb-copy-button>
                                       </mat-form-field>
                                       <mat-form-field fxFlex *ngIf="domainInfo.get('scheme').value === 'MIXED'" class="mat-block">
@@ -112,7 +112,7 @@
                                           [copyText]="redirectURIMixed(domainInfo)"
                                           tooltipText="{{ 'admin.oauth2.copy-redirect-uri' | translate }}"
                                           tooltipPosition="above"
-                                          mdiIcon="mdi:clipboard-arrow-left">
+                                          icon="mdi:clipboard-arrow-left">
                                         </tb-copy-button>
                                       </mat-form-field>
                                     </div>
@@ -171,7 +171,7 @@
                                           [copyText]="mobileInfo.get('appSecret').value"
                                           tooltipText="{{ 'admin.oauth2.copy-mobile-app-secret' | translate }}"
                                           tooltipPosition="above"
-                                          mdiIcon="mdi:clipboard-arrow-left">
+                                          icon="mdi:clipboard-arrow-left">
                                         </tb-copy-button>
                                         <mat-error *ngIf="mobileInfo.get('appSecret').invalid">
                                           {{ 'admin.oauth2.invalid-mobile-app-secret' | translate }}

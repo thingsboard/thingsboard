@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,13 +27,15 @@ import {
   IDashboardComponent,
   WidgetContextMenuItem
 } from '@home/models/dashboard-component.models';
-import { Subscription } from 'rxjs';
+import { Observable, of, Subscription } from 'rxjs';
 import { Hotkey } from 'angular2-hotkeys';
 import { TranslateService } from '@ngx-translate/core';
 import { ItemBufferService } from '@app/core/services/item-buffer.service';
 import { DomSanitizer, SafeStyle } from '@angular/platform-browser';
 import { TbCheatSheetComponent } from '@shared/components/cheatsheet.component';
 import { TbPopoverComponent } from '@shared/components/popover.component';
+import { ImagePipe } from '@shared/pipe/image.pipe';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-dashboard-layout',
@@ -44,7 +46,7 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
 
   layoutCtxValue: DashboardPageLayoutContext;
   dashboardStyle: {[klass: string]: any} = null;
-  backgroundImage: SafeStyle | string;
+  backgroundImage$: Observable<SafeStyle | string>;
 
   hotKeys: Hotkey[] = [];
 
@@ -92,6 +94,7 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
               private itembuffer: ItemBufferService,
+              private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer) {
     super(store);
     this.initHotKeys();
@@ -188,8 +191,10 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
       'background-attachment': 'scroll',
       'background-size': this.layoutCtx.gridSettings.backgroundSizeMode || '100%',
       'background-position': '0% 0%'};
-    this.backgroundImage = this.layoutCtx.gridSettings.backgroundImageUrl ?
-      this.sanitizer.bypassSecurityTrustStyle('url(' + this.layoutCtx.gridSettings.backgroundImageUrl + ')') : 'none';
+    this.backgroundImage$ = this.layoutCtx.gridSettings.backgroundImageUrl ?
+      this.imagePipe.transform(this.layoutCtx.gridSettings.backgroundImageUrl, {asString: true, ignoreLoadingImage: true}).pipe(
+        map((imageUrl) => this.sanitizer.bypassSecurityTrustStyle('url(' + imageUrl + ')'))
+      ) : of('none');
   }
 
   reload() {

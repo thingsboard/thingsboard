@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import { isNotEmptyStr } from '@core/utils';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 import { ComponentStyle, Font, TimewindowStyle } from '@shared/models/widget-settings.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
+import { HasTenantId } from '@shared/models/entity.models';
 
 export enum widgetType {
   timeseries = 'timeseries',
@@ -193,7 +194,7 @@ export interface WidgetControllerDescriptor {
   actionSources?: {[actionSourceId: string]: WidgetActionSource};
 }
 
-export interface BaseWidgetType extends BaseData<WidgetTypeId> {
+export interface BaseWidgetType extends BaseData<WidgetTypeId>, HasTenantId {
   tenantId: TenantId;
   fqn: string;
   name: string;
@@ -268,6 +269,8 @@ export enum LegendPosition {
   left = 'left',
   right = 'right'
 }
+
+export const legendPositions = Object.keys(LegendPosition) as LegendPosition[];
 
 export const legendPositionTranslationMap = new Map<LegendPosition, string>(
   [
@@ -458,7 +461,13 @@ export interface ReplaceInfo {
   dataKeyName: string;
 }
 
-export type DataSet = [number, any][];
+export type DataEntry = [number, any, [number, number]?];
+
+export type DataSet = DataEntry[];
+
+export interface IndexedData {
+  [id: number]: DataSet;
+}
 
 export interface DataSetHolder {
   data: DataSet;
@@ -698,7 +707,7 @@ export interface BaseWidgetInfo {
   type: widgetType;
 }
 
-export interface Widget extends BaseWidgetInfo {
+export interface Widget extends BaseWidgetInfo, ExportableEntity<WidgetTypeId> {
   typeId?: WidgetTypeId;
   sizeX: number;
   sizeY: number;

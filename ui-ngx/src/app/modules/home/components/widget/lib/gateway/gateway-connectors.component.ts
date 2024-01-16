@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -138,6 +138,21 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   ngAfterViewInit() {
     this.connectorForm.valueChanges.subscribe(() => {
       this.cd.detectChanges();
+    });
+
+    this.connectorForm.get('type').valueChanges.subscribe(type=> {
+      if(type && !this.initialConnector) {
+        this.attributeService.getEntityAttributes(this.device, AttributeScope.CLIENT_SCOPE,
+          [`${type.toUpperCase()}_DEFAULT_CONFIG`], {ignoreErrors: true}).subscribe(defaultConfig=>{
+          if (defaultConfig && defaultConfig.length) {
+            this.connectorForm.get('configurationJson').setValue(
+              isString(defaultConfig[0].value) ?
+                JSON.parse(defaultConfig[0].value) :
+                defaultConfig[0].value);
+            this.cd.detectChanges();
+          }
+        })
+      }
     });
 
     this.dataSource.sort = this.sort;
@@ -308,6 +323,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   }
 
   private clearOutConnectorForm(): void {
+    this.initialConnector = null;
     this.connectorForm.setValue({
       name: '',
       type: ConnectorType.MQTT,
@@ -317,7 +333,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       configuration: '',
       configurationJson: {}
     });
-    this.initialConnector = null;
     this.connectorForm.markAsPristine();
   }
 

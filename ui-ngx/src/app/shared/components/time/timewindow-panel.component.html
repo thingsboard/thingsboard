@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 -->
 <form [formGroup]="timewindowForm" class="mat-content">
   <mat-tab-group [ngClass]="{'tb-headless': historyOnly}"
-                 (selectedIndexChange)="timewindowForm.markAsDirty()" [(selectedIndex)]="timewindow.selectedTab">
+                 (selectedTabChange)="onTimewindowTypeChange()" [(selectedIndex)]="timewindow.selectedTab">
     <mat-tab label="{{ 'timewindow.realtime' | translate }}">
       <section fxLayout="row">
         <section *ngIf="isEdit" fxLayout="column" fxLayoutAlign="start center"
@@ -203,6 +203,7 @@
         [(hideFlag)]="timewindow.hideAggInterval"
         (hideFlagChange)="onHideAggIntervalChanged()"
         [min]="minRealtimeAggInterval()" [max]="maxRealtimeAggInterval()"
+        useCalendarIntervals
         predefinedName="aggregation.group-interval">
       </tb-timeinterval>
     </div>
@@ -215,6 +216,7 @@
         [(hideFlag)]="timewindow.hideAggInterval"
         (hideFlagChange)="onHideAggIntervalChanged()"
         [min]="minHistoryAggInterval()" [max]="maxHistoryAggInterval()"
+        useCalendarIntervals
         predefinedName="aggregation.group-interval">
       </tb-timeinterval>
     </div>

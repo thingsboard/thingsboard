@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.util.CollectionUtils;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -31,6 +32,7 @@ import org.thingsboard.server.dao.model.ToData;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -152,15 +154,26 @@ public abstract class DaoUtil {
         }
     }
 
-    public static List<EntitySubtype> convertTenantEntityTypesToDto(UUID tenantId, EntityType entityType, List<String> types) {
+    public static List<EntitySubtype> convertTenantEntityTypesToDto(UUID tenantUUID, EntityType entityType, List<String> types) {
         if (CollectionUtils.isEmpty(types)) {
             return Collections.emptyList();
         }
-
-        List<EntitySubtype> list = new ArrayList<>(types.size());
-        for (String type : types) {
-            list.add(new EntitySubtype(TenantId.fromUUID(tenantId), entityType, type));
-        }
-        return list;
+        TenantId tenantId = TenantId.fromUUID(tenantUUID);
+        return types.stream()
+                .map(type -> new EntitySubtype(tenantId, entityType, type))
+                .collect(Collectors.toList());
     }
+
+    @Deprecated // used only in deprecated DAO api
+    public static List<EntitySubtype> convertTenantEntityInfosToDto(UUID tenantUUID, EntityType entityType, List<EntityInfo> entityInfos) {
+        if (CollectionUtils.isEmpty(entityInfos)) {
+            return Collections.emptyList();
+        }
+        var tenantId = TenantId.fromUUID(tenantUUID);
+        return entityInfos.stream()
+                .map(info -> new EntitySubtype(tenantId, entityType, info.getName()))
+                .sorted(Comparator.comparing(EntitySubtype::getType))
+                .collect(Collectors.toList());
+    }
+
 }

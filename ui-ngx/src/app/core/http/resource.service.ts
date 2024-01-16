@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,15 +21,17 @@ import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-uti
 import { forkJoin, Observable, of } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { Resource, ResourceInfo, ResourceType } from '@shared/models/resource.models';
-import { catchError, map, mergeMap } from 'rxjs/operators';
+import { catchError, mergeMap } from 'rxjs/operators';
 import { isNotEmptyStr } from '@core/utils';
+import { ResourcesService } from '@core/services/resources.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ResourceService {
   constructor(
-    private http: HttpClient
+    private http: HttpClient,
+    private resourcesService: ResourcesService
   ) {
 
   }
@@ -42,6 +44,10 @@ export class ResourceService {
     return this.http.get<PageData<ResourceInfo>>(url, defaultHttpOptionsFromConfig(config));
   }
 
+  public getTenantResources(pageLink: PageLink, config?: RequestConfig): Observable<PageData<ResourceInfo>> {
+    return this.http.get<PageData<ResourceInfo>>(`/api/resource/tenant${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
+  }
+
   public getResource(resourceId: string, config?: RequestConfig): Observable<Resource> {
     return this.http.get<Resource>(`/api/resource/${resourceId}`, defaultHttpOptionsFromConfig(config));
   }
@@ -51,34 +57,7 @@ export class ResourceService {
   }
 
   public downloadResource(resourceId: string): Observable<any> {
-    return this.http.get(`/api/resource/${resourceId}/download`, {
-      responseType: 'arraybuffer',
-      observe: 'response'
-    }).pipe(
-      map((response) => {
-        const headers = response.headers;
-        const filename = headers.get('x-filename');
-        const contentType = headers.get('content-type');
-        const linkElement = document.createElement('a');
-        try {
-          const blob = new Blob([response.body], {type: contentType});
-          const url = URL.createObjectURL(blob);
-          linkElement.setAttribute('href', url);
-          linkElement.setAttribute('download', filename);
-          const clickEvent = new MouseEvent('click',
-            {
-              view: window,
-              bubbles: true,
-              cancelable: false
-            }
-          );
-          linkElement.dispatchEvent(clickEvent);
-          return null;
-        } catch (e) {
-          throw e;
-        }
-      })
-    );
+    return this.resourcesService.downloadResource(`/api/resource/${resourceId}/download`);
   }
 
   public saveResources(resources: Resource[], config?: RequestConfig): Observable<Resource[]> {

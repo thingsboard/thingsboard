@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
+import java.util.Arrays;
 import java.util.NoSuchElementException;
 
 @Slf4j
@@ -46,10 +47,9 @@ public abstract class TbAbstractNodeWithFetchTo<C extends TbAbstractFetchToNodeC
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         config = loadNodeConfiguration(configuration);
         if (config.getFetchTo() == null) {
-            throw new TbNodeException("FetchTo cannot be null!");
-        } else {
-            fetchTo = config.getFetchTo();
+            throw new TbNodeException("FetchTo option can't be null! Allowed values: " + Arrays.toString(TbMsgSource.values()));
         }
+        fetchTo = config.getFetchTo();
     }
 
     protected abstract C loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException;

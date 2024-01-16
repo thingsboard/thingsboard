@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,13 +39,13 @@ import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPA
 
 @Slf4j
 public class LwM2mObjectModelUtils {
-    
+
     private static final TbDDFFileParser ddfFileParser = new TbDDFFileParser();
-    
-    public static void toLwm2mResource (TbResource resource) throws ThingsboardException {
+
+    public static void toLwm2mResource(TbResource resource) throws ThingsboardException {
         try {
             List<ObjectModel> objectModels =
-                    ddfFileParser.parse(new ByteArrayInputStream(Base64.getDecoder().decode(resource.getData())), resource.getSearchText());
+                    ddfFileParser.parse(new ByteArrayInputStream(resource.getData()), resource.getSearchText());
             if (!objectModels.isEmpty()) {
                 ObjectModel objectModel = objectModels.get(0);
 
@@ -73,7 +73,7 @@ public class LwM2mObjectModelUtils {
     public static LwM2mObject toLwM2mObject(TbResource resource, boolean isSave) {
         try {
             List<ObjectModel> objectModels =
-                    ddfFileParser.parse(new ByteArrayInputStream(Base64.getDecoder().decode(resource.getData())), resource.getSearchText());
+                    ddfFileParser.parse(new ByteArrayInputStream(resource.getData()), resource.getSearchText());
             if (objectModels.size() == 0) {
                 return null;
             } else {

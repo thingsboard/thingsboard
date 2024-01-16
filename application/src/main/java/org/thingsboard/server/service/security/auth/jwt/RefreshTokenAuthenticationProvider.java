@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public class RefreshTokenAuthenticationProvider implements AuthenticationProvide
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         Assert.notNull(authentication, "No authentication data provided");
         RawAccessJwtToken rawAccessToken = (RawAccessJwtToken) authentication.getCredentials();
-        SecurityUser unsafeUser = tokenFactory.parseRefreshToken(rawAccessToken);
+        SecurityUser unsafeUser = tokenFactory.parseRefreshToken(rawAccessToken.getToken());
         UserPrincipal principal = unsafeUser.getUserPrincipal();
 
         SecurityUser securityUser;
@@ -67,7 +67,7 @@ public class RefreshTokenAuthenticationProvider implements AuthenticationProvide
             securityUser = authenticateByPublicId(principal.getValue());
         }
         securityUser.setSessionId(unsafeUser.getSessionId());
-        if (tokenOutdatingService.isOutdated(rawAccessToken, securityUser.getId())) {
+        if (tokenOutdatingService.isOutdated(rawAccessToken.getToken(), securityUser.getId())) {
             throw new CredentialsExpiredException("Token is outdated");
         }
 

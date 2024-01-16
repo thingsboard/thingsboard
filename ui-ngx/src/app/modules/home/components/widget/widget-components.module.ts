@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -74,6 +74,10 @@ import { ValueChartCardWidgetComponent } from '@home/components/widget/lib/cards
 import { ProgressBarWidgetComponent } from '@home/components/widget/lib/cards/progress-bar-widget.component';
 import { LiquidLevelWidgetComponent } from '@home/components/widget/lib/indicator/liquid-level-widget.component';
 import { DoughnutWidgetComponent } from '@home/components/widget/lib/chart/doughnut-widget.component';
+import { RangeChartWidgetComponent } from '@home/components/widget/lib/chart/range-chart-widget.component';
+import {
+  BarChartWithLabelsWidgetComponent
+} from '@home/components/widget/lib/chart/bar-chart-with-labels-widget.component';
 import {
   GatewayServiceRPCConnectorTemplateDialogComponent
 } from '@home/components/widget/lib/gateway/gateway-service-rpc-connector-template-dialog';
@@ -120,7 +124,9 @@ import {
       ValueChartCardWidgetComponent,
       ProgressBarWidgetComponent,
       LiquidLevelWidgetComponent,
-      DoughnutWidgetComponent
+      DoughnutWidgetComponent,
+      RangeChartWidgetComponent,
+      BarChartWithLabelsWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -129,47 +135,49 @@ import {
     HomePageWidgetsModule,
     SharedHomeComponentsModule
   ],
-  exports: [
-    EntitiesTableWidgetComponent,
-    AlarmsTableWidgetComponent,
-    TimeseriesTableWidgetComponent,
-    EntitiesHierarchyWidgetComponent,
-    EdgesOverviewWidgetComponent,
-    RpcWidgetsModule,
-    HomePageWidgetsModule,
-    DateRangeNavigatorWidgetComponent,
-    JsonInputWidgetComponent,
-    MultipleInputWidgetComponent,
-    TripAnimationComponent,
-    PhotoCameraInputWidgetComponent,
-    GatewayFormComponent,
-    NavigationCardsWidgetComponent,
-    NavigationCardWidgetComponent,
-    QrCodeWidgetComponent,
-    MarkdownWidgetComponent,
-    LegendComponent,
-    FlotWidgetComponent,
-    GatewayConnectorComponent,
-    GatewayLogsComponent,
-    GatewayServiceRPCConnectorComponent,
-    GatewayServiceRPCConnectorTemplatesComponent,
-    GatewayStatisticsComponent,
-    GatewayServiceRPCComponent,
-    DeviceGatewayCommandComponent,
-    GatewayConfigurationComponent,
-    GatewayRemoteConfigurationDialogComponent,
-    GatewayServiceRPCConnectorTemplateDialogComponent,
-    ValueCardWidgetComponent,
-    AggregatedValueCardWidgetComponent,
-    CountWidgetComponent,
-    BatteryLevelWidgetComponent,
-    WindSpeedDirectionWidgetComponent,
-    SignalStrengthWidgetComponent,
-    ValueChartCardWidgetComponent,
-    ProgressBarWidgetComponent,
-    LiquidLevelWidgetComponent,
-    DoughnutWidgetComponent
-  ],
+    exports: [
+        EntitiesTableWidgetComponent,
+        AlarmsTableWidgetComponent,
+        TimeseriesTableWidgetComponent,
+        EntitiesHierarchyWidgetComponent,
+        EdgesOverviewWidgetComponent,
+        RpcWidgetsModule,
+        HomePageWidgetsModule,
+        DateRangeNavigatorWidgetComponent,
+        JsonInputWidgetComponent,
+        MultipleInputWidgetComponent,
+        TripAnimationComponent,
+        PhotoCameraInputWidgetComponent,
+        GatewayFormComponent,
+        NavigationCardsWidgetComponent,
+        NavigationCardWidgetComponent,
+        QrCodeWidgetComponent,
+        MarkdownWidgetComponent,
+        LegendComponent,
+        FlotWidgetComponent,
+        GatewayConnectorComponent,
+        GatewayLogsComponent,
+        GatewayServiceRPCConnectorComponent,
+        GatewayServiceRPCConnectorTemplatesComponent,
+        GatewayStatisticsComponent,
+        GatewayServiceRPCComponent,
+        DeviceGatewayCommandComponent,
+        GatewayConfigurationComponent,
+        GatewayRemoteConfigurationDialogComponent,
+        GatewayServiceRPCConnectorTemplateDialogComponent,
+        ValueCardWidgetComponent,
+        AggregatedValueCardWidgetComponent,
+        CountWidgetComponent,
+        BatteryLevelWidgetComponent,
+        WindSpeedDirectionWidgetComponent,
+        SignalStrengthWidgetComponent,
+        ValueChartCardWidgetComponent,
+        ProgressBarWidgetComponent,
+        LiquidLevelWidgetComponent,
+        DoughnutWidgetComponent,
+        RangeChartWidgetComponent,
+        BarChartWithLabelsWidgetComponent
+    ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule}
   ]

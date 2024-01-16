@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,13 @@ public final class TransportsMonitoringService extends BaseMonitoringService<Tra
     @Override
     protected BaseHealthChecker<?, ?> createHealthChecker(TransportMonitoringConfig config, TransportMonitoringTarget target) {
         return applicationContext.getBean(config.getTransportType().getServiceClass(), config, target);
+    }
+
+    @Override
+    protected TransportMonitoringTarget createTarget(String baseUrl) {
+        TransportMonitoringTarget target = new TransportMonitoringTarget();
+        target.setBaseUrl(baseUrl);
+        return target;
     }
 
     @Override

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -85,6 +85,12 @@ import {
 import {
   DoughnutBasicConfigComponent
 } from '@home/components/widget/config/basic/chart/doughnut-basic-config.component';
+import {
+  RangeChartBasicConfigComponent
+} from '@home/components/widget/config/basic/chart/range-chart-basic-config.component';
+import {
+  BarChartWithLabelsBasicConfigComponent
+} from '@home/components/widget/config/basic/chart/bar-chart-with-labels-basic-config.component';
 
 @NgModule({
   declarations: [
@@ -111,7 +117,9 @@ import {
     ThermometerScaleGaugeBasicConfigComponent,
     CompassGaugeBasicConfigComponent,
     LiquidLevelCardBasicConfigComponent,
-    DoughnutBasicConfigComponent
+    DoughnutBasicConfigComponent,
+    RangeChartBasicConfigComponent,
+    BarChartWithLabelsBasicConfigComponent
   ],
   imports: [
     CommonModule,
@@ -142,7 +150,9 @@ import {
     ThermometerScaleGaugeBasicConfigComponent,
     CompassGaugeBasicConfigComponent,
     LiquidLevelCardBasicConfigComponent,
-    DoughnutBasicConfigComponent
+    DoughnutBasicConfigComponent,
+    RangeChartBasicConfigComponent,
+    BarChartWithLabelsBasicConfigComponent
   ]
 })
 export class BasicWidgetConfigModule {
@@ -167,5 +177,7 @@ export const basicWidgetConfigComponentsMap: {[key: string]: Type<IBasicWidgetCo
   'tb-thermometer-scale-gauge-basic-config': ThermometerScaleGaugeBasicConfigComponent,
   'tb-compass-gauge-basic-config': CompassGaugeBasicConfigComponent,
   'tb-liquid-level-card-basic-config': LiquidLevelCardBasicConfigComponent,
-  'tb-doughnut-basic-config': DoughnutBasicConfigComponent
+  'tb-doughnut-basic-config': DoughnutBasicConfigComponent,
+  'tb-range-chart-basic-config': RangeChartBasicConfigComponent,
+  'tb-bar-chart-with-labels-basic-config': BarChartWithLabelsBasicConfigComponent
 };

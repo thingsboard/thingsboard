@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -245,10 +245,10 @@
                              iconClearButton
                              formControlName="icon">
     </tb-material-icon-select>
-    <tb-image-input [fxShow]="updateMultipleAttributesKeySettingsForm.get('useCustomIcon').value"
+    <tb-gallery-image-input [fxShow]="updateMultipleAttributesKeySettingsForm.get('useCustomIcon').value"
                     label="{{ 'widgets.input-widgets.input-cell-icon' | translate }}"
                     formControlName="customIcon">
-    </tb-image-input>
+    </tb-gallery-image-input>
   </fieldset>
   <fieldset [fxShow]="!updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value" class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.value-conversion-settings</legend>

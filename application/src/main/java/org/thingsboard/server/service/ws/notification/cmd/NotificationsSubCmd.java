@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package org.thingsboard.server.service.ws.notification.cmd;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.thingsboard.server.service.ws.WsCmd;
+import org.thingsboard.server.service.ws.WsCmdType;
 
 @Data
 @NoArgsConstructor
@@ -25,4 +27,9 @@ import lombok.NoArgsConstructor;
 public class NotificationsSubCmd implements WsCmd {
     private int cmdId;
     private int limit;
+
+    @Override
+    public WsCmdType getType() {
+        return WsCmdType.NOTIFICATIONS;
+    }
 }

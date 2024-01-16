@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNode;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
 import org.thingsboard.rule.engine.flow.TbRuleChainOutputNode;
@@ -405,21 +404,16 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
                 if (fromVersion < toVersion) {
                     log.debug("Going to upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
                             ruleNodeId, ruleNodeType, fromVersion, toVersion);
-                    try {
-                        TbNodeUpgradeUtils.upgradeConfigurationAndVersion(node, ruleNodeClass);
-                        log.debug("Successfully upgrade rule node with id: {} type: {}, rule chain id: {} fromVersion: {} toVersion: {}",
-                                ruleNodeId, ruleNodeType, ruleChainId, fromVersion, toVersion);
-                    } catch (TbNodeException e) {
-                        log.warn("Failed to upgrade rule node with id: {} type: {} rule chain id: {} fromVersion: {} toVersion: {} due to: ",
-                                ruleNodeId, ruleNodeType, ruleChainId, fromVersion, toVersion, e);
-                    }
+                    TbNodeUpgradeUtils.upgradeConfigurationAndVersion(node, ruleNodeClass);
+                    log.debug("Successfully upgrade rule node with id: {} type: {}, rule chain id: {} fromVersion: {} toVersion: {}",
+                            ruleNodeId, ruleNodeType, ruleChainId, fromVersion, toVersion);
                 } else {
                     log.debug("Rule node with id: {} type: {} ruleChainId: {} already set to latest version!",
                             ruleNodeId, ruleChainId, ruleNodeType);
                 }
             }
         } catch (Exception e) {
-            log.error("Failed to update the rule node with id: {} type: {}, rule chain id: {}",
+            log.error("Failed to upgrade rule node with id: {} type: {}, rule chain id: {}",
                     ruleNodeId, ruleNodeType, ruleChainId, e);
         }
         return node;

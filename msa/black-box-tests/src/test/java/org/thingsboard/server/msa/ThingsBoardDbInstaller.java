@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -253,12 +253,16 @@ public class ThingsBoardDbInstaller {
                 .add(tbVcExecutorLogVolume)
                 .add(resolveRedisComposeVolumeLog());
 
+        if (IS_HYBRID_MODE) {
+            rmVolumesCommand.add(cassandraDataVolume);
+        }
+
         dockerCompose.withCommand(rmVolumesCommand.toString());
     }
 
     private String resolveRedisComposeVolumeLog() {
         if (IS_REDIS_CLUSTER) {
-            return IntStream.range(0, 6).mapToObj(i -> redisClusterDataVolume + "-" + i).collect(Collectors.joining());
+            return IntStream.range(0, 6).mapToObj(i -> " " + redisClusterDataVolume + "-" + i).collect(Collectors.joining());
         }
         if (IS_REDIS_SENTINEL) {
             return redisSentinelDataVolume + "-" + "master " + " " +

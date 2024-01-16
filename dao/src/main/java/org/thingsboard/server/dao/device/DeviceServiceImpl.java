@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,6 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -223,7 +222,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
                 }
                 device.setDeviceProfileId(new DeviceProfileId(deviceProfile.getId().getId()));
             } else {
-                deviceProfile = this.deviceProfileService.findDeviceProfileById(device.getTenantId(), device.getDeviceProfileId());
+                deviceProfile = this.deviceProfileService.findDeviceProfileById(device.getTenantId(), device.getDeviceProfileId(), false);
                 if (deviceProfile == null) {
                     throw new DataValidationException("Device is referencing non existing device profile!");
                 }
@@ -239,7 +238,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
                 countService.publishCountEntityEvictEvent(result.getTenantId(), EntityType.DEVICE);
             }
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(result.getTenantId())
-                    .entityId(result.getId()).added(device.getId() == null).build());
+                    .entityId(result.getId()).created(device.getId() == null).build());
             return result;
         } catch (Exception t) {
             handleEvictEvent(deviceCacheEvictEvent);
@@ -486,12 +485,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     public ListenableFuture<List<EntitySubtype>> findDeviceTypesByTenantId(TenantId tenantId) {
         log.trace("Executing findDeviceTypesByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        ListenableFuture<List<EntitySubtype>> tenantDeviceTypes = deviceDao.findTenantDeviceTypesAsync(tenantId.getId());
-        return Futures.transform(tenantDeviceTypes,
-                deviceTypes -> {
-                    deviceTypes.sort(Comparator.comparing(EntitySubtype::getType));
-                    return deviceTypes;
-                }, MoreExecutors.directExecutor());
+        return deviceDao.findTenantDeviceTypesAsync(tenantId.getId());
     }
 
     @Transactional

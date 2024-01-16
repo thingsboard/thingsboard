@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -802,7 +802,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return readResponse(doPostAsync(urlTemplate, content, DEFAULT_TIMEOUT, params).andExpect(resultMatcher), responseClass);
     }
 
-    protected <T> T doPut(String urlTemplate, T content, Class<T> responseClass, String... params) {
+    protected <T> T doPut(String urlTemplate, Object content, Class<T> responseClass, String... params) {
         try {
             return readResponse(doPut(urlTemplate, content, params).andExpect(status().isOk()), responseClass);
         } catch (Exception e) {

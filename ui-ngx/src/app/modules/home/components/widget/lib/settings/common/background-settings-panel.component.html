@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 -->
 <div class="tb-background-settings-panel" [formGroup]="backgroundSettingsFormGroup">
   <div class="tb-background-settings-title" translate>widgets.background.background-settings</div>
-  <div class="tb-form-panel">
+  <div class="tb-form-panel tb-background-form-panel">
     <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
       <div class="tb-form-panel-title" translate>widgets.background.background</div>
       <tb-toggle-select formControlName="type" fxFlex selectMediaBreakpoint="xs">
@@ -27,14 +27,8 @@
         </tb-toggle-option>
       </tb-toggle-select>
     </div>
-    <tb-image-input [fxShow]="backgroundSettingsFormGroup.get('type').value === backgroundType.image" formControlName="imageBase64"></tb-image-input>
-    <div [fxShow]="backgroundSettingsFormGroup.get('type').value === backgroundType.imageUrl" class="tb-form-row space-between">
-      <div translate>widgets.background.image-url</div>
-      <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
-        <input matInput formControlName="imageUrl" placeholder="{{ 'widget-config.set' | translate }}">
-      </mat-form-field>
-    </div>
-    <div [fxShow]="backgroundSettingsFormGroup.get('type').value === backgroundType.color" class="tb-form-row space-between">
+    <tb-gallery-image-input [fxShow]="backgroundSettingsFormGroup.get('type').value === backgroundType.image" formControlName="imageUrl"></tb-gallery-image-input>
+    <div [fxShow]="backgroundSettingsFormGroup.get('type').value === backgroundType.color" class="tb-form-row space-between tb-background-color-field">
       <div translate>widgets.color.color</div>
       <tb-color-input asBoxInput
                       formControlName="color">
@@ -64,7 +58,7 @@
     <div class="tb-background-settings-preview-title" translate>
       widgets.background.preview
     </div>
-    <div class="tb-background-settings-preview-box mat-elevation-z4" [style]="backgroundStyle">
+    <div class="tb-background-settings-preview-box mat-elevation-z4" [style]="backgroundStyle$ | async">
       <div class="tb-background-settings-preview-overlay" [style]="overlayStyle">
       </div>
     </div>

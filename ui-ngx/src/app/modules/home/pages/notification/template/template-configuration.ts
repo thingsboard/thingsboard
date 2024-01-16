@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MatDialogRef } from '@angular/material/dialog';
 import { deepClone, deepTrim } from '@core/utils';
+import tinymce from 'tinymce';
 
 @Directive()
 // tslint:disable-next-line:directive-class-suffix
@@ -61,6 +62,7 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
     toolbar: 'fontselect fontsizeselect | formatselect | bold italic  strikethrough  forecolor backcolor ' +
       '| link | table | image | alignleft aligncenter alignright alignjustify  ' +
       '| numlist bullist outdent indent  | removeformat | code | fullscreen',
+    toolbar_mode: 'sliding',
     height: 400,
     autofocus: false,
     branding: false

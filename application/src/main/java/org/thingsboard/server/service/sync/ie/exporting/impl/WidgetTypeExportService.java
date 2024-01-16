@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,10 +32,11 @@ import java.util.Set;
 public class WidgetTypeExportService extends BaseEntityExportService<WidgetTypeId, WidgetTypeDetails, WidgetTypeExportData> {
 
     @Override
-    protected void setRelatedEntities(EntitiesExportCtx<?> ctx, WidgetTypeDetails widgetsBundle, WidgetTypeExportData exportData) {
-        if (widgetsBundle.getTenantId() == null || widgetsBundle.getTenantId().isNullUid()) {
+    protected void setRelatedEntities(EntitiesExportCtx<?> ctx, WidgetTypeDetails widgetTypeDetails, WidgetTypeExportData exportData) {
+        if (widgetTypeDetails.getTenantId() == null || widgetTypeDetails.getTenantId().isNullUid()) {
             throw new IllegalArgumentException("Export of system Widget Type is not allowed");
         }
+        imageService.inlineImages(widgetTypeDetails);
     }
 
     @Override

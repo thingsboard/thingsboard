@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.awaitility.Awaitility;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -337,8 +338,12 @@ public class MqttClientTest extends AbstractContainerTest {
         MqttClient mqttClient = getMqttClient(deviceCredentials, listener);
 
         testRestClient.deleteDeviceIfExists(device.getId());
-        TimeUnit.SECONDS.sleep(3 * timeoutMultiplier);
-        assertThat(mqttClient.isConnected()).isFalse();
+
+        Awaitility
+                .await()
+                .alias("Check device connection.")
+                .atMost(10, TimeUnit.SECONDS)
+                .until(() -> !mqttClient.isConnected());
     }
 
     @Test

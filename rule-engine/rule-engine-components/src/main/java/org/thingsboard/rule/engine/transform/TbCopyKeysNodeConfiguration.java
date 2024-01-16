@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.rule.engine.transform;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 
 import java.util.Collections;
 import java.util.Set;
@@ -24,14 +25,14 @@ import java.util.Set;
 @Data
 public class TbCopyKeysNodeConfiguration implements NodeConfiguration<TbCopyKeysNodeConfiguration> {
 
-    private boolean fromMetadata;
+    private TbMsgSource copyFrom;
     private Set<String> keys;
 
     @Override
     public TbCopyKeysNodeConfiguration defaultConfiguration() {
         TbCopyKeysNodeConfiguration configuration = new TbCopyKeysNodeConfiguration();
         configuration.setKeys(Collections.emptySet());
-        configuration.setFromMetadata(false);
+        configuration.setCopyFrom(TbMsgSource.DATA);
         return configuration;
     }
 

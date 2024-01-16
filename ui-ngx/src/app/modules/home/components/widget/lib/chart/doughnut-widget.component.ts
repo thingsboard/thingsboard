@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import {
 import {
   doughnutDefaultSettings,
   DoughnutLayout,
-  DoughnutLegendPosition,
   DoughnutTooltipValueType,
   DoughnutWidgetSettings
 } from '@home/components/widget/lib/chart/doughnut-widget.models';
@@ -49,22 +48,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { PieDataItemOption } from 'echarts/types/src/chart/pie/PieSeries';
 import { formatValue, isDefinedAndNotNull, isNumeric } from '@core/utils';
 import { SVG, Svg, Text } from '@svgdotjs/svg.js';
-import { DataKey } from '@shared/models/widget.models';
-import { TooltipComponent, TooltipComponentOption } from 'echarts/components';
-import { PieChart, PieSeriesOption } from 'echarts/charts';
-import { SVGRenderer } from 'echarts/renderers';
-
-echarts.use([
-  TooltipComponent,
-  PieChart,
-  SVGRenderer
-]);
-
-type EChartsOption = echarts.ComposeOption<
-  | TooltipComponentOption
-  | PieSeriesOption
->;
-type ECharts = echarts.ECharts;
+import { DataKey, LegendPosition } from '@shared/models/widget.models';
+import { Observable } from 'rxjs';
+import { ImagePipe } from '@shared/pipe/image.pipe';
+import { DomSanitizer } from '@angular/platform-browser';
+import { ECharts, echartsModule, EChartsOption } from '@home/components/widget/lib/chart/echarts-widget.models';
 
 const shapeSize = 134;
 const shapeSegmentWidth = 13.4;
@@ -117,7 +105,7 @@ export class DoughnutWidgetComponent implements OnInit, OnDestroy, AfterViewInit
 
   totalValueColor: ColorProcessor;
 
-  backgroundStyle: ComponentStyle = {};
+  backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
 
   legendItems: DoughnutLegendItem[];
@@ -145,7 +133,9 @@ export class DoughnutWidgetComponent implements OnInit, OnDestroy, AfterViewInit
   private svgShape: Svg;
   private totalTextNode: Text;
 
-  constructor(private widgetComponent: WidgetComponent,
+  constructor(private imagePipe: ImagePipe,
+              private sanitizer: DomSanitizer,
+              private widgetComponent: WidgetComponent,
               private renderer: Renderer2,
               private translate: TranslateService,
               private cd: ChangeDetectorRef) {
@@ -167,13 +157,13 @@ export class DoughnutWidgetComponent implements OnInit, OnDestroy, AfterViewInit
       this.totalValueColor = ColorProcessor.fromSettings(this.settings.totalValueColor);
     }
 
-    this.backgroundStyle = backgroundStyle(this.settings.background);
+    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
 
     if (this.showLegend) {
       this.legendItems = [];
       this.legendClass = `legend-${this.settings.legendPosition}`;
-      this.legendHorizontal = [DoughnutLegendPosition.left, DoughnutLegendPosition.right].includes(this.settings.legendPosition);
+      this.legendHorizontal = [LegendPosition.left, LegendPosition.right].includes(this.settings.legendPosition);
       this.legendLabelStyle = textStyle(this.settings.legendLabelFont);
       this.disabledLegendLabelStyle = textStyle(this.settings.legendLabelFont);
       this.legendLabelStyle.color = this.settings.legendLabelColor;
@@ -382,6 +372,7 @@ export class DoughnutWidgetComponent implements OnInit, OnDestroy, AfterViewInit
   }
 
   private drawDoughnut() {
+    echartsModule.init();
     const shapeWidth = this.doughnutShape.nativeElement.getBoundingClientRect().width;
     const shapeHeight = this.doughnutShape.nativeElement.getBoundingClientRect().height;
     const size = this.settings.autoScale ? shapeSize : Math.min(shapeWidth, shapeHeight);

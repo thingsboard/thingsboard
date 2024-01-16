@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@
                    type="text"
                    (focus)="key.isFocused = true; focusInputElement($event)"
                    (blur)="key.isFocused = false; inputChanged(source, key)">
-            <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon" matIconPrefix>
+            <ng-container *ngIf="key.settings.icon || key.settings.customIconUrl" matIconPrefix>
               <ng-container *ngTemplateOutlet="iconPrefix; context: {key: key}"></ng-container>
             </ng-container>
             <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
@@ -56,7 +56,7 @@
                    max="{{key.settings.maxValue}}"
                    (focus)="key.isFocused = true; focusInputElement($event)"
                    (blur)="key.isFocused = false; inputChanged(source, key)">
-            <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon" matIconPrefix>
+            <ng-container *ngIf="key.settings.icon || key.settings.customIconUrl" matIconPrefix>
               <ng-container *ngTemplateOutlet="iconPrefix; context: {key: key}"></ng-container>
             </ng-container>
             <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
@@ -82,7 +82,7 @@
               (focus)="key.isFocused = true; focusInputElement($event)"
               (blur)="key.isFocused = false; inputChanged(source, key)"
             />
-            <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon" matIconPrefix>
+            <ng-container *ngIf="key.settings.icon || key.settings.customIconUrl" matIconPrefix>
               <ng-container *ngTemplateOutlet="iconPrefix; context: {key: key}"></ng-container>
             </ng-container>
             <button [disabled]="key.settings.isEditable === 'disabled' || key.settings.isEditable === 'readonly'"
@@ -131,7 +131,7 @@
                 {{ getCustomTranslationText(option.label ? option.label : option.value) }}
               </mat-option>
             </mat-select>
-            <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon" matIconPrefix>
+            <ng-container *ngIf="key.settings.icon || key.settings.customIconUrl" matIconPrefix>
               <ng-container *ngTemplateOutlet="iconPrefix; context: {key: key}"></ng-container>
             </ng-container>
             <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
@@ -148,7 +148,7 @@
                    [readonly]="key.settings.isEditable === 'readonly'"
                    type="text"
                    (keydown)="$event.preventDefault();">
-            <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon" matIconPrefix>
+            <ng-container *ngIf="key.settings.icon || key.settings.customIconUrl" matIconPrefix>
               <ng-container *ngTemplateOutlet="iconPrefix; context: {key: key}"></ng-container>
             </ng-container>
             <tb-color-input #colorInput asBoxInput matSuffix
@@ -166,7 +166,7 @@
           <mat-checkbox *ngIf="key.settings.dataKeyValueType === 'booleanCheckbox'"
                         formControlName="{{key.formId}}"
                         (change)="inputChanged(source, key)">
-            <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon">
+            <ng-container *ngIf="key.settings.icon || key.settings.customIconUrl">
               <ng-container *ngTemplateOutlet="iconPrefix; context: {key: key}"></ng-container>
             </ng-container>
             <span class="label-wrapper">{{key.label}}</span>
@@ -175,7 +175,7 @@
                             formControlName="{{key.formId}}"
                             [labelPosition]="key.settings.slideToggleLabelPosition"
                             (change)="inputChanged(source, key)">
-            <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon">
+            <ng-container *ngIf="key.settings.icon || key.settings.customIconUrl">
               <ng-container *ngTemplateOutlet="iconPrefix; context: {key: key}"></ng-container>
             </ng-container>
             <span class="label-wrapper">{{key.label}}</span>
@@ -207,8 +207,8 @@
   </div>
 </form>
 <ng-template #iconPrefix let-key="key">
-  <tb-icon *ngIf="!key.settings.safeCustomIcon; else customToggleIcon">{{key.settings.icon}}</tb-icon>
+  <tb-icon *ngIf="!key.settings.customIconUrl; else customToggleIcon">{{key.settings.icon}}</tb-icon>
   <ng-template #customToggleIcon>
-    <img class="mat-icon" [src]="key.settings.safeCustomIcon" alt="icon">
+    <img class="mat-icon" [src]="key.settings.customIconUrl | image | async" alt="icon">
   </ng-template>
 </ng-template>

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
+import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
 import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -30,15 +31,17 @@ import javax.servlet.http.HttpServletRequest;
 
 public interface SystemSecurityService {
 
-    SecuritySettings getSecuritySettings(TenantId tenantId);
+    SecuritySettings getSecuritySettings();
 
-    SecuritySettings saveSecuritySettings(TenantId tenantId, SecuritySettings securitySettings);
+    SecuritySettings saveSecuritySettings(SecuritySettings securitySettings);
+
+    void validatePasswordByPolicy(String password, UserPasswordPolicy passwordPolicy);
 
     void validateUserCredentials(TenantId tenantId, UserCredentials userCredentials, String username, String password) throws AuthenticationException;
 
     void validateTwoFaVerification(SecurityUser securityUser, boolean verificationSuccess, PlatformTwoFaSettings twoFaSettings);
 
-    void validatePassword(TenantId tenantId, String password, UserCredentials userCredentials) throws DataValidationException;
+    void validatePassword(String password, UserCredentials userCredentials) throws DataValidationException;
 
     String getBaseUrl(TenantId tenantId, CustomerId customerId, HttpServletRequest httpServletRequest);
 
