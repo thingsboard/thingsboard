@@ -20,6 +20,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -100,8 +102,6 @@ import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2mSecurityStore;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -341,12 +341,20 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                     } else if (v instanceof LwM2mResource) {
                         this.updateResourcesValue(lwM2MClient, (LwM2mResource) v, k.toString(), Mode.UPDATE, responseCode);
                     }
+                } else {
+                    this.onErrorObservation(registration, k + ": value in composite response is null");
                 }
             });
             clientContext.update(lwM2MClient);
             tryAwake(lwM2MClient);
         }
     }
+
+    public void onErrorObservation(Registration registration, String errorMsg) {
+        LwM2mClient lwM2MClient = this.clientContext.getClientByEndpoint(registration.getEndpoint());
+        logService.log(lwM2MClient, LOG_LWM2M_ERROR + ": " + errorMsg);
+    }
+
 
     /**
      * Sending updated value to thingsboard from SendListener.dataReceived: object, instance, SingleResource or MultipleResource
@@ -557,7 +565,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
     private void updateObjectInstanceResourceValue(LwM2mClient client, LwM2mObjectInstance lwM2mObjectInstance, String pathIdVer, int code) {
         LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer));
         lwM2mObjectInstance.getResources().forEach((resourceId, resource) -> {
-            String pathRez = pathIds.toString() + "/" + resourceId;
+            String pathRez = pathIdVer + "/" + resourceId;
             this.updateResourcesValue(client, resource, pathRez, Mode.UPDATE, code);
         });
     }
@@ -600,7 +608,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                 otaService.onCurrentSoftwareResultUpdate(lwM2MClient, (Long) lwM2mResource.getValue());
             }
             if (ResponseCode.BAD_REQUEST.getCode() > code) {
-                this.updateAttrTelemetry(registration, Collections.singleton(path));
+                this.updateAttrTelemetry(registration, path);
             }
         } else {
             log.error("Fail update path [{}] Resource [{}]", path, lwM2mResource);
@@ -617,9 +625,12 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
      *
      * @param registration - Registration LwM2M Client
      */
-    private void updateAttrTelemetry(Registration registration, Set<String> paths) {
+    public void updateAttrTelemetry(Registration registration, String path) {
         try {
-            ResultsAddKeyValueProto results = this.getParametersFromProfile(registration, paths);
+            ResultsAddKeyValueProto results = this.getParametersFromProfile(registration, path);
+            if (path.equals("/3_1.2/0/9")) {
+                log.info("UpdateTelemetry paths [{}] key: [{}] value [{}]", path, results.getResultTelemetries().get(0).getKey(), results.getResultTelemetries().get(0).getLongV());
+            }
             SessionInfoProto sessionInfo = this.getSessionInfoOrCloseSession(registration);
             if (results != null && sessionInfo != null) {
                 if (results.getResultAttributes().size() > 0) {
@@ -669,13 +680,13 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
      * @param registration - Registration LwM2M Client
      * @param path         -
      */
-    private ResultsAddKeyValueProto getParametersFromProfile(Registration registration, Set<String> path) {
-        if (path != null && path.size() > 0) {
+    private ResultsAddKeyValueProto getParametersFromProfile(Registration registration, String path) {
+        if (!path.isEmpty()) {
             ResultsAddKeyValueProto results = new ResultsAddKeyValueProto();
             var profile = clientContext.getProfile(registration);
             List<TransportProtos.KeyValueProto> resultAttributes = new ArrayList<>();
             profile.getObserveAttr().getAttribute().forEach(pathIdVer -> {
-                if (path.contains(pathIdVer)) {
+                if (path.equals(pathIdVer)) {
                     TransportProtos.KeyValueProto kvAttr = this.getKvToThingsBoard(pathIdVer, registration);
                     if (kvAttr != null) {
                         resultAttributes.add(kvAttr);

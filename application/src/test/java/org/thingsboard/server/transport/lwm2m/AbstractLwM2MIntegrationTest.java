@@ -145,8 +145,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
                     "    \"telemetry\": [],\n" +
                     "    \"attributeLwm2m\": {}\n" +
                     "  }";
-
-    public static final String OBSERVE_ATTRIBUTES_WITH_PARAMS =
+    public static  String OBSERVE_ATTRIBUTES_WITH_PARAMS =
 
             "    {\n" +
                     "    \"keyName\": {\n" +
@@ -403,17 +402,24 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     }
 
     protected  void awaitObserveReadAll(int cntObserve, String deviceIdStr) throws Exception {
-        await("ObserveReadAll after start client: countObserve " + cntObserve)
+        await("ObserveReadAll after start client/test: countObserve " + cntObserve)
                 .atMost(40, TimeUnit.SECONDS)
                 .until(() -> cntObserve == getCntObserveAll(deviceIdStr));
     }
 
-    protected int getCntObserveAll(String deviceIdStr) throws Exception {
+    protected Integer getCntObserveAll(String deviceIdStr) throws Exception {
         String actualResultBefore = sendObserve("ObserveReadAll", null, deviceIdStr);
         ObjectNode rpcActualResultBefore = JacksonUtil.fromString(actualResultBefore, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResultBefore.get("result").asText());
         JsonElement element = JsonUtils.parse(rpcActualResultBefore.get("value").asText());
-        return element.isJsonArray() ? ((JsonArray)element).size() : 0;
+        return element.isJsonArray() ? ((JsonArray)element).size() : null;
+    }
+
+    protected void sendCancelObserveAllWithAwait(String deviceIdStr) throws Exception {
+        String actualResultCancelAll = sendObserve("ObserveCancelAll", null, deviceIdStr);
+        ObjectNode rpcActualResultCancelAll = JacksonUtil.fromString(actualResultCancelAll, ObjectNode.class);
+        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResultCancelAll.get("result").asText());
+        awaitObserveReadAll(0, deviceId);
     }
 
     protected String sendObserve(String method, String params, String deviceIdStr) throws Exception {

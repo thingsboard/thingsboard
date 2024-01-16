@@ -93,9 +93,10 @@ public class LwM2mServerListener {
 
         @Override
         public void cancelled(Observation observation) {
-            //TODO: should be able to use CompositeObservation
-            log.trace("Canceled Observation {}.", ((SingleObservation)observation).getPath());
-        }
+            log.info("Canceled Observation [RegistrationId:{}: {}].", observation.getRegistrationId(), observation instanceof SingleObservation ?
+                    "SingleObservation: " + ((SingleObservation) observation).getPath() :
+                    "CompositeObservation: " + ((CompositeObservation) observation).getPaths());
+       }
 
         @Override
         public void onResponse(SingleObservation observation, Registration registration, ObserveResponse response) {
@@ -106,21 +107,25 @@ public class LwM2mServerListener {
 
         @Override
         public void onResponse(CompositeObservation observation, Registration registration, ObserveCompositeResponse response) {
-            throw new RuntimeException("Not implemented yet!");
+            log.trace("Update Composite Observation [{}: {}].", observation.getRegistrationId(), observation.getPaths());
+            service.onUpdateValueAfterReadCompositeResponse(registration, response);
         }
 
         @Override
         public void onError(Observation observation, Registration registration, Exception error) {
             if (error != null) {
-                //TODO: should be able to use CompositeObservation
-                log.debug("Unable to handle notification of [{}:{}] [{}]", observation.getRegistrationId(), ((SingleObservation)observation).getPath(), error.getMessage());
+                var path = observation instanceof SingleObservation ? "Single Observation Cancel: " + ((SingleObservation) observation).getPath() : "Composite Observation Cancel: " + ((CompositeObservation) observation).getPaths();
+                var msgError = path + ": " + error.getMessage();
+                log.trace("Unable to handle notification [RegistrationId:{}]: [{}].", observation.getRegistrationId(), msgError);
+                service.onErrorObservation(registration, msgError);
             }
         }
 
         @Override
         public void newObservation(Observation observation, Registration registration) {
-            //TODO: should be able to use CompositeObservation
-            log.trace("Successful start newObservation {}.", ((SingleObservation)observation).getPath());
+            log.trace("Successful start newObservation  [RegistrationId:{}: {}].", observation.getRegistrationId(), observation instanceof SingleObservation ?
+                    "Single: " + ((SingleObservation) observation).getPath() :
+                    "Composite: " + ((CompositeObservation) observation).getPaths());
         }
     };
 

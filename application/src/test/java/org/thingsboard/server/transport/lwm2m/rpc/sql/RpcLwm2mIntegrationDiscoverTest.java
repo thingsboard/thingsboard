@@ -35,6 +35,7 @@ import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_2;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertObjectIdToVerId;
 
 
 public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegrationTest {
@@ -132,8 +133,10 @@ public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegration
         String expectedObjectInstanceId = pathIdVerToObjectId(expectedInstance);
         LwM2mPath expectedPath = new LwM2mPath(expectedObjectInstanceId);
         int expectedResource = lwM2MTestClient.getLeshanClient().getObjectTree().getObjectEnablers().get(expectedPath.getObjectId()).getObjectModel().resources.entrySet().stream().findAny().get().getKey();
+        String ver = lwM2MTestClient.getLeshanClient().getObjectTree().getObjectEnablers().get(expectedPath.getObjectId()).getObjectModel().version;
         String expected = expectedInstance + "/" + expectedResource;
-        String actualResult = sendDiscover(expected);
+        String expectedVerId = convertObjectIdToVerId(expected, ver);
+        String actualResult = sendDiscover(expectedVerId);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
         String expectedResourceId = "<" + expectedObjectInstanceId + "/" + expectedResource + ">";

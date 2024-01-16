@@ -19,11 +19,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.Token;
 import org.eclipse.californium.core.network.serialization.UdpDataParser;
 import org.eclipse.californium.core.network.serialization.UdpDataSerializer;
-import org.eclipse.californium.core.observe.ObservationStoreException;
 import org.eclipse.leshan.core.Destroyable;
 import org.eclipse.leshan.core.Startable;
 import org.eclipse.leshan.core.Stoppable;
-import org.eclipse.leshan.core.californium.ObserveUtil;
+import org.eclipse.leshan.core.node.LwM2mPath;
+import org.eclipse.leshan.core.observation.CompositeObservation;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.observation.ObservationIdentifier;
 import org.eclipse.leshan.core.observation.SingleObservation;
@@ -82,6 +82,7 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
     private static final String REG_EP_IDENTITY = "EP:IDENTITY:"; // secondary index key (Identity => Endpoint)
     private static final String LOCK_EP = "LOCK:EP:";
     private static final byte[] OBS_TKN = "OBS:TKN:".getBytes(UTF_8);
+    private static final byte[] OBS_TKN_GET_ALL = "OBS:TKN:*".getBytes(UTF_8);
     private static final String OBS_TKNS_REGID_IDX = "TKNS:REGID:"; // secondary index (token list by registration)
     private static final byte[] EXP_EP = "EXP:EP".getBytes(UTF_8); // a sorted set used for registration expiration
     // (expiration date, Endpoint)
@@ -477,16 +478,56 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
                 lock.lock();
 
                 // Add and Get previous observation
-                byte[] previousValue;
+
+                byte[] previousValue = null;
+//                byte[] key;
+//                byte[] serializeObs;
                 byte[] key = toKey(OBS_TKN, observation.getId().getBytes());
                 byte[] serializeObs = serializeObs(observation);
-                if (addIfAbsent) {
+                // we analyze the present previous value
+                Collection<LwM2mPath> previousPaths = getPreviousPaths(observation, connection);
+                if (observation instanceof SingleObservation) {
+                    if (previousPaths == null) {
+                        connection.stringCommands().set(key, serializeObs);
+                    } else if (!addIfAbsent) {
+
+                    }
+
+
                     previousValue = connection.get(key);
                     if (previousValue == null || previousValue.length == 0) {
-                        connection.set(key, serializeObs);
+                        if (observation instanceof CompositeObservation) {
+                            List<LwM2mPath> paths = ((CompositeObservation) observation).getPaths();
+                            if (paths.size()==1) {
+                                key = toKey(OBS_TKN, observation.getId().getBytes());
+                                serializeObs = serializeObs(observation);
+                                previousValue = connection.stringCommands().get(key);
+                                if (previousValue == null || previousValue.length == 0) {
+//                                connection.set(key, serializeObs);
+                                    connection.stringCommands().set(key, serializeObs);
+                                }
+                                paths.forEach(pObs -> {
+
+                                });
+                            }
+                            else {
+                                paths.forEach(pObs -> {
+
+                                });
+                            }
+                        } else if (observation instanceof SingleObservation) {
+//                            previousValue = connection.get(key);
+                            previousValue = connection.stringCommands().get(key);
+                            if (previousValue == null || previousValue.length == 0) {
+                                connection.stringCommands().set(key, serializeObs);
+//                                connection.set(key, serializeObs);
+                            }
+                        }
                     }
+
                 } else {
-                    previousValue = connection.getSet(key, serializeObs);
+//                    previousValue = connection.getSet(key, serializeObs);
+                    previousValue = connection.stringCommands().getSet(key, serializeObs);
                 }
 
                 // secondary index to get the list by registrationId
@@ -501,11 +542,36 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
                 }
                 // cancel existing observations for the same path and registration id.
                 for (Observation obs : getObservations(connection, registrationId)) {
-                    //TODO: should be able to use CompositeObservation
-                    if (((SingleObservation)observation).getPath().equals(((SingleObservation)obs).getPath())
-                            && !observation.getId().equals(obs.getId())) {
-                        removed.add(obs);
-                        unsafeRemoveObservation(connection, registrationId, obs.getId().getBytes());
+                    if (obs instanceof CompositeObservation){
+                        ((CompositeObservation)obs).getPaths().forEach(pObs -> {
+                            if (observation instanceof CompositeObservation) {
+                                ((CompositeObservation)observation).getPaths().forEach(pObservation -> {
+                                    //TODO include obs every (SingleObservation) in observation Composite
+                                });
+                                log.info("observation obs -> CompositeObservation");
+                            } else if (observation instanceof SingleObservation) {
+                                if (((SingleObservation) observation).getPath().equals(((SingleObservation)obs).getPath())
+                                        && !observation.getId().equals(obs.getId())){
+                                    removed.add(obs);
+                                    unsafeRemoveObservation(connection, registrationId, obs.getId().getBytes());
+                                }
+                            }
+
+                        });
+
+                    } else if (obs instanceof SingleObservation) {
+                        if (observation instanceof CompositeObservation) {
+                            ((CompositeObservation)observation).getPaths().forEach(pObservation -> {
+                                //TODO include obs every (SingleObservation) in observation Composite
+                            });
+                            log.info("observation -> CompositeObservation, obs -> SingleObservation");
+                        } else if (observation instanceof SingleObservation) {
+                            if (((SingleObservation) observation).getPath().equals(((SingleObservation)obs).getPath())
+                                    && !observation.getId().equals(obs.getId())){
+                                removed.add(obs);
+                                unsafeRemoveObservation(connection, registrationId, obs.getId().getBytes());
+                            }
+                        }
                     }
                 }
             } finally {
@@ -573,15 +639,45 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
         }
     }
 
+
     private Collection<Observation> getObservations(RedisConnection connection, String registrationId) {
         Collection<Observation> result = new ArrayList<>();
-        for (byte[] token : connection.lRange(toKey(OBS_TKNS_REGID_IDX, registrationId), 0, -1)) {
-            byte[] obs = connection.get(toKey(OBS_TKN, token));
+        for (byte[] token : connection.listCommands().lRange(toKey(OBS_TKNS_REGID_IDX, registrationId), 0, -1)) {
+            byte[] obs = connection.stringCommands().get(toKey(OBS_TKN, token));
             if (obs != null) {
                 result.add(deserializeObs(obs));
             }
         }
         return result;
+    }
+
+    private Collection<LwM2mPath> getPreviousPaths(Observation observation, RedisConnection connection) {
+        Collection<LwM2mPath> result = new ArrayList<>();
+        Collection<Observation> observations = getObservations(connection, observation.getRegistrationId());
+        observations.forEach(obs -> {
+
+            Collection<LwM2mPath> prevPath = getPreviousPaths( observation, obs);
+            if (prevPath != null){
+                result.addAll(prevPath);
+            }
+        });
+        return result.size() > 0 ? result : null;
+    }
+
+    private Collection<LwM2mPath> getPreviousPaths(Observation observation, Observation prevObs) {
+        Collection<LwM2mPath> prevPath = new ArrayList<>();
+        if (observation instanceof SingleObservation && prevObs instanceof SingleObservation) {
+
+        } else if (observation instanceof CompositeObservation) {
+            if (prevObs instanceof CompositeObservation) { // observation instanceof CompositeObservation && prevObs instanceof CompositeObservation
+
+            } else {                                    // observation instanceof CompositeObservation && prevObs instanceof SingleObservation
+
+            }
+        } else {                                        // observation instanceof SingleObservation prevObs instanceof CompositeObservation
+
+        }
+        return  prevPath.size() > 0 ? prevPath : null;
     }
 
     @Override
@@ -610,100 +706,100 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
 
     /* *************** Californium ObservationStore API **************** */
 
-    public org.eclipse.californium.core.observe.Observation putIfAbsent(Token token,
-                                                                        org.eclipse.californium.core.observe.Observation obs) throws ObservationStoreException {
-        return add(obs, true);
-    }
+//    public org.eclipse.californium.core.observe.Observation putIfAbsent(Token token,
+//                                                                        org.eclipse.californium.core.observe.Observation obs) throws ObservationStoreException {
+//        return add(obs, true);
+//    }
 
-    public org.eclipse.californium.core.observe.Observation put(Token token,
-                                                                org.eclipse.californium.core.observe.Observation obs) throws ObservationStoreException {
-        return add(obs, false);
-    }
+//    public org.eclipse.californium.core.observe.Observation put(Token token,
+//                                                                org.eclipse.californium.core.observe.Observation obs) throws ObservationStoreException {
+//        return add(obs, false);
+//    }
 
-    private org.eclipse.californium.core.observe.Observation add(org.eclipse.californium.core.observe.Observation obs, boolean ifAbsent) throws ObservationStoreException {
-        String endpoint = ObserveUtil.validateCoapObservation(obs);
-        org.eclipse.californium.core.observe.Observation previousObservation = null;
-
-        try (var connection = connectionFactory.getConnection()) {
-            Lock lock = null;
-            String lockKey = toLockKey(endpoint);
-            try {
-                lock = redisLock.obtain(lockKey);
-                lock.lock();
-
-                String registrationId = ObserveUtil.extractRegistrationId(obs);
-                if (!connection.exists(toRegIdKey(registrationId)))
-                    throw new ObservationStoreException("no registration for this Id");
-                byte[] key = toKey(OBS_TKN, obs.getRequest().getToken().getBytes());
-                Observation obsLeshan = buildLwM2mObservationFromCfToLeshanCore(obs);
-                byte[] serializeObs = serializeObs(obsLeshan);
-                byte[] previousValue;
-                if (ifAbsent) {
-                    previousValue = connection.get(key);
-                    if (previousValue == null || previousValue.length == 0) {
-                        connection.set(key, serializeObs);
-                        previousValue = connection.getSet(key, serializeObs);
-                    } else {
-                        return buildCoapObservationFromLeshanCoreToCfCore(deserializeObs(previousValue));
-                    }
-                } else {
-                    previousValue = connection.getSet(key, serializeObs);
-                }
-
-                // secondary index to get the list by registrationId
-                connection.lPush(toKey(OBS_TKNS_REGID_IDX, registrationId), obs.getRequest().getToken().getBytes());
-
-                // log any collisions
-                if (previousValue != null && previousValue.length != 0) {
-                    previousObservation =  buildCoapObservationFromLeshanCoreToCfCore(deserializeObs(previousValue));
-                    LOG.warn(
-                            "Token collision ? observation from request [{}] will be replaced by observation from request [{}] ",
-                            previousObservation.getRequest(), obs.getRequest());
-                }
-            } finally {
-                if (lock != null) {
-                    lock.unlock();
-                }
-            }
-        }
-        return previousObservation;
-    }
-
-    public void remove(Token token) {
-        try (var connection = connectionFactory.getConnection()) {
-            byte[] tokenKey = toKey(OBS_TKN, token.getBytes());
-
-            // fetch the observation by token
-            byte[] serializedObs = connection.get(tokenKey);
-            if (serializedObs == null)
-                return;
-
-//            org.eclipse.californium.core.observe.Observation obs = deserializeObs(serializedObs);
-            org.eclipse.californium.core.observe.Observation obs = null;
-            String registrationId = ObserveUtil.extractRegistrationId(obs);
-            Registration registration = getRegistration(connection, registrationId);
-            if (registration == null) {
-                LOG.warn("Unable to remove observation {}, registration {} does not exist anymore", obs.getRequest(),
-                        registrationId);
-                return;
-            }
-
-            String endpoint = registration.getEndpoint();
-            Lock lock = null;
-            String lockKey = toLockKey(endpoint);
-            try {
-                lock = redisLock.obtain(lockKey);
-                lock.lock();
-
-                unsafeRemoveObservation(connection, registrationId, token.getBytes());
-            } finally {
-                if (lock != null) {
-                    lock.unlock();
-                }
-            }
-        }
-
-    }
+//    private org.eclipse.californium.core.observe.Observation add(org.eclipse.californium.core.observe.Observation obs, boolean ifAbsent) throws ObservationStoreException {
+//        String endpoint = ObserveUtil.validateCoapObservation(obs);
+//        org.eclipse.californium.core.observe.Observation previousObservation = null;
+//
+//        try (var connection = connectionFactory.getConnection()) {
+//            Lock lock = null;
+//            String lockKey = toLockKey(endpoint);
+//            try {
+//                lock = redisLock.obtain(lockKey);
+//                lock.lock();
+//
+//                String registrationId = ObserveUtil.extractRegistrationId(obs);
+//                if (!connection.exists(toRegIdKey(registrationId)))
+//                    throw new ObservationStoreException("no registration for this Id");
+//                byte[] key = toKey(OBS_TKN, obs.getRequest().getToken().getBytes());
+//                Observation obsLeshan = buildLwM2mObservationFromCfToLeshanCore(obs);
+//                byte[] serializeObs = serializeObs(obsLeshan);
+//                byte[] previousValue;
+//                if (ifAbsent) {
+//                    previousValue = connection.get(key);
+//                    if (previousValue == null || previousValue.length == 0) {
+//                        connection.set(key, serializeObs);
+//                        previousValue = connection.getSet(key, serializeObs);
+//                    } else {
+//                        return buildCoapObservationFromLeshanCoreToCfCore(deserializeObs(previousValue));
+//                    }
+//                } else {
+//                    previousValue = connection.getSet(key, serializeObs);
+//                }
+//
+//                // secondary index to get the list by registrationId
+//                connection.lPush(toKey(OBS_TKNS_REGID_IDX, registrationId), obs.getRequest().getToken().getBytes());
+//
+//                // log any collisions
+//                if (previousValue != null && previousValue.length != 0) {
+//                    previousObservation =  buildCoapObservationFromLeshanCoreToCfCore(deserializeObs(previousValue));
+//                    LOG.warn(
+//                            "Token collision ? observation from request [{}] will be replaced by observation from request [{}] ",
+//                            previousObservation.getRequest(), obs.getRequest());
+//                }
+//            } finally {
+//                if (lock != null) {
+//                    lock.unlock();
+//                }
+//            }
+//        }
+//        return previousObservation;
+//    }
+//
+//    public void remove(Token token) {
+//        try (var connection = connectionFactory.getConnection()) {
+//            byte[] tokenKey = toKey(OBS_TKN, token.getBytes());
+//
+//            // fetch the observation by token
+//            byte[] serializedObs = connection.get(tokenKey);
+//            if (serializedObs == null)
+//                return;
+//
+////            org.eclipse.californium.core.observe.Observation obs = deserializeObs(serializedObs);
+//            org.eclipse.californium.core.observe.Observation obs = null;
+//            String registrationId = ObserveUtil.extractRegistrationId(obs);
+//            Registration registration = getRegistration(connection, registrationId);
+//            if (registration == null) {
+//                LOG.warn("Unable to remove observation {}, registration {} does not exist anymore", obs.getRequest(),
+//                        registrationId);
+//                return;
+//            }
+//
+//            String endpoint = registration.getEndpoint();
+//            Lock lock = null;
+//            String lockKey = toLockKey(endpoint);
+//            try {
+//                lock = redisLock.obtain(lockKey);
+//                lock.lock();
+//
+//                unsafeRemoveObservation(connection, registrationId, token.getBytes());
+//            } finally {
+//                if (lock != null) {
+//                    lock.unlock();
+//                }
+//            }
+//        }
+//
+//    }
 
     public Observation get(Token token) {
         try (var connection = connectionFactory.getConnection()) {
@@ -745,15 +841,15 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
         return observationSerDes.serialize(obs);
     }
 
-    private org.eclipse.leshan.core.observation.Observation buildLwM2mObservationFromCfToLeshanCore(
-            org.eclipse.californium.core.observe.Observation observation) {
-        String serializedObservation = observationSerDesCoap.serialize(observation);
-        return serializedObservation == null ? null : ObserveUtil.createLwM2mObservation(observation, serializedObservation);
-    }
-    private org.eclipse.californium.core.observe.Observation buildCoapObservationFromLeshanCoreToCfCore(Observation obs) {
-        String serializedObservation = ObserveUtil.extractSerializedObservation(obs);
-        return serializedObservation == null ? null : observationSerDesCoap.deserialize(serializedObservation);
-    }
+//    private Observation buildLwM2mObservationFromCfToLeshanCore(
+//            org.eclipse.californium.core.observe.Observation observation) {
+//        String serializedObservation = observationSerDesCoap.serialize(observation);
+//        return serializedObservation == null ? null : ObserveUtil.createLwM2mObservation(observation, serializedObservation);
+//    }
+//    private org.eclipse.californium.core.observe.Observation buildCoapObservationFromLeshanCoreToCfCore(Observation obs) {
+//        String serializedObservation = ObserveUtil.extractSerializedObservation(obs);
+//        return serializedObservation == null ? null : observationSerDesCoap.deserialize(serializedObservation);
+//    }
 
     private Observation deserializeObs(byte[] data) {
         return data == null ? null : observationSerDes.deserialize(data);

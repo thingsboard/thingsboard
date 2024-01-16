@@ -16,7 +16,7 @@
 package org.thingsboard.server.transport.lwm2m.server.store;
 
 import lombok.RequiredArgsConstructor;
-import org.eclipse.leshan.server.registration.InMemoryRegistrationStore;
+import org.eclipse.californium.core.network.RandomTokenGenerator;
 import org.eclipse.leshan.server.registration.RegistrationStore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -25,6 +25,7 @@ import org.thingsboard.server.cache.TBRedisCacheConfiguration;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mVersionedModelProvider;
 
 import java.util.Optional;
 
@@ -37,10 +38,12 @@ public class TbLwM2mStoreFactory {
     private final LwM2MTransportServerConfig config;
     private final LwM2mCredentialsSecurityInfoValidator validator;
 
+    private final LwM2mVersionedModelProvider modelProvider;
+
     @Bean
     private RegistrationStore registrationStore() {
         return redisConfiguration.isPresent() ?
-                new TbLwM2mRedisRegistrationStore(getConnectionFactory()) : new InMemoryRegistrationStore(config.getCleanPeriodInSec());
+                new TbLwM2mRedisRegistrationStore(getConnectionFactory()) : new TbInMemoryRegistrationStore(new RandomTokenGenerator(config.getCoapConfig()), config.getCleanPeriodInSec(), modelProvider);
     }
 
     @Bean

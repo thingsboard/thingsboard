@@ -198,16 +198,16 @@ public class DeviceProfileEdgeTest extends AbstractEdgeTest {
 
         Assert.assertEquals("PUBLIC_KEY", noSecLwM2MBootstrapServerCredential.getServerPublicKey());
         Assert.assertEquals(Integer.valueOf(123), noSecLwM2MBootstrapServerCredential.getShortServerId());
-        Assert.assertTrue(noSecLwM2MBootstrapServerCredential.isBootstrapServerIs());
+        Assert.assertFalse(noSecLwM2MBootstrapServerCredential.isBootstrapServerIs());
         Assert.assertEquals("localhost", noSecLwM2MBootstrapServerCredential.getHost());
-        Assert.assertEquals(Integer.valueOf(5687), noSecLwM2MBootstrapServerCredential.getPort());
+        Assert.assertEquals(Integer.valueOf(5685), noSecLwM2MBootstrapServerCredential.getPort());
 
         TelemetryMappingConfiguration observeAttr = transportConfiguration.getObserveAttr();
-        Assert.assertEquals("batteryLevel", observeAttr.getKeyName().get("/3_1.0/0/9"));
+        Assert.assertEquals("batteryLevel", observeAttr.getKeyName().get("/3_1.2/0/9"));
         Assert.assertTrue(observeAttr.getObserve().isEmpty());
         Assert.assertTrue(observeAttr.getAttribute().isEmpty());
         Assert.assertFalse(observeAttr.getTelemetry().isEmpty());
-        Assert.assertTrue(observeAttr.getTelemetry().contains("/3_1.0/0/9"));
+        Assert.assertTrue(observeAttr.getTelemetry().contains("/3_1.2/0/9"));
         Assert.assertTrue(observeAttr.getAttributeLwm2m().isEmpty());
 
         removeDeviceProfileAndDoBasicAssert(deviceProfile);
@@ -366,9 +366,9 @@ public class DeviceProfileEdgeTest extends AbstractEdgeTest {
         AbstractLwM2MBootstrapServerCredential bootstrapServerCredential = new NoSecLwM2MBootstrapServerCredential();
         bootstrapServerCredential.setServerPublicKey("PUBLIC_KEY");
         bootstrapServerCredential.setShortServerId(123);
-        bootstrapServerCredential.setBootstrapServerIs(true);
+        bootstrapServerCredential.setBootstrapServerIs(false);
         bootstrapServerCredential.setHost("localhost");
-        bootstrapServerCredential.setPort(5687);
+        bootstrapServerCredential.setPort(5685);
         bootstrap.add(bootstrapServerCredential);
         transportConfiguration.setBootstrap(bootstrap);
 

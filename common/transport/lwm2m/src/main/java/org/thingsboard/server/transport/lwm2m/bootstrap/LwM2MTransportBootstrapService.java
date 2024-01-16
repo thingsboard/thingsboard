@@ -131,6 +131,7 @@ public class LwM2MTransportBootstrapService {
 
         // Set Californium Configuration
         endpointsBuilder.setConfiguration(serverCoapConfig);
+        serverConfig.setCoapConfig(serverCoapConfig);
 
 
         // Create CoAP endpoint

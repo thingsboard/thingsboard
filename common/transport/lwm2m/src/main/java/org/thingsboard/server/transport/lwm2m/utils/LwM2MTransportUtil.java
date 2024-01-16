@@ -79,7 +79,7 @@ public class LwM2MTransportUtil {
     public static final String LOG_LWM2M_INFO = "info";
     public static final String LOG_LWM2M_ERROR = "error";
     public static final String LOG_LWM2M_WARN = "warn";
-    public static final int BOOTSTRAP_DEFAULT_SHORT_ID = 0;
+    public static final int BOOTSTRAP_DEFAULT_SHORT_ID_0 = 0;
 
     public enum LwM2MClientStrategy {
         CLIENT_STRATEGY_1(1, "Read only resources marked as observation"),
@@ -223,6 +223,9 @@ public class LwM2MTransportUtil {
 
     public static String convertObjectIdToVersionedId(String path, Registration registration) {
         String ver = String.valueOf(registration.getSupportedObject().get(new LwM2mPath(path).getObjectId()));
+        return convertObjectIdToVerId(path, ver);
+    }
+    public static String convertObjectIdToVerId(String path, String ver) {
         ver = ver != null ? ver : TbLwM2mVersion.VERSION_1_0.getVersion().toString();
         try {
             String[] keyArray = path.split(LWM2M_SEPARATOR_PATH);
@@ -244,60 +247,6 @@ public class LwM2MTransportUtil {
             return ObjectModel.DEFAULT_VERSION;
         }
     }
-
-    /**
-     * As example:
-     * a)Write-Attributes/3/0/9?pmin=1 means the Battery Level value will be notified
-     * to the Server with a minimum interval of 1sec;
-     * this value is set at theResource level.
-     * b)Write-Attributes/3/0/9?pmin means the Battery Level will be notified
-     * to the Server with a minimum value (pmin) given by the default one
-     * (resource 2 of Object Server ID=1),
-     * or with another value if this Attribute has been set at another level
-     * (Object or Object Instance: see section5.1.1).
-     * c)Write-Attributes/3/0?pmin=10 means that all Resources of Instance 0 of the Object ‘Device (ID:3)’
-     * will be notified to the Server with a minimum interval of 10 sec;
-     * this value is set at the Object Instance level.
-     * d)Write-Attributes /3/0/9?gt=45&st=10 means the Battery Level will be notified to the Server
-     * when:
-     * a.old value is 20 and new value is 35 due to step condition
-     * b.old value is 45 and new value is 50 due to gt condition
-     * c.old value is 50 and new value is 40 due to both gt and step conditions
-     * d.old value is 35 and new value is 20 due to step conditione)
-     * Write-Attributes /3/0/9?lt=20&gt=85&st=10 means the Battery Level will be notified to the Server
-     * when:
-     * a.old value is 17 and new value is 24 due to lt condition
-     * b.old value is 75 and new value is 90 due to both gt and step conditions
-     * String uriQueries = "pmin=10&pmax=60";
-     * AttributeSet attributes = AttributeSet.parse(uriQueries);
-     * WriteAttributesRequest request = new WriteAttributesRequest(target, attributes);
-     * Attribute gt = new Attribute(GREATER_THAN, Double.valueOf("45"));
-     * Attribute st = new Attribute(LESSER_THAN, Double.valueOf("10"));
-     * Attribute pmax = new Attribute(MAXIMUM_PERIOD, "60");
-     * Attribute [] attrs = {gt, st};
-     */
-//    public static SimpleDownlinkRequest createWriteAttributeRequest(String target, Object params, LwM2mUplinkMsgHandler serviceImpl) {
-//        AttributeSet attrSet = new AttributeSet(createWriteAttributes(params, serviceImpl, target));
-//        return attrSet.getAttributes().size() > 0 ? new WriteAttributesRequest(target, attrSet) : null;
-//    }
-
-//    private static Attribute[] createWriteAttributes(Object params, LwM2mUplinkMsgHandler serviceImpl, String target) {
-//        List<Attribute> attributeLists = new ArrayList<>();
-//        Map<String, Object> map = JacksonUtil.convertValue(params, new TypeReference<>() {
-//        });
-//        map.forEach((k, v) -> {
-//            if (StringUtils.trimToNull(v.toString()) != null) {
-//                Object attrValue = convertWriteAttributes(k, v, serviceImpl, target);
-//                if (attrValue != null) {
-//                    Attribute attribute = createAttribute(k, attrValue);
-//                    if (attribute != null) {
-//                        attributeLists.add(new Attribute(k, attrValue));
-//                    }
-//                }
-//            }
-//        });
-//        return attributeLists.toArray(Attribute[]::new);
-//    }
 
     /**
      * "UNSIGNED_INTEGER":  // Number -> Integer Example:
@@ -356,41 +305,6 @@ public class LwM2MTransportUtil {
         return LwM2mValueConverterImpl.getInstance().convertValue(value,
                 STRING, type, new LwM2mPath(fromVersionedIdToObjectId(versionedId)));
     }
-
-//    public static Object convertWriteAttributes(String type, Object value, LwM2mUplinkMsgHandler serviceImpl, String target) {
-//        switch (type) {
-//            /** Integer [0:255]; */
-//            case DIMENSION:
-//                Long dim = (Long) serviceImpl.getConverter().convertValue(value, equalsResourceTypeGetSimpleName(value), INTEGER, new LwM2mPath(target));
-//                return dim >= 0 && dim <= 255 ? dim : null;
-//            /**String;*/
-//            case OBJECT_VERSION:
-//                return serviceImpl.getConverter().convertValue(value, equalsResourceTypeGetSimpleName(value), STRING, new LwM2mPath(target));
-//            /**INTEGER */
-//            case MINIMUM_PERIOD:
-//            case MAXIMUM_PERIOD:
-//                return serviceImpl.getConverter().convertValue(value, equalsResourceTypeGetSimpleName(value), INTEGER, new LwM2mPath(target));
-//            /**Float; */
-//            case GREATER_THAN:
-//            case LESSER_THAN:
-//            case STEP:
-//                if (value.getClass().getSimpleName().equals("String")) {
-//                    value = Double.valueOf((String) value);
-//                }
-//                return serviceImpl.getConverter().convertValue(value, equalsResourceTypeGetSimpleName(value), FLOAT, new LwM2mPath(target));
-//            default:
-//                return null;
-//        }
-//    }
-
-//    private static Attribute createAttribute(String key, Object attrValue) {
-//        try {
-//            return new Attribute(key, attrValue);
-//        } catch (Exception e) {
-//            log.error("CreateAttribute, not valid parameter key: [{}], attrValue: [{}], error: [{}]", key, attrValue, e.getMessage());
-//            return null;
-//        }
-//    }
 
     /**
      * @param lwM2MClient -

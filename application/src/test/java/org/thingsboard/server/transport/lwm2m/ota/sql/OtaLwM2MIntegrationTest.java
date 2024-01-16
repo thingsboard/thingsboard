@@ -51,46 +51,6 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfil
 @Slf4j
 public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
 
-    protected final String OBSERVE_ATTRIBUTES_WITH_PARAMS_OTA =
-
-            "    {\n" +
-                    "    \"keyName\": {\n" +
-                    "      \"/5_1.0/0/3\": \"state\",\n" +
-                    "      \"/5_1.0/0/5\": \"updateResult\",\n" +
-                    "      \"/5_1.0/0/6\": \"pkgname\",\n" +
-                    "      \"/5_1.0/0/7\": \"pkgversion\",\n" +
-                    "      \"/5_1.0/0/9\": \"firmwareUpdateDeliveryMethod\",\n" +
-                    "      \"/9_1.0/0/0\": \"pkgname\",\n" +
-                    "      \"/9_1.0/0/1\": \"pkgversion\",\n" +
-                    "      \"/9_1.0/0/7\": \"updateState\",\n" +
-                    "      \"/9_1.0/0/9\": \"updateResult\"\n" +
-                    "    },\n" +
-                    "    \"observe\": [\n" +
-                    "      \"/5_1.0/0/3\",\n" +
-                    "      \"/5_1.0/0/5\",\n" +
-                    "      \"/5_1.0/0/6\",\n" +
-                    "      \"/5_1.0/0/7\",\n" +
-                    "      \"/5_1.0/0/9\",\n" +
-                    "      \"/9_1.0/0/0\",\n" +
-                    "      \"/9_1.0/0/1\",\n" +
-                    "      \"/9_1.0/0/7\",\n" +
-                    "      \"/9_1.0/0/9\"\n" +
-                    "    ],\n" +
-                    "    \"attribute\": [],\n" +
-                    "    \"telemetry\": [\n" +
-                    "      \"/5_1.0/0/3\",\n" +
-                    "      \"/5_1.0/0/5\",\n" +
-                    "      \"/5_1.0/0/6\",\n" +
-                    "      \"/5_1.0/0/7\",\n" +
-                    "      \"/5_1.0/0/9\",\n" +
-                    "      \"/9_1.0/0/0\",\n" +
-                    "      \"/9_1.0/0/1\",\n" +
-                    "      \"/9_1.0/0/7\",\n" +
-                    "      \"/9_1.0/0/9\"\n" +
-                    "    ],\n" +
-                    "    \"attributeLwm2m\": {}\n" +
-                    "  }";
-
     private List<OtaPackageUpdateStatus> expectedStatuses;
 
     @Test

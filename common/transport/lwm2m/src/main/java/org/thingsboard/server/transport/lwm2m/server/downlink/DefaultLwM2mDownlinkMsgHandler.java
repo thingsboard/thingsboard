@@ -31,6 +31,7 @@ import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.ObjectLink;
+import org.eclipse.leshan.core.observation.CompositeObservation;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.observation.SingleObservation;
 import org.eclipse.leshan.core.request.CompositeDownlinkRequest;
@@ -40,6 +41,7 @@ import org.eclipse.leshan.core.request.DeleteRequest;
 import org.eclipse.leshan.core.request.DiscoverRequest;
 import org.eclipse.leshan.core.request.DownlinkRequest;
 import org.eclipse.leshan.core.request.ExecuteRequest;
+import org.eclipse.leshan.core.request.ObserveCompositeRequest;
 import org.eclipse.leshan.core.request.ObserveRequest;
 import org.eclipse.leshan.core.request.ReadCompositeRequest;
 import org.eclipse.leshan.core.request.ReadRequest;
@@ -55,6 +57,7 @@ import org.eclipse.leshan.core.response.DeleteResponse;
 import org.eclipse.leshan.core.response.DiscoverResponse;
 import org.eclipse.leshan.core.response.ExecuteResponse;
 import org.eclipse.leshan.core.response.LwM2mResponse;
+import org.eclipse.leshan.core.response.ObserveCompositeResponse;
 import org.eclipse.leshan.core.response.ObserveResponse;
 import org.eclipse.leshan.core.response.ReadCompositeResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
@@ -73,6 +76,8 @@ import org.thingsboard.server.transport.lwm2m.server.LwM2mVersionedModelProvider
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.server.common.LwM2MExecutorAwareService;
+import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MCancelObserveCompositeRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MObserveCompositeRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MReadCompositeRequest;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 import org.thingsboard.server.transport.lwm2m.server.rpc.composite.RpcWriteCompositeRequest;
@@ -81,10 +86,14 @@ import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -172,23 +181,19 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         try {
             validateVersionedId(client, request);
             LwM2mPath resultIds = new LwM2mPath(request.getObjectId());
-            Set<Observation> observations = context.getServer().getObservationService().getObservations(client.getRegistration());
-            //TODO: should be able to use CompositeObservation
-            if (observations.stream().noneMatch(observation -> ((SingleObservation)observation).getPath().equals(resultIds))) {
-                ObserveRequest downlink;
-                ContentFormat contentFormat = getReadRequestContentFormat(client, request, modelProvider);
-                if (resultIds.isResource()) {
-                    downlink = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId());
-                } else if (resultIds.isObjectInstance()) {
-                    downlink = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId());
-                } else {
-                    downlink = new ObserveRequest(contentFormat, resultIds.getObjectId());
-                }
-                log.info("[{}] Send observation: {}.", client.getEndpoint(), request.getVersionedId());
-                sendSimpleRequest(client, downlink, request.getTimeout(), callback);
+            ObserveRequest downlink;
+            ContentFormat contentFormat = getReadRequestContentFormat(client, request, modelProvider);
+            if (resultIds.isResourceInstance()) {
+                downlink = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(), resultIds.getResourceInstanceId());
+            } else if (resultIds.isResource()) {
+                downlink = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId());
+            } else if (resultIds.isObjectInstance()) {
+                downlink = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId());
             } else {
-                callback.onValidationError(resultIds.toString(), "Observation is already registered!");
+                downlink = new ObserveRequest(contentFormat, resultIds.getObjectId());
             }
+            log.info("[{}] Send observation: {}.", client.getEndpoint(), request.getVersionedId());
+            sendSimpleRequest(client, downlink, request.getTimeout(), callback);
         } catch (InvalidRequestException e) {
             callback.onValidationError(request.toString(), e.getMessage());
         }
@@ -197,9 +202,70 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     @Override
     public void sendObserveAllRequest(LwM2mClient client, TbLwM2MObserveAllRequest request, DownlinkRequestCallback<TbLwM2MObserveAllRequest, Set<String>> callback) {
         Set<Observation> observations = context.getServer().getObservationService().getObservations(client.getRegistration());
-        //TODO: should be able to use CompositeObservation
-        Set<String> paths = observations.stream().map(observation -> ((SingleObservation)observation).getPath().toString()).collect(Collectors.toUnmodifiableSet());
+        Set<String> paths = new LinkedHashSet<>();
+        observations.stream().forEach(observation -> {
+            if (observation instanceof SingleObservation) {
+                paths.add("SingleObservation:" + ((SingleObservation) observation).getPath().toString());
+            } else {
+                List<LwM2mPath> listPath = ((CompositeObservation) observation).getPaths();
+                List<String> pathsComposite =  listPath.stream().map(lwM2mPath -> (lwM2mPath.toString())).collect(Collectors.toList());
+                Set <String> pathsCompositeSort = new TreeSet<>();
+                if (pathsComposite.size() == 1) {
+                    pathsCompositeSort.add("CompositeObservation: [" + pathsComposite.get(0) + "]");
+                } else if (pathsComposite.size() > 1) {
+                    List <String> sort = new LinkedList<>();
+                    sort.addAll(pathsComposite);
+                    sort.set(0, "CompositeObservation: [" + sort.get(0));
+                    sort.set(pathsComposite.size()-1, sort.get(pathsComposite.size()-1) + "]");
+                    pathsCompositeSort = new LinkedHashSet<>(sort);
+                }
+                paths.addAll(pathsCompositeSort);
+            }
+
+        });
         callback.onSuccess(request, paths);
+    }
+
+    /**
+     * if resource (SingleObservation or in CompositeObservation) is already registered - return BAD REQUEST
+     */
+    @Override
+    public void sendObserveCompositeRequest(LwM2mClient client, TbLwM2MObserveCompositeRequest request, DownlinkRequestCallback<ObserveCompositeRequest,
+            ObserveCompositeResponse> callback) {
+        try {
+            log.trace("[{}] Send Composite observation: [{}].", client.getEndpoint(), request.getObjectIds());
+            ContentFormat compositeContentFormat = this.findFirstContentFormatForComposite(client.getClientSupportContentFormats());
+            ObserveCompositeRequest downlink = new ObserveCompositeRequest(compositeContentFormat, compositeContentFormat, request.getObjectIds());
+            sendCompositeRequest(client, downlink, this.config.getTimeout(), callback);
+        } catch (InvalidRequestException e) {
+            callback.onValidationError(request.toString(), e.getMessage());
+        }
+    }
+
+    @Override
+    public void sendCancelObserveCompositeRequest(LwM2mClient client, TbLwM2MCancelObserveCompositeRequest request, DownlinkRequestCallback<TbLwM2MCancelObserveCompositeRequest, Integer> callback) {
+        Set<Observation> observations = context.getServer().getObservationService().getObservations(client.getRegistration());
+        List<LwM2mPath> listPath = LwM2mPath.getLwM2mPathList(Arrays.asList(request.getObjectIds()));
+        Optional<Observation> observationOpt = Optional.ofNullable(observations.stream().filter(observation -> observation instanceof CompositeObservation && ((CompositeObservation) observation).getPaths().equals(listPath)).findFirst().orElse(null));
+        int cnt = 0;
+        if (observationOpt.isPresent()) {
+            cnt = context.getServer().getObservationService().cancelCompositeObservations(client.getRegistration(), request.getObjectIds());
+            callback.onSuccess(request, cnt);
+        } else {
+            Set<String> lwPaths = new HashSet<>();
+            observations.forEach(obs -> {
+                LwM2mPath lwPathObs = ((SingleObservation) obs).getPath();
+                listPath.forEach(nodePath -> {
+                    if(nodePath.equals(lwPathObs) || lwPathObs.startWith(nodePath)){    // nodePath = "3",     lwPathObs = "3/0/9": cancel for tne all lwPathObs
+                        lwPaths.add(nodePath.toString());
+                    }
+                });
+            });
+            for (String nodePath : lwPaths) {
+                cnt += context.getServer().getObservationService().cancelObservations(client.getRegistration(), nodePath);
+            }
+        }
+        callback.onSuccess(request, cnt);
     }
 
     @Override
@@ -258,7 +324,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     }
 
     @Override
-    public void sendCancelAllRequest(LwM2mClient client, TbLwM2MCancelAllRequest request, DownlinkRequestCallback<TbLwM2MCancelAllRequest, Integer> callback) {
+    public void sendCancelObserveAllRequest(LwM2mClient client, TbLwM2MCancelAllRequest request, DownlinkRequestCallback<TbLwM2MCancelAllRequest, Integer> callback) {
         int observeCancelCnt = context.getServer().getObservationService().cancelObservations(client.getRegistration());
         callback.onSuccess(request, observeCancelCnt);
     }
@@ -708,5 +774,14 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             }
         });
         return compositeContentFormat.get() != null ? compositeContentFormat.get() : defaultValue;
+    }
+
+    private static <T> boolean containsObserveComposite(List<T> l1, List<T> l2) {
+        for (T elem : l1) {
+            if (l2.contains(elem)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
