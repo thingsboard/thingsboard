@@ -90,7 +90,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
             }
             publishEvictEvent(new ResourceInfoEvictEvent(tenantId, resource.getId()));
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(saved.getTenantId())
-                    .entityId(saved.getId()).added(resource.getId() == null).build());
+                    .entityId(saved.getId()).created(resource.getId() == null).build());
             return saved;
         } catch (Exception t) {
             publishEvictEvent(new ResourceInfoEvictEvent(tenantId, resource.getId()));

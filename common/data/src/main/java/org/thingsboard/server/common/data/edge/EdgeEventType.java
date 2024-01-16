@@ -27,6 +27,7 @@ public enum EdgeEventType {
     ASSET_PROFILE(true, EntityType.ASSET_PROFILE),
     ENTITY_VIEW(false, EntityType.ENTITY_VIEW),
     ALARM(false, EntityType.ALARM),
+    ALARM_COMMENT(false, null),
     RULE_CHAIN(false, EntityType.RULE_CHAIN),
     RULE_CHAIN_METADATA(false, null),
     EDGE(false, EntityType.EDGE),
