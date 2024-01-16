@@ -92,6 +92,7 @@ public class AlarmEdgeTest extends AbstractEdgeTest {
         alarm.setType("alarm");
         alarm.setSeverity(AlarmSeverity.CRITICAL);
         Alarm savedAlarm = doPost("/api/alarm", alarm, Alarm.class);
+        edgeImitator.ignoreType(AlarmCommentUpdateMsg.class);
 
         // ack alarm
         edgeImitator.expectMessageAmount(1);
@@ -135,6 +136,7 @@ public class AlarmEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(savedAlarm.getType(), alarmMsg.getType());
         Assert.assertEquals(savedAlarm.getName(), alarmMsg.getName());
         Assert.assertEquals(AlarmStatus.CLEARED_ACK, alarmMsg.getStatus());
+        edgeImitator.allowIgnoredTypes();
     }
 
     @Test

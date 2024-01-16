@@ -116,7 +116,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 entityCountService.publishCountEntityEvictEvent(ruleChain.getTenantId(), EntityType.RULE_CHAIN);
             }
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedRuleChain.getTenantId())
-                    .entity(savedRuleChain).entityId(savedRuleChain.getId()).added(ruleChain.getId() == null).build());
+                    .entity(savedRuleChain).entityId(savedRuleChain.getId()).created(ruleChain.getId() == null).build());
             return savedRuleChain;
         } catch (Exception e) {
             checkConstraintViolation(e, "rule_chain_external_id_unq_key", "Rule Chain with such external id already exists!");

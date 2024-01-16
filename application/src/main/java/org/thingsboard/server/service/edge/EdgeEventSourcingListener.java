@@ -79,10 +79,10 @@ public class EdgeEventSourcingListener {
                 return;
             }
             log.trace("[{}] SaveEntityEvent called: {}", event.getTenantId(), event);
-            boolean isAdded = Boolean.TRUE.equals(event.getAdded());
+            boolean isCreated = Boolean.TRUE.equals(event.getCreated());
             String body = getBodyMsgForEntityEvent(event.getEntity());
             EdgeEventType type = getEdgeEventTypeForEntityEvent(event.getEntity());
-            EdgeEventActionType action = getActionForEntityEvent(event.getEntity(), isAdded);
+            EdgeEventActionType action = getActionForEntityEvent(event.getEntity(), isCreated);
             tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, event.getEntityId(),
                     body, type, action, edgeSynchronizationManager.getEdgeId().get());
         } catch (Exception e) {
@@ -200,10 +200,10 @@ public class EdgeEventSourcingListener {
         return null;
     }
 
-    private EdgeEventActionType getActionForEntityEvent(Object entity, boolean isAdded) {
+    private EdgeEventActionType getActionForEntityEvent(Object entity, boolean isCreated) {
         if (entity instanceof AlarmComment) {
-            return isAdded ? EdgeEventActionType.ADDED_COMMENT : EdgeEventActionType.UPDATED_COMMENT;
+            return isCreated ? EdgeEventActionType.ADDED_COMMENT : EdgeEventActionType.UPDATED_COMMENT;
         }
-        return isAdded ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED;
+        return isCreated ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED;
     }
 }

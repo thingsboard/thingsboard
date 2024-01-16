@@ -61,7 +61,7 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
         }
         if (result != null) {
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entity(result)
-                    .entityId(result.getAlarmId()).added(isCreated).build());
+                    .entityId(result.getAlarmId()).created(isCreated).build());
         }
         return result;
     }
