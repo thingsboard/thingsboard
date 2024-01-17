@@ -2878,7 +2878,8 @@
             "write-single-coil": "05: Write Single Coil",
             "write-single-holding-register": "06: Write Single Holding Register",
             "write-multiple-coils": "15: Write Multiple Coils",
-            "write-multiple-holding-registers": "16: Write Multiple Holding Registers"
+            "write-multiple-holding-registers": "16: Write Multiple Holding Registers",
+            "json-value-invalid": "JSON value has an invalid format"
         },
         "other": "Other",
         "save-tip": "Save configuration file",

@@ -513,12 +513,15 @@
         </mat-form-field>
         <mat-form-field fxFlex>
           <mat-label>{{ 'widget-config.datasource-parameters' | translate }}</mat-label>
-          <input matInput formControlName="params" type="JSON"/>
+          <input matInput formControlName="params" type="JSON" tb-json-to-string/>
           <mat-icon class="material-icons-outlined" aria-hidden="false" aria-label="help-icon"
                     matIconSuffix style="cursor:pointer;"
                     (click)="openEditJSONDialog($event)"
                     matTooltip="{{ 'gateway.rpc-command-edit-params' | translate }}">edit
           </mat-icon>
+          <mat-error *ngIf="commandForm.get('params').hasError('invalidJSON')">
+            {{ 'gateway.rpc.json-value-invalid' | translate }}
+          </mat-error>
         </mat-form-field>
       </ng-template>
     </ng-container>

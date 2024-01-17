@@ -351,7 +351,7 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        jsonValue: JSON.parse(this.commandForm.get('params').value),
+        jsonValue: this.commandForm.get('params').value,
         required: true
       }
     }).afterClosed().subscribe(
