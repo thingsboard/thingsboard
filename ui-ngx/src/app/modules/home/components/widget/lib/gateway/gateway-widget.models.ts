@@ -194,15 +194,21 @@ export const BACnetRequestTypesTranslates = new Map<BACnetRequestTypes, string>(
 ])
 
 export enum BACnetObjectTypes {
+  BinaryInput = 'binaryInput',
   BinaryOutput = 'binaryOutput',
+  AnalogInput = 'analogInput',
   AnalogOutput = 'analogOutput',
-  BinaryValue = 'binaryValue'
+  BinaryValue = 'binaryValue',
+  AnalogValue = 'analogValue'
 }
 
 export const BACnetObjectTypesTranslates = new Map<BACnetObjectTypes, string>([
   [BACnetObjectTypes.AnalogOutput, 'gateway.rpc.analog-output'],
+  [BACnetObjectTypes.AnalogInput, 'gateway.rpc.analog-input'],
   [BACnetObjectTypes.BinaryOutput, 'gateway.rpc.binary-output'],
+  [BACnetObjectTypes.BinaryInput, 'gateway.rpc.binary-input'],
   [BACnetObjectTypes.BinaryValue, 'gateway.rpc.binary-value'],
+  [BACnetObjectTypes.AnalogValue, 'gateway.rpc.analog-value']
 ])
 
 export enum BLEMethods {
