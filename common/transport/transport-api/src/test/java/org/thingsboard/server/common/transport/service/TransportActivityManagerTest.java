@@ -175,28 +175,7 @@ public class TransportActivityManagerTest {
         transportServiceMock.recordActivity(sessionInfo);
 
         // THEN
-        verify(transportServiceMock).onActivity(SESSION_ID, expectedTime);
-    }
-
-    @Test
-    void givenKey_whenCreatingNewState_thenShouldCorrectlyCreateNewEmptyState() {
-        // GIVEN
-        TransportProtos.SessionInfoProto sessionInfo = TransportProtos.SessionInfoProto.newBuilder()
-                .setSessionIdMSB(SESSION_ID.getMostSignificantBits())
-                .setSessionIdLSB(SESSION_ID.getLeastSignificantBits())
-                .build();
-        sessions.put(SESSION_ID, new SessionMetaData(sessionInfo, TransportProtos.SessionType.ASYNC, null));
-
-        when(transportServiceMock.createNewState(SESSION_ID)).thenCallRealMethod();
-
-        ActivityState<TransportProtos.SessionInfoProto> expectedState = new ActivityState<>();
-        expectedState.setMetadata(sessionInfo);
-
-        // WHEN
-        ActivityState<TransportProtos.SessionInfoProto> actualState = transportServiceMock.createNewState(SESSION_ID);
-
-        // THEN
-        assertThat(actualState).isEqualTo(expectedState);
+        verify(transportServiceMock).onActivity(SESSION_ID, sessionInfo, expectedTime);
     }
 
     @ParameterizedTest
