@@ -69,6 +69,8 @@ import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.device.profile.lwm2m.ObjectAttributes;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
@@ -244,28 +246,43 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
 
     @Override
     public void sendCancelObserveCompositeRequest(LwM2mClient client, TbLwM2MCancelObserveCompositeRequest request, DownlinkRequestCallback<TbLwM2MCancelObserveCompositeRequest, Integer> callback) {
-        Set<Observation> observations = context.getServer().getObservationService().getObservations(client.getRegistration());
-        List<LwM2mPath> listPath = LwM2mPath.getLwM2mPathList(Arrays.asList(request.getObjectIds()));
-        Optional<Observation> observationOpt = Optional.ofNullable(observations.stream().filter(observation -> observation instanceof CompositeObservation && ((CompositeObservation) observation).getPaths().equals(listPath)).findFirst().orElse(null));
-        int cnt = 0;
-        if (observationOpt.isPresent()) {
-            cnt = context.getServer().getObservationService().cancelCompositeObservations(client.getRegistration(), request.getObjectIds());
-            callback.onSuccess(request, cnt);
-        } else {
-            Set<String> lwPaths = new HashSet<>();
-            observations.forEach(obs -> {
-                LwM2mPath lwPathObs = ((SingleObservation) obs).getPath();
-                listPath.forEach(nodePath -> {
-                    if(nodePath.equals(lwPathObs) || lwPathObs.startWith(nodePath)){    // nodePath = "3",     lwPathObs = "3/0/9": cancel for tne all lwPathObs
-                        lwPaths.add(nodePath.toString());
+        try {
+            Set<Observation> observations = context.getServer().getObservationService().getObservations(client.getRegistration());
+            List<LwM2mPath> listPath = LwM2mPath.getLwM2mPathList(Arrays.asList(request.getObjectIds()));
+            Optional<Observation> observationOpt = Optional.ofNullable(observations.stream().filter(observation -> observation instanceof CompositeObservation && ((CompositeObservation) observation).getPaths().equals(listPath)).findFirst().orElse(null));
+            int cnt = 0;
+            if (observationOpt.isPresent()) {
+                cnt = context.getServer().getObservationService().cancelCompositeObservations(client.getRegistration(), request.getObjectIds());
+                callback.onSuccess(request, cnt);
+            } else {
+                Set<String> lwPaths = new HashSet<>();
+                for (Observation obs : observations) {
+                    LwM2mPath lwPathObs = ((SingleObservation) obs).getPath();
+                    for (LwM2mPath nodePath : listPath) {
+                        String validNodePath = validatePathCompositeCancel(nodePath, lwPathObs, client);
+                        if (validNodePath != null) lwPaths.add(validNodePath);
                     }
-                });
-            });
-            for (String nodePath : lwPaths) {
-                cnt += context.getServer().getObservationService().cancelObservations(client.getRegistration(), nodePath);
+                };
+                for (String nodePath : lwPaths) {
+                    cnt += context.getServer().getObservationService().cancelObservations(client.getRegistration(), nodePath);
+                }
             }
+            callback.onSuccess(request, cnt);
+        } catch (ThingsboardException e){
+            callback.onValidationError(request.toString(), e.getMessage());
         }
-        callback.onSuccess(request, cnt);
+    }
+
+    private String validatePathCompositeCancel(LwM2mPath nodePath, LwM2mPath lwPathObs, LwM2mClient client) throws ThingsboardException {
+        if (nodePath.equals(lwPathObs) || lwPathObs.startWith(nodePath)) {    // nodePath = "3",     lwPathObs = "3/0/9": cancel for tne all lwPathObs
+            return nodePath.toString();
+        } else if (!nodePath.equals(lwPathObs) && nodePath.startWith(lwPathObs)) {
+            String errorMsg = String.format(
+                    "Unexpected error: There is registration with Endpoint %s for observation path %s, that includes this observation path %s",
+                    client.getRegistration().getEndpoint(), nodePath, lwPathObs);
+            throw new ThingsboardException(errorMsg, ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
+        return null;
     }
 
     @Override

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -389,8 +389,49 @@ public class RpcLwm2MIntegrationObserveCompositeTest extends AbstractRpcLwM2MInt
         assertEquals("[\"SingleObservation:" + fromVersionedIdToObjectId(expectedIdVer3_0_9) + "\"]", actualValues);
     }
 
+    /**
+     * ObserveComposite {"ids":["/3", "/5/0/3", "/19/1/0/0"]} - Ok
+     * ObserveCompositeCancel {"ids":["/3/0/9", "/5/0/3", "/19/1/0/0"} -> BAD_REQUEST
+     * ObserveCompositeCancel {"ids":["/3"} -> CONTENT
+     */
+    @Test
+    public void testObserveOneObjectAnyResources_Result_CONTENT_Cancel_OneResourceFromObjectAnyResource_Result_BAD_REQUEST_Cancel_OneObject_Result_CONTENT() throws Exception {
+        sendCancelObserveAllWithAwait(deviceId);
+            // ObserveComposite
+        sendCancelObserveAllWithAwait(deviceId);
+        String expectedIdVer5_0_3 = objectInstanceIdVer_5 + "/" + RESOURCE_ID_3;
+        String expectedIdVer19_1_0_0 = objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_1 + "/" + RESOURCE_ID_0 + "/" + RESOURCE_INSTANCE_ID_0;
+        String expectedIds = "[\"" +  objectIdVer_3 + "\", \"" + expectedIdVer5_0_3 + "\", \"" + expectedIdVer19_1_0_0 + "\"]";
+        String actualResult =  sendCompositeRPCByIds("ObserveComposite", expectedIds);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
+
+           // ObserveCompositeCancel
+        expectedIds = "[\"" + expectedIdVer19_1_0_0 + "\", \"" + idVer_3_0_9 + "\"]";
+        actualResult =  sendCompositeRPCByIds("ObserveCompositeCancel", expectedIds);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.BAD_REQUEST.getName(), rpcActualResult.get("result").asText());
+        String expectedValue = "for observation path " + fromVersionedIdToObjectId(idVer_3_0_9) + ", that includes this observation path " + fromVersionedIdToObjectId(objectIdVer_3);
+        assertTrue(rpcActualResult.get("error").asText().contains(expectedValue));
+
+            // ObserveCompositeCancel
+        expectedIds = "[\"" + objectIdVer_3 + "\", \"" + expectedIdVer19_1_0_0 + "\"]";
+        actualResult =  sendCompositeRPCByIds("ObserveCompositeCancel", expectedIds);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
+        assertEquals("2", rpcActualResult.get("value").asText());
+
+        String actualResultReadAll = sendCompositeRPCByKeys("ObserveReadAll", null);
+        ObjectNode rpcActualResultReadAll = JacksonUtil.fromString(actualResultReadAll, ObjectNode.class);
+        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResultReadAll.get("result").asText());
+        String actualValues =  rpcActualResultReadAll.get("value").asText();
+        assertEquals("[\"SingleObservation:" + fromVersionedIdToObjectId(expectedIdVer5_0_3) + "\"]", actualValues);
+    }
+
+
    /**
      *  ObserveComposite {"ids":["/3/0/9", "/3/0/14", "/5/0/3", "/3/0/15", "/19/1/0/0"]} - Ok
+     *  ObserveCancel {"id":"/3/0/9"} -> INTERNAL_SERVER_ERROR
      *  ObserveCompositeCancel {"ids":["/3/0/9", "/19/1/0/0", "/3]} - Ok
      *  last Observation
      * @throws Exception

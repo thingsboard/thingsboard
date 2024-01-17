@@ -311,7 +311,8 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
 
     /**
      * Observe {"id":"/3"}
-     * ObserveCancel {"id":"/3/0/9"}
+     * ObserveCancel {"id":"/3/0/9"} -> INTERNAL_SERVER_ERROR
+     * ObserveCancel {"id":"/3"} -> CONTENT
      */
     @Test
     public void testObserveObject_ObserveCancelOneResource_Result_INTERNAL_SERVER_ERROR_Than_Cancel_ObserveObject_Result_CONTENT_Count_1() throws Exception {
