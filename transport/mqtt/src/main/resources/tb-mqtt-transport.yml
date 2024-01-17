@@ -181,8 +181,12 @@ transport:
       # Skip certificate validity check for client certificates.
       skip_validity_check_for_client_cert: "${MQTT_SSL_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
   sessions:
-    # Inactivity timeout for device session in transport service. The last activity time of the device session is updated if the device sends any message, including keepalive messages
-    inactivity_timeout: "${TB_TRANSPORT_SESSIONS_INACTIVITY_TIMEOUT:300000}"
+    # Parameter defines how long the device transport session will be opened after the last activity time.
+    # The last activity time of the device session is updated if the device sends any message, including keepalive messages
+    # If there is no activity, the session will be closed, and all subscriptions will be deleted.
+    # We recommend this parameter to be in sync with state.defaultInactivityTimeoutInSec
+    # (current parameter should be equal to or greater than defaultInactivityTimeoutInSec; if not, you can get the situation when the session is closed for the active device).
+    inactivity_timeout: "${TB_TRANSPORT_SESSIONS_INACTIVITY_TIMEOUT:600000}"
     # Interval of periodic check for expired sessions and report of the changes to session last activity time
     report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:3000}"
   json:
