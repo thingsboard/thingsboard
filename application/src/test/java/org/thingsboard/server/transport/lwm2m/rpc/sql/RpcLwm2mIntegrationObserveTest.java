@@ -230,22 +230,22 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
 
     /**
      *  Observe {"id":["3"]} - Ok
-     *  PreviousObservation  contains "3/0/0"
+     *  PreviousObservation  contains "3/0/9"
      * @throws Exception
      */
     @Test
     public void testObserve_Result_CONTENT_ONE_PATH_PreviousObservation_CONTAINCE_OTHER_CurrentObservation() throws Exception {
         sendCancelObserveAllWithAwait(deviceId);
             // "3/0/9"
-        String idVer_3_0_0 = objectInstanceIdVer_3 + "/" + RESOURCE_ID_0;
-        String actualResult3_0_0 = sendRpcObserve("Observe", idVer_3_0_0);
-        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult3_0_0, ObjectNode.class);
+        String idVer_3_0_9 = objectInstanceIdVer_3 + "/" + RESOURCE_ID_9;
+        String actualResult3_0_9 = sendRpcObserve("Observe", idVer_3_0_9);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult3_0_9, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
             // "3"
         String actualResult3 = sendRpcObserve("Observe", objectIdVer_3);
         rpcActualResult = JacksonUtil.fromString(actualResult3, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-            // PreviousObservation "3/0/0" change to CurrentObservation "3"
+            // PreviousObservation "3/0/9" change to CurrentObservation "3"
         String actualResultReadAll = sendRpcObserve("ObserveReadAll", null);
         rpcActualResult = JacksonUtil.fromString(actualResultReadAll, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
@@ -263,16 +263,18 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
     @Test
     public void testObserve_Result_CONTENT_ONE_PATH_CurrentObservation_CONTAINCE_OTHER_PreviousObservation() throws Exception {
         sendCancelObserveAllWithAwait(deviceId);
+
             // "3"
         String actualResult3 = sendRpcObserve("Observe", objectIdVer_3);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult3, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-            // "3/0/0"
+
+            // "3/0/0"; WARN: - Token collision ? existing observation [/3] includes input observation [/3/0/0]
         String idVer_3_0_0 = objectInstanceIdVer_3 + "/" + RESOURCE_ID_0;
         String actualResult3_0_0 = sendRpcObserve("Observe", idVer_3_0_0);
         rpcActualResult = JacksonUtil.fromString(actualResult3_0_0, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-            // PreviousObservation "3" contains CurrentObservation "3/0/0"
+
         String actualResultReadAll = sendRpcObserve("ObserveReadAll", null);
         rpcActualResult = JacksonUtil.fromString(actualResultReadAll, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
@@ -331,7 +333,7 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
             // cancel observe "/3_1.2/0/9"
         String  expectedId_3_0_9 = objectInstanceIdVer_3 + "/" + RESOURCE_ID_9;
         String actualResult = sendRpcObserve("ObserveCancel", expectedId_3_0_9);
-        String expectedValue = "for observation path " + fromVersionedIdToObjectId(expectedId_3_0_9) + ", that includes this observation path " + fromVersionedIdToObjectId(objectIdVer_3);
+        String expectedValue = "existing observation [" + fromVersionedIdToObjectId(objectIdVer_3) + "] includes input observation [" + fromVersionedIdToObjectId(expectedId_3_0_9);
         rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.INTERNAL_SERVER_ERROR.getName(), rpcActualResult.get("result").asText());
         assertTrue(rpcActualResult.get("error").asText().contains(expectedValue));

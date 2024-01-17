@@ -43,7 +43,7 @@ public class TbLwM2mStoreFactory {
     @Bean
     private RegistrationStore registrationStore() {
         return redisConfiguration.isPresent() ?
-                new TbLwM2mRedisRegistrationStore(getConnectionFactory()) : new TbInMemoryRegistrationStore(new RandomTokenGenerator(config.getCoapConfig()), config.getCleanPeriodInSec(), modelProvider);
+                new TbLwM2mRedisRegistrationStore(new RandomTokenGenerator(config.getCoapConfig()), getConnectionFactory(), modelProvider) : new TbInMemoryRegistrationStore(new RandomTokenGenerator(config.getCoapConfig()), config.getCleanPeriodInSec(), modelProvider);
     }
 
     @Bean

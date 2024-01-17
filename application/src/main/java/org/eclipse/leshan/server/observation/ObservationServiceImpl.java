@@ -188,8 +188,8 @@ public class ObservationServiceImpl implements ObservationService, LwM2mNotifica
                     result.add(obs);
                 } else if (!lwPath.equals(lwPathObs) && lwPath.startWith(lwPathObs)) {        // nodePath = "3/0/9", lwPathObs = "3":     error...
                         String errorMsg = String.format(
-                                "Unexpected error: There is registration with id %s for observation path %s, that includes this observation path %s",
-                                registrationId, lwPath, lwPathObs);
+                                "Unexpected error <cancelObservation>: There is registration with id [%s] existing observation [%s] includes input observation [%s]!",
+                                registrationId, lwPathObs, lwPath);
                         throw new IllegalStateException(errorMsg);
                 }
             }
