@@ -77,6 +77,7 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
   saveTemplate: EventEmitter<RPCTemplateConfig> = new EventEmitter();
 
   commandForm: FormGroup;
+  isMQTTWithResponse: FormControl;
   codesArray: Array<number> = [1, 2, 3, 4, 5, 6, 15, 16];
   ConnectorType = ConnectorType;
   modbusCommandTypes = Object.values(ModbusCommandTypes) as ModbusCommandTypes[];
@@ -134,7 +135,8 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
       if (this.commandForm.valid) {
         this.propagateChange({...this.commandForm.value, ...value});
       }
-    })
+    });
+    this.isMQTTWithResponse = this.fb.control(false);
   }
 
   connectorParamsFormGroupByType(type: ConnectorType): FormGroup {

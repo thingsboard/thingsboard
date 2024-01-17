@@ -31,12 +31,15 @@
           <input matInput formControlName="requestTopicExpression"
                  placeholder="sensor/${deviceName}/request/${methodName}/${requestId}"/>
         </mat-form-field>
-        <mat-form-field>
+        <mat-slide-toggle class="margin" (click)="$event.stopPropagation()" [formControl]="isMQTTWithResponse">
+          {{ 'gateway.rpc.withResponse' | translate }}
+        </mat-slide-toggle>
+        <mat-form-field *ngIf="isMQTTWithResponse.value">
           <mat-label>{{ 'gateway.rpc.responseTopicExpression' | translate }}</mat-label>
           <input matInput formControlName="responseTopicExpression"
                  placeholder="sensor/${deviceName}/response/${methodName}/${requestId}"/>
         </mat-form-field>
-        <mat-form-field>
+        <mat-form-field *ngIf="isMQTTWithResponse.value">
           <mat-label>{{ 'gateway.rpc.responseTimeout' | translate }}</mat-label>
           <input matInput formControlName="responseTimeout" type="number"
                  placeholder="10000" min="10" step="1"/>
