@@ -18,13 +18,17 @@ package org.thingsboard.server.service.queue;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.rpc.RpcError;
+import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
@@ -56,6 +60,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 @Service
 @TbRuleEngineComponent
@@ -152,10 +157,6 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
         if (nfMsg.hasComponentLifecycle()) {
             handleComponentLifecycleMsg(id, ProtoUtils.fromProto(nfMsg.getComponentLifecycle()));
             callback.onSuccess();
-        } else if (!nfMsg.getComponentLifecycleMsg().isEmpty()) {
-            //will be removed in 3.6.1 in favour of hasComponentLifecycle()
-            handleComponentLifecycleMsg(id, nfMsg.getComponentLifecycleMsg());
-            callback.onSuccess();
         } else if (nfMsg.hasFromDeviceRpcResponse()) {
             TransportProtos.FromDeviceRPCResponseProto proto = nfMsg.getFromDeviceRpcResponse();
             RpcError error = proto.getError() > 0 ? RpcError.values()[proto.getError()] : null;
@@ -164,10 +165,10 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
             tbDeviceRpcService.processRpcResponseFromDevice(response);
             callback.onSuccess();
         } else if (nfMsg.hasQueueUpdateMsg()) {
-            ctx.getScheduler().execute(() -> updateQueue(nfMsg.getQueueUpdateMsg()));
+            updateQueue(nfMsg.getQueueUpdateMsg());
             callback.onSuccess();
         } else if (nfMsg.hasQueueDeleteMsg()) {
-            ctx.getScheduler().execute(() -> deleteQueue(nfMsg.getQueueDeleteMsg()));
+            deleteQueue(nfMsg.getQueueDeleteMsg());
             callback.onSuccess();
         } else {
             log.trace("Received notification with missing handler");
@@ -204,11 +205,28 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
         QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, queueDeleteMsg.getQueueName(), tenantId);
         var consumerManager = consumers.remove(queueKey);
         if (consumerManager != null) {
-            consumerManager.delete();
+            consumerManager.delete(true);
         }
 
         partitionService.removeQueue(queueDeleteMsg);
         partitionService.recalculatePartitions(ctx.getServiceInfoProvider().getServiceInfo(), new ArrayList<>(partitionService.getOtherServices(ServiceType.TB_RULE_ENGINE)));
+    }
+
+    @EventListener
+    public void handleComponentLifecycleEvent(ComponentLifecycleMsg event) {
+        if (event.getEntityId().getEntityType() == EntityType.TENANT) {
+            if (event.getEvent() == ComponentLifecycleEvent.DELETED) {
+                List<QueueKey> toRemove = consumers.keySet().stream()
+                        .filter(queueKey -> queueKey.getTenantId().equals(event.getTenantId()))
+                        .collect(Collectors.toList());
+                toRemove.forEach(queueKey -> {
+                    var consumerManager = consumers.remove(queueKey);
+                    if (consumerManager != null) {
+                        consumerManager.delete(false);
+                    }
+                });
+            }
+        }
     }
 
     private TbRuleEngineQueueConsumerManager getOrCreateConsumer(QueueKey queueKey) {
