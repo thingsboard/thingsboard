@@ -40,6 +40,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -61,6 +63,34 @@ public class TransportActivityManagerTest {
     public void setup() {
         sessions = new ConcurrentHashMap<>();
         ReflectionTestUtils.setField(transportServiceMock, "sessions", sessions);
+    }
+
+    @Test
+    void givenFirstActivityForAlreadyRemovedSessionAndFirstEventReportingStrategy_whenOnActivity_thenShouldRecordActivityAndReport() {
+        // GIVEN
+        ConcurrentMap<UUID, Object> states = new ConcurrentHashMap<>();
+        ReflectionTestUtils.setField(transportServiceMock, "states", states);
+
+        var strategyMock = mock(ActivityStrategy.class);
+        when(transportServiceMock.getStrategy()).thenReturn(strategyMock);
+        when(strategyMock.onActivity()).thenReturn(true);
+
+        long activityTime = 123L;
+        var sessionInfo = TransportProtos.SessionInfoProto.newBuilder()
+                .setSessionIdMSB(SESSION_ID.getMostSignificantBits())
+                .setSessionIdLSB(SESSION_ID.getLeastSignificantBits())
+                .build();
+
+        doCallRealMethod().when(transportServiceMock).getLastRecordedTime(SESSION_ID);
+        doCallRealMethod().when(transportServiceMock).onActivity(SESSION_ID, sessionInfo, activityTime);
+
+        // WHEN
+        transportServiceMock.onActivity(SESSION_ID, sessionInfo, activityTime);
+
+        // THEN
+        assertThat(states).containsKey(SESSION_ID);
+        assertThat(transportServiceMock.getLastRecordedTime(SESSION_ID)).isEqualTo(activityTime);
+        verify(transportServiceMock).reportActivity(eq(SESSION_ID), eq(sessionInfo), eq(activityTime), any(ActivityReportCallback.class));
     }
 
     @Test
