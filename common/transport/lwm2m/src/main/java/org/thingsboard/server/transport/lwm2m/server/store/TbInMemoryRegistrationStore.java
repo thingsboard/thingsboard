@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.lwm2m.server.store;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.eclipse.californium.core.coap.Token;
+import org.eclipse.californium.core.network.RandomTokenGenerator;
 import org.eclipse.californium.core.network.TokenGenerator;
 import org.eclipse.californium.core.network.TokenGenerator.Scope;
 import org.eclipse.leshan.core.Destroyable;
@@ -42,6 +43,7 @@ import org.eclipse.leshan.server.registration.UpdatedRegistration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mVersionedModelProvider;
 
 import java.net.InetSocketAddress;
@@ -87,25 +89,27 @@ public class TbInMemoryRegistrationStore implements RegistrationStore, Startable
     private boolean started = false;
     private final long cleanPeriod; // in seconds
 
-    private final TokenGenerator tokenGenerator;
+    private final LwM2MTransportServerConfig config;
 
     private final LwM2mVersionedModelProvider modelProvider;
+
+    private TokenGenerator tokenGenerator;
 
     public TbInMemoryRegistrationStore() {
         this(null, 2, null); // default clean period : 2s
     }
 
-    public TbInMemoryRegistrationStore(TokenGenerator tokenGenerator, long cleanPeriodInSec, LwM2mVersionedModelProvider modelProvider) {
-        this(tokenGenerator, Executors.newScheduledThreadPool(1,
+    public TbInMemoryRegistrationStore(LwM2MTransportServerConfig config, long cleanPeriodInSec, LwM2mVersionedModelProvider modelProvider) {
+        this(config, Executors.newScheduledThreadPool(1,
                         new NamedThreadFactory(String.format("TbInMemoryRegistrationStore Cleaner (%ds)", cleanPeriodInSec))),
                 cleanPeriodInSec, modelProvider);
     }
 
-    public TbInMemoryRegistrationStore(TokenGenerator tokenGenerator, ScheduledExecutorService schedExecutor, long cleanPeriodInSec, LwM2mVersionedModelProvider modelProvider) {
+    public TbInMemoryRegistrationStore(LwM2MTransportServerConfig config, ScheduledExecutorService schedExecutor, long cleanPeriodInSec, LwM2mVersionedModelProvider modelProvider) {
         this.schedExecutor = schedExecutor;
         this.cleanPeriod = cleanPeriodInSec;
         this.modelProvider = modelProvider;
-        this.tokenGenerator =  tokenGenerator;
+        this.config =  config;
     }
 
     /* *************** Leshan Registration API **************** */
@@ -271,7 +275,7 @@ public class TbInMemoryRegistrationStore implements RegistrationStore, Startable
                 ((CompositeObservation)observation).getPaths().forEach(path -> {
                     if (validateObserveResource(path, registrationId)) {
                         String serializedObs = createSerializedSingleObservation(nodeSerObs, path.toString());
-                        Observation singleObservation = createSingleObservation(registrationId, path, ct, ctx, serializedObs, tokenGenerator);
+                        Observation singleObservation = createSingleObservation(registrationId, path, ct, ctx, serializedObs, getTokenGenerator());
                         updateSingleObservation(registrationId, (SingleObservation) singleObservation, addIfAbsent, removed);
                         // cancel existing observations for the same path and registration id.
                         cancelObservation (singleObservation, registrationId, removed);
@@ -357,6 +361,13 @@ public class TbInMemoryRegistrationStore implements RegistrationStore, Startable
             }
         });
         return result.get();
+    }
+
+    private TokenGenerator getTokenGenerator(){
+        if (this.tokenGenerator == null) {
+            this.tokenGenerator = new RandomTokenGenerator(config.getCoapConfig());
+        }
+        return this.tokenGenerator;
     }
 
     public static SingleObservation createSingleObservation(String registrationId, LwM2mPath target, ContentFormat ct,
