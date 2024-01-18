@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.eclipse.californium.core.network.RandomTokenGenerator;
 import org.eclipse.leshan.server.registration.RegistrationStore;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.cache.TBRedisCacheConfiguration;
@@ -35,6 +36,7 @@ import java.util.Optional;
 public class TbLwM2mStoreFactory {
 
     private final Optional<TBRedisCacheConfiguration> redisConfiguration;
+    @Lazy
     private final LwM2MTransportServerConfig config;
     private final LwM2mCredentialsSecurityInfoValidator validator;
 
@@ -43,7 +45,8 @@ public class TbLwM2mStoreFactory {
     @Bean
     private RegistrationStore registrationStore() {
         return redisConfiguration.isPresent() ?
-                new TbLwM2mRedisRegistrationStore(new RandomTokenGenerator(config.getCoapConfig()), getConnectionFactory(), modelProvider) : new TbInMemoryRegistrationStore(new RandomTokenGenerator(config.getCoapConfig()), config.getCleanPeriodInSec(), modelProvider);
+                new TbLwM2mRedisRegistrationStore(new RandomTokenGenerator(config.getCoapConfig()), getConnectionFactory(), modelProvider) :
+                new TbInMemoryRegistrationStore(new RandomTokenGenerator(config.getCoapConfig()), config.getCleanPeriodInSec(), modelProvider);
     }
 
     @Bean
