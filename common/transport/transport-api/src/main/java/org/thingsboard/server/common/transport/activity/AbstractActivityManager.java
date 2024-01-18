@@ -78,12 +78,12 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
         states.compute(key, (__, stateWrapper) -> {
             if (stateWrapper == null) {
                 ActivityState<Metadata> newState = new ActivityState<>();
-                newState.setMetadata(metadata);
                 stateWrapper = new ActivityStateWrapper();
                 stateWrapper.setState(newState);
                 stateWrapper.setStrategy(getStrategy());
             }
             var state = stateWrapper.getState();
+            state.setMetadata(metadata);
             if (state.getLastRecordedTime() < newLastRecordedTime) {
                 state.setLastRecordedTime(newLastRecordedTime);
             }
