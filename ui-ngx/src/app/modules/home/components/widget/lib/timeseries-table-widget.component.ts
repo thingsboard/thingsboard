@@ -407,9 +407,10 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
       }
     }
     if (this.sources.length) {
-      this.prepareDisplayedColumn();
-      this.sources[this.sourceIndex].displayedColumns =
-        this.displayedColumns[this.sourceIndex].filter(value => value.display).map(value => value.def);
+      this.sources.forEach((source, index) => {
+        this.prepareDisplayedColumn(index);
+        source.displayedColumns = this.displayedColumns[index].filter(value => value.display).map(value => value.def);
+      });
     }
     this.updateActiveEntityInfo();
   }
@@ -437,8 +438,6 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
       });
 
       const source = this.sources[this.sourceIndex];
-
-      this.prepareDisplayedColumn();
 
       const providers: StaticProvider[] = [
         {
@@ -472,11 +471,11 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     }
   }
 
-  private prepareDisplayedColumn() {
-    if (!this.displayedColumns[this.sourceIndex]) {
-      this.displayedColumns[this.sourceIndex] = this.sources[this.sourceIndex].displayedColumns.map(value => {
+  private prepareDisplayedColumn(index: number) {
+    if (!this.displayedColumns[index]) {
+      this.displayedColumns[index] = this.sources[index].displayedColumns.map(value => {
         let title = '';
-        const header = this.sources[this.sourceIndex].header.find(column => column.index.toString() === value);
+        const header = this.sources[index].header.find(column => column.index.toString() === value);
         if (value === '0') {
           title = 'Timestamp';
         } else if (value === 'actions') {
