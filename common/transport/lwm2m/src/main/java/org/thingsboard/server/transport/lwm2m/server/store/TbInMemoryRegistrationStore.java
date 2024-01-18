@@ -351,7 +351,7 @@ public class TbInMemoryRegistrationStore implements RegistrationStore, Startable
             LwM2mPath pathObs = ((SingleObservation)obs).getPath();
             if ((!pathObservation.equals(pathObs) && pathObs.startWith(pathObservation)) ||        // pathObs = "3/0/9"-> pathObservation = "3"
                     (pathObservation.equals(pathObs) && !observation.getId().equals(obs.getId()))) {
-                result.set((SingleObservation)obs);
+               result.set((SingleObservation)obs);
             } else if (!pathObservation.equals(pathObs) && pathObservation.startWith(pathObs)) {    // pathObs = "3" -> pathObservation = "3/0/9"
                 result.set(observation);
             }
