@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,19 @@
 package org.thingsboard.server.cache;
 
 import lombok.Data;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
 
-@Configuration
-@ConfigurationProperties(prefix = "redis.ssl")
 @Data
-public class TbRedisSslCredentialsConfiguration {
+public class RedisKeystoreCredentialsConfig {
 
-    private boolean enabled;
+    private String type;
+
+    private String truststoreType;
 
     private String truststoreLocation;
 
     private String truststorePassword;
+
+    private String keystoreType;
 
     private String keystoreLocation;
 
