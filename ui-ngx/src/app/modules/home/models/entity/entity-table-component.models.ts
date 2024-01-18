@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -80,6 +80,7 @@ export interface IEntitiesTableComponent {
   exitFilterMode(): void;
   resetSortAndFilter(update?: boolean, preserveTimewindow?: boolean): void;
   columnsUpdated(resetData?: boolean): void;
+  cellActionDescriptorsUpdated(): void;
   headerCellStyle(column: EntityColumn<BaseData<HasId>>): any;
   clearCellCache(col: number, row: number): void;
   cellContent(entity: BaseData<HasId>, column: EntityColumn<BaseData<HasId>>, row: number): any;

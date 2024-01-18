@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { MenuService } from '@core/services/menu.service';
-import { distinctUntilChanged, filter, map, mergeMap, take } from 'rxjs/operators';
-import { merge } from 'rxjs';
+import { distinctUntilChanged, filter, map, mergeMap, startWith, take } from 'rxjs/operators';
+import { merge, Observable } from 'rxjs';
 import { MenuSection } from '@core/services/menu.models';
 import { ActiveComponentService } from '@core/services/active-component.service';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
@@ -39,14 +39,9 @@ export class RouterTabsComponent extends PageComponent implements OnInit {
 
   hideCurrentTabs = false;
 
-  tabs$ = merge(this.menuService.menuSections(),
-    this.router.events.pipe(
-      filter((event) => event instanceof NavigationEnd ),
-      distinctUntilChanged())
-  ).pipe(
-    mergeMap(() => this.menuService.menuSections().pipe(take(1))),
-    map((sections) => this.buildTabs(this.activatedRoute, sections))
-  );
+  replaceUrl = false;
+
+  tabs$: Observable<Array<MenuSection>>;
 
   constructor(protected store: Store<AppState>,
               private activatedRoute: ActivatedRoute,
@@ -57,6 +52,27 @@ export class RouterTabsComponent extends PageComponent implements OnInit {
   }
 
   ngOnInit() {
+    if (this.activatedRoute.snapshot.data.useChildrenRoutesForTabs) {
+      this.tabs$ = this.router.events.pipe(
+        filter((event) => event instanceof NavigationEnd),
+        startWith(''),
+        map(() => this.buildTabsForRoutes(this.activatedRoute))
+      );
+    } else {
+      this.tabs$ = merge(this.menuService.menuSections(),
+        this.router.events.pipe(
+          filter((event) => event instanceof NavigationEnd ),
+          distinctUntilChanged())
+      ).pipe(
+        mergeMap(() => this.menuService.menuSections().pipe(take(1))),
+        map((sections) => this.buildTabs(this.activatedRoute, sections))
+      );
+    }
+
+    if (this.activatedRoute.snapshot.data.replaceUrl) {
+      this.replaceUrl = true;
+    }
+
     this.activatedRoute.data.subscribe(
       (data) => this.buildTabsHeaderComponent(data)
     );
@@ -80,18 +96,36 @@ export class RouterTabsComponent extends PageComponent implements OnInit {
     }
   }
 
-  private buildTabs(activatedRoute: ActivatedRoute, sections: MenuSection[]): Array<MenuSection> {
-    const sectionPath = '/' + activatedRoute.pathFromRoot.map(r => r.snapshot.url)
+  private getSectionPath(activatedRoute: ActivatedRoute): string {
+    return '/' + activatedRoute.pathFromRoot.map(r => r.snapshot.url)
       .filter(f => !!f[0]).map(f => f.map(f1 => f1.path).join('/')).join('/');
+  }
+
+  private buildTabs(activatedRoute: ActivatedRoute, sections: MenuSection[]): Array<MenuSection> {
+    const sectionPath = this.getSectionPath(activatedRoute);
     const found = this.findRootSection(sections, sectionPath);
     if (found) {
       const rootPath = sectionPath.substring(0, sectionPath.length - found.path.length);
       const isRoot = rootPath === '';
       const tabs: Array<MenuSection> = found ? found.pages.filter(page => !page.disabled && (!page.rootOnly || isRoot)) : [];
       return tabs.map((tab) => ({...tab, path: rootPath + tab.path}));
-    } else {
-      return [];
     }
+    return [];
+  }
+
+  private buildTabsForRoutes(activatedRoute: ActivatedRoute): Array<MenuSection> {
+    const sectionPath = this.getSectionPath(activatedRoute);
+    if (activatedRoute.routeConfig.children.length) {
+      const activeRouterChildren = activatedRoute.routeConfig.children.filter(page => page.path !== '');
+      return activeRouterChildren.map(tab => ({
+        id: tab.component.name,
+        type: 'link',
+        name: tab.data?.breadcrumb?.label ?? '',
+        icon: tab.data?.breadcrumb?.icon ?? '',
+        path: `${sectionPath}/${tab.path}`
+      }));
+    }
+    return [];
   }
 
   private findRootSection(sections: MenuSection[], sectionPath: string): MenuSection {

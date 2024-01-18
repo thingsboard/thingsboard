@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,34 +30,34 @@ import org.thingsboard.server.dao.entity.EntityDaoService;
 import java.util.List;
 
 public interface UserService extends EntityDaoService {
-	
-	User findUserById(TenantId tenantId, UserId userId);
 
-	ListenableFuture<User> findUserByIdAsync(TenantId tenantId, UserId userId);
+    User findUserById(TenantId tenantId, UserId userId);
 
-	User findUserByEmail(TenantId tenantId, String email);
+    ListenableFuture<User> findUserByIdAsync(TenantId tenantId, UserId userId);
+
+    User findUserByEmail(TenantId tenantId, String email);
 
     User findUserByTenantIdAndEmail(TenantId tenantId, String email);
 
-	User saveUser(User user);
+    User saveUser(TenantId tenantId, User user);
 
-	UserCredentials findUserCredentialsByUserId(TenantId tenantId, UserId userId);
-	
-	UserCredentials findUserCredentialsByActivateToken(TenantId tenantId, String activateToken);
+    UserCredentials findUserCredentialsByUserId(TenantId tenantId, UserId userId);
 
-	UserCredentials findUserCredentialsByResetToken(TenantId tenantId, String resetToken);
+    UserCredentials findUserCredentialsByActivateToken(TenantId tenantId, String activateToken);
 
-	UserCredentials saveUserCredentials(TenantId tenantId, UserCredentials userCredentials);
-	
-	UserCredentials activateUserCredentials(TenantId tenantId, String activateToken, String password);
-	
-	UserCredentials requestPasswordReset(TenantId tenantId, String email);
+    UserCredentials findUserCredentialsByResetToken(TenantId tenantId, String resetToken);
+
+    UserCredentials saveUserCredentials(TenantId tenantId, UserCredentials userCredentials);
+
+    UserCredentials activateUserCredentials(TenantId tenantId, String activateToken, String password);
+
+    UserCredentials requestPasswordReset(TenantId tenantId, String email);
 
     UserCredentials requestExpiredPasswordReset(TenantId tenantId, UserCredentialsId userCredentialsId);
 
     UserCredentials replaceUserCredentials(TenantId tenantId, UserCredentials userCredentials);
 
-    void deleteUser(TenantId tenantId, UserId userId);
+    void deleteUser(TenantId tenantId, User user);
 
     PageData<User> findUsersByTenantId(TenantId tenantId, PageLink pageLink);
 

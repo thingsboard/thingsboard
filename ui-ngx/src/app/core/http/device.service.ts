@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -25,13 +25,16 @@ import {
   ClaimResult,
   Device,
   DeviceCredentials,
-  DeviceInfo, DeviceInfoQuery,
-  DeviceSearchQuery
-} from '@app/shared/models/device.models';
-import { EntitySubtype } from '@app/shared/models/entity-type.models';
+  DeviceInfo,
+  DeviceInfoQuery,
+  DeviceSearchQuery,
+  PublishTelemetryCommand
+} from '@shared/models/device.models';
+import { EntitySubtype } from '@shared/models/entity-type.models';
 import { AuthService } from '@core/auth/auth.service';
-import { BulkImportRequest, BulkImportResult } from '@home/components/import-export/import-export.models';
+import { BulkImportRequest, BulkImportResult } from '@shared/import-export/import-export.models';
 import { PersistentRpc, RpcStatus } from '@shared/models/rpc.models';
+import { ResourcesService } from '@core/services/resources.service';
 
 @Injectable({
   providedIn: 'root'
@@ -39,7 +42,8 @@ import { PersistentRpc, RpcStatus } from '@shared/models/rpc.models';
 export class DeviceService {
 
   constructor(
-    private http: HttpClient
+    private http: HttpClient,
+    private resourcesService: ResourcesService
   ) { }
 
   public getDeviceInfosByQuery(deviceInfoQuery: DeviceInfoQuery, config?: RequestConfig): Observable<PageData<DeviceInfo>> {
@@ -85,6 +89,13 @@ export class DeviceService {
 
   public saveDevice(device: Device, config?: RequestConfig): Observable<Device> {
     return this.http.post<Device>('/api/device', device, defaultHttpOptionsFromConfig(config));
+  }
+
+  public saveDeviceWithCredentials(device: Device, credentials: DeviceCredentials, config?: RequestConfig): Observable<Device> {
+    return this.http.post<Device>('/api/device-with-credentials', {
+      device,
+      credentials
+    }, defaultHttpOptionsFromConfig(config));
   }
 
   public deleteDevice(deviceId: string, config?: RequestConfig) {
@@ -201,4 +212,11 @@ export class DeviceService {
     return this.http.post<BulkImportResult>('/api/device/bulk_import', entitiesData, defaultHttpOptionsFromConfig(config));
   }
 
+  public getDevicePublishTelemetryCommands(deviceId: string, config?: RequestConfig): Observable<PublishTelemetryCommand> {
+    return this.http.get<PublishTelemetryCommand>(`/api/device-connectivity/${deviceId}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public downloadGatewayDockerComposeFile(deviceId: string): Observable<any> {
+    return this.resourcesService.downloadResource(`/api/device-connectivity/gateway-launch/${deviceId}/docker-compose/download`);
+  }
 }

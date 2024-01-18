@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,16 +15,16 @@
 ///
 
 import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Observable, of } from 'rxjs';
 import { map, mergeMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { BroadcastService } from '@app/core/services/broadcast.service';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { RelationTypes } from '@app/shared/models/relation.models';
-import { FloatLabelType, SubscriptSizing } from '@angular/material/form-field';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
+import { coerceArray, coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-relation-type-autocomplete',
@@ -38,23 +38,24 @@ import { FloatLabelType, SubscriptSizing } from '@angular/material/form-field';
 })
 export class RelationTypeAutocompleteComponent implements ControlValueAccessor, OnInit, AfterViewInit, OnDestroy {
 
-  relationTypeFormGroup: UntypedFormGroup;
+  relationTypeFormGroup: FormGroup;
 
   modelValue: string | null;
 
-  private requiredValue: boolean;
-  get required(): boolean {
-    return this.requiredValue;
-  }
-
-  @Input() label: string;
-
-  @Input() floatLabel: FloatLabelType = 'auto';
+  @Input()
+  @coerceBoolean()
+  showLabel = true;
 
   @Input()
-  set required(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
+  @coerceArray()
+  additionalClasses: Array<string>;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
+
+  @Input()
+  @coerceBoolean()
+  required: boolean;
 
   @Input()
   disabled: boolean;
@@ -75,7 +76,7 @@ export class RelationTypeAutocompleteComponent implements ControlValueAccessor, 
   constructor(private store: Store<AppState>,
               private broadcast: BroadcastService,
               public translate: TranslateService,
-              private fb: UntypedFormBuilder) {
+              private fb: FormBuilder) {
     this.relationTypeFormGroup = this.fb.group({
       relationType: [null, this.required ? [Validators.required, Validators.maxLength(255)] : [Validators.maxLength(255)]]
     });

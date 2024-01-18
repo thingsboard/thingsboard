@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@ package org.thingsboard.rule.engine.metadata;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,12 +28,16 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.rule.engine.TestDbCallbackExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.data.RelationsQuery;
+import org.thingsboard.rule.engine.util.TbMsgSource;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
@@ -54,13 +56,13 @@ import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -72,7 +74,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -86,28 +87,13 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 
 @ExtendWith(MockitoExtension.class)
 public class TbGetRelatedAttributeNodeTest {
 
     private static final EntityId DUMMY_DEVICE_ORIGINATOR = new DeviceId(UUID.randomUUID());
     private static final TenantId TENANT_ID = new TenantId(UUID.randomUUID());
-    private static final ListeningExecutor DB_EXECUTOR = new ListeningExecutor() {
-        @Override
-        public <T> ListenableFuture<T> executeAsync(Callable<T> task) {
-            try {
-                return Futures.immediateFuture(task.call());
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        @Override
-        public void execute(@NotNull Runnable command) {
-            command.run();
-        }
-    };
+    private static final ListeningExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
     @Mock
     private TbContext ctxMock;
     @Mock
@@ -142,7 +128,7 @@ public class TbGetRelatedAttributeNodeTest {
         var exception = assertThrows(TbNodeException.class, () -> node.init(ctxMock, nodeConfiguration));
 
         // THEN
-        assertThat(exception.getMessage()).isEqualTo("FetchTo cannot be null!");
+        assertThat(exception.getMessage()).isEqualTo("FetchTo option can't be null! Allowed values: " + Arrays.toString(TbMsgSource.values()));
         verify(ctxMock, never()).tellSuccess(any());
     }
 
@@ -172,7 +158,7 @@ public class TbGetRelatedAttributeNodeTest {
         assertThat(nodeConfig).isEqualTo(config);
         assertThat(nodeConfig.getDataMapping()).isEqualTo(Map.of("serialNumber", "sn"));
         assertThat(nodeConfig.getDataToFetch()).isEqualTo(DataToFetch.ATTRIBUTES);
-        assertThat(node.fetchTo).isEqualTo(FetchTo.METADATA);
+        assertThat(node.fetchTo).isEqualTo(TbMsgSource.METADATA);
 
         var relationsQuery = new RelationsQuery();
         var relationEntityTypeFilter = new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.emptyList());
@@ -191,7 +177,7 @@ public class TbGetRelatedAttributeNodeTest {
                 "sourceAttr2", "targetKey2",
                 "sourceAttr3", "targetKey3"));
         config.setDataToFetch(DataToFetch.LATEST_TELEMETRY);
-        config.setFetchTo(FetchTo.DATA);
+        config.setFetchTo(TbMsgSource.DATA);
 
         var relationsQuery = new RelationsQuery();
         var relationEntityTypeFilter = new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.emptyList());
@@ -214,7 +200,7 @@ public class TbGetRelatedAttributeNodeTest {
                 "sourceAttr3", "targetKey3"
         ));
         assertThat(nodeConfig.getDataToFetch()).isEqualTo(DataToFetch.LATEST_TELEMETRY);
-        assertThat(node.fetchTo).isEqualTo(FetchTo.DATA);
+        assertThat(node.fetchTo).isEqualTo(TbMsgSource.DATA);
         assertThat(nodeConfig.getRelationsQuery()).isEqualTo(relationsQuery);
     }
 
@@ -237,8 +223,8 @@ public class TbGetRelatedAttributeNodeTest {
     @Test
     public void givenMsgDataIsNotAnJsonObjectAndFetchToData_whenOnMsg_thenException() {
         // GIVEN
-        node.fetchTo = FetchTo.DATA;
-        msg = TbMsg.newMsg("POST_TELEMETRY_REQUEST", DUMMY_DEVICE_ORIGINATOR, new TbMsgMetaData(), "[]");
+        node.fetchTo = TbMsgSource.DATA;
+        msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_ARRAY);
 
         // WHEN
         var exception = assertThrows(IllegalArgumentException.class, () -> node.onMsg(ctxMock, msg));
@@ -251,7 +237,7 @@ public class TbGetRelatedAttributeNodeTest {
     @Test
     public void givenDidNotFindEntity_whenOnMsg_thenShouldTellFailure() {
         // GIVEN
-        prepareMsgAndConfig(FetchTo.METADATA, DataToFetch.ATTRIBUTES, DUMMY_DEVICE_ORIGINATOR);
+        prepareMsgAndConfig(TbMsgSource.METADATA, DataToFetch.ATTRIBUTES, DUMMY_DEVICE_ORIGINATOR);
 
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
 
@@ -287,7 +273,7 @@ public class TbGetRelatedAttributeNodeTest {
         var customer = new Customer(new CustomerId(UUID.randomUUID()));
         var user = new User(new UserId(UUID.randomUUID()));
 
-        prepareMsgAndConfig(FetchTo.DATA, DataToFetch.ATTRIBUTES, customer.getId());
+        prepareMsgAndConfig(TbMsgSource.DATA, DataToFetch.ATTRIBUTES, customer.getId());
 
         entityRelation.setFrom(customer.getId());
         entityRelation.setTo(user.getId());
@@ -306,7 +292,7 @@ public class TbGetRelatedAttributeNodeTest {
         doReturn(Futures.immediateFuture(List.of(entityRelation))).when(relationServiceMock).findByQuery(eq(TENANT_ID), any());
 
         when(ctxMock.getAttributesService()).thenReturn(attributesServiceMock);
-        when(attributesServiceMock.find(eq(TENANT_ID), eq(user.getId()), eq(SERVER_SCOPE), argThat(new ListMatcher<>(expectedPatternProcessedKeysList))))
+        when(attributesServiceMock.find(eq(TENANT_ID), eq(user.getId()), eq(AttributeScope.SERVER_SCOPE), argThat(new ListMatcher<>(expectedPatternProcessedKeysList))))
                 .thenReturn(Futures.immediateFuture(attributes));
 
         when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
@@ -338,7 +324,7 @@ public class TbGetRelatedAttributeNodeTest {
         var firstCustomer = new Customer(new CustomerId(UUID.randomUUID()));
         var secondCustomer = new Customer(new CustomerId(UUID.randomUUID()));
 
-        prepareMsgAndConfig(FetchTo.METADATA, DataToFetch.ATTRIBUTES, firstCustomer.getId());
+        prepareMsgAndConfig(TbMsgSource.METADATA, DataToFetch.ATTRIBUTES, firstCustomer.getId());
 
         entityRelation.setFrom(firstCustomer.getId());
         entityRelation.setTo(secondCustomer.getId());
@@ -357,7 +343,7 @@ public class TbGetRelatedAttributeNodeTest {
         doReturn(Futures.immediateFuture(List.of(entityRelation))).when(relationServiceMock).findByQuery(eq(TENANT_ID), any());
 
         when(ctxMock.getAttributesService()).thenReturn(attributesServiceMock);
-        when(attributesServiceMock.find(eq(TENANT_ID), eq(secondCustomer.getId()), eq(SERVER_SCOPE), argThat(new ListMatcher<>(expectedPatternProcessedKeysList))))
+        when(attributesServiceMock.find(eq(TENANT_ID), eq(secondCustomer.getId()), eq(AttributeScope.SERVER_SCOPE), argThat(new ListMatcher<>(expectedPatternProcessedKeysList))))
                 .thenReturn(Futures.immediateFuture(attributes));
 
         when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
@@ -389,7 +375,7 @@ public class TbGetRelatedAttributeNodeTest {
         var dashboard = new Dashboard(new DashboardId(UUID.randomUUID()));
         var entityView = new EntityView(new EntityViewId(UUID.randomUUID()));
 
-        prepareMsgAndConfig(FetchTo.DATA, DataToFetch.LATEST_TELEMETRY, dashboard.getId());
+        prepareMsgAndConfig(TbMsgSource.DATA, DataToFetch.LATEST_TELEMETRY, dashboard.getId());
 
         entityRelation.setFrom(dashboard.getId());
         entityRelation.setTo(entityView.getId());
@@ -440,7 +426,7 @@ public class TbGetRelatedAttributeNodeTest {
         var tenant = new Tenant(new TenantId(UUID.randomUUID()));
         var device = new Device(new DeviceId(UUID.randomUUID()));
 
-        prepareMsgAndConfig(FetchTo.METADATA, DataToFetch.LATEST_TELEMETRY, tenant.getId());
+        prepareMsgAndConfig(TbMsgSource.METADATA, DataToFetch.LATEST_TELEMETRY, tenant.getId());
 
         entityRelation.setFrom(tenant.getId());
         entityRelation.setTo(device.getId());
@@ -493,7 +479,7 @@ public class TbGetRelatedAttributeNodeTest {
         device.setName("Device Name");
         var asset = new Asset(new AssetId(UUID.randomUUID()));
 
-        prepareMsgAndConfig(FetchTo.DATA, DataToFetch.FIELDS, asset.getId());
+        prepareMsgAndConfig(TbMsgSource.DATA, DataToFetch.FIELDS, asset.getId());
 
         entityRelation.setFrom(asset.getId());
         entityRelation.setTo(device.getId());
@@ -533,7 +519,7 @@ public class TbGetRelatedAttributeNodeTest {
         device.setName("Device Name");
         var asset = new Asset(new AssetId(UUID.randomUUID()));
 
-        prepareMsgAndConfig(FetchTo.METADATA, DataToFetch.FIELDS, asset.getId());
+        prepareMsgAndConfig(TbMsgSource.METADATA, DataToFetch.FIELDS, asset.getId());
 
         entityRelation.setFrom(asset.getId());
         entityRelation.setTo(device.getId());
@@ -583,7 +569,7 @@ public class TbGetRelatedAttributeNodeTest {
         Assertions.assertEquals(defaultConfig, JacksonUtil.treeToValue(upgrade.getSecond(), defaultConfig.getClass()));
     }
 
-    private void prepareMsgAndConfig(FetchTo fetchTo, DataToFetch dataToFetch, EntityId originator) {
+    private void prepareMsgAndConfig(TbMsgSource fetchTo, DataToFetch dataToFetch, EntityId originator) {
 
         config.setDataToFetch(dataToFetch);
         config.setFetchTo(fetchTo);
@@ -607,7 +593,7 @@ public class TbGetRelatedAttributeNodeTest {
             msgData = "{\"temp\":42,\"humidity\":77,\"messageBodyPattern1\":\"targetKey2\",\"messageBodyPattern2\":\"sourceKey3\"}";
         }
 
-        msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), originator, msgMetaData, msgData);
+        msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, msgMetaData, msgData);
     }
 
     @RequiredArgsConstructor

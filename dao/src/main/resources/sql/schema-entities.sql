@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2023 The Thingsboard Authors
+-- Copyright © 2016-2024 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ CREATE OR REPLACE PROCEDURE insert_tb_schema_settings()
 $$
 BEGIN
     IF (SELECT COUNT(*) FROM tb_schema_settings) = 0 THEN
-        INSERT INTO tb_schema_settings (schema_version) VALUES (3003000);
+        INSERT INTO tb_schema_settings (schema_version) VALUES (3006000);
     END IF;
 END;
 $$;
@@ -103,17 +103,16 @@ CREATE TABLE IF NOT EXISTS audit_log (
 ) PARTITION BY RANGE (created_time);
 
 CREATE TABLE IF NOT EXISTS attribute_kv (
-  entity_type varchar(255),
   entity_id uuid,
-  attribute_type varchar(255),
-  attribute_key varchar(255),
+  attribute_type int,
+  attribute_key int,
   bool_v boolean,
   str_v varchar(10000000),
   long_v bigint,
   dbl_v double precision,
   json_v json,
   last_update_ts bigint,
-  CONSTRAINT attribute_kv_pkey PRIMARY KEY (entity_type, entity_id, attribute_type, attribute_key)
+  CONSTRAINT attribute_kv_pkey PRIMARY KEY (entity_id, attribute_type, attribute_key)
 );
 
 CREATE TABLE IF NOT EXISTS component_descriptor (
@@ -126,7 +125,8 @@ CREATE TABLE IF NOT EXISTS component_descriptor (
     name varchar(255),
     scope varchar(255),
     type varchar(255),
-    clustering_mode varchar(255)
+    clustering_mode varchar(255),
+    has_queue_name boolean DEFAULT false
 );
 
 CREATE TABLE IF NOT EXISTS customer (
@@ -187,6 +187,7 @@ CREATE TABLE IF NOT EXISTS rule_node (
     name varchar(255),
     debug_mode boolean,
     singleton_mode boolean,
+    queue_name varchar(255),
     external_id uuid
 );
 
@@ -482,13 +483,17 @@ CREATE TABLE IF NOT EXISTS user_credentials (
 CREATE TABLE IF NOT EXISTS widget_type (
     id uuid NOT NULL CONSTRAINT widget_type_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
-    alias varchar(255),
-    bundle_alias varchar(255),
+    fqn varchar(512),
     descriptor varchar(1000000),
     name varchar(255),
     tenant_id uuid,
     image varchar(1000000),
-    description varchar(255)
+    deprecated boolean NOT NULL DEFAULT false,
+    description varchar(1024),
+    tags text[],
+    external_id uuid,
+    CONSTRAINT uq_widget_type_fqn UNIQUE (tenant_id, fqn),
+    CONSTRAINT widget_type_external_id_unq_key UNIQUE (tenant_id, external_id)
 );
 
 CREATE TABLE IF NOT EXISTS widgets_bundle (
@@ -498,9 +503,20 @@ CREATE TABLE IF NOT EXISTS widgets_bundle (
     tenant_id uuid,
     title varchar(255),
     image varchar(1000000),
-    description varchar(255),
+    description varchar(1024),
+    widgets_bundle_order int,
     external_id uuid,
+    CONSTRAINT uq_widgets_bundle_alias UNIQUE (tenant_id, alias),
     CONSTRAINT widgets_bundle_external_id_unq_key UNIQUE (tenant_id, external_id)
+);
+
+CREATE TABLE IF NOT EXISTS widgets_bundle_widget (
+    widgets_bundle_id uuid NOT NULL,
+    widget_type_id uuid NOT NULL,
+    widget_type_order int NOT NULL DEFAULT 0,
+    CONSTRAINT widgets_bundle_widget_pkey PRIMARY KEY (widgets_bundle_id, widget_type_id),
+    CONSTRAINT fk_widgets_bundle FOREIGN KEY (widgets_bundle_id) REFERENCES widgets_bundle(id) ON DELETE CASCADE,
+    CONSTRAINT fk_widget_type FOREIGN KEY (widget_type_id) REFERENCES widget_type(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS entity_view (
@@ -533,11 +549,11 @@ CREATE TABLE IF NOT EXISTS ts_kv_latest
     CONSTRAINT ts_kv_latest_pkey PRIMARY KEY (entity_id, key)
 );
 
-CREATE TABLE IF NOT EXISTS ts_kv_dictionary
+CREATE TABLE IF NOT EXISTS key_dictionary
 (
     key    varchar(255) NOT NULL,
     key_id serial UNIQUE,
-    CONSTRAINT ts_key_id_pkey PRIMARY KEY (key)
+    CONSTRAINT key_dictionary_id_pkey PRIMARY KEY (key)
 );
 
 CREATE TABLE IF NOT EXISTS oauth2_params (
@@ -683,6 +699,7 @@ CREATE TABLE IF NOT EXISTS api_usage_state (
     db_storage varchar(32),
     re_exec varchar(32),
     js_exec varchar(32),
+    tbel_exec varchar(32),
     email_exec varchar(32),
     sms_exec varchar(32),
     alarm_exec varchar(32),
@@ -698,8 +715,13 @@ CREATE TABLE IF NOT EXISTS resource (
     resource_key varchar(255) NOT NULL,
     search_text varchar(255),
     file_name varchar(255) NOT NULL,
-    data varchar,
+    data bytea,
     etag varchar,
+    descriptor varchar,
+    preview bytea,
+    is_public boolean default true,
+    public_resource_key varchar(32) unique,
+    external_id uuid,
     CONSTRAINT resource_unq_key UNIQUE (tenant_id, resource_type, resource_key)
 );
 
@@ -826,7 +848,7 @@ CREATE TABLE IF NOT EXISTS notification_request (
     targets VARCHAR(10000) NOT NULL,
     template_id UUID,
     template VARCHAR(10000000),
-    info VARCHAR(1000),
+    info VARCHAR(1000000),
     additional_config VARCHAR(1000),
     originator_entity_id UUID,
     originator_entity_type VARCHAR(32),
@@ -838,8 +860,8 @@ CREATE TABLE IF NOT EXISTS notification_request (
 CREATE TABLE IF NOT EXISTS notification (
     id UUID NOT NULL,
     created_time BIGINT NOT NULL,
-    request_id UUID NULL CONSTRAINT fk_notification_request_id REFERENCES notification_request(id) ON DELETE CASCADE,
-    recipient_id UUID NOT NULL CONSTRAINT fk_notification_recipient_id REFERENCES tb_user(id) ON DELETE CASCADE,
+    request_id UUID,
+    recipient_id UUID NOT NULL,
     type VARCHAR(50) NOT NULL,
     subject VARCHAR(255),
     body VARCHAR(1000) NOT NULL,
@@ -853,4 +875,11 @@ CREATE TABLE IF NOT EXISTS user_settings (
     settings varchar(10000),
     CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES tb_user(id) ON DELETE CASCADE,
     CONSTRAINT user_settings_pkey PRIMARY KEY (user_id, type)
+);
+
+CREATE TABLE IF NOT EXISTS alarm_types (
+    tenant_id uuid NOT NULL,
+    type varchar(255) NOT NULL,
+    CONSTRAINT tenant_id_type_unq_key UNIQUE (tenant_id, type),
+    CONSTRAINT fk_entity_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenant(id) ON DELETE CASCADE
 );

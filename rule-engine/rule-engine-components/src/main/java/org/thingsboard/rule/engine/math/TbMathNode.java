@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
@@ -31,7 +33,7 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
@@ -44,9 +46,10 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.Optional;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -81,9 +84,8 @@ import static org.thingsboard.rule.engine.math.TbMathArgumentType.CONSTANT;
 )
 public class TbMathNode implements TbNode {
 
-    private static final ConcurrentMap<EntityId, Semaphore> semaphores = new ConcurrentReferenceHashMap<>();
+    private static final ConcurrentMap<EntityId, SemaphoreWithQueue<TbMsgTbContextBiFunction>> locks = new ConcurrentReferenceHashMap<>(16, ConcurrentReferenceHashMap.ReferenceType.WEAK);
     private final ThreadLocal<Expression> customExpression = new ThreadLocal<>();
-
     private TbMathNodeConfiguration config;
     private boolean msgBodyToJsonConversionRequired;
 
@@ -108,51 +110,76 @@ public class TbMathNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        var originator = msg.getOriginator();
-        var originatorSemaphore = semaphores.computeIfAbsent(originator, tmp -> new Semaphore(1, true));
-        boolean acquired = tryAcquire(originator, originatorSemaphore);
+        var semaphoreWithQueue = locks.computeIfAbsent(msg.getOriginator(), SemaphoreWithQueue::new);
+        semaphoreWithQueue.getQueue().add(new TbMsgTbContextBiFunction(msg, ctx, this::processMsgAsync));
 
-        if (!acquired) {
-            ctx.tellFailure(msg, new RuntimeException("Failed to process message for originator synchronously"));
-            return;
-        }
+        tryProcessQueue(semaphoreWithQueue);
+    }
 
-        try {
-            var arguments = config.getArguments();
-            Optional<ObjectNode> msgBodyOpt = convertMsgBodyIfRequired(msg);
-            var argumentValues = Futures.allAsList(arguments.stream()
-                    .map(arg -> resolveArguments(ctx, msg, msgBodyOpt, arg)).collect(Collectors.toList()));
-            ListenableFuture<TbMsg> resultMsgFuture = Futures.transformAsync(argumentValues, args ->
-                    updateMsgAndDb(ctx, msg, msgBodyOpt, calculateResult(args)), ctx.getDbCallbackExecutor());
-            DonAsynchron.withCallback(resultMsgFuture, resultMsg -> {
-                try {
-                    ctx.tellSuccess(resultMsg);
-                } finally {
-                    originatorSemaphore.release();
+    void tryProcessQueue(SemaphoreWithQueue<TbMsgTbContextBiFunction> lockAndQueue) {
+        final Semaphore semaphore = lockAndQueue.getSemaphore();
+        final Queue<TbMsgTbContextBiFunction> queue = lockAndQueue.getQueue();
+        while (!queue.isEmpty()) {
+            // The semaphore have to be acquired before EACH poll and released before NEXT poll.
+            // Otherwise, some message will remain unprocessed in queue
+            if (!semaphore.tryAcquire()) {
+                return;
+            }
+            TbMsgTbContextBiFunction tbMsgTbContext = null;
+            try {
+                tbMsgTbContext = queue.poll();
+                if (tbMsgTbContext == null) {
+                    semaphore.release();
+                    continue;
                 }
-            }, t -> {
-                try {
-                    ctx.tellFailure(msg, t);
-                } finally {
-                    originatorSemaphore.release();
+                final TbMsg msg = tbMsgTbContext.getMsg();
+                if (!msg.getCallback().isMsgValid()) {
+                    log.trace("[{}] Skipping non-valid message [{}]", lockAndQueue.getEntityId(), msg);
+                    semaphore.release();
+                    continue;
                 }
-            }, ctx.getDbCallbackExecutor());
-        } catch (Throwable e) {
-            originatorSemaphore.release();
-            log.warn("[{}] Failed to process message: {}", originator, msg, e);
-            throw e;
+                //DO PROCESSING
+                final TbContext ctx = tbMsgTbContext.getCtx();
+                final ListenableFuture<TbMsg> resultMsgFuture = tbMsgTbContext.getBiFunction().apply(ctx, msg);
+                DonAsynchron.withCallback(resultMsgFuture, resultMsg -> {
+                    try {
+                        ctx.tellSuccess(resultMsg);
+                    } finally {
+                        lockAndQueue.getSemaphore().release();
+                        tryProcessQueue(lockAndQueue);
+                    }
+                }, t -> {
+                    try {
+                        ctx.tellFailure(msg, t);
+                    } finally {
+                        lockAndQueue.getSemaphore().release();
+                        tryProcessQueue(lockAndQueue);
+                    }
+                }, ctx.getDbCallbackExecutor());
+            } catch (Throwable t) {
+                semaphore.release();
+                if (tbMsgTbContext == null) { // if no message polled, the loop become infinite, will throw exception
+                    log.error("[{}] Failed to process TbMsgTbContext queue", lockAndQueue.getEntityId(), t);
+                    throw t;
+                }
+                TbMsg msg = tbMsgTbContext.getMsg();
+                TbContext ctx = tbMsgTbContext.getCtx();
+                log.warn("[{}] Failed to process message: {}", lockAndQueue.getEntityId(), msg, t);
+                ctx.tellFailure(msg, t); // you are not allowed to throw here, because queue will remain unprocessed
+                continue; // We are probably the last who process the queue. We have to continue poll until get successful callback or queue is empty
+            }
+            break; //submitted async exact one task. next poll will try on callback
         }
     }
 
-    private boolean tryAcquire(EntityId originator, Semaphore originatorSemaphore) {
-        boolean acquired;
-        try {
-            acquired = originatorSemaphore.tryAcquire(20, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            acquired = false;
-            log.debug("[{}] Failed to acquire semaphore", originator, e);
-        }
-        return acquired;
+    ListenableFuture<TbMsg> processMsgAsync(TbContext ctx, TbMsg msg) {
+        var arguments = config.getArguments();
+        Optional<ObjectNode> msgBodyOpt = convertMsgBodyIfRequired(msg);
+        var argumentValues = Futures.allAsList(arguments.stream()
+                .map(arg -> resolveArguments(ctx, msg, msgBodyOpt, arg)).collect(Collectors.toList()));
+        ListenableFuture<TbMsg> resultMsgFuture = Futures.transformAsync(argumentValues, args ->
+                updateMsgAndDb(ctx, msg, msgBodyOpt, calculateResult(args)), ctx.getDbCallbackExecutor());
+        return resultMsgFuture;
     }
 
     private ListenableFuture<TbMsg> updateMsgAndDb(TbContext ctx, TbMsg msg, Optional<ObjectNode> msgBodyOpt, double result) {
@@ -181,7 +208,7 @@ public class TbMathNode implements TbNode {
     }
 
     private ListenableFuture<Void> saveAttribute(TbContext ctx, TbMsg msg, double result, TbMathResult mathResultDef) {
-        String attributeScope = getAttributeScope(mathResultDef.getAttributeScope());
+        AttributeScope attributeScope = getAttributeScope(mathResultDef.getAttributeScope());
         if (isIntegerResult(mathResultDef, config.getOperation())) {
             var value = toIntValue(result);
             return ctx.getTelemetryService().saveAttrAndNotify(
@@ -248,7 +275,7 @@ public class TbMathNode implements TbNode {
         } else {
             md.putValue(mathResultKey, Double.toString(toDoubleValue(mathResultDef, result)));
         }
-        return TbMsg.transformMsg(msg, md);
+        return TbMsg.transformMsgMetadata(msg, md);
     }
 
     private double calculateResult(List<TbMathArgumentValue> args) {
@@ -347,7 +374,7 @@ public class TbMathNode implements TbNode {
         return function.apply(arg1.getValue(), arg2.getValue());
     }
 
-    private ListenableFuture<TbMathArgumentValue> resolveArguments(TbContext ctx, TbMsg msg, Optional<ObjectNode> msgBodyOpt, TbMathArgument arg) {
+    ListenableFuture<TbMathArgumentValue> resolveArguments(TbContext ctx, TbMsg msg, Optional<ObjectNode> msgBodyOpt, TbMathArgument arg) {
         String argKey = getKeyFromTemplate(msg, arg.getType(), arg.getKey());
         switch (arg.getType()) {
             case CONSTANT:
@@ -357,7 +384,7 @@ public class TbMathNode implements TbNode {
             case MESSAGE_METADATA:
                 return Futures.immediateFuture(TbMathArgumentValue.fromMessageMetadata(arg, argKey, msg.getMetaData()));
             case ATTRIBUTE:
-                String scope = getAttributeScope(arg.getAttributeScope());
+                AttributeScope scope = getAttributeScope(arg.getAttributeScope());
                 return Futures.transform(ctx.getAttributesService().find(ctx.getTenantId(), msg.getOriginator(), scope, argKey),
                         opt -> getTbMathArgumentValue(arg, opt, "Attribute: " + argKey + " with scope: " + scope + " not found for entity: " + msg.getOriginator())
                         , MoreExecutors.directExecutor());
@@ -375,8 +402,8 @@ public class TbMathNode implements TbNode {
         return CONSTANT.equals(type) ? keyPattern : TbNodeUtils.processPattern(keyPattern, msg);
     }
 
-    private String getAttributeScope(String attrScope) {
-        return StringUtils.isEmpty(attrScope) ? DataConstants.SERVER_SCOPE : attrScope;
+    private AttributeScope getAttributeScope(String attrScope) {
+        return StringUtils.isEmpty(attrScope) ? AttributeScope.SERVER_SCOPE : AttributeScope.valueOf(attrScope);
     }
 
     private TbMathArgumentValue getTbMathArgumentValue(TbMathArgument arg, Optional<? extends KvEntry> kvOpt, String error) {
@@ -402,4 +429,21 @@ public class TbMathNode implements TbNode {
     @Override
     public void destroy() {
     }
+
+    @Data
+    @RequiredArgsConstructor
+    static public class SemaphoreWithQueue<T> {
+        final EntityId entityId;
+        final Semaphore semaphore = new Semaphore(1);
+        final Queue<T> queue = new ConcurrentLinkedQueue<>();
+    }
+
+    @Data
+    @RequiredArgsConstructor
+    static public class TbMsgTbContextBiFunction {
+        final TbMsg msg;
+        final TbContext ctx;
+        final BiFunction<TbContext, TbMsg, ListenableFuture<TbMsg>> biFunction;
+    }
+
 }

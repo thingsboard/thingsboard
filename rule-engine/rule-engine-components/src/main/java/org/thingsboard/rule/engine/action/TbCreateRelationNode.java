@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
         ListenableFuture<Boolean> future = createRelationIfAbsent(ctx, msg, entity, relationType);
         return Futures.transform(future, result -> {
             if (result && config.isChangeOriginatorToRelatedEntity()) {
-                TbMsg tbMsg = ctx.transformMsg(msg, msg.getType(), entity.getEntityId(), msg.getMetaData(), msg.getData());
+                TbMsg tbMsg = ctx.transformMsgOriginator(msg, entity.getEntityId());
                 return new RelationContainer(tbMsg, result);
             }
             return new RelationContainer(msg, result);

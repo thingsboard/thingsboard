@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -70,7 +70,8 @@ export class KeyFilterDialogComponent extends
   entityKeyTypes =
     this.data.telemetryKeysOnly ?
       [EntityKeyType.ATTRIBUTE, EntityKeyType.TIME_SERIES, EntityKeyType.CONSTANT] :
-      [EntityKeyType.ENTITY_FIELD, EntityKeyType.ATTRIBUTE, EntityKeyType.TIME_SERIES];
+      [EntityKeyType.ENTITY_FIELD, EntityKeyType.ATTRIBUTE, EntityKeyType.CLIENT_ATTRIBUTE,
+        EntityKeyType.SERVER_ATTRIBUTE, EntityKeyType.SHARED_ATTRIBUTE, EntityKeyType.TIME_SERIES];
 
   entityKeyTypeTranslations = entityKeyTypeTranslationMap;
 

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MatDialogRef } from '@angular/material/dialog';
 import { deepClone, deepTrim } from '@core/utils';
+import tinymce from 'tinymce';
 
 @Directive()
 // tslint:disable-next-line:directive-class-suffix
@@ -43,6 +44,7 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
   emailTemplateForm: FormGroup;
   smsTemplateForm: FormGroup;
   slackTemplateForm: FormGroup;
+  microsoftTeamsTemplateForm: FormGroup;
 
   notificationDeliveryMethods = Object.keys(NotificationDeliveryMethod) as NotificationDeliveryMethod[];
   notificationDeliveryMethodTranslateMap = NotificationDeliveryMethodTranslateMap;
@@ -60,6 +62,7 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
     toolbar: 'fontselect fontsizeselect | formatselect | bold italic  strikethrough  forecolor backcolor ' +
       '| link | table | image | alignleft aligncenter alignright alignjustify  ' +
       '| numlist bullist outdent indent  | removeformat | code | fullscreen',
+    toolbar_mode: 'sliding',
     height: 400,
     autofocus: false,
     branding: false
@@ -95,17 +98,9 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
         icon: this.fb.group({
           enabled: [false],
           icon: [{value: 'notifications', disabled: true}, Validators.required],
-          color: ['#757575']
+          color: [{value: '#757575', disabled: true}]
         }),
-        actionButtonConfig: this.fb.group({
-          enabled: [false],
-          text: [{value: '', disabled: true}, [Validators.required, Validators.maxLength(50)]],
-          linkType: [ActionButtonLinkType.LINK],
-          link: [{value: '', disabled: true}, Validators.required],
-          dashboardId: [{value: null, disabled: true}, Validators.required],
-          dashboardState: [{value: null, disabled: true}],
-          setEntityIdInState: [{value: true, disabled: true}],
-        }),
+        actionButtonConfig: this.createButtonConfigForm()
       })
     });
 
@@ -114,39 +109,10 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
     ).subscribe((value) => {
       if (value) {
         this.webTemplateForm.get('additionalConfig.icon.icon').enable({emitEvent: false});
+        this.webTemplateForm.get('additionalConfig.icon.color').enable({emitEvent: false});
       } else {
         this.webTemplateForm.get('additionalConfig.icon.icon').disable({emitEvent: false});
-      }
-    });
-
-    this.webTemplateForm.get('additionalConfig.actionButtonConfig.enabled').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe((value) => {
-      if (value) {
-        this.webTemplateForm.get('additionalConfig.actionButtonConfig').enable({emitEvent: false});
-        this.webTemplateForm.get('additionalConfig.actionButtonConfig.linkType').updateValueAndValidity({onlySelf: true});
-      } else {
-        this.webTemplateForm.get('additionalConfig.actionButtonConfig').disable({emitEvent: false});
-        this.webTemplateForm.get('additionalConfig.actionButtonConfig.enabled').enable({emitEvent: false});
-      }
-    });
-
-    this.webTemplateForm.get('additionalConfig.actionButtonConfig.linkType').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe((value) => {
-      const isEnabled = this.webTemplateForm.get('additionalConfig.actionButtonConfig.enabled').value;
-      if (isEnabled) {
-        if (value === ActionButtonLinkType.LINK) {
-          this.webTemplateForm.get('additionalConfig.actionButtonConfig.link').enable({emitEvent: false});
-          this.webTemplateForm.get('additionalConfig.actionButtonConfig.dashboardId').disable({emitEvent: false});
-          this.webTemplateForm.get('additionalConfig.actionButtonConfig.dashboardState').disable({emitEvent: false});
-          this.webTemplateForm.get('additionalConfig.actionButtonConfig.setEntityIdInState').disable({emitEvent: false});
-        } else {
-          this.webTemplateForm.get('additionalConfig.actionButtonConfig.link').disable({emitEvent: false});
-          this.webTemplateForm.get('additionalConfig.actionButtonConfig.dashboardId').enable({emitEvent: false});
-          this.webTemplateForm.get('additionalConfig.actionButtonConfig.dashboardState').enable({emitEvent: false});
-          this.webTemplateForm.get('additionalConfig.actionButtonConfig.setEntityIdInState').enable({emitEvent: false});
-        }
+        this.webTemplateForm.get('additionalConfig.icon.color').disable({emitEvent: false});
       }
     });
 
@@ -163,11 +129,19 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
       body: ['', Validators.required]
     });
 
+    this.microsoftTeamsTemplateForm = this.fb.group({
+      subject: [''],
+      body: ['', Validators.required],
+      themeColor: [''],
+      button: this.createButtonConfigForm()
+    });
+
     this.deliveryMethodFormsMap = new Map<NotificationDeliveryMethod, FormGroup>([
       [NotificationDeliveryMethod.WEB, this.webTemplateForm],
       [NotificationDeliveryMethod.EMAIL, this.emailTemplateForm],
       [NotificationDeliveryMethod.SMS, this.smsTemplateForm],
-      [NotificationDeliveryMethod.SLACK, this.slackTemplateForm]
+      [NotificationDeliveryMethod.SLACK, this.slackTemplateForm],
+      [NotificationDeliveryMethod.MICROSOFT_TEAMS, this.microsoftTeamsTemplateForm]
     ]);
   }
 
@@ -197,5 +171,49 @@ export abstract class TemplateConfiguration<T, R = any> extends DialogComponent<
       }
     });
     return deepTrim(template);
+  }
+
+  private createButtonConfigForm(): FormGroup {
+    const form = this.fb.group({
+      enabled: [false],
+      text: [{value: '', disabled: true}, [Validators.required, Validators.maxLength(50)]],
+      linkType: [ActionButtonLinkType.LINK],
+      link: [{value: '', disabled: true}, Validators.required],
+      dashboardId: [{value: null, disabled: true}, Validators.required],
+      dashboardState: [{value: null, disabled: true}],
+      setEntityIdInState: [{value: true, disabled: true}],
+    });
+
+    form.get('enabled').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((value) => {
+      if (value) {
+        form.enable({emitEvent: false});
+        form.get('linkType').updateValueAndValidity({onlySelf: true});
+      } else {
+        form.disable({emitEvent: false});
+        form.get('enabled').enable({emitEvent: false});
+      }
+    });
+
+    form.get('linkType').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((value) => {
+      const isEnabled = form.get('enabled').value;
+      if (isEnabled) {
+        if (value === ActionButtonLinkType.LINK) {
+          form.get('link').enable({emitEvent: false});
+          form.get('dashboardId').disable({emitEvent: false});
+          form.get('dashboardState').disable({emitEvent: false});
+          form.get('setEntityIdInState').disable({emitEvent: false});
+        } else {
+          form.get('link').disable({emitEvent: false});
+          form.get('dashboardId').enable({emitEvent: false});
+          form.get('dashboardState').enable({emitEvent: false});
+          form.get('setEntityIdInState').enable({emitEvent: false});
+        }
+      }
+    });
+    return form;
   }
 }

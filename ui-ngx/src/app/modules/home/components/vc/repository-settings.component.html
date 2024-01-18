@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -80,8 +80,7 @@
               </mat-form-field>
             </section>
             <section [fxShow]="repositorySettingsForm.get('authMethod').value === repositoryAuthMethod.PRIVATE_KEY" fxLayout="column">
-              <tb-file-input style="margin-bottom: 16px;"
-                             [existingFileName]="repositorySettingsForm.get('privateKeyFileName').value"
+              <tb-file-input [existingFileName]="repositorySettingsForm.get('privateKeyFileName').value"
                              required
                              formControlName="privateKey"
                              dropLabel="{{ 'admin.drop-private-key-file-or' | translate }}"

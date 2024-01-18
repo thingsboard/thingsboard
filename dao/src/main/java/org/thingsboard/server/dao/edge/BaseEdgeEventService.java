@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,30 +15,71 @@
  */
 package org.thingsboard.server.dao.edge;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import lombok.AllArgsConstructor;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.service.DataValidator;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Service
 @Slf4j
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class BaseEdgeEventService implements EdgeEventService {
 
     private final EdgeEventDao edgeEventDao;
 
     private final DataValidator<EdgeEvent> edgeEventValidator;
 
+    private final ApplicationEventPublisher eventPublisher;
+
+    private ExecutorService edgeEventExecutor;
+
+    @PostConstruct
+    public void initExecutor() {
+        edgeEventExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("edge-event-service"));
+    }
+
+    @PreDestroy
+    public void shutdownExecutor() {
+        if (edgeEventExecutor != null) {
+            edgeEventExecutor.shutdown();
+        }
+    }
+
     @Override
     public ListenableFuture<Void> saveAsync(EdgeEvent edgeEvent) {
         edgeEventValidator.validate(edgeEvent, EdgeEvent::getTenantId);
-        return edgeEventDao.saveAsync(edgeEvent);
+
+        ListenableFuture<Void> saveFuture = edgeEventDao.saveAsync(edgeEvent);
+
+        Futures.addCallback(saveFuture, new FutureCallback<>() {
+            @Override
+            public void onSuccess(Void result) {
+                eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(edgeEvent.getTenantId())
+                        .entity(edgeEvent).entityId(edgeEvent.getEdgeId()).build());
+            }
+
+            @Override
+            public void onFailure(@NotNull Throwable throwable) {}
+        }, edgeEventExecutor);
+
+        return saveFuture;
     }
 
     @Override

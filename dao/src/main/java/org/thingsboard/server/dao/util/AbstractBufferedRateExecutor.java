@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,7 +121,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
                 perTenantLimitReached = true;
             }
         } else if (tenantId == null) {
-            log.info("Invalid task received: {}", task);
+            log.info("[{}] Invalid task received: {}", getBufferName(), task);
         }
 
         if (!perTenantLimitReached) {
@@ -157,7 +157,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
     public abstract String getBufferName();
 
     private void dispatch() {
-        log.info("Buffered rate executor thread started");
+        log.info("[{}] Buffered rate executor thread started", getBufferName());
         while (!Thread.interrupted()) {
             int curLvl = concurrencyLevel.get();
             AsyncTaskContext<T, V> taskCtx = null;
@@ -169,7 +169,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
                         if (printQueriesIdx.incrementAndGet() >= printQueriesFreq) {
                             printQueriesIdx.set(0);
                             String query = queryToString(finalTaskCtx);
-                            log.info("[{}] Cassandra query: {}", taskCtx.getId(), query);
+                            log.info("[{}][{}] Cassandra query: {}", getBufferName(), taskCtx.getId(), query);
                         }
                     }
                     logTask("Processing", finalTaskCtx);
@@ -222,7 +222,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
                 }
             }
         }
-        log.info("Buffered rate executor thread stopped");
+        log.info("[{}] Buffered rate executor thread stopped", getBufferName());
     }
 
     private void logTask(String action, AsyncTaskContext<T, V> taskCtx) {
@@ -298,7 +298,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
             statsBuilder.append(CONCURRENCY_LEVEL).append(" = [").append(concurrencyLevel.get()).append("] ");
 
             stats.getStatsCounters().forEach(StatsCounter::clear);
-            log.info("Permits {}", statsBuilder);
+            log.info("[{}] Permits {}", getBufferName(), statsBuilder);
         }
 
         stats.getRateLimitedTenants().entrySet().stream()
@@ -314,13 +314,13 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
                             try {
                                 return entityService.fetchEntityName(TenantId.SYS_TENANT_ID, tenantId).orElse(defaultName);
                             } catch (Exception e) {
-                                log.error("[{}] Failed to get tenant name", tenantId, e);
+                                log.error("[{}][{}] Failed to get tenant name", getBufferName(), tenantId, e);
                                 return defaultName;
                             }
                         });
-                        log.info("[{}][{}] Rate limited requests: {}", tenantId, name, rateLimitedRequests);
+                        log.info("[{}][{}][{}] Rate limited requests: {}", getBufferName(), tenantId, name, rateLimitedRequests);
                     } else {
-                        log.info("[{}] Rate limited requests: {}", tenantId, rateLimitedRequests);
+                        log.info("[{}][{}] Rate limited requests: {}", getBufferName(), tenantId, rateLimitedRequests);
                     }
                 });
     }

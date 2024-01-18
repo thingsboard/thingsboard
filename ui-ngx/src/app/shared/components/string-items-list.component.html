@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@
       <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
     </mat-chip-row>
     <input matInput type="text"
+           (blur)="onTouched()"
            placeholder="{{ placeholder }}"
            style="max-width: 300px;min-width: 250px"
            #stringItemInput
@@ -54,7 +55,15 @@
       {{ 'common.not-found' | translate }}
     </mat-option>
   </mat-autocomplete>
-  <mat-hint>{{ hint }}</mat-hint>
+  <mat-hint [hidden]="!hint">
+    {{ hint }}
+  </mat-hint>
+  <mat-hint align="end" [hidden]="!matHintEnd.children.length" #matHintEnd>
+    <ng-content select="[matHintEnd]"></ng-content>
+  </mat-hint>
+  <div matSuffix>
+    <ng-content select="[matSuffix]"></ng-content>
+  </div>
   <mat-error *ngIf="stringItemsForm.get('items').hasError('required')">
     {{ requiredText }}
   </mat-error>

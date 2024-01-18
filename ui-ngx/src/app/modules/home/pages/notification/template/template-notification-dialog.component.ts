@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -54,7 +54,6 @@ export class TemplateNotificationDialogComponent
   @ViewChild('notificationTemplateStepper', {static: true}) notificationTemplateStepper: MatStepper;
 
   stepperOrientation: Observable<StepperOrientation>;
-  stepperLabelPosition: Observable<'bottom' | 'end'>;
 
   dialogTitle = 'notification.edit-notification-template';
 
@@ -81,9 +80,6 @@ export class TemplateNotificationDialogComponent
 
     this.stepperOrientation = this.breakpointObserver.observe(MediaBreakpoints['gt-sm'])
       .pipe(map(({matches}) => matches ? 'horizontal' : 'vertical'));
-
-    this.stepperLabelPosition = this.breakpointObserver.observe(MediaBreakpoints['gt-md'])
-      .pipe(map(({matches}) => matches ? 'end' : 'bottom'));
 
     if (isDefinedAndNotNull(this.data?.predefinedType)) {
       this.hideSelectType = true;

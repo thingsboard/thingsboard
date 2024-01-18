@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2023 The Thingsboard Authors
+-- Copyright © 2016-2024 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -99,19 +99,22 @@ DECLARE
     p RECORD;
     partition_end_ts BIGINT;
 BEGIN
-    FOR p IN SELECT DISTINCT (created_time - created_time % partition_size_ms) AS partition_ts FROM old_edge_event
-             WHERE created_time >= start_time_ms AND created_time < end_time_ms
-        LOOP
-            partition_end_ts = p.partition_ts + partition_size_ms;
-            RAISE NOTICE '[edge_event] Partition to create : [%-%]', p.partition_ts, partition_end_ts;
-            EXECUTE format('CREATE TABLE IF NOT EXISTS edge_event_%s PARTITION OF edge_event ' ||
-                           'FOR VALUES FROM ( %s ) TO ( %s )', p.partition_ts, p.partition_ts, partition_end_ts);
-        END LOOP;
-
-    INSERT INTO edge_event (id, created_time, edge_id, edge_event_type, edge_event_uid, entity_id, edge_event_action, body, tenant_id, ts)
-    SELECT id, created_time, edge_id, edge_event_type, edge_event_uid, entity_id, edge_event_action, body, tenant_id, ts
-    FROM old_edge_event
-    WHERE created_time >= start_time_ms AND created_time < end_time_ms;
+    IF (SELECT exists(SELECT FROM pg_tables WHERE tablename = 'old_edge_event')) THEN
+        FOR p IN SELECT DISTINCT (created_time - created_time % partition_size_ms) AS partition_ts FROM old_edge_event
+                 WHERE created_time >= start_time_ms AND created_time < end_time_ms
+            LOOP
+                partition_end_ts = p.partition_ts + partition_size_ms;
+                RAISE NOTICE '[edge_event] Partition to create : [%-%]', p.partition_ts, partition_end_ts;
+                EXECUTE format('CREATE TABLE IF NOT EXISTS edge_event_%s PARTITION OF edge_event ' ||
+                               'FOR VALUES FROM ( %s ) TO ( %s )', p.partition_ts, p.partition_ts, partition_end_ts);
+            END LOOP;
+        INSERT INTO edge_event (id, created_time, edge_id, edge_event_type, edge_event_uid, entity_id, edge_event_action, body, tenant_id, ts)
+        SELECT id, created_time, edge_id, edge_event_type, edge_event_uid, entity_id, edge_event_action, body, tenant_id, ts
+        FROM old_edge_event
+        WHERE created_time >= start_time_ms AND created_time < end_time_ms;
+    ELSE
+       RAISE NOTICE 'Table old_edge_event does not exists, skipping migration';
+    END IF;
 END;
 $$;
 -- EDGE EVENTS MIGRATION END
@@ -122,3 +125,72 @@ ALTER TABLE resource
 UPDATE resource
     SET etag = encode(sha256(decode(resource.data, 'base64')),'hex') WHERE resource.data is not null;
 
+ALTER TABLE notification_request ALTER COLUMN info SET DATA TYPE varchar(1000000);
+
+DELETE FROM alarm WHERE tenant_id NOT IN (SELECT id FROM tenant);
+
+CREATE TABLE IF NOT EXISTS alarm_types (
+    tenant_id uuid NOT NULL,
+    type varchar(255) NOT NULL,
+    CONSTRAINT tenant_id_type_unq_key UNIQUE (tenant_id, type),
+    CONSTRAINT fk_entity_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenant(id) ON DELETE CASCADE
+);
+
+INSERT INTO alarm_types (tenant_id, type) SELECT DISTINCT tenant_id, type FROM alarm ON CONFLICT (tenant_id, type) DO NOTHING;
+
+ALTER TABLE widgets_bundle ALTER COLUMN description SET DATA TYPE varchar(1024);
+ALTER TABLE widget_type ALTER COLUMN description SET DATA TYPE varchar(1024);
+
+ALTER TABLE widget_type
+    ADD COLUMN IF NOT EXISTS fqn varchar(512);
+ALTER TABLE widget_type
+    ADD COLUMN IF NOT EXISTS deprecated boolean NOT NULL DEFAULT false;
+DO
+$$
+    BEGIN
+        IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname = 'uq_widget_type_fqn') THEN
+            UPDATE widget_type SET fqn = concat(widget_type.bundle_alias, '.', widget_type.alias);
+            ALTER TABLE widget_type ADD CONSTRAINT uq_widget_type_fqn UNIQUE (tenant_id, fqn);
+            ALTER TABLE widget_type DROP COLUMN IF EXISTS alias;
+        END IF;
+    END;
+$$;
+
+ALTER TABLE widget_type
+    ADD COLUMN IF NOT EXISTS external_id UUID;
+DO
+$$
+    BEGIN
+        IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname = 'widget_type_external_id_unq_key') THEN
+            ALTER TABLE widget_type ADD CONSTRAINT widget_type_external_id_unq_key UNIQUE (tenant_id, external_id);
+        END IF;
+    END;
+$$;
+
+DO
+$$
+    BEGIN
+        IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname = 'uq_widgets_bundle_alias') THEN
+            ALTER TABLE widgets_bundle ADD CONSTRAINT uq_widgets_bundle_alias UNIQUE (tenant_id, alias);
+        END IF;
+    END;
+$$;
+
+CREATE TABLE IF NOT EXISTS widgets_bundle_widget (
+    widgets_bundle_id uuid NOT NULL,
+    widget_type_id uuid NOT NULL,
+    widget_type_order int NOT NULL DEFAULT 0,
+    CONSTRAINT widgets_bundle_widget_pkey PRIMARY KEY (widgets_bundle_id, widget_type_id),
+    CONSTRAINT fk_widgets_bundle FOREIGN KEY (widgets_bundle_id) REFERENCES widgets_bundle(id) ON DELETE CASCADE,
+    CONSTRAINT fk_widget_type FOREIGN KEY (widget_type_id) REFERENCES widget_type(id) ON DELETE CASCADE
+);
+
+DO
+$$
+    BEGIN
+        IF EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name = 'widget_type' and column_name='bundle_alias') THEN
+            INSERT INTO widgets_bundle_widget SELECT wb.id as widgets_bundle_id, wt.id as widget_type_id from widget_type wt left join widgets_bundle wb ON wt.bundle_alias = wb.alias AND wt.tenant_id = wb.tenant_id ON CONFLICT (widgets_bundle_id, widget_type_id) DO NOTHING;
+            ALTER TABLE widget_type DROP COLUMN IF EXISTS bundle_alias;
+        END IF;
+    END;
+$$;

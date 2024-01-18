@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
                                 tenantId,
                                 entityId.getEntityType(),
                                 entityId.getId(),
-                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getTextSearch(),
                                 pageLink.getStartTime(),
                                 pageLink.getEndTime(),
                                 actionTypes,
@@ -113,7 +113,7 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
                         .findAuditLogsByTenantIdAndCustomerId(
                                 tenantId,
                                 customerId.getId(),
-                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getTextSearch(),
                                 pageLink.getStartTime(),
                                 pageLink.getEndTime(),
                                 actionTypes,
@@ -127,7 +127,7 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
                         .findAuditLogsByTenantIdAndUserId(
                                 tenantId,
                                 userId.getId(),
-                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getTextSearch(),
                                 pageLink.getStartTime(),
                                 pageLink.getEndTime(),
                                 actionTypes,
@@ -139,7 +139,7 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
         return DaoUtil.toPageData(
                 auditLogRepository.findByTenantId(
                         tenantId,
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         pageLink.getStartTime(),
                         pageLink.getEndTime(),
                         actionTypes,

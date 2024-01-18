@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public class Validator {
 
 
     /**
-     * This method validate <code>long</code> value. If value isn't possitive than throw
+     * This method validate <code>long</code> value. If value isn't positive than throw
      * <code>IncorrectParameterException</code> exception
      *
      * @param val          the val
@@ -155,6 +155,12 @@ public class Validator {
 
     public static boolean isValidProperty(String key) {
         return StringUtils.isEmpty(key) || RegexUtils.matches(key, PROPERTY_PATTERN);
+    }
+
+    public static void checkNotNull(Object reference, String errorMessage) {
+        if (reference == null) {
+            throw new IncorrectParameterException(errorMessage);
+        }
     }
 
 }

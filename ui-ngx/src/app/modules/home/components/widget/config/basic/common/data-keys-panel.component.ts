@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -38,10 +38,9 @@ import {
 import { MatDialog } from '@angular/material/dialog';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKey, DatasourceType, JsonSettingsSchema, widgetType } from '@shared/models/widget.models';
-import { dataKeyRowValidator } from '@home/components/widget/config/basic/common/data-key-row.component';
+import { dataKeyRowValidator, dataKeyValid } from '@home/components/widget/config/basic/common/data-key-row.component';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { alarmFields } from '@shared/models/alarm.models';
 import { UtilsService } from '@core/services/utils.service';
 import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
@@ -100,9 +99,27 @@ export class DataKeysPanelComponent implements ControlValueAccessor, OnInit, OnC
   @coerceBoolean()
   hideDataKeyColor = false;
 
+  @Input()
+  @coerceBoolean()
+  hideUnits = false;
+
+  @Input()
+  @coerceBoolean()
+  hideDecimals = false;
+
+  @Input()
+  @coerceBoolean()
+  hideDataKeyUnits = false;
+
+  @Input()
+  @coerceBoolean()
+  hideDataKeyDecimals = false;
+
+  @Input()
+  @coerceBoolean()
+  hideSourceSelection = false;
+
   dataKeyType: DataKeyType;
-  alarmKeys: Array<DataKey>;
-  functionTypeKeys: Array<DataKey>;
 
   keysListFormGroup: UntypedFormGroup;
 
@@ -117,7 +134,7 @@ export class DataKeysPanelComponent implements ControlValueAccessor, OnInit, OnC
   }
 
   get hasAdditionalLatestDataKeys(): boolean {
-    return this.widgetConfigComponent.widgetType === widgetType.timeseries &&
+    return !this.hideSourceSelection && this.widgetConfigComponent.widgetType === widgetType.timeseries &&
       this.widgetConfigComponent.modelValue?.typeParameters?.hasAdditionalLatestDataKeys;
   }
 
@@ -151,22 +168,14 @@ export class DataKeysPanelComponent implements ControlValueAccessor, OnInit, OnC
       keys: [this.fb.array([]), []]
     });
     this.keysListFormGroup.valueChanges.subscribe(
-      (val) => this.propagateChange(this.keysListFormGroup.get('keys').value)
+      () => {
+        let keys: DataKey[] = this.keysListFormGroup.get('keys').value;
+        if (keys) {
+          keys = keys.filter(k => dataKeyValid(k));
+        }
+        this.propagateChange(keys);
+      }
     );
-    this.alarmKeys = [];
-    for (const name of Object.keys(alarmFields)) {
-      this.alarmKeys.push({
-        name,
-        type: DataKeyType.alarm
-      });
-    }
-    this.functionTypeKeys = [];
-    for (const type of this.utils.getPredefinedFunctionsList()) {
-      this.functionTypeKeys.push({
-        name: type,
-        type: DataKeyType.function
-      });
-    }
     this.updateParams();
   }
 

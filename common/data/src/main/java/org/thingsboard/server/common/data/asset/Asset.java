@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,7 +130,7 @@ public class Asset extends BaseDataWithAdditionalInfo<AssetId> implements HasLab
         this.name = name;
     }
 
-    @Schema(required = true, description = "Asset type", example = "Building")
+    @Schema(description = "Asset type", example = "Building")
     public String getType() {
         return type;
     }
@@ -139,7 +139,7 @@ public class Asset extends BaseDataWithAdditionalInfo<AssetId> implements HasLab
         this.type = type;
     }
 
-    @Schema(required = true, description = "Label that may be used in widgets", example = "NY Building")
+    @Schema(description = "Label that may be used in widgets", example = "NY Building")
     public String getLabel() {
         return label;
     }
@@ -148,7 +148,7 @@ public class Asset extends BaseDataWithAdditionalInfo<AssetId> implements HasLab
         this.label = label;
     }
 
-    @Schema(required = true, description = "JSON object with Asset Profile Id.")
+    @Schema(description = "JSON object with Asset Profile Id.")
     public AssetProfileId getAssetProfileId() {
         return assetProfileId;
     }

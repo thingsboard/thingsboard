@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,16 +20,9 @@
     <div class="tb-card-header">
       <a class="tb-title-link" routerLink="/dashboards">{{ 'widgets.recent-dashboards.title' | translate }}</a>
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutAlign.lt-md="space-between center" fxLayoutGap="8px">
-        <tb-toggle-header #dashboardsToggle [value]="toggleValue" name="usageToggle" (valueChange)="toggleValueChange($event)" [options]="[
-          {
-            name: ctx.translate.instant('widgets.recent-dashboards.last'),
-            value: 'last'
-          },
-          {
-            name: ctx.translate.instant('widgets.recent-dashboards.starred'),
-            value: 'starred'
-          }
-        ]">
+        <tb-toggle-header #dashboardsToggle [value]="toggleValue" name="usageToggle" (valueChange)="toggleValueChange($event)">
+          <tb-toggle-option value="last">{{ 'widgets.recent-dashboards.last' | translate }}</tb-toggle-option>
+          <tb-toggle-option value="starred">{{ 'widgets.recent-dashboards.starred' | translate }}</tb-toggle-option>
         </tb-toggle-header>
         <a *ngIf="authUser.authority === authority.TENANT_ADMIN" fxHide.md
            mat-flat-button color="primary" routerLink="/dashboards" [queryParams]="{action: 'add'}">{{ 'dashboard.add' | translate }}</a>

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -41,26 +41,16 @@
 </button>
 <section *ngIf="!asButton"
          class="tb-timewindow"
-         fxLayout="row"
-         fxLayoutAlign="start center">
-  <button *ngIf="direction === 'left'" [disabled]="timewindowDisabled" mat-icon-button class="tb-mat-32"
-          type="button"
-          (click)="toggleTimewindow($event)"
-          matTooltip="{{ 'timewindow.edit' | translate }}"
-          [matTooltipPosition]="tooltipPosition">
-    <mat-icon class="material-icons">query_builder</mat-icon>
-  </button>
-  <span [fxHide]="hideLabel"
-        (click)="toggleTimewindow($event)"
-        matTooltip="{{ 'timewindow.edit' | translate }}"
-        [matTooltipPosition]="tooltipPosition">
+         [class]="{'no-padding': noPadding}"
+         matTooltip="{{ 'timewindow.edit' | translate }}"
+         [matTooltipPosition]="tooltipPosition"
+         [style]="timewindowComponentStyle"
+         (click)="toggleTimewindow($event)">
+  <tb-icon *ngIf="computedTimewindowStyle.showIcon && computedTimewindowStyle.iconPosition === 'left'"
+           [style]="timewindowIconStyle">{{ computedTimewindowStyle.icon }}</tb-icon>
+  <div class="tb-timewindow-label" [fxHide]="hideLabel">
     {{innerValue?.displayValue}} <span [fxShow]="innerValue?.displayTimezoneAbbr !== ''">| <span class="timezone-abbr">{{innerValue?.displayTimezoneAbbr}}</span></span>
-  </span>
-  <button *ngIf="direction === 'right'" [disabled]="timewindowDisabled" mat-icon-button class="tb-mat-32"
-          type="button"
-          (click)="toggleTimewindow($event)"
-          matTooltip="{{ 'timewindow.edit' | translate }}"
-          [matTooltipPosition]="tooltipPosition">
-    <mat-icon class="material-icons">query_builder</mat-icon>
-  </button>
+  </div>
+  <tb-icon *ngIf="computedTimewindowStyle.showIcon && computedTimewindowStyle.iconPosition === 'right'"
+           [style]="timewindowIconStyle">{{ computedTimewindowStyle.icon }}</tb-icon>
 </section>

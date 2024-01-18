@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
+import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -31,19 +32,30 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.alarm.AlarmDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -98,7 +110,7 @@ public class AlarmControllerTest extends AbstractControllerTest {
 
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
 
-        testNotifyEntityAllOneTime(alarm, alarm.getId(), alarm.getOriginator(),
+        testNotifyEntityOneTimeMsgToEdgeServiceNever(alarm, alarm.getId(), alarm.getOriginator(),
                 tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.ADDED);
     }
 
@@ -110,7 +122,7 @@ public class AlarmControllerTest extends AbstractControllerTest {
 
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
 
-        testNotifyEntityAllOneTime(alarm, alarm.getId(), alarm.getOriginator(),
+        testNotifyEntityOneTimeMsgToEdgeServiceNever(alarm, alarm.getId(), alarm.getOriginator(),
                 tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ADDED);
     }
 
@@ -127,7 +139,7 @@ public class AlarmControllerTest extends AbstractControllerTest {
         Assert.assertEquals(AlarmSeverity.MAJOR, updatedAlarm.getSeverity());
 
         AlarmInfo foundAlarm = doGet("/api/alarm/info/" + updatedAlarm.getId(), AlarmInfo.class);
-        testNotifyEntityAllOneTime(foundAlarm, updatedAlarm.getId(), updatedAlarm.getOriginator(),
+        testNotifyEntityOneTimeMsgToEdgeServiceNever(foundAlarm, updatedAlarm.getId(), updatedAlarm.getOriginator(),
                 tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.UPDATED);
     }
 
@@ -144,7 +156,7 @@ public class AlarmControllerTest extends AbstractControllerTest {
         Assert.assertEquals(AlarmSeverity.MAJOR, updatedAlarm.getSeverity());
 
         AlarmInfo foundAlarm = doGet("/api/alarm/info/" + updatedAlarm.getId(), AlarmInfo.class);
-        testNotifyEntityAllOneTime(foundAlarm, foundAlarm.getId(), foundAlarm.getOriginator(),
+        testNotifyEntityOneTimeMsgToEdgeServiceNever(foundAlarm, foundAlarm.getId(), foundAlarm.getOriginator(),
                 tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.UPDATED);
 
         alarm = updatedAlarm;
@@ -156,8 +168,10 @@ public class AlarmControllerTest extends AbstractControllerTest {
         Assert.assertEquals(alarm.getAckTs(), updatedAlarm.getAckTs());
 
         foundAlarm = doGet("/api/alarm/info/" + updatedAlarm.getId(), AlarmInfo.class);
-        testNotifyEntityAllOneTime(foundAlarm, foundAlarm.getId(), foundAlarm.getOriginator(),
-                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ALARM_ACK);
+
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(foundAlarm, customerDevice, tenantId,
+                customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ALARM_ACK, 1, 1, 1);
+        Mockito.reset(tbClusterService, auditLogService);
 
         alarm = updatedAlarm;
         alarm.setCleared(true);
@@ -168,8 +182,10 @@ public class AlarmControllerTest extends AbstractControllerTest {
         Assert.assertEquals(alarm.getClearTs(), updatedAlarm.getClearTs());
 
         foundAlarm = doGet("/api/alarm/info/" + updatedAlarm.getId(), AlarmInfo.class);
-        testNotifyEntityAllOneTime(foundAlarm, foundAlarm.getId(), foundAlarm.getOriginator(),
-                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ALARM_CLEAR);
+
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(foundAlarm, customerDevice, tenantId,
+                customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ALARM_CLEAR, 1, 1, 1);
+        Mockito.reset(tbClusterService, auditLogService);
 
         alarm = updatedAlarm;
         alarm.setAssigneeId(tenantAdminUserId);
@@ -180,8 +196,10 @@ public class AlarmControllerTest extends AbstractControllerTest {
         Assert.assertEquals(alarm.getAssignTs(), updatedAlarm.getAssignTs());
 
         foundAlarm = doGet("/api/alarm/info/" + updatedAlarm.getId(), AlarmInfo.class);
-        testNotifyEntityAllOneTime(foundAlarm, foundAlarm.getId(), foundAlarm.getOriginator(),
-                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ALARM_ASSIGNED);
+
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(foundAlarm, customerDevice, tenantId,
+                customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ALARM_ASSIGNED, 1, 1, 1);
+        Mockito.reset(tbClusterService, auditLogService);
 
         alarm = updatedAlarm;
         alarm.setAssigneeId(null);
@@ -192,8 +210,11 @@ public class AlarmControllerTest extends AbstractControllerTest {
         Assert.assertEquals(alarm.getAssignTs(), updatedAlarm.getAssignTs());
 
         foundAlarm = doGet("/api/alarm/info/" + updatedAlarm.getId(), AlarmInfo.class);
-        testNotifyEntityAllOneTime(foundAlarm, foundAlarm.getId(), foundAlarm.getOriginator(),
-                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ALARM_UNASSIGNED);
+
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(foundAlarm, customerDevice, tenantId,
+                customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ALARM_UNASSIGNED, 1, 1, 1);
+        Mockito.reset(tbClusterService, auditLogService);
+
     }
 
     @Test
@@ -239,7 +260,7 @@ public class AlarmControllerTest extends AbstractControllerTest {
 
         doDelete("/api/alarm/" + alarm.getId()).andExpect(status().isOk());
 
-        testNotifyEntityOneTimeMsgToEdgeServiceNever(new Alarm(alarm), alarm.getId(), alarm.getOriginator(),
+        testNotifyEntityAllOneTime(new Alarm(alarm), alarm.getId(), alarm.getOriginator(),
                 tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.DELETED);
     }
 
@@ -252,7 +273,7 @@ public class AlarmControllerTest extends AbstractControllerTest {
 
         doDelete("/api/alarm/" + alarm.getId()).andExpect(status().isOk());
 
-        testNotifyEntityOneTimeMsgToEdgeServiceNever(new Alarm(alarm), alarm.getId(), alarm.getOriginator(),
+        testNotifyEntityAllOneTime(new Alarm(alarm), alarm.getId(), alarm.getOriginator(),
                 tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.DELETED);
     }
 
@@ -530,6 +551,154 @@ public class AlarmControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testUnassignTenantUserAlarmOnUserRemoving() throws Exception {
+        loginDifferentTenant();
+
+        User user = new User();
+        user.setAuthority(Authority.TENANT_ADMIN);
+        user.setTenantId(tenantId);
+        user.setEmail("tenantForAssign@thingsboard.org");
+        User savedUser = createUser(user, "password");
+
+        Device device = createDevice("Different tenant device", "default", "differentTenantTest");
+
+        Alarm alarm = Alarm.builder()
+                .type(TEST_ALARM_TYPE)
+                .tenantId(savedDifferentTenant.getId())
+                .originator(device.getId())
+                .severity(AlarmSeverity.MAJOR)
+                .build();
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+        Assert.assertNotNull(alarm);
+
+        alarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
+        Assert.assertNotNull(alarm);
+        AlarmId alarmId = alarm.getId();
+
+        long beforeAssignmentTs = System.currentTimeMillis();
+
+        doPost("/api/alarm/" + alarmId.getId() + "/assign/" + savedUser.getId().getId()).andExpect(status().isOk());
+        Alarm foundAlarm = doGet("/api/alarm/info/" + alarmId.getId(), AlarmInfo.class);
+
+        Assert.assertNotNull(foundAlarm);
+        Assert.assertEquals(savedUser.getId(), foundAlarm.getAssigneeId());
+        Assert.assertTrue(foundAlarm.getAssignTs() >= beforeAssignmentTs);
+
+        beforeAssignmentTs = System.currentTimeMillis();
+
+        loginSysAdmin();
+
+        doDelete("/api/user/" + savedUser.getId().getId()).andExpect(status().isOk());
+
+        loginDifferentTenant();
+
+        foundAlarm = Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> doGet("/api/alarm/info/" + alarmId.getId(), AlarmInfo.class), Objects::nonNull);
+
+        Assert.assertNotNull(foundAlarm);
+        Assert.assertNull(foundAlarm.getAssigneeId());
+        Assert.assertTrue(foundAlarm.getAssignTs() >= beforeAssignmentTs);
+    }
+
+    @Test
+    public void testUnassignAlarmOnUserRemoving() throws Exception {
+        loginDifferentTenant();
+
+        User user = new User();
+        user.setAuthority(Authority.TENANT_ADMIN);
+        user.setTenantId(tenantId);
+        user.setEmail("tenantForAssign@thingsboard.org");
+        User savedUser = createUser(user, "password");
+
+        Device device = createDevice("Different tenant device", "default", "differentTenantTest");
+
+        Alarm alarm = Alarm.builder()
+                .type(TEST_ALARM_TYPE)
+                .tenantId(savedDifferentTenant.getId())
+                .originator(device.getId())
+                .severity(AlarmSeverity.MAJOR)
+                .build();
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+        Assert.assertNotNull(alarm);
+        AlarmId alarmId = alarm.getId();
+        alarm = doGet("/api/alarm/info/" + alarmId.getId(), AlarmInfo.class);
+        Assert.assertNotNull(alarm);
+        long beforeAssignmentTs = System.currentTimeMillis();
+
+        doPost("/api/alarm/" + alarmId.getId() + "/assign/" + savedUser.getId().getId()).andExpect(status().isOk());
+        AlarmInfo foundAlarm = doGet("/api/alarm/info/" + alarmId.getId(), AlarmInfo.class);
+        Assert.assertNotNull(foundAlarm);
+        Assert.assertEquals(savedUser.getId(), foundAlarm.getAssigneeId());
+        Assert.assertTrue(foundAlarm.getAssignTs() >= beforeAssignmentTs);
+
+        beforeAssignmentTs = System.currentTimeMillis();
+
+        doDelete("/api/user/" + savedUser.getId().getId()).andExpect(status().isOk());
+
+        foundAlarm = Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> doGet("/api/alarm/info/" + alarmId.getId(), AlarmInfo.class), Objects::nonNull);
+
+        Assert.assertNotNull(foundAlarm);
+        Assert.assertNull(foundAlarm.getAssigneeId());
+        Assert.assertTrue(foundAlarm.getAssignTs() >= beforeAssignmentTs);
+    }
+
+    @Test
+    public void testUnassignAlarmOnCustomerRemoving() throws Exception {
+        createDifferentTenantCustomer();
+        loginDifferentTenant();
+
+        User user = new User();
+        user.setAuthority(Authority.CUSTOMER_USER);
+        user.setTenantId(tenantId);
+        user.setCustomerId(differentTenantCustomerId);
+        user.setEmail("customerForAssign@thingsboard.org");
+        User savedUser = createUser(user, "password");
+
+        Device device = createDevice("Different customer device", "default", "differentTenantTest");
+
+        Device assignedDevice = doPost("/api/customer/" + differentTenantCustomerId.getId()
+                + "/device/" + device.getId().getId(), Device.class);
+        Assert.assertEquals(differentTenantCustomerId, assignedDevice.getCustomerId());
+
+        Alarm alarm = Alarm.builder()
+                .type(TEST_ALARM_TYPE)
+                .tenantId(savedDifferentTenant.getId())
+                .customerId(differentTenantCustomerId)
+                .originator(device.getId())
+                .severity(AlarmSeverity.MAJOR)
+                .build();
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+        Assert.assertNotNull(alarm);
+        AlarmId alarmId = alarm.getId();
+
+        alarm = doGet("/api/alarm/info/" + alarmId.getId(), AlarmInfo.class);
+        Assert.assertNotNull(alarm);
+
+        Mockito.reset(tbClusterService, auditLogService);
+        long beforeAssignmentTs = System.currentTimeMillis();
+
+        doPost("/api/alarm/" + alarmId.getId() + "/assign/" + savedUser.getId().getId()).andExpect(status().isOk());
+        AlarmInfo foundAlarm = doGet("/api/alarm/info/" + alarmId.getId(), AlarmInfo.class);
+        Assert.assertNotNull(foundAlarm);
+        Assert.assertEquals(savedUser.getId(), foundAlarm.getAssigneeId());
+        Assert.assertTrue(foundAlarm.getAssignTs() >= beforeAssignmentTs);
+
+        beforeAssignmentTs = System.currentTimeMillis();
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        doDelete("/api/customer/" + differentTenantCustomerId.getId()).andExpect(status().isOk());
+
+        foundAlarm = Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> doGet("/api/alarm/info/" + alarmId.getId(), AlarmInfo.class), Objects::nonNull);
+
+        Assert.assertNotNull(foundAlarm);
+        Assert.assertNull(foundAlarm.getAssigneeId());
+        Assert.assertTrue(foundAlarm.getAssignTs() >= beforeAssignmentTs);
+    }
+
+    @Test
     public void testFindAlarmsViaCustomerUser() throws Exception {
         loginCustomerUser();
 
@@ -603,7 +772,7 @@ public class AlarmControllerTest extends AbstractControllerTest {
         alarm = doPost("/api/alarm", alarm, Alarm.class);
         Assert.assertNotNull("Saved alarm is null!", alarm);
 
-        testNotifyEntityNeverMsgToEdgeServiceOneTime(alarm, alarm.getId(), tenantId, ActionType.ADDED);
+        testNotifyEntityNever(alarm.getId(), alarm);
 
         resetTokens();
 
@@ -640,10 +809,14 @@ public class AlarmControllerTest extends AbstractControllerTest {
     }
 
     private AlarmInfo createAlarm(String type) throws Exception {
+        return createAlarm(type, customerDevice.getId(), customerId);
+    }
+
+    private AlarmInfo createAlarm(String type, EntityId originatorId, CustomerId customerId) throws Exception {
         Alarm alarm = Alarm.builder()
                 .tenantId(tenantId)
                 .customerId(customerId)
-                .originator(customerDevice.getId())
+                .originator(originatorId)
                 .severity(AlarmSeverity.CRITICAL)
                 .type(type)
                 .build();
@@ -689,6 +862,168 @@ public class AlarmControllerTest extends AbstractControllerTest {
                 .build();
 
         doPost("/api/alarm", alarm).andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void testSaveAlarmTypes() throws Exception {
+        loginTenantAdmin();
+
+        List<String> types = new ArrayList<>();
+
+        for (int i = 1; i < 13; i++) {
+            types.add(createAlarm(TEST_ALARM_TYPE + i).getType());
+        }
+
+        Device device = new Device();
+        device.setName("Test device 2");
+        device.setCustomerId(customerId);
+        customerDevice = doPost("/api/device", device, Device.class);
+
+        for (int i = 1; i < 10; i++) {
+            createAlarm(TEST_ALARM_TYPE + i);
+        }
+
+        List<String> foundTypes = doGetTyped("/api/alarm/types?pageSize=1024&page=0", new TypeReference<PageData<EntitySubtype>>() {
+        })
+                .getData()
+                .stream()
+                .map(EntitySubtype::getType)
+                .collect(Collectors.toList());
+
+        Collections.sort(types);
+        Collections.sort(foundTypes);
+
+        Assert.assertEquals(types, foundTypes);
+    }
+
+    @Test
+    public void testDeleteAlarmTypes() throws Exception {
+        loginTenantAdmin();
+
+        List<AlarmInfo> alarms = new ArrayList<>();
+
+        for (int i = 1; i < 13; i++) {
+            alarms.add(createAlarm(TEST_ALARM_TYPE + i));
+        }
+
+        Device device = new Device();
+        device.setName("Test device 2");
+        device.setCustomerId(customerId);
+        customerDevice = doPost("/api/device", device, Device.class);
+
+        for (int i = 1; i < 14; i++) {
+            alarms.add(createAlarm(TEST_ALARM_TYPE + i));
+        }
+
+        List<String> expectedTypes = alarms.stream().map(AlarmInfo::getType).distinct().sorted().collect(Collectors.toList());
+
+        List<String> foundTypes = doGetTyped("/api/alarm/types?pageSize=1024&page=0", new TypeReference<PageData<EntitySubtype>>() {
+        })
+                .getData()
+                .stream()
+                .map(EntitySubtype::getType)
+                .sorted()
+                .collect(Collectors.toList());
+
+        Assert.assertEquals(13, foundTypes.size());
+        Assert.assertEquals(expectedTypes, foundTypes);
+
+        for (int i = 0; i < 12; i++) {
+            doDelete("/api/alarm/" + alarms.get(i).getId()).andExpect(status().isOk());
+        }
+
+        foundTypes = doGetTyped("/api/alarm/types?pageSize=1024&page=0", new TypeReference<PageData<EntitySubtype>>() {
+        })
+                .getData()
+                .stream()
+                .map(EntitySubtype::getType)
+                .sorted()
+                .collect(Collectors.toList());
+
+        Assert.assertEquals(13, foundTypes.size());
+        Assert.assertEquals(expectedTypes, foundTypes);
+
+        doDelete("/api/alarm/" + alarms.get(12).getId()).andExpect(status().isOk());
+
+        foundTypes = doGetTyped("/api/alarm/types?pageSize=1024&page=0", new TypeReference<PageData<EntitySubtype>>() {
+        })
+                .getData()
+                .stream()
+                .map(EntitySubtype::getType)
+                .sorted()
+                .collect(Collectors.toList());
+
+        Assert.assertEquals(12, foundTypes.size());
+
+        for (int i = 13; i < alarms.size(); i++) {
+            doDelete("/api/alarm/" + alarms.get(i).getId()).andExpect(status().isOk());
+        }
+
+        foundTypes = doGetTyped("/api/alarm/types?pageSize=1024&page=0", new TypeReference<PageData<EntitySubtype>>() {
+        })
+                .getData()
+                .stream()
+                .map(EntitySubtype::getType)
+                .sorted()
+                .collect(Collectors.toList());
+
+        Assert.assertTrue(foundTypes.isEmpty());
+    }
+
+    @Test
+    public void testDeleteAlarmTypesAfterDeletingAlarmOriginator() throws Exception {
+        loginTenantAdmin();
+
+        List<Device> devices = new ArrayList<>();
+        List<String> types = new ArrayList<>();
+
+        for (int i = 0; i < 13; i++) {
+            Device device = new Device();
+            device.setName("Test_device_" + i);
+            devices.add(device = doPost("/api/device", device, Device.class));
+            types.add(createAlarm(TEST_ALARM_TYPE + i, device.getId(), null).getType());
+        }
+
+        devices.sort(Comparator.comparing(Device::getName));
+        Collections.sort(types);
+
+        List<String> foundTypes = doGetTyped("/api/alarm/types?pageSize=1024&page=0", new TypeReference<PageData<EntitySubtype>>() {
+        })
+                .getData()
+                .stream()
+                .map(EntitySubtype::getType)
+                .sorted()
+                .collect(Collectors.toList());
+
+        Assert.assertEquals(13, foundTypes.size());
+        Assert.assertEquals(types, foundTypes);
+
+        for (int i = 0; i < 12; i++) {
+            doDelete("/api/device/" + devices.remove(0).getId()).andExpect(status().isOk());
+            types.remove(0);
+        }
+
+        foundTypes = doGetTyped("/api/alarm/types?pageSize=1024&page=0", new TypeReference<PageData<EntitySubtype>>() {
+        })
+                .getData()
+                .stream()
+                .map(EntitySubtype::getType)
+                .collect(Collectors.toList());
+
+        Assert.assertEquals(types.size(), foundTypes.size());
+        Assert.assertEquals(types, foundTypes);
+
+        doDelete("/api/device/" + devices.get(0).getId()).andExpect(status().isOk());
+
+        foundTypes = doGetTyped("/api/alarm/types?pageSize=1024&page=0", new TypeReference<PageData<EntitySubtype>>() {
+        })
+                .getData()
+                .stream()
+                .map(EntitySubtype::getType)
+                .sorted()
+                .collect(Collectors.toList());
+
+        Assert.assertTrue(foundTypes.isEmpty());
     }
 
 }

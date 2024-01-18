@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import java.io.Serializable;
 
 import static org.thingsboard.server.dao.model.ModelConstants.BOOLEAN_VALUE_COLUMN;
@@ -65,19 +66,22 @@ public class AttributeKvEntity implements ToData<AttributeKvEntry>, Serializable
     @Column(name = LAST_UPDATE_TS_COLUMN)
     private Long lastUpdateTs;
 
+    @Transient
+    protected String strKey;
+
     @Override
     public AttributeKvEntry toData() {
         KvEntry kvEntry = null;
         if (strValue != null) {
-            kvEntry = new StringDataEntry(id.getAttributeKey(), strValue);
+            kvEntry = new StringDataEntry(strKey, strValue);
         } else if (booleanValue != null) {
-            kvEntry = new BooleanDataEntry(id.getAttributeKey(), booleanValue);
+            kvEntry = new BooleanDataEntry(strKey, booleanValue);
         } else if (doubleValue != null) {
-            kvEntry = new DoubleDataEntry(id.getAttributeKey(), doubleValue);
+            kvEntry = new DoubleDataEntry(strKey, doubleValue);
         } else if (longValue != null) {
-            kvEntry = new LongDataEntry(id.getAttributeKey(), longValue);
+            kvEntry = new LongDataEntry(strKey, longValue);
         } else if (jsonValue != null) {
-            kvEntry = new JsonDataEntry(id.getAttributeKey(), jsonValue);
+            kvEntry = new JsonDataEntry(strKey, jsonValue);
         }
 
         return new BaseAttributeKvEntry(kvEntry, lastUpdateTs);

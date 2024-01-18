@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@app/shared/shared.module';
-import { EntitiesTableWidgetComponent } from '@home/components/widget/lib/entities-table-widget.component';
+import { EntitiesTableWidgetComponent } from '@home/components/widget/lib/entity/entities-table-widget.component';
 import { DisplayColumnsPanelComponent } from '@home/components/widget/lib/display-columns-panel.component';
-import { AlarmsTableWidgetComponent } from '@home/components/widget/lib/alarms-table-widget.component';
+import { AlarmsTableWidgetComponent } from '@home/components/widget/lib/alarm/alarms-table-widget.component';
 import { SharedHomeComponentsModule } from '@home/components/shared-home-components.module';
 import { TimeseriesTableWidgetComponent } from '@home/components/widget/lib/timeseries-table-widget.component';
-import { EntitiesHierarchyWidgetComponent } from '@home/components/widget/lib/entities-hierarchy-widget.component';
+import { EntitiesHierarchyWidgetComponent } from '@home/components/widget/lib/entity/entities-hierarchy-widget.component';
 import { RpcWidgetsModule } from '@home/components/widget/lib/rpc/rpc-widgets.module';
 import {
   DateRangeNavigatorPanelComponent,
@@ -43,6 +43,33 @@ import { HomePageWidgetsModule } from '@home/components/widget/lib/home-page/hom
 import { WIDGET_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
 import { FlotWidgetComponent } from '@home/components/widget/lib/flot-widget.component';
 import { LegendComponent } from '@home/components/widget/lib/legend.component';
+import { GatewayConnectorComponent } from '@home/components/widget/lib/gateway/gateway-connectors.component';
+import { GatewayLogsComponent } from '@home/components/widget/lib/gateway/gateway-logs.component';
+import { GatewayStatisticsComponent } from '@home/components/widget/lib/gateway/gateway-statistics.component';
+import { GatewayServiceRPCComponent } from '@home/components/widget/lib/gateway/gateway-service-rpc.component';
+import { DeviceGatewayCommandComponent } from '@home/components/widget/lib/gateway/device-gateway-command.component';
+import { GatewayConfigurationComponent } from '@home/components/widget/lib/gateway/gateway-configuration.component';
+import {
+  GatewayRemoteConfigurationDialogComponent
+} from '@home/components/widget/lib/gateway/gateway-remote-configuration-dialog';
+import { ValueCardWidgetComponent } from '@home/components/widget/lib/cards/value-card-widget.component';
+import {
+  AggregatedValueCardWidgetComponent
+} from '@home/components/widget/lib/cards/aggregated-value-card-widget.component';
+import { CountWidgetComponent } from '@home/components/widget/lib/count/count-widget.component';
+import { BatteryLevelWidgetComponent } from '@home/components/widget/lib/indicator/battery-level-widget.component';
+import {
+  WindSpeedDirectionWidgetComponent
+} from '@home/components/widget/lib/weather/wind-speed-direction-widget.component';
+import { SignalStrengthWidgetComponent } from '@home/components/widget/lib/indicator/signal-strength-widget.component';
+import { ValueChartCardWidgetComponent } from '@home/components/widget/lib/cards/value-chart-card-widget.component';
+import { ProgressBarWidgetComponent } from '@home/components/widget/lib/cards/progress-bar-widget.component';
+import { LiquidLevelWidgetComponent } from '@home/components/widget/lib/indicator/liquid-level-widget.component';
+import { DoughnutWidgetComponent } from '@home/components/widget/lib/chart/doughnut-widget.component';
+import { RangeChartWidgetComponent } from '@home/components/widget/lib/chart/range-chart-widget.component';
+import {
+  BarChartWithLabelsWidgetComponent
+} from '@home/components/widget/lib/chart/bar-chart-with-labels-widget.component';
 
 @NgModule({
   declarations:
@@ -66,7 +93,26 @@ import { LegendComponent } from '@home/components/widget/lib/legend.component';
       MarkdownWidgetComponent,
       SelectEntityDialogComponent,
       LegendComponent,
-      FlotWidgetComponent
+      FlotWidgetComponent,
+      GatewayConnectorComponent,
+      GatewayLogsComponent,
+      GatewayStatisticsComponent,
+      GatewayServiceRPCComponent,
+      DeviceGatewayCommandComponent,
+      GatewayConfigurationComponent,
+      GatewayRemoteConfigurationDialogComponent,
+      ValueCardWidgetComponent,
+      AggregatedValueCardWidgetComponent,
+      CountWidgetComponent,
+      BatteryLevelWidgetComponent,
+      WindSpeedDirectionWidgetComponent,
+      SignalStrengthWidgetComponent,
+      ValueChartCardWidgetComponent,
+      ProgressBarWidgetComponent,
+      LiquidLevelWidgetComponent,
+      DoughnutWidgetComponent,
+      RangeChartWidgetComponent,
+      BarChartWithLabelsWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -94,7 +140,26 @@ import { LegendComponent } from '@home/components/widget/lib/legend.component';
         QrCodeWidgetComponent,
         MarkdownWidgetComponent,
         LegendComponent,
-        FlotWidgetComponent
+        FlotWidgetComponent,
+        GatewayConnectorComponent,
+        GatewayLogsComponent,
+        GatewayStatisticsComponent,
+        GatewayServiceRPCComponent,
+        DeviceGatewayCommandComponent,
+        GatewayConfigurationComponent,
+        GatewayRemoteConfigurationDialogComponent,
+        ValueCardWidgetComponent,
+        AggregatedValueCardWidgetComponent,
+        CountWidgetComponent,
+        BatteryLevelWidgetComponent,
+        WindSpeedDirectionWidgetComponent,
+        SignalStrengthWidgetComponent,
+        ValueChartCardWidgetComponent,
+        ProgressBarWidgetComponent,
+        LiquidLevelWidgetComponent,
+        DoughnutWidgetComponent,
+        RangeChartWidgetComponent,
+        BarChartWithLabelsWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }

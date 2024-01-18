@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,7 +136,7 @@ public class AlarmCommentControllerTest extends AbstractControllerTest {
         Assert.assertEquals("true", updatedAlarmComment.getComment().get("edited").asText());
         Assert.assertNotNull(updatedAlarmComment.getComment().get("editedOn"));
 
-        testLogEntityActionEntityEqClass(alarm, alarm.getId(), tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.UPDATED_COMMENT, 1, savedComment);
+        testLogEntityActionEntityEqClass(alarm, alarm.getId(), tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.UPDATED_COMMENT, 1, updatedAlarmComment);
     }
 
     @Test

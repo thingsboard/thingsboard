@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -38,6 +38,10 @@ export class AssetProfileService {
 
   public getAssetProfile(assetProfileId: string, config?: RequestConfig): Observable<AssetProfile> {
     return this.http.get<AssetProfile>(`/api/assetProfile/${assetProfileId}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public exportAssetProfile(assetProfileId: string, config?: RequestConfig): Observable<AssetProfile> {
+    return this.http.get<AssetProfile>(`/api/assetProfile/${assetProfileId}?inlineImages=true`, defaultHttpOptionsFromConfig(config));
   }
 
   public saveAssetProfile(assetProfile: AssetProfile, config?: RequestConfig): Observable<AssetProfile> {

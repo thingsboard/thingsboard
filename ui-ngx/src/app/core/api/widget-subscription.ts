@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -81,6 +81,7 @@ import { distinct, filter, map, switchMap, takeUntil } from 'rxjs/operators';
 import { AlarmDataListener } from '@core/api/alarm-data.service';
 import { RpcStatus } from '@shared/models/rpc.models';
 import { EventEmitter } from '@angular/core';
+import { NOT_SUPPORTED } from '@shared/models/telemetry/telemetry.models';
 
 const moment = moment_;
 
@@ -159,6 +160,16 @@ export class WidgetSubscription implements IWidgetSubscription {
   pageSize: number;
   warnOnPageDataOverflow: boolean;
   ignoreDataUpdateOnIntervalTick: boolean;
+
+  get firstDatasource(): Datasource {
+    if (this.type === widgetType.alarm) {
+      return this.alarmSource;
+    } else if (this.datasources?.length) {
+      return this.datasources[0];
+    } else {
+      return null;
+    }
+  }
 
   datasourcePages: PageData<Datasource>[];
   dataPages: PageData<Array<DatasourceData>>[];
@@ -1242,14 +1253,19 @@ export class WidgetSubscription implements IWidgetSubscription {
   private updateTimewindow() {
     this.timeWindow.interval = this.subscriptionTimewindow.aggregation.interval || 1000;
     this.timeWindow.timezone = this.subscriptionTimewindow.timezone;
+    this.timeWindow.tsOffset = this.subscriptionTimewindow.tsOffset;
     if (this.subscriptionTimewindow.realtimeWindowMs) {
       if (this.subscriptionTimewindow.quickInterval) {
         const startEndTime = calculateIntervalStartEndTime(this.subscriptionTimewindow.quickInterval, this.subscriptionTimewindow.timezone);
         this.timeWindow.maxTime = startEndTime[1] + this.subscriptionTimewindow.tsOffset;
         this.timeWindow.minTime = startEndTime[0] + this.subscriptionTimewindow.tsOffset;
       } else {
-        this.timeWindow.maxTime = moment().valueOf() + this.subscriptionTimewindow.tsOffset + this.timeWindow.stDiff;
-        this.timeWindow.minTime = this.timeWindow.maxTime - this.subscriptionTimewindow.realtimeWindowMs;
+        const now = moment().valueOf() + this.subscriptionTimewindow.tsOffset + this.timeWindow.stDiff;
+        if (!this.timeWindow.maxTime || Math.abs(now - this.timeWindow.maxTime) > 500) {
+          this.timeWindow.maxTime = now;
+          this.timeWindow.maxTime -= this.timeWindow.maxTime % 1000;
+          this.timeWindow.minTime = this.timeWindow.maxTime - this.subscriptionTimewindow.realtimeWindowMs;
+        }
       }
     } else if (this.subscriptionTimewindow.fixedWindow) {
       this.timeWindow.maxTime = this.subscriptionTimewindow.fixedWindow.endTimeMs + this.subscriptionTimewindow.tsOffset;
@@ -1526,12 +1542,12 @@ export class WidgetSubscription implements IWidgetSubscription {
     }
     if (this.type === widgetType.latest) {
       const prevData = currentData.data;
-      if (!data.data.length) {
+      if (!data.data.length && !prevData.length) {
         update = false;
       } else if (prevData && prevData[0] && prevData[0].length > 1 && data.data.length > 0) {
         const prevTs = prevData[0][0];
         const prevValue = prevData[0][1];
-        if (prevTs === data.data[0][0] && prevValue === data.data[0][1]) {
+        if (prevTs === data.data[0][0] && prevValue === data.data[0][1] && data.data[0][1] !== NOT_SUPPORTED) {
           update = false;
         }
       }
@@ -1549,6 +1565,8 @@ export class WidgetSubscription implements IWidgetSubscription {
       }
       this.notifyDataLoaded();
       this.onDataUpdated(detectChanges);
+    } else if (this.loadingData) {
+      this.notifyDataLoaded();
     }
   }
 

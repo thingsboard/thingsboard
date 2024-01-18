@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,9 +103,7 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
 
     @Override
     protected void validateDataImpl(TenantId tenantId, DeviceProfile deviceProfile) {
-        if (StringUtils.isEmpty(deviceProfile.getName())) {
-            throw new DataValidationException("Device profile name should be specified!");
-        }
+        validateString("Device profile name", deviceProfile.getName());
         if (deviceProfile.getType() == null) {
             throw new DataValidationException("Device profile type should be specified!");
         }

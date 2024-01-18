@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.attributes;
 
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -25,17 +26,23 @@ import java.util.List;
 
 public class AttributeUtils {
 
+    @Deprecated(since = "3.7.0")
     public static void validate(EntityId id, String scope) {
         Validator.validateId(id.getId(), "Incorrect id " + id);
         Validator.validateString(scope, "Incorrect scope " + scope);
     }
 
-    public static void validate(List<AttributeKvEntry> kvEntries) {
-        kvEntries.forEach(AttributeUtils::validate);
+    public static void validate(EntityId id, AttributeScope scope) {
+        Validator.validateId(id.getId(), "Incorrect id " + id);
+        Validator.checkNotNull(scope, "Incorrect scope " + scope);
     }
 
-    public static void validate(AttributeKvEntry kvEntry) {
-        KvUtils.validate(kvEntry);
+    public static void validate(List<AttributeKvEntry> kvEntries,  boolean valueNoXssValidation) {
+        kvEntries.forEach(tsKvEntry -> validate(tsKvEntry, valueNoXssValidation));
+    }
+
+    public static void validate(AttributeKvEntry kvEntry, boolean valueNoXssValidation) {
+        KvUtils.validate(kvEntry, valueNoXssValidation);
         if (kvEntry.getDataType() == null) {
             throw new IncorrectParameterException("Incorrect kvEntry. Data type can't be null");
         } else {

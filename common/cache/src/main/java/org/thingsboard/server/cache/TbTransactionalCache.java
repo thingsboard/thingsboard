@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,18 @@ public interface TbTransactionalCache<K extends Serializable, V extends Serializ
      */
     TbCacheTransaction<K, V> newTransactionForKeys(List<K> keys);
 
+    default V getOrFetchFromDB(K key, Supplier<V> dbCall, boolean cacheNullValue, boolean putToCache) {
+        if (putToCache) {
+            return getAndPutInTransaction(key, dbCall, cacheNullValue);
+        } else {
+            TbCacheValueWrapper<V> cacheValueWrapper = get(key);
+            if (cacheValueWrapper != null) {
+                return cacheValueWrapper.get();
+            }
+            return dbCall.get();
+        }
+    }
+
     default V getAndPutInTransaction(K key, Supplier<V> dbCall, boolean cacheNullValue) {
         TbCacheValueWrapper<V> cacheValueWrapper = get(key);
         if (cacheValueWrapper != null) {
@@ -66,6 +78,19 @@ public interface TbTransactionalCache<K extends Serializable, V extends Serializ
         } catch (Throwable e) {
             cacheTransaction.rollback();
             throw e;
+        }
+    }
+
+    default <R> R getOrFetchFromDB(K key, Supplier<R> dbCall, Function<V, R> cacheValueToResult, Function<R, V> dbValueToCacheValue, boolean cacheNullValue, boolean putToCache) {
+        if (putToCache) {
+            return getAndPutInTransaction(key, dbCall, cacheValueToResult, dbValueToCacheValue, cacheNullValue);
+        } else {
+            TbCacheValueWrapper<V> cacheValueWrapper = get(key);
+            if (cacheValueWrapper != null) {
+                var cacheValue = cacheValueWrapper.get();
+                return cacheValue == null ? null : cacheValueToResult.apply(cacheValue);
+            }
+            return dbCall.get();
         }
     }
 

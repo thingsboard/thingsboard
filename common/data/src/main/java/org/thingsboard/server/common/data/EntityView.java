@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ public class EntityView extends BaseDataWithAdditionalInfo<EntityViewId>
     @Length(fieldName = "type")
     @Schema(required = true, description = "Device Profile Name", example = "Temperature Sensor")
     private String type;
-    @Schema(required = true, description = "Set of telemetry and attribute keys to expose via Entity View.")
+    @Schema(description = "Set of telemetry and attribute keys to expose via Entity View.")
     private TelemetryEntityView keys;
     @Schema(description = "Represents the start time of the interval that is used to limit access to target device telemetry. Customer will not be able to see entity telemetry that is outside the specified interval;")
     private long startTimeMs;

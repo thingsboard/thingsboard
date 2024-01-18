@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import { Widget, WidgetConfig } from '@shared/models/widget.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { deepClone } from '@core/utils';
+import { Timewindow } from '@shared/models/time/time.models';
 
 @Component({
   selector: 'tb-widget-preview',
@@ -36,10 +37,19 @@ export class WidgetPreviewComponent extends PageComponent implements OnInit, OnC
   stateController: IStateController;
 
   @Input()
+  dashboardTimewindow: Timewindow;
+
+  @Input()
   widget: Widget;
 
   @Input()
   widgetConfig: WidgetConfig;
+
+  @Input()
+  previewWidth = '100%';
+
+  @Input()
+  previewHeight = '70%';
 
   widgets: Widget[];
 
@@ -67,13 +77,15 @@ export class WidgetPreviewComponent extends PageComponent implements OnInit, OnC
   }
 
   private loadPreviewWidget() {
-    const widget = deepClone(this.widget);
-    widget.sizeX = 24;
-    widget.sizeY = this.widget.sizeY * 2;
-    widget.row = 0;
-    widget.col = 0;
-    widget.config = this.widgetConfig;
-    this.widgets = [widget];
+    if (this.widget) {
+      const widget = deepClone(this.widget);
+      widget.sizeX = 24;
+      widget.sizeY = this.widget.sizeY * 2;
+      widget.row = 0;
+      widget.col = 0;
+      widget.config = this.widgetConfig;
+      this.widgets = [widget];
+    }
   }
 
 }

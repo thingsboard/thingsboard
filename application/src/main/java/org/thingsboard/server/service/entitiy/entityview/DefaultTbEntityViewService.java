@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,13 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
+import jakarta.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ConcurrentReferenceHashMap;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.User;
@@ -49,7 +50,6 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
-import jakarta.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -81,14 +81,12 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
             EntityView savedEntityView = checkNotNull(entityViewService.saveEntityView(entityView));
             this.updateEntityViewAttributes(tenantId, savedEntityView, existingEntityView, user);
             autoCommit(user, savedEntityView.getId());
-            notificationEntityService.notifyCreateOrUpdateEntity(savedEntityView.getTenantId(), savedEntityView.getId(), savedEntityView,
+            logEntityActionService.logEntityAction(savedEntityView.getTenantId(), savedEntityView.getId(), savedEntityView,
                     null, actionType, user);
             localCache.computeIfAbsent(savedEntityView.getTenantId(), (k) -> new ConcurrentReferenceHashMap<>()).clear();
-            tbClusterService.broadcastEntityStateChangeEvent(savedEntityView.getTenantId(), savedEntityView.getId(),
-                    entityView.getId() == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
             return savedEntityView;
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(user.getTenantId(), emptyId(EntityType.ENTITY_VIEW), entityView, actionType, user, e);
+            logEntityActionService.logEntityAction(user.getTenantId(), emptyId(EntityType.ENTITY_VIEW), entityView, actionType, user, e);
             throw e;
         }
     }
@@ -99,9 +97,9 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
 
         if (oldEntityView != null) {
             if (oldEntityView.getKeys() != null && oldEntityView.getKeys().getAttributes() != null) {
-                futures.add(deleteAttributesFromEntityView(oldEntityView, DataConstants.CLIENT_SCOPE, oldEntityView.getKeys().getAttributes().getCs(), user));
-                futures.add(deleteAttributesFromEntityView(oldEntityView, DataConstants.SERVER_SCOPE, oldEntityView.getKeys().getAttributes().getSs(), user));
-                futures.add(deleteAttributesFromEntityView(oldEntityView, DataConstants.SHARED_SCOPE, oldEntityView.getKeys().getAttributes().getSh(), user));
+                futures.add(deleteAttributesFromEntityView(oldEntityView, AttributeScope.CLIENT_SCOPE, oldEntityView.getKeys().getAttributes().getCs(), user));
+                futures.add(deleteAttributesFromEntityView(oldEntityView, AttributeScope.SERVER_SCOPE, oldEntityView.getKeys().getAttributes().getSs(), user));
+                futures.add(deleteAttributesFromEntityView(oldEntityView, AttributeScope.SHARED_SCOPE, oldEntityView.getKeys().getAttributes().getSh(), user));
             }
             List<String> tsKeys = oldEntityView.getKeys() != null && oldEntityView.getKeys().getTimeseries() != null ?
                     oldEntityView.getKeys().getTimeseries() : Collections.emptyList();
@@ -109,9 +107,9 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         }
         if (savedEntityView.getKeys() != null) {
             if (savedEntityView.getKeys().getAttributes() != null) {
-                futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.CLIENT_SCOPE, savedEntityView.getKeys().getAttributes().getCs(), user));
-                futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SERVER_SCOPE, savedEntityView.getKeys().getAttributes().getSs(), user));
-                futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SHARED_SCOPE, savedEntityView.getKeys().getAttributes().getSh(), user));
+                futures.add(copyAttributesFromEntityToEntityView(savedEntityView, AttributeScope.CLIENT_SCOPE, savedEntityView.getKeys().getAttributes().getCs(), user));
+                futures.add(copyAttributesFromEntityToEntityView(savedEntityView, AttributeScope.SERVER_SCOPE, savedEntityView.getKeys().getAttributes().getSs(), user));
+                futures.add(copyAttributesFromEntityToEntityView(savedEntityView, AttributeScope.SHARED_SCOPE, savedEntityView.getKeys().getAttributes().getSh(), user));
             }
             futures.add(copyLatestFromEntityToEntityView(tenantId, savedEntityView));
         }
@@ -129,15 +127,13 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         TenantId tenantId = entityView.getTenantId();
         EntityViewId entityViewId = entityView.getId();
         try {
-            List<EdgeId> relatedEdgeIds = edgeService.findAllRelatedEdgeIds(tenantId, entityViewId);
             entityViewService.deleteEntityView(tenantId, entityViewId);
-            notificationEntityService.notifyDeleteEntity(tenantId, entityViewId, entityView, entityView.getCustomerId(), ActionType.DELETED,
-                    relatedEdgeIds, user, entityViewId.toString());
+            logEntityActionService.logEntityAction(tenantId, entityViewId, entityView, entityView.getCustomerId(),
+                    ActionType.DELETED, user, entityViewId.toString());
 
             localCache.computeIfAbsent(tenantId, (k) -> new ConcurrentReferenceHashMap<>()).clear();
-            tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityViewId, ComponentLifecycleEvent.DELETED);
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ENTITY_VIEW),
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.ENTITY_VIEW),
                     ActionType.DELETED, user, e, entityViewId.toString());
             throw e;
         }
@@ -145,15 +141,31 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
 
     @Override
     public EntityView assignEntityViewToCustomer(TenantId tenantId, EntityViewId entityViewId, Customer customer, User user) throws ThingsboardException {
+        ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
         CustomerId customerId = customer.getId();
         try {
             EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToCustomer(tenantId, entityViewId, customerId));
-            notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, entityViewId, customerId, savedEntityView,
-                    ActionType.ASSIGNED_TO_CUSTOMER, user, entityViewId.toString(), customerId.toString(), customer.getName());
+            logEntityActionService.logEntityAction(tenantId, entityViewId, savedEntityView, savedEntityView.getCustomerId(),
+                    actionType, user, entityViewId.toString(), customerId.toString(), customer.getName());
             return savedEntityView;
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ENTITY_VIEW),
-                    ActionType.ASSIGNED_TO_CUSTOMER, user, e, entityViewId.toString(), customerId.toString());
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.ENTITY_VIEW),
+                    actionType, user, e, entityViewId.toString(), customerId.toString());
+            throw e;
+        }
+    }
+
+    @Override
+    public EntityView unassignEntityViewFromCustomer(TenantId tenantId, EntityViewId entityViewId, Customer customer, User user) throws ThingsboardException {
+        ActionType actionType = ActionType.UNASSIGNED_FROM_CUSTOMER;
+        try {
+            EntityView savedEntityView = checkNotNull(entityViewService.unassignEntityViewFromCustomer(tenantId, entityViewId));
+            logEntityActionService.logEntityAction(tenantId, entityViewId, savedEntityView, customer.getId(),
+                    actionType, user, savedEntityView.getId().toString(), customer.getId().toString(), customer.getName());
+            return savedEntityView;
+        } catch (Exception e) {
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.ENTITY_VIEW),
+                    actionType, user, e, entityViewId.toString());
             throw e;
         }
     }
@@ -165,12 +177,11 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         try {
             EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToCustomer(tenantId,
                     entityViewId, publicCustomer.getId()));
-            notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, entityViewId, savedEntityView.getCustomerId(), savedEntityView,
-                    actionType, user, savedEntityView.getId().toString(),
-                    publicCustomer.getId().toString(), publicCustomer.getName());
+            logEntityActionService.logEntityAction(tenantId, entityViewId, savedEntityView, savedEntityView.getCustomerId(),
+                    actionType, user, savedEntityView.getId().toString(), publicCustomer.getId().toString(), publicCustomer.getName());
             return savedEntityView;
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ENTITY_VIEW),
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.ENTITY_VIEW),
                     actionType, user, e, entityViewId.toString());
             throw e;
         }
@@ -178,16 +189,16 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
 
     @Override
     public EntityView assignEntityViewToEdge(TenantId tenantId, CustomerId customerId, EntityViewId entityViewId, Edge edge, User user) throws ThingsboardException {
+        ActionType actionType = ActionType.ASSIGNED_TO_EDGE;
         EdgeId edgeId = edge.getId();
         try {
             EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToEdge(tenantId, entityViewId, edgeId));
-            notificationEntityService.notifyAssignOrUnassignEntityToEdge(tenantId, entityViewId, customerId,
-                    edgeId, savedEntityView, ActionType.ASSIGNED_TO_EDGE, user, savedEntityView.getEntityId().toString(),
-                    edgeId.toString(), edge.getName());
+            logEntityActionService.logEntityAction(tenantId, entityViewId, savedEntityView, customerId, actionType,
+                    user, savedEntityView.getEntityId().toString(), edgeId.toString(), edge.getName());
             return savedEntityView;
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ENTITY_VIEW),
-                    ActionType.ASSIGNED_TO_EDGE, user, e, entityViewId.toString(), edgeId.toString());
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.ENTITY_VIEW),
+                    actionType, user, e, entityViewId.toString(), edgeId.toString());
             throw e;
         }
     }
@@ -195,34 +206,17 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
     @Override
     public EntityView unassignEntityViewFromEdge(TenantId tenantId, CustomerId customerId, EntityView entityView,
                                                  Edge edge, User user) throws ThingsboardException {
+        ActionType actionType = ActionType.UNASSIGNED_FROM_EDGE;
         EntityViewId entityViewId = entityView.getId();
         EdgeId edgeId = edge.getId();
         try {
             EntityView savedEntityView = checkNotNull(entityViewService.unassignEntityViewFromEdge(tenantId, entityViewId, edgeId));
-            notificationEntityService.notifyAssignOrUnassignEntityToEdge(tenantId, entityViewId, customerId,
-                    edgeId, entityView, ActionType.UNASSIGNED_FROM_EDGE, user, entityViewId.toString(),
-                    edgeId.toString(), edge.getName());
+            logEntityActionService.logEntityAction(tenantId, entityViewId, savedEntityView, customerId, actionType,
+                    user, entityViewId.toString(), edgeId.toString(), edge.getName());
             return savedEntityView;
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ENTITY_VIEW),
-                    ActionType.UNASSIGNED_FROM_EDGE, user, e, entityViewId.toString(), edgeId.toString());
-            throw e;
-        }
-    }
-
-    @Override
-    public EntityView unassignEntityViewFromCustomer(TenantId tenantId, EntityViewId entityViewId, Customer customer, User user) throws ThingsboardException {
-        ActionType actionType = ActionType.UNASSIGNED_FROM_CUSTOMER;
-        try {
-            EntityView savedEntityView = checkNotNull(entityViewService.unassignEntityViewFromCustomer(tenantId, entityViewId));
-
-            notificationEntityService.notifyAssignOrUnassignEntityToCustomer(tenantId, entityViewId, customer.getId(), savedEntityView,
-                    actionType, user, savedEntityView.getId().toString(), customer.getId().toString(), customer.getName());
-
-            return savedEntityView;
-        } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ENTITY_VIEW),
-                    actionType, user, e, entityViewId.toString());
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.ENTITY_VIEW),
+                    actionType, user, e, entityViewId.toString(), edgeId.toString());
             throw e;
         }
     }
@@ -272,7 +266,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         }
     }
 
-    private ListenableFuture<List<Void>> copyAttributesFromEntityToEntityView(EntityView entityView, String scope, Collection<String> keys, User user) throws ThingsboardException {
+    private ListenableFuture<List<Void>> copyAttributesFromEntityToEntityView(EntityView entityView, AttributeScope scope, Collection<String> keys, User user) throws ThingsboardException {
         EntityViewId entityId = entityView.getId();
         if (keys != null && !keys.isEmpty()) {
             ListenableFuture<List<AttributeKvEntry>> getAttrFuture = attributesService.find(entityView.getTenantId(), entityView.getEntityId(), scope, keys);
@@ -354,7 +348,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         }, MoreExecutors.directExecutor());
     }
 
-    private ListenableFuture<Void> deleteAttributesFromEntityView(EntityView entityView, String scope, List<String> keys, User user) {
+    private ListenableFuture<Void> deleteAttributesFromEntityView(EntityView entityView, AttributeScope scope, List<String> keys, User user) {
         EntityViewId entityId = entityView.getId();
         SettableFuture<Void> resultFuture = SettableFuture.create();
         if (keys != null && !keys.isEmpty()) {
@@ -436,16 +430,16 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         return resultFuture;
     }
 
-    private void logAttributesUpdated(TenantId tenantId, User user, EntityId entityId, String scope, List<AttributeKvEntry> attributes, Throwable e) throws ThingsboardException {
-        notificationEntityService.logEntityAction(tenantId, entityId, ActionType.ATTRIBUTES_UPDATED, user, toException(e), scope, attributes);
+    private void logAttributesUpdated(TenantId tenantId, User user, EntityId entityId, AttributeScope scope, List<AttributeKvEntry> attributes, Throwable e) throws ThingsboardException {
+        logEntityActionService.logEntityAction(tenantId, entityId, ActionType.ATTRIBUTES_UPDATED, user, toException(e), scope, attributes);
     }
 
-    private void logAttributesDeleted(TenantId tenantId, User user, EntityId entityId, String scope, List<String> keys, Throwable e) throws ThingsboardException {
-        notificationEntityService.logEntityAction(tenantId, entityId, ActionType.ATTRIBUTES_DELETED, user, toException(e), scope, keys);
+    private void logAttributesDeleted(TenantId tenantId, User user, EntityId entityId, AttributeScope scope, List<String> keys, Throwable e) throws ThingsboardException {
+        logEntityActionService.logEntityAction(tenantId, entityId, ActionType.ATTRIBUTES_DELETED, user, toException(e), scope, keys);
     }
 
     private void logTimeseriesDeleted(TenantId tenantId, User user, EntityId entityId, List<String> keys, Throwable e) throws ThingsboardException {
-        notificationEntityService.logEntityAction(tenantId, entityId, ActionType.TIMESERIES_DELETED, user, toException(e), keys);
+        logEntityActionService.logEntityAction(tenantId, entityId, ActionType.TIMESERIES_DELETED, user, toException(e), keys);
     }
 
     public static Exception toException(Throwable error) {

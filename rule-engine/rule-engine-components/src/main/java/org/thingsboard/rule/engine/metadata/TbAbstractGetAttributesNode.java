@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -27,6 +28,8 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.rule.engine.util.TbMsgSource;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
@@ -66,7 +69,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
-        var msgDataAsObjectNode = FetchTo.DATA.equals(fetchTo) ? getMsgDataAsObjectNode(msg) : null;
+        var msgDataAsObjectNode = TbMsgSource.DATA.equals(fetchTo) ? getMsgDataAsObjectNode(msg) : null;
         withCallback(
                 findEntityIdAsync(ctx, msg),
                 entityId -> safePutAttributes(ctx, msg, msgDataAsObjectNode, entityId),
@@ -75,13 +78,32 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
 
     protected abstract ListenableFuture<T> findEntityIdAsync(TbContext ctx, TbMsg msg);
 
+    protected TbPair<Boolean, JsonNode> upgradeRuleNodesWithOldPropertyToUseFetchTo(
+            JsonNode oldConfiguration,
+            String oldProperty,
+            String ifTrue,
+            String ifFalse
+    ) throws TbNodeException {
+        var newConfigObjectNode = (ObjectNode) oldConfiguration;
+        if (!newConfigObjectNode.has(oldProperty)) {
+            newConfigObjectNode.put(FETCH_TO_PROPERTY_NAME, TbMsgSource.METADATA.name());
+            return new TbPair<>(true, newConfigObjectNode);
+        }
+        if (newConfigObjectNode.get(oldProperty).isNull()) {
+            newConfigObjectNode.remove(oldProperty);
+            newConfigObjectNode.put(FETCH_TO_PROPERTY_NAME, TbMsgSource.METADATA.name());
+            return new TbPair<>(true, newConfigObjectNode);
+        }
+        return upgradeConfigurationToUseFetchTo(oldProperty, ifTrue, ifFalse, newConfigObjectNode);
+    }
+
     private void safePutAttributes(TbContext ctx, TbMsg msg, ObjectNode msgDataNode, T entityId) {
         Set<TbPair<String, List<String>>> failuresPairSet = ConcurrentHashMap.newKeySet();
         var getKvEntryPairFutures = Futures.allAsList(
                 getLatestTelemetry(ctx, entityId, TbNodeUtils.processPatterns(config.getLatestTsKeyNames(), msg), failuresPairSet),
-                getAttrAsync(ctx, entityId, CLIENT_SCOPE, TbNodeUtils.processPatterns(config.getClientAttributeNames(), msg), failuresPairSet),
-                getAttrAsync(ctx, entityId, SHARED_SCOPE, TbNodeUtils.processPatterns(config.getSharedAttributeNames(), msg), failuresPairSet),
-                getAttrAsync(ctx, entityId, SERVER_SCOPE, TbNodeUtils.processPatterns(config.getServerAttributeNames(), msg), failuresPairSet)
+                getAttrAsync(ctx, entityId, AttributeScope.CLIENT_SCOPE, TbNodeUtils.processPatterns(config.getClientAttributeNames(), msg), failuresPairSet),
+                getAttrAsync(ctx, entityId, AttributeScope.SHARED_SCOPE, TbNodeUtils.processPatterns(config.getSharedAttributeNames(), msg), failuresPairSet),
+                getAttrAsync(ctx, entityId, AttributeScope.SERVER_SCOPE, TbNodeUtils.processPatterns(config.getServerAttributeNames(), msg), failuresPairSet)
         );
         withCallback(getKvEntryPairFutures, futuresList -> {
             var msgMetaData = msg.getMetaData().copy();
@@ -106,7 +128,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
     private ListenableFuture<TbPair<String, List<AttributeKvEntry>>> getAttrAsync(
             TbContext ctx,
             EntityId entityId,
-            String scope,
+            AttributeScope scope,
             List<String> keys,
             Set<TbPair<String, List<String>>> failuresPairSet
     ) {
@@ -117,9 +139,9 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         return Futures.transform(attributeKvEntryListFuture, attributeKvEntryList -> {
             if (isTellFailureIfAbsent && attributeKvEntryList.size() != keys.size()) {
                 List<String> nonExistentKeys = getNonExistentKeys(attributeKvEntryList, keys);
-                failuresPairSet.add(new TbPair<>(scope, nonExistentKeys));
+                failuresPairSet.add(new TbPair<>(scope.name(), nonExistentKeys));
             }
-            return new TbPair<>(scope, attributeKvEntryList);
+            return new TbPair<>(scope.name(), attributeKvEntryList);
         }, ctx.getDbCallbackExecutor());
     }
 
@@ -150,7 +172,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
     }
 
     private TsKvEntry getValueWithTs(TsKvEntry tsKvEntry) {
-        var mapper = FetchTo.DATA.equals(fetchTo) ? JacksonUtil.OBJECT_MAPPER : JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER;
+        var mapper = TbMsgSource.DATA.equals(fetchTo) ? JacksonUtil.OBJECT_MAPPER : JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER;
         var value = JacksonUtil.newObjectNode(mapper);
         value.put(TS, tsKvEntry.getTs());
         JacksonUtil.addKvEntry(value, tsKvEntry, VALUE, mapper);

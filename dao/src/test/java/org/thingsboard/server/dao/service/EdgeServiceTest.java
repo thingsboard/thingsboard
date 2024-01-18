@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -650,4 +650,23 @@ public class EdgeServiceTest extends AbstractServiceTest {
         Assert.assertEquals("{\"Rule Chain #3\":[\"Rule Chain #1\",\"Rule Chain #2\"]}", missingToRelatedRuleChains);
     }
 
+    @Test
+    public void testFindEdgesByTenantProfileId() {
+        Tenant tenant1 = createTenant();
+        Tenant tenant2 = createTenant();
+        Assert.assertNotNull(tenant1);
+        Assert.assertNotNull(tenant2);
+
+        Edge edge1 = constructEdge(tenant1.getId(), "Tenant1 edge", "default");
+        Edge edge2 = constructEdge(tenant2.getId(), "Tenant2 edge", "default");
+        Edge savedEdge1 = edgeService.saveEdge(edge1);
+        Edge savedEdge2 = edgeService.saveEdge(edge2);
+        Assert.assertNotNull(savedEdge1);
+        Assert.assertNotNull(savedEdge2);
+        Assert.assertEquals(tenant1.getTenantProfileId(), tenant2.getTenantProfileId());
+
+        PageData<Edge> edgesPageData = edgeService.findEdgesByTenantProfileId(tenant2.getTenantProfileId(),
+                new PageLink(1000));
+        Assert.assertEquals(2, edgesPageData.getTotalElements());
+    }
 }

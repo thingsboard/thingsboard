@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,48 +14,48 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
 
 export interface ColorPickerDialogData {
   color: string;
+  colorClearButton: boolean;
+}
+
+export interface ColorPickerDialogResult {
+  color?: string;
+  canceled?: boolean;
 }
 
 @Component({
   selector: 'tb-color-picker-dialog',
   templateUrl: './color-picker-dialog.component.html',
-  styleUrls: []
+  styleUrls: ['./color-picker-dialog.component.scss']
 })
-export class ColorPickerDialogComponent extends DialogComponent<ColorPickerDialogComponent, string>
-  implements OnInit {
+export class ColorPickerDialogComponent extends DialogComponent<ColorPickerDialogComponent, ColorPickerDialogResult> {
 
-  colorPickerFormGroup: FormGroup;
+  color: string;
+  colorClearButton: boolean;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: ColorPickerDialogData,
-              public dialogRef: MatDialogRef<ColorPickerDialogComponent, string>,
-              public fb: FormBuilder) {
+              public dialogRef: MatDialogRef<ColorPickerDialogComponent, ColorPickerDialogResult>) {
     super(store, router, dialogRef);
+    this.color = data.color;
+    this.colorClearButton = data.colorClearButton;
   }
 
-  ngOnInit(): void {
-    this.colorPickerFormGroup = this.fb.group({
-      color: [this.data.color, [Validators.required]]
-    });
+  selectColor(color: string) {
+    this.dialogRef.close({color});
   }
 
   cancel(): void {
-    this.dialogRef.close(null);
+    this.dialogRef.close({canceled: true});
   }
 
-  select(): void {
-    const color: string = this.colorPickerFormGroup.get('color').value;
-    this.dialogRef.close(color);
-  }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,8 +117,8 @@ public class CustomerControllerTest extends AbstractControllerTest {
 
         Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
 
-        testNotifyEntityOneTimeMsgToEdgeServiceNever(savedCustomer, savedCustomer.getId(), savedCustomer.getId(),
-                savedCustomer.getTenantId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+        testNotifyEntityAllOneTime(savedCustomer, savedCustomer.getId(), savedCustomer.getId(), savedCustomer.getTenantId(),
+                new CustomerId(CustomerId.NULL_UUID), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.ADDED);
 
         Assert.assertNotNull(savedCustomer);
@@ -242,7 +242,7 @@ public class CustomerControllerTest extends AbstractControllerTest {
         doDelete("/api/customer/" + savedCustomer.getId().getId().toString())
                 .andExpect(status().isOk());
 
-        testNotifyEntityBroadcastEntityStateChangeEventOneTimeMsgToEdgeServiceNever(savedCustomer, savedCustomer.getId(),
+        testNotifyEntityBroadcastEntityStateChangeEventOneTime(savedCustomer, savedCustomer.getId(),
                 savedCustomer.getId(), savedCustomer.getTenantId(), savedCustomer.getId(), tenantAdmin.getId(),
                 tenantAdmin.getEmail(), ActionType.DELETED, savedCustomer.getId().getId().toString());
     }
@@ -272,7 +272,7 @@ public class CustomerControllerTest extends AbstractControllerTest {
         doDelete("/api/customer/" + savedCustomer.getId().getId().toString())
                 .andExpect(status().isOk());
 
-        testNotifyEntityBroadcastEntityStateChangeEventOneTimeMsgToEdgeServiceNever(savedCustomer, savedCustomer.getId(),
+        testNotifyEntityBroadcastEntityStateChangeEventOneTime(savedCustomer, savedCustomer.getId(),
                 savedCustomer.getId(), savedCustomer.getTenantId(), savedCustomer.getId(), tenantAdmin.getId(),
                 tenantAdmin.getEmail(), ActionType.DELETED, savedCustomer.getId().getId().toString());
 
@@ -332,9 +332,9 @@ public class CustomerControllerTest extends AbstractControllerTest {
         }
         List<Customer> customers = Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS);
 
-        testNotifyManyEntityManyTimeMsgToEdgeServiceNever(new Customer(), new Customer(),
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new Customer(), new Customer(),
                 tenantId, tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ADDED, cntEntity);
+                ActionType.ADDED, cntEntity, cntEntity, cntEntity);
 
         List<Customer> loadedCustomers = new ArrayList<>(135);
         PageLink pageLink = new PageLink(23);

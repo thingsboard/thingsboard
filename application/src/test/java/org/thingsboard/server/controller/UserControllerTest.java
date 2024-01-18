@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.settings.StarredDashboardInfo;
 import org.thingsboard.server.common.data.settings.UserDashboardsInfo;
+import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.user.UserDao;
@@ -80,6 +81,9 @@ public class UserControllerTest extends AbstractControllerTest {
 
     @Autowired
     private UserDao userDao;
+
+    @Autowired
+    private DeviceService deviceService;
 
     static class Config {
         @Bean
@@ -113,7 +117,7 @@ public class UserControllerTest extends AbstractControllerTest {
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(foundUser, foundUser,
                 SYSTEM_TENANT, customerNUULId, null, SYS_ADMIN_EMAIL,
-                ActionType.ADDED, ActionType.ADDED, 1, 1, 1);
+                ActionType.ADDED, 1, 1, 1);
         Mockito.reset(tbClusterService, auditLogService);
 
         resetTokens();
@@ -152,7 +156,7 @@ public class UserControllerTest extends AbstractControllerTest {
 
         testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(foundUser, foundUser.getId(), foundUser.getId(),
                 SYSTEM_TENANT, customerNUULId, null, SYS_ADMIN_EMAIL,
-                ActionType.DELETED, SYSTEM_TENANT.getId().toString());
+                ActionType.DELETED, ActionType.DELETED, SYSTEM_TENANT.getId().toString());
     }
 
     @Test
@@ -397,7 +401,7 @@ public class UserControllerTest extends AbstractControllerTest {
         testManyUser.setTenantId(tenantId);
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(testManyUser, testManyUser,
                 SYSTEM_TENANT, customerNUULId, null, SYS_ADMIN_EMAIL,
-                ActionType.ADDED, ActionType.ADDED, cntEntity, cntEntity, cntEntity);
+                ActionType.ADDED, cntEntity, cntEntity, cntEntity);
 
         List<User> loadedTenantAdmins = new ArrayList<>();
         PageLink pageLink = new PageLink(33);
@@ -510,7 +514,7 @@ public class UserControllerTest extends AbstractControllerTest {
         testManyUser.setTenantId(tenantId);
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(testManyUser, testManyUser,
                 SYSTEM_TENANT, customerNUULId, null, SYS_ADMIN_EMAIL,
-                ActionType.DELETED, ActionType.DELETED, cntEntity, NUMBER_OF_USERS, cntEntity, new String());
+                ActionType.DELETED, cntEntity, NUMBER_OF_USERS, cntEntity, "");
 
         pageLink = new PageLink(4, 0, email1);
         pageData = doGetTypedWithPageLink("/api/tenant/" + tenantId.getId().toString() + "/users?",
@@ -738,6 +742,43 @@ public class UserControllerTest extends AbstractControllerTest {
         loadedUserIds.sort(userIdComparator);
 
         Assert.assertEquals(expectedCustomerUserIds, loadedUserIds);
+    }
+
+    @Test
+    public void testGetUsersForDeletedAlarmOriginator() throws Exception {
+        loginTenantAdmin();
+
+        String email = "testEmail1";
+        for (int i = 0; i < 45; i++) {
+            User customerUser = createCustomerUser( customerId);
+            customerUser.setEmail(email + StringUtils.randomAlphanumeric((int) (5 + Math.random() * 10)) + "@thingsboard.org");
+            doPost("/api/user", customerUser, User.class);
+        }
+
+        Device device = new Device();
+        device.setName("testDevice");
+        device.setCustomerId(customerId);
+        Device savedDevice = doPost("/api/device", device, Device.class);
+
+        Alarm alarm = createTestAlarm(savedDevice);
+
+        deviceService.deleteDevice(tenantId, savedDevice.getId());
+
+        List<UserId> loadedUserIds = new ArrayList<>();
+        PageLink pageLink = new PageLink(33, 0);
+        PageData<UserEmailInfo> pageData;
+        do {
+            pageData = doGetTypedWithPageLink("/api/users/assign/" + alarm.getId().getId().toString() + "?",
+                    new TypeReference<>() {}, pageLink);
+            loadedUserIds.addAll(pageData.getData().stream().map(UserEmailInfo::getId)
+                    .collect(Collectors.toList()));
+            if (pageData.hasNext()) {
+                pageLink = pageLink.nextPageLink();
+            }
+        } while (pageData.hasNext());
+
+        Assert.assertEquals(1, loadedUserIds.size());
+        Assert.assertEquals(tenantAdminUserId, loadedUserIds.get(0));
     }
 
     @Test

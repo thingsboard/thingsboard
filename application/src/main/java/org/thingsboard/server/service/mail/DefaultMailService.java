@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.mail;
 
 import com.fasterxml.jackson.databind.JsonNode;
-
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import jakarta.xml.bind.DatatypeConverter;
@@ -364,6 +363,8 @@ public class DefaultMailService implements MailService {
                 return valueInM + " out of " + thresholdInM + " allowed messages";
             case JS_EXEC_COUNT:
                 return valueInM + " out of " + thresholdInM + " allowed JavaScript functions";
+            case TBEL_EXEC_COUNT:
+                return valueInM + " out of " + thresholdInM + " allowed Tbel functions";
             case RE_EXEC_COUNT:
                 return valueInM + " out of " + thresholdInM + " allowed Rule Engine messages";
             case EMAIL_EXEC_COUNT:
@@ -384,6 +385,8 @@ public class DefaultMailService implements MailService {
                 return recordState.getValueAsString() + " messages";
             case JS_EXEC_COUNT:
                 return "JavaScript functions " + recordState.getValueAsString() + " times";
+            case TBEL_EXEC_COUNT:
+                return "TBEL functions " + recordState.getValueAsString() + " times";
             case RE_EXEC_COUNT:
                 return recordState.getValueAsString() + " Rule Engine messages";
             case EMAIL_EXEC_COUNT:

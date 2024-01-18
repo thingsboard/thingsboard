@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import org.thingsboard.server.common.data.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 public class PropertyUtils {
 
@@ -35,6 +36,19 @@ public class PropertyUtils {
             }
         }
         return configs;
+    }
+
+    public static Map<String, String> getProps(Map<String, String> defaultProperties, String propertiesStr) {
+        return getProps(defaultProperties, propertiesStr, PropertyUtils::getProps);
+    }
+
+    public static Map<String, String> getProps(Map<String, String> defaultProperties, String propertiesStr, Function<String, Map<String, String>> parser) {
+        Map<String, String> properties = defaultProperties;
+        if (StringUtils.isNotBlank(propertiesStr)) {
+            properties = new HashMap<>(properties);
+            properties.putAll(parser.apply(propertiesStr));
+        }
+        return properties;
     }
 
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -317,7 +317,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     this.gridsterResize$ = new ResizeObserver(() => {
       this.onGridsterParentResize();
     });
-    this.gridsterResize$.observe(this.gridster.el);
+    this.gridsterResize$.observe(this.gridster.el.parentElement);
   }
 
   onUpdateTimewindow(startTimeMs: number, endTimeMs: number, interval?: number, persist?: boolean): void {

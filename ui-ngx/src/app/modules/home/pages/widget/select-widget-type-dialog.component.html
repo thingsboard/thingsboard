@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -34,13 +34,9 @@
         <button *ngFor="let type of allWidgetTypes;" class="tb-card-button" mat-raised-button color="primary"
                 type="button"
                 (click)="typeSelected(widgetTypes[type])">
-          <mat-icon *ngIf="!widgetTypesDataMap.get(widgetTypes[type]).isMdiIcon; else mdiIconBlock" class="tb-mat-96">
+          <tb-icon matButtonIcon class="tb-mat-96">
             {{ widgetTypesDataMap.get(widgetTypes[type]).icon }}
-          </mat-icon>
-          <ng-template #mdiIconBlock>
-            <mat-icon class="tb-mat-96" [svgIcon]="widgetTypesDataMap.get(widgetTypes[type]).icon">
-            </mat-icon>
-          </ng-template>
+          </tb-icon>
           <span translate>{{ widgetTypesDataMap.get(widgetTypes[type]).name }}</span>
         </button>
       </div>

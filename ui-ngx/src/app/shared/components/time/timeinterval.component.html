@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@
   <section fxLayout="row" fxFlex [fxShow]="!advanced && (isEdit || !hideFlag)">
     <mat-form-field fxFlex [subscriptSizing]="subscriptSizing">
       <mat-label *ngIf="predefinedName" translate>{{ predefinedName }}</mat-label>
-      <mat-select [disabled]="hideFlag || disabled" [(ngModel)]="intervalMs" (ngModelChange)="onIntervalMsChange()" style="min-width: 150px;">
+      <mat-select [disabled]="hideFlag || disabled" [(ngModel)]="interval" (ngModelChange)="onIntervalChange()" style="min-width: 150px;">
         <mat-option *ngFor="let interval of intervals" [value]="interval.value">
           {{ interval.name | translate:interval.translateParams }}
         </mat-option>

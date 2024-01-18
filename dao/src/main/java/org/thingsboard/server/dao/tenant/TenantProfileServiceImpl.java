@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -92,6 +94,8 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
         try {
             savedTenantProfile = tenantProfileDao.save(tenantId, tenantProfile);
             publishEvictEvent(new TenantProfileEvictEvent(savedTenantProfile.getId(), savedTenantProfile.isDefault()));
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entity(savedTenantProfile)
+                    .entityId(savedTenantProfile.getId()).created(tenantProfile.getId() == null).build());
         } catch (Exception t) {
             handleEvictEvent(new TenantProfileEvictEvent(null, tenantProfile.isDefault()));
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
@@ -112,10 +116,11 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
         if (tenantProfile != null && tenantProfile.isDefault()) {
             throw new DataValidationException("Deletion of Default Tenant Profile is prohibited!");
         }
-        this.removeTenantProfile(tenantId, tenantProfileId, false);
+        this.removeTenantProfile(tenantId, tenantProfile, false);
     }
 
-    private void removeTenantProfile(TenantId tenantId, TenantProfileId tenantProfileId, boolean isDefault) {
+    private void removeTenantProfile(TenantId tenantId, TenantProfile tenantProfile, boolean isDefault) {
+        TenantProfileId tenantProfileId = tenantProfile.getId();
         try {
             tenantProfileDao.removeById(tenantId, tenantProfileId.getId());
         } catch (Exception t) {
@@ -128,6 +133,7 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
         }
         deleteEntityRelations(tenantId, tenantProfileId);
         publishEvictEvent(new TenantProfileEvictEvent(tenantProfileId, isDefault));
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entity(tenantProfile).entityId(tenantProfileId).build());
     }
 
     @Override
@@ -234,7 +240,7 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
 
                 @Override
                 protected void removeEntity(TenantId tenantId, TenantProfile entity) {
-                    removeTenantProfile(tenantId, entity.getId(), entity.isDefault());
+                    removeTenantProfile(tenantId, entity, entity.isDefault());
                 }
             };
 

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 ///
 
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
@@ -62,7 +63,7 @@ export class WidgetComponentAction {
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class WidgetContainerComponent extends PageComponent implements OnInit, OnDestroy {
+export class WidgetContainerComponent extends PageComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @HostBinding('class')
   widgetContainerClass = 'tb-widget-container';
@@ -129,6 +130,10 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
       cssParser.cssPreviewNamespace = this.cssClass;
       cssParser.createStyleElement(this.cssClass, cssString);
     }
+  }
+
+  ngAfterViewInit(): void {
+    this.widget.widgetContext.$widgetElement = $(this.tbWidgetElement.nativeElement);
   }
 
   ngOnDestroy(): void {

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,15 +20,14 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { BasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
-import {
-  DataKey,
-  Datasource,
-  datasourcesHasAggregation,
-  datasourcesHasOnlyComparisonAggregation, WidgetConfig
-} from '@shared/models/widget.models';
+import { DataKey, Datasource, WidgetConfig } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { deepClone, isUndefined } from '@core/utils';
+import {
+  getTimewindowConfig,
+  setTimewindowConfig
+} from '@home/components/widget/config/timewindow-config-panel.component';
 
 @Component({
   selector: 'tb-timeseries-table-basic-config',
@@ -58,22 +57,19 @@ export class TimeseriesTableBasicConfigComponent extends BasicWidgetConfigCompon
     return this.timeseriesTableWidgetConfigForm;
   }
 
-  protected setupDefaults(configData: WidgetConfigComponentData) {
-    this.setupDefaultDatasource(configData,
-      [{ name: 'temperature', label: 'Temperature', type: DataKeyType.timeseries, units: '°C', decimals: 0 }]);
+  protected defaultDataKeys(configData: WidgetConfigComponentData): DataKey[] {
+    return [{ name: 'temperature', label: 'Temperature', type: DataKeyType.timeseries, units: '°C', decimals: 0 }];
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {
     this.timeseriesTableWidgetConfigForm = this.fb.group({
-      timewindowConfig: [{
-        useDashboardTimewindow: configData.config.useDashboardTimewindow,
-        displayTimewindow: configData.config.displayTimewindow,
-        timewindow: configData.config.timewindow
-      }, []],
+      timewindowConfig: [getTimewindowConfig(configData.config), []],
       datasources: [configData.config.datasources, []],
       columns: [this.getColumns(configData.config.datasources), []],
       showTitle: [configData.config.showTitle, []],
       title: [configData.config.title, []],
+      titleFont: [configData.config.titleFont, []],
+      titleColor: [configData.config.titleColor, []],
       showTitleIcon: [configData.config.showTitleIcon, []],
       titleIcon: [configData.config.titleIcon, []],
       iconColor: [configData.config.iconColor, []],
@@ -85,18 +81,18 @@ export class TimeseriesTableBasicConfigComponent extends BasicWidgetConfigCompon
   }
 
   protected prepareOutputConfig(config: any): WidgetConfigComponentData {
-    this.widgetConfig.config.useDashboardTimewindow = config.timewindowConfig.useDashboardTimewindow;
-    this.widgetConfig.config.displayTimewindow = config.timewindowConfig.displayTimewindow;
-    this.widgetConfig.config.timewindow = config.timewindowConfig.timewindow;
+    setTimewindowConfig(this.widgetConfig.config, config.timewindowConfig);
     this.widgetConfig.config.datasources = config.datasources;
     this.setColumns(config.columns, this.widgetConfig.config.datasources);
     this.widgetConfig.config.actions = config.actions;
     this.widgetConfig.config.showTitle = config.showTitle;
-    this.widgetConfig.config.settings = this.widgetConfig.config.settings || {};
-    this.widgetConfig.config.settings.entitiesTitle = config.title;
+    this.widgetConfig.config.title = config.title;
+    this.widgetConfig.config.titleFont = config.titleFont;
+    this.widgetConfig.config.titleColor = config.titleColor;
     this.widgetConfig.config.showTitleIcon = config.showTitleIcon;
     this.widgetConfig.config.titleIcon = config.titleIcon;
     this.widgetConfig.config.iconColor = config.iconColor;
+    this.widgetConfig.config.settings = this.widgetConfig.config.settings || {};
     this.setCardButtons(config.cardButtons, this.widgetConfig.config);
     this.widgetConfig.config.color = config.color;
     this.widgetConfig.config.backgroundColor = config.backgroundColor;
@@ -112,6 +108,8 @@ export class TimeseriesTableBasicConfigComponent extends BasicWidgetConfigCompon
     const showTitleIcon: boolean = this.timeseriesTableWidgetConfigForm.get('showTitleIcon').value;
     if (showTitle) {
       this.timeseriesTableWidgetConfigForm.get('title').enable();
+      this.timeseriesTableWidgetConfigForm.get('titleFont').enable();
+      this.timeseriesTableWidgetConfigForm.get('titleColor').enable();
       this.timeseriesTableWidgetConfigForm.get('showTitleIcon').enable({emitEvent: false});
       if (showTitleIcon) {
         this.timeseriesTableWidgetConfigForm.get('titleIcon').enable();
@@ -122,11 +120,15 @@ export class TimeseriesTableBasicConfigComponent extends BasicWidgetConfigCompon
       }
     } else {
       this.timeseriesTableWidgetConfigForm.get('title').disable();
+      this.timeseriesTableWidgetConfigForm.get('titleFont').disable();
+      this.timeseriesTableWidgetConfigForm.get('titleColor').disable();
       this.timeseriesTableWidgetConfigForm.get('showTitleIcon').disable({emitEvent: false});
       this.timeseriesTableWidgetConfigForm.get('titleIcon').disable();
       this.timeseriesTableWidgetConfigForm.get('iconColor').disable();
     }
     this.timeseriesTableWidgetConfigForm.get('title').updateValueAndValidity({emitEvent});
+    this.timeseriesTableWidgetConfigForm.get('titleFont').updateValueAndValidity({emitEvent});
+    this.timeseriesTableWidgetConfigForm.get('titleColor').updateValueAndValidity({emitEvent});
     this.timeseriesTableWidgetConfigForm.get('showTitleIcon').updateValueAndValidity({emitEvent: false});
     this.timeseriesTableWidgetConfigForm.get('titleIcon').updateValueAndValidity({emitEvent});
     this.timeseriesTableWidgetConfigForm.get('iconColor').updateValueAndValidity({emitEvent});

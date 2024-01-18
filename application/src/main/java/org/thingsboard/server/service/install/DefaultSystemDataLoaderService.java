@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -83,9 +84,9 @@ import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
-import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.device.DeviceConnectivityConfiguration;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -99,6 +100,7 @@ import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 
@@ -114,13 +116,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.thingsboard.server.common.data.DataConstants.DEFAULT_DEVICE_TYPE;
+
 @Service
 @Profile("install")
 @Slf4j
 public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     public static final String CUSTOMER_CRED = "customer";
-    public static final String DEFAULT_DEVICE_TYPE = "default";
     public static final String ACTIVITY_STATE = "active";
 
     @Autowired
@@ -134,6 +137,9 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     @Autowired
     private AdminSettingsService adminSettingsService;
+
+    @Autowired
+    private WidgetTypeService widgetTypeService;
 
     @Autowired
     private WidgetsBundleService widgetsBundleService;
@@ -164,6 +170,9 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     @Autowired
     private TimeseriesService tsService;
+
+    @Autowired
+    private DeviceConnectivityConfiguration connectivityConfiguration;
 
     @Value("${state.persistToTelemetry:false}")
     @Getter
@@ -276,6 +285,12 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         node.put("showChangePassword", false);
         mailSettings.setJsonValue(node);
         adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, mailSettings);
+
+        AdminSettings connectivitySettings = new AdminSettings();
+        connectivitySettings.setTenantId(TenantId.SYS_TENANT_ID);
+        connectivitySettings.setKey("connectivity");
+        connectivitySettings.setJsonValue(JacksonUtil.valueToTree(connectivityConfiguration.getConnectivity()));
+        adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, connectivitySettings);
     }
 
     @Override
@@ -461,7 +476,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         DeviceId t1Id = createDevice(demoTenant.getId(), null, savedThermostatDeviceProfile.getId(), "Thermostat T1", "T1_TEST_TOKEN", "Demo device for Thermostats dashboard").getId();
         DeviceId t2Id = createDevice(demoTenant.getId(), null, savedThermostatDeviceProfile.getId(), "Thermostat T2", "T2_TEST_TOKEN", "Demo device for Thermostats dashboard").getId();
 
-        attributesService.save(demoTenant.getId(), t1Id, DataConstants.SERVER_SCOPE,
+        attributesService.save(demoTenant.getId(), t1Id, AttributeScope.SERVER_SCOPE,
                 Arrays.asList(new BaseAttributeKvEntry(System.currentTimeMillis(), new DoubleDataEntry("latitude", 37.3948)),
                         new BaseAttributeKvEntry(System.currentTimeMillis(), new DoubleDataEntry("longitude", -122.1503)),
                         new BaseAttributeKvEntry(System.currentTimeMillis(), new BooleanDataEntry("temperatureAlarmFlag", true)),
@@ -469,7 +484,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
                         new BaseAttributeKvEntry(System.currentTimeMillis(), new LongDataEntry("temperatureAlarmThreshold", (long) 20)),
                         new BaseAttributeKvEntry(System.currentTimeMillis(), new LongDataEntry("humidityAlarmThreshold", (long) 50))));
 
-        attributesService.save(demoTenant.getId(), t2Id, DataConstants.SERVER_SCOPE,
+        attributesService.save(demoTenant.getId(), t2Id, AttributeScope.SERVER_SCOPE,
                 Arrays.asList(new BaseAttributeKvEntry(System.currentTimeMillis(), new DoubleDataEntry("latitude", 37.493801)),
                         new BaseAttributeKvEntry(System.currentTimeMillis(), new DoubleDataEntry("longitude", -121.948769)),
                         new BaseAttributeKvEntry(System.currentTimeMillis(), new BooleanDataEntry("temperatureAlarmFlag", true)),
@@ -478,39 +493,11 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
                         new BaseAttributeKvEntry(System.currentTimeMillis(), new LongDataEntry("humidityAlarmThreshold", (long) 30))));
 
         installScripts.loadDashboards(demoTenant.getId(), null);
-    }
-
-    @Override
-    public void deleteSystemWidgetBundle(String bundleAlias) throws Exception {
-        WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(TenantId.SYS_TENANT_ID, bundleAlias);
-        if (widgetsBundle != null) {
-            widgetsBundleService.deleteWidgetsBundle(TenantId.SYS_TENANT_ID, widgetsBundle.getId());
-        }
+        installScripts.createDefaultTenantDashboards(demoTenant.getId(), null);
     }
 
     @Override
     public void loadSystemWidgets() throws Exception {
-        installScripts.loadSystemWidgets();
-    }
-
-    @Override
-    public void updateSystemWidgets() throws Exception {
-        this.deleteSystemWidgetBundle("charts");
-        this.deleteSystemWidgetBundle("cards");
-        this.deleteSystemWidgetBundle("maps");
-        this.deleteSystemWidgetBundle("analogue_gauges");
-        this.deleteSystemWidgetBundle("digital_gauges");
-        this.deleteSystemWidgetBundle("gpio_widgets");
-        this.deleteSystemWidgetBundle("alarm_widgets");
-        this.deleteSystemWidgetBundle("control_widgets");
-        this.deleteSystemWidgetBundle("maps_v2");
-        this.deleteSystemWidgetBundle("gateway_widgets");
-        this.deleteSystemWidgetBundle("input_widgets");
-        this.deleteSystemWidgetBundle("date");
-        this.deleteSystemWidgetBundle("entity_admin_widgets");
-        this.deleteSystemWidgetBundle("navigation_widgets");
-        this.deleteSystemWidgetBundle("edge_widgets");
-        this.deleteSystemWidgetBundle("home_page_widgets");
         installScripts.loadSystemWidgets();
     }
 
@@ -524,7 +511,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         user.setEmail(email);
         user.setTenantId(tenantId);
         user.setCustomerId(customerId);
-        user = userService.saveUser(user);
+        user = userService.saveUser(tenantId, user);
         UserCredentials userCredentials = userService.findUserCredentialsByUserId(TenantId.SYS_TENANT_ID, user.getId());
         userCredentials.setPassword(passwordEncoder.encode(password));
         userCredentials.setEnabled(true);
@@ -565,7 +552,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
                     Collections.singletonList(new BasicTsKvEntry(System.currentTimeMillis(), new BooleanDataEntry(key, value))), 0L);
             addTsCallback(saveFuture, new TelemetrySaveCallback<>(deviceId, key, value));
         } else {
-            ListenableFuture<List<String>> saveFuture = attributesService.save(TenantId.SYS_TENANT_ID, deviceId, DataConstants.SERVER_SCOPE,
+            ListenableFuture<List<String>> saveFuture = attributesService.save(TenantId.SYS_TENANT_ID, deviceId, AttributeScope.SERVER_SCOPE,
                     Collections.singletonList(new BaseAttributeKvEntry(new BooleanDataEntry(key, value)
                     , System.currentTimeMillis())));
             addTsCallback(saveFuture, new TelemetrySaveCallback<>(deviceId, key, value));

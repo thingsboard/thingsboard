@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -186,8 +186,12 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
     }
 
     protected void subscribeAndWait(MqttTestClient client, String attrSubTopic, DeviceId deviceId, FeatureType featureType) throws MqttException {
+        subscribeAndWait(client, attrSubTopic, deviceId, featureType, MqttQoS.AT_MOST_ONCE);
+    }
+
+    protected void subscribeAndWait(MqttTestClient client, String attrSubTopic, DeviceId deviceId, FeatureType featureType, MqttQoS mqttQoS) throws MqttException {
         int subscriptionCount = getDeviceActorSubscriptionCount(deviceId, featureType);
-        client.subscribeAndWait(attrSubTopic, MqttQoS.AT_MOST_ONCE);
+        client.subscribeAndWait(attrSubTopic, mqttQoS);
         // TODO: This test awaits for the device actor to receive the subscription. Ideally it should not happen. See details below:
         // The transport layer acknowledge subscription request once the message about subscription is in the queue.
         // Test sends data immediately after acknowledgement.

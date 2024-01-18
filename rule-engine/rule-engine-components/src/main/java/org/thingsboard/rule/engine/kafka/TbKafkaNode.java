@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,16 +22,15 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.config.SslConfigs;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.springframework.util.ReflectionUtils;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.external.TbAbstractExternalNode;
 import org.thingsboard.server.common.data.exception.ThingsboardKafkaClientError;
@@ -93,7 +92,14 @@ public class TbKafkaNode extends TbAbstractExternalNode {
         properties.put(ProducerConfig.LINGER_MS_CONFIG, config.getLinger());
         properties.put(ProducerConfig.BUFFER_MEMORY_CONFIG, config.getBufferMemory());
         if (config.getOtherProperties() != null) {
-            config.getOtherProperties().forEach(properties::put);
+            config.getOtherProperties().forEach((k, v) -> {
+                if (SslConfigs.SSL_KEYSTORE_CERTIFICATE_CHAIN_CONFIG.equals(k)
+                        || SslConfigs.SSL_KEYSTORE_KEY_CONFIG.equals(k)
+                        || SslConfigs.SSL_TRUSTSTORE_CERTIFICATES_CONFIG.equals(k)) {
+                    v = v.replace("\\n", "\n");
+                }
+                properties.put(k, v);
+            });
         }
         addMetadataKeyValuesAsKafkaHeaders = BooleanUtils.toBooleanDefaultIfNull(config.isAddMetadataKeyValuesAsKafkaHeaders(), false);
         toBytesCharset = config.getKafkaHeadersCharset() != null ? Charset.forName(config.getKafkaHeadersCharset()) : StandardCharsets.UTF_8;
@@ -115,25 +121,25 @@ public class TbKafkaNode extends TbAbstractExternalNode {
     public void onMsg(TbContext ctx, TbMsg msg) {
         String topic = TbNodeUtils.processPattern(config.getTopicPattern(), msg);
         String keyPattern = config.getKeyPattern();
+        var tbMsg = ackIfNeeded(ctx, msg);
         try {
             if (initError != null) {
-                ctx.tellFailure(msg, new RuntimeException("Failed to initialize Kafka rule node producer: " + initError.getMessage()));
+                ctx.tellFailure(tbMsg, new RuntimeException("Failed to initialize Kafka rule node producer: " + initError.getMessage()));
             } else {
                 ctx.getExternalCallExecutor().executeAsync(() -> {
                     publish(
                             ctx,
-                            msg,
+                            tbMsg,
                             topic,
                             keyPattern == null || keyPattern.isEmpty()
                                     ? null
-                                    : TbNodeUtils.processPattern(config.getKeyPattern(), msg)
+                                    : TbNodeUtils.processPattern(config.getKeyPattern(), tbMsg)
                     );
                     return null;
                 });
             }
-            ackIfNeeded(ctx, msg);
         } catch (Exception e) {
-            ctx.tellFailure(msg, e);
+            ctx.tellFailure(tbMsg, e);
         }
     }
 
@@ -167,24 +173,24 @@ public class TbKafkaNode extends TbAbstractExternalNode {
 
     private void processRecord(TbContext ctx, TbMsg msg, RecordMetadata metadata, Exception e) {
         if (e == null) {
-            tellSuccess(ctx, processResponse(ctx, msg, metadata));
+            tellSuccess(ctx, processResponse(msg, metadata));
         } else {
-            tellFailure(ctx, processException(ctx, msg, e), e);
+            tellFailure(ctx, processException(msg, e), e);
         }
     }
 
-    private TbMsg processResponse(TbContext ctx, TbMsg origMsg, RecordMetadata recordMetadata) {
+    private TbMsg processResponse(TbMsg origMsg, RecordMetadata recordMetadata) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(OFFSET, String.valueOf(recordMetadata.offset()));
         metaData.putValue(PARTITION, String.valueOf(recordMetadata.partition()));
         metaData.putValue(TOPIC, recordMetadata.topic());
-        return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
+        return TbMsg.transformMsgMetadata(origMsg, metaData);
     }
 
-    private TbMsg processException(TbContext ctx, TbMsg origMsg, Exception e) {
+    private TbMsg processException(TbMsg origMsg, Exception e) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(ERROR, e.getClass() + ": " + e.getMessage());
-        return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
+        return TbMsg.transformMsgMetadata(origMsg, metaData);
     }
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,10 +45,11 @@ public class DefaultTbAlarmCommentService extends AbstractTbEntityService implem
         }
         try {
             AlarmComment savedAlarmComment = checkNotNull(alarmCommentService.createOrUpdateAlarmComment(alarm.getTenantId(), alarmComment));
-            notificationEntityService.notifyAlarmComment(alarm, savedAlarmComment, actionType, user);
+            logEntityActionService.logEntityAction(alarm.getTenantId(), alarm.getId(), alarm, alarm.getCustomerId(), actionType, user, savedAlarmComment);
+
             return savedAlarmComment;
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(alarm.getTenantId(), emptyId(EntityType.ALARM), alarm, actionType, user, e, alarmComment);
+            logEntityActionService.logEntityAction(alarm.getTenantId(), emptyId(EntityType.ALARM), alarm, actionType, user, e, alarmComment);
             throw e;
         }
     }
@@ -62,7 +63,7 @@ public class DefaultTbAlarmCommentService extends AbstractTbEntityService implem
                     String.format("User %s deleted his comment",
                             (user.getFirstName() == null || user.getLastName() == null) ? user.getName() : user.getFirstName() + " " + user.getLastName())));
             AlarmComment savedAlarmComment = checkNotNull(alarmCommentService.saveAlarmComment(alarm.getTenantId(), alarmComment));
-            notificationEntityService.notifyAlarmComment(alarm, savedAlarmComment, ActionType.DELETED_COMMENT, user);
+            logEntityActionService.logEntityAction(alarm.getTenantId(), alarm.getId(), alarm, alarm.getCustomerId(), ActionType.DELETED_COMMENT, user, savedAlarmComment);
         } else {
             throw new ThingsboardException("System comment could not be deleted", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }

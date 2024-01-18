@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import org.thingsboard.mqtt.MqttClientConfig;
 import org.thingsboard.mqtt.MqttConnectResult;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
@@ -41,6 +40,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import javax.net.ssl.SSLException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -58,7 +58,7 @@ import java.util.concurrent.TimeoutException;
 )
 public class TbMqttNode extends TbAbstractExternalNode {
 
-    private static final Charset UTF8 = Charset.forName("UTF-8");
+    private static final Charset UTF8 = StandardCharsets.UTF_8;
 
     private static final String ERROR = "error";
 
@@ -80,22 +80,22 @@ public class TbMqttNode extends TbAbstractExternalNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         String topic = TbNodeUtils.processPattern(this.mqttNodeConfiguration.getTopicPattern(), msg);
-        this.mqttClient.publish(topic, Unpooled.wrappedBuffer(msg.getData().getBytes(UTF8)), MqttQoS.AT_LEAST_ONCE, mqttNodeConfiguration.isRetainedMessage())
+        var tbMsg = ackIfNeeded(ctx, msg);
+        this.mqttClient.publish(topic, Unpooled.wrappedBuffer(tbMsg.getData().getBytes(UTF8)), MqttQoS.AT_LEAST_ONCE, mqttNodeConfiguration.isRetainedMessage())
                 .addListener(future -> {
                             if (future.isSuccess()) {
-                                tellSuccess(ctx, msg);
+                                tellSuccess(ctx, tbMsg);
                             } else {
-                                tellFailure(ctx, processException(ctx, msg, future.cause()), future.cause());
+                                tellFailure(ctx, processException(tbMsg, future.cause()), future.cause());
                             }
                         }
                 );
-        ackIfNeeded(ctx, msg);
     }
 
-    private TbMsg processException(TbContext ctx, TbMsg origMsg, Throwable e) {
+    private TbMsg processException(TbMsg origMsg, Throwable e) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(ERROR, e.getClass() + ": " + e.getMessage());
-        return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
+        return TbMsg.transformMsgMetadata(origMsg, metaData);
     }
 
     @Override
@@ -105,8 +105,13 @@ public class TbMqttNode extends TbAbstractExternalNode {
         }
     }
 
+    String getOwnerId(TbContext ctx) {
+        return "Tenant[" + ctx.getTenantId().getId() + "]RuleNode[" + ctx.getSelf().getId().getId() + "]";
+    }
+
     protected MqttClient initClient(TbContext ctx) throws Exception {
         MqttClientConfig config = new MqttClientConfig(getSslContext());
+        config.setOwnerId(getOwnerId(ctx));
         if (!StringUtils.isEmpty(this.mqttNodeConfiguration.getClientId())) {
             config.setClientId(this.mqttNodeConfiguration.isAppendClientIdSuffix() ?
                     this.mqttNodeConfiguration.getClientId() + "_" + ctx.getServiceId() : this.mqttNodeConfiguration.getClientId());
@@ -114,7 +119,7 @@ public class TbMqttNode extends TbAbstractExternalNode {
         config.setCleanSession(this.mqttNodeConfiguration.isCleanSession());
 
         prepareMqttClientConfig(config);
-        MqttClient client = MqttClient.create(config, null);
+        MqttClient client = MqttClient.create(config, null, ctx.getExternalCallExecutor());
         client.setEventLoop(ctx.getSharedEventLoop());
         Future<MqttConnectResult> connectFuture = client.connect(this.mqttNodeConfiguration.getHost(), this.mqttNodeConfiguration.getPort());
         MqttConnectResult result;

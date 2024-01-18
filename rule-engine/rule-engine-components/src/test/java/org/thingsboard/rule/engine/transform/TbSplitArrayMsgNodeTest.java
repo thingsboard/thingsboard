@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
@@ -82,8 +83,7 @@ public class TbSplitArrayMsgNodeTest {
 
     @Test
     void givenZeroMsg_whenOnMsg_thenVerifyOutput() throws Exception {
-        String data = "[]";
-        VerifyOutputMsg(data);
+        VerifyOutputMsg(TbMsg.EMPTY_JSON_ARRAY);
     }
 
     @Test
@@ -132,6 +132,6 @@ public class TbSplitArrayMsgNodeTest {
                 "country", "US",
                 "city", "NY"
         );
-        return TbMsg.newMsg("POST_ATTRIBUTES_REQUEST", entityId, new TbMsgMetaData(mdMap), data, callback);
+        return TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, entityId, new TbMsgMetaData(mdMap), data, callback);
     }
 }

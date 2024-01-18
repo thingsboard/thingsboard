@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,17 @@
  * limitations under the License.
  */
 :host {
+  .widget-preview-background {
+    position: absolute;
+    top: 68px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #fff;
+  }
   .widget-preview-section {
     position: absolute;
-    top: 72px;
+    top: 0;
     left: 16px;
     right: 16px;
     bottom: 16px;

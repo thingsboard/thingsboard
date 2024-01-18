@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -38,13 +38,8 @@ export class WidgetEditorDashboardResolver implements Resolve<Dashboard> {
   resolve(route: ActivatedRouteSnapshot): Dashboard {
     const editWidgetInfo = this.utils.editWidgetInfo;
     const widget: Widget = {
-      isSystemType: true,
-      bundleAlias: 'customWidgetBundle',
-      typeAlias: 'customWidget',
+      typeFullFqn: 'system.customWidget',
       type: editWidgetInfo.type,
-      title: 'My widget',
-      image: null,
-      description: null,
       sizeX: editWidgetInfo.sizeX * 2,
       sizeY: editWidgetInfo.sizeY * 2,
       row: 2,

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,8 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 
+import static org.thingsboard.server.service.sync.ie.importing.impl.RuleChainImportService.PROCESSED_CONFIG_FIELDS_PATTERN;
+
 @Service
 @TbCoreComponent
 @RequiredArgsConstructor
@@ -47,7 +49,7 @@ public class RuleChainExportService extends BaseEntityExportService<RuleChainId,
                     ruleNode.setId(ctx.getExternalId(ruleNode.getId()));
                     ruleNode.setCreatedTime(0);
                     ruleNode.setExternalId(null);
-                    replaceUuidsRecursively(ctx, ruleNode.getConfiguration(), Collections.emptySet());
+                    replaceUuidsRecursively(ctx, ruleNode.getConfiguration(), Collections.emptySet(), PROCESSED_CONFIG_FIELDS_PATTERN);
                 });
         Optional.ofNullable(metaData.getRuleChainConnections()).orElse(Collections.emptyList())
                 .forEach(ruleChainConnectionInfo -> {

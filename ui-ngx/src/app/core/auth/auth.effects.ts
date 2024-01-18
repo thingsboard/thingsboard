@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -38,5 +38,19 @@ export class AuthEffects {
     ),
     withLatestFrom(this.store.pipe(select(selectAuthState))),
     mergeMap(([action, state]) => this.userSettingsService.putUserSettings({ openedMenuSections: state.userSettings.openedMenuSections }))
+  ), {dispatch: false});
+
+  putUserSettings = createEffect(() => this.actions$.pipe(
+    ofType(
+      AuthActionTypes.PUT_USER_SETTINGS,
+    ),
+    mergeMap((state) => this.userSettingsService.putUserSettings(state.payload))
+  ), {dispatch: false});
+
+  deleteUserSettings = createEffect(() => this.actions$.pipe(
+    ofType(
+      AuthActionTypes.DELETE_USER_SETTINGS,
+    ),
+    mergeMap((state) => this.userSettingsService.deleteUserSettings(state.payload))
   ), {dispatch: false});
 }

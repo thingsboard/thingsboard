@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,13 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -51,7 +54,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.thingsboard.server.common.data.security.DeviceCredentialsType.ACCESS_TOKEN;
 
 @ExtendWith(MockitoExtension.class)
 public class TbFetchDeviceCredentialsNodeTest {
@@ -82,13 +84,13 @@ public class TbFetchDeviceCredentialsNodeTest {
     @Test
     void givenDefaultConfig_whenInit_thenOK() {
         assertThat(node.config).isEqualTo(config);
-        assertThat(node.fetchTo).isEqualTo(FetchTo.METADATA);
+        assertThat(node.fetchTo).isEqualTo(TbMsgSource.METADATA);
     }
 
     @Test
     void givenDefaultConfig_whenVerify_thenOK() {
         var defaultConfig = new TbFetchDeviceCredentialsNodeConfiguration().defaultConfiguration();
-        assertThat(defaultConfig.getFetchTo()).isEqualTo(FetchTo.METADATA);
+        assertThat(defaultConfig.getFetchTo()).isEqualTo(TbMsgSource.METADATA);
     }
 
     @Test
@@ -97,7 +99,7 @@ public class TbFetchDeviceCredentialsNodeTest {
         doReturn(deviceCredentialsServiceMock).when(ctxMock).getDeviceCredentialsService();
         doAnswer(invocation -> {
             DeviceCredentials deviceCredentials = new DeviceCredentials();
-            deviceCredentials.setCredentialsType(ACCESS_TOKEN);
+            deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
             return deviceCredentials;
         }).when(deviceCredentialsServiceMock).findDeviceCredentialsByDeviceId(any(), any());
         doAnswer(invocation -> JacksonUtil.newObjectNode()).when(deviceCredentialsServiceMock).toCredentialsInfo(any());
@@ -171,7 +173,7 @@ public class TbFetchDeviceCredentialsNodeTest {
         final var metaData = new TbMsgMetaData(mdMap);
         final String data = "{\"TestAttribute_1\": \"humidity\", \"TestAttribute_2\": \"voltage\"}";
 
-        return TbMsg.newMsg("POST_ATTRIBUTES_REQUEST", entityId, metaData, data, callbackMock);
+        return TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, entityId, metaData, data, callbackMock);
     }
 
 }

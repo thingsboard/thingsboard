@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -28,7 +29,7 @@ public class TbFetchDeviceCredentialsNodeConfiguration extends TbAbstractFetchTo
     @Override
     public TbFetchDeviceCredentialsNodeConfiguration defaultConfiguration() {
         var configuration = new TbFetchDeviceCredentialsNodeConfiguration();
-        configuration.setFetchTo(FetchTo.METADATA);
+        configuration.setFetchTo(TbMsgSource.METADATA);
         return configuration;
     }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,14 @@
 package org.thingsboard.server.dao.sql.device;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -34,7 +36,7 @@ import org.thingsboard.server.dao.model.sql.DeviceProfileEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import java.util.Objects;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -73,7 +75,7 @@ public class JpaDeviceProfileDao extends JpaAbstractDao<DeviceProfileEntity, Dev
         return DaoUtil.toPageData(
                 deviceProfileRepository.findDeviceProfiles(
                         tenantId.getId(),
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 
@@ -83,14 +85,14 @@ public class JpaDeviceProfileDao extends JpaAbstractDao<DeviceProfileEntity, Dev
             return DaoUtil.pageToPageData(
                     deviceProfileRepository.findDeviceProfileInfos(
                             tenantId.getId(),
-                            Objects.toString(pageLink.getTextSearch(), ""),
+                            pageLink.getTextSearch(),
                             DeviceTransportType.valueOf(transportType),
                             DaoUtil.toPageable(pageLink)));
         } else {
             return DaoUtil.pageToPageData(
                     deviceProfileRepository.findDeviceProfileInfos(
                             tenantId.getId(),
-                            Objects.toString(pageLink.getTextSearch(), ""),
+                            pageLink.getTextSearch(),
                             DaoUtil.toPageable(pageLink)));
         }
     }
@@ -116,6 +118,18 @@ public class JpaDeviceProfileDao extends JpaAbstractDao<DeviceProfileEntity, Dev
     }
 
     @Override
+    public PageData<DeviceProfile> findAllWithImages(PageLink pageLink) {
+        return DaoUtil.toPageData(deviceProfileRepository.findAllByImageNotNull(DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public List<EntityInfo> findTenantDeviceProfileNames(UUID tenantId, boolean activeOnly) {
+        return activeOnly ?
+                deviceProfileRepository.findActiveTenantDeviceProfileNames(tenantId) :
+                deviceProfileRepository.findAllTenantDeviceProfileNames(tenantId);
+    }
+
+    @Override
     public DeviceProfile findByTenantIdAndExternalId(UUID tenantId, UUID externalId) {
         return DaoUtil.getData(deviceProfileRepository.findByTenantIdAndExternalId(tenantId, externalId));
     }
@@ -134,6 +148,16 @@ public class JpaDeviceProfileDao extends JpaAbstractDao<DeviceProfileEntity, Dev
     public DeviceProfileId getExternalIdByInternal(DeviceProfileId internalId) {
         return Optional.ofNullable(deviceProfileRepository.getExternalIdById(internalId.getId()))
                 .map(DeviceProfileId::new).orElse(null);
+    }
+
+    @Override
+    public List<DeviceProfileInfo> findByTenantAndImageLink(TenantId tenantId, String imageLink, int limit) {
+        return deviceProfileRepository.findByTenantAndImageLink(tenantId.getId(), imageLink, PageRequest.of(0, limit));
+    }
+
+    @Override
+    public List<DeviceProfileInfo> findByImageLink(String imageLink, int limit) {
+        return deviceProfileRepository.findByImageLink(imageLink, PageRequest.of(0, limit));
     }
 
     @Override

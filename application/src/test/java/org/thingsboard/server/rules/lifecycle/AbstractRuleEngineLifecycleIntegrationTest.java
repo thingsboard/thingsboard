@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,16 +24,18 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.metadata.FetchTo;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNode;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
@@ -97,7 +99,7 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
         ruleNode.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
         ruleNode.setDebugMode(true);
         TbGetAttributesNodeConfiguration configuration = new TbGetAttributesNodeConfiguration();
-        configuration.setFetchTo(FetchTo.METADATA);
+        configuration.setFetchTo(TbMsgSource.METADATA);
         configuration.setServerAttributeNames(Collections.singletonList("serverAttributeKey"));
         ruleNode.setConfiguration(JacksonUtil.valueToTree(configuration));
 
@@ -133,13 +135,13 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
         device = doPost("/api/device", device, Device.class);
 
         log.warn("before update attr");
-        attributesService.save(device.getTenantId(), device.getId(), DataConstants.SERVER_SCOPE,
+        attributesService.save(device.getTenantId(), device.getId(), AttributeScope.SERVER_SCOPE,
                 Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry("serverAttributeKey", "serverAttributeValue"), System.currentTimeMillis())))
                 .get(TIMEOUT, TimeUnit.SECONDS);
         log.warn("attr updated");
         TbMsgCallback tbMsgCallback = Mockito.mock(TbMsgCallback.class);
         Mockito.when(tbMsgCallback.isMsgValid()).thenReturn(true);
-        TbMsg tbMsg = TbMsg.newMsg("CUSTOM", device.getId(), new TbMsgMetaData(), "{}", tbMsgCallback);
+        TbMsg tbMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, device.getId(), TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT, tbMsgCallback);
         QueueToRuleEngineMsg qMsg = new QueueToRuleEngineMsg(tenantId, tbMsg, null, null);
         // Pushing Message to the system
         log.warn("before tell tbMsgCallback");
@@ -147,12 +149,12 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
         log.warn("awaiting tbMsgCallback");
         Mockito.verify(tbMsgCallback, Mockito.timeout(TimeUnit.SECONDS.toMillis(TIMEOUT))).onSuccess();
         log.warn("awaiting events");
-        List<EventInfo> events = Awaitility.await("get debug by custom event")
+        List<EventInfo> events = Awaitility.await("get debug by post telemetry event")
                 .pollInterval(10, MILLISECONDS)
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> {
                             List<EventInfo> debugEvents = getDebugEvents(tenantId, ruleChainFinal.getFirstRuleNodeId(), 1000)
-                                    .getData().stream().filter(filterByCustomEvent()).collect(Collectors.toList());
+                                    .getData().stream().filter(filterByPostTelemetryEventType()).collect(Collectors.toList());
                             log.warn("filtered debug events [{}]", debugEvents.size());
                             debugEvents.forEach((e) -> log.warn("event: {}", e));
                             return debugEvents;

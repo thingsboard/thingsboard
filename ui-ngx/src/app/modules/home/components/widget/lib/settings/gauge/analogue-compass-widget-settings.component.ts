@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,9 +19,7 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Component } from '@angular/core';
-import { MatChipInputEvent } from '@angular/material/chips';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
-import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 
 @Component({
   selector: 'tb-analogue-compass-widget-settings',
@@ -81,6 +79,7 @@ export class AnalogueCompassWidgetSettingsComponent extends WidgetSettingsCompon
       colorMinorTicks: [settings.colorMinorTicks, []],
       showStrokeTicks: [settings.showStrokeTicks, []],
       majorTickFont: [settings.majorTickFont, []],
+      majorTickColor: [settings.majorTickFont.color, []],
 
       // Plate settings
       colorPlate: [settings.colorPlate, []],
@@ -131,41 +130,8 @@ export class AnalogueCompassWidgetSettingsComponent extends WidgetSettingsCompon
     this.analogueCompassWidgetSettingsForm.get('animationTarget').updateValueAndValidity({emitEvent});
   }
 
-  majorTicksNamesList(): string[] {
-    return this.analogueCompassWidgetSettingsForm.get('majorTicks').value;
-  }
-
-  removeMajorTickName(tickName: string): void {
-    const tickNames: string[] = this.analogueCompassWidgetSettingsForm.get('majorTicks').value;
-    const index = tickNames.indexOf(tickName);
-    if (index >= 0) {
-      tickNames.splice(index, 1);
-      this.analogueCompassWidgetSettingsForm.get('majorTicks').setValue(tickNames);
-      this.analogueCompassWidgetSettingsForm.get('majorTicks').markAsDirty();
-    }
-  }
-
-  addMajorTickName(event: MatChipInputEvent): void {
-    const input = event.chipInput.inputElement;
-    const value = event.value;
-
-    const tickNames: string[] = this.analogueCompassWidgetSettingsForm.get('majorTicks').value;
-
-    if ((value || '').trim()) {
-      tickNames.push(value.trim());
-      this.analogueCompassWidgetSettingsForm.get('majorTicks').setValue(tickNames);
-      this.analogueCompassWidgetSettingsForm.get('majorTicks').markAsDirty();
-    }
-
-    if (input) {
-      input.value = '';
-    }
-  }
-
-  majorTickNameDrop(event: CdkDragDrop<string[]>): void {
-    const tickNames: string[] = this.analogueCompassWidgetSettingsForm.get('majorTicks').value;
-    moveItemInArray(tickNames, event.previousIndex, event.currentIndex);
-    this.analogueCompassWidgetSettingsForm.get('majorTicks').setValue(tickNames);
-    this.analogueCompassWidgetSettingsForm.get('majorTicks').markAsDirty();
+  protected prepareOutputSettings(settings) {
+    settings.majorTickFont.color = this.analogueCompassWidgetSettingsForm.get('majorTickColor').value;
+    return settings;
   }
 }

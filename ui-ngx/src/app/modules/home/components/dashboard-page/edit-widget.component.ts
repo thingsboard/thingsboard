@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -26,6 +26,7 @@ import { WidgetComponentService } from '@home/components/widget/widget-component
 import { WidgetConfigComponentData } from '../../models/widget-component.models';
 import { isDefined, isDefinedAndNotNull, isString } from '@core/utils';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
+import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 
 @Component({
   selector: 'tb-edit-widget',
@@ -33,6 +34,9 @@ import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
   styleUrls: ['./edit-widget.component.scss']
 })
 export class EditWidgetComponent extends PageComponent implements OnInit, OnChanges {
+
+  @ViewChild('widgetConfigComponent')
+  widgetConfigComponent: WidgetConfigComponent;
 
   @Input()
   dashboard: Dashboard;
@@ -64,17 +68,12 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
 
   previewMode = false;
 
-  hasBasicMode = false;
-
   get widgetConfigMode(): WidgetConfigMode {
-    return this.hasBasicMode ? (this.widgetConfig?.config?.configMode || WidgetConfigMode.advanced) : WidgetConfigMode.advanced;
+    return this.widgetConfigComponent?.widgetConfigMode;
   }
 
   set widgetConfigMode(widgetConfigMode: WidgetConfigMode) {
-    if (this.hasBasicMode) {
-      this.widgetConfig.config.configMode = widgetConfigMode;
-      this.widgetFormGroup.markAsDirty();
-    }
+    this.widgetConfigComponent.setWidgetConfigMode(widgetConfigMode);
   }
 
   private currentWidgetConfigChanged = false;
@@ -169,9 +168,9 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
       settingsDirective: widgetInfo.settingsDirective,
       dataKeySettingsDirective: widgetInfo.dataKeySettingsDirective,
       latestDataKeySettingsDirective: widgetInfo.latestDataKeySettingsDirective,
+      hasBasicMode: isDefinedAndNotNull(widgetInfo.hasBasicMode) ? widgetInfo.hasBasicMode : false,
       basicModeDirective: widgetInfo.basicModeDirective
     };
-    this.hasBasicMode = isDefinedAndNotNull(widgetInfo.hasBasicMode) ? widgetInfo.hasBasicMode : false;
     this.widgetFormGroup.reset({widgetConfig: this.widgetConfig});
   }
 }

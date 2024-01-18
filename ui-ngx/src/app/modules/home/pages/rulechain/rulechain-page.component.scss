@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,7 +117,7 @@
             min-height: 32px;
             padding: 6px;
             line-height: 20px;
-            mat-icon {
+            .mat-icon {
               width: 20px;
               min-width: 20px;
               height: 20px;
@@ -173,6 +173,7 @@
   }
   .mat-drawer-content.tb-rulechain-graph-content {
     overflow: hidden;
+    z-index: 0;
     .tb-rulechain-graph {
       z-index: 0;
       overflow: auto;
@@ -216,7 +217,7 @@
       cursor: pointer;
       box-sizing: border-box;
 
-      mat-icon{
+      .mat-icon{
         width: 16px;
         min-width: 16px;
         height: 16px;

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -63,7 +63,6 @@ export class SentNotificationDialogComponent extends
 
   @ViewChild('createNotification', {static: true}) createNotification: MatStepper;
   stepperOrientation: Observable<StepperOrientation>;
-  stepperLabelPosition: Observable<'bottom' | 'end'>;
 
   isAdd = true;
   entityType = EntityType;
@@ -101,9 +100,6 @@ export class SentNotificationDialogComponent extends
 
     this.stepperOrientation = this.breakpointObserver.observe(MediaBreakpoints['gt-sm'])
       .pipe(map(({matches}) => matches ? 'horizontal' : 'vertical'));
-
-    this.stepperLabelPosition = this.breakpointObserver.observe(MediaBreakpoints['gt-md'])
-      .pipe(map(({matches}) => matches ? 'end' : 'bottom'));
 
     this.notificationRequestForm = this.fb.group({
       useTemplate: [false],

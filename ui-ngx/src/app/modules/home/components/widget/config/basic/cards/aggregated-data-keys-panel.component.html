@@ -1,0 +1,52 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-form-panel tb-aggregated-data-keys-panel">
+  <div class="tb-form-panel-title">{{ 'widgets.aggregated-value-card.values' | translate }}</div>
+  <div class="tb-form-table">
+    <div class="tb-form-table-header">
+      <div class="tb-form-table-header-cell tb-position-header" translate>widgets.aggregated-value-card.position</div>
+      <div class="tb-form-table-header-cell tb-aggregation-header" translate>widgets.aggregated-value-card.aggregation</div>
+      <div class="tb-form-table-header-cell tb-units-header" translate>widget-config.units-short</div>
+      <div class="tb-form-table-header-cell tb-decimals-header" translate>widget-config.decimals-short</div>
+      <div class="tb-form-table-header-cell tb-font-header" translate>widgets.aggregated-value-card.font</div>
+      <div class="tb-form-table-header-cell tb-color-header" translate>widgets.aggregated-value-card.color</div>
+      <div class="tb-form-table-header-cell tb-arrow-header" translate>widgets.aggregated-value-card.arrow</div>
+      <div class="tb-form-table-header-cell tb-actions-header"></div>
+    </div>
+    <div *ngIf="keysFormArray().controls.length; else noKeys" class="tb-form-table-body">
+      <div *ngFor="let keyControl of keysFormArray().controls; trackBy: trackByKey; let $index = index;">
+        <tb-aggregated-data-key-row fxFlex
+                         [formControl]="keyControl"
+                         [index]="$index"
+                         [datasourceType]="datasourceType"
+                         [keyName]="keyName"
+                         (keyRemoved)="removeKey($index)">
+        </tb-aggregated-data-key-row>
+      </div>
+    </div>
+  </div>
+  <div>
+    <button type="button" mat-stroked-button color="primary" (click)="addKey()">
+      {{ 'widgets.aggregated-value-card.add-value' | translate }}
+    </button>
+  </div>
+</div>
+<ng-template #noKeys>
+  <span fxLayoutAlign="center center"
+        class="tb-prompt">{{ 'widgets.aggregated-value-card.no-values' | translate }}</span>
+</ng-template>

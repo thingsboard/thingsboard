@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.thingsboard.server.common.data.device.profile;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.transport.snmp.SnmpMapping;
 import org.thingsboard.server.common.data.transport.snmp.config.SnmpCommunicationConfig;
 
 import java.util.List;
@@ -45,8 +44,7 @@ public class SnmpDeviceProfileTransportConfiguration implements DeviceProfileTra
     private boolean isValid() {
         return timeoutMs != null && timeoutMs >= 0 && retries != null && retries >= 0
                 && communicationConfigs != null
-                && communicationConfigs.stream().allMatch(config -> config != null && config.isValid())
-                && communicationConfigs.stream().flatMap(config -> config.getAllMappings().stream()).map(SnmpMapping::getOid)
-                .distinct().count() == communicationConfigs.stream().mapToInt(config -> config.getAllMappings().size()).sum();
+                && communicationConfigs.stream().allMatch(config -> config != null && config.isValid());
     }
+
 }

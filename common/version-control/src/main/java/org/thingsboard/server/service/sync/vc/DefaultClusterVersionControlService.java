@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.eclipse.jgit.errors.LargeObjectException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
@@ -36,12 +37,12 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
-import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AddMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.BranchInfoProto;
@@ -67,13 +68,12 @@ import org.thingsboard.server.gen.transport.TransportProtos.VersionedEntityInfoP
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.NotificationsTopicService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
+import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.provider.TbVersionControlQueueFactory;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbVersionControlComponent;
 
 import jakarta.annotation.PostConstruct;
@@ -108,9 +108,8 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
     private final PartitionService partitionService;
     private final TbQueueProducerProvider producerProvider;
     private final TbVersionControlQueueFactory queueFactory;
-    private final DataDecodingEncodingService encodingService;
     private final GitRepositoryService vcService;
-    private final NotificationsTopicService notificationsTopicService;
+    private final TopicService topicService;
 
     private final ConcurrentMap<TenantId, Lock> tenantRepoLocks = new ConcurrentHashMap<>();
     private final Map<TenantId, PendingCommit> pendingCommitMap = new HashMap<>();
@@ -122,11 +121,11 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
 
     @Value("${queue.vc.poll-interval:25}")
     private long pollDuration;
-    @Value("${queue.vc.pack-processing-timeout:60000}")
+    @Value("${queue.vc.pack-processing-timeout:180000}")
     private long packProcessingTimeout;
     @Value("${vc.git.io_pool_size:3}")
     private int ioPoolSize;
-    @Value("${queue.vc.msg-chunk-size:500000}")
+    @Value("${queue.vc.msg-chunk-size:250000}")
     private int msgChunkSize;
 
     //We need to manually manage the threads since tasks for particular tenant need to be processed sequentially.
@@ -196,7 +195,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
                 }
                 for (TbProtoQueueMsg<ToVersionControlServiceMsg> msgWrapper : msgs) {
                     ToVersionControlServiceMsg msg = msgWrapper.getValue();
-                    var ctx = new VersionControlRequestCtx(msg, msg.hasClearRepositoryRequest() ? null : getEntitiesVersionControlSettings(msg));
+                    var ctx = new VersionControlRequestCtx(msg, msg.hasClearRepositoryRequest() ? null : ProtoUtils.fromProto(msg.getVcSettings()));
                     long startTs = System.currentTimeMillis();
                     log.trace("[{}][{}] RECEIVED task: {}", ctx.getTenantId(), ctx.getRequestId(), msg);
                     int threadIdx = Math.abs(ctx.getTenantId().hashCode() % ioPoolSize);
@@ -261,7 +260,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
                 }
             }
         } catch (Exception e) {
-            reply(ctx, Optional.of(e));
+            reply(ctx, Optional.of(handleError(e)));
         } finally {
             lock.unlock();
         }
@@ -303,6 +302,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
 
     private void handleEntityContentRequest(VersionControlRequestCtx ctx, EntityContentRequestMsg request) throws IOException {
         String path = getRelativePath(EntityType.valueOf(request.getEntityType()), new UUID(request.getEntityIdMSB(), request.getEntityIdLSB()).toString());
+        log.debug("Executing handleEntityContentRequest [{}][{}]", ctx.getTenantId(), path);
         String data = vcService.getFileContentAtCommit(ctx.getTenantId(), path, request.getVersionId());
 
         Iterable<String> dataChunks = StringUtils.split(data, msgChunkSize);
@@ -393,6 +393,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
     }
 
     private void handleCommitRequest(VersionControlRequestCtx ctx, CommitRequestMsg request) throws Exception {
+        log.debug("Executing handleCommitRequest [{}][{}]", ctx.getTenantId(), ctx.getRequestId());
         var tenantId = ctx.getTenantId();
         UUID txId = UUID.fromString(request.getTxId());
         if (request.hasPrepareMsg()) {
@@ -443,6 +444,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
     }
 
     private void addToCommit(VersionControlRequestCtx ctx, PendingCommit commit, AddMsg addMsg) throws IOException {
+        log.debug("Executing addToCommit [{}][{}]", ctx.getTenantId(), ctx.getRequestId());
         log.trace("[{}] received chunk {} for 'addToCommit'", addMsg.getChunkedMsgId(), addMsg.getChunkIndex());
         Map<String, String[]> chunkedMsgs = commit.getChunkedMsgs();
         String[] msgChunks = chunkedMsgs.computeIfAbsent(addMsg.getChunkedMsgId(), id -> new String[addMsg.getChunksCount()]);
@@ -496,6 +498,13 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
         }
     }
 
+    private Exception handleError(Exception e) {
+        if (e instanceof LargeObjectException) {
+            return new RuntimeException("Version is too big");
+        }
+        return e;
+    }
+
     private void reply(VersionControlRequestCtx ctx, VersionCreationResult result) {
         var responseBuilder = CommitResponseMsg.newBuilder().setAdded(result.getAdded())
                 .setModified(result.getModified())
@@ -520,7 +529,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
     }
 
     private void reply(VersionControlRequestCtx ctx, Optional<Exception> e, Function<VersionControlResponseMsg.Builder, VersionControlResponseMsg.Builder> enrichFunction) {
-        TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, ctx.getNodeId());
+        TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_CORE, ctx.getNodeId());
         VersionControlResponseMsg.Builder builder = VersionControlResponseMsg.newBuilder()
                 .setRequestIdMSB(ctx.getRequestId().getMostSignificantBits())
                 .setRequestIdLSB(ctx.getRequestId().getLeastSignificantBits());
@@ -540,16 +549,6 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
         ToCoreNotificationMsg msg = ToCoreNotificationMsg.newBuilder().setVcResponseMsg(builder).build();
         log.trace("[{}][{}] PUSHING reply: {} to: {}", ctx.getTenantId(), ctx.getRequestId(), msg, tpi);
         producer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), null);
-    }
-
-    private RepositorySettings getEntitiesVersionControlSettings(ToVersionControlServiceMsg msg) {
-        Optional<RepositorySettings> settingsOpt = encodingService.decode(msg.getVcSettings().toByteArray());
-        if (settingsOpt.isPresent()) {
-            return settingsOpt.get();
-        } else {
-            log.warn("Failed to parse VC settings: {}", msg.getVcSettings());
-            throw new RuntimeException("Failed to parse vc settings!");
-        }
     }
 
     private String getRelativePath(EntityType entityType, String entityId) {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,16 +60,16 @@ public class TbSendSmsNode extends TbAbstractExternalNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
+        var tbMsg = ackIfNeeded(ctx, msg);
         try {
             withCallback(ctx.getSmsExecutor().executeAsync(() -> {
-                        sendSms(ctx, msg);
+                        sendSms(ctx, tbMsg);
                         return null;
                     }),
-                    ok -> tellSuccess(ctx, msg),
-                    fail -> tellFailure(ctx, msg, fail));
-            ackIfNeeded(ctx, msg);
+                    ok -> tellSuccess(ctx, tbMsg),
+                    fail -> tellFailure(ctx, tbMsg, fail));
         } catch (Exception ex) {
-            ctx.tellFailure(msg, ex);
+            ctx.tellFailure(tbMsg, ex);
         }
     }
 

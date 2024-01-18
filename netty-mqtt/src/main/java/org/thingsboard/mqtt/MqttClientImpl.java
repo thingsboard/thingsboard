@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.Promise;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.ListeningExecutor;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -88,13 +89,13 @@ final class MqttClientImpl implements MqttClient {
     private int port;
     private MqttClientCallback callback;
 
+    private final ListeningExecutor handlerExecutor;
 
     /**
      * Construct the MqttClientImpl with default config
      */
-    public MqttClientImpl(MqttHandler defaultHandler) {
-        this.clientConfig = new MqttClientConfig();
-        this.defaultHandler = defaultHandler;
+    public MqttClientImpl(MqttHandler defaultHandler, ListeningExecutor handlerExecutor) {
+        this(new MqttClientConfig(), defaultHandler, handlerExecutor);
     }
 
     /**
@@ -103,9 +104,10 @@ final class MqttClientImpl implements MqttClient {
      *
      * @param clientConfig The config object to use while looking for settings
      */
-    public MqttClientImpl(MqttClientConfig clientConfig, MqttHandler defaultHandler) {
+    public MqttClientImpl(MqttClientConfig clientConfig, MqttHandler defaultHandler, ListeningExecutor handlerExecutor) {
         this.clientConfig = clientConfig;
         this.defaultHandler = defaultHandler;
+        this.handlerExecutor = handlerExecutor;
     }
 
     /**
@@ -225,6 +227,11 @@ final class MqttClientImpl implements MqttClient {
     @Override
     public void setEventLoop(EventLoopGroup eventLoop) {
         this.eventLoop = eventLoop;
+    }
+
+    @Override
+    public ListeningExecutor getHandlerExecutor() {
+        return this.handlerExecutor;
     }
 
     /**

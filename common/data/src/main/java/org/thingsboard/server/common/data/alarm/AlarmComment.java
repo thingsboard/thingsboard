@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
@@ -43,6 +44,7 @@ public class AlarmComment extends BaseData<AlarmCommentId> implements HasName {
     @Schema(description = "JSON object with text of comment.",implementation = com.fasterxml.jackson.databind.JsonNode.class)
     @NoXss
     @Length(fieldName = "comment", max = 10000)
+    @EqualsAndHashCode.Include
     private transient JsonNode comment;
 
     @Schema(description = "JSON object with the alarm comment Id. " +

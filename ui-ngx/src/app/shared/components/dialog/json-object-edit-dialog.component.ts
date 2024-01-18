@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import { isNotEmptyStr } from '@core/utils';
 
 export interface JsonObjectEditDialogData {
   jsonValue: object;
+  required?: boolean;
   title?: string;
   saveLabel?: string;
   cancelLabel?: string;
@@ -42,6 +43,8 @@ export class JsonObjectEditDialogComponent extends DialogComponent<JsonObjectEdi
   title = this.translate.instant('details.edit-json');
   saveButtonLabel = this.translate.instant('action.save');
   cancelButtonLabel = this.translate.instant('action.cancel');
+
+  required = this.data.required === true;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,

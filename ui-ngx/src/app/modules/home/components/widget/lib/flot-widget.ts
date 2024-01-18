@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,7 +18,8 @@
 import { WidgetContext } from '@home/models/widget-component.models';
 import {
   createLabelFromDatasource,
-  deepClone, formattedDataFormDatasourceData,
+  deepClone,
+  formattedDataFormDatasourceData,
   insertVariable,
   isDefined,
   isDefinedAndNotNull,
@@ -55,10 +56,11 @@ import {
 } from './flot-widget.models';
 import * as moment_ from 'moment';
 import tinycolor from 'tinycolor2';
-import { AggregationType } from '@shared/models/time/time.models';
+import { AggregationType, IntervalMath } from '@shared/models/time/time.models';
 import { CancelAnimationFrame } from '@core/services/raf.service';
 import { UtilsService } from '@core/services/utils.service';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { BehaviorSubject } from 'rxjs';
 import Timeout = NodeJS.Timeout;
 
 const moment = moment_;
@@ -130,9 +132,15 @@ export class TbFlot {
   private pieAnimationLastTime: number;
   private pieAnimationCaf: CancelAnimationFrame;
 
-  constructor(private ctx: WidgetContext, private readonly chartType: ChartType, private $flotElement?: JQuery<any>) {
+  private yMinSubject = new BehaviorSubject(-1);
+  private yMaxSubject = new BehaviorSubject(1);
+
+  yMin$ = this.yMinSubject.asObservable();
+  yMax$ = this.yMaxSubject.asObservable();
+
+  constructor(private ctx: WidgetContext, private readonly chartType: ChartType, private $flotElement?: JQuery<any>, settings?: TbFlotSettings) {
     this.chartType = this.chartType || 'line';
-    this.settings = ctx.settings as TbFlotSettings;
+    this.settings = settings || (ctx.settings as TbFlotSettings);
     this.utils = this.ctx.$injector.get(UtilsService);
     this.enableSelection = isDefined(this.settings.enableSelection) ? this.settings.enableSelection : true;
     this.selectionMode = this.enableSelection ? 'x' : null;
@@ -208,6 +216,12 @@ export class TbFlot {
           this.yaxis.tickSize = this.settings.yaxis.tickSize;
         } else {
           this.yaxis.tickSize = null;
+        }
+        if (this.settings.yaxis.tickGenerator?.length) {
+          try {
+            this.yaxis.ticks = new Function('axis',
+              this.settings.yaxis.tickGenerator);
+          } catch (e) {}
         }
         if (isNumber(this.settings.yaxis.tickDecimals)) {
           this.yaxis.tickDecimals = this.settings.yaxis.tickDecimals;
@@ -401,7 +415,6 @@ export class TbFlot {
 
     for (let i = 0; i < this.subscription.data.length; i++) {
       const series = this.subscription.data[i] as TbFlotSeries;
-      colors.push(series.dataKey.color);
       const keySettings = series.dataKey.settings;
       series.dataKey.tooltipValueFormatFunction = tooltipValueFormatFunction;
       if (keySettings.tooltipValueFormatter && keySettings.tooltipValueFormatter.length) {
@@ -452,8 +465,8 @@ export class TbFlot {
           apply: true
         };
       }
-
       const lineColor = tinycolor(series.dataKey.color);
+      colors.push(lineColor.toRgbString());
       lineColor.setAlpha(.75);
 
       series.highlightColor = lineColor.toRgbString();
@@ -545,7 +558,7 @@ export class TbFlot {
           this.subscription.timeWindowConfig.aggregation.type === AggregationType.NONE) {
           this.options.series.bars.barWidth = this.defaultBarWidth;
         } else {
-          this.options.series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
+          this.options.series.bars.barWidth = IntervalMath.numberValue(this.subscription.timeWindow.interval) * 0.6;
         }
       }
       this.options.xaxes[0].min = this.subscription.timeWindow.minTime;
@@ -650,7 +663,7 @@ export class TbFlot {
               this.subscription.timeWindowConfig.aggregation.type === AggregationType.NONE) {
               this.options.series.bars.barWidth = this.defaultBarWidth;
             } else {
-              this.options.series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
+              this.options.series.bars.barWidth = IntervalMath.numberValue(this.subscription.timeWindow.interval) * 0.6;
             }
           }
 
@@ -668,7 +681,7 @@ export class TbFlot {
                 this.subscription.timeWindowConfig.aggregation.type === AggregationType.NONE) {
                 this.plot.getOptions().series.bars.barWidth = this.defaultBarWidth;
               } else {
-                this.plot.getOptions().series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
+                this.plot.getOptions().series.bars.barWidth = IntervalMath.numberValue(this.subscription.timeWindow.interval) * 0.6;
               }
             }
             this.updateData();
@@ -714,6 +727,15 @@ export class TbFlot {
       } else if (this.isMouseInteraction && this.plot) {
         this.latestUpdateTimeoutHandle = setTimeout(this.latestDataUpdate.bind(this), 30);
       }
+    }
+  }
+
+  public updateSeriesColor(color: string) {
+    if (this.subscription?.data?.length) {
+      const series = this.subscription.data[0] as TbFlotSeries;
+      series.dataKey.color = color;
+      series.color = color;
+      series.highlightColor = tinycolor(color).setAlpha(.75).toRgbString();
     }
   }
 
@@ -802,6 +824,8 @@ export class TbFlot {
       clearTimeout(this.resizeTimeoutHandle);
       this.resizeTimeoutHandle = null;
     }
+    this.yMinSubject.complete();
+    this.yMaxSubject.complete();
   }
 
   private createPlot() {
@@ -818,6 +842,7 @@ export class TbFlot {
         } else {
           this.plot = $.plot(this.$element, this.subscription.data, this.options) as JQueryPlot;
         }
+        this.updateYMinMax();
       } else {
         this.createPlotTimeoutHandle = setTimeout(this.createPlot.bind(this), 30);
       }
@@ -830,6 +855,20 @@ export class TbFlot {
       this.plot.setupGrid();
     }
     this.plot.draw();
+    this.updateYMinMax();
+  }
+
+  private updateYMinMax() {
+    if (this.plot?.getYAxes().length) {
+      const min = this.plot?.getYAxes()[0].min;
+      const max = this.plot?.getYAxes()[0].max;
+      if (this.yMinSubject.value !== min) {
+        this.yMinSubject.next(min);
+      }
+      if (this.yMaxSubject.value !== max) {
+        this.yMaxSubject.next(max);
+      }
+    }
   }
 
   private redrawPlot() {
@@ -1019,7 +1058,9 @@ export class TbFlot {
       const series = this.subscription.data[i] as TbFlotSeries;
       this.substituteLabelPatterns(series, i);
     }
-    this.updateData();
+    if (this.plot) {
+      this.updateData();
+    }
     this.ctx.detectChanges();
   }
 
@@ -1581,10 +1622,10 @@ export class TbFlot {
     const descriptors = this.ctx.actionsApi.getActionDescriptors('sliceClick');
     if ($event && descriptors.length) {
       $event.stopPropagation();
-      const entityInfo = this.ctx.actionsApi.getActiveEntityInfo();
-      const entityId = entityInfo ? entityInfo.entityId : null;
-      const entityName = entityInfo ? entityInfo.entityName : null;
-      const entityLabel = entityInfo ? entityInfo.entityLabel : null;
+      const datasource = item.series.datasource;
+      const entityId = datasource ? datasource.entity?.id : null;
+      const entityName = datasource ? datasource.entityName : null;
+      const entityLabel = datasource ? datasource.entityLabel : null;
       this.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, item, entityLabel);
     }
   }

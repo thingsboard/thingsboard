@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.util.EntitiesFieldsAsyncLoader;
+import org.thingsboard.rule.engine.util.TbMsgSource;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -35,7 +37,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
-import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 
 @Slf4j
 public abstract class TbAbstractGetMappedDataNode<T extends EntityId, C extends TbGetMappedDataNodeConfiguration> extends TbAbstractNodeWithFetchTo<C> {
@@ -77,9 +78,9 @@ public abstract class TbAbstractGetMappedDataNode<T extends EntityId, C extends 
         for (var entry : targetKeysToSourceValuesMap.entrySet()) {
             var targetKeyName = entry.getKey();
             var sourceFieldValue = entry.getValue();
-            if (FetchTo.DATA.equals(fetchTo)) {
+            if (TbMsgSource.DATA.equals(fetchTo)) {
                 msgDataAsJsonNode.put(targetKeyName, sourceFieldValue);
-            } else if (FetchTo.METADATA.equals(fetchTo)) {
+            } else if (TbMsgSource.METADATA.equals(fetchTo)) {
                 msgMetaData.putValue(targetKeyName, sourceFieldValue);
             }
         }
@@ -133,7 +134,7 @@ public abstract class TbAbstractGetMappedDataNode<T extends EntityId, C extends 
     }
 
     private ListenableFuture<List<KvEntry>> getAttributesAsync(TbContext ctx, EntityId entityId, List<String> attrKeys) {
-        var latest = ctx.getAttributesService().find(ctx.getTenantId(), entityId, SERVER_SCOPE, attrKeys);
+        var latest = ctx.getAttributesService().find(ctx.getTenantId(), entityId, AttributeScope.SERVER_SCOPE, attrKeys);
         return Futures.transform(latest, l ->
                         l.stream()
                                 .map(i -> (KvEntry) i)

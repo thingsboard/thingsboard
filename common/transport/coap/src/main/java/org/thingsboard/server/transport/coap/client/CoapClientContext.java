@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@ package org.thingsboard.server.transport.coap.client;
 import org.eclipse.californium.core.observe.ObserveRelation;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.transport.coap.CoapSessionMsgType;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -33,7 +33,7 @@ public interface CoapClientContext {
 
     AtomicInteger getNotificationCounterByToken(String token);
 
-    TbCoapClientState getOrCreateClient(SessionMsgType type, ValidateDeviceCredentialsResponse deviceCredentials, DeviceProfile deviceProfile) throws AdaptorException;
+    TbCoapClientState getOrCreateClient(CoapSessionMsgType type, ValidateDeviceCredentialsResponse deviceCredentials, DeviceProfile deviceProfile) throws AdaptorException;
 
     TransportProtos.SessionInfoProto getNewSyncSession(TbCoapClientState clientState);
 

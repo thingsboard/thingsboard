@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import { AlarmSearchStatus, AlarmSeverity, AlarmStatus } from '@shared/models/al
 import { EntityType } from '@shared/models/entity-type.models';
 import { ApiFeature, ApiUsageStateValue } from '@shared/models/api-usage.models';
 import { LimitedApi } from '@shared/models/limited-api.models';
+import { HasTenantId } from '@shared/models/entity.models';
 
 export interface Notification {
   readonly id: NotificationId;
@@ -109,14 +110,14 @@ export interface SlackConversation {
   type: string;
 }
 
-export interface NotificationRule extends Omit<BaseData<NotificationRuleId>, 'label'>, ExportableEntity<NotificationRuleId> {
+export interface NotificationRule extends Omit<BaseData<NotificationRuleId>, 'label'>, HasTenantId, ExportableEntity<NotificationRuleId> {
   tenantId: TenantId;
   enabled: boolean;
   templateId: NotificationTemplateId;
   triggerType: TriggerType;
   triggerConfig: NotificationRuleTriggerConfig;
   recipientsConfig: NotificationRuleRecipientConfig;
-  additionalConfig: {description: string};
+  additionalConfig?: {description: string};
 }
 
 export type NotificationRuleTriggerConfig = Partial<AlarmNotificationRuleTriggerConfig & DeviceInactivityNotificationRuleTriggerConfig &
@@ -241,12 +242,15 @@ export interface NonConfirmedNotificationEscalation {
   targets: Array<string>;
 }
 
-export interface NotificationTarget extends Omit<BaseData<NotificationTargetId>, 'label'>, ExportableEntity<NotificationTargetId> {
+export interface NotificationTarget extends Omit<BaseData<NotificationTargetId>, 'label'>, HasTenantId,
+  ExportableEntity<NotificationTargetId> {
   tenantId: TenantId;
   configuration: NotificationTargetConfig;
 }
 
-export interface NotificationTargetConfig extends Partial<PlatformUsersNotificationTargetConfig & SlackNotificationTargetConfig> {
+export interface NotificationTargetConfig extends Partial<PlatformUsersNotificationTargetConfig
+  & SlackNotificationTargetConfig
+  & MicrosoftTeamsNotificationTargetConfig> {
   description?: string;
   type: NotificationTargetType;
 }
@@ -276,17 +280,25 @@ export interface SlackNotificationTargetConfig {
   conversationType: SlackChanelType;
   conversation: SlackConversation;
 }
+
+export interface MicrosoftTeamsNotificationTargetConfig {
+  webhookUrl: string;
+  channelName: string;
+}
 export enum NotificationTargetType {
   PLATFORM_USERS = 'PLATFORM_USERS',
-  SLACK = 'SLACK'
+  SLACK = 'SLACK',
+  MICROSOFT_TEAMS = 'MICROSOFT_TEAMS'
 }
 
 export const NotificationTargetTypeTranslationMap = new Map<NotificationTargetType, string>([
   [NotificationTargetType.PLATFORM_USERS, 'notification.platform-users'],
-  [NotificationTargetType.SLACK, 'notification.delivery-method.slack']
+  [NotificationTargetType.SLACK, 'notification.delivery-method.slack'],
+  [NotificationTargetType.MICROSOFT_TEAMS, 'notification.delivery-method.microsoft-teams'],
 ]);
 
-export interface NotificationTemplate extends Omit<BaseData<NotificationTemplateId>, 'label'>, ExportableEntity<NotificationTemplateId> {
+export interface NotificationTemplate extends Omit<BaseData<NotificationTemplateId>, 'label'>,
+  HasTenantId, ExportableEntity<NotificationTemplateId> {
   tenantId: TenantId;
   notificationType: NotificationType;
   configuration: NotificationTemplateConfig;
@@ -299,14 +311,17 @@ interface NotificationTemplateConfig {
 }
 
 export interface DeliveryMethodNotificationTemplate extends
-  Partial<WebDeliveryMethodNotificationTemplate & EmailDeliveryMethodNotificationTemplate & SlackDeliveryMethodNotificationTemplate>{
-  body?: string;
+  Partial<WebDeliveryMethodNotificationTemplate
+    & EmailDeliveryMethodNotificationTemplate
+    & SlackDeliveryMethodNotificationTemplate
+    & MicrosoftTeamsDeliveryMethodNotificationTemplate>{
+  body: string;
   enabled: boolean;
   method: NotificationDeliveryMethod;
 }
 
 interface WebDeliveryMethodNotificationTemplate {
-  subject?: string;
+  subject: string;
   additionalConfig: WebDeliveryMethodAdditionalConfig;
 }
 
@@ -316,15 +331,17 @@ interface WebDeliveryMethodAdditionalConfig {
     icon: string;
     color: string;
   };
-  actionButtonConfig: {
-    enabled: boolean;
-    text: string;
-    linkType: ActionButtonLinkType;
-    link?: string;
-    dashboardId?: string;
-    dashboardState?: string;
-    setEntityIdInState?: boolean;
-  };
+  actionButtonConfig: NotificationButtonConfig;
+}
+
+interface NotificationButtonConfig {
+  enabled: boolean;
+  text: string;
+  linkType: ActionButtonLinkType;
+  link?: string;
+  dashboardId?: string;
+  dashboardState?: string;
+  setEntityIdInState?: boolean;
 }
 
 interface EmailDeliveryMethodNotificationTemplate {
@@ -336,6 +353,11 @@ interface SlackDeliveryMethodNotificationTemplate {
   conversationId: string;
 }
 
+interface MicrosoftTeamsDeliveryMethodNotificationTemplate {
+  subject?: string;
+  button: NotificationButtonConfig;
+}
+
 export enum NotificationStatus {
   SENT = 'SENT',
   READ = 'READ'
@@ -345,14 +367,16 @@ export enum NotificationDeliveryMethod {
   WEB = 'WEB',
   SMS = 'SMS',
   EMAIL = 'EMAIL',
-  SLACK = 'SLACK'
+  SLACK = 'SLACK',
+  MICROSOFT_TEAMS = 'MICROSOFT_TEAMS'
 }
 
 export const NotificationDeliveryMethodTranslateMap = new Map<NotificationDeliveryMethod, string>([
   [NotificationDeliveryMethod.WEB, 'notification.delivery-method.web'],
   [NotificationDeliveryMethod.SMS, 'notification.delivery-method.sms'],
   [NotificationDeliveryMethod.EMAIL, 'notification.delivery-method.email'],
-  [NotificationDeliveryMethod.SLACK, 'notification.delivery-method.slack']
+  [NotificationDeliveryMethod.SLACK, 'notification.delivery-method.slack'],
+  [NotificationDeliveryMethod.MICROSOFT_TEAMS, 'notification.delivery-method.microsoft-teams'],
 ]);
 
 export enum NotificationRequestStatus {
@@ -418,14 +442,12 @@ export const NotificationTargetConfigTypeInfoMap = new Map<NotificationTargetCon
   ],
   [NotificationTargetConfigType.ORIGINATOR_ENTITY_OWNER_USERS,
     {
-      name: 'notification.recipient-type.users-entity-owner',
-      hint: 'notification.recipient-type.users-entity-owner-hint'
+      name: 'notification.recipient-type.users-entity-owner'
     }
   ],
   [NotificationTargetConfigType.AFFECTED_USER,
     {
-      name: 'notification.recipient-type.affected-user',
-      hint: 'notification.recipient-type.affected-user-hint'
+      name: 'notification.recipient-type.affected-user'
     }
   ],
   [NotificationTargetConfigType.SYSTEM_ADMINISTRATORS,
@@ -591,3 +613,12 @@ export const TriggerTypeTranslationMap = new Map<TriggerType, string>([
   [TriggerType.NEW_PLATFORM_VERSION, 'notification.trigger.new-platform-version'],
   [TriggerType.RATE_LIMITS, 'notification.trigger.rate-limits'],
 ]);
+
+export interface NotificationUserSettings {
+  prefs: {[key: string]: NotificationUserSetting};
+}
+
+export interface NotificationUserSetting {
+  enabled: boolean;
+  enabledDeliveryMethods: {[key: string]: boolean};
+}

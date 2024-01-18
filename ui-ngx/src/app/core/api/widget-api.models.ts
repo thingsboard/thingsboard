@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -89,6 +89,7 @@ export interface WidgetActionsApi {
   handleWidgetAction: ($event: Event, descriptor: WidgetActionDescriptor,
                        entityId?: EntityId, entityName?: string, additionalParams?: any, entityLabel?: string) => void;
   elementClick: ($event: Event) => void;
+  cardClick: ($event: Event) => void;
   getActiveEntityInfo: () => SubscriptionEntityInfo;
   openDashboardStateInSeparateDialog: (targetDashboardStateId: string, params?: StateParams, dialogTitle?: string,
                                        hideDashboardToolbar?: boolean, dialogWidth?: number, dialogHeight?: number) => void;
@@ -283,6 +284,8 @@ export interface IWidgetSubscription {
   useDashboardTimewindow: boolean;
 
   legendData: LegendData;
+
+  readonly firstDatasource?: Datasource;
 
   datasourcePages?: PageData<Datasource>[];
   dataPages?: PageData<Array<DatasourceData>>[];

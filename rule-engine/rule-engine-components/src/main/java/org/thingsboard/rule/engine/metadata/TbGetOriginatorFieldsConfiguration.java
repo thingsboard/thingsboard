@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.metadata;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,7 +27,6 @@ import java.util.Map;
 @EqualsAndHashCode(callSuper = true)
 public class TbGetOriginatorFieldsConfiguration extends TbGetMappedDataNodeConfiguration implements NodeConfiguration<TbGetOriginatorFieldsConfiguration> {
 
-    private Map<String, String> dataMapping;
     private boolean ignoreNullStrings;
 
     @Override
@@ -37,7 +37,7 @@ public class TbGetOriginatorFieldsConfiguration extends TbGetMappedDataNodeConfi
         dataMapping.put("type", "originatorType");
         configuration.setDataMapping(dataMapping);
         configuration.setIgnoreNullStrings(false);
-        configuration.setFetchTo(FetchTo.METADATA);
+        configuration.setFetchTo(TbMsgSource.METADATA);
         return configuration;
     }
 

@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2023 The Thingsboard Authors
+# Copyright © 2016-2024 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,12 @@
 # limitations under the License.
 #
 
-FROM thingsboard/openjdk17:bullseye-slim
+FROM thingsboard/openjdk17:bookworm-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update \
+    && apt-get install -yq --no-install-recommends ncdu \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY start-tb-vc-executor.sh ${pkg.name}.deb /tmp/
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,44 +40,41 @@ public class DefaultTbEntityRelationService extends AbstractTbEntityService impl
 
     @Override
     public void save(TenantId tenantId, CustomerId customerId, EntityRelation relation, User user) throws ThingsboardException {
+        ActionType actionType = ActionType.RELATION_ADD_OR_UPDATE;
         try {
             relationService.saveRelation(tenantId, relation);
-            notificationEntityService.notifyRelation(tenantId, customerId,
-                    relation, user, ActionType.RELATION_ADD_OR_UPDATE, relation);
+            logEntityActionService.logEntityRelationAction(tenantId, customerId,
+                    relation, user, actionType, null, relation);
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, relation.getFrom(), null, customerId,
-                    ActionType.RELATION_ADD_OR_UPDATE, user, e, relation);
-            notificationEntityService.logEntityAction(tenantId, relation.getTo(), null, customerId,
-                    ActionType.RELATION_ADD_OR_UPDATE, user, e, relation);
+            logEntityActionService.logEntityRelationAction(tenantId, customerId,
+                    relation, user, actionType, e, relation);
             throw e;
         }
     }
 
     @Override
     public void delete(TenantId tenantId, CustomerId customerId, EntityRelation relation, User user) throws ThingsboardException {
+        ActionType actionType = ActionType.RELATION_DELETED;
         try {
             boolean found = relationService.deleteRelation(tenantId, relation.getFrom(), relation.getTo(), relation.getType(), relation.getTypeGroup());
             if (!found) {
                 throw new ThingsboardException("Requested item wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
             }
-            notificationEntityService.notifyRelation(tenantId, customerId,
-                    relation, user, ActionType.RELATION_DELETED, relation);
+            logEntityActionService.logEntityRelationAction(tenantId, customerId, relation, user, actionType, null, relation);
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, relation.getFrom(), null, customerId,
-                    ActionType.RELATION_DELETED, user, e, relation);
-            notificationEntityService.logEntityAction(tenantId, relation.getTo(), null, customerId,
-                    ActionType.RELATION_DELETED, user, e, relation);
+            logEntityActionService.logEntityRelationAction(tenantId, customerId,
+                    relation, user, actionType, e, relation);
             throw e;
         }
     }
 
     @Override
-    public void deleteRelations(TenantId tenantId, CustomerId customerId, EntityId entityId, User user) throws ThingsboardException {
+    public void deleteCommonRelations(TenantId tenantId, CustomerId customerId, EntityId entityId, User user) throws ThingsboardException {
         try {
-            relationService.deleteEntityRelations(tenantId, entityId);
-            notificationEntityService.logEntityAction(tenantId, entityId, null, customerId, ActionType.RELATIONS_DELETED, user);
+            relationService.deleteEntityCommonRelations(tenantId, entityId);
+            logEntityActionService.logEntityAction(tenantId, entityId, null, customerId, ActionType.RELATIONS_DELETED, user);
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, entityId, null, customerId,
+            logEntityActionService.logEntityAction(tenantId, entityId, null, customerId,
                     ActionType.RELATIONS_DELETED, user, e);
             throw e;
         }

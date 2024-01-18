@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,9 @@ public class WidgetTypeInfo extends BaseWidgetType {
     @Schema(description = "Description of the widget type", accessMode = Schema.AccessMode.READ_ONLY)
     private String description;
     @NoXss
+    @Schema(description = "Tags of the widget type", accessMode = Schema.AccessMode.READ_ONLY)
+    private String[] tags;
+    @NoXss
     @Schema(description = "Type of the widget (timeseries, latest, control, alarm or static)", accessMode = Schema.AccessMode.READ_ONLY)
     private String widgetType;
 
@@ -48,6 +51,19 @@ public class WidgetTypeInfo extends BaseWidgetType {
         super(widgetTypeInfo);
         this.image = widgetTypeInfo.getImage();
         this.description = widgetTypeInfo.getDescription();
+        this.tags = widgetTypeInfo.getTags();
         this.widgetType = widgetTypeInfo.getWidgetType();
+    }
+
+    public WidgetTypeInfo(WidgetTypeDetails widgetTypeDetails) {
+        super(widgetTypeDetails);
+        this.image = widgetTypeDetails.getImage();
+        this.description = widgetTypeDetails.getDescription();
+        this.tags = widgetTypeDetails.getTags();
+        if (widgetTypeDetails.getDescriptor() != null && widgetTypeDetails.getDescriptor().has("type")) {
+            this.widgetType = widgetTypeDetails.getDescriptor().get("type").asText();
+        } else {
+            this.widgetType = "";
+        }
     }
 }

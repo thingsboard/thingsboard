@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,13 @@ import lombok.Data;
 import org.thingsboard.server.common.data.queue.ProcessingStrategy;
 import org.thingsboard.server.common.data.queue.SubmitStrategy;
 
+import java.io.Serializable;
+
 @Data
-public class TenantProfileQueueConfiguration {
+public class TenantProfileQueueConfiguration implements Serializable {
+
+    private static final long serialVersionUID = -546600745123197362L;
+
     private String name;
     private String topic;
     private int pollInterval;

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
@@ -40,7 +42,7 @@ import java.io.IOException;
 @ToString(exclude = {"image", "profileDataBytes"})
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName, HasTenantId, HasOtaPackage, HasRuleEngineProfile, ExportableEntity<DeviceProfileId> {
+public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName, HasTenantId, HasOtaPackage, HasRuleEngineProfile, ExportableEntity<DeviceProfileId>, HasImage {
 
     private static final long serialVersionUID = 6998485460273302018L;
 
@@ -53,7 +55,6 @@ public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName,
     @NoXss
     @Schema(description = "Device Profile description. ")
     private String description;
-    @Length(fieldName = "image", max = 1000000)
     @Schema(description = "Either URL or Base64 data of the icon. Used in the mobile application to visualize set of device profiles in the grid view. ")
     private String image;
     private boolean isDefault;
@@ -78,6 +79,8 @@ public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName,
     @Valid
     private transient DeviceProfileData profileData;
     @JsonIgnore
+    @Getter
+    @Setter
     private byte[] profileDataBytes;
     @NoXss
     @Schema(description = "Unique provisioning key used by 'Device Provisioning' feature.")

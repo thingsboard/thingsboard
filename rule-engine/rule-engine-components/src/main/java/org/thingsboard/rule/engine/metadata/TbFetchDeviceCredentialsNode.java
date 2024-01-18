@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
@@ -41,7 +42,9 @@ import java.util.concurrent.ExecutionException;
         nodeDescription = "Adds device credentials to the message or message metadata",
         nodeDetails = "if message originator type is Device and device credentials was successfully fetched, " +
                 "rule node enriches message or message metadata with <i>credentialsType</i> and <i>credentials</i> properties. " +
-                "Useful when you need to fetch device credentials and use them for further message processing. For example, use device credentials to interact with external systems.",
+                "Useful when you need to fetch device credentials and use them for further message processing. " +
+                "For example, use device credentials to interact with external systems.<br><br>" +
+                "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeFetchDeviceCredentialsConfig")
 public class TbFetchDeviceCredentialsNode extends TbAbstractNodeWithFetchTo<TbFetchDeviceCredentialsNodeConfiguration> {
@@ -57,7 +60,7 @@ public class TbFetchDeviceCredentialsNode extends TbAbstractNodeWithFetchTo<TbFe
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
         var originator = msg.getOriginator();
-        var msgDataAsObjectNode = FetchTo.DATA.equals(fetchTo) ? getMsgDataAsObjectNode(msg) : null;
+        var msgDataAsObjectNode = TbMsgSource.DATA.equals(fetchTo) ? getMsgDataAsObjectNode(msg) : null;
         if (!EntityType.DEVICE.equals(originator.getEntityType())) {
             ctx.tellFailure(msg, new RuntimeException("Unsupported originator type: " + originator.getEntityType() + "!"));
             return;
@@ -72,14 +75,14 @@ public class TbFetchDeviceCredentialsNode extends TbAbstractNodeWithFetchTo<TbFe
         var credentialsType = deviceCredentials.getCredentialsType();
         var credentialsInfo = ctx.getDeviceCredentialsService().toCredentialsInfo(deviceCredentials);
         var metaData = msg.getMetaData().copy();
-        if (FetchTo.METADATA.equals(fetchTo)) {
+        if (TbMsgSource.METADATA.equals(fetchTo)) {
             metaData.putValue(CREDENTIALS_TYPE, credentialsType.name());
             if (credentialsType.equals(DeviceCredentialsType.ACCESS_TOKEN) || credentialsType.equals(DeviceCredentialsType.X509_CERTIFICATE)) {
                 metaData.putValue(CREDENTIALS, credentialsInfo.asText());
             } else {
                 metaData.putValue(CREDENTIALS, JacksonUtil.toString(credentialsInfo));
             }
-        } else if (FetchTo.DATA.equals(fetchTo)) {
+        } else if (TbMsgSource.DATA.equals(fetchTo)) {
             msgDataAsObjectNode.put(CREDENTIALS_TYPE, credentialsType.name());
             msgDataAsObjectNode.set(CREDENTIALS, credentialsInfo);
         }
@@ -93,8 +96,8 @@ public class TbFetchDeviceCredentialsNode extends TbAbstractNodeWithFetchTo<TbFe
                 upgradeRuleNodesWithOldPropertyToUseFetchTo(
                         oldConfiguration,
                         "fetchToMetadata",
-                        FetchTo.METADATA.name(),
-                        FetchTo.DATA.name()) :
+                        TbMsgSource.METADATA.name(),
+                        TbMsgSource.DATA.name()) :
                 new TbPair<>(false, oldConfiguration);
     }
 

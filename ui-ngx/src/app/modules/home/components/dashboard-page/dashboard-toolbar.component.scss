@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,6 +126,7 @@ tb-dashboard-toolbar {
           @media #{$mat-lt-md} {
             height: $mobile-toolbar-height;
             max-height: $mobile-toolbar-height;
+            padding: 0 8px !important;
           }
 
           .close-action {
@@ -150,8 +151,44 @@ tb-dashboard-toolbar {
               .tb-dashboard-action-panel {
                 min-width: 0;
                 height: $half-mobile-toolbar-height;
+                flex: 1 0 auto;
+                display: flex;
+                flex-direction: row-reverse;
+                place-content: center space-between;
+                align-items: center;
+                &.tb-left-panel {
+                  flex: 1 1 auto;
+                }
+
+                @media #{$mat-lt-md} {
+                  padding-left: 12px;
+                }
+
+                @media #{$mat-xs} {
+                  gap: 3px;
+                  padding-left: 0;
+                  &.tb-left-panel {
+                    padding-left: 12px;
+                  }
+                }
+
+                @media #{$mat-sm} {
+                  gap: 6px;
+                }
+
+                @media #{$mat-md} {
+                  gap: 6px;
+                }
+
+                @media #{$mat-gt-md} {
+                  gap: 12px;
+                }
 
                 @media #{$mat-gt-sm} {
+                  place-content: center flex-start;
+                  &.tb-left-panel {
+                    place-content: center flex-end;
+                  }
                   height: 46px;
                 }
 

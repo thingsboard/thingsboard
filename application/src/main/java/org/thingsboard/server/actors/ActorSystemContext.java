@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
@@ -66,6 +67,7 @@ import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.nosql.CassandraBufferedRateReadExecutor;
@@ -90,8 +92,6 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.queue.discovery.DiscoveryService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
-import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
@@ -99,6 +99,7 @@ import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.executors.ExternalCallExecutorService;
 import org.thingsboard.server.service.executors.NotificationExecutorService;
+import org.thingsboard.server.service.executors.PubSubRuleNodeExecutorProvider;
 import org.thingsboard.server.service.executors.SharedEventLoopGroupService;
 import org.thingsboard.server.service.mail.MailExecutorService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
@@ -184,10 +185,6 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private DataDecodingEncodingService encodingService;
-
-    @Autowired
-    @Getter
     private DeviceService deviceService;
 
     @Autowired
@@ -247,6 +244,7 @@ public class ActorSystemContext {
     private RuleNodeStateService ruleNodeStateService;
 
     @Autowired
+    @Getter
     private PartitionService partitionService;
 
     @Autowired
@@ -321,6 +319,11 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private NotificationExecutorService notificationExecutor;
+
+    @Lazy
+    @Autowired
+    @Getter
+    private PubSubRuleNodeExecutorProvider pubSubRuleNodeExecutorProvider;
 
     @Autowired
     @Getter
@@ -449,6 +452,11 @@ public class ActorSystemContext {
     @Getter
     private WidgetTypeService widgetTypeService;
 
+    @Lazy
+    @Autowired(required = false)
+    @Getter
+    private EntityService entityService;
+
     @Value("${actors.session.max_concurrent_sessions_per_device:1}")
     @Getter
     private long maxConcurrentSessionsPerDevice;
@@ -528,9 +536,13 @@ public class ActorSystemContext {
     @Getter
     private String debugPerTenantLimitsConfiguration;
 
-    @Value("${actors.rpc.sequential:false}")
+    @Value("${actors.rpc.submit_strategy:BURST}")
     @Getter
-    private boolean rpcSequential;
+    private String rpcSubmitStrategy;
+
+    @Value("${actors.rpc.response_timeout_ms:30000}")
+    @Getter
+    private long rpcResponseTimeout;
 
     @Value("${actors.rpc.max_retries:5}")
     @Getter

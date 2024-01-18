@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -145,7 +146,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
                 .status(AlarmStatus.ACTIVE_UNACK).pageLink(
                         new TimePageLink(1, 0, "",
                                 new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
-                ).build()).get();
+                ).build());
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
         Assert.assertEquals(created, new AlarmInfo(alarms.getData().get(0)));
@@ -156,7 +157,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
                 .status(AlarmStatus.ACTIVE_UNACK).pageLink(
                         new TimePageLink(1, 0, "",
                                 new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
-                ).build()).get();
+                ).build());
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(0, alarms.getData().size());
 
@@ -170,7 +171,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
                 .status(AlarmStatus.ACTIVE_UNACK).pageLink(
                         new TimePageLink(1, 0, "",
                                 new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
-                ).build()).get();
+                ).build());
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
         Assert.assertEquals(created, new AlarmInfo(alarms.getData().get(0)));
@@ -181,7 +182,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
                 .status(AlarmStatus.ACTIVE_UNACK).pageLink(
                         new TimePageLink(1, 0, "",
                                 new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
-                ).build()).get();
+                ).build());
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
         Assert.assertEquals(created, new AlarmInfo(alarms.getData().get(0)));
@@ -194,7 +195,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
                 .status(AlarmStatus.ACTIVE_ACK).pageLink(
                         new TimePageLink(1, 0, "",
                                 new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
-                ).build()).get();
+                ).build());
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
         Assert.assertEquals(created, new AlarmInfo(alarms.getData().get(0)));
@@ -205,7 +206,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
                 .status(AlarmStatus.ACTIVE_UNACK).pageLink(
                         new TimePageLink(1, 0, "",
                                 new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
-                ).build()).get();
+                ).build());
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(0, alarms.getData().size());
 
@@ -217,7 +218,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
                 .status(AlarmStatus.CLEARED_ACK).pageLink(
                         new TimePageLink(1, 0, "",
                                 new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
-                ).build()).get();
+                ).build());
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
         Assert.assertEquals(created, new AlarmInfo(alarms.getData().get(0)));
@@ -244,11 +245,11 @@ public class AlarmServiceTest extends AbstractServiceTest {
         // Check child relation
         PageData<AlarmInfo> alarms = alarmService.findAlarmsV2(tenantId, AlarmQueryV2.builder()
                 .affectedEntityId(childId)
-                        .severityList(Arrays.asList(AlarmSeverity.CRITICAL))
-                        .statusList(Arrays.asList(AlarmSearchStatus.ACTIVE, AlarmSearchStatus.UNACK)).pageLink(
+                .severityList(Arrays.asList(AlarmSeverity.CRITICAL))
+                .statusList(Arrays.asList(AlarmSearchStatus.ACTIVE, AlarmSearchStatus.UNACK)).pageLink(
                         new TimePageLink(1, 0, "",
                                 new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
-                ).build()).get();
+                ).build());
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
         Assert.assertEquals(created, new AlarmInfo(alarms.getData().get(0)));
@@ -260,7 +261,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
                 .statusList(Arrays.asList(AlarmSearchStatus.ACTIVE, AlarmSearchStatus.UNACK)).pageLink(
                         new TimePageLink(1, 0, "",
                                 new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
-                ).build()).get();
+                ).build());
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(0, alarms.getData().size());
 
@@ -275,7 +276,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
                 .statusList(Arrays.asList(AlarmSearchStatus.ACTIVE, AlarmSearchStatus.UNACK)).pageLink(
                         new TimePageLink(1, 0, "",
                                 new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
-                ).build()).get();
+                ).build());
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
         Assert.assertEquals(created, new AlarmInfo(alarms.getData().get(0)));
@@ -287,7 +288,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
                 .statusList(Arrays.asList(AlarmSearchStatus.ACTIVE, AlarmSearchStatus.UNACK)).pageLink(
                         new TimePageLink(1, 0, "",
                                 new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
-                ).build()).get();
+                ).build());
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
         Assert.assertEquals(created, new AlarmInfo(alarms.getData().get(0)));
@@ -301,7 +302,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
                 .statusList(Arrays.asList(AlarmSearchStatus.ACTIVE, AlarmSearchStatus.ACK)).pageLink(
                         new TimePageLink(1, 0, "",
                                 new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
-                ).build()).get();
+                ).build());
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
         Assert.assertEquals(created, new AlarmInfo(alarms.getData().get(0)));
@@ -313,7 +314,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
                 .statusList(Arrays.asList(AlarmSearchStatus.ACTIVE, AlarmSearchStatus.UNACK)).pageLink(
                         new TimePageLink(1, 0, "",
                                 new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
-                ).build()).get();
+                ).build());
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(0, alarms.getData().size());
 
@@ -326,7 +327,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
                 .statusList(Arrays.asList(AlarmSearchStatus.CLEARED, AlarmSearchStatus.ACK)).pageLink(
                         new TimePageLink(1, 0, "",
                                 new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
-                ).build()).get();
+                ).build());
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
         Assert.assertEquals(created, new AlarmInfo(alarms.getData().get(0)));
@@ -358,7 +359,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
         tenantUser.setEmail(TEST_TENANT_EMAIL);
         tenantUser.setFirstName(TEST_TENANT_FIRST_NAME);
         tenantUser.setLastName(TEST_TENANT_LAST_NAME);
-        tenantUser = userService.saveUser(tenantUser);
+        tenantUser = userService.saveUser(TenantId.SYS_TENANT_ID, tenantUser);
 
         Assert.assertNotNull(tenantUser);
 
@@ -370,7 +371,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
                 .fetchOriginator(true)
                 .pageLink(new TimePageLink(1, 0, "",
                         new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
-                ).build()).get();
+                ).build());
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
         Assert.assertEquals(created, alarms.getData().get(0));
@@ -392,7 +393,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
         tenantUser2.setEmail(2 + TEST_TENANT_EMAIL);
         tenantUser2.setFirstName(TEST_TENANT_FIRST_NAME);
         tenantUser2.setLastName(TEST_TENANT_LAST_NAME);
-        tenantUser2 = userService.saveUser(tenantUser2);
+        tenantUser2 = userService.saveUser(TenantId.SYS_TENANT_ID, tenantUser2);
 
         Assert.assertNotNull(tenantUser2);
         pageLink.setAssigneeId(tenantUser2.getId());
@@ -465,7 +466,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
                 .status(AlarmStatus.ACTIVE_UNACK).pageLink(
                         new TimePageLink(10, 0, "",
                                 new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
-                ).build()).get();
+                ).build());
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
         Assert.assertEquals(tenantAlarm, new AlarmInfo(alarms.getData().get(0)));
@@ -751,7 +752,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
                 .status(AlarmStatus.ACTIVE_UNACK).pageLink(
                         new TimePageLink(10, 0, "",
                                 new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
-                ).build()).get();
+                ).build());
         Assert.assertNotNull(alarmsInfoData.getData());
         Assert.assertEquals(1, alarmsInfoData.getData().size());
         Assert.assertEquals(created, new AlarmInfo(alarmsInfoData.getData().get(0)));
@@ -762,7 +763,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
                 .status(AlarmStatus.ACTIVE_UNACK).pageLink(
                         new TimePageLink(10, 0, "",
                                 new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
-                ).build()).get();
+                ).build());
         Assert.assertNotNull(alarmsInfoData.getData());
         Assert.assertEquals(1, alarmsInfoData.getData().size());
         Assert.assertEquals(created, new AlarmInfo(alarmsInfoData.getData().get(0)));
@@ -773,7 +774,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
                 .status(AlarmStatus.ACTIVE_UNACK).pageLink(
                         new TimePageLink(10, 0, "",
                                 new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
-                ).build()).get();
+                ).build());
         Assert.assertNotNull(alarmsInfoData.getData());
         Assert.assertEquals(1, alarmsInfoData.getData().size());
         Assert.assertEquals(created, new AlarmInfo(alarmsInfoData.getData().get(0)));
@@ -898,7 +899,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
                 .status(AlarmStatus.ACTIVE_UNACK).pageLink(
                         new TimePageLink(1, 0, "",
                                 new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
-                ).build()).get();
+                ).build());
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
         Assert.assertEquals(created, new AlarmInfo(alarms.getData().get(0)));
@@ -909,12 +910,12 @@ public class AlarmServiceTest extends AbstractServiceTest {
                 .status(AlarmStatus.ACTIVE_UNACK).pageLink(
                         new TimePageLink(1, 0, "",
                                 new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
-                ).build()).get();
+                ).build());
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(1, alarms.getData().size());
         Assert.assertEquals(created, new AlarmInfo(alarms.getData().get(0)));
 
-        Assert.assertTrue("Alarm was not deleted when expected", alarmService.deleteAlarm(tenantId, created.getId()).isSuccessful());
+        Assert.assertTrue("Alarm was not deleted when expected", alarmService.delAlarm(tenantId, created.getId()).isSuccessful());
 
         Alarm fetched = alarmService.findAlarmByIdAsync(tenantId, created.getId()).get();
 
@@ -925,7 +926,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
                 .status(AlarmStatus.ACTIVE_UNACK).pageLink(
                         new TimePageLink(1, 0, "",
                                 new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
-                ).build()).get();
+                ).build());
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(0, alarms.getData().size());
 
@@ -935,7 +936,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
                 .status(AlarmStatus.ACTIVE_UNACK).pageLink(
                         new TimePageLink(1, 0, "",
                                 new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
-                ).build()).get();
+                ).build());
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(0, alarms.getData().size());
 

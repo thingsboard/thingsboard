@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,28 +15,21 @@
     limitations under the License.
 
 -->
-<div [formGroup]="datasourcesFormGroup" class="tb-widget-config-panel tb-datasources" [ngClass]="{'no-padding-bottom': !showAddDatasource}">
+<div [formGroup]="datasourcesFormGroup" class="tb-form-panel tb-datasources" [ngClass]="{'no-padding-bottom': !showAddDatasource}">
   <div fxLayout="column">
     <div fxLayout="row" fxLayoutAlign="space-between center">
-      <div class="tb-widget-config-panel-title">{{ (singleDatasource ? 'widget-config.datasource' : 'widget-config.datasources') | translate }}</div>
+      <div class="tb-form-panel-title">{{ (singleDatasource ? (isAlarmSource ? 'widget-config.alarm-source' : 'widget-config.datasource') : 'widget-config.datasources') | translate }}</div>
       <div fxFlex fxLayout="row" fxLayoutAlign="center center" *ngIf="timeseriesKeyError">
         <mat-error >{{ 'widget-config.timeseries-key-error' | translate }}</mat-error>
       </div>
-      <tb-toggle-header *ngIf="basicMode" (valueChange)="datasourcesModeChange($event)" ignoreMdLgSize="true"
-                            [options]="[
-                                {
-                                   name: translate.instant('device.device'),
-                                   value: datasourceType.device
-                                },
-                                {
-                                   name: translate.instant('entity.entity-alias'),
-                                   value: datasourceType.entity
-                                }
-                              ]" [value]="datasourcesMode" name="widgetConfigModeHeader" useSelectOnMdLg="false">
-      </tb-toggle-header>
+      <tb-toggle-select *ngIf="basicMode && !hideDatasourcesMode" [ngModel]="datasourcesMode" (ngModelChange)="datasourcesModeChange($event)"
+                        [ngModelOptions]="{ standalone: true }">
+        <tb-toggle-option [value]="datasourceType.device">{{ 'device.device' | translate }}</tb-toggle-option>
+        <tb-toggle-option [value]="datasourceType.entity">{{ 'entity.entity-alias' | translate }}</tb-toggle-option>
+      </tb-toggle-select>
     </div>
     <div *ngIf="maxDatasources > 1"
-         class="tb-widget-config-panel-hint">{{ 'widget-config.maximum-datasources' | translate:{count: maxDatasources} }}</div>
+         class="tb-form-panel-hint">{{ 'widget-config.maximum-datasources' | translate:{count: maxDatasources} }}</div>
   </div>
   <div *ngIf="datasourcesFormArray.length === 0; else datasourcesTemplate">
                 <span translate fxLayoutAlign="center center"
@@ -51,29 +44,27 @@
                 [cdkDropListDisabled]="dragDisabled"
                 formArrayName="datasources">
         <mat-list-item *ngFor="let datasourceControl of datasourcesControls; trackBy: trackByDatasource; let $index = index;"
-                       class="tb-datasource-list-item tb-draggable" [ngClass]="{'bordered': !singleDatasource}" cdkDrag
+                       class="tb-datasource-list-item tb-draggable" cdkDrag
                        [cdkDragDisabled]="dragDisabled">
-          <div fxFlex fxLayout="row" fxLayoutAlign="start start">
-            <div *ngIf="!singleDatasource" fxLayout="row" fxLayoutAlign="center center" style="width: 42px; height: 56px;">
+          <div class="tb-datasource-row">
+            <div *ngIf="!singleDatasource" class="tb-datasource-index-container">
               <div class="tb-datasource-index">{{$index + 1}}</div>
             </div>
-            <div class="tb-datasource-params" fxFlex>
-              <div fxFlex
-                   fxLayout="row"
-                   fxLayoutAlign="start">
-                <tb-datasource fxFlex
-                               [formControl]="datasourceControl">
+            <div class="tb-datasource-params">
+              <div class="tb-datasource-item">
+                <tb-datasource [formControl]="datasourceControl">
                 </tb-datasource>
-                <div *ngIf="!singleDatasource && !disabled" fxLayout="row" fxLayoutAlign="center center" style="height: 56px;">
-                  <button type="button"
-                          mat-icon-button color="primary"
+                <div *ngIf="!singleDatasource && !disabled" class="tb-datasource-buttons">
+                  <button class="tb-box-button" type="button"
+                          mat-icon-button
                           (click)="removeDatasource($index)"
                           matTooltip="{{ 'widget-config.remove-datasource' | translate }}"
                           matTooltipPosition="above">
                     <mat-icon>delete</mat-icon>
                   </button>
                   <button *ngIf="!dragDisabled"
-                          mat-icon-button color="primary"
+                          class="tb-box-button"
+                          mat-icon-button
                           type="button"
                           cdkDragHandle
                           matTooltip="{{ 'action.drag' | translate }}"

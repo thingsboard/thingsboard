@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -218,7 +218,7 @@ export class EntityTypesVersionLoadComponent extends PageComponent implements On
   onRemoveOtherEntities(removeOtherEntitiesCheckbox: MatCheckbox, entityTypeControl: AbstractControl) {
     const removeOtherEntities: boolean = entityTypeControl.get('config.removeOtherEntities').value;
     if (removeOtherEntities) {
-      entityTypeControl.get('config').get('removeOtherEntities').patchValue(false, {emitEvent: false});
+      entityTypeControl.get('config').get('removeOtherEntities').patchValue(false, {emitEvent: true});
       const trigger = $('.mdc-checkbox__background', removeOtherEntitiesCheckbox._elementRef.nativeElement)[0];
       if (this.popoverService.hasPopover(trigger)) {
         this.popoverService.hidePopover(trigger);

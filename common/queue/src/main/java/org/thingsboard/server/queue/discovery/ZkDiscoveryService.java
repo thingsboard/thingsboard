@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.server.queue.discovery;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.ProtocolStringList;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
@@ -34,18 +35,22 @@ import org.apache.zookeeper.KeeperException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.discovery.event.OtherServiceShutdownEvent;
 import org.thingsboard.server.queue.util.AfterStartUp;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -66,7 +71,12 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
     private Integer zkSessionTimeout;
     @Value("${zk.zk_dir}")
     private String zkDir;
+    @Value("${zk.recalculate_delay:0}")
+    private Long recalculateDelay;
 
+    protected final ConcurrentHashMap<String, ScheduledFuture<?>> delayedTasks;
+
+    private final ApplicationEventPublisher applicationEventPublisher;
     private final TbServiceInfoProvider serviceInfoProvider;
     private final PartitionService partitionService;
 
@@ -78,10 +88,13 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
 
     private volatile boolean stopped = true;
 
-    public ZkDiscoveryService(TbServiceInfoProvider serviceInfoProvider,
+    public ZkDiscoveryService(ApplicationEventPublisher applicationEventPublisher,
+                              TbServiceInfoProvider serviceInfoProvider,
                               PartitionService partitionService) {
+        this.applicationEventPublisher = applicationEventPublisher;
         this.serviceInfoProvider = serviceInfoProvider;
         this.partitionService = partitionService;
+        delayedTasks = new ConcurrentHashMap<>();
     }
 
     @PostConstruct
@@ -133,9 +146,11 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
             return;
         }
         log.info("Going to publish current server...");
-        zkExecutorService.scheduleAtFixedRate(this::publishCurrentServer, 0, 1, TimeUnit.MINUTES);
+        publishCurrentServer();
         log.info("Going to recalculate partitions...");
         recalculatePartitions();
+
+        zkExecutorService.scheduleAtFixedRate(this::publishCurrentServer, 1, 1, TimeUnit.MINUTES);
     }
 
     @SneakyThrows
@@ -287,11 +302,40 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
             log.error("Failed to decode server instance for node {}", data.getPath(), e);
             throw e;
         }
-        log.debug("Processing [{}] event for [{}]", pathChildrenCacheEvent.getType(), instance.getServiceId());
+
+        String serviceId = instance.getServiceId();
+        ProtocolStringList serviceTypesList = instance.getServiceTypesList();
+
+        log.trace("Processing [{}] event for [{}]", pathChildrenCacheEvent.getType(), serviceId);
         switch (pathChildrenCacheEvent.getType()) {
             case CHILD_ADDED:
+                ScheduledFuture<?> task = delayedTasks.remove(serviceId);
+                if (task != null) {
+                    if (task.cancel(false)) {
+                        log.debug("[{}] Recalculate partitions ignored. Service was restarted in time [{}].",
+                                serviceId, serviceTypesList);
+                    } else {
+                        log.debug("[{}] Going to recalculate partitions. Service was not restarted in time [{}]!",
+                                serviceId, serviceTypesList);
+                        recalculatePartitions();
+                    }
+                } else {
+                    log.trace("[{}] Going to recalculate partitions due to adding new node [{}].",
+                            serviceId, serviceTypesList);
+                    recalculatePartitions();
+                }
+                break;
             case CHILD_REMOVED:
-                recalculatePartitions();
+                zkExecutorService.submit(() -> applicationEventPublisher.publishEvent(new OtherServiceShutdownEvent(this, serviceId, serviceTypesList)));
+                ScheduledFuture<?> future = zkExecutorService.schedule(() -> {
+                    log.debug("[{}] Going to recalculate partitions due to removed node [{}]",
+                            serviceId, serviceTypesList);
+                    ScheduledFuture<?> removedTask = delayedTasks.remove(serviceId);
+                    if (removedTask != null) {
+                        recalculatePartitions();
+                    }
+                }, recalculateDelay, TimeUnit.MILLISECONDS);
+                delayedTasks.put(serviceId, future);
                 break;
             default:
                 break;
@@ -303,6 +347,8 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
      * Synchronized to ensure that other servers info is up to date
      * */
     synchronized void recalculatePartitions() {
+        delayedTasks.values().forEach(future -> future.cancel(false));
+        delayedTasks.clear();
         partitionService.recalculatePartitions(serviceInfoProvider.getServiceInfo(), getOtherServers());
     }
 

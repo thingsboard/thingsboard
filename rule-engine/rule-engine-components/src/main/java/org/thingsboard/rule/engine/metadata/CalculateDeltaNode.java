@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,10 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
 import java.math.BigDecimal;
@@ -45,11 +46,12 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 @Slf4j
 @RuleNode(type = ComponentType.ENRICHMENT,
-        name = "calculate delta", relationTypes = {"Success", "Failure", "Other"},
+        name = "calculate delta", relationTypes = {TbNodeConnectionType.SUCCESS, TbNodeConnectionType.FAILURE, TbNodeConnectionType.OTHER},
         configClazz = CalculateDeltaNodeConfiguration.class,
         nodeDescription = "Calculates delta and amount of time passed between previous timeseries key reading " +
                 "and current value for this key from the incoming message",
-        nodeDetails = "Useful for metering use cases, when you need to calculate consumption based on pulse counter reading.",
+        nodeDetails = "Useful for metering use cases, when you need to calculate consumption based on pulse counter reading.<br><br>" +
+                "Output connections: <code>Success</code>, <code>Other</code> or <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeCalculateDeltaConfig")
 public class CalculateDeltaNode implements TbNode {
@@ -73,14 +75,14 @@ public class CalculateDeltaNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        if (!msg.getType().equals(SessionMsgType.POST_TELEMETRY_REQUEST.name())) {
-            ctx.tellNext(msg, "Other");
+        if (!msg.isTypeOf(TbMsgType.POST_TELEMETRY_REQUEST)) {
+            ctx.tellNext(msg, TbNodeConnectionType.OTHER);
             return;
         }
         JsonNode json = JacksonUtil.toJsonNode(msg.getData());
         String inputKey = config.getInputValueKey();
         if (!json.has(inputKey)) {
-            ctx.tellNext(msg, "Other");
+            ctx.tellNext(msg, TbNodeConnectionType.OTHER);
             return;
         }
         withCallback(getLastValue(msg.getOriginator()),
@@ -114,7 +116,7 @@ public class CalculateDeltaNode implements TbNode {
                         long period = previousData != null ? currentTs - previousData.ts : 0;
                         result.put(config.getPeriodValueKey(), period);
                     }
-                    ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(result)));
+                    ctx.tellSuccess(TbMsg.transformMsgData(msg, JacksonUtil.toString(result)));
                 },
                 t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }

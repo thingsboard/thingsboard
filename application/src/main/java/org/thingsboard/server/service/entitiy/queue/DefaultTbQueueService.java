@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,11 @@
  */
 package org.thingsboard.server.service.entitiy.queue;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.Queue;
@@ -28,7 +27,6 @@ import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfi
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.queue.TbQueueAdmin;
-import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
@@ -36,20 +34,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @TbCoreComponent
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class DefaultTbQueueService extends AbstractTbEntityService implements TbQueueService {
-    private static final long DELETE_DELAY = 30;
 
     private final QueueService queueService;
     private final TbClusterService tbClusterService;
     private final TbQueueAdmin tbQueueAdmin;
-    private final SchedulerComponent scheduler;
 
     @Override
     public Queue saveQueue(Queue queue) {
@@ -71,8 +66,6 @@ public class DefaultTbQueueService extends AbstractTbEntityService implements Tb
             onQueueUpdated(savedQueue, oldQueue);
         }
 
-        notificationEntityService.notifySendMsgToEdgeService(queue.getTenantId(), savedQueue.getId(), create ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
-
         return savedQueue;
     }
 
@@ -93,7 +86,9 @@ public class DefaultTbQueueService extends AbstractTbEntityService implements Tb
     private void onQueueCreated(Queue queue) {
         for (int i = 0; i < queue.getPartitions(); i++) {
             tbQueueAdmin.createTopicIfNotExists(
-                    new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());
+                    new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName(),
+                    queue.getCustomProperties()
+            );
         }
 
         tbClusterService.onQueueChange(queue);
@@ -108,21 +103,15 @@ public class DefaultTbQueueService extends AbstractTbEntityService implements Tb
                 log.info("Added [{}] new partitions to [{}] queue", currentPartitions - oldPartitions, queue.getName());
                 for (int i = oldPartitions; i < currentPartitions; i++) {
                     tbQueueAdmin.createTopicIfNotExists(
-                            new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());
+                            new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName(),
+                            queue.getCustomProperties()
+                    );
                 }
                 tbClusterService.onQueueChange(queue);
             } else {
                 log.info("Removed [{}] partitions from [{}] queue", oldPartitions - currentPartitions, queue.getName());
                 tbClusterService.onQueueChange(queue);
-
-                scheduler.schedule(() -> {
-                    for (int i = currentPartitions; i < oldPartitions; i++) {
-                        String fullTopicName = new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName();
-                        log.info("Removed partition [{}]", fullTopicName);
-                        tbQueueAdmin.deleteTopic(
-                                fullTopicName);
-                    }
-                }, DELETE_DELAY, TimeUnit.SECONDS);
+                // TODO: move all the messages left in old partitions and delete topics
             }
         } else if (!oldQueue.equals(queue)) {
             tbClusterService.onQueueChange(queue);
@@ -131,22 +120,7 @@ public class DefaultTbQueueService extends AbstractTbEntityService implements Tb
 
     private void onQueueDeleted(Queue queue) {
         tbClusterService.onQueueDelete(queue);
-
 //        queueStatsService.deleteQueueStatsByQueueId(tenantId, queueId);
-
-        scheduler.schedule(() -> {
-            for (int i = 0; i < queue.getPartitions(); i++) {
-                String fullTopicName = new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName();
-                log.info("Deleting queue [{}]", fullTopicName);
-                try {
-                    tbQueueAdmin.deleteTopic(fullTopicName);
-                } catch (Exception e) {
-                    log.error("Failed to delete queue [{}]", fullTopicName);
-                }
-            }
-        }, DELETE_DELAY, TimeUnit.SECONDS);
-
-        notificationEntityService.notifySendMsgToEdgeService(queue.getTenantId(), queue.getId(), EdgeEventActionType.DELETED);
     }
 
     @Override
@@ -198,6 +172,10 @@ public class DefaultTbQueueService extends AbstractTbEntityService implements Tb
             }
         }
 
+        if (log.isDebugEnabled()) {
+            log.debug("[{}] Handling profile queue config update: creating queues {}, updating {}, deleting {}. Affected tenants: {}",
+                    newTenantProfile.getUuidId(), toCreate, toUpdate, toRemove, tenantIds);
+        }
         tenantIds.forEach(tenantId -> {
             toCreate.forEach(key -> saveQueue(new Queue(tenantId, newQueues.get(key))));
 

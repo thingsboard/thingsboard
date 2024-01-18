@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,7 +111,7 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                 .setConnectRequestMsg(ConnectRequestMsg.newBuilder()
                         .setEdgeRoutingKey(edgeKey)
                         .setEdgeSecret(edgeSecret)
-                        .setEdgeVersion(EdgeVersion.V_3_4_0)
+                        .setEdgeVersion(EdgeVersion.V_3_6_2)
                         .setMaxInboundMessageSize(maxInboundMessageSize)
                         .build())
                 .build());
@@ -221,17 +221,11 @@ public class EdgeGrpcClient implements EdgeRpcClient {
     }
 
     @Override
-    public void sendSyncRequestMsg(boolean syncRequired) {
-        sendSyncRequestMsg(syncRequired, true);
-    }
-
-    @Override
-    public void sendSyncRequestMsg(boolean syncRequired, boolean fullSync) {
+    public void sendSyncRequestMsg(boolean fullSyncRequired) {
         uplinkMsgLock.lock();
         try {
             SyncRequestMsg syncRequestMsg = SyncRequestMsg.newBuilder()
-                    .setSyncRequired(syncRequired)
-                    .setFullSync(fullSync)
+                    .setFullSync(fullSyncRequired)
                     .build();
             this.inputStream.onNext(RequestMsg.newBuilder()
                     .setMsgType(RequestMsgType.SYNC_REQUEST_RPC_MESSAGE)

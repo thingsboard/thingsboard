@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,9 @@ import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -50,7 +53,6 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.stats.DefaultRuleEngineStatisticsService;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
@@ -114,8 +116,8 @@ public class AssetControllerTest extends AbstractControllerTest {
 
         Asset savedAsset = doPost("/api/asset", asset, Asset.class);
 
-        testNotifyEntityOneTimeMsgToEdgeServiceNever(savedAsset, savedAsset.getId(), savedAsset.getId(),
-                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED);
+        testNotifyEntityAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(), savedTenant.getId(),
+                tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED);
 
         Assert.assertNotNull(savedAsset);
         Assert.assertNotNull(savedAsset.getId());
@@ -130,8 +132,8 @@ public class AssetControllerTest extends AbstractControllerTest {
         savedAsset.setName("My new asset");
         doPost("/api/asset", savedAsset, Asset.class);
 
-        testNotifyEntityAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(),
-                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UPDATED);
+        testNotifyEntityAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(), savedTenant.getId(),
+                tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UPDATED);
 
         Asset foundAsset = doGet("/api/asset/" + savedAsset.getId().getId().toString(), Asset.class);
         Assert.assertEquals(foundAsset.getName(), savedAsset.getName());
@@ -229,7 +231,8 @@ public class AssetControllerTest extends AbstractControllerTest {
 
     @Test
     public void testFindAssetTypesByTenantId() throws Exception {
-        List<Asset> assets = new ArrayList<>();
+        AssetProfile assetProfile = createAssetProfile("typeB");
+        assetProfile = doPost("/api/assetProfile", assetProfile, AssetProfile.class);
 
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -238,24 +241,25 @@ public class AssetControllerTest extends AbstractControllerTest {
             Asset asset = new Asset();
             asset.setName("My asset B" + i);
             asset.setType("typeB");
-            assets.add(doPost("/api/asset", asset, Asset.class));
+            asset.setAssetProfileId(assetProfile.getId());
+            doPost("/api/asset", asset, Asset.class);
         }
 
-        testNotifyManyEntityManyTimeMsgToEdgeServiceNever(new Asset(), new Asset(),
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new Asset(), new Asset(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ADDED, cntTime);
+                ActionType.ADDED, cntTime, cntTime, cntTime);
 
         for (int i = 0; i < 7; i++) {
             Asset asset = new Asset();
             asset.setName("My asset C" + i);
             asset.setType("typeC");
-            assets.add(doPost("/api/asset", asset, Asset.class));
+            doPost("/api/asset", asset, Asset.class);
         }
         for (int i = 0; i < 9; i++) {
             Asset asset = new Asset();
             asset.setName("My asset A" + i);
             asset.setType("typeA");
-            assets.add(doPost("/api/asset", asset, Asset.class));
+            doPost("/api/asset", asset, Asset.class);
         }
         List<EntitySubtype> assetTypes = doGetTyped("/api/asset/types",
                 new TypeReference<List<EntitySubtype>>() {
@@ -280,7 +284,7 @@ public class AssetControllerTest extends AbstractControllerTest {
         doDelete("/api/asset/" + savedAsset.getId().getId().toString())
                 .andExpect(status().isOk());
 
-        testNotifyEntityOneTimeMsgToEdgeServiceNever(savedAsset, savedAsset.getId(), savedAsset.getId(),
+        testNotifyEntityAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.DELETED, savedAsset.getId().getId().toString());
 
@@ -288,6 +292,39 @@ public class AssetControllerTest extends AbstractControllerTest {
         doGet("/api/asset/" + assetIdStr)
                 .andExpect(status().isNotFound())
                 .andExpect(statusReason(containsString(msgErrorNoFound("Asset", assetIdStr))));
+    }
+
+    @Test
+    public void testDeleteAssetWithAlarmsAndAlarmTypes() throws Exception {
+        Asset asset = new Asset();
+        asset.setName("My asset");
+        asset.setType("default");
+        Asset savedAsset = doPost("/api/asset", asset, Asset.class);
+
+        Alarm alarm = Alarm.builder()
+                .tenantId(tenantId)
+                .originator(savedAsset.getId())
+                .severity(AlarmSeverity.CRITICAL)
+                .type("test_type")
+                .build();
+
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+        Assert.assertNotNull(alarm);
+
+        AlarmInfo foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
+        Assert.assertNotNull(foundAlarm);
+
+        doDelete("/api/asset/" + savedAsset.getId().getId().toString())
+                .andExpect(status().isOk());
+
+        String assetIdStr = savedAsset.getId().getId().toString();
+        doGet("/api/asset/" + assetIdStr)
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(containsString(msgErrorNoFound("Asset", assetIdStr))));
+
+        doGet("/api/alarm/info/" + alarm.getId())
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(containsString(msgErrorNoFound("Alarm", alarm.getId().getId().toString()))));
     }
 
     @Test
@@ -342,7 +379,7 @@ public class AssetControllerTest extends AbstractControllerTest {
         Asset savedAsset = doPost("/api/asset", asset, Asset.class);
         Assert.assertEquals("default", savedAsset.getType());
 
-        testNotifyEntityOneTimeMsgToEdgeServiceNever(savedAsset, savedAsset.getId(), savedAsset.getId(),
+        testNotifyEntityAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.ADDED);
     }
@@ -380,9 +417,9 @@ public class AssetControllerTest extends AbstractControllerTest {
                 + "/asset/" + savedAsset.getId().getId().toString(), Asset.class);
         Assert.assertEquals(savedCustomer.getId(), assignedAsset.getCustomerId());
 
-        testNotifyEntityAllOneTime(assignedAsset, assignedAsset.getId(), assignedAsset.getId(),
+        testNotifyAssignUnassignEntityAllOneTime(assignedAsset, assignedAsset.getId(), assignedAsset.getId(),
                 savedTenant.getId(), savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ASSIGNED_TO_CUSTOMER, assignedAsset.getId().toString(), savedCustomer.getId().toString(), savedCustomer.getTitle());
+                ActionType.ASSIGNED_TO_CUSTOMER, ActionType.UPDATED, assignedAsset.getId().toString(), savedCustomer.getId().toString(), savedCustomer.getTitle());
 
         Asset foundAsset = doGet("/api/asset/" + savedAsset.getId().getId().toString(), Asset.class);
         Assert.assertEquals(savedCustomer.getId(), foundAsset.getCustomerId());
@@ -393,9 +430,9 @@ public class AssetControllerTest extends AbstractControllerTest {
                 doDelete("/api/customer/asset/" + savedAsset.getId().getId().toString(), Asset.class);
         Assert.assertEquals(ModelConstants.NULL_UUID, unassignedAsset.getCustomerId().getId());
 
-        testNotifyEntityAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(),
+        testNotifyAssignUnassignEntityAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(),
                 savedTenant.getId(), savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.UNASSIGNED_FROM_CUSTOMER, savedAsset.getId().toString(), savedCustomer.getId().toString(), savedCustomer.getTitle());
+                ActionType.UNASSIGNED_FROM_CUSTOMER, ActionType.UPDATED, savedAsset.getId().toString(), savedCustomer.getId().toString(), savedCustomer.getTitle());
 
         foundAsset = doGet("/api/asset/" + savedAsset.getId().getId().toString(), Asset.class);
         Assert.assertEquals(ModelConstants.NULL_UUID, foundAsset.getCustomerId().getId());
@@ -415,9 +452,10 @@ public class AssetControllerTest extends AbstractControllerTest {
         Customer publicCustomer = doGet("/api/customer/" + assignedAsset.getCustomerId(), Customer.class);
         Assert.assertTrue(publicCustomer.isPublic());
 
-        testNotifyEntityAllOneTime(assignedAsset, assignedAsset.getId(), assignedAsset.getId(),
+        testNotifyAssignUnassignEntityAllOneTime(assignedAsset, assignedAsset.getId(), assignedAsset.getId(),
                 savedTenant.getId(), publicCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ASSIGNED_TO_CUSTOMER, assignedAsset.getId().toString(), publicCustomer.getId().toString(), publicCustomer.getTitle());
+                ActionType.ASSIGNED_TO_CUSTOMER, ActionType.UPDATED, assignedAsset.getId().toString(),
+                publicCustomer.getId().toString(), publicCustomer.getTitle());
 
         Asset foundAsset = doGet("/api/asset/" + savedAsset.getId().getId().toString(), Asset.class);
         Assert.assertEquals(publicCustomer.getId(), foundAsset.getCustomerId());
@@ -428,9 +466,10 @@ public class AssetControllerTest extends AbstractControllerTest {
                 doDelete("/api/customer/asset/" + savedAsset.getId().getId().toString(), Asset.class);
         Assert.assertEquals(ModelConstants.NULL_UUID, unassignedAsset.getCustomerId().getId());
 
-        testNotifyEntityAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(),
+        testNotifyAssignUnassignEntityAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(),
                 savedTenant.getId(), publicCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.UNASSIGNED_FROM_CUSTOMER, savedAsset.getId().toString(), publicCustomer.getId().toString(), publicCustomer.getTitle());
+                ActionType.UNASSIGNED_FROM_CUSTOMER, ActionType.UPDATED, savedAsset.getId().toString(),
+                publicCustomer.getId().toString(), publicCustomer.getTitle());
 
         foundAsset = doGet("/api/asset/" + savedAsset.getId().getId().toString(), Asset.class);
         Assert.assertEquals(ModelConstants.NULL_UUID, foundAsset.getCustomerId().getId());
@@ -513,7 +552,7 @@ public class AssetControllerTest extends AbstractControllerTest {
         }
         List<Asset> loadedAssets = new ArrayList<>();
         PageLink pageLink = new PageLink(23);
-        PageData<Asset> pageData = null;
+        PageData<Asset> pageData;
         do {
             pageData = doGetTypedWithPageLink("/api/tenant/assets?",
                     new TypeReference<PageData<Asset>>() {
@@ -524,14 +563,14 @@ public class AssetControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        testNotifyManyEntityManyTimeMsgToEdgeServiceNever(new Asset(), new Asset(),
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new Asset(), new Asset(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ADDED, cntEntity);
+                ActionType.ADDED, cntEntity, cntEntity, cntEntity);
 
         loadedAssets.removeIf(asset -> asset.getType().equals(DefaultRuleEngineStatisticsService.TB_SERVICE_QUEUE));
 
-        Collections.sort(assets, idComparator);
-        Collections.sort(loadedAssets, idComparator);
+        assets.sort(idComparator);
+        loadedAssets.sort(idComparator);
 
         Assert.assertEquals(assets, loadedAssets);
     }
@@ -574,8 +613,8 @@ public class AssetControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(assetsTitle1, idComparator);
-        Collections.sort(loadedAssetsTitle1, idComparator);
+        assetsTitle1.sort(idComparator);
+        loadedAssetsTitle1.sort(idComparator);
 
         Assert.assertEquals(assetsTitle1, loadedAssetsTitle1);
 
@@ -591,8 +630,8 @@ public class AssetControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(assetsTitle2, idComparator);
-        Collections.sort(loadedAssetsTitle2, idComparator);
+        assetsTitle2.sort(idComparator);
+        loadedAssetsTitle2.sort(idComparator);
 
         Assert.assertEquals(assetsTitle2, loadedAssetsTitle2);
 
@@ -661,8 +700,8 @@ public class AssetControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(assetsType1, idComparator);
-        Collections.sort(loadedAssetsType1, idComparator);
+        assetsType1.sort(idComparator);
+        loadedAssetsType1.sort(idComparator);
 
         Assert.assertEquals(assetsType1, loadedAssetsType1);
 
@@ -678,8 +717,8 @@ public class AssetControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(assetsType2, idComparator);
-        Collections.sort(loadedAssetsType2, idComparator);
+        assetsType2.sort(idComparator);
+        loadedAssetsType2.sort(idComparator);
 
         Assert.assertEquals(assetsType2, loadedAssetsType2);
 
@@ -738,8 +777,8 @@ public class AssetControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(assets, idComparator);
-        Collections.sort(loadedAssets, idComparator);
+        assets.sort(idComparator);
+        loadedAssets.sort(idComparator);
 
         Assert.assertEquals(assets, loadedAssets);
     }
@@ -791,8 +830,8 @@ public class AssetControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(assetsTitle1, idComparator);
-        Collections.sort(loadedAssetsTitle1, idComparator);
+        assetsTitle1.sort(idComparator);
+        loadedAssetsTitle1.sort(idComparator);
 
         Assert.assertEquals(assetsTitle1, loadedAssetsTitle1);
 
@@ -808,8 +847,8 @@ public class AssetControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(assetsTitle2, idComparator);
-        Collections.sort(loadedAssetsTitle2, idComparator);
+        assetsTitle2.sort(idComparator);
+        loadedAssetsTitle2.sort(idComparator);
 
         Assert.assertEquals(assetsTitle2, loadedAssetsTitle2);
 
@@ -887,8 +926,8 @@ public class AssetControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(assetsType1, idComparator);
-        Collections.sort(loadedAssetsType1, idComparator);
+        assetsType1.sort(idComparator);
+        loadedAssetsType1.sort(idComparator);
 
         Assert.assertEquals(assetsType1, loadedAssetsType1);
 
@@ -904,8 +943,8 @@ public class AssetControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(assetsType2, idComparator);
-        Collections.sort(loadedAssetsType2, idComparator);
+        assetsType2.sort(idComparator);
+        loadedAssetsType2.sort(idComparator);
 
         Assert.assertEquals(assetsType2, loadedAssetsType2);
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,15 +37,12 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL;
-import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfiguration.FETCH_MODE_FIRST;
-import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfiguration.MAX_FETCH_SIZE;
 
 /**
  * Created by mshvayka on 04.09.18.
@@ -57,7 +54,8 @@ import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfigurati
         nodeDescription = "Adds message originator telemetry for selected time range into message metadata",
         nodeDetails = "Useful when you need to get telemetry data set from the message originator for a specific time range " +
                 "instead of fetching just the latest telemetry or if you need to get the closest telemetry to the fetch interval start or end. " +
-                "Also, this node can be used for telemetry aggregation within configured fetch interval.",
+                "Also, this node can be used for telemetry aggregation within configured fetch interval.<br><br>" +
+                "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeGetTelemetryFromDatabase")
 public class TbGetTelemetryNode implements TbNode {
@@ -76,7 +74,7 @@ public class TbGetTelemetryNode implements TbNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbGetTelemetryNodeConfiguration.class);
         tsKeyNames = config.getLatestTsKeyNames();
-        limit = config.getFetchMode().equals(FETCH_MODE_ALL) ? validateLimit(config.getLimit()) : 1;
+        limit = config.getFetchMode().equals(TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL) ? validateLimit(config.getLimit()) : 1;
         fetchMode = config.getFetchMode();
         orderByFetchAll = config.getOrderBy();
         if (StringUtils.isEmpty(orderByFetchAll)) {
@@ -86,7 +84,7 @@ public class TbGetTelemetryNode implements TbNode {
     }
 
     Aggregation parseAggregationConfig(String aggName) {
-        if (StringUtils.isEmpty(aggName) || !fetchMode.equals(FETCH_MODE_ALL)) {
+        if (StringUtils.isEmpty(aggName) || !fetchMode.equals(TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL)) {
             return Aggregation.NONE;
         }
         return Aggregation.valueOf(aggName);
@@ -102,8 +100,8 @@ public class TbGetTelemetryNode implements TbNode {
                 List<String> keys = TbNodeUtils.processPatterns(tsKeyNames, msg);
                 ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), buildQueries(interval, keys));
                 DonAsynchron.withCallback(list, data -> {
-                    process(data, msg, keys);
-                    ctx.tellSuccess(ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), msg.getData()));
+                    var metaData = updateMetadata(data, msg, keys);
+                    ctx.tellSuccess(TbMsg.transformMsgMetadata(msg, metaData));
                 }, error -> ctx.tellFailure(msg, error), ctx.getDbCallbackExecutor());
             } catch (Exception e) {
                 ctx.tellFailure(msg, e);
@@ -124,28 +122,29 @@ public class TbGetTelemetryNode implements TbNode {
 
     private String getOrderBy() {
         switch (fetchMode) {
-            case FETCH_MODE_ALL:
+            case TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL:
                 return orderByFetchAll;
-            case FETCH_MODE_FIRST:
+            case TbGetTelemetryNodeConfiguration.FETCH_MODE_FIRST:
                 return ASC_ORDER;
             default:
                 return DESC_ORDER;
         }
     }
 
-    private void process(List<TsKvEntry> entries, TbMsg msg, List<String> keys) {
+    private TbMsgMetaData updateMetadata(List<TsKvEntry> entries, TbMsg msg, List<String> keys) {
         ObjectNode resultNode = JacksonUtil.newObjectNode(JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER);
-        if (FETCH_MODE_ALL.equals(fetchMode)) {
+        if (TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL.equals(fetchMode)) {
             entries.forEach(entry -> processArray(resultNode, entry));
         } else {
             entries.forEach(entry -> processSingle(resultNode, entry));
         }
-
+        var copy = msg.getMetaData().copy();
         for (String key : keys) {
             if (resultNode.has(key)) {
-                msg.getMetaData().putValue(key, resultNode.get(key).toString());
+                copy.putValue(key, resultNode.get(key).toString());
             }
         }
+        return copy;
     }
 
     private void processSingle(ObjectNode node, TsKvEntry entry) {
@@ -216,7 +215,7 @@ public class TbGetTelemetryNode implements TbNode {
         if (limit != 0) {
             return limit;
         } else {
-            return MAX_FETCH_SIZE;
+            return TbGetTelemetryNodeConfiguration.MAX_FETCH_SIZE;
         }
     }
 

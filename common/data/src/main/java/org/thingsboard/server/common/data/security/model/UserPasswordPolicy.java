@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ public class UserPasswordPolicy implements Serializable {
 
     @Schema(description = "Minimum number of symbols in the password." )
     private Integer minimumLength;
+    @Schema(description = "Maximum number of symbols in the password." )
+    private Integer maximumLength;
     @Schema(description = "Minimum number of uppercase letters in the password." )
     private Integer minimumUppercaseLetters;
     @Schema(description = "Minimum number of lowercase letters in the password." )
@@ -36,6 +38,8 @@ public class UserPasswordPolicy implements Serializable {
     private Integer minimumSpecialCharacters;
     @Schema(description = "Allow whitespaces")
     private Boolean allowWhitespaces = true;
+    @Schema(description = "Force user to update password if existing one does not pass validation")
+    private Boolean forceUserToResetPasswordIfNotValid = false;
 
     @Schema(description = "Password expiration period (days). Force expiration of the password." )
     private Integer passwordExpirationPeriodDays;

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
@@ -44,6 +45,9 @@ import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityCountService;
+import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -51,6 +55,7 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.thingsboard.server.common.data.StringUtils.generateSafeToken;
@@ -65,8 +70,8 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
 
     public static final String USER_PASSWORD_HISTORY = "userPasswordHistory";
 
-    private static final String LAST_LOGIN_TS = "lastLoginTs";
-    private static final String FAILED_LOGIN_ATTEMPTS = "failedLoginAttempts";
+    public static final String LAST_LOGIN_TS = "lastLoginTs";
+    public static final String FAILED_LOGIN_ATTEMPTS = "failedLoginAttempts";
 
     private static final int DEFAULT_TOKEN_LENGTH = 30;
     public static final String INCORRECT_USER_ID = "Incorrect userId ";
@@ -119,9 +124,9 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     }
 
     @Override
-    public User saveUser(User user) {
+    public User saveUser(TenantId tenantId, User user) {
         log.trace("Executing saveUser [{}]", user);
-        userValidator.validate(user, User::getTenantId);
+        User oldUser = userValidator.validate(user, User::getTenantId);
         if (!userLoginCaseSensitive) {
             user.setEmail(user.getEmail().toLowerCase());
         }
@@ -135,6 +140,12 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
             userCredentials.setAdditionalInfo(JacksonUtil.newObjectNode());
             userCredentialsDao.save(user.getTenantId(), userCredentials);
         }
+        eventPublisher.publishEvent(SaveEntityEvent.builder()
+                .tenantId(tenantId == null ? TenantId.SYS_TENANT_ID : tenantId)
+                .entity(savedUser)
+                .oldEntity(oldUser)
+                .entityId(savedUser.getId())
+                .created(user.getId() == null).build());
         return savedUser;
     }
 
@@ -163,7 +174,12 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     public UserCredentials saveUserCredentials(TenantId tenantId, UserCredentials userCredentials) {
         log.trace("Executing saveUserCredentials [{}]", userCredentials);
         userCredentialsValidator.validate(userCredentials, data -> tenantId);
-        return userCredentialsDao.save(tenantId, userCredentials);
+        UserCredentials result = userCredentialsDao.save(tenantId, userCredentials);
+        eventPublisher.publishEvent(ActionEntityEvent.builder()
+                .tenantId(tenantId)
+                .entityId(userCredentials.getUserId())
+                .actionType(ActionType.CREDENTIALS_UPDATED).build());
+        return result;
     }
 
     @Override
@@ -222,21 +238,32 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         if (userCredentials.getPassword() != null) {
             updatePasswordHistory(userCredentials);
         }
-        return userCredentialsDao.save(tenantId, userCredentials);
+        UserCredentials result = userCredentialsDao.save(tenantId, userCredentials);
+        eventPublisher.publishEvent(ActionEntityEvent.builder()
+                .tenantId(tenantId)
+                .entityId(userCredentials.getUserId())
+                .actionType(ActionType.CREDENTIALS_UPDATED).build());
+        return result;
     }
 
     @Override
     @Transactional
-    public void deleteUser(TenantId tenantId, UserId userId) {
-        log.trace("Executing deleteUser [{}]", userId);
+    public void deleteUser(TenantId tenantId, User user) {
+        Objects.requireNonNull(user, "User is null");
+        UserId userId = user.getId();
+        log.trace("[{}] Executing deleteUser [{}]", tenantId, userId);
         validateId(userId, INCORRECT_USER_ID + userId);
-        UserCredentials userCredentials = userCredentialsDao.findByUserId(tenantId, userId.getId());
-        userCredentialsDao.removeById(tenantId, userCredentials.getUuidId());
+        userCredentialsDao.removeByUserId(tenantId, userId);
         userAuthSettingsDao.removeByUserId(userId);
         deleteEntityRelations(tenantId, userId);
+
         userDao.removeById(tenantId, userId.getId());
         eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(userId));
         countService.publishCountEntityEvictEvent(tenantId, EntityType.USER);
+        eventPublisher.publishEvent(DeleteEntityEvent.builder()
+                .tenantId(tenantId)
+                .entityId(userId)
+                .entity(user).build());
     }
 
     @Override
@@ -340,7 +367,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         log.trace("Executing onUserLoginSuccessful [{}]", userId);
         User user = findUserById(tenantId, userId);
         resetFailedLoginAttempts(user);
-        saveUser(user);
+        saveUser(tenantId, user);
     }
 
     private void resetFailedLoginAttempts(User user) {
@@ -361,7 +388,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         }
         ((ObjectNode) additionalInfo).put(LAST_LOGIN_TS, System.currentTimeMillis());
         user.setAdditionalInfo(additionalInfo);
-        saveUser(user);
+        saveUser(tenantId, user);
     }
 
     @Override
@@ -369,7 +396,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         log.trace("Executing onUserLoginIncorrectCredentials [{}]", userId);
         User user = findUserById(tenantId, userId);
         int failedLoginAttempts = increaseFailedLoginAttempts(user);
-        saveUser(user);
+        saveUser(tenantId, user);
         return failedLoginAttempts;
     }
 
@@ -420,8 +447,8 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         }
 
         @Override
-        protected void removeEntity(TenantId tenantId, User entity) {
-            deleteUser(tenantId, new UserId(entity.getUuidId()));
+        protected void removeEntity(TenantId tenantId, User user) {
+            deleteUser(tenantId, user);
         }
     };
 
@@ -434,7 +461,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
 
         @Override
         protected void removeEntity(TenantId tenantId, User entity) {
-            deleteUser(tenantId, new UserId(entity.getUuidId()));
+            deleteUser(tenantId, entity);
         }
     };
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.rest;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -26,6 +27,7 @@ import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpRequestHandler;
 import org.junit.After;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -38,6 +40,8 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -89,7 +93,9 @@ public class TbRestApiCallNodeTest {
 
     @After
     public void teardown() {
-        server.stop();
+        if (server != null) {
+            server.stop();
+        }
     }
 
     @Test
@@ -133,23 +139,18 @@ public class TbRestApiCallNodeTest {
         config.setRestEndpointUrlPattern(String.format("http://localhost:%d%s", server.getLocalPort(), path));
         initWithConfig(config);
 
-        TbMsg msg = TbMsg.newMsg("USER", originator, metaData, TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, metaData, TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, ruleChainId, ruleNodeId);
         restNode.onMsg(ctx, msg);
 
         assertTrue("Server handled request", latch.await(10, TimeUnit.SECONDS));
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        ArgumentCaptor<String> typeCaptor = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<EntityId> originatorCaptor = ArgumentCaptor.forClass(EntityId.class);
         ArgumentCaptor<TbMsgMetaData> metadataCaptor = ArgumentCaptor.forClass(TbMsgMetaData.class);
         ArgumentCaptor<String> dataCaptor = ArgumentCaptor.forClass(String.class);
-        verify(ctx).transformMsg(msgCaptor.capture(), typeCaptor.capture(), originatorCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
+        verify(ctx).transformMsg(msgCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
 
-
-        assertEquals("USER", typeCaptor.getValue());
-        assertEquals(originator, originatorCaptor.getValue());
         assertNotSame(metaData, metadataCaptor.getValue());
-        assertEquals("{}", dataCaptor.getValue());
+        assertEquals(TbMsg.EMPTY_JSON_OBJECT, dataCaptor.getValue());
     }
 
     @Test
@@ -199,22 +200,34 @@ public class TbRestApiCallNodeTest {
         config.setRestEndpointUrlPattern(String.format("http://localhost:%d%s", server.getLocalPort(), path));
         initWithConfig(config);
 
-        TbMsg msg = TbMsg.newMsg("USER", originator, metaData, TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, metaData, TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, ruleChainId, ruleNodeId);
         restNode.onMsg(ctx, msg);
 
         assertTrue("Server handled request", latch.await(10, TimeUnit.SECONDS));
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        ArgumentCaptor<String> typeCaptor = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<EntityId> originatorCaptor = ArgumentCaptor.forClass(EntityId.class);
         ArgumentCaptor<TbMsgMetaData> metadataCaptor = ArgumentCaptor.forClass(TbMsgMetaData.class);
         ArgumentCaptor<String> dataCaptor = ArgumentCaptor.forClass(String.class);
-        verify(ctx).transformMsg(msgCaptor.capture(), typeCaptor.capture(), originatorCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
+        verify(ctx).transformMsg(msgCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
 
-        assertEquals("USER", typeCaptor.getValue());
-        assertEquals(originator, originatorCaptor.getValue());
         assertNotSame(metaData, metadataCaptor.getValue());
-        assertEquals("{}", dataCaptor.getValue());
+        assertEquals(TbMsg.EMPTY_JSON_OBJECT, dataCaptor.getValue());
+    }
+
+    @Test
+    public void givenOldConfig_whenUpgrade_thenShouldReturnTrueResultWithNewConfig() throws Exception {
+        var defaultConfig = new TbRestApiCallNodeConfiguration().defaultConfiguration();
+        var node = new TbRestApiCallNode();
+        String oldConfig = "{\"restEndpointUrlPattern\":\"http://localhost/api\",\"requestMethod\":\"POST\"," +
+                "\"useSimpleClientHttpFactory\":false,\"ignoreRequestBody\":false,\"enableProxy\":false," +
+                "\"useSystemProxyProperties\":false,\"proxyScheme\":null,\"proxyHost\":null,\"proxyPort\":0," +
+                "\"proxyUser\":null,\"proxyPassword\":null,\"readTimeoutMs\":0,\"maxParallelRequestsCount\":0," +
+                "\"headers\":{\"Content-Type\":\"application/json\"},\"useRedisQueueForMsgPersistence\":false," +
+                "\"trimQueue\":null,\"maxQueueSize\":null,\"credentials\":{\"type\":\"anonymous\"},\"trimDoubleQuotes\":true}";
+        JsonNode configJson = JacksonUtil.toJsonNode(oldConfig);
+        TbPair<Boolean, JsonNode> upgrade = node.upgrade(0, configJson);
+        Assertions.assertTrue(upgrade.getFirst());
+        Assertions.assertTrue(JacksonUtil.treeToValue(upgrade.getSecond(), defaultConfig.getClass()).isParseToPlainText());
     }
 
 }

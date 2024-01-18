@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -268,7 +268,7 @@ pre.tb-highlight {
   letter-spacing: normal;
 }
 
-.tb-timewindow-panel, .tb-legend-config-panel, .tb-filter-panel {
+.tb-timewindow-panel, .tb-legend-config-panel, .tb-filter-panel, .tb-panel-container {
   overflow: hidden;
   background: #fff;
   border-radius: 4px;
@@ -306,10 +306,7 @@ pre.tb-highlight {
 
 .tb-fullscreen {
   position: fixed !important;
-  top: 0;
-  left: 0;
-  width: 100% !important;
-  height: 100% !important;
+  inset: 0 !important;
 }
 
 .tb-fullscreen-parent {
@@ -345,6 +342,12 @@ mat-label {
   }
 }
 
+mat-icon {
+  &.tb-error {
+    color: rgb(221, 44, 0);
+  }
+}
+
 .tb-error-messages {
   height: 24px; //30px
   margin-top: -6px;
@@ -357,6 +360,13 @@ mat-label {
   font-size: 12px;
   line-height: 14px;
   color: rgb(221, 44, 0);
+}
+
+.mat-mdc-tooltip.tb-error-tooltip {
+  .mdc-tooltip__surface {
+    background-color: rgba(209, 39, 48, 0.12);
+    color: rgba(209, 39, 48, 1);
+  }
 }
 
 .tb-autocomplete {
@@ -624,12 +634,39 @@ mat-label {
 
   .mat-toolbar.mat-primary {
     button.mat-mdc-icon-button {
-      mat-icon {
+      .mat-icon {
         color: white;
       }
     }
-    .mat-mdc-select-value, .mat-mdc-select-arrow {
+    .mat-mdc-select-value, .mat-mdc-select-arrow, .mat-mdc-select-arrow:after {
       color: white;
+    }
+    .mat-mdc-text-field-wrapper {
+      &.mdc-text-field--outlined {
+        &:not(.mdc-text-field--focused):not(.mdc-text-field--disabled):not(.mdc-text-field--invalid) {
+          &:not(:hover) {
+            .mdc-notched-outline {
+              .mdc-notched-outline__leading, .mdc-notched-outline__trailing {
+                border-color: white;
+              }
+            }
+          }
+          &:hover {
+            .mdc-notched-outline {
+              .mdc-notched-outline__leading, .mdc-notched-outline__trailing {
+                border-color: rgba(255, 255, 255, 0.87);
+              }
+            }
+          }
+        }
+        &:not(.mdc-text-field--disabled).mdc-text-field--focused {
+          .mdc-notched-outline {
+            .mdc-notched-outline__leading, .mdc-notched-outline__trailing {
+              border-color: rgba(255, 255, 255, 0.67);
+            }
+          }
+        }
+      }
     }
   }
 
@@ -648,11 +685,11 @@ mat-label {
 
   mat-toolbar.mat-mdc-table-toolbar:not(.mat-primary), .mat-mdc-cell, .mat-expansion-panel-header {
     button.mat-mdc-icon-button {
-      mat-icon {
+      .mat-icon {
         color: rgba(0, 0, 0, .54);
       }
       &[disabled][disabled] {
-        mat-icon {
+        .mat-icon {
           color: rgba(0, 0, 0, .26);
         }
       }
@@ -666,6 +703,25 @@ mat-label {
     table-layout: auto;
     border-collapse: separate;
     margin: 0;
+  }
+
+  .tb-table-widget {
+    .mat-mdc-table {
+      .mat-mdc-row {
+        font-size: 13px;
+      }
+
+      .mat-mdc-cell {
+        background-color: transparent;
+        color: inherit;
+        font-size: inherit;
+        font-family: inherit;
+        font-weight: inherit;
+        line-height: inherit;
+        letter-spacing: inherit;
+        text-transform: inherit;
+      }
+    }
   }
 
   .mat-mdc-footer-row::after, .mat-mdc-header-row::after, .mat-mdc-row::after {
@@ -695,16 +751,21 @@ mat-label {
     }
   }
 
-  .mat-mdc-row {
-    transition: background-color .2s;
-    &:hover:not(.tb-current-entity) {
-      background-color: #f4f4f4;
-    }
-    &.tb-current-entity {
-      background-color: #e9e9e9;
-    }
-    &.tb-pointer {
-      cursor: pointer;
+  .mat-mdc-table {
+    .mat-mdc-row {
+      transition: background-color .2s;
+
+      &:hover:not(.tb-current-entity) {
+        background-color: #f4f4f4;
+      }
+
+      &.tb-current-entity {
+        background-color: #e9e9e9;
+      }
+
+      &.tb-pointer {
+        cursor: pointer;
+      }
     }
   }
 
@@ -791,7 +852,7 @@ mat-label {
     &.mat-number-cell {
       text-align: end;
     }
-    mat-icon {
+    .mat-icon {
       color: rgba(0, 0, 0, .54);
     }
   }
@@ -830,6 +891,9 @@ mat-label {
   .mat-icon {
     svg {
       vertical-align: inherit;
+    }
+    &.tb-mat-12 {
+      @include tb-mat-icon-size(12);
     }
     &.tb-mat-16 {
       @include tb-mat-icon-size(16);
@@ -951,7 +1015,7 @@ mat-label {
         padding: 0 6px;
         min-width: 88px;
       }
-      mat-icon {
+      .mat-icon {
         margin-right: 5px;
       }
     }
@@ -983,10 +1047,7 @@ mat-label {
       min-width: 100%;
       max-width: none !important;
       position: absolute !important;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      right: 0;
+      inset: 0;
       .mat-mdc-dialog-container {
         > *:first-child, form {
           min-width: 100% !important;
@@ -1004,10 +1065,7 @@ mat-label {
       min-width: 100%;
       max-width: none !important;
       position: absolute !important;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      right: 0;
+      inset: 0;
       .mat-mdc-dialog-container {
         > *:first-child, form {
           min-width: 100% !important;
@@ -1022,10 +1080,7 @@ mat-label {
 
   .tb-absolute-fill {
     position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    inset: 0;
   }
 
   .tb-layout-fill {
@@ -1037,10 +1092,7 @@ mat-label {
 
   .tb-progress-cover {
     position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
+    inset: 0;
     z-index: 6;
     background-color: #eee;
     opacity: 1;
@@ -1051,7 +1103,7 @@ mat-label {
     background: #ccc;
     opacity: .85;
 
-    mat-icon {
+    .mat-icon {
       color: #666;
     }
   }
@@ -1094,7 +1146,17 @@ mat-label {
       box-shadow: none;
       border-radius: 4px;
       .tb-color-result {
-        border: 1px solid rgba(0, 0, 0, 0.12);
+        position: relative;
+        &:after {
+          content: '';
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          border-radius: 4px;
+          border: 1px solid rgba(0, 0, 0, 0.12);
+        }
       }
       &.disabled {
         cursor: initial;
@@ -1155,7 +1217,7 @@ mat-label {
 
   .tb-drag-handle {
     cursor: move;
-    mat-icon {
+    .mat-icon {
       pointer-events: none;
     }
   }
@@ -1186,193 +1248,7 @@ mat-label {
     color: inherit;
   }
 
-  // Widget config
-
-  .tb-widget-config-panel {
-    box-shadow: 0 0 10px 6px rgba(11, 17, 51, 0.04);
-    border-radius: 4px;
-    padding: 16px;
-    gap: 16px;
-    display: flex;
-    flex-direction: column;
-    color: rgba(0, 0, 0, 0.87);
-    letter-spacing: 0.15px;
-    position: relative;
-    &.no-padding-bottom {
-      padding-bottom: 0;
-    }
-    &.no-padding {
-      padding: 0;
-    }
-    &.stroked {
-      box-shadow: none;
-      border: 1px solid rgba(0, 0, 0, 0.12);
-      border-radius: 6px;
-    }
-    &.tb-slide-toggle {
-      padding: 0;
-      gap: 0;
-      .tb-widget-config-panel-title {
-        padding-top: 16px;
-        padding-left: 16px;
-      }
-      .mat-expansion-panel {
-        padding: 16px;
-        .mat-expansion-panel-header {
-          height: 32px;
-          .mat-slide {
-            margin: 0;
-          }
-        }
-      }
-    }
-    .mat-expansion-panel {
-      &.tb-settings {
-        box-shadow: none;
-        .mat-content {
-          overflow: visible;
-        }
-        .mat-expansion-panel-header {
-          font-weight: 500;
-          font-size: 16px;
-          line-height: 24px;
-          letter-spacing: 0.25px;
-          padding: 0;
-          .mat-content {
-            flex: 0;
-            white-space: nowrap;
-          }
-          &.fill-width {
-            .mat-content {
-              flex: 1;
-            }
-          }
-          &:hover {
-            background: none;
-          }
-          .mat-expansion-indicator {
-            height: 32px;
-            padding: 2px;
-          }
-        }
-        .mat-expansion-panel-header-description {
-          align-items: center;
-        }
-        > .mat-expansion-panel-content {
-          > .mat-expansion-panel-body {
-            padding: 0;
-          }
-        }
-        .tb-json-object-panel, .tb-css-content-panel {
-          margin: 0 0 8px;
-        }
-      }
-      .mat-expansion-panel-content {
-        font: inherit;
-      }
-    }
-    .mat-slide {
-      margin: 8px 0;
-      &.no-margin {
-        margin: 0;
-      }
-      .mdc-form-field>label {
-        font-weight: 400;
-        font-size: 16px;
-        line-height: 24px;
-        margin-left: 12px;
-      }
-    }
+  .cursor-pointer {
+    cursor: pointer;
   }
-
-  .tb-widget-config-panel-title {
-    font-weight: 500;
-    font-size: 16px;
-  }
-  .tb-widget-config-panel-hint {
-    font-size: 12px;
-    color: #808080;
-  }
-  .tb-widget-config-row {
-    height: 56px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 16px;
-    padding-left: 16px;
-    padding-right: 12px;
-    border: 1px solid rgba(0, 0, 0, 0.12);
-    border-radius: 6px;
-    &.same-padding {
-      padding-right: 16px;
-    }
-    &.space-between {
-      justify-content: space-between;
-    }
-    .mat-divider-vertical {
-      height: 56px;
-    }
-    .mat-mdc-form-field {
-      width: 80px;
-    }
-  }
-
-  .tb-widget-config-row .mat-mdc-form-field, .mat-mdc-form-field.tb-inline-field {
-    &.mat-form-field-appearance-fill {
-      .mdc-text-field--filled:not(.mdc-text-field--disabled) {
-        &:before {
-          opacity: 0;
-        }
-        .mdc-line-ripple::before {
-          border-bottom-color: rgba(0, 0, 0, 0.12);
-        }
-      }
-      .mat-mdc-form-field-focus-overlay {
-        opacity: 0;
-      }
-    }
-    .mat-mdc-text-field-wrapper {
-      &.mdc-text-field--outlined, &:not(.mdc-text-field--outlined) {
-        padding-right: 12px;
-        padding-left: 12px;
-        &:not(.mdc-text-field--focused):not(.mdc-text-field--disabled):not(:hover) {
-          .mdc-notched-outline__leading, .mdc-notched-outline__trailing {
-            border-color: rgba(0, 0, 0, 0.12);
-          }
-        }
-        .mat-mdc-form-field-infix {
-          padding-top: 7px;
-          padding-bottom: 7px;
-          min-height: 38px;
-          width: auto;
-          .mdc-text-field__input, .mat-mdc-select {
-            font-weight: 400;
-            font-size: 14px;
-            line-height: 20px;
-          }
-        }
-      }
-    }
-    &.center {
-      .mat-mdc-text-field-wrapper {
-        .mat-mdc-form-field-infix {
-          .mdc-text-field__input {
-            text-align: center;
-          }
-        }
-      }
-    }
-    &.number {
-      .mat-mdc-text-field-wrapper {
-        padding-right: 4px;
-        .mat-mdc-form-field-infix {
-          input.mdc-text-field__input[type=number]::-webkit-inner-spin-button,
-          input.mdc-text-field__input[type=number]::-webkit-outer-spin-button {
-            opacity: 1;
-          }
-        }
-      }
-    }
-  }
-
 }

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,14 +15,16 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="entitySubtypeListFormGroup" [ngClass]="label ? '' : 'tb-chip-list'" class="mat-block">
+<mat-form-field [formGroup]="entitySubtypeListFormGroup" [floatLabel]="floatLabel"
+                [appearance]="appearance" [subscriptSizing]="subscriptSizing"
+                [class.tb-chip-list]="!label" [class]="additionalClasses" class="mat-block">
   <mat-label *ngIf="label">{{ label }}</mat-label>
   <mat-chip-grid #chipList formControlName="entitySubtypeList">
     <mat-chip-row
       *ngFor="let entitySubtype of entitySubtypeList"
       [removable]="!disabled"
       (removed)="remove(entitySubtype)">
-      {{entitySubtype}}
+      {{customTranslate(entitySubtype)}}
       <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
     </mat-chip-row>
     <input matInput type="text" placeholder="{{ !disabled ? ((!entitySubtypeList || !entitySubtypeList.length) ? placeholder : secondaryPlaceholder) : '' }}"
@@ -31,6 +33,7 @@
            (focusin)="onFocus()"
            formControlName="entitySubtype"
            matAutocompleteOrigin
+           matChipInputAddOnBlur
            #origin="matAutocompleteOrigin"
            [matAutocompleteConnectedTo]="origin"
            [matAutocomplete]="entitySubtypeAutocomplete"
@@ -38,13 +41,6 @@
            [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
            (matChipInputTokenEnd)="chipAdd($event)">
   </mat-chip-grid>
-  <button *ngIf="entitySubtypeListFormGroup.get('entitySubtypeList').value?.length > 1"
-          type="button"
-          matTooltip="{{'entity.clear-selected-profiles' | translate}}"
-          matSuffix mat-icon-button
-          (click)="clearChipGrid()">
-    <mat-icon color="primary" class="material-icons">close</mat-icon>
-  </button>
   <mat-autocomplete #entitySubtypeAutocomplete="matAutocomplete"
                     class="tb-autocomplete"
                     (optionSelected)="selected($event)"
@@ -52,12 +48,10 @@
     <mat-option *ngFor="let entitySubtype of filteredEntitySubtypeList | async" [value]="entitySubtype">
       <span [innerHTML]="entitySubtype | highlight:searchText"></span>
     </mat-option>
-    <mat-option *ngIf="!(filteredEntitySubtypeList | async)?.length" [value]="null">
-      <span>
-          {{ translate.get(noSubtypesMathingText, {entitySubtype: searchText}) | async }}
-      </span>
-    </mat-option>
   </mat-autocomplete>
+  <div matSuffix>
+    <ng-content select="[matSuffix]"></ng-content>
+  </div>
   <mat-error *ngIf="entitySubtypeListFormGroup.get('entitySubtypeList').hasError('required')">
     {{ subtypeListEmptyText | translate }}
   </mat-error>

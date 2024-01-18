@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,23 +163,6 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
         doPost("/api/tenantProfile", tenantProfile2)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("Tenant profile with such name already exists")));
-
-        testBroadcastEntityStateChangeEventNeverTenantProfile();
-    }
-
-    @Test
-    public void testSaveSameTenantProfileWithDifferentIsolatedTbRuleEngine() throws Exception {
-        loginSysAdmin();
-        TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile");
-        TenantProfile savedTenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
-        savedTenantProfile.setIsolatedTbRuleEngine(true);
-        addMainQueueConfig(savedTenantProfile);
-
-        Mockito.reset(tbClusterService);
-
-        doPost("/api/tenantProfile", savedTenantProfile)
-                .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Can't update isolatedTbRuleEngine property")));
 
         testBroadcastEntityStateChangeEventNeverTenantProfile();
     }

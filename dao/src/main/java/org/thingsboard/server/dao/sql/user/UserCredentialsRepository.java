@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.sql.user;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sql.UserCredentialsEntity;
 
 import java.util.UUID;
@@ -30,4 +31,8 @@ public interface UserCredentialsRepository extends JpaRepository<UserCredentials
     UserCredentialsEntity findByActivateToken(String activateToken);
 
     UserCredentialsEntity findByResetToken(String resetToken);
+
+    @Transactional
+    void removeByUserId(UUID userId);
+
 }

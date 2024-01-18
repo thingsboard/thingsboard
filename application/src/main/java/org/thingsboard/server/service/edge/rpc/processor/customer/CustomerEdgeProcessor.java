@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,9 +33,11 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.gen.edge.v1.CustomerUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.constructor.customer.CustomerMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 import java.util.ArrayList;
@@ -47,7 +49,7 @@ import java.util.UUID;
 @TbCoreComponent
 public class CustomerEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg convertCustomerEventToDownlink(EdgeEvent edgeEvent) {
+    public DownlinkMsg convertCustomerEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         CustomerId customerId = new CustomerId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
@@ -56,8 +58,8 @@ public class CustomerEdgeProcessor extends BaseEdgeProcessor {
                 Customer customer = customerService.findCustomerById(edgeEvent.getTenantId(), customerId);
                 if (customer != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    CustomerUpdateMsg customerUpdateMsg =
-                            customerMsgConstructor.constructCustomerUpdatedMsg(msgType, customer);
+                    CustomerUpdateMsg customerUpdateMsg = ((CustomerMsgConstructor)
+                            customerMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructCustomerUpdatedMsg(msgType, customer);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addCustomerUpdateMsg(customerUpdateMsg)
@@ -65,8 +67,8 @@ public class CustomerEdgeProcessor extends BaseEdgeProcessor {
                 }
                 break;
             case DELETED:
-                CustomerUpdateMsg customerUpdateMsg =
-                        customerMsgConstructor.constructCustomerDeleteMsg(customerId);
+                CustomerUpdateMsg customerUpdateMsg = ((CustomerMsgConstructor)
+                        customerMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructCustomerDeleteMsg(customerId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addCustomerUpdateMsg(customerUpdateMsg)

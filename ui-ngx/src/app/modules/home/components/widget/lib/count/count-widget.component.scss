@@ -1,0 +1,96 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+:host {
+  .tb-count-panel {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    &.tb-count-pointer {
+      cursor: pointer;
+    }
+    .tb-count-panel-content {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 12px;
+      .tb-count-panel-column {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        overflow: hidden;
+      }
+      .tb-count-panel-row {
+        flex: 1;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 12px;
+      }
+      .tb-count-icon-panel {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        .mat-icon {
+          z-index: 1;
+        }
+      }
+      .tb-count-icon-background-panel {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      .tb-count-label-value-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        place-content: flex-start space-around;
+        align-items: flex-start;
+        gap: 0;
+        overflow: hidden;
+        &.tb-count-layout-row {
+          flex-direction: row;
+          align-items: center;
+        }
+        .tb-count-label {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          width: 100%;
+        }
+      }
+    }
+  }
+}
+
+:host ::ng-deep {
+  .tb-count-panel {
+    .tb-widget-title {
+      padding: 0;
+    }
+  }
+}

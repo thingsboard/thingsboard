@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,8 +58,14 @@ public class InMemoryTbQueueConsumer<T extends TbQueueMsg> implements TbQueueCon
     }
 
     @Override
+    public void stop() {
+        stopped = true;
+    }
+
+    @Override
     public void unsubscribe() {
         stopped = true;
+        subscribed = false;
     }
 
     @Override
@@ -101,6 +107,11 @@ public class InMemoryTbQueueConsumer<T extends TbQueueMsg> implements TbQueueCon
     @Override
     public boolean isStopped() {
         return stopped;
+    }
+
+    @Override
+    public List<String> getFullTopicNames() {
+        return partitions.stream().map(TopicPartitionInfo::getFullTopicName).collect(Collectors.toList());
     }
 
 }

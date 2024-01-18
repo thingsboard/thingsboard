@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.event.RuleChainDebugEventFilter;
 import org.thingsboard.server.common.data.event.RuleNodeDebugEventFilter;
 import org.thingsboard.server.common.data.event.StatisticsEventFilter;
 import org.thingsboard.server.common.data.id.EventId;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.stats.StatsFactory;
@@ -280,7 +281,7 @@ public class JpaBaseEventDao implements EventDao {
 
     private PageData<? extends Event> findEventByFilter(UUID tenantId, UUID entityId, LifeCycleEventFilter eventFilter, TimePageLink pageLink) {
         boolean statusFilterEnabled = !StringUtils.isEmpty(eventFilter.getStatus());
-        boolean statusFilter = statusFilterEnabled && eventFilter.getStatus().equalsIgnoreCase("Success");
+        boolean statusFilter = statusFilterEnabled && eventFilter.getStatus().equalsIgnoreCase(TbNodeConnectionType.SUCCESS);
         return DaoUtil.toPageData(
                 lcEventRepository.findEvents(
                         tenantId,
@@ -359,7 +360,7 @@ public class JpaBaseEventDao implements EventDao {
 
     private void removeEventsByFilter(UUID tenantId, UUID entityId, LifeCycleEventFilter eventFilter, Long startTime, Long endTime) {
         boolean statusFilterEnabled = !StringUtils.isEmpty(eventFilter.getStatus());
-        boolean statusFilter = statusFilterEnabled && eventFilter.getStatus().equalsIgnoreCase("Success");
+        boolean statusFilter = statusFilterEnabled && eventFilter.getStatus().equalsIgnoreCase(TbNodeConnectionType.SUCCESS);
         lcEventRepository.removeEvents(
                 tenantId,
                 entityId,

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,10 +32,21 @@ import java.math.RoundingMode;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -57,10 +68,13 @@ public class TbUtils {
                 List.class)));
         parserConfig.addImport("decodeToJson", new MethodStub(TbUtils.class.getMethod("decodeToJson",
                 ExecutionContext.class, List.class)));
-        parserConfig.addImport("stringToBytes", new MethodStub(TbUtils.class.getMethod("stringToBytes",
+        parserConfig.addImport("decodeToJson", new MethodStub(TbUtils.class.getMethod("decodeToJson",
                 ExecutionContext.class, String.class)));
         parserConfig.addImport("stringToBytes", new MethodStub(TbUtils.class.getMethod("stringToBytes",
-                ExecutionContext.class, String.class, String.class)));
+                ExecutionContext.class, Object.class)));
+        parserConfig.addImport("stringToBytes", new MethodStub(TbUtils.class.getMethod("stringToBytes",
+                ExecutionContext.class, Object.class, String.class)));
+        parserConfig.registerNonConvertableMethods(TbUtils.class, Collections.singleton("stringToBytes"));
         parserConfig.addImport("parseInt", new MethodStub(TbUtils.class.getMethod("parseInt",
                 String.class)));
         parserConfig.addImport("parseInt", new MethodStub(TbUtils.class.getMethod("parseInt",
@@ -174,31 +188,52 @@ public class TbUtils {
     public static Object decodeToJson(ExecutionContext ctx, List<Byte> bytesList) throws IOException {
         return TbJson.parse(ctx, bytesToString(bytesList));
     }
+    public static Object decodeToJson(ExecutionContext ctx, String jsonStr) throws IOException {
+        return TbJson.parse(ctx, jsonStr);
+    }
 
-    public static String bytesToString(List<Byte> bytesList) {
+    public static String bytesToString(List<?> bytesList) {
         byte[] bytes = bytesFromList(bytesList);
         return new String(bytes);
     }
 
-    public static String bytesToString(List<Byte> bytesList, String charsetName) throws UnsupportedEncodingException {
+    public static String bytesToString(List<?> bytesList, String charsetName) throws UnsupportedEncodingException {
         byte[] bytes = bytesFromList(bytesList);
         return new String(bytes, charsetName);
     }
 
-    public static List<Byte> stringToBytes(ExecutionContext ctx, String str) {
-        byte[] bytes = str.getBytes();
-        return bytesToList(ctx, bytes);
+    public static List<Byte> stringToBytes(ExecutionContext ctx, Object str) throws IllegalAccessException {
+        if (str instanceof String) {
+            byte[] bytes = str.toString().getBytes();
+            return bytesToList(ctx, bytes);
+        } else {
+            throw new IllegalAccessException("Invalid type parameter [" + str.getClass().getSimpleName() + "]. Expected 'String'");
+        }
     }
 
-    public static List<Byte> stringToBytes(ExecutionContext ctx, String str, String charsetName) throws UnsupportedEncodingException {
-        byte[] bytes = str.getBytes(charsetName);
-        return bytesToList(ctx, bytes);
+    public static List<Byte> stringToBytes(ExecutionContext ctx, Object str, String charsetName) throws UnsupportedEncodingException, IllegalAccessException {
+        if (str instanceof String) {
+            byte[] bytes = str.toString().getBytes(charsetName);
+            return bytesToList(ctx, bytes);
+        } else {
+            throw new IllegalAccessException("Invalid type parameter [" + str.getClass().getSimpleName() + "]. Expected 'String'");
+        }
     }
 
-    private static byte[] bytesFromList(List<Byte> bytesList) {
+    private static byte[] bytesFromList(List<?> bytesList) {
         byte[] bytes = new byte[bytesList.size()];
         for (int i = 0; i < bytesList.size(); i++) {
-            bytes[i] = bytesList.get(i);
+            Object objectVal = bytesList.get(i);
+            if (objectVal instanceof Integer) {
+                bytes[i] = isValidIntegerToByte((Integer) objectVal);
+            } else if (objectVal instanceof String) {
+                bytes[i] = isValidIntegerToByte(parseInt((String) objectVal));
+            } else if (objectVal instanceof Byte) {
+                bytes[i] = (byte) objectVal;
+            } else {
+                throw new NumberFormatException("The value '" + objectVal + "' could not be correctly converted to a byte. " +
+                        "Must be a HexDecimal/String/Integer/Byte format !");
+            }
         }
         return bytes;
     }
@@ -628,7 +663,7 @@ public class TbUtils {
         }
     }
 
-    public static boolean isValidRadix(String value, int radix) {
+    private static boolean isValidRadix(String value, int radix) {
         for (int i = 0; i < value.length(); i++) {
             if (i == 0 && value.charAt(i) == '-') {
                 if (value.length() == 1)
@@ -642,4 +677,12 @@ public class TbUtils {
         return true;
     }
 
+    private static byte isValidIntegerToByte (Integer val) {
+        if (val > 255 || val.intValue() < -128) {
+            throw new NumberFormatException("The value '" + val + "' could not be correctly converted to a byte. " +
+                    "Integer to byte conversion requires the use of only 8 bits (with a range of min/max = -128/255)!");
+        } else {
+            return val.byteValue();
+        }
+    }
 }

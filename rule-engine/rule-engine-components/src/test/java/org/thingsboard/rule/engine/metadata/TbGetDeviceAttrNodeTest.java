@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,43 @@ public class TbGetDeviceAttrNodeTest {
         var defaultConfig = new TbGetDeviceAttrNodeConfiguration().defaultConfiguration();
         var node = new TbGetDeviceAttrNode();
         String oldConfig = "{\"fetchToData\":false," +
+                "\"clientAttributeNames\":[]," +
+                "\"sharedAttributeNames\":[]," +
+                "\"serverAttributeNames\":[]," +
+                "\"latestTsKeyNames\":[]," +
+                "\"tellFailureIfAbsent\":true," +
+                "\"getLatestValueWithTs\":false," +
+                "\"deviceRelationsQuery\":{\"direction\":\"FROM\",\"maxLevel\":1,\"relationType\":\"Contains\",\"deviceTypes\":[\"default\"]," +
+                "\"fetchLastLevelOnly\":false}}";
+        JsonNode configJson = JacksonUtil.toJsonNode(oldConfig);
+        TbPair<Boolean, JsonNode> upgrade = node.upgrade(0, configJson);
+        Assertions.assertTrue(upgrade.getFirst());
+        Assertions.assertEquals(defaultConfig, JacksonUtil.treeToValue(upgrade.getSecond(), defaultConfig.getClass()));
+    }
+
+    @Test
+    public void givenOldConfigWithNoFetchToDataProperty_whenUpgrade_thenShouldReturnTrueResultWithNewConfig() throws Exception {
+        var defaultConfig = new TbGetDeviceAttrNodeConfiguration().defaultConfiguration();
+        var node = new TbGetDeviceAttrNode();
+        String oldConfig = "{\"clientAttributeNames\":[]," +
+                "\"sharedAttributeNames\":[]," +
+                "\"serverAttributeNames\":[]," +
+                "\"latestTsKeyNames\":[]," +
+                "\"tellFailureIfAbsent\":true," +
+                "\"getLatestValueWithTs\":false," +
+                "\"deviceRelationsQuery\":{\"direction\":\"FROM\",\"maxLevel\":1,\"relationType\":\"Contains\",\"deviceTypes\":[\"default\"]," +
+                "\"fetchLastLevelOnly\":false}}";
+        JsonNode configJson = JacksonUtil.toJsonNode(oldConfig);
+        TbPair<Boolean, JsonNode> upgrade = node.upgrade(0, configJson);
+        Assertions.assertTrue(upgrade.getFirst());
+        Assertions.assertEquals(defaultConfig, JacksonUtil.treeToValue(upgrade.getSecond(), defaultConfig.getClass()));
+    }
+
+    @Test
+    public void givenOldConfigWithNullFetchToDataProperty_whenUpgrade_thenShouldReturnTrueResultWithNewConfig() throws Exception {
+        var defaultConfig = new TbGetDeviceAttrNodeConfiguration().defaultConfiguration();
+        var node = new TbGetDeviceAttrNode();
+        String oldConfig = "{\"fetchToData\":null," +
                 "\"clientAttributeNames\":[]," +
                 "\"sharedAttributeNames\":[]," +
                 "\"serverAttributeNames\":[]," +

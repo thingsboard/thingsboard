@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileConfiguration;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantProfileDao;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -93,6 +94,7 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
         apiUsageState.setTransportState(ApiUsageStateValue.ENABLED);
         apiUsageState.setReExecState(ApiUsageStateValue.ENABLED);
         apiUsageState.setJsExecState(ApiUsageStateValue.ENABLED);
+        apiUsageState.setTbelExecState(ApiUsageStateValue.ENABLED);
         apiUsageState.setDbStorageState(ApiUsageStateValue.ENABLED);
         apiUsageState.setSmsExecState(ApiUsageStateValue.ENABLED);
         apiUsageState.setEmailExecState(ApiUsageStateValue.ENABLED);
@@ -110,6 +112,8 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
                 new StringDataEntry(ApiFeature.RE.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
         apiUsageStates.add(new BasicTsKvEntry(saved.getCreatedTime(),
                 new StringDataEntry(ApiFeature.JS.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
+        apiUsageStates.add(new BasicTsKvEntry(saved.getCreatedTime(),
+                new StringDataEntry(ApiFeature.TBEL.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
         apiUsageStates.add(new BasicTsKvEntry(saved.getCreatedTime(),
                 new StringDataEntry(ApiFeature.EMAIL.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
         apiUsageStates.add(new BasicTsKvEntry(saved.getCreatedTime(),
@@ -140,7 +144,10 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
         log.trace("Executing save [{}]", apiUsageState.getTenantId());
         validateId(apiUsageState.getTenantId(), INCORRECT_TENANT_ID + apiUsageState.getTenantId());
         validateId(apiUsageState.getId(), "Can't save new usage state. Only update is allowed!");
-        return apiUsageStateDao.save(apiUsageState.getTenantId(), apiUsageState);
+        ApiUsageState savedState = apiUsageStateDao.save(apiUsageState.getTenantId(), apiUsageState);
+        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedState.getTenantId()).entityId(savedState.getId())
+                .entity(savedState).build());
+        return savedState;
     }
 
     @Override

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -83,15 +83,19 @@ import * as TbCore from '@core/public-api';
 import * as TbShared from '@shared/public-api';
 import * as TbHomeComponents from '@home/components/public-api';
 
-import * as MillisecondsToTimeStringPipe from '@shared/pipe/milliseconds-to-time-string.pipe';
+import * as DateAgoPipe from '@shared/pipe/date-ago.pipe';
 import * as EnumToArrayPipe from '@shared/pipe/enum-to-array.pipe';
-import * as HighlightPipe from '@shared/pipe/highlight.pipe';
-import * as TruncatePipe from '@shared/pipe/truncate.pipe';
-import * as TbJsonPipe from '@shared/pipe/tbJson.pipe';
 import * as FileSizePipe from '@shared/pipe/file-size.pipe';
-import * as NospacePipe from '@shared/pipe/nospace.pipe';
-import * as SelectableColumnsPipe from '@shared/pipe/selectable-columns.pipe';
+import * as HighlightPipe from '@shared/pipe/highlight.pipe';
 import * as KeyboardShortcutPipe from '@shared/pipe/keyboard-shortcut.pipe';
+import * as MillisecondsToTimeStringPipe from '@shared/pipe/milliseconds-to-time-string.pipe';
+import * as NospacePipe from '@shared/pipe/nospace.pipe';
+import * as SafePipe from '@shared/pipe/safe.pipe';
+import * as SelectableColumnsPipe from '@shared/pipe/selectable-columns.pipe';
+import * as ShortNumberPipe from '@shared/pipe/short-number.pipe';
+import * as TbJsonPipe from '@shared/pipe/tbJson.pipe';
+import * as TruncatePipe from '@shared/pipe/truncate.pipe';
+import * as ImagePipe from '@shared/pipe/image.pipe';
 
 import * as coercion from '@shared/decorators/coercion';
 import * as enumerable from '@shared/decorators/enumerable';
@@ -179,6 +183,14 @@ import * as ProtobufContentComponent from '@shared/components/protobuf-content.c
 import * as SlackConversationAutocompleteComponent from '@shared/components/slack-conversation-autocomplete.component';
 import * as StringItemsListComponent from '@shared/components/string-items-list.component';
 import * as ToggleHeaderComponent from '@shared/components/toggle-header.component';
+import * as ToggleSelectComponent from '@shared/components/toggle-select.component';
+import * as UnitInputComponent from '@shared/components/unit-input.component';
+import * as MaterialIconsComponent from '@shared/components/material-icons.component';
+import * as TbIconComponent from '@shared/components/icon.component';
+import * as HintTooltipIconComponent from '@shared/components/hint-tooltip-icon.component';
+import * as ScrollGridComponent from '@shared/components/grid/scroll-grid.component';
+import * as GalleryImageInputComponent from '@shared/components/image/gallery-image-input.component';
+import * as MultipleGalleryImageInputComponent from '@shared/components/image/multiple-gallery-image-input.component';
 
 import * as AddEntityDialogComponent from '@home/components/entity/add-entity-dialog.component';
 import * as EntitiesTableComponent from '@home/components/entity/entities-table.component';
@@ -219,10 +231,10 @@ import * as CustomActionPrettyEditorComponent from '@home/components/widget/acti
 import * as MobileActionEditorComponent from '@home/components/widget/action/mobile-action-editor.component';
 import * as CustomDialogService from '@home/components/widget/dialog/custom-dialog.service';
 import * as CustomDialogContainerComponent from '@home/components/widget/dialog/custom-dialog-container.component';
-import * as ImportDialogComponent from '@home/components/import-export/import-dialog.component';
+import * as ImportDialogComponent from '@shared/import-export/import-dialog.component';
 import * as AddWidgetToDashboardDialogComponent from '@home/components/attribute/add-widget-to-dashboard-dialog.component';
-import * as ImportDialogCsvComponent from '@home/components/import-export/import-dialog-csv.component';
-import * as TableColumnsAssignmentComponent from '@home/components/import-export/table-columns-assignment.component';
+import * as ImportDialogCsvComponent from '@shared/import-export/import-dialog-csv.component';
+import * as TableColumnsAssignmentComponent from '@shared/import-export/table-columns-assignment.component';
 import * as EventContentDialogComponent from '@home/components/event/event-content-dialog.component';
 import * as SharedHomeComponentsModule from '@home/components/shared-home-components.module';
 import * as SelectTargetLayoutDialogComponent from '@home/components/dashboard/select-target-layout-dialog.component';
@@ -381,19 +393,27 @@ class ModulesMap implements IModulesMap {
     '@shared/public-api': TbShared,
     '@home/components/public-api': TbHomeComponents,
 
-    '@shared/pipe/milliseconds-to-time-string.pipe': MillisecondsToTimeStringPipe,
+    '@shared/pipe/date-ago.pipe': DateAgoPipe,
     '@shared/pipe/enum-to-array.pipe': EnumToArrayPipe,
-    '@shared/pipe/highlight.pipe': HighlightPipe,
-    '@shared/pipe/truncate.pipe': TruncatePipe,
-    '@shared/pipe/tbJson.pipe': TbJsonPipe,
     '@shared/pipe/file-size.pipe': FileSizePipe,
-    '@shared/pipe/nospace.pipe': NospacePipe,
-    '@shared/pipe/selectable-columns.pipe': SelectableColumnsPipe,
+    '@shared/pipe/highlight.pipe': HighlightPipe,
     '@shared/pipe/keyboard-shortcut.pipe': KeyboardShortcutPipe,
+    '@shared/pipe/milliseconds-to-time-string.pipe': MillisecondsToTimeStringPipe,
+    '@shared/pipe/nospace.pipe': NospacePipe,
+    '@shared/pipe/safe.pipe': SafePipe,
+    '@shared/pipe/selectable-columns.pipe': SelectableColumnsPipe,
+    '@shared/pipe/short-number.pipe': ShortNumberPipe,
+    '@shared/pipe/tbJson.pipe': TbJsonPipe,
+    '@shared/pipe/truncate.pipe': TruncatePipe,
+    '@shared/pipe/image.pipe': ImagePipe,
 
     '@shared/decorators/coercion': coercion,
     '@shared/decorators/enumerable': enumerable,
     '@shared/decorators/tb-inject': TbInject,
+
+    '@shared/import-export/import-dialog.component': ImportDialogComponent,
+    '@shared/import-export/import-dialog-csv.component': ImportDialogCsvComponent,
+    '@shared/import-export/table-columns-assignment.component': TableColumnsAssignmentComponent,
 
     '@shared/components/footer.component': FooterComponent,
     '@shared/components/logo.component': LogoComponent,
@@ -478,6 +498,14 @@ class ModulesMap implements IModulesMap {
     '@shared/components/slack-conversation-autocomplete.component': SlackConversationAutocompleteComponent,
     '@shared/components/string-items-list.component': StringItemsListComponent,
     '@shared/components/toggle-header.component': ToggleHeaderComponent,
+    '@shared/components/toggle-select.component': ToggleSelectComponent,
+    '@shared/components/unit-input.component': UnitInputComponent,
+    '@shared/components/material-icons.component': MaterialIconsComponent,
+    '@shared/components/icon.component': TbIconComponent,
+    '@shared/components/hint-tooltip-icon.component': HintTooltipIconComponent,
+    '@shared/components/grid/scroll-grid.component': ScrollGridComponent,
+    '@shared/components/image/gallery-image-input.component': GalleryImageInputComponent,
+    '@shared/components/image/multiple-gallery-image-input.component': MultipleGalleryImageInputComponent,
 
     '@home/components/entity/add-entity-dialog.component': AddEntityDialogComponent,
     '@home/components/entity/entities-table.component': EntitiesTableComponent,
@@ -518,10 +546,7 @@ class ModulesMap implements IModulesMap {
     '@home/components/widget/action/mobile-action-editor.component': MobileActionEditorComponent,
     '@home/components/widget/dialog/custom-dialog.service': CustomDialogService,
     '@home/components/widget/dialog/custom-dialog-container.component': CustomDialogContainerComponent,
-    '@home/components/import-export/import-dialog.component': ImportDialogComponent,
     '@home/components/attribute/add-widget-to-dashboard-dialog.component': AddWidgetToDashboardDialogComponent,
-    '@home/components/import-export/import-dialog-csv.component': ImportDialogCsvComponent,
-    '@home/components/import-export/table-columns-assignment.component': TableColumnsAssignmentComponent,
     '@home/components/event/event-content-dialog.component': EventContentDialogComponent,
     '@home/components/shared-home-components.module': SharedHomeComponentsModule,
     '@home/components/dashboard/select-target-layout-dialog.component': SelectTargetLayoutDialogComponent,

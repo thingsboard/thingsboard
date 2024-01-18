@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.dashboard.TbDashboardService;
@@ -74,6 +75,8 @@ import static org.thingsboard.server.controller.ControllerConstants.EDGE_ID;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_UNASSIGN_ASYNC_FIRST_STEP_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.INLINE_IMAGES;
+import static org.thingsboard.server.controller.ControllerConstants.INLINE_IMAGES_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
@@ -93,6 +96,7 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 public class DashboardController extends BaseController {
 
     private final TbDashboardService tbDashboardService;
+    private final ImageService imageService;
     public static final String DASHBOARD_ID = "dashboardId";
 
     private static final String HOME_DASHBOARD_ID = "homeDashboardId";
@@ -152,10 +156,16 @@ public class DashboardController extends BaseController {
     @ResponseBody
     public Dashboard getDashboardById(
             @Parameter(description = DASHBOARD_ID_PARAM_DESCRIPTION)
-            @PathVariable(DASHBOARD_ID) String strDashboardId) throws ThingsboardException {
+            @PathVariable(DASHBOARD_ID) String strDashboardId,
+            @Parameter(description = INLINE_IMAGES_DESCRIPTION)
+            @RequestParam(value = INLINE_IMAGES, required = false) boolean inlineImages) throws ThingsboardException {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
-        return checkDashboardId(dashboardId, Operation.READ);
+        var result = checkDashboardId(dashboardId, Operation.READ);
+        if (inlineImages) {
+            imageService.inlineImages(result);
+        }
+        return result;
     }
 
     @ApiOperation(value = "Create Or Update Dashboard (saveDashboard)",
@@ -522,7 +532,7 @@ public class DashboardController extends BaseController {
         }
         Tenant tenant = tenantService.findTenantById(getTenantId());
         JsonNode additionalInfo = tenant.getAdditionalInfo();
-        if (additionalInfo == null || !(additionalInfo instanceof ObjectNode)) {
+        if (!(additionalInfo instanceof ObjectNode)) {
             additionalInfo = JacksonUtil.newObjectNode();
         }
         if (homeDashboardInfo.getDashboardId() != null) {
@@ -548,8 +558,7 @@ public class DashboardController extends BaseController {
                 }
                 return new HomeDashboardInfo(dashboardId, hideDashboardToolbar);
             }
-        } catch (Exception e) {
-        }
+        } catch (Exception ignored) {}
         return null;
     }
 
@@ -565,8 +574,7 @@ public class DashboardController extends BaseController {
                 }
                 return new HomeDashboard(dashboard, hideDashboardToolbar);
             }
-        } catch (Exception e) {
-        }
+        } catch (Exception ignored) {}
         return null;
     }
 

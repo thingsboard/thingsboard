@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,6 +78,16 @@ public class JpaDashboardDao extends JpaAbstractDao<DashboardEntity, Dashboard> 
     @Override
     public List<Dashboard> findByTenantIdAndTitle(UUID tenantId, String title) {
         return DaoUtil.convertDataList(dashboardRepository.findByTenantIdAndTitle(tenantId, title));
+    }
+
+    @Override
+    public PageData<DashboardId> findIdsByTenantId(TenantId tenantId, PageLink pageLink) {
+        return DaoUtil.pageToPageData(dashboardRepository.findIdsByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)).map(DashboardId::new));
+    }
+
+    @Override
+    public PageData<DashboardId> findAllIds(PageLink pageLink) {
+        return DaoUtil.pageToPageData(dashboardRepository.findAllIds(DaoUtil.toPageable(pageLink)).map(DashboardId::new));
     }
 
     @Override

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -92,6 +93,12 @@ public class JpaAssetDaoTest extends AbstractJpaDaoTest {
             assetProfileDao.removeById(TenantId.SYS_TENANT_ID, assetProfileId.getId());
         }
         savedAssetProfiles.clear();
+    }
+
+    @Test
+    public void testSaveDeviceName0x00_thenSomeDatabaseException() {
+        assertThatThrownBy(() -> assets.add(
+                saveAsset(UUID.randomUUID(), tenantId2, customerId2, "F0929906\000\000\000\000\000\000\000\000\000")));
     }
 
     @Test

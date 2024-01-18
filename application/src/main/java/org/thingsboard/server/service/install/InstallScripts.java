@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,29 @@
 package org.thingsboard.server.service.install;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.ResourceType;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
+import org.thingsboard.server.common.data.widget.DeprecatedFilter;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
+import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -40,15 +47,20 @@ import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
+import org.thingsboard.server.service.install.update.ImagesUpdater;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Base64;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static org.thingsboard.server.utils.LwM2mObjectModelUtils.toLwm2mResource;
 
@@ -70,6 +82,7 @@ public class InstallScripts {
     public static final String DEVICE_PROFILE_DIR = "device_profile";
     public static final String DEMO_DIR = "demo";
     public static final String RULE_CHAINS_DIR = "rule_chains";
+    public static final String WIDGET_TYPES_DIR = "widget_types";
     public static final String WIDGET_BUNDLES_DIR = "widget_bundles";
     public static final String OAUTH2_CONFIG_TEMPLATES_DIR = "oauth2_config_templates";
     public static final String DASHBOARDS_DIR = "dashboards";
@@ -100,15 +113,20 @@ public class InstallScripts {
     @Autowired
     private ResourceService resourceService;
 
-    private Path getTenantRuleChainsDir() {
+    @Autowired
+    private ImagesUpdater imagesUpdater;
+    @Getter @Setter
+    private boolean updateImages = false;
+
+    Path getTenantRuleChainsDir() {
         return Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, RULE_CHAINS_DIR);
     }
 
-    private Path getDeviceProfileDefaultRuleChainTemplateFilePath() {
+    Path getDeviceProfileDefaultRuleChainTemplateFilePath() {
         return Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, DEVICE_PROFILE_DIR, "rule_chain_template.json");
     }
 
-    private Path getEdgeRuleChainsDir() {
+    Path getEdgeRuleChainsDir() {
         return Paths.get(getDataDir(), JSON_DIR, EDGE_DIR, RULE_CHAINS_DIR);
     }
 
@@ -144,25 +162,29 @@ public class InstallScripts {
     }
 
     private void loadRuleChainsFromPath(TenantId tenantId, Path ruleChainsPath) throws IOException {
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(ruleChainsPath, path -> path.toString().endsWith(InstallScripts.JSON_EXT))) {
-            dirStream.forEach(
-                    path -> {
-                        try {
-                            createRuleChainFromFile(tenantId, path, null);
-                        } catch (Exception e) {
-                            log.error("Unable to load rule chain from json: [{}]", path.toString());
-                            throw new RuntimeException("Unable to load rule chain from json", e);
-                        }
-                    }
-            );
-        }
+        findRuleChainsFromPath(ruleChainsPath).forEach(path -> {
+            try {
+                createRuleChainFromFile(tenantId, path, null);
+            } catch (Exception e) {
+                log.error("Unable to load rule chain from json: [{}]", path.toString());
+                throw new RuntimeException("Unable to load rule chain from json", e);
+            }
+        });
     }
 
-    public RuleChain createDefaultRuleChain(TenantId tenantId, String ruleChainName) throws IOException {
+    List<Path> findRuleChainsFromPath(Path ruleChainsPath) throws IOException {
+        List<Path> paths = new ArrayList<>();
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(ruleChainsPath, path -> path.toString().endsWith(InstallScripts.JSON_EXT))) {
+            dirStream.forEach(paths::add);
+        }
+        return paths;
+    }
+
+    public RuleChain createDefaultRuleChain(TenantId tenantId, String ruleChainName) {
         return createRuleChainFromFile(tenantId, getDeviceProfileDefaultRuleChainTemplateFilePath(), ruleChainName);
     }
 
-    public RuleChain createRuleChainFromFile(TenantId tenantId, Path templateFilePath, String newRuleChainName) throws IOException {
+    public RuleChain createRuleChainFromFile(TenantId tenantId, Path templateFilePath, String newRuleChainName) {
         JsonNode ruleChainJson = JacksonUtil.toJsonNode(templateFilePath.toFile());
         RuleChain ruleChain = JacksonUtil.treeToValue(ruleChainJson.get("ruleChain"), RuleChain.class);
         RuleChainMetaData ruleChainMetaData = JacksonUtil.treeToValue(ruleChainJson.get("metadata"), RuleChainMetaData.class);
@@ -171,48 +193,153 @@ public class InstallScripts {
         if (!StringUtils.isEmpty(newRuleChainName)) {
             ruleChain.setName(newRuleChainName);
         }
-        ruleChain = ruleChainService.saveRuleChain(ruleChain);
+        ruleChain = ruleChainService.saveRuleChain(ruleChain, false);
 
         ruleChainMetaData.setRuleChainId(ruleChain.getId());
-        ruleChainService.saveRuleChainMetaData(TenantId.SYS_TENANT_ID, ruleChainMetaData, Function.identity());
+        ruleChainService.saveRuleChainMetaData(TenantId.SYS_TENANT_ID, ruleChainMetaData, Function.identity(), false);
 
         return ruleChain;
     }
 
     public void loadSystemWidgets() throws Exception {
+        log.info("Loading system widgets");
+        Map<Path, JsonNode> widgetsBundlesMap = new HashMap<>();
         Path widgetBundlesDir = Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, WIDGET_BUNDLES_DIR);
         try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(widgetBundlesDir, path -> path.toString().endsWith(JSON_EXT))) {
             dirStream.forEach(
                     path -> {
+                        JsonNode widgetsBundleDescriptorJson;
                         try {
-                            JsonNode widgetsBundleDescriptorJson = JacksonUtil.toJsonNode(path.toFile());
-                            JsonNode widgetsBundleJson = widgetsBundleDescriptorJson.get("widgetsBundle");
-                            WidgetsBundle widgetsBundle = JacksonUtil.treeToValue(widgetsBundleJson, WidgetsBundle.class);
-                            WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
-                            JsonNode widgetTypesArrayJson = widgetsBundleDescriptorJson.get("widgetTypes");
-                            widgetTypesArrayJson.forEach(
-                                    widgetTypeJson -> {
-                                        try {
-                                            WidgetTypeDetails widgetTypeDetails = JacksonUtil.treeToValue(widgetTypeJson, WidgetTypeDetails.class);
-                                            widgetTypeDetails.setBundleAlias(savedWidgetsBundle.getAlias());
-                                            widgetTypeService.saveWidgetType(widgetTypeDetails);
-                                        } catch (Exception e) {
-                                            log.error("Unable to load widget type from json: [{}]", path.toString());
-                                            throw new RuntimeException("Unable to load widget type from json", e);
-                                        }
-                                    }
-                            );
+                            widgetsBundleDescriptorJson = JacksonUtil.toJsonNode(path.toFile());
                         } catch (Exception e) {
-                            log.error("Unable to load widgets bundle from json: [{}]", path.toString());
-                            throw new RuntimeException("Unable to load widgets bundle from json", e);
+                            log.error("Unable to parse widgets bundle from json: [{}]", path);
+                            throw new RuntimeException("Unable to parse widgets bundle from json", e);
+                        }
+                        if (widgetsBundleDescriptorJson == null || !widgetsBundleDescriptorJson.has("widgetsBundle")) {
+                            log.error("Invalid widgets bundle json: [{}]", path);
+                            throw new RuntimeException("Invalid widgets bundle json: [" + path + "]");
+                        }
+                        widgetsBundlesMap.put(path, widgetsBundleDescriptorJson);
+                        JsonNode bundleAliasNode = widgetsBundleDescriptorJson.get("widgetsBundle").get("alias");
+                        if (bundleAliasNode == null || !bundleAliasNode.isTextual()) {
+                            log.error("Invalid widgets bundle json: [{}]", path);
+                            throw new RuntimeException("Invalid widgets bundle json: [" + path + "]");
+                        }
+                        String bundleAlias = bundleAliasNode.asText();
+                        try {
+                            this.deleteSystemWidgetBundle(bundleAlias);
+                        } catch (Exception e) {
+                            log.error("Failed to delete system widgets bundle: [{}]", bundleAlias);
+                            throw new RuntimeException("Failed to delete system widgets bundle: [" + bundleAlias + "]", e);
                         }
                     }
             );
+        }
+        Path widgetTypesDir = Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, WIDGET_TYPES_DIR);
+        if (Files.exists(widgetTypesDir)) {
+            try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(widgetTypesDir, path -> path.toString().endsWith(JSON_EXT))) {
+                dirStream.forEach(
+                        path -> {
+                            try {
+                                JsonNode widgetTypeJson = JacksonUtil.toJsonNode(path.toFile());
+                                WidgetTypeDetails widgetTypeDetails = JacksonUtil.treeToValue(widgetTypeJson, WidgetTypeDetails.class);
+                                widgetTypeService.saveWidgetType(widgetTypeDetails);
+                            } catch (Exception e) {
+                                log.error("Unable to load widget type from json: [{}]", path.toString());
+                                throw new RuntimeException("Unable to load widget type from json", e);
+                            }
+                        }
+                );
+            }
+        }
+        for (var widgetsBundleDescriptorEntry : widgetsBundlesMap.entrySet()) {
+            Path path = widgetsBundleDescriptorEntry.getKey();
+            try {
+                JsonNode widgetsBundleDescriptorJson = widgetsBundleDescriptorEntry.getValue();
+                JsonNode widgetsBundleJson = widgetsBundleDescriptorJson.get("widgetsBundle");
+                WidgetsBundle widgetsBundle = JacksonUtil.treeToValue(widgetsBundleJson, WidgetsBundle.class);
+                WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
+                List<String> widgetTypeFqns = new ArrayList<>();
+                if (widgetsBundleDescriptorJson.has("widgetTypes")) {
+                    JsonNode widgetTypesArrayJson = widgetsBundleDescriptorJson.get("widgetTypes");
+                    widgetTypesArrayJson.forEach(
+                            widgetTypeJson -> {
+                                try {
+                                    WidgetTypeDetails widgetTypeDetails = JacksonUtil.treeToValue(widgetTypeJson, WidgetTypeDetails.class);
+                                    var savedWidgetType = widgetTypeService.saveWidgetType(widgetTypeDetails);
+                                    widgetTypeFqns.add(savedWidgetType.getFqn());
+                                } catch (Exception e) {
+                                    log.error("Unable to load widget type from json: [{}]", path.toString());
+                                    throw new RuntimeException("Unable to load widget type from json", e);
+                                }
+                            }
+                    );
+                }
+                if (widgetsBundleDescriptorJson.has("widgetTypeFqns")) {
+                    JsonNode widgetFqnsArrayJson = widgetsBundleDescriptorJson.get("widgetTypeFqns");
+                    widgetFqnsArrayJson.forEach(fqnJson -> {
+                        widgetTypeFqns.add(fqnJson.asText());
+                    });
+                }
+                widgetTypeService.updateWidgetsBundleWidgetFqns(TenantId.SYS_TENANT_ID, savedWidgetsBundle.getId(), widgetTypeFqns);
+            } catch (Exception e) {
+                log.error("Unable to load widgets bundle from json: [{}]", path.toString());
+                throw new RuntimeException("Unable to load widgets bundle from json", e);
+            }
+        }
+    }
+
+    private void deleteSystemWidgetBundle(String bundleAlias) {
+        WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(TenantId.SYS_TENANT_ID, bundleAlias);
+        if (widgetsBundle != null) {
+            PageData<WidgetTypeInfo> widgetTypes;
+            var pageLink = new PageLink(1024);
+            do {
+                widgetTypes = widgetTypeService.findWidgetTypesInfosByWidgetsBundleId(TenantId.SYS_TENANT_ID, widgetsBundle.getId(), false, DeprecatedFilter.ALL, null, pageLink);
+                for (var widgetType : widgetTypes.getData()) {
+                    widgetTypeService.deleteWidgetType(TenantId.SYS_TENANT_ID, widgetType.getId());
+                }
+                pageLink.nextPageLink();
+            } while (widgetTypes.hasNext());
+            widgetsBundleService.deleteWidgetsBundle(TenantId.SYS_TENANT_ID, widgetsBundle.getId());
+        }
+    }
+
+    public void updateImages() {
+        imagesUpdater.updateWidgetsBundlesImages();
+        imagesUpdater.updateWidgetTypesImages();
+        imagesUpdater.updateDashboardsImages();
+        imagesUpdater.updateDeviceProfilesImages();
+        imagesUpdater.updateAssetProfilesImages();
+    }
+
+    @SneakyThrows
+    public void loadSystemImages() {
+        log.info("Loading system images...");
+        Stream<Path> dashboardsFiles = Files.list(Paths.get(getDataDir(), JSON_DIR, DEMO_DIR, DASHBOARDS_DIR));
+        try (dashboardsFiles) {
+            dashboardsFiles.forEach(file -> {
+                try {
+                    Dashboard dashboard = JacksonUtil.OBJECT_MAPPER.readValue(file.toFile(), Dashboard.class);
+                    imagesUpdater.createSystemImages(dashboard);
+                } catch (Exception e) {
+                    log.error("Failed to create system images for default dashboard {}", file.getFileName(), e);
+                }
+            });
         }
     }
 
     public void loadDashboards(TenantId tenantId, CustomerId customerId) throws Exception {
         Path dashboardsDir = Paths.get(getDataDir(), JSON_DIR, DEMO_DIR, DASHBOARDS_DIR);
+        loadDashboardsFromDir(tenantId, customerId, dashboardsDir);
+    }
+
+    public void createDefaultTenantDashboards(TenantId tenantId, CustomerId customerId) throws Exception {
+        Path dashboardsDir = Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, DASHBOARDS_DIR);
+        loadDashboardsFromDir(tenantId, customerId, dashboardsDir);
+    }
+
+    private void loadDashboardsFromDir(TenantId tenantId, CustomerId customerId, Path dashboardsDir) throws IOException {
         try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dashboardsDir, path -> path.toString().endsWith(JSON_EXT))) {
             dirStream.forEach(
                     path -> {
@@ -268,12 +395,12 @@ public class InstallScripts {
     }
 
     public void loadSystemLwm2mResources() {
-        Path resourceLwm2mPath = Paths.get(dataDir, MODELS_LWM2M_DIR);
+        Path resourceLwm2mPath = Paths.get(getDataDir(), MODELS_LWM2M_DIR);
         try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(resourceLwm2mPath, path -> path.toString().endsWith(InstallScripts.XML_EXT))) {
             dirStream.forEach(
                     path -> {
                         try {
-                            String data = Base64.getEncoder().encodeToString(Files.readAllBytes(path));
+                            byte[] data = Files.readAllBytes(path);
                             TbResource tbResource = new TbResource();
                             tbResource.setTenantId(TenantId.SYS_TENANT_ID);
                             tbResource.setData(data);
@@ -294,15 +421,13 @@ public class InstallScripts {
 
     private void doSaveLwm2mResource(TbResource resource) throws ThingsboardException {
         log.trace("Executing saveResource [{}]", resource);
-        if (StringUtils.isEmpty(resource.getData())) {
+        if (resource.getData() == null || resource.getData().length == 0) {
             throw new DataValidationException("Resource data should be specified!");
         }
         toLwm2mResource(resource);
-        TbResource foundResource =
-                resourceService.getResource(TenantId.SYS_TENANT_ID, ResourceType.LWM2M_MODEL, resource.getResourceKey());
+        TbResource foundResource = resourceService.findResourceByTenantIdAndKey(TenantId.SYS_TENANT_ID, ResourceType.LWM2M_MODEL, resource.getResourceKey());
         if (foundResource == null) {
             resourceService.saveResource(resource);
         }
     }
 }
-

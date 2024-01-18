@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,14 @@ import com.google.gson.JsonPrimitive;
 import lombok.Data;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasAdditionalInfo;
 import org.thingsboard.server.common.data.HasTenantId;
@@ -57,7 +59,7 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.utils.CsvUtils;
-import org.thingsboard.server.utils.TypeCastUtil;
+import org.thingsboard.server.common.data.util.TypeCastUtil;
 
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
@@ -229,7 +231,7 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
         List<AttributeKvEntry> attributes = new ArrayList<>(JsonConverter.convertToAttributes(kvsEntry.getValue()));
 
         accessValidator.validateEntityAndCallback(user, Operation.WRITE_ATTRIBUTES, entity.getId(), (result, tenantId, entityId) -> {
-            tsSubscriptionService.saveAndNotify(tenantId, entityId, scope, attributes, new FutureCallback<>() {
+            tsSubscriptionService.saveAndNotify(tenantId, entityId, AttributeScope.valueOf(scope), attributes, new FutureCallback<>() {
 
                 @Override
                 public void onSuccess(Void unused) {
@@ -269,7 +271,7 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
                                 if (!entry.getKey().getType().isKv()) {
                                     entityData.getFields().put(entry.getKey().getType(), entry.getValue());
                                 } else {
-                                    Map.Entry<DataType, Object> castResult = TypeCastUtil.castValue(entry.getValue());
+                                    Pair<DataType, Object> castResult = TypeCastUtil.castValue(entry.getValue());
                                     entityData.getKvs().put(entry.getKey(), new ParsedValue(castResult.getValue(), castResult.getKey()));
                                 }
                             });

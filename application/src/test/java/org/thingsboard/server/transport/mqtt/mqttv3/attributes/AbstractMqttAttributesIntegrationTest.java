@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -575,14 +575,14 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
     protected void validateJsonResponse(MqttTestCallback callback, String expectedResponse) throws InterruptedException {
         assertThat(callback.getSubscribeLatch().await(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS))
                 .as("await callback").isTrue();
-        assertEquals(MqttQoS.AT_MOST_ONCE.value(), callback.getQoS());
+        assertEquals(MqttQoS.AT_MOST_ONCE.value(), callback.getMessageArrivedQoS());
         assertEquals(JacksonUtil.toJsonNode(expectedResponse), JacksonUtil.fromBytes(callback.getPayloadBytes()));
     }
 
     protected void validateProtoResponse(MqttTestCallback callback, TransportProtos.GetAttributeResponseMsg expectedResponse) throws InterruptedException, InvalidProtocolBufferException {
         assertThat(callback.getSubscribeLatch().await(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS))
                 .as("await callback").isTrue();
-        assertEquals(MqttQoS.AT_MOST_ONCE.value(), callback.getQoS());
+        assertEquals(MqttQoS.AT_MOST_ONCE.value(), callback.getMessageArrivedQoS());
         TransportProtos.GetAttributeResponseMsg actualAttributesResponse = TransportProtos.GetAttributeResponseMsg.parseFrom(callback.getPayloadBytes());
         assertEquals(expectedResponse.getRequestId(), actualAttributesResponse.getRequestId());
         List<TransportProtos.KeyValueProto> expectedClientKeyValueProtos = expectedResponse.getClientAttributeListList().stream().map(TransportProtos.TsKvProto::getKv).collect(Collectors.toList());
@@ -606,7 +606,7 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
     protected void validateJsonResponseGateway(MqttTestCallback callback, String deviceName, String expectedValues) throws InterruptedException {
         assertThat(callback.getSubscribeLatch().await(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS))
                 .as("await callback").isTrue();
-        assertEquals(MqttQoS.AT_LEAST_ONCE.value(), callback.getQoS());
+        assertEquals(MqttQoS.AT_LEAST_ONCE.value(), callback.getMessageArrivedQoS());
         String expectedRequestPayload = "{\"id\":1,\"device\":\"" + deviceName + "\",\"values\":" + expectedValues + "}";
         assertEquals(JacksonUtil.toJsonNode(expectedRequestPayload), JacksonUtil.fromBytes(callback.getPayloadBytes()));
     }
@@ -614,7 +614,7 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
     protected void validateProtoClientResponseGateway(MqttTestCallback callback, String deviceName) throws InterruptedException, InvalidProtocolBufferException {
         assertThat(callback.getSubscribeLatch().await(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS))
                 .as("await callback").isTrue();
-        assertEquals(MqttQoS.AT_LEAST_ONCE.value(), callback.getQoS());
+        assertEquals(MqttQoS.AT_LEAST_ONCE.value(), callback.getMessageArrivedQoS());
         TransportApiProtos.GatewayAttributeResponseMsg expectedGatewayAttributeResponseMsg = getExpectedGatewayAttributeResponseMsg(deviceName, true);
         TransportApiProtos.GatewayAttributeResponseMsg actualGatewayAttributeResponseMsg = TransportApiProtos.GatewayAttributeResponseMsg.parseFrom(callback.getPayloadBytes());
         assertEquals(expectedGatewayAttributeResponseMsg.getDeviceName(), actualGatewayAttributeResponseMsg.getDeviceName());
@@ -631,7 +631,7 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
     protected void validateProtoSharedResponseGateway(MqttTestCallback callback, String deviceName) throws InterruptedException, InvalidProtocolBufferException {
         assertThat(callback.getSubscribeLatch().await(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS))
                 .as("await callback").isTrue();
-        assertEquals(MqttQoS.AT_LEAST_ONCE.value(), callback.getQoS());
+        assertEquals(MqttQoS.AT_LEAST_ONCE.value(), callback.getMessageArrivedQoS());
         TransportApiProtos.GatewayAttributeResponseMsg expectedGatewayAttributeResponseMsg = getExpectedGatewayAttributeResponseMsg(deviceName, false);
         TransportApiProtos.GatewayAttributeResponseMsg actualGatewayAttributeResponseMsg = TransportApiProtos.GatewayAttributeResponseMsg.parseFrom(callback.getPayloadBytes());
         assertEquals(expectedGatewayAttributeResponseMsg.getDeviceName(), actualGatewayAttributeResponseMsg.getDeviceName());

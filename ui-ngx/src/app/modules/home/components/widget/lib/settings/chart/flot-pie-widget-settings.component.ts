@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -59,9 +59,9 @@ export class FlotPieWidgetSettingsComponent extends WidgetSettingsComponent {
 
       // Common pie settings
 
-      radius: [settings.radius, [Validators.min(0)]],
-      innerRadius: [settings.innerRadius, [Validators.min(0)]],
-      tilt: [settings.tilt, [Validators.min(0)]],
+      radius: [settings.radius, [Validators.min(0), Validators.max(1)]],
+      innerRadius: [settings.innerRadius, [Validators.min(0), Validators.max(1)]],
+      tilt: [settings.tilt, [Validators.min(0), Validators.max(1)]],
 
       // Stroke settings
 

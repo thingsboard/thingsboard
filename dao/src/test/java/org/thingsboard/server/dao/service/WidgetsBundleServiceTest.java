@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -174,7 +174,7 @@ public class WidgetsBundleServiceTest extends AbstractServiceTest {
         PageLink pageLink = new PageLink(19);
         PageData<WidgetsBundle> pageData = null;
         do {
-            pageData = widgetsBundleService.findSystemWidgetsBundlesByPageLink(tenantId, pageLink);
+            pageData = widgetsBundleService.findSystemWidgetsBundlesByPageLink(tenantId, false, pageLink);
             loadedWidgetsBundles.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -297,7 +297,7 @@ public class WidgetsBundleServiceTest extends AbstractServiceTest {
         PageLink pageLink = new PageLink(17);
         PageData<WidgetsBundle> pageData = null;
         do {
-            pageData = widgetsBundleService.findAllTenantWidgetsBundlesByTenantIdAndPageLink(tenantId, pageLink);
+            pageData = widgetsBundleService.findAllTenantWidgetsBundlesByTenantIdAndPageLink(tenantId, false, pageLink);
             loadedWidgetsBundles.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -314,7 +314,7 @@ public class WidgetsBundleServiceTest extends AbstractServiceTest {
         loadedWidgetsBundles.clear();
         pageLink = new PageLink(14);
         do {
-            pageData = widgetsBundleService.findAllTenantWidgetsBundlesByTenantIdAndPageLink(tenantId, pageLink);
+            pageData = widgetsBundleService.findAllTenantWidgetsBundlesByTenantIdAndPageLink(tenantId, false, pageLink);
             loadedWidgetsBundles.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -336,7 +336,7 @@ public class WidgetsBundleServiceTest extends AbstractServiceTest {
         loadedWidgetsBundles.clear();
         pageLink = new PageLink(18);
         do {
-            pageData = widgetsBundleService.findAllTenantWidgetsBundlesByTenantIdAndPageLink(tenantId, pageLink);
+            pageData = widgetsBundleService.findAllTenantWidgetsBundlesByTenantIdAndPageLink(tenantId, false, pageLink);
             loadedWidgetsBundles.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ public class MqttTestCallback implements MqttCallback {
 
     protected CountDownLatch subscribeLatch;
     protected final CountDownLatch deliveryLatch;
-    protected int qoS;
+    protected int messageArrivedQoS;
     protected byte[] payloadBytes;
     protected boolean pubAckReceived;
 
@@ -53,7 +53,7 @@ public class MqttTestCallback implements MqttCallback {
     @Override
     public void messageArrived(String requestTopic, MqttMessage mqttMessage) {
         log.warn("messageArrived on topic: {}", requestTopic);
-        qoS = mqttMessage.getQos();
+        messageArrivedQoS = mqttMessage.getQos();
         payloadBytes = mqttMessage.getPayload();
         subscribeLatch.countDown();
     }
@@ -63,6 +63,5 @@ public class MqttTestCallback implements MqttCallback {
         log.warn("delivery complete: {}", iMqttDeliveryToken.getResponse());
         pubAckReceived = iMqttDeliveryToken.getResponse().getType() == MqttWireMessage.MESSAGE_TYPE_PUBACK;
         deliveryLatch.countDown();
-
     }
 }

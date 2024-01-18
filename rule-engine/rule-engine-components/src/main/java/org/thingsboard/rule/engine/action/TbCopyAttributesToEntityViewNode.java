@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -36,7 +37,6 @@ import org.thingsboard.server.common.data.objects.AttributesEntityView;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 
 import jakarta.annotation.Nullable;
@@ -45,7 +45,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ACTIVITY_EVENT;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_DELETED;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_UPDATED;
+import static org.thingsboard.server.common.data.msg.TbMsgType.INACTIVITY_EVENT;
+import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
+import static org.thingsboard.server.common.data.msg.TbNodeConnectionType.SUCCESS;
 
 @Slf4j
 @RuleNode(
@@ -71,15 +76,12 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        if (DataConstants.ATTRIBUTES_UPDATED.equals(msg.getType()) ||
-                DataConstants.ATTRIBUTES_DELETED.equals(msg.getType()) ||
-                DataConstants.ACTIVITY_EVENT.equals(msg.getType()) ||
-                DataConstants.INACTIVITY_EVENT.equals(msg.getType()) ||
-                SessionMsgType.POST_ATTRIBUTES_REQUEST.name().equals(msg.getType())) {
+        if (msg.isTypeOneOf(ATTRIBUTES_UPDATED, ATTRIBUTES_DELETED,
+                ACTIVITY_EVENT, INACTIVITY_EVENT, POST_ATTRIBUTES_REQUEST)) {
             if (!msg.getMetaData().getData().isEmpty()) {
                 long now = System.currentTimeMillis();
-                String scope = msg.getType().equals(SessionMsgType.POST_ATTRIBUTES_REQUEST.name()) ?
-                        DataConstants.CLIENT_SCOPE : msg.getMetaData().getValue(DataConstants.SCOPE);
+                AttributeScope scope = msg.isTypeOf(POST_ATTRIBUTES_REQUEST) ?
+                        AttributeScope.CLIENT_SCOPE : AttributeScope.valueOf(msg.getMetaData().getValue(DataConstants.SCOPE));
 
                 ListenableFuture<List<EntityView>> entityViewsFuture =
                         ctx.getEntityViewService().findEntityViewsByTenantIdAndEntityIdAsync(ctx.getTenantId(), msg.getOriginator());
@@ -90,9 +92,9 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
                                 long startTime = entityView.getStartTimeMs();
                                 long endTime = entityView.getEndTimeMs();
                                 if ((endTime != 0 && endTime > now && startTime < now) || (endTime == 0 && startTime < now)) {
-                                    if (DataConstants.ATTRIBUTES_DELETED.equals(msg.getType())) {
+                                    if (msg.isTypeOf(ATTRIBUTES_DELETED)) {
                                         List<String> attributes = new ArrayList<>();
-                                        for (JsonElement element : new JsonParser().parse(msg.getData()).getAsJsonObject().get("attributes").getAsJsonArray()) {
+                                        for (JsonElement element : JsonParser.parseString(msg.getData()).getAsJsonObject().get("attributes").getAsJsonArray()) {
                                             if (element.isJsonPrimitive()) {
                                                 JsonPrimitive value = element.getAsJsonPrimitive();
                                                 if (value.isString()) {
@@ -107,7 +109,7 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
                                                     getFutureCallback(ctx, msg, entityView));
                                         }
                                     } else {
-                                        Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(new JsonParser().parse(msg.getData()));
+                                        Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(JsonParser.parseString(msg.getData()));
                                         List<AttributeKvEntry> filteredAttributes =
                                                 attributes.stream().filter(attr -> attributeContainsInEntityView(scope, attr.getKey(), entityView)).collect(Collectors.toList());
                                         ctx.getTelemetryService().saveAndNotify(ctx.getTenantId(), entityView.getId(), scope, filteredAttributes,
@@ -144,17 +146,17 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
         ctx.enqueueForTellNext(ctx.newMsg(msg.getQueueName(), msg.getType(), entityView.getId(), msg.getCustomerId(), msg.getMetaData(), msg.getData()), SUCCESS);
     }
 
-    private boolean attributeContainsInEntityView(String scope, String attrKey, EntityView entityView) {
+    private boolean attributeContainsInEntityView(AttributeScope scope, String attrKey, EntityView entityView) {
         AttributesEntityView attributesEntityView = entityView.getKeys().getAttributes();
         List<String> keys = null;
         switch (scope) {
-            case DataConstants.CLIENT_SCOPE:
+            case CLIENT_SCOPE:
                 keys = attributesEntityView.getCs();
                 break;
-            case DataConstants.SERVER_SCOPE:
+            case SERVER_SCOPE:
                 keys = attributesEntityView.getSs();
                 break;
-            case DataConstants.SHARED_SCOPE:
+            case SHARED_SCOPE:
                 keys = attributesEntityView.getSh();
                 break;
         }

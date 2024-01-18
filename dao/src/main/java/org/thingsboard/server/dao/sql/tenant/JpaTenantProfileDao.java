@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public class JpaTenantProfileDao extends JpaAbstractDao<TenantProfileEntity, Ten
     public PageData<TenantProfile> findTenantProfiles(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(
                 tenantProfileRepository.findTenantProfiles(
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 
@@ -68,7 +68,7 @@ public class JpaTenantProfileDao extends JpaAbstractDao<TenantProfileEntity, Ten
     public PageData<EntityInfo> findTenantProfileInfos(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.pageToPageData(
                 tenantProfileRepository.findTenantProfileInfos(
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 

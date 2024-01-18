@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 :host {
-  display: block;
-  overflow: hidden;
+  display: flex;
   max-width: 100%;
   .mdc-button {
     max-width: 100%;
@@ -30,6 +29,26 @@
     .mdc-button__label {
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+  }
+}
+
+::ng-deep {
+  .tb-alarm-filter-config-component {
+    flex: 1;
+
+    tb-entity-subtype-list {
+      flex: 1;
+      width: 180px;
+      .mdc-evolution-chip-set__chips {
+        width: 100%;
+      }
+    }
+
+    .mat-mdc-chip {
+      .mdc-evolution-chip__cell, .mat-mdc-chip-action, .mat-mdc-chip-action-label {
+        overflow: hidden;
+      }
     }
   }
 }

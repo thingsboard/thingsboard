@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,15 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.WidgetTypeId;
+import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
+
+import java.util.List;
 
 @Service
 @TbCoreComponent
@@ -32,6 +37,7 @@ import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 public class DefaultWidgetsBundleService extends AbstractTbEntityService implements TbWidgetsBundleService {
 
     private final WidgetsBundleService widgetsBundleService;
+    private final WidgetTypeService widgetTypeService;
 
     @Override
     public WidgetsBundle save(WidgetsBundle widgetsBundle, User user) throws Exception {
@@ -40,26 +46,37 @@ public class DefaultWidgetsBundleService extends AbstractTbEntityService impleme
         try {
             WidgetsBundle savedWidgetsBundle = checkNotNull(widgetsBundleService.saveWidgetsBundle(widgetsBundle));
             autoCommit(user, savedWidgetsBundle.getId());
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, savedWidgetsBundle.getId(),
-                    savedWidgetsBundle, user, actionType, true, null);
+            logEntityActionService.logEntityAction(tenantId, savedWidgetsBundle.getId(), savedWidgetsBundle,
+                    null, actionType, user);
             return savedWidgetsBundle;
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.WIDGETS_BUNDLE), widgetsBundle, actionType, user, e);
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.WIDGETS_BUNDLE), widgetsBundle, actionType, user, e);
             throw e;
         }
     }
 
     @Override
     public void delete(WidgetsBundle widgetsBundle, User user) {
+        ActionType actionType = ActionType.DELETED;
         TenantId tenantId = widgetsBundle.getTenantId();
         try {
             widgetsBundleService.deleteWidgetsBundle(widgetsBundle.getTenantId(), widgetsBundle.getId());
-            notificationEntityService.notifyCreateOrUpdateOrDelete(tenantId, null, widgetsBundle.getId(), widgetsBundle,
-                    user, ActionType.DELETED, true, null);
+            logEntityActionService.logEntityAction(tenantId, widgetsBundle.getId(), widgetsBundle, null, actionType, user);
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.WIDGETS_BUNDLE),
-                    ActionType.DELETED, user, e, widgetsBundle.getId());
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.WIDGETS_BUNDLE), actionType, user, e, widgetsBundle.getId());
             throw e;
         }
+    }
+
+    @Override
+    public void updateWidgetsBundleWidgetTypes(WidgetsBundleId widgetsBundleId, List<WidgetTypeId> widgetTypeIds, User user) throws Exception {
+        widgetTypeService.updateWidgetsBundleWidgetTypes(user.getTenantId(), widgetsBundleId, widgetTypeIds);
+        autoCommit(user, widgetsBundleId);
+    }
+
+    @Override
+    public void updateWidgetsBundleWidgetFqns(WidgetsBundleId widgetsBundleId, List<String> widgetFqns, User user) throws Exception {
+        widgetTypeService.updateWidgetsBundleWidgetFqns(user.getTenantId(), widgetsBundleId, widgetFqns);
+        autoCommit(user, widgetsBundleId);
     }
 }

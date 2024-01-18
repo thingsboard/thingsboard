@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,13 +37,19 @@ import org.thingsboard.server.common.data.queue.SubmitStrategyType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
+import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
+import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @DaoSqlTest
 public class TenantProfileServiceTest extends AbstractServiceTest {
@@ -189,17 +195,6 @@ public class TenantProfileServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testSaveSameTenantProfileWithDifferentIsolatedTbRuleEngine() {
-        TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile");
-        TenantProfile savedTenantProfile = tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
-        savedTenantProfile.setIsolatedTbRuleEngine(true);
-        addMainQueueConfig(savedTenantProfile);
-        Assertions.assertThrows(DataValidationException.class, () -> {
-            tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, savedTenantProfile);
-        });
-    }
-
-    @Test
     public void testDeleteTenantProfileWithExistingTenant() {
         TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile");
         TenantProfile savedTenantProfile = tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
@@ -304,6 +299,24 @@ public class TenantProfileServiceTest extends AbstractServiceTest {
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
 
+    }
+
+    @Test
+    public void testTenantProfileSerialization_proto() {
+        TenantProfile tenantProfile = new TenantProfile();
+        tenantProfile.setId(new TenantProfileId(UUID.randomUUID()));
+        tenantProfile.setName("testProfile");
+        TenantProfileData profileData = new TenantProfileData();
+        tenantProfile.setProfileData(profileData);
+        profileData.setConfiguration(new DefaultTenantProfileConfiguration());
+        addMainQueueConfig(tenantProfile);
+
+        byte[] serialized = assertDoesNotThrow(() -> ProtoUtils.toProto(tenantProfile).toByteArray());
+
+        TenantProfile deserialized = assertDoesNotThrow(() -> ProtoUtils.fromProto(TransportProtos.TenantProfileProto.parseFrom(serialized)));
+        assertThat(deserialized).isEqualTo(tenantProfile);
+        assertThat(deserialized.getProfileData()).isNotNull();
+        assertThat(deserialized.getProfileData().getQueueConfiguration()).isNotEmpty();
     }
 
     public static TenantProfile createTenantProfile(String name) {

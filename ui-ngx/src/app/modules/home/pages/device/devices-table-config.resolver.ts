@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import {
 import { DeviceComponent } from '@modules/home/pages/device/device.component';
 import { forkJoin, Observable, of, Subject } from 'rxjs';
 import { select, Store } from '@ngrx/store';
-import { selectAuthUser } from '@core/auth/auth.selectors';
+import { selectAuthUser, selectUserSettingsProperty } from '@core/auth/auth.selectors';
 import { map, mergeMap, take, tap } from 'rxjs/operators';
 import { AppState } from '@core/core.state';
 import { DeviceService } from '@app/core/http/device.service';
@@ -79,6 +79,11 @@ import { EdgeId } from '@shared/models/id/edge-id';
 import { CustomerId } from '@shared/models/id/customer-id';
 import { PageLink, PageQueryParam } from '@shared/models/page/page-link';
 import { DeviceProfileId } from '@shared/models/id/device-profile-id';
+import {
+  DeviceCheckConnectivityDialogComponent,
+  DeviceCheckConnectivityDialogData
+} from '@home/pages/device/device-check-connectivity-dialog.component';
+import { EntityId } from '@shared/models/id/entity-id';
 
 interface DevicePageQueryParams extends PageQueryParam {
   deviceProfileId?: string;
@@ -456,16 +461,21 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
 
   deviceWizard($event: Event) {
     this.dialog.open<DeviceWizardDialogComponent, AddEntityDialogData<BaseData<HasId>>,
-      boolean>(DeviceWizardDialogComponent, {
+      Device>(DeviceWizardDialogComponent, {
       disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        entitiesTableConfig: this.config
-      }
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog']
     }).afterClosed().subscribe(
       (res) => {
         if (res) {
-          this.config.updateData();
+          this.store.pipe(select(selectUserSettingsProperty( 'notDisplayConnectivityAfterAddDevice'))).pipe(
+            take(1)
+          ).subscribe((settings: boolean) => {
+            if(!settings) {
+              this.checkConnectivity(null, res.id, true);
+            } else {
+              this.config.updateData();
+            }
+          });
         }
       }
     );
@@ -634,6 +644,9 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
       case 'manageCredentials':
         this.manageCredentials(action.event, action.entity);
         return true;
+      case 'checkConnectivity':
+        this.checkConnectivity(action.event, action.entity.id);
+        return true;
     }
     return false;
   }
@@ -708,4 +721,24 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     );
   }
 
+  checkConnectivity($event: Event, deviceId: EntityId, afterAdd = false) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialog.open<DeviceCheckConnectivityDialogComponent, DeviceCheckConnectivityDialogData>
+      (DeviceCheckConnectivityDialogComponent, {
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        data: {
+          deviceId,
+          afterAdd
+        }
+      })
+      .afterClosed()
+      .subscribe(() => {
+        if (afterAdd ) {
+          this.config.updateData();
+        }
+      });
+  }
 }

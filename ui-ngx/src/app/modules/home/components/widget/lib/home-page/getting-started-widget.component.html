@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -111,21 +111,10 @@
           </ng-template>
           <div [innerHTML]="'widgets.getting-started.tenant-admin.step2.content-before' | translate | safe: 'html'"></div>
           <div class="tb-bordered-content">
-            <tb-toggle-header #publishCommandSteps value="ubuntu" name="publishCommandSteps" useSelectOnMdLg="false"
-                              [options]="[
-                                {
-                                  name: 'Ubuntu',
-                                  value: 'ubuntu'
-                                },
-                                {
-                                  name: 'MacOS',
-                                  value: 'macos'
-                                },
-                                {
-                                  name: 'Windows',
-                                  value: 'windows'
-                                }
-                              ]">
+            <tb-toggle-header #publishCommandSteps value="ubuntu" name="publishCommandSteps" useSelectOnMdLg="false">
+              <tb-toggle-option value="ubuntu">Ubuntu</tb-toggle-option>
+              <tb-toggle-option value="macos">MacOS</tb-toggle-option>
+              <tb-toggle-option value="windows">Windows</tb-toggle-option>
             </tb-toggle-header>
             <ng-container [ngSwitch]="publishCommandSteps.value">
               <ng-template [ngSwitchCase]="'ubuntu'">

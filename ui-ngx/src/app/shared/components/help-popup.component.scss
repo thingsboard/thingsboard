@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@
   width: initial;
   display: inline-block;
   vertical-align: middle;
+  &.hint-button {
+    line-height: 1;
+  }
 }
 
 .tb-help-popup-button {
@@ -63,6 +66,21 @@
       margin-left: 4px;
       margin-right: 5px;
       vertical-align: middle;
+    }
+  }
+  &.hint-button {
+    padding: 2px 3px;
+    line-height: 1;
+    &.mat-mdc-outlined-button {
+      padding: 1px 2px;
+    }
+    .mdc-button__label > span {
+      .mat-icon {
+        margin-right: 0;
+      }
+      .mat-mdc-progress-spinner {
+        margin-right: 0;
+      }
     }
   }
 }

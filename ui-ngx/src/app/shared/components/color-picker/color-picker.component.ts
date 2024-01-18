@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,7 +17,8 @@
 import { Component, forwardRef, OnDestroy } from '@angular/core';
 import { Color, ColorPickerControl } from '@iplab/ngx-color-picker';
 import { Subscription } from 'rxjs';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormControl } from '@angular/forms';
+import { isString } from '@core/utils';
 
 export enum ColorType {
   hex = 'hex',
@@ -28,6 +29,10 @@ export enum ColorType {
   hsl = 'hsl',
   cmyk = 'cmyk'
 }
+
+const colorPresetsHex =
+  ['#435B63', '#F44336', '#E89623', '#F5DD00', '#8BC34A', '#4CAF50', '#009688', '#048AD3', '#673AB7', '#9C27B0', '#E91E63',
+   '#A1ADB1', '#F9A19B', '#FFD190', '#FFF59D', '#C5E1A4', '#A5D7A7', '#80CBC3', '#81C4E9', '#B39CDB', '#CD93D7', '#F48FB1'];
 
 @Component({
   selector: `tb-color-picker`,
@@ -43,9 +48,12 @@ export enum ColorType {
 })
 export class ColorPickerComponent implements ControlValueAccessor, OnDestroy {
 
-  selectedPresentation = 0;
   presentations = [ColorType.hex, ColorType.rgba, ColorType.hsla];
   control = new ColorPickerControl();
+
+  presentationControl = new UntypedFormControl(0);
+
+  colorPresets: Color[] = colorPresetsHex.map(c => Color.from(c));
 
   private modelValue: string;
 
@@ -65,6 +73,11 @@ export class ColorPickerComponent implements ControlValueAccessor, OnDestroy {
         }
       })
     );
+    this.subscriptions.push(
+      this.presentationControl.valueChanges.subscribe(() => {
+        this.updateModel();
+      })
+    );
   }
 
   registerOnChange(fn: any): void {
@@ -75,8 +88,9 @@ export class ColorPickerComponent implements ControlValueAccessor, OnDestroy {
   }
 
   writeValue(value: string): void {
-    this.setValue = !!value;
-    this.control.setValueFrom(value || '#fff');
+    const valid = this.isValidColorValue(value);
+    this.setValue = valid;
+    this.control.setValueFrom(valid ? value : '#fff');
     this.modelValue = value;
 
     if (this.control.initType === ColorType.hexa) {
@@ -86,12 +100,15 @@ export class ColorPickerComponent implements ControlValueAccessor, OnDestroy {
     } else if (this.control.initType === ColorType.hsl) {
       this.control.initType = ColorType.hsla;
     }
+    this.presentationControl.patchValue(this.presentations.indexOf(this.control.initType), {emitEvent: false});
+  }
 
-    this.selectedPresentation = this.presentations.indexOf(this.control.initType);
+  private isValidColorValue(value: string): boolean {
+    return value && isString(value) && value.trim().length > 0;
   }
 
   private updateModel() {
-    const color: string = this.getValueByType(this.control.value, this.presentations[this.selectedPresentation]);
+    const color: string = this.getValueByType(this.control.value, this.presentations[this.presentationControl.value]);
     if (this.modelValue !== color) {
       this.modelValue = color;
       this.propagateChange(color);
@@ -101,12 +118,6 @@ export class ColorPickerComponent implements ControlValueAccessor, OnDestroy {
   public ngOnDestroy(): void {
     this.subscriptions.forEach((subscription) => subscription.unsubscribe());
     this.subscriptions.length = 0;
-  }
-
-  public changePresentation(): void {
-    this.selectedPresentation =
-      this.selectedPresentation === this.presentations.length - 1 ? 0 : this.selectedPresentation + 1;
-    this.updateModel();
   }
 
   getValueByType(color: Color, type: ColorType): string {

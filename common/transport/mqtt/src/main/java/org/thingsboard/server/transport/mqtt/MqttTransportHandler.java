@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.msg.EncryptionUtil;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportService;
@@ -136,6 +137,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private static final MqttQoS MAX_SUPPORTED_QOS_LVL = AT_LEAST_ONCE;
 
     private final UUID sessionId;
+
     protected final MqttTransportContext context;
     private final TransportService transportService;
     private final SchedulerComponent scheduler;
@@ -320,7 +322,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             case PINGREQ:
                 if (checkConnected(ctx, msg)) {
                     ctx.writeAndFlush(new MqttMessage(new MqttFixedHeader(PINGRESP, false, AT_MOST_ONCE, false, 0)));
-                    transportService.reportActivity(deviceSessionCtx.getSessionInfo());
+                    transportService.recordActivity(deviceSessionCtx.getSessionInfo());
                 }
                 break;
             case DISCONNECT:
@@ -348,7 +350,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         if (topicName.startsWith(MqttTopics.BASE_GATEWAY_API_TOPIC)) {
             if (gatewaySessionHandler != null) {
                 handleGatewayPublishMsg(ctx, topicName, msgId, mqttMsg);
-                transportService.reportActivity(deviceSessionCtx.getSessionInfo());
+                transportService.recordActivity(deviceSessionCtx.getSessionInfo());
             } else {
                 log.error("[gatewaySessionHandler] is null, [{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId);
             }
@@ -442,10 +444,12 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             MqttTransportAdaptor payloadAdaptor = deviceSessionCtx.getPayloadAdaptor();
             if (deviceSessionCtx.isDeviceAttributesTopic(topicName)) {
                 TransportProtos.PostAttributeMsg postAttributeMsg = payloadAdaptor.convertToPostAttributes(deviceSessionCtx, mqttMsg);
-                transportService.process(deviceSessionCtx.getSessionInfo(), postAttributeMsg, getPubAckCallback(ctx, msgId, postAttributeMsg));
+                transportService.process(deviceSessionCtx.getSessionInfo(), postAttributeMsg, getMetadata(deviceSessionCtx, topicName),
+                        getPubAckCallback(ctx, msgId, postAttributeMsg));
             } else if (deviceSessionCtx.isDeviceTelemetryTopic(topicName)) {
                 TransportProtos.PostTelemetryMsg postTelemetryMsg = payloadAdaptor.convertToPostTelemetry(deviceSessionCtx, mqttMsg);
-                transportService.process(deviceSessionCtx.getSessionInfo(), postTelemetryMsg, getPubAckCallback(ctx, msgId, postTelemetryMsg));
+                transportService.process(deviceSessionCtx.getSessionInfo(), postTelemetryMsg, getMetadata(deviceSessionCtx, topicName),
+                        getPubAckCallback(ctx, msgId, postTelemetryMsg));
             } else if (topicName.startsWith(MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX)) {
                 TransportProtos.GetAttributeRequestMsg getAttributeMsg = payloadAdaptor.convertToGetAttributes(deviceSessionCtx, mqttMsg, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX);
                 transportService.process(deviceSessionCtx.getSessionInfo(), getAttributeMsg, getPubAckCallback(ctx, msgId, getAttributeMsg));
@@ -466,22 +470,28 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 getOtaPackageCallback(ctx, mqttMsg, msgId, fwMatcher, OtaPackageType.SOFTWARE);
             } else if (topicName.equals(MqttTopics.DEVICE_TELEMETRY_SHORT_TOPIC)) {
                 TransportProtos.PostTelemetryMsg postTelemetryMsg = payloadAdaptor.convertToPostTelemetry(deviceSessionCtx, mqttMsg);
-                transportService.process(deviceSessionCtx.getSessionInfo(), postTelemetryMsg, getPubAckCallback(ctx, msgId, postTelemetryMsg));
+                transportService.process(deviceSessionCtx.getSessionInfo(), postTelemetryMsg, getMetadata(deviceSessionCtx, topicName),
+                        getPubAckCallback(ctx, msgId, postTelemetryMsg));
             } else if (topicName.equals(MqttTopics.DEVICE_TELEMETRY_SHORT_JSON_TOPIC)) {
                 TransportProtos.PostTelemetryMsg postTelemetryMsg = context.getJsonMqttAdaptor().convertToPostTelemetry(deviceSessionCtx, mqttMsg);
-                transportService.process(deviceSessionCtx.getSessionInfo(), postTelemetryMsg, getPubAckCallback(ctx, msgId, postTelemetryMsg));
+                transportService.process(deviceSessionCtx.getSessionInfo(), postTelemetryMsg, getMetadata(deviceSessionCtx, topicName),
+                        getPubAckCallback(ctx, msgId, postTelemetryMsg));
             } else if (topicName.equals(MqttTopics.DEVICE_TELEMETRY_SHORT_PROTO_TOPIC)) {
                 TransportProtos.PostTelemetryMsg postTelemetryMsg = context.getProtoMqttAdaptor().convertToPostTelemetry(deviceSessionCtx, mqttMsg);
-                transportService.process(deviceSessionCtx.getSessionInfo(), postTelemetryMsg, getPubAckCallback(ctx, msgId, postTelemetryMsg));
+                transportService.process(deviceSessionCtx.getSessionInfo(), postTelemetryMsg, getMetadata(deviceSessionCtx, topicName),
+                        getPubAckCallback(ctx, msgId, postTelemetryMsg));
             } else if (topicName.equals(MqttTopics.DEVICE_ATTRIBUTES_SHORT_TOPIC)) {
                 TransportProtos.PostAttributeMsg postAttributeMsg = payloadAdaptor.convertToPostAttributes(deviceSessionCtx, mqttMsg);
-                transportService.process(deviceSessionCtx.getSessionInfo(), postAttributeMsg, getPubAckCallback(ctx, msgId, postAttributeMsg));
+                transportService.process(deviceSessionCtx.getSessionInfo(), postAttributeMsg, getMetadata(deviceSessionCtx, topicName),
+                        getPubAckCallback(ctx, msgId, postAttributeMsg));
             } else if (topicName.equals(MqttTopics.DEVICE_ATTRIBUTES_SHORT_JSON_TOPIC)) {
                 TransportProtos.PostAttributeMsg postAttributeMsg = context.getJsonMqttAdaptor().convertToPostAttributes(deviceSessionCtx, mqttMsg);
-                transportService.process(deviceSessionCtx.getSessionInfo(), postAttributeMsg, getPubAckCallback(ctx, msgId, postAttributeMsg));
+                transportService.process(deviceSessionCtx.getSessionInfo(), postAttributeMsg, getMetadata(deviceSessionCtx, topicName),
+                        getPubAckCallback(ctx, msgId, postAttributeMsg));
             } else if (topicName.equals(MqttTopics.DEVICE_ATTRIBUTES_SHORT_PROTO_TOPIC)) {
                 TransportProtos.PostAttributeMsg postAttributeMsg = context.getProtoMqttAdaptor().convertToPostAttributes(deviceSessionCtx, mqttMsg);
-                transportService.process(deviceSessionCtx.getSessionInfo(), postAttributeMsg, getPubAckCallback(ctx, msgId, postAttributeMsg));
+                transportService.process(deviceSessionCtx.getSessionInfo(), postAttributeMsg, getMetadata(deviceSessionCtx, topicName),
+                        getPubAckCallback(ctx, msgId, postAttributeMsg));
             } else if (topicName.startsWith(MqttTopics.DEVICE_RPC_RESPONSE_SHORT_JSON_TOPIC)) {
                 TransportProtos.ToDeviceRpcResponseMsg rpcResponseMsg = context.getJsonMqttAdaptor().convertToDeviceRpcResponse(deviceSessionCtx, mqttMsg, MqttTopics.DEVICE_RPC_RESPONSE_SHORT_JSON_TOPIC);
                 transportService.process(deviceSessionCtx.getSessionInfo(), rpcResponseMsg, getPubAckCallback(ctx, msgId, rpcResponseMsg));
@@ -516,12 +526,22 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 transportService.process(deviceSessionCtx.getSessionInfo(), getAttributeMsg, getPubAckCallback(ctx, msgId, getAttributeMsg));
                 attrReqTopicType = TopicType.V2;
             } else {
-                transportService.reportActivity(deviceSessionCtx.getSessionInfo());
+                transportService.recordActivity(deviceSessionCtx.getSessionInfo());
                 ack(ctx, msgId, ReturnCode.TOPIC_NAME_INVALID);
             }
         } catch (AdaptorException e) {
             log.debug("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
             sendAckOrCloseSession(ctx, topicName, msgId);
+        }
+    }
+
+    private TbMsgMetaData getMetadata(DeviceSessionCtx ctx, String topicName) {
+        if (ctx.isDeviceProfileMqttTransportType()) {
+            TbMsgMetaData md = new TbMsgMetaData();
+            md.putValue(DataConstants.MQTT_TOPIC, topicName);
+            return md;
+        } else {
+            return null;
         }
     }
 
@@ -776,7 +796,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             }
         }
         if (!activityReported) {
-            transportService.reportActivity(deviceSessionCtx.getSessionInfo());
+            transportService.recordActivity(deviceSessionCtx.getSessionInfo());
         }
         ctx.writeAndFlush(createSubAckMessage(mqttMsg.variableHeader().messageId(), grantedQoSList));
     }
@@ -874,7 +894,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             }
         }
         if (!activityReported) {
-            transportService.reportActivity(deviceSessionCtx.getSessionInfo());
+            transportService.recordActivity(deviceSessionCtx.getSessionInfo());
         }
         ctx.writeAndFlush(createUnSubAckMessage(mqttMsg.variableHeader().messageId(), unSubResults));
     }

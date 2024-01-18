@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,18 +19,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.dashboard.DashboardDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantService;
 
 @Component
 public class DashboardDataValidator extends DataValidator<Dashboard> {
-
-    @Autowired
-    private DashboardDao dashboardDao;
 
     @Autowired
     private TenantService tenantService;
@@ -42,9 +37,7 @@ public class DashboardDataValidator extends DataValidator<Dashboard> {
 
     @Override
     protected void validateDataImpl(TenantId tenantId, Dashboard dashboard) {
-        if (StringUtils.isEmpty(dashboard.getTitle())) {
-            throw new DataValidationException("Dashboard title should be specified!");
-        }
+        validateString("Dashboard title", dashboard.getTitle());
         if (dashboard.getTenantId() == null) {
             throw new DataValidationException("Dashboard should be assigned to tenant!");
         } else {

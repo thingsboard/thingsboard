@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,10 @@ import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
@@ -49,10 +52,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.thingsboard.server.common.data.DataConstants.NOTIFY_DEVICE_METADATA_KEY;
-import static org.thingsboard.server.common.data.DataConstants.SCOPE;
-import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
-import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 
 @Slf4j
 public class TbMsgDeleteAttributesNodeTest {
@@ -83,7 +82,7 @@ public class TbMsgDeleteAttributesNodeTest {
             callBack.onSuccess(null);
             return null;
         }).given(telemetryService).deleteAndNotify(
-                any(), any(), anyString(), anyList(), anyBoolean(), any());
+                any(), any(), any(AttributeScope.class), anyList(), anyBoolean(), any());
     }
 
     @AfterEach
@@ -94,7 +93,7 @@ public class TbMsgDeleteAttributesNodeTest {
     @Test
     void givenDefaultConfig_whenVerify_thenOK() {
         TbMsgDeleteAttributesNodeConfiguration defaultConfig = new TbMsgDeleteAttributesNodeConfiguration().defaultConfiguration();
-        assertThat(defaultConfig.getScope()).isEqualTo(SERVER_SCOPE);
+        assertThat(defaultConfig.getScope()).isEqualTo(DataConstants.SERVER_SCOPE);
         assertThat(defaultConfig.getKeys()).isEqualTo(Collections.emptyList());
     }
 
@@ -115,7 +114,7 @@ public class TbMsgDeleteAttributesNodeTest {
     void givenMsg_whenOnMsg_thenVerifyOutput_SendAttributesDeletedNotification_NotifyDevice() throws Exception {
         config.setSendAttributesDeletedNotification(true);
         config.setNotifyDevice(true);
-        config.setScope(SHARED_SCOPE);
+        config.setScope(DataConstants.SHARED_SCOPE);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
         onMsg_thenVerifyOutput(true, true, false);
@@ -135,12 +134,12 @@ public class TbMsgDeleteAttributesNodeTest {
         );
         TbMsgMetaData metaData = new TbMsgMetaData(mdMap);
         if (notifyDeviceMetadata) {
-            metaData.putValue(NOTIFY_DEVICE_METADATA_KEY, "true");
-            metaData.putValue(SCOPE, SHARED_SCOPE);
+            metaData.putValue(DataConstants.NOTIFY_DEVICE_METADATA_KEY, "true");
+            metaData.putValue(DataConstants.SCOPE, DataConstants.SHARED_SCOPE);
         }
         final String data = "{\"TestAttribute_2\": \"humidity\", \"TestAttribute_3\": \"voltage\"}";
 
-        TbMsg msg = TbMsg.newMsg("POST_ATTRIBUTES_REQUEST", deviceId, metaData, data, callback);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, deviceId, metaData, data, callback);
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<Runnable> successCaptor = ArgumentCaptor.forClass(Runnable.class);
@@ -154,6 +153,6 @@ public class TbMsgDeleteAttributesNodeTest {
         }
         verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());
         verify(ctx, never()).tellFailure(any(), any());
-        verify(telemetryService, times(1)).deleteAndNotify(any(), any(), anyString(), anyList(), eq(notifyDevice || notifyDeviceMetadata), any());
+        verify(telemetryService, times(1)).deleteAndNotify(any(), any(), any(AttributeScope.class), anyList(), eq(notifyDevice || notifyDeviceMetadata), any());
     }
 }

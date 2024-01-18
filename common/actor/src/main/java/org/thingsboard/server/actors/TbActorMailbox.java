@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,8 @@
  */
 package org.thingsboard.server.actors;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.msg.MsgType;
@@ -31,7 +32,8 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 @Slf4j
-@Data
+@Getter
+@RequiredArgsConstructor
 public final class TbActorMailbox implements TbActorCtx {
     private static final boolean HIGH_PRIORITY = true;
     private static final boolean NORMAL_PRIORITY = false;
@@ -212,9 +214,9 @@ public final class TbActorMailbox implements TbActorCtx {
     }
 
     @Override
-    public TbActorRef getOrCreateChildActor(TbActorId actorId, Supplier<String> dispatcher, Supplier<TbActorCreator> creator) {
+    public TbActorRef getOrCreateChildActor(TbActorId actorId, Supplier<String> dispatcher, Supplier<TbActorCreator> creator, Supplier<Boolean> createCondition) {
         TbActorRef actorRef = system.getActor(actorId);
-        if (actorRef == null) {
+        if (actorRef == null && createCondition.get()) {
             return system.createChildActor(dispatcher.get(), creator.get(), selfId);
         } else {
             return actorRef;

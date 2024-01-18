@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@
     <button type='button' *ngIf="!disabled" mat-button class="tidy" (click)="beautifyJs()">
       {{'js-func.tidy' | translate }}
     </button>
+    <ng-content select="[toolbarSuffixButton]"></ng-content>
     <div *ngIf="helpId" [tb-help-popup]="helpId"></div>
     <fieldset style="width: initial">
       <div matTooltip="{{(fullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"

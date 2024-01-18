@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.sql.notification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -32,13 +33,13 @@ import java.util.UUID;
 public interface NotificationTargetRepository extends JpaRepository<NotificationTargetEntity, UUID>, ExportableEntityRepository<NotificationTargetEntity> {
 
     @Query("SELECT t FROM NotificationTargetEntity t WHERE t.tenantId = :tenantId " +
-            "AND (:searchText = '' OR lower(t.name) LIKE lower(concat('%', :searchText, '%')))")
+            "AND (:searchText is NULL OR ilike(t.name, concat('%', :searchText, '%')) = true)")
     Page<NotificationTargetEntity> findByTenantIdAndSearchText(@Param("tenantId") UUID tenantId,
                                                                @Param("searchText") String searchText,
                                                                Pageable pageable);
 
     @Query(value = "SELECT * FROM notification_target t WHERE t.tenant_id = :tenantId " +
-            "AND (:searchText = '' OR lower(t.name) LIKE lower(concat('%', :searchText, '%'))) " +
+            "AND (:searchText IS NULL OR t.name ILIKE concat('%', :searchText, '%')) " +
             "AND (cast(t.configuration as json) ->> 'type' <> 'PLATFORM_USERS' OR " +
             "cast(t.configuration as json) -> 'usersFilter' ->> 'type' IN :usersFilterTypes)", nativeQuery = true)
     Page<NotificationTargetEntity> findByTenantIdAndSearchTextAndUsersFilterTypeIfPresent(@Param("tenantId") UUID tenantId,
@@ -49,7 +50,9 @@ public interface NotificationTargetRepository extends JpaRepository<Notification
     List<NotificationTargetEntity> findByTenantIdAndIdIn(UUID tenantId, List<UUID> ids);
 
     @Transactional
-    void deleteByTenantId(UUID tenantId);
+    @Modifying
+    @Query("DELETE FROM NotificationTargetEntity t WHERE t.tenantId = :tenantId")
+    void deleteByTenantId(@Param("tenantId") UUID tenantId);
 
     long countByTenantId(UUID tenantId);
 

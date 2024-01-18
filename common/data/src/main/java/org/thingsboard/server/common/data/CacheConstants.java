@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,4 +45,5 @@ public class CacheConstants {
     public static final String DASHBOARD_TITLES_CACHE = "dashboardTitles";
     public static final String ENTITY_COUNT_CACHE = "entityCount";
     public static final String RESOURCE_INFO_CACHE = "resourceInfo";
+    public static final String ALARM_TYPES_CACHE = "alarmTypes";
 }

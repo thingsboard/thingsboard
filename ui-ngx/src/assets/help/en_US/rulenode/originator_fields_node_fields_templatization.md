@@ -9,10 +9,10 @@
 
 Let's assume that we have two device types in our use case:
 
-- `smart_door_lock`
-- `motion_detector`
+- `smartDoorLock`
+- `motionDetector`
 
-Let's assume that device of type `dock_lock_sensor` and name `SDL-001` publish next type of messages to the system:
+Let's assume that device of type `smartDoorLock` and name `SDL-001` publish next type of messages to the system:
 
 ```json
 {
@@ -21,7 +21,7 @@ Let's assume that device of type `dock_lock_sensor` and name `SDL-001` publish n
   },
   "metadata": {
     "deviceName": "SDL-001",
-    "deviceType": "smart_door_lock",
+    "deviceType": "smartDoorLock",
     "ts": "1685379440000"
   }
 }
@@ -29,7 +29,7 @@ Let's assume that device of type `dock_lock_sensor` and name `SDL-001` publish n
 
 <br>
 
-and device of type `motion_detector` and name `MD-001` publish next type of messages to the system:
+and device of type `motionDetector` and name `MD-001` publish next type of messages to the system:
 
 ```json
 {
@@ -38,7 +38,7 @@ and device of type `motion_detector` and name `MD-001` publish next type of mess
   },
   "metadata": {
     "deviceName": "MD-001",
-    "deviceType": "motion_detector",
+    "deviceType": "motionDetector",
     "ts": "1685379440000"
   }
 }
@@ -70,11 +70,11 @@ Rule node configuration set to fetch data to the message. In the following way:
 {
   "msg": {
     "status": "locked",
-    "smart_door_lock": "Grocery warehouse door"
+    "smartDoorLock": "Grocery warehouse door"
   },
   "metadata": {
     "deviceName": "SDL-001",
-    "deviceType": "smart_door_lock",
+    "deviceType": "smartDoorLock",
     "ts": "1685379440000"
   }
 }
@@ -88,11 +88,11 @@ Rule node configuration set to fetch data to the message. In the following way:
 {
   "msg": {
     "motionDetected": "true",
-    "motion_detector": "Grocery Warehouse motion detector"
+    "motionDetector": "Grocery Warehouse motion detector"
   },
   "metadata": {
     "deviceName": "MD-001",
-    "deviceType": "motion_detector",
+    "deviceType": "motionDetector",
     "ts": "1685379440000"
   }
 }

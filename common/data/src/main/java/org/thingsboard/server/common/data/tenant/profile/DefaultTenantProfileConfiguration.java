@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ import org.thingsboard.server.common.data.TenantProfileType;
 @Data
 public class DefaultTenantProfileConfiguration implements TenantProfileConfiguration {
 
+    private static final long serialVersionUID = -7134932690332578595L;
+
     private long maxDevices;
     private long maxAssets;
     private long maxCustomers;
@@ -37,6 +39,7 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxRuleChains;
     private long maxResourcesInBytes;
     private long maxOtaPackagesInBytes;
+    private long maxResourceSize;
 
     private String transportTenantMsgRateLimit;
     private String transportTenantTelemetryMsgRateLimit;
@@ -54,6 +57,7 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxTransportDataPoints;
     private long maxREExecutions;
     private long maxJSExecutions;
+    private long maxTbelExecutions;
     private long maxDPStorageDays;
     private int maxRuleNodeExecutionsPerMessage;
     private long maxEmails;
@@ -80,6 +84,8 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private int defaultStorageTtlDays;
     private int alarmsTtlDays;
     private int rpcTtlDays;
+    private int queueStatsTtlDays;
+    private int ruleEngineExceptionsTtlDays;
 
     private double warnThreshold;
 
@@ -92,6 +98,8 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
                 return maxTransportDataPoints;
             case JS_EXEC_COUNT:
                 return maxJSExecutions;
+            case TBEL_EXEC_COUNT:
+                return maxTbelExecutions;
             case RE_EXEC_COUNT:
                 return maxREExecutions;
             case STORAGE_DP_COUNT:

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -30,7 +30,9 @@ export const exportableEntityTypes: Array<EntityType> = [
   EntityType.DEVICE_PROFILE,
   EntityType.ASSET_PROFILE,
   EntityType.RULE_CHAIN,
+  EntityType.WIDGET_TYPE,
   EntityType.WIDGETS_BUNDLE,
+  EntityType.TB_RESOURCE,
   EntityType.NOTIFICATION_TEMPLATE,
   EntityType.NOTIFICATION_TARGET,
   EntityType.NOTIFICATION_RULE
@@ -39,7 +41,8 @@ export const exportableEntityTypes: Array<EntityType> = [
 export const entityTypesWithoutRelatedData: Set<EntityType> = new Set([
   EntityType.NOTIFICATION_TEMPLATE,
   EntityType.NOTIFICATION_TARGET,
-  EntityType.NOTIFICATION_RULE
+  EntityType.NOTIFICATION_RULE,
+  EntityType.TB_RESOURCE
 ]);
 
 export interface VersionCreateConfig {

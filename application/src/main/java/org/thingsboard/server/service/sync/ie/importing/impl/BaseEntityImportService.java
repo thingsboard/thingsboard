@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
 import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.service.action.EntityActionService;
-import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
+import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
 import org.thingsboard.server.service.sync.ie.exporting.ExportableEntitiesService;
 import org.thingsboard.server.service.sync.ie.importing.EntityImportService;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
@@ -65,6 +65,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -84,7 +85,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
     @Autowired
     protected TbClusterService clusterService;
     @Autowired
-    protected TbNotificationEntityService entityNotificationService;
+    protected TbLogEntityActionService logEntityActionService;
 
     @Override
     public EntityImportResult<E> importEntity(EntitiesImportCtx ctx, D exportData) throws ThingsboardException {
@@ -211,8 +212,8 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                         importResult.setUpdatedRelatedEntities(true);
                         relationService.deleteRelation(ctx.getTenantId(), existingRelation.getFrom(), existingRelation.getTo(), existingRelation.getType(), existingRelation.getTypeGroup());
                         importResult.addSendEventsCallback(() -> {
-                            entityNotificationService.notifyRelation(tenantId, null,
-                                    existingRelation, ctx.getUser(), ActionType.RELATION_DELETED, existingRelation);
+                            logEntityActionService.logEntityRelationAction(tenantId, null,
+                                    existingRelation, ctx.getUser(), ActionType.RELATION_DELETED, null, existingRelation);
                         });
                     } else if (Objects.equal(relation.getAdditionalInfo(), existingRelation.getAdditionalInfo())) {
                         relationsMap.remove(relation);
@@ -266,8 +267,8 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
     }
 
     protected void onEntitySaved(User user, E savedEntity, E oldEntity) throws ThingsboardException {
-        entityNotificationService.notifyCreateOrUpdateEntity(user.getTenantId(), savedEntity.getId(), savedEntity,
-                null, oldEntity == null ? ActionType.ADDED : ActionType.UPDATED, user);
+        logEntityActionService.logEntityAction(user.getTenantId(), savedEntity.getId(), savedEntity, null,
+                oldEntity == null ? ActionType.ADDED : ActionType.UPDATED, user);
     }
 
 
@@ -386,9 +387,12 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
         return oldEntity == null ? null : getter.apply(oldEntity);
     }
 
-    protected void replaceIdsRecursively(EntitiesImportCtx ctx, IdProvider idProvider, JsonNode entityAlias, Set<String> skipFieldsSet, LinkedHashSet<EntityType> hints) {
-        JacksonUtil.replaceUuidsRecursively(entityAlias, skipFieldsSet,
-                uuid -> idProvider.getInternalIdByUuid(uuid, ctx.isFinalImportAttempt(), hints).map(EntityId::getId).orElse(uuid));
+    protected void replaceIdsRecursively(EntitiesImportCtx ctx, IdProvider idProvider, JsonNode json,
+                                         Set<String> skippedRootFields, Pattern includedFieldsPattern,
+                                         LinkedHashSet<EntityType> hints) {
+        JacksonUtil.replaceUuidsRecursively(json, skippedRootFields, includedFieldsPattern,
+                uuid -> idProvider.getInternalIdByUuid(uuid, ctx.isFinalImportAttempt(), hints)
+                        .map(EntityId::getId).orElse(uuid), true);
     }
 
 }

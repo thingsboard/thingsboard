@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.rabbitmq.client.MessageProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
@@ -35,6 +34,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
@@ -51,7 +51,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
 )
 public class TbRabbitMqNode extends TbAbstractExternalNode {
 
-    private static final Charset UTF8 = Charset.forName("UTF-8");
+    private static final Charset UTF8 = StandardCharsets.UTF_8;
 
     private static final String ERROR = "error";
 
@@ -84,10 +84,10 @@ public class TbRabbitMqNode extends TbAbstractExternalNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        withCallback(publishMessageAsync(ctx, msg),
+        var tbMsg = ackIfNeeded(ctx, msg);
+        withCallback(publishMessageAsync(ctx, tbMsg),
                 m -> tellSuccess(ctx, m),
-                t -> tellFailure(ctx, processException(ctx, msg, t), t));
-        ackIfNeeded(ctx, msg);
+                t -> tellFailure(ctx, processException(tbMsg, t), t));
     }
 
     private ListenableFuture<TbMsg> publishMessageAsync(TbContext ctx, TbMsg msg) {
@@ -115,10 +115,10 @@ public class TbRabbitMqNode extends TbAbstractExternalNode {
         return msg;
     }
 
-    private TbMsg processException(TbContext ctx, TbMsg origMsg, Throwable t) {
+    private TbMsg processException(TbMsg origMsg, Throwable t) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(ERROR, t.getClass() + ": " + t.getMessage());
-        return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
+        return TbMsg.transformMsgMetadata(origMsg, metaData);
     }
 
     @Override

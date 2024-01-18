@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,25 +63,20 @@ public class MonitoringReporter {
     private String reportingAssetId;
 
     public void reportLatencies(TbClient tbClient) {
-        List<Latency> latencies = this.latencies.values().stream()
-                .filter(Latency::isNotEmpty)
-                .map(latency -> {
-                    Latency snapshot = latency.snapshot();
-                    latency.reset();
-                    return snapshot;
-                })
-                .collect(Collectors.toList());
         if (latencies.isEmpty()) {
             return;
         }
-        log.info("Latencies:\n{}", latencies.stream().map(latency -> latency.getKey() + ": " + latency.getAvg() + " ms")
+        log.debug("Latencies:\n{}", latencies.values().stream().map(latency -> latency.getKey() + ": " + latency.getFormattedValue())
                 .collect(Collectors.joining("\n")) + "\n");
-
         if (!latencyReportingEnabled) return;
 
-        if (latencies.stream().anyMatch(latency -> latency.getAvg() >= (double) latencyThresholdMs)) {
-            HighLatencyNotification highLatencyNotification = new HighLatencyNotification(latencies, latencyThresholdMs);
+        List<Latency> highLatencies = latencies.values().stream()
+                .filter(latency -> latency.getValue() >= (double) latencyThresholdMs)
+                .collect(Collectors.toList());
+        if (!highLatencies.isEmpty()) {
+            HighLatencyNotification highLatencyNotification = new HighLatencyNotification(highLatencies, latencyThresholdMs);
             notificationService.sendNotification(highLatencyNotification);
+            log.warn("{}", highLatencyNotification.getText());
         }
 
         try {
@@ -99,10 +94,11 @@ public class MonitoringReporter {
             }
 
             ObjectNode msg = JacksonUtil.newObjectNode();
-            latencies.forEach(latency -> {
-                msg.set(latency.getKey(), new DoubleNode(latency.getAvg()));
+            latencies.values().forEach(latency -> {
+                msg.set(latency.getKey(), new DoubleNode(latency.getValue()));
             });
             tbClient.saveEntityTelemetry(new AssetId(UUID.fromString(reportingAssetId)), "time", msg);
+            latencies.clear();
         } catch (Exception e) {
             log.error("Failed to report latencies: {}", e.getMessage());
         }
@@ -112,7 +108,7 @@ public class MonitoringReporter {
         String latencyKey = key + "Latency";
         double latencyInMs = (double) latencyInNanos / 1000_000;
         log.trace("Reporting latency [{}]: {} ms", key, latencyInMs);
-        latencies.computeIfAbsent(latencyKey, k -> new Latency(latencyKey)).report(latencyInMs);
+        latencies.put(latencyKey, Latency.of(latencyKey, latencyInMs));
     }
 
     public void serviceFailure(Object serviceKey, Throwable error) {

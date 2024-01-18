@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import { AuthService } from '@core/auth/auth.service';
 import { select, Store } from '@ngrx/store';
 import { selectIsAuthenticated } from '@core/auth/auth.selectors';
 import { AppState } from '@core/core.state';
-import { tap } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 
 declare const System;
 
@@ -47,6 +47,7 @@ export interface ModulesWithFactories {
 })
 export class ResourcesService {
 
+  private loadedJsonResources: { [url: string]: ReplaySubject<any> } = {};
   private loadedResources: { [url: string]: ReplaySubject<void> } = {};
   private loadedModules: { [url: string]: ReplaySubject<Type<any>[]> } = {};
   private loadedModulesAndFactories: { [url: string]: ReplaySubject<ModulesWithFactories> } = {};
@@ -59,6 +60,32 @@ export class ResourcesService {
               private http: HttpClient,
               private injector: Injector) {
     this.store.pipe(select(selectIsAuthenticated)).subscribe(() => this.clearModulesCache());
+  }
+
+  public loadJsonResource<T>(url: string, postProcess?: (data: T) => T): Observable<T> {
+    if (this.loadedJsonResources[url]) {
+      return this.loadedJsonResources[url].asObservable();
+    }
+    const subject = new ReplaySubject<any>();
+    this.loadedJsonResources[url] = subject;
+    const req$ = (url.endsWith('.raw') || url.endsWith('.svg') ?
+      this.http.get(url, {responseType: 'text'}) : this.http.get<T>(url)) as Observable<T>;
+    req$.subscribe(
+      {
+        next: (o) => {
+          if (postProcess) {
+            o = postProcess(o);
+          }
+          this.loadedJsonResources[url].next(o);
+          this.loadedJsonResources[url].complete();
+        },
+        error: () => {
+          this.loadedJsonResources[url].error(new Error(`Unable to load ${url}`));
+          delete this.loadedJsonResources[url];
+        }
+      }
+    );
+    return subject.asObservable();
   }
 
   public loadResource(url: string): Observable<any> {
@@ -77,6 +104,37 @@ export class ResourcesService {
       return throwError(() => new Error(`Unsupported file type: ${fileType}`));
     }
     return this.loadResourceByType(fileType, url);
+  }
+
+  public downloadResource(downloadUrl: string): Observable<any> {
+    return this.http.get(downloadUrl, {
+      responseType: 'arraybuffer',
+      observe: 'response'
+    }).pipe(
+      map((response) => {
+        const headers = response.headers;
+        const filename = headers.get('x-filename');
+        const contentType = headers.get('content-type');
+        const linkElement = document.createElement('a');
+        try {
+          const blob = new Blob([response.body], {type: contentType});
+          const url = URL.createObjectURL(blob);
+          linkElement.setAttribute('href', url);
+          linkElement.setAttribute('download', filename);
+          const clickEvent = new MouseEvent('click',
+            {
+              view: window,
+              bubbles: true,
+              cancelable: false
+            }
+          );
+          linkElement.dispatchEvent(clickEvent);
+          return null;
+        } catch (e) {
+          throw e;
+        }
+      })
+    );
   }
 
   public loadFactories(resourceId: string | TbResourceId, modulesMap: IModulesMap): Observable<ModulesWithFactories> {
