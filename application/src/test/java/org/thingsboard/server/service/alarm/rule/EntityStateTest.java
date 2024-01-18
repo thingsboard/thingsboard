@@ -31,22 +31,22 @@ import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleOriginatorTargetEntity;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilterKey;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionKeyType;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleArgument;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleCondition;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfiguration;
+import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentValueType;
+import org.thingsboard.server.common.data.alarm.rule.condition.Operation;
+import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionFilter;
+import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionSpec;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleAllDevicesEntityFilter;
-import org.thingsboard.server.common.data.device.profile.AlarmCondition;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
-import org.thingsboard.server.common.data.device.profile.AlarmRuleCondition;
-import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
-import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionFilter;
-import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionSpec;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AlarmRuleId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
-import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
-import org.thingsboard.server.common.data.query.EntityKeyValueType;
-import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -161,17 +161,25 @@ public class EntityStateTest {
     }
 
     private AlarmRuleConfiguration createAlarmConfigWithBoolAttrCondition(String key, boolean value) {
+        AlarmRuleArgument enabledKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, key))
+                .valueType(ArgumentValueType.BOOLEAN)
+                .build();
+        AlarmRuleArgument enabledConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, key))
+                .valueType(ArgumentValueType.BOOLEAN)
+                .defaultValue(value)
+                .build();
+
         SimpleAlarmConditionFilter condition = new SimpleAlarmConditionFilter();
-        condition.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, key));
-        condition.setValueType(EntityKeyValueType.BOOLEAN);
-        BooleanFilterPredicate predicate = new BooleanFilterPredicate();
-        predicate.setOperation(BooleanFilterPredicate.BooleanOperation.EQUAL);
-        predicate.setValue(new FilterPredicateValue<>(value));
-        condition.setPredicate(predicate);
+        condition.setLeftArgId("enabledKey");
+        condition.setRightArgId("enabledConst");
+        condition.setOperation(Operation.EQUAL);
 
         AlarmRuleConfiguration alarmConfig = new AlarmRuleConfiguration();
         AlarmRuleCondition alarmRule = new AlarmRuleCondition();
         AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setArguments(Map.of("enabledKey", enabledKey, "enabledConst", enabledConst));
         alarmCondition.setSpec(new SimpleAlarmConditionSpec());
         alarmCondition.setCondition(condition);
         alarmRule.setCondition(alarmCondition);

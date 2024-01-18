@@ -16,8 +16,8 @@
 package org.thingsboard.server.service.alarm.rule;
 
 import lombok.Getter;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilterKey;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionKeyType;
 
 import java.util.Set;
 
@@ -33,7 +33,7 @@ class SnapshotUpdate {
         this.keys = keys;
     }
 
-    boolean hasUpdate(){
+    boolean hasUpdate() {
         return !keys.isEmpty();
     }
 }

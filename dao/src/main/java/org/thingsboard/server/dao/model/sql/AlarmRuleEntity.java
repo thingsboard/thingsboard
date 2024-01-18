@@ -26,7 +26,7 @@ import org.hibernate.annotations.JdbcType;
 import org.hibernate.dialect.PostgreSQLJsonPGObjectJsonbType;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
-import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.id.AlarmRuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;

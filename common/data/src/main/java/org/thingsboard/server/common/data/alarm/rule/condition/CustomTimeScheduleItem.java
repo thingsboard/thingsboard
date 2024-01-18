@@ -13,11 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.server.common.data.alarm.rule.condition;
 
-public enum AlarmConditionKeyType {
-    ATTRIBUTE,
-    TIME_SERIES,
-    ENTITY_FIELD,
-    CONSTANT
+import lombok.Data;
+
+import java.io.Serializable;
+
+@Data
+public class CustomTimeScheduleItem implements Serializable {
+
+    private boolean enabled;
+    private int dayOfWeek;
+    private long startsOn;
+    private long endsOn;
+
 }

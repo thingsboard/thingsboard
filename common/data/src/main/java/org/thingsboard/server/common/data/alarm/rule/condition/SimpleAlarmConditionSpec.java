@@ -13,26 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.server.common.data.alarm.rule.condition;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
-import org.thingsboard.server.common.data.query.DynamicValue;
-
-import java.util.Set;
 
 @Data
-public class SpecificTimeSchedule implements AlarmSchedule {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class SimpleAlarmConditionSpec implements AlarmConditionSpec {
 
-    private String timezone;
-    private Set<Integer> daysOfWeek;
-    private long startsOn;
-    private long endsOn;
-
-    private DynamicValue<String> dynamicValue;
+    private static final long serialVersionUID = -5786432686880249296L;
 
     @Override
-    public AlarmScheduleType getType() {
-        return AlarmScheduleType.SPECIFIC_TIME;
+    public AlarmConditionSpecType getType() {
+        return AlarmConditionSpecType.SIMPLE;
     }
-
 }

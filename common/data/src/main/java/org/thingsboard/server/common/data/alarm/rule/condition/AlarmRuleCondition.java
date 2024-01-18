@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.server.common.data.alarm.rule.condition;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.validation.NoXss;
 
-import jakarta.validation.Valid;
 import java.io.Serializable;
 
 @Schema

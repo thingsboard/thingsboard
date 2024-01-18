@@ -19,33 +19,15 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionSpec;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionSpecType;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionType;
-import org.thingsboard.server.common.data.device.profile.AlarmRuleCondition;
-import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
-import org.thingsboard.server.common.data.device.profile.AlarmSchedule;
-import org.thingsboard.server.common.data.device.profile.ComplexAlarmConditionFilter;
-import org.thingsboard.server.common.data.device.profile.DurationAlarmConditionSpec;
-import org.thingsboard.server.common.data.device.profile.RepeatingAlarmConditionSpec;
-import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionFilter;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilterKey;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.id.AlarmRuleId;
-import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
-import org.thingsboard.server.common.data.query.DynamicValue;
-import org.thingsboard.server.common.data.query.DynamicValueSourceType;
-import org.thingsboard.server.common.data.query.KeyFilterPredicate;
-import org.thingsboard.server.common.data.query.SimpleKeyFilterPredicate;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -93,106 +75,20 @@ class EntityRulesState {
         Map<AlarmSeverity, Set<AlarmConditionFilterKey>> createAlarmKeys = alarmCreateKeys.computeIfAbsent(alarmRule.getId(), id -> new HashMap<>());
         configuration.getCreateRules().forEach(((severity, alarmRuleCondition) -> {
             var ruleKeys = createAlarmKeys.computeIfAbsent(severity, id -> new HashSet<>());
-            for (var keyFilter : getSimpleConditions(alarmRuleCondition.getCondition().getCondition())) {
-                entityKeys.add(keyFilter.getKey());
-                ruleKeys.add(keyFilter.getKey());
-                addDynamicValuesRecursively(keyFilter.getPredicate(), entityKeys, ruleKeys);
-            }
-            addEntityKeysFromAlarmConditionSpec(alarmRuleCondition);
-            AlarmSchedule schedule = alarmRuleCondition.getSchedule();
-            if (schedule != null) {
-                addScheduleDynamicValues(schedule);
+            for (var argument : alarmRuleCondition.getCondition().getArguments().values()) {
+                if (!argument.isConstant()) {
+                    entityKeys.add(argument.getKey());
+                    ruleKeys.add(argument.getKey());
+                }
             }
         }));
         if (configuration.getClearRule() != null) {
             var clearAlarmKeys = alarmClearKeys.computeIfAbsent(alarmRule.getId(), id -> new HashSet<>());
-            for (var keyFilter : getSimpleConditions(configuration.getClearRule().getCondition().getCondition())) {
-                entityKeys.add(keyFilter.getKey());
-                clearAlarmKeys.add(keyFilter.getKey());
-                addDynamicValuesRecursively(keyFilter.getPredicate(), entityKeys, clearAlarmKeys);
+            for (var argument : configuration.getClearRule().getCondition().getArguments().values()) {
+                if (!argument.isConstant())
+                    entityKeys.add(argument.getKey());
+                clearAlarmKeys.add(argument.getKey());
             }
-            addEntityKeysFromAlarmConditionSpec(configuration.getClearRule());
-        }
-    }
-
-    private Set<SimpleAlarmConditionFilter> getSimpleConditions(AlarmConditionFilter condition) {
-        if (condition.getType() == AlarmConditionType.SIMPLE) {
-            return Set.of((SimpleAlarmConditionFilter) condition);
-        }
-        Set<SimpleAlarmConditionFilter> simpleFilters = new HashSet<>();
-        Queue<AlarmConditionFilter> filters = new LinkedList<>(((ComplexAlarmConditionFilter) condition).getConditions());
-
-        while (!filters.isEmpty()) {
-            AlarmConditionFilter filter = filters.poll();
-            if (filter.getType() == AlarmConditionType.SIMPLE) {
-                simpleFilters.add((SimpleAlarmConditionFilter) filter);
-            } else {
-                filters.addAll(((ComplexAlarmConditionFilter) filter).getConditions());
-            }
-        }
-
-        return simpleFilters;
-    }
-
-    private void addScheduleDynamicValues(AlarmSchedule schedule) {
-        DynamicValue<String> dynamicValue = schedule.getDynamicValue();
-        if (dynamicValue != null) {
-            entityKeys.add(
-                    new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE,
-                            dynamicValue.getSourceAttribute())
-            );
-        }
-    }
-
-    private void addEntityKeysFromAlarmConditionSpec(AlarmRuleCondition alarmRule) {
-        AlarmConditionSpec spec = alarmRule.getCondition().getSpec();
-        if (spec == null) {
-            return;
-        }
-        AlarmConditionSpecType specType = spec.getType();
-        switch (specType) {
-            case DURATION:
-                DurationAlarmConditionSpec duration = (DurationAlarmConditionSpec) spec;
-                if (duration.getPredicate().getDynamicValue() != null
-                        && duration.getPredicate().getDynamicValue().getSourceAttribute() != null) {
-                    entityKeys.add(
-                            new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE,
-                                    duration.getPredicate().getDynamicValue().getSourceAttribute())
-                    );
-                }
-                break;
-            case REPEATING:
-                RepeatingAlarmConditionSpec repeating = (RepeatingAlarmConditionSpec) spec;
-                if (repeating.getPredicate().getDynamicValue() != null
-                        && repeating.getPredicate().getDynamicValue().getSourceAttribute() != null) {
-                    entityKeys.add(
-                            new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE,
-                                    repeating.getPredicate().getDynamicValue().getSourceAttribute())
-                    );
-                }
-                break;
-        }
-    }
-
-    private void addDynamicValuesRecursively(KeyFilterPredicate predicate, Set<AlarmConditionFilterKey> entityKeys, Set<AlarmConditionFilterKey> ruleKeys) {
-        switch (predicate.getType()) {
-            case STRING:
-            case NUMERIC:
-            case BOOLEAN:
-                DynamicValue value = ((SimpleKeyFilterPredicate) predicate).getValue().getDynamicValue();
-                if (value != null && (value.getSourceType() == DynamicValueSourceType.CURRENT_TENANT ||
-                        value.getSourceType() == DynamicValueSourceType.CURRENT_CUSTOMER ||
-                        value.getSourceType() == DynamicValueSourceType.CURRENT_DEVICE)) {
-                    AlarmConditionFilterKey entityKey = new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, value.getSourceAttribute());
-                    entityKeys.add(entityKey);
-                    ruleKeys.add(entityKey);
-                }
-                break;
-            case COMPLEX:
-                for (KeyFilterPredicate child : ((ComplexFilterPredicate) predicate).getPredicates()) {
-                    addDynamicValuesRecursively(child, entityKeys, ruleKeys);
-                }
-                break;
         }
     }
 

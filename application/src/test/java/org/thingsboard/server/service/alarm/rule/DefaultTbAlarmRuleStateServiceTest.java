@@ -40,6 +40,20 @@ import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleOriginatorTargetEntity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleRelationTargetEntity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleSpecifiedTargetEntity;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilterKey;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionKeyType;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleArgument;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleCondition;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfiguration;
+import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentValueType;
+import org.thingsboard.server.common.data.alarm.rule.condition.ComplexAlarmConditionFilter;
+import org.thingsboard.server.common.data.alarm.rule.condition.CustomTimeSchedule;
+import org.thingsboard.server.common.data.alarm.rule.condition.CustomTimeScheduleItem;
+import org.thingsboard.server.common.data.alarm.rule.condition.DurationAlarmConditionSpec;
+import org.thingsboard.server.common.data.alarm.rule.condition.Operation;
+import org.thingsboard.server.common.data.alarm.rule.condition.RepeatingAlarmConditionSpec;
+import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionFilter;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleAllAssetsEntityFilter;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleAllDevicesEntityFilter;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleAssetTypeEntityFilter;
@@ -49,17 +63,6 @@ import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleEntityListE
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleSingleEntityFilter;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
-import org.thingsboard.server.common.data.device.profile.AlarmCondition;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
-import org.thingsboard.server.common.data.device.profile.AlarmRuleCondition;
-import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
-import org.thingsboard.server.common.data.device.profile.ComplexAlarmConditionFilter;
-import org.thingsboard.server.common.data.device.profile.CustomTimeSchedule;
-import org.thingsboard.server.common.data.device.profile.CustomTimeScheduleItem;
-import org.thingsboard.server.common.data.device.profile.DurationAlarmConditionSpec;
-import org.thingsboard.server.common.data.device.profile.RepeatingAlarmConditionSpec;
-import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionFilter;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -71,12 +74,7 @@ import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
-import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
-import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.DynamicValueSourceType;
-import org.thingsboard.server.common.data.query.EntityKeyValueType;
-import org.thingsboard.server.common.data.query.FilterPredicateValue;
-import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
@@ -172,29 +170,42 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         alarmRule.setName("highTemperatureAlarmRule");
         alarmRule.setEnabled(true);
 
+        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+
+        AlarmRuleArgument highTemperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(30.0)
+                .build();
+
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        highTemperaturePredicate.setValue(new FilterPredicateValue<>(30.0));
-        highTempFilter.setPredicate(highTemperaturePredicate);
+        highTempFilter.setLeftArgId("temperatureKey");
+        highTempFilter.setRightArgId("highTemperatureConst");
+        highTempFilter.setOperation(Operation.GREATER);
         AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmCondition.setCondition(highTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
 
+        AlarmRuleArgument lowTemperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(10.0)
+                .build();
+
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
-        lowTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        lowTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate lowTemperaturePredicate = new NumericFilterPredicate();
-        lowTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.LESS);
-        lowTemperaturePredicate.setValue(new FilterPredicateValue<>(10.0));
-        lowTempFilter.setPredicate(lowTemperaturePredicate);
+        lowTempFilter.setLeftArgId("temperatureKey");
+        lowTempFilter.setRightArgId("lowTemperatureConst");
+        lowTempFilter.setOperation(Operation.LESS);
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
+        clearCondition.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
         clearCondition.setCondition(lowTempFilter);
         clearRule.setCondition(clearCondition);
         alarmRuleConfiguration.setClearRule(clearRule);
@@ -273,26 +284,39 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         alarmRule.setName("highTemperatureAlarmRule");
         alarmRule.setEnabled(true);
 
+        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+
+        AlarmRuleArgument temperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(30.0)
+                .build();
+
         SimpleAlarmConditionFilter tempFilter = new SimpleAlarmConditionFilter();
-        tempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        tempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate temperaturePredicate = new NumericFilterPredicate();
-        temperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        temperaturePredicate.setValue(new FilterPredicateValue<>(30.0));
-        tempFilter.setPredicate(temperaturePredicate);
+        tempFilter.setLeftArgId("temperatureKey");
+        tempFilter.setRightArgId("temperatureConst");
+        tempFilter.setOperation(Operation.GREATER);
         AlarmCondition tempAlarmCondition = new AlarmCondition();
+        tempAlarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "temperatureConst", temperatureConst));
         tempAlarmCondition.setCondition(tempFilter);
         AlarmRuleCondition tempAlarmRuleCondition = new AlarmRuleCondition();
         tempAlarmRuleCondition.setCondition(tempAlarmCondition);
 
+        AlarmRuleArgument highTemperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(50.0)
+                .build();
+
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        highTemperaturePredicate.setValue(new FilterPredicateValue<>(50.0));
-        highTempFilter.setPredicate(highTemperaturePredicate);
+        highTempFilter.setLeftArgId("temperatureKey");
+        highTempFilter.setRightArgId("highTemperatureConst");
+        highTempFilter.setOperation(Operation.GREATER);
         AlarmCondition highTempAlarmCondition = new AlarmCondition();
+        highTempAlarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         highTempAlarmCondition.setCondition(highTempFilter);
         AlarmRuleCondition highTempAlarmRuleCondition = new AlarmRuleCondition();
         highTempAlarmRuleCondition.setCondition(highTempAlarmCondition);
@@ -348,28 +372,44 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         alarmRule.setName("alarmEnabledAlarmRule");
         alarmRule.setEnabled(true);
 
+        AlarmRuleArgument alarmEnabledConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "alarmEnabled"))
+                .valueType(ArgumentValueType.BOOLEAN)
+                .defaultValue(Boolean.TRUE)
+                .build();
+        AlarmRuleArgument alarmEnabledKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "alarmEnabled"))
+                .valueType(ArgumentValueType.BOOLEAN)
+                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .build();
+
         SimpleAlarmConditionFilter alarmEnabledFilter = new SimpleAlarmConditionFilter();
-        alarmEnabledFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "alarmEnabled"));
-        alarmEnabledFilter.setValue(Boolean.TRUE);
-        alarmEnabledFilter.setValueType(EntityKeyValueType.BOOLEAN);
-        BooleanFilterPredicate alarmEnabledPredicate = new BooleanFilterPredicate();
-        alarmEnabledPredicate.setOperation(BooleanFilterPredicate.BooleanOperation.EQUAL);
-        alarmEnabledPredicate.setValue(new FilterPredicateValue<>(
-                Boolean.FALSE,
-                null,
-                new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "alarmEnabled")
-        ));
-        alarmEnabledFilter.setPredicate(alarmEnabledPredicate);
+        alarmEnabledFilter.setLeftArgId("alarmEnabledConst");
+        alarmEnabledFilter.setRightArgId("alarmEnabledKey");
+        alarmEnabledFilter.setOperation(Operation.EQUAL);
+
+        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+
+        AlarmRuleArgument temperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(20.0)
+                .build();
 
         SimpleAlarmConditionFilter temperatureFilter = new SimpleAlarmConditionFilter();
-        temperatureFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        temperatureFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate temperaturePredicate = new NumericFilterPredicate();
-        temperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        temperaturePredicate.setValue(new FilterPredicateValue<>(20.0, null, null));
-        temperatureFilter.setPredicate(temperaturePredicate);
+        temperatureFilter.setLeftArgId("temperatureKey");
+        temperatureFilter.setRightArgId("temperatureConst");
+        temperatureFilter.setOperation(Operation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setArguments(Map.of(
+                "alarmEnabledConst", alarmEnabledConst,
+                "alarmEnabledKey", alarmEnabledKey,
+                "temperatureKey", temperatureKey,
+                "temperatureConst", temperatureConst));
         alarmCondition.setCondition(new ComplexAlarmConditionFilter(Arrays.asList(alarmEnabledFilter, temperatureFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);
@@ -428,28 +468,45 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         alarmRule.setName("alarmEnabledAlarmRule");
         alarmRule.setEnabled(true);
 
+        AlarmRuleArgument alarmEnabledConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "alarmEnabled"))
+                .valueType(ArgumentValueType.BOOLEAN)
+                .defaultValue(Boolean.TRUE)
+                .build();
+        AlarmRuleArgument alarmEnabledKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "alarmEnabled"))
+                .valueType(ArgumentValueType.BOOLEAN)
+                .inherit(true)
+                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .build();
+
         SimpleAlarmConditionFilter alarmEnabledFilter = new SimpleAlarmConditionFilter();
-        alarmEnabledFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "alarmEnabled"));
-        alarmEnabledFilter.setValue(Boolean.TRUE);
-        alarmEnabledFilter.setValueType(EntityKeyValueType.BOOLEAN);
-        BooleanFilterPredicate alarmEnabledPredicate = new BooleanFilterPredicate();
-        alarmEnabledPredicate.setOperation(BooleanFilterPredicate.BooleanOperation.EQUAL);
-        alarmEnabledPredicate.setValue(new FilterPredicateValue<>(
-                Boolean.FALSE,
-                null,
-                new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "alarmEnabled", true)
-        ));
-        alarmEnabledFilter.setPredicate(alarmEnabledPredicate);
+        alarmEnabledFilter.setLeftArgId("alarmEnabledConst");
+        alarmEnabledFilter.setRightArgId("alarmEnabledKey");
+        alarmEnabledFilter.setOperation(Operation.EQUAL);
+
+        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+
+        AlarmRuleArgument temperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(20.0)
+                .build();
 
         SimpleAlarmConditionFilter temperatureFilter = new SimpleAlarmConditionFilter();
-        temperatureFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        temperatureFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate temperaturePredicate = new NumericFilterPredicate();
-        temperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        temperaturePredicate.setValue(new FilterPredicateValue<>(20.0, null, null));
-        temperatureFilter.setPredicate(temperaturePredicate);
+        temperatureFilter.setLeftArgId("temperatureKey");
+        temperatureFilter.setRightArgId("temperatureConst");
+        temperatureFilter.setOperation(Operation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setArguments(Map.of(
+                "alarmEnabledConst", alarmEnabledConst,
+                "alarmEnabledKey", alarmEnabledKey,
+                "temperatureKey", temperatureKey,
+                "temperatureConst", temperatureConst));
         alarmCondition.setCondition(new ComplexAlarmConditionFilter(Arrays.asList(alarmEnabledFilter, temperatureFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);
@@ -512,29 +569,44 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         alarmRule.setName("highTemperatureAlarmRule");
         alarmRule.setEnabled(true);
 
+        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+
+        AlarmRuleArgument highTemperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(30.0)
+                .build();
+
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        highTemperaturePredicate.setValue(new FilterPredicateValue<>(30.0));
-        highTempFilter.setPredicate(highTemperaturePredicate);
+        highTempFilter.setLeftArgId("temperatureKey");
+        highTempFilter.setRightArgId("temperatureConst");
+        highTempFilter.setOperation(Operation.GREATER);
+
         AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmCondition.setCondition(highTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
 
+
+        AlarmRuleArgument lowTemperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(10.0)
+                .build();
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
-        lowTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        lowTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate lowTemperaturePredicate = new NumericFilterPredicate();
-        lowTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.LESS);
-        lowTemperaturePredicate.setValue(new FilterPredicateValue<>(10.0));
-        lowTempFilter.setPredicate(lowTemperaturePredicate);
+        lowTempFilter.setLeftArgId("temperatureKey");
+        lowTempFilter.setRightArgId("lowTemperatureConst");
+        lowTempFilter.setOperation(Operation.LESS);
+
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
+        clearCondition.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
         clearCondition.setCondition(lowTempFilter);
         clearRule.setCondition(clearCondition);
         alarmRuleConfiguration.setClearRule(clearRule);
@@ -622,29 +694,44 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         alarmRule.setName("highTemperatureAlarmRule");
         alarmRule.setEnabled(true);
 
+        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+
+        AlarmRuleArgument highTemperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(30.0)
+                .build();
+
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        highTemperaturePredicate.setValue(new FilterPredicateValue<>(30.0));
-        highTempFilter.setPredicate(highTemperaturePredicate);
+        highTempFilter.setLeftArgId("temperatureKey");
+        highTempFilter.setRightArgId("temperatureConst");
+        highTempFilter.setOperation(Operation.GREATER);
+
         AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmCondition.setCondition(highTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
 
+
+        AlarmRuleArgument lowTemperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(10.0)
+                .build();
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
-        lowTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        lowTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate lowTemperaturePredicate = new NumericFilterPredicate();
-        lowTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.LESS);
-        lowTemperaturePredicate.setValue(new FilterPredicateValue<>(10.0));
-        lowTempFilter.setPredicate(lowTemperaturePredicate);
+        lowTempFilter.setLeftArgId("temperatureKey");
+        lowTempFilter.setRightArgId("lowTemperatureConst");
+        lowTempFilter.setOperation(Operation.LESS);
+
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
+        clearCondition.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
         clearCondition.setCondition(lowTempFilter);
         clearRule.setCondition(clearCondition);
         alarmRuleConfiguration.setClearRule(clearRule);
@@ -716,29 +803,44 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         alarmRule.setName("highTemperatureAlarmRule");
         alarmRule.setEnabled(true);
 
+        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+
+        AlarmRuleArgument highTemperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(30.0)
+                .build();
+
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        highTemperaturePredicate.setValue(new FilterPredicateValue<>(30.0));
-        highTempFilter.setPredicate(highTemperaturePredicate);
+        highTempFilter.setLeftArgId("temperatureKey");
+        highTempFilter.setRightArgId("highTemperatureConst");
+        highTempFilter.setOperation(Operation.GREATER);
+
         AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmCondition.setCondition(highTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
 
+
+        AlarmRuleArgument lowTemperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(10.0)
+                .build();
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
-        lowTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        lowTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate lowTemperaturePredicate = new NumericFilterPredicate();
-        lowTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.LESS);
-        lowTemperaturePredicate.setValue(new FilterPredicateValue<>(10.0));
-        lowTempFilter.setPredicate(lowTemperaturePredicate);
+        lowTempFilter.setLeftArgId("temperatureKey");
+        lowTempFilter.setRightArgId("lowTemperatureConst");
+        lowTempFilter.setOperation(Operation.LESS);
+
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
+        clearCondition.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
         clearCondition.setCondition(lowTempFilter);
         clearRule.setCondition(clearCondition);
         alarmRuleConfiguration.setClearRule(clearRule);
@@ -808,29 +910,44 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         alarmRule.setName("highTemperatureAlarmRule");
         alarmRule.setEnabled(true);
 
+        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+
+        AlarmRuleArgument highTemperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(30.0)
+                .build();
+
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        highTemperaturePredicate.setValue(new FilterPredicateValue<>(30.0));
-        highTempFilter.setPredicate(highTemperaturePredicate);
+        highTempFilter.setLeftArgId("temperatureKey");
+        highTempFilter.setRightArgId("highTemperatureConst");
+        highTempFilter.setOperation(Operation.GREATER);
+
         AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmCondition.setCondition(highTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
 
+
+        AlarmRuleArgument lowTemperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(10.0)
+                .build();
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
-        lowTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        lowTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate lowTemperaturePredicate = new NumericFilterPredicate();
-        lowTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.LESS);
-        lowTemperaturePredicate.setValue(new FilterPredicateValue<>(10.0));
-        lowTempFilter.setPredicate(lowTemperaturePredicate);
+        lowTempFilter.setLeftArgId("temperatureKey");
+        lowTempFilter.setRightArgId("lowTemperatureConst");
+        lowTempFilter.setOperation(Operation.LESS);
+
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
+        clearCondition.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
         clearCondition.setCondition(lowTempFilter);
         clearRule.setCondition(clearCondition);
         alarmRuleConfiguration.setClearRule(clearRule);
@@ -900,29 +1017,44 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         alarmRule.setName("highTemperatureAlarmRule");
         alarmRule.setEnabled(true);
 
+        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+
+        AlarmRuleArgument highTemperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(30.0)
+                .build();
+
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        highTemperaturePredicate.setValue(new FilterPredicateValue<>(30.0));
-        highTempFilter.setPredicate(highTemperaturePredicate);
+        highTempFilter.setLeftArgId("temperatureKey");
+        highTempFilter.setRightArgId("highTemperatureConst");
+        highTempFilter.setOperation(Operation.GREATER);
+
         AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmCondition.setCondition(highTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
 
+
+        AlarmRuleArgument lowTemperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(10.0)
+                .build();
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
-        lowTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        lowTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate lowTemperaturePredicate = new NumericFilterPredicate();
-        lowTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.LESS);
-        lowTemperaturePredicate.setValue(new FilterPredicateValue<>(10.0));
-        lowTempFilter.setPredicate(lowTemperaturePredicate);
+        lowTempFilter.setLeftArgId("temperatureKey");
+        lowTempFilter.setRightArgId("lowTemperatureConst");
+        lowTempFilter.setOperation(Operation.LESS);
+
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
+        clearCondition.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
         clearCondition.setCondition(lowTempFilter);
         clearRule.setCondition(clearCondition);
         alarmRuleConfiguration.setClearRule(clearRule);
@@ -994,29 +1126,44 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         alarmRule.setName("highTemperatureAlarmRule");
         alarmRule.setEnabled(true);
 
+        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+
+        AlarmRuleArgument highTemperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(30.0)
+                .build();
+
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        highTemperaturePredicate.setValue(new FilterPredicateValue<>(30.0));
-        highTempFilter.setPredicate(highTemperaturePredicate);
+        highTempFilter.setLeftArgId("temperatureKey");
+        highTempFilter.setRightArgId("highTemperatureConst");
+        highTempFilter.setOperation(Operation.GREATER);
+
         AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmCondition.setCondition(highTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
 
+
+        AlarmRuleArgument lowTemperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(10.0)
+                .build();
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
-        lowTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        lowTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate lowTemperaturePredicate = new NumericFilterPredicate();
-        lowTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.LESS);
-        lowTemperaturePredicate.setValue(new FilterPredicateValue<>(10.0));
-        lowTempFilter.setPredicate(lowTemperaturePredicate);
+        lowTempFilter.setLeftArgId("temperatureKey");
+        lowTempFilter.setRightArgId("lowTemperatureConst");
+        lowTempFilter.setOperation(Operation.LESS);
+
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
+        clearCondition.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
         clearCondition.setCondition(lowTempFilter);
         clearRule.setCondition(clearCondition);
         alarmRuleConfiguration.setClearRule(clearRule);
@@ -1089,29 +1236,43 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         alarmRule.setName("highTemperatureAlarmRule");
         alarmRule.setEnabled(true);
 
+        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+
+        AlarmRuleArgument highTemperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(30.0)
+                .build();
+
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        highTemperaturePredicate.setValue(new FilterPredicateValue<>(30.0));
-        highTempFilter.setPredicate(highTemperaturePredicate);
+        highTempFilter.setLeftArgId("temperatureKey");
+        highTempFilter.setRightArgId("highTemperatureConst");
+        highTempFilter.setOperation(Operation.GREATER);
+
         AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmCondition.setCondition(highTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
 
+        AlarmRuleArgument lowTemperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(10.0)
+                .build();
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
-        lowTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        lowTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate lowTemperaturePredicate = new NumericFilterPredicate();
-        lowTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.LESS);
-        lowTemperaturePredicate.setValue(new FilterPredicateValue<>(10.0));
-        lowTempFilter.setPredicate(lowTemperaturePredicate);
+        lowTempFilter.setLeftArgId("temperatureKey");
+        lowTempFilter.setRightArgId("lowTemperatureConst");
+        lowTempFilter.setOperation(Operation.LESS);
+
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
+        clearCondition.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
         clearCondition.setCondition(lowTempFilter);
         clearRule.setCondition(clearCondition);
         alarmRuleConfiguration.setClearRule(clearRule);
@@ -1180,29 +1341,44 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         alarmRule.setName("highTemperatureAlarmRule");
         alarmRule.setEnabled(true);
 
+        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+
+        AlarmRuleArgument highTemperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(30.0)
+                .build();
+
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        highTemperaturePredicate.setValue(new FilterPredicateValue<>(30.0));
-        highTempFilter.setPredicate(highTemperaturePredicate);
+        highTempFilter.setLeftArgId("temperatureKey");
+        highTempFilter.setRightArgId("highTemperatureConst");
+        highTempFilter.setOperation(Operation.GREATER);
+
         AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmCondition.setCondition(highTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
 
+
+        AlarmRuleArgument lowTemperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(10.0)
+                .build();
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
-        lowTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        lowTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate lowTemperaturePredicate = new NumericFilterPredicate();
-        lowTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.LESS);
-        lowTemperaturePredicate.setValue(new FilterPredicateValue<>(10.0));
-        lowTempFilter.setPredicate(lowTemperaturePredicate);
+        lowTempFilter.setLeftArgId("temperatureKey");
+        lowTempFilter.setRightArgId("lowTemperatureConst");
+        lowTempFilter.setOperation(Operation.LESS);
+
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
+        clearCondition.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
         clearCondition.setCondition(lowTempFilter);
         clearRule.setCondition(clearCondition);
         alarmRuleConfiguration.setClearRule(clearRule);
@@ -1284,29 +1460,44 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         alarmRule.setName("highTemperatureAlarmRule");
         alarmRule.setEnabled(true);
 
+        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+
+        AlarmRuleArgument highTemperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(30.0)
+                .build();
+
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        highTemperaturePredicate.setValue(new FilterPredicateValue<>(30.0));
-        highTempFilter.setPredicate(highTemperaturePredicate);
+        highTempFilter.setLeftArgId("temperatureKey");
+        highTempFilter.setRightArgId("highTemperatureConst");
+        highTempFilter.setOperation(Operation.GREATER);
+
         AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmCondition.setCondition(highTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
 
+
+        AlarmRuleArgument lowTemperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(10.0)
+                .build();
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
-        lowTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        lowTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate lowTemperaturePredicate = new NumericFilterPredicate();
-        lowTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.LESS);
-        lowTemperaturePredicate.setValue(new FilterPredicateValue<>(10.0));
-        lowTempFilter.setPredicate(lowTemperaturePredicate);
+        lowTempFilter.setLeftArgId("temperatureKey");
+        lowTempFilter.setRightArgId("lowTemperatureConst");
+        lowTempFilter.setOperation(Operation.LESS);
+
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
+        clearCondition.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
         clearCondition.setCondition(lowTempFilter);
         clearRule.setCondition(clearCondition);
         alarmRuleConfiguration.setClearRule(clearRule);
@@ -1380,18 +1571,25 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         alarmRule.setName("highTemperatureAlarmRule");
         alarmRule.setEnabled(true);
 
+        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+
+        AlarmRuleArgument greaterAttributeKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "greaterAttribute"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(0.0)
+                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .build();
+
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        highTemperaturePredicate.setValue(new FilterPredicateValue<>(
-                0.0,
-                null,
-                new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "greaterAttribute")
-        ));
-        highTempFilter.setPredicate(highTemperaturePredicate);
+        highTempFilter.setLeftArgId("temperatureKey");
+        highTempFilter.setRightArgId("greaterAttributeKey");
+        highTempFilter.setOperation(Operation.GREATER);
+
         AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "greaterAttributeKey", greaterAttributeKey));
         alarmCondition.setCondition(highTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);
@@ -1453,30 +1651,39 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         alarmRule.setName("highTemperatureAlarmRule");
         alarmRule.setEnabled(true);
 
+        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+
+        AlarmRuleArgument greaterAttributeKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "greaterAttribute"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(0.0)
+                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .build();
+
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        highTemperaturePredicate.setValue(new FilterPredicateValue<>(
-                0.0,
-                null,
-                new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "greaterAttribute", false)
-        ));
-        highTempFilter.setPredicate(highTemperaturePredicate);
+        highTempFilter.setLeftArgId("temperatureKey");
+        highTempFilter.setRightArgId("greaterAttributeKey");
+        highTempFilter.setOperation(Operation.GREATER);
+
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setCondition(highTempFilter);
 
-        FilterPredicateValue<Long> filterPredicateValue = new FilterPredicateValue<>(
-                10L,
-                null,
-                new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "alarm_delay", false)
-        );
+        AlarmRuleArgument alarmDelayKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "alarm_delay"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(10)
+                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .build();
 
         DurationAlarmConditionSpec durationSpec = new DurationAlarmConditionSpec();
         durationSpec.setUnit(TimeUnit.SECONDS);
-        durationSpec.setPredicate(filterPredicateValue);
+        durationSpec.setArgId("alarmDelayKey");
         alarmCondition.setSpec(durationSpec);
+
+        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "greaterAttributeKey", greaterAttributeKey, "alarmDelayKey", alarmDelayKey));
 
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);
@@ -1555,30 +1762,40 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         alarmRule.setName("highTemperatureAlarmRule");
         alarmRule.setEnabled(true);
 
+        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+
+        AlarmRuleArgument greaterAttributeKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "greaterAttribute"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(0.0)
+                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .build();
+
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        highTemperaturePredicate.setValue(new FilterPredicateValue<>(
-                0.0,
-                null,
-                new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "greaterAttribute", false)
-        ));
-        highTempFilter.setPredicate(highTemperaturePredicate);
+        highTempFilter.setLeftArgId("temperatureKey");
+        highTempFilter.setRightArgId("greaterAttributeKey");
+        highTempFilter.setOperation(Operation.GREATER);
+
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setCondition(highTempFilter);
 
-        FilterPredicateValue<Long> filterPredicateValue = new FilterPredicateValue<>(
-                10L,
-                null,
-                new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "alarm_delay", true)
-        );
+        AlarmRuleArgument alarmDelayKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "alarm_delay"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(10)
+                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .inherit(true)
+                .build();
 
         DurationAlarmConditionSpec durationSpec = new DurationAlarmConditionSpec();
         durationSpec.setUnit(TimeUnit.SECONDS);
-        durationSpec.setPredicate(filterPredicateValue);
+        durationSpec.setArgId("alarmDelayKey");
         alarmCondition.setSpec(durationSpec);
+
+        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "greaterAttributeKey", greaterAttributeKey, "alarmDelayKey", alarmDelayKey));
 
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);
@@ -1654,29 +1871,37 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         alarmRule.setName("highTemperatureAlarmRule");
         alarmRule.setEnabled(true);
 
+        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+
+        AlarmRuleArgument greaterAttributeKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "greaterAttribute"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(0.0)
+                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .build();
+
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        highTemperaturePredicate.setValue(new FilterPredicateValue<>(
-                0.0,
-                null,
-                new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "greaterAttribute", false)
-        ));
-        highTempFilter.setPredicate(highTemperaturePredicate);
+        highTempFilter.setLeftArgId("temperatureKey");
+        highTempFilter.setRightArgId("greaterAttributeKey");
+        highTempFilter.setOperation(Operation.GREATER);
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setCondition(highTempFilter);
 
-        FilterPredicateValue<Integer> filterPredicateValue = new FilterPredicateValue<Integer>(
-                10,
-                null,
-                new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "alarm_repeating", false)
-        );
+        AlarmRuleArgument alarmRepeatingKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "alarm_repeating"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(10)
+                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .build();
 
         RepeatingAlarmConditionSpec repeatingSpec = new RepeatingAlarmConditionSpec();
-        repeatingSpec.setPredicate(filterPredicateValue);
+        repeatingSpec.setArgId("alarmRepeatingKey");
         alarmCondition.setSpec(repeatingSpec);
+
+        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "greaterAttributeKey", greaterAttributeKey, "alarmRepeatingKey", alarmRepeatingKey));
 
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);
@@ -1742,29 +1967,38 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         alarmRule.setName("highTemperatureAlarmRule");
         alarmRule.setEnabled(true);
 
+        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+
+        AlarmRuleArgument greaterAttributeKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "greaterAttribute"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(0.0)
+                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .build();
+
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        highTemperaturePredicate.setValue(new FilterPredicateValue<>(
-                0.0,
-                null,
-                new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "greaterAttribute", false)
-        ));
-        highTempFilter.setPredicate(highTemperaturePredicate);
+        highTempFilter.setLeftArgId("temperatureKey");
+        highTempFilter.setRightArgId("greaterAttributeKey");
+        highTempFilter.setOperation(Operation.GREATER);
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setCondition(highTempFilter);
 
-        FilterPredicateValue<Integer> filterPredicateValue = new FilterPredicateValue<Integer>(
-                10,
-                null,
-                new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "alarm_repeating", true)
-        );
+        AlarmRuleArgument alarmRepeatingKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "alarm_repeating"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(10)
+                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .inherit(true)
+                .build();
 
         RepeatingAlarmConditionSpec repeatingSpec = new RepeatingAlarmConditionSpec();
-        repeatingSpec.setPredicate(filterPredicateValue);
+        repeatingSpec.setArgId("alarmRepeatingKey");
         alarmCondition.setSpec(repeatingSpec);
+
+        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "greaterAttributeKey", greaterAttributeKey, "alarmRepeatingKey", alarmRepeatingKey));
 
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);
@@ -1833,30 +2067,39 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         alarmRule.setName("highTemperatureAlarmRule");
         alarmRule.setEnabled(true);
 
+        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+
+        AlarmRuleArgument greaterAttributeKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "greaterAttribute"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(0.0)
+                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .build();
+
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        highTemperaturePredicate.setValue(new FilterPredicateValue<>(
-                0.0,
-                null,
-                new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "greaterAttribute", false)
-        ));
-        highTempFilter.setPredicate(highTemperaturePredicate);
+        highTempFilter.setLeftArgId("temperatureKey");
+        highTempFilter.setRightArgId("greaterAttributeKey");
+        highTempFilter.setOperation(Operation.GREATER);
+
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setCondition(highTempFilter);
 
-        FilterPredicateValue<Long> filterPredicateValue = new FilterPredicateValue<>(
-                alarmDelayInSeconds,
-                null,
-                new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, null, false)
-        );
+        AlarmRuleArgument alarmDelayKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, null))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(alarmDelayInSeconds)
+                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .build();
 
         DurationAlarmConditionSpec durationSpec = new DurationAlarmConditionSpec();
         durationSpec.setUnit(TimeUnit.SECONDS);
-        durationSpec.setPredicate(filterPredicateValue);
+        durationSpec.setArgId("alarmDelayKey");
         alarmCondition.setSpec(durationSpec);
+
+        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "greaterAttributeKey", greaterAttributeKey, "alarmDelayKey", alarmDelayKey));
 
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);
@@ -1932,29 +2175,38 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         alarmRule.setName("highTemperatureAlarmRule");
         alarmRule.setEnabled(true);
 
+        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+
+        AlarmRuleArgument greaterAttributeKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "greaterAttribute"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(0.0)
+                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .build();
+
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        highTemperaturePredicate.setValue(new FilterPredicateValue<>(
-                0.0,
-                null,
-                new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "greaterAttribute", false)
-        ));
-        highTempFilter.setPredicate(highTemperaturePredicate);
+        highTempFilter.setLeftArgId("temperatureKey");
+        highTempFilter.setRightArgId("greaterAttributeKey");
+        highTempFilter.setOperation(Operation.GREATER);
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setCondition(highTempFilter);
 
-        FilterPredicateValue<Integer> filterPredicateValue = new FilterPredicateValue<Integer>(
-                2,
-                null,
-                new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, null, true)
-        );
+        AlarmRuleArgument alarmRepeatingKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, null))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(2)
+                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .inherit(true)
+                .build();
 
         RepeatingAlarmConditionSpec repeatingSpec = new RepeatingAlarmConditionSpec();
-        repeatingSpec.setPredicate(filterPredicateValue);
+        repeatingSpec.setArgId("alarmRepeatingKey");
         alarmCondition.setSpec(repeatingSpec);
+
+        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "greaterAttributeKey", greaterAttributeKey, "alarmRepeatingKey", alarmRepeatingKey));
 
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);
@@ -2020,23 +2272,35 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         alarmRule.setName("highTemperatureAlarmRule");
         alarmRule.setEnabled(true);
 
+        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+        AlarmRuleArgument temperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(0.0)
+                .build();
+
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        highTemperaturePredicate.setValue(new FilterPredicateValue<>(
-                0.0,
-                null,
-                null
-        ));
-        highTempFilter.setPredicate(highTemperaturePredicate);
+        highTempFilter.setLeftArgId("temperatureKey");
+        highTempFilter.setRightArgId("temperatureConst");
+        highTempFilter.setOperation(Operation.GREATER);
+
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setCondition(highTempFilter);
 
+        AlarmRuleArgument scheduleKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "dynamicValueActiveSchedule"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .build();
+
         CustomTimeSchedule schedule = new CustomTimeSchedule();
         schedule.setItems(Collections.emptyList());
-        schedule.setDynamicValue(new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "dynamicValueActiveSchedule", false));
+        schedule.setArgumentId("scheduleKey");
+
+        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "temperatureConst", temperatureConst, "scheduleKey", scheduleKey));
 
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);
@@ -2087,7 +2351,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         DeviceId deviceId = device.getId();
 
-        saveJsonAttribute(deviceId, "dynamicValueActiveSchedule",
+        saveJsonAttribute(deviceId, "dynamicValueInactiveSchedule",
                 "{\"timezone\":\"Europe/Kiev\",\"items\":[{\"enabled\":false,\"dayOfWeek\":1,\"startsOn\":0,\"endsOn\":0},{\"enabled\":false,\"dayOfWeek\":2,\"startsOn\":0,\"endsOn\":0},{\"enabled\":false,\"dayOfWeek\":3,\"startsOn\":0,\"endsOn\":0},{\"enabled\":false,\"dayOfWeek\":4,\"startsOn\":0,\"endsOn\":0},{\"enabled\":false,\"dayOfWeek\":5,\"startsOn\":0,\"endsOn\":0},{\"enabled\":false,\"dayOfWeek\":6,\"startsOn\":0,\"endsOn\":0},{\"enabled\":false,\"dayOfWeek\":7,\"startsOn\":0,\"endsOn\":0}],\"dynamicValue\":null}"
         );
 
@@ -2097,18 +2361,21 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         alarmRule.setName("highTemperatureAlarmRule");
         alarmRule.setEnabled(true);
 
-        SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        highTemperaturePredicate.setValue(new FilterPredicateValue<>(
-                0.0,
-                null,
-                null
-        ));
+        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+        AlarmRuleArgument temperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(0.0)
+                .build();
 
-        highTempFilter.setPredicate(highTemperaturePredicate);
+        SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
+        highTempFilter.setLeftArgId("temperatureKey");
+        highTempFilter.setRightArgId("temperatureConst");
+        highTempFilter.setOperation(Operation.GREATER);
+
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setCondition(highTempFilter);
 
@@ -2124,8 +2391,16 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
             items.add(item);
         }
 
+        AlarmRuleArgument scheduleKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "dynamicValueInactiveSchedule"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .build();
+
         schedule.setItems(items);
-        schedule.setDynamicValue(new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "dynamicValueInactiveSchedule", false));
+        schedule.setArgumentId("scheduleKey");
+
+        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "temperatureConst", temperatureConst, "scheduleKey", scheduleKey));
 
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);
@@ -2148,17 +2423,13 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         alarmRuleStateService.process(ctx, msg);
 
-        Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+        Mockito.verify(clusterService, Mockito.never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
         PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
 
         List<AlarmInfo> alarms = pageData.getData();
-        Assert.equals(1, alarms.size());
-
-        AlarmInfo alarm = alarms.get(0);
-        Assert.equals("highTemperatureAlarm", alarm.getName());
-        Assert.equals(AlarmStatus.ACTIVE_UNACK, alarm.getStatus());
+        Assert.equals(0, alarms.size());
     }
 
     @Test
@@ -2184,19 +2455,25 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         alarmRule.setName("lessTemperatureAlarmRule");
         alarmRule.setEnabled(true);
 
+        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+        AlarmRuleArgument lessAttributeKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "lessAttribute"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(20.0)
+                .sourceType(DynamicValueSourceType.CURRENT_CUSTOMER)
+                .inherit(true)
+                .build();
+
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
-        lowTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        lowTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate lowTempPredicate = new NumericFilterPredicate();
-        lowTempPredicate.setOperation(NumericFilterPredicate.NumericOperation.LESS);
-        lowTempPredicate.setValue(
-                new FilterPredicateValue<>(
-                        20.0,
-                        null,
-                        new DynamicValue<>(DynamicValueSourceType.CURRENT_CUSTOMER, "lessAttribute"))
-        );
-        lowTempFilter.setPredicate(lowTempPredicate);
+        lowTempFilter.setLeftArgId("temperatureKey");
+        lowTempFilter.setRightArgId("lessAttributeKey");
+        lowTempFilter.setOperation(Operation.LESS);
+
         AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "lessAttributeKey", lessAttributeKey));
         alarmCondition.setCondition(lowTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);
@@ -2254,19 +2531,25 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         alarmRule.setName("lessTemperatureAlarmRule");
         alarmRule.setEnabled(true);
 
+        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+        AlarmRuleArgument lessAttributeKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "lessAttribute"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(32.0)
+                .sourceType(DynamicValueSourceType.CURRENT_TENANT)
+                .inherit(true)
+                .build();
+
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
-        lowTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        lowTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate lowTempPredicate = new NumericFilterPredicate();
-        lowTempPredicate.setOperation(NumericFilterPredicate.NumericOperation.LESS);
-        lowTempPredicate.setValue(
-                new FilterPredicateValue<>(
-                        32.0,
-                        null,
-                        new DynamicValue<>(DynamicValueSourceType.CURRENT_TENANT, "lessAttribute"))
-        );
-        lowTempFilter.setPredicate(lowTempPredicate);
+        lowTempFilter.setLeftArgId("temperatureKey");
+        lowTempFilter.setRightArgId("lessAttributeKey");
+        lowTempFilter.setOperation(Operation.LESS);
+
         AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "lessAttributeKey", lessAttributeKey));
         alarmCondition.setCondition(lowTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);
@@ -2324,19 +2607,25 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         alarmRule.setName("lessTemperatureAlarmRule");
         alarmRule.setEnabled(true);
 
+        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+        AlarmRuleArgument tenantAttributeKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "tenantAttribute"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(0.0)
+                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .inherit(true)
+                .build();
+
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
-        lowTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        lowTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate lowTempPredicate = new NumericFilterPredicate();
-        lowTempPredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        lowTempPredicate.setValue(
-                new FilterPredicateValue<>(
-                        0.0,
-                        null,
-                        new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "tenantAttribute", true))
-        );
-        lowTempFilter.setPredicate(lowTempPredicate);
+        lowTempFilter.setLeftArgId("temperatureKey");
+        lowTempFilter.setRightArgId("tenantAttributeKey");
+        lowTempFilter.setOperation(Operation.GREATER);
+
         AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "tenantAttributeKey", tenantAttributeKey));
         alarmCondition.setCondition(lowTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);
@@ -2373,7 +2662,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         AlarmInfo alarm = alarms.get(0);
         Assert.equals("lessTemperatureAlarm", alarm.getName());
         Assert.equals(AlarmStatus.ACTIVE_UNACK, alarm.getStatus());
-
     }
 
     @Test
@@ -2399,19 +2687,25 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         alarmRule.setName("greaterTemperatureAlarmRule");
         alarmRule.setEnabled(true);
 
+        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+        AlarmRuleArgument tenantAttributeKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "tenantAttribute"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(0.0)
+                .sourceType(DynamicValueSourceType.CURRENT_CUSTOMER)
+                .inherit(true)
+                .build();
+
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
-        lowTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        lowTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate lowTempPredicate = new NumericFilterPredicate();
-        lowTempPredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        lowTempPredicate.setValue(
-                new FilterPredicateValue<>(
-                        0.0,
-                        null,
-                        new DynamicValue<>(DynamicValueSourceType.CURRENT_CUSTOMER, "tenantAttribute", true))
-        );
-        lowTempFilter.setPredicate(lowTempPredicate);
+        lowTempFilter.setLeftArgId("temperatureKey");
+        lowTempFilter.setRightArgId("tenantAttributeKey");
+        lowTempFilter.setOperation(Operation.GREATER);
+
         AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "tenantAttributeKey", tenantAttributeKey));
         alarmCondition.setCondition(lowTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);

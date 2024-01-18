@@ -13,24 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.server.common.data.alarm.rule.condition;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.query.DynamicValue;
+public enum AlarmConditionSpecType {
 
-import java.util.List;
-
-@Data
-public class CustomTimeSchedule implements AlarmSchedule {
-
-    private String timezone;
-    private List<CustomTimeScheduleItem> items;
-
-    private DynamicValue<String> dynamicValue;
-
-    @Override
-    public AlarmScheduleType getType() {
-        return AlarmScheduleType.CUSTOM;
-    }
+    SIMPLE,
+    DURATION,
+    REPEATING
 
 }

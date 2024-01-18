@@ -13,19 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.server.common.data.alarm.rule.condition;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.Data;
-
-@Data
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class SimpleAlarmConditionSpec implements AlarmConditionSpec {
-
-    private static final long serialVersionUID = -5786432686880249296L;
-
-    @Override
-    public AlarmConditionSpecType getType() {
-        return AlarmConditionSpecType.SIMPLE;
-    }
+public enum AlarmConditionType {
+    SIMPLE,
+    COMPLEX;
 }

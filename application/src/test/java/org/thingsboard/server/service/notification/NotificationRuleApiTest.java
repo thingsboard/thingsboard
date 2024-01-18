@@ -40,18 +40,21 @@ import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleOriginatorTargetEntity;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilterKey;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionKeyType;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleArgument;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleCondition;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfiguration;
+import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentValueType;
+import org.thingsboard.server.common.data.alarm.rule.condition.Operation;
+import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionFilter;
+import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionSpec;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleDeviceTypeEntityFilter;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.DeviceData;
-import org.thingsboard.server.common.data.device.profile.AlarmCondition;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
-import org.thingsboard.server.common.data.device.profile.AlarmRuleCondition;
-import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
-import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionFilter;
-import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionSpec;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -86,9 +89,6 @@ import org.thingsboard.server.common.data.notification.targets.platform.SystemAd
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
-import org.thingsboard.server.common.data.query.EntityKeyValueType;
-import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.security.Authority;
@@ -855,14 +855,23 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setSpec(new SimpleAlarmConditionSpec());
 
-        SimpleAlarmConditionFilter alarmConditionFilter = new SimpleAlarmConditionFilter();
-        alarmConditionFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "bool"));
-        BooleanFilterPredicate predicate = new BooleanFilterPredicate();
-        predicate.setOperation(BooleanFilterPredicate.BooleanOperation.EQUAL);
-        predicate.setValue(new FilterPredicateValue<>(true));
+        AlarmRuleArgument boolKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "bool"))
+                .valueType(ArgumentValueType.BOOLEAN)
+                .build();
 
-        alarmConditionFilter.setPredicate(predicate);
-        alarmConditionFilter.setValueType(EntityKeyValueType.BOOLEAN);
+        AlarmRuleArgument boolConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "bool"))
+                .valueType(ArgumentValueType.BOOLEAN)
+                .defaultValue(Boolean.TRUE)
+                .build();
+
+        alarmCondition.setArguments(Map.of("boolKey", boolKey, "boolConst", boolConst));
+
+        SimpleAlarmConditionFilter alarmConditionFilter = new SimpleAlarmConditionFilter();
+        alarmConditionFilter.setLeftArgId("boolKey");
+        alarmConditionFilter.setRightArgId("boolConst");
+        alarmConditionFilter.setOperation(Operation.EQUAL);
         alarmCondition.setCondition(alarmConditionFilter);
 
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();

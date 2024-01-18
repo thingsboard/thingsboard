@@ -13,24 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.server.common.data.alarm.rule.condition;
 
-import io.swagger.v3.oas.annotations.media.Schema;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
-import org.thingsboard.server.common.data.validation.NoXss;
 
-import java.io.Serializable;
-
-@Schema
 @Data
-public class AlarmConditionFilterKey implements Serializable {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class RepeatingAlarmConditionSpec implements AlarmConditionSpec {
 
-    private static final long serialVersionUID = -7104557431581283731L;
+    private String argId;
 
-    @Schema(description = "The key type", example = "TIME_SERIES")
-    private final AlarmConditionKeyType type;
-    @NoXss
-    @Schema(description = "String value representing the key", example = "temp")
-    private final String key;
-
+    @Override
+    public AlarmConditionSpecType getType() {
+        return AlarmConditionSpecType.REPEATING;
+    }
 }

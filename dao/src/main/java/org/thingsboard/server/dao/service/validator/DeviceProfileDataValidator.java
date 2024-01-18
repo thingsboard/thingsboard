@@ -34,7 +34,6 @@ import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurity
 import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceTypeConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultCoapDeviceTypeConfiguration;
-import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;

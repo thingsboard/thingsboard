@@ -17,8 +17,8 @@ package org.thingsboard.server.service.alarm.rule;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilterKey;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 
@@ -43,19 +43,11 @@ class DataSnapshot {
     }
 
     static AlarmConditionKeyType toConditionKeyType(EntityKeyType keyType) {
-        switch (keyType) {
-            case ATTRIBUTE:
-            case SERVER_ATTRIBUTE:
-            case SHARED_ATTRIBUTE:
-            case CLIENT_ATTRIBUTE:
-                return AlarmConditionKeyType.ATTRIBUTE;
-            case TIME_SERIES:
-                return AlarmConditionKeyType.TIME_SERIES;
-            case ENTITY_FIELD:
-                return AlarmConditionKeyType.ENTITY_FIELD;
-            default:
-                throw new RuntimeException("Not supported entity key: " + keyType.name());
-        }
+        return switch (keyType) {
+            case ATTRIBUTE, SERVER_ATTRIBUTE, SHARED_ATTRIBUTE, CLIENT_ATTRIBUTE -> AlarmConditionKeyType.ATTRIBUTE;
+            case TIME_SERIES -> AlarmConditionKeyType.TIME_SERIES;
+            default -> throw new RuntimeException("Not supported entity key: " + keyType.name());
+        };
     }
 
     void removeValue(EntityKey key) {

@@ -13,13 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.server.common.data.alarm.rule.condition;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.Valid;
 import lombok.Data;
-import org.thingsboard.server.common.data.query.EntityKeyValueType;
-import org.thingsboard.server.common.data.query.KeyFilterPredicate;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.io.Serializable;
@@ -28,17 +25,12 @@ import java.io.Serializable;
 @Data
 public class SimpleAlarmConditionFilter implements AlarmConditionFilter, Serializable {
 
-    @Valid
-    @Schema(description = "JSON object for specifying alarm condition by specific key")
-    private AlarmConditionFilterKey key;
-    @Schema(description = "String representation of the type of the value", example = "NUMERIC")
-    private EntityKeyValueType valueType;
     @NoXss
-    @Schema(description = "Value used in Constant comparison. For other types, such as TIME_SERIES or ATTRIBUTE, the predicate condition is used")
-    private Object value;
-    @Valid
-    @Schema(description = "JSON object representing filter condition")
-    private KeyFilterPredicate predicate;
+    private String leftArgId;
+    @NoXss
+    private String rightArgId;
+
+    private Operation operation;
 
     @Override
     public AlarmConditionType getType() {

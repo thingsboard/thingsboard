@@ -13,12 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.server.common.data.alarm.rule.condition;
 
-public enum AlarmScheduleType {
+import lombok.Data;
 
-    ANY_TIME,
-    SPECIFIC_TIME,
-    CUSTOM
+import java.util.Set;
+
+@Data
+public class SpecificTimeSchedule implements AlarmSchedule {
+
+    private String timezone;
+    private Set<Integer> daysOfWeek;
+    private long startsOn;
+    private long endsOn;
+
+    private String argumentId;
+
+    @Override
+    public AlarmScheduleType getType() {
+        return AlarmScheduleType.SPECIFIC_TIME;
+    }
 
 }

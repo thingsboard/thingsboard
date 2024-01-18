@@ -19,7 +19,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.id.AlarmRuleId;
 
 @Schema

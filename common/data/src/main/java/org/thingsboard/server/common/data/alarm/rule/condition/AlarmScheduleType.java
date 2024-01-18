@@ -13,22 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.server.common.data.alarm.rule.condition;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.Data;
-import org.thingsboard.server.common.data.query.FilterPredicateValue;
+public enum AlarmScheduleType {
 
-@Data
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class RepeatingAlarmConditionSpec implements AlarmConditionSpec {
+    ANY_TIME,
+    SPECIFIC_TIME,
+    CUSTOM
 
-    private static final long serialVersionUID = -4074736854439604533L;
-
-    private FilterPredicateValue<Integer> predicate;
-
-    @Override
-    public AlarmConditionSpecType getType() {
-        return AlarmConditionSpecType.REPEATING;
-    }
 }

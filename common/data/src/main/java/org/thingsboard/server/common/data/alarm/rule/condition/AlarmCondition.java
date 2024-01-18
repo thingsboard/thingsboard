@@ -13,18 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.server.common.data.alarm.rule.condition;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.Map;
 
+@Schema
 @Data
-public class CustomTimeScheduleItem implements Serializable {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class AlarmCondition implements Serializable {
 
-    private boolean enabled;
-    private int dayOfWeek;
-    private long startsOn;
-    private long endsOn;
+    private Map<String, AlarmRuleArgument> arguments;
+
+    @Valid
+    @Schema(description = "JSON array of alarm condition filters")
+    private AlarmConditionFilter condition;
+    @Schema(description = "JSON object representing alarm condition type")
+    private AlarmConditionSpec spec;
 
 }

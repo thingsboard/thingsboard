@@ -13,32 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.server.common.data.alarm.rule.condition;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-
-import java.io.Serializable;
-import java.util.List;
-
-@Schema
-@Data
-@AllArgsConstructor
-public class ComplexAlarmConditionFilter implements AlarmConditionFilter, Serializable {
-
-    private List<AlarmConditionFilter> conditions;
-
-    private ComplexOperation operation;
-
+public class AnyTimeSchedule implements AlarmSchedule {
 
     @Override
-    public AlarmConditionType getType() {
-        return AlarmConditionType.COMPLEX;
+    public AlarmScheduleType getType() {
+        return AlarmScheduleType.ANY_TIME;
     }
 
-    public enum ComplexOperation {
-        AND,
-        OR
+    @Override
+    public String getArgumentId() {
+        return null;
     }
+
 }

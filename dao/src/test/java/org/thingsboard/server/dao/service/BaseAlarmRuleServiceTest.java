@@ -24,28 +24,27 @@ import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleInfo;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleOriginatorTargetEntity;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilterKey;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionKeyType;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleArgument;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleCondition;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfiguration;
+import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentValueType;
+import org.thingsboard.server.common.data.alarm.rule.condition.ComplexAlarmConditionFilter;
+import org.thingsboard.server.common.data.alarm.rule.condition.Operation;
+import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionFilter;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleDeviceTypeEntityFilter;
-import org.thingsboard.server.common.data.device.profile.AlarmCondition;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
-import org.thingsboard.server.common.data.device.profile.AlarmRuleCondition;
-import org.thingsboard.server.common.data.device.profile.AlarmRuleConfiguration;
-import org.thingsboard.server.common.data.device.profile.ComplexAlarmConditionFilter;
-import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionFilter;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
-import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.DynamicValueSourceType;
-import org.thingsboard.server.common.data.query.EntityKeyValueType;
-import org.thingsboard.server.common.data.query.FilterPredicateValue;
-import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
@@ -132,28 +131,45 @@ public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
         alarmRule.setAlarmType(name + "Alarm");
         alarmRule.setName(name);
 
+        AlarmRuleArgument alarmEnabledConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "alarmEnabled"))
+                .valueType(ArgumentValueType.BOOLEAN)
+                .defaultValue(Boolean.TRUE)
+                .build();
+        AlarmRuleArgument alarmEnabledKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "alarmEnabled"))
+                .valueType(ArgumentValueType.BOOLEAN)
+                .defaultValue(Boolean.FALSE)
+                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .build();
+
         SimpleAlarmConditionFilter alarmEnabledFilter = new SimpleAlarmConditionFilter();
-        alarmEnabledFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "alarmEnabled"));
-        alarmEnabledFilter.setValue(Boolean.TRUE);
-        alarmEnabledFilter.setValueType(EntityKeyValueType.BOOLEAN);
-        BooleanFilterPredicate alarmEnabledPredicate = new BooleanFilterPredicate();
-        alarmEnabledPredicate.setOperation(BooleanFilterPredicate.BooleanOperation.EQUAL);
-        alarmEnabledPredicate.setValue(new FilterPredicateValue<>(
-                Boolean.FALSE,
-                null,
-                new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "alarmEnabled")
-        ));
-        alarmEnabledFilter.setPredicate(alarmEnabledPredicate);
+        alarmEnabledFilter.setLeftArgId("alarmEnabledConst");
+        alarmEnabledFilter.setRightArgId("alarmEnabledKey");
+        alarmEnabledFilter.setOperation(Operation.EQUAL);
+
+        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+
+        AlarmRuleArgument temperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(20.0)
+                .build();
 
         SimpleAlarmConditionFilter temperatureFilter = new SimpleAlarmConditionFilter();
-        temperatureFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        temperatureFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate temperaturePredicate = new NumericFilterPredicate();
-        temperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        temperaturePredicate.setValue(new FilterPredicateValue<>(20.0, null, null));
-        temperatureFilter.setPredicate(temperaturePredicate);
+        temperatureFilter.setLeftArgId("temperatureKey");
+        temperatureFilter.setRightArgId("temperatureConst");
+        temperatureFilter.setOperation(Operation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setArguments(Map.of(
+                "alarmEnabledConst", alarmEnabledConst,
+                "alarmEnabledKey", alarmEnabledKey,
+                "temperatureKey", temperatureKey,
+                "temperatureConst", temperatureConst));
         alarmCondition.setCondition(new ComplexAlarmConditionFilter(Arrays.asList(alarmEnabledFilter, temperatureFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);

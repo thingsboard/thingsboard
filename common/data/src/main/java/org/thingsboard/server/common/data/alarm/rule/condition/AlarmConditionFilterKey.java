@@ -13,20 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.server.common.data.alarm.rule.condition;
 
-import org.thingsboard.server.common.data.query.DynamicValue;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+import org.thingsboard.server.common.data.validation.NoXss;
 
-public class AnyTimeSchedule implements AlarmSchedule {
+import java.io.Serializable;
 
-    @Override
-    public AlarmScheduleType getType() {
-        return AlarmScheduleType.ANY_TIME;
-    }
+@Schema
+@Data
+public class AlarmConditionFilterKey implements Serializable {
 
-    @Override
-    public DynamicValue<String> getDynamicValue() {
-        return null;
-    }
+    @Schema(description = "The key type", example = "TIME_SERIES")
+    private final AlarmConditionKeyType type;
+    @NoXss
+    @Schema(description = "String value representing the key", example = "temp")
+    private final String key;
 
 }

@@ -13,27 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.server.common.data.alarm.rule.condition;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-import java.io.Serializable;
-
-@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.PROPERTY,
         property = "type")
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = SimpleAlarmConditionSpec.class, name = "SIMPLE"),
-        @JsonSubTypes.Type(value = DurationAlarmConditionSpec.class, name = "DURATION"),
-        @JsonSubTypes.Type(value = RepeatingAlarmConditionSpec.class, name = "REPEATING")})
-public interface AlarmConditionSpec extends Serializable {
-
-    @JsonIgnore
-    AlarmConditionSpecType getType();
-
+        @JsonSubTypes.Type(value = SimpleAlarmConditionFilter.class, name = "SIMPLE"),
+        @JsonSubTypes.Type(value = ComplexAlarmConditionFilter.class, name = "COMPLEX")})
+public interface AlarmConditionFilter {
+    AlarmConditionType getType();
 }

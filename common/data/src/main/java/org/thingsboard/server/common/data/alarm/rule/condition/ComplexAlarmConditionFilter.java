@@ -13,26 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.server.common.data.alarm.rule.condition;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
-import jakarta.validation.Valid;
 import java.io.Serializable;
+import java.util.List;
 
 @Schema
 @Data
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class AlarmCondition implements Serializable {
+@AllArgsConstructor
+public class ComplexAlarmConditionFilter implements AlarmConditionFilter, Serializable {
 
-    private static final long serialVersionUID = -3520632174723456021L;
+    private List<AlarmConditionFilter> conditions;
 
-    @Valid
-    @Schema(description = "JSON array of alarm condition filters")
-    private AlarmConditionFilter condition;
-    @Schema(description = "JSON object representing alarm condition type")
-    private AlarmConditionSpec spec;
+    private ComplexOperation operation;
 
+
+    @Override
+    public AlarmConditionType getType() {
+        return AlarmConditionType.COMPLEX;
+    }
+
+    public enum ComplexOperation {
+        AND,
+        OR
+    }
 }

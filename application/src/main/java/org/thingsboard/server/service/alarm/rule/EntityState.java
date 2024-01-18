@@ -22,15 +22,13 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilterKey;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.exception.ApiUsageLimitsExceededException;
 import org.thingsboard.server.common.data.id.AlarmRuleId;
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -39,7 +37,6 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.dao.sql.query.EntityKeyMapping;
 import org.thingsboard.server.service.alarm.rule.state.PersistedAlarmState;
 import org.thingsboard.server.service.alarm.rule.state.PersistedEntityState;
 
@@ -376,15 +373,12 @@ class EntityState {
     }
 
     private static EntityKeyType getKeyTypeFromScope(String scope) {
-        switch (scope) {
-            case DataConstants.CLIENT_SCOPE:
-                return EntityKeyType.CLIENT_ATTRIBUTE;
-            case DataConstants.SHARED_SCOPE:
-                return EntityKeyType.SHARED_ATTRIBUTE;
-            case DataConstants.SERVER_SCOPE:
-                return EntityKeyType.SERVER_ATTRIBUTE;
-        }
-        return EntityKeyType.ATTRIBUTE;
+        return switch (scope) {
+            case DataConstants.CLIENT_SCOPE -> EntityKeyType.CLIENT_ATTRIBUTE;
+            case DataConstants.SHARED_SCOPE -> EntityKeyType.SHARED_ATTRIBUTE;
+            case DataConstants.SERVER_SCOPE -> EntityKeyType.SERVER_ATTRIBUTE;
+            default -> EntityKeyType.ATTRIBUTE;
+        };
     }
 
     private DataSnapshot fetchLatestValues(TbAlarmRuleContext ctx, EntityId originator) throws ExecutionException, InterruptedException {
@@ -398,38 +392,11 @@ class EntityState {
         Set<String> attributeKeys = new HashSet<>();
         Set<String> latestTsKeys = new HashSet<>();
 
-        Device device = null;
         for (AlarmConditionFilterKey entityKey : entityKeysToFetch) {
             String key = entityKey.getKey();
             switch (entityKey.getType()) {
-                case ATTRIBUTE:
-                    attributeKeys.add(key);
-                    break;
-                case TIME_SERIES:
-                    latestTsKeys.add(key);
-                    break;
-                //TODO: add other entities
-                case ENTITY_FIELD:
-                    if (device == null) {
-                        device = ctx.getDeviceService().findDeviceById(tenantId, new DeviceId(originator.getId()));
-                    }
-                    if (device != null) {
-                        switch (key) {
-                            case EntityKeyMapping.NAME:
-                                result.putValue(entityKey, device.getCreatedTime(), EntityKeyValue.fromString(device.getName()));
-                                break;
-                            case EntityKeyMapping.TYPE:
-                                result.putValue(entityKey, device.getCreatedTime(), EntityKeyValue.fromString(device.getType()));
-                                break;
-                            case EntityKeyMapping.CREATED_TIME:
-                                result.putValue(entityKey, device.getCreatedTime(), EntityKeyValue.fromLong(device.getCreatedTime()));
-                                break;
-                            case EntityKeyMapping.LABEL:
-                                result.putValue(entityKey, device.getCreatedTime(), EntityKeyValue.fromString(device.getLabel()));
-                                break;
-                        }
-                    }
-                    break;
+                case ATTRIBUTE -> attributeKeys.add(key);
+                case TIME_SERIES -> latestTsKeys.add(key);
             }
         }
 
@@ -458,20 +425,14 @@ class EntityState {
     }
 
     public static EntityKeyValue toEntityValue(KvEntry entry) {
-        switch (entry.getDataType()) {
-            case STRING:
-                return EntityKeyValue.fromString(entry.getStrValue().get());
-            case LONG:
-                return EntityKeyValue.fromLong(entry.getLongValue().get());
-            case DOUBLE:
-                return EntityKeyValue.fromDouble(entry.getDoubleValue().get());
-            case BOOLEAN:
-                return EntityKeyValue.fromBool(entry.getBooleanValue().get());
-            case JSON:
-                return EntityKeyValue.fromJson(entry.getJsonValue().get());
-            default:
-                throw new RuntimeException("Can't parse entry:* " + entry.getDataType());
-        }
+        return switch (entry.getDataType()) {
+            case STRING -> EntityKeyValue.fromString(entry.getStrValue().get());
+            case LONG -> EntityKeyValue.fromLong(entry.getLongValue().get());
+            case DOUBLE -> EntityKeyValue.fromDouble(entry.getDoubleValue().get());
+            case BOOLEAN -> EntityKeyValue.fromBool(entry.getBooleanValue().get());
+            case JSON -> EntityKeyValue.fromJson(entry.getJsonValue().get());
+            default -> throw new RuntimeException("Can't parse entry:* " + entry.getDataType());
+        };
     }
 
     private PersistedAlarmState getOrInitPersistedAlarmState(AlarmRule alarm) {

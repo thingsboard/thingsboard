@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.server.common.data.alarm.rule.condition;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
-import org.thingsboard.server.common.data.query.FilterPredicateValue;
 
 import java.util.concurrent.TimeUnit;
 
@@ -28,7 +27,7 @@ public class DurationAlarmConditionSpec implements AlarmConditionSpec {
     private static final long serialVersionUID = 1370936855678346003L;
 
     private TimeUnit unit;
-    private FilterPredicateValue<Long> predicate;
+    private String argId;
 
     @Override
     public AlarmConditionSpecType getType() {

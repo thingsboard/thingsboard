@@ -13,17 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.server.common.data.alarm.rule.condition;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import lombok.Data;
 
-@JsonTypeInfo(
-        use = JsonTypeInfo.Id.NAME,
-        property = "type")
-@JsonSubTypes({
-        @JsonSubTypes.Type(value = SimpleAlarmConditionFilter.class, name = "SIMPLE"),
-        @JsonSubTypes.Type(value = ComplexAlarmConditionFilter.class, name = "COMPLEX")})
-public interface AlarmConditionFilter {
-    AlarmConditionType getType();
+import java.util.List;
+
+@Data
+public class CustomTimeSchedule implements AlarmSchedule {
+
+    private String timezone;
+    private List<CustomTimeScheduleItem> items;
+
+    private String argumentId;
+
+    @Override
+    public AlarmScheduleType getType() {
+        return AlarmScheduleType.CUSTOM;
+    }
+
 }
