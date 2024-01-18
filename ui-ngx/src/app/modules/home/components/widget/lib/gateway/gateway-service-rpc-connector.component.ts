@@ -51,7 +51,9 @@ import {
   JsonObjectEditDialogData
 } from '@shared/components/dialog/json-object-edit-dialog.component';
 import { jsonRequired } from '@shared/components/json-object-edit.component';
-import { deepClone, noLeadTrailSpacesRegex } from '@core/utils';
+import { deepClone } from '@core/utils';
+
+export const noLeadTrailSpacesRegex: RegExp = /^(?! )[\S\s]*(?<! )$/;
 
 @Component({
   selector: 'tb-gateway-service-rpc-connector',

@@ -46,7 +46,6 @@ import org.thingsboard.server.dao.relation.RelationService;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 

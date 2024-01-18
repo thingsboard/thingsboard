@@ -22,9 +22,7 @@ import { DisplayColumnsPanelComponent } from '@home/components/widget/lib/displa
 import { AlarmsTableWidgetComponent } from '@home/components/widget/lib/alarm/alarms-table-widget.component';
 import { SharedHomeComponentsModule } from '@home/components/shared-home-components.module';
 import { TimeseriesTableWidgetComponent } from '@home/components/widget/lib/timeseries-table-widget.component';
-import {
-  EntitiesHierarchyWidgetComponent
-} from '@home/components/widget/lib/entity/entities-hierarchy-widget.component';
+import { EntitiesHierarchyWidgetComponent } from '@home/components/widget/lib/entity/entities-hierarchy-widget.component';
 import { RpcWidgetsModule } from '@home/components/widget/lib/rpc/rpc-widgets.module';
 import {
   DateRangeNavigatorPanelComponent,
@@ -179,7 +177,7 @@ import {
         BarChartWithLabelsWidgetComponent
     ],
   providers: [
-    {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule}
+    {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }
   ]
 })
 export class WidgetComponentsModule {
