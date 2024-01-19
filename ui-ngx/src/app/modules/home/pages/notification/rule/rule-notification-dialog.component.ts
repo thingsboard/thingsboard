@@ -98,6 +98,7 @@ export class RuleNotificationDialogComponent extends
   apiUsageLimitTemplateForm: FormGroup;
   newPlatformVersionTemplateForm: FormGroup;
   rateLimitsTemplateForm: FormGroup;
+  edgeTemplateForm: FormGroup;
 
   triggerType = TriggerType;
   triggerTypes: TriggerType[];
@@ -220,6 +221,12 @@ export class RuleNotificationDialogComponent extends
         this.alarmTemplateForm.get('triggerConfig.clearRule').disable({emitEvent: false});
       }
     });
+
+    this.edgeTemplateForm = this.fb.group({
+      triggerConfig: this.fb.group({
+      })
+      }
+    );
 
     this.alarmTemplateForm = this.fb.group({
       triggerConfig: this.fb.group({

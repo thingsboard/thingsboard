@@ -69,6 +69,8 @@ public class RateLimitServiceTest {
         profileConfiguration.setCustomerServerRestLimitsConfiguration(rateLimit);
         profileConfiguration.setWsUpdatesPerSessionRateLimit(rateLimit);
         profileConfiguration.setCassandraQueryTenantRateLimitsConfiguration(rateLimit);
+        profileConfiguration.setEdgeEventRateLimits(rateLimit);
+        profileConfiguration.setEdgeEventRateLimitsPerEdge(rateLimit);
         updateTenantProfileConfiguration(profileConfiguration);
 
         for (LimitedApi limitedApi : List.of(
@@ -76,7 +78,9 @@ public class RateLimitServiceTest {
                 LimitedApi.ENTITY_IMPORT,
                 LimitedApi.NOTIFICATION_REQUESTS,
                 LimitedApi.REST_REQUESTS_PER_CUSTOMER,
-                LimitedApi.CASSANDRA_QUERIES
+                LimitedApi.CASSANDRA_QUERIES,
+                LimitedApi.EDGE_EVENTS,
+                LimitedApi.EDGE_EVENTS_PER_EDGE
         )) {
             testRateLimits(limitedApi, max, tenantId);
         }

@@ -28,6 +28,7 @@ public enum NotificationType {
     ENTITIES_LIMIT,
     API_USAGE_LIMIT,
     RULE_NODE,
-    RATE_LIMITS
-
+    RATE_LIMITS,
+    EDGE_CONNECTIVITY,
+    EDGE_FAILURE
 }

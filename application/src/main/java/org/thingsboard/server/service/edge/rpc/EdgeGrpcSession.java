@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.notification.rule.trigger.EdgeFailureTrigger;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
@@ -110,7 +111,7 @@ public final class EdgeGrpcSession implements Closeable {
 
     private final UUID sessionId;
     private final BiConsumer<EdgeId, EdgeGrpcSession> sessionOpenListener;
-    private final BiConsumer<EdgeId, UUID> sessionCloseListener;
+    private final BiConsumer<Edge, UUID> sessionCloseListener;
 
     private final EdgeSessionState sessionState = new EdgeSessionState();
 
@@ -136,7 +137,7 @@ public final class EdgeGrpcSession implements Closeable {
     private ScheduledExecutorService sendDownlinkExecutorService;
 
     EdgeGrpcSession(EdgeContextComponent ctx, StreamObserver<ResponseMsg> outputStream, BiConsumer<EdgeId, EdgeGrpcSession> sessionOpenListener,
-                    BiConsumer<EdgeId, UUID> sessionCloseListener, ScheduledExecutorService sendDownlinkExecutorService, int maxInboundMessageSize) {
+                    BiConsumer<Edge, UUID> sessionCloseListener, ScheduledExecutorService sendDownlinkExecutorService, int maxInboundMessageSize) {
         this.sessionId = UUID.randomUUID();
         this.ctx = ctx;
         this.outputStream = outputStream;
@@ -205,7 +206,7 @@ public final class EdgeGrpcSession implements Closeable {
                 connected = false;
                 if (edge != null) {
                     try {
-                        sessionCloseListener.accept(edge.getId(), sessionId);
+                        sessionCloseListener.accept(edge, sessionId);
                     } catch (Exception ignored) {
                     }
                 }
@@ -313,7 +314,7 @@ public final class EdgeGrpcSession implements Closeable {
             } catch (Exception e) {
                 log.error("[{}][{}] Failed to send downlink message [{}]", this.tenantId, this.sessionId, downlinkMsg, e);
                 connected = false;
-                sessionCloseListener.accept(edge.getId(), sessionId);
+                sessionCloseListener.accept(edge, sessionId);
             } finally {
                 downlinkMsgLock.unlock();
             }
@@ -465,7 +466,14 @@ public final class EdgeGrpcSession implements Closeable {
                 if (isConnected() && sessionState.getPendingMsgsMap().values().size() > 0) {
                     List<DownlinkMsg> copy = new ArrayList<>(sessionState.getPendingMsgsMap().values());
                     if (attempt > 1) {
-                        log.warn("[{}][{}] Failed to deliver the batch: {}, attempt: {}", this.tenantId, this.sessionId, copy, attempt);
+                        String errorMsg = String.format("Failed to deliver the batch: {%s}", copy);
+                        if (attempt == 2) {
+                            // Send a failure notification only on the second attempt.
+                            // This ensures that failure alerts are sent just once to avoid redundant notifications.
+                            ctx.getNotificationRuleProcessor().process(EdgeFailureTrigger.builder().tenantId(tenantId)
+                                    .edgeId(edge.getId()).customerId(edge.getCustomerId()).edgeName(edge.getName()).errorMsg(errorMsg).build());
+                        }
+                        log.warn("[{}][{}] {}, attempt: {}", this.tenantId, this.sessionId, errorMsg, attempt);
                     }
                     log.trace("[{}][{}][{}] downlink msg(s) are going to be send.", this.tenantId, this.sessionId, copy.size());
                     for (DownlinkMsg downlinkMsg : copy) {
@@ -484,8 +492,11 @@ public final class EdgeGrpcSession implements Closeable {
                     if (attempt < MAX_DOWNLINK_ATTEMPTS) {
                         scheduleDownlinkMsgsPackSend(attempt + 1);
                     } else {
+                        String errorMsg = String.format("Failed to deliver messages: %s", copy);
                         log.warn("[{}][{}] Failed to deliver the batch after {} attempts. Next messages are going to be discarded {}",
                                 this.tenantId, this.sessionId, MAX_DOWNLINK_ATTEMPTS, copy);
+                        ctx.getNotificationRuleProcessor().process(EdgeFailureTrigger.builder().tenantId(tenantId).edgeId(edge.getId())
+                                .customerId(edge.getCustomerId()).edgeName(edge.getName()).errorMsg(errorMsg).build());
                         stopCurrentSendDownlinkMsgsTask(false);
                     }
                 } else {
@@ -779,7 +790,10 @@ public final class EdgeGrpcSession implements Closeable {
                 }
             }
         } catch (Exception e) {
+            String errorMsg = String.format("Can't process uplink msg [%s] from edge", uplinkMsg);
             log.error("[{}][{}] Can't process uplink msg [{}]", this.tenantId, this.sessionId, uplinkMsg, e);
+            ctx.getNotificationRuleProcessor().process(EdgeFailureTrigger.builder().tenantId(tenantId).edgeId(edge.getId())
+                    .customerId(edge.getCustomerId()).edgeName(edge.getName()).errorMsg(errorMsg).build());
             return Futures.immediateFailedFuture(e);
         }
         return Futures.allAsList(result);
@@ -803,15 +817,21 @@ public final class EdgeGrpcSession implements Closeable {
                             .setMaxInboundMessageSize(maxInboundMessageSize)
                             .build();
                 }
+                String errorMsg = String.format("Failed to validate the edge! Provided request secret: %s", request.getEdgeSecret());
+                ctx.getNotificationRuleProcessor().process(EdgeFailureTrigger.builder().tenantId(tenantId).edgeId(edge.getId())
+                        .customerId(edge.getCustomerId()).edgeName(edge.getName()).errorMsg(errorMsg).build());
                 return ConnectResponseMsg.newBuilder()
                         .setResponseCode(ConnectResponseCode.BAD_CREDENTIALS)
-                        .setErrorMsg("Failed to validate the edge!")
+                        .setErrorMsg(errorMsg)
                         .setConfiguration(EdgeConfiguration.getDefaultInstance()).build();
             } catch (Exception e) {
-                log.error("[{}] Failed to process edge connection!", request.getEdgeRoutingKey(), e);
+                String errorMsg = "Failed to process edge connection!";
+                ctx.getNotificationRuleProcessor().process(EdgeFailureTrigger.builder().tenantId(tenantId).edgeId(edge.getId())
+                        .customerId(edge.getCustomerId()).edgeName(edge.getName()).errorMsg(errorMsg).build());
+                log.error(errorMsg, e);
                 return ConnectResponseMsg.newBuilder()
                         .setResponseCode(ConnectResponseCode.SERVER_UNAVAILABLE)
-                        .setErrorMsg("Failed to process edge connection!")
+                        .setErrorMsg(errorMsg)
                         .setConfiguration(EdgeConfiguration.getDefaultInstance()).build();
             }
         }

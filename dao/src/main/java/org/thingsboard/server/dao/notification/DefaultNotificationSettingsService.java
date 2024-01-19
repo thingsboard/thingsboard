@@ -41,6 +41,7 @@ import org.thingsboard.server.common.data.notification.targets.platform.SystemAd
 import org.thingsboard.server.common.data.notification.targets.platform.TenantAdministratorsFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.UsersFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.UsersFilterType;
+import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.settings.UserSettings;
 import org.thingsboard.server.common.data.settings.UserSettingsType;
@@ -53,6 +54,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -187,6 +189,8 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
         defaultNotifications.create(tenantId, DefaultNotifications.alarmComment, tenantAdmins.getId());
         defaultNotifications.create(tenantId, DefaultNotifications.alarmAssignment, affectedUser.getId());
         defaultNotifications.create(tenantId, DefaultNotifications.ruleEngineComponentLifecycleFailure, tenantAdmins.getId());
+        defaultNotifications.create(tenantId, DefaultNotifications.edgeConnectivity, tenantAdmins.getId());
+        defaultNotifications.create(tenantId, DefaultNotifications.edgeFailure, tenantAdmins.getId());
     }
 
     @Override
@@ -198,17 +202,40 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
             }
 
             NotificationTarget sysAdmins = notificationTargetService.findNotificationTargetsByTenantIdAndUsersFilterType(tenantId, UsersFilterType.SYSTEM_ADMINISTRATORS).stream()
-                    .findFirst().orElseGet(() -> {
-                        return createTarget(tenantId, "System administrators", new SystemAdministratorsFilter(), "All system administrators");
-                    });
+                    .findFirst().orElseGet(() -> createTarget(tenantId, "System administrators", new SystemAdministratorsFilter(), "All system administrators"));
             NotificationTarget affectedTenantAdmins = notificationTargetService.findNotificationTargetsByTenantIdAndUsersFilterType(tenantId, UsersFilterType.AFFECTED_TENANT_ADMINISTRATORS).stream()
-                    .findFirst().orElseGet(() -> {
-                        return createTarget(tenantId, "Affected tenant's administrators", new AffectedTenantAdministratorsFilter(), "");
-                    });
+                    .findFirst().orElseGet(() -> createTarget(tenantId, "Affected tenant's administrators", new AffectedTenantAdministratorsFilter(), ""));
 
             defaultNotifications.create(tenantId, DefaultNotifications.exceededRateLimits, affectedTenantAdmins.getId());
             defaultNotifications.create(tenantId, DefaultNotifications.exceededPerEntityRateLimits, affectedTenantAdmins.getId());
             defaultNotifications.create(tenantId, DefaultNotifications.exceededRateLimitsForSysadmin, sysAdmins.getId());
+        } else {
+            List<NotificationType> requiredNotificationTypes = List.of(NotificationType.EDGE_CONNECTIVITY, NotificationType.EDGE_FAILURE);
+            List<NotificationType> existingNotificationTypes = notificationTemplateService.findNotificationTemplatesByTenantIdAndNotificationTypes(
+                            tenantId, requiredNotificationTypes, new PageLink(1))
+                    .getData()
+                    .stream()
+                    .map(NotificationTemplate::getNotificationType)
+                    .collect(Collectors.toList());
+
+            NotificationTarget tenantAdmins = notificationTargetService.findNotificationTargetsByTenantIdAndUsersFilterType(tenantId, UsersFilterType.TENANT_ADMINISTRATORS)
+                    .stream()
+                    .findFirst()
+                    .orElseGet(() -> createTarget(tenantId, "Tenant administrators", new TenantAdministratorsFilter(),
+                            tenantId.isSysTenantId() ? "All tenant administrators" : "Tenant administrators"));
+
+            for (NotificationType type : requiredNotificationTypes) {
+                if (!existingNotificationTypes.contains(type)) {
+                    switch (type) {
+                        case EDGE_CONNECTIVITY:
+                            defaultNotifications.create(tenantId, DefaultNotifications.edgeConnectivity, tenantAdmins.getId());
+                            break;
+                        case EDGE_FAILURE:
+                            defaultNotifications.create(tenantId, DefaultNotifications.edgeFailure, tenantAdmins.getId());
+                            break;
+                    }
+                }
+            }
         }
     }
 

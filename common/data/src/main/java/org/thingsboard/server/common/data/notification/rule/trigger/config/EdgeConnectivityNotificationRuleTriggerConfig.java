@@ -15,32 +15,32 @@
  */
 package org.thingsboard.server.common.data.notification.rule.trigger.config;
 
-import lombok.Getter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
-public enum NotificationRuleTriggerType {
+import javax.validation.constraints.NotEmpty;
+import java.util.Set;
+import java.util.UUID;
 
-    ENTITY_ACTION,
-    ALARM,
-    ALARM_COMMENT,
-    ALARM_ASSIGNMENT,
-    DEVICE_ACTIVITY,
-    RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT,
-    EDGE_CONNECTIVITY,
-    EDGE_FAILURE,
-    NEW_PLATFORM_VERSION(false),
-    ENTITIES_LIMIT(false),
-    API_USAGE_LIMIT(false),
-    RATE_LIMITS(false);
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class EdgeConnectivityNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
 
-    private final boolean tenantLevel;
+    private Set<UUID> edges; // if empty - all edges
+    @NotEmpty
+    private Set<EdgeConnectivityEvent> notifyOn;
 
-    NotificationRuleTriggerType() {
-        this(true);
+    @Override
+    public NotificationRuleTriggerType getTriggerType() {
+        return NotificationRuleTriggerType.EDGE_CONNECTIVITY;
     }
 
-    NotificationRuleTriggerType(boolean tenantLevel) {
-        this.tenantLevel = tenantLevel;
+    public enum EdgeConnectivityEvent {
+        CONNECTED, DISCONNECTED
     }
 
 }

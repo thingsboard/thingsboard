@@ -474,7 +474,9 @@ export enum NotificationType {
   API_USAGE_LIMIT = 'API_USAGE_LIMIT',
   NEW_PLATFORM_VERSION = 'NEW_PLATFORM_VERSION',
   RULE_NODE = 'RULE_NODE',
-  RATE_LIMITS = 'RATE_LIMITS'
+  RATE_LIMITS = 'RATE_LIMITS',
+  EDGE_CONNECTIVITY = 'EDGE_CONNECTIVITY',
+  EDGE_FAILURE = 'EDGE_FAILURE'
 }
 
 export const NotificationTypeIcons = new Map<NotificationType, string | null>([
@@ -585,6 +587,18 @@ export const NotificationTemplateTypeTranslateMap = new Map<NotificationType, No
       name: 'notification.template-type.rate-limits',
       helpId: 'notification/rate_limits'
     }
+  ],
+  [NotificationType.EDGE_CONNECTIVITY,
+    {
+      name: 'notification.template-type.edge-connectivity',
+      helpId: 'notification/edge_connectivity'
+    }
+  ],
+  [NotificationType.EDGE_FAILURE,
+    {
+      name: 'notification.template-type.edge-failure',
+      helpId: 'notification/edge_failure'
+    }
   ]
 ]);
 
@@ -598,7 +612,9 @@ export enum TriggerType {
   ENTITIES_LIMIT = 'ENTITIES_LIMIT',
   API_USAGE_LIMIT = 'API_USAGE_LIMIT',
   NEW_PLATFORM_VERSION = 'NEW_PLATFORM_VERSION',
-  RATE_LIMITS = 'RATE_LIMITS'
+  RATE_LIMITS = 'RATE_LIMITS',
+  EDGE_CONNECTIVITY = 'EDGE_CONNECTIVITY',
+  EDGE_FAILURE = 'EDGE_FAILURE'
 }
 
 export const TriggerTypeTranslationMap = new Map<TriggerType, string>([
@@ -612,6 +628,8 @@ export const TriggerTypeTranslationMap = new Map<TriggerType, string>([
   [TriggerType.API_USAGE_LIMIT, 'notification.trigger.api-usage-limit'],
   [TriggerType.NEW_PLATFORM_VERSION, 'notification.trigger.new-platform-version'],
   [TriggerType.RATE_LIMITS, 'notification.trigger.rate-limits'],
+  [TriggerType.EDGE_CONNECTIVITY, 'notification.trigger.edge-connectivity'],
+  [TriggerType.EDGE_FAILURE, 'notification.trigger.edge-failure']
 ]);
 
 export interface NotificationUserSettings {

@@ -851,7 +851,9 @@
         "rest-api-requests-per-customer": "REST API requests per customer",
         "transport-messages": "Transport messages",
         "transport-messages-per-device": "Transport messages per device",
-        "ws-updates-per-session": "WS updates per session"
+        "ws-updates-per-session": "WS updates per session",
+        "edge-events": "Edge events",
+        "edge-events-per-edge": "Edge events per edge"
     },
     "audit-log": {
         "audit": "Audit",
@@ -3279,6 +3281,7 @@
         "device-list-rule-hint": "If the field is empty, the trigger will be applied to all devices",
         "device-profiles-list-rule-hint": "If the field is empty, the trigger will be applied to all device profiles",
         "disabled": "Disabled",
+        "edge-trigger-settings": "Edge trigger settings",
         "edit-notification-recipients-group": "Edit notification recipients group",
         "edit-notification-template": "Edit notification template",
         "edit-rule": "Edit rule",
@@ -3423,7 +3426,8 @@
             "rule-engine-lifecycle-event": "Rule engine lifecycle event",
             "rule-node": "Rule node",
             "new-platform-version": "New platform version",
-            "rate-limits": "Exceeded rate limits"
+            "rate-limits": "Exceeded rate limits",
+            "edge": "Edge"
         },
         "templates": "Templates",
         "notification-templates": "Notifications / Templates",
@@ -3444,6 +3448,8 @@
             "rule-engine-lifecycle-event": "Rule engine lifecycle event",
             "new-platform-version": "New platform version",
             "rate-limits": "Exceeded rate limits",
+            "edge-connectivity": "Edge connectivity",
+            "edge-failure": "Edge failure",
             "trigger": "Trigger",
             "trigger-required": "Trigger is required"
         },
