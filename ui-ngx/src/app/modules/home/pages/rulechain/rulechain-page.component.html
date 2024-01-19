@@ -129,9 +129,9 @@
                   <div id="tb-node-content" class="mat-padding" fxLayout="column">
                     <div class="tb-node-title">{{editingRuleNode.component.name}}</div>
                     <div>&nbsp;</div>
-                    <div class="tb-node-description" [innerHtml]="editingRuleNode.component.configurationDescriptor.nodeDefinition.description"></div>
+                    <div class="tb-node-description" [innerHtml]="editingRuleNode.component.configurationDescriptor.nodeDefinition.description | safe: 'html'"></div>
                     <div>&nbsp;</div>
-                    <div class="tb-node-details" [innerHtml]="editingRuleNode.component.configurationDescriptor.nodeDefinition.details"></div>
+                    <div class="tb-node-details" [innerHtml]="editingRuleNode.component.configurationDescriptor.nodeDefinition.details | safe: 'html'"></div>
                   </div>
                 </div>
               </mat-tab>
