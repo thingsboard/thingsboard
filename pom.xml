@@ -131,7 +131,7 @@
         <antisamy.version>1.7.3</antisamy.version>
         <snmp4j.version>2.8.5</snmp4j.version>
         <!--         TEST SCOPE         -->
-        <awaitility.version>4.1.0</awaitility.version>
+        <awaitility.version>4.2.0</awaitility.version>
         <dbunit.version>2.7.2</dbunit.version>
         <java-websocket.version>1.5.2</java-websocket.version>
         <jupiter.version>5.9.3</jupiter.version> <!-- keep the same version as spring-boot-starter-test depend on jupiter-->

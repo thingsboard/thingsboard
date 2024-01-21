@@ -93,7 +93,7 @@ public class LwM2mServerListener {
 
         @Override
         public void cancelled(Observation observation) {
-            log.info("Canceled Observation [RegistrationId:{}: {}].", observation.getRegistrationId(), observation instanceof SingleObservation ?
+            log.trace("Canceled Observation [RegistrationId:{}: {}].", observation.getRegistrationId(), observation instanceof SingleObservation ?
                     "SingleObservation: " + ((SingleObservation) observation).getPath() :
                     "CompositeObservation: " + ((CompositeObservation) observation).getPaths());
        }

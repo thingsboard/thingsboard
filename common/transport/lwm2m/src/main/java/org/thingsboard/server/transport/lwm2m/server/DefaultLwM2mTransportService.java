@@ -68,7 +68,6 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
 
     public static final CipherSuite[] RPK_OR_X509_CIPHER_SUITES = {TLS_PSK_WITH_AES_128_CCM_8, TLS_PSK_WITH_AES_128_CBC_SHA256, TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8, TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256};
     public static final CipherSuite[] PSK_CIPHER_SUITES = {TLS_PSK_WITH_AES_128_CCM_8, TLS_PSK_WITH_AES_128_CBC_SHA256};
-//    public static final CipherSuite[] PSK_CIPHER_SUITES = {TLS_PSK_WITH_AES_128_CCM_8};
 
     private final LwM2mTransportContext context;
     private final LwM2MTransportServerConfig config;
@@ -92,8 +91,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
          * nameFile = "BC68JAR01A09_TO_BC68JAR01A10.bin"
          * "coap://host:port/{path}/{token}/{nameFile}"
          */
-        LwM2mTransportCoapResource otaCoapResource = new LwM2mTransportCoapResource(otaPackageDataCache, FIRMWARE_UPDATE_COAP_RESOURCE);
-//        this.server.coap().getServer().add(otaCoapResource);
+        new LwM2mTransportCoapResource(otaPackageDataCache, FIRMWARE_UPDATE_COAP_RESOURCE);
         this.context.setServer(server);
         this.startLhServer();
     }
@@ -168,16 +166,19 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
         serverCoapConfig.set(DTLS_ROLE, SERVER_ONLY);
         serverCoapConfig.setTransient(DtlsConfig.DTLS_CONNECTION_ID_LENGTH);
         /**
-         * "Control usage of DTLS connection ID.", //
-         *                     "- 'on' to activate Connection ID support ", //
-         *                     "  (same as -cid 6)", //
-         *                     "- 'off' to deactivate it", //
-         *                     "- Positive value define the size in byte of CID generated.", //
-         *                     "- 0 value means we accept to use CID but will not generated one for foreign peer.", //
-         *                     "Default: on"
+         * "Control usage of DTLS connection ID.",
+         * If DTLS_CONNECTION_ID_LENGTH enables the use of a connection id, this node id could be used
+         * to configure the generation of connection ids specific for node in a multi-node deployment (cluster).
+         * The value is used as first byte in generated connection ids.
+         * DTLS connection ID length. <blank> disabled,
+         * 0 enables support without active use of CID.", defaultValue == null, minimumValue == 0);
+         *   "- 'on' to activate Connection ID support ",
+         *   "  (same as -cid 6)",
+         *   "- 'off' to deactivate it",
+         *   "- Positive value define the size in byte of CID generated.",
+         *   "- 0 value means we accept to use CID but will not generated one for foreign peer.",
          */
-        int cid = 6;
-        serverCoapConfig.set(DtlsConfig.DTLS_CONNECTION_ID_LENGTH, cid);
+        serverCoapConfig.set(DtlsConfig.DTLS_CONNECTION_ID_LENGTH, 6);
 
 
         /* Create DTLS Config */

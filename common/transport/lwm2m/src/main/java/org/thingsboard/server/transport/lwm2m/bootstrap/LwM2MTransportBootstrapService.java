@@ -113,13 +113,8 @@ public class LwM2MTransportBootstrapService {
         serverCoapConfig.setTransient(DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY);
         serverCoapConfig.set(DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, serverConfig.isRecommendedCiphers());
         serverCoapConfig.setTransient(DtlsConfig.DTLS_CONNECTION_ID_LENGTH);
-        int cid = 6;
-        if (cid > 0) {
-            serverCoapConfig.set(DtlsConfig.DTLS_CONNECTION_ID_LENGTH, cid);
-        }
-
+        serverCoapConfig.set(DtlsConfig.DTLS_CONNECTION_ID_LENGTH, 6);
         serverCoapConfig.set(DTLS_RECOMMENDED_CURVES_ONLY, serverConfig.isRecommendedSupportedGroups());
-
         serverCoapConfig.setTransient(DTLS_RETRANSMISSION_TIMEOUT);
         serverCoapConfig.set(DTLS_RETRANSMISSION_TIMEOUT, serverConfig.getDtlsRetransmissionTimeout(), MILLISECONDS);
 

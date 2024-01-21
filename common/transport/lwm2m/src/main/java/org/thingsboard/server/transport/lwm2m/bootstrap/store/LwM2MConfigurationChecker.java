@@ -63,12 +63,12 @@ public class LwM2MConfigurationChecker extends ConfigurationChecker {
             if (security == null) {
                 throw new InvalidConfigurationException("no security entry for server instance: " + e.getKey());
             }
-                // BS Server
+            // BS Server
             if (security.bootstrapServer && srvCfg.shortId != 0) {
                 throw new InvalidConfigurationException("short ID must be 0");
             }
 
-                // LwM2M Server
+            // LwM2M Server
             /**
              * This identifier uniquely identifies each LwM2M Server configured for the LwM2M Client.
              * This Resource MUST be set when the Bootstrap-Server Resource has false value.

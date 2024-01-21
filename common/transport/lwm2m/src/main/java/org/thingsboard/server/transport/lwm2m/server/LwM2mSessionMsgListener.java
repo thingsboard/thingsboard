@@ -55,7 +55,7 @@ public class LwM2mSessionMsgListener implements GenericFutureListener<Future<? s
 
     @Override
     public void onAttributeUpdate(UUID sessionId, AttributeUpdateNotificationMsg attributeUpdateNotification) {
-        log.info("[{}] Received attributes update notification to device", sessionId);
+        log.trace("[{}] Received attributes update notification to device", sessionId);
         this.attributesService.onAttributesUpdate(attributeUpdateNotification, this.sessionInfo);
     }
 
