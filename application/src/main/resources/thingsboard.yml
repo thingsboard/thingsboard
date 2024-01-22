@@ -642,7 +642,7 @@ redis:
   # ssl config
   ssl:
     # Enable/disable secure connection
-    enabled: "${REDIS_SSL_ENABLED:false}"
+    enabled: "${TB_REDIS_SSL_ENABLED:false}"
     # Server SSL credentials
     credentials:
       # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
@@ -651,9 +651,9 @@ redis:
       pem:
         # Path redis server (CA) certificate
         cert_file: "${TB_REDIS_SSL_PEM_CERT:}"
-        # Path to user certificate file (optional)
+        # Path to user certificate file. This is optional for the client and can be used for two-way authentication for the client
         user_cert_file: "${TB_REDIS_SSL_PEM_KEY:}"
-        # Path to user private key file (optional)
+        # Path to user private key file. This is optional for the client and only needed if ‘ssl.pem.user_cert_file’ is configured.
         user_key_file: "${TB_REDIS_SSL_PEM_KEY_PASSWORD:}"
       # Keystore server credentials
       keystore:

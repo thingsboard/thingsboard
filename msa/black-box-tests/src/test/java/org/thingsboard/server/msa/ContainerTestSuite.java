@@ -108,7 +108,7 @@ public class ContainerTestSuite {
 
             if (IS_REDIS_SSL) {
                 addToFile(targetDir, "cache-redis.env",
-                        Map.of("REDIS_SSL_ENABLED", "true",
+                        Map.of("TB_REDIS_SSL_ENABLED", "true",
                                 "TB_REDIS_SSL_PEM_CERT", "/redis/certs/redisCA.crt"));
             }
 
