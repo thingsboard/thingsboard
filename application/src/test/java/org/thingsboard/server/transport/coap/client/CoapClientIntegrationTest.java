@@ -113,7 +113,7 @@ public class CoapClientIntegrationTest extends AbstractCoapIntegrationTest {
         assertEquals(expectedKeySet, actualKeySet);
 
         String attributesValuesUrl = "/api/plugins/telemetry/DEVICE/" + deviceId + "/values/attributes/CLIENT_SCOPE?keys=" + String.join(",", actualKeySet);
-        ;
+
         List<Map<String, Object>> values = doGetAsyncTyped(attributesValuesUrl, new TypeReference<>() {
         });
         assertAttributesValues(values, actualKeySet);

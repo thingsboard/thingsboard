@@ -829,7 +829,8 @@
                             <exclude>src/main/scripts/control/**</exclude>
                             <exclude>src/main/scripts/windows/**</exclude>
                             <exclude>src/main/resources/public/static/rulenode/**</exclude>
-                            <exclude>src/main/java/org/eclipse/leshan/server/observation//**</exclude>
+                            <exclude>src/main/java/org/eclipse/leshan/server/observation/**</exclude>
+                            <exclude>src/main/java/org/eclipse/californium/core/observe/**</exclude>
                             <exclude>**/*.proto.js</exclude>
                             <exclude>docker/haproxy/**</exclude>
                             <exclude>docker/tb-node/**</exclude>

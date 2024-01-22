@@ -234,6 +234,7 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         client = new CoapTestClient(accessToken, FeatureType.ATTRIBUTES);
         CoapTestCallback callbackCoap = new CoapTestCallback();
 
+        // Subscribe
         CoapObserveRelation observeRelation = client.getObserveRelation(callbackCoap);
         String awaitAlias = "await Json Test Subscribe To AttributesUpdates (client.getObserveRelation)";
         await(awaitAlias)
