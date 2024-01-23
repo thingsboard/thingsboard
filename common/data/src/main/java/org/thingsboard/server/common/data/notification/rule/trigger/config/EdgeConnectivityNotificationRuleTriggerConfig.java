@@ -31,7 +31,6 @@ import java.util.UUID;
 public class EdgeConnectivityNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
 
     private Set<UUID> edges; // if empty - all edges
-    @NotEmpty
     private Set<EdgeConnectivityEvent> notifyOn;
 
     @Override

@@ -2073,7 +2073,9 @@
         "action-type-assigned-to-edge": "Assigned to Edge",
         "action-type-unassigned-from-edge": "Unassigned from Edge",
         "action-type-credentials-request": "Credentials Request",
-        "action-type-entity-merge-request": "Entity Merge Request"
+        "action-type-entity-merge-request": "Entity Merge Request",
+        "connected": "Connected",
+        "disconnected": "Disconnected"
     },
     "error": {
         "unable-to-connect": "Unable to connect to the server! Please check your internet connection.",
@@ -3282,6 +3284,7 @@
         "device-profiles-list-rule-hint": "If the field is empty, the trigger will be applied to all device profiles",
         "disabled": "Disabled",
         "edge-trigger-settings": "Edge trigger settings",
+        "edge-list-rule-hint": "If the field is empty, the trigger will be applied to all edge instances",
         "edit-notification-recipients-group": "Edit notification recipients group",
         "edit-notification-template": "Edit notification template",
         "edit-rule": "Edit rule",
@@ -3427,7 +3430,8 @@
             "rule-node": "Rule node",
             "new-platform-version": "New platform version",
             "rate-limits": "Exceeded rate limits",
-            "edge": "Edge"
+            "edge-failure": "Edge error",
+            "edge-connectivity": "Edge connectivity"
         },
         "templates": "Templates",
         "notification-templates": "Notifications / Templates",
@@ -4173,6 +4177,10 @@
             "edit-tenant-entity-import-rate-limit-title": "Edit entity version load rate limits",
             "edit-tenant-notification-request-rate-limit-title": "Edit notification requests rate limits",
             "edit-tenant-notification-requests-per-rule-rate-limit-title": "Edit notification requests per notification rule rate limits",
+            "edit-edge-events-rate-limit": "Edit edge events rate limits",
+            "edit-edge-events-per-edge-rate-limit": "Edit edge events per edge rate limits",
+            "edge-events-rate-limit": "Edge events",
+            "edge-events-per-edge-rate-limit": "Edge events per edge",
             "messages-per": "messages per",
             "not-set": "Not set",
             "number-of-messages": "Number of messages",

@@ -32,7 +32,7 @@ public class EdgeConnectivityTriggerProcessor implements NotificationRuleTrigger
     @Override
     public boolean matchesFilter(EdgeConnectivityTrigger trigger, EdgeConnectivityNotificationRuleTriggerConfig triggerConfig) {
         EdgeConnectivityEvent event = trigger.isConnected() ? EdgeConnectivityEvent.CONNECTED : EdgeConnectivityEvent.DISCONNECTED;
-        if (!triggerConfig.getNotifyOn().contains(event)) {
+        if (CollectionUtils.isEmpty(triggerConfig.getNotifyOn()) || !triggerConfig.getNotifyOn().contains(event)) {
             return false;
         }
         if (CollectionUtils.isNotEmpty(triggerConfig.getEdges())) {
