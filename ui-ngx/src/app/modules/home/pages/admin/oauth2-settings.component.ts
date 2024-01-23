@@ -15,7 +15,14 @@
 ///
 
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
-import { AbstractControl, UntypedFormArray, UntypedFormBuilder, UntypedFormGroup, ValidationErrors, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormGroup,
+  ValidationErrors,
+  Validators
+} from '@angular/forms';
 import {
   ClientAuthenticationMethod,
   DomainSchema,
@@ -26,9 +33,11 @@ import {
   MapperConfigType,
   OAuth2ClientRegistrationTemplate,
   OAuth2DomainInfo,
-  OAuth2Info, OAuth2MobileInfo,
+  OAuth2Info,
+  OAuth2MobileInfo,
   OAuth2ParamsInfo,
-  OAuth2RegistrationInfo, PlatformType,
+  OAuth2RegistrationInfo,
+  PlatformType,
   platformTypeTranslations,
   TenantNameStrategy
 } from '@shared/models/oauth2.models';
@@ -45,13 +54,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { isDefined, isDefinedAndNotNull, randomAlphanumeric } from '@core/utils';
 import { OAuth2Service } from '@core/http/oauth2.service';
 import { ActivatedRoute } from '@angular/router';
+import { HasShowLoading } from '@home/pages/home-pages.models';
 
 @Component({
   selector: 'tb-oauth2-settings',
   templateUrl: './oauth2-settings.component.html',
   styleUrls: ['./oauth2-settings.component.scss', './settings-card.scss']
 })
-export class OAuth2SettingsComponent extends PageComponent implements OnInit, HasConfirmForm, OnDestroy {
+export class OAuth2SettingsComponent extends PageComponent implements OnInit, HasConfirmForm, HasShowLoading, OnDestroy {
 
   constructor(protected store: Store<AppState>,
               private route: ActivatedRoute,
@@ -104,6 +114,8 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
   platformTypeTranslations = platformTypeTranslations;
 
   templateProvider = ['Custom'];
+
+  showLoadingBar = false;
 
   private loginProcessingUrl: string = this.route.snapshot.data.loginProcessingUrl;
 

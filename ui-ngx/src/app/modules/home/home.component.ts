@@ -15,7 +15,7 @@
 ///
 
 import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { startWith, skip, Subject } from 'rxjs';
+import { skip, startWith, Subject } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 
@@ -151,10 +151,10 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
     this.textSearch.reset('', {emitEvent: false});
     this.activeComponent = activeComponent;
     let showLoadingBar: boolean;
-    if (isDefined(this.route.children[0]?.snapshot?.data?.showLoadingBar)) {
-      showLoadingBar = this.route.children[0]?.snapshot?.data?.showLoadingBar;
-    } else if (isDefined(this.route.children[0]?.children[0]?.snapshot?.data?.showLoadingBar)) {
-      showLoadingBar = this.route.children[0]?.children[0]?.snapshot?.data?.showLoadingBar;
+    if (isDefined(this.activeComponent.activatedRoute?.data?.value?.showLoadingBar)) {
+      showLoadingBar = this.activeComponent.activatedRoute?.data?.value?.showLoadingBar;
+    } else if (isDefined(this.activeComponent?.showLoadingBar)) {
+      showLoadingBar = this.activeComponent.showLoadingBar;
     }
     if (activeComponent && activeComponent instanceof RouterTabsComponent) {
       this.hideLoadingBar = isDefinedAndNotNull(showLoadingBar) ? !showLoadingBar : true;

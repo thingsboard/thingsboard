@@ -32,13 +32,14 @@ import { isNotEmptyStr } from '@core/utils';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { MatExpansionPanel } from '@angular/material/expansion';
+import { HasShowLoading } from '@home/pages/home-pages.models';
 
 @Component({
   selector: 'tb-2fa-settings',
   templateUrl: './two-factor-auth-settings.component.html',
   styleUrls: [ './settings-card.scss', './two-factor-auth-settings.component.scss']
 })
-export class TwoFactorAuthSettingsComponent extends PageComponent implements OnInit, HasConfirmForm, OnDestroy {
+export class TwoFactorAuthSettingsComponent extends PageComponent implements OnInit, HasConfirmForm, HasShowLoading, OnDestroy {
 
   private readonly destroy$ = new Subject<void>();
   private readonly posIntValidation = [Validators.required, Validators.min(1), Validators.pattern(/^\d*$/)];
@@ -46,6 +47,8 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
   twoFaFormGroup: UntypedFormGroup;
   twoFactorAuthProviderType = TwoFactorAuthProviderType;
   twoFactorAuthProvidersData = twoFactorAuthProvidersData;
+
+  showLoadingBar = false;
 
   @ViewChildren(MatExpansionPanel) expansionPanel: QueryList<MatExpansionPanel>;
 

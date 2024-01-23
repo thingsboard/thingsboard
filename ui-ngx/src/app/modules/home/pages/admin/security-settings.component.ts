@@ -23,7 +23,8 @@ import {
   AbstractControl,
   UntypedFormBuilder,
   UntypedFormControl,
-  UntypedFormGroup, ValidationErrors,
+  UntypedFormGroup,
+  ValidationErrors,
   ValidatorFn,
   Validators
 } from '@angular/forms';
@@ -35,20 +36,20 @@ import { randomAlphanumeric } from '@core/utils';
 import { AuthService } from '@core/auth/auth.service';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
-import { forkJoin, Observable, of } from 'rxjs';
-import { MatCheckboxChange } from '@angular/material/checkbox';
-import { AlarmInfo } from '@shared/models/alarm.models';
-import { QueueProcessingStrategyTypes, QueueProcessingStrategyTypesMap } from '@shared/models/queue.models';
+import { Observable, of } from 'rxjs';
+import { HasShowLoading } from '@home/pages/home-pages.models';
 
 @Component({
   selector: 'tb-security-settings',
   templateUrl: './security-settings.component.html',
   styleUrls: ['./security-settings.component.scss', './settings-card.scss']
 })
-export class SecuritySettingsComponent extends PageComponent implements HasConfirmForm {
+export class SecuritySettingsComponent extends PageComponent implements HasConfirmForm, HasShowLoading {
 
   securitySettingsFormGroup: UntypedFormGroup;
   jwtSecuritySettingsFormGroup: UntypedFormGroup;
+
+  showLoadingBar = false;
 
   private securitySettings: SecuritySettings;
   private jwtSettings: JwtSettings;

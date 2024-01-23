@@ -34,6 +34,7 @@ import { selectHasRepository } from '@core/auth/auth.selectors';
 import { catchError, mergeMap, take } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { TbPopoverComponent } from '@shared/components/popover.component';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-repository-settings',
@@ -49,6 +50,7 @@ export class RepositorySettingsComponent extends PageComponent implements OnInit
   popoverComponent: TbPopoverComponent;
 
   @Input()
+  @coerceBoolean()
   hideLoadingBar = false;
 
   repositorySettingsForm: UntypedFormGroup;
