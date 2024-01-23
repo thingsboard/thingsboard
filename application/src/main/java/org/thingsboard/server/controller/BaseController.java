@@ -16,14 +16,16 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.postgresql.util.PSQLException;
+import org.postgresql.util.ServerErrorMessage;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -46,7 +48,6 @@ import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
@@ -376,6 +377,14 @@ public abstract class BaseController {
             return new ThingsboardException("Unable to send mail: " + exception.getMessage(), ThingsboardErrorCode.GENERAL);
         } else if (exception instanceof AsyncRequestTimeoutException) {
             return new ThingsboardException("Request timeout", ThingsboardErrorCode.GENERAL);
+        } else if (exception instanceof DataAccessException) {
+            Throwable rootCause = ExceptionUtils.getRootCause(exception);
+            if (rootCause instanceof PSQLException) {
+                return new ThingsboardException(Optional.ofNullable(((PSQLException) rootCause).getServerErrorMessage())
+                        .map(ServerErrorMessage::getMessage).orElse(rootCause.getMessage()), ThingsboardErrorCode.GENERAL);
+            } else {
+                return new ThingsboardException(rootCause, ThingsboardErrorCode.GENERAL);
+            }
         } else {
             return new ThingsboardException(exception.getMessage(), exception, ThingsboardErrorCode.GENERAL);
         }
