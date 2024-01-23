@@ -34,6 +34,9 @@ import {
   LegendData,
   LegendKey,
   LegendKeyData,
+  TargetDevice,
+  TargetDeviceType,
+  targetDeviceValid,
   widgetType
 } from '@app/shared/models/widget.models';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -200,9 +203,6 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   loadingData: boolean;
 
-  targetDeviceAliasIds?: Array<string>;
-  targetDeviceIds?: Array<string>;
-
   executingRpcRequest: boolean;
   rpcEnabled: boolean;
   rpcErrorText: string;
@@ -213,9 +213,10 @@ export class WidgetSubscription implements IWidgetSubscription {
   cafs: {[cafId: string]: CancelAnimationFrame} = {};
   hasResolvedData = false;
 
-  targetDeviceAliasId: string;
+  targetEntityId?: EntityId;
+  targetEntityName?: string;
+  targetDevice: TargetDevice;
   targetDeviceId: string;
-  targetDeviceName: string;
   executingSubjects: Array<Subject<void>>;
 
   subscribed = false;
@@ -242,11 +243,22 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.callbacks.onRpcFailed = this.callbacks.onRpcFailed || (() => {});
       this.callbacks.onRpcErrorCleared = this.callbacks.onRpcErrorCleared || (() => {});
 
-      this.targetDeviceAliasIds = options.targetDeviceAliasIds;
-      this.targetDeviceIds = options.targetDeviceIds;
-
-      this.targetDeviceAliasId = null;
-      this.targetDeviceId = null;
+      this.targetDevice = options.targetDevice;
+      if (!targetDeviceValid(this.targetDevice)) {
+        if (options.targetDeviceAliasIds && options.targetDeviceAliasIds.length) {
+          this.targetDevice = {
+            type: TargetDeviceType.entity,
+            entityAliasId: options.targetDeviceAliasIds[0]
+          };
+        } else if (options.targetDeviceIds && options.targetDeviceIds.length) {
+          this.targetDevice = {
+            type: TargetDeviceType.device,
+            entityAliasId: options.targetDeviceIds[0]
+          };
+        }
+      }
+      this.targetEntityId = null;
+      this.targetEntityName = null;
 
       this.rpcRejection = null;
       this.rpcErrorText = null;
@@ -299,7 +311,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.callbacks.legendDataUpdated = this.callbacks.legendDataUpdated || (() => {});
       this.callbacks.timeWindowUpdated = this.callbacks.timeWindowUpdated || (() => {});
 
-      this.configuredDatasources = this.ctx.utils.validateDatasources(options.datasources);
+      this.configuredDatasources = this.ctx.dashboardUtils.validateAndUpdateDatasources(options.datasources);
       this.datasourcesOptional = options.datasourcesOptional;
       this.entityDataListeners = [];
       this.hasDataPageLink = options.hasDataPageLink;
@@ -373,50 +385,35 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   private initRpc(): Observable<any> {
     const initRpcSubject = new ReplaySubject<void>();
-    if (this.targetDeviceAliasIds && this.targetDeviceAliasIds.length > 0) {
-      this.targetDeviceAliasId = this.targetDeviceAliasIds[0];
-      this.ctx.aliasController.resolveSingleEntityInfo(this.targetDeviceAliasId).subscribe(
-        (entityInfo) => {
-          if (entityInfo && entityInfo.entityType === EntityType.DEVICE) {
-            this.targetDeviceId = entityInfo.id;
-            this.targetDeviceName = entityInfo.name;
-            if (this.targetDeviceId) {
-              this.rpcEnabled = true;
-            } else {
-              this.rpcEnabled = this.ctx.utils.widgetEditMode;
-            }
-            this.hasResolvedData = this.rpcEnabled;
-            this.callbacks.rpcStateChanged(this);
-            initRpcSubject.next();
-            initRpcSubject.complete();
-          } else {
-            this.rpcEnabled = false;
-            this.callbacks.rpcStateChanged(this);
-            initRpcSubject.next();
-            initRpcSubject.complete();
-          }
-        },
-        () => {
-          this.rpcEnabled = false;
-          this.callbacks.rpcStateChanged(this);
-          initRpcSubject.next();
-          initRpcSubject.complete();
+    this.ctx.aliasController.resolveSingleEntityInfoForTargetDevice(this.targetDevice).subscribe({
+      next: (entityInfo) => {
+        if (entityInfo?.id) {
+          this.targetEntityId = {
+            id: entityInfo.id,
+            entityType: entityInfo.entityType
+          };
+          this.targetEntityName = entityInfo.name;
         }
-      );
-    } else {
-      if (this.targetDeviceIds && this.targetDeviceIds.length > 0) {
-        this.targetDeviceId = this.targetDeviceIds[0];
+        if (entityInfo?.entityType === EntityType.DEVICE) {
+          this.targetDeviceId = entityInfo.id;
+        }
+        if (this.targetDeviceId) {
+          this.rpcEnabled = true;
+        } else {
+          this.rpcEnabled = this.ctx.utils.widgetEditMode;
+        }
+        this.hasResolvedData = true;
+        this.callbacks.rpcStateChanged(this);
+        initRpcSubject.next();
+        initRpcSubject.complete();
+      },
+      error: () => {
+        this.rpcEnabled = false;
+        this.callbacks.rpcStateChanged(this);
+        initRpcSubject.next();
+        initRpcSubject.complete();
       }
-      if (this.targetDeviceId) {
-        this.rpcEnabled = true;
-      } else {
-        this.rpcEnabled = this.ctx.utils.widgetEditMode;
-      }
-      this.hasResolvedData = true;
-      this.callbacks.rpcStateChanged(this);
-      initRpcSubject.next();
-      initRpcSubject.complete();
-    }
+    });
     return initRpcSubject.asObservable();
   }
 
@@ -573,12 +570,10 @@ export class WidgetSubscription implements IWidgetSubscription {
     let entityLabel: string;
     let entityDescription: string;
     if (this.type === widgetType.rpc) {
-      if (this.targetDeviceId) {
-        entityId = {
-          entityType: EntityType.DEVICE,
-          id: this.targetDeviceId
-        };
-        entityName = this.targetDeviceName;
+      if (this.targetEntityId) {
+        entityId = this.targetEntityId;
+        entityName = this.targetEntityName;
+        entityLabel = this.targetEntityName;
       }
     } else if (this.type === widgetType.alarm) {
       if (this.alarmSource && this.alarmSource.entityType && this.alarmSource.entityId) {
@@ -845,12 +840,14 @@ export class WidgetSubscription implements IWidgetSubscription {
           this.ctx.deviceService.sendTwoWayRpcCommand(this.targetDeviceId, requestBody)).pipe(
             switchMap((response) => {
               if (persistent && persistentPollingInterval > 0) {
-                return timer(persistentPollingInterval / 2, persistentPollingInterval).pipe(
+                const pollingInterval = Math.max(persistentPollingInterval, 1000);
+                const initialTimeout = timeout ? Math.min(timeout + 1000, pollingInterval) : pollingInterval;
+                return timer(initialTimeout, pollingInterval).pipe(
                   switchMap(() => this.ctx.deviceService.getPersistedRpc(response.rpcId, true)),
                   filter(persistentRespons =>
                     persistentRespons.status !== RpcStatus.DELIVERED && persistentRespons.status !== RpcStatus.QUEUED),
                   switchMap(persistentResponse => {
-                    if (persistentResponse.status === RpcStatus.TIMEOUT) {
+                    if ([RpcStatus.TIMEOUT, RpcStatus.EXPIRED].includes(persistentResponse.status)) {
                       return throwError({status: 504});
                     } else if (persistentResponse.status === RpcStatus.FAILED) {
                       return throwError({status: 502, statusText: persistentResponse.response.error});
@@ -1091,7 +1088,8 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   private checkRpcTarget(aliasIds: Array<string>): boolean {
-    return aliasIds.indexOf(this.targetDeviceAliasId) > -1;
+    return this.targetDevice?.type === TargetDeviceType.entity &&
+          aliasIds.indexOf(this.targetDevice.entityAliasId) > -1;
   }
 
   private checkAlarmSource(aliasIds: Array<string>): boolean {
@@ -1184,7 +1182,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   private updateDataSubscriptions() {
-    this.configuredDatasources = this.ctx.utils.validateDatasources(this.options.datasources);
+    this.configuredDatasources = this.ctx.dashboardUtils.validateAndUpdateDatasources(this.options.datasources);
     if (!this.ctx.aliasController) {
       this.configuredDatasources = deepClone(this.configuredDatasources);
       this.hasResolvedData = true;

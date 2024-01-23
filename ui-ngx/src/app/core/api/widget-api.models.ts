@@ -23,7 +23,7 @@ import {
   DatasourceType,
   KeyInfo,
   LegendConfig,
-  LegendData,
+  LegendData, TargetDevice,
   WidgetActionDescriptor,
   widgetType
 } from '@shared/models/widget.models';
@@ -57,6 +57,7 @@ import { IDashboardController } from '@home/components/dashboard-page/dashboard-
 import { PopoverPlacement } from '@shared/components/popover.models';
 import { PersistentRpc } from '@shared/models/rpc.models';
 import { EventEmitter } from '@angular/core';
+import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 
 export interface TimewindowFunctions {
   onUpdateTimewindow: (startTimeMs: number, endTimeMs: number, interval?: number) => void;
@@ -121,6 +122,8 @@ export interface IAliasController {
   getEntityAliasId(aliasName: string): string;
   getInstantAliasInfo(aliasId: string): AliasInfo;
   resolveSingleEntityInfo(aliasId: string): Observable<EntityInfo>;
+  resolveSingleEntityInfoForDeviceId(deviceId: string): Observable<EntityInfo>;
+  resolveSingleEntityInfoForTargetDevice(targetDevice: TargetDevice): Observable<EntityInfo>;
   resolveDatasources(datasources: Array<Datasource>, singleEntity?: boolean, pageSize?: number): Observable<Array<Datasource>>;
   resolveAlarmSource(alarmSource: Datasource): Observable<Datasource>;
   getEntityAliases(): EntityAliases;
@@ -208,6 +211,7 @@ export class WidgetSubscriptionContext {
   entityDataService: EntityDataService;
   alarmDataService: AlarmDataService;
   utils: UtilsService;
+  dashboardUtils: DashboardUtilsService;
   raf: RafService;
   widgetUtils: IWidgetUtils;
   getServerTimeDiff: () => Observable<number>;
@@ -250,6 +254,7 @@ export interface WidgetSubscriptionOptions {
   ignoreDataUpdateOnIntervalTick?: boolean;
   targetDeviceAliasIds?: Array<string>;
   targetDeviceIds?: Array<string>;
+  targetDevice?: TargetDevice;
   useDashboardTimewindow?: boolean;
   displayTimewindow?: boolean;
   timeWindowConfig?: Timewindow;
@@ -305,8 +310,7 @@ export interface IWidgetSubscription {
   alarms?: PageData<AlarmData>;
   alarmSource?: Datasource;
 
-  targetDeviceAliasIds?: Array<string>;
-  targetDeviceIds?: Array<string>;
+  targetEntityId?: EntityId;
 
   rpcEnabled?: boolean;
   executingRpcRequest?: boolean;

@@ -53,7 +53,13 @@ import { RafService } from '@core/services/raf.service';
 import { WidgetTypeId } from '@shared/models/id/widget-type-id';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { WidgetLayout } from '@shared/models/dashboard.models';
-import { createLabelFromDatasource, formatValue, hasDatasourceLabelsVariables, isDefined } from '@core/utils';
+import {
+  createLabelFromDatasource,
+  createLabelFromSubscriptionEntityInfo,
+  formatValue,
+  hasDatasourceLabelsVariables,
+  isDefined
+} from '@core/utils';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
@@ -482,9 +488,14 @@ export class LabelVariablePattern {
 
   update() {
     let label = this.pattern;
-    const datasource = this.ctx.defaultSubscription?.firstDatasource;
-    if (this.hasVariables && datasource) {
-      label = createLabelFromDatasource(datasource, label);
+    if (this.hasVariables) {
+      if (this.ctx.defaultSubscription?.type === widgetType.rpc) {
+        const entityInfo = this.ctx.defaultSubscription.getFirstEntityInfo();
+        label = createLabelFromSubscriptionEntityInfo(entityInfo, label);
+      } else {
+        const datasource = this.ctx.defaultSubscription?.firstDatasource;
+        label = createLabelFromDatasource(datasource, label);
+      }
     }
     if (this.labelSubject.value !== label) {
       this.labelSubject.next(label);
