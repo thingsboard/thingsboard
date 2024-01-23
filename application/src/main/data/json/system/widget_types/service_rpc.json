@@ -15,7 +15,7 @@
     "settingsSchema": "",
     "dataKeySettingsSchema": "{}\n",
     "settingsDirective": "tb-gateway-service-rpc-settings",
-    "defaultConfig": "{\"targetDeviceAliases\":[],\"showTitle\":true,\"backgroundColor\":\"#fff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"isConnector\":false},\"title\":\"Service RPC\"}"
+    "defaultConfig": "{\"targetDeviceAliases\":[],\"showTitle\":true,\"backgroundColor\":\"#fff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"margin\":\"0px\",\"borderRadius\":\"0px\",\"settings\":{\"isConnector\":false},\"title\":\"Service RPC\"}"
   },
   "tags": [
     "command",

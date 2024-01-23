@@ -15,7 +15,7 @@
     "settingsSchema": "",
     "dataKeySettingsSchema": "{}\n",
     "settingsDirective": "tb-update-device-attribute-widget-settings",
-    "defaultConfig": "{\"showTitle\":false,\"backgroundColor\":\"#e6e7e8\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"styleButton\":{\"isRaised\":true,\"isPrimary\":false},\"entityParameters\":\"{}\",\"entityAttributeType\":\"SERVER_SCOPE\",\"buttonText\":\"Update device attribute\"},\"title\":\"Update device attribute\",\"dropShadow\":true,\"enableFullscreen\":false,\"widgetStyle\":{},\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"useDashboardTimewindow\":true,\"showLegend\":false,\"actions\":{},\"targetDeviceAliases\":[]}"
+    "defaultConfig": "{\"showTitle\":false,\"backgroundColor\":\"#e6e7e8\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"margin\":\"0px\",\"borderRadius\":\"0px\",\"settings\":{\"styleButton\":{\"isRaised\":true,\"isPrimary\":false},\"entityParameters\":\"{}\",\"entityAttributeType\":\"SERVER_SCOPE\",\"buttonText\":\"Update device attribute\"},\"title\":\"Update device attribute\",\"dropShadow\":true,\"enableFullscreen\":false,\"widgetStyle\":{},\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"useDashboardTimewindow\":true,\"showLegend\":false,\"actions\":{},\"targetDeviceAliases\":[]}"
   },
   "externalId": null,
   "tags": [

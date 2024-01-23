@@ -15,7 +15,7 @@
     "settingsSchema": "",
     "dataKeySettingsSchema": "",
     "settingsDirective": "",
-    "defaultConfig": "{\"showTitle\":false,\"backgroundColor\":\"rgb(255, 255, 255)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"8px\",\"settings\":{},\"title\":\"Usage info\",\"dropShadow\":true,\"enableFullscreen\":false,\"widgetStyle\":{},\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showLegend\":false}"
+    "defaultConfig": "{\"showTitle\":false,\"backgroundColor\":\"rgb(255, 255, 255)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"8px\",\"margin\":\"0px\",\"borderRadius\":\"0px\",\"settings\":{},\"title\":\"Usage info\",\"dropShadow\":true,\"enableFullscreen\":false,\"widgetStyle\":{},\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showLegend\":false}"
   },
   "externalId": null,
   "tags": [
