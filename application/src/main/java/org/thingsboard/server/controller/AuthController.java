@@ -175,18 +175,14 @@ public class AuthController extends BaseController {
             @ApiParam(value = "The JSON object representing the reset password email request.")
             @RequestBody ResetPasswordEmailRequest resetPasswordByEmailRequest,
             HttpServletRequest request) throws ThingsboardException {
-        try {
-            String email = resetPasswordByEmailRequest.getEmail();
-            UserCredentials userCredentials = userService.requestPasswordReset(TenantId.SYS_TENANT_ID, email);
-            User user = userService.findUserById(TenantId.SYS_TENANT_ID, userCredentials.getUserId());
-            String baseUrl = systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), request);
-            String resetUrl = String.format("%s/api/noauth/resetPassword?resetToken=%s", baseUrl,
-                    userCredentials.getResetToken());
+        String email = resetPasswordByEmailRequest.getEmail();
+        UserCredentials userCredentials = userService.requestPasswordReset(TenantId.SYS_TENANT_ID, email);
+        User user = userService.findUserById(TenantId.SYS_TENANT_ID, userCredentials.getUserId());
+        String baseUrl = systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), request);
+        String resetUrl = String.format("%s/api/noauth/resetPassword?resetToken=%s", baseUrl,
+                userCredentials.getResetToken());
 
-            mailService.sendResetPasswordEmailAsync(resetUrl, email);
-        } catch (Exception e) {
-            throw new ThingsboardException("Failed to send reset password email: " + e.getMessage(), ThingsboardErrorCode.GENERAL);
-        }
+        mailService.sendResetPasswordEmailAsync(resetUrl, email);
     }
 
     @ApiOperation(value = "Check password reset token (checkResetToken)",
