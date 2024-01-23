@@ -10,6 +10,11 @@
     <logger name="org.thingsboard.server.dao" level="WARN"/>
     <logger name="org.testcontainers" level="INFO" />
 
+    <!-- Log Hibernate SQL queries -->
+    <logger name="org.hibernate.SQL" level="DEBUG"/>
+    <logger name="org.springframework.jdbc.core.JdbcTemplate" level="DEBUG"/>
+    <logger name="org.thingsboard.server.dao.sql.audit" level="DEBUG"/>
+
     <root level="WARN">
         <appender-ref ref="console"/>
     </root>

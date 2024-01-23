@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.sql.audit;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,6 +42,7 @@ import java.util.concurrent.TimeoutException;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+@Slf4j
 public class JpaAuditLogDaoTest extends AbstractJpaDaoTest {
     List<AuditLog> auditLogList = new ArrayList<>();
     UUID tenantId;
@@ -153,6 +155,7 @@ public class JpaAuditLogDaoTest extends AbstractJpaDaoTest {
         auditLog.setEntityId(entityId);
         auditLog.setUserName("AUDIT_LOG_" + number);
         auditLog.setActionType(actionType);
+        log.info("createAuditLog [{}]", auditLog);
         return auditLogDao.save(TenantId.fromUUID(tenantId), auditLog);
     }
 }
