@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.common.data.mobile;
 
 import lombok.Data;
 
+import java.util.Map;
+
 @Data
 public class UserMobileInfo {
-    private String fcmToken;
-    private long fcmTokenTimestamp;
+
+    private Map<String, MobileSessionInfo> sessions;
+
 }

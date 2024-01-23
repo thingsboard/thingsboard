@@ -31,13 +31,13 @@ import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.rule.engine.api.notification.FirebaseService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.UserMobileInfo;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.mobile.MobileSessionInfo;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
@@ -93,6 +93,7 @@ import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
@@ -108,8 +109,6 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
     private NotificationCenter notificationCenter;
     @Autowired
     private NotificationDao notificationDao;
-    @Autowired
-    private DbCallbackExecutorService executor;
     @Autowired
     private MicrosoftTeamsNotificationChannel microsoftTeamsNotificationChannel;
     @MockBean
@@ -726,14 +725,14 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         saveNotificationSettings(config);
 
         loginCustomerUser();
-        UserMobileInfo customerMobileInfo = new UserMobileInfo();
-        customerMobileInfo.setFcmToken("customerFcmToken");
-        doPost("/api/user/mobile/info", customerMobileInfo).andExpect(status().isOk());
+        mobileToken = "customerFcmToken";
+        doPost("/api/user/mobile/session", new MobileSessionInfo()).andExpect(status().isOk());
 
         loginTenantAdmin();
-        UserMobileInfo tenantMobileInfo = new UserMobileInfo();
-        tenantMobileInfo.setFcmToken("tenantFcmToken");
-        doPost("/api/user/mobile/info", tenantMobileInfo).andExpect(status().isOk());
+        mobileToken = "tenantFcmToken1";
+        doPost("/api/user/mobile/session", new MobileSessionInfo()).andExpect(status().isOk());
+        mobileToken = "tenantFcmToken2";
+        doPost("/api/user/mobile/session", new MobileSessionInfo()).andExpect(status().isOk());
 
         loginDifferentCustomer(); // with no mobile info
 
@@ -748,7 +747,19 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
                 .contains("doesn't use the mobile app");
 
         verify(firebaseService).sendMessage(eq(tenantId), eq("testCredentials"),
-                eq("tenantFcmToken"), eq("Title"), eq("Message"));
+                eq("tenantFcmToken1"), eq("Title"), eq("Message"));
+        verify(firebaseService).sendMessage(eq(tenantId), eq("testCredentials"),
+                eq("tenantFcmToken2"), eq("Title"), eq("Message"));
+        verify(firebaseService).sendMessage(eq(tenantId), eq("testCredentials"),
+                eq("customerFcmToken"), eq("Title"), eq("Message"));
+        verifyNoMoreInteractions(firebaseService);
+        clearInvocations(firebaseService);
+
+        doDelete("/api/user/mobile/session").andExpect(status().isOk());
+        request = submitNotificationRequest(List.of(target.getId()), template.getId(), 0);
+        awaitNotificationRequest(request.getId());
+        verify(firebaseService).sendMessage(eq(tenantId), eq("testCredentials"),
+                eq("tenantFcmToken1"), eq("Title"), eq("Message"));
         verify(firebaseService).sendMessage(eq(tenantId), eq("testCredentials"),
                 eq("customerFcmToken"), eq("Title"), eq("Message"));
         verifyNoMoreInteractions(firebaseService);

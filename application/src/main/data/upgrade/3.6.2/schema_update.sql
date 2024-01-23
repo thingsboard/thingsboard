@@ -33,5 +33,3 @@ $$
         END IF;
     END;
 $$;
-
-CREATE INDEX IF NOT EXISTS idx_user_settings_mobile_fcm_token ON user_settings ((settings ->> 'fcmToken')) WHERE type = 'MOBILE';
