@@ -772,7 +772,7 @@ public class DefaultTransportService extends TransportActivityManager implements
     }
 
     private void recordActivityInternal(TransportProtos.SessionInfoProto sessionInfo) {
-        onActivity(toSessionId(sessionInfo), getCurrentTimeMillis());
+        onActivity(toSessionId(sessionInfo), sessionInfo, getCurrentTimeMillis());
     }
 
     @Override
@@ -931,8 +931,8 @@ public class DefaultTransportService extends TransportActivityManager implements
                     Optional<Tenant> profileOpt = dataDecodingEncodingService.decode(msg.getData().toByteArray());
                     if (profileOpt.isPresent()) {
                         Tenant tenant = profileOpt.get();
-                        partitionService.removeTenant(tenant.getId());
                         boolean updated = tenantProfileCache.put(tenant.getId(), tenant.getTenantProfileId());
+                        partitionService.evictTenantInfo(tenant.getId());
                         if (updated) {
                             rateLimitService.update(tenant.getId());
                         }
@@ -957,7 +957,9 @@ public class DefaultTransportService extends TransportActivityManager implements
                 } else if (EntityType.TENANT_PROFILE.equals(entityType)) {
                     tenantProfileCache.remove(new TenantProfileId(entityUuid));
                 } else if (EntityType.TENANT.equals(entityType)) {
-                    rateLimitService.remove(TenantId.fromUUID(entityUuid));
+                    TenantId tenantId = TenantId.fromUUID(entityUuid);
+                    rateLimitService.remove(tenantId);
+                    partitionService.removeTenant(tenantId);
                 } else if (EntityType.DEVICE.equals(entityType)) {
                     rateLimitService.remove(new DeviceId(entityUuid));
                     onDeviceDeleted(new DeviceId(entityUuid));

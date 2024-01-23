@@ -13,24 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.monitoring.config.transport;
+package org.thingsboard.server.service.edge.rpc.constructor.alarm;
 
-import lombok.Data;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.alarm.AlarmComment;
+import org.thingsboard.server.gen.edge.v1.AlarmCommentUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 
-@Data
-public class TransportInfo {
-
-    private final TransportType transportType;
-    private final String baseUrl;
-    private final String queue;
+public abstract class BaseAlarmMsgConstructor implements AlarmMsgConstructor {
 
     @Override
-    public String toString() {
-        if (queue.equals("Main")) {
-            return String.format("*%s* (%s)", transportType.getName(), baseUrl);
-        } else {
-            return String.format("*%s* (%s) _%s_", transportType.getName(), baseUrl, queue);
-        }
+    public AlarmCommentUpdateMsg constructAlarmCommentUpdatedMsg(UpdateMsgType msgType, AlarmComment alarmComment) {
+        return AlarmCommentUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(alarmComment)).build();
     }
-
 }

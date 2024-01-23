@@ -25,7 +25,7 @@ public class ServiceRecoveryNotification implements Notification {
 
     @Override
     public String getText() {
-        return String.format("[%s] is OK", serviceKey);
+        return String.format("%s is OK", serviceKey);
     }
 
 }
