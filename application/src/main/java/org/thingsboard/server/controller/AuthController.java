@@ -185,7 +185,7 @@ public class AuthController extends BaseController {
 
             mailService.sendResetPasswordEmailAsync(resetUrl, email);
         } catch (Exception e) {
-            log.warn("Error occurred: {}", e.getMessage());
+            throw new ThingsboardException("Failed to send reset password email: " + e.getMessage(), ThingsboardErrorCode.GENERAL);
         }
     }
 
