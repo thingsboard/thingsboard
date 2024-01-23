@@ -73,7 +73,6 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
               @Inject(WINDOW) private window: Window,
               private activeComponentService: ActiveComponentService,
               private fb: FormBuilder,
-              private route: ActivatedRoute,
               public breakpointObserver: BreakpointObserver) {
     super(store);
   }
