@@ -48,6 +48,9 @@ export class RepositorySettingsComponent extends PageComponent implements OnInit
   @Input()
   popoverComponent: TbPopoverComponent;
 
+  @Input()
+  hideLoadingBar = false;
+
   repositorySettingsForm: UntypedFormGroup;
   settings: RepositorySettings = null;
 

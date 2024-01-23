@@ -234,6 +234,7 @@ export const widgetsLibraryRoutes: Routes = [
     component: RouterTabsComponent,
     data: {
       auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+      showLoadingBar: true,
       breadcrumb: {
         label: 'widget.widget-library',
         icon: 'now_widgets'

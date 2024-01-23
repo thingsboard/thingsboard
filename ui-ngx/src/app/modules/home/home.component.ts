@@ -32,6 +32,8 @@ import { instanceOfSearchableComponent, ISearchableComponent } from '@home/model
 import { ActiveComponentService } from '@core/services/active-component.service';
 import { RouterTabsComponent } from '@home/components/router-tabs.component';
 import { FormBuilder } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
+import { isDefined, isDefinedAndNotNull } from '@core/utils';
 
 @Component({
   selector: 'tb-home',
@@ -70,8 +72,9 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
   constructor(protected store: Store<AppState>,
               @Inject(WINDOW) private window: Window,
               private activeComponentService: ActiveComponentService,
-              public breakpointObserver: BreakpointObserver,
-              private fb: FormBuilder) {
+              private fb: FormBuilder,
+              private route: ActivatedRoute,
+              public breakpointObserver: BreakpointObserver) {
     super(store);
   }
 
@@ -144,9 +147,20 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
 
   private updateActiveComponent(activeComponent: any) {
     this.showSearch = false;
+    this.hideLoadingBar = false;
     this.textSearch.reset('', {emitEvent: false});
     this.activeComponent = activeComponent;
-    this.hideLoadingBar = activeComponent && activeComponent instanceof RouterTabsComponent;
+    let showLoadingBar: boolean;
+    if (isDefined(this.route.children[0]?.snapshot?.data?.showLoadingBar)) {
+      showLoadingBar = this.route.children[0]?.snapshot?.data?.showLoadingBar;
+    } else if (isDefined(this.route.children[0]?.children[0]?.snapshot?.data?.showLoadingBar)) {
+      showLoadingBar = this.route.children[0]?.children[0]?.snapshot?.data?.showLoadingBar;
+    }
+    if (activeComponent && activeComponent instanceof RouterTabsComponent) {
+      this.hideLoadingBar = isDefinedAndNotNull(showLoadingBar) ? !showLoadingBar : true;
+    } else if (isDefinedAndNotNull(showLoadingBar)) {
+      this.hideLoadingBar = !showLoadingBar;
+    }
     if (this.activeComponent && instanceOfSearchableComponent(this.activeComponent)) {
       this.searchEnabled = true;
       this.searchableComponent = this.activeComponent;

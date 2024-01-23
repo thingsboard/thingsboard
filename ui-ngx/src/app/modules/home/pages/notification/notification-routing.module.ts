@@ -32,6 +32,7 @@ const routes: Routes = [
     component: RouterTabsComponent,
     data: {
       auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER, Authority.SYS_ADMIN],
+      showLoadingBar: true,
       breadcrumb: {
         label: 'notification.notification-center',
         icon: 'mdi:message-badge'

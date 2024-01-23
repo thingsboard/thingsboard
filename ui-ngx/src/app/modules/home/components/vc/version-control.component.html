@@ -15,9 +15,11 @@
     limitations under the License.
 
 -->
-<tb-repository-settings #repositorySettingsComponent [detailsMode]="detailsMode"
+<tb-repository-settings #repositorySettingsComponent
+                        [detailsMode]="detailsMode"
+                        [hideLoadingBar]="true"
                         [popoverComponent]="popoverComponent"
-  *ngIf="!(hasRepository$ | async); else versionsTable">
+                        *ngIf="!(hasRepository$ | async); else versionsTable">
 </tb-repository-settings>
 <ng-template #versionsTable>
   <tb-entity-versions-table [singleEntityMode]="singleEntityMode"

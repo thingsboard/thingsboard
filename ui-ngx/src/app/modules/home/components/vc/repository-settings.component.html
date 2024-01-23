@@ -26,7 +26,7 @@
       <span fxFlex></span>
       <div tb-help="repositorySettings"></div>
     </mat-card-header>
-    <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+    <mat-progress-bar color="warn" mode="indeterminate" *ngIf="!hideLoadingBar && isLoading$ | async">
     </mat-progress-bar>
     <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
     <mat-card-content style="padding-top: 16px;">

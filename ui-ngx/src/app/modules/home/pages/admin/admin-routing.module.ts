@@ -323,6 +323,7 @@ const routes: Routes = [
         canDeactivate: [ConfirmOnExitGuard],
         data: {
           auth: [Authority.SYS_ADMIN],
+          showLoadingBar: false,
           title: 'admin.general',
           breadcrumb: {
             label: 'admin.general',
@@ -336,6 +337,7 @@ const routes: Routes = [
         canDeactivate: [ConfirmOnExitGuard],
         data: {
           auth: [Authority.SYS_ADMIN],
+          showLoadingBar: false,
           title: 'admin.2fa.2fa',
           breadcrumb: {
             label: 'admin.2fa.2fa',
@@ -349,6 +351,7 @@ const routes: Routes = [
         canDeactivate: [ConfirmOnExitGuard],
         data: {
           auth: [Authority.SYS_ADMIN],
+          showLoadingBar: false,
           title: 'admin.oauth2.oauth2',
           breadcrumb: {
             label: 'admin.oauth2.oauth2',
