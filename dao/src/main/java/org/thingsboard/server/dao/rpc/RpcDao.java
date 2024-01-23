@@ -30,5 +30,6 @@ public interface RpcDao extends Dao<Rpc> {
 
     PageData<Rpc> findAllRpcByTenantId(TenantId tenantId, PageLink pageLink);
 
-    Long deleteOutdatedRpcByTenantId(TenantId tenantId, Long expirationTime);
+    int deleteOutdatedRpcByTenantId(TenantId tenantId, Long expirationTime);
+
 }
