@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,26 @@
 package org.thingsboard.server.common.data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Schema
 @Slf4j
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class ImageExportData {
 
-    private final String mediaType;
-    private final String fileName;
-    private final String title;
-    private final String resourceKey;
-    private final boolean isPublic;
-    private final String publicResourceKey;
-    private final String data;
+    private String mediaType;
+    private String fileName;
+    private String title;
+    private String resourceKey;
+    private boolean isPublic;
+    private String publicResourceKey;
+    private String data;
 
 }

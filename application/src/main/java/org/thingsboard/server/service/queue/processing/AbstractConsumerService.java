@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.service.queue.processing;
 
-import com.google.protobuf.ByteString;
+import lombok.RequiredArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -44,7 +44,6 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.util.AfterStartUp;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
@@ -72,7 +71,6 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     protected volatile boolean stopped = false;
     protected volatile boolean isReady = false;
     protected final ActorSystemContext actorContext;
-    protected final DataDecodingEncodingService encodingService;
     protected final TbTenantProfileCache tenantProfileCache;
     protected final TbDeviceProfileCache deviceProfileCache;
     protected final TbAssetProfileCache assetProfileCache;
@@ -150,12 +148,6 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
             }
             log.info("TB Notifications Consumer stopped.");
         });
-    }
-
-    // To be removed in 3.6.1 in favour of handleComponentLifecycleMsg(UUID id, TbActorMsg actorMsg)
-    protected void handleComponentLifecycleMsg(UUID id, ByteString nfMsg) {
-        Optional<TbActorMsg> actorMsgOpt = encodingService.decode(nfMsg.toByteArray());
-        actorMsgOpt.ifPresent(tbActorMsg -> handleComponentLifecycleMsg(id, tbActorMsg));
     }
 
     protected void handleComponentLifecycleMsg(UUID id, TbActorMsg actorMsg) {

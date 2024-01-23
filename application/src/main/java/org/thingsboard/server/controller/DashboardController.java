@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -532,7 +532,7 @@ public class DashboardController extends BaseController {
         }
         Tenant tenant = tenantService.findTenantById(getTenantId());
         JsonNode additionalInfo = tenant.getAdditionalInfo();
-        if (additionalInfo == null || !(additionalInfo instanceof ObjectNode)) {
+        if (!(additionalInfo instanceof ObjectNode)) {
             additionalInfo = JacksonUtil.newObjectNode();
         }
         if (homeDashboardInfo.getDashboardId() != null) {
@@ -558,8 +558,7 @@ public class DashboardController extends BaseController {
                 }
                 return new HomeDashboardInfo(dashboardId, hideDashboardToolbar);
             }
-        } catch (Exception e) {
-        }
+        } catch (Exception ignored) {}
         return null;
     }
 
@@ -575,8 +574,7 @@ public class DashboardController extends BaseController {
                 }
                 return new HomeDashboard(dashboard, hideDashboardToolbar);
             }
-        } catch (Exception e) {
-        }
+        } catch (Exception ignored) {}
         return null;
     }
 

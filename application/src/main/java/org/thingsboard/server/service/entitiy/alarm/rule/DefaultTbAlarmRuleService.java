@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.AlarmRuleId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
 @Service
@@ -34,13 +33,12 @@ public class DefaultTbAlarmRuleService extends AbstractTbEntityService implement
         ActionType actionType = isCreated ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = alarmRule.getTenantId();
         try {
-            AlarmRule savedAlarmRule = checkNotNull(alarmRuleService.saveAlarmRule(tenantId, alarmRule));
+            AlarmRule savedAlarmRule = alarmRuleService.saveAlarmRule(tenantId, alarmRule);
 //            autoCommit(user, savedAlarmRule.getId());
-            notificationEntityService.logEntityAction(tenantId, savedAlarmRule.getId(), savedAlarmRule, null, actionType, user);
-            tbClusterService.onAlarmRuleChange(savedAlarmRule, isCreated ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+            logEntityActionService.logEntityAction(tenantId, savedAlarmRule.getId(), savedAlarmRule, null, actionType, user);
             return savedAlarmRule;
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ALARM_RULE), alarmRule, actionType, user, e);
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.ALARM_RULE), alarmRule, actionType, user, e);
             throw e;
         }
     }
@@ -51,12 +49,9 @@ public class DefaultTbAlarmRuleService extends AbstractTbEntityService implement
         AlarmRuleId alarmRuleId = alarmRule.getId();
         try {
             alarmRuleService.deleteAlarmRule(tenantId, alarmRuleId);
-            notificationEntityService.logEntityAction(tenantId, alarmRuleId, alarmRule, null,
-                    ActionType.DELETED, null, user, alarmRuleId.toString());
-            tbClusterService.onAlarmRuleChange(alarmRule, ComponentLifecycleEvent.DELETED);
+            logEntityActionService.logEntityAction(tenantId, alarmRuleId, alarmRule, null, ActionType.DELETED, null, user, alarmRuleId.toString());
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.ALARM_RULE), ActionType.DELETED,
-                    user, e, alarmRuleId.toString());
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.ALARM_RULE), ActionType.DELETED, user, e, alarmRuleId.toString());
             throw e;
         }
     }

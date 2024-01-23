@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 
@@ -50,13 +52,17 @@ public class BaseAlarmRuleService extends AbstractEntityService implements Alarm
     @Override
     public AlarmRule saveAlarmRule(TenantId tenantId, AlarmRule alarmRule) {
         alarmRuleDataValidator.validate(alarmRule, AlarmRule::getTenantId);
-        return alarmRuleDao.save(tenantId, alarmRule);
+        AlarmRule saved = alarmRuleDao.save(tenantId, alarmRule);
+        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(saved.getId()).created(alarmRule.getId() == null).build());
+        return saved;
     }
 
     @Override
     public void deleteAlarmRule(TenantId tenantId, AlarmRuleId alarmRuleId) {
         log.debug("Deleting AlarmRule Id: {}", alarmRuleId);
         alarmRuleDao.removeById(tenantId, alarmRuleId.getId());
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId)
+                .entityId(alarmRuleId).build());
     }
 
     @Override

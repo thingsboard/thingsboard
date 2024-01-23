@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
+import org.thingsboard.server.common.data.kv.IntervalType;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
@@ -51,6 +52,7 @@ import org.thingsboard.server.dao.nosql.TbResultSet;
 import org.thingsboard.server.dao.nosql.TbResultSetFuture;
 import org.thingsboard.server.dao.sqlts.AggregationTimeseriesDao;
 import org.thingsboard.server.dao.util.NoSqlTsDao;
+import org.thingsboard.server.dao.util.TimeUtils;
 
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
@@ -227,18 +229,24 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
 
     @Override
     public ListenableFuture<ReadTsKvQueryResult> findAllAsync(TenantId tenantId, EntityId entityId, ReadTsKvQuery query) {
-        if (query.getAggregation() == Aggregation.NONE) {
+        var aggParams = query.getAggParameters();
+        if (Aggregation.NONE.equals(aggParams.getAggregation())) {
             return findAllAsyncWithLimit(tenantId, entityId, query);
         } else {
             long startPeriod = query.getStartTs();
             long endPeriod = Math.max(query.getStartTs() + 1, query.getEndTs());
-            long step = Math.max(query.getInterval(), MIN_AGGREGATION_STEP_MS);
             List<ListenableFuture<Optional<TsKvEntryAggWrapper>>> futures = new ArrayList<>();
+            var intervalType = aggParams.getIntervalType();
             while (startPeriod < endPeriod) {
                 long startTs = startPeriod;
-                long endTs = Math.min(startPeriod + step, endPeriod);
-                long ts = endTs - startTs;
-                ReadTsKvQuery subQuery = new BaseReadTsKvQuery(query.getKey(), startTs, endTs, ts, 1, query.getAggregation(), query.getOrder());
+                long endTs;
+                if (IntervalType.MILLISECONDS.equals(intervalType)) {
+                    endTs = startPeriod + Math.max(query.getInterval(), MIN_AGGREGATION_STEP_MS);
+                } else {
+                    endTs = TimeUtils.calculateIntervalEnd(startTs, aggParams.getIntervalType(), aggParams.getTzId());
+                }
+                endTs = Math.min(endTs, endPeriod);
+                ReadTsKvQuery subQuery = new BaseReadTsKvQuery(query.getKey(), startTs, endTs, endTs - startTs, 1, query.getAggregation(), query.getOrder());
                 futures.add(findAndAggregateAsync(tenantId, entityId, subQuery, toPartitionTs(startTs), toPartitionTs(endTs)));
                 startPeriod = endTs;
             }

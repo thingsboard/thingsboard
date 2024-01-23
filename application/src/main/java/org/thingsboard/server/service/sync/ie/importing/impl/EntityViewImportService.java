@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,8 +64,6 @@ public class EntityViewImportService extends BaseEntityImportService<EntityViewI
     protected void onEntitySaved(User user, EntityView savedEntityView, EntityView oldEntityView) throws ThingsboardException {
         tbEntityViewService.updateEntityViewAttributes(user.getTenantId(), savedEntityView, oldEntityView, user);
         super.onEntitySaved(user, savedEntityView, oldEntityView);
-        clusterService.broadcastEntityStateChangeEvent(savedEntityView.getTenantId(), savedEntityView.getId(),
-                oldEntityView == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
     }
 
     @Override

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -630,8 +630,7 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
         DeviceProfile importedDeviceProfile = (DeviceProfile) importEntity(tenantAdmin2, getAndClone(entitiesExportData, EntityType.DEVICE_PROFILE)).getSavedEntity();
         verify(entityActionService).logEntityAction(any(), eq(importedDeviceProfile.getId()), eq(importedDeviceProfile),
                 any(), eq(ActionType.ADDED), isNull());
-        verify(tbClusterService).onDeviceProfileChange(eq(importedDeviceProfile), any());
-        verify(tbClusterService).broadcastEntityStateChangeEvent(any(), eq(importedDeviceProfile.getId()), eq(ComponentLifecycleEvent.CREATED));
+        verify(tbClusterService).onDeviceProfileChange(eq(importedDeviceProfile), any(), any());
         verify(tbClusterService).sendNotificationMsgToEdge(any(), any(), eq(importedDeviceProfile.getId()), any(), any(), eq(EdgeEventActionType.ADDED), any());
         verify(otaPackageStateService).update(eq(importedDeviceProfile), eq(false), eq(false));
 

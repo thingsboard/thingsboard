@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.telemetry;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,8 +24,10 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.AttributeScope;
@@ -40,7 +41,6 @@ import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
-import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -53,7 +53,7 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.willCallRealMethod;
 import static org.mockito.Mockito.mock;
@@ -64,7 +64,7 @@ import static org.mockito.Mockito.when;
 import static org.thingsboard.server.common.data.DataConstants.NOTIFY_DEVICE_METADATA_KEY;
 
 @Slf4j
-class TbMsgAttributesNodeTest {
+class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private TenantId tenantId;
     private DeviceId deviceId;
@@ -222,21 +222,9 @@ class TbMsgAttributesNodeTest {
         );
     }
 
-    @ParameterizedTest
-    @MethodSource
-    void givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig(int givenVersion, String givenConfigStr, boolean hasChanges, String expectedConfigStr) throws TbNodeException {
-        // GIVEN
-        willCallRealMethod().given(node).upgrade(anyInt(), any());
-        JsonNode givenConfig = JacksonUtil.toJsonNode(givenConfigStr);
-        JsonNode expectedConfig = JacksonUtil.toJsonNode(expectedConfigStr);
-
-        // WHEN
-        TbPair<Boolean, JsonNode> upgradeResult = node.upgrade(givenVersion, givenConfig);
-
-        // THEN
-        assertThat(upgradeResult.getFirst()).isEqualTo(hasChanges);
-        ObjectNode upgradedConfig = (ObjectNode) upgradeResult.getSecond();
-        assertThat(upgradedConfig).isEqualTo(expectedConfig);
+    @Override
+    protected TbNode getTestNode() {
+        return node;
     }
 
 }

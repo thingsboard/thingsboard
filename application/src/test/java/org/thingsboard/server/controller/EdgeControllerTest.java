@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,9 +157,9 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertEquals(NULL_UUID, savedEdge.getCustomerId().getId());
         Assert.assertEquals(edge.getName(), savedEdge.getName());
 
-        testNotifyEntityBroadcastEntityStateChangeEventOneTimeMsgToEdgeServiceNever(savedEdge, savedEdge.getId(), savedEdge.getId(),
+        testNotifyEntityBroadcastEntityStateChangeEventManyTimeMsgToEdgeServiceNever(savedEdge, savedEdge.getId(), savedEdge.getId(),
                 tenantId, tenantAdminUser.getCustomerId(), tenantAdminUser.getId(), tenantAdminUser.getEmail(),
-                ActionType.ADDED);
+                ActionType.ADDED, 2);
 
         savedEdge.setName("My new edge");
         doPost("/api/edge", savedEdge, Edge.class);
@@ -167,9 +167,9 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Edge foundEdge = doGet("/api/edge/" + savedEdge.getId().getId().toString(), Edge.class);
         Assert.assertEquals(foundEdge.getName(), savedEdge.getName());
 
-        testNotifyEntityBroadcastEntityStateChangeEventOneTimeMsgToEdgeServiceNever(foundEdge, foundEdge.getId(), foundEdge.getId(),
+        testNotifyEntityBroadcastEntityStateChangeEventManyTimeMsgToEdgeServiceNever(foundEdge, foundEdge.getId(), foundEdge.getId(),
                 tenantId, tenantAdminUser.getCustomerId(), tenantAdminUser.getId(), tenantAdminUser.getEmail(),
-                ActionType.UPDATED);
+                ActionType.UPDATED, 1);
     }
 
     @Test
@@ -262,9 +262,9 @@ public class EdgeControllerTest extends AbstractControllerTest {
         doDelete("/api/edge/" + savedEdge.getId().getId().toString())
                 .andExpect(status().isOk());
 
-        testNotifyEntityBroadcastEntityStateChangeEventOneTimeMsgToEdgeServiceNever(savedEdge, savedEdge.getId(), savedEdge.getId(),
+        testNotifyEntityBroadcastEntityStateChangeEventManyTimeMsgToEdgeServiceNever(savedEdge, savedEdge.getId(), savedEdge.getId(),
                 tenantId, tenantAdminUser.getCustomerId(), tenantAdminUser.getId(), tenantAdminUser.getEmail(),
-                ActionType.DELETED, savedEdge.getId().getId().toString());
+                ActionType.DELETED, 1, savedEdge.getId().getId().toString());
 
         doGet("/api/edge/" + savedEdge.getId().getId().toString())
                 .andExpect(status().isNotFound())
@@ -864,6 +864,8 @@ public class EdgeControllerTest extends AbstractControllerTest {
         doPost("/api/admin/jwtSettings", settings).andExpect(status().isOk());
         loginTenantAdmin();
 
+        Edge edge = doPost("/api/edge", constructEdge("Test Sync Edge", "test"), Edge.class);
+
         Asset asset = new Asset();
         asset.setName("Test Sync Edge Asset 1");
         asset.setType("test");
@@ -873,8 +875,6 @@ public class EdgeControllerTest extends AbstractControllerTest {
         device.setName("Test Sync Edge Device 1");
         device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
-
-        Edge edge = doPost("/api/edge", constructEdge("Test Sync Edge", "test"), Edge.class);
 
         simulateEdgeActivation(edge);
 

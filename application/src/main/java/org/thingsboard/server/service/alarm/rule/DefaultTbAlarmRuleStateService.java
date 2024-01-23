@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTbAlarmRuleStateServiceMsg;
@@ -60,7 +61,6 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbAlarmRulesQueueFactory;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.alarm.rule.state.PersistedEntityState;
 import org.thingsboard.server.service.alarm.rule.store.AlarmRuleEntityStateStore;
@@ -106,7 +106,6 @@ public class DefaultTbAlarmRuleStateService extends TbApplicationEventListener<P
     //    private final RelationService relationService;
     private final TbDeviceProfileCache deviceProfileCache;
     private final TbAssetProfileCache assetProfileCache;
-    private final DataDecodingEncodingService encodingService;
 
     //    private final TbQueueProducerProvider producerProvider;
     private final TbAlarmRulesQueueFactory queueFactory;
@@ -181,7 +180,7 @@ public class DefaultTbAlarmRuleStateService extends TbApplicationEventListener<P
         if (entityState != null) {
             entityState.getLock().lock();
             try {
-                EntityId currentProfileId = entity.getProfileId();
+                EntityId currentProfileId = entityState.getProfileId();
                 if (!currentProfileId.equals(entity.getProfileId())) {
                     List<AlarmRule> oldAlarmRules = entityState.getAlarmRules();
                     List<AlarmRule> newAlarmRules = getAlarmRulesForEntity(tenantId, entityId);
@@ -401,9 +400,16 @@ public class DefaultTbAlarmRuleStateService extends TbApplicationEventListener<P
 
         if (msgProto.hasEntityUpdateMsg()) {
             TransportProtos.EntityUpdateMsg entityUpdateMsg = msgProto.getEntityUpdateMsg();
-            HasProfileId<?> entity = (HasProfileId) encodingService.decode(entityUpdateMsg.getData().toByteArray()).get();
-
-            processEntityUpdated(tenantId, ((HasId<? extends EntityId>) entity).getId(), entity);
+            switch (entityUpdateMsg.getEntityUpdateCase()) {
+                case DEVICE -> {
+                    var device = ProtoUtils.fromProto(entityUpdateMsg.getDevice());
+                    processEntityUpdated(tenantId, device.getId(), device);
+                }
+                case ASSET -> {
+                    var asset = ProtoUtils.fromProto(entityUpdateMsg.getAsset());
+                    processEntityUpdated(tenantId, asset.getId(), asset);
+                }
+            }
         } else if (msgProto.hasEntityDeleteMsg()) {
             TransportProtos.EntityDeleteMsg entityDeleteMsg = msgProto.getEntityDeleteMsg();
             EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityDeleteMsg.getEntityType(),

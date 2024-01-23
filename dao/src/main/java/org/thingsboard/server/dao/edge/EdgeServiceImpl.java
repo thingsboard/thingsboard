@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -49,7 +48,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageDataIterableByTenantIdEntityId;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -58,13 +56,14 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
-import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
 
 import jakarta.annotation.Nullable;
@@ -103,9 +102,6 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
 
     @Autowired
     private RelationService relationService;
-
-    @Autowired
-    private TenantService tenantService;
 
     @Autowired
     private DataValidator<Edge> edgeValidator;
@@ -168,8 +164,10 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
         Edge oldEdge = edgeValidator.validate(edge, Edge::getTenantId);
         EdgeCacheEvictEvent evictEvent = new EdgeCacheEvictEvent(edge.getTenantId(), edge.getName(), oldEdge != null ? oldEdge.getName() : null);
         try {
-            var savedEdge = edgeDao.save(edge.getTenantId(), edge);
+            Edge savedEdge = edgeDao.save(edge.getTenantId(), edge);
             publishEvictEvent(evictEvent);
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedEdge.getTenantId())
+                    .entityId(savedEdge.getId()).entity(savedEdge).created(edge.getId() == null).build());
             return savedEdge;
         } catch (Exception t) {
             handleEvictEvent(evictEvent);
@@ -217,6 +215,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
 
         edgeDao.removeById(tenantId, edgeId.getId());
 
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(edgeId).build());
         publishEvictEvent(new EdgeCacheEvictEvent(edge.getTenantId(), edge.getName(), null));
     }
 

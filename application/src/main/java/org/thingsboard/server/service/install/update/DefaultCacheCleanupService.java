@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,7 +96,7 @@ public class DefaultCacheCleanupService implements CacheCleanupService {
                 clearCacheByName(RESOURCE_INFO_CACHE);
                 break;
             case "3.6.3":
-                log.info("Clearing cache to upgrade from version 3.6.3 to 3.7.0 ...");
+                log.info("Clearing cache to upgrade from version 3.6.3 to 3.7.0");
                 clearAll();
                 break;
             default:

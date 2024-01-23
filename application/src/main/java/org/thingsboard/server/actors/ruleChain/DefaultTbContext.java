@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,6 @@ import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -185,7 +184,7 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public void enqueue(TbMsg tbMsg, Runnable onSuccess, Consumer<Throwable> onFailure) {
-        TopicPartitionInfo tpi = mainCtx.resolve(ServiceType.TB_RULE_ENGINE, getTenantId(), tbMsg.getOriginator());
+        TopicPartitionInfo tpi = mainCtx.resolve(ServiceType.TB_RULE_ENGINE, getQueueName(), getTenantId(), tbMsg.getOriginator());
         enqueue(tpi, tbMsg, onFailure, onSuccess);
     }
 
@@ -310,7 +309,7 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public boolean isLocalEntity(EntityId entityId) {
-        return mainCtx.resolve(ServiceType.TB_RULE_ENGINE, getTenantId(), entityId).isMyPartition();
+        return mainCtx.resolve(ServiceType.TB_RULE_ENGINE, getQueueName(), getTenantId(), entityId).isMyPartition();
     }
 
     private void scheduleMsgWithDelay(TbActorMsg msg, long delayInMs, TbActorRef target) {
@@ -447,11 +446,6 @@ class DefaultTbContext implements TbContext {
         return entityActionMsg(originator, tbMsgMetaData, msgData, actionMsgType, profile);
     }
 
-    @Override
-    public void onEdgeEventUpdate(TenantId tenantId, EdgeId edgeId) {
-        mainCtx.getClusterService().onEdgeEventUpdate(tenantId, edgeId);
-    }
-
     public <E, I extends EntityId> TbMsg entityActionMsg(E entity, I id, RuleNodeId ruleNodeId, TbMsgType actionMsgType) {
         return entityActionMsg(entity, id, ruleNodeId, actionMsgType, null);
     }
@@ -507,6 +501,11 @@ class DefaultTbContext implements TbContext {
     @Override
     public String getRuleChainName() {
         return ruleChainName;
+    }
+
+    @Override
+    public String getQueueName() {
+        return getSelf().getQueueName();
     }
 
     @Override

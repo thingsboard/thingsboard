@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,6 +121,14 @@ public class JacksonUtil {
     public static <T> T fromBytes(byte[] bytes, Class<T> clazz) {
         try {
             return bytes != null ? OBJECT_MAPPER.readValue(bytes, clazz) : null;
+        } catch (IOException e) {
+            throw new IllegalArgumentException("The given string value cannot be transformed to Json object: " + Arrays.toString(bytes), e);
+        }
+    }
+
+    public static <T> T fromBytes(byte[] bytes, TypeReference<T> valueTypeRef) {
+        try {
+            return bytes != null ? OBJECT_MAPPER.readValue(bytes, valueTypeRef) : null;
         } catch (IOException e) {
             throw new IllegalArgumentException("The given string value cannot be transformed to Json object: " + Arrays.toString(bytes), e);
         }

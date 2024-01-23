@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -60,6 +60,7 @@ import { TranslateService } from '@ngx-translate/core';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
+import { DataEntry } from '@shared/models/widget.models';
 
 @Component({
   selector: 'tb-liquid-level-widget',
@@ -399,7 +400,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
     return limits.min + (percentage / 100) * (limits.max - limits.min);
   }
 
-  private updateTooltip(value: [number, any]): void {
+  private updateTooltip(value: DataEntry): void {
     this.tooltipContent = this.getTooltipContent(value);
 
     if (this.tooltip) {
@@ -494,7 +495,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
     }
   }
 
-  private getTooltipContent(value?: [number, any]): string {
+  private getTooltipContent(value?: DataEntry): string {
     const contentValue = value || [0, ''];
     let tooltipValue: string | number = 'N/A';
 

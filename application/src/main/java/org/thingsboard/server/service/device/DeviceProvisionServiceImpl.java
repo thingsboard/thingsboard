@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.AttributeScope;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
@@ -82,7 +80,6 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
     private static final String DEVICE_PROVISION_STATE = "provisionState";
     private static final String PROVISIONED_STATE = "provisioned";
 
-    private final TbClusterService clusterService;
     private final DeviceProfileService deviceProfileService;
     private final DeviceService deviceService;
     private final DeviceCredentialsService deviceCredentialsService;
@@ -90,9 +87,8 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
     private final AuditLogService auditLogService;
     private final PartitionService partitionService;
 
-    public DeviceProvisionServiceImpl(TbQueueProducerProvider producerProvider, TbClusterService clusterService, DeviceProfileService deviceProfileService, DeviceService deviceService, DeviceCredentialsService deviceCredentialsService, AttributesService attributesService, AuditLogService auditLogService, PartitionService partitionService) {
+    public DeviceProvisionServiceImpl(TbQueueProducerProvider producerProvider, DeviceProfileService deviceProfileService, DeviceService deviceService, DeviceCredentialsService deviceCredentialsService, AttributesService attributesService, AuditLogService auditLogService, PartitionService partitionService) {
         ruleEngineMsgProducer = producerProvider.getRuleEngineMsgProducer();
-        this.clusterService = clusterService;
         this.deviceProfileService = deviceProfileService;
         this.deviceService = deviceService;
         this.deviceCredentialsService = deviceCredentialsService;
@@ -221,7 +217,6 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
                 provisionRequest.setDeviceName(newDeviceName);
             }
             Device savedDevice = deviceService.saveDevice(provisionRequest, profile);
-            clusterService.onDeviceUpdated(savedDevice, null);
             saveProvisionStateAttribute(savedDevice).get();
             pushDeviceCreatedEventToRuleEngine(savedDevice);
             notify(savedDevice, provisionRequest, TbMsgType.PROVISION_SUCCESS, true);
