@@ -24,6 +24,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -37,8 +38,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.attributes.AttributesService;
 
-import java.util.List;
-import java.util.Map;
+import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -51,6 +51,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.thingsboard.rule.engine.util.GpsGeofencingEvents.ENTERED;
 import static org.thingsboard.rule.engine.util.GpsGeofencingEvents.INSIDE;
+import static org.thingsboard.rule.engine.util.GpsGeofencingEvents.LEFT;
+import static org.thingsboard.rule.engine.util.GpsGeofencingEvents.OUTSIDE;
 import static org.thingsboard.server.common.data.msg.TbNodeConnectionType.SUCCESS;
 
 class TbGpsGeofencingActionNodeTest {
@@ -70,42 +72,47 @@ class TbGpsGeofencingActionNodeTest {
         node.destroy();
     }
 
-    private static Stream<Arguments> givenPresenceMonitoringStrategyOnEachMessage_whenOnMsg_thenVerifyOutputMsgTypes() {
+    private static Stream<Arguments> givenReportPresenceStatusOnEachMessage_whenOnMsg_thenVerifyOutputMsgType() {
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        long tsNow = System.currentTimeMillis();
+        long tsNowMinusMinuteAndMillis = tsNow - Duration.ofMinutes(1).plusMillis(1).toMillis();
         return Stream.of(
-                // default config with presenceMonitoringStrategyOnEachMessage false
-                Arguments.of(false, List.of(
-                        Map.of(ENTERED, 0, INSIDE, 0, SUCCESS, 0),
-                        Map.of(ENTERED, 1, INSIDE, 0, SUCCESS, 0),
-                        Map.of(ENTERED, 1, INSIDE, 0, SUCCESS, 1),
-                        Map.of(ENTERED, 1, INSIDE, 1, SUCCESS, 1),
-                        Map.of(ENTERED, 1, INSIDE, 1, SUCCESS, 2)
-                )),
-                // default config with presenceMonitoringStrategyOnEachMessage true
-                Arguments.of(true, List.of(
-                        Map.of(ENTERED, 0, INSIDE, 0, SUCCESS, 0),
-                        Map.of(ENTERED, 1, INSIDE, 0, SUCCESS, 0),
-                        Map.of(ENTERED, 1, INSIDE, 1, SUCCESS, 0),
-                        Map.of(ENTERED, 1, INSIDE, 2, SUCCESS, 0),
-                        Map.of(ENTERED, 1, INSIDE, 3, SUCCESS, 0)
-                ))
+                // default config with presenceMonitoringStrategyOnEachMessage false and msgInside true
+                Arguments.of(new GpsGeofencingActionTestCase(deviceId, true, false, new EntityGeofencingState(false, 0, false)), ENTERED),
+                Arguments.of(new GpsGeofencingActionTestCase(deviceId, true, false, new EntityGeofencingState(true, tsNow, false)), SUCCESS),
+                Arguments.of(new GpsGeofencingActionTestCase(deviceId, true, false, new EntityGeofencingState(true, tsNowMinusMinuteAndMillis, false)), INSIDE),
+                Arguments.of(new GpsGeofencingActionTestCase(deviceId, true, false, new EntityGeofencingState(true, tsNow, true)), SUCCESS),
+                // default config with presenceMonitoringStrategyOnEachMessage false and msgInside false
+                Arguments.of(new GpsGeofencingActionTestCase(deviceId, false, false, new EntityGeofencingState(false, 0, false)), LEFT),
+                Arguments.of(new GpsGeofencingActionTestCase(deviceId, false, false, new EntityGeofencingState(false, tsNow, false)), SUCCESS),
+                Arguments.of(new GpsGeofencingActionTestCase(deviceId, false, false, new EntityGeofencingState(false, tsNowMinusMinuteAndMillis, false)), OUTSIDE),
+                Arguments.of(new GpsGeofencingActionTestCase(deviceId, false, false, new EntityGeofencingState(false, tsNow, true)), SUCCESS),
+                // default config with presenceMonitoringStrategyOnEachMessage true and msgInside true
+                Arguments.of(new GpsGeofencingActionTestCase(deviceId, true, true, new EntityGeofencingState(false, 0, false)), ENTERED),
+                Arguments.of(new GpsGeofencingActionTestCase(deviceId, true, true, new EntityGeofencingState(true, tsNow, false)), INSIDE),
+                Arguments.of(new GpsGeofencingActionTestCase(deviceId, true, true, new EntityGeofencingState(true, tsNowMinusMinuteAndMillis, false)), INSIDE),
+                // default config with presenceMonitoringStrategyOnEachMessage true and msgInside false
+                Arguments.of(new GpsGeofencingActionTestCase(deviceId, false, true, new EntityGeofencingState(false, 0, false)), LEFT),
+                Arguments.of(new GpsGeofencingActionTestCase(deviceId, false, true, new EntityGeofencingState(false, tsNow, false)), OUTSIDE),
+                Arguments.of(new GpsGeofencingActionTestCase(deviceId, false, true, new EntityGeofencingState(false, tsNowMinusMinuteAndMillis, false)), OUTSIDE)
         );
     }
 
     @ParameterizedTest
     @MethodSource
-    void givenPresenceMonitoringStrategyOnEachMessage_whenOnMsg_thenVerifyOutputMsgTypes(
-            boolean presenceMonitoringStrategyOnEachMessage,
-            List<Map<String, Integer>> outputMsgTypesCountList
+    void givenReportPresenceStatusOnEachMessage_whenOnMsg_thenVerifyOutputMsgType(
+            GpsGeofencingActionTestCase gpsGeofencingActionTestCase,
+            String expectedOutput
     ) throws TbNodeException {
         // GIVEN
         var config = new TbGpsGeofencingActionNodeConfiguration().defaultConfiguration();
-        config.setPresenceMonitoringStrategyOnEachMessage(presenceMonitoringStrategyOnEachMessage);
+        config.setReportPresenceStatusOnEachMessage(gpsGeofencingActionTestCase.isReportPresenceStatusOnEachMessage());
+
         node.init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
-        DeviceId deviceId = new DeviceId(UUID.randomUUID());
-        TbMsgMetaData metadata = getMetadataForNewVersionPolygonPerimeter();
-        TbMsg msg = getTbMsg(deviceId, metadata,
-                GeoUtilTest.POINT_OUTSIDE_SIMPLE_RECT.getLatitude(), GeoUtilTest.POINT_OUTSIDE_SIMPLE_RECT.getLongitude());
+        TbMsg msg = gpsGeofencingActionTestCase.isMsgInside() ?
+                getInsideRectangleTbMsg(gpsGeofencingActionTestCase.getEntityId()) :
+                getOutsideRectangleTbMsg(gpsGeofencingActionTestCase.getEntityId());
 
         when(ctx.getAttributesService()).thenReturn(attributesService);
         when(ctx
@@ -113,40 +120,30 @@ class TbGpsGeofencingActionNodeTest {
                 .find(ctx.getTenantId(), msg.getOriginator(), DataConstants.SERVER_SCOPE, ctx.getServiceId()))
                 .thenReturn(Futures.immediateFuture(Optional.empty()));
 
+        ReflectionTestUtils.setField(node, "entityStates", gpsGeofencingActionTestCase.getEntityStates());
+
         // WHEN
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         node.onMsg(ctx, msg);
 
         // THEN
-        verifyNodeOutputs(newMsgCaptor, outputMsgTypesCountList.get(0));
+        if (SUCCESS.equals(expectedOutput)) {
+            verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());
+        } else {
+            verify(ctx, times(1)).tellNext(newMsgCaptor.capture(), eq(expectedOutput));
+        }
+    }
 
-        // WHEN
-        msg = getTbMsg(deviceId, metadata,
-                GeoUtilTest.POINT_INSIDE_SIMPLE_RECT_CENTER.getLatitude(), GeoUtilTest.POINT_INSIDE_SIMPLE_RECT_CENTER.getLongitude());
-        node.onMsg(ctx, msg);
+    private TbMsg getOutsideRectangleTbMsg(EntityId entityId) {
+        return getTbMsg(entityId, getMetadataForNewVersionPolygonPerimeter(),
+                GeoUtilTest.POINT_OUTSIDE_SIMPLE_RECT.getLatitude(),
+                GeoUtilTest.POINT_OUTSIDE_SIMPLE_RECT.getLongitude());
+    }
 
-        // THEN
-        verifyNodeOutputs(newMsgCaptor, outputMsgTypesCountList.get(1));
-
-        // WHEN
-        node.onMsg(ctx, msg);
-
-        // THEN
-        verifyNodeOutputs(newMsgCaptor, outputMsgTypesCountList.get(2));
-
-        // WHEN
-        config.setMinInsideDuration(0);
-        node.init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
-        node.onMsg(ctx, msg);
-
-        // THEN
-        verifyNodeOutputs(newMsgCaptor, outputMsgTypesCountList.get(3));
-
-        // WHEN
-        node.onMsg(ctx, msg);
-
-        // THEN
-        verifyNodeOutputs(newMsgCaptor, outputMsgTypesCountList.get(4));
+    private TbMsg getInsideRectangleTbMsg(EntityId entityId) {
+        return getTbMsg(entityId, getMetadataForNewVersionPolygonPerimeter(),
+                GeoUtilTest.POINT_INSIDE_SIMPLE_RECT_CENTER.getLatitude(),
+                GeoUtilTest.POINT_INSIDE_SIMPLE_RECT_CENTER.getLongitude());
     }
 
     private TbMsg getTbMsg(EntityId entityId, TbMsgMetaData metadata, double latitude, double longitude) {
@@ -158,12 +155,6 @@ class TbGpsGeofencingActionNodeTest {
         var metadata = new TbMsgMetaData();
         metadata.putValue("ss_perimeter", GeoUtilTest.SIMPLE_RECT);
         return metadata;
-    }
-
-    private void verifyNodeOutputs(ArgumentCaptor<TbMsg> newMsgCaptor, Map<String, Integer> outputMsgTypesCount) {
-        verify(this.ctx, times(outputMsgTypesCount.get(ENTERED))).tellNext(newMsgCaptor.capture(), eq(ENTERED));
-        verify(this.ctx, times(outputMsgTypesCount.get(INSIDE))).tellNext(newMsgCaptor.capture(), eq(INSIDE));
-        verify(this.ctx, times(outputMsgTypesCount.get(SUCCESS))).tellSuccess(newMsgCaptor.capture());
     }
 
     // Rule nodes upgrade
@@ -193,7 +184,7 @@ class TbGpsGeofencingActionNodeTest {
                                 "  \"minOutsideDuration\": 1,\n" +
                                 "  \"minInsideDurationTimeUnit\": \"MINUTES\",\n" +
                                 "  \"minOutsideDurationTimeUnit\": \"MINUTES\",\n" +
-                                "  \"presenceMonitoringStrategyOnEachMessage\": false,\n" +
+                                "  \"reportPresenceStatusOnEachMessage\": false,\n" +
                                 "  \"latitudeKeyName\": \"latitude\",\n" +
                                 "  \"longitudeKeyName\": \"longitude\",\n" +
                                 "  \"perimeterType\": \"POLYGON\",\n" +
@@ -212,7 +203,7 @@ class TbGpsGeofencingActionNodeTest {
                                 "  \"minOutsideDuration\": 1,\n" +
                                 "  \"minInsideDurationTimeUnit\": \"MINUTES\",\n" +
                                 "  \"minOutsideDurationTimeUnit\": \"MINUTES\",\n" +
-                                "  \"presenceMonitoringStrategyOnEachMessage\": false,\n" +
+                                "  \"reportPresenceStatusOnEachMessage\": false,\n" +
                                 "  \"latitudeKeyName\": \"latitude\",\n" +
                                 "  \"longitudeKeyName\": \"longitude\",\n" +
                                 "  \"perimeterType\": \"POLYGON\",\n" +
@@ -230,7 +221,7 @@ class TbGpsGeofencingActionNodeTest {
                                 "  \"minOutsideDuration\": 1,\n" +
                                 "  \"minInsideDurationTimeUnit\": \"MINUTES\",\n" +
                                 "  \"minOutsideDurationTimeUnit\": \"MINUTES\",\n" +
-                                "  \"presenceMonitoringStrategyOnEachMessage\": false,\n" +
+                                "  \"reportPresenceStatusOnEachMessage\": false,\n" +
                                 "  \"latitudeKeyName\": \"latitude\",\n" +
                                 "  \"longitudeKeyName\": \"longitude\",\n" +
                                 "  \"perimeterType\": \"POLYGON\",\n" +
