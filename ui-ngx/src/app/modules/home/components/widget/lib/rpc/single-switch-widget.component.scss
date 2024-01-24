@@ -61,14 +61,14 @@ $switchColorDisabled: var(--tb-single-switch-color-disabled, #D5D7E5);
       align-items: center;
       gap: 4px;
       border-radius: 4px;
-      border: 1px solid rgba(209, 39, 48, 0.04);
-      background: rgba(209, 39, 48, 0.04);
+      background-color: #fff2f3;
+      box-shadow: -2px 2px 4px 0px rgba(0,0,0,0.2);
       .tb-single-switch-error-text {
         font-size: 12px;
         font-style: normal;
         font-weight: 400;
         line-height: 16px;
-        color: #D12730;
+        color: rgba(209, 39, 48, 1);
       }
       .tb-single-switch-error-clear {
         color: rgba(209, 39, 48, 1);

@@ -122,7 +122,7 @@ export interface WidgetAction extends IWidgetAction {
 }
 
 export interface IDashboardWidget {
-  updateWidgetParams();
+  updateWidgetParams(): void;
 }
 
 export class WidgetContext {
@@ -514,7 +514,7 @@ export interface IDynamicWidgetComponent {
   executingRpcRequest: boolean;
   rpcEnabled: boolean;
   rpcErrorText: string;
-  rpcRejection: HttpErrorResponse;
+  rpcRejection: HttpErrorResponse | Error;
   raf: RafService;
   [key: string]: any;
 }

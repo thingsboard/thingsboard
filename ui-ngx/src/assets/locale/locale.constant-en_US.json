@@ -3723,6 +3723,15 @@
             "pkcs-12": "PKCS #12"
         }
     },
+    "rpc": {
+      "error": {
+        "target-device-is-not-set": "Target device is not set!",
+        "invalid-target-entity": "RPC commands are not supported by <b>{{entityType}}</b> entity.",
+        "failed-to-resolve-target-device": "Failed to resolve target device!",
+        "request-timeout": "Request Timeout.",
+        "rpc-http-error": "Error: {{status}} - {{statusText}}"
+      }
+    },
     "rulechain": {
         "rulechain": "Rule chain",
         "rulechain-events": "Rule chain events",
@@ -6038,7 +6047,12 @@
             "parse-value-function": "Parse value function",
             "on-when-result-is": "'On' when result is",
             "parameters": "Parameters",
-            "convert-value-function": "Convert value function"
+            "convert-value-function": "Convert value function",
+            "error": {
+              "target-entity-is-not-set": "Target entity is not set!",
+              "failed-to-perform-action": "Failed to perform the <b>{{ actionLabel }}</b> action.",
+              "invalid-attribute-scope": "{{scope}} attribute scope is not supported by <b>{{entityType}}</b> entity."
+            }
         },
         "maps": {
             "select-entity": "Select entity",

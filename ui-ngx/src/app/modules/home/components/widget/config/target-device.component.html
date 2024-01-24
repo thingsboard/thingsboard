@@ -32,7 +32,6 @@
     *ngIf="targetDeviceFormGroup.get('type').value === targetDeviceType.entity"
     [tbRequired]="!widgetEditMode"
     [aliasController]="aliasController"
-    [allowedEntityTypes]="[entityType.DEVICE]"
     [callbacks]="entityAliasSelectCallbacks"
     formControlName="entityAliasId">
   </tb-entity-alias-select>

@@ -38,7 +38,7 @@ import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
 import cssjs from '@core/css/css';
 import { hashCode } from '@core/utils';
-import { RpcUpdateStateSettings } from '@shared/models/rpc-widget-settings.models';
+import { RpcInitialStateSettings, RpcUpdateStateSettings } from '@shared/models/rpc-widget-settings.models';
 import { ValueType } from '@shared/models/constants';
 
 const horizontalLayoutPadding = 48;
@@ -170,8 +170,13 @@ export class SingleSwitchWidgetComponent extends
     return {...singleSwitchDefaultSettings};
   }
 
+  protected initialState(): RpcInitialStateSettings<boolean> {
+    return {...this.settings.initialState, actionLabel: this.ctx.translate.instant('widgets.rpc-state.initial-state')};
+  }
+
   protected getUpdateStateSettingsForValue(value: boolean): RpcUpdateStateSettings {
-      return value ? this.settings.onUpdateState : this.settings.offUpdateState;
+    const targetSettings = value ? this.settings.onUpdateState : this.settings.offUpdateState;
+    return {...targetSettings, actionLabel: this.ctx.translate.instant(value ? 'widgets.rpc-state.turn-on' : 'widgets.rpc-state.turn-off')};
   }
 
   protected validateValue(value: any): boolean {

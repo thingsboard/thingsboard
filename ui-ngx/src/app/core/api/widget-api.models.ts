@@ -37,7 +37,7 @@ import { RafService } from '@core/services/raf.service';
 import { EntityAliases } from '@shared/models/alias.models';
 import { EntityInfo } from '@app/shared/models/entity.models';
 import { IDashboardComponent } from '@home/models/dashboard-component.models';
-import * as moment_ from 'moment';
+import moment_ from 'moment';
 import {
   AlarmData,
   AlarmDataPageLink,
@@ -130,12 +130,12 @@ export interface IAliasController {
   getFilters(): Filters;
   getFilterInfo(filterId: string): FilterInfo;
   getKeyFilters(filterId: string): Array<KeyFilter>;
-  updateCurrentAliasEntity(aliasId: string, currentEntity: EntityInfo);
-  updateUserFilter(filter: Filter);
-  updateEntityAliases(entityAliases: EntityAliases);
-  updateFilters(filters: Filters);
-  updateAliases(aliasIds?: Array<string>);
-  dashboardStateChanged();
+  updateCurrentAliasEntity(aliasId: string, currentEntity: EntityInfo): void;
+  updateUserFilter(filter: Filter): void;
+  updateEntityAliases(entityAliases: EntityAliases): void;
+  updateFilters(filters: Filters): void;
+  updateAliases(aliasIds?: Array<string>): void;
+  dashboardStateChanged(): void;
 }
 
 export interface StateObject {
@@ -315,7 +315,7 @@ export interface IWidgetSubscription {
   rpcEnabled?: boolean;
   executingRpcRequest?: boolean;
   rpcErrorText?: string;
-  rpcRejection?: HttpErrorResponse;
+  rpcRejection?: HttpErrorResponse | Error;
 
   getFirstEntityInfo(): SubscriptionEntityInfo;
 

@@ -35,7 +35,7 @@
   <mat-progress-bar class="tb-single-switch-progress" style="height: 2px;" color="accent" mode="indeterminate" *ngIf="loading$ | async"></mat-progress-bar>
   <div *ngIf="error" class="tb-single-switch-error-container">
     <div class="tb-single-switch-error-panel">
-      <div class="tb-single-switch-error-text">{{ error }}</div>
+      <div class="tb-single-switch-error-text" [innerHTML]="error | safe: 'html'"></div>
       <button class="tb-single-switch-error-clear tb-mat-20" mat-icon-button (click)="clearError()"><mat-icon>close</mat-icon></button>
     </div>
   </div>

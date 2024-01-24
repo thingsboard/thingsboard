@@ -14,9 +14,14 @@
 /// limitations under the License.
 ///
 
-import { AttributeData, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
+import {
+  AttributeData,
+  AttributeScope,
+  LatestTelemetry,
+  telemetryTypeTranslationsShort
+} from '@shared/models/telemetry/telemetry.models';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { catchError, delay, map, share } from 'rxjs/operators';
 import { UtilsService } from '@core/services/utils.service';
 import { AfterViewInit, ChangeDetectorRef, Directive, Input, OnInit, TemplateRef } from '@angular/core';
@@ -24,6 +29,7 @@ import { backgroundStyle, ComponentStyle, overlayStyle } from '@shared/models/wi
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
 import {
+  RpcActionSettings,
   RpcGetAttributeSettings,
   RpcSetAttributeSettings,
   RpcSettings,
@@ -42,6 +48,7 @@ import {
   RpcUpdateStateSettings
 } from '@app/shared/models/rpc-widget-settings.models';
 import { ValueType } from '@shared/models/constants';
+import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 
 @Directive()
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
@@ -77,7 +84,7 @@ export abstract class BasicRpcStateWidgetComponent<V, S extends RpcStateWidgetSe
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
 
     const behaviourSettings: RpcStateBehaviourSettings<V> = {
-      initialState: this.settings.initialState,
+      initialState: this.initialState(),
       updateStateByValue: val => this.getUpdateStateSettingsForValue(val)
     };
 
@@ -116,6 +123,8 @@ export abstract class BasicRpcStateWidgetComponent<V, S extends RpcStateWidgetSe
   }
 
   protected abstract defaultSettings(): S;
+
+  protected abstract initialState(): RpcInitialStateSettings<V>;
 
   protected abstract getUpdateStateSettingsForValue(value: V): RpcUpdateStateSettings;
 
@@ -161,14 +170,14 @@ export class RpcStateBehaviorApi<V> extends RpcHasLoading {
               private ctx: WidgetContext,
               private settings: RpcStateBehaviourSettings<V>,
               private callbacks: RpcStateCallbacks<V>,
-              private stateValueType: ValueType) {
+              stateValueType: ValueType) {
     super();
     this.initialStateGetter = RpcInitialStateGetter.fromSettings(ctx, settings.initialState, stateValueType, callbacks);
     this.stateUpdatersMap = new Map<RpcUpdateStateSettings, RpcStateUpdater<V>>();
   }
 
   initState() {
-    if (this.ctx.defaultSubscription.rpcEnabled) {
+    if (this.ctx.defaultSubscription.targetEntityId || this.ctx.defaultSubscription.rpcEnabled) {
       this.loadingSubject.next(true);
       this.initialStateGetter.initState().subscribe(
         {
@@ -186,7 +195,7 @@ export class RpcStateBehaviorApi<V> extends RpcHasLoading {
         }
       );
     } else {
-      this.callbacks.onError('Target device is not set!');
+      this.callbacks.onError(this.ctx.translate.instant('widgets.rpc-state.error.target-entity-is-not-set'));
     }
   }
 
@@ -268,7 +277,23 @@ export class RpcDataToStateConverter<V> {
   }
 }
 
-export abstract class RpcInitialStateGetter<V> {
+export abstract class RpcAction {
+
+  protected constructor(protected ctx: WidgetContext,
+                        protected settings: RpcActionSettings) {}
+
+  handleError(err: any): Error {
+    const reason = parseError(this.ctx, err);
+    let errorMessage = this.ctx.translate.instant('widgets.rpc-state.error.failed-to-perform-action',
+      {actionLabel: this.settings.actionLabel});
+    if (reason) {
+      errorMessage += '<br>' + reason;
+    }
+    return new Error(errorMessage);
+  }
+}
+
+export abstract class RpcInitialStateGetter<V> extends RpcAction {
 
   static fromSettings<V>(ctx: WidgetContext,
                          settings: RpcInitialStateSettings<V>,
@@ -293,6 +318,7 @@ export abstract class RpcInitialStateGetter<V> {
                         protected settings: RpcInitialStateSettings<V>,
                         protected stateValueType: ValueType,
                         protected callbacks: RpcStateCallbacks<V>) {
+    super(ctx, settings);
     this.isSimulated = this.ctx.$injector.get(UtilsService).widgetEditMode;
     if (this.settings.action !== RpcInitialStateAction.DO_NOTHING) {
       this.dataConverter = new RpcDataToStateConverter<V>(settings.dataToState, stateValueType, this.callbacks);
@@ -308,6 +334,9 @@ export abstract class RpcInitialStateGetter<V> {
         } else {
           return data;
         }
+      }),
+      catchError(err => {
+        throw this.handleError(err);
       })
     );
   }
@@ -355,7 +384,7 @@ export class RpcStateToParamsConverter<V> {
   }
 }
 
-export abstract class RpcStateUpdater<V> {
+export abstract class RpcStateUpdater<V> extends RpcAction {
 
   static fromSettings<V>(ctx: WidgetContext,
                          settings: RpcUpdateStateSettings): RpcStateUpdater<V> {
@@ -374,6 +403,7 @@ export abstract class RpcStateUpdater<V> {
 
   protected constructor(protected ctx: WidgetContext,
                         protected settings: RpcUpdateStateSettings) {
+    super(ctx, settings);
     this.isSimulated = this.ctx.$injector.get(UtilsService).widgetEditMode;
     this.paramsConverter = new RpcStateToParamsConverter<V>(settings.stateToParams);
   }
@@ -382,7 +412,11 @@ export abstract class RpcStateUpdater<V> {
     if (this.isSimulated) {
       return of(null).pipe(delay(500));
     } else {
-      return this.doUpdateState(this.paramsConverter.stateToParams(state));
+      return this.doUpdateState(this.paramsConverter.stateToParams(state)).pipe(
+        catchError(err => {
+          throw this.handleError(err);
+        })
+      );
     }
   }
 
@@ -423,8 +457,8 @@ export class ExecuteRpcStateGetter<V> extends RpcInitialStateGetter<V> {
       this.executeRpcSettings.requestTimeout,
       this.executeRpcSettings.requestPersistent,
       this.executeRpcSettings.persistentPollingInterval).pipe(
-        catchError(() => {
-          throw new Error(this.ctx.defaultSubscription.rpcErrorText);
+        catchError((err) => {
+          throw handleRpcError(this.ctx, err);
         })
     );
   }
@@ -444,6 +478,10 @@ export class RpcAttributeStateGetter<V> extends RpcInitialStateGetter<V> {
 
   protected doGetState(): Observable<V> {
     if (this.ctx.defaultSubscription.targetEntityId) {
+      const err = validateAttributeScope(this.ctx, this.getAttributeSettings.scope);
+      if (err) {
+        return throwError(() => err);
+      }
       return this.ctx.attributeService.getEntityAttributes(this.ctx.defaultSubscription.targetEntityId,
         this.getAttributeSettings.scope, [this.getAttributeSettings.key], {ignoreLoading: true, ignoreErrors: true})
       .pipe(
@@ -506,8 +544,8 @@ export class ExecuteRpcStateUpdater<V> extends RpcStateUpdater<V> {
       this.executeRpcSettings.requestTimeout,
       this.executeRpcSettings.requestPersistent,
       this.executeRpcSettings.persistentPollingInterval).pipe(
-      catchError(() => {
-        throw new Error(this.ctx.defaultSubscription.rpcErrorText);
+      catchError((err) => {
+        throw handleRpcError(this.ctx, err);
       })
     );
   }
@@ -525,6 +563,10 @@ export class RpcAttributeStateUpdater<V> extends RpcStateUpdater<V> {
 
   protected doUpdateState(params: any): Observable<any> {
     if (this.ctx.defaultSubscription.targetEntityId) {
+      const err = validateAttributeScope(this.ctx, this.setAttributeSettings.scope);
+      if (err) {
+        return throwError(() => err);
+      }
       const attributes: Array<AttributeData> = [{key: this.setAttributeSettings.key, value: params}];
       return this.ctx.attributeService.saveEntityAttributes(this.ctx.defaultSubscription.targetEntityId,
         this.setAttributeSettings.scope, attributes, {ignoreLoading: true, ignoreErrors: true});
@@ -559,3 +601,26 @@ export class RpcTimeSeriesStateUpdater<V> extends RpcStateUpdater<V> {
 
 const parseError = (ctx: WidgetContext, err: any): string =>
   ctx.$injector.get(UtilsService).parseException(err).message || 'Unknown Error';
+
+const handleRpcError = (ctx: WidgetContext, err: any): Error => {
+  let reason: string;
+  if (ctx.defaultSubscription.rpcErrorText) {
+    reason = ctx.defaultSubscription.rpcErrorText;
+  } else {
+    reason = parseError(ctx, err);
+  }
+  return new Error(reason);
+};
+
+const validateAttributeScope = (ctx: WidgetContext, scope?: AttributeScope): Error | null => {
+  if (ctx.defaultSubscription.targetEntityId.entityType !== EntityType.DEVICE && scope && scope !== AttributeScope.SERVER_SCOPE) {
+    const scopeStr = ctx.translate.instant(telemetryTypeTranslationsShort.get(scope));
+    const entityType =
+      ctx.translate.instant(entityTypeTranslations.get(ctx.defaultSubscription.targetEntityId.entityType).type);
+    const errorMessage =
+      ctx.translate.instant('widgets.rpc-state.error.invalid-attribute-scope', {scope: scopeStr, entityType});
+    return new Error(errorMessage);
+  } else {
+    return null;
+  }
+};

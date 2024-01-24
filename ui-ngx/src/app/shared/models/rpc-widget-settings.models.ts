@@ -65,7 +65,11 @@ export interface RpcDataToStateSettings {
   compareToValue?: any;
 }
 
-export interface RpcInitialStateSettings<V> {
+export interface RpcActionSettings {
+  actionLabel?: string;
+}
+
+export interface RpcInitialStateSettings<V> extends RpcActionSettings {
   action: RpcInitialStateAction;
   defaultValue: V;
   executeRpc: RpcSettings;
@@ -102,7 +106,7 @@ export interface RpcStateToParamsSettings {
   stateToParamsFunction: string;
 }
 
-export interface RpcUpdateStateSettings {
+export interface RpcUpdateStateSettings extends RpcActionSettings {
   action: RpcUpdateStateAction;
   executeRpc: RpcSettings;
   setAttribute: RpcSetAttributeSettings;

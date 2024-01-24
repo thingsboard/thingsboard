@@ -80,6 +80,7 @@ export const getPlacementName = (position: ConnectedOverlayPositionChange): Popo
 };
 
 export interface PropertyMapping {
+  // @ts-ignore
   [key: string]: [string, () => unknown];
 }
 
