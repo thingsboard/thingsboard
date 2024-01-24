@@ -21,6 +21,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -139,6 +140,54 @@ public class DefaultDeviceStateServiceTest {
         then(clusterService).shouldHaveNoInteractions();
         then(notificationRuleProcessor).shouldHaveNoInteractions();
         then(telemetrySubscriptionService).shouldHaveNoInteractions();
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {Long.MIN_VALUE, -100, -1})
+    public void givenNegativeLastInactivityTime_whenOnDeviceInactivity_thenSkipsThisEvent(long negativeLastInactivityTime) {
+        // GIVEN
+        doReturn(false).when(service).cleanDeviceStateIfBelongsToExternalPartition(tenantId, deviceId);
+
+        // WHEN
+        service.onDeviceInactivity(tenantId, deviceId, negativeLastInactivityTime);
+
+        // THEN
+        then(service).should(never()).getOrFetchDeviceStateData(deviceId);
+        then(clusterService).shouldHaveNoInteractions();
+        then(notificationRuleProcessor).shouldHaveNoInteractions();
+        then(telemetrySubscriptionService).shouldHaveNoInteractions();
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    public void givenOutdatedLastInactivityTime_whenOnDeviceInactivity_thenSkipsThisEvent(long outdatedLastActivityTime, long currentLastActivityTime) {
+        // GIVEN
+        doReturn(false).when(service).cleanDeviceStateIfBelongsToExternalPartition(tenantId, deviceId);
+
+        var deviceStateData = DeviceStateData.builder()
+                .tenantId(tenantId)
+                .deviceId(deviceId)
+                .state(DeviceState.builder().lastInactivityAlarmTime(currentLastActivityTime).build())
+                .build();
+        service.deviceStates.put(deviceId, deviceStateData);
+
+        // WHEN
+        service.onDeviceInactivity(tenantId, deviceId, outdatedLastActivityTime);
+
+        // THEN
+        then(clusterService).shouldHaveNoInteractions();
+        then(notificationRuleProcessor).shouldHaveNoInteractions();
+        then(telemetrySubscriptionService).shouldHaveNoInteractions();
+    }
+
+    private static Stream<Arguments> givenOutdatedLastInactivityTime_whenOnDeviceInactivity_thenSkipsThisEvent() {
+        return Stream.of(
+                Arguments.of(0, 0),
+                Arguments.of(0, 100),
+                Arguments.of(50, 100),
+                Arguments.of(99, 100),
+                Arguments.of(100, 100)
+        );
     }
 
     @Test

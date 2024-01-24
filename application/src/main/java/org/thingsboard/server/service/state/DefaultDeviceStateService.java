@@ -297,8 +297,20 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         if (cleanDeviceStateIfBelongsToExternalPartition(tenantId, deviceId)) {
             return;
         }
-        log.trace("[{}] on Device Inactivity [{}]", tenantId.getId(), deviceId.getId());
+        if (lastInactivityTime < 0) {
+            log.trace("[{}][{}] On device inactivity: received negative last inactivity ts [{}]. Skipping this event.",
+                    tenantId.getId(), deviceId.getId(), lastInactivityTime);
+            return;
+        }
+        log.trace("[{}][{}] On device inactivity: processing inactivity event with ts [{}].",
+                tenantId.getId(), deviceId.getId(), lastInactivityTime);
         DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
+        long currentLastInactivityAlarmTime = stateData.getState().getLastInactivityAlarmTime();
+        if (lastInactivityTime <= currentLastInactivityAlarmTime) {
+            log.trace("[{}][{}] On device inactivity: received outdated last inactivity ts [{}]. Skipping this event. Current last inactivity ts [{}].",
+                    tenantId.getId(), deviceId.getId(), lastInactivityTime, currentLastInactivityAlarmTime);
+            return;
+        }
         reportInactivity(lastInactivityTime, deviceId, stateData);
     }
 
