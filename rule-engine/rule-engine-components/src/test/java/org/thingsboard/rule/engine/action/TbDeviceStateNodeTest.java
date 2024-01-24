@@ -88,15 +88,11 @@ public class TbDeviceStateNodeTest {
     @BeforeEach
     public void setUp() {
         node = new TbDeviceStateNode();
-        config = new TbDeviceStateNodeConfiguration();
+        config = new TbDeviceStateNodeConfiguration().defaultConfiguration();
     }
 
     @Test
     public void givenDefaultConfiguration_whenInvoked_thenCorrectValuesAreSet() {
-        // GIVEN-WHEN
-        config = config.defaultConfiguration();
-
-        // THEN
         assertThat(config.getEvent()).isEqualTo(TbMsgType.ACTIVITY_EVENT);
         assertThat(TbDeviceStateNode.SUPPORTED_EVENTS).isEqualTo(Set.of(
                 TbMsgType.CONNECT_EVENT, TbMsgType.ACTIVITY_EVENT,
@@ -135,15 +131,15 @@ public class TbDeviceStateNodeTest {
     public void givenNonDeviceOriginator_whenOnMsg_thenTellsSuccessAndNoActivityActionsTriggered() {
         // GIVEN
         var asset = new AssetId(UUID.randomUUID());
-        var msg = TbMsg.newMsg(TbMsgType.ENTITY_CREATED, asset, new TbMsgMetaData(), "{}");
+        var msg = TbMsg.newMsg(TbMsgType.ENTITY_CREATED, asset, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
         given(ctxMock.isLocalEntity(asset)).willReturn(true);
 
         // WHEN
         node.onMsg(ctxMock, msg);
 
         // THEN
-        then(ctxMock).should(times(1)).isLocalEntity(asset);
-        then(ctxMock).should(times(1)).tellSuccess(msg);
+        then(ctxMock).should().isLocalEntity(asset);
+        then(ctxMock).should().tellSuccess(msg);
         then(ctxMock).shouldHaveNoMoreInteractions();
     }
 
@@ -158,18 +154,13 @@ public class TbDeviceStateNodeTest {
         node.onMsg(ctxMock, msg);
 
         // THEN
-        then(ctxMock).should(times(1)).isLocalEntity(DEVICE_ID);
-        then(ctxMock).should().getTenantId();
-        then(ctxMock).should().getSelfId();
-        then(ctxMock).should(times(1)).ack(msg);
+        then(ctxMock).should().ack(msg);
         then(ctxMock).shouldHaveNoMoreInteractions();
     }
 
     @ParameterizedTest
     @MethodSource("provideSupportedEventsAndExpectedMessages")
-    public void givenSupportedEvent_whenOnMsg_thenCorrectMsgIsSent(
-            TbMsgType event, TransportProtos.ToCoreMsg expectedToCoreMsg
-    ) {
+    public void givenSupportedEvent_whenOnMsg_thenCorrectMsgIsSent(TbMsgType event, TransportProtos.ToCoreMsg expectedToCoreMsg) {
         // GIVEN
         config.setEvent(event);
         var nodeConfig = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
@@ -188,17 +179,16 @@ public class TbDeviceStateNodeTest {
         // THEN
         var protoCaptor = ArgumentCaptor.forClass(TransportProtos.ToCoreMsg.class);
         var callbackCaptor = ArgumentCaptor.forClass(TbQueueCallback.class);
-        then(tbClusterServiceMock).should(times(1))
-                .pushMsgToCore(eq(TENANT_ID), eq(DEVICE_ID), protoCaptor.capture(), callbackCaptor.capture());
+        then(tbClusterServiceMock).should().pushMsgToCore(eq(TENANT_ID), eq(DEVICE_ID), protoCaptor.capture(), callbackCaptor.capture());
 
         TbQueueCallback actualCallback = callbackCaptor.getValue();
 
         actualCallback.onSuccess(null);
-        then(ctxMock).should(times(1)).tellSuccess(msg);
+        then(ctxMock).should().tellSuccess(msg);
 
         var throwable = new Throwable();
         actualCallback.onFailure(throwable);
-        then(ctxMock).should(times(1)).tellFailure(msg, throwable);
+        then(ctxMock).should().tellFailure(msg, throwable);
 
         assertThat(expectedToCoreMsg).isEqualTo(protoCaptor.getValue());
 
