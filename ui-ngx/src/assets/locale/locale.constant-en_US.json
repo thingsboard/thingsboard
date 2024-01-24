@@ -3933,7 +3933,7 @@
         "processing-timeout": "Processing within, ms",
         "batch-size": "Batch size",
         "retries": "Number of retries (0 – unlimited)",
-        "failure-percentage": "Percentage of failure messages for skipping retries",
+        "failure-percentage": "Failure messages for skipping retries, %",
         "pause-between-retries": "Retry within, sec",
         "max-pause-between-retries": "Additional retry within, sec",
         "delete": "Delete queue",
