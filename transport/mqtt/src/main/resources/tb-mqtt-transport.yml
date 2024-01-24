@@ -100,7 +100,7 @@ redis:
     enabled: "${TB_REDIS_SSL_ENABLED:false}"
     # Server SSL credentials
     credentials:
-      # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
+      # Server credentials type (pem - pem certificate file; keystore - java keystore)
       type: "${TB_REDIS_SSL_CREDENTIALS_TYPE:pem}"
       # PEM server credentials
       pem:
