@@ -76,7 +76,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
@@ -135,7 +134,7 @@ public class DefaultDeviceStateServiceTest {
         service.onDeviceInactivity(tenantId, deviceId, System.currentTimeMillis());
 
         // THEN
-        then(service).should(times(1)).cleanDeviceStateIfBelongsToExternalPartition(tenantId, deviceId);
+        then(service).should().cleanDeviceStateIfBelongsToExternalPartition(tenantId, deviceId);
         then(service).should(never()).fetchDeviceStateDataUsingSeparateRequests(deviceId);
         then(clusterService).shouldHaveNoInteractions();
         then(notificationRuleProcessor).shouldHaveNoInteractions();
@@ -209,24 +208,24 @@ public class DefaultDeviceStateServiceTest {
         service.onDeviceInactivity(tenantId, deviceId, lastInactivityTime);
 
         // THEN
-        then(telemetrySubscriptionService).should(times(1)).saveAttrAndNotify(
+        then(telemetrySubscriptionService).should().saveAttrAndNotify(
                 eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(DataConstants.SERVER_SCOPE),
                 eq(INACTIVITY_ALARM_TIME), eq(lastInactivityTime), any()
         );
-        then(telemetrySubscriptionService).should(times(1)).saveAttrAndNotify(
+        then(telemetrySubscriptionService).should().saveAttrAndNotify(
                 eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(DataConstants.SERVER_SCOPE),
                 eq(ACTIVITY_STATE), eq(false), any()
         );
 
         var msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        then(clusterService).should(times(1))
+        then(clusterService).should()
                 .pushMsgToRuleEngine(eq(tenantId), eq(deviceId), msgCaptor.capture(), any());
         var actualMsg = msgCaptor.getValue();
         assertThat(actualMsg.getType()).isEqualTo(TbMsgType.INACTIVITY_EVENT.name());
         assertThat(actualMsg.getOriginator()).isEqualTo(deviceId);
 
         var notificationCaptor = ArgumentCaptor.forClass(DeviceActivityTrigger.class);
-        then(notificationRuleProcessor).should(times(1)).process(notificationCaptor.capture());
+        then(notificationRuleProcessor).should().process(notificationCaptor.capture());
         var actualNotification = notificationCaptor.getValue();
         assertThat(actualNotification.getTenantId()).isEqualTo(tenantId);
         assertThat(actualNotification.getDeviceId()).isEqualTo(deviceId);
@@ -249,24 +248,24 @@ public class DefaultDeviceStateServiceTest {
         service.updateInactivityStateIfExpired(System.currentTimeMillis(), deviceId, deviceStateData);
 
         // THEN
-        then(telemetrySubscriptionService).should(times(1)).saveAttrAndNotify(
+        then(telemetrySubscriptionService).should().saveAttrAndNotify(
                 eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(DataConstants.SERVER_SCOPE),
                 eq(INACTIVITY_ALARM_TIME), anyLong(), any()
         );
-        then(telemetrySubscriptionService).should(times(1)).saveAttrAndNotify(
+        then(telemetrySubscriptionService).should().saveAttrAndNotify(
                 eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(DataConstants.SERVER_SCOPE),
                 eq(ACTIVITY_STATE), eq(false), any()
         );
 
         var msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        then(clusterService).should(times(1))
+        then(clusterService).should()
                 .pushMsgToRuleEngine(eq(tenantId), eq(deviceId), msgCaptor.capture(), any());
         var actualMsg = msgCaptor.getValue();
         assertThat(actualMsg.getType()).isEqualTo(TbMsgType.INACTIVITY_EVENT.name());
         assertThat(actualMsg.getOriginator()).isEqualTo(deviceId);
 
         var notificationCaptor = ArgumentCaptor.forClass(DeviceActivityTrigger.class);
-        then(notificationRuleProcessor).should(times(1)).process(notificationCaptor.capture());
+        then(notificationRuleProcessor).should().process(notificationCaptor.capture());
         var actualNotification = notificationCaptor.getValue();
         assertThat(actualNotification.getTenantId()).isEqualTo(tenantId);
         assertThat(actualNotification.getDeviceId()).isEqualTo(deviceId);
@@ -287,7 +286,7 @@ public class DefaultDeviceStateServiceTest {
         willReturn(deviceStateDataMock).given(service).fetchDeviceStateDataUsingSeparateRequests(deviceId);
         DeviceStateData deviceStateData = service.getOrFetchDeviceStateData(deviceId);
         assertThat(deviceStateData).isEqualTo(deviceStateDataMock);
-        verify(service, times(1)).fetchDeviceStateDataUsingSeparateRequests(deviceId);
+        verify(service).fetchDeviceStateDataUsingSeparateRequests(deviceId);
     }
 
     @Test
@@ -513,7 +512,7 @@ public class DefaultDeviceStateServiceTest {
     }
 
     private void activityVerify(boolean isActive) {
-        verify(telemetrySubscriptionService, times(1)).saveAttrAndNotify(any(), eq(deviceId), any(), eq(ACTIVITY_STATE), eq(isActive), any());
+        verify(telemetrySubscriptionService).saveAttrAndNotify(any(), eq(deviceId), any(), eq(ACTIVITY_STATE), eq(isActive), any());
     }
 
     @Test
@@ -869,7 +868,7 @@ public class DefaultDeviceStateServiceTest {
             }
         }
 
-        then(service).should(times(1)).fetchDeviceStateDataUsingSeparateRequests(deviceId);
+        then(service).should().fetchDeviceStateDataUsingSeparateRequests(deviceId);
     }
 
 }
