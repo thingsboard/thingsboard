@@ -226,8 +226,19 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         if (cleanDeviceStateIfBelongsToExternalPartition(tenantId, deviceId)) {
             return;
         }
-        log.trace("[{}] on Device Connect [{}]", tenantId.getId(), deviceId.getId());
+        if (lastConnectTime < 0) {
+            log.trace("[{}][{}] On device connect: received negative last connect ts [{}]. Skipping this event.",
+                    tenantId.getId(), deviceId.getId(), lastConnectTime);
+            return;
+        }
         DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
+        long currentLastConnectTime = stateData.getState().getLastConnectTime();
+        if (lastConnectTime <= currentLastConnectTime) {
+            log.trace("[{}][{}] On device connect: received outdated last connect ts [{}]. Skipping this event. Current last connect ts [{}].",
+                    tenantId.getId(), deviceId.getId(), lastConnectTime, currentLastConnectTime);
+            return;
+        }
+        log.trace("[{}][{}] On device connect: processing connect event with ts [{}].", tenantId.getId(), deviceId.getId(), lastConnectTime);
         stateData.getState().setLastConnectTime(lastConnectTime);
         save(deviceId, LAST_CONNECT_TIME, lastConnectTime);
         pushRuleEngineMessage(stateData, TbMsgType.CONNECT_EVENT);
