@@ -50,9 +50,9 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.limit.LimitedApi;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.notification.rule.trigger.RateLimitsTrigger;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
-import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -96,10 +96,9 @@ import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.AsyncCallbackTemplate;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.QueueKey;
-import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.provider.TbTransportQueueFactory;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
@@ -1056,10 +1055,10 @@ public class DefaultTransportService implements TransportService {
                     log.warn("ResourceDelete - [{}] [{}]", id, mdRez);
                     transportCallbackExecutor.submit(() -> mdRez.getListener().onResourceDelete(msg));
                 });
-            } else if (toSessionMsg.hasQueueUpdateMsg()) {
-                partitionService.updateQueue(toSessionMsg.getQueueUpdateMsg());
-            } else if (toSessionMsg.hasQueueDeleteMsg()) {
-                partitionService.removeQueue(toSessionMsg.getQueueDeleteMsg());
+            } else if (toSessionMsg.getQueueUpdateMsgsCount() > 0) {
+                partitionService.updateQueues(toSessionMsg.getQueueUpdateMsgsList());
+            } else if (toSessionMsg.getQueueDeleteMsgsCount() > 0) {
+                partitionService.removeQueues(toSessionMsg.getQueueDeleteMsgsList());
             } else {
                 //TODO: should we notify the device actor about missed session?
                 log.debug("[{}] Missing session.", sessionId);
