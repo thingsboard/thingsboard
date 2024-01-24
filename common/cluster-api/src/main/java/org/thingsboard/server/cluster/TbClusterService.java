@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import org.thingsboard.server.common.msg.edge.FromEdgeSyncResponse;
 import org.thingsboard.server.common.msg.edge.ToEdgeSyncRequest;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
@@ -49,6 +50,8 @@ public interface TbClusterService extends TbQueueClusterService {
     void pushMsgToCore(TenantId tenantId, EntityId entityId, ToCoreMsg msg, TbQueueCallback callback);
 
     void pushMsgToCore(ToDeviceActorNotificationMsg msg, TbQueueCallback callback);
+
+    void broadcastToCore(TransportProtos.ToCoreNotificationMsg msg);
 
     void pushMsgToVersionControl(TenantId tenantId, ToVersionControlServiceMsg msg, TbQueueCallback callback);
 
@@ -80,7 +83,9 @@ public interface TbClusterService extends TbQueueClusterService {
 
     void onDeviceUpdated(Device device, Device old);
 
-    void onDeviceDeleted(Device device, TbQueueCallback callback);
+    void onDeviceDeleted(TenantId tenantId, Device device, TbQueueCallback callback);
+
+    void onDeviceAssignedToTenant(TenantId oldTenantId, Device device);
 
     void onResourceChange(TbResource resource, TbQueueCallback callback);
 
@@ -92,6 +97,6 @@ public interface TbClusterService extends TbQueueClusterService {
 
     void pushEdgeSyncResponseToCore(FromEdgeSyncResponse fromEdgeSyncResponse);
 
-    void sendNotificationMsgToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, EdgeEventActionType action);
+    void sendNotificationMsgToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, EdgeEventActionType action, EdgeId sourceEdgeId);
 
 }

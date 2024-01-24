@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.api.msg.DeviceCredentialsUpdateNotificationMsg;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.HasName;
@@ -27,7 +26,6 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -40,6 +38,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.rule.engine.DeviceCredentialsUpdateNotificationMsg;
 import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
 
@@ -112,7 +111,7 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
     public void notifyDeleteDevice(TenantId tenantId, DeviceId deviceId, CustomerId customerId, Device device,
                                    User user, Object... additionalInfo) {
         gatewayNotificationsService.onDeviceDeleted(device);
-        tbClusterService.onDeviceDeleted(device, null);
+        tbClusterService.onDeviceDeleted(tenantId, device, null);
         logEntityAction(tenantId, deviceId, device, customerId, ActionType.DELETED, user, additionalInfo);
     }
 
@@ -126,6 +125,7 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
     @Override
     public void notifyAssignDeviceToTenant(TenantId tenantId, TenantId newTenantId, DeviceId deviceId, CustomerId customerId,
                                            Device device, Tenant tenant, User user, Object... additionalInfo) {
+        tbClusterService.onDeviceAssignedToTenant(tenantId, device);
         logEntityAction(tenantId, deviceId, device, customerId, ActionType.ASSIGNED_TO_TENANT, user, additionalInfo);
         pushAssignedFromNotification(tenant, newTenantId, device);
     }
@@ -172,40 +172,5 @@ public class DefaultTbNotificationEntityService implements TbNotificationEntityS
         metaData.putValue("assignedFromTenantId", tenant.getId().getId().toString());
         metaData.putValue("assignedFromTenantName", tenant.getName());
         return metaData;
-    }
-
-    public static EdgeEventActionType edgeTypeByActionType(ActionType actionType) {
-        switch (actionType) {
-            case ADDED:
-                return EdgeEventActionType.ADDED;
-            case UPDATED:
-                return EdgeEventActionType.UPDATED;
-            case ALARM_ACK:
-                return EdgeEventActionType.ALARM_ACK;
-            case ALARM_CLEAR:
-                return EdgeEventActionType.ALARM_CLEAR;
-            case ALARM_ASSIGNED:
-                return EdgeEventActionType.ALARM_ASSIGNED;
-            case ALARM_UNASSIGNED:
-                return EdgeEventActionType.ALARM_UNASSIGNED;
-            case DELETED:
-                return EdgeEventActionType.DELETED;
-            case RELATION_ADD_OR_UPDATE:
-                return EdgeEventActionType.RELATION_ADD_OR_UPDATE;
-            case RELATION_DELETED:
-                return EdgeEventActionType.RELATION_DELETED;
-            case ASSIGNED_TO_CUSTOMER:
-                return EdgeEventActionType.ASSIGNED_TO_CUSTOMER;
-            case UNASSIGNED_FROM_CUSTOMER:
-                return EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER;
-            case ASSIGNED_TO_EDGE:
-                return EdgeEventActionType.ASSIGNED_TO_EDGE;
-            case UNASSIGNED_FROM_EDGE:
-                return EdgeEventActionType.UNASSIGNED_FROM_EDGE;
-            case CREDENTIALS_UPDATED:
-                return EdgeEventActionType.CREDENTIALS_UPDATED;
-            default:
-                return null;
-        }
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.awaitility.Awaitility;
 import org.junit.After;
@@ -26,6 +27,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -86,6 +89,11 @@ public class EdgeEventControllerTest extends AbstractControllerTest {
         Edge edge = constructEdge("TestEdge", "default");
         edge = doPost("/api/edge", edge, Edge.class);
 
+        // simulate edge activation
+        ObjectNode attributes = JacksonUtil.newObjectNode();
+        attributes.put("active", true);
+        doPost("/api/plugins/telemetry/EDGE/" + edge.getId() + "/attributes/" + DataConstants.SERVER_SCOPE, attributes);
+
         Device device = constructDevice("TestDevice", "default");
         Device savedDevice = doPost("/api/device", device, Device.class);
 
@@ -99,14 +107,13 @@ public class EdgeEventControllerTest extends AbstractControllerTest {
 
         EntityRelation relation = new EntityRelation(savedAsset.getId(), savedDevice.getId(), EntityRelation.CONTAINS_TYPE);
 
-        awaitForNumberOfEdgeEvents(edgeId, 3);
+        awaitForNumberOfEdgeEvents(edgeId, 2);
 
         doPost("/api/relation", relation);
 
-        awaitForNumberOfEdgeEvents(edgeId, 4);
+        awaitForNumberOfEdgeEvents(edgeId, 3);
 
         List<EdgeEvent> edgeEvents = findEdgeEvents(edgeId);
-        Assert.assertTrue(popEdgeEvent(edgeEvents, EdgeEventType.RULE_CHAIN)); // root rule chain
         Assert.assertTrue(popEdgeEvent(edgeEvents, EdgeEventType.DEVICE)); // TestDevice
         Assert.assertTrue(popEdgeEvent(edgeEvents, EdgeEventType.ASSET)); // TestAsset
         Assert.assertTrue(popEdgeEvent(edgeEvents, EdgeEventType.RELATION));

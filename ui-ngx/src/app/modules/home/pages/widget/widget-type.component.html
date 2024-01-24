@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,19 +20,25 @@
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'edit')"
           [fxShow]="!isEdit">
-    {{'widget.edit-widget-type' | translate }}
+    {{ 'widget.edit' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'openDetails')"
+          [fxShow]="!isEdit && !isDetailsPage">
+    {{'common.open-details-page' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'export')"
           [fxShow]="!isEdit">
-    {{'widget-type.export' | translate }}
+    {{ 'widget.export' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
           [fxShow]="!hideDelete() && !isEdit">
-    {{'widget.delete-widget-type' | translate }}
+    {{ 'widget.delete-widget' | translate }}
   </button>
 </div>
 <div class="mat-padding" fxLayout="column">
@@ -48,11 +54,10 @@
           {{ 'widget.title-max-length' | translate }}
         </mat-error>
       </mat-form-field>
-      <tb-image-input fxFlex
+      <tb-gallery-image-input fxFlex
                       label="{{'widget.image-preview' | translate}}"
-                      maxSizeByte="524288"
                       formControlName="image">
-      </tb-image-input>
+      </tb-gallery-image-input>
       <mat-form-field class="mat-block">
         <mat-label translate>widget.description</mat-label>
         <textarea matInput formControlName="description" rows="2" maxlength="1024" #descriptionInput></textarea>

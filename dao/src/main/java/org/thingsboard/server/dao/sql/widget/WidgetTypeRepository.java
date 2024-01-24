@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public interface WidgetTypeRepository extends JpaRepository<WidgetTypeDetailsEnt
     boolean existsByTenantIdAndId(UUID tenantId, UUID id);
 
     @Query("SELECT wtd FROM WidgetTypeDetailsEntity wtd WHERE wtd.tenantId = :tenantId " +
-            "AND LOWER(wtd.name) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "AND (:textSearch IS NULL OR ilike(wtd.name, CONCAT('%', :textSearch, '%')) = true)")
     Page<WidgetTypeDetailsEntity> findTenantWidgetTypeDetailsByTenantId(@Param("tenantId") UUID tenantId,
                                                                         @Param("textSearch") String textSearch,
                                                                         Pageable pageable);
@@ -69,11 +69,17 @@ public interface WidgetTypeRepository extends JpaRepository<WidgetTypeDetailsEnt
 
     @Query(value = "SELECT * FROM widget_type wt " +
             "WHERE wt.tenant_id = :tenantId AND cast(wt.descriptor as json) ->> 'resources' LIKE LOWER(CONCAT('%', :resourceId, '%'))",
-    nativeQuery = true)
+            nativeQuery = true)
     List<WidgetTypeDetailsEntity> findWidgetTypesInfosByTenantIdAndResourceId(@Param("tenantId") UUID tenantId,
-                                                                    @Param("resourceId") UUID resourceId);
+                                                                              @Param("resourceId") UUID resourceId);
 
     @Query("SELECT externalId FROM WidgetTypeDetailsEntity WHERE id = :id")
     UUID getExternalIdById(@Param("id") UUID id);
+
+    @Query("SELECT w.id FROM WidgetTypeDetailsEntity w")
+    Page<UUID> findAllIds(Pageable pageable);
+
+    @Query("SELECT w.id FROM WidgetTypeDetailsEntity w WHERE w.tenantId = :tenantId")
+    Page<UUID> findIdsByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
 
 }

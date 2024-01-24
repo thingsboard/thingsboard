@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -45,7 +45,12 @@ import {
 } from '@home/components/widget/lib/settings/common/background-settings-panel.component';
 import {
   CountWidgetSettingsComponent
-} from "@home/components/widget/lib/settings/common/count-widget-settings.component";
+} from '@home/components/widget/lib/settings/common/count-widget-settings.component';
+import { ColorRangeListComponent } from '@home/components/widget/lib/settings/common/color-range-list.component';
+import { ColorRangePanelComponent } from '@home/components/widget/lib/settings/common/color-range-panel.component';
+import {
+  ColorRangeSettingsComponent, ColorRangeSettingsComponentService
+} from '@home/components/widget/lib/settings/common/color-range-settings.component';
 
 @NgModule({
   declarations: [
@@ -63,7 +68,10 @@ import {
     ValueSourceComponent,
     LegendConfigComponent,
     WidgetFontComponent,
-    CountWidgetSettingsComponent
+    CountWidgetSettingsComponent,
+    ColorRangeListComponent,
+    ColorRangePanelComponent,
+    ColorRangeSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -85,10 +93,14 @@ import {
     ValueSourceComponent,
     LegendConfigComponent,
     WidgetFontComponent,
-    CountWidgetSettingsComponent
+    CountWidgetSettingsComponent,
+    ColorRangeListComponent,
+    ColorRangePanelComponent,
+    ColorRangeSettingsComponent
   ],
   providers: [
-    ColorSettingsComponentService
+    ColorSettingsComponentService,
+    ColorRangeSettingsComponentService
   ]
 })
 export class WidgetSettingsCommonModule {

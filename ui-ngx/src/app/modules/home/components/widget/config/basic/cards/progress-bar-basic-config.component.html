@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -31,7 +31,10 @@
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widget-config.appearance</div>
     <tb-image-cards-select rowHeight="2:1"
-                           cols="2"
+                           [cols]="{columns: 2,
+                                    breakpoints: {
+                                      'lt-sm': 1
+                                    }}"
                            label="{{ 'widgets.progress-bar.layout' | translate }}" formControlName="layout">
       <tb-image-cards-select-option *ngFor="let layout of progressBarLayouts"
                                     [value]="layout"

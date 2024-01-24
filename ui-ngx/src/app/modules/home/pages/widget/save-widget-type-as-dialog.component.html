@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<form [formGroup]="saveWidgetTypeAsFormGroup" (ngSubmit)="saveAs()">
+<form [formGroup]="saveWidgetTypeAsFormGroup" (ngSubmit)="saveAs()" style="width: 360px">
   <mat-toolbar color="primary">
-    <h2 translate>widget.save-widget-type-as</h2>
+    <h2 translate>widget.save-widget-as</h2>
     <span fxFlex></span>
     <button mat-icon-button
             (click)="cancel()"
@@ -29,16 +29,18 @@
   </mat-progress-bar>
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div mat-dialog-content>
-    <fieldset>
-      <span translate>widget.save-widget-type-as-text</span>
-      <mat-form-field class="mat-block">
-        <mat-label translate>widget.title</mat-label>
-        <input matInput formControlName="title" required>
-        <mat-error *ngIf="saveWidgetTypeAsFormGroup.get('title').hasError('required')">
-          {{ 'widget.title-required' | translate }}
-        </mat-error>
-      </mat-form-field>
-    </fieldset>
+    <span translate>widget.save-widget-as-text</span>
+    <mat-form-field class="mat-block">
+      <mat-label translate>widget.title</mat-label>
+      <input matInput formControlName="title" required>
+      <mat-error *ngIf="saveWidgetTypeAsFormGroup.get('title').hasError('required')">
+        {{ 'widget.title-required' | translate }}
+      </mat-error>
+    </mat-form-field>
+    <tb-widgets-bundle-select
+      formControlName="widgetsBundle"
+      bundlesScope="{{bundlesScope}}">
+    </tb-widgets-bundle-select>
   </div>
   <div mat-dialog-actions fxLayoutAlign="end center">
     <button mat-button color="primary"

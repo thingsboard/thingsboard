@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public class JpaNotificationRequestDao extends JpaAbstractDao<NotificationReques
     @Override
     public PageData<NotificationRequestInfo> findInfosByTenantIdAndOriginatorTypeAndPageLink(TenantId tenantId, EntityType originatorType, PageLink pageLink) {
         return DaoUtil.pageToPageData(notificationRequestRepository.findInfosByTenantIdAndOriginatorEntityTypeAndSearchText(tenantId.getId(),
-                        originatorType, Strings.nullToEmpty(pageLink.getTextSearch()), DaoUtil.toPageable(pageLink, Map.of(
+                        originatorType, pageLink.getTextSearch(), DaoUtil.toPageable(pageLink, Map.of(
                                 "templateName", "t.name"
                         ))))
                 .mapData(NotificationRequestInfoEntity::toData);

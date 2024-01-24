@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -199,20 +199,21 @@ export class DeviceCheckConnectivityDialogComponent extends
       case 'android':
         this.httpTabIndex = 2;
         this.mqttTabIndex = 2;
-        this.coapTabIndex = 1;
         break;
       case 'macos':
       case 'ios':
         this.httpTabIndex = 1;
         this.mqttTabIndex = 1;
+        this.coapTabIndex = 1;
         break;
       case 'windows':
         this.httpTabIndex = 0;
         this.mqttTabIndex = 0;
+        this.coapTabIndex = 1;
         break;
       default:
         this.mqttTabIndex = this.commands.mqtt?.docker ? 3 : 0;
-        this.coapTabIndex = this.commands.coap?.docker ? 2 : 1;
+        this.coapTabIndex = this.commands.coap?.docker ? 1 : 0;
     }
   }
 

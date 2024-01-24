@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Random;
@@ -350,7 +351,7 @@ public class TbUtilsTest {
     }
 
     @Test
-    public void parseBytesDecodeToJson() throws IOException {
+    public void parseBytesDecodeToJson() throws IOException, IllegalAccessException {
         String expectedStr = "{\"hello\": \"world\"}";
         ExecutionHashMap<String, Object> expectedJson = new ExecutionHashMap<>(1, ctx);
         expectedJson.put("hello", "world");
@@ -366,6 +367,113 @@ public class TbUtilsTest {
         Object actualJson =  TbUtils.decodeToJson(ctx, expectedStr);
         Assert.assertEquals(expectedJson,actualJson);
     }
+
+    @Test
+    public void stringToBytesInputObjectTest() throws IOException, IllegalAccessException {
+        String expectedStr = "{\"hello\": \"world\"}";
+        Object inputJson = TbUtils.decodeToJson(ctx, expectedStr);
+        byte[] arrayBytes = {119, 111, 114, 108, 100};
+        List<Byte> expectedBytes = Bytes.asList(arrayBytes);
+        List<Byte> actualBytes = TbUtils.stringToBytes(ctx, ((ExecutionHashMap) inputJson).get("hello"));
+        Assert.assertEquals(expectedBytes, actualBytes);
+        actualBytes = TbUtils.stringToBytes(ctx, ((ExecutionHashMap) inputJson).get("hello"), "UTF-8");
+        Assert.assertEquals(expectedBytes, actualBytes);
+
+        expectedStr = "{\"hello\": 1234}";
+        inputJson = TbUtils.decodeToJson(ctx, expectedStr);
+        Object finalInputJson = inputJson;
+        Assert.assertThrows(IllegalAccessException.class, () -> TbUtils.stringToBytes(ctx, ((ExecutionHashMap) finalInputJson).get("hello")));
+        Assert.assertThrows(IllegalAccessException.class, () -> TbUtils.stringToBytes(ctx, ((ExecutionHashMap) finalInputJson).get("hello"), "UTF-8"));
+    }
+
+    @Test
+    public void bytesFromList() {
+        byte[] arrayBytes =      {(byte)0x00, (byte)0x08, (byte)0x10, (byte)0x1C, (byte)0xFF, (byte)0xFC, (byte)0xAD, (byte)0x88, (byte)0x75, (byte)0x74, (byte)0x8A, (byte)0x82};
+        Object[] arrayMix      = {    "0x00",         8,        "16",     "0x1C",        255, (byte)0xFC,        173,        136,        117,        116,       -118,     "-126"};
+
+        String expected = new String(arrayBytes);
+        ArrayList<Byte> listBytes = new ArrayList<>(arrayBytes.length);
+        for (Byte element : arrayBytes) {
+            listBytes.add(element);
+        }
+        Assert.assertEquals(expected, TbUtils.bytesToString(listBytes));
+
+        ArrayList<Object> listMix = new ArrayList<>(arrayMix.length);
+        for (Object element : arrayMix) {
+            listMix.add(element);
+        }
+        Assert.assertEquals(expected, TbUtils.bytesToString(listMix));
+    }
+
+    @Test
+    public void bytesFromList_Error() {
+        List<String> listHex = new ArrayList<>();
+        listHex.add("0xFG");
+        try {
+            TbUtils.bytesToString(listHex);
+            Assert.fail("Should throw NumberFormatException");
+        } catch (NumberFormatException e) {
+            Assert.assertTrue(e.getMessage().contains("Failed radix: [16] for value: \"FG\"!"));
+        }
+        listHex.add(0, "1F");
+        try {
+            TbUtils.bytesToString(listHex);
+            Assert.fail("Should throw NumberFormatException");
+        } catch (NumberFormatException e) {
+            Assert.assertTrue(e.getMessage().contains("Failed radix: [10] for value: \"1F\"!"));
+        }
+
+        List<String> listIntString = new ArrayList<>();
+        listIntString.add("-129");
+        try {
+            TbUtils.bytesToString(listIntString);
+            Assert.fail("Should throw NumberFormatException");
+        } catch (NumberFormatException e) {
+            Assert.assertTrue(e.getMessage().contains("The value '-129' could not be correctly converted to a byte. " +
+                    "Integer to byte conversion requires the use of only 8 bits (with a range of min/max = -128/255)!"));
+        }
+
+        listIntString.add(0, "256");
+        try {
+            TbUtils.bytesToString(listIntString);
+            Assert.fail("Should throw NumberFormatException");
+        } catch (NumberFormatException e) {
+            Assert.assertTrue(e.getMessage().contains("The value '256' could not be correctly converted to a byte. " +
+                    "Integer to byte conversion requires the use of only 8 bits (with a range of min/max = -128/255)!"));
+        }
+
+        ArrayList<Integer> listIntBytes = new ArrayList<>();
+        listIntBytes.add(-129);
+        try {
+            TbUtils.bytesToString(listIntBytes);
+            Assert.fail("Should throw NumberFormatException");
+        } catch (NumberFormatException e) {
+            Assert.assertTrue(e.getMessage().contains("The value '-129' could not be correctly converted to a byte. " +
+                    "Integer to byte conversion requires the use of only 8 bits (with a range of min/max = -128/255)!"));
+        }
+
+        listIntBytes.add(0, 256);
+        try {
+            TbUtils.bytesToString(listIntBytes);
+            Assert.fail("Should throw NumberFormatException");
+        } catch (NumberFormatException e) {
+            Assert.assertTrue(e.getMessage().contains("The value '256' could not be correctly converted to a byte. " +
+                    "Integer to byte conversion requires the use of only 8 bits (with a range of min/max = -128/255)!"));
+        }
+
+        ArrayList<Object> listObjects = new ArrayList<>();
+        ArrayList<String> listStringObjects = new ArrayList<>();
+        listStringObjects.add("0xFD");
+        listObjects.add(listStringObjects);
+        try {
+            TbUtils.bytesToString(listObjects);
+            Assert.fail("Should throw NumberFormatException");
+        } catch (NumberFormatException e) {
+            Assert.assertTrue(e.getMessage().contains("The value '[0xFD]' could not be correctly converted to a byte. " +
+                    "Must be a HexDecimal/String/Integer/Byte format !"));
+        }
+    }
+
 
     private static List<Byte> toList(byte[] data) {
         List<Byte> result = new ArrayList<>(data.length);

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -69,9 +69,11 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { alarmFields } from '@shared/models/alarm.models';
 import { UtilsService } from '@core/services/utils.service';
 
+export const dataKeyValid = (key: DataKey): boolean => !!key && !!key.type && !!key.name;
+
 export const dataKeyRowValidator = (control: AbstractControl): ValidationErrors | null => {
   const dataKey: DataKey = control.value;
-  if (!dataKey || !dataKey.type || !dataKey.name) {
+  if (!dataKeyValid(dataKey)) {
     return {
       dataKey: true
     };

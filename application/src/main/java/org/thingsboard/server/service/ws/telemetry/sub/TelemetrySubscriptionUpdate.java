@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.service.subscription.SubscriptionErrorCode;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +28,7 @@ import java.util.stream.Collectors;
 
 public class TelemetrySubscriptionUpdate {
 
-    private int subscriptionId;
+    private final int subscriptionId;
     private int errorCode;
     private String errorMsg;
     private Map<String, List<Object>> data;
@@ -94,7 +95,14 @@ public class TelemetrySubscriptionUpdate {
 
     @Override
     public String toString() {
-        return "TsSubscriptionUpdate [subscriptionId=" + subscriptionId + ", errorCode=" + errorCode + ", errorMsg=" + errorMsg + ", data="
-                + data + "]";
+        StringBuilder result = new StringBuilder("TelemetrySubscriptionUpdate [subscriptionId=" + subscriptionId + ", errorCode=" + errorCode + ", errorMsg=" + errorMsg + ", data=");
+        data.forEach((k, v) -> {
+            result.append(k).append("=[");
+            for(Object a : v){
+                result.append(Arrays.toString((Object[])a)).append("|");
+            }
+            result.append("]");
+        });
+        return result.toString();
     }
 }

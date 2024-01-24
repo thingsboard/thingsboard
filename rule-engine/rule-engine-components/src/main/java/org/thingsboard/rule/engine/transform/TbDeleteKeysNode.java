@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,84 +21,100 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RuleNode(
         type = ComponentType.TRANSFORMATION,
-        name = "delete keys",
+        name = "delete key-value pairs",
+        version = 2,
         configClazz = TbDeleteKeysNodeConfiguration.class,
-        nodeDescription = "Removes keys from the msg data or metadata with the specified key names selected in the list",
-        nodeDetails = "Will fetch fields (regex) values specified in list. If specified field (regex) is not part of msg " +
-                "or metadata fields it will be ignored. Returns transformed messages via <code>Success</code> chain",
+        nodeDescription = "Deletes key-value pairs from message or message metadata.",
+        nodeDetails = "Deletes key-value pairs from the message or message metadata according to the configured " +
+                "keys and/or regular expressions.<br><br>" +
+                "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbTransformationNodeDeleteKeysConfig",
         icon = "remove_circle"
 )
-public class TbDeleteKeysNode implements TbNode {
+public class TbDeleteKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
 
     private TbDeleteKeysNodeConfiguration config;
-    private List<Pattern> patternKeys;
-    private boolean fromMetadata;
+    private TbMsgSource deleteFrom;
+    private List<Pattern> compiledKeyPatterns;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbDeleteKeysNodeConfiguration.class);
-        this.fromMetadata = config.isFromMetadata();
-        this.patternKeys = new ArrayList<>();
-        config.getKeys().forEach(key -> {
-            this.patternKeys.add(Pattern.compile(key));
-        });
+        this.deleteFrom = config.getDeleteFrom();
+        if (deleteFrom == null) {
+            throw new TbNodeException("DeleteFrom can't be null! Allowed values: " + Arrays.toString(TbMsgSource.values()));
+        }
+        this.compiledKeyPatterns = config.getKeys().stream().map(Pattern::compile).collect(Collectors.toList());
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        TbMsgMetaData metaData = msg.getMetaData();
-        String msgData = msg.getData();
-        List<String> keysToDelete = new ArrayList<>();
-        if (fromMetadata) {
-            Map<String, String> metaDataMap = metaData.getData();
-            metaDataMap.forEach((keyMetaData, valueMetaData) -> {
-                if (checkKey(keyMetaData)) {
-                    keysToDelete.add(keyMetaData);
+        var metaDataCopy = msg.getMetaData().copy();
+        var msgDataStr = msg.getData();
+        boolean hasNoChanges = false;
+        switch (deleteFrom) {
+            case METADATA:
+                var metaDataMap = metaDataCopy.getData();
+                var mdKeysToDelete = metaDataMap.keySet()
+                        .stream()
+                        .filter(this::matches)
+                        .collect(Collectors.toList());
+                mdKeysToDelete.forEach(metaDataMap::remove);
+                metaDataCopy = new TbMsgMetaData(metaDataMap);
+                hasNoChanges = mdKeysToDelete.isEmpty();
+                break;
+            case DATA:
+                JsonNode dataNode = JacksonUtil.toJsonNode(msgDataStr);
+                if (dataNode.isObject()) {
+                    var msgDataObject = (ObjectNode) dataNode;
+                    var msgKeysToDelete = new ArrayList<String>();
+                    dataNode.fieldNames().forEachRemaining(key -> {
+                        if (matches(key)) {
+                            msgKeysToDelete.add(key);
+                        }
+                    });
+                    msgDataObject.remove(msgKeysToDelete);
+                    msgDataStr = JacksonUtil.toString(msgDataObject);
+                    hasNoChanges = msgKeysToDelete.isEmpty();
                 }
-            });
-            keysToDelete.forEach(metaDataMap::remove);
-            metaData = new TbMsgMetaData(metaDataMap);
-        } else {
-            JsonNode dataNode = JacksonUtil.toJsonNode(msgData);
-            if (dataNode.isObject()) {
-                ObjectNode msgDataObject = (ObjectNode) dataNode;
-                dataNode.fields().forEachRemaining(entry -> {
-                    String keyData = entry.getKey();
-                    if (checkKey(keyData)) {
-                        keysToDelete.add(keyData);
-                    }
-                });
-                msgDataObject.remove(keysToDelete);
-                msgData = JacksonUtil.toString(msgDataObject);
-            }
+                break;
+            default:
+                log.debug("Unexpected DeleteFrom value: {}. Allowed values: {}", deleteFrom, TbMsgSource.values());
         }
-        if (keysToDelete.isEmpty()) {
-            ctx.tellSuccess(msg);
-        } else {
-            ctx.tellSuccess(TbMsg.transformMsg(msg, metaData, msgData));
-        }
+        ctx.tellSuccess(hasNoChanges ? msg : TbMsg.transformMsg(msg, metaDataCopy, msgDataStr));
     }
 
-    boolean checkKey(String key) {
-        return patternKeys.stream().anyMatch(pattern -> pattern.matcher(key).matches());
+    @Override
+    protected String getNewKeyForUpgradeFromVersionZero() {
+        return "deleteFrom";
     }
+
+    @Override
+    protected String getKeyToUpgradeFromVersionOne() {
+        return "dataToFetch";
+    }
+
+    boolean matches(String key) {
+        return compiledKeyPatterns.stream().anyMatch(pattern -> pattern.matcher(key).matches());
+    }
+
 }

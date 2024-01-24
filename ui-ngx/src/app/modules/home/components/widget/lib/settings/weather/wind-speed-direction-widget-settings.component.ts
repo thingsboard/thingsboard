@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,14 +21,13 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { formatValue, isDefinedAndNotNull } from '@core/utils';
 import {
-  centerValueLabel,
   windSpeedDirectionDefaultSettings,
   WindSpeedDirectionLayout,
   windSpeedDirectionLayoutImages,
   windSpeedDirectionLayouts,
   windSpeedDirectionLayoutTranslations
 } from '@home/components/widget/lib/weather/wind-speed-direction-widget.models';
-import { getDataKeyByLabel } from '@shared/models/widget-settings.models';
+import { getDataKey } from '@shared/models/widget-settings.models';
 
 @Component({
   selector: 'tb-wind-speed-direction-widget-settings',
@@ -38,7 +37,7 @@ import { getDataKeyByLabel } from '@shared/models/widget-settings.models';
 export class WindSpeedDirectionWidgetSettingsComponent extends WidgetSettingsComponent {
 
   get hasCenterValue(): boolean {
-    return !!getDataKeyByLabel(this.widgetConfig.config.datasources, centerValueLabel);
+    return !!getDataKey(this.widgetConfig.config.datasources, 1);
   }
 
   get majorTicksFontEnabled(): boolean {
@@ -120,7 +119,7 @@ export class WindSpeedDirectionWidgetSettingsComponent extends WidgetSettingsCom
   }
 
   private _centerValuePreviewFn(): string {
-    const centerValueDataKey = getDataKeyByLabel(this.widgetConfig.config.datasources, centerValueLabel);
+    const centerValueDataKey = getDataKey(this.widgetConfig.config.datasources, 1);
     if (centerValueDataKey) {
       let units: string = this.widgetConfig.config.units;
       let decimals: number = this.widgetConfig.config.decimals;

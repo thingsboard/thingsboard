@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import {
   ViewEncapsulation
 } from '@angular/core';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { formatValue, isDefinedAndNotNull } from '@core/utils';
+import { formatValue, isDefinedAndNotNull, isNumeric } from '@core/utils';
 import {
   backgroundStyle,
   ColorProcessor,
@@ -48,10 +48,12 @@ import { TbFlot } from '@home/components/widget/lib/flot-widget';
 import { DataKey } from '@shared/models/widget.models';
 import { TbFlotKeySettings, TbFlotSettings } from '@home/components/widget/lib/flot-widget.models';
 import { getTsValueByLatestDataKey } from '@home/components/widget/lib/cards/aggregated-value-card.models';
+import { Observable } from 'rxjs';
+import { ImagePipe } from '@shared/pipe/image.pipe';
+import { DomSanitizer } from '@angular/platform-browser';
 
-const layoutWidth = 218;
-const layoutValueWidth = 68;
-const valueRelativeWidth = layoutValueWidth / layoutWidth;
+const layoutHeight = 56;
+const valueRelativeMaxWidth = 0.5;
 
 @Component({
   selector: 'tb-value-chart-card-widget',
@@ -85,20 +87,23 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
   valueStyle: ComponentStyle = {};
   valueColor: ColorProcessor;
 
-  backgroundStyle: ComponentStyle = {};
+  backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
 
   private flot: TbFlot;
   private flotDataKey: DataKey;
 
   private valueKey: DataKey;
-
   private contentResize$: ResizeObserver;
 
   private decimals = 0;
   private units = '';
 
-  constructor(private renderer: Renderer2,
+  private valueFontSize: number;
+
+  constructor(private imagePipe: ImagePipe,
+              private sanitizer: DomSanitizer,
+              private renderer: Renderer2,
               private widgetComponent: WidgetComponent,
               private cd: ChangeDetectorRef) {
   }
@@ -126,10 +131,10 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
     this.layout = this.settings.layout;
 
     this.showValue = this.settings.showValue;
-    this.valueStyle = textStyle(this.settings.valueFont,  '0.25px');
+    this.valueStyle = textStyle(this.settings.valueFont);
     this.valueColor = ColorProcessor.fromSettings(this.settings.valueColor);
 
-    this.backgroundStyle = backgroundStyle(this.settings.background);
+    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
 
     if (this.ctx.defaultSubscription.firstDatasource?.dataKeys?.length) {
@@ -192,9 +197,9 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
     if (this.showValue && this.valueKey) {
       const tsValue = getTsValueByLatestDataKey(this.ctx.latestData, this.valueKey);
       let value;
-      if (tsValue) {
+      if (tsValue && isDefinedAndNotNull(tsValue[1]) && isNumeric(tsValue[1])) {
         value = tsValue[1];
-        this.valueText = formatValue(value, this.decimals, this.units, true);
+        this.valueText = formatValue(value, this.decimals, this.units, false);
       } else {
         this.valueText = 'N/A';
       }
@@ -214,29 +219,35 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
     this.flot.destroy();
   }
 
-  private onResize(fitMaxWidth = true) {
+  private onResize(fitTargetHeight = true) {
     if (this.settings.autoScale && this.showValue) {
       const contentWidth = this.valueChartCardContent.nativeElement.getBoundingClientRect().width;
       const contentHeight = this.valueChartCardContent.nativeElement.getBoundingClientRect().height;
-      const targetValueWidth = valueRelativeWidth * contentWidth;
-      this.setValueFontSize(targetValueWidth, contentHeight, fitMaxWidth);
+      if (!this.valueFontSize) {
+        const fontSize = getComputedStyle(this.valueChartCardValue.nativeElement).fontSize;
+        this.valueFontSize = resolveCssSize(fontSize)[0];
+      }
+      const valueRelativeHeight = Math.min(this.valueFontSize / layoutHeight, 1);
+      const targetValueHeight = contentHeight * valueRelativeHeight;
+      const maxValueWidth = contentWidth * valueRelativeMaxWidth;
+      this.setValueFontSize(targetValueHeight, maxValueWidth, fitTargetHeight);
     }
     this.flot.resize();
   }
 
-  private setValueFontSize(maxWidth: number, maxHeight: number, fitMaxWidth = true) {
+  private setValueFontSize(targetHeight: number, maxWidth: number, fitTargetHeight = true) {
     const fontSize = getComputedStyle(this.valueChartCardValue.nativeElement).fontSize;
     let valueFontSize = resolveCssSize(fontSize)[0];
     this.renderer.setStyle(this.valueChartCardValue.nativeElement, 'fontSize', valueFontSize + 'px');
     this.renderer.setStyle(this.valueChartCardValue.nativeElement, 'lineHeight', '1');
-    let valueWidth = this.valueChartCardValue.nativeElement.getBoundingClientRect().width;
-    while (fitMaxWidth && valueWidth < maxWidth) {
+    let valueHeight = this.valueChartCardValue.nativeElement.getBoundingClientRect().height;
+    while (fitTargetHeight && valueHeight < targetHeight) {
       valueFontSize++;
       this.renderer.setStyle(this.valueChartCardValue.nativeElement, 'fontSize', valueFontSize + 'px');
-      valueWidth = this.valueChartCardValue.nativeElement.getBoundingClientRect().width;
+      valueHeight = this.valueChartCardValue.nativeElement.getBoundingClientRect().height;
     }
-    let valueHeight = this.valueChartCardValue.nativeElement.getBoundingClientRect().height;
-    while ((valueWidth > maxWidth || valueHeight > maxHeight) && valueFontSize > 6) {
+    let valueWidth = this.valueChartCardValue.nativeElement.getBoundingClientRect().width;
+    while ((valueHeight > targetHeight || valueWidth > maxWidth) && valueFontSize > 6) {
       valueFontSize--;
       this.renderer.setStyle(this.valueChartCardValue.nativeElement, 'fontSize', valueFontSize + 'px');
       valueWidth = this.valueChartCardValue.nativeElement.getBoundingClientRect().width;

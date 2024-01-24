@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -29,10 +29,14 @@ import {
   ViewContainerRef
 } from '@angular/core';
 import {
+  AbstractControl,
   ControlValueAccessor,
+  NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   UntypedFormBuilder,
   UntypedFormGroup,
+  ValidationErrors,
+  Validator,
   Validators
 } from '@angular/forms';
 import { Subscription } from 'rxjs';
@@ -54,9 +58,14 @@ import { WidgetConfigComponentData } from '@home/models/widget-component.models'
     provide: NG_VALUE_ACCESSOR,
     useExisting: forwardRef(() => WidgetSettingsComponent),
     multi: true
+  },
+  {
+    provide: NG_VALIDATORS,
+    useExisting: forwardRef(() => WidgetSettingsComponent),
+    multi: true
   }]
 })
-export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, OnDestroy, AfterViewInit, OnChanges {
+export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, OnDestroy, AfterViewInit, OnChanges, Validator {
 
   @ViewChild('definedSettingsContent', {read: ViewContainerRef, static: true}) definedSettingsContainer: ViewContainerRef;
 
@@ -89,7 +98,6 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
   private definedSettingsComponent: IWidgetSettingsComponent;
 
   private widgetSettingsFormData: JsonFormComponentData;
-
   private propagateChange = (v: any) => { };
 
   constructor(private translate: TranslateService,
@@ -193,11 +201,7 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
 
   private updateModel(settings: WidgetSettings) {
     this.widgetSettingsFormData.model = settings;
-    if (this.definedSettingsComponent || this.widgetSettingsFormGroup.valid) {
-      this.propagateChange(this.widgetSettingsFormData);
-    } else {
-      this.propagateChange(null);
-    }
+    this.propagateChange(this.widgetSettingsFormData);
   }
 
   private validateDefinedDirective() {
@@ -232,9 +236,24 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
     }
   }
 
-  validate() {
+  validate(control: AbstractControl): ValidationErrors | null {
     if (this.useDefinedDirective()) {
-      this.definedSettingsComponent.validate();
+      if (!this.definedSettingsComponent.validateSettings()) {
+        return {
+          widgetSettings: {
+            valid: false
+          }
+        };
+      }
+    } else if (this.useJsonForm()) {
+      if (!this.widgetSettingsFormGroup.get('settings').valid) {
+        return {
+          widgetSettings: {
+            valid: false
+          }
+        };
+      }
     }
+    return null;
   }
 }

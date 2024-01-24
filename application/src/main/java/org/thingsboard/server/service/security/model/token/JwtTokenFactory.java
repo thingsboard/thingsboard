@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,8 +93,8 @@ public class JwtTokenFactory {
         return new AccessJwtToken(token);
     }
 
-    public SecurityUser parseAccessJwtToken(RawAccessJwtToken rawAccessToken) {
-        Jws<Claims> jwsClaims = parseTokenClaims(rawAccessToken);
+    public SecurityUser parseAccessJwtToken(String token) {
+        Jws<Claims> jwsClaims = parseTokenClaims(token);
         Claims claims = jwsClaims.getBody();
         String subject = claims.getSubject();
         @SuppressWarnings("unchecked")
@@ -145,8 +145,8 @@ public class JwtTokenFactory {
         return new AccessJwtToken(token);
     }
 
-    public SecurityUser parseRefreshToken(RawAccessJwtToken rawAccessToken) {
-        Jws<Claims> jwsClaims = parseTokenClaims(rawAccessToken);
+    public SecurityUser parseRefreshToken(String token) {
+        Jws<Claims> jwsClaims = parseTokenClaims(token);
         Claims claims = jwsClaims.getBody();
         String subject = claims.getSubject();
         @SuppressWarnings("unchecked")
@@ -200,11 +200,11 @@ public class JwtTokenFactory {
                 .signWith(SignatureAlgorithm.HS512, jwtSettingsService.getJwtSettings().getTokenSigningKey());
     }
 
-    public Jws<Claims> parseTokenClaims(JwtToken token) {
+    public Jws<Claims> parseTokenClaims(String token) {
         try {
             return Jwts.parser()
                     .setSigningKey(jwtSettingsService.getJwtSettings().getTokenSigningKey())
-                    .parseClaimsJws(token.getToken());
+                    .parseClaimsJws(token);
         } catch (UnsupportedJwtException | MalformedJwtException | IllegalArgumentException ex) {
             log.debug("Invalid JWT Token", ex);
             throw new BadCredentialsException("Invalid JWT token: ", ex);

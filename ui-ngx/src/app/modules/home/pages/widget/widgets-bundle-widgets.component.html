@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -27,6 +27,23 @@
         </button>
         <span class="mat-headline-5">{{ widgetsBundle.title }}: {{ 'widget.widgets' | translate }}</span>
         <span fxFlex></span>
+        <button mat-icon-button [disabled]="isLoading$ | async"
+                *ngIf="!isReadOnly"
+                matTooltip="{{ 'widget.add-new-widget' | translate }}"
+                matTooltipPosition="above"
+                [matMenuTriggerFor]="addWidgetMenu">
+          <mat-icon>add</mat-icon>
+        </button>
+        <mat-menu #addWidgetMenu="matMenu" xPosition="before">
+          <button mat-menu-item (click)="addWidgetType($event)">
+            <mat-icon>insert_drive_file</mat-icon>
+            <span>{{ 'dashboard.create-new-widget' | translate }}</span>
+          </button>
+          <button mat-menu-item (click)="importWidgetType()">
+            <mat-icon>file_upload</mat-icon>
+            <span>{{ 'widget.import' | translate }}</span>
+          </button>
+        </mat-menu>
         <button mat-icon-button
                 matTooltip="{{ 'widgets-bundle.export' | translate }}"
                 matTooltipPosition="above"
@@ -45,7 +62,7 @@
       <div cdkDrag class="tb-draggable tb-bundle-widget-row" *ngFor="let widget of widgets; trackBy: trackByWidget;
                let $index = index; last as isLast;">
         <div class="tb-bundle-widget-row-details">
-          <img class="tb-bundle-widget-image-preview" [src]="getPreviewImage(widget.image)" alt="{{ widget.name }}">
+          <img class="tb-bundle-widget-image-preview" [src]="widget.image | image: {preview: true, emptyUrl: '/assets/widget-preview-empty.svg'} | async" alt="{{ widget.name }}">
           <div class="tb-bundle-widget-details">
             <div class="tb-bundle-widget-title">{{ widget.name }}</div>
             <div *ngIf="widget.deprecated" class="tb-bundle-widget-deprecated">{{ 'widget.deprecated' | translate }}</div>
@@ -54,14 +71,14 @@
         <button *ngIf="!editMode"
                 mat-icon-button
                 (click)="openWidgetEditor($event, widget)"
-                matTooltip="{{'widget.edit-widget-type' | translate }}"
+                matTooltip="{{ 'widget.edit' | translate }}"
                 matTooltipPosition="above">
           <mat-icon>edit</mat-icon>
         </button>
         <button *ngIf="!editMode"
                 mat-icon-button
                 (click)="exportWidgetType($event, widget)"
-                matTooltip="{{'widget-type.export' | translate }}"
+                matTooltip="{{ 'widget.export' | translate }}"
                 matTooltipPosition="above">
           <mat-icon>file_download</mat-icon>
         </button>
@@ -83,18 +100,15 @@
       </div>
     </div>
     <div *ngIf="editMode && !addMode && widgets?.length" class="tb-add-widget-button"
-         matTooltip="{{ 'widget.add' | translate }}"
+         matTooltip="{{ 'widget.add-existing-widget' | translate }}"
          matTooltipPosition="above"
          (click)="addWidgetMode()">
       <tb-icon color="primary" class="tb-add-widget-icon">add</tb-icon>
     </div>
     <div *ngIf="editMode && !addMode && !widgets?.length" class="tb-add-widget-button-panel">
-      <div class="tb-add-widget-button-with-text"
-           matTooltip="{{ 'widget.add' | translate }}"
-           matTooltipPosition="above"
-           (click)="addWidgetMode()">
+      <div class="tb-add-widget-button-with-text" (click)="addWidgetMode()">
         <tb-icon color="primary" class="tb-add-widget-icon">add</tb-icon>
-        <div class="tb-add-widget-button-text" translate>widget.add</div>
+        <div class="tb-add-widget-button-text" translate>widget.add-existing-widget</div>
       </div>
     </div>
     <div *ngIf="isReadOnly && !widgets?.length" class="tb-no-data-available">

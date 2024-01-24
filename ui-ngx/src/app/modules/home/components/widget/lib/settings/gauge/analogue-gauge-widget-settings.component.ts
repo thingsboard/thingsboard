@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,11 +15,9 @@
 ///
 
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
-import { AbstractControl, UntypedFormArray, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { GaugeHighlight } from '@home/components/widget/lib/settings/gauge/gauge-highlight.component';
-import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
 export class AnalogueGaugeWidgetSettingsComponent extends WidgetSettingsComponent {
 
@@ -116,22 +114,27 @@ export class AnalogueGaugeWidgetSettingsComponent extends WidgetSettingsComponen
       maxValue: [settings.maxValue, []],
       majorTicksCount: [settings.majorTicksCount, [Validators.min(0)]],
       colorMajorTicks: [settings.colorMajorTicks, []],
-      minorTicks: [settings.majorTicksCount, [Validators.min(0)]],
+      minorTicks: [settings.minorTicks, [Validators.min(0)]],
       colorMinorTicks: [settings.colorMinorTicks, []],
       numbersFont: [settings.numbersFont, []],
+      numbersColor: [settings.numbersFont.color, []],
 
       // Unit title settings
       showUnitTitle: [settings.showUnitTitle, []],
       unitTitle: [settings.unitTitle, []],
       titleFont: [settings.titleFont, []],
+      titleColor: [settings.titleFont.color, []],
 
       // Units settings
       unitsFont: [settings.unitsFont, []],
+      unitsColor: [settings.unitsFont.color, []],
 
       // Value box settings
       valueBox: [settings.valueBox, []],
       valueInt: [settings.valueInt, [Validators.min(0)]],
       valueFont: [settings.valueFont, []],
+      valueColor: [settings.valueFont.color, []],
+      valueColorShadow: [settings.valueFont.shadowColor, []],
       colorValueBoxRect: [settings.colorValueBoxRect, []],
       colorValueBoxRectEnd: [settings.colorValueBoxRectEnd, []],
       colorValueBoxBackground: [settings.colorValueBoxBackground, []],
@@ -149,7 +152,7 @@ export class AnalogueGaugeWidgetSettingsComponent extends WidgetSettingsComponen
 
       // Highlights settings
       highlightsWidth: [settings.highlightsWidth, [Validators.min(0)]],
-      highlights: this.prepareHighlightsFormArray(settings.highlights),
+      highlights: [settings.highlights, []],
 
       // Animation settings
       animation: [settings.animation, []],
@@ -170,13 +173,16 @@ export class AnalogueGaugeWidgetSettingsComponent extends WidgetSettingsComponen
     if (showUnitTitle) {
       this.analogueGaugeWidgetSettingsForm.get('unitTitle').enable();
       this.analogueGaugeWidgetSettingsForm.get('titleFont').enable();
+      this.analogueGaugeWidgetSettingsForm.get('titleColor').enable();
     } else {
       this.analogueGaugeWidgetSettingsForm.get('unitTitle').disable();
       this.analogueGaugeWidgetSettingsForm.get('titleFont').disable();
+      this.analogueGaugeWidgetSettingsForm.get('titleColor').disable();
     }
     if (valueBox) {
       this.analogueGaugeWidgetSettingsForm.get('valueInt').enable();
       this.analogueGaugeWidgetSettingsForm.get('valueFont').enable();
+      this.analogueGaugeWidgetSettingsForm.get('valueColor').enable();
       this.analogueGaugeWidgetSettingsForm.get('colorValueBoxRect').enable();
       this.analogueGaugeWidgetSettingsForm.get('colorValueBoxRectEnd').enable();
       this.analogueGaugeWidgetSettingsForm.get('colorValueBoxBackground').enable();
@@ -184,6 +190,7 @@ export class AnalogueGaugeWidgetSettingsComponent extends WidgetSettingsComponen
     } else {
       this.analogueGaugeWidgetSettingsForm.get('valueInt').disable();
       this.analogueGaugeWidgetSettingsForm.get('valueFont').disable();
+      this.analogueGaugeWidgetSettingsForm.get('valueColor').disable();
       this.analogueGaugeWidgetSettingsForm.get('colorValueBoxRect').disable();
       this.analogueGaugeWidgetSettingsForm.get('colorValueBoxRectEnd').disable();
       this.analogueGaugeWidgetSettingsForm.get('colorValueBoxBackground').disable();
@@ -198,8 +205,10 @@ export class AnalogueGaugeWidgetSettingsComponent extends WidgetSettingsComponen
     }
     this.analogueGaugeWidgetSettingsForm.get('unitTitle').updateValueAndValidity({emitEvent});
     this.analogueGaugeWidgetSettingsForm.get('titleFont').updateValueAndValidity({emitEvent});
+    this.analogueGaugeWidgetSettingsForm.get('titleColor').updateValueAndValidity({emitEvent});
     this.analogueGaugeWidgetSettingsForm.get('valueInt').updateValueAndValidity({emitEvent});
     this.analogueGaugeWidgetSettingsForm.get('valueFont').updateValueAndValidity({emitEvent});
+    this.analogueGaugeWidgetSettingsForm.get('valueColor').updateValueAndValidity({emitEvent});
     this.analogueGaugeWidgetSettingsForm.get('colorValueBoxRect').updateValueAndValidity({emitEvent});
     this.analogueGaugeWidgetSettingsForm.get('colorValueBoxRectEnd').updateValueAndValidity({emitEvent});
     this.analogueGaugeWidgetSettingsForm.get('colorValueBoxBackground').updateValueAndValidity({emitEvent});
@@ -208,50 +217,17 @@ export class AnalogueGaugeWidgetSettingsComponent extends WidgetSettingsComponen
     this.analogueGaugeWidgetSettingsForm.get('animationRule').updateValueAndValidity({emitEvent});
   }
 
-  protected doUpdateSettings(settingsForm: UntypedFormGroup, settings: WidgetSettings) {
-    settingsForm.setControl('highlights', this.prepareHighlightsFormArray(settings.highlights), {emitEvent: false});
-  }
-
-  private prepareHighlightsFormArray(highlights: GaugeHighlight[] | undefined): UntypedFormArray {
-    const highlightsControls: Array<AbstractControl> = [];
-    if (highlights) {
-      highlights.forEach((highlight) => {
-        highlightsControls.push(this.fb.control(highlight, [Validators.required]));
-      });
+  protected prepareOutputSettings(settings) {
+    settings.numbersFont.color = this.analogueGaugeWidgetSettingsForm.get('numbersColor').value;
+    if (settings.titleFont) {
+      settings.titleFont.color = this.analogueGaugeWidgetSettingsForm.get('titleColor').value;
     }
-    return this.fb.array(highlightsControls);
-  }
-
-  highlightsFormArray(): UntypedFormArray {
-    return this.analogueGaugeWidgetSettingsForm.get('highlights') as UntypedFormArray;
-  }
-
-  public trackByHighlightControl(index: number, highlightControl: AbstractControl): any {
-    return highlightControl;
-  }
-
-  public removeHighlight(index: number) {
-    (this.analogueGaugeWidgetSettingsForm.get('highlights') as UntypedFormArray).removeAt(index);
-  }
-
-  public addHighlight() {
-    const highlight: GaugeHighlight = {
-      from: null,
-      to: null,
-      color: null
-    };
-    const highlightsArray = this.analogueGaugeWidgetSettingsForm.get('highlights') as UntypedFormArray;
-    const highlightControl = this.fb.control(highlight, [Validators.required]);
-    (highlightControl as any).new = true;
-    highlightsArray.push(highlightControl);
-    this.analogueGaugeWidgetSettingsForm.updateValueAndValidity();
-  }
-
-  highlightDrop(event: CdkDragDrop<string[]>) {
-    const highlightsArray = this.analogueGaugeWidgetSettingsForm.get('highlights') as UntypedFormArray;
-    const highlight = highlightsArray.at(event.previousIndex);
-    highlightsArray.removeAt(event.previousIndex);
-    highlightsArray.insert(event.currentIndex, highlight);
+    settings.unitsFont.color = this.analogueGaugeWidgetSettingsForm.get('unitsColor').value;
+    if (settings.valueFont) {
+      settings.valueFont.color = this.analogueGaugeWidgetSettingsForm.get('valueColor').value;
+      settings.valueFont.shadowColor = this.analogueGaugeWidgetSettingsForm.get('valueColorShadow').value;
+    }
+    return settings;
   }
 
 }

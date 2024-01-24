@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
@@ -59,6 +60,9 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
     @Autowired
     protected ApplicationEventPublisher eventPublisher;
 
+    @Autowired
+    private ImageService imageService;
+
     @Override
     public WidgetsBundle findWidgetsBundleById(TenantId tenantId, WidgetsBundleId widgetsBundleId) {
         log.trace("Executing findWidgetsBundleById [{}]", widgetsBundleId);
@@ -71,9 +75,10 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
         log.trace("Executing saveWidgetsBundle [{}]", widgetsBundle);
         widgetsBundleValidator.validate(widgetsBundle, WidgetsBundle::getTenantId);
         try {
+            imageService.replaceBase64WithImageUrl(widgetsBundle, "bundle");
             WidgetsBundle result = widgetsBundleDao.save(widgetsBundle.getTenantId(), widgetsBundle);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(result.getTenantId())
-                    .entityId(result.getId()).added(widgetsBundle.getId() == null).build());
+                    .entityId(result.getId()).created(widgetsBundle.getId() == null).build());
             return result;
         } catch (Exception e) {
             AbstractCachedEntityService.checkConstraintViolation(e,
@@ -140,6 +145,14 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         Validator.validatePageLink(pageLink);
         return widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId.getId(), fullSearch, pageLink);
+    }
+
+    @Override
+    public PageData<WidgetsBundle> findTenantWidgetsBundlesByTenantIdAndPageLink(TenantId tenantId, boolean fullSearch, PageLink pageLink) {
+        log.trace("Executing findTenantWidgetsBundlesByTenantIdAndPageLink, tenantId [{}], fullSearch [{}], pageLink [{}]", tenantId, fullSearch, pageLink);
+        Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        Validator.validatePageLink(pageLink);
+        return widgetsBundleDao.findTenantWidgetsBundlesByTenantId(tenantId.getId(), fullSearch, pageLink);
     }
 
     @Override

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,7 +27,15 @@ import { WidgetLayout, WidgetLayouts } from '@app/shared/models/dashboard.models
 import { IDashboardWidget, WidgetAction, WidgetContext, WidgetHeaderAction } from './widget-component.models';
 import { Timewindow } from '@shared/models/time/time.models';
 import { Observable, of, Subject } from 'rxjs';
-import { formattedDataFormDatasourceData, guid, isDefined, isEqual, isUndefined } from '@app/core/utils';
+import {
+  convertKeysToCamelCase,
+  formattedDataFormDatasourceData,
+  guid,
+  isDefined,
+  isEmpty,
+  isEqual,
+  isUndefined
+} from '@app/core/utils';
 import { IterableDiffer, KeyValueDiffer } from '@angular/core';
 import { IAliasController, IStateController } from '@app/core/api/widget-api.models';
 import { enumerable } from '@shared/decorators/enumerable';
@@ -437,7 +445,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
       && this.widgetContext.widgetTitleTooltip.length ? this.widgetContext.widgetTitleTooltip : this.widget.config.titleTooltip;
     this.titleTooltip = this.dashboard.utils.customTranslation(this.titleTooltip, this.titleTooltip);
     this.showTitle = isDefined(this.widget.config.showTitle) ? this.widget.config.showTitle : true;
-    this.titleStyle = {...(this.widget.config.titleStyle || {}), ...textStyle(this.widget.config.titleFont, 'normal')};
+    this.titleStyle = {...(this.widget.config.titleStyle || {}), ...textStyle(this.widget.config.titleFont)};
     if (this.widget.config.titleColor) {
       this.titleStyle.color = this.widget.config.titleColor;
     }
@@ -479,9 +487,9 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
       backgroundColor: this.backgroundColor,
       padding: this.padding,
       margin: this.margin,
-      borderRadius: this.borderRadius};
-    if (this.widget.config.widgetStyle) {
-      this.style = {...this.style, ...this.widget.config.widgetStyle};
+      borderRadius: this.borderRadius };
+    if (!isEmpty(this.widget.config.widgetStyle)) {
+      this.style = {...this.style, ...convertKeysToCamelCase(this.widget.config.widgetStyle)};
     }
 
     this.showWidgetTitlePanel = this.widgetContext.hideTitlePanel ? false :

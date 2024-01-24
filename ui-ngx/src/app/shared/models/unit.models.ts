@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,6 +21,15 @@ export interface Unit {
   name: string;
   symbol: string;
   tags: string[];
+}
+
+export enum UnitsType {
+  capacity = 'capacity'
+}
+
+export enum Units {
+  percent = '%',
+  liters = 'L'
 }
 
 export const unitBySymbol = (_units: Array<Unit>, symbol: string): Unit => _units.find(u => u.symbol === symbol);

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -243,7 +243,7 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
         }
       };
     }
-    if (this.hasAdditionalLatestDataKeys) {
+    if (this.hasAdditionalLatestDataKeys && !this.basicMode) {
       let valid = datasources.filter(datasource => datasource?.dataKeys?.length).length > 0;
       if (!valid) {
         this.timeseriesKeyError = true;

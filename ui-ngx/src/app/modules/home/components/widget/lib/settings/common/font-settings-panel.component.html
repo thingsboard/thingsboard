@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@
       </mat-select>
     </mat-form-field>
   </div>
-  <div class="tb-form-row no-border no-padding">
+  <div class="tb-form-row no-border no-padding" *ngIf="!disabledLineHeight">
     <div class="fixed-title-width" translate>widgets.widget-font.line-height</div>
     <mat-form-field *ngIf="!autoScale" fxFlex appearance="outline" subscriptSizing="dynamic">
       <input matInput formControlName="lineHeight" placeholder="{{ 'widget-config.set' | translate }}">

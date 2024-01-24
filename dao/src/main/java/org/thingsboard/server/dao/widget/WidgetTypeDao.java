@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.common.data.widget.WidgetsBundleWidget;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.ExportableEntityDao;
+import org.thingsboard.server.dao.ImageContainerDao;
 
 import java.util.List;
 import java.util.UUID;
@@ -33,7 +34,7 @@ import java.util.UUID;
 /**
  * The Interface WidgetTypeDao.
  */
-public interface WidgetTypeDao extends Dao<WidgetTypeDetails>, ExportableEntityDao<WidgetTypeId, WidgetTypeDetails> {
+public interface WidgetTypeDao extends Dao<WidgetTypeDetails>, ExportableEntityDao<WidgetTypeId, WidgetTypeDetails>, ImageContainerDao<WidgetTypeInfo> {
 
     /**
      * Save or update widget type object
@@ -107,5 +108,7 @@ public interface WidgetTypeDao extends Dao<WidgetTypeDetails>, ExportableEntityD
     void saveWidgetsBundleWidget(WidgetsBundleWidget widgetsBundleWidget);
 
     void removeWidgetTypeFromWidgetsBundle(UUID widgetsBundleId, UUID widgetTypeId);
+
+    PageData<WidgetTypeId> findAllWidgetTypesIds(PageLink pageLink);
 
 }

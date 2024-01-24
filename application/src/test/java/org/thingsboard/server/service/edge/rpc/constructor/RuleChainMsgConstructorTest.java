@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
@@ -37,6 +37,7 @@ import org.thingsboard.server.gen.edge.v1.RuleChainConnectionInfoProto;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleNodeProto;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
+import org.thingsboard.server.service.edge.rpc.constructor.rule.RuleChainMsgConstructorV1;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,13 +50,13 @@ public class RuleChainMsgConstructorTest {
 
     private static final String RPC_CONNECTION_TYPE = "RPC";
 
-    private RuleChainMsgConstructor constructor;
+    private RuleChainMsgConstructorV1 ruleChainMsgConstructorV1;
 
     private TenantId tenantId;
 
     @Before
     public void setup() {
-        constructor = new RuleChainMsgConstructor();
+        ruleChainMsgConstructorV1 = new RuleChainMsgConstructorV1();
         tenantId = new TenantId(UUID.randomUUID());
     }
 
@@ -65,7 +66,7 @@ public class RuleChainMsgConstructorTest {
         RuleChainMetaData ruleChainMetaData = createRuleChainMetaData(
                 ruleChainId, 3, createRuleNodes(ruleChainId), createConnections());
         RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg =
-                constructor.constructRuleChainMetadataUpdatedMsg(
+                ruleChainMsgConstructorV1.constructRuleChainMetadataUpdatedMsg(
                         tenantId,
                         UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE,
                         ruleChainMetaData,
@@ -84,7 +85,7 @@ public class RuleChainMsgConstructorTest {
         RuleChainMetaData ruleChainMetaData = createRuleChainMetaData(
                 ruleChainId, 3, createRuleNodes(ruleChainId), createConnections());
         RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg =
-                constructor.constructRuleChainMetadataUpdatedMsg(
+                ruleChainMsgConstructorV1.constructRuleChainMetadataUpdatedMsg(
                         tenantId,
                         UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE,
                         ruleChainMetaData,
@@ -123,7 +124,7 @@ public class RuleChainMsgConstructorTest {
         RuleChainId ruleChainId = new RuleChainId(UUID.randomUUID());
         RuleChainMetaData ruleChainMetaData = createRuleChainMetaData(ruleChainId, 3, createRuleNodes(ruleChainId), createConnections());
         RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg =
-                constructor.constructRuleChainMetadataUpdatedMsg(
+                ruleChainMsgConstructorV1.constructRuleChainMetadataUpdatedMsg(
                         tenantId,
                         UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE,
                         ruleChainMetaData,
@@ -165,7 +166,7 @@ public class RuleChainMsgConstructorTest {
         RuleChainId ruleChainId = new RuleChainId(UUID.randomUUID());
         RuleChainMetaData ruleChainMetaData1 = createRuleChainMetaData(ruleChainId, 8, createRuleNodesInDifferentOrder(ruleChainId), createConnectionsInDifferentOrder());
         RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg =
-                constructor.constructRuleChainMetadataUpdatedMsg(
+                ruleChainMsgConstructorV1.constructRuleChainMetadataUpdatedMsg(
                         tenantId,
                         UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, 
                         ruleChainMetaData1, 

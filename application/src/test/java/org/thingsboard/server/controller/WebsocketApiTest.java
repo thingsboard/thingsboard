@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -454,6 +454,12 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
         getWsClient().registerWaitForUpdate();
 
+        // Pushing update with wrong scope and make sure it will not arrive.
+        AttributeKvEntry invalidDataPoint = new BaseAttributeKvEntry(now - TimeUnit.MINUTES.toMillis(1), new LongDataEntry("serverAttributeKey", 55L));
+        sendAttributes(device, TbAttributeSubscriptionScope.CLIENT_SCOPE, Arrays.asList(invalidDataPoint));
+
+        Assert.assertNull(getWsClient().waitForUpdate(3000));
+
         AttributeKvEntry dataPoint1 = new BaseAttributeKvEntry(now - TimeUnit.MINUTES.toMillis(1), new LongDataEntry("serverAttributeKey", 42L));
         List<AttributeKvEntry> tsData = Arrays.asList(dataPoint1);
         sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, tsData);
@@ -642,7 +648,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testEntityCountCmd_filterTypeSingularCompatibilityTest() {
+    public void testEntityCountCmd_filterTypeSingularCompatibilityTest() throws Exception {
         ObjectNode oldFormatDeviceTypeFilterSingular = JacksonUtil.newObjectNode();
         oldFormatDeviceTypeFilterSingular.put("type", "deviceType");
         oldFormatDeviceTypeFilterSingular.put("deviceType", "default");
@@ -661,9 +667,10 @@ public class WebsocketApiTest extends AbstractControllerTest {
         ObjectNode wrapperNode = JacksonUtil.newObjectNode();
         wrapperNode.set("entityCountCmds", entityCountCmds);
 
-        getWsClient().send(JacksonUtil.toString(wrapperNode));
+        wsClient = buildAndConnectWebSocketClient("/api/ws/plugins/telemetry?token=" + token);
+        wsClient.send(JacksonUtil.toString(wrapperNode));
 
-        EntityCountUpdate update = getWsClient().parseCountReply(getWsClient().waitForReply());
+        EntityCountUpdate update = wsClient.parseCountReply(wsClient.waitForReply());
         Assert.assertEquals(1, update.getCmdId());
         Assert.assertEquals(1, update.getCount());
 

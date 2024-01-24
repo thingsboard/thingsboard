@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,6 +78,7 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.DataConstants.TENANT;
 import static org.thingsboard.server.dao.service.Validator.validateId;
+import static org.thingsboard.server.dao.service.Validator.validateIds;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 import static org.thingsboard.server.dao.service.Validator.validatePositiveNumber;
 import static org.thingsboard.server.dao.service.Validator.validateString;
@@ -115,7 +116,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 entityCountService.publishCountEntityEvictEvent(ruleChain.getTenantId(), EntityType.RULE_CHAIN);
             }
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedRuleChain.getTenantId())
-                    .entity(savedRuleChain).entityId(savedRuleChain.getId()).added(ruleChain.getId() == null).build());
+                    .entity(savedRuleChain).entityId(savedRuleChain.getId()).created(ruleChain.getId() == null).build());
             return savedRuleChain;
         } catch (Exception e) {
             checkConstraintViolation(e, "rule_chain_external_id_unq_key", "Rule Chain with such external id already exists!");
@@ -154,7 +155,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         if (ruleChain == null) {
             return RuleChainUpdateResult.failed();
         }
-        RuleChainDataValidator.validateMetaData(ruleChainMetaData);
+        RuleChainDataValidator.validateMetaDataFieldsAndConnections(ruleChainMetaData);
 
         List<RuleNode> nodes = ruleChainMetaData.getNodes();
         List<RuleNode> toAddOrUpdate = new ArrayList<>();
@@ -193,6 +194,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             for (RuleNode node : toAddOrUpdate) {
                 node.setRuleChainId(ruleChainId);
                 node = ruleNodeUpdater.apply(node);
+                RuleChainDataValidator.validateRuleNode(node);
                 RuleNode savedNode = ruleNodeDao.save(tenantId, node);
                 relations.add(new EntityRelation(ruleChainMetaData.getRuleChainId(), savedNode.getId(),
                         EntityRelation.CONTAINS_TYPE, RelationTypeGroup.RULE_CHAIN));
@@ -724,6 +726,23 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         validatePositiveNumber(version, "Incorrect version to compare with. Version should be greater than 0!");
         validatePageLink(pageLink);
         return ruleNodeDao.findAllRuleNodesByTypeAndVersionLessThan(type, version, pageLink);
+    }
+
+    @Override
+    public PageData<RuleNodeId> findAllRuleNodeIdsByTypeAndVersionLessThan(String type, int version, PageLink pageLink) {
+        log.trace("Executing findAllRuleNodeIdsByTypeAndVersionLessThan, type {}, pageLink {}, version {}", type, pageLink, version);
+        validateString(type, "Incorrect type of the rule node");
+        validatePositiveNumber(version, "Incorrect version to compare with. Version should be greater than 0!");
+        validatePageLink(pageLink);
+        return ruleNodeDao.findAllRuleNodeIdsByTypeAndVersionLessThan(type, version, pageLink);
+    }
+
+    @Override
+    public List<RuleNode> findAllRuleNodesByIds(List<RuleNodeId> ruleNodeIds) {
+        log.trace("Executing findAllRuleNodesByIds, ruleNodeIds {}", ruleNodeIds);
+        validateIds(ruleNodeIds, "Incorrect ruleNodeIds " + ruleNodeIds);
+        assert ruleNodeIds.size() <= 1024;
+        return ruleNodeDao.findAllRuleNodeByIds(ruleNodeIds);
     }
 
     @Override

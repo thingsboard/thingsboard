@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 :host {
   min-width: 52px;
   width: 100%;
-  padding: 0 6px;
+  padding: 0;
+  .tb-rule-select {
+    width: 100%;
+  }
   .tb-rule-chain-select {
     display: flex;
     min-height: 100%;

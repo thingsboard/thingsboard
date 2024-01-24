@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,10 @@ import javax.websocket.SendResult;
 import javax.websocket.Session;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Deque;
 import java.util.List;
+import java.util.Random;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -49,6 +52,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willReturn;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -79,7 +83,9 @@ class TbWebSocketHandlerTest {
         asyncRemote = mock(RemoteEndpoint.Async.class);
         willReturn(asyncRemote).given(nativeSession).getAsyncRemote();
         sessionRef = mock(WebSocketSessionRef.class, Mockito.RETURNS_DEEP_STUBS); //prevent NPE on logs
-        sendHandler = spy(wsHandler.new SessionMetaData(session, sessionRef, maxMsgQueuePerSession));
+        TbWebSocketHandler.SessionMetaData sessionMd = wsHandler.new SessionMetaData(session, sessionRef);
+        sessionMd.setMaxMsgQueueSize(maxMsgQueuePerSession);
+        sendHandler = spy(sessionMd);
     }
 
     @AfterEach
@@ -155,6 +161,27 @@ class TbWebSocketHandlerTest {
         sendHandler.sendMsg("excessive message");
         verify(sendHandler, times(1)).closeSession(eq(new CloseStatus(1008, "Max pending updates limit reached!")));
         verify(asyncRemote, times(1)).sendText(anyString(), any());
+    }
+
+    @Test
+    void sendHandler_onMsg_allProcessed() throws Exception {
+        Deque<String> msgs = new ConcurrentLinkedDeque<>();
+        doAnswer(inv -> msgs.add(inv.getArgument(1))).when(wsHandler).processMsg(any(), any());
+        for (int i = 0; i < 100; i++) {
+            String msg = String.valueOf(i);
+            executor.submit(() -> {
+                try {
+                    Thread.sleep(new Random().nextInt(50));
+                    sendHandler.onMsg(msg);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
+        executor.shutdown();
+        executor.awaitTermination(5, TimeUnit.SECONDS);
+
+        assertThat(msgs).map(Integer::parseInt).doesNotHaveDuplicates().hasSize(100);
     }
 
 }

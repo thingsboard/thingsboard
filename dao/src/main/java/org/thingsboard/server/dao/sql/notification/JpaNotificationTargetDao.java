@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,13 +48,13 @@ public class JpaNotificationTargetDao extends JpaAbstractDao<NotificationTargetE
     @Override
     public PageData<NotificationTarget> findByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(notificationTargetRepository.findByTenantIdAndSearchText(tenantId.getId(),
-                Strings.nullToEmpty(pageLink.getTextSearch()), DaoUtil.toPageable(pageLink)));
+                pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
     }
 
     @Override
     public PageData<NotificationTarget> findByTenantIdAndSupportedNotificationTypeAndPageLink(TenantId tenantId, NotificationType notificationType, PageLink pageLink) {
         return DaoUtil.toPageData(notificationTargetRepository.findByTenantIdAndSearchTextAndUsersFilterTypeIfPresent(tenantId.getId(),
-                Strings.nullToEmpty(pageLink.getTextSearch()),
+                pageLink.getTextSearch(),
                 Arrays.stream(UsersFilterType.values())
                         .filter(type -> notificationType != NotificationType.GENERAL || !type.isForRules())
                         .map(Enum::name).collect(Collectors.toList()),
@@ -68,7 +68,7 @@ public class JpaNotificationTargetDao extends JpaAbstractDao<NotificationTargetE
 
     @Override
     public List<NotificationTarget> findByTenantIdAndUsersFilterType(TenantId tenantId, UsersFilterType filterType) {
-        return DaoUtil.convertDataList(notificationTargetRepository.findByTenantIdAndSearchTextAndUsersFilterTypeIfPresent(tenantId.getId(), "",
+        return DaoUtil.convertDataList(notificationTargetRepository.findByTenantIdAndSearchTextAndUsersFilterTypeIfPresent(tenantId.getId(), null,
                 List.of(filterType.name()), DaoUtil.toPageable(new PageLink(Integer.MAX_VALUE))).getContent());
     }
 

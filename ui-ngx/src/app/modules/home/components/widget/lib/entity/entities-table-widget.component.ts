@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ import { deepClone, hashCode, isDefined, isNumber, isObject, isUndefined } from 
 import cssjs from '@core/css/css';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { BehaviorSubject, merge, Observable, Subject } from 'rxjs';
+import { BehaviorSubject, fromEvent, merge, Observable, Subject } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { entityTypeTranslations } from '@shared/models/entity-type.models';
@@ -83,16 +83,16 @@ import {
   TableWidgetSettings,
   widthStyle
 } from '@home/components/widget/lib/table-widget.models';
-import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
+import { Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
 import {
   DISPLAY_COLUMNS_PANEL_DATA,
   DisplayColumnsPanelComponent,
   DisplayColumnsPanelData
 } from '@home/components/widget/lib/display-columns-panel.component';
+import { Direction } from '@shared/models/page/sort-order';
 import {
   dataKeyToEntityKey,
-  Direction,
   EntityDataPageLink,
   entityDataPageLinkSortDirection,
   EntityKeyType,
@@ -106,6 +106,7 @@ import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { AggregationType } from '@shared/models/time/time.models';
 import { FormBuilder } from '@angular/forms';
+import { DEFAULT_OVERLAY_POSITIONS } from '@shared/models/overlay.models';
 
 interface EntitiesTableWidgetSettings extends TableWidgetSettings {
   entitiesTitle: string;
@@ -462,18 +463,17 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     if ($event) {
       $event.stopPropagation();
     }
-    const target = $event.target || $event.currentTarget;
-    const config = new OverlayConfig();
-    config.backdropClass = 'cdk-overlay-transparent-backdrop';
-    config.hasBackdrop = true;
-    const connectedPosition: ConnectedPosition = {
-      originX: 'end',
-      originY: 'bottom',
-      overlayX: 'end',
-      overlayY: 'top'
-    };
-    config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
-      .withPositions([connectedPosition]);
+    const target = $event.target || $event.srcElement || $event.currentTarget;
+    const config = new OverlayConfig({
+      panelClass: 'tb-panel-container',
+      backdropClass: 'cdk-overlay-transparent-backdrop',
+      hasBackdrop: true,
+      height: 'fit-content',
+      maxHeight: '75vh'
+    });
+    config.positionStrategy = this.overlay.position()
+      .flexibleConnectedTo(target as HTMLElement)
+      .withPositions(DEFAULT_OVERLAY_POSITIONS);
 
     const overlayRef = this.overlay.create(config);
     overlayRef.backdropClick().subscribe(() => {
@@ -481,11 +481,11 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     });
 
     const columns: DisplayColumn[] = this.columns.map(column => ({
-        title: column.title,
-        def: column.def,
-        display: this.displayedColumns.indexOf(column.def) > -1,
-        selectable: this.columnSelectionAvailability[column.def]
-      }));
+      title: column.title,
+      def: column.def,
+      display: this.displayedColumns.indexOf(column.def) > -1,
+      selectable: this.columnSelectionAvailability[column.def]
+    }));
 
     const providers: StaticProvider[] = [
       {
@@ -506,9 +506,18 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         useValue: overlayRef
       }
     ];
+
     const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
-    overlayRef.attach(new ComponentPortal(DisplayColumnsPanelComponent,
+    const componentRef = overlayRef.attach(new ComponentPortal(DisplayColumnsPanelComponent,
       this.viewContainerRef, injector));
+
+    const resizeWindows$ = fromEvent(window, 'resize').subscribe(() => {
+      overlayRef.updatePosition();
+    });
+    componentRef.onDestroy(() => {
+      resizeWindows$.unsubscribe();
+    });
+
     this.ctx.detectChanges();
   }
 

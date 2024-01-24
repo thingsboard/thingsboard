@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.service.ws.telemetry.cmd.TelemetryPluginCmdsWrapper;
+import org.thingsboard.server.service.ws.telemetry.cmd.TelemetryCmdsWrapper;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.LatestValueCmd;
@@ -206,7 +206,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
             lwModel.setFileName(resourceName);
             lwModel.setTenantId(tenantId);
             byte[] bytes = IOUtils.toByteArray(AbstractLwM2MIntegrationTest.class.getClassLoader().getResourceAsStream("lwm2m/" + resourceName));
-            lwModel.setData(Base64.getEncoder().encodeToString(bytes));
+            lwModel.setData(bytes);
             lwModel = doPostWithTypedResponse("/api/resource", lwModel, new TypeReference<>() {
             });
             Assert.assertNotNull(lwModel);
@@ -229,10 +229,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
                 Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
 
         EntityDataCmd cmd = new EntityDataCmd(1, edq, null, latestCmd, null);
-        TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
-        wrapper.setEntityDataCmds(Collections.singletonList(cmd));
-
-        getWsClient().send(JacksonUtil.toString(wrapper));
+        getWsClient().send(cmd);
         getWsClient().waitForReply();
 
         getWsClient().registerWaitForUpdate();

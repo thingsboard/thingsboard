@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -34,15 +34,8 @@ import {
   setTimewindowConfig
 } from '@home/components/widget/config/timewindow-config-panel.component';
 import { formatValue, isDefinedAndNotNull, isUndefined } from '@core/utils';
+import { cssSizeToStrSize, getDataKey, resolveCssSize, updateDataKeys } from '@shared/models/widget-settings.models';
 import {
-  cssSizeToStrSize, getDataKey,
-  getDataKeyByLabel,
-  resolveCssSize,
-  updateDataKeyByLabel
-} from '@shared/models/widget-settings.models';
-import {
-  centerValueLabel,
-  windDirectionLabel,
   windSpeedDirectionDefaultSettings,
   WindSpeedDirectionLayout,
   windSpeedDirectionLayoutImages,
@@ -107,26 +100,22 @@ export class WindSpeedDirectionBasicConfigComponent extends BasicWidgetConfigCom
     return this.windSpeedDirectionWidgetConfigForm;
   }
 
-  protected setupDefaults(configData: WidgetConfigComponentData) {
-    this.setupDefaultDatasource(configData, [{ name: 'winddirection', label: windDirectionLabel, type: DataKeyType.timeseries },
-                                                   { name: 'windspeed', label: centerValueLabel, type: DataKeyType.timeseries,
-                                                     units: 'm/s', decimals: 1 }]);
+  protected defaultDataKeys(configData: WidgetConfigComponentData): DataKey[] {
+    return [{ name: 'direction', label: 'Wind Direction', type: DataKeyType.timeseries },
+      { name: 'speed', label: 'Wind Speed', type: DataKeyType.timeseries,
+        units: 'm/s', decimals: 1 }];
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {
     const settings: WindSpeedDirectionWidgetSettings = {...windSpeedDirectionDefaultSettings, ...(configData.config.settings || {})};
     const iconSize = resolveCssSize(configData.config.iconSize);
-    let windDirectionDataKey = getDataKeyByLabel(configData.config.datasources, windDirectionLabel);
-    if (!windDirectionDataKey) {
-      windDirectionDataKey = getDataKey(configData.config.datasources);
-    }
     this.windSpeedDirectionWidgetConfigForm = this.fb.group({
       timewindowConfig: [getTimewindowConfig(configData.config), []],
       datasources: [configData.config.datasources, []],
 
-      windDirectionKey: [windDirectionDataKey, [Validators.required]],
+      windDirectionKey: [getDataKey(configData.config.datasources, 0), [Validators.required]],
 
-      centerValueKey: [getDataKeyByLabel(configData.config.datasources, centerValueLabel), []],
+      centerValueKey: [getDataKey(configData.config.datasources, 1), []],
       centerValueFont: [settings.centerValueFont, []],
       centerValueColor: [settings.centerValueColor, []],
 
@@ -167,8 +156,15 @@ export class WindSpeedDirectionBasicConfigComponent extends BasicWidgetConfigCom
     setTimewindowConfig(this.widgetConfig.config, config.timewindowConfig);
     this.widgetConfig.config.datasources = config.datasources;
 
-    updateDataKeyByLabel(this.widgetConfig.config.datasources, config.windDirectionKey, windDirectionLabel);
-    updateDataKeyByLabel(this.widgetConfig.config.datasources, config.centerValueKey, centerValueLabel);
+    const dataKeys: DataKey[] = [];
+    if (config.windDirectionKey) {
+      dataKeys.push(config.windDirectionKey);
+      if (config.centerValueKey) {
+        dataKeys.push(config.centerValueKey);
+      }
+    }
+
+    updateDataKeys(this.widgetConfig.config.datasources, dataKeys);
 
     this.widgetConfig.config.showTitle = config.showTitle;
     this.widgetConfig.config.title = config.title;

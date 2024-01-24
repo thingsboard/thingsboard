@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,12 +43,17 @@ public interface RuleNodeRepository extends JpaRepository<RuleNodeEntity, UUID> 
                                                 Pageable pageable);
 
     @Query(nativeQuery = true, value = "SELECT * FROM rule_node r WHERE r.type = :ruleType " +
-            " AND configuration_version < :version " +
+            " AND r.configuration_version < :version " +
             " AND (:searchText IS NULL OR r.configuration ILIKE CONCAT('%', :searchText, '%'))")
     Page<RuleNodeEntity> findAllRuleNodesByTypeAndVersionLessThan(@Param("ruleType") String ruleType,
                                                                   @Param("version") int version,
                                                                   @Param("searchText") String searchText,
                                                                   Pageable pageable);
+
+    @Query("SELECT r.id FROM RuleNodeEntity r WHERE r.type = :ruleType AND r.configurationVersion < :version")
+    Page<UUID> findAllRuleNodeIdsByTypeAndVersionLessThan(@Param("ruleType") String ruleType,
+                                                          @Param("version") int version,
+                                                          Pageable pageable);
 
     List<RuleNodeEntity> findRuleNodesByRuleChainIdAndExternalIdIn(UUID ruleChainId, List<UUID> externalIds);
 

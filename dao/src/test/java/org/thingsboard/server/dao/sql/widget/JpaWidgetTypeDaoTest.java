@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -50,6 +52,26 @@ import static org.junit.Assert.assertNotNull;
  * Created by Valerii Sosliuk on 4/30/2017.
  */
 public class JpaWidgetTypeDaoTest extends AbstractJpaDaoTest {
+
+    // given search text should find a widget with tags, when searching by tags
+    final Map<String, String[]> SHOULD_FIND_SEARCH_TO_TAGS_MAP = Map.of(
+            "A",             new String[]{"a", "b", "c"},
+            "test A test",   new String[]{"a", "b", "c"},
+            "test x y test", new String[]{"x y", "b", "c"},
+            "x y test",      new String[]{"x y", "b", "c"},
+            "x y",           new String[]{"x y", "b", "c"},
+            "test x y",      new String[]{"x y", "b", "c"}
+    );
+
+    // given search text should not find a widget with tags, when searching by tags
+    final Map<String, String[]> SHOULDNT_FIND_SEARCH_TO_TAGS_MAP = Map.of(
+            "testA test",   new String[]{"a", "b", "c"},
+            "testx y test", new String[]{"x y", "b", "c"},
+            "testx ytest",  new String[]{"x y", "b", "c"},
+            "x ytest",      new String[]{"x y", "b", "c"},
+            "testx y",      new String[]{"x y", "b", "c"},
+            "x",            new String[]{"x y", "b", "c"}
+    );
 
     final String BUNDLE_ALIAS = "BUNDLE_ALIAS";
     final int WIDGET_TYPE_COUNT = 3;
@@ -88,10 +110,25 @@ public class JpaWidgetTypeDaoTest extends AbstractJpaDaoTest {
         widgetType.setName("WIDGET_TYPE_" + number);
         widgetType.setDescription("WIDGET_TYPE_DESCRIPTION" + number);
         widgetType.setFqn("FQN_" + number);
+        widgetType.setImage("/image/system/logo.png");
         var descriptor = JacksonUtil.newObjectNode();
         descriptor.put("type", number % 2 == 0 ? "latest" : "static");
         widgetType.setDescriptor(descriptor);
         String[] tags = new String[]{"Tag1_"+number, "Tag2_"+number, "TEST_"+number};
+        widgetType.setTags(tags);
+        return widgetTypeDao.save(TenantId.SYS_TENANT_ID, widgetType);
+    }
+
+    WidgetTypeDetails createAndSaveWidgetType(TenantId tenantId, int number, String[] tags) {
+        WidgetTypeDetails widgetType = new WidgetTypeDetails();
+        widgetType.setTenantId(tenantId);
+        widgetType.setName("WIDGET_TYPE_" + number);
+        widgetType.setDescription("WIDGET_TYPE_DESCRIPTION" + number);
+        widgetType.setFqn("FQN_" + number);
+        widgetType.setImage("/image/tenant/logo.png");
+        var descriptor = JacksonUtil.newObjectNode();
+        descriptor.put("type", number % 2 == 0 ? "latest" : "static");
+        widgetType.setDescriptor(descriptor);
         widgetType.setTags(tags);
         return widgetTypeDao.save(TenantId.SYS_TENANT_ID, widgetType);
     }
@@ -124,6 +161,40 @@ public class JpaWidgetTypeDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
+    public void testTagsSearchInFindBySystemWidgetTypes() {
+        for (var entry : SHOULD_FIND_SEARCH_TO_TAGS_MAP.entrySet()) {
+            String searchText = entry.getKey();
+            String[] tags = entry.getValue();
+
+            WidgetTypeDetails savedWidgetType = createAndSaveWidgetType(TenantId.SYS_TENANT_ID, WIDGET_TYPE_COUNT + 1, tags);
+
+            PageData<WidgetTypeInfo> widgetTypes = widgetTypeDao.findSystemWidgetTypes(
+                    TenantId.SYS_TENANT_ID, true, DeprecatedFilter.ALL, null, new PageLink(10, 0, searchText)
+            );
+
+            assertThat(widgetTypes.getData()).hasSize(1);
+            assertThat(widgetTypes.getData().get(0).getId()).isEqualTo(savedWidgetType.getId());
+
+            widgetTypeDao.removeById(TenantId.SYS_TENANT_ID, savedWidgetType.getUuidId());
+        }
+
+        for (var entry : SHOULDNT_FIND_SEARCH_TO_TAGS_MAP.entrySet()) {
+            String searchText = entry.getKey();
+            String[] tags = entry.getValue();
+
+            WidgetTypeDetails savedWidgetType = createAndSaveWidgetType(TenantId.SYS_TENANT_ID, WIDGET_TYPE_COUNT + 1, tags);
+
+            PageData<WidgetTypeInfo> widgetTypes = widgetTypeDao.findSystemWidgetTypes(
+                    TenantId.SYS_TENANT_ID, true, DeprecatedFilter.ALL, null, new PageLink(10, 0, searchText)
+            );
+
+            assertThat(widgetTypes.getData()).hasSize(0);
+
+            widgetTypeDao.removeById(TenantId.SYS_TENANT_ID, savedWidgetType.getUuidId());
+        }
+    }
+
+    @Test
     public void testFindTenantWidgetTypesByTenantId() {
         UUID tenantId = Uuids.timeBased();
         for (int i = 0; i < WIDGET_TYPE_COUNT; i++) {
@@ -136,6 +207,74 @@ public class JpaWidgetTypeDaoTest extends AbstractJpaDaoTest {
         assertEquals(new WidgetTypeInfo(widgetTypeList.get(3)), widgetTypes.getData().get(0));
         assertEquals(new WidgetTypeInfo(widgetTypeList.get(4)), widgetTypes.getData().get(1));
         assertEquals(new WidgetTypeInfo(widgetTypeList.get(5)), widgetTypes.getData().get(2));
+    }
+
+    @Test
+    public void testTagsSearchInFindTenantWidgetTypesByTenantId() {
+        for (var entry : SHOULD_FIND_SEARCH_TO_TAGS_MAP.entrySet()) {
+            String searchText = entry.getKey();
+            String[] tags = entry.getValue();
+
+            WidgetTypeDetails savedWidgetType = createAndSaveWidgetType(TenantId.SYS_TENANT_ID, WIDGET_TYPE_COUNT + 1, tags);
+
+            PageData<WidgetTypeInfo> widgetTypes = widgetTypeDao.findTenantWidgetTypesByTenantId(
+                    TenantId.SYS_TENANT_ID.getId(), true, DeprecatedFilter.ALL, null, new PageLink(10, 0, searchText)
+            );
+
+            assertThat(widgetTypes.getData()).hasSize(1);
+            assertThat(widgetTypes.getData().get(0).getId()).isEqualTo(savedWidgetType.getId());
+
+            widgetTypeDao.removeById(TenantId.SYS_TENANT_ID, savedWidgetType.getUuidId());
+        }
+
+        for (var entry : SHOULDNT_FIND_SEARCH_TO_TAGS_MAP.entrySet()) {
+            String searchText = entry.getKey();
+            String[] tags = entry.getValue();
+
+            WidgetTypeDetails savedWidgetType = createAndSaveWidgetType(TenantId.SYS_TENANT_ID, WIDGET_TYPE_COUNT + 1, tags);
+
+            PageData<WidgetTypeInfo> widgetTypes = widgetTypeDao.findTenantWidgetTypesByTenantId(
+                    TenantId.SYS_TENANT_ID.getId(), true, DeprecatedFilter.ALL, null, new PageLink(10, 0, searchText)
+            );
+
+            assertThat(widgetTypes.getData()).hasSize(0);
+
+            widgetTypeDao.removeById(TenantId.SYS_TENANT_ID, savedWidgetType.getUuidId());
+        }
+    }
+
+    @Test
+    public void testTagsSearchInFindAllTenantWidgetTypesByTenantId() {
+        for (var entry : SHOULD_FIND_SEARCH_TO_TAGS_MAP.entrySet()) {
+            String searchText = entry.getKey();
+            String[] tags = entry.getValue();
+
+            WidgetTypeDetails savedWidgetType = createAndSaveWidgetType(TenantId.SYS_TENANT_ID, WIDGET_TYPE_COUNT + 1, tags);
+
+            PageData<WidgetTypeInfo> widgetTypes = widgetTypeDao.findAllTenantWidgetTypesByTenantId(
+                    TenantId.SYS_TENANT_ID.getId(), true, DeprecatedFilter.ALL, null, new PageLink(10, 0, searchText)
+            );
+
+            assertThat(widgetTypes.getData()).hasSize(1);
+            assertThat(widgetTypes.getData().get(0).getId()).isEqualTo(savedWidgetType.getId());
+
+            widgetTypeDao.removeById(TenantId.SYS_TENANT_ID, savedWidgetType.getUuidId());
+        }
+
+        for (var entry : SHOULDNT_FIND_SEARCH_TO_TAGS_MAP.entrySet()) {
+            String searchText = entry.getKey();
+            String[] tags = entry.getValue();
+
+            WidgetTypeDetails savedWidgetType = createAndSaveWidgetType(TenantId.SYS_TENANT_ID, WIDGET_TYPE_COUNT + 1, tags);
+
+            PageData<WidgetTypeInfo> widgetTypes = widgetTypeDao.findAllTenantWidgetTypesByTenantId(
+                    TenantId.SYS_TENANT_ID.getId(), true, DeprecatedFilter.ALL, null, new PageLink(10, 0, searchText)
+            );
+
+            assertThat(widgetTypes.getData()).hasSize(0);
+
+            widgetTypeDao.removeById(TenantId.SYS_TENANT_ID, savedWidgetType.getUuidId());
+        }
     }
 
     @Test
@@ -153,10 +292,67 @@ public class JpaWidgetTypeDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
+    public void testTagsSearchInFindByWidgetTypeInfosByBundleId() {
+        for (var entry : SHOULD_FIND_SEARCH_TO_TAGS_MAP.entrySet()) {
+            String searchText = entry.getKey();
+            String[] tags = entry.getValue();
+
+            WidgetTypeDetails savedWidgetType = createAndSaveWidgetType(TenantId.SYS_TENANT_ID, WIDGET_TYPE_COUNT + 1, tags);
+            widgetTypeDao.saveWidgetsBundleWidget(new WidgetsBundleWidget(this.widgetsBundle.getId(), savedWidgetType.getId(), WIDGET_TYPE_COUNT + 1));
+
+            PageData<WidgetTypeInfo> widgetTypes = widgetTypeDao.findWidgetTypesInfosByWidgetsBundleId(
+                    TenantId.SYS_TENANT_ID.getId(), widgetsBundle.getUuidId(), true, DeprecatedFilter.ALL, null, new PageLink(10, 0, searchText)
+            );
+
+            assertThat(widgetTypes.getData()).hasSize(1);
+            assertThat(widgetTypes.getData().get(0).getId()).isEqualTo(savedWidgetType.getId());
+
+            widgetTypeDao.removeById(TenantId.SYS_TENANT_ID, savedWidgetType.getUuidId());
+        }
+
+        for (var entry : SHOULDNT_FIND_SEARCH_TO_TAGS_MAP.entrySet()) {
+            String searchText = entry.getKey();
+            String[] tags = entry.getValue();
+
+            WidgetTypeDetails savedWidgetType = createAndSaveWidgetType(TenantId.SYS_TENANT_ID, WIDGET_TYPE_COUNT + 1, tags);
+            widgetTypeDao.saveWidgetsBundleWidget(new WidgetsBundleWidget(this.widgetsBundle.getId(), savedWidgetType.getId(), WIDGET_TYPE_COUNT + 1));
+
+            PageData<WidgetTypeInfo> widgetTypes = widgetTypeDao.findWidgetTypesInfosByWidgetsBundleId(
+                    TenantId.SYS_TENANT_ID.getId(), widgetsBundle.getUuidId(), true, DeprecatedFilter.ALL, null, new PageLink(10, 0, searchText)
+            );
+
+            assertThat(widgetTypes.getData()).hasSize(0);
+
+            widgetTypeDao.removeById(TenantId.SYS_TENANT_ID, savedWidgetType.getUuidId());
+        }
+    }
+
+    @Test
     public void testFindByTenantIdAndFqn() {
         WidgetType result = widgetTypeList.get(0);
         assertNotNull(result);
         WidgetType widgetType = widgetTypeDao.findByTenantIdAndFqn(TenantId.SYS_TENANT_ID.getId(), "FQN_0");
         assertEquals(result.getId(), widgetType.getId());
+    }
+
+    @Test
+    public void testFindByTenantAndImageLink() {
+        var result = widgetTypeDao.findByImageLink("/image/system/logo.png", 5);
+        assertEquals(3, result.size());
+        result = widgetTypeDao.findByImageLink("/image/system/logo2.png", 5);
+        assertEquals(0, result.size());
+    }
+
+    @Test
+    public void testFindByImageLink() {
+        TenantId tenantId = new TenantId(UUID.randomUUID());
+        WidgetTypeDetails details = createAndSaveWidgetType(tenantId, 0, new String[]{"a"});
+        details.setDescriptor(JacksonUtil.newObjectNode().put("bg", "/image/tenant/widget.png"));
+        widgetTypeDao.save(tenantId, details);
+        var result = widgetTypeDao.findByTenantAndImageLink(tenantId, "/image/tenant/widget.png", 3);
+        assertEquals(1, result.size());
+        result = widgetTypeDao.findByTenantAndImageLink(tenantId, "/image/tenant/widget2.png", 3);
+        assertEquals(0, result.size());
+        widgetTypeDao.removeById(tenantId, details.getUuidId());
     }
 }

@@ -249,7 +249,7 @@
 },
 {
   "name": "unit.liter",
-  "symbol": "l",
+  "symbol": "L",
   "tags": ["volume","capacity","extent","liter","liters","l"]
 },
 {
@@ -939,6 +939,11 @@
   "tags": ["decibels millivolt","voltage level","signal","dBmV"]
 },
 {
+  "name": "unit.dbm",
+  "symbol": "dBm",
+  "tags": ["decibel milliwatts","output power","signal","dBm"]
+},
+{
   "name": "unit.volt-meter",
   "symbol": "V·m",
   "tags": ["electric flux","volt-meter","V·m"]
@@ -1108,7 +1113,7 @@
   "symbol": "%",
   "tags": ["power source","state of charge (SoC)","battery","battery level","level","humidity","moisture","percentage",
     "relative humidity","water content","soil moisture","irrigation","water in soil","soil water content","VWC",
-    "Volumetric Water Content","Total Harmonic Distortion","THD","power quality","UV Transmittance","%"]
+    "Volumetric Water Content","Total Harmonic Distortion","THD","power quality","UV Transmittance","%", "capacity"]
 },
 {
   "name": "unit.rssi",
@@ -1310,6 +1315,11 @@
   "name": "unit.milligram-per-milliliter",
   "symbol": "mg/mL",
   "tags": ["concentration","mass per volume","mg/mL"]
+},
+{
+    "name": "unit.milligram-per-cubic-meter",
+    "symbol": "mg/m³",
+    "tags": ["concentration","mass per volume","mg/m³"]
 },
 {
   "name": "unit.pound-per-cubic-foot",

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.BaseData;
-import org.thingsboard.server.common.data.BaseDataWithAdditionalInfo;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.HasImage;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasRuleEngineProfile;
 import org.thingsboard.server.common.data.HasTenantId;
@@ -39,7 +39,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 @ToString(exclude = {"image"})
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class AssetProfile extends BaseData<AssetProfileId> implements HasName, HasTenantId, HasRuleEngineProfile, ExportableEntity<AssetProfileId> {
+public class AssetProfile extends BaseData<AssetProfileId> implements HasName, HasTenantId, HasRuleEngineProfile, ExportableEntity<AssetProfileId>, HasImage {
 
     private static final long serialVersionUID = 6998485460273302018L;
 
@@ -52,7 +52,6 @@ public class AssetProfile extends BaseData<AssetProfileId> implements HasName, H
     @NoXss
     @ApiModelProperty(position = 11, value = "Asset Profile description. ")
     private String description;
-    @Length(fieldName = "image", max = 1000000)
     @ApiModelProperty(position = 12, value = "Either URL or Base64 data of the icon. Used in the mobile application to visualize set of asset profiles in the grid view. ")
     private String image;
     private boolean isDefault;
@@ -114,7 +113,7 @@ public class AssetProfile extends BaseData<AssetProfileId> implements HasName, H
     }
 
     @ApiModelProperty(position = 5, value = "Used to mark the default profile. Default profile is used when the asset profile is not specified during asset creation.")
-    public boolean isDefault(){
+    public boolean isDefault() {
         return isDefault;
     }
 

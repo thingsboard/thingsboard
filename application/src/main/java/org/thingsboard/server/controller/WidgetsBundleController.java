@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.widgets.bundle.TbWidgetsBundleService;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -47,6 +48,8 @@ import java.util.List;
 import java.util.Set;
 
 import static org.thingsboard.server.controller.ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER;
+import static org.thingsboard.server.controller.ControllerConstants.INLINE_IMAGES;
+import static org.thingsboard.server.controller.ControllerConstants.INLINE_IMAGES_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
@@ -66,9 +69,11 @@ import static org.thingsboard.server.controller.ControllerConstants.WIDGET_BUNDL
 public class WidgetsBundleController extends BaseController {
 
     private final TbWidgetsBundleService tbWidgetsBundleService;
+    private final ImageService imageService;
 
     private static final String WIDGET_BUNDLE_DESCRIPTION = "Widget Bundle represents a group(bundle) of widgets. Widgets are grouped into bundle by type or use case. ";
     private static final String FULL_SEARCH_PARAM_DESCRIPTION = "Optional boolean parameter indicating extended search of widget bundles by description and by name / description of related widget types";
+    private static final String TENANT_BUNDLES_ONLY_DESCRIPTION = "Optional boolean parameter to include only tenant-level bundles without system";
 
     @ApiOperation(value = "Get Widget Bundle (getWidgetsBundleById)",
             notes = "Get the Widget Bundle based on the provided Widget Bundle Id. " + WIDGET_BUNDLE_DESCRIPTION + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
@@ -77,10 +82,16 @@ public class WidgetsBundleController extends BaseController {
     @ResponseBody
     public WidgetsBundle getWidgetsBundleById(
             @ApiParam(value = WIDGET_BUNDLE_ID_PARAM_DESCRIPTION, required = true)
-            @PathVariable("widgetsBundleId") String strWidgetsBundleId) throws ThingsboardException {
+            @PathVariable("widgetsBundleId") String strWidgetsBundleId,
+            @ApiParam(value = INLINE_IMAGES_DESCRIPTION)
+            @RequestParam(value = INLINE_IMAGES, required = false) boolean inlineImages) throws ThingsboardException {
         checkParameter("widgetsBundleId", strWidgetsBundleId);
         WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
-        return checkWidgetsBundleId(widgetsBundleId, Operation.READ);
+        var result = checkWidgetsBundleId(widgetsBundleId, Operation.READ);
+        if (inlineImages) {
+            imageService.inlineImage(result);
+        }
+        return result;
     }
 
     @ApiOperation(value = "Create Or Update Widget Bundle (saveWidgetsBundle)",
@@ -185,6 +196,8 @@ public class WidgetsBundleController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder,
+            @ApiParam(value = TENANT_BUNDLES_ONLY_DESCRIPTION)
+            @RequestParam(required = false) Boolean tenantOnly,
             @ApiParam(value = FULL_SEARCH_PARAM_DESCRIPTION)
             @RequestParam(required = false) Boolean fullSearch) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
@@ -192,7 +205,11 @@ public class WidgetsBundleController extends BaseController {
             return checkNotNull(widgetsBundleService.findSystemWidgetsBundlesByPageLink(getTenantId(), fullSearch != null && fullSearch, pageLink));
         } else {
             TenantId tenantId = getCurrentUser().getTenantId();
-            return checkNotNull(widgetsBundleService.findAllTenantWidgetsBundlesByTenantIdAndPageLink(tenantId, fullSearch != null && fullSearch, pageLink));
+            if (tenantOnly != null && tenantOnly) {
+                return checkNotNull(widgetsBundleService.findTenantWidgetsBundlesByTenantIdAndPageLink(tenantId, fullSearch != null && fullSearch, pageLink));
+            } else {
+                return checkNotNull(widgetsBundleService.findAllTenantWidgetsBundlesByTenantIdAndPageLink(tenantId, fullSearch != null && fullSearch, pageLink));
+            }
         }
     }
 

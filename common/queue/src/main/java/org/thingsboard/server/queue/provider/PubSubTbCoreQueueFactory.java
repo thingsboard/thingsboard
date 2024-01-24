@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import org.thingsboard.server.queue.TbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.DefaultTbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.TbProtoJsQueueMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.NotificationsTopicService;
+import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.pubsub.TbPubSubAdmin;
 import org.thingsboard.server.queue.pubsub.TbPubSubConsumerTemplate;
@@ -61,7 +61,7 @@ public class PubSubTbCoreQueueFactory implements TbCoreQueueFactory {
     private final TbPubSubSettings pubSubSettings;
     private final TbQueueCoreSettings coreSettings;
     private final TbQueueTransportApiSettings transportApiSettings;
-    private final NotificationsTopicService notificationsTopicService;
+    private final TopicService topicService;
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TbQueueRemoteJsInvokeSettings jsInvokeSettings;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
@@ -76,7 +76,7 @@ public class PubSubTbCoreQueueFactory implements TbCoreQueueFactory {
     public PubSubTbCoreQueueFactory(TbPubSubSettings pubSubSettings,
                                     TbQueueCoreSettings coreSettings,
                                     TbQueueTransportApiSettings transportApiSettings,
-                                    NotificationsTopicService notificationsTopicService,
+                                    TopicService topicService,
                                     TbServiceInfoProvider serviceInfoProvider,
                                     TbQueueRemoteJsInvokeSettings jsInvokeSettings,
                                     TbQueueTransportNotificationSettings transportNotificationSettings,
@@ -85,7 +85,7 @@ public class PubSubTbCoreQueueFactory implements TbCoreQueueFactory {
         this.pubSubSettings = pubSubSettings;
         this.coreSettings = coreSettings;
         this.transportApiSettings = transportApiSettings;
-        this.notificationsTopicService = notificationsTopicService;
+        this.topicService = topicService;
         this.serviceInfoProvider = serviceInfoProvider;
         this.jsInvokeSettings = jsInvokeSettings;
         this.transportNotificationSettings = transportNotificationSettings;
@@ -132,7 +132,7 @@ public class PubSubTbCoreQueueFactory implements TbCoreQueueFactory {
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToCoreNotificationMsg>> createToCoreNotificationsMsgConsumer() {
         return new TbPubSubConsumerTemplate<>(notificationAdmin, pubSubSettings,
-                notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, serviceInfoProvider.getServiceId()).getFullTopicName(),
+                topicService.getNotificationsTopic(ServiceType.TB_CORE, serviceInfoProvider.getServiceId()).getFullTopicName(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), ToCoreNotificationMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 

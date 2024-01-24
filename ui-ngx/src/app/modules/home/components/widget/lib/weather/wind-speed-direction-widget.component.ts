@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,12 +24,11 @@ import {
   OnInit,
   Renderer2,
   TemplateRef,
-  ViewChild, ViewEncapsulation
+  ViewChild,
+  ViewEncapsulation
 } from '@angular/core';
 import { WidgetContext } from '@home/models/widget-component.models';
 import {
-  centerValueLabel,
-  windDirectionLabel,
   windSpeedDirectionDefaultSettings,
   WindSpeedDirectionLayout,
   WindSpeedDirectionWidgetSettings
@@ -38,8 +37,8 @@ import {
   backgroundStyle,
   ColorProcessor,
   ComponentStyle,
-  Font, getDataKey,
-  getDataKeyByLabel,
+  Font,
+  getDataKey,
   getSingleTsValueByDataKey,
   overlayStyle
 } from '@shared/models/widget-settings.models';
@@ -48,6 +47,9 @@ import { formatValue, isDefinedAndNotNull, isNumeric } from '@core/utils';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { Path, Svg, SVG, Text } from '@svgdotjs/svg.js';
 import { DataKey } from '@shared/models/widget.models';
+import { Observable } from 'rxjs';
+import { ImagePipe } from '@shared/pipe/image.pipe';
+import { DomSanitizer } from '@angular/platform-browser';
 
 const shapeSize = 180;
 const cx = shapeSize / 2;
@@ -88,7 +90,7 @@ export class WindSpeedDirectionWidgetComponent implements OnInit, OnDestroy, Aft
 
   centerValueColor: ColorProcessor;
 
-  backgroundStyle: ComponentStyle = {};
+  backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
 
   shapeResize$: ResizeObserver;
@@ -110,6 +112,8 @@ export class WindSpeedDirectionWidgetComponent implements OnInit, OnDestroy, Aft
   private centerValueText = 'N/A';
 
   constructor(private widgetComponent: WidgetComponent,
+              private imagePipe: ImagePipe,
+              private sanitizer: DomSanitizer,
               private renderer: Renderer2,
               private cd: ChangeDetectorRef) {
   }
@@ -118,11 +122,8 @@ export class WindSpeedDirectionWidgetComponent implements OnInit, OnDestroy, Aft
     this.ctx.$scope.windSpeedDirectionWidget = this;
     this.settings = {...windSpeedDirectionDefaultSettings, ...this.ctx.settings};
 
-    this.windDirectionDataKey = getDataKeyByLabel(this.ctx.datasources, windDirectionLabel);
-    if (!this.windDirectionDataKey) {
-      this.windDirectionDataKey = getDataKey(this.ctx.datasources);
-    }
-    this.centerValueDataKey = getDataKeyByLabel(this.ctx.datasources, centerValueLabel);
+    this.windDirectionDataKey = getDataKey(this.ctx.datasources, 0);
+    this.centerValueDataKey = getDataKey(this.ctx.datasources, 1);
 
     if (this.centerValueDataKey) {
       this.decimals = this.ctx.decimals;
@@ -139,7 +140,7 @@ export class WindSpeedDirectionWidgetComponent implements OnInit, OnDestroy, Aft
 
     this.centerValueColor = ColorProcessor.fromSettings(this.settings.centerValueColor);
 
-    this.backgroundStyle = backgroundStyle(this.settings.background);
+    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
 
     this.hasCardClickAction = this.ctx.actionsApi.getActionDescriptors('cardClick').length > 0;
@@ -169,21 +170,27 @@ export class WindSpeedDirectionWidgetComponent implements OnInit, OnDestroy, Aft
   }
 
   public onDataUpdated() {
-    let centerValue = 0;
+    let value = 0;
     this.windDirection = 0;
     this.centerValueText = 'N/A';
-    const windDirectionTsValue = getSingleTsValueByDataKey(this.ctx.data, this.windDirectionDataKey);
-    if (windDirectionTsValue && isDefinedAndNotNull(windDirectionTsValue[1]) && isNumeric(windDirectionTsValue[1])) {
-      this.windDirection = windDirectionTsValue[1];
+    if (this.windDirectionDataKey) {
+      const windDirectionTsValue = getSingleTsValueByDataKey(this.ctx.data, this.windDirectionDataKey);
+      if (windDirectionTsValue && isDefinedAndNotNull(windDirectionTsValue[1]) && isNumeric(windDirectionTsValue[1])) {
+        this.windDirection = windDirectionTsValue[1];
+        if (!this.centerValueDataKey) {
+          value = this.windDirection;
+          this.centerValueText = formatValue(value, 0, '', false) + '°';
+        }
+      }
     }
     if (this.centerValueDataKey) {
       const centerValueTsValue = getSingleTsValueByDataKey(this.ctx.data, this.centerValueDataKey);
       if (centerValueTsValue && isDefinedAndNotNull(centerValueTsValue[1]) && isNumeric(centerValueTsValue[1])) {
-        centerValue = centerValueTsValue[1];
-        this.centerValueText = formatValue(centerValue, this.decimals, '', true);
+        value = centerValueTsValue[1];
+        this.centerValueText = formatValue(value, this.decimals, '', false);
       }
     }
-    this.centerValueColor.update(centerValue);
+    this.centerValueColor.update(value);
     this.renderValues();
   }
 
@@ -313,9 +320,8 @@ export class WindSpeedDirectionWidgetComponent implements OnInit, OnDestroy, Aft
   }
 
   private renderCenterValueText() {
-    const text = this.centerValueDataKey ? this.centerValueText : formatValue(this.windDirection, 0, '') + '°';
     this.centerValueTextNode.text(add => {
-      add.tspan(text).font({size: '24px'});
+      add.tspan(this.centerValueText).font({size: '24px'});
       if (this.units) {
         add.tspan(this.units).newLine().font({size: '14px'});
       }

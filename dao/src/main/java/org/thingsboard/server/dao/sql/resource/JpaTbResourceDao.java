@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -31,7 +32,6 @@ import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 @Slf4j
@@ -56,8 +56,7 @@ public class JpaTbResourceDao extends JpaAbstractDao<TbResourceEntity, TbResourc
     }
 
     @Override
-    public TbResource getResource(TenantId tenantId, ResourceType resourceType, String resourceKey) {
-
+    public TbResource findResourceByTenantIdAndKey(TenantId tenantId, ResourceType resourceType, String resourceKey) {
         return DaoUtil.getData(resourceRepository.findByTenantIdAndResourceTypeAndResourceKey(tenantId.getId(), resourceType.name(), resourceKey));
     }
 
@@ -74,7 +73,7 @@ public class JpaTbResourceDao extends JpaAbstractDao<TbResourceEntity, TbResourc
                 tenantId.getId(),
                 TenantId.SYS_TENANT_ID.getId(),
                 resourceType.name(),
-                Objects.toString(pageLink.getTextSearch(), ""),
+                pageLink.getTextSearch(),
                 DaoUtil.toPageable(pageLink)
         ));
     }
@@ -88,7 +87,7 @@ public class JpaTbResourceDao extends JpaAbstractDao<TbResourceEntity, TbResourc
                         tenantId.getId(),
                         TenantId.SYS_TENANT_ID.getId(),
                         resourceType.name(),
-                        Objects.toString(searchText, ""))) :
+                        searchText)) :
                 DaoUtil.convertDataList(resourceRepository.findResourcesByIds(
                         tenantId.getId(),
                         TenantId.SYS_TENANT_ID.getId(),
@@ -96,8 +95,44 @@ public class JpaTbResourceDao extends JpaAbstractDao<TbResourceEntity, TbResourc
     }
 
     @Override
+    public byte[] getResourceData(TenantId tenantId, TbResourceId resourceId) {
+        return resourceRepository.getDataById(resourceId.getId());
+    }
+
+    @Override
+    public byte[] getResourcePreview(TenantId tenantId, TbResourceId resourceId) {
+        return resourceRepository.getPreviewById(resourceId.getId());
+    }
+
+    @Override
+    public long getResourceSize(TenantId tenantId, TbResourceId resourceId) {
+        return resourceRepository.getDataSizeById(resourceId.getId());
+    }
+
+    @Override
     public Long sumDataSizeByTenantId(TenantId tenantId) {
         return resourceRepository.sumDataSizeByTenantId(tenantId.getId());
+    }
+
+    @Override
+    public TbResource findByTenantIdAndExternalId(UUID tenantId, UUID externalId) {
+        return DaoUtil.getData(resourceRepository.findByTenantIdAndExternalId(tenantId, externalId));
+    }
+
+    @Override
+    public PageData<TbResource> findByTenantId(UUID tenantId, PageLink pageLink) {
+        return findAllByTenantId(TenantId.fromUUID(tenantId), pageLink);
+    }
+
+    @Override
+    public PageData<TbResourceId> findIdsByTenantId(UUID tenantId, PageLink pageLink) {
+        return DaoUtil.pageToPageData(resourceRepository.findIdsByTenantId(tenantId, DaoUtil.toPageable(pageLink))
+                .map(TbResourceId::new));
+    }
+
+    @Override
+    public TbResourceId getExternalIdByInternal(TbResourceId internalId) {
+        return DaoUtil.toEntityId(resourceRepository.getExternalIdByInternal(internalId.getId()), TbResourceId::new);
     }
 
     @Override

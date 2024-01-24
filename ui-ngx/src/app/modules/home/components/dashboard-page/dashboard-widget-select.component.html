@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@
   <ng-template #widgets let-fetchFunction="fetchFunction" let-filter="filter">
     <tb-scroll-grid
       [columns]="columns"
+      [itemSize]="gridWidgetsItemSizeStrategy"
       [fetchFunction]="fetchFunction"
       [filter]="filter"
       [itemCard]="widgetCard"
@@ -35,16 +36,22 @@
       [noData]="noWidgets">
     </tb-scroll-grid>
     <ng-template #widgetCard let-item="item">
-      <mat-card class="tb-widget-preview-card" appearance="raised" fxFlexFill fxLayout="row" fxLayoutGap="16px" (click)="onWidgetClicked($event, item)">
-        <div class="preview-container" fxFlex="45">
-          <img class="preview" [src]="getPreviewImage(item.image)" alt="{{ item.title }}">
+      <mat-card class="tb-widget-preview-card" appearance="raised" fxLayout="column" fxLayoutGap="8px" (click)="onWidgetClicked($event, item)">
+        <div class="title-container">
+          <div title="{{item.name}}" class="widget-title">
+            {{item.name}}
+          </div>
+          <div class="title-items-container">
+            <div class="title-items">
+              <div class="widget-type">{{ 'widget.' + item.widgetType + '-short' | translate }}</div>
+              <div tb-popover [tbPopoverContent]="item.description" [tbPopoverOverlayStyle]="{maxWidth: '300px'}" tbPopoverShowCloseButton="false" class="info-banner tb-primary-fill"><span>i</span></div>
+            </div>
+            <div *ngIf="item.deprecated" class="widget-deprecated" translate>widget.deprecated</div>
+          </div>
         </div>
-        <div fxFlex fxLayout="column">
-          <mat-card-title>{{item.name}}<div *ngIf="item.deprecated" class="tb-deprecated" translate>widget.deprecated</div></mat-card-title>
-          <mat-card-subtitle>{{ 'widget.' + item.widgetType | translate }}</mat-card-subtitle>
-          <mat-card-content *ngIf="item.description">
-            {{ item.description }}
-          </mat-card-content>
+        <div class="preview-container">
+          <div class="preview-spacer"></div>
+          <img class="preview" [src]="item.image | image: {emptyUrl: '/assets/widget-preview-empty.svg'} | async" alt="{{ item.title }}">
         </div>
       </mat-card>
     </ng-template>
@@ -67,6 +74,7 @@
   <ng-template #bundles>
     <tb-scroll-grid
       [columns]="columns"
+      [itemSize]="gridWidgetsItemSizeStrategy"
       [fetchFunction]="widgetBundlesFetchFunction"
       [filter]="widgetsBundleFilter"
       [itemCard]="widgetsBundleCard"
@@ -75,16 +83,19 @@
       [noData]="noWidgetBundles">
     </tb-scroll-grid>
     <ng-template #widgetsBundleCard let-item="item">
-      <mat-card class="tb-widget-preview-card" appearance="raised" fxFlexFill fxLayout="row" fxLayoutGap="16px" (click)="selectBundle($event, item)">
-        <div class="preview-container" fxFlex="45">
-          <img class="preview" [src]=getPreviewImage(item.image) alt="{{ item.title }}">
+      <mat-card class="tb-widget-preview-card" appearance="raised" fxLayout="column" fxLayoutGap="8px" (click)="selectBundle($event, item)">
+        <div class="title-container">
+          <div title="{{item.name}}" class="widget-title">
+            {{item.title}}
+          </div>
+          <div class="title-items">
+            <div *ngIf="isSystem(item)" class="widget-type">sys</div>
+            <div tb-popover [tbPopoverContent]="item.description" [tbPopoverOverlayStyle]="{maxWidth: '300px'}" tbPopoverShowCloseButton="false" class="info-banner tb-primary-fill"><span>i</span></div>
+          </div>
         </div>
-        <div fxFlex fxLayout="column">
-          <mat-card-title>{{ item.title }}</mat-card-title>
-          <mat-card-subtitle *ngIf="isSystem(item)" translate>widgets-bundle.system</mat-card-subtitle>
-          <mat-card-content *ngIf="item.description">
-            {{ item.description }}
-          </mat-card-content>
+        <div class="preview-container">
+          <div class="preview-spacer"></div>
+          <img class="preview" [src]="item.image | image: {emptyUrl: '/assets/widget-preview-empty.svg'} | async" alt="{{ item.title }}">
         </div>
       </mat-card>
     </ng-template>
@@ -105,14 +116,11 @@
     </ng-template>
   </ng-template>
   <ng-template #widgetLoadingCard>
-    <mat-card class="tb-widget-preview-card loading-cell" appearance="raised" fxLayout="row" fxLayoutGap="16px">
-      <div class="preview-container" fxFlex="45">
+    <mat-card class="tb-widget-preview-card loading-cell" appearance="raised" fxLayout="column" fxLayoutGap="8px">
+      <div class="title-container">
       </div>
-      <div fxFlex fxLayout="column">
-        <mat-card-title>
-        </mat-card-title>
-        <mat-card-content>
-        </mat-card-content>
+      <div class="preview-container">
+        <div class="preview-spacer"></div>
       </div>
     </mat-card>
   </ng-template>

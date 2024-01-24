@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import {
   lastUpdateAgoDateFormat,
   textStyle
 } from '@shared/models/widget-settings.models';
-import { ComparisonResultType, DataKey, DatasourceData } from '@shared/models/widget.models';
+import { ComparisonResultType, DataEntry, DataKey, DatasourceData } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { AggregationType } from '@shared/models/time/time.models';
 
@@ -92,7 +92,7 @@ export const computeAggregatedCardValue =
       key,
       value: '',
       units: key.units,
-      style: textStyle(settings.font, '0.25px'),
+      style: textStyle(settings.font),
       color: ColorProcessor.fromSettings(settings.color),
       center: position === AggregatedValueCardKeyPosition.center,
       showArrow: settings.showArrow,
@@ -102,7 +102,7 @@ export const computeAggregatedCardValue =
   }
 };
 
-export const getTsValueByLatestDataKey = (latestData: Array<DatasourceData>, dataKey: DataKey): [number, any] => {
+export const getTsValueByLatestDataKey = (latestData: Array<DatasourceData>, dataKey: DataKey): DataEntry => {
   if (latestData?.length) {
     const dsData = latestData.find(data => data.dataKey === dataKey);
     if (dsData?.data?.length) {
@@ -161,72 +161,3 @@ export const aggregatedValueCardDefaultKeySettings: AggregatedValueCardKeySettin
   color: constantColor('rgba(0, 0, 0, 0.87)'),
   showArrow: false
 };
-
-export const createDefaultAggregatedValueLatestDataKeys = (keyName: string, units): DataKey[] => [
-    {
-      name: keyName, label: 'Latest', type: DataKeyType.timeseries, units, decimals: 0,
-      aggregationType: AggregationType.NONE,
-      settings: {
-        position: AggregatedValueCardKeyPosition.center,
-        font: {
-          family: 'Roboto',
-          size: 52,
-          sizeUnit: 'px',
-          style: 'normal',
-          weight: '500',
-          lineHeight: '1'
-        },
-        color: constantColor('rgba(0, 0, 0, 0.87)'),
-        showArrow: false
-      } as AggregatedValueCardKeySettings
-    },
-    {
-      name: keyName, label: 'Delta percent', type: DataKeyType.timeseries, units: '%', decimals: 0,
-      aggregationType: AggregationType.AVG,
-      comparisonEnabled: true,
-      timeForComparison: 'previousInterval',
-      comparisonResultType: ComparisonResultType.DELTA_PERCENT,
-      settings: {
-        position: AggregatedValueCardKeyPosition.rightTop,
-        font: {
-          family: 'Roboto',
-          size: 14,
-          sizeUnit: 'px',
-          style: 'normal',
-          weight: '500',
-          lineHeight: '1'
-        },
-        color: {
-          color: 'rgba(0, 0, 0, 0.87)',
-          type: ColorType.range,
-          rangeList: [
-            {to: 0, color: '#198038'},
-            {from: 0, to: 0, color: 'rgba(0, 0, 0, 0.87)'},
-            {from: 0, color: '#D12730'}
-          ],
-          colorFunction: ''
-        },
-        showArrow: true
-      } as AggregatedValueCardKeySettings
-    },
-    {
-      name: keyName, label: 'Delta absolute', type: DataKeyType.timeseries, units, decimals: 1,
-      aggregationType: AggregationType.AVG,
-      comparisonEnabled: true,
-      timeForComparison: 'previousInterval',
-      comparisonResultType: ComparisonResultType.DELTA_ABSOLUTE,
-      settings: {
-        position: AggregatedValueCardKeyPosition.rightBottom,
-        font: {
-          family: 'Roboto',
-          size: 11,
-          sizeUnit: 'px',
-          style: 'normal',
-          weight: '400',
-          lineHeight: '1'
-        },
-        color: constantColor('rgba(0, 0, 0, 0.38)'),
-        showArrow: false
-      } as AggregatedValueCardKeySettings
-    }
-  ];

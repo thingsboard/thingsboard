@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,8 +152,7 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
 
         private ObjectModel getObjectModel(String key) {
             Optional<TbResource> tbResource = context.getTransportResourceCache().get(this.tenantId, LWM2M_MODEL, key);
-            return tbResource.map(resource -> helper.parseFromXmlToObjectModel(
-                    Base64.getDecoder().decode(resource.getData()),
+            return tbResource.map(resource -> helper.parseFromXmlToObjectModel(resource.getData(),
                     key + ".xml")).orElse(null);
         }
     }

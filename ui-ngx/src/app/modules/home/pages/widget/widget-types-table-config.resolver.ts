@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -31,16 +31,15 @@ import { WidgetService } from '@app/core/http/widget.service';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { getCurrentAuthState, getCurrentAuthUser } from '@app/core/auth/auth.selectors';
+import { getCurrentAuthUser } from '@app/core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
-import { DialogService } from '@core/services/dialog.service';
-import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { ImportExportService } from '@shared/import-export/import-export.service';
 import { Direction } from '@shared/models/page/sort-order';
 import {
   BaseWidgetType,
+  widgetType as WidgetDataType,
   WidgetTypeDetails,
   WidgetTypeInfo,
-  widgetType as WidgetDataType,
   widgetTypesData
 } from '@shared/models/widget.models';
 import { WidgetTypeComponent } from '@home/pages/widget/widget-type.component';
@@ -87,13 +86,13 @@ export class WidgetTypesTableConfigResolver implements Resolve<EntityTableConfig
 
     this.config.addActionDescriptors.push(
       {
-        name: this.translate.instant('widget-type.create-new-widget-type'),
+        name: this.translate.instant('dashboard.create-new-widget'),
         icon: 'insert_drive_file',
         isEnabled: () => true,
         onAction: ($event) => this.addWidgetType($event)
       },
       {
-        name: this.translate.instant('widget-type.import'),
+        name: this.translate.instant('widget.import'),
         icon: 'file_upload',
         isEnabled: () => true,
         onAction: ($event) => this.importWidgetType($event)
@@ -102,13 +101,13 @@ export class WidgetTypesTableConfigResolver implements Resolve<EntityTableConfig
 
     this.config.cellActionDescriptors.push(
       {
-        name: this.translate.instant('widget-type.export'),
+        name: this.translate.instant('widget.export'),
         icon: 'file_download',
         isEnabled: () => true,
         onAction: ($event, entity) => this.exportWidgetType($event, entity)
       },
       {
-        name: this.translate.instant('widget.widget-type-details'),
+        name: this.translate.instant('widget.widget-details'),
         icon: 'edit',
         isEnabled: () => true,
         onAction: ($event, entity) => this.config.toggleEntityDetails($event, entity)
@@ -117,24 +116,24 @@ export class WidgetTypesTableConfigResolver implements Resolve<EntityTableConfig
 
     this.config.groupActionDescriptors.push(
       {
-        name: this.translate.instant('widget-type.export-widget-types'),
+        name: this.translate.instant('widget.export-widgets'),
         icon: 'file_download',
         isEnabled: true,
         onAction: ($event, entities) => this.exportWidgetTypes($event, entities)
       }
     );
 
-    this.config.deleteEntityTitle = widgetType => this.translate.instant('widget.delete-widget-type-title',
-      { widgetTypeName: widgetType.name });
-    this.config.deleteEntityContent = () => this.translate.instant('widget.delete-widget-type-text');
-    this.config.deleteEntitiesTitle = count => this.translate.instant('widget.delete-widget-types-title', {count});
-    this.config.deleteEntitiesContent = () => this.translate.instant('widget.delete-widget-types-text');
+    this.config.deleteEntityTitle = widgetType => this.translate.instant('widget.delete-widget-title',
+      { widgetName: widgetType.name });
+    this.config.deleteEntityContent = () => this.translate.instant('widget.delete-widget-text');
+    this.config.deleteEntitiesTitle = count => this.translate.instant('widget.delete-widgets-title', {count});
+    this.config.deleteEntitiesContent = () => this.translate.instant('widget.delete-widgets-text');
 
 
     this.config.loadEntity = id => this.widgetsService.getWidgetTypeById(id.id);
     this.config.saveEntity = widgetType => this.widgetsService.saveWidgetType(widgetType as WidgetTypeDetails);
     this.config.deleteEntity = id => this.widgetsService.deleteWidgetType(id.id);
-    this.config.onEntityAction = action => this.onWidgetTypeAction(action);
+    this.config.onEntityAction = action => this.onWidgetTypeAction(action, this.config);
 
     this.config.handleRowClick = ($event, widgetType) => {
       if (this.config.isDetailsOpen()) {
@@ -147,7 +146,7 @@ export class WidgetTypesTableConfigResolver implements Resolve<EntityTableConfig
   }
 
   resolve(): EntityTableConfig<WidgetTypeInfo | WidgetTypeDetails> {
-    this.config.tableTitle = this.translate.instant('widget.widget-types');
+    this.config.tableTitle = this.translate.instant('widget.widgets');
     const authUser = getCurrentAuthUser(this.store);
     this.config.deleteEnabled = (widgetType) => this.isWidgetTypeEditable(widgetType, authUser.authority);
     this.config.entitySelectionEnabled = (widgetType) => this.isWidgetTypeEditable(widgetType, authUser.authority);
@@ -198,6 +197,14 @@ export class WidgetTypesTableConfigResolver implements Resolve<EntityTableConfig
     this.router.navigateByUrl(`resources/widgets-library/widget-types/${widgetType.id.id}`);
   }
 
+  private openWidgetTypeDetails($event: Event, widgetType: BaseWidgetType, config: EntityTableConfig<BaseWidgetType>) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const url = this.router.createUrlTree(['details', widgetType.id.id], {relativeTo: config.getActivatedRoute()});
+    this.router.navigateByUrl(url);
+  }
+
   exportWidgetType($event: Event, widgetType: BaseWidgetType) {
     if ($event) {
       $event.stopPropagation();
@@ -216,10 +223,13 @@ export class WidgetTypesTableConfigResolver implements Resolve<EntityTableConfig
     );
   }
 
-  onWidgetTypeAction(action: EntityAction<BaseWidgetType>): boolean {
+  onWidgetTypeAction(action: EntityAction<BaseWidgetType>, config: EntityTableConfig<BaseWidgetType>): boolean {
     switch (action.action) {
       case 'edit':
         this.openWidgetEditor(action.event, action.entity);
+        return true;
+      case 'openDetails':
+        this.openWidgetTypeDetails(action.event, action.entity, config);
         return true;
       case 'export':
         this.exportWidgetType(action.event, action.entity);

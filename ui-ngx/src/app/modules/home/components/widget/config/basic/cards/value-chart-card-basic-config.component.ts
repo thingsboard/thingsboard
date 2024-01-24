@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -72,12 +72,14 @@ export class ValueChartCardBasicConfigComponent extends BasicWidgetConfigCompone
     return this.valueChartCardWidgetConfigForm;
   }
 
-  protected setupDefaults(configData: WidgetConfigComponentData) {
-    this.setupDefaultDatasource(configData, [
-        { name: 'temperature', label: 'Temperature', type: DataKeyType.timeseries, color: 'rgba(63, 82, 221, 1)'}
-      ],
-      [{ name: 'temperature', label: 'Latest', type: DataKeyType.timeseries}]
-    );
+  protected defaultDataKeys(configData: WidgetConfigComponentData): DataKey[] {
+    return [
+      { name: 'temperature', label: 'Temperature', type: DataKeyType.timeseries, color: 'rgba(63, 82, 221, 1)'}
+    ];
+  }
+
+  protected defaultLatestDataKeys(configData: WidgetConfigComponentData): DataKey[] {
+    return [{ name: 'temperature', label: 'Latest', type: DataKeyType.timeseries}];
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {

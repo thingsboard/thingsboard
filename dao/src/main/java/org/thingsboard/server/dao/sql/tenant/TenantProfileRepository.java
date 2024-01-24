@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,13 +34,13 @@ public interface TenantProfileRepository extends JpaRepository<TenantProfileEnti
     EntityInfo findTenantProfileInfoById(@Param("tenantProfileId") UUID tenantProfileId);
 
     @Query("SELECT t FROM TenantProfileEntity t WHERE " +
-            "LOWER(t.name) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "(:textSearch IS NULL OR ilike(t.name, CONCAT('%', :textSearch, '%')) = true)")
     Page<TenantProfileEntity> findTenantProfiles(@Param("textSearch") String textSearch,
                                                  Pageable pageable);
 
     @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(t.id, 'TENANT_PROFILE', t.name) " +
             "FROM TenantProfileEntity t " +
-            "WHERE LOWER(t.name) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "WHERE (:textSearch IS NULL OR ilike(t.name, CONCAT('%', :textSearch, '%')) = true)")
     Page<EntityInfo> findTenantProfileInfos(@Param("textSearch") String textSearch,
                                             Pageable pageable);
 

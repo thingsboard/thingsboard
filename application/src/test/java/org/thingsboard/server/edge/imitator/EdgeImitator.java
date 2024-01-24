@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.thingsboard.edge.rpc.EdgeGrpcClient;
 import org.thingsboard.edge.rpc.EdgeRpcClient;
 import org.thingsboard.server.gen.edge.v1.AdminSettingsUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.AlarmCommentUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
@@ -45,6 +46,7 @@ import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.OtaPackageUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.QueueUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RelationUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.ResourceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.TenantProfileUpdateMsg;
@@ -230,6 +232,11 @@ public class EdgeImitator {
                 result.add(saveDownlinkMsg(alarmUpdateMsg));
             }
         }
+        if (downlinkMsg.getAlarmCommentUpdateMsgCount() > 0) {
+            for (AlarmCommentUpdateMsg alarmCommentUpdateMsg : downlinkMsg.getAlarmCommentUpdateMsgList()) {
+                result.add(saveDownlinkMsg(alarmCommentUpdateMsg));
+            }
+        }
         if (downlinkMsg.getEntityDataCount() > 0) {
             for (EntityDataProto entityData : downlinkMsg.getEntityDataList()) {
                 if (randomFailuresOnTimeseriesDownlink) {
@@ -301,6 +308,11 @@ public class EdgeImitator {
         if (downlinkMsg.getTenantProfileUpdateMsgCount() > 0) {
             for (TenantProfileUpdateMsg tenantProfileUpdateMsg : downlinkMsg.getTenantProfileUpdateMsgList()) {
                 result.add(saveDownlinkMsg(tenantProfileUpdateMsg));
+            }
+        }
+        if (downlinkMsg.getResourceUpdateMsgCount() > 0) {
+            for (ResourceUpdateMsg resourceUpdateMsg : downlinkMsg.getResourceUpdateMsgList()) {
+                result.add(saveDownlinkMsg(resourceUpdateMsg));
             }
         }
         if (downlinkMsg.hasEdgeConfiguration()) {

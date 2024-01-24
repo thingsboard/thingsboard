@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 import { BaseData } from '@shared/models/base-data';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { QueueId } from '@shared/models/id/queue-id';
+import { HasTenantId } from '@shared/models/entity.models';
 
 export enum ServiceType {
   TB_CORE = 'TB_CORE',
@@ -99,7 +100,7 @@ export const QueueProcessingStrategyTypesMap = new Map<QueueProcessingStrategyTy
     }]
   ]);
 
-export interface QueueInfo extends BaseData<QueueId> {
+export interface QueueInfo extends BaseData<QueueId>, HasTenantId {
   generatedId?: string;
   name: string;
   packProcessingTimeout: number;

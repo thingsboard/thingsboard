@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -95,9 +95,9 @@ export class RuleTableConfigResolver implements Resolve<EntityTableConfig<Notifi
       name: '',
       nameFunction: (entity) =>
         this.translate.instant(entity.enabled ? 'notification.rule-disable' : 'notification.rule-enable'),
-      mdiIcon: 'mdi:toggle-switch',
+      icon: 'mdi:toggle-switch',
       isEnabled: () => true,
-      mdiIconFunction: (entity) => entity.enabled ? 'mdi:toggle-switch' : 'mdi:toggle-switch-off-outline',
+      iconFunction: (entity) => entity.enabled ? 'mdi:toggle-switch' : 'mdi:toggle-switch-off-outline',
       onAction: ($event, entity) => this.toggleEnableMode($event, entity)
     },
     {

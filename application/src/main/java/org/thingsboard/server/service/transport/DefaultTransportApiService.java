@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.ApiUsageState;
@@ -74,9 +78,11 @@ import org.thingsboard.server.dao.device.provision.ProvisionFailedException;
 import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 import org.thingsboard.server.dao.device.provision.ProvisionResponse;
 import org.thingsboard.server.dao.device.provision.ProvisionResponseStatus;
+import org.thingsboard.server.dao.exception.EntitiesLimitException;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
@@ -104,10 +110,11 @@ import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.resource.TbResourceService;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -139,15 +146,32 @@ public class DefaultTransportApiService implements TransportApiService {
     private final TbClusterService tbClusterService;
     private final DataDecodingEncodingService dataDecodingEncodingService;
     private final DeviceProvisionService deviceProvisionService;
-    private final TbResourceService resourceService;
+    private final ResourceService resourceService;
     private final OtaPackageService otaPackageService;
     private final OtaPackageDataCache otaPackageDataCache;
     private final QueueService queueService;
 
-    private final ConcurrentMap<String, ReentrantLock> deviceCreationLocks = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, ReentrantLock> deviceCreationLocks = new ConcurrentReferenceHashMap<>(16, ConcurrentReferenceHashMap.ReferenceType.WEAK);
+
+    @Value("${queue.transport_api.max_core_handler_threads:16}")
+    private int maxCoreHandlerThreads;
+
+    ListeningExecutorService handlerExecutor;
 
     private static boolean checkIsMqttCredentials(DeviceCredentials credentials) {
         return credentials != null && DeviceCredentialsType.MQTT_BASIC.equals(credentials.getCredentialsType());
+    }
+
+    @PostConstruct
+    public void init() {
+        handlerExecutor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(maxCoreHandlerThreads, "transport-api-service-core-handler"));
+    }
+
+    @PreDestroy
+    public void destroy() {
+        if (handlerExecutor != null) {
+            handlerExecutor.shutdownNow();
+        }
     }
 
     @Override
@@ -157,25 +181,29 @@ public class DefaultTransportApiService implements TransportApiService {
 
         if (transportApiRequestMsg.hasValidateTokenRequestMsg()) {
             ValidateDeviceTokenRequestMsg msg = transportApiRequestMsg.getValidateTokenRequestMsg();
-            result = validateCredentials(msg.getToken(), DeviceCredentialsType.ACCESS_TOKEN);
+            final String token = msg.getToken();
+            result = handlerExecutor.submit(() -> validateCredentials(token, DeviceCredentialsType.ACCESS_TOKEN));
         } else if (transportApiRequestMsg.hasValidateBasicMqttCredRequestMsg()) {
             TransportProtos.ValidateBasicMqttCredRequestMsg msg = transportApiRequestMsg.getValidateBasicMqttCredRequestMsg();
-            result = validateCredentials(msg);
+            result = handlerExecutor.submit(() -> validateCredentials(msg));
         } else if (transportApiRequestMsg.hasValidateX509CertRequestMsg()) {
             ValidateDeviceX509CertRequestMsg msg = transportApiRequestMsg.getValidateX509CertRequestMsg();
-            result = validateCredentials(msg.getHash(), DeviceCredentialsType.X509_CERTIFICATE);
+            final String hash = msg.getHash();
+            result = handlerExecutor.submit(() -> validateCredentials(hash, DeviceCredentialsType.X509_CERTIFICATE));
         } else if (transportApiRequestMsg.hasValidateOrCreateX509CertRequestMsg()) {
             TransportProtos.ValidateOrCreateDeviceX509CertRequestMsg msg = transportApiRequestMsg.getValidateOrCreateX509CertRequestMsg();
-            result = validateOrCreateDeviceX509Certificate(msg.getCertificateChain());
+            final String certChain = msg.getCertificateChain();
+            result = handlerExecutor.submit(() -> validateOrCreateDeviceX509Certificate(certChain));
         } else if (transportApiRequestMsg.hasGetOrCreateDeviceRequestMsg()) {
-            result = handle(transportApiRequestMsg.getGetOrCreateDeviceRequestMsg());
+            result = handlerExecutor.submit(() -> handle(transportApiRequestMsg.getGetOrCreateDeviceRequestMsg()));
         } else if (transportApiRequestMsg.hasEntityProfileRequestMsg()) {
             result = handle(transportApiRequestMsg.getEntityProfileRequestMsg());
         } else if (transportApiRequestMsg.hasLwM2MRequestMsg()) {
             result = handle(transportApiRequestMsg.getLwM2MRequestMsg());
         } else if (transportApiRequestMsg.hasValidateDeviceLwM2MCredentialsRequestMsg()) {
             ValidateDeviceLwM2MCredentialsRequestMsg msg = transportApiRequestMsg.getValidateDeviceLwM2MCredentialsRequestMsg();
-            result = validateCredentials(msg.getCredentialsId(), DeviceCredentialsType.LWM2M_CREDENTIALS);
+            final String credentialsId = msg.getCredentialsId();
+            result = handlerExecutor.submit(() -> validateCredentials(credentialsId, DeviceCredentialsType.LWM2M_CREDENTIALS));
         } else if (transportApiRequestMsg.hasProvisionDeviceRequestMsg()) {
             result = handle(transportApiRequestMsg.getProvisionDeviceRequestMsg());
         } else if (transportApiRequestMsg.hasResourceRequestMsg()) {
@@ -197,24 +225,23 @@ public class DefaultTransportApiService implements TransportApiService {
                 MoreExecutors.directExecutor());
     }
 
-    private ListenableFuture<TransportApiResponseMsg> validateCredentials(String credentialsId, DeviceCredentialsType credentialsType) {
-        //TODO: Make async and enable caching
+    private TransportApiResponseMsg validateCredentials(String credentialsId, DeviceCredentialsType credentialsType) {
         DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(credentialsId);
         if (credentials != null && credentials.getCredentialsType() == credentialsType) {
             return getDeviceInfo(credentials);
         } else {
-            return getEmptyTransportApiResponseFuture();
+            return getEmptyTransportApiResponse();
         }
     }
 
-    private ListenableFuture<TransportApiResponseMsg> validateCredentials(TransportProtos.ValidateBasicMqttCredRequestMsg mqtt) {
+    private TransportApiResponseMsg validateCredentials(TransportProtos.ValidateBasicMqttCredRequestMsg mqtt) {
         DeviceCredentials credentials;
         if (StringUtils.isEmpty(mqtt.getUserName())) {
             credentials = checkMqttCredentials(mqtt, EncryptionUtil.getSha3Hash(mqtt.getClientId()));
             if (credentials != null) {
                 return getDeviceInfo(credentials);
             } else {
-                return getEmptyTransportApiResponseFuture();
+                return getEmptyTransportApiResponse();
             }
         } else {
             credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(
@@ -224,7 +251,7 @@ public class DefaultTransportApiService implements TransportApiService {
                 if (VALID.equals(validationResult)) {
                     return getDeviceInfo(credentials);
                 } else if (PASSWORD_MISMATCH.equals(validationResult)) {
-                    return getEmptyTransportApiResponseFuture();
+                    return getEmptyTransportApiResponse();
                 } else {
                     return validateUserNameCredentials(mqtt);
                 }
@@ -234,7 +261,7 @@ public class DefaultTransportApiService implements TransportApiService {
         }
     }
 
-    protected ListenableFuture<TransportApiResponseMsg> validateOrCreateDeviceX509Certificate(String certificateChain) {
+    protected TransportApiResponseMsg validateOrCreateDeviceX509Certificate(String certificateChain) {
         List<String> chain = X509_CERTIFICATE_TRIM_CHAIN_PATTERN.matcher(certificateChain).results().map(match ->
                 EncryptionUtil.certTrimNewLines(match.group())).collect(Collectors.toList());
         for (String certificateValue : chain) {
@@ -254,16 +281,16 @@ public class DefaultTransportApiService implements TransportApiService {
                     }
                 } catch (ProvisionFailedException e) {
                     log.debug("[{}][{}] Failed to provision device with cert chain: {}", deviceProfile.getTenantId(), deviceProfile.getId(), provisionRequest, e);
-                    return getEmptyTransportApiResponseFuture();
+                    return getEmptyTransportApiResponse();
                 }
             } else if (deviceProfile != null) {
                 log.warn("[{}][{}] Device Profile provision configuration mismatched: expected {}, actual {}", deviceProfile.getTenantId(), deviceProfile.getId(), DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN, deviceProfile.getProvisionType());
             }
         }
-        return getEmptyTransportApiResponseFuture();
+        return getEmptyTransportApiResponse();
     }
 
-    private ListenableFuture<TransportApiResponseMsg> validateUserNameCredentials(TransportProtos.ValidateBasicMqttCredRequestMsg mqtt) {
+    private TransportApiResponseMsg validateUserNameCredentials(TransportProtos.ValidateBasicMqttCredRequestMsg mqtt) {
         DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(mqtt.getUserName());
         if (credentials != null) {
             switch (credentials.getCredentialsType()) {
@@ -273,11 +300,11 @@ public class DefaultTransportApiService implements TransportApiService {
                     if (VALID.equals(validateMqttCredentials(mqtt, credentials))) {
                         return getDeviceInfo(credentials);
                     } else {
-                        return getEmptyTransportApiResponseFuture();
+                        return getEmptyTransportApiResponse();
                     }
             }
         }
-        return getEmptyTransportApiResponseFuture();
+        return getEmptyTransportApiResponse();
     }
 
     private DeviceCredentials checkMqttCredentials(TransportProtos.ValidateBasicMqttCredRequestMsg clientCred, String credId) {
@@ -311,76 +338,81 @@ public class DefaultTransportApiService implements TransportApiService {
         return VALID;
     }
 
-    private ListenableFuture<TransportApiResponseMsg> handle(GetOrCreateDeviceFromGatewayRequestMsg requestMsg) {
+    private TransportApiResponseMsg handle(GetOrCreateDeviceFromGatewayRequestMsg requestMsg) {
         DeviceId gatewayId = new DeviceId(new UUID(requestMsg.getGatewayIdMSB(), requestMsg.getGatewayIdLSB()));
-        ListenableFuture<Device> gatewayFuture = deviceService.findDeviceByIdAsync(TenantId.SYS_TENANT_ID, gatewayId);
-        return Futures.transform(gatewayFuture, gateway -> {
-            Lock deviceCreationLock = deviceCreationLocks.computeIfAbsent(requestMsg.getDeviceName(), id -> new ReentrantLock());
-            deviceCreationLock.lock();
-            try {
-                Device device = deviceService.findDeviceByTenantIdAndName(gateway.getTenantId(), requestMsg.getDeviceName());
-                if (device == null) {
-                    TenantId tenantId = gateway.getTenantId();
-                    device = new Device();
-                    device.setTenantId(tenantId);
-                    device.setName(requestMsg.getDeviceName());
-                    device.setType(requestMsg.getDeviceType());
-                    device.setCustomerId(gateway.getCustomerId());
-                    DeviceProfile deviceProfile = deviceProfileCache.findOrCreateDeviceProfile(gateway.getTenantId(), requestMsg.getDeviceType());
+        Device gateway = deviceService.findDeviceById(TenantId.SYS_TENANT_ID, gatewayId);
+        Lock deviceCreationLock = deviceCreationLocks.computeIfAbsent(requestMsg.getDeviceName(), id -> new ReentrantLock());
+        deviceCreationLock.lock();
+        try {
+            Device device = deviceService.findDeviceByTenantIdAndName(gateway.getTenantId(), requestMsg.getDeviceName());
+            if (device == null) {
+                TenantId tenantId = gateway.getTenantId();
+                device = new Device();
+                device.setTenantId(tenantId);
+                device.setName(requestMsg.getDeviceName());
+                device.setType(requestMsg.getDeviceType());
+                device.setCustomerId(gateway.getCustomerId());
+                DeviceProfile deviceProfile = deviceProfileCache.findOrCreateDeviceProfile(gateway.getTenantId(), requestMsg.getDeviceType());
 
-                    device.setDeviceProfileId(deviceProfile.getId());
-                    ObjectNode additionalInfo = JacksonUtil.newObjectNode();
-                    additionalInfo.put(DataConstants.LAST_CONNECTED_GATEWAY, gatewayId.toString());
-                    device.setAdditionalInfo(additionalInfo);
+                device.setDeviceProfileId(deviceProfile.getId());
+                ObjectNode additionalInfo = JacksonUtil.newObjectNode();
+                additionalInfo.put(DataConstants.LAST_CONNECTED_GATEWAY, gatewayId.toString());
+                device.setAdditionalInfo(additionalInfo);
+                Device savedDevice = deviceService.saveDevice(device);
+                tbClusterService.onDeviceUpdated(savedDevice, null);
+                device = savedDevice;
+
+                relationService.saveRelation(TenantId.SYS_TENANT_ID, new EntityRelation(gateway.getId(), device.getId(), "Created"));
+
+                TbMsgMetaData metaData = new TbMsgMetaData();
+                CustomerId customerId = gateway.getCustomerId();
+                if (customerId != null && !customerId.isNullUid()) {
+                    metaData.putValue("customerId", customerId.toString());
+                }
+                metaData.putValue("gatewayId", gatewayId.toString());
+
+                DeviceId deviceId = device.getId();
+                JsonNode entityNode = JacksonUtil.valueToTree(device);
+                TbMsg tbMsg = TbMsg.newMsg(TbMsgType.ENTITY_CREATED, deviceId, customerId, metaData, TbMsgDataType.JSON, JacksonUtil.toString(entityNode));
+                tbClusterService.pushMsgToRuleEngine(tenantId, deviceId, tbMsg, null);
+            } else {
+                JsonNode deviceAdditionalInfo = device.getAdditionalInfo();
+                if (deviceAdditionalInfo == null) {
+                    deviceAdditionalInfo = JacksonUtil.newObjectNode();
+                }
+                if (deviceAdditionalInfo.isObject() &&
+                        (!deviceAdditionalInfo.has(DataConstants.LAST_CONNECTED_GATEWAY)
+                                || !gatewayId.toString().equals(deviceAdditionalInfo.get(DataConstants.LAST_CONNECTED_GATEWAY).asText()))) {
+                    ObjectNode newDeviceAdditionalInfo = (ObjectNode) deviceAdditionalInfo;
+                    newDeviceAdditionalInfo.put(DataConstants.LAST_CONNECTED_GATEWAY, gatewayId.toString());
                     Device savedDevice = deviceService.saveDevice(device);
-                    tbClusterService.onDeviceUpdated(savedDevice, null);
-                    device = savedDevice;
-
-                    relationService.saveRelation(TenantId.SYS_TENANT_ID, new EntityRelation(gateway.getId(), device.getId(), "Created"));
-
-                    TbMsgMetaData metaData = new TbMsgMetaData();
-                    CustomerId customerId = gateway.getCustomerId();
-                    if (customerId != null && !customerId.isNullUid()) {
-                        metaData.putValue("customerId", customerId.toString());
-                    }
-                    metaData.putValue("gatewayId", gatewayId.toString());
-
-                    DeviceId deviceId = device.getId();
-                    JsonNode entityNode = JacksonUtil.valueToTree(device);
-                    TbMsg tbMsg = TbMsg.newMsg(TbMsgType.ENTITY_CREATED, deviceId, customerId, metaData, TbMsgDataType.JSON, JacksonUtil.toString(entityNode));
-                    tbClusterService.pushMsgToRuleEngine(tenantId, deviceId, tbMsg, null);
-                } else {
-                    JsonNode deviceAdditionalInfo = device.getAdditionalInfo();
-                    if (deviceAdditionalInfo == null) {
-                        deviceAdditionalInfo = JacksonUtil.newObjectNode();
-                    }
-                    if (deviceAdditionalInfo.isObject() &&
-                            (!deviceAdditionalInfo.has(DataConstants.LAST_CONNECTED_GATEWAY)
-                                    || !gatewayId.toString().equals(deviceAdditionalInfo.get(DataConstants.LAST_CONNECTED_GATEWAY).asText()))) {
-                        ObjectNode newDeviceAdditionalInfo = (ObjectNode) deviceAdditionalInfo;
-                        newDeviceAdditionalInfo.put(DataConstants.LAST_CONNECTED_GATEWAY, gatewayId.toString());
-                        Device savedDevice = deviceService.saveDevice(device);
-                        tbClusterService.onDeviceUpdated(savedDevice, device);
-                    }
+                    tbClusterService.onDeviceUpdated(savedDevice, device);
                 }
-                GetOrCreateDeviceFromGatewayResponseMsg.Builder builder = GetOrCreateDeviceFromGatewayResponseMsg.newBuilder()
-                        .setDeviceInfo(getDeviceInfoProto(device));
-                DeviceProfile deviceProfile = deviceProfileCache.get(device.getTenantId(), device.getDeviceProfileId());
-                if (deviceProfile != null) {
-                    builder.setProfileBody(ByteString.copyFrom(dataDecodingEncodingService.encode(deviceProfile)));
-                } else {
-                    log.warn("[{}] Failed to find device profile [{}] for device. ", device.getId(), device.getDeviceProfileId());
-                }
-                return TransportApiResponseMsg.newBuilder()
-                        .setGetOrCreateDeviceResponseMsg(builder.build())
-                        .build();
-            } catch (JsonProcessingException e) {
-                log.warn("[{}] Failed to lookup device by gateway id and name: [{}]", gatewayId, requestMsg.getDeviceName(), e);
-                throw new RuntimeException(e);
-            } finally {
-                deviceCreationLock.unlock();
             }
-        }, dbCallbackExecutorService);
+            GetOrCreateDeviceFromGatewayResponseMsg.Builder builder = GetOrCreateDeviceFromGatewayResponseMsg.newBuilder()
+                    .setDeviceInfo(getDeviceInfoProto(device));
+            DeviceProfile deviceProfile = deviceProfileCache.get(device.getTenantId(), device.getDeviceProfileId());
+            if (deviceProfile != null) {
+                builder.setProfileBody(ByteString.copyFrom(dataDecodingEncodingService.encode(deviceProfile)));
+            } else {
+                log.warn("[{}] Failed to find device profile [{}] for device. ", device.getId(), device.getDeviceProfileId());
+            }
+            return TransportApiResponseMsg.newBuilder()
+                    .setGetOrCreateDeviceResponseMsg(builder.build())
+                    .build();
+        } catch (JsonProcessingException e) {
+            log.warn("[{}] Failed to lookup device by gateway id and name: [{}]", gatewayId, requestMsg.getDeviceName(), e);
+            throw new RuntimeException(e);
+        } catch (EntitiesLimitException e) {
+            log.warn("[{}][{}] API limit exception: [{}]", e.getTenantId(), gatewayId, e.getMessage());
+            return TransportApiResponseMsg.newBuilder()
+                    .setGetOrCreateDeviceResponseMsg(
+                            GetOrCreateDeviceFromGatewayResponseMsg.newBuilder()
+                                    .setError(TransportProtos.TransportApiRequestErrorCode.ENTITY_LIMIT))
+                    .build();
+        } finally {
+            deviceCreationLock.unlock();
+        }
     }
 
     private ListenableFuture<TransportApiResponseMsg> handle(ProvisionDeviceRequestMsg requestMsg) {
@@ -489,10 +521,10 @@ public class DefaultTransportApiService implements TransportApiService {
         ResourceType resourceType = ResourceType.valueOf(requestMsg.getResourceType());
         String resourceKey = requestMsg.getResourceKey();
         TransportProtos.GetResourceResponseMsg.Builder builder = TransportProtos.GetResourceResponseMsg.newBuilder();
-        TbResource resource = resourceService.getResource(tenantId, resourceType, resourceKey);
+        TbResource resource = resourceService.findResourceByTenantIdAndKey(tenantId, resourceType, resourceKey);
 
         if (resource == null && !tenantId.equals(TenantId.SYS_TENANT_ID)) {
-            resource = resourceService.getResource(TenantId.SYS_TENANT_ID, resourceType, resourceKey);
+            resource = resourceService.findResourceByTenantIdAndKey(TenantId.SYS_TENANT_ID, resourceType, resourceKey);
         }
 
         if (resource != null) {
@@ -518,31 +550,30 @@ public class DefaultTransportApiService implements TransportApiService {
                 .build());
     }
 
-    private ListenableFuture<TransportApiResponseMsg> getDeviceInfo(DeviceCredentials credentials) {
-        return Futures.transform(deviceService.findDeviceByIdAsync(TenantId.SYS_TENANT_ID, credentials.getDeviceId()), device -> {
-            if (device == null) {
-                log.trace("[{}] Failed to lookup device by id", credentials.getDeviceId());
-                return getEmptyTransportApiResponse();
+    TransportApiResponseMsg getDeviceInfo(DeviceCredentials credentials) {
+        Device device = deviceService.findDeviceById(TenantId.SYS_TENANT_ID, credentials.getDeviceId());
+        if (device == null) {
+            log.trace("[{}] Failed to lookup device by id", credentials.getDeviceId());
+            return getEmptyTransportApiResponse();
+        }
+        try {
+            ValidateDeviceCredentialsResponseMsg.Builder builder = ValidateDeviceCredentialsResponseMsg.newBuilder();
+            builder.setDeviceInfo(getDeviceInfoProto(device));
+            DeviceProfile deviceProfile = deviceProfileCache.get(device.getTenantId(), device.getDeviceProfileId());
+            if (deviceProfile != null) {
+                builder.setProfileBody(ByteString.copyFrom(dataDecodingEncodingService.encode(deviceProfile)));
+            } else {
+                log.warn("[{}] Failed to find device profile [{}] for device. ", device.getId(), device.getDeviceProfileId());
             }
-            try {
-                ValidateDeviceCredentialsResponseMsg.Builder builder = ValidateDeviceCredentialsResponseMsg.newBuilder();
-                builder.setDeviceInfo(getDeviceInfoProto(device));
-                DeviceProfile deviceProfile = deviceProfileCache.get(device.getTenantId(), device.getDeviceProfileId());
-                if (deviceProfile != null) {
-                    builder.setProfileBody(ByteString.copyFrom(dataDecodingEncodingService.encode(deviceProfile)));
-                } else {
-                    log.warn("[{}] Failed to find device profile [{}] for device. ", device.getId(), device.getDeviceProfileId());
-                }
-                if (!StringUtils.isEmpty(credentials.getCredentialsValue())) {
-                    builder.setCredentialsBody(credentials.getCredentialsValue());
-                }
-                return TransportApiResponseMsg.newBuilder()
-                        .setValidateCredResponseMsg(builder.build()).build();
-            } catch (JsonProcessingException e) {
-                log.warn("[{}] Failed to lookup device by id", credentials.getDeviceId(), e);
-                return getEmptyTransportApiResponse();
+            if (!StringUtils.isEmpty(credentials.getCredentialsValue())) {
+                builder.setCredentialsBody(credentials.getCredentialsValue());
             }
-        }, MoreExecutors.directExecutor());
+            return TransportApiResponseMsg.newBuilder()
+                    .setValidateCredResponseMsg(builder.build()).build();
+        } catch (JsonProcessingException e) {
+            log.warn("[{}] Failed to lookup device by id", credentials.getDeviceId(), e);
+            return getEmptyTransportApiResponse();
+        }
     }
 
     private DeviceInfoProto getDeviceInfoProto(Device device) throws JsonProcessingException {

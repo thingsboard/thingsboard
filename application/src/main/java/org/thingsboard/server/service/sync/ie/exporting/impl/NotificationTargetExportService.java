@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,9 @@ public class NotificationTargetExportService extends BaseEntityExportService<Not
                 case CUSTOMER_USERS:
                     CustomerUsersFilter customerUsersFilter = (CustomerUsersFilter) usersFilter;
                     customerUsersFilter.setCustomerId(getExternalIdOrElseInternal(ctx, new CustomerId(customerUsersFilter.getCustomerId())).getId());
+                    break;
+                case USER_LIST:
+                    // users list stays as is and is replaced with current user id on import (due to user entities not being supported by VC)
                     break;
             }
         }

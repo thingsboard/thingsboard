@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,9 @@ public final class WidgetsBundleEntity extends BaseSqlEntity<WidgetsBundle> {
     @Column(name = ModelConstants.WIDGETS_BUNDLE_DESCRIPTION)
     private String description;
 
+    @Column(name = ModelConstants.WIDGETS_BUNDLE_ORDER)
+    private Integer order;
+
     @Column(name = ModelConstants.EXTERNAL_ID_PROPERTY)
     private UUID externalId;
 
@@ -69,6 +72,7 @@ public final class WidgetsBundleEntity extends BaseSqlEntity<WidgetsBundle> {
         this.title = widgetsBundle.getTitle();
         this.image = widgetsBundle.getImage();
         this.description = widgetsBundle.getDescription();
+        this.order = widgetsBundle.getOrder();
         if (widgetsBundle.getExternalId() != null) {
             this.externalId = widgetsBundle.getExternalId().getId();
         }
@@ -85,6 +89,7 @@ public final class WidgetsBundleEntity extends BaseSqlEntity<WidgetsBundle> {
         widgetsBundle.setTitle(title);
         widgetsBundle.setImage(image);
         widgetsBundle.setDescription(description);
+        widgetsBundle.setOrder(order);
         if (externalId != null) {
             widgetsBundle.setExternalId(new WidgetsBundleId(externalId));
         }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -142,6 +142,13 @@ export class MenuService {
                 icon: 'now_widgets'
               }
             ]
+          },
+          {
+            id: 'images',
+            name: 'image.gallery',
+            type: 'link',
+            path: '/resources/images',
+            icon: 'filter'
           },
           {
             id: 'resources_library',
@@ -526,6 +533,13 @@ export class MenuService {
                 icon: 'now_widgets'
               }
             ]
+          },
+          {
+            id: 'images',
+            name: 'image.gallery',
+            type: 'link',
+            path: '/resources/images',
+            icon: 'filter'
           },
           {
             id: 'resources_library',

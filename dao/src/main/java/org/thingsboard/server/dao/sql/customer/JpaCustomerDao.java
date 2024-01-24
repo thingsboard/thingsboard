@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public class JpaCustomerDao extends JpaAbstractDao<CustomerEntity, Customer> imp
     public PageData<Customer> findCustomersByTenantId(UUID tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(customerRepository.findByTenantId(
                 tenantId,
-                Objects.toString(pageLink.getTextSearch(), ""),
+                pageLink.getTextSearch(),
                 DaoUtil.toPageable(pageLink)));
     }
 

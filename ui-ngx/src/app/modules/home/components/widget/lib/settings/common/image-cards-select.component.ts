@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,22 +21,31 @@ import {
   Directive,
   ElementRef,
   forwardRef,
-  Input, OnChanges,
-  OnDestroy, OnInit,
-  QueryList, SimpleChanges,
+  Input,
+  OnChanges,
+  OnDestroy,
+  OnInit,
+  QueryList,
+  SimpleChanges,
   ViewEncapsulation
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormControl } from '@angular/forms';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import { BehaviorSubject, combineLatest, Observable, Subject } from 'rxjs';
+import { EMPTY, Observable, Subject } from 'rxjs';
 import { map, share, startWith, takeUntil } from 'rxjs/operators';
-import { BreakpointObserver } from '@angular/cdk/layout';
-import { MediaBreakpoints } from '@shared/models/constants';
+import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
+import { SafeUrl } from '@angular/platform-browser';
+import { resolveBreakpoint } from '@shared/models/constants';
 
 export interface ImageCardsSelectOption {
   name: string;
   value: any;
-  image: string;
+  image: string | SafeUrl;
+}
+
+export interface ImageCardsColumns {
+  columns: number;
+  breakpoints?: {[breakpoint: string]: number};
 }
 
 @Directive(
@@ -49,7 +58,7 @@ export class ImageCardsSelectOptionDirective {
 
   @Input() value: any;
 
-  @Input() image: string;
+  @Input() image: string | SafeUrl;
 
   get viewValue(): string {
     return (this._element?.nativeElement.textContent || '').trim();
@@ -82,10 +91,7 @@ export class ImageCardsSelectComponent implements ControlValueAccessor, OnInit, 
   disabled: boolean;
 
   @Input()
-  cols = 4;
-
-  @Input()
-  colsLtMd = 2;
+  cols: ImageCardsColumns | number = 4;
 
   @Input()
   rowHeight = '9:5';
@@ -107,28 +113,20 @@ export class ImageCardsSelectComponent implements ControlValueAccessor, OnInit, 
 
   private _destroyed = new Subject<void>();
 
-  private _colsChanged = new BehaviorSubject<void>(null);
-
   constructor(private breakpointObserver: BreakpointObserver) {
     this.valueFormControl = new UntypedFormControl('');
   }
 
   ngOnInit(): void {
-    const gridColumns = this.breakpointObserver.isMatched(MediaBreakpoints['lt-md']) ? this.colsLtMd : this.cols;
-    this.cols$ = combineLatest({state: this.breakpointObserver
-      .observe(MediaBreakpoints['lt-md']), colsChanged: this._colsChanged.asObservable()}).pipe(
-        map((data) => data.state.matches ? this.colsLtMd : this.cols),
-        startWith(gridColumns),
-        share()
-      );
+    this._initCols();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
       if (!change.firstChange && change.currentValue !== change.previousValue) {
-        if (['cols', 'colsLtMd'].includes(propName)) {
-          this._colsChanged.next(null);
+        if (['cols'].includes(propName)) {
+          this._initCols();
         }
       }
     }
@@ -143,6 +141,40 @@ export class ImageCardsSelectComponent implements ControlValueAccessor, OnInit, 
   ngOnDestroy() {
     this._destroyed.next();
     this._destroyed.complete();
+  }
+
+  private _initCols() {
+    const gridColumns = this._detectColumns();
+    let state: Observable<BreakpointState>;
+    if (typeof this.cols === 'object' && this.cols.breakpoints) {
+      const breakpoints = Object.keys(this.cols.breakpoints);
+      state = this.breakpointObserver.observe(breakpoints.map(breakpoint => resolveBreakpoint(breakpoint)));
+    } else {
+      state = EMPTY;
+    }
+    this.cols$ = state.pipe(
+      map(() => this._detectColumns()),
+      startWith(gridColumns),
+      share()
+    );
+  }
+
+  private _detectColumns(): number {
+    if (typeof this.cols !== 'object') {
+      return this.cols;
+    } else {
+      let columns = this.cols.columns;
+      if (this.cols.breakpoints) {
+        for (const breakpoint of Object.keys(this.cols.breakpoints)) {
+          const breakpointValue = resolveBreakpoint(breakpoint);
+          if (this.breakpointObserver.isMatched(breakpointValue)) {
+            columns = this.cols.breakpoints[breakpoint];
+            break;
+          }
+        }
+      }
+      return columns;
+    }
   }
 
   private syncImageCardsSelectOptions() {
@@ -164,7 +196,7 @@ export class ImageCardsSelectComponent implements ControlValueAccessor, OnInit, 
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(_fn: any): void {
   }
 
   setDisabledState(isDisabled: boolean): void {

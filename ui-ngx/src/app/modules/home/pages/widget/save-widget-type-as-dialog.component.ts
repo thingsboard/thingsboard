@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,12 +18,15 @@ import { Component, OnInit } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { Authority } from '@shared/models/authority.enum';
 
 export interface SaveWidgetTypeAsDialogResult {
   widgetName: string;
+  widgetBundleId?: string;
 }
 
 @Component({
@@ -34,18 +37,27 @@ export interface SaveWidgetTypeAsDialogResult {
 export class SaveWidgetTypeAsDialogComponent extends
   DialogComponent<SaveWidgetTypeAsDialogComponent, SaveWidgetTypeAsDialogResult> implements OnInit {
 
-  saveWidgetTypeAsFormGroup: UntypedFormGroup;
+  saveWidgetTypeAsFormGroup: FormGroup;
+  bundlesScope: string;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
               public dialogRef: MatDialogRef<SaveWidgetTypeAsDialogComponent, SaveWidgetTypeAsDialogResult>,
-              public fb: UntypedFormBuilder) {
+              public fb: FormBuilder) {
     super(store, router, dialogRef);
+
+    const authUser = getCurrentAuthUser(store);
+    if (authUser.authority === Authority.TENANT_ADMIN) {
+      this.bundlesScope = 'tenant';
+    } else {
+      this.bundlesScope = 'system';
+    }
   }
 
   ngOnInit(): void {
     this.saveWidgetTypeAsFormGroup = this.fb.group({
-      title: [null, [Validators.required]]
+      title: [null, [Validators.required]],
+      widgetsBundle: [null]
     });
   }
 
@@ -55,8 +67,10 @@ export class SaveWidgetTypeAsDialogComponent extends
 
   saveAs(): void {
     const widgetName: string = this.saveWidgetTypeAsFormGroup.get('title').value;
+    const widgetBundleId: string = this.saveWidgetTypeAsFormGroup.get('widgetsBundle').value?.id?.id;
     const result: SaveWidgetTypeAsDialogResult = {
-      widgetName
+      widgetName,
+      widgetBundleId
     };
     this.dialogRef.close(result);
   }

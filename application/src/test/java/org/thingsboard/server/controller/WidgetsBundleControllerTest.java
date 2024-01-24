@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -206,22 +206,32 @@ public class WidgetsBundleControllerTest extends AbstractControllerTest {
 
     @Test
     public void testFindTenantWidgetsBundlesByPageLink() throws Exception {
+        loginSysAdmin();
 
-        login(tenantAdmin.getEmail(), "testPassword1");
+        //upload some system bundles
+        int sysCntEntity = 10;
+        for (int i = 0; i < sysCntEntity; i++) {
+            WidgetsBundle widgetsBundle = new WidgetsBundle();
+            widgetsBundle.setTitle("Widgets bundle" + i);
+            doPost("/api/widgetsBundle", widgetsBundle, WidgetsBundle.class);
+        }
 
         List<WidgetsBundle> sysWidgetsBundles = doGetTyped("/api/widgetsBundles?",
                 new TypeReference<>() {
                 });
 
+        login(tenantAdmin.getEmail(), "testPassword1");
+
         int cntEntity = 73;
-        List<WidgetsBundle> widgetsBundles = new ArrayList<>();
+        List<WidgetsBundle> tenantWidgetsBundles = new ArrayList<>();
         for (int i = 0; i < cntEntity; i++) {
             WidgetsBundle widgetsBundle = new WidgetsBundle();
             widgetsBundle.setTitle("Widgets bundle" + i);
-            widgetsBundles.add(doPost("/api/widgetsBundle", widgetsBundle, WidgetsBundle.class));
+            tenantWidgetsBundles.add(doPost("/api/widgetsBundle", widgetsBundle, WidgetsBundle.class));
         }
 
-        widgetsBundles.addAll(sysWidgetsBundles);
+        List<WidgetsBundle> allWidgetsBundles = new ArrayList<>(tenantWidgetsBundles);
+        allWidgetsBundles.addAll(sysWidgetsBundles);
 
         List<WidgetsBundle> loadedWidgetsBundles = new ArrayList<>();
         PageLink pageLink = new PageLink(14);
@@ -236,10 +246,35 @@ public class WidgetsBundleControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(widgetsBundles, idComparator);
+        Collections.sort(allWidgetsBundles, idComparator);
         Collections.sort(loadedWidgetsBundles, idComparator);
 
-        Assert.assertEquals(widgetsBundles, loadedWidgetsBundles);
+        Assert.assertEquals(allWidgetsBundles, loadedWidgetsBundles);
+
+        //retrieve tenant only bundles
+        List<WidgetsBundle> loadedWidgetsBundles2 = new ArrayList<>();
+        PageLink pageLink2 = new PageLink(14);
+        do {
+            pageData = doGetTypedWithPageLink("/api/widgetsBundles?tenantOnly=true&",
+                    new TypeReference<>() {
+                    }, pageLink2);
+            loadedWidgetsBundles2.addAll(pageData.getData());
+            if (pageData.hasNext()) {
+                pageLink2 = pageLink2.nextPageLink();
+            }
+        } while (pageData.hasNext());
+
+        Collections.sort(tenantWidgetsBundles, idComparator);
+        Collections.sort(loadedWidgetsBundles2, idComparator);
+
+        Assert.assertEquals(tenantWidgetsBundles, loadedWidgetsBundles2);
+
+        // cleanup
+        loginSysAdmin();
+        for (WidgetsBundle sysWidgetsBundle : sysWidgetsBundles) {
+            doDelete("/api/widgetsBundle/" + sysWidgetsBundle.getId().getId().toString())
+                    .andExpect(status().isOk());
+        }
     }
 
     @Test

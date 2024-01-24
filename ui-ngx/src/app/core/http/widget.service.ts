@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -85,14 +85,22 @@ export class WidgetService {
     );
   }
 
-  public getWidgetBundles(pageLink: PageLink, fullSearch = false, config?: RequestConfig): Observable<PageData<WidgetsBundle>> {
-    return this.http.get<PageData<WidgetsBundle>>(`/api/widgetsBundles${pageLink.toQuery()}&fullSearch=${fullSearch}`,
-      defaultHttpOptionsFromConfig(config));
+  public getWidgetBundles(pageLink: PageLink, fullSearch = false,
+                          tenantOnly = false, config?: RequestConfig): Observable<PageData<WidgetsBundle>> {
+    return this.http.get<PageData<WidgetsBundle>>(
+      `/api/widgetsBundles${pageLink.toQuery()}&tenantOnly=${tenantOnly}&fullSearch=${fullSearch}`,
+      defaultHttpOptionsFromConfig(config)
+    );
   }
 
   public getWidgetsBundle(widgetsBundleId: string,
                           config?: RequestConfig): Observable<WidgetsBundle> {
     return this.http.get<WidgetsBundle>(`/api/widgetsBundle/${widgetsBundleId}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public exportWidgetsBundle(widgetsBundleId: string,
+                          config?: RequestConfig): Observable<WidgetsBundle> {
+    return this.http.get<WidgetsBundle>(`/api/widgetsBundle/${widgetsBundleId}?inlineImages=true`, defaultHttpOptionsFromConfig(config));
   }
 
   public saveWidgetsBundle(widgetsBundle: WidgetsBundle,
@@ -134,9 +142,9 @@ export class WidgetService {
       defaultHttpOptionsFromConfig(config));
   }
 
-  public getBundleWidgetTypesDetails(widgetsBundleId: string,
+  public exportBundleWidgetTypesDetails(widgetsBundleId: string,
                                      config?: RequestConfig): Observable<Array<WidgetTypeDetails>> {
-    return this.http.get<Array<WidgetTypeDetails>>(`/api/widgetTypesDetails?widgetsBundleId=${widgetsBundleId}`,
+    return this.http.get<Array<WidgetTypeDetails>>(`/api/widgetTypesDetails?widgetsBundleId=${widgetsBundleId}&inlineImages=true`,
       defaultHttpOptionsFromConfig(config));
   }
 
@@ -201,6 +209,12 @@ export class WidgetService {
       defaultHttpOptionsFromConfig(config));
   }
 
+  public exportWidgetType(widgetTypeId: string,
+                          config?: RequestConfig): Observable<WidgetTypeDetails> {
+    return this.http.get<WidgetTypeDetails>(`/api/widgetType/${widgetTypeId}?inlineImages=true`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
   public getWidgetTypeInfoById(widgetTypeId: string,
                                config?: RequestConfig): Observable<WidgetTypeInfo> {
     return this.http.get<WidgetTypeInfo>(`/api/widgetTypeInfo/${widgetTypeId}`,
@@ -234,6 +248,15 @@ export class WidgetService {
       url += `&widgetTypeList=${widgetTypes.join(',')}`;
     }
     return this.http.get<PageData<WidgetTypeInfo>>(url, defaultHttpOptionsFromConfig(config));
+  }
+
+  public addWidgetFqnToWidgetBundle(widgetsBundleId: string, fqn: string, config?: RequestConfig) {
+    return this.getBundleWidgetTypeFqns(widgetsBundleId, config).pipe(
+      mergeMap(widgetsBundleFqn => {
+        widgetsBundleFqn.push(fqn);
+        return this.updateWidgetsBundleWidgetFqns(widgetsBundleId, widgetsBundleFqn, config);
+      })
+    );
   }
 
   public getWidgetTemplate(widgetTypeParam: widgetType,

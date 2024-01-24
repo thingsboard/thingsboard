@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.NotificationsTopicService;
+import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
@@ -41,7 +41,7 @@ public class RemoteNotificationRuleProcessor implements NotificationRuleProcesso
 
     private final NotificationDeduplicationService deduplicationService;
     private final TbQueueProducerProvider producerProvider;
-    private final NotificationsTopicService notificationsTopicService;
+    private final TopicService topicService;
     private final PartitionService partitionService;
     private final DataDecodingEncodingService encodingService;
 
@@ -57,7 +57,7 @@ public class RemoteNotificationRuleProcessor implements NotificationRuleProcesso
                     .setTrigger(ByteString.copyFrom(encodingService.encode(trigger)));
 
             partitionService.getAllServiceIds(ServiceType.TB_CORE).stream().findAny().ifPresent(serviceId -> {
-                TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, serviceId);
+                TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_CORE, serviceId);
                 producerProvider.getTbCoreNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(),
                         TransportProtos.ToCoreNotificationMsg.newBuilder()
                                 .setNotificationRuleProcessorMsg(msg)

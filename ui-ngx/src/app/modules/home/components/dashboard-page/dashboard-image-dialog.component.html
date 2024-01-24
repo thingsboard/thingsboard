@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -40,8 +40,8 @@
             <input matInput formControlName="left" type="number" step="1" min="0" max="100">
           </mat-form-field>
           <div class="tb-image-preview-container">
-            <div *ngIf="!safeImageUrl; else elseBlock">{{ 'dashboard.no-image' | translate }}</div>
-            <ng-template #elseBlock><img class="tb-image-preview" [src]="safeImageUrl" /></ng-template>
+            <div *ngIf="!imageUrl; else elseBlock">{{ 'dashboard.no-image' | translate }}</div>
+            <ng-template #elseBlock><img class="tb-image-preview" [src]="imageUrl | image | async" /></ng-template>
           </div>
           <mat-form-field class="rect-field">
             <mat-label>Right %</mat-label>
@@ -62,9 +62,9 @@
         </button>
       </div>
       <div [formGroup]="dashboardImageFormGroup">
-        <tb-image-input [showPreview]="false" label="{{'dashboard.image' | translate}}"
+        <tb-gallery-image-input label="{{'dashboard.image' | translate}}"
                         formControlName="dashboardImage">
-        </tb-image-input>
+        </tb-gallery-image-input>
       </div>
     </fieldset>
     <div *ngIf="takingScreenshot$ | async" class="taking-screenshot-progress tb-absolute-fill" fxLayout="column"

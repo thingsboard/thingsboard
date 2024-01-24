@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -271,14 +271,14 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
     [
       EntityType.WIDGET_TYPE,
       {
-        type: 'entity.type-widget-type',
-        typePlural: 'entity.type-widget-types',
-        list: 'entity.list-of-widget-types',
+        type: 'entity.type-widget',
+        typePlural: 'entity.type-widgets',
+        list: 'entity.list-of-widgets',
         details: 'widget.details',
-        add: 'widget.add-widget-type',
-        noEntities: 'widget.no-widget-types-text',
-        search: 'widget.search-widget-types',
-        selectedEntities: 'widget.selected-widget-types'
+        add: 'dashboard.add-widget',
+        noEntities: 'widget.no-widgets-text',
+        search: 'widget.search-widgets',
+        selectedEntities: 'widget.selected-widgets'
       }
     ],
     [
@@ -326,6 +326,8 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
       EntityType.TB_RESOURCE,
       {
         type: 'entity.type-tb-resource',
+        typePlural: 'entity.type-tb-resources',
+        list: 'entity.list-of-tb-resources',
         details: 'resource.resource-library-details',
         add: 'resource.add',
         noEntities: 'resource.no-resource-text',
@@ -535,7 +537,9 @@ export const baseDetailsPageByEntityType = new Map<EntityType, string>([
   [EntityType.ENTITY_VIEW, '/entities/entityViews'],
   [EntityType.TB_RESOURCE, '/resources/resources-library'],
   [EntityType.OTA_PACKAGE, '/features/otaUpdates'],
-  [EntityType.QUEUE, '/settings/queues']
+  [EntityType.QUEUE, '/settings/queues'],
+  [EntityType.WIDGETS_BUNDLE, '/resources/widgets-library/widgets-bundles/details'],
+  [EntityType.WIDGET_TYPE, '/resources/widgets-library/widget-types/details']
 ]);
 
 export interface EntitySubtype {

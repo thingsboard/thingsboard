@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -91,7 +90,7 @@ public class InMemoryHouseKeeperServiceService implements HouseKeeperService {
             }
 
             @Override
-            public void onFailure(@NotNull Throwable throwable) {
+            public void onFailure(Throwable throwable) {
                 queueSize.decrementAndGet();
                 totalProcessedCounter.incrementAndGet();
                 log.error("[{}][{}] unassignDeletedUserAlarms failed, pending queue size: {}, total processed count: {}",

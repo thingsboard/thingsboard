@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -43,6 +43,9 @@ import {
 import { WidgetComponent } from '@home/components/widget/widget.component';
 import { progressBarDefaultSettings, ProgressBarLayout, ProgressBarWidgetSettings } from './progress-bar-widget.models';
 import { ResizeObserver } from '@juggle/resize-observer';
+import { Observable } from 'rxjs';
+import { ImagePipe } from '@shared/pipe/image.pipe';
+import { DomSanitizer } from '@angular/platform-browser';
 
 const defaultLayoutHeight = 80;
 const simplifiedLayoutHeight = 75;
@@ -93,7 +96,7 @@ export class ProgressBarWidgetComponent implements OnInit, OnDestroy, AfterViewI
 
   value: number;
 
-  backgroundStyle: ComponentStyle = {};
+  backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
 
   progressBarPanelResize$: ResizeObserver;
@@ -102,6 +105,8 @@ export class ProgressBarWidgetComponent implements OnInit, OnDestroy, AfterViewI
   private units = '';
 
   constructor(private date: DatePipe,
+              private imagePipe: ImagePipe,
+              private sanitizer: DomSanitizer,
               private widgetComponent: WidgetComponent,
               private renderer: Renderer2,
               private cd: ChangeDetectorRef) {
@@ -124,7 +129,7 @@ export class ProgressBarWidgetComponent implements OnInit, OnDestroy, AfterViewI
     this.layout = this.settings.layout;
 
     this.showValue = this.settings.showValue;
-    this.valueStyle = textStyle(this.settings.valueFont,  '0.1px');
+    this.valueStyle = textStyle(this.settings.valueFont);
     this.valueColor = ColorProcessor.fromSettings(this.settings.valueColor);
 
     this.showTitleValueRow = this.showValue ||
@@ -140,11 +145,11 @@ export class ProgressBarWidgetComponent implements OnInit, OnDestroy, AfterViewI
 
     this.showTicks = this.settings.showTicks && this.layout === ProgressBarLayout.default;
     if (this.showTicks) {
-      this.ticksStyle = textStyle(this.settings.ticksFont,  '0.1px');
+      this.ticksStyle = textStyle(this.settings.ticksFont);
       this.ticksStyle.color = this.settings.ticksColor;
     }
 
-    this.backgroundStyle = backgroundStyle(this.settings.background);
+    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
   }
 
@@ -174,14 +179,16 @@ export class ProgressBarWidgetComponent implements OnInit, OnDestroy, AfterViewI
     this.value = 0;
     if (tsValue && isDefinedAndNotNull(tsValue[1]) && isNumeric(tsValue[1])) {
       this.value = tsValue[1];
-      this.valueText = formatValue(this.value, this.decimals, this.units, true);
+      this.valueText = formatValue(this.value, this.decimals, this.units, false);
     } else {
       this.valueText = 'N/A';
     }
     this.valueColor.update(this.value);
     this.barColor.update(this.value);
     const range = this.settings.tickMax - this.settings.tickMin;
-    this.barWidth = `${(this.value / range) * 100}%`;
+    let barWidthValue = ((this.value - this.settings.tickMin) / range) * 100;
+    barWidthValue = Math.max(0, Math.min(100, barWidthValue));
+    this.barWidth = `${barWidthValue}%`;
     this.cd.detectChanges();
   }
 

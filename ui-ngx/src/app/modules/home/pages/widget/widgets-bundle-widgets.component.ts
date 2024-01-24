@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,13 +24,15 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
-import { WidgetTypeInfo } from '@shared/models/widget.models';
+import { widgetType as WidgetDataType, WidgetTypeInfo } from '@shared/models/widget.models';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
-import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { ImportExportService } from '@shared/import-export/import-export.service';
 import { WidgetService } from '@core/http/widget.service';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { isDefinedAndNotNull } from '@core/utils';
 import { FormControl, Validators } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
+import { SelectWidgetTypeDialogComponent } from '@home/pages/widget/select-widget-type-dialog.component';
+
+type WidgetTypeBundle = WithOptional<WidgetTypeInfo, 'widgetType'>;
 
 @Component({
   selector: 'tb-widgets-bundle-widget',
@@ -47,7 +49,7 @@ export class WidgetsBundleWidgetsComponent extends PageComponent implements OnIn
   isDirty = false;
 
   widgetsBundle: WidgetsBundle;
-  widgets: Array<WidgetTypeInfo>;
+  widgets: Array<WidgetTypeBundle>;
   excludeWidgetTypeIds: Array<string>;
 
   addWidgetFormControl = new FormControl(null, [Validators.required]);
@@ -57,8 +59,8 @@ export class WidgetsBundleWidgetsComponent extends PageComponent implements OnIn
               private route: ActivatedRoute,
               private widgetsService: WidgetService,
               private importExport: ImportExportService,
-              private sanitizer: DomSanitizer,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private dialog: MatDialog) {
     super(store);
     this.authUser = getCurrentAuthUser(this.store);
     this.widgetsBundle = this.route.snapshot.data.widgetsBundle;
@@ -81,14 +83,7 @@ export class WidgetsBundleWidgetsComponent extends PageComponent implements OnIn
   ngOnInit(): void {
   }
 
-  getPreviewImage(imageUrl: string | null): SafeUrl | string {
-    if (isDefinedAndNotNull(imageUrl)) {
-      return this.sanitizer.bypassSecurityTrustUrl(imageUrl);
-    }
-    return '/assets/widget-preview-empty.svg';
-  }
-
-  trackByWidget(index: number, widget: WidgetTypeInfo): any {
+  trackByWidget(index: number, widget: WidgetTypeBundle): any {
     return widget;
   }
 
@@ -109,27 +104,27 @@ export class WidgetsBundleWidgetsComponent extends PageComponent implements OnIn
     this.addMode = false;
   }
 
-  private addWidget(newWidget: WidgetTypeInfo) {
+  private addWidget(newWidget: WidgetTypeBundle) {
     this.widgets.push(newWidget);
     this.isDirty = true;
     this.addMode = false;
   }
 
-  openWidgetEditor($event: Event, widgetType: WidgetTypeInfo) {
+  openWidgetEditor($event: Event, widgetType: WidgetTypeBundle) {
     if ($event) {
       $event.stopPropagation();
     }
-    this.router.navigateByUrl(`resources/widgets-library/widget-types/${widgetType.id.id}`);
+    this.router.navigate([widgetType.id.id], {relativeTo: this.route}).then(()=> {});
   }
 
-  exportWidgetType($event: Event, widgetType: WidgetTypeInfo) {
+  exportWidgetType($event: Event, widgetType: WidgetTypeBundle) {
     if ($event) {
       $event.stopPropagation();
     }
     this.importExport.exportWidgetType(widgetType.id.id);
   }
 
-  removeWidgetType($event: Event, widgetType: WidgetTypeInfo) {
+  removeWidgetType($event: Event, widgetType: WidgetTypeBundle) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -174,6 +169,46 @@ export class WidgetsBundleWidgetsComponent extends PageComponent implements OnIn
       this.editMode = false;
       this.addMode = false;
     });
+  }
+
+  addWidgetType($event: Event): void {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialog.open<SelectWidgetTypeDialogComponent, any,
+      WidgetDataType>(SelectWidgetTypeDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog']
+    }).afterClosed().subscribe(
+      (type) => {
+        if (type) {
+          this.router.navigate([type], {relativeTo: this.route}).then(() => {});
+        }
+      }
+    );
+  }
+
+  importWidgetType() {
+    this.importExport.importWidgetType().subscribe(
+      (widgetType) => {
+        if (widgetType) {
+          const isExistWidget = this.widgets.some(widget => widget.id.id === widgetType.id.id);
+          if (isExistWidget) {
+            this.widgets = this.widgets.map(widget => widget.id.id !== widgetType.id.id ? widget : widgetType);
+          }
+          if (this.editMode) {
+            this.widgets.push(widgetType);
+            this.isDirty = true;
+            this.cd.markForCheck();
+          } else if (!isExistWidget) {
+            this.widgetsService.addWidgetFqnToWidgetBundle(this.widgetsBundle.id.id, widgetType.fqn).subscribe(() => {
+              this.widgets.push(widgetType);
+              this.cd.markForCheck();
+            });
+          }
+        }
+      }
+    );
   }
 
 }

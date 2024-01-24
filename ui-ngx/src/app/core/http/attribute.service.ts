@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -32,12 +32,18 @@ export class AttributeService {
     private http: HttpClient
   ) { }
 
-  public getEntityAttributes(entityId: EntityId, attributeScope: AttributeScope,
+  public getEntityAttributes(entityId: EntityId, attributeScope?: AttributeScope,
                              keys?: Array<string>, config?: RequestConfig): Observable<Array<AttributeData>> {
-    let url = `/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/values/attributes/${attributeScope}`;
+    let url = `/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/values/attributes`;
+
+    if (attributeScope) {
+      url += `/${attributeScope}`;
+    }
+
     if (keys && keys.length) {
       url += `?keys=${keys.join(',')}`;
     }
+
     return this.http.get<Array<AttributeData>>(url, defaultHttpOptionsFromConfig(config));
   }
 

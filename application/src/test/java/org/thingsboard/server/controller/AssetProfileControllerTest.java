@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
@@ -46,11 +47,13 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.common.data.DataConstants.DEFAULT_DEVICE_TYPE;
 
 @ContextConfiguration(classes = {AssetProfileControllerTest.Config.class})
 @DaoSqlTest
@@ -457,6 +460,62 @@ public class AssetProfileControllerTest extends AbstractControllerTest {
     public void testDeleteAssetProfileExceptionWithRelationsTransactional() throws Exception {
         AssetProfileId assetProfileId = savedAssetProfile("AssetProfile for Test WithRelations Transactional Exception").getId();
         testEntityDaoWithRelationsTransactionalException(assetProfileDao, savedTenant.getId(), assetProfileId, "/api/assetProfile/" + assetProfileId);
+    }
+
+    @Test
+    public void testGetAssetProfileNames() throws Exception {
+        var pageLink = new PageLink(Integer.MAX_VALUE);
+        var assetProfileInfos = doGetTypedWithPageLink("/api/assetProfileInfos?",
+                new TypeReference<PageData<AssetProfileInfo>>() {
+                }, pageLink);
+        Assert.assertNotNull("Asset Profile Infos page data is null!", assetProfileInfos);
+        Assert.assertEquals("Asset Profile Infos Page data is empty! Expected to have default profile created!", 1, assetProfileInfos.getTotalElements());
+        List<EntityInfo> expectedAssetProfileNames = assetProfileInfos.getData().stream()
+                .map(info -> new EntityInfo(info.getId(), info.getName()))
+                .sorted(Comparator.comparing(EntityInfo::getName))
+                .collect(Collectors.toList());
+        var assetProfileNames = doGetTyped("/api/assetProfile/names", new TypeReference<List<EntityInfo>>() {
+        });
+        Assert.assertNotNull("Asset Profile Names list is null!", assetProfileNames);
+        Assert.assertFalse("Asset Profile Names list is empty!", assetProfileNames.isEmpty());
+        Assert.assertEquals(expectedAssetProfileNames, assetProfileNames);
+        Assert.assertEquals(1, assetProfileNames.size());
+        Assert.assertEquals(DEFAULT_DEVICE_TYPE, assetProfileNames.get(0).getName());
+
+        int count = 3;
+        for (int i = 0; i < count; i++) {
+            Asset asset = new Asset();
+            asset.setName("AssetName" + i);
+            asset.setType("AssetProfileName" + i);
+            Asset savedAsset = doPost("/api/asset", asset, Asset.class);
+            Assert.assertNotNull(savedAsset);
+        }
+        assetProfileInfos = doGetTypedWithPageLink("/api/assetProfileInfos?",
+                new TypeReference<>() {
+                }, pageLink);
+        Assert.assertNotNull("Asset Profile Infos page data is null!", assetProfileInfos);
+        Assert.assertEquals("Asset Profile Infos Page data is empty! Expected to have default profile created + count value!", 1 + count, assetProfileInfos.getTotalElements());
+        expectedAssetProfileNames = assetProfileInfos.getData().stream()
+                .map(info -> new EntityInfo(info.getId(), info.getName()))
+                .sorted(Comparator.comparing(EntityInfo::getName))
+                .collect(Collectors.toList());
+
+        assetProfileNames = doGetTyped("/api/assetProfile/names", new TypeReference<>() {
+        });
+        Assert.assertNotNull("Asset Profile Names list is null!", assetProfileNames);
+        Assert.assertFalse("Asset Profile Names list is empty!", assetProfileNames.isEmpty());
+        Assert.assertEquals(expectedAssetProfileNames, assetProfileNames);
+        Assert.assertEquals(1 + count, assetProfileNames.size());
+
+        assetProfileNames = doGetTyped("/api/assetProfile/names?activeOnly=true", new TypeReference<>() {
+        });
+        Assert.assertNotNull("Asset Profile Names list is null!", assetProfileNames);
+        Assert.assertFalse("Asset Profile Names list is empty!", assetProfileNames.isEmpty());
+        var expectedAssetProfileNamesWithoutDefault = expectedAssetProfileNames.stream()
+                .filter(entityInfo -> !entityInfo.getName().equals(DEFAULT_DEVICE_TYPE))
+                .collect(Collectors.toList());
+        Assert.assertEquals(expectedAssetProfileNamesWithoutDefault, assetProfileNames);
+        Assert.assertEquals(count, assetProfileNames.size());
     }
 
     private AssetProfile savedAssetProfile(String name) {

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -25,8 +25,9 @@
          (keydown)="deviceProfileEnter($event)"
          (keypress)="deviceProfileEnter($event)"
          [matAutocomplete]="deviceProfileAutocomplete"
-         [fxShow]="!showDetailsPageLink || !disabled || !selectDeviceProfileFormGroup.get('deviceProfile').value">
-  <a *ngIf="showDetailsPageLink && selectDeviceProfileFormGroup.get('deviceProfile').value && disabled" aria-label="Open device profile" [routerLink]=deviceProfileURL>
+         [fxShow]="!showDetailsPageLink || !useDeviceProfileLink || !disabled || !selectDeviceProfileFormGroup.get('deviceProfile').value">
+  <a *ngIf="showDetailsPageLink && useDeviceProfileLink && selectDeviceProfileFormGroup.get('deviceProfile').value && disabled"
+     aria-label="Open device profile" [routerLink]=deviceProfileURL>
     {{ displayDeviceProfileFn(selectDeviceProfileFormGroup.get('deviceProfile').value) }}
   </a>
   <button *ngIf="selectDeviceProfileFormGroup.get('deviceProfile').value && !disabled"

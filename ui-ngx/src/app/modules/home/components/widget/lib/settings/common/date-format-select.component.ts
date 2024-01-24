@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,11 +16,7 @@
 
 import { Component, forwardRef, Input, OnInit, Renderer2, ViewChild, ViewContainerRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormControl } from '@angular/forms';
-import {
-  compareDateFormats,
-  dateFormats,
-  DateFormatSettings
-} from '@shared/models/widget-settings.models';
+import { compareDateFormats, dateFormats, DateFormatSettings } from '@shared/models/widget-settings.models';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { MatButton } from '@angular/material/button';
@@ -29,6 +25,7 @@ import { deepClone } from '@core/utils';
 import {
   DateFormatSettingsPanelComponent
 } from '@home/components/widget/lib/settings/common/date-format-settings-panel.component';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-date-format-select',
@@ -50,7 +47,11 @@ export class DateFormatSelectComponent implements OnInit, ControlValueAccessor {
   @Input()
   disabled: boolean;
 
-  dateFormatList = dateFormats;
+  @Input()
+  @coerceBoolean()
+  excludeLastUpdateAgo = false;
+
+  dateFormatList: DateFormatSettings[];
 
   dateFormatsCompare = compareDateFormats;
 
@@ -69,6 +70,8 @@ export class DateFormatSelectComponent implements OnInit, ControlValueAccessor {
               private viewContainerRef: ViewContainerRef) {}
 
   ngOnInit(): void {
+    this.dateFormatList = this.excludeLastUpdateAgo ?
+      dateFormats.filter(format => !format.lastUpdateAgo) : dateFormats;
     this.dateFormatFormControl = new UntypedFormControl();
     this.dateFormatFormControl.valueChanges.subscribe((value: DateFormatSettings) => {
       this.updateModel(value);

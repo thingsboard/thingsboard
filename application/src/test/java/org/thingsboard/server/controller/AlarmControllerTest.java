@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,7 +110,7 @@ public class AlarmControllerTest extends AbstractControllerTest {
 
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
 
-        testNotifyEntityAllOneTime(alarm, alarm.getId(), alarm.getOriginator(),
+        testNotifyEntityOneTimeMsgToEdgeServiceNever(alarm, alarm.getId(), alarm.getOriginator(),
                 tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.ADDED);
     }
 
@@ -122,7 +122,7 @@ public class AlarmControllerTest extends AbstractControllerTest {
 
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
 
-        testNotifyEntityAllOneTime(alarm, alarm.getId(), alarm.getOriginator(),
+        testNotifyEntityOneTimeMsgToEdgeServiceNever(alarm, alarm.getId(), alarm.getOriginator(),
                 tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ADDED);
     }
 
@@ -139,7 +139,7 @@ public class AlarmControllerTest extends AbstractControllerTest {
         Assert.assertEquals(AlarmSeverity.MAJOR, updatedAlarm.getSeverity());
 
         AlarmInfo foundAlarm = doGet("/api/alarm/info/" + updatedAlarm.getId(), AlarmInfo.class);
-        testNotifyEntityAllOneTime(foundAlarm, updatedAlarm.getId(), updatedAlarm.getOriginator(),
+        testNotifyEntityOneTimeMsgToEdgeServiceNever(foundAlarm, updatedAlarm.getId(), updatedAlarm.getOriginator(),
                 tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.UPDATED);
     }
 
@@ -156,7 +156,7 @@ public class AlarmControllerTest extends AbstractControllerTest {
         Assert.assertEquals(AlarmSeverity.MAJOR, updatedAlarm.getSeverity());
 
         AlarmInfo foundAlarm = doGet("/api/alarm/info/" + updatedAlarm.getId(), AlarmInfo.class);
-        testNotifyEntityAllOneTime(foundAlarm, foundAlarm.getId(), foundAlarm.getOriginator(),
+        testNotifyEntityOneTimeMsgToEdgeServiceNever(foundAlarm, foundAlarm.getId(), foundAlarm.getOriginator(),
                 tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.UPDATED);
 
         alarm = updatedAlarm;
@@ -772,7 +772,7 @@ public class AlarmControllerTest extends AbstractControllerTest {
         alarm = doPost("/api/alarm", alarm, Alarm.class);
         Assert.assertNotNull("Saved alarm is null!", alarm);
 
-        testNotifyEntityNeverMsgToEdgeServiceOneTime(alarm, alarm.getId(), tenantId, ActionType.ADDED);
+        testNotifyEntityNever(alarm.getId(), alarm);
 
         resetTokens();
 

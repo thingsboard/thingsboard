@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.notification;
 
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.data.Offset;
@@ -113,14 +114,12 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
     @Test
     public void testSubscribingToUnreadNotificationsCount() {
+        wsClient.subscribeForUnreadNotificationsCount().waitForReply(true);
         NotificationTarget notificationTarget = createNotificationTarget(customerUserId);
         String notificationText1 = "Notification 1";
         submitNotificationRequest(notificationTarget.getId(), notificationText1);
         String notificationText2 = "Notification 2";
         submitNotificationRequest(notificationTarget.getId(), notificationText2);
-
-        wsClient.subscribeForUnreadNotificationsCount();
-        wsClient.waitForReply(true);
 
         await().atMost(2, TimeUnit.SECONDS)
                 .until(() -> wsClient.getLastCountUpdate().getTotalUnreadCount() == 2);
@@ -711,7 +710,17 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
     private NotificationRequestStats submitNotificationRequestAndWait(NotificationRequest notificationRequest) throws Exception {
         SettableFuture<NotificationRequestStats> future = SettableFuture.create();
-        notificationCenter.processNotificationRequest(notificationRequest.getTenantId(), notificationRequest, future::set);
+        notificationCenter.processNotificationRequest(notificationRequest.getTenantId(), notificationRequest, new FutureCallback<>() {
+            @Override
+            public void onSuccess(NotificationRequestStats result) {
+                future.set(result);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                future.setException(t);
+            }
+        });
         return future.get(30, TimeUnit.SECONDS);
     }
 

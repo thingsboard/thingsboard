@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import org.thingsboard.server.service.edge.rpc.fetch.SystemWidgetTypesEdgeEventF
 import org.thingsboard.server.service.edge.rpc.fetch.SystemWidgetsBundlesEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.TenantAdminUsersEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.TenantEdgeEventFetcher;
+import org.thingsboard.server.service.edge.rpc.fetch.TenantResourcesEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.TenantWidgetTypesEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.TenantWidgetsBundlesEdgeEventFetcher;
 
@@ -55,7 +56,7 @@ public class EdgeSyncCursor {
             fetchers.add(new TenantEdgeEventFetcher(ctx.getTenantService()));
             fetchers.add(new QueuesEdgeEventFetcher(ctx.getQueueService()));
             fetchers.add(new RuleChainsEdgeEventFetcher(ctx.getRuleChainService()));
-            fetchers.add(new AdminSettingsEdgeEventFetcher(ctx.getAdminSettingsService(), ctx.getFreemarkerConfig()));
+            fetchers.add(new AdminSettingsEdgeEventFetcher(ctx.getAdminSettingsService()));
             fetchers.add(new TenantAdminUsersEdgeEventFetcher(ctx.getUserService()));
             Customer publicCustomer = ctx.getCustomerService().findOrCreatePublicCustomer(edge.getTenantId());
             fetchers.add(new CustomerEdgeEventFetcher(publicCustomer.getId()));
@@ -77,6 +78,7 @@ public class EdgeSyncCursor {
             fetchers.add(new SystemWidgetsBundlesEdgeEventFetcher(ctx.getWidgetsBundleService()));
             fetchers.add(new TenantWidgetsBundlesEdgeEventFetcher(ctx.getWidgetsBundleService()));
             fetchers.add(new OtaPackagesEdgeEventFetcher(ctx.getOtaPackageService()));
+            fetchers.add(new TenantResourcesEdgeEventFetcher(ctx.getResourceService()));
         }
     }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.stats.StatsType;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingResult;
 
 import java.util.ArrayList;
@@ -66,9 +67,9 @@ public class TbRuleEngineConsumerStats {
     private final String queueName;
     private final TenantId tenantId;
 
-    public TbRuleEngineConsumerStats(Queue queue, StatsFactory statsFactory) {
-        this.queueName = queue.getName();
-        this.tenantId = queue.getTenantId();
+    public TbRuleEngineConsumerStats(QueueKey queueKey, StatsFactory statsFactory) {
+        this.queueName = queueKey.getQueueName();
+        this.tenantId = queueKey.getTenantId();
         this.statsFactory = statsFactory;
 
         String statsKey = StatsType.RULE_ENGINE.getName() + "." + queueName;

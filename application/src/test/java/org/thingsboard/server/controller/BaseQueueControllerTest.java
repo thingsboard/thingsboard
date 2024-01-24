@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,12 +37,14 @@ import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.queue.SubmitStrategy;
 import org.thingsboard.server.common.data.queue.SubmitStrategyType;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.service.queue.TbRuleEngineConsumerStats;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingResult;
 import org.thingsboard.server.service.stats.DefaultRuleEngineStatisticsService;
@@ -163,7 +165,7 @@ public class BaseQueueControllerTest extends AbstractControllerTest {
                 tenantId, ruleEngineException
         )));
 
-        TbRuleEngineConsumerStats testStats = new TbRuleEngineConsumerStats(queue, statsFactory);
+        TbRuleEngineConsumerStats testStats = new TbRuleEngineConsumerStats(new QueueKey(ServiceType.TB_RULE_ENGINE, queue), statsFactory);
         testStats.log(testProcessingResult, true);
 
         int queueStatsTtlDays = 14;
@@ -215,7 +217,7 @@ public class BaseQueueControllerTest extends AbstractControllerTest {
                 tenantId, ruleEngineException
         )));
 
-        TbRuleEngineConsumerStats testStats = new TbRuleEngineConsumerStats(queue, statsFactory);
+        TbRuleEngineConsumerStats testStats = new TbRuleEngineConsumerStats(new QueueKey(ServiceType.TB_RULE_ENGINE, queue), statsFactory);
         testStats.log(testProcessingResult, true);
         ruleEngineStatisticsService.reportQueueStats(System.currentTimeMillis(), testStats);
 

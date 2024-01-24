@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,7 +135,7 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
         }
         if (result.getAlarm() != null) {
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(result.getAlarm().getTenantId())
-                    .entityId(result.getAlarm().getId()).added(true).build());
+                    .entityId(result.getAlarm().getId()).entity(result).created(true).build());
             publishEvictEvent(new AlarmTypesCacheEvictEvent(request.getTenantId()));
         }
         return withPropagated(result);
@@ -188,6 +188,7 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
         if (alarm == null) {
             return AlarmApiCallResult.builder().successful(false).build();
         } else {
+            var propagationIds = getPropagationEntityIdsList(alarm);
             deleteEntityRelations(tenantId, alarm.getId());
             alarmDao.removeById(tenantId, alarm.getUuidId());
             eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId)
@@ -195,7 +196,7 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
             if (checkAndDeleteAlarmType) {
                 delAlarmTypes(tenantId, Collections.singleton(alarm.getType()));
             }
-            return AlarmApiCallResult.builder().alarm(alarm).deleted(true).successful(true).build();
+            return AlarmApiCallResult.builder().alarm(alarm).deleted(true).successful(true).propagatedEntitiesList(propagationIds).build();
         }
     }
 

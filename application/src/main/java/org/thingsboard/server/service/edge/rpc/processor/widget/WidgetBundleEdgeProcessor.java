@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,11 @@ import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.WidgetsBundleUpdateMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.constructor.widget.WidgetMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 import java.util.List;
@@ -34,7 +36,7 @@ import java.util.List;
 @TbCoreComponent
 public class WidgetBundleEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg convertWidgetsBundleEventToDownlink(EdgeEvent edgeEvent) {
+    public DownlinkMsg convertWidgetsBundleEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         WidgetsBundleId widgetsBundleId = new WidgetsBundleId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
@@ -45,7 +47,7 @@ public class WidgetBundleEdgeProcessor extends BaseEdgeProcessor {
                     List<String> widgets = widgetTypeService.findWidgetFqnsByWidgetsBundleId(edgeEvent.getTenantId(), widgetsBundleId);
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     WidgetsBundleUpdateMsg widgetsBundleUpdateMsg =
-                            widgetsBundleMsgConstructor.constructWidgetsBundleUpdateMsg(msgType, widgetsBundle, widgets);
+                            ((WidgetMsgConstructor) widgetMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructWidgetsBundleUpdateMsg(msgType, widgetsBundle, widgets);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addWidgetsBundleUpdateMsg(widgetsBundleUpdateMsg)
@@ -54,7 +56,7 @@ public class WidgetBundleEdgeProcessor extends BaseEdgeProcessor {
                 break;
             case DELETED:
                 WidgetsBundleUpdateMsg widgetsBundleUpdateMsg =
-                        widgetsBundleMsgConstructor.constructWidgetsBundleDeleteMsg(widgetsBundleId);
+                        ((WidgetMsgConstructor) widgetMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructWidgetsBundleDeleteMsg(widgetsBundleId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addWidgetsBundleUpdateMsg(widgetsBundleUpdateMsg)

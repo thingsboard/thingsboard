@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,38 +26,46 @@ import java.util.stream.Collectors;
  * @author Andrew Shvayka
  */
 public enum EntityType {
-    TENANT,
-    CUSTOMER,
-    USER,
-    DASHBOARD,
-    ASSET,
-    DEVICE,
-    ALARM,
-    RULE_CHAIN,
-    RULE_NODE,
-    ENTITY_VIEW {
+    TENANT(1),
+    CUSTOMER(2),
+    USER(3),
+    DASHBOARD(4),
+    ASSET(5),
+    DEVICE(6),
+    ALARM (7),
+    RULE_CHAIN (11),
+    RULE_NODE (12),
+
+    ENTITY_VIEW (15) {
         // backward compatibility for TbOriginatorTypeSwitchNode to return correct rule node connection.
         @Override
-        public String getNormalName() {
+        public String getNormalName () {
             return "Entity View";
         }
     },
-    WIDGETS_BUNDLE,
-    WIDGET_TYPE,
-    TENANT_PROFILE,
-    DEVICE_PROFILE,
-    ASSET_PROFILE,
-    API_USAGE_STATE,
-    TB_RESOURCE,
-    OTA_PACKAGE,
-    EDGE,
-    RPC,
-    QUEUE,
-    NOTIFICATION_TARGET,
-    NOTIFICATION_TEMPLATE,
-    NOTIFICATION_REQUEST,
-    NOTIFICATION,
-    NOTIFICATION_RULE;
+    WIDGETS_BUNDLE (16),
+    WIDGET_TYPE (17),
+    TENANT_PROFILE (20),
+    DEVICE_PROFILE (21),
+    ASSET_PROFILE (22),
+    API_USAGE_STATE (23),
+    TB_RESOURCE (24),
+    OTA_PACKAGE (25),
+    EDGE (26),
+    RPC (27),
+    QUEUE (28),
+    NOTIFICATION_TARGET (29),
+    NOTIFICATION_TEMPLATE (30),
+    NOTIFICATION_REQUEST (31),
+    NOTIFICATION (32),
+    NOTIFICATION_RULE (33);
+
+    @Getter
+    private final int protoNumber; // Corresponds to EntityTypeProto
+
+    private EntityType(int protoNumber) {
+        this.protoNumber = protoNumber;
+    }
 
     public static final List<String> NORMAL_NAMES = EnumSet.allOf(EntityType.class).stream()
             .map(EntityType::getNormalName).collect(Collectors.toUnmodifiableList());

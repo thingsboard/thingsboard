@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,26 +19,18 @@ import {
   AggregationType,
   DAY,
   defaultTimeIntervals,
-  defaultTimewindow,
+  defaultTimewindow, Interval, IntervalMath,
   SECOND,
+  TimeInterval,
   Timewindow
 } from '@shared/models/time/time.models';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { defaultHttpOptions } from '@core/http/http-utils';
-import { map } from 'rxjs/operators';
 import { isDefined } from '@core/utils';
-
-export interface TimeInterval {
-  name: string;
-  translateParams: { [key: string]: any };
-  value: number;
-}
 
 const MIN_INTERVAL = SECOND;
 const MAX_INTERVAL = 365 * 20 * DAY;
 
-const MIN_LIMIT = 7;
+const MIN_LIMIT = 1;
 
 const MAX_DATAPOINTS_LIMIT = 500;
 
@@ -60,15 +52,16 @@ export class TimeService {
     }
   }
 
-  public matchesExistingInterval(min: number, max: number, intervalMs: number): boolean {
-    const intervals = this.getIntervals(min, max);
-    return intervals.findIndex(interval => interval.value === intervalMs) > -1;
+  public matchesExistingInterval(min: number, max: number, interval: Interval, useCalendarIntervals = false): boolean {
+    const intervals = this.getIntervals(min, max, useCalendarIntervals);
+    return intervals.findIndex(timeInterval => timeInterval.value === interval) > -1;
   }
 
-  public getIntervals(min: number, max: number): Array<TimeInterval> {
+  public getIntervals(min: number, max: number, useCalendarIntervals = false): Array<TimeInterval> {
     min = this.boundMinInterval(min);
     max = this.boundMaxInterval(max);
-    return defaultTimeIntervals.filter((interval) => interval.value >= min && interval.value <= max);
+    return defaultTimeIntervals.filter((interval) => (useCalendarIntervals || typeof interval.value === 'number') &&
+      IntervalMath.numberValue(interval.value) >= min && IntervalMath.numberValue(interval.value) <= max);
   }
 
   public boundMinInterval(min: number): number {
@@ -85,32 +78,37 @@ export class TimeService {
     return this.toBound(max, MIN_INTERVAL, MAX_INTERVAL, MAX_INTERVAL);
   }
 
-  public boundToPredefinedInterval(min: number, max: number, intervalMs: number): number {
-    const intervals = this.getIntervals(min, max);
+  public boundToPredefinedInterval(min: number, max: number, interval: Interval, useCalendarIntervals = false): Interval {
+    const intervals = this.getIntervals(min, max, useCalendarIntervals);
     let minDelta = MAX_INTERVAL;
-    const boundedInterval = intervalMs || min;
+    const boundedInterval = interval || min;
     if (!intervals.length) {
       return boundedInterval;
     }
-    let matchedInterval: TimeInterval = intervals[0];
-    intervals.forEach((interval) => {
-      const delta = Math.abs(interval.value - boundedInterval);
-      if (delta < minDelta) {
-        matchedInterval = interval;
-        minDelta = delta;
-      }
-    });
-    return matchedInterval.value;
+    const found = intervals.find(timeInterval => timeInterval.value === boundedInterval);
+    if (found) {
+      return found.value;
+    } else {
+      let matchedInterval: TimeInterval = intervals[0];
+      intervals.forEach((timeInterval) => {
+        const delta = Math.abs(IntervalMath.numberValue(timeInterval.value) - IntervalMath.numberValue(boundedInterval));
+        if (delta <= minDelta) {
+          matchedInterval = timeInterval;
+          minDelta = delta;
+        }
+      });
+      return matchedInterval.value;
+    }
   }
 
-  public boundIntervalToTimewindow(timewindow: number, intervalMs: number, aggType: AggregationType): number {
+  public boundIntervalToTimewindow(timewindow: number, interval: Interval, aggType: AggregationType): Interval {
     if (aggType === AggregationType.NONE) {
       return SECOND;
     } else {
       const min = this.minIntervalLimit(timewindow);
       const max = this.maxIntervalLimit(timewindow);
-      if (intervalMs) {
-        return this.toBound(intervalMs, min, max, intervalMs);
+      if (interval) {
+        return this.toIntervalBound(interval, min, max, interval);
       } else {
         return this.boundToPredefinedInterval(min, max, this.avgInterval(timewindow));
       }
@@ -154,4 +152,13 @@ export class TimeService {
     }
   }
 
+  private toIntervalBound(value: Interval, min: number, max: number, defValue: Interval): Interval {
+    if (isDefined(value)) {
+      value = IntervalMath.max(value, min);
+      value = IntervalMath.min(value, max);
+      return value;
+    } else {
+      return defValue;
+    }
+  }
 }

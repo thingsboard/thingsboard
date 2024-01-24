@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -34,7 +34,11 @@
   <div class="tb-color-settings-panel-body" [fxShow]="colorSettingsFormGroup.get('type').value === colorType.constant">
   </div>
   <div class="tb-color-settings-panel-body" [fxShow]="colorSettingsFormGroup.get('type').value === colorType.range">
-    <ng-container *ngTemplateOutlet="range"></ng-container>
+    <tb-color-range-list fxFlex class="tb-color-ranges-panel"
+                         formControlName="rangeList"
+                         panelTitle="{{ 'widgets.color.value-range' | translate }}"
+                         [popover]="popover">
+    </tb-color-range-list>
   </div>
   <div class="tb-color-settings-panel-body" [fxShow]="colorSettingsFormGroup.get('type').value === colorType.function">
     <ng-container *ngTemplateOutlet="function"></ng-container>
@@ -72,43 +76,6 @@
   </div>
 </div>
 
-<ng-template #range>
-  <div fxFlex class="tb-color-ranges-panel">
-    <div class="tb-form-panel-title" translate>widgets.color.value-range</div>
-    <div class="tb-color-ranges" [formGroup]="colorSettingsFormGroup">
-      <div class="tb-form-row no-padding no-border" [formGroup]="rangeFormGroup" *ngFor="let rangeFormGroup of rangeListFormGroups; trackBy: trackByRange; let $index = index;">
-        <div fxFlex fxLayout="row" fxLayoutGap="24px">
-          <div fxFlex fxLayout="row" fxLayoutGap="12px" fxLayoutAlign="start center">
-            <div class="tb-value-range-text" translate>widgets.color.from</div>
-            <mat-form-field fxFlex appearance="outline" class="center number" subscriptSizing="dynamic">
-              <input matInput type="number" formControlName="from" placeholder="{{ 'widget-config.set' | translate }}">
-            </mat-form-field>
-            <div class="tb-value-range-text tb-value-range-text-to" translate>widgets.color.to</div>
-            <mat-form-field fxFlex appearance="outline" class="center number" subscriptSizing="dynamic">
-              <input matInput type="number" formControlName="to" placeholder="{{ 'widget-config.set' | translate }}">
-            </mat-form-field>
-            <tb-color-input asBoxInput
-                            formControlName="color">
-            </tb-color-input>
-          </div>
-          <button type="button"
-                  mat-icon-button
-                  class="tb-box-button"
-                  (click)="removeRange($index)"
-                  matTooltip="{{ 'action.remove' | translate }}"
-                  matTooltipPosition="above">
-            <mat-icon>delete</mat-icon>
-          </button>
-        </div>
-      </div>
-    </div>
-    <button class="tb-add-color-range"
-            mat-stroked-button
-            (click)="addRange()">
-      <mat-icon>add</mat-icon>
-    </button>
-  </div>
-</ng-template>
 <ng-template #function>
   <div class="tb-form-panel no-padding no-border" [formGroup]="colorSettingsFormGroup">
     <tb-js-func formControlName="colorFunction"

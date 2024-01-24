@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -69,11 +69,11 @@ export abstract class BasicWidgetConfigComponent extends PageComponent implement
   ngOnInit() {}
 
   ngAfterViewInit(): void {
-    setTimeout(() => {
-      if (!this.validateConfig()) {
-        this.onConfigChanged(this.prepareOutputConfig(this.configForm().getRawValue()));
-      }
-    }, 0);
+    if (!this.validateConfig()) {
+      setTimeout(() => {
+          this.onConfigChanged(this.prepareOutputConfig(this.configForm().getRawValue()));
+      }, 0);
+    }
   }
 
   protected setupConfig(widgetConfig: WidgetConfigComponentData) {
@@ -97,7 +97,34 @@ export abstract class BasicWidgetConfigComponent extends PageComponent implement
     });
   }
 
-  protected setupDefaults(configData: WidgetConfigComponentData) {}
+  protected setupDefaults(configData: WidgetConfigComponentData) {
+    const params = configData.typeParameters;
+    let dataKeys: DataKey[];
+    let latestDataKeys: DataKey[];
+    if (params.defaultDataKeysFunction) {
+      dataKeys = params.defaultDataKeysFunction(this, configData);
+    }
+    if (params.defaultLatestDataKeysFunction) {
+      latestDataKeys = params.defaultLatestDataKeysFunction(this, configData);
+    }
+    if (!dataKeys) {
+      dataKeys = this.defaultDataKeys(configData);
+    }
+    if (!latestDataKeys) {
+      latestDataKeys = this.defaultLatestDataKeys(configData);
+    }
+    if (dataKeys || latestDataKeys) {
+      this.setupDefaultDatasource(configData, dataKeys, latestDataKeys);
+    }
+  }
+
+  protected defaultDataKeys(configData: WidgetConfigComponentData): DataKey[] {
+    return null;
+  }
+
+  protected defaultLatestDataKeys(configData: WidgetConfigComponentData): DataKey[] {
+    return null;
+  }
 
   protected updateValidators(emitEvent: boolean, trigger?: string) {
   }

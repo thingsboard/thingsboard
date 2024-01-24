@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,10 @@ public class EntityIdFactory {
 
     public static EntityId getByTypeAndUuid(int type, String uuid) {
         return getByTypeAndUuid(EntityType.values()[type], UUID.fromString(uuid));
+    }
+
+    public static EntityId getByTypeAndUuid(int type, UUID uuid) {
+        return getByTypeAndUuid(EntityType.values()[type], uuid);
     }
 
     public static EntityId getByTypeAndUuid(String type, String uuid) {
@@ -139,6 +143,8 @@ public class EntityIdFactory {
                 return new EdgeId(uuid);
             case QUEUE:
                 return new QueueId(uuid);
+            case TB_RESOURCE:
+                return new TbResourceId(uuid);
         }
         throw new IllegalArgumentException("EdgeEventType " + edgeEventType + " is not supported!");
     }

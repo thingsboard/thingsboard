@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -297,7 +297,7 @@
           {{ 'tenant-profile.rule-engine-exceptions-ttl-days-required' | translate}}
         </mat-error>
         <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('ruleEngineExceptionsTtlDays').hasError('min')">
-          {{ 'tenant-profile.rule-engine-exceptions-ttl-days-days-range' | translate}}
+          {{ 'tenant-profile.rule-engine-exceptions-ttl-days-range' | translate}}
         </mat-error>
         <mat-hint></mat-hint>
       </mat-form-field>
@@ -385,6 +385,22 @@
         </mat-error>
         <mat-hint></mat-hint>
       </mat-form-field>
+    </div>
+    <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+      <mat-form-field fxFlex class="mat-block" appearance="fill">
+        <mat-label translate>tenant-profile.maximum-resource-size</mat-label>
+        <input matInput required min="0" step="1"
+               formControlName="maxResourceSize"
+               type="number">
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxResourceSize').hasError('required')">
+          {{ 'tenant-profile.maximum-resource-size-required' | translate}}
+        </mat-error>
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxResourceSize').hasError('min')">
+          {{ 'tenant-profile.maximum-resource-size-range' | translate}}
+        </mat-error>
+        <mat-hint></mat-hint>
+      </mat-form-field>
+      <div fxFlex></div>
     </div>
   </fieldset>
 

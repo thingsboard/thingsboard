@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.thingsboard.server.common.data.BaseData;
-import org.thingsboard.server.common.data.BaseDataWithAdditionalInfo;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.HasImage;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.HasTitle;
@@ -34,7 +34,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 
 @ApiModel
 @EqualsAndHashCode(callSuper = true)
-public class WidgetsBundle extends BaseData<WidgetsBundleId> implements HasName, HasTenantId, ExportableEntity<WidgetsBundleId>, HasTitle {
+public class WidgetsBundle extends BaseData<WidgetsBundleId> implements HasName, HasTenantId, ExportableEntity<WidgetsBundleId>, HasTitle, HasImage {
 
     private static final long serialVersionUID = -7627368878362410489L;
 
@@ -57,10 +57,9 @@ public class WidgetsBundle extends BaseData<WidgetsBundleId> implements HasName,
     @ApiModelProperty(position = 5, value = "Title used in search and UI", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String title;
 
-    @Length(fieldName = "image", max = 1000000)
     @Getter
     @Setter
-    @ApiModelProperty(position = 6, value = "Base64 encoded thumbnail", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @ApiModelProperty(position = 6, value = "Relative or external image URL. Replaced with image data URL (Base64) in case of relative URL and 'inlineImages' option enabled.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String image;
 
     @NoXss
@@ -69,6 +68,11 @@ public class WidgetsBundle extends BaseData<WidgetsBundleId> implements HasName,
     @Setter
     @ApiModelProperty(position = 7, value = "Description", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private String description;
+
+    @Getter
+    @Setter
+    @ApiModelProperty(position = 8, value = "Order", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    private Integer order;
 
     @Getter
     @Setter
@@ -89,6 +93,7 @@ public class WidgetsBundle extends BaseData<WidgetsBundleId> implements HasName,
         this.title = widgetsBundle.getTitle();
         this.image = widgetsBundle.getImage();
         this.description = widgetsBundle.getDescription();
+        this.order = widgetsBundle.getOrder();
         this.externalId = widgetsBundle.getExternalId();
     }
 

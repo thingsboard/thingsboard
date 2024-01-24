@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2023 The Thingsboard Authors
+-- Copyright © 2016-2024 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -189,7 +189,7 @@ DO
 $$
     BEGIN
         IF EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name = 'widget_type' and column_name='bundle_alias') THEN
-            INSERT INTO widgets_bundle_widget SELECT wb.id as widgets_bundle_id, wt.id as widget_type_id from widget_type wt left join widgets_bundle wb ON wt.bundle_alias = wb.alias ON CONFLICT (widgets_bundle_id, widget_type_id) DO NOTHING;
+            INSERT INTO widgets_bundle_widget SELECT wb.id as widgets_bundle_id, wt.id as widget_type_id from widget_type wt left join widgets_bundle wb ON wt.bundle_alias = wb.alias AND wt.tenant_id = wb.tenant_id ON CONFLICT (widgets_bundle_id, widget_type_id) DO NOTHING;
             ALTER TABLE widget_type DROP COLUMN IF EXISTS bundle_alias;
         END IF;
     END;

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,13 +67,13 @@ public class JpaNotificationDao extends JpaAbstractDao<NotificationEntity, Notif
     @Override
     public PageData<Notification> findUnreadByRecipientIdAndPageLink(TenantId tenantId, UserId recipientId, PageLink pageLink) {
         return DaoUtil.toPageData(notificationRepository.findByRecipientIdAndStatusNot(recipientId.getId(), NotificationStatus.READ,
-                Strings.nullToEmpty(pageLink.getTextSearch()), DaoUtil.toPageable(pageLink)));
+                pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
     }
 
     @Override
     public PageData<Notification> findByRecipientIdAndPageLink(TenantId tenantId, UserId recipientId, PageLink pageLink) {
         return DaoUtil.toPageData(notificationRepository.findByRecipientId(recipientId.getId(),
-                Strings.nullToEmpty(pageLink.getTextSearch()), DaoUtil.toPageable(pageLink)));
+                pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
     }
 
     @Override
