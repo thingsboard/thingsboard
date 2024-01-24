@@ -44,8 +44,10 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -123,15 +125,27 @@ class TbGpsGeofencingActionNodeTest {
         ReflectionTestUtils.setField(node, "entityStates", gpsGeofencingActionTestCase.getEntityStates());
 
         // WHEN
-        ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         node.onMsg(ctx, msg);
 
         // THEN
+        verify(ctx, never()).tellFailure(any(), any(Throwable.class));
+        verify(ctx, never()).enqueueForTellNext(any(), eq(expectedOutput), any(), any());
+        verify(ctx, never()).ack(any());
+
+        ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         if (SUCCESS.equals(expectedOutput)) {
             verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());
         } else {
             verify(ctx, times(1)).tellNext(newMsgCaptor.capture(), eq(expectedOutput));
         }
+
+        var actualMsg = newMsgCaptor.getValue();
+        assertThat(actualMsg).isNotNull();
+        assertThat(actualMsg).isSameAs(msg);
+        assertThat(actualMsg.getType()).isSameAs(msg.getType());
+        assertThat(actualMsg.getData()).isSameAs(msg.getData());
+        assertThat(actualMsg.getMetaData()).isEqualTo(msg.getMetaData());
+        assertThat(actualMsg.getOriginator()).isSameAs(msg.getOriginator());
     }
 
     private TbMsg getOutsideRectangleTbMsg(EntityId entityId) {
