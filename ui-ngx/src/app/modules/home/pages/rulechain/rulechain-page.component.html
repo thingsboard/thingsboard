@@ -34,7 +34,7 @@
               *ngIf="!isImport"
               [ruleChainType]="ruleChainType"
               [disabled]="isDirtyValue"
-              [(ngModel)]="ruleChain.id.id"
+              [(ngModel)]="ruleChain"
               (ngModelChange)="currentRuleChainIdChanged(ruleChain.id?.id)">
             </tb-rule-chain-select>
           </mat-toolbar>

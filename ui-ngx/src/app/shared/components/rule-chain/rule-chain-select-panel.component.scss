@@ -13,25 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import "../../../../scss/constants";
+
 :host {
-  min-width: 52px;
   width: 100%;
-  padding: 0;
-  .tb-rule-select {
-    width: 100%;
+}
 
-    input {
-      color: #fff;
-      cursor: pointer;
-      text-overflow: ellipsis;
-      pointer-events: none;
+::ng-deep {
+  .tb-autocomplete.tb-rule-chain-search {
+    .mat-mdc-option.tb-selected-option {
+      display: flex;
+      flex-direction: row-reverse;
+      background-color: rgba(0, 0, 0, .04);
 
-      &:disabled {
-        cursor: unset;
+      mat-icon {
+        margin-right: 0;
+        margin-left: 16px;
+        color: $tb-primary-color;
+      }
+
+      .mdc-list-item__primary-text {
+        color: $tb-primary-color;
       }
     }
-  }
-  .disabled {
-    opacity: 0.5;
   }
 }
