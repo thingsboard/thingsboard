@@ -184,10 +184,30 @@
                                   formControlName="volumeAttributeName">
           </tb-string-autocomplete>
         </ng-template>
-        <tb-unit-input [tagFilter]="unitsType.capacity"
-                       required style="max-width: 25%" class="flex"
+      </div>
+    </div>
+    <div class="tb-form-row space-between" [fxShow]="volumeInput">
+      <div class="fixed-title-width tb-required" translate>widgets.liquid-level-card.total-volume-units</div>
+      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic" style="max-width: 25%">
+          <mat-select formControlName="volumeUnitsSource" placeholder="{{ 'widget-config.set' | translate }}">
+            <mat-option *ngFor="let type of DataSourceTypes" [value]="type">
+              {{ DataSourceTypeTranslations.get(type) | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <tb-unit-input *ngIf="levelCardWidgetConfigForm.get('volumeUnitsSource').value === DataSourceType.static; else selectVolumeUnitsAttributes"
+                       class="flex" required
+                       [tagFilter]="unitsType.capacity"
                        formControlName="volumeUnits">
         </tb-unit-input>
+        <ng-template #selectVolumeUnitsAttributes>
+          <tb-string-autocomplete [fetchOptionsFn]="fetchOptions.bind(this)"
+                                  required style="flex: 1"
+                                  [errorText]="'widgets.liquid-level-card.attribute-name-required' | translate"
+                                  formControlName="volumeUnitsAttributeName">
+          </tb-string-autocomplete>
+        </ng-template>
       </div>
     </div>
   </div>
