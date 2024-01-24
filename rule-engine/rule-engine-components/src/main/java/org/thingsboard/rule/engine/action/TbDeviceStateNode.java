@@ -93,25 +93,20 @@ public class TbDeviceStateNode implements TbNode {
             return;
         }
         switch (event) {
-            case CONNECT_EVENT: {
+            case CONNECT_EVENT:
                 sendDeviceConnectMsg(ctx, msg);
                 break;
-            }
-            case ACTIVITY_EVENT: {
+            case ACTIVITY_EVENT:
                 sendDeviceActivityMsg(ctx, msg);
                 break;
-            }
-            case DISCONNECT_EVENT: {
+            case DISCONNECT_EVENT:
                 sendDeviceDisconnectMsg(ctx, msg);
                 break;
-            }
-            case INACTIVITY_EVENT: {
+            case INACTIVITY_EVENT:
                 sendDeviceInactivityMsg(ctx, msg);
                 break;
-            }
-            default: {
+            default:
                 ctx.tellFailure(msg, new IllegalStateException("Configured event [" + event + "] is not supported!"));
-            }
         }
     }
 
