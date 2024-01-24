@@ -501,9 +501,13 @@ export class EntityService {
   }
 
   public findEntityKeysByQuery(query: EntityDataQuery, attributes = true, timeseries = true,
-                               config?: RequestConfig): Observable<EntitiesKeysByQuery> {
+                               scope?: AttributeScope, config?: RequestConfig): Observable<EntitiesKeysByQuery> {
+    let url = `/api/entitiesQuery/find/keys?attributes=${attributes}&timeseries=${timeseries}`;
+    if (scope) {
+      url += `&scope=${scope}`;
+    }
     return this.http.post<EntitiesKeysByQuery>(
-      `/api/entitiesQuery/find/keys?attributes=${attributes}&timeseries=${timeseries}`,
+      url,
       query, defaultHttpOptionsFromConfig(config));
   }
 
@@ -831,7 +835,14 @@ export class EntityService {
   }
 
   public getEntityKeysByEntityFilter(filter: EntityFilter, types: DataKeyType[],
-                                     entityTypes?: EntityType[], config?: RequestConfig): Observable<Array<DataKey>> {
+                                     entityTypes?: EntityType[],
+                                     config?: RequestConfig): Observable<Array<DataKey>> {
+    return this.getEntityKeysByEntityFilterAndScope(filter, types, entityTypes, null, config);
+  }
+
+  public getEntityKeysByEntityFilterAndScope(filter: EntityFilter, types: DataKeyType[],
+                                             entityTypes?: EntityType[], scope?: AttributeScope,
+                                             config?: RequestConfig): Observable<Array<DataKey>> {
     if (!types.length) {
       return of([]);
     }
@@ -842,7 +853,7 @@ export class EntityService {
         pageLink: createDefaultEntityDataPageLink(100),
       };
       entitiesKeysByQuery$ = this.findEntityKeysByQuery(dataQuery, types.includes(DataKeyType.attribute),
-        types.includes(DataKeyType.timeseries), config);
+        types.includes(DataKeyType.timeseries), scope, config);
     } else {
       entitiesKeysByQuery$ = of({
         attribute: [],

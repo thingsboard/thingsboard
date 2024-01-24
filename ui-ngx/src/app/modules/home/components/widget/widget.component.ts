@@ -19,7 +19,6 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  ComponentFactoryResolver,
   ComponentRef,
   ElementRef,
   Inject,
@@ -110,12 +109,12 @@ import { MatDialog } from '@angular/material/dialog';
 import { ComponentType } from '@angular/cdk/portal';
 import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/embed-dashboard-dialog-token';
 import { MobileService } from '@core/services/mobile.service';
-import { DialogService } from '@core/services/dialog.service';
 import { PopoverPlacement } from '@shared/components/popover.models';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { DASHBOARD_PAGE_COMPONENT_TOKEN } from '@home/components/tokens';
 import { MODULES_MAP } from '@shared/models/constants';
 import { IModulesMap } from '@modules/common/modules-map.models';
+import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 
 @Component({
   selector: 'tb-widget',
@@ -179,7 +178,6 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
               private route: ActivatedRoute,
               private router: Router,
               private widgetComponentService: WidgetComponentService,
-              private componentFactoryResolver: ComponentFactoryResolver,
               private elementRef: ElementRef,
               private injector: Injector,
               private dialog: MatDialog,
@@ -198,8 +196,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
               private alarmDataService: AlarmDataService,
               private translate: TranslateService,
               private utils: UtilsService,
+              private dashboardUtils: DashboardUtilsService,
               private mobileService: MobileService,
-              private dialogs: DialogService,
               private raf: RafService,
               private ngZone: NgZone,
               private cd: ChangeDetectorRef) {
@@ -298,6 +296,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.subscriptionContext.entityDataService = this.entityDataService;
     this.subscriptionContext.alarmDataService = this.alarmDataService;
     this.subscriptionContext.utils = this.utils;
+    this.subscriptionContext.dashboardUtils = this.dashboardUtils;
     this.subscriptionContext.raf = this.raf;
     this.subscriptionContext.widgetUtils = this.widgetContext.utils;
     this.subscriptionContext.getServerTimeDiff = this.dashboardService.getServerTimeDiff.bind(this.dashboardService);
@@ -959,7 +958,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       this.loadingData = false;
       options = {
         type: this.widget.type,
-        targetDeviceAliasIds: this.widget.config.targetDeviceAliasIds
+        targetDevice: this.widget.config.targetDevice
       };
       options.callbacks = {
         rpcStateChanged: (subscription) => {
@@ -974,7 +973,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
             this.dynamicWidgetComponent.executingRpcRequest = subscription.executingRpcRequest;
             this.dynamicWidgetComponent.rpcErrorText = subscription.rpcErrorText;
             this.dynamicWidgetComponent.rpcRejection = subscription.rpcRejection;
-            this.clearMessage();
+            if (this.typeParameters.displayRpcMessageToast) {
+              this.clearMessage();
+            }
             this.detectChanges();
           }
         },
@@ -983,7 +984,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
             this.dynamicWidgetComponent.executingRpcRequest = subscription.executingRpcRequest;
             this.dynamicWidgetComponent.rpcErrorText = subscription.rpcErrorText;
             this.dynamicWidgetComponent.rpcRejection = subscription.rpcRejection;
-            if (subscription.rpcErrorText) {
+            if (subscription.rpcErrorText && this.typeParameters.displayRpcMessageToast) {
               this.displayMessage('error', subscription.rpcErrorText);
             }
             this.detectChanges();
@@ -993,7 +994,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           if (this.dynamicWidgetComponent) {
             this.dynamicWidgetComponent.rpcErrorText = null;
             this.dynamicWidgetComponent.rpcRejection = null;
-            this.clearMessage();
+            if (this.typeParameters.displayRpcMessageToast) {
+              this.clearMessage();
+            }
             this.detectChanges();
           }
         }
