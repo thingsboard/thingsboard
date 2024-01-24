@@ -191,14 +191,14 @@ export enum EdgeInstructionsMethod {
 
 export const edgeVersionAttributeKey = 'edgeVersion';
 
-export enum EdgeConnectivityEvent {
+export enum EdgeConnectionEvent {
   CONNECTED= 'CONNECTED',
   DISCONNECTED = 'DISCONNECTED'
 }
 
-export const EdgeConnectivityEventTranslationMap = new Map<EdgeConnectivityEvent, string>(
+export const EdgeConnectionEventTranslationMap = new Map<EdgeConnectionEvent, string>(
   [
-    [EdgeConnectivityEvent.CONNECTED, 'edge-event.connected'],
-    [EdgeConnectivityEvent.DISCONNECTED, 'edge-event.disconnected']
+    [EdgeConnectionEvent.CONNECTED, 'edge.connected'],
+    [EdgeConnectionEvent.DISCONNECTED, 'edge.disconnected']
   ]
 );

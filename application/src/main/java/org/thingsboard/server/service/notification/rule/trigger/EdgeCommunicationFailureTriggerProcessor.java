@@ -18,18 +18,18 @@ package org.thingsboard.server.service.notification.rule.trigger;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.notification.info.EdgeFailureNotificationInfo;
+import org.thingsboard.server.common.data.notification.info.EdgeCommunicationFailureNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
-import org.thingsboard.server.common.data.notification.rule.trigger.EdgeFailureTrigger;
-import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeFailureNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.EdgeCommunicationFailureTrigger;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeCommunicationFailureNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 
 @Service
 @RequiredArgsConstructor
-public class EdgeFailureTriggerProcessor implements NotificationRuleTriggerProcessor<EdgeFailureTrigger, EdgeFailureNotificationRuleTriggerConfig> {
+public class EdgeCommunicationFailureTriggerProcessor implements NotificationRuleTriggerProcessor<EdgeCommunicationFailureTrigger, EdgeCommunicationFailureNotificationRuleTriggerConfig> {
 
     @Override
-    public boolean matchesFilter(EdgeFailureTrigger trigger, EdgeFailureNotificationRuleTriggerConfig triggerConfig) {
+    public boolean matchesFilter(EdgeCommunicationFailureTrigger trigger, EdgeCommunicationFailureNotificationRuleTriggerConfig triggerConfig) {
         if (CollectionUtils.isNotEmpty(triggerConfig.getEdges())) {
             return !triggerConfig.getEdges().contains(trigger.getEdgeId().getId());
         }
@@ -37,18 +37,26 @@ public class EdgeFailureTriggerProcessor implements NotificationRuleTriggerProce
     }
 
     @Override
-    public RuleOriginatedNotificationInfo constructNotificationInfo(EdgeFailureTrigger trigger) {
-        return EdgeFailureNotificationInfo.builder()
+    public RuleOriginatedNotificationInfo constructNotificationInfo(EdgeCommunicationFailureTrigger trigger) {
+        return EdgeCommunicationFailureNotificationInfo.builder()
                 .tenantId(trigger.getTenantId())
                 .edgeId(trigger.getEdgeId())
                 .customerId(trigger.getCustomerId())
                 .edgeName(trigger.getEdgeName())
-                .errorMsg(trigger.getErrorMsg())
+                .failureMsg(truncateFailureMsg(trigger.getFailureMsg()))
                 .build();
     }
 
     @Override
     public NotificationRuleTriggerType getTriggerType() {
-        return NotificationRuleTriggerType.EDGE_FAILURE;
+        return NotificationRuleTriggerType.EDGE_COMMUNICATION_FAILURE;
+    }
+
+    private String truncateFailureMsg(String input) {
+        int maxLength = 800;
+        if (input != null && input.length() > maxLength) {
+            return input.substring(0, maxLength);
+        }
+        return input;
     }
 }

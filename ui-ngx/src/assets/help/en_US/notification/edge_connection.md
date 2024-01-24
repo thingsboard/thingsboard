@@ -11,7 +11,7 @@ Available template parameters:
 
 * `edgeId` - the edge id as uuid string;
 * `edgeName` - the name of the edge;
-* `errorMsg` - the string representation of the error, occurred on the Edge;
+* `eventType` - the string representation of the connectivity status: connected or disconnected;
 
 Parameter names must be wrapped using `${...}`. For example: `${edgeName}`.
 You may also modify the value of the parameter with one of the suffixes:
@@ -24,34 +24,21 @@ You may also modify the value of the parameter with one of the suffixes:
 
 ##### Examples
 
-Let's assume the notification about the failing of processing connection to Edge.
+Let's assume the notification about the connecting Edge into the ThingsBoard.
 The following template:
 
 ```text
-Edge '${edgeName}' received error
+Edge '${edgeName}' is now ${eventType}
 {:copy-code}
 ```
 
 will be transformed to:
 
 ```text
-Edge 'DatacenterEdge' received error
+Edge 'DatacenterEdge' is now connected
 ```
 
 <br/>
-
-The following template:
-
-```text
-Error message: '${errorMsg}'
-{:copy-code}
-```
-
-will be transformed to:
-
-```text
-Error message: 'Failed to process edge connection!'
-```
 
 <br>
 <br>

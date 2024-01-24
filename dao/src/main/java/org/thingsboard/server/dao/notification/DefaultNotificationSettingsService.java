@@ -189,8 +189,8 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
         defaultNotifications.create(tenantId, DefaultNotifications.alarmComment, tenantAdmins.getId());
         defaultNotifications.create(tenantId, DefaultNotifications.alarmAssignment, affectedUser.getId());
         defaultNotifications.create(tenantId, DefaultNotifications.ruleEngineComponentLifecycleFailure, tenantAdmins.getId());
-        defaultNotifications.create(tenantId, DefaultNotifications.edgeConnectivity, tenantAdmins.getId());
-        defaultNotifications.create(tenantId, DefaultNotifications.edgeFailure, tenantAdmins.getId());
+        defaultNotifications.create(tenantId, DefaultNotifications.edgeConnection, tenantAdmins.getId());
+        defaultNotifications.create(tenantId, DefaultNotifications.edgeCommunicationFailures, tenantAdmins.getId());
     }
 
     @Override
@@ -210,7 +210,7 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
             defaultNotifications.create(tenantId, DefaultNotifications.exceededPerEntityRateLimits, affectedTenantAdmins.getId());
             defaultNotifications.create(tenantId, DefaultNotifications.exceededRateLimitsForSysadmin, sysAdmins.getId());
         } else {
-            List<NotificationType> requiredNotificationTypes = List.of(NotificationType.EDGE_CONNECTIVITY, NotificationType.EDGE_FAILURE);
+            List<NotificationType> requiredNotificationTypes = List.of(NotificationType.EDGE_CONNECTION, NotificationType.EDGE_COMMUNICATION_FAILURE);
             List<NotificationType> existingNotificationTypes = notificationTemplateService.findNotificationTemplatesByTenantIdAndNotificationTypes(
                             tenantId, requiredNotificationTypes, new PageLink(1))
                     .getData()
@@ -227,11 +227,11 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
             for (NotificationType type : requiredNotificationTypes) {
                 if (!existingNotificationTypes.contains(type)) {
                     switch (type) {
-                        case EDGE_CONNECTIVITY:
-                            defaultNotifications.create(tenantId, DefaultNotifications.edgeConnectivity, tenantAdmins.getId());
+                        case EDGE_CONNECTION:
+                            defaultNotifications.create(tenantId, DefaultNotifications.edgeConnection, tenantAdmins.getId());
                             break;
-                        case EDGE_FAILURE:
-                            defaultNotifications.create(tenantId, DefaultNotifications.edgeFailure, tenantAdmins.getId());
+                        case EDGE_COMMUNICATION_FAILURE:
+                            defaultNotifications.create(tenantId, DefaultNotifications.edgeCommunicationFailures, tenantAdmins.getId());
                             break;
                     }
                 }

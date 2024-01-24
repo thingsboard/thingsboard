@@ -38,7 +38,7 @@ import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
-import org.thingsboard.server.common.data.notification.rule.trigger.EdgeConnectivityTrigger;
+import org.thingsboard.server.common.data.notification.rule.trigger.EdgeConnectionTrigger;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -467,7 +467,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 edgeState.put(DefaultDeviceStateService.ACTIVITY_STATE, false);
                 edgeState.put(DefaultDeviceStateService.LAST_DISCONNECT_TIME, ts);
             }
-            ctx.getNotificationRuleProcessor().process(EdgeConnectivityTrigger.builder()
+            ctx.getNotificationRuleProcessor().process(EdgeConnectionTrigger.builder()
                     .tenantId(tenantId)
                     .customerId(edge.getCustomerId())
                     .edgeId(edgeId)

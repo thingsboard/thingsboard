@@ -13,55 +13,51 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.info;
+package org.thingsboard.server.common.data.notification.rule.trigger;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 
-import java.util.Map;
-
-import static org.thingsboard.server.common.data.util.CollectionsUtil.mapOf;
+import java.util.concurrent.TimeUnit;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Builder
-public class EdgeConnectivityNotificationInfo implements RuleOriginatedNotificationInfo {
+public class EdgeCommunicationFailureTrigger implements NotificationRuleTrigger {
 
-    private String eventType;
-    private TenantId tenantId;
-    private CustomerId customerId;
-    private EdgeId edgeId;
-    private String edgeName;
+    private final TenantId tenantId;
+    private final CustomerId customerId;
+    private final EdgeId edgeId;
+    private final String edgeName;
+    private final String failureMsg;
+    private final String error;
 
     @Override
-    public Map<String, String> getTemplateData() {
-        return mapOf(
-                "eventType", eventType,
-                "tenantId", tenantId.toString(),
-                "edgeId", edgeId.toString(),
-                "edgeName", edgeName
-        );
+    public boolean deduplicate() {
+        return true;
     }
 
     @Override
-    public TenantId getAffectedTenantId() {
-        return tenantId;
+    public String getDeduplicationKey() {
+        return String.join(":", NotificationRuleTrigger.super.getDeduplicationKey(), edgeId.toString(), error);
     }
 
     @Override
-    public CustomerId getAffectedCustomerId() {
-        return customerId;
+    public long getDefaultDeduplicationDuration() {
+        return TimeUnit.MINUTES.toMillis(30);
     }
 
     @Override
-    public EntityId getStateEntityId() {
+    public NotificationRuleTriggerType getType() {
+        return NotificationRuleTriggerType.EDGE_COMMUNICATION_FAILURE;
+    }
+
+    @Override
+    public EntityId getOriginatorEntityId() {
         return edgeId;
     }
 }

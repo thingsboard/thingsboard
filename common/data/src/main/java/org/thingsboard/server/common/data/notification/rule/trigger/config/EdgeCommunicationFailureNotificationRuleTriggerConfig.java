@@ -27,13 +27,13 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class EdgeFailureNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
+public class EdgeCommunicationFailureNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
 
     private Set<UUID> edges; // if empty - all edges
 
     @Override
     public NotificationRuleTriggerType getTriggerType() {
-        return NotificationRuleTriggerType.EDGE_FAILURE;
+        return NotificationRuleTriggerType.EDGE_COMMUNICATION_FAILURE;
     }
 
 }

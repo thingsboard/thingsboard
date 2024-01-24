@@ -2030,7 +2030,9 @@
         "missing-related-rule-chains-title": "Edge has missing related rule chain(s)",
         "missing-related-rule-chains-text": "Assigned to edge rule chain(s) use rule nodes that forward message(s) to rule chain(s) that are not assigned to this edge. <br><br> List of missing rule chain(s): <br> {{missingRuleChains}}",
         "upgrade-instructions": "Upgrade Instructions",
-        "widget-datasource-error": "This widget supports only EDGE entity datasource"
+        "widget-datasource-error": "This widget supports only EDGE entity datasource",
+        "connected": "Connected",
+        "disconnected": "Disconnected"
     },
     "edge-event": {
         "type-dashboard": "Dashboard",
@@ -2073,9 +2075,7 @@
         "action-type-assigned-to-edge": "Assigned to Edge",
         "action-type-unassigned-from-edge": "Unassigned from Edge",
         "action-type-credentials-request": "Credentials Request",
-        "action-type-entity-merge-request": "Entity Merge Request",
-        "connected": "Connected",
-        "disconnected": "Disconnected"
+        "action-type-entity-merge-request": "Entity Merge Request"
     },
     "error": {
         "unable-to-connect": "Unable to connect to the server! Please check your internet connection.",
@@ -3430,8 +3430,8 @@
             "rule-node": "Rule node",
             "new-platform-version": "New platform version",
             "rate-limits": "Exceeded rate limits",
-            "edge-failure": "Edge error",
-            "edge-connectivity": "Edge connectivity"
+            "edge-communication-failure": "Edge communication failure",
+            "edge-connection": "Edge connection"
         },
         "templates": "Templates",
         "notification-templates": "Notifications / Templates",
@@ -3452,8 +3452,8 @@
             "rule-engine-lifecycle-event": "Rule engine lifecycle event",
             "new-platform-version": "New platform version",
             "rate-limits": "Exceeded rate limits",
-            "edge-connectivity": "Edge connectivity",
-            "edge-failure": "Edge failure",
+            "edge-connection": "Edge connection",
+            "edge-communication-failure": "Edge communication failure",
             "trigger": "Trigger",
             "trigger-required": "Trigger is required"
         },

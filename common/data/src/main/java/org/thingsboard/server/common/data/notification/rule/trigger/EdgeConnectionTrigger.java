@@ -23,12 +23,11 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Data
 @Builder
-public class EdgeConnectivityTrigger implements NotificationRuleTrigger {
+public class EdgeConnectionTrigger implements NotificationRuleTrigger {
 
     private final TenantId tenantId;
     private final CustomerId customerId;
@@ -48,12 +47,12 @@ public class EdgeConnectivityTrigger implements NotificationRuleTrigger {
 
     @Override
     public long getDefaultDeduplicationDuration() {
-        return TimeUnit.HOURS.toMillis(3);
+        return TimeUnit.MINUTES.toMillis(30);
     }
 
     @Override
     public NotificationRuleTriggerType getType() {
-        return NotificationRuleTriggerType.EDGE_CONNECTIVITY;
+        return NotificationRuleTriggerType.EDGE_CONNECTION;
     }
 
     @Override

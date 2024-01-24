@@ -40,9 +40,9 @@ import org.thingsboard.server.common.data.notification.rule.trigger.config.Alarm
 import org.thingsboard.server.common.data.notification.rule.trigger.config.ApiUsageLimitNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.DeviceActivityNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.DeviceActivityNotificationRuleTriggerConfig.DeviceEvent;
-import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeConnectivityNotificationRuleTriggerConfig;
-import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeConnectivityNotificationRuleTriggerConfig.EdgeConnectivityEvent;
-import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeFailureNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeConnectionNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeConnectionNotificationRuleTriggerConfig.EdgeConnectivityEvent;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeCommunicationFailureNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.EntitiesLimitNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.EntityActionNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NewPlatformVersionNotificationRuleTriggerConfig;
@@ -328,34 +328,33 @@ public class DefaultNotifications {
                     .description("Send notification to tenant admins when any Rule chain or Rule node failed to start, update or stop")
                     .build())
             .build();
-    public static final DefaultNotification edgeConnectivity = DefaultNotification.builder()
-            .name("Edge connectivity notification")
-            .type(NotificationType.EDGE_CONNECTIVITY)
-            .subject("Edge '${edgeName}' is ${eventType}")
+    public static final DefaultNotification edgeConnection = DefaultNotification.builder()
+            .name("Edge connection notification")
+            .type(NotificationType.EDGE_CONNECTION)
+            .subject("Edge connection status change")
             .text("Edge '${edgeName}' is now ${eventType}")
             .icon("info").color(null)
             .button("Go to Edge").link("/edgeManagement/instances/${edgeId}")
             .rule(DefaultRule.builder()
-                    .name("Edge connectivity")
-                    .enabled(false)
-                    .triggerConfig(EdgeConnectivityNotificationRuleTriggerConfig.builder()
+                    .name("Edge connection status change")
+                    .triggerConfig(EdgeConnectionNotificationRuleTriggerConfig.builder()
                             .edges(null)
                             .notifyOn(Set.of(EdgeConnectivityEvent.CONNECTED, EdgeConnectivityEvent.DISCONNECTED))
                             .build())
-                    .description("Send notification to tenant admins when Edge changes its connectivity state")
+                    .description("Send notification to tenant admins when the connection status between TB and Edge changes")
                     .build())
             .build();
-    public static final DefaultNotification edgeFailure = DefaultNotification.builder()
-            .name("Edge error notification")
-            .type(NotificationType.EDGE_FAILURE)
-            .subject("Edge '${edgeName}' received error")
-            .text("Error message: '${errorMsg}'")
-            .icon("error").color(null)
+    public static final DefaultNotification edgeCommunicationFailures = DefaultNotification.builder()
+            .name("Edge communication failure notification")
+            .type(NotificationType.EDGE_COMMUNICATION_FAILURE)
+            .subject("Edge '${edgeName}' communication failure occured")
+            .text("Failure message: '${failureMsg}'")
+            .icon("error").color(RED_COLOR)
             .button("Go to Edge").link("/edgeManagement/instances/${edgeId}")
             .rule(DefaultRule.builder()
-                    .name("Edge error")
-                    .triggerConfig(EdgeFailureNotificationRuleTriggerConfig.builder().edges(null).build())
-                    .description("Send notification to tenant admins or to assigned customers to Edge when error occurs")
+                    .name("Edge communication failure")
+                    .triggerConfig(EdgeCommunicationFailureNotificationRuleTriggerConfig.builder().edges(null).build())
+                    .description("Send notification to tenant admins when communication failures occur")
                     .build())
             .build();
 

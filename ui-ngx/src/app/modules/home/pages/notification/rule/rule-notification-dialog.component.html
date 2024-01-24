@@ -408,10 +408,10 @@
       </form>
     </mat-step>
 
-    <mat-step [stepControl]="edgeConnectivityTemplateForm"
-              *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.EDGE_CONNECTIVITY">
+    <mat-step [stepControl]="edgeConnectionTemplateForm"
+              *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.EDGE_CONNECTION">
       <ng-template matStepLabel>{{ 'notification.edge-trigger-settings' | translate }}</ng-template>
-      <form [formGroup]="edgeConnectivityTemplateForm">
+      <form [formGroup]="edgeConnectionTemplateForm">
         <section formGroupName="triggerConfig">
           <fieldset class="fields-group tb-margin-before-field">
             <legend translate>notification.filter</legend>
@@ -426,9 +426,9 @@
             <mat-form-field fxFlex class="mat-block" floatLabel="always">
               <mat-label translate>notification.notify-on</mat-label>
               <mat-select formControlName="notifyOn" multiple
-                          placeholder="{{ !edgeConnectivityTemplateForm.get('triggerConfig.notifyOn').value?.length ? ('event.all-events' | translate) : '' }}">
-                <mat-option *ngFor="let edgeEvent of edgeConnectivityEvents" [value]="edgeEvent">
-                  {{ edgeConnectivityEventTranslationMap.get(edgeEvent) | translate }}
+                          placeholder="{{ !edgeConnectionTemplateForm.get('triggerConfig.notifyOn').value?.length ? ('event.all-events' | translate) : '' }}">
+                <mat-option *ngFor="let edgeEvent of edgeConnectionEvents" [value]="edgeEvent">
+                  {{ edgeConnectionEventTranslationMap.get(edgeEvent) | translate }}
                 </mat-option>
               </mat-select>
             </mat-form-field>
@@ -445,10 +445,10 @@
       </form>
     </mat-step>
 
-    <mat-step [stepControl]="edgeFailureTemplateForm"
-              *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.EDGE_FAILURE">
+    <mat-step [stepControl]="edgeCommunicationFailureTemplateForm"
+              *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.EDGE_COMMUNICATION_FAILURE">
       <ng-template matStepLabel>{{ 'notification.edge-trigger-settings' | translate }}</ng-template>
-      <form [formGroup]="edgeFailureTemplateForm">
+      <form [formGroup]="edgeCommunicationFailureTemplateForm">
         <section formGroupName="triggerConfig">
           <fieldset class="fields-group tb-margin-before-field">
             <legend translate>notification.filter</legend>

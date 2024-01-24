@@ -33,8 +33,8 @@ import org.thingsboard.server.common.data.notification.rule.EscalatedNotificatio
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.rule.NotificationRuleRecipientsConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.DeviceActivityNotificationRuleTriggerConfig;
-import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeConnectivityNotificationRuleTriggerConfig;
-import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeFailureNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeConnectionNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeCommunicationFailureNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig;
@@ -98,13 +98,13 @@ public class NotificationRuleImportService extends BaseEntityImportService<Notif
                 }
                 break;
             }
-            case EDGE_CONNECTIVITY: {
-                EdgeConnectivityNotificationRuleTriggerConfig triggerConfig = (EdgeConnectivityNotificationRuleTriggerConfig) ruleTriggerConfig;
+            case EDGE_CONNECTION: {
+                EdgeConnectionNotificationRuleTriggerConfig triggerConfig = (EdgeConnectionNotificationRuleTriggerConfig) ruleTriggerConfig;
                 triggerConfig.setEdges(null);
                 break;
             }
-            case EDGE_FAILURE: {
-                EdgeFailureNotificationRuleTriggerConfig triggerConfig = (EdgeFailureNotificationRuleTriggerConfig) ruleTriggerConfig;
+            case EDGE_COMMUNICATION_FAILURE: {
+                EdgeCommunicationFailureNotificationRuleTriggerConfig triggerConfig = (EdgeCommunicationFailureNotificationRuleTriggerConfig) ruleTriggerConfig;
                 triggerConfig.setEdges(null);
                 break;
             }
