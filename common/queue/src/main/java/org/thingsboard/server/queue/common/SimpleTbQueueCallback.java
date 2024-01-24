@@ -22,10 +22,10 @@ import java.util.function.Consumer;
 
 public class SimpleTbQueueCallback implements TbQueueCallback {
 
-    private final Runnable onSuccess;
+    private final Consumer<TbQueueMsgMetadata> onSuccess;
     private final Consumer<Throwable> onFailure;
 
-    public SimpleTbQueueCallback(Runnable onSuccess, Consumer<Throwable> onFailure) {
+    public SimpleTbQueueCallback(Consumer<TbQueueMsgMetadata> onSuccess, Consumer<Throwable> onFailure) {
         this.onSuccess = onSuccess;
         this.onFailure = onFailure;
     }
@@ -33,7 +33,7 @@ public class SimpleTbQueueCallback implements TbQueueCallback {
     @Override
     public void onSuccess(TbQueueMsgMetadata metadata) {
         if (onSuccess != null) {
-            onSuccess.run();
+            onSuccess.accept(metadata);
         }
     }
 

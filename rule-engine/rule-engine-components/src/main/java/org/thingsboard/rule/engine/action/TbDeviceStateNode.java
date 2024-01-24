@@ -183,7 +183,7 @@ public class TbDeviceStateNode implements TbNode {
     }
 
     private TbQueueCallback getMsgEnqueuedCallback(TbContext ctx, TbMsg msg) {
-        return new SimpleTbQueueCallback(() -> ctx.tellSuccess(msg), t -> ctx.tellFailure(msg, t));
+        return new SimpleTbQueueCallback(metadata -> ctx.tellSuccess(msg), t -> ctx.tellFailure(msg, t));
     }
 
 }

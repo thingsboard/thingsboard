@@ -214,13 +214,19 @@ class DefaultTbContext implements TbContext {
         if (nodeCtx.getSelf().isDebugMode()) {
             mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), tbMsg, "To Root Rule Chain");
         }
-        mainCtx.getClusterService().pushMsgToRuleEngine(tpi, tbMsg.getId(), msg, new SimpleTbQueueCallback(onSuccess, t -> {
-            if (onFailure != null) {
-                onFailure.accept(t);
-            } else {
-                log.debug("[{}] Failed to put item into queue!", nodeCtx.getTenantId().getId(), t);
-            }
-        }));
+        mainCtx.getClusterService().pushMsgToRuleEngine(tpi, tbMsg.getId(), msg, new SimpleTbQueueCallback(
+                metadata -> {
+                    if (onSuccess != null) {
+                        onSuccess.run();
+                    }
+                },
+                t -> {
+                    if (onFailure != null) {
+                        onFailure.accept(t);
+                    } else {
+                        log.debug("[{}] Failed to put item into queue!", nodeCtx.getTenantId().getId(), t);
+                    }
+                }));
     }
 
     @Override
@@ -306,13 +312,19 @@ class DefaultTbContext implements TbContext {
             relationTypes.forEach(relationType ->
                     mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), tbMsg, relationType, null, failureMessage));
         }
-        mainCtx.getClusterService().pushMsgToRuleEngine(tpi, tbMsg.getId(), msg.build(), new SimpleTbQueueCallback(onSuccess, t -> {
-            if (onFailure != null) {
-                onFailure.accept(t);
-            } else {
-                log.debug("[{}] Failed to put item into queue!", nodeCtx.getTenantId().getId(), t);
-            }
-        }));
+        mainCtx.getClusterService().pushMsgToRuleEngine(tpi, tbMsg.getId(), msg.build(), new SimpleTbQueueCallback(
+                metadata -> {
+                    if (onSuccess != null) {
+                        onSuccess.run();
+                    }
+                },
+                t -> {
+                    if (onFailure != null) {
+                        onFailure.accept(t);
+                    } else {
+                        log.debug("[{}] Failed to put item into queue!", nodeCtx.getTenantId().getId(), t);
+                    }
+                }));
     }
 
     @Override
