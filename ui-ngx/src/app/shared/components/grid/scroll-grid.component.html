@@ -1,0 +1,54 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<cdk-virtual-scroll-viewport #viewport class="tb-scroll-grid-viewport" [itemSize]="calculatedItemSize"
+                             [minBufferPx]="minBuffer" [maxBufferPx]="maxBuffer" appendOnly>
+  <ng-container *cdkVirtualFor="let itemsRow of dataSource; let row = index; trackBy: trackByItemsRow">
+    <div *ngIf="itemsRow" class="tb-scroll-grid-items-row" [style]="{gap: gap+'px'}">
+      <div *ngFor="let item of itemsRow; let col = index; trackBy: trackByItem" class="tb-scroll-grid-item-container">
+        <ng-container *ngIf="item === 'loadingCell'">
+          <ng-container *ngTemplateOutlet="loadingCell ? loadingCell : defaultLoadingCell"></ng-container>
+        </ng-container>
+        <ng-container *ngIf="isObject(item)">
+          <ng-container *ngTemplateOutlet="itemCard; context:{ item: item, itemIndex: row * dataSource.currentColumns + col }"></ng-container>
+        </ng-container>
+      </div>
+    </div>
+  </ng-container>
+</cdk-virtual-scroll-viewport>
+<ng-container *ngIf="dataSource.isEmpty">
+  <ng-container *ngTemplateOutlet="loadingItems"></ng-container>
+</ng-container>
+<ng-template #loadingItems>
+  <ng-container *ngIf="dataSource.initialDataLoading; else emptyData">
+    <ng-container *ngTemplateOutlet="dataLoading ? dataLoading : defaultDataLoading"></ng-container>
+  </ng-container>
+</ng-template>
+<ng-template #emptyData>
+  <ng-container *ngTemplateOutlet="noData"></ng-container>
+</ng-template>
+<ng-template #defaultLoadingCell>
+  <div fxLayout="column" fxLayoutAlign="center center" [style]="{minHeight: itemSize + 'px'}">
+    <mat-spinner color="accent" strokeWidth="5"></mat-spinner>
+  </div>
+</ng-template>
+<ng-template #defaultDataLoading>
+  <div fxLayout="column"
+       fxLayoutAlign="center center" class="tb-absolute-fill">
+    <mat-spinner color="accent" strokeWidth="5"></mat-spinner>
+  </div>
+</ng-template>

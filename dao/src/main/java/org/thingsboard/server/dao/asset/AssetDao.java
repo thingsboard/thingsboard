@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -189,6 +189,7 @@ public interface AssetDao extends Dao<Asset>, TenantEntityDao, ExportableEntityD
      *
      * @return the list of tenant asset type objects
      */
+    @Deprecated(since = "3.6.2", forRemoval = true)
     ListenableFuture<List<EntitySubtype>> findTenantAssetTypesAsync(UUID tenantId);
 
     Long countAssetsByAssetProfileId(TenantId tenantId, UUID assetProfileId);

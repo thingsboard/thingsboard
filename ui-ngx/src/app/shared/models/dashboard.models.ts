@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,8 +23,9 @@ import { Timewindow } from '@shared/models/time/time.models';
 import { EntityAliases } from './alias.models';
 import { Filters } from '@shared/models/query/query.models';
 import { MatDialogRef } from '@angular/material/dialog';
+import { HasTenantId } from '@shared/models/entity.models';
 
-export interface DashboardInfo extends BaseData<DashboardId>, ExportableEntity<DashboardId> {
+export interface DashboardInfo extends BaseData<DashboardId>, HasTenantId, ExportableEntity<DashboardId> {
   tenantId?: TenantId;
   title?: string;
   image?: string;
@@ -135,6 +136,10 @@ export interface HomeDashboard extends Dashboard {
 export interface HomeDashboardInfo {
   dashboardId: DashboardId;
   hideDashboardToolbar: boolean;
+}
+
+export interface DashboardSetup extends Dashboard {
+  assignedCustomerIds?: Array<string>;
 }
 
 export const isPublicDashboard = (dashboard: DashboardInfo): boolean => {

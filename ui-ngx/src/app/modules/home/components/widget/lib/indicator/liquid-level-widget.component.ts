@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -58,6 +58,9 @@ import { ResourcesService } from '@core/services/resources.service';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { TranslateService } from '@ngx-translate/core';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
+import { ImagePipe } from '@shared/pipe/image.pipe';
+import { DomSanitizer } from '@angular/platform-browser';
+import { DataEntry } from '@shared/models/widget.models';
 
 @Component({
   selector: 'tb-liquid-level-widget',
@@ -76,7 +79,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
   @Input()
   widgetTitlePanel: TemplateRef<any>;
 
-  backgroundStyle: ComponentStyle = {};
+  backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
 
   hasCardClickAction = false;
@@ -106,7 +109,9 @@ export class LiquidLevelWidgetComponent implements OnInit {
 
   private capacityUnits = Object.values(CapacityUnits);
 
-  constructor(private cd: ChangeDetectorRef,
+  constructor(private imagePipe: ImagePipe,
+              private sanitizer: DomSanitizer,
+              private cd: ChangeDetectorRef,
               private resourcesService: ResourcesService,
               private translate: TranslateService) {
   }
@@ -116,7 +121,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
     this.settings = {...levelCardDefaultSettings, ...this.ctx.settings};
     this.declareStyles();
 
-    this.backgroundStyle = backgroundStyle(this.settings.background);
+    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
 
     this.hasCardClickAction = this.ctx.actionsApi.getActionDescriptors('cardClick').length > 0;
@@ -160,26 +165,30 @@ export class LiquidLevelWidgetComponent implements OnInit {
   }
 
   private getData(): Observable<{ svg: string; volume: number; units: string }> {
-    const entityId: EntityId = {
-      entityType: this.ctx.datasources[0].entityType,
-      id: this.ctx.datasources[0].entityId
-    };
+    if (this.ctx.datasources?.length) {
+      const entityId: EntityId = {
+        entityType: this.ctx.datasources[0].entityType,
+        id: this.ctx.datasources[0].entityId
+      };
 
-    return this.getShape(entityId).pipe(
-      switchMap(shape => {
-        this.shape = shape;
-        this.svgParams = svgMapping.get(shape);
-        if (this.svgParams) {
-          return forkJoin([
-            this.resourcesService.loadJsonResource<string>(this.svgParams.svg),
-            this.getTankersParams(entityId)
-          ]).pipe(
-            map(params => ({svg: params[0], ...params[1]}))
-          );
-        }
-        return of(null);
-      })
-    );
+      return this.getShape(entityId).pipe(
+        switchMap(shape => {
+          this.shape = shape;
+          this.svgParams = svgMapping.get(shape);
+          if (this.svgParams) {
+            return forkJoin([
+              this.resourcesService.loadJsonResource<string>(this.svgParams.svg),
+              this.getTankersParams(entityId)
+            ]).pipe(
+              map(params => ({svg: params[0], ...params[1]}))
+            );
+          }
+          return of(null);
+        })
+      );
+    }
+
+    return of(null);
   }
 
   public onInit() {
@@ -391,7 +400,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
     return limits.min + (percentage / 100) * (limits.max - limits.min);
   }
 
-  private updateTooltip(value: [number, any]): void {
+  private updateTooltip(value: DataEntry): void {
     this.tooltipContent = this.getTooltipContent(value);
 
     if (this.tooltip) {
@@ -486,7 +495,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
     }
   }
 
-  private getTooltipContent(value?: [number, any]): string {
+  private getTooltipContent(value?: DataEntry): string {
     const contentValue = value || [0, ''];
     let tooltipValue: string | number = 'N/A';
 
@@ -541,13 +550,13 @@ export class LiquidLevelWidgetComponent implements OnInit {
             </div>`;
   }
 
-  private convertInputData(value: number): number {
+  private convertInputData(value: any): number {
     if (this.settings.datasourceUnits !== CapacityUnits.percent) {
-      return (convertLiters(value, this.settings.datasourceUnits, ConversionType.to) /
+      return (convertLiters(Number(value), this.settings.datasourceUnits, ConversionType.to) /
         convertLiters(this.volume, this.settings.volumeUnits, ConversionType.to)) * 100;
     }
 
-    return value;
+    return Number(value);
   }
 
   private convertOutputData(value: number): number {

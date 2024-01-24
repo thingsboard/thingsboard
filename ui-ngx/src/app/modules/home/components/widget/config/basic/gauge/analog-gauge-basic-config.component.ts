@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -108,6 +108,7 @@ export class GaugeBasicConfigComponent extends BasicWidgetConfigComponent {
 
     this.widgetConfig.config.settings = this.widgetConfig.config.settings || {};
     this.setCardButtons(config.cardButtons, this.widgetConfig.config);
+    this.widgetConfig.config.borderRadius = config.borderRadius;
     this.widgetConfig.config.backgroundColor = config.backgroundColor;
 
     this.widgetConfig.config.settings.showUnitTitle = config.showUnitTitle;
@@ -131,7 +132,7 @@ export class GaugeBasicConfigComponent extends BasicWidgetConfigComponent {
 
     this.widgetConfig.config.settings.defaultColor = config.defaultColor;
     this.widgetConfig.config.settings.colorPlate = config.colorPlate;
-    this.widgetConfig.config.settings.highlights = config.highlights.rangeList;
+    this.widgetConfig.config.settings.highlights = config.highlights;
     return this.widgetConfig;
   }
 

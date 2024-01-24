@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package org.thingsboard.rule.engine.rest;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -23,6 +25,7 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.external.TbAbstractExternalNode;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
 @Slf4j
@@ -30,6 +33,7 @@ import org.thingsboard.server.common.msg.TbMsg;
         type = ComponentType.EXTERNAL,
         name = "rest api call",
         configClazz = TbRestApiCallNodeConfiguration.class,
+        version = 1,
         nodeDescription = "Invoke REST API calls to external REST server",
         nodeDetails = "Will invoke REST API call <code>GET | POST | PUT | DELETE</code> to external REST server. " +
                 "Message payload added into Request body. Configured attributes can be added into Headers from Message Metadata." +
@@ -45,6 +49,8 @@ import org.thingsboard.server.common.msg.TbMsg;
 )
 public class TbRestApiCallNode extends TbAbstractExternalNode {
 
+    static final String PARSE_TO_PLAIN_TEXT = "parseToPlainText";
+    static final String TRIM_DOUBLE_QUOTES = "trimDoubleQuotes";
     protected TbHttpClient httpClient;
 
     @Override
@@ -70,6 +76,23 @@ public class TbRestApiCallNode extends TbAbstractExternalNode {
         if (this.httpClient != null) {
             this.httpClient.destroy();
         }
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0:
+                if (!oldConfiguration.has(PARSE_TO_PLAIN_TEXT) && oldConfiguration.has(TRIM_DOUBLE_QUOTES)) {
+                    hasChanges = true;
+                    ((ObjectNode) oldConfiguration).put(PARSE_TO_PLAIN_TEXT, oldConfiguration.get(TRIM_DOUBLE_QUOTES).booleanValue());
+                    ((ObjectNode) oldConfiguration).remove(TRIM_DOUBLE_QUOTES);
+                }
+                break;
+            default:
+                break;
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
     }
 
 }

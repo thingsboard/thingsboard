@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,7 +139,9 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
         String oldCustomerTitle = null;
         if (doValidate) {
             Customer oldCustomer = customerValidator.validate(customer, Customer::getTenantId);
-            oldCustomerTitle = oldCustomer != null ? oldCustomer.getTitle() : null;
+            if (oldCustomer != null) {
+                oldCustomerTitle = oldCustomer.getTitle();
+            }
         }
         var evictEvent = new CustomerCacheEvictEvent(customer.getTenantId(), customer.getTitle(), oldCustomerTitle);
         try {
@@ -150,7 +152,7 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
             }
             publishEvictEvent(evictEvent);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedCustomer.getTenantId())
-                    .entityId(savedCustomer.getId()).added(customer.getId() == null).build());
+                    .entityId(savedCustomer.getId()).created(customer.getId() == null).build());
             return savedCustomer;
         } catch (Exception e) {
             handleEvictEvent(evictEvent);

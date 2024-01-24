@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -240,11 +240,10 @@
               <mat-tab label="{{ 'widget.widget-settings' | translate }}">
                 <div class="tb-resize-container" style="background-color: #fff;">
                   <div class="mat-padding">
-                    <tb-image-input fxFlex label="{{'widget.image-preview' | translate}}"
-                                    maxSizeByte="524288"
+                    <tb-gallery-image-input fxFlex label="{{'widget.image-preview' | translate}}"
                                     [(ngModel)]="widget.image"
                                     (ngModelChange)="isDirty = true" >
-                    </tb-image-input>
+                    </tb-gallery-image-input>
                     <mat-form-field class="mat-block">
                       <mat-label translate>widget.description</mat-label>
                       <textarea matInput #descriptionInput

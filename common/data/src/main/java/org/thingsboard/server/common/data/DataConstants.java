@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,8 @@ public class DataConstants {
     public static final String MQTT_TRANSPORT_NAME = "MQTT";
     public static final String HTTP_TRANSPORT_NAME = "HTTP";
     public static final String SNMP_TRANSPORT_NAME = "SNMP";
+    public static final String MAXIMUM_NUMBER_OF_DEVICES_REACHED = "Maximum number of devices reached!";
+    public static final String TB_IMAGE_PREFIX = "tb-image;";
 
 
     public static final String[] allScopes() {
@@ -122,6 +124,7 @@ public class DataConstants {
     public static final String PASSWORD = "password";
     public static final String EDGE_MSG_SOURCE = "edge";
     public static final String MSG_SOURCE_KEY = "source";
+    public static final String EDGE_VERSION_ATTR_KEY = "edgeVersion";
 
     public static final String LAST_CONNECTED_GATEWAY = "lastConnectedGateway";
 
@@ -133,5 +136,6 @@ public class DataConstants {
     public static final String HP_QUEUE_TOPIC = "tb_rule_engine.hp";
     public static final String SQ_QUEUE_NAME = "SequentialByOriginator";
     public static final String SQ_QUEUE_TOPIC = "tb_rule_engine.sq";
+    public static final String QUEUE_NAME = "queueName";
 
 }

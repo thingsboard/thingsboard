@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -31,7 +31,10 @@
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widget-config.appearance</div>
     <tb-image-cards-select rowHeight="2:1"
-                           cols="2"
+                           [cols]="{columns: 2,
+                                    breakpoints: {
+                                      'lt-sm': 1
+                                    }}"
                            label="{{ 'widgets.signal-strength.layout' | translate }}" formControlName="layout">
       <tb-image-cards-select-option *ngFor="let layout of signalStrengthLayouts"
                                     [value]="layout"
@@ -114,14 +117,14 @@
         <mat-panel-title>
           <mat-slide-toggle class="mat-slide" formControlName="showTooltip" (click)="$event.stopPropagation()"
                             fxLayoutAlign="center">
-            {{ 'widgets.signal-strength.tooltip' | translate }}
+            {{ 'widget-config.tooltip' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
         <div class="tb-form-row">
           <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTooltipValue">
-            {{ 'widgets.signal-strength.value' | translate }}
+            {{ 'tooltip.value' | translate }}
           </mat-slide-toggle>
           <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
             <tb-unit-input class="flex" formControlName="units"></tb-unit-input>
@@ -141,7 +144,7 @@
         </div>
         <div class="tb-form-row column-xs">
           <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTooltipDate">
-            {{ 'widgets.signal-strength.date' | translate }}
+            {{ 'tooltip.date' | translate }}
           </mat-slide-toggle>
           <div fxFlex.gt-xs fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
             <tb-date-format-select fxFlex formControlName="tooltipDateFormat"></tb-date-format-select>
@@ -155,13 +158,13 @@
           </div>
         </div>
         <div class="tb-form-row space-between">
-          <div>{{ 'widgets.signal-strength.background-color' | translate }}</div>
+          <div>{{ 'tooltip.background-color' | translate }}</div>
           <tb-color-input asBoxInput
                           formControlName="tooltipBackgroundColor">
           </tb-color-input>
         </div>
         <div class="tb-form-row space-between">
-          <div translate>widgets.signal-strength.background-blur</div>
+          <div translate>tooltip.background-blur</div>
           <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="tooltipBackgroundBlur" type="number" min="0" step="1"
                    placeholder="{{ 'widget-config.set' | translate }}">

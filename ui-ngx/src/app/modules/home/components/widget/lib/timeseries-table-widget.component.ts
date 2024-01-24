@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ import cssjs from '@core/css/css';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder, sortOrderFromString } from '@shared/models/page/sort-order';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
-import { BehaviorSubject, merge, Observable, of, Subject, Subscription } from 'rxjs';
+import { BehaviorSubject, fromEvent, merge, Observable, of, Subject, Subscription } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { catchError, debounceTime, distinctUntilChanged, map, skip, startWith, takeUntil } from 'rxjs/operators';
 import { MatPaginator } from '@angular/material/paginator';
@@ -81,7 +81,7 @@ import {
   TableWidgetDataKeySettings,
   TableWidgetSettings
 } from '@home/components/widget/lib/table-widget.models';
-import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
+import { Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { SubscriptionEntityInfo } from '@core/api/widget-api.models';
 import { DatePipe } from '@angular/common';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
@@ -93,11 +93,14 @@ import {
 } from '@home/components/widget/lib/display-columns-panel.component';
 import { ComponentPortal } from '@angular/cdk/portal';
 import { FormBuilder } from '@angular/forms';
+import { DEFAULT_OVERLAY_POSITIONS } from '@shared/models/overlay.models';
+import { DateFormatSettings } from '@shared/models/widget-settings.models';
 
 export interface TimeseriesTableWidgetSettings extends TableWidgetSettings {
   showTimestamp: boolean;
   showMilliseconds: boolean;
   hideEmptyLines: boolean;
+  dateFormat: DateFormatSettings;
 }
 
 interface TimeseriesWidgetLatestDataKeySettings extends TableWidgetDataKeySettings {
@@ -319,7 +322,12 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     this.hideEmptyLines = isDefined(this.settings.hideEmptyLines) ? this.settings.hideEmptyLines : false;
     this.useEntityLabel = isDefined(this.widgetConfig.settings.useEntityLabel) ? this.widgetConfig.settings.useEntityLabel : false;
     this.showTimestamp = this.settings.showTimestamp !== false;
-    this.dateFormatFilter = (this.settings.showMilliseconds !== true) ? 'yyyy-MM-dd HH:mm:ss' :  'yyyy-MM-dd HH:mm:ss.SSS';
+    // For backward compatibility
+    if (isDefined(this.settings?.showMilliseconds) && this.settings?.showMilliseconds) {
+      this.dateFormatFilter = 'yyyy-MM-dd HH:mm:ss.SSS';
+    } else {
+      this.dateFormatFilter = isDefined(this.settings.dateFormat?.format) ? this.settings.dateFormat?.format : 'yyyy-MM-dd HH:mm:ss';
+    }
 
     this.rowStylesInfo = getRowStyleInfo(this.settings, 'rowData, ctx');
 
@@ -411,23 +419,23 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
       $event.stopPropagation();
     }
     if (this.sources.length) {
-      const target = $event.target || $event.currentTarget;
-      const config = new OverlayConfig();
-      config.backdropClass = 'cdk-overlay-transparent-backdrop';
-      config.hasBackdrop = true;
-      const connectedPosition: ConnectedPosition = {
-        originX: 'end',
-        originY: 'bottom',
-        overlayX: 'end',
-        overlayY: 'top'
-      };
-      config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
-        .withPositions([connectedPosition]);
+      const target = $event.target || $event.srcElement || $event.currentTarget;
+      const config = new OverlayConfig({
+        panelClass: 'tb-panel-container',
+        backdropClass: 'cdk-overlay-transparent-backdrop',
+        hasBackdrop: true,
+        height: 'fit-content',
+        maxHeight: '75vh'
+      });
+      config.positionStrategy = this.overlay.position()
+        .flexibleConnectedTo(target as HTMLElement)
+        .withPositions(DEFAULT_OVERLAY_POSITIONS);
 
       const overlayRef = this.overlay.create(config);
       overlayRef.backdropClick().subscribe(() => {
         overlayRef.dispose();
       });
+
       const source = this.sources[this.sourceIndex];
 
       this.prepareDisplayedColumn();
@@ -450,8 +458,16 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
       ];
 
       const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
-      overlayRef.attach(new ComponentPortal(DisplayColumnsPanelComponent,
+      const componentRef = overlayRef.attach(new ComponentPortal(DisplayColumnsPanelComponent,
         this.viewContainerRef, injector));
+
+      const resizeWindows$ = fromEvent(window, 'resize').subscribe(() => {
+        overlayRef.updatePosition();
+      });
+      componentRef.onDestroy(() => {
+        resizeWindows$.unsubscribe();
+      });
+
       this.ctx.detectChanges();
     }
   }

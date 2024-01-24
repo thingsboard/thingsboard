@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,8 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -57,6 +59,7 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.common.msg.rule.engine.DeviceEdgeUpdateMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceNameOrTypeUpdateMsg;
+import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.FromDeviceRPCResponseProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
@@ -68,8 +71,8 @@ import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.MultipleTbQueueCallbackWrapper;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
@@ -77,11 +80,12 @@ import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.thingsboard.server.service.queue.ProtoUtils.toProto;
+import static org.thingsboard.server.common.util.ProtoUtils.toProto;
 
 @Service
 @Slf4j
@@ -116,6 +120,7 @@ public class DefaultTbClusterService implements TbClusterService {
     private final TbDeviceProfileCache deviceProfileCache;
     private final TbAssetProfileCache assetProfileCache;
     private final GatewayNotificationsService gatewayNotificationsService;
+    private final EdgeService edgeService;
 
     @Override
     public void pushMsgToCore(TenantId tenantId, EntityId entityId, ToCoreMsg msg, TbQueueCallback callback) {
@@ -308,10 +313,17 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     @Override
-    public void onDeviceDeleted(Device device, TbQueueCallback callback) {
-        broadcastEntityDeleteToTransport(device.getTenantId(), device.getId(), device.getName(), callback);
-        sendDeviceStateServiceEvent(device.getTenantId(), device.getId(), false, false, true);
-        broadcastEntityStateChangeEvent(device.getTenantId(), device.getId(), ComponentLifecycleEvent.DELETED);
+    public void onDeviceDeleted(TenantId tenantId, Device device, TbQueueCallback callback) {
+        DeviceId deviceId = device.getId();
+        broadcastEntityDeleteToTransport(tenantId, deviceId, device.getName(), callback);
+        sendDeviceStateServiceEvent(tenantId, deviceId, false, false, true);
+        broadcastEntityStateChangeEvent(tenantId, deviceId, ComponentLifecycleEvent.DELETED);
+    }
+
+    @Override
+    public void onDeviceAssignedToTenant(TenantId oldTenantId, Device device) {
+        onDeviceDeleted(oldTenantId, device, null);
+        sendDeviceStateServiceEvent(device.getTenantId(), device.getId(), true, false, false);
     }
 
     @Override
@@ -486,7 +498,7 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     @Override
-    public void sendNotificationMsgToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, EdgeEventActionType action, EdgeId sourceEdgeId) {
+    public void sendNotificationMsgToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, EdgeEventActionType action, EdgeId originatorEdgeId) {
         if (!edgesEnabled) {
             return;
         }
@@ -519,9 +531,9 @@ public class DefaultTbClusterService implements TbClusterService {
         if (body != null) {
             builder.setBody(body);
         }
-        if (sourceEdgeId != null) {
-            builder.setSourceEdgeIdMSB(sourceEdgeId.getId().getMostSignificantBits());
-            builder.setSourceEdgeIdLSB(sourceEdgeId.getId().getLeastSignificantBits());
+        if (originatorEdgeId != null) {
+            builder.setOriginatorEdgeIdMSB(originatorEdgeId.getId().getMostSignificantBits());
+            builder.setOriginatorEdgeIdLSB(originatorEdgeId.getId().getLeastSignificantBits());
         }
         TransportProtos.EdgeNotificationMsgProto msg = builder.build();
         log.trace("[{}] sending notification to edge service {}", tenantId.getId(), msg);
@@ -539,9 +551,15 @@ public class DefaultTbClusterService implements TbClusterService {
                 pushMsgToCore(new DeviceEdgeUpdateMsg(tenantId, new DeviceId(entityId.getId()), edgeId), null);
                 break;
             case UNASSIGNED_FROM_EDGE:
-                pushMsgToCore(new DeviceEdgeUpdateMsg(tenantId, new DeviceId(entityId.getId()), null), null);
+                EdgeId relatedEdgeId = findRelatedEdgeIdIfAny(tenantId, entityId);
+                pushMsgToCore(new DeviceEdgeUpdateMsg(tenantId, new DeviceId(entityId.getId()), relatedEdgeId), null);
                 break;
         }
+    }
+
+    private EdgeId findRelatedEdgeIdIfAny(TenantId tenantId, EntityId entityId) {
+        PageData<EdgeId> pageData = edgeService.findRelatedEdgeIdsByEntityId(tenantId, entityId, new PageLink(1));
+        return Optional.ofNullable(pageData).filter(pd -> pd.getTotalElements() > 0).map(pd -> pd.getData().get(0)).orElse(null);
     }
 
     @Override

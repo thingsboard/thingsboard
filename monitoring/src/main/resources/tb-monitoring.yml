@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2023 The Thingsboard Authors
+# Copyright © 2016-2024 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ monitoring:
   check_timeout_ms: '${CHECK_TIMEOUT_MS:5000}'
 
   # Failures threshold for notifying
-  failures_threshold: '${FAILURES_THRESHOLD:2}'
+  failures_threshold: '${FAILURES_THRESHOLD:1}'
   # Notify after each REPEATED_FAILURE_NOTIFICATION subsequent failures, 0 to notify only once on first failure
   repeated_failure_notification: '${REPEATED_FAILURE_NOTIFICATION:4}'
 
@@ -51,8 +51,12 @@ monitoring:
       # MQTT QoS
       qos: '${MQTT_QOS_LEVEL:1}'
       targets:
-        # MQTT transport base url, tcp://DOMAIN:1883 by default
+          # MQTT transport base url, tcp://DOMAIN:1883 by default
         - base_url: '${MQTT_TRANSPORT_BASE_URL:tcp://${monitoring.domain}:1883}'
+          # Queue to use for target device
+          queue: '${MQTT_TRANSPORT_USED_QUEUE:Main}'
+          # Whether to monitor IPs associated with the domain from base url
+          check_domain_ips: '${MQTT_TRANSPORT_CHECK_DOMAIN_IPS:false}'
         # To add more targets, use following environment variables:
         # monitoring.transports.mqtt.targets[1].base_url, monitoring.transports.mqtt.targets[2].base_url, etc.
 
@@ -62,8 +66,12 @@ monitoring:
       # CoAP request timeout in milliseconds
       request_timeout_ms: '${COAP_REQUEST_TIMEOUT_MS:4000}'
       targets:
-        # CoAP transport base url, coap://DOMAIN by default
+          # CoAP transport base url, coap://DOMAIN by default
         - base_url: '${COAP_TRANSPORT_BASE_URL:coap://${monitoring.domain}}'
+          # Queue to use for target device
+          queue: '${COAP_TRANSPORT_USED_QUEUE:Main}'
+          # Whether to monitor IPs associated with the domain from base url
+          check_domain_ips: '${COAP_TRANSPORT_CHECK_DOMAIN_IPS:false}'
         # To add more targets, use following environment variables:
         # monitoring.transports.coap.targets[1].base_url, monitoring.transports.coap.targets[2].base_url, etc.
 
@@ -73,8 +81,12 @@ monitoring:
       # HTTP request timeout in milliseconds
       request_timeout_ms: '${HTTP_REQUEST_TIMEOUT_MS:4000}'
       targets:
-        # HTTP transport base url, http://DOMAIN by default
+          # HTTP transport base url, http://DOMAIN by default
         - base_url: '${HTTP_TRANSPORT_BASE_URL:http://${monitoring.domain}}'
+          # Queue to use for target device
+          queue: '${HTTP_TRANSPORT_USED_QUEUE:Main}'
+          # Whether to monitor IPs associated with the domain from base url
+          check_domain_ips: '${HTTP_TRANSPORT_CHECK_DOMAIN_IPS:false}'
         # To add more targets, use following environment variables:
         # monitoring.transports.http.targets[1].base_url, monitoring.transports.http.targets[2].base_url, etc.
 
@@ -84,12 +96,17 @@ monitoring:
       # LwM2M request timeout in milliseconds
       request_timeout_ms: '${LWM2M_REQUEST_TIMEOUT_MS:4000}'
       targets:
-        # LwM2M transport base url, coap://DOMAIN:5685 by default
+          # LwM2M transport base url, coap://DOMAIN:5685 by default
         - base_url: '${LWM2M_TRANSPORT_BASE_URL:coap://${monitoring.domain}:5685}'
+          # Queue to use for target device
+          queue: '${LWM2M_TRANSPORT_USED_QUEUE:Main}'
+          # Whether to monitor IPs associated with the domain from base url
+          check_domain_ips: '${LWM2M_TRANSPORT_CHECK_DOMAIN_IPS:false}'
         # To add more targets, use following environment variables:
         # monitoring.transports.lwm2m.targets[1].base_url, monitoring.transports.lwm2m.targets[2].base_url, etc.
 
-  notification_channels:
+  notifications:
+    message_prefix: '${NOTIFICATION_MESSAGE_PREFIX:}'
     slack:
       # Enable notifying via Slack
       enabled: '${SLACK_NOTIFICATION_CHANNEL_ENABLED:false}'

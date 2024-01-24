@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,34 +15,24 @@
  */
 package org.thingsboard.server.service.resource;
 
-import com.google.common.hash.HashCode;
-import com.google.common.hash.Hashing;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ResourceType;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
-import org.thingsboard.server.common.data.TbResourceInfo;
-import org.thingsboard.server.common.data.TbResourceInfoFilter;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.widget.BaseWidgetType;
-import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.resource.ResourceService;
-import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
-import java.util.Base64;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -56,39 +46,51 @@ import static org.thingsboard.server.utils.LwM2mObjectModelUtils.toLwm2mResource
 @Slf4j
 @Service
 @TbCoreComponent
+@RequiredArgsConstructor
 public class DefaultTbResourceService extends AbstractTbEntityService implements TbResourceService {
 
     private final ResourceService resourceService;
-    private final WidgetTypeService widgetTypeService;
 
-    public DefaultTbResourceService(ResourceService resourceService, WidgetTypeService widgetTypeService) {
-        this.resourceService = resourceService;
-        this.widgetTypeService = widgetTypeService;
+    @Override
+    public TbResource save(TbResource resource, User user) throws ThingsboardException {
+        if (resource.getResourceType() == ResourceType.IMAGE) {
+            throw new IllegalArgumentException("Image resource type is not supported");
+        }
+        ActionType actionType = resource.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
+        TenantId tenantId = resource.getTenantId();
+        try {
+            if (ResourceType.LWM2M_MODEL.equals(resource.getResourceType())) {
+                toLwm2mResource(resource);
+            } else if (resource.getResourceKey() == null) {
+                resource.setResourceKey(resource.getFileName());
+            }
+            TbResource savedResource = resourceService.saveResource(resource);
+            tbClusterService.onResourceChange(savedResource, null);
+            notificationEntityService.logEntityAction(tenantId, savedResource.getId(), savedResource, actionType, user);
+            return savedResource;
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE),
+                    resource, actionType, user, e);
+            throw e;
+        }
     }
 
     @Override
-    public TbResource getResource(TenantId tenantId, ResourceType resourceType, String resourceId) {
-        return resourceService.getResource(tenantId, resourceType, resourceId);
-    }
-
-    @Override
-    public TbResource findResourceById(TenantId tenantId, TbResourceId resourceId) {
-        return resourceService.findResourceById(tenantId, resourceId);
-    }
-
-    @Override
-    public TbResourceInfo findResourceInfoById(TenantId tenantId, TbResourceId resourceId) {
-        return resourceService.findResourceInfoById(tenantId, resourceId);
-    }
-
-    @Override
-    public PageData<TbResourceInfo> findAllTenantResourcesByTenantId(TbResourceInfoFilter filter, PageLink pageLink) {
-        return resourceService.findAllTenantResourcesByTenantId(filter, pageLink);
-    }
-
-    @Override
-    public PageData<TbResourceInfo> findTenantResourcesByTenantId(TbResourceInfoFilter filter, PageLink pageLink) {
-        return resourceService.findTenantResourcesByTenantId(filter, pageLink);
+    public void delete(TbResource tbResource, User user) {
+        if (tbResource.getResourceType() == ResourceType.IMAGE) {
+            throw new IllegalArgumentException("Image resource type is not supported");
+        }
+        TbResourceId resourceId = tbResource.getId();
+        TenantId tenantId = tbResource.getTenantId();
+        try {
+            resourceService.deleteResource(tenantId, resourceId);
+            tbClusterService.onResourceDeleted(tbResource, null);
+            notificationEntityService.logEntityAction(tenantId, resourceId, tbResource, ActionType.DELETED, user, resourceId.toString());
+        } catch (Exception e) {
+            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE),
+                    ActionType.DELETED, user, e, resourceId.toString());
+            throw e;
+        }
     }
 
     @Override
@@ -114,16 +116,6 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
                 .collect(Collectors.toList());
     }
 
-    @Override
-    public void deleteResourcesByTenantId(TenantId tenantId) {
-        resourceService.deleteResourcesByTenantId(tenantId);
-    }
-
-    @Override
-    public long sumDataSizeByTenantId(TenantId tenantId) {
-        return resourceService.sumDataSizeByTenantId(tenantId);
-    }
-
     private Comparator<? super LwM2mObject> getComparator(String sortProperty, String sortOrder) {
         Comparator<LwM2mObject> comparator;
         if ("name".equals(sortProperty)) {
@@ -134,50 +126,4 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
         return "DESC".equals(sortOrder) ? comparator.reversed() : comparator;
     }
 
-    @Override
-    public TbResource save(TbResource tbResource, User user) throws ThingsboardException {
-        ActionType actionType = tbResource.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
-        TenantId tenantId = tbResource.getTenantId();
-        try {
-            TbResource savedResource = checkNotNull(doSave(tbResource));
-            tbClusterService.onResourceChange(savedResource, null);
-            notificationEntityService.logEntityAction(tenantId, savedResource.getId(), savedResource, actionType, user);
-            return savedResource;
-        } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE),
-                    tbResource, actionType, user, e);
-            throw e;
-        }
-    }
-
-    @Override
-    public void delete(TbResource tbResource, User user) {
-        TbResourceId resourceId = tbResource.getId();
-        TenantId tenantId = tbResource.getTenantId();
-        try {
-            resourceService.deleteResource(tenantId, resourceId);
-            tbClusterService.onResourceDeleted(tbResource, null);
-            notificationEntityService.logEntityAction(tenantId, resourceId, tbResource, ActionType.DELETED, user, resourceId.toString());
-        } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE),
-                    ActionType.DELETED, user, e, resourceId.toString());
-            throw e;
-        }
-    }
-
-    private TbResource doSave(TbResource resource) throws ThingsboardException {
-        log.trace("Executing saveResource [{}]", resource);
-        if (StringUtils.isEmpty(resource.getData())) {
-            throw new DataValidationException("Resource data should be specified!");
-        }
-        if (ResourceType.LWM2M_MODEL.equals(resource.getResourceType())) {
-            toLwm2mResource(resource);
-        } else {
-            resource.setResourceKey(resource.getFileName());
-        }
-        HashCode hashCode = Hashing.sha256().hashBytes(Base64.getDecoder().decode(resource.getData().getBytes()));
-        resource.setEtag(hashCode.toString());
-        return resourceService.saveResource(resource);
-    }
 }
-

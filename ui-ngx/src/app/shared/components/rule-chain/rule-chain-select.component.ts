@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ export class RuleChainSelectComponent implements ControlValueAccessor, OnInit {
   }
 
   ngOnInit() {
-    const pageLink = new PageLink(100, 0, null, {
+    const pageLink = new PageLink(1024, 0, null, {
       property: 'name',
       direction: Direction.ASC
     });

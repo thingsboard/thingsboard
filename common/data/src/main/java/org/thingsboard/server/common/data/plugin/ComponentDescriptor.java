@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,8 @@ public class ComponentDescriptor extends BaseData<ComponentDescriptorId> {
     @Length(fieldName = "actions")
     @ApiModelProperty(position = 10, value = "Rule Node Actions. Deprecated. Always null.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     @Getter @Setter private String actions;
+    @ApiModelProperty(position = 11, value = "Indicates that the RuleNode supports queue name configuration.", accessMode = ApiModelProperty.AccessMode.READ_ONLY, example = "true")
+    @Getter @Setter private boolean hasQueueName;
 
     public ComponentDescriptor() {
         super();
@@ -74,6 +76,7 @@ public class ComponentDescriptor extends BaseData<ComponentDescriptorId> {
         this.configurationDescriptor = plugin.getConfigurationDescriptor();
         this.configurationVersion = plugin.getConfigurationVersion();
         this.actions = plugin.getActions();
+        this.hasQueueName = plugin.isHasQueueName();
     }
 
     @ApiModelProperty(position = 1, value = "JSON object with the descriptor Id. " +
@@ -104,6 +107,8 @@ public class ComponentDescriptor extends BaseData<ComponentDescriptorId> {
         if (!Objects.equals(actions, that.actions)) return false;
         if (!Objects.equals(configurationDescriptor, that.configurationDescriptor)) return false;
         if (configurationVersion != that.configurationVersion) return false;
+        if (clusteringMode != that.clusteringMode) return false;
+        if (hasQueueName != that.isHasQueueName()) return false;
         return Objects.equals(clazz, that.clazz);
     }
 
@@ -115,6 +120,8 @@ public class ComponentDescriptor extends BaseData<ComponentDescriptorId> {
         result = 31 * result + (name != null ? name.hashCode() : 0);
         result = 31 * result + (clazz != null ? clazz.hashCode() : 0);
         result = 31 * result + (actions != null ? actions.hashCode() : 0);
+        result = 31 * result + (clusteringMode != null ? clusteringMode.hashCode() : 0);
+        result = 31 * result + (hasQueueName ? 1 : 0);
         return result;
     }
 

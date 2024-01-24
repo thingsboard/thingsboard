@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -194,7 +194,7 @@ public class TbHttpClient {
                 config.isIgnoreRequestBody()) {
             entity = new HttpEntity<>(headers);
         } else {
-            entity = new HttpEntity<>(getData(msg), headers);
+            entity = new HttpEntity<>(getData(msg, config.isIgnoreRequestBody(), config.isParseToPlainText()), headers);
         }
 
         URI uri = buildEncodedUri(endpointUrl);
@@ -242,12 +242,19 @@ public class TbHttpClient {
         return uri;
     }
 
-    private String getData(TbMsg msg) {
-        String data = msg.getData();
+    private String getData(TbMsg tbMsg, boolean ignoreBody, boolean parseToPlainText) {
+        if (!ignoreBody && parseToPlainText) {
+            return parseJsonStringToPlainText(tbMsg.getData());
+        }
+        return tbMsg.getData();
+    }
 
-        if (config.isTrimDoubleQuotes()) {
+    protected String parseJsonStringToPlainText(String data) {
+        if (data.startsWith("\"") && data.endsWith("\"") && data.length() >= 2) {
             final String dataBefore = data;
-            data = data.replaceAll("^\"|\"$", "");
+            try {
+                data = JacksonUtil.fromString(data, String.class);
+            } catch (Exception ignored) {}
             log.trace("Trimming double quotes. Before trim: [{}], after trim: [{}]", dataBefore, data);
         }
 

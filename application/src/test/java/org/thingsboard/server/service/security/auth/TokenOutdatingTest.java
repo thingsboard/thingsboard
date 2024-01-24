@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,12 +114,12 @@ public class TokenOutdatingTest {
         // Token outdatage time is rounded to 1 sec. Need to wait before outdating so that outdatage time is strictly after token issue time
         SECONDS.sleep(1);
         eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(securityUser.getId()));
-        assertTrue(tokenOutdatingService.isOutdated(jwtToken, securityUser.getId()));
+        assertTrue(tokenOutdatingService.isOutdated(jwtToken.getToken(), securityUser.getId()));
 
         SECONDS.sleep(1);
 
         JwtToken newJwtToken = tokenFactory.createAccessJwtToken(securityUser);
-        assertFalse(tokenOutdatingService.isOutdated(newJwtToken, securityUser.getId()));
+        assertFalse(tokenOutdatingService.isOutdated(newJwtToken.getToken(), securityUser.getId()));
     }
 
     @Test

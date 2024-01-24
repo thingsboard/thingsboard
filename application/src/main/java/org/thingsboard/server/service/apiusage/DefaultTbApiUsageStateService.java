@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -353,6 +353,9 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
             String email = tenantService.findTenantById(state.getTenantId()).getEmail();
             result.forEach((apiFeature, stateValue) -> {
                 ApiUsageRecordState recordState = createApiUsageRecordState((TenantApiUsageState) state, apiFeature, stateValue);
+                if (recordState == null) {
+                    return;
+                }
                 notificationRuleProcessor.process(ApiUsageLimitTrigger.builder()
                         .tenantId(state.getTenantId())
                         .state(recordState)

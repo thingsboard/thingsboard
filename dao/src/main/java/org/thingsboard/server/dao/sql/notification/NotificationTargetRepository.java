@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public interface NotificationTargetRepository extends JpaRepository<Notification
                                                                Pageable pageable);
 
     @Query(value = "SELECT * FROM notification_target t WHERE t.tenant_id = :tenantId " +
-            "AND (:searchText IS NULL OR ilike(t.name, concat('%', :searchText, '%')) = true) " +
+            "AND (:searchText IS NULL OR t.name ILIKE concat('%', :searchText, '%')) " +
             "AND (cast(t.configuration as json) ->> 'type' <> 'PLATFORM_USERS' OR " +
             "cast(t.configuration as json) -> 'usersFilter' ->> 'type' IN :usersFilterTypes)", nativeQuery = true)
     Page<NotificationTargetEntity> findByTenantIdAndSearchTextAndUsersFilterTypeIfPresent(@Param("tenantId") UUID tenantId,

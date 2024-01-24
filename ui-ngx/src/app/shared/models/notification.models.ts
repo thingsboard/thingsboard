@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import { AlarmSearchStatus, AlarmSeverity, AlarmStatus } from '@shared/models/al
 import { EntityType } from '@shared/models/entity-type.models';
 import { ApiFeature, ApiUsageStateValue } from '@shared/models/api-usage.models';
 import { LimitedApi } from '@shared/models/limited-api.models';
+import { HasTenantId } from '@shared/models/entity.models';
 
 export interface Notification {
   readonly id: NotificationId;
@@ -109,7 +110,7 @@ export interface SlackConversation {
   type: string;
 }
 
-export interface NotificationRule extends Omit<BaseData<NotificationRuleId>, 'label'>, ExportableEntity<NotificationRuleId> {
+export interface NotificationRule extends Omit<BaseData<NotificationRuleId>, 'label'>, HasTenantId, ExportableEntity<NotificationRuleId> {
   tenantId: TenantId;
   enabled: boolean;
   templateId: NotificationTemplateId;
@@ -241,7 +242,8 @@ export interface NonConfirmedNotificationEscalation {
   targets: Array<string>;
 }
 
-export interface NotificationTarget extends Omit<BaseData<NotificationTargetId>, 'label'>, ExportableEntity<NotificationTargetId> {
+export interface NotificationTarget extends Omit<BaseData<NotificationTargetId>, 'label'>, HasTenantId,
+  ExportableEntity<NotificationTargetId> {
   tenantId: TenantId;
   configuration: NotificationTargetConfig;
 }
@@ -295,7 +297,8 @@ export const NotificationTargetTypeTranslationMap = new Map<NotificationTargetTy
   [NotificationTargetType.MICROSOFT_TEAMS, 'notification.delivery-method.microsoft-teams'],
 ]);
 
-export interface NotificationTemplate extends Omit<BaseData<NotificationTemplateId>, 'label'>, ExportableEntity<NotificationTemplateId> {
+export interface NotificationTemplate extends Omit<BaseData<NotificationTemplateId>, 'label'>,
+  HasTenantId, ExportableEntity<NotificationTemplateId> {
   tenantId: TenantId;
   notificationType: NotificationType;
   configuration: NotificationTemplateConfig;
@@ -439,14 +442,12 @@ export const NotificationTargetConfigTypeInfoMap = new Map<NotificationTargetCon
   ],
   [NotificationTargetConfigType.ORIGINATOR_ENTITY_OWNER_USERS,
     {
-      name: 'notification.recipient-type.users-entity-owner',
-      hint: 'notification.recipient-type.users-entity-owner-hint'
+      name: 'notification.recipient-type.users-entity-owner'
     }
   ],
   [NotificationTargetConfigType.AFFECTED_USER,
     {
-      name: 'notification.recipient-type.affected-user',
-      hint: 'notification.recipient-type.affected-user-hint'
+      name: 'notification.recipient-type.affected-user'
     }
   ],
   [NotificationTargetConfigType.SYSTEM_ADMINISTRATORS,

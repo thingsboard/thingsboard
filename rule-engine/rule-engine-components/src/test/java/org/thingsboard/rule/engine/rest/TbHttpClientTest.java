@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,18 @@ package org.thingsboard.rule.engine.rest;
 
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import org.assertj.core.api.Assertions;
-import org.awaitility.Awaitility;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockserver.integration.ClientAndServer;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.AsyncRestTemplate;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -39,6 +40,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -46,6 +48,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.willCallRealMethod;
 import static org.mockito.Mockito.mock;
@@ -61,13 +64,13 @@ public class TbHttpClientTest {
     EventLoopGroup eventLoop;
     TbHttpClient client;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         client = mock(TbHttpClient.class);
-        willCallRealMethod().given(client).getSharedOrCreateEventLoopGroup(any());
+        when(client.getSharedOrCreateEventLoopGroup(any())).thenCallRealMethod();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         if (eventLoop != null) {
             eventLoop.shutdownGracefully();
@@ -91,7 +94,7 @@ public class TbHttpClientTest {
         Mockito.when(client.buildEncodedUri(any())).thenCallRealMethod();
         String url = "http://localhost:8080/";
         URI uri = client.buildEncodedUri(url);
-        Assert.assertEquals(url, uri.toString());
+        Assertions.assertEquals(url, uri.toString());
     }
 
     @Test
@@ -114,7 +117,7 @@ public class TbHttpClientTest {
         String url = "http://192.168.1.1/data?d={\"a\": 12}";
         String expected = "http://192.168.1.1/data?d=%7B%22a%22:%2012%7D";
         URI uri = client.buildEncodedUri(url);
-        Assert.assertEquals(expected, uri.toString());
+        Assertions.assertEquals(expected, uri.toString());
     }
 
     @Test
@@ -166,24 +169,23 @@ public class TbHttpClientTest {
                 capturedData.capture()
         )).thenReturn(successMsg);
 
-        httpClient.processMessage(ctx, msg,
-                m -> ctx.tellSuccess(msg),
-                ctx::tellFailure);
+        CountDownLatch latch = new CountDownLatch(1);
 
-        Awaitility.await()
-                .atMost(30, TimeUnit.SECONDS)
-                .until(() -> {
-                    try {
-                        verify(ctx, times(1)).tellSuccess(any());
-                        return true;
-                    } catch (Exception e) {
-                        return false;
-                    }
+        httpClient.processMessage(ctx, msg,
+                m -> {
+                    ctx.tellSuccess(msg);
+                    latch.countDown();
+                },
+                (m, t) -> {
+                    ctx.tellFailure(m, t);
+                    latch.countDown();
                 });
+
+        latch.await(5, TimeUnit.SECONDS);
 
         verify(ctx, times(1)).tellSuccess(any());
         verify(ctx, times(0)).tellFailure(any(), any());
-        Assert.assertEquals(successResponseBody, capturedData.getValue());
+        Assertions.assertEquals(successResponseBody, capturedData.getValue());
     }
 
     private ClientAndServer setUpDummyServer(String host, String path, String paramKey, String paramVal, String successResponseBody) {
@@ -219,9 +221,21 @@ public class TbHttpClientTest {
 
         Map<String, String> data = metaData.getData();
 
-        Assertions.assertThat(data).hasSize(2);
-        Assertions.assertThat(data.get("Content-Type")).isEqualTo("binary");
-        Assertions.assertThat(data.get("Set-Cookie")).isEqualTo("[\"sap-context=sap-client=075; path=/\",\"sap-token=sap-client=075; path=/\"]");
+        Assertions.assertEquals(2, data.size());
+        Assertions.assertEquals(data.get("Content-Type"), "binary");
+        Assertions.assertEquals(data.get("Set-Cookie"), "[\"sap-context=sap-client=075; path=/\",\"sap-token=sap-client=075; path=/\"]");
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "false", "\"", "\"\"", "\"This is a string with double quotes\"", "Path: /home/developer/test.txt",
+            "First line\nSecond line\n\nFourth line", "Before\rAfter", "Tab\tSeparated\tValues", "Test\bbackspace", "[]",
+            "[1, 2, 3]", "{\"key\": \"value\"}", "{\n\"temperature\": 25.5,\n\"humidity\": 50.2\n\"}", "Expression: (a + b) * c",
+            "世界", "Україна", "\u1F1FA\u1F1E6", "🇺🇦"})
+    public void testParseJsonStringToPlainText(String original) {
+        Mockito.when(client.parseJsonStringToPlainText(anyString())).thenCallRealMethod();
+
+        String serialized = JacksonUtil.toString(original);
+        Assertions.assertNotNull(serialized);
+        Assertions.assertEquals(original, client.parseJsonStringToPlainText(serialized));
+    }
 }

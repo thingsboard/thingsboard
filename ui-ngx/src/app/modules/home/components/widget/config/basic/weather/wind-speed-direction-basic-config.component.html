@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -79,8 +79,10 @@
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widget-config.appearance</div>
     <tb-image-cards-select rowHeight="1:1"
-                           cols="3"
-                           colsLtMd="2"
+                           [cols]="{columns: 3,
+                                    breakpoints: {
+                                      'lt-md': 2
+                                    }}"
                            label="{{ 'widgets.wind-speed-direction.layout' | translate }}" formControlName="layout">
       <tb-image-cards-select-option *ngFor="let layout of windSpeedDirectionLayouts"
                                     [value]="layout"

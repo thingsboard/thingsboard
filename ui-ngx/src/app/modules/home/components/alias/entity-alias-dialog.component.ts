@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,11 +20,11 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
+  FormGroupDirective,
+  NgForm,
   UntypedFormBuilder,
   UntypedFormControl,
   UntypedFormGroup,
-  FormGroupDirective,
-  NgForm,
   ValidatorFn,
   Validators
 } from '@angular/forms';
@@ -36,6 +36,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityService } from '@core/http/entity.service';
 import { Observable } from 'rxjs';
+import { isEmpty, isEqual } from '@core/utils';
 
 export interface EntityAliasDialogData {
   isAdd: boolean;
@@ -141,6 +142,12 @@ export class EntityAliasDialogComponent extends DialogComponent<EntityAliasDialo
     this.alias.alias = this.entityAliasFormGroup.get('alias').value.trim();
     this.alias.filter = this.entityAliasFormGroup.get('filter').value;
     this.alias.filter.resolveMultiple = this.entityAliasFormGroup.get('resolveMultiple').value;
+    if (!isEmpty(this.alias.filter?.filters)) {
+      this.alias.filter.filters = this.alias.filter.filters.filter((value, index, self) =>
+        self.findIndex(v => v.relationType === value.relationType && isEqual(v.entityTypes, value.entityTypes)) === index &&
+        (value.relationType || value.entityTypes.length)
+      );
+    }
     if (this.alias.filter.type) {
       this.validate().subscribe(() => {
           if (this.isAdd) {

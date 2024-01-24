@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.widget.WidgetsBundleWidget;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
@@ -64,6 +65,9 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
     @Autowired
     protected ApplicationEventPublisher eventPublisher;
 
+    @Autowired
+    protected ImageService imageService;
+
     @Override
     public WidgetType findWidgetTypeById(TenantId tenantId, WidgetTypeId widgetTypeId) {
         log.trace("Executing findWidgetTypeById [{}]", widgetTypeId);
@@ -90,9 +94,10 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
         log.trace("Executing saveWidgetType [{}]", widgetTypeDetails);
         widgetTypeValidator.validate(widgetTypeDetails, WidgetType::getTenantId);
         try {
+            imageService.replaceBase64WithImageUrl(widgetTypeDetails);
             WidgetTypeDetails result = widgetTypeDao.save(widgetTypeDetails.getTenantId(), widgetTypeDetails);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(result.getTenantId())
-                    .entityId(result.getId()).added(widgetTypeDetails.getId() == null).build());
+                    .entityId(result.getId()).created(widgetTypeDetails.getId() == null).build());
             return result;
         } catch (Exception t) {
             AbstractCachedEntityService.checkConstraintViolation(t,
@@ -204,7 +209,7 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
             widgetTypeDao.saveWidgetsBundleWidget(widgetsBundleWidget);
         }
         eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId)
-                .entityId(widgetsBundleId).added(false).build());
+                .entityId(widgetsBundleId).created(false).build());
     }
 
     @Override

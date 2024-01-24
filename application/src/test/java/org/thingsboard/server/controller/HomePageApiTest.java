@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,6 +91,8 @@ public class HomePageApiTest extends AbstractControllerTest {
 
     @MockBean
     private SmsService smsService;
+
+    private static final int DEFAULT_DASHBOARDS_COUNT = 1;
 
     //For system administrator
     @Test
@@ -408,7 +410,7 @@ public class HomePageApiTest extends AbstractControllerTest {
         Assert.assertEquals(2, usageInfo.getUsers());
         Assert.assertEquals(configuration.getMaxUsers(), usageInfo.getMaxUsers());
 
-        Assert.assertEquals(0, usageInfo.getDashboards());
+        Assert.assertEquals(DEFAULT_DASHBOARDS_COUNT, usageInfo.getDashboards());
         Assert.assertEquals(configuration.getMaxDashboards(), usageInfo.getMaxDashboards());
 
         Assert.assertEquals(0, usageInfo.getTransportMessages());
@@ -478,7 +480,8 @@ public class HomePageApiTest extends AbstractControllerTest {
         }
 
         usageInfo = doGet("/api/usage", UsageInfo.class);
-        Assert.assertEquals(dashboards.size(), usageInfo.getDashboards());
+        int expectedDashboardsCount = dashboards.size() + DEFAULT_DASHBOARDS_COUNT;
+        Assert.assertEquals(expectedDashboardsCount, usageInfo.getDashboards());
     }
 
     private Long getInitialEntityCount(EntityType entityType) throws Exception {

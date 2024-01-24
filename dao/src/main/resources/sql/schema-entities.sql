@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2023 The Thingsboard Authors
+-- Copyright © 2016-2024 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -126,7 +126,8 @@ CREATE TABLE IF NOT EXISTS component_descriptor (
     name varchar(255),
     scope varchar(255),
     type varchar(255),
-    clustering_mode varchar(255)
+    clustering_mode varchar(255),
+    has_queue_name boolean DEFAULT false
 );
 
 CREATE TABLE IF NOT EXISTS customer (
@@ -188,6 +189,7 @@ CREATE TABLE IF NOT EXISTS rule_node (
     name varchar(255),
     debug_mode boolean,
     singleton_mode boolean,
+    queue_name varchar(255),
     external_id uuid
 );
 
@@ -715,8 +717,13 @@ CREATE TABLE IF NOT EXISTS resource (
     resource_key varchar(255) NOT NULL,
     search_text varchar(255),
     file_name varchar(255) NOT NULL,
-    data varchar,
+    data bytea,
     etag varchar,
+    descriptor varchar,
+    preview bytea,
+    is_public boolean default true,
+    public_resource_key varchar(32) unique,
+    external_id uuid,
     CONSTRAINT resource_unq_key UNIQUE (tenant_id, resource_type, resource_key)
 );
 
