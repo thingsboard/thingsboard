@@ -279,7 +279,7 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
       default:
         formGroup = this.fb.group({
           command: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          params: ['{}', [jsonRequired]],
+          params: [{}, [jsonRequired]],
         })
     }
     return formGroup;
@@ -359,7 +359,7 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
     }).afterClosed().subscribe(
       (res) => {
         if (res) {
-          this.commandForm.get('params').setValue(JSON.stringify(res));
+          this.commandForm.get('params').setValue(res);
         }
       }
     );
