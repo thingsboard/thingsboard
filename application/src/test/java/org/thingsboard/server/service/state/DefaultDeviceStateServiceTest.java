@@ -83,6 +83,7 @@ import static org.thingsboard.server.service.state.DefaultDeviceStateService.ACT
 import static org.thingsboard.server.service.state.DefaultDeviceStateService.INACTIVITY_ALARM_TIME;
 import static org.thingsboard.server.service.state.DefaultDeviceStateService.INACTIVITY_TIMEOUT;
 import static org.thingsboard.server.service.state.DefaultDeviceStateService.LAST_ACTIVITY_TIME;
+import static org.thingsboard.server.service.state.DefaultDeviceStateService.LAST_DISCONNECT_TIME;
 
 @ExtendWith(MockitoExtension.class)
 public class DefaultDeviceStateServiceTest {
@@ -126,6 +127,91 @@ public class DefaultDeviceStateServiceTest {
     }
 
     @Test
+    public void givenDeviceBelongsToExternalPartition_whenOnDeviceDisconnect_thenCleansStateAndDoesNotReportDisconnect() {
+        // GIVEN
+        doReturn(true).when(service).cleanDeviceStateIfBelongsToExternalPartition(tenantId, deviceId);
+
+        // WHEN
+        service.onDeviceDisconnect(tenantId, deviceId, System.currentTimeMillis());
+
+        // THEN
+        then(service).should().cleanDeviceStateIfBelongsToExternalPartition(tenantId, deviceId);
+        then(service).should(never()).getOrFetchDeviceStateData(deviceId);
+        then(clusterService).shouldHaveNoInteractions();
+        then(notificationRuleProcessor).shouldHaveNoInteractions();
+        then(telemetrySubscriptionService).shouldHaveNoInteractions();
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {Long.MIN_VALUE, -100, -1})
+    public void givenNegativeLastDisconnectTime_whenOnDeviceDisconnect_thenSkipsThisEvent(long negativeLastDisconnectTime) {
+        // GIVEN
+        doReturn(false).when(service).cleanDeviceStateIfBelongsToExternalPartition(tenantId, deviceId);
+
+        // WHEN
+        service.onDeviceDisconnect(tenantId, deviceId, negativeLastDisconnectTime);
+
+        // THEN
+        then(service).should(never()).getOrFetchDeviceStateData(deviceId);
+        then(clusterService).shouldHaveNoInteractions();
+        then(notificationRuleProcessor).shouldHaveNoInteractions();
+        then(telemetrySubscriptionService).shouldHaveNoInteractions();
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideOutdatedTimestamps")
+    public void givenOutdatedLastDisconnectTime_whenOnDeviceDisconnect_thenSkipsThisEvent(long outdatedLastDisconnectTime, long currentLastDisconnectTime) {
+        // GIVEN
+        doReturn(false).when(service).cleanDeviceStateIfBelongsToExternalPartition(tenantId, deviceId);
+
+        var deviceStateData = DeviceStateData.builder()
+                .tenantId(tenantId)
+                .deviceId(deviceId)
+                .state(DeviceState.builder().lastDisconnectTime(currentLastDisconnectTime).build())
+                .build();
+        service.deviceStates.put(deviceId, deviceStateData);
+
+        // WHEN
+        service.onDeviceDisconnect(tenantId, deviceId, outdatedLastDisconnectTime);
+
+        // THEN
+        then(clusterService).shouldHaveNoInteractions();
+        then(notificationRuleProcessor).shouldHaveNoInteractions();
+        then(telemetrySubscriptionService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    public void givenDeviceBelongsToMyPartition_whenOnDeviceDisconnect_thenReportsDisconnect() {
+        // GIVEN
+        var deviceStateData = DeviceStateData.builder()
+                .tenantId(tenantId)
+                .deviceId(deviceId)
+                .state(DeviceState.builder().build())
+                .metaData(new TbMsgMetaData())
+                .build();
+
+        doReturn(false).when(service).cleanDeviceStateIfBelongsToExternalPartition(tenantId, deviceId);
+
+        service.deviceStates.put(deviceId, deviceStateData);
+        long lastDisconnectTime = System.currentTimeMillis();
+
+        // WHEN
+        service.onDeviceDisconnect(tenantId, deviceId, lastDisconnectTime);
+
+        // THEN
+        then(telemetrySubscriptionService).should().saveAttrAndNotify(
+                eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(DataConstants.SERVER_SCOPE),
+                eq(LAST_DISCONNECT_TIME), eq(lastDisconnectTime), any()
+        );
+
+        var msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        then(clusterService).should().pushMsgToRuleEngine(eq(tenantId), eq(deviceId), msgCaptor.capture(), any());
+        var actualMsg = msgCaptor.getValue();
+        assertThat(actualMsg.getType()).isEqualTo(TbMsgType.DISCONNECT_EVENT.name());
+        assertThat(actualMsg.getOriginator()).isEqualTo(deviceId);
+    }
+
+    @Test
     public void givenDeviceBelongsToExternalPartition_whenOnDeviceInactivity_thenCleansStateAndDoesNotReportInactivity() {
         // GIVEN
         doReturn(true).when(service).cleanDeviceStateIfBelongsToExternalPartition(tenantId, deviceId);
@@ -158,7 +244,7 @@ public class DefaultDeviceStateServiceTest {
     }
 
     @ParameterizedTest
-    @MethodSource
+    @MethodSource("provideOutdatedTimestamps")
     public void givenOutdatedLastInactivityTime_whenOnDeviceInactivity_thenSkipsThisEvent(long outdatedLastActivityTime, long currentLastActivityTime) {
         // GIVEN
         doReturn(false).when(service).cleanDeviceStateIfBelongsToExternalPartition(tenantId, deviceId);
@@ -179,7 +265,7 @@ public class DefaultDeviceStateServiceTest {
         then(telemetrySubscriptionService).shouldHaveNoInteractions();
     }
 
-    private static Stream<Arguments> givenOutdatedLastInactivityTime_whenOnDeviceInactivity_thenSkipsThisEvent() {
+    private static Stream<Arguments> provideOutdatedTimestamps() {
         return Stream.of(
                 Arguments.of(0, 0),
                 Arguments.of(0, 100),

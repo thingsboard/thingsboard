@@ -271,8 +271,19 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         if (cleanDeviceStateIfBelongsToExternalPartition(tenantId, deviceId)) {
             return;
         }
-        log.trace("[{}] on Device Disconnect [{}]", tenantId.getId(), deviceId.getId());
+        if (lastDisconnectTime < 0) {
+            log.trace("[{}][{}] On device disconnect: received negative last disconnect ts [{}]. Skipping this event.",
+                    tenantId.getId(), deviceId.getId(), lastDisconnectTime);
+            return;
+        }
         DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
+        long currentLastDisconnectTime = stateData.getState().getLastDisconnectTime();
+        if (lastDisconnectTime <= currentLastDisconnectTime) {
+            log.trace("[{}][{}] On device disconnect: received outdated last disconnect ts [{}]. Skipping this event. Current last disconnect ts [{}].",
+                    tenantId.getId(), deviceId.getId(), lastDisconnectTime, currentLastDisconnectTime);
+            return;
+        }
+        log.trace("[{}][{}] On device disconnect: processing disconnect event with ts [{}].", tenantId.getId(), deviceId.getId(), lastDisconnectTime);
         stateData.getState().setLastDisconnectTime(lastDisconnectTime);
         save(deviceId, LAST_DISCONNECT_TIME, lastDisconnectTime);
         pushRuleEngineMessage(stateData, TbMsgType.DISCONNECT_EVENT);
@@ -302,8 +313,6 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                     tenantId.getId(), deviceId.getId(), lastInactivityTime);
             return;
         }
-        log.trace("[{}][{}] On device inactivity: processing inactivity event with ts [{}].",
-                tenantId.getId(), deviceId.getId(), lastInactivityTime);
         DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
         long currentLastInactivityAlarmTime = stateData.getState().getLastInactivityAlarmTime();
         if (lastInactivityTime <= currentLastInactivityAlarmTime) {
@@ -311,6 +320,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                     tenantId.getId(), deviceId.getId(), lastInactivityTime, currentLastInactivityAlarmTime);
             return;
         }
+        log.trace("[{}][{}] On device inactivity: processing inactivity event with ts [{}].", tenantId.getId(), deviceId.getId(), lastInactivityTime);
         reportInactivity(lastInactivityTime, deviceId, stateData);
     }
 
