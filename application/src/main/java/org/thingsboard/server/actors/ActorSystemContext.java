@@ -119,7 +119,6 @@ import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
@@ -508,7 +507,7 @@ public class ActorSystemContext {
     public void init() {
         this.localCacheType = "caffeine".equals(cacheType);
         if (statisticsEnabled) {
-            tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, statisticsPrintInterval, statisticsPrintInterval, TimeUnit.MILLISECONDS);
+            tbPrintStatsExecutorService.scheduleWithFixedDelay(this::printStats, statisticsPrintInterval, statisticsPrintInterval, TimeUnit.MILLISECONDS);
         }
     }
 

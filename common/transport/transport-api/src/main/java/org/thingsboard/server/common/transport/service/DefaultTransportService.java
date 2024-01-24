@@ -258,7 +258,7 @@ public class DefaultTransportService implements TransportService {
         transportApiRequestTemplate.init();
         mainConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("transport-consumer"));
         if (statsEnabled) {
-            tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, statsPrintInterval, statsPrintInterval, TimeUnit.MILLISECONDS);
+            tbPrintStatsExecutorService.scheduleWithFixedDelay(this::printStats, statsPrintInterval, statsPrintInterval, TimeUnit.MILLISECONDS);
         }
     }
 

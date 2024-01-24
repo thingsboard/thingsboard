@@ -101,7 +101,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
             }
         }
         if (ctx.isStatsEnabled()) {
-            tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, statsPrintInterval, statsPrintInterval, TimeUnit.MILLISECONDS);
+            tbPrintStatsExecutorService.scheduleWithFixedDelay(this::printStats, statsPrintInterval, statsPrintInterval, TimeUnit.MILLISECONDS);
         }
     }
 

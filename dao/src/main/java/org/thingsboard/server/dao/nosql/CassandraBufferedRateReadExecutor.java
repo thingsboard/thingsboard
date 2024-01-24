@@ -65,11 +65,6 @@ public class CassandraBufferedRateReadExecutor extends AbstractBufferedRateExecu
         schedulePrintStats();
     }
 
-    @Override
-    public void printStats() {
-        super.printStats();
-    }
-
     @PreDestroy
     public void stop() {
         super.stop();

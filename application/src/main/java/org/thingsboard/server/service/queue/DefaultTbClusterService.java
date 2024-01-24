@@ -126,7 +126,7 @@ public class DefaultTbClusterService implements TbClusterService {
     @PostConstruct
     public void init() {
         if (statsEnabled) {
-            tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, statsPrintInterval, statsPrintInterval, TimeUnit.MILLISECONDS);
+            tbPrintStatsExecutorService.scheduleWithFixedDelay(this::printStats, statsPrintInterval, statsPrintInterval, TimeUnit.MILLISECONDS);
         }
     }
 

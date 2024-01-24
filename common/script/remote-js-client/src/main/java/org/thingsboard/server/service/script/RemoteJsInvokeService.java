@@ -99,10 +99,6 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
         return "Queue JS Invoke Stats";
     }
 
-    public void printStats() {
-        super.printStats();
-    }
-
     @Autowired
     protected TbQueueRequestTemplate<TbProtoJsQueueMsg<JsInvokeProtos.RemoteJsRequest>, TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> requestTemplate;
 

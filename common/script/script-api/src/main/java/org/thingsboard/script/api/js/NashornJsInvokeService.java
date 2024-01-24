@@ -101,10 +101,6 @@ public class NashornJsInvokeService extends AbstractJsInvokeService {
         return MoreExecutors.directExecutor();
     }
 
-    public void printStats() {
-        super.printStats();
-    }
-
     @PostConstruct
     @Override
     public void init() {

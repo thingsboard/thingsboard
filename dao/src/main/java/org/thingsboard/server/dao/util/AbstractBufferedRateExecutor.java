@@ -283,7 +283,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
     }
 
     protected void schedulePrintStats() {
-        tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, printInterval, printInterval, TimeUnit.MILLISECONDS);
+        tbPrintStatsExecutorService.scheduleWithFixedDelay(this::printStats, printInterval, printInterval, TimeUnit.MILLISECONDS);
     }
 
     public void printStats() {

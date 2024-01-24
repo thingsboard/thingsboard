@@ -97,7 +97,7 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
             timeoutExecutorService = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("script-timeout"));
         }
         if (isStatsEnabled()) {
-            tbPrintStatsExecutorService.scheduleAtFixedRate(this::printStats, getStatsPrintInterval(), getStatsPrintInterval(), TimeUnit.MILLISECONDS);
+            tbPrintStatsExecutorService.scheduleWithFixedDelay(this::printStats, getStatsPrintInterval(), getStatsPrintInterval(), TimeUnit.MILLISECONDS);
         }
     }
 

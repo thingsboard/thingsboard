@@ -120,10 +120,6 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
         this.apiUsageReportClient = apiUsageReportClient;
     }
 
-    public void printStats() {
-        super.printStats();
-    }
-
     @SneakyThrows
     @PostConstruct
     @Override
