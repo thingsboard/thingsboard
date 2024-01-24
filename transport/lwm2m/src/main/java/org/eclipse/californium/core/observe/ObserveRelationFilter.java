@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Copyright (c) 2016 Sierra Wireless and others.
+ * Copyright (c) 2015 Bosch Software Innovations GmbH and others.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
@@ -23,23 +23,23 @@
  *    http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *    http://www.eclipse.org/org/documents/edl-v10.html.
+ *
+ * Contributors:
+ *    Achim Kraus (Bosch Software Innovations GmbH) - initial version
  */
 
 package org.eclipse.californium.core.observe;
 
-import org.eclipse.californium.core.coap.Request;
-import org.eclipse.californium.core.coap.Response;
-
-public interface NotificationListener {
-
+/**
+ * Define a (sub-)selection of observe relations.
+ * Used by {@link org.eclipse.californium.core.CoapResource#changed(ObserveRelationFilter)}
+ */
+public interface ObserveRelationFilter {
     /**
-     * Invoked when a notification for an observed resource has been received.
-     *
-     * @param request
-     *            The original request that was used to establish the
-     *            observation.
-     * @param response
-     *            the notification.
+     * Check, if the observe relation should be accepted by this filter.
+     * @param relation observe relation
+     * @return {@code true}, if the relation should be selected,
+     *         {@code false}, if not
      */
-    void onNotification(Request request, Response response);
+    boolean accept(ObserveRelation relation);
 }

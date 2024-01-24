@@ -53,8 +53,6 @@ import org.eclipse.californium.core.server.resources.ObservableResource;
 import org.eclipse.californium.core.server.resources.Resource;
 import org.eclipse.californium.elements.config.Configuration;
 import org.eclipse.californium.elements.util.ClockUtil;
-import org.eclipse.leshan.client.californium.RootResource;
-import org.eclipse.leshan.client.californium.object.ObjectResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -405,11 +403,7 @@ public class ObserveRelation {
         } else if (isEstablished()) {
             exchange.retransmitResponse();
             if (response.isSuccess()) {
-                if (resource instanceof ObjectResource || resource instanceof RootResource) {
-                    response.getOptions().setObserve(resource.getNotificationSequenceNumber());
-                } else {
-                    ((CoapResource)resource).checkObserveRelation(exchange, response);
-                }
+                ((CoapResource)resource).checkObserveRelation(exchange, response);
             }
             return State.ESTABILSHED;
         } else {
@@ -420,12 +414,7 @@ public class ObserveRelation {
                 established = !isCanceled();
             }
             if (established) {
-                if (resource instanceof ObjectResource || resource instanceof RootResource) {
-                    response.getOptions().setObserve(resource.getNotificationSequenceNumber());
-                } else {
-                    ((CoapResource)resource).checkObserveRelation(exchange, response);
-                }
-
+                ((CoapResource)resource).checkObserveRelation(exchange, response);
                 return State.INIT;
             } else {
                 return State.CANCELED;
