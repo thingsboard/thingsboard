@@ -132,29 +132,12 @@ public class TbDeviceStateNodeTest {
         // GIVEN
         var asset = new AssetId(UUID.randomUUID());
         var msg = TbMsg.newMsg(TbMsgType.ENTITY_CREATED, asset, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
-        given(ctxMock.isLocalEntity(asset)).willReturn(true);
 
         // WHEN
         node.onMsg(ctxMock, msg);
 
         // THEN
-        then(ctxMock).should().isLocalEntity(asset);
         then(ctxMock).should().tellSuccess(msg);
-        then(ctxMock).shouldHaveNoMoreInteractions();
-    }
-
-    @Test
-    public void givenNonLocalOriginator_whenOnMsg_thenTellsSuccessAndNoActivityActionsTriggered() {
-        // GIVEN
-        given(ctxMock.isLocalEntity(msg.getOriginator())).willReturn(false);
-        given(ctxMock.getSelfId()).willReturn(new RuleNodeId(UUID.randomUUID()));
-        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
-
-        // WHEN
-        node.onMsg(ctxMock, msg);
-
-        // THEN
-        then(ctxMock).should().ack(msg);
         then(ctxMock).shouldHaveNoMoreInteractions();
     }
 
@@ -171,7 +154,6 @@ public class TbDeviceStateNodeTest {
         }
         given(ctxMock.getTenantId()).willReturn(TENANT_ID);
         given(ctxMock.getClusterService()).willReturn(tbClusterServiceMock);
-        given(ctxMock.isLocalEntity(msg.getOriginator())).willReturn(true);
 
         // WHEN
         node.onMsg(ctxMock, msg);

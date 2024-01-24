@@ -81,14 +81,7 @@ public class TbDeviceStateNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        var originator = msg.getOriginator();
-        if (!ctx.isLocalEntity(originator)) {
-            log.warn("[{}][{}] Received message from non-local entity [{}]!",
-                    ctx.getTenantId().getId(), ctx.getSelfId().getId(), originator.getId());
-            ctx.ack(msg);
-            return;
-        }
-        if (!EntityType.DEVICE.equals(originator.getEntityType())) {
+        if (!EntityType.DEVICE.equals(msg.getOriginator().getEntityType())) {
             ctx.tellSuccess(msg);
             return;
         }
