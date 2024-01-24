@@ -165,8 +165,8 @@
                         [matTooltip]="cellTooltip(entity, column, row)"
                         matTooltipPosition="above"
                         [ngStyle]="cellStyle(entity, column, row)">
-                <ng-container *ngIf="column.type == 'link' && column.entityURL(entity) as detailsPageURl; else defaultContent">
-                  <a [routerLink]="detailsPageURl" [innerHTML]="cellContent(entity, column, row)" (click)="$event.stopPropagation();"></a>
+                <ng-container *ngIf="column.type == 'link' && column.entityURL(entity) as detailsPageURL; else defaultContent">
+                  <a [routerLink]="detailsPageURL" [innerHTML]="cellContent(entity, column, row)" (click)="$event.stopPropagation();"></a>
                 </ng-container>
                 <ng-template #defaultContent>
                   <span [innerHTML]="cellContent(entity, column, row)"></span>
