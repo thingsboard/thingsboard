@@ -739,7 +739,7 @@ export function randomAlphanumeric(length: number): string {
 }
 
 export function getEntityDetailsPageURL(id: string, entityType: EntityType): string {
-  return `${baseDetailsPageByEntityType.get(entityType)}/${id}`;
+  return baseDetailsPageByEntityType.has(entityType) ? `${baseDetailsPageByEntityType.get(entityType)}/${id}` : '';
 }
 
 export function parseHttpErrorMessage(errorResponse: HttpErrorResponse,
