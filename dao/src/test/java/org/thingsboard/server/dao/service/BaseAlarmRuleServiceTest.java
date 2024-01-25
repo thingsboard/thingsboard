@@ -140,7 +140,7 @@ public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
                 .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "alarmEnabled"))
                 .valueType(ArgumentValueType.BOOLEAN)
                 .defaultValue(Boolean.FALSE)
-                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .sourceType(AlarmRuleArgument.ValueSourceType.CURRENT_ENTITY)
                 .build();
 
         SimpleAlarmConditionFilter alarmEnabledFilter = new SimpleAlarmConditionFilter();

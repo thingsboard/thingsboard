@@ -415,7 +415,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         AlarmRuleArgument temperatureAlarmThresholdKey = AlarmRuleArgument.builder()
                 .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "temperatureAlarmThreshold"))
                 .valueType(ArgumentValueType.NUMERIC)
-                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .sourceType(AlarmRuleArgument.ValueSourceType.CURRENT_ENTITY)
                 .defaultValue(25.0)
                 .build();
 
@@ -491,7 +491,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         AlarmRuleArgument humidityAlarmThresholdKey = AlarmRuleArgument.builder()
                 .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "humidityAlarmThreshold"))
                 .valueType(ArgumentValueType.NUMERIC)
-                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .sourceType(AlarmRuleArgument.ValueSourceType.CURRENT_ENTITY)
                 .defaultValue(60.0)
                 .build();
 

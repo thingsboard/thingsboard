@@ -74,7 +74,6 @@ import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
-import org.thingsboard.server.common.data.query.DynamicValueSourceType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
@@ -380,7 +379,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         AlarmRuleArgument alarmEnabledKey = AlarmRuleArgument.builder()
                 .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "alarmEnabled"))
                 .valueType(ArgumentValueType.BOOLEAN)
-                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .sourceType(AlarmRuleArgument.ValueSourceType.CURRENT_ENTITY)
                 .build();
 
         SimpleAlarmConditionFilter alarmEnabledFilter = new SimpleAlarmConditionFilter();
@@ -477,7 +476,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
                 .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "alarmEnabled"))
                 .valueType(ArgumentValueType.BOOLEAN)
                 .inherit(true)
-                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .sourceType(AlarmRuleArgument.ValueSourceType.CURRENT_ENTITY)
                 .build();
 
         SimpleAlarmConditionFilter alarmEnabledFilter = new SimpleAlarmConditionFilter();
@@ -1578,7 +1577,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
                 .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "greaterAttribute"))
                 .valueType(ArgumentValueType.NUMERIC)
                 .defaultValue(0.0)
-                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .sourceType(AlarmRuleArgument.ValueSourceType.CURRENT_ENTITY)
                 .build();
 
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
@@ -1658,7 +1657,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
                 .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "greaterAttribute"))
                 .valueType(ArgumentValueType.NUMERIC)
                 .defaultValue(0.0)
-                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .sourceType(AlarmRuleArgument.ValueSourceType.CURRENT_ENTITY)
                 .build();
 
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
@@ -1673,7 +1672,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
                 .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "alarm_delay"))
                 .valueType(ArgumentValueType.NUMERIC)
                 .defaultValue(10)
-                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .sourceType(AlarmRuleArgument.ValueSourceType.CURRENT_ENTITY)
                 .build();
 
         DurationAlarmConditionSpec durationSpec = new DurationAlarmConditionSpec();
@@ -1768,7 +1767,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
                 .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "greaterAttribute"))
                 .valueType(ArgumentValueType.NUMERIC)
                 .defaultValue(0.0)
-                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .sourceType(AlarmRuleArgument.ValueSourceType.CURRENT_ENTITY)
                 .build();
 
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
@@ -1783,7 +1782,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
                 .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "alarm_delay"))
                 .valueType(ArgumentValueType.NUMERIC)
                 .defaultValue(10)
-                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .sourceType(AlarmRuleArgument.ValueSourceType.CURRENT_ENTITY)
                 .inherit(true)
                 .build();
 
@@ -1876,7 +1875,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
                 .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "greaterAttribute"))
                 .valueType(ArgumentValueType.NUMERIC)
                 .defaultValue(0.0)
-                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .sourceType(AlarmRuleArgument.ValueSourceType.CURRENT_ENTITY)
                 .build();
 
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
@@ -1890,7 +1889,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
                 .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "alarm_repeating"))
                 .valueType(ArgumentValueType.NUMERIC)
                 .defaultValue(10)
-                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .sourceType(AlarmRuleArgument.ValueSourceType.CURRENT_ENTITY)
                 .build();
 
         RepeatingAlarmConditionSpec repeatingSpec = new RepeatingAlarmConditionSpec();
@@ -1971,7 +1970,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
                 .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "greaterAttribute"))
                 .valueType(ArgumentValueType.NUMERIC)
                 .defaultValue(0.0)
-                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .sourceType(AlarmRuleArgument.ValueSourceType.CURRENT_ENTITY)
                 .build();
 
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
@@ -1985,7 +1984,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
                 .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "alarm_repeating"))
                 .valueType(ArgumentValueType.NUMERIC)
                 .defaultValue(10)
-                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .sourceType(AlarmRuleArgument.ValueSourceType.CURRENT_ENTITY)
                 .inherit(true)
                 .build();
 
@@ -2070,7 +2069,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
                 .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "greaterAttribute"))
                 .valueType(ArgumentValueType.NUMERIC)
                 .defaultValue(0.0)
-                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .sourceType(AlarmRuleArgument.ValueSourceType.CURRENT_ENTITY)
                 .build();
 
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
@@ -2085,7 +2084,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
                 .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, null))
                 .valueType(ArgumentValueType.NUMERIC)
                 .defaultValue(alarmDelayInSeconds)
-                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .sourceType(AlarmRuleArgument.ValueSourceType.CURRENT_ENTITY)
                 .build();
 
         DurationAlarmConditionSpec durationSpec = new DurationAlarmConditionSpec();
@@ -2176,7 +2175,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
                 .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "greaterAttribute"))
                 .valueType(ArgumentValueType.NUMERIC)
                 .defaultValue(0.0)
-                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .sourceType(AlarmRuleArgument.ValueSourceType.CURRENT_ENTITY)
                 .build();
 
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
@@ -2190,7 +2189,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
                 .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, null))
                 .valueType(ArgumentValueType.NUMERIC)
                 .defaultValue(2)
-                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .sourceType(AlarmRuleArgument.ValueSourceType.CURRENT_ENTITY)
                 .inherit(true)
                 .build();
 
@@ -2284,7 +2283,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         AlarmRuleArgument scheduleKey = AlarmRuleArgument.builder()
                 .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "dynamicValueActiveSchedule"))
                 .valueType(ArgumentValueType.NUMERIC)
-                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .sourceType(AlarmRuleArgument.ValueSourceType.CURRENT_ENTITY)
                 .build();
 
         CustomTimeSchedule schedule = new CustomTimeSchedule();
@@ -2384,7 +2383,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         AlarmRuleArgument scheduleKey = AlarmRuleArgument.builder()
                 .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "dynamicValueInactiveSchedule"))
                 .valueType(ArgumentValueType.NUMERIC)
-                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .sourceType(AlarmRuleArgument.ValueSourceType.CURRENT_ENTITY)
                 .build();
 
         schedule.setItems(items);
@@ -2452,7 +2451,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
                 .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "lessAttribute"))
                 .valueType(ArgumentValueType.NUMERIC)
                 .defaultValue(20.0)
-                .sourceType(DynamicValueSourceType.CURRENT_CUSTOMER)
+                .sourceType(AlarmRuleArgument.ValueSourceType.CURRENT_CUSTOMER)
                 .inherit(true)
                 .build();
 
@@ -2528,7 +2527,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
                 .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "lessAttribute"))
                 .valueType(ArgumentValueType.NUMERIC)
                 .defaultValue(32.0)
-                .sourceType(DynamicValueSourceType.CURRENT_TENANT)
+                .sourceType(AlarmRuleArgument.ValueSourceType.CURRENT_TENANT)
                 .inherit(true)
                 .build();
 
@@ -2604,7 +2603,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
                 .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "tenantAttribute"))
                 .valueType(ArgumentValueType.NUMERIC)
                 .defaultValue(0.0)
-                .sourceType(DynamicValueSourceType.CURRENT_DEVICE)
+                .sourceType(AlarmRuleArgument.ValueSourceType.CURRENT_ENTITY)
                 .inherit(true)
                 .build();
 
@@ -2684,7 +2683,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
                 .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "tenantAttribute"))
                 .valueType(ArgumentValueType.NUMERIC)
                 .defaultValue(0.0)
-                .sourceType(DynamicValueSourceType.CURRENT_CUSTOMER)
+                .sourceType(AlarmRuleArgument.ValueSourceType.CURRENT_CUSTOMER)
                 .inherit(true)
                 .build();
 

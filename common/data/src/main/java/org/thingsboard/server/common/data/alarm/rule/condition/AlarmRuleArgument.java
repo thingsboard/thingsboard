@@ -40,7 +40,7 @@ public class AlarmRuleArgument implements Serializable {
     @NoXss
     private final Object defaultValue;
 
-    private final DynamicValueSourceType sourceType;
+    private final ValueSourceType sourceType;
 
     private final boolean inherit;
 
@@ -55,6 +55,12 @@ public class AlarmRuleArgument implements Serializable {
                 || key.getType() == null
                 || StringUtils.isEmpty(key.getKey())
                 || key.getType() == AlarmConditionKeyType.CONSTANT;
+    }
+
+    public enum ValueSourceType {
+        CURRENT_TENANT,
+        CURRENT_CUSTOMER,
+        CURRENT_ENTITY
     }
 
 }

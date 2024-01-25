@@ -385,7 +385,7 @@ class AlarmRuleState {
         AlarmConditionFilterKey key = argument.getKey();
         EntityKeyValue ekv = null;
         switch (argument.getSourceType()) {
-            case CURRENT_DEVICE:
+            case CURRENT_ENTITY:
                 ekv = data.getValue(key);
                 if (ekv != null || !argument.isInherit()) {
                     break;

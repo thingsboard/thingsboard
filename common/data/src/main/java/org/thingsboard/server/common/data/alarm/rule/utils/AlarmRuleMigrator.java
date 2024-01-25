@@ -51,6 +51,7 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
 import org.thingsboard.server.common.data.query.DynamicValue;
+import org.thingsboard.server.common.data.query.DynamicValueSourceType;
 import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.FilterPredicateType;
 import org.thingsboard.server.common.data.query.KeyFilterPredicate;
@@ -268,7 +269,7 @@ public class AlarmRuleMigrator {
 
         AlarmConditionFilterKey key;
         if (dynamicValue != null) {
-            argument.sourceType(dynamicValue.getSourceType()).inherit(dynamicValue.isInherit());
+            argument.sourceType(getValueSourceType(dynamicValue.getSourceType())).inherit(dynamicValue.isInherit());
             var keyType = dynamicValue.getSourceAttribute() == null ? AlarmConditionKeyType.CONSTANT : AlarmConditionKeyType.ATTRIBUTE;
             key = new AlarmConditionFilterKey(keyType, dynamicValue.getSourceAttribute());
         } else {
@@ -278,6 +279,14 @@ public class AlarmRuleMigrator {
         argument.key(key);
 
         return argument.build();
+    }
+
+    private static AlarmRuleArgument.ValueSourceType getValueSourceType(DynamicValueSourceType dynamicValueSourceType) {
+        return switch (dynamicValueSourceType) {
+            case CURRENT_TENANT -> AlarmRuleArgument.ValueSourceType.CURRENT_TENANT;
+            case CURRENT_CUSTOMER -> AlarmRuleArgument.ValueSourceType.CURRENT_CUSTOMER;
+            case CURRENT_DEVICE, CURRENT_USER -> AlarmRuleArgument.ValueSourceType.CURRENT_ENTITY;
+        };
     }
 
     private static String getArgumentIdIgnoreValue(AlarmRuleArgument argument) {
